@@ -101,6 +101,7 @@ describe('NightlifeService', () => {
       const result = await service.getEntryBySlug('test-club');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).name).toBe('Test Club');
     });
 
@@ -136,6 +137,7 @@ describe('NightlifeService', () => {
       });
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).slug).toBe('test-club');
     });
   });
@@ -152,6 +154,7 @@ describe('NightlifeService', () => {
       const result = await service.updateEntry('nightlife-1', { name: 'Updated Club' });
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).name).toBe('Updated Club');
     });
 
@@ -172,6 +175,7 @@ describe('NightlifeService', () => {
       const result = await service.deleteEntry('nightlife-1');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).message).toBe('Entry deleted successfully');
     });
 

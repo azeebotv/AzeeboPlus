@@ -5,7 +5,7 @@ import { UpdateUniverseAffinityDto } from './dto/update-universe-affinity.dto';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
 import { CompleteProfileSetupDto } from './dto/complete-profile-setup.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../prisma/client';
 
 interface UniverseAffinityResponse {
   userId: string;
@@ -24,7 +24,7 @@ export class UsersService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly cache: CacheService,
+    private readonly cache: CacheService
   ) {}
 
   async getPreferences(userId: string): Promise<Record<string, unknown>> {
@@ -71,12 +71,14 @@ export class UsersService {
 
       const darkMode = preferences.darkMode;
       const notifications = preferences.notifications as Prisma.InputJsonValue | undefined;
-      const contentPreferences = preferences.contentPreferences as Prisma.InputJsonValue | undefined;
+      const contentPreferences = preferences.contentPreferences as
+        | Prisma.InputJsonValue
+        | undefined;
 
       let result;
 
       if (existing) {
-        const updateData: Prisma.UserPreferencesUpdateInput = {};
+        const updateData: Record<string, unknown> = {};
         if (darkMode !== undefined) updateData.darkMode = darkMode;
         if (notifications !== undefined) updateData.notifications = notifications;
         if (contentPreferences !== undefined) updateData.contentPreferences = contentPreferences;
@@ -563,7 +565,9 @@ export class UsersService {
       return {
         success: true,
         data: {
-          followers: followingRecords.map((f: { followerId: string }) => userMap.get(f.followerId)).filter(Boolean),
+          followers: followingRecords
+            .map((f: { followerId: string }) => userMap.get(f.followerId))
+            .filter(Boolean),
           pagination: {
             page,
             limit,
@@ -609,7 +613,9 @@ export class UsersService {
       return {
         success: true,
         data: {
-          following: followingRecords.map((f: { followingId: string }) => userMap.get(f.followingId)).filter(Boolean),
+          following: followingRecords
+            .map((f: { followingId: string }) => userMap.get(f.followingId))
+            .filter(Boolean),
           pagination: {
             page,
             limit,
@@ -719,14 +725,22 @@ export class UsersService {
 
       return {
         success: true,
-        data: history.map((item: { contentId: string; contentType: string; universe: string; watchedAt: Date }) => ({
-          id: item.contentId,
-          contentId: item.contentId,
-          contentType: item.contentType,
-          universe: item.universe,
-          watchedAt: item.watchedAt.toISOString(),
-          progress: 0,
-        })),
+        data: history.map(
+          (item: {
+            contentId: string;
+            contentType: string;
+            universe: string;
+            watchedAt: Date;
+            metadata?: Record<string, unknown>;
+          }) => ({
+            id: item.contentId,
+            contentId: item.contentId,
+            contentType: item.contentType,
+            universe: item.universe,
+            watchedAt: item.watchedAt.toISOString(),
+            progress: (item.metadata as { progress?: number })?.progress ?? 0,
+          })
+        ),
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get continue watching for user ${userId}`, error);
@@ -743,17 +757,43 @@ export class UsersService {
 
       return {
         success: true,
-        data: affinity.map((item: { universeId: string; affinityScore: number; lastEngaged: Date }) => ({
-          universeId: item.universeId,
-          universeName: item.universeId,
-          universeIcon: undefined,
-          engagementCount: item.affinityScore,
-          lastEngagedAt: item.lastEngaged.toISOString(),
-        })),
+        data: affinity.map(
+          (item: { universeId: string; affinityScore: number; lastEngaged: Date }) => ({
+            universeId: item.universeId,
+            universeName: item.universeId,
+            universeIcon: undefined,
+            engagementCount: item.affinityScore,
+            lastEngagedAt: item.lastEngaged.toISOString(),
+          })
+        ),
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get universe engagement for user ${userId}`, error);
       throw new BadRequestException('Failed to retrieve universe engagement');
+    }
+  }
+
+  async removeFromWatchHistory(userId: string, contentId: string): Promise<void> {
+    try {
+      await this.prisma.watchHistory.deleteMany({
+        where: { userId, contentId },
+      });
+      this.logger.log(`Removed content ${contentId} from watch history for user ${userId}`);
+    } catch (error: unknown) {
+      this.logger.error(`Failed to remove from watch history for user ${userId}`, error);
+      throw new BadRequestException('Failed to remove from watch history');
+    }
+  }
+
+  async getFollowerCount(userId: string): Promise<number> {
+    try {
+      const count = await this.prisma.following.count({
+        where: { followingId: userId },
+      });
+      return count;
+    } catch (error: unknown) {
+      this.logger.error(`Failed to get follower count for user ${userId}`, error);
+      return 0;
     }
   }
 }

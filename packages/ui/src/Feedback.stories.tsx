@@ -102,7 +102,7 @@ export const AllSizes: StoryObj<typeof avatarMeta> = {
   render: () => (
     <div className="flex items-center gap-4">
       <Avatar size="sm" fallback="SM" />
-      <Avatar size="medium" fallback="MD" />
+      <Avatar size="md" fallback="MD" />
       <Avatar size="lg" fallback="LG" />
     </div>
   ),

@@ -58,7 +58,7 @@ describe('WalletService', () => {
         {
           provide: ConfigService,
           useValue: {
-            get: jest.fn((key, defaultValue) => defaultValue),
+            get: jest.fn((_key: string, defaultValue: unknown) => defaultValue),
           },
         },
       ],

@@ -1,4 +1,10 @@
-import { CanActivate, ExecutionContext, Injectable, Optional, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  Optional,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
@@ -26,7 +32,7 @@ import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 export class ServiceAuthGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
-    @Optional() private readonly jwtService?: JwtService,
+    @Optional() private readonly jwtService?: JwtService
   ) {}
 
   canActivate(context: ExecutionContext): boolean {
@@ -96,10 +102,13 @@ export class ServiceAuthGuard implements CanActivate {
       }
 
       try {
-        const payload = this.jwtService.verify<{ sub: string; role?: string; email?: string }>(token, {
-          audience: 'azeebo-api',
-          issuer: 'azeebo-auth',
-        });
+        const payload = this.jwtService.verify<{ sub: string; role?: string; email?: string }>(
+          token,
+          {
+            audience: 'azeebo-api',
+            issuer: 'azeebo-auth',
+          }
+        );
 
         request.user = {
           sub: payload.sub,

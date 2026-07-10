@@ -48,7 +48,9 @@ export class EngagementService {
 
   async getLeaderboard(timePeriod = 'weekly', category = 'all', limit = 50) {
     if (!(ALLOWED_TIME_PERIODS as readonly string[]).includes(timePeriod)) {
-      throw new BadRequestException(`Invalid timePeriod. Allowed: ${ALLOWED_TIME_PERIODS.join(', ')}`);
+      throw new BadRequestException(
+        `Invalid timePeriod. Allowed: ${ALLOWED_TIME_PERIODS.join(', ')}`
+      );
     }
     if (!(ALLOWED_CATEGORIES as readonly string[]).includes(category)) {
       throw new BadRequestException(`Invalid category. Allowed: ${ALLOWED_CATEGORIES.join(', ')}`);
@@ -87,7 +89,10 @@ export class EngagementService {
       await this.cache.set(cacheK, result, 60);
       return result;
     } catch (error) {
-      this.logger.error(`getLeaderboard failed: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `getLeaderboard failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }
@@ -165,7 +170,10 @@ export class EngagementService {
         },
       };
     } catch (error) {
-      this.logger.error(`getPredictionResults failed: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `getPredictionResults failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }
@@ -204,7 +212,10 @@ export class EngagementService {
         },
       };
     } catch (error) {
-      this.logger.error(`submitPrediction failed: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `submitPrediction failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }
@@ -258,7 +269,10 @@ export class EngagementService {
 
       return { success: true, message: 'Leaderboard updated' };
     } catch (error) {
-      this.logger.error(`updateLeaderboard failed: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `updateLeaderboard failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }

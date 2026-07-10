@@ -38,6 +38,9 @@
 #   migrate        Run Prisma migrations for all services
 #   seed           Seed all databases with demo data
 #   reset          Reset ALL databases (drop + recreate + migrate + seed)
+#   status         Show status of all databases
+#   reset-service  Reset a specific service's database
+#   test           Test database connections
 #   studio         Open Prisma Studio for a service
 #
 # ============================================================
@@ -995,6 +998,70 @@ cmd_db() {
       bash "$SCRIPT_DIR/database/seed-all.sh"
       ;;
     reset)    db_reset ;;
+    status)
+      section "Database Status"
+      for entry in "${DB_SERVICES[@]}"; do
+        IFS='|' read -r svc_name svc_dir db_name port <<< "$entry"
+        if psql -U "$DB_USER" -d "$db_name" -c "SELECT 1" &>/dev/null; then
+          local table_count
+          table_count=$(psql -U "$DB_USER" -d "$db_name" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public'" 2>/dev/null | tr -d ' ')
+          log_ok "  $db_name: connected ($table_count tables)"
+        else
+          log_error "  $db_name: FAILED to connect"
+        fi
+      done
+      ;;
+    reset-service)
+      local service="${2:-}"
+      if [[ -z "$service" ]]; then
+        log_error "Usage: local-dev.sh db reset-service <service-name>"
+        log_info "Available services:"
+        for entry in "${DB_SERVICES[@]}"; do
+          IFS='|' read -r svc_name _ db_name _ <<< "$entry"
+          echo "  $svc_name ($db_name)"
+        done
+        return 1
+      fi
+      local found=false
+      for entry in "${DB_SERVICES[@]}"; do
+        IFS='|' read -r svc_name svc_dir db_name port <<< "$entry"
+        if [[ "$svc_name" == "$service" ]]; then
+          log_warn "Resetting database for $service ($db_name)..."
+          psql -U postgres -c "DROP DATABASE IF EXISTS $db_name;" 2>/dev/null
+          psql -U postgres -c "CREATE DATABASE $db_name OWNER $DB_USER;" 2>/dev/null
+          local db_url="${DB_BASE_URL}/${db_name}?schema=public"
+          if [[ -f "$ROOT_DIR/$svc_dir/prisma/schema.prisma" ]]; then
+            cd "$ROOT_DIR/$svc_dir" && DATABASE_URL="$db_url" npx prisma migrate deploy 2>&1 | tail -3
+          fi
+          log_ok "Database for $service reset and migrated"
+          found=true
+          break
+        fi
+      done
+      if [[ "$found" != "true" ]]; then
+        log_error "Service '$service' not found"
+        return 1
+      fi
+      ;;
+    test)
+      section "Testing Database Connections"
+      local failed=0
+      for entry in "${DB_SERVICES[@]}"; do
+        IFS='|' read -r svc_name svc_dir db_name port <<< "$entry"
+        if psql -U "$DB_USER" -d "$db_name" -c "SELECT 1" &>/dev/null; then
+          log_ok "  $db_name: OK"
+        else
+          log_error "  $db_name: FAILED"
+          failed=$((failed + 1))
+        fi
+      done
+      if [[ $failed -eq 0 ]]; then
+        log_ok "All database connections successful"
+      else
+        log_error "$failed database connection(s) failed"
+        return 1
+      fi
+      ;;
     studio)
       local service="${2:-auth-service}"
       local dir=""

@@ -53,13 +53,17 @@ export class RealityService {
     metadata: Record<string, unknown>
   ): Promise<void> {
     try {
-      await axios.post(`${this.analyticsServiceBaseUrl}/analytics/track`, {
-        eventName,
-        userId,
-        universe: 'reality',
-        metadata,
-        timestamp: new Date().toISOString(),
-      }, { timeout: 10000 });
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/analytics/track`,
+        {
+          eventName,
+          userId,
+          universe: 'reality',
+          metadata,
+          timestamp: new Date().toISOString(),
+        },
+        { timeout: 10000 }
+      );
     } catch (error) {
       this.logger.error('Failed to track analytics event:', error);
     }
@@ -324,14 +328,19 @@ export class RealityService {
     const idempotencyKey = randomUUID();
 
     const debitResult = await axios
-      .post(`${this.walletServiceBaseUrl}/wallet/debit`, {
-        walletId: wallet.id,
-        amount: this.supervoteCost,
-        description: `Supervote for contestant ${contestantId} on show ${showId}`,
-        idempotencyKey,
-      }, { timeout: 10000 })
+      .post(
+        `${this.walletServiceBaseUrl}/wallet/debit`,
+        {
+          walletId: wallet.id,
+          amount: this.supervoteCost,
+          description: `Supervote for contestant ${contestantId} on show ${showId}`,
+          idempotencyKey,
+        },
+        { timeout: 10000 }
+      )
       .catch((error: unknown) => {
-        const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to debit wallet';
+        const errorMessage =
+          error instanceof Error ? (error as Error).message : 'Failed to debit wallet';
         throw new ConflictException(errorMessage);
       });
 
@@ -363,21 +372,26 @@ export class RealityService {
           message: `Supervote submitted successfully. ${this.supervoteCost} NGN has been deducted from your wallet.`,
         },
       };
-    } catch (_err) {
+    } catch (error) {
       await axios
-        .post(`${this.walletServiceBaseUrl}/wallet/credit`, {
-          walletId: wallet.id,
-          amount: this.supervoteCost,
-          description: `Compensation for failed supervote: ${idempotencyKey}`,
-          reference: `compensate:${idempotencyKey}`,
-        }, { timeout: 10000 })
+        .post(
+          `${this.walletServiceBaseUrl}/wallet/credit`,
+          {
+            walletId: wallet.id,
+            amount: this.supervoteCost,
+            description: `Compensation for failed supervote: ${idempotencyKey}`,
+            reference: `compensate:${idempotencyKey}`,
+          },
+          { timeout: 10000 }
+        )
         .catch((compensateError: unknown) => {
           this.logger.error(
             'Failed to compensate wallet after supervote failure:',
             compensateError
           );
         });
-      const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to submit supervote';
+      const errorMessage =
+        error instanceof Error ? (error as Error).message : 'Failed to submit supervote';
       throw new ConflictException(errorMessage);
     }
   }
@@ -485,14 +499,19 @@ export class RealityService {
     const idempotencyKey = randomUUID();
 
     const debitResult = await axios
-      .post(`${this.walletServiceBaseUrl}/wallet/debit`, {
-        walletId: wallet.id,
-        amount: totalCost,
-        description: `${quantity} votes for contestant ${contestantId}`,
-        idempotencyKey,
-      }, { timeout: 10000 })
+      .post(
+        `${this.walletServiceBaseUrl}/wallet/debit`,
+        {
+          walletId: wallet.id,
+          amount: totalCost,
+          description: `${quantity} votes for contestant ${contestantId}`,
+          idempotencyKey,
+        },
+        { timeout: 10000 }
+      )
       .catch((error: unknown) => {
-        const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to debit wallet';
+        const errorMessage =
+          error instanceof Error ? (error as Error).message : 'Failed to debit wallet';
         throw new ConflictException(errorMessage);
       });
 
@@ -534,18 +553,23 @@ export class RealityService {
           message: `${quantity} votes submitted successfully`,
         },
       };
-    } catch (_err) {
+    } catch (error) {
       await axios
-        .post(`${this.walletServiceBaseUrl}/wallet/credit`, {
-          walletId: wallet.id,
-          amount: totalCost,
-          description: `Compensation for failed votes: ${idempotencyKey}`,
-          reference: `compensate:${idempotencyKey}`,
-        }, { timeout: 10000 })
+        .post(
+          `${this.walletServiceBaseUrl}/wallet/credit`,
+          {
+            walletId: wallet.id,
+            amount: totalCost,
+            description: `Compensation for failed votes: ${idempotencyKey}`,
+            reference: `compensate:${idempotencyKey}`,
+          },
+          { timeout: 10000 }
+        )
         .catch((compensateError: unknown) => {
           this.logger.error('Failed to compensate wallet after votes failure:', compensateError);
         });
-      const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to submit votes';
+      const errorMessage =
+        error instanceof Error ? (error as Error).message : 'Failed to submit votes';
       throw new ConflictException(errorMessage);
     }
   }
@@ -613,12 +637,16 @@ export class RealityService {
     const idempotencyKey = randomUUID();
 
     try {
-      await axios.post(`${this.walletServiceBaseUrl}/wallet/debit`, {
-        walletId: wallet.id,
-        amount: extra.price,
-        description: `Purchase premium extra: ${extra.name}`,
-        idempotencyKey,
-      }, { timeout: 10000 });
+      await axios.post(
+        `${this.walletServiceBaseUrl}/wallet/debit`,
+        {
+          walletId: wallet.id,
+          amount: extra.price,
+          description: `Purchase premium extra: ${extra.name}`,
+          idempotencyKey,
+        },
+        { timeout: 10000 }
+      );
 
       await this.trackAnalyticsEvent('premium_extra_purchased', userId, {
         purchaseId: idempotencyKey,
@@ -637,7 +665,7 @@ export class RealityService {
           message: `Successfully purchased ${extra.name}`,
         },
       };
-    } catch (_err) {
+    } catch (error) {
       const errorMessage =
         error instanceof Error ? (error as Error).message : 'Failed to purchase premium extra';
       throw new ConflictException(errorMessage);
@@ -1107,10 +1135,7 @@ export class RealityService {
       riskLevel: 'low' as 'low' | 'medium' | 'high' | 'critical',
     };
 
-    if (
-      fraudIndicators.rapidVoters > 5 ||
-      fraudIndicators.topContestantConcentration > 0
-    ) {
+    if (fraudIndicators.rapidVoters > 5 || fraudIndicators.topContestantConcentration > 0) {
       fraudIndicators.riskLevel = 'high';
     } else if (fraudIndicators.rapidVoters > 0) {
       fraudIndicators.riskLevel = 'medium';

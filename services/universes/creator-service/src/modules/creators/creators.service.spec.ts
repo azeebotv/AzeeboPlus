@@ -25,15 +25,6 @@ describe('CreatorsService', () => {
     updatedAt: new Date(),
   };
 
-  const mockWallet = {
-    id: 'wallet-1',
-    userId: 'user-123',
-    balance: 1000,
-    currency: 'NGN',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
   const mockChannel = {
     id: 'channel-1',
     creatorId: 'user-123',
@@ -448,6 +439,7 @@ describe('CreatorsService', () => {
       const result = await service.createChannel(userId, channelData);
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).channel.name).toBe('Test Channel');
     });
 
@@ -777,6 +769,7 @@ describe('CreatorsService', () => {
       const result = await service.createChallenge(userId, challengeData);
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).challenge.title).toBe('Test Challenge');
     });
 

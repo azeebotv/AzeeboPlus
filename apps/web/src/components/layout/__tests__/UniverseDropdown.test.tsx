@@ -43,6 +43,9 @@ function setup(overrides = {}) {
     error: null,
     select: vi.fn(),
     refetch: vi.fn(),
+    getUniverse: vi.fn(),
+    isUniverseEnabled: vi.fn().mockReturnValue(true),
+    hasFeature: vi.fn().mockReturnValue(false),
   };
   mockUseUniverses.mockReturnValue({ ...defaults, ...overrides });
   return defaults;

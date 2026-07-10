@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import BrandLogo from '@/components/auth/BrandLogo';
 import { Alert, Spinner } from '@/components/auth/FormBits';

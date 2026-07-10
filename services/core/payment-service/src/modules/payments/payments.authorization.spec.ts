@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ExecutionContext } from '@nestjs/common';
+import { ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';
@@ -11,8 +11,6 @@ import { FlutterwaveProvider } from './providers/flutterwave.provider';
 import { WebhookRetryService } from './webhook-retry.service';
 
 describe('Payments Service Authorization Tests', () => {
-  let app: INestApplication;
-
   const mockPaymentsService = {
     initializePayment: jest.fn().mockResolvedValue({
       success: true,

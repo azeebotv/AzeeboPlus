@@ -1,5 +1,4 @@
 'use client';
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
@@ -13,16 +12,29 @@ import { StaggerGrid } from '@/components/motion/StaggerGrid';
 import { GlowCard } from '@/components/motion/GlowCard';
 
 export default function GamesPage(): React.JSX.Element {
+  const universesQuery = useQuery({
+    queryKey: ['universes'],
+    queryFn: async () => {
+      const res = await api.universe.getUniverses();
+      if (!res.success || !res.data) throw new Error(res.message || 'Failed to load universes');
+      return res.data;
+    },
+    staleTime: 300000,
+  });
+
+  const gamesUniverse = universesQuery.data?.find((u) => u.name?.toLowerCase() === 'games');
+
   const {
     data: games = [],
     isLoading,
     error,
     refetch,
   } = useQuery<ContentItem[], Error>({
-    queryKey: ['games-content'],
+    queryKey: ['games-content', gamesUniverse?.id],
     queryFn: async () => {
+      if (!gamesUniverse?.id) throw new Error('Games universe not found');
       const result = await api.content.getContentByUniverse(
-        'u0000001-0000-0000-0000-000000000008',
+        gamesUniverse.id,
         1,
         20
       );

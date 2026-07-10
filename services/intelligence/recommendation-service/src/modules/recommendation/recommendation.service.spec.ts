@@ -94,7 +94,11 @@ describe('RecommendationService', () => {
         {
           id: 'creator-1',
           bio: 'Test bio',
-          user: { id: 'user-1', displayName: 'Test Creator', avatar: 'https://example.com/avatar.jpg' },
+          user: {
+            id: 'user-1',
+            displayName: 'Test Creator',
+            avatar: 'https://example.com/avatar.jpg',
+          },
         },
       ]);
 

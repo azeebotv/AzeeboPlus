@@ -1,5 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ExecutionContext, UnauthorizedException, VersioningType } from '@nestjs/common';
+import {
+  INestApplication,
+  ExecutionContext,
+  UnauthorizedException,
+  VersioningType,
+} from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
 import { UsersModule } from './users.module';

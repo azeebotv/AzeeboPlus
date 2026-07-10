@@ -50,4 +50,19 @@ export class NotificationAdminService {
       hasMore: skip + limit < total,
     };
   }
+
+  async getTemplates() {
+    // Get unique notification types from the database
+    const types = await this.prisma.notification.findMany({
+      select: { type: true },
+      distinct: ['type'],
+      orderBy: { type: 'asc' },
+    });
+
+    return types.map((t) => ({
+      id: t.type,
+      name: t.type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+      type: t.type,
+    }));
+  }
 }

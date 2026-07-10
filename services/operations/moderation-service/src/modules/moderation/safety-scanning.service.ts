@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { ConfigService } from '@nestjs/config';
-import type { SafetyScan } from '@prisma/client';
+import type { SafetyScan } from '../../prisma/client';
 import axios from 'axios';
 
 export interface ScanResult {
@@ -121,7 +121,7 @@ export class SafetyScanningService {
       });
 
       return { scanId: scanRecord.id, result };
-    } catch (_err) {
+    } catch (error) {
       await this.prisma.safetyScan.update({
         where: { id: scanRecord.id },
         data: {
@@ -258,7 +258,7 @@ export class SafetyScanningService {
       }
 
       return { result: 'clean' };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`Malware scan failed: ${(error as Error).message}`);
       return this.mockMalwareScan();
     }
@@ -349,7 +349,7 @@ export class SafetyScanningService {
       }
 
       return { result: 'clean' };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`Content safety scan failed: ${(error as Error).message}`);
       return this.mockContentSafetyScan();
     }
@@ -403,25 +403,25 @@ export class SafetyScanningService {
       }
 
       return { result: 'clean' };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`Copyright scan failed: ${(error as Error).message}`);
       return this.mockCopyrightScan();
     }
   }
 
   private mockMalwareScan(): ScanResult {
-    this.logger.debug('Performing mock malware scan');
-    return { result: 'clean' };
+    this.logger.warn('Malware scan API not configured — content flagged for manual review');
+    return { result: 'flagged', threatLevel: 'low', categories: ['scan_unavailable'] };
   }
 
   private mockContentSafetyScan(): ScanResult {
-    this.logger.debug('Performing mock content safety scan');
-    return { result: 'clean' };
+    this.logger.warn('Content safety API not configured — content flagged for manual review');
+    return { result: 'flagged', threatLevel: 'low', categories: ['scan_unavailable'] };
   }
 
   private mockCopyrightScan(): ScanResult {
-    this.logger.debug('Performing mock copyright scan');
-    return { result: 'clean' };
+    this.logger.warn('Copyright scan API not configured — content flagged for manual review');
+    return { result: 'flagged', threatLevel: 'low', categories: ['scan_unavailable'] };
   }
 
   private aggregateResults(results: ScanResult[]): ScanResult {

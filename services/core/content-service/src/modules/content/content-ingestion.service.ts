@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../prisma/client';
 import { CreateContentDto } from './dto/create-content.dto';
 
 type ContentWithUniverse = Prisma.ContentItemGetPayload<{ include: { universe: true } }>;
@@ -32,10 +32,10 @@ export class ContentIngestionService {
           ...(overrides.isPremiere !== undefined && { isPremiere: overrides.isPremiere }),
           ...(overrides.windowType && { windowType: overrides.windowType }),
           metadata: {
-            ...(createContentDto.metadata as Record<string, unknown> || {}),
+            ...((createContentDto.metadata as Record<string, unknown>) || {}),
             ...overrides.metadata,
           } as Prisma.InputJsonValue,
-        },
+        } as Prisma.ContentItemUncheckedCreateInput,
         include: { universe: true },
       });
 
@@ -45,7 +45,10 @@ export class ContentIngestionService {
       };
     } catch (error) {
       this.logger.error(`Failed to create content record: ${error}`);
-      return { success: false, error: { code: 'CREATE_CONTENT_RECORD_FAILED', message: 'Failed to create content record' } } as never;
+      return {
+        success: false,
+        error: { code: 'CREATE_CONTENT_RECORD_FAILED', message: 'Failed to create content record' },
+      } as never;
     }
   }
 
@@ -101,7 +104,10 @@ export class ContentIngestionService {
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to ingest clip content: ${error}`);
-      return { success: false, error: { code: 'INGEST_CLIP_FAILED', message: 'Failed to ingest clip content' } } as never;
+      return {
+        success: false,
+        error: { code: 'INGEST_CLIP_FAILED', message: 'Failed to ingest clip content' },
+      } as never;
     }
   }
 

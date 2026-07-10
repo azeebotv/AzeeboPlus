@@ -187,7 +187,7 @@ class ApiClientClass {
       }
 
       return data as T;
-    } catch (_err) {
+    } catch (error) {
       clearTimeout(timeoutId);
 
       if (error instanceof Error && error.name === 'AbortError') {

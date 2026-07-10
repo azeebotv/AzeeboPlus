@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createModerationMethods } from '../moderation';
 import type { RequestClient } from '../base';
 
-function createMockClient(): RequestClient & { request: ReturnType<typeof vi.fn> } {
-  return { request: vi.fn() };
+function createMockClient() {
+  return { request: vi.fn() } as unknown as RequestClient & { request: ReturnType<typeof vi.fn> };
 }
 
 describe('Moderation API Methods', () => {
@@ -22,7 +22,12 @@ describe('Moderation API Methods', () => {
 
     expect(client.request).toHaveBeenCalledWith('/api/v1/moderation/report', {
       method: 'POST',
-      body: JSON.stringify({ contentId: 'c1', reason: 'spam', description: 'This is spam content', type: 'report' }),
+      body: JSON.stringify({
+        contentId: 'c1',
+        reason: 'spam',
+        description: 'This is spam content',
+        type: 'report',
+      }),
     });
   });
 
@@ -33,7 +38,12 @@ describe('Moderation API Methods', () => {
 
     expect(client.request).toHaveBeenCalledWith('/api/v1/moderation/report', {
       method: 'POST',
-      body: JSON.stringify({ contentId: 'c1', reason: 'inappropriate', description: undefined, type: 'report' }),
+      body: JSON.stringify({
+        contentId: 'c1',
+        reason: 'inappropriate',
+        description: undefined,
+        type: 'report',
+      }),
     });
   });
 });

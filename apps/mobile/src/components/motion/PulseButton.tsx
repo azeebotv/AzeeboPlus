@@ -1,10 +1,8 @@
-import { StyleSheet, type ViewStyle, type StyleProp } from 'react-native';
+import { StyleSheet, TouchableOpacity, type ViewStyle, type StyleProp } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { colors, radius, typography, spacing, shadows } from '../../theme';
 
-const AnimatedTouchable = Animated.createAnimatedComponent(
-  require('react-native').TouchableOpacity
-);
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 interface PulseButtonProps {
   title: string;

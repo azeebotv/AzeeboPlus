@@ -53,10 +53,7 @@ export class OtpService {
     return true;
   }
 
-  async sendOtpToUser(
-    userId: string,
-    phoneNumber: string
-  ): Promise<{ message: string }> {
+  async sendOtpToUser(userId: string, phoneNumber: string): Promise<{ message: string }> {
     if (!phoneNumber) {
       throw new BadRequestException('Phone number is required for OTP delivery');
     }

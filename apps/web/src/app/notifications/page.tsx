@@ -69,16 +69,23 @@ export default function NotificationsPage(): React.JSX.Element {
     staleTime: 60000,
   });
 
-  const markAsRead = useCallback(async (notificationId: string) => {
-    try {
-      await apiFetch<MarkReadResult>(`/notifications/${notificationId}/read`, { method: 'PATCH' });
-      queryClient.setQueryData<Notification[]>(['notifications'], (old) =>
-        old?.map((n) => (n.id === notificationId ? { ...n, readAt: new Date().toISOString() } : n))
-      );
-    } catch (err) {
-      /* intentionally minimal */
-    }
-  }, [queryClient]);
+  const markAsRead = useCallback(
+    async (notificationId: string) => {
+      try {
+        await apiFetch<MarkReadResult>(`/notifications/${notificationId}/read`, {
+          method: 'PATCH',
+        });
+        queryClient.setQueryData<Notification[]>(['notifications'], (old) =>
+          old?.map((n) =>
+            n.id === notificationId ? { ...n, readAt: new Date().toISOString() } : n
+          )
+        );
+      } catch (err) {
+        /* intentionally minimal */
+      }
+    },
+    [queryClient]
+  );
 
   const markAllAsRead = useCallback(async () => {
     try {

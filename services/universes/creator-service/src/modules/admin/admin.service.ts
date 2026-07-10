@@ -25,7 +25,10 @@ export class AdminService {
         pendingPayouts,
       };
     } catch (error) {
-      this.logger.error(`Failed to get creator stats: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get creator stats: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }
@@ -68,7 +71,10 @@ export class AdminService {
         },
       };
     } catch (error) {
-      this.logger.error(`Failed to get all creators: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get all creators: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }
@@ -98,7 +104,10 @@ export class AdminService {
 
       return creator;
     } catch (error) {
-      this.logger.error(`Failed to get creator by id: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get creator by id: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       if (error instanceof NotFoundException) throw error;
       return { success: false, error: (error as Error).message };
     }
@@ -124,7 +133,10 @@ export class AdminService {
 
       return creator;
     } catch (error) {
-      this.logger.error(`Failed to get creator by user id: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get creator by user id: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       if (error instanceof NotFoundException) throw error;
       return { success: false, error: (error as Error).message };
     }
@@ -142,7 +154,10 @@ export class AdminService {
         data: { verified: true },
       });
     } catch (error) {
-      this.logger.error(`Failed to verify creator: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to verify creator: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       if (error instanceof NotFoundException) throw error;
       return { success: false, error: (error as Error).message };
     }
@@ -160,7 +175,10 @@ export class AdminService {
         data: { verified: false },
       });
     } catch (error) {
-      this.logger.error(`Failed to unverify creator: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to unverify creator: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       if (error instanceof NotFoundException) throw error;
       return { success: false, error: (error as Error).message };
     }
@@ -200,7 +218,10 @@ export class AdminService {
         },
       };
     } catch (error) {
-      this.logger.error(`Failed to get creator earnings: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get creator earnings: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }
@@ -239,7 +260,10 @@ export class AdminService {
         },
       };
     } catch (error) {
-      this.logger.error(`Failed to get payout requests: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get payout requests: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }

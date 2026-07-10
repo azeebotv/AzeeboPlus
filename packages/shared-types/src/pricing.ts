@@ -92,7 +92,9 @@ export function getPricing(env?: Record<string, string | undefined>): {
         price: r('SUBSCRIPTION_BASIC_PRICE', e?.SUBSCRIPTION_BASIC_PRICE),
         currency,
         interval: 'monthly' as const,
-        features: (e?.SUBSCRIPTION_BASIC_FEATURES || 'HD Streaming,Limited Content,1 Device').split(','),
+        features: (e?.SUBSCRIPTION_BASIC_FEATURES || 'HD Streaming,Limited Content,1 Device').split(
+          ','
+        ),
       },
       {
         id: 'premium',
@@ -100,7 +102,9 @@ export function getPricing(env?: Record<string, string | undefined>): {
         price: r('SUBSCRIPTION_PREMIUM_PRICE', e?.SUBSCRIPTION_PREMIUM_PRICE),
         currency,
         interval: 'monthly' as const,
-        features: (e?.SUBSCRIPTION_PREMIUM_FEATURES || '4K Streaming,All Content,3 Devices,Offline Download').split(','),
+        features: (
+          e?.SUBSCRIPTION_PREMIUM_FEATURES || '4K Streaming,All Content,3 Devices,Offline Download'
+        ).split(','),
       },
       {
         id: 'vip',
@@ -108,7 +112,10 @@ export function getPricing(env?: Record<string, string | undefined>): {
         price: r('SUBSCRIPTION_VIP_PRICE', e?.SUBSCRIPTION_VIP_PRICE),
         currency,
         interval: 'monthly' as const,
-        features: (e?.SUBSCRIPTION_VIP_FEATURES || '4K Streaming,All Content,5 Devices,Offline Download,Early Access,Exclusive Content').split(','),
+        features: (
+          e?.SUBSCRIPTION_VIP_FEATURES ||
+          '4K Streaming,All Content,5 Devices,Offline Download,Early Access,Exclusive Content'
+        ).split(','),
       },
     ],
     universePricing: {

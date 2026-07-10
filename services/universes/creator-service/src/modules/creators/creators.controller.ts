@@ -17,7 +17,7 @@ import { RateLimitGuard, RateLimit, Public } from '@azeebo/security';
 
 import { CreatorsService } from './creators.service';
 import { CreatorResponse } from './interfaces/creator-response.interface';
-import { RolesGuard, Roles, Pagination } from '@azeebo/shared-services';
+import { RolesGuard, Roles } from '@azeebo/shared-services';
 import {
   SubmitDocumentsDto,
   UploadRequestDto,
@@ -74,7 +74,7 @@ export class CreatorsController {
   @ApiResponse({ status: 201, description: 'Creator profile created' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async onboard(@Request() req: { user: { sub: string } }): Promise<CreatorResponse> {
-    return this.creatorsService.onboard(req.user.id);
+    return this.creatorsService.onboard(req.user.sub);
   }
 
   @Post('verification/submit')
@@ -85,7 +85,7 @@ export class CreatorsController {
     @Request() req: { user: { sub: string } },
     @Body() body: SubmitDocumentsDto
   ): Promise<CreatorResponse> {
-    return this.creatorsService.submitVerification(req.user.id, body.documents);
+    return this.creatorsService.submitVerification(req.user.sub, body.documents);
   }
 
   @Get('verification/status')
@@ -93,7 +93,7 @@ export class CreatorsController {
   @ApiOperation({ summary: 'Get verification status' })
   @ApiResponse({ status: 200, description: 'Verification status' })
   async getVerificationStatus(@Request() req: { user: { sub: string } }): Promise<CreatorResponse> {
-    return this.creatorsService.getVerificationStatus(req.user.id);
+    return this.creatorsService.getVerificationStatus(req.user.sub);
   }
 
   @Post('upload/initiate')
@@ -104,7 +104,7 @@ export class CreatorsController {
     @Request() req: { user: { sub: string } },
     @Body() body: UploadRequestDto
   ): Promise<CreatorResponse> {
-    return this.creatorsService.uploadMedia(req.user.id, body);
+    return this.creatorsService.uploadMedia(req.user.sub, body);
   }
 
   @Post('upload/complete')
@@ -115,7 +115,7 @@ export class CreatorsController {
     @Request() req: { user: { sub: string } },
     @Body() body: LinkUploadDto
   ): Promise<CreatorResponse> {
-    return this.creatorsService.completeUpload(req.user.id, body.uploadId, body.assetId);
+    return this.creatorsService.completeUpload(req.user.sub, body.uploadId, body.assetId);
   }
 
   @Get('me')
@@ -124,7 +124,7 @@ export class CreatorsController {
   @ApiResponse({ status: 200, description: 'Creator profile' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getMyProfile(@Request() req: { user: { sub: string } }): Promise<CreatorResponse> {
-    return this.creatorsService.getMyProfile(req.user.id);
+    return this.creatorsService.getMyProfile(req.user.sub);
   }
 
   @Patch('me')
@@ -136,7 +136,7 @@ export class CreatorsController {
     @Request() req: { user: { sub: string } },
     @Body() body: UpdateProfileBody
   ): Promise<CreatorResponse> {
-    return this.creatorsService.updateProfile(req.user.id, body);
+    return this.creatorsService.updateProfile(req.user.sub, body);
   }
 
   @Get('channels')
@@ -144,7 +144,7 @@ export class CreatorsController {
   @ApiOperation({ summary: 'List my channels' })
   @ApiResponse({ status: 200, description: 'Channels list' })
   async listChannels(@Request() req: { user: { sub: string } }): Promise<CreatorResponse> {
-    return this.creatorsService.listChannels(req.user.id);
+    return this.creatorsService.listChannels(req.user.sub);
   }
 
   @Post('channels')
@@ -155,7 +155,7 @@ export class CreatorsController {
     @Request() req: { user: { sub: string } },
     @Body() body: ChannelBody
   ): Promise<CreatorResponse> {
-    return this.creatorsService.createChannel(req.user.id, body);
+    return this.creatorsService.createChannel(req.user.sub, body);
   }
 
   @Public()
@@ -185,7 +185,7 @@ export class CreatorsController {
     @Request() req: { user: { sub: string } },
     @Body() body: CreateUploadBody
   ): Promise<CreatorResponse> {
-    return this.creatorsService.createUpload(req.user.id, body);
+    return this.creatorsService.createUpload(req.user.sub, body);
   }
 
   @Post('channels/:channelId/uploads')
@@ -197,7 +197,7 @@ export class CreatorsController {
     @Param('channelId') channelId: string,
     @Body() body: CreateUploadBody
   ): Promise<CreatorResponse> {
-    return this.creatorsService.createUploadForChannel(req.user.id, channelId, body);
+    return this.creatorsService.createUploadForChannel(req.user.sub, channelId, body);
   }
 
   @Get('uploads')
@@ -206,7 +206,7 @@ export class CreatorsController {
   @ApiResponse({ status: 200, description: 'Uploads list' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async listUploads(@Request() req: { user: { sub: string } }): Promise<CreatorResponse> {
-    return this.creatorsService.listUploads(req.user.id);
+    return this.creatorsService.listUploads(req.user.sub);
   }
 
   @Public()
@@ -228,7 +228,7 @@ export class CreatorsController {
     @Param('creatorId') creatorId: string,
     @Body() body: FundCreatorDto
   ): Promise<CreatorResponse> {
-    return this.creatorsService.sendTip(req.user.id, creatorId, body.amount);
+    return this.creatorsService.sendTip(req.user.sub, creatorId, body.amount);
   }
 
   @Post('subscribe/:creatorId')
@@ -240,7 +240,7 @@ export class CreatorsController {
     @Param('creatorId') creatorId: string,
     @Body() body: UpdateTierDto
   ): Promise<CreatorResponse> {
-    return this.creatorsService.subscribe(req.user.id, creatorId, body.tier || 'free');
+    return this.creatorsService.subscribe(req.user.sub, creatorId, body.tier || 'free');
   }
 
   @Delete('subscribe/:creatorId')
@@ -251,7 +251,7 @@ export class CreatorsController {
     @Request() req: { user: { sub: string } },
     @Param('creatorId') creatorId: string
   ): Promise<CreatorResponse> {
-    return this.creatorsService.cancelSubscription(req.user.id, creatorId);
+    return this.creatorsService.cancelSubscription(req.user.sub, creatorId);
   }
 
   @Get('subscriptions')
@@ -259,7 +259,7 @@ export class CreatorsController {
   @ApiOperation({ summary: 'Get my subscriptions' })
   @ApiResponse({ status: 200, description: 'Subscriptions list' })
   async getMySubscriptions(@Request() req: { user: { sub: string } }): Promise<CreatorResponse> {
-    return this.creatorsService.getMySubscriptions(req.user.id);
+    return this.creatorsService.getMySubscriptions(req.user.sub);
   }
 
   @Get('subscribers')
@@ -267,7 +267,7 @@ export class CreatorsController {
   @ApiOperation({ summary: 'Get my subscribers' })
   @ApiResponse({ status: 200, description: 'Subscribers list' })
   async getMySubscribers(@Request() req: { user: { sub: string } }): Promise<CreatorResponse> {
-    return this.creatorsService.getMySubscribers(req.user.id);
+    return this.creatorsService.getMySubscribers(req.user.sub);
   }
 
   @Get('earnings')
@@ -275,7 +275,7 @@ export class CreatorsController {
   @ApiOperation({ summary: 'Get creator earnings' })
   @ApiResponse({ status: 200, description: 'Earnings data' })
   async getEarnings(@Request() req: { user: { sub: string } }): Promise<CreatorResponse> {
-    return this.creatorsService.getEarnings(req.user.id);
+    return this.creatorsService.getEarnings(req.user.sub);
   }
 
   @Post('payouts')
@@ -286,7 +286,7 @@ export class CreatorsController {
     @Request() req: { user: { sub: string } },
     @Body() body: PayoutBody
   ): Promise<CreatorResponse> {
-    return this.creatorsService.requestPayout(req.user.id, body);
+    return this.creatorsService.requestPayout(req.user.sub, body);
   }
 
   @Get('payouts')
@@ -294,7 +294,7 @@ export class CreatorsController {
   @ApiOperation({ summary: 'Get payout history' })
   @ApiResponse({ status: 200, description: 'Payout history' })
   async getPayoutHistory(@Request() req: { user: { sub: string } }): Promise<CreatorResponse> {
-    return this.creatorsService.getPayoutHistory(req.user.id);
+    return this.creatorsService.getPayoutHistory(req.user.sub);
   }
 
   @Get('analytics')
@@ -302,7 +302,7 @@ export class CreatorsController {
   @ApiOperation({ summary: 'Get creator analytics' })
   @ApiResponse({ status: 200, description: 'Analytics data' })
   async getAnalytics(@Request() req: { user: { sub: string } }): Promise<CreatorResponse> {
-    return this.creatorsService.getAnalytics(req.user.id);
+    return this.creatorsService.getAnalytics(req.user.sub);
   }
 
   @Post('challenges')
@@ -314,7 +314,7 @@ export class CreatorsController {
     @Request() req: { user: { sub: string } },
     @Body() body: ChallengeBody
   ): Promise<CreatorResponse> {
-    return this.creatorsService.createChallenge(req.user.id, body);
+    return this.creatorsService.createChallenge(req.user.sub, body);
   }
 
   @Get('challenges')
@@ -335,21 +335,21 @@ export class CreatorsController {
     @Param('challengeId') challengeId: string,
     @Body() body: PublishContentDto
   ): Promise<CreatorResponse> {
-    return this.creatorsService.participateInChallenge(req.user.id, challengeId, body.contentUrl);
+    return this.creatorsService.participateInChallenge(req.user.sub, challengeId, body.contentUrl);
   }
 
   @Get('stats')
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get creator stats' })
   async getStats(@Request() req: { user: { sub: string } }): Promise<CreatorResponse> {
-    return this.creatorsService.getStats(req.user.id);
+    return this.creatorsService.getStats(req.user.sub);
   }
 
   @Get('settings')
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get creator settings' })
   async getSettings(@Request() req: { user: { sub: string } }): Promise<CreatorResponse> {
-    return this.creatorsService.getSettings(req.user.id);
+    return this.creatorsService.getSettings(req.user.sub);
   }
 
   @Put('settings')
@@ -359,7 +359,7 @@ export class CreatorsController {
     @Request() req: { user: { sub: string } },
     @Body() body: Record<string, unknown>
   ): Promise<CreatorResponse> {
-    return this.creatorsService.updateSettings(req.user.id, body);
+    return this.creatorsService.updateSettings(req.user.sub, body);
   }
 
   @Public()
@@ -380,6 +380,6 @@ export class CreatorsController {
     @Request() req: { user: { sub: string } },
     @Body() body: Record<string, unknown>
   ): Promise<CreatorResponse> {
-    return this.creatorsService.updateSettings(req.user.id, body);
+    return this.creatorsService.updateSettings(req.user.sub, body);
   }
 }

@@ -54,6 +54,7 @@ describe('MessagingController', () => {
 
   describe('getConversations', () => {
     it('should call messagingService.getConversations with userId', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockReq = { user: { id: 'user-1' } } as any;
       const mockResult = { success: true, data: [] };
       mockMessagingService.getConversations.mockResolvedValue(mockResult);
@@ -67,6 +68,7 @@ describe('MessagingController', () => {
 
   describe('getMessages', () => {
     it('should call messagingService.getMessages with default limit and offset', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockReq = { user: { id: 'user-1' } } as any;
       const mockResult = { success: true, data: [] };
       mockMessagingService.getMessages.mockResolvedValue(mockResult);
@@ -78,6 +80,7 @@ describe('MessagingController', () => {
     });
 
     it('should call messagingService.getMessages with custom limit and offset', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockReq = { user: { id: 'user-1' } } as any;
       const mockResult = { success: true, data: [] };
       mockMessagingService.getMessages.mockResolvedValue(mockResult);
@@ -91,6 +94,7 @@ describe('MessagingController', () => {
 
   describe('createConversation', () => {
     it('should call messagingService.createConversation with userId and dto', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockReq = { user: { id: 'user-1' } } as any;
       const dto = { participantIds: ['user-2'], type: 'direct' as const, name: undefined };
       const mockResult = {
@@ -108,6 +112,7 @@ describe('MessagingController', () => {
 
   describe('sendMessage', () => {
     it('should call messagingService.sendMessage with correct params', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockReq = { user: { id: 'user-1' } } as any;
       const dto = { content: 'Hello world', type: 'text' as const };
       const mockResult = {
@@ -132,6 +137,7 @@ describe('MessagingController', () => {
 
   describe('markAsRead', () => {
     it('should call messagingService.markAsRead with correct params', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockReq = { user: { id: 'user-1' } } as any;
       const dto = { messageId: 'msg-1' };
       const mockResult = { success: true, message: 'Message marked as read' };
@@ -146,6 +152,7 @@ describe('MessagingController', () => {
 
   describe('deleteConversation', () => {
     it('should call messagingService.deleteConversation with correct params', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockReq = { user: { id: 'user-1' } } as any;
       const mockResult = { success: true, message: 'Conversation deleted' };
       mockMessagingService.deleteConversation.mockResolvedValue(mockResult);

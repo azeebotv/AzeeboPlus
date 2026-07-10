@@ -6,7 +6,6 @@ import { RateLimitService } from '@azeebo/security';
 
 describe('GamesController', () => {
   let controller: GamesController;
-  let service: GamesService;
 
   const mockGamesService = {
     getHome: jest.fn(),
@@ -20,7 +19,9 @@ describe('GamesController', () => {
   };
 
   const mockRateLimitService = {
-    checkRateLimit: jest.fn().mockResolvedValue({ allowed: true, remaining: 10, resetAt: Date.now() + 60000, limit: 10 }),
+    checkRateLimit: jest
+      .fn()
+      .mockResolvedValue({ allowed: true, remaining: 10, resetAt: Date.now() + 60000, limit: 10 }),
     resetRateLimit: jest.fn(),
     getRateLimitStatus: jest.fn(),
   };
@@ -42,7 +43,7 @@ describe('GamesController', () => {
     }).compile();
 
     controller = module.get<GamesController>(GamesController);
-    service = module.get<GamesService>(GamesService);
+    module.get<GamesService>(GamesService);
   });
 
   afterEach(() => {
@@ -55,7 +56,10 @@ describe('GamesController', () => {
 
   describe('getHome', () => {
     it('should return games home data', async () => {
-      const result = { success: true, data: { dailyChallenge: null, tournaments: [], topPlayers: [] } };
+      const result = {
+        success: true,
+        data: { dailyChallenge: null, tournaments: [], topPlayers: [] },
+      };
       mockGamesService.getHome.mockResolvedValue(result);
 
       expect(await controller.getHome()).toEqual(result);
@@ -81,7 +85,9 @@ describe('GamesController', () => {
         new (require('@nestjs/common').NotFoundException)('No daily challenge available')
       );
 
-      await expect(controller.submitDailyChallenge(req, body)).rejects.toThrow('No daily challenge available');
+      await expect(controller.submitDailyChallenge(req, body)).rejects.toThrow(
+        'No daily challenge available'
+      );
     });
 
     it('should throw BadRequestException when challenge already completed', async () => {
@@ -91,7 +97,9 @@ describe('GamesController', () => {
         new (require('@nestjs/common').BadRequestException)('Daily challenge already completed')
       );
 
-      await expect(controller.submitDailyChallenge(req, body)).rejects.toThrow('Daily challenge already completed');
+      await expect(controller.submitDailyChallenge(req, body)).rejects.toThrow(
+        'Daily challenge already completed'
+      );
     });
   });
 
@@ -111,7 +119,9 @@ describe('GamesController', () => {
         new (require('@nestjs/common').NotFoundException)('No daily challenge available')
       );
 
-      await expect(controller.getDailyChallenge(req)).rejects.toThrow('No daily challenge available');
+      await expect(controller.getDailyChallenge(req)).rejects.toThrow(
+        'No daily challenge available'
+      );
     });
   });
 
@@ -119,7 +129,10 @@ describe('GamesController', () => {
     it('should start a game session', async () => {
       const req = { user: { sub: 'user-123' } };
       const body = { challengeId: 'challenge-1' };
-      const result = { success: true, data: { sessionId: 'session-1', message: 'Session started' } };
+      const result = {
+        success: true,
+        data: { sessionId: 'session-1', message: 'Session started' },
+      };
       mockGamesService.startSession.mockResolvedValue(result);
 
       expect(await controller.startSession(req, body)).toEqual(result);
@@ -133,7 +146,9 @@ describe('GamesController', () => {
         new (require('@nestjs/common').BadRequestException)('User already has an active session')
       );
 
-      await expect(controller.startSession(req, body)).rejects.toThrow('User already has an active session');
+      await expect(controller.startSession(req, body)).rejects.toThrow(
+        'User already has an active session'
+      );
     });
   });
 
@@ -142,11 +157,18 @@ describe('GamesController', () => {
       const req = { user: { sub: 'user-123' } };
       const sessionId = 'session-1';
       const body = { answer: 'correct' };
-      const result = { success: true, data: { isCorrect: true, score: 100, message: 'Correct answer!' } };
+      const result = {
+        success: true,
+        data: { isCorrect: true, score: 100, message: 'Correct answer!' },
+      };
       mockGamesService.submitAnswer.mockResolvedValue(result);
 
       expect(await controller.submitAnswer(req, sessionId, body)).toEqual(result);
-      expect(mockGamesService.submitAnswer).toHaveBeenCalledWith('user-123', 'session-1', 'correct');
+      expect(mockGamesService.submitAnswer).toHaveBeenCalledWith(
+        'user-123',
+        'session-1',
+        'correct'
+      );
     });
 
     it('should throw NotFoundException when session not found', async () => {
@@ -155,7 +177,9 @@ describe('GamesController', () => {
         new (require('@nestjs/common').NotFoundException)('Session not found')
       );
 
-      await expect(controller.submitAnswer(req, 'nonexistent', { answer: 'x' })).rejects.toThrow('Session not found');
+      await expect(controller.submitAnswer(req, 'nonexistent', { answer: 'x' })).rejects.toThrow(
+        'Session not found'
+      );
     });
 
     it('should throw BadRequestException when session does not belong to user', async () => {
@@ -164,7 +188,9 @@ describe('GamesController', () => {
         new (require('@nestjs/common').BadRequestException)('Session does not belong to user')
       );
 
-      await expect(controller.submitAnswer(req, 'session-1', { answer: 'x' })).rejects.toThrow('Session does not belong to user');
+      await expect(controller.submitAnswer(req, 'session-1', { answer: 'x' })).rejects.toThrow(
+        'Session does not belong to user'
+      );
     });
   });
 
@@ -205,7 +231,9 @@ describe('GamesController', () => {
         new (require('@nestjs/common').NotFoundException)('Tournament not found')
       );
 
-      await expect(controller.enterTournament(req, 'nonexistent')).rejects.toThrow('Tournament not found');
+      await expect(controller.enterTournament(req, 'nonexistent')).rejects.toThrow(
+        'Tournament not found'
+      );
     });
 
     it('should throw BadRequestException when tournament is not active', async () => {
@@ -214,7 +242,9 @@ describe('GamesController', () => {
         new (require('@nestjs/common').BadRequestException)('Tournament is not active')
       );
 
-      await expect(controller.enterTournament(req, 'tournament-1')).rejects.toThrow('Tournament is not active');
+      await expect(controller.enterTournament(req, 'tournament-1')).rejects.toThrow(
+        'Tournament is not active'
+      );
     });
   });
 });

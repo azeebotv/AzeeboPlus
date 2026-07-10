@@ -1,5 +1,4 @@
 'use client';
-import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '@/lib/api';
@@ -7,26 +6,6 @@ import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-
-interface Reward {
-  id: string;
-  title: string;
-  description: string;
-  points: number;
-  image?: string;
-  isAvailable: boolean;
-  category: string;
-}
-
-interface Achievement {
-  id: string;
-  name: string;
-  description: string;
-  unlocked: boolean;
-  icon: string;
-  progress: number;
-  target: number;
-}
 
 interface Mission {
   id: string;
@@ -108,8 +87,7 @@ export default function RewardsPage(): React.JSX.Element {
     queryKey: ['rewards', 'balance'],
     queryFn: async () => {
       const res = await apiFetch<RewardsBalance>('/rewards/balance');
-      if (res.success && res.data)
-        return Number(res.data.balance || res.data.points || 0);
+      if (res.success && res.data) return Number(res.data.balance || res.data.points || 0);
       return 0;
     },
     staleTime: 60000,
@@ -119,7 +97,11 @@ export default function RewardsPage(): React.JSX.Element {
   const achievements = badgesQuery.data ?? [];
   const userPoints = balanceQuery.data ?? 0;
   const isLoading = missionsQuery.isLoading || badgesQuery.isLoading || balanceQuery.isLoading;
-  const error = missionsQuery.error?.message || badgesQuery.error?.message || balanceQuery.error?.message || null;
+  const error =
+    missionsQuery.error?.message ||
+    badgesQuery.error?.message ||
+    balanceQuery.error?.message ||
+    null;
 
   const handleClaimReward = async (rewardId: string): Promise<void> => {
     try {

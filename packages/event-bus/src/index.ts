@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger, Module, Global, DynamicModule, Provider, InjectionToken, OptionalFactoryDependency } from '@nestjs/common';
 import Redis from 'ioredis';
 import { randomUUID } from 'crypto';
 
@@ -184,7 +184,7 @@ export class EventBusService {
   /**
    * Handle incoming messages
    */
-  private async handleMessage(channel: string, message: string): Promise<void> {
+  private async handleMessage(_channel: string, message: string): Promise<void> {
     try {
       const event: DomainEvent = JSON.parse(message);
       const eventType = event.type;
@@ -260,8 +260,6 @@ export class EventBusService {
 // NestJS Module
 // ============================================================================
 
-import { Module, Global, DynamicModule, Provider } from '@nestjs/common';
-
 export const EVENT_BUS_SERVICE = 'EVENT_BUS_SERVICE';
 
 @Global()
@@ -288,7 +286,7 @@ export class EventBusModule {
     const eventBusProvider: Provider = {
       provide: EVENT_BUS_SERVICE,
       useFactory: (config: EventBusConfig) => new EventBusService(config, options.serviceName),
-      inject: options.inject || [],
+      inject: (options.inject as (InjectionToken | OptionalFactoryDependency)[]) || [],
     };
 
     return {

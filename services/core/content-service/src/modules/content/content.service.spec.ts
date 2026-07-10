@@ -71,6 +71,7 @@ describe('ContentService', () => {
   };
 
   const mockConfigService = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     get: jest.fn((key: string, defaultValue?: any) => {
       switch (key) {
         case 'MODERATION_SERVICE_URL':
@@ -331,7 +332,7 @@ describe('ContentService', () => {
       const result = await service.deleteContent(userId, contentId);
 
       expect(result.success).toBe(true);
-      expect(result.data.message).toBe('Content soft deleted successfully');
+      expect(result.data!.message).toBe('Content soft deleted successfully');
     });
 
     it('should throw NotFoundException if content not found', async () => {

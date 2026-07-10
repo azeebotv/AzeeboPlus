@@ -32,18 +32,16 @@ import { createSuccessResponse } from '@azeebo/shared-types';
 import { OtpService } from './otp/otp.service';
 import { RedisService } from '../../common/services/redis.service';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import type { StringValue } from 'ms';
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
   private readonly saltRounds: number;
   private readonly accessTokenExpiry: string;
-  private readonly refreshTokenExpiry: string;
   private readonly refreshTokenExpiryDays: number;
   private readonly revokedTokensPrefix = 'revoked:';
   private readonly failedLoginPrefix = 'failed_login:';
-  private readonly userByEmailPrefix = 'auth:user:';
-  private readonly permissionsPrefix = 'auth:permissions:';
   private readonly maxFailedAttempts: number;
   private readonly lockoutDurationSeconds: number;
 
@@ -57,7 +55,6 @@ export class AuthService {
   ) {
     this.saltRounds = this.configService.get<number>('SALT_ROUNDS', 10);
     this.accessTokenExpiry = this.configService.get<string>('JWT_EXPIRES_IN', '30m');
-    this.refreshTokenExpiry = this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '7d');
     this.refreshTokenExpiryDays = this.configService.get<number>('REFRESH_TOKEN_EXPIRY_DAYS', 7);
     this.maxFailedAttempts = this.configService.get<number>('MAX_FAILED_ATTEMPTS', 5);
     this.lockoutDurationSeconds = this.configService.get<number>(
@@ -190,7 +187,7 @@ export class AuthService {
           expiresAt: tokens.expiresAt,
         },
       };
-    } catch (error) {
+    } catch (error: unknown) {
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
@@ -241,7 +238,8 @@ export class AuthService {
       const user = await this.authRepository.findById(decoded.sub);
       if (!user) return null;
       return this.mapToUser(user);
-    } catch {
+    } catch (error) {
+      this.logger.debug(`Token validation failed: ${error instanceof Error ? error.message : 'unknown'}`);
       return null;
     }
   }
@@ -276,8 +274,8 @@ export class AuthService {
           userName: user.displayName,
         },
       });
-    } catch (error) {
-      this.logger.error(`Failed to send password reset email: ${error.message}`);
+    } catch (error: unknown) {
+      this.logger.error(`Failed to send password reset email: ${error instanceof Error ? error.message : String(error)}`);
     }
 
     return { success: true, message: 'If the email exists, a reset link has been sent' };
@@ -422,7 +420,7 @@ export class AuthService {
         iat: now,
       } as Record<string, unknown>,
       {
-        expiresIn: this.accessTokenExpiry as string | number,
+        expiresIn: this.accessTokenExpiry as StringValue,
         secret: jwtAccessSecret,
       }
     );
@@ -440,7 +438,7 @@ export class AuthService {
         iat: now,
       } as Record<string, unknown>,
       {
-        expiresIn: this.refreshTokenExpiryDays as string | number,
+        expiresIn: this.refreshTokenExpiryDays as unknown as StringValue,
         secret: jwtRefreshSecret,
       }
     );
@@ -455,11 +453,15 @@ export class AuthService {
 
     // Cache session for faster lookups
     const sessionCacheK = cacheKey('auth', `session:${user.id}`);
-    await this.cacheService.set(sessionCacheK, {
-      userId: user.id,
-      refreshToken: hashedRefreshToken,
-      expiresAt: expiresAt.toISOString(),
-    }, 1800);
+    await this.cacheService.set(
+      sessionCacheK,
+      {
+        userId: user.id,
+        refreshToken: hashedRefreshToken,
+        expiresAt: expiresAt.toISOString(),
+      },
+      1800
+    );
 
     return {
       accessToken,

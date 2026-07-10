@@ -208,6 +208,21 @@ export class ModerationService {
   }
 
   async getReportTypes(): Promise<unknown> {
+    // Fetch from moderation-service API if available, otherwise use defaults
+    const moderationServiceUrl = process.env.MODERATION_SERVICE_URL || 'http://localhost:3022';
+    try {
+      const response = await fetch(`${moderationServiceUrl}/api/moderation/report-types`, {
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(5000),
+      });
+      if (response.ok) {
+        const data = await response.json() as { data?: unknown };
+        if (data.data) return data.data;
+      }
+    } catch {
+      // Fall back to defaults
+    }
+
     return [
       { value: 'harassment', label: 'Harassment' },
       { value: 'hate_speech', label: 'Hate Speech' },

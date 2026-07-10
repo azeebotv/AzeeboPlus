@@ -75,36 +75,43 @@ export default function AuthenticatedHomepage({
       }
     };
     loadSlides();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // --- Section 2: Recently Watched (with infinite scroll) ---
   const HISTORY_PAGE_SIZE = 10;
 
-  const loadRecentlyWatched = useCallback(async (cancelled?: boolean) => {
-    try {
-      const response = await api.homepageEngagement.getRecentlyWatched(
-        HISTORY_PAGE_SIZE,
-        recentlyWatchedOffset
-      );
-      if (!cancelled && response.success && response.data) {
-        const newItems = response.data.items || [];
-        setRecentlyWatched((prev) =>
-          recentlyWatchedOffset === 0 ? newItems : [...prev, ...newItems]
+  const loadRecentlyWatched = useCallback(
+    async (cancelled?: boolean) => {
+      try {
+        const response = await api.homepageEngagement.getRecentlyWatched(
+          HISTORY_PAGE_SIZE,
+          recentlyWatchedOffset
         );
-        setHasMoreHistory(response.data.hasMore);
+        if (!cancelled && response.success && response.data) {
+          const newItems = response.data.items || [];
+          setRecentlyWatched((prev) =>
+            recentlyWatchedOffset === 0 ? newItems : [...prev, ...newItems]
+          );
+          setHasMoreHistory(response.data.hasMore);
+        }
+      } catch (error) {
+        if (!cancelled) logger.error('Failed to load recently watched:', error);
+      } finally {
+        if (!cancelled) setIsLoadingHistory(false);
       }
-    } catch (error) {
-      if (!cancelled) logger.error('Failed to load recently watched:', error);
-    } finally {
-      if (!cancelled) setIsLoadingHistory(false);
-    }
-  }, [recentlyWatchedOffset]);
+    },
+    [recentlyWatchedOffset]
+  );
 
   useEffect(() => {
     let cancelled = false;
     loadRecentlyWatched(cancelled);
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const loadMoreHistory = useCallback(async () => {
@@ -159,7 +166,8 @@ export default function AuthenticatedHomepage({
               items: contentResponse.success ? contentResponse.data || [] : [],
             };
           } catch (error) {
-            if (!cancelled) logger.error(`Failed to load content for universe ${ue.universeName}:`, error);
+            if (!cancelled)
+              logger.error(`Failed to load content for universe ${ue.universeName}:`, error);
             return {
               universeId: ue.universeId,
               universeName: ue.universeName,
@@ -180,7 +188,9 @@ export default function AuthenticatedHomepage({
       }
     };
     loadUniverseContent();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // --- Section 4: Personalized Recommendations ---
@@ -226,7 +236,9 @@ export default function AuthenticatedHomepage({
       }
     };
     loadRecommendations();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // --- Section 5: Supplementary ---
@@ -273,7 +285,9 @@ export default function AuthenticatedHomepage({
       }
     };
     loadSupplementary();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (

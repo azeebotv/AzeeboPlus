@@ -48,7 +48,7 @@ export class PollController {
   @ApiResponse({ status: 201, description: 'Poll created' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async createPoll(@Request() req: { user: { sub: string } }, @Body() data: CreatePollDto) {
-    return this.pollService.createPoll(req.user.id, data);
+    return this.pollService.createPoll(req.user.sub, data);
   }
 
   @Post(':id/vote')
@@ -63,6 +63,6 @@ export class PollController {
     @Param('id') pollId: string,
     @Body() body: VotePollDto
   ) {
-    return this.pollService.votePoll(pollId, req.user.id, body.optionId);
+    return this.pollService.votePoll(pollId, req.user.sub, body.optionId);
   }
 }

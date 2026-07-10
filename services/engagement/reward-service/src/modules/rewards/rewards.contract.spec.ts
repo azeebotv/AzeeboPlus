@@ -4,7 +4,6 @@ import request from 'supertest';
 import { RewardsModule } from './rewards.module';
 import { RewardsService } from './rewards.service';
 import { PrismaService } from '../database/prisma.service';
-import { JwtService } from '@nestjs/jwt';
 import { AuthGuard } from '@nestjs/passport';
 
 class MockAuthGuard {
@@ -72,8 +71,24 @@ describe('Rewards Controller Contract Tests', () => {
         success: true,
         data: {
           missions: [
-            { id: 'm1', title: 'Daily Login', description: null, points: 10, type: 'daily', isActive: true, isCompleted: false },
-            { id: 'm2', title: 'Watch Video', description: null, points: 5, type: 'daily', isActive: true, isCompleted: false },
+            {
+              id: 'm1',
+              title: 'Daily Login',
+              description: null,
+              points: 10,
+              type: 'daily',
+              isActive: true,
+              isCompleted: false,
+            },
+            {
+              id: 'm2',
+              title: 'Watch Video',
+              description: null,
+              points: 5,
+              type: 'daily',
+              isActive: true,
+              isCompleted: false,
+            },
           ],
         },
       });
@@ -133,7 +148,14 @@ describe('Rewards Controller Contract Tests', () => {
         success: true,
         data: {
           balance: 500,
-          level: { id: 'level-2', name: 'Intermediate', rank: 2, minPoints: 200, icon: null, color: null },
+          level: {
+            id: 'level-2',
+            name: 'Intermediate',
+            rank: 2,
+            minPoints: 200,
+            icon: null,
+            color: null,
+          },
           userId: 'user-123',
         },
       });

@@ -1,4 +1,4 @@
-import { Test, TestingModule, TestingModuleBuilder } from '@nestjs/testing';
+import { Test, TestingModuleBuilder } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { AuthGuard } from '@nestjs/passport';
@@ -72,13 +72,21 @@ describe('Creators Controller Contract Tests', () => {
     });
 
     moduleBuilder.overrideGuard(AuthGuard('jwt')).useValue({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       canActivate: (context: any) => {
         const req = context.switchToHttp().getRequest();
-        req.user = { sub: 'user-123', userId: 'user-123', email: 'test@example.com', role: 'ADMIN' };
+        req.user = {
+          sub: 'user-123',
+          userId: 'user-123',
+          email: 'test@example.com',
+          role: 'ADMIN',
+        };
         return true;
       },
     });
-    moduleBuilder.overrideGuard(RateLimitGuard).useValue({ canActivate: jest.fn().mockReturnValue(true) });
+    moduleBuilder
+      .overrideGuard(RateLimitGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) });
 
     const compiledModule = await moduleBuilder.compile();
 
@@ -122,7 +130,7 @@ describe('Creators Controller Contract Tests', () => {
         controllers: [CreatorsController],
         providers: [
           { provide: CreatorsService, useValue: mockCreatorsService },
-          { provide: ConfigService, useValue: { get: jest.fn((k: string, d?: string) => d) } },
+          { provide: ConfigService, useValue: { get: jest.fn((_k: string, d?: string) => d) } },
           Reflector,
         ],
       })

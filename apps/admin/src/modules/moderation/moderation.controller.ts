@@ -51,7 +51,12 @@ export class ModerationController {
     @Body() body: { action: string; reason: string }
   ): Promise<unknown> {
     const adminId = req.user.id;
-    const result = await this.moderationService.resolveReport(id, body.action, body.reason, adminId);
+    const result = await this.moderationService.resolveReport(
+      id,
+      body.action,
+      body.reason,
+      adminId
+    );
     await this.auditLogService.log({
       actorId: adminId,
       action: 'moderation.report.resolved',

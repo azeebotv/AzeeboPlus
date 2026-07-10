@@ -1,5 +1,4 @@
 'use client';
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import Link from 'next/link';
@@ -8,16 +7,29 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
 export default function SportsPage(): React.JSX.Element {
+  const universesQuery = useQuery({
+    queryKey: ['universes'],
+    queryFn: async () => {
+      const res = await api.universe.getUniverses();
+      if (!res.success || !res.data) throw new Error(res.message || 'Failed to load universes');
+      return res.data;
+    },
+    staleTime: 300000,
+  });
+
+  const sportsUniverse = universesQuery.data?.find((u) => u.name?.toLowerCase() === 'sports');
+
   const {
     data: matches = [],
     isLoading,
     error,
     refetch,
   } = useQuery<ContentItem[], Error>({
-    queryKey: ['sports-content'],
+    queryKey: ['sports-content', sportsUniverse?.id],
     queryFn: async () => {
+      if (!sportsUniverse?.id) throw new Error('Sports universe not found');
       const result = await api.content.getContentByUniverse(
-        'u0000001-0000-0000-0000-000000000006',
+        sportsUniverse.id,
         1,
         20
       );
@@ -27,6 +39,7 @@ export default function SportsPage(): React.JSX.Element {
       throw new Error(result.message || 'Failed to load sports content.');
     },
     staleTime: 60000,
+    enabled: !!sportsUniverse?.id,
   });
 
   return (

@@ -33,7 +33,10 @@ export class FlutterwaveProvider {
 
   constructor(private readonly configService: ConfigService) {
     this.apiKey = this.configService.get<string>('FLUTTERWAVE_SECRET_KEY') || '';
-    this.baseUrl = this.configService.get<string>('FLUTTERWAVE_API_URL', 'https://api.flutterwave.com/v3');
+    this.baseUrl = this.configService.get<string>(
+      'FLUTTERWAVE_API_URL',
+      'https://api.flutterwave.com/v3'
+    );
     if (!this.apiKey) {
       this.logger.warn(
         'FLUTTERWAVE_SECRET_KEY is not configured — Flutterwave payments will be unavailable'
@@ -135,7 +138,7 @@ export class FlutterwaveProvider {
       this.storeIdempotency(idempotencyKey, result);
 
       return result;
-    } catch (_err) {
+    } catch (error) {
       const message = error instanceof Error ? (error as Error).message : 'Unknown error';
       throw new BadRequestException(`Flutterwave initialization failed: ${message}`);
     }
@@ -167,7 +170,7 @@ export class FlutterwaveProvider {
         paidAt: new Date(response.data.data.created_at),
         reference: response.data.data.tx_ref,
       };
-    } catch (_err) {
+    } catch (error) {
       const message = error instanceof Error ? (error as Error).message : 'Unknown error';
       throw new BadRequestException(`Flutterwave verification failed: ${message}`);
     }
@@ -201,7 +204,7 @@ export class FlutterwaveProvider {
         amount: response.data.data.amount,
         status: response.data.data.status,
       };
-    } catch (_err) {
+    } catch (error) {
       const message = error instanceof Error ? (error as Error).message : 'Unknown error';
       throw new BadRequestException(`Flutterwave refund failed: ${message}`);
     }

@@ -103,6 +103,7 @@ describe('LoreService', () => {
       const result = await service.getEntryBySlug('test-lore');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).title).toBe('Test Lore');
     });
 
@@ -120,6 +121,7 @@ describe('LoreService', () => {
       const result = await service.getCategories();
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).categories).toContain('history');
     });
   });
@@ -136,6 +138,7 @@ describe('LoreService', () => {
       });
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).slug).toBe('test-lore');
     });
   });
@@ -152,6 +155,7 @@ describe('LoreService', () => {
       const result = await service.updateEntry('lore-1', { title: 'Updated Lore' });
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).title).toBe('Updated Lore');
     });
 
@@ -172,6 +176,7 @@ describe('LoreService', () => {
       const result = await service.deleteEntry('lore-1');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).message).toBe('Entry deleted');
     });
 

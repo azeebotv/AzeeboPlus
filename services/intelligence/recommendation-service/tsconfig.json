@@ -1,17 +1,13 @@
 {
   "extends": "../../../tsconfig.json",
   "compilerOptions": {
-    "module": "Node16",
     "baseUrl": ".",
     "declaration": true,
     "removeComments": true,
     "allowSyntheticDefaultImports": true,
-    "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
     "incremental": true,
-    "strict": true,
-    "noImplicitReturns": true,
     "types": ["jest", "node", "supertest"],
     "paths": {
       "@prisma/client": ["./src/prisma/client"],

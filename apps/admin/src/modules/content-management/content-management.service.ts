@@ -41,7 +41,7 @@ export class ContentManagementService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly auditService: AuditLogService,
+    private readonly auditService: AuditLogService
   ) {}
 
   // ─── Content List ────────────────────────────────────────────────────────
@@ -134,9 +134,25 @@ export class ContentManagementService {
   // ─── Create Content ──────────────────────────────────────────────────────
 
   async createContent(data: Record<string, unknown>) {
-    const { title, description, thumbnail, mediaUrl, universeId, creatorId, status, metadata,
-            releaseDate, theatricalReleaseDate, streamingReleaseDate, windowEndDate,
-            windowType, isExclusive, isPremiere, categoryIds, tagIds } = data as {
+    const {
+      title,
+      description,
+      thumbnail,
+      mediaUrl,
+      universeId,
+      creatorId,
+      status,
+      metadata,
+      releaseDate,
+      theatricalReleaseDate,
+      streamingReleaseDate,
+      windowEndDate,
+      windowType,
+      isExclusive,
+      isPremiere,
+      categoryIds,
+      tagIds,
+    } = data as {
       title: string;
       description?: string;
       thumbnail?: string;
@@ -180,9 +196,7 @@ export class ContentManagementService {
         ...(categoryIds?.length
           ? { categories: { connect: categoryIds.map((id) => ({ id })) } }
           : {}),
-        ...(tagIds?.length
-          ? { tags: { connect: tagIds.map((id) => ({ id })) } }
-          : {}),
+        ...(tagIds?.length ? { tags: { connect: tagIds.map((id) => ({ id })) } } : {}),
       },
       include: {
         creator: { select: { id: true, displayName: true, email: true } },
@@ -215,9 +229,25 @@ export class ContentManagementService {
     // Store version snapshot before update
     await this.storeVersionSnapshot(existing);
 
-    const { title, description, thumbnail, mediaUrl, universeId, status, metadata,
-            releaseDate, theatricalReleaseDate, streamingReleaseDate, windowEndDate,
-            windowType, isExclusive, isPremiere, categoryIds, tagIds, creatorId } = data as {
+    const {
+      title,
+      description,
+      thumbnail,
+      mediaUrl,
+      universeId,
+      status,
+      metadata,
+      releaseDate,
+      theatricalReleaseDate,
+      streamingReleaseDate,
+      windowEndDate,
+      windowType,
+      isExclusive,
+      isPremiere,
+      categoryIds,
+      tagIds,
+      creatorId,
+    } = data as {
       title?: string;
       description?: string;
       thumbnail?: string;
@@ -251,10 +281,18 @@ export class ContentManagementService {
       }
     }
     if (metadata !== undefined) updateData.metadata = metadata as Prisma.InputJsonValue;
-    if (releaseDate !== undefined) updateData.releaseDate = releaseDate ? new Date(releaseDate) : null;
-    if (theatricalReleaseDate !== undefined) updateData.theatricalReleaseDate = theatricalReleaseDate ? new Date(theatricalReleaseDate) : null;
-    if (streamingReleaseDate !== undefined) updateData.streamingReleaseDate = streamingReleaseDate ? new Date(streamingReleaseDate) : null;
-    if (windowEndDate !== undefined) updateData.windowEndDate = windowEndDate ? new Date(windowEndDate) : null;
+    if (releaseDate !== undefined)
+      updateData.releaseDate = releaseDate ? new Date(releaseDate) : null;
+    if (theatricalReleaseDate !== undefined)
+      updateData.theatricalReleaseDate = theatricalReleaseDate
+        ? new Date(theatricalReleaseDate)
+        : null;
+    if (streamingReleaseDate !== undefined)
+      updateData.streamingReleaseDate = streamingReleaseDate
+        ? new Date(streamingReleaseDate)
+        : null;
+    if (windowEndDate !== undefined)
+      updateData.windowEndDate = windowEndDate ? new Date(windowEndDate) : null;
     if (windowType !== undefined) updateData.windowType = windowType;
     if (isExclusive !== undefined) updateData.isExclusive = isExclusive;
     if (isPremiere !== undefined) updateData.isPremiere = isPremiere;
@@ -474,7 +512,12 @@ export class ContentManagementService {
 
     if (!name) throw new BadRequestException('name is required');
 
-    const generatedSlug = slug ?? name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const generatedSlug =
+      slug ??
+      name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
 
     const existing = await this.prisma.category.findUnique({ where: { slug: generatedSlug } });
     if (existing) {
@@ -727,7 +770,15 @@ export class ContentManagementService {
       where: {
         targetType: 'content',
         targetId: contentId,
-        action: { in: ['create_content', 'update_content', 'publish_content', 'unpublish_content', 'archive_content'] },
+        action: {
+          in: [
+            'create_content',
+            'update_content',
+            'publish_content',
+            'unpublish_content',
+            'archive_content',
+          ],
+        },
       },
       orderBy: { createdAt: 'desc' },
     });

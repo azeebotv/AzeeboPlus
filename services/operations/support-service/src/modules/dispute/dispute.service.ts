@@ -65,7 +65,7 @@ export class DisputeService {
     id: string,
     resolution: 'APPROVED' | 'REJECTED' | 'PARTIAL',
     resolvedBy: string,
-    notes?: string,
+    _notes?: string,
     compensation?: Prisma.Decimal
   ) {
     const dispute = await this.prisma.payoutDispute.findUnique({ where: { id } });
@@ -83,7 +83,7 @@ export class DisputeService {
           reference: `dispute-${id}`,
           transactionType: 'dispute_compensation',
         });
-      } catch (_err) {
+      } catch (error) {
         this.logger.error(`Failed to credit wallet for dispute ${id}: ${(error as Error).message}`);
       }
     }

@@ -47,7 +47,7 @@ describe('CreatorsService Integration', () => {
               if (key === 'ANALYTICS_SERVICE_URL') return 'http://analytics-service';
               return '';
             }),
-            get: jest.fn((key: string, defaultValue?: string) => defaultValue),
+            get: jest.fn((_key: string, defaultValue?: string) => defaultValue),
           },
         },
         {

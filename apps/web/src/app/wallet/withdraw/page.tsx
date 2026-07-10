@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
@@ -20,6 +20,16 @@ interface WithdrawalMethods {
   cryptoWallet: boolean;
 }
 
+interface WalletPricing {
+  presetAmounts: number[];
+  limits: {
+    minDeposit: number;
+    maxDeposit: number;
+    minWithdrawal: number;
+  };
+  withdrawalQuickAmounts: number[];
+}
+
 interface Pricing {
   minAmount: number;
   maxAmount: number;
@@ -34,6 +44,7 @@ export default function WithdrawPage(): React.JSX.Element {
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
   const [_methods, setMethods] = useState<WithdrawalMethods | null>(null);
   const [pricing, setPricing] = useState<Pricing | null>(null);
+  const [walletPricing, setWalletPricing] = useState<WalletPricing | null>(null);
   const [walletBalance, setWalletBalance] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,20 +52,24 @@ export default function WithdrawPage(): React.JSX.Element {
   const [newBank, setNewBank] = useState({ bankName: '', accountNumber: '', accountName: '' });
   const [error, setError] = useState<string | null>(null);
 
+  const quickAmounts = walletPricing?.withdrawalQuickAmounts || [1000, 5000, 10000, 20000];
+
   useEffect(() => {
     const loadData = async (): Promise<void> => {
       try {
-        const [accountsRes, methodsRes, pricingRes, balanceRes] = await Promise.all([
+        const [accountsRes, methodsRes, pricingRes, balanceRes, walletPricingRes] = await Promise.all([
           apiFetch<BankAccount[]>('/v1/wallet/accounts'),
           apiFetch<WithdrawalMethods>('/v1/wallet/withdrawal-methods'),
           apiFetch<Pricing>('/v1/wallet/withdrawal-pricing'),
           apiFetch<{ balance: number }>('/v1/wallet/balance'),
+          apiFetch<WalletPricing>('/v1/pricing/wallet'),
         ]);
         if (accountsRes.success && accountsRes.data)
           setAccounts(Array.isArray(accountsRes.data) ? accountsRes.data : []);
         if (methodsRes.success && methodsRes.data) setMethods(methodsRes.data);
         if (pricingRes.success && pricingRes.data) setPricing(pricingRes.data);
         if (balanceRes.success && balanceRes.data) setWalletBalance(balanceRes.data.balance);
+        if (walletPricingRes.success && walletPricingRes.data) setWalletPricing(walletPricingRes.data);
       } catch (error) {
         webLogger.error('Failed to load data', error);
       } finally {
@@ -89,8 +104,6 @@ export default function WithdrawPage(): React.JSX.Element {
       setIsProcessing(false);
     }
   };
-
-  const quickAmounts = [1000, 5000, 10000, 20000];
 
   if (isLoading) {
     return (

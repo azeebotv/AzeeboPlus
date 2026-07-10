@@ -1,5 +1,3 @@
-import React from 'react';
-
 type AlertProps = {
   variant?: 'error' | 'success';
   children: React.ReactNode;

@@ -39,9 +39,7 @@ export class CharactersController {
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Create new character' })
   @ApiResponse({ status: 201, description: 'Character created' })
-  async createCharacter(
-    @Body() data: CreateCharacterDto
-  ): Promise<unknown> {
+  async createCharacter(@Body() data: CreateCharacterDto): Promise<unknown> {
     return this.charactersService.createCharacter(data);
   }
 

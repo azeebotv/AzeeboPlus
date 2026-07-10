@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from '@azeebo/security';
@@ -58,10 +68,7 @@ export class LoreController {
   @UseGuards(AuthGuard('jwt'), AdminGuard)
   @ApiOperation({ summary: 'Update lore entry' })
   @ApiResponse({ status: 200, description: 'Entry updated' })
-  async updateEntry(
-    @Param('id') id: string,
-    @Body() body: UpdateLoreDto
-  ): Promise<unknown> {
+  async updateEntry(@Param('id') id: string, @Body() body: UpdateLoreDto): Promise<unknown> {
     return this.loreService.updateEntry(id, body);
   }
 

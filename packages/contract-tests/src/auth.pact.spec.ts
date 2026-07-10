@@ -1,7 +1,7 @@
 import { PactV4, MatchersV3 } from '@pact-foundation/pact';
 import * as path from 'path';
 
-const { integer, string, regex } = MatchersV3;
+const { integer: _integer, string, regex } = MatchersV3;
 const TEST_PASSWORD = 'ValidPassword123!';
 
 const provider = new PactV4({

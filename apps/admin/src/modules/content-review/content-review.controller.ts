@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Query, Body, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, UseGuards, Req } from '@nestjs/common';
 import { ContentReviewService } from './content-review.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -16,14 +16,11 @@ interface AuthRequest extends Request {
 export class ContentReviewController {
   constructor(
     private readonly contentReviewService: ContentReviewService,
-    private readonly auditService: AuditLogService,
+    private readonly auditService: AuditLogService
   ) {}
 
   @Get()
-  async getReviewQueue(
-    @Query('page') page = 1,
-    @Query('limit') limit = 20
-  ) {
+  async getReviewQueue(@Query('page') page = 1, @Query('limit') limit = 20) {
     return this.contentReviewService.getContentReviewQueue(Number(page), Number(limit));
   }
 

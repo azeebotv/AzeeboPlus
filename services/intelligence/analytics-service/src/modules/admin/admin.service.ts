@@ -48,7 +48,7 @@ export class AdminService {
           count: e._count.id,
         })),
       };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`getStats failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: (error as Error).message };
     }
@@ -106,7 +106,7 @@ export class AdminService {
           totalPages: Math.ceil(total / limit),
         },
       };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`getEvents failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: (error as Error).message };
     }
@@ -124,8 +124,11 @@ export class AdminService {
         name: r.eventName,
         count: r._count.id,
       }));
-    } catch (_err) {
-      this.logger.error(`getEventNames failed: ${(error as Error).message}`, (error as Error).stack);
+    } catch (error) {
+      this.logger.error(
+        `getEventNames failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }

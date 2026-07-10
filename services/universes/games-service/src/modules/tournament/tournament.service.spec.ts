@@ -62,6 +62,7 @@ describe('TournamentService', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toHaveProperty('items');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).items).toHaveLength(1);
     });
 
@@ -84,6 +85,7 @@ describe('TournamentService', () => {
       const result = await service.getTournamentById('tournament-1');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).title).toBe('Test Tournament');
     });
 
@@ -108,6 +110,7 @@ describe('TournamentService', () => {
       const result = await service.enterTournament('user-1', 'tournament-1');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).message).toBe('Entered tournament successfully');
     });
 
@@ -160,6 +163,7 @@ describe('TournamentService', () => {
       const result = await service.updateScore('user-1', 'tournament-1', 50);
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).score).toBe(150);
     });
 
@@ -188,6 +192,7 @@ describe('TournamentService', () => {
       const result = await service.getLeaderboard('tournament-1');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).leaderboard).toBeDefined();
     });
   });

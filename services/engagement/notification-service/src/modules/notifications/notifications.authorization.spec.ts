@@ -9,7 +9,6 @@ import { PrismaService } from '../database/prisma.service';
 
 describe('NotificationsController (Authorization)', () => {
   let app: INestApplication;
-  let notificationsService: NotificationsService;
 
   const mockNotificationsService = {
     getNotifications: jest.fn(),
@@ -57,7 +56,6 @@ describe('NotificationsController (Authorization)', () => {
     const module = await buildModule(true);
 
     app = module.createNestApplication();
-    notificationsService = module.get<NotificationsService>(NotificationsService);
     await app.init();
   });
 

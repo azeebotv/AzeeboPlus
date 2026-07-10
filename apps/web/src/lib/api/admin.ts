@@ -512,7 +512,9 @@ export function createAdminMethods(client: RequestClient) {
       return client.request<SystemSetting>('/api/v1/admin/settings/branding');
     },
 
-    updateBranding: async (branding: Record<string, unknown>): Promise<ApiResponse<SystemSetting>> => {
+    updateBranding: async (
+      branding: Record<string, unknown>
+    ): Promise<ApiResponse<SystemSetting>> => {
       return client.request<SystemSetting>('/api/v1/admin/settings/branding', {
         method: 'PUT',
         body: JSON.stringify(branding),
@@ -524,14 +526,19 @@ export function createAdminMethods(client: RequestClient) {
       return client.request<SystemSetting[]>('/api/v1/admin/settings/subscriptions/plans');
     },
 
-    createSubscriptionPlan: async (plan: Record<string, unknown>): Promise<ApiResponse<SystemSetting>> => {
+    createSubscriptionPlan: async (
+      plan: Record<string, unknown>
+    ): Promise<ApiResponse<SystemSetting>> => {
       return client.request<SystemSetting>('/api/v1/admin/settings/subscriptions/plans', {
         method: 'POST',
         body: JSON.stringify(plan),
       });
     },
 
-    updateSubscriptionPlan: async (id: string, plan: Record<string, unknown>): Promise<ApiResponse<SystemSetting>> => {
+    updateSubscriptionPlan: async (
+      id: string,
+      plan: Record<string, unknown>
+    ): Promise<ApiResponse<SystemSetting>> => {
       return client.request<SystemSetting>(`/api/v1/admin/settings/subscriptions/plans/${id}`, {
         method: 'PUT',
         body: JSON.stringify(plan),
@@ -539,9 +546,12 @@ export function createAdminMethods(client: RequestClient) {
     },
 
     deleteSubscriptionPlan: async (id: string): Promise<ApiResponse<{ message: string }>> => {
-      return client.request<{ message: string }>(`/api/v1/admin/settings/subscriptions/plans/${id}`, {
-        method: 'DELETE',
-      });
+      return client.request<{ message: string }>(
+        `/api/v1/admin/settings/subscriptions/plans/${id}`,
+        {
+          method: 'DELETE',
+        }
+      );
     },
 
     // Site Identity
@@ -549,7 +559,9 @@ export function createAdminMethods(client: RequestClient) {
       return client.request<SystemSetting>('/api/v1/admin/settings/site');
     },
 
-    updateSiteSettings: async (site: Record<string, unknown>): Promise<ApiResponse<SystemSetting>> => {
+    updateSiteSettings: async (
+      site: Record<string, unknown>
+    ): Promise<ApiResponse<SystemSetting>> => {
       return client.request<SystemSetting>('/api/v1/admin/settings/site', {
         method: 'PUT',
         body: JSON.stringify(site),
@@ -561,7 +573,10 @@ export function createAdminMethods(client: RequestClient) {
       return client.request<SystemSetting>('/api/v1/admin/settings/access/roles');
     },
 
-    updateRole: async (role: string, permissions: Record<string, unknown>): Promise<ApiResponse<SystemSetting>> => {
+    updateRole: async (
+      role: string,
+      permissions: Record<string, unknown>
+    ): Promise<ApiResponse<SystemSetting>> => {
       return client.request<SystemSetting>(`/api/v1/admin/settings/access/roles/${role}`, {
         method: 'PUT',
         body: JSON.stringify(permissions),
@@ -590,7 +605,9 @@ export function createAdminMethods(client: RequestClient) {
       return client.request<SystemSetting>('/api/v1/admin/settings/performance');
     },
 
-    updatePerformance: async (perf: Record<string, unknown>): Promise<ApiResponse<SystemSetting>> => {
+    updatePerformance: async (
+      perf: Record<string, unknown>
+    ): Promise<ApiResponse<SystemSetting>> => {
       return client.request<SystemSetting>('/api/v1/admin/settings/performance', {
         method: 'PUT',
         body: JSON.stringify(perf),
@@ -602,14 +619,19 @@ export function createAdminMethods(client: RequestClient) {
       return client.request<SystemSetting>('/api/v1/admin/settings/integrations');
     },
 
-    updateIntegration: async (provider: string, config: Record<string, unknown>): Promise<ApiResponse<SystemSetting>> => {
+    updateIntegration: async (
+      provider: string,
+      config: Record<string, unknown>
+    ): Promise<ApiResponse<SystemSetting>> => {
       return client.request<SystemSetting>(`/api/v1/admin/settings/integrations/${provider}`, {
         method: 'PUT',
         body: JSON.stringify(config),
       });
     },
 
-    testIntegration: async (provider: string): Promise<ApiResponse<{ success: boolean; message: string }>> => {
+    testIntegration: async (
+      provider: string
+    ): Promise<ApiResponse<{ success: boolean; message: string }>> => {
       return client.request<{ success: boolean; message: string }>(
         `/api/v1/admin/settings/integrations/${provider}/test`,
         { method: 'POST' }
@@ -621,7 +643,9 @@ export function createAdminMethods(client: RequestClient) {
       return client.request<SystemSetting>('/api/v1/admin/settings/compliance');
     },
 
-    updateCompliance: async (compliance: Record<string, unknown>): Promise<ApiResponse<SystemSetting>> => {
+    updateCompliance: async (
+      compliance: Record<string, unknown>
+    ): Promise<ApiResponse<SystemSetting>> => {
       return client.request<SystemSetting>('/api/v1/admin/settings/compliance', {
         method: 'PUT',
         body: JSON.stringify(compliance),
@@ -632,7 +656,9 @@ export function createAdminMethods(client: RequestClient) {
       return client.request<SystemSetting>('/api/v1/admin/settings/compliance/data-retention');
     },
 
-    updateDataRetention: async (retention: Record<string, unknown>): Promise<ApiResponse<SystemSetting>> => {
+    updateDataRetention: async (
+      retention: Record<string, unknown>
+    ): Promise<ApiResponse<SystemSetting>> => {
       return client.request<SystemSetting>('/api/v1/admin/settings/compliance/data-retention', {
         method: 'PUT',
         body: JSON.stringify(retention),
@@ -644,7 +670,9 @@ export function createAdminMethods(client: RequestClient) {
       return client.request<SystemSetting>('/api/v1/admin/settings/localization');
     },
 
-    updateLocalization: async (loc: Record<string, unknown>): Promise<ApiResponse<SystemSetting>> => {
+    updateLocalization: async (
+      loc: Record<string, unknown>
+    ): Promise<ApiResponse<SystemSetting>> => {
       return client.request<SystemSetting>('/api/v1/admin/settings/localization', {
         method: 'PUT',
         body: JSON.stringify(loc),
@@ -675,14 +703,22 @@ export function createAdminMethods(client: RequestClient) {
     },
 
     // Content Management CRUD
-    getContentList: async (params?: { page?: number; limit?: number; search?: string; status?: string; universeId?: string }): Promise<ApiResponse<PaginatedResponse<ContentItem>>> => {
+    getContentList: async (params?: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      status?: string;
+      universeId?: string;
+    }): Promise<ApiResponse<PaginatedResponse<ContentItem>>> => {
       const query = new URLSearchParams();
       if (params?.page) query.append('page', String(params.page));
       if (params?.limit) query.append('limit', String(params.limit));
       if (params?.search) query.append('search', params.search);
       if (params?.status) query.append('status', params.status);
       if (params?.universeId) query.append('universeId', params.universeId);
-      return client.request<PaginatedResponse<ContentItem>>(`/api/v1/admin/content-management?${query.toString()}`);
+      return client.request<PaginatedResponse<ContentItem>>(
+        `/api/v1/admin/content-management?${query.toString()}`
+      );
     },
 
     getContentItem: async (id: string): Promise<ApiResponse<ContentItem>> => {
@@ -696,7 +732,10 @@ export function createAdminMethods(client: RequestClient) {
       });
     },
 
-    updateContentItem: async (id: string, data: Record<string, unknown>): Promise<ApiResponse<ContentItem>> => {
+    updateContentItem: async (
+      id: string,
+      data: Record<string, unknown>
+    ): Promise<ApiResponse<ContentItem>> => {
       return client.request<ContentItem>(`/api/v1/admin/content-management/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(data),
@@ -716,12 +755,18 @@ export function createAdminMethods(client: RequestClient) {
     },
 
     unpublishContent: async (id: string): Promise<ApiResponse<{ message: string }>> => {
-      return client.request<{ message: string }>(`/api/v1/admin/content-management/${id}/unpublish`, {
-        method: 'POST',
-      });
+      return client.request<{ message: string }>(
+        `/api/v1/admin/content-management/${id}/unpublish`,
+        {
+          method: 'POST',
+        }
+      );
     },
 
-    bulkUpdateContentStatus: async (ids: string[], status: string): Promise<ApiResponse<{ updated: number }>> => {
+    bulkUpdateContentStatus: async (
+      ids: string[],
+      status: string
+    ): Promise<ApiResponse<{ updated: number }>> => {
       return client.request<{ updated: number }>('/api/v1/admin/content-management/bulk/status', {
         method: 'POST',
         body: JSON.stringify({ ids, status }),
@@ -739,14 +784,19 @@ export function createAdminMethods(client: RequestClient) {
       return client.request<SystemSetting[]>('/api/v1/admin/content-management/categories');
     },
 
-    createContentCategory: async (data: Record<string, unknown>): Promise<ApiResponse<SystemSetting>> => {
+    createContentCategory: async (
+      data: Record<string, unknown>
+    ): Promise<ApiResponse<SystemSetting>> => {
       return client.request<SystemSetting>('/api/v1/admin/content-management/categories', {
         method: 'POST',
         body: JSON.stringify(data),
       });
     },
 
-    updateContentCategory: async (id: string, data: Record<string, unknown>): Promise<ApiResponse<SystemSetting>> => {
+    updateContentCategory: async (
+      id: string,
+      data: Record<string, unknown>
+    ): Promise<ApiResponse<SystemSetting>> => {
       return client.request<SystemSetting>(`/api/v1/admin/content-management/categories/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
@@ -754,16 +804,21 @@ export function createAdminMethods(client: RequestClient) {
     },
 
     deleteContentCategory: async (id: string): Promise<ApiResponse<{ message: string }>> => {
-      return client.request<{ message: string }>(`/api/v1/admin/content-management/categories/${id}`, {
-        method: 'DELETE',
-      });
+      return client.request<{ message: string }>(
+        `/api/v1/admin/content-management/categories/${id}`,
+        {
+          method: 'DELETE',
+        }
+      );
     },
 
     getContentTags: async (): Promise<ApiResponse<SystemSetting[]>> => {
       return client.request<SystemSetting[]>('/api/v1/admin/content-management/tags');
     },
 
-    createContentTag: async (data: Record<string, unknown>): Promise<ApiResponse<SystemSetting>> => {
+    createContentTag: async (
+      data: Record<string, unknown>
+    ): Promise<ApiResponse<SystemSetting>> => {
       return client.request<SystemSetting>('/api/v1/admin/content-management/tags', {
         method: 'POST',
         body: JSON.stringify(data),
@@ -805,21 +860,29 @@ export function createAdminMethods(client: RequestClient) {
       return client.request<Record<string, unknown>>(`/api/v1/admin/universes/export/${id}`);
     },
 
-    importUniverses: async (data: Record<string, unknown>): Promise<ApiResponse<{ imported: number; skipped: number; errors: string[] }>> => {
+    importUniverses: async (
+      data: Record<string, unknown>
+    ): Promise<ApiResponse<{ imported: number; skipped: number; errors: string[] }>> => {
       return client.request<{ imported: number; skipped: number; errors: string[] }>(
         '/api/v1/admin/universes/import',
         { method: 'POST', body: JSON.stringify(data) }
       );
     },
 
-    bulkToggleUniverses: async (ids: string[], isEnabled: boolean): Promise<ApiResponse<{ updated: number }>> => {
+    bulkToggleUniverses: async (
+      ids: string[],
+      isEnabled: boolean
+    ): Promise<ApiResponse<{ updated: number }>> => {
       return client.request<{ updated: number }>('/api/v1/admin/universes/bulk/toggle', {
         method: 'POST',
         body: JSON.stringify({ ids, isEnabled }),
       });
     },
 
-    cloneUniverse: async (id: string, data: Record<string, unknown>): Promise<ApiResponse<AdminUniverse>> => {
+    cloneUniverse: async (
+      id: string,
+      data: Record<string, unknown>
+    ): Promise<ApiResponse<AdminUniverse>> => {
       return client.request<AdminUniverse>(`/api/v1/admin/universes/${id}/copy`, {
         method: 'POST',
         body: JSON.stringify(data),

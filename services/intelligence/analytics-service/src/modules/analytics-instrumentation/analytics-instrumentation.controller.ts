@@ -9,7 +9,7 @@ import {
 } from './analytics-instrumentation.service';
 
 interface AuthenticatedRequest extends Request {
-  user: { sub: string };
+  user: { sub: string; id: string };
 }
 
 @ApiTags('Analytics Instrumentation')
@@ -22,7 +22,10 @@ export class AnalyticsInstrumentationController {
   @Post('track')
   @ApiOperation({ summary: 'Track a single event' })
   @RateLimit(100, 60000)
-  async track(@Body() event: AnalyticsEvent, @Req() req: AuthenticatedRequest): Promise<{ id: string }> {
+  async track(
+    @Body() event: AnalyticsEvent,
+    @Req() req: AuthenticatedRequest
+  ): Promise<{ id: string }> {
     return this.analyticsInstrumentationService.track({
       ...event,
       userId: req.user?.sub ?? event.userId,
@@ -32,11 +35,12 @@ export class AnalyticsInstrumentationController {
   @Post('track-batch')
   @ApiOperation({ summary: 'Track multiple events' })
   @RateLimit(100, 60000)
-  async trackBatch(@Body() events: AnalyticsEvent[], @Req() req: AuthenticatedRequest): Promise<{ ingested: number }> {
+  async trackBatch(
+    @Body() events: AnalyticsEvent[],
+    @Req() req: AuthenticatedRequest
+  ): Promise<{ ingested: number }> {
     const userId = req.user?.sub;
-    const sanitized = userId
-      ? events.map((e) => ({ ...e, userId }))
-      : events;
+    const sanitized = userId ? events.map((e) => ({ ...e, userId })) : events;
     return this.analyticsInstrumentationService.trackBatch(sanitized);
   }
 

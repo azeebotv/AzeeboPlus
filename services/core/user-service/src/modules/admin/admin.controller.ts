@@ -241,7 +241,11 @@ export class AdminController {
     @Query('limit') limit?: number,
     @Query('status') status?: string
   ) {
-    return this.adminService.getModerationReports(Number(page) || 1, Math.min(100, Math.max(1, Number(limit) || 20)), status);
+    return this.adminService.getModerationReports(
+      Number(page) || 1,
+      Math.min(100, Math.max(1, Number(limit) || 20)),
+      status
+    );
   }
 
   @Patch('moderation/reports/:id')
@@ -276,7 +280,11 @@ export class AdminController {
     @Query('limit') limit?: number,
     @Query('userId') userId?: string
   ) {
-    return this.adminService.getAuditLogs(Number(page) || 1, Math.min(100, Math.max(1, Number(limit) || 20)), userId);
+    return this.adminService.getAuditLogs(
+      Number(page) || 1,
+      Math.min(100, Math.max(1, Number(limit) || 20)),
+      userId
+    );
   }
 
   @Get('creators/verification')

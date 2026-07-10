@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
@@ -25,7 +25,9 @@ export default function PredictionResultsPage(): React.JSX.Element {
 
   const loadResults = async () => {
     try {
-      const response = await apiFetch<{ success: boolean; data: PredictionResults }>(`/engagement/predictions/${predictionId}/results`);
+      const response = await apiFetch<PredictionResults>(
+        `/engagement/predictions/${predictionId}/results`
+      );
       if (response.success && response.data) setResults(response.data);
     } catch {
       /* ignore */
@@ -115,7 +117,7 @@ export default function PredictionResultsPage(): React.JSX.Element {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {results.options.map((opt, i) => {
                     const pct =
-                      results.totalVotes > 0
+                      results.totalVotes && results.totalVotes > 0
                         ? Math.round((opt.votes / results.totalVotes) * 100)
                         : 0;
                     const isCorrect = opt.text === results.correctAnswer;

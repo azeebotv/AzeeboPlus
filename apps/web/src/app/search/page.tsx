@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@azeebo/ui/web';
-import { apiFetch } from '../../lib/api';
+import { apiFetch, api } from '../../lib/api';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
 
@@ -16,6 +16,13 @@ interface SearchResult {
   creator?: { name: string };
   universe?: { name: string; icon?: string };
   type?: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  icon?: string;
 }
 
 interface SearchFilters {
@@ -53,7 +60,16 @@ export default function SearchPage(): React.JSX.Element {
   const [searchHistory, setSearchHistory] = useState<HistoryItem[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  const categoriesQuery = useQuery<Category[]>({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const res = await api.content.getCategories();
+      if (!res.success || !res.data) throw new Error(res.message || 'Failed to load categories');
+      return res.data;
+    },
+    staleTime: 300000,
+  });
 
   useEffect(() => {
     const saved = typeof window !== 'undefined' ? localStorage.getItem('searchHistory') : null;
@@ -81,10 +97,7 @@ export default function SearchPage(): React.JSX.Element {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const {
-    data: results = [],
-    isLoading,
-  } = useQuery<SearchResult[], Error>({
+  const { data: results = [], isLoading } = useQuery<SearchResult[], Error>({
     queryKey: ['search', activeQuery, filters],
     queryFn: async () => {
       if (!activeQuery.trim()) return [];
@@ -132,32 +145,26 @@ export default function SearchPage(): React.JSX.Element {
     }
   }, [suggestionsData]);
 
-  const handleQueryChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
-      setQuery(value);
-    },
-    []
-  );
+  const handleQueryChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setQuery(value);
+  }, []);
 
-  const handleSearch = useCallback(
-    (searchQuery: string) => {
-      if (!searchQuery.trim()) return;
-      setActiveQuery(searchQuery);
-      setHasSearched(true);
-      setShowSuggestions(false);
-      const newHistoryItem = { query: searchQuery, timestamp: new Date() };
-      setSearchHistory((prev) => {
-        const updated = [
-          newHistoryItem,
-          ...prev.filter((item) => item.query !== searchQuery),
-        ].slice(0, 10);
-        localStorage.setItem('searchHistory', JSON.stringify(updated));
-        return updated;
-      });
-    },
-    []
-  );
+  const handleSearch = useCallback((searchQuery: string) => {
+    if (!searchQuery.trim()) return;
+    setActiveQuery(searchQuery);
+    setHasSearched(true);
+    setShowSuggestions(false);
+    const newHistoryItem = { query: searchQuery, timestamp: new Date() };
+    setSearchHistory((prev) => {
+      const updated = [newHistoryItem, ...prev.filter((item) => item.query !== searchQuery)].slice(
+        0,
+        10
+      );
+      localStorage.setItem('searchHistory', JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -415,10 +422,11 @@ export default function SearchPage(): React.JSX.Element {
                   className="az-input w-full"
                 >
                   <option value="all">All Categories</option>
-                  <option value="drama">Drama</option>
-                  <option value="comedy">Comedy</option>
-                  <option value="action">Action</option>
-                  <option value="romance">Romance</option>
+                  {(categoriesQuery.data || []).map((cat) => (
+                    <option key={cat.id} value={cat.slug}>
+                      {cat.name}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>

@@ -170,7 +170,7 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
     storage.gauge.set(key, current - value);
   }
 
-  private observeHistogram(name: string, value: number, labels: Record<string, string>): void {
+  private observeHistogram(name: string, value: number, _labels: Record<string, string>): void {
     const storage = this.storage.get(name);
     if (!storage?.histogram) return;
 
@@ -182,7 +182,7 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private resetHistogram(name: string, labels: Record<string, string>): void {
+  private resetHistogram(name: string, _labels: Record<string, string>): void {
     const storage = this.storage.get(name);
     if (!storage?.histogram) return;
 
@@ -297,7 +297,6 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
       } else if (metric.type === 'histogram' && storage.histogram) {
         const { sum, count, values: histValues } = storage.histogram;
         if (count > 0) {
-          const labelKey = '';
           values.push({ name: `${name}_sum`, value: sum, timestamp: Date.now() });
           values.push({ name: `${name}_count`, value: count, timestamp: Date.now() });
 

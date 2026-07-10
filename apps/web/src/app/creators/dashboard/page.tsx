@@ -1,5 +1,4 @@
 'use client';
-import React from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -21,10 +20,14 @@ export default function CreatorDashboardPage(): React.JSX.Element {
   const router = useRouter();
   const isEnabled = !authLoading && !!isAuthenticated && !!user;
 
-  const { data: stats, isLoading, error } = useQuery({
+  const {
+    data: stats,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['creator', 'dashboard-stats'],
     queryFn: async () => {
-      const result = await apiFetch<{ success: boolean; data: DashboardStats }>('/v1/creators/stats');
+      const result = await apiFetch<DashboardStats>('/v1/creators/stats');
       if (result.success && result.data) return result.data;
       return null;
     },
@@ -64,7 +67,11 @@ export default function CreatorDashboardPage(): React.JSX.Element {
             className="az-glass"
             style={{ padding: 40, borderRadius: 16, textAlign: 'center', marginBottom: 32 }}
           >
-            <ErrorState title="Failed to load dashboard" description="Please try again later" onButtonPress={() => router.refresh()} />
+            <ErrorState
+              title="Failed to load dashboard"
+              description="Please try again later"
+              onButtonPress={() => router.refresh()}
+            />
           </div>
         ) : stats ? (
           <div

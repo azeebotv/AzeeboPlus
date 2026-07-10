@@ -20,7 +20,7 @@
     "jsx": "react-jsx",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "types": [],
+    "types": ["multer"],
     "paths": {
       "@/*": ["./apps/web/src/*"],
       "@azeebo/ui": ["./packages/ui/src"],
@@ -37,13 +37,19 @@
       "@azeebo/utils/*": ["./packages/utils/src/*"],
       "@azeebo/shared-services": ["./packages/shared-services/src"],
       "@azeebo/shared-services/*": ["./packages/shared-services/src/*"],
+      "@azeebo/shared-queue": ["./packages/shared-queue/src"],
       "@azeebo/auth": ["./packages/auth/src/index.ts"],
+      "@azeebo/contract-tests": ["./packages/contract-tests/src"],
       "@azeebo/security": ["./packages/security/src/index.ts"],
       "@azeebo/observability": ["./packages/observability/src/index.ts"],
+      "@azeebo/opentelemetry": ["./packages/opentelemetry/src/index.ts"],
       "@azeebo/feature-flags": ["./packages/feature-flags/src/index.ts"],
+      "@azeebo/http-client": ["./packages/http-client/src/index.ts"],
+      "@azeebo/http-client/*": ["./packages/http-client/src/*"],
       "@azeebo/internal-clients": ["./packages/internal-clients/src/index.ts"],
       "@azeebo/logger": ["./packages/logger/src/index.ts"],
       "@azeebo/error-handling": ["./packages/error-handling/src/index.ts"],
+      "@azeebo/event-bus": ["./packages/event-bus/src"],
       "@azeebo/validation": ["./packages/validation/src/index.ts"],
       "@azeebo/test-utils": ["./packages/test-utils/src/index.ts"]
     }

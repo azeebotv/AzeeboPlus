@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, UnauthorizedException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3Service } from './s3.service';
 import { RedisService } from '../../common/services/redis.service';
@@ -141,7 +141,7 @@ export class PremiumContentService {
         userId: urlData.userId,
       };
     } catch (error: unknown) {
-      this.logger.error(`Error validating URL token: ${error.message}`);
+      this.logger.error(`Error validating URL token: ${error instanceof Error ? error.message : String(error)}`);
       return {
         valid: false,
         error: 'Invalid URL data',
@@ -172,7 +172,7 @@ export class PremiumContentService {
             invalidatedCount++;
           }
         } catch (error: unknown) {
-          this.logger.warn(`Error parsing URL data for key ${key}: ${error.message}`);
+          this.logger.warn(`Error parsing URL data for key ${key}: ${error instanceof Error ? error.message : String(error)}`);
         }
       }
     }

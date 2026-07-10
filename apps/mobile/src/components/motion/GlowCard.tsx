@@ -1,4 +1,4 @@
-import { StyleSheet, type ViewStyle, type StyleProp } from 'react-native';
+import { StyleSheet, TouchableOpacity, type ViewStyle, type StyleProp } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -7,9 +7,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { colors, radius, shadows, universeColors } from '../../theme';
 
-const AnimatedTouchable = Animated.createAnimatedComponent(
-  require('react-native').TouchableOpacity
-);
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 interface GlowCardProps {
   children: React.ReactNode;

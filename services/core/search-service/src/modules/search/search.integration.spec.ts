@@ -9,8 +9,6 @@ import { RateLimitGuard } from '@azeebo/security';
 
 describe('Search Service Integration Tests', () => {
   let app: INestApplication;
-  let prismaService: jest.Mocked<PrismaService>;
-
   const mockPrismaService = {
     contentItem: {
       findMany: jest.fn(),

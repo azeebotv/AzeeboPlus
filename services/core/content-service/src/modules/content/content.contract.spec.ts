@@ -1,6 +1,6 @@
 /// <reference types="jest" />
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, CanActivate, ExecutionContext, NestInterceptor } from '@nestjs/common';
+import { INestApplication, CanActivate, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
 import { ContentModule } from './content.module';
 import { ContentRepository } from './content.repository';
@@ -10,8 +10,8 @@ import { MediaService } from '../media/media.service';
 import { TranscodingService } from '../media/transcoding.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, AdminGuard } from '@azeebo/security';
-import { CacheInterceptor, CacheService } from '../../cache';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { CacheInterceptor } from '../../cache';
+import { ConfigModule } from '@nestjs/config';
 
 class MockAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext) {
@@ -156,7 +156,9 @@ describe('Content Controller Contract Tests', () => {
       .overrideGuard(AdminGuard)
       .useClass(MockAdminGuard)
       .overrideInterceptor(CacheInterceptor)
-      .useValue({ intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle() })
+      .useValue({
+        intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle(),
+      })
       .compile();
 
     app = moduleFixture.createNestApplication();

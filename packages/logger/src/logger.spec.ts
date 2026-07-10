@@ -8,6 +8,7 @@ jest.mock('@opentelemetry/api', () => ({
 
 // Mock @nestjs/common with Injectable decorator
 jest.mock('@nestjs/common', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Injectable: () => (target: any) => target,
   LoggerService: class {},
   Logger: class {

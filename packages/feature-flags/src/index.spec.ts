@@ -1,4 +1,9 @@
-import { FeatureFlagService, FeatureFlagGuard, FeatureFlagModule, createFeatureFlagService } from './index';
+import {
+  FeatureFlagService,
+  FeatureFlagGuard,
+  FeatureFlagModule,
+  createFeatureFlagService,
+} from './index';
 
 describe('FeatureFlagService', () => {
   it('should be defined', () => {

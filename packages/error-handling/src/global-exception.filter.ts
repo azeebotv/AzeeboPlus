@@ -12,7 +12,6 @@ import { AppError, ErrorResponse } from './types';
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger('ExceptionFilter');
-  private readonly isProduction = process.env.NODE_ENV === 'production';
 
   /**
    * Derive an RFC 7807 problem type URI from the HTTP status code.

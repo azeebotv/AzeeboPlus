@@ -2,8 +2,6 @@ import { Controller, Get, Post, Body, UseGuards, Request } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
-import * as speakeasy from 'speakeasy';
-
 import { MfaService } from './mfa.service';
 import { EnableMfaDto } from '../dto/enable-mfa.dto';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
@@ -61,11 +59,7 @@ export class MfaController {
       return ApiResponseWrapper.error('MFA_SETUP_REQUIRED', 'Run /mfa/setup first');
     }
 
-    const isValid = speakeasy.totp.verify({
-      secret: pendingSecret,
-      encoding: 'base32',
-      token: dto.code,
-    });
+    const isValid = await this.mfaService.verifyMfaCode(req.user.id, dto.code);
 
     if (!isValid) {
       return ApiResponseWrapper.error('MFA_INVALID_CODE', 'Invalid MFA code');

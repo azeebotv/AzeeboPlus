@@ -15,17 +15,17 @@ export class QuizQuestionDto {
   @ApiProperty({ example: 'What is the capital of Nigeria?' })
   @IsString()
   @IsNotEmpty()
-  question: string;
+  question!: string;
 
   @ApiProperty({ example: ['Lagos', 'Abuja', 'Kano', 'Port Harcourt'] })
   @IsArray()
   @IsString({ each: true })
-  options: string[];
+  options!: string[];
 
   @ApiProperty({ example: '1' })
   @IsString()
   @IsNotEmpty()
-  correctAnswer: string;
+  correctAnswer!: string;
 
   @ApiPropertyOptional({ example: 'Abuja has been the capital since 1991.' })
   @IsString()
@@ -43,7 +43,7 @@ export class CreateQuizDto {
   @ApiProperty({ example: 'Nigeria Geography Quiz' })
   @IsString()
   @IsNotEmpty()
-  title: string;
+  title!: string;
 
   @ApiPropertyOptional({ example: 'Test your knowledge of Nigerian geography' })
   @IsString()
@@ -81,5 +81,5 @@ export class CreateQuizDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => QuizQuestionDto)
-  questions: QuizQuestionDto[];
+  questions!: QuizQuestionDto[];
 }

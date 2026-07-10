@@ -77,7 +77,7 @@ export class TakedownService {
           headers: { 'x-admin-user-id': decidedBy },
         });
         this.logger.log(`Content ${takedown.contentId} removed via content-service`);
-      } catch (_err) {
+      } catch (error) {
         this.logger.error(
           `Failed to remove content ${takedown.contentId}: ${(error as Error).message}`
         );
@@ -88,7 +88,7 @@ export class TakedownService {
           restoredBy: decidedBy,
         });
         this.logger.log(`Content ${takedown.contentId} restored via content-service`);
-      } catch (_err) {
+      } catch (error) {
         this.logger.error(
           `Failed to restore content ${takedown.contentId}: ${(error as Error).message}`
         );
@@ -120,7 +120,7 @@ export class TakedownService {
   }) {
     try {
       await this.auditServiceClient.post('/api/moderation/audit', event);
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`Failed to create audit event: ${(error as Error).message}`);
     }
   }

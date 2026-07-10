@@ -11,9 +11,12 @@ describe('Analytics SDK', () => {
     // Override flush to capture events without sending them
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (analytics as any).flush = async function (this: Analytics) {
-      if (this.queue.length === 0) return;
-      trackedEvents.push(...this.queue);
-      this.queue = [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((this as any).queue.length === 0) return;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      trackedEvents.push(...(this as any).queue);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (this as any).queue = [];
     };
   });
 

@@ -117,6 +117,32 @@ export class AgbalaTitlesService {
     };
   }
 
+  async getStoryworlds(): Promise<unknown[]> {
+    try {
+      const storyworlds = await this.prisma.universeMap.findMany({
+        where: { status: 'active' },
+        include: {
+          _count: { select: { titles: true, characters: true, locations: true } },
+        },
+        orderBy: { name: 'asc' },
+      });
+      return storyworlds.map((sw) => ({
+        id: sw.id,
+        name: sw.name,
+        slug: sw.slug,
+        description: sw.description,
+        imageUrl: sw.imageUrl,
+        status: sw.status,
+        titleCount: sw._count.titles,
+        characterCount: sw._count.characters,
+        locationCount: sw._count.locations,
+      }));
+    } catch (error) {
+      this.logger.error(`Failed to get storyworlds: ${(error as Error).message}`);
+      return [];
+    }
+  }
+
   async getTitles(
     page = 1,
     limit = 20,
@@ -233,7 +259,10 @@ export class AgbalaTitlesService {
       return response;
     } catch (error) {
       this.logger.error(`Failed to fetch featured titles: ${error}`);
-      return { success: false, error: { code: 'FETCH_ERROR', message: 'Failed to fetch featured titles' } };
+      return {
+        success: false,
+        error: { code: 'FETCH_ERROR', message: 'Failed to fetch featured titles' },
+      };
     }
   }
 

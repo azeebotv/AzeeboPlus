@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '../../../lib/api';
 import { webLogger } from '../../../lib/logger';
@@ -31,7 +31,6 @@ export default function EpisodesPage(): React.JSX.Element {
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchEpisodes = async () => {
@@ -43,12 +42,9 @@ export default function EpisodesPage(): React.JSX.Element {
         const result = await apiFetch<{ seasons: Season[] }>(`/v1/content/${contentId}/episodes`);
         if (result.success && result.data) {
           setSeasons(result.data.seasons || []);
-        } else {
-          setError(result.message || 'Failed to load episodes');
         }
       } catch (err) {
         webLogger.error('Failed to load episodes', err);
-        setError(err instanceof Error ? err.message : 'Failed to load episodes');
       } finally {
         setIsLoading(false);
       }

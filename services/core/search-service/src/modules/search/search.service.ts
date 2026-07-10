@@ -1,7 +1,7 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
-import { Prisma } from '@prisma/client';
+// Prisma client types available via PrismaService
 import { SearchResponse } from './interfaces/search-response.interface';
 
 interface FacetedFilters {
@@ -36,7 +36,7 @@ export class SearchService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly cache: CacheService,
+    private readonly cache: CacheService
   ) {}
 
   private escapeRegex(str: string): string {
@@ -61,7 +61,7 @@ export class SearchService {
 
     const escapedQuery = this.escapeRegex(query);
 
-    const whereCondition: Prisma.ContentItemWhereInput = {
+    const whereCondition: Record<string, unknown> = {
       OR: [
         { title: { contains: escapedQuery, mode: 'insensitive' } },
         { description: { contains: escapedQuery, mode: 'insensitive' } },
@@ -215,7 +215,7 @@ export class SearchService {
 
     const escapedQuery = this.escapeRegex(query);
 
-    const baseCondition: Prisma.ContentItemWhereInput = {
+    const baseCondition: Record<string, unknown> = {
       OR: [
         { title: { contains: escapedQuery, mode: 'insensitive' } },
         { description: { contains: escapedQuery, mode: 'insensitive' } },
@@ -305,7 +305,7 @@ export class SearchService {
   private async computeFacets(query: string): Promise<Facets> {
     const escapedQuery = this.escapeRegex(query);
 
-    const baseCondition: Prisma.ContentItemWhereInput = {
+    const baseCondition: Record<string, unknown> = {
       OR: [
         { title: { contains: escapedQuery, mode: 'insensitive' } },
         { description: { contains: escapedQuery, mode: 'insensitive' } },
@@ -359,7 +359,7 @@ export class SearchService {
     };
   }
 
-  private async getDateRangeFacets(baseCondition: Prisma.ContentItemWhereInput): Promise<Facet[]> {
+  private async getDateRangeFacets(baseCondition: Record<string, unknown>): Promise<Facet[]> {
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
     const sevenDaysAgo = new Date(startOfToday);
@@ -448,7 +448,7 @@ export class SearchService {
   }
 
   async getFacets(query?: string, universe?: string): Promise<SearchResponse> {
-    const contentWhere: Prisma.ContentItemWhereInput = {
+    const contentWhere: Record<string, unknown> = {
       status: 'published',
       ...(universe ? { universeId: universe } : {}),
       ...(query

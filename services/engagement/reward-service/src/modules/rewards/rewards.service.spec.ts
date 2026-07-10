@@ -6,7 +6,6 @@ import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('RewardsService', () => {
   let service: RewardsService;
-  let prisma: PrismaService;
 
   const mockPrismaService = {
     rewardAccount: {
@@ -60,7 +59,6 @@ describe('RewardsService', () => {
     }).compile();
 
     service = module.get<RewardsService>(RewardsService);
-    prisma = module.get<PrismaService>(PrismaService);
 
     jest.clearAllMocks();
   });
@@ -392,7 +390,7 @@ describe('RewardsService', () => {
       mockPrismaService.rewardAccount.update.mockResolvedValue({});
       mockPrismaService.pointsLedger.create.mockResolvedValue({});
 
-      const result = await service.earnPoints('user-1', 'custom', 25);
+      const result = await service.earnPoints('user-1', 'custom');
 
       expect(result.success).toBe(true);
       expect(result.data!.pointsEarned).toBe(25);

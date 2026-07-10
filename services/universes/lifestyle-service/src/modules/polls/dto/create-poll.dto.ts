@@ -1,10 +1,4 @@
-import {
-  IsString,
-  IsNotEmpty,
-  IsOptional,
-  IsArray,
-  ValidateNested,
-} from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsArray, ValidateNested } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
@@ -12,7 +6,7 @@ export class PollOptionDto {
   @ApiProperty({ example: 'Option A' })
   @IsString()
   @IsNotEmpty()
-  text: string;
+  text!: string;
 
   @ApiPropertyOptional({ example: 'https://example.com/option-a.jpg' })
   @IsString()
@@ -24,7 +18,7 @@ export class CreatePollDto {
   @ApiProperty({ example: 'Best Neighborhood in Lagos?' })
   @IsString()
   @IsNotEmpty()
-  title: string;
+  title!: string;
 
   @ApiPropertyOptional({ example: 'Vote for your favorite neighborhood' })
   @IsString()
@@ -50,5 +44,5 @@ export class CreatePollDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => PollOptionDto)
-  options: PollOptionDto[];
+  options!: PollOptionDto[];
 }

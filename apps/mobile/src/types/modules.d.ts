@@ -15,18 +15,21 @@ declare module '@expo/vector-icons' {
 
 declare module '@expo/vector-icons/Ionicons' {
   import { ComponentType } from 'react';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const Ionicons: ComponentType<{ name: string; size?: number; color?: string; style?: any }>;
   export default Ionicons;
 }
 
 declare module '@expo/vector-icons/MaterialIcons' {
   import { ComponentType } from 'react';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const MaterialIcons: ComponentType<{ name: string; size?: number; color?: string; style?: any }>;
   export default MaterialIcons;
 }
 
 declare module '@expo/vector-icons/FontAwesome' {
   import { ComponentType } from 'react';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const FontAwesome: ComponentType<{ name: string; size?: number; color?: string; style?: any }>;
   export default FontAwesome;
 }
@@ -37,6 +40,7 @@ declare module '@expo/vector-icons/MaterialCommunityIcons' {
     name: string;
     size?: number;
     color?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     style?: any;
   }>;
   export default MaterialCommunityIcons;

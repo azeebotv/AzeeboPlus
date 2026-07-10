@@ -63,6 +63,7 @@ describe('FixturesService', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toHaveProperty('items');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).items).toHaveLength(1);
     });
 
@@ -96,6 +97,7 @@ describe('FixturesService', () => {
       const result = await service.getFixtureById('event-1');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).title).toBe('Test Event');
     });
 
@@ -118,6 +120,7 @@ describe('FixturesService', () => {
       });
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).metadataId).toBe('metadata-1');
     });
 

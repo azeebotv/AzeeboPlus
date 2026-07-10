@@ -64,8 +64,8 @@ export function createContentMethods(client: RequestClient) {
 
     getSignedUrl: async (
       contentId: string
-    ): Promise<ApiResponse<{ url: string; expiresIn: number }>> => {
-      return client.request<{ url: string; expiresIn: number }>(
+    ): Promise<ApiResponse<{ signedUrl: string; expiresIn: number; mediaAssetId: string }>> => {
+      return client.request<{ signedUrl: string; expiresIn: number; mediaAssetId: string }>(
         `/api/v1/content/${contentId}/media/signed-url`
       );
     },

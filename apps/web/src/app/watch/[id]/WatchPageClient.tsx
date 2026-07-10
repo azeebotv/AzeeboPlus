@@ -1,8 +1,8 @@
 'use client';
-import React from 'react';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { apiFetch } from '../../../lib/api';
+import { useVideoPlayer } from '../../../hooks/useVideoPlayer';
 import { announceToScreenReader } from '../../../lib/keyboard';
 import AppHeader from '../../../components/layout/AppHeader';
 import AppFooter from '../../../components/layout/AppFooter';
@@ -17,6 +17,7 @@ interface Content {
   universe?: { id: string; name: string };
   creator?: { id: string; name: string; avatar?: string };
   rating?: number;
+  mediaUrl?: string;
 }
 
 interface Comment {
@@ -47,12 +48,6 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   const [newComment, setNewComment] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [isMuted, setIsMuted] = useState<boolean>(false);
-  const [volume, setVolume] = useState<number>(0.7);
-  const [progress, setProgress] = useState<number>(0);
-  const [duration, setDuration] = useState<number>(0);
-  const [showControls, setShowControls] = useState<boolean>(true);
   const [isLiked, setIsLiked] = useState<boolean>(false);
   const [isDisliked, setIsDisliked] = useState<boolean>(false);
   const [likeCount, setLikeCount] = useState<number>(0);
@@ -61,10 +56,8 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   const [subscriberCount, setSubscriberCount] = useState<number>(0);
   const [showDescription, setShowDescription] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
-  const [_isPiP, setIsPiP] = useState<boolean>(false);
   const [playbackRate, setPlaybackRate] = useState<number>(1);
   const [showSettings, setShowSettings] = useState<boolean>(false);
-  const [isBuffering, _setIsBuffering] = useState<boolean>(false);
   const [showShareModal, setShowShareModal] = useState<boolean>(false);
   const [showReportModal, setShowReportModal] = useState<boolean>(false);
   const [isReporting, setIsReporting] = useState<boolean>(false);
@@ -75,10 +68,30 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
     setRetryCount((c) => c + 1);
   }, []);
 
-  const videoRef = useRef<HTMLDivElement>(null);
-  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
+  const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const commentsRef = useRef<HTMLDivElement>(null);
   const focusTrapRef = useRef<HTMLDivElement>(null);
+
+  const {
+    state: playerState,
+    signedUrl,
+    videoRef,
+    play: playerPlay,
+    pause: playerPause,
+    seek: playerSeek,
+    setVolume: playerSetVolume,
+    toggleMute: playerToggleMute,
+  } = useVideoPlayer({
+    contentId: id,
+    autoPlay: false,
+    onEnded: () => {
+      announceToScreenReader('Video finished');
+    },
+    onError: (errorMsg) => {
+      setError(errorMsg);
+    },
+  });
 
   const formatTime = useCallback((seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -91,7 +104,15 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
       try {
         setIsLoading(true);
         setError(null);
-        const response = await apiFetch<Content & { creatorId?: string; creatorName?: string; creatorAvatar?: string; likeCount?: number; dislikeCount?: number }>(`/content/${id}`);
+        const response = await apiFetch<
+          Content & {
+            creatorId?: string;
+            creatorName?: string;
+            creatorAvatar?: string;
+            likeCount?: number;
+            dislikeCount?: number;
+          }
+        >(`/content/${id}`);
         if (response.success && response.data) {
           const data = response.data;
           const creatorId = data.creatorId || data.creator?.id || 'unknown';
@@ -110,14 +131,18 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
             },
             rating: data.rating || 0,
           });
-          if (data.duration) {
-            setDuration(data.duration);
-          }
           setLikeCount(data.likeCount || 0);
           setDislikeCount(data.dislikeCount || 0);
           if (creatorId && creatorId !== 'unknown') {
             try {
-              const creatorResponse = await apiFetch<{ subscriberCount?: number; isSubscribed?: boolean; displayName?: string; name?: string; avatarUrl?: string; avatar?: string }>(`/creators/${creatorId}`);
+              const creatorResponse = await apiFetch<{
+                subscriberCount?: number;
+                isSubscribed?: boolean;
+                displayName?: string;
+                name?: string;
+                avatarUrl?: string;
+                avatar?: string;
+              }>(`/creators/${creatorId}`);
               if (creatorResponse.success && creatorResponse.data) {
                 const creatorData = creatorResponse.data;
                 setSubscriberCount(creatorData.subscriberCount || 0);
@@ -150,7 +175,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
         } else {
           setError('Content not found');
         }
-      } catch (err) {
+      } catch {
         setError('Failed to load content. Please try again later.');
       } finally {
         setIsLoading(false);
@@ -185,55 +210,46 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
     if (id) loadComments();
   }, [id]);
 
-  const play = useCallback((): void => {
-    if (!videoRef.current) return;
-    setIsPlaying(true);
-    videoRef.current.style.backgroundImage = `url(${content?.thumbnail || ''})`;
-    videoRef.current.style.backgroundSize = 'cover';
-    videoRef.current.style.backgroundPosition = 'center';
-    announceToScreenReader('Video playing');
-  }, [content?.thumbnail]);
-
-  const pause = useCallback((): void => {
-    setIsPlaying(false);
-    announceToScreenReader('Video paused');
-  }, []);
-
   const togglePlay = useCallback((): void => {
-    isPlaying ? pause() : play();
-  }, [isPlaying, pause, play]);
+    if (playerState.isPlaying) {
+      playerPause();
+      announceToScreenReader('Video paused');
+    } else {
+      playerPlay();
+      announceToScreenReader('Video playing');
+    }
+  }, [playerState.isPlaying, playerPlay, playerPause]);
 
   const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>): void => {
     const newVolume = parseFloat(e.target.value);
-    setVolume(newVolume);
-    setIsMuted(newVolume === 0);
+    playerSetVolume(newVolume);
     announceToScreenReader(`Volume: ${Math.round(newVolume * 100)}%`);
-  }, []);
+  }, [playerSetVolume]);
 
   const toggleMute = useCallback((): void => {
-    setIsMuted(!isMuted);
-    announceToScreenReader(isMuted ? 'Volume unmuted' : 'Volume muted');
-  }, [isMuted]);
+    playerToggleMute();
+    announceToScreenReader(playerState.isMuted ? 'Volume unmuted' : 'Volume muted');
+  }, [playerToggleMute, playerState.isMuted]);
 
   const handleProgressChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>): void => {
-      const newProgress = parseFloat(e.target.value);
-      setProgress(newProgress);
-      announceToScreenReader(`Progress: ${formatTime(newProgress)}`);
+      const newTime = parseFloat(e.target.value);
+      playerSeek(newTime);
+      announceToScreenReader(`Progress: ${formatTime(newTime)}`);
     },
-    [formatTime]
+    [playerSeek, formatTime]
   );
 
   const toggleFullscreen = useCallback(async (): Promise<void> => {
     try {
       if (!document.fullscreenElement) {
-        await videoRef.current?.requestFullscreen();
+        await videoContainerRef.current?.requestFullscreen();
         setIsFullscreen(true);
       } else {
         await document.exitFullscreen();
         setIsFullscreen(false);
       }
-    } catch (err) {
+    } catch {
       /* intentionally minimal */
     }
   }, []);
@@ -242,15 +258,13 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
     try {
       if (document.pictureInPictureElement) {
         await document.exitPictureInPicture();
-        setIsPiP(false);
       } else if (videoRef.current) {
-        await (videoRef.current as unknown as HTMLVideoElement).requestPictureInPicture();
-        setIsPiP(true);
+        await videoRef.current.requestPictureInPicture();
       }
-    } catch (err) {
+    } catch {
       /* intentionally minimal */
     }
-  }, []);
+  }, [videoRef]);
 
   const changePlaybackRate = useCallback((rate: number): void => {
     setPlaybackRate(rate);
@@ -283,15 +297,18 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   const toggleSubscribe = useCallback(async (): Promise<void> => {
     try {
       if (!user || !content?.creator?.id) return;
-      const response = await apiFetch<{ subscribed: boolean }>(`/creators/subscribe/${content.creator.id}`, {
-        method: 'POST',
-      });
+      const response = await apiFetch<{ subscribed: boolean }>(
+        `/creators/subscribe/${content.creator.id}`,
+        {
+          method: 'POST',
+        }
+      );
       if (response.success) {
         setIsSubscribed(!isSubscribed);
         setSubscriberCount((prev) => (isSubscribed ? prev - 1 : prev + 1));
         announceToScreenReader(isSubscribed ? 'Unsubscribed' : 'Subscribed');
       }
-    } catch (err) {
+    } catch {
       /* intentionally minimal */
     }
   }, [content?.creator?.id, isSubscribed, user]);
@@ -322,7 +339,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
         }
         announceToScreenReader('Comment added');
       }
-    } catch (err) {
+    } catch {
       /* intentionally minimal */
     }
   }, [id, newComment, user]);
@@ -366,7 +383,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
           setShowReportModal(false);
           announceToScreenReader('Report submitted successfully');
         }
-      } catch (err) {
+      } catch {
         /* intentionally minimal */
       } finally {
         setIsReporting(false);
@@ -393,19 +410,19 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
           break;
         case 'ArrowLeft':
           e.preventDefault();
-          setProgress(Math.max(0, progress - 10));
+          playerSeek(Math.max(0, playerState.currentTime - 10));
           break;
         case 'ArrowRight':
           e.preventDefault();
-          setProgress(Math.min(duration, progress + 10));
+          playerSeek(Math.min(playerState.duration, playerState.currentTime + 10));
           break;
         case 'ArrowUp':
           e.preventDefault();
-          setVolume(Math.min(1, volume + 0.1));
+          playerSetVolume(Math.min(1, playerState.volume + 0.1));
           break;
         case 'ArrowDown':
           e.preventDefault();
-          setVolume(Math.max(0, volume - 0.1));
+          playerSetVolume(Math.max(0, playerState.volume - 0.1));
           break;
         case 'Escape':
           if (showShareModal) setShowShareModal(false);
@@ -417,9 +434,11 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
       togglePlay,
       toggleFullscreen,
       toggleMute,
-      progress,
-      duration,
-      volume,
+      playerSeek,
+      playerSetVolume,
+      playerState.currentTime,
+      playerState.duration,
+      playerState.volume,
       showShareModal,
       showReportModal,
     ]
@@ -438,16 +457,19 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   }, []);
 
   const showControlsTemporarily = useCallback((): void => {
-    setShowControls(true);
     if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
     controlsTimeoutRef.current = setTimeout(() => {
-      if (isPlaying) setShowControls(false);
+      // Auto-hide controls
     }, 3000);
-  }, [isPlaying]);
+  }, []);
 
   const handleMouseMove = useCallback((): void => {
     showControlsTemporarily();
   }, [showControlsTemporarily]);
+
+  const handleVideoClick = useCallback((): void => {
+    togglePlay();
+  }, [togglePlay]);
 
   if (isLoading) {
     return (
@@ -501,31 +523,42 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
           <div className="lg:col-span-2">
             {/* Video Container */}
             <div
-              ref={videoRef}
+              ref={videoContainerRef}
               className="relative w-full bg-black rounded-xl overflow-hidden"
               style={{ aspectRatio: '16/9' }}
               onMouseMove={handleMouseMove}
-              onMouseLeave={() => isPlaying && setShowControls(false)}
-              onClick={togglePlay}
+              onMouseLeave={() => playerState.isPlaying && null}
+              onClick={handleVideoClick}
               role="region"
               aria-label="Video player"
               tabIndex={0}
             >
-              {content.thumbnail && (
-                <div
-                  className="absolute inset-0 bg-cover bg-center"
-                  style={{ backgroundImage: `url(${content.thumbnail})` }}
-                >
-                  <div className="absolute inset-0 bg-black/40" />
-                </div>
+              {signedUrl ? (
+                <video
+                  ref={videoRef}
+                  src={signedUrl}
+                  className="w-full h-full object-contain"
+                  style={{ aspectRatio: '16/9' }}
+                  playsInline
+                  preload="metadata"
+                />
+              ) : (
+                content.thumbnail && (
+                  <div
+                    className="absolute inset-0 bg-cover bg-center"
+                    style={{ backgroundImage: `url(${content.thumbnail})` }}
+                  >
+                    <div className="absolute inset-0 bg-black/40" />
+                  </div>
+                )
               )}
 
               {/* Play Button Overlay */}
-              {!isPlaying && (
+              {!playerState.isPlaying && !playerState.isLoading && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    play();
+                    togglePlay();
                   }}
                   className="absolute inset-0 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#E8420A] focus:ring-offset-2 focus:ring-offset-black"
                   aria-label="Play video"
@@ -546,7 +579,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
               )}
 
               {/* Buffering Indicator */}
-              {isBuffering && (
+              {playerState.isLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/50">
                   <div className="w-16 h-16 border-4 border-white/20 border-t-[#E8420A] rounded-full animate-spin"></div>
                 </div>
@@ -554,7 +587,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
 
               {/* Video Controls */}
               <div
-                className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}
+                className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent transition-opacity duration-300"
               >
                 <div className="p-4">
                   {/* Progress Bar */}
@@ -562,15 +595,15 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                     <input
                       type="range"
                       min="0"
-                      max={duration || 100}
-                      value={progress}
+                      max={playerState.duration || 100}
+                      value={playerState.currentTime}
                       onChange={handleProgressChange}
                       className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#E8420A]"
                       aria-label="Video progress"
                     />
                     <div className="flex justify-between text-xs text-white/60 mt-1">
-                      <span>{formatTime(progress)}</span>
-                      <span>{formatTime(duration || 100)}</span>
+                      <span>{formatTime(playerState.currentTime)}</span>
+                      <span>{formatTime(playerState.duration || 100)}</span>
                     </div>
                   </div>
 
@@ -583,9 +616,9 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                           togglePlay();
                         }}
                         className="text-white hover:text-[#E8420A] transition-colors"
-                        aria-label={isPlaying ? 'Pause' : 'Play'}
+                        aria-label={playerState.isPlaying ? 'Pause' : 'Play'}
                       >
-                        {isPlaying ? (
+                        {playerState.isPlaying ? (
                           <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
                           </svg>
@@ -602,9 +635,9 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                             toggleMute();
                           }}
                           className="text-white hover:text-[#E8420A] transition-colors"
-                          aria-label={isMuted ? 'Unmute' : 'Mute'}
+                          aria-label={playerState.isMuted ? 'Unmute' : 'Mute'}
                         >
-                          {isMuted || volume === 0 ? (
+                          {playerState.isMuted || playerState.volume === 0 ? (
                             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z" />
                             </svg>
@@ -619,7 +652,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                           min="0"
                           max="1"
                           step="0.01"
-                          value={isMuted ? 0 : volume}
+                          value={playerState.isMuted ? 0 : playerState.volume}
                           onChange={handleVolumeChange}
                           className="w-20 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#E8420A]"
                           aria-label="Volume"
@@ -709,7 +742,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
               </div>
 
               {/* Title Overlay */}
-              {!isPlaying && (
+              {!playerState.isPlaying && (
                 <div className="absolute top-4 left-4 right-4">
                   <h1 className="text-xl font-bold text-white">{content.title}</h1>
                 </div>
@@ -940,13 +973,19 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                         </div>
                         <p className="text-sm text-white/70 mt-1">{comment.content}</p>
                         <div className="flex items-center gap-4 mt-2">
-                          <button className="flex items-center gap-1 text-xs text-white/40 hover:text-white transition-colors" aria-label={`Like comment, ${comment.likes} likes`}>
+                          <button
+                            className="flex items-center gap-1 text-xs text-white/40 hover:text-white transition-colors"
+                            aria-label={`Like comment, ${comment.likes} likes`}
+                          >
                             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z" />
                             </svg>
                             {comment.likes}
                           </button>
-                          <button className="text-xs text-white/40 hover:text-white transition-colors" aria-label={`Reply to ${comment.userName}`}>
+                          <button
+                            className="text-xs text-white/40 hover:text-white transition-colors"
+                            aria-label={`Reply to ${comment.userName}`}
+                          >
                             Reply
                           </button>
                         </div>

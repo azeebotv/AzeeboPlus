@@ -43,9 +43,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
   }, [id]);
 
   if (isLoading) {
-    return (
-      <div style={{ padding: 32, color: '#9A8A7A' }}>Loading...</div>
-    );
+    return <div style={{ padding: 32, color: '#9A8A7A' }}>Loading...</div>;
   }
 
   if (error) {
@@ -71,9 +69,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
   }
 
   if (!user) {
-    return (
-      <div style={{ padding: 32, color: '#9A8A7A' }}>User not found</div>
-    );
+    return <div style={{ padding: 32, color: '#9A8A7A' }}>User not found</div>;
   }
 
   return (
@@ -107,39 +103,57 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
       >
         <div style={{ display: 'grid', gap: 16 }}>
           <div>
-            <label style={{ fontSize: 12, color: '#9A8A7A', textTransform: 'uppercase' }}>Email</label>
+            <label style={{ fontSize: 12, color: '#9A8A7A', textTransform: 'uppercase' }}>
+              Email
+            </label>
             <p style={{ color: '#fff', marginTop: 4 }}>{user.email}</p>
           </div>
           <div>
-            <label style={{ fontSize: 12, color: '#9A8A7A', textTransform: 'uppercase' }}>Username</label>
+            <label style={{ fontSize: 12, color: '#9A8A7A', textTransform: 'uppercase' }}>
+              Username
+            </label>
             <p style={{ color: '#fff', marginTop: 4 }}>{user.username}</p>
           </div>
           {user.phone && (
             <div>
-              <label style={{ fontSize: 12, color: '#9A8A7A', textTransform: 'uppercase' }}>Phone</label>
+              <label style={{ fontSize: 12, color: '#9A8A7A', textTransform: 'uppercase' }}>
+                Phone
+              </label>
               <p style={{ color: '#fff', marginTop: 4 }}>{user.phone}</p>
             </div>
           )}
           <div>
-            <label style={{ fontSize: 12, color: '#9A8A7A', textTransform: 'uppercase' }}>Status</label>
+            <label style={{ fontSize: 12, color: '#9A8A7A', textTransform: 'uppercase' }}>
+              Status
+            </label>
             <p style={{ color: user.isActive ? '#22C55E' : '#CC1C1C', marginTop: 4 }}>
               {user.isActive ? 'Active' : 'Inactive'}
             </p>
           </div>
           <div>
-            <label style={{ fontSize: 12, color: '#9A8A7A', textTransform: 'uppercase' }}>Email Verified</label>
+            <label style={{ fontSize: 12, color: '#9A8A7A', textTransform: 'uppercase' }}>
+              Email Verified
+            </label>
             <p style={{ color: user.emailVerified ? '#22C55E' : '#F59E0B', marginTop: 4 }}>
               {user.emailVerified ? 'Yes' : 'No'}
             </p>
           </div>
           <div>
-            <label style={{ fontSize: 12, color: '#9A8A7A', textTransform: 'uppercase' }}>Created</label>
-            <p style={{ color: '#fff', marginTop: 4 }}>{new Date(user.createdAt).toLocaleDateString()}</p>
+            <label style={{ fontSize: 12, color: '#9A8A7A', textTransform: 'uppercase' }}>
+              Created
+            </label>
+            <p style={{ color: '#fff', marginTop: 4 }}>
+              {new Date(user.createdAt).toLocaleDateString()}
+            </p>
           </div>
           {user.lastLoginAt && (
             <div>
-              <label style={{ fontSize: 12, color: '#9A8A7A', textTransform: 'uppercase' }}>Last Login</label>
-              <p style={{ color: '#fff', marginTop: 4 }}>{new Date(user.lastLoginAt).toLocaleDateString()}</p>
+              <label style={{ fontSize: 12, color: '#9A8A7A', textTransform: 'uppercase' }}>
+                Last Login
+              </label>
+              <p style={{ color: '#fff', marginTop: 4 }}>
+                {new Date(user.lastLoginAt).toLocaleDateString()}
+              </p>
             </div>
           )}
         </div>

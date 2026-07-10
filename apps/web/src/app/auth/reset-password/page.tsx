@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import AuthShell from '@/components/auth/AuthShell';

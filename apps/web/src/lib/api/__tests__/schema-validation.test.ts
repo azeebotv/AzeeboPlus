@@ -2,18 +2,16 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createAuthMethods } from '../auth';
 import { createContentMethods } from '../content';
 import { createWalletMethods } from '../wallet';
-import { createUserMethods } from '../user';
 import { createPaymentMethods } from '../payment';
 import { createUniverseMethods } from '../universe';
 import { createCreatorMethods } from '../creator';
 import { createAdminMethods } from '../admin';
-import { createRecommendationMethods } from '../recommendation';
 import { createEngagementMethods } from '../engagement';
 import { createRealityMethods } from '../reality';
 import type { RequestClient } from '../base';
 
-function createMockClient(): RequestClient & { request: ReturnType<typeof vi.fn> } {
-  return { request: vi.fn() };
+function createMockClient() {
+  return { request: vi.fn() } as unknown as RequestClient & { request: ReturnType<typeof vi.fn> };
 }
 
 // ── Response Shape Validation ──────────────────────────────────────────────
@@ -177,7 +175,14 @@ describe('Response Schema — Wallet', () => {
   it('getTransactions returns PaginatedResponse of Transaction', async () => {
     const data = {
       items: [
-        { id: 'tx1', type: 'credit', amount: 100, currency: 'NGN', status: 'completed', createdAt: '2026-01-01' },
+        {
+          id: 'tx1',
+          type: 'credit',
+          amount: 100,
+          currency: 'NGN',
+          status: 'completed',
+          createdAt: '2026-01-01',
+        },
       ],
       total: 1,
       page: 1,
@@ -255,7 +260,13 @@ describe('Response Schema — Universe', () => {
 
   it('getUniverses returns array of Universe', async () => {
     const data = [
-      { id: 'u1', name: 'nollywood', description: 'Nigerian cinema', icon: '🎬', contentCount: 150 },
+      {
+        id: 'u1',
+        name: 'nollywood',
+        description: 'Nigerian cinema',
+        icon: '🎬',
+        contentCount: 150,
+      },
     ];
     client.request.mockResolvedValue({ success: true, data });
 
@@ -277,7 +288,12 @@ describe('Response Schema — Creator', () => {
   });
 
   it('getCreator returns creator profile', async () => {
-    const data = { id: 'cr1', name: 'Creator One', avatar: 'https://cdn.example.com/avatar.jpg', contentCount: 50 };
+    const data = {
+      id: 'cr1',
+      name: 'Creator One',
+      avatar: 'https://cdn.example.com/avatar.jpg',
+      contentCount: 50,
+    };
     client.request.mockResolvedValue({ success: true, data });
 
     const result = await creator.getCreator('cr1');
@@ -399,7 +415,13 @@ describe('Response Schema — Reality', () => {
 
   it('getContestants returns array of Contestant shape', async () => {
     const data = [
-      { id: 'cont1', name: 'Contestant 1', avatar: 'https://cdn.example.com/c1.jpg', votes: 1500, status: 'safe' },
+      {
+        id: 'cont1',
+        name: 'Contestant 1',
+        avatar: 'https://cdn.example.com/c1.jpg',
+        votes: 1500,
+        status: 'safe',
+      },
     ];
     client.request.mockResolvedValue({ success: true, data });
 
@@ -425,7 +447,11 @@ describe('Error Response Schema — consistent error envelope', () => {
 
   it('error responses have success: false and message', async () => {
     const auth = createAuthMethods(client);
-    client.request.mockResolvedValue({ success: false, message: 'Invalid credentials', statusCode: 401 });
+    client.request.mockResolvedValue({
+      success: false,
+      message: 'Invalid credentials',
+      statusCode: 401,
+    });
 
     const result = await auth.login({ email: 'a@b.com', password: 'wrong' });
 

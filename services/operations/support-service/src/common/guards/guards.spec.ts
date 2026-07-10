@@ -26,6 +26,7 @@ describe('Auth Guard Tests', () => {
   });
 
   it('should allow authenticated user', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mockReq: { headers: { authorization?: string }; user?: any } = {
       headers: { authorization: 'Bearer valid-token' },
     };
@@ -120,6 +121,7 @@ describe('Admin Guard Tests', () => {
   });
 
   it('should allow ADMIN role', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mockReq: { headers: { authorization?: string }; user?: any } = {
       headers: { authorization: 'Bearer admin-token' },
     };

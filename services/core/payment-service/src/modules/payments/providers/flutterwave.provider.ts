@@ -61,7 +61,10 @@ export class FlutterwaveProvider {
 
   constructor(private readonly configService: ConfigService) {
     this.apiKey = this.configService.get<string>('FLUTTERWAVE_SECRET_KEY') || '';
-    this.baseUrl = this.configService.get<string>('FLUTTERWAVE_API_URL', 'https://api.flutterwave.com/v3');
+    this.baseUrl = this.configService.get<string>(
+      'FLUTTERWAVE_API_URL',
+      'https://api.flutterwave.com/v3'
+    );
     if (!this.apiKey) {
       this.logger.warn(
         'FLUTTERWAVE_SECRET_KEY is not configured — Flutterwave payments will be unavailable'

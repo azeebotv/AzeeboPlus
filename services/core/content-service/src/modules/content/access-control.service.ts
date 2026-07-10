@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 export interface AccessCheckResult {
@@ -443,7 +443,9 @@ export class AccessControlService {
       });
 
       if (userPasses.length > 0) {
-        const universeIds = userPasses.filter((p) => p.universeId).map((p) => p.universeId as string);
+        const universeIds = userPasses
+          .filter((p) => p.universeId)
+          .map((p) => p.universeId as string);
 
         const passAccessibleContent = await this.prisma.contentItem.findMany({
           where: {
@@ -476,7 +478,13 @@ export class AccessControlService {
       };
     } catch (error) {
       this.logger.error(`Failed to get accessible content: ${error}`);
-      return { success: false, error: { code: 'GET_ACCESSIBLE_CONTENT_FAILED', message: 'Failed to retrieve accessible content' } };
+      return {
+        success: false,
+        error: {
+          code: 'GET_ACCESSIBLE_CONTENT_FAILED',
+          message: 'Failed to retrieve accessible content',
+        },
+      };
     }
   }
 }

@@ -45,9 +45,7 @@ export class UniverseController {
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Create new location' })
   @ApiResponse({ status: 201, description: 'Location created' })
-  async createLocation(
-    @Body() data: CreateLocationDto
-  ): Promise<unknown> {
+  async createLocation(@Body() data: CreateLocationDto): Promise<unknown> {
     return this.universeService.createLocation(data);
   }
 
@@ -55,10 +53,7 @@ export class UniverseController {
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Update location' })
   @ApiResponse({ status: 200, description: 'Location updated' })
-  async updateLocation(
-    @Param('id') id: string,
-    @Body() data: UpdateLocationDto
-  ): Promise<unknown> {
+  async updateLocation(@Param('id') id: string, @Body() data: UpdateLocationDto): Promise<unknown> {
     return this.universeService.updateLocation(id, data);
   }
 

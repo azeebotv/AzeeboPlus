@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { useSettings } from '../hooks/useDatabase';
 
@@ -17,7 +17,6 @@ export function SeoMeta({
   image,
   noIndex = false,
 }: SeoMetaProps): React.JSX.Element {
-  const _pathname = usePathname();
   const { getSetting } = useSettings();
   const siteName = getSetting('site_name', 'Azeebo+');
 

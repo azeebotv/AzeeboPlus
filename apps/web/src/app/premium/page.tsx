@@ -1,30 +1,11 @@
 'use client';
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { Spinner, ErrorState } from '@azeebo/ui/web';
-
-interface PremiumPlan {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  duration: 'weekly' | 'monthly' | 'yearly';
-  features: string[];
-  isPopular: boolean;
-  discount?: number;
-}
-
-interface PremiumStatus {
-  isPremium: boolean;
-  subscriptionId?: string;
-  planName?: string;
-  expiresAt?: string;
-  autoRenew: boolean;
-}
 
 export default function PremiumAccessPage(): React.JSX.Element {
   const queryClient = useQueryClient();
@@ -51,7 +32,12 @@ export default function PremiumAccessPage(): React.JSX.Element {
           name: plan.name,
           description: plan.description,
           price: plan.price,
-          duration: plan.duration === 7 ? 'weekly' : plan.duration === 30 ? 'monthly' : 'yearly' as 'weekly' | 'monthly' | 'yearly',
+          duration:
+            plan.duration === 7
+              ? 'weekly'
+              : plan.duration === 30
+                ? 'monthly'
+                : ('yearly' as 'weekly' | 'monthly' | 'yearly'),
           features: plan.features,
           isPopular: plan.tier === 'premium',
         }));
@@ -104,7 +90,10 @@ export default function PremiumAccessPage(): React.JSX.Element {
         queryClient.invalidateQueries({ queryKey: ['premium'] });
       }
     } catch (error: unknown) {
-      setToast({ message: error instanceof Error ? error.message : 'Failed to subscribe', type: 'error' });
+      setToast({
+        message: error instanceof Error ? error.message : 'Failed to subscribe',
+        type: 'error',
+      });
     } finally {
       setIsPurchasing(false);
     }
@@ -294,7 +283,8 @@ export default function PremiumAccessPage(): React.JSX.Element {
         <div
           className="fixed bottom-6 right-6 z-50 px-6 py-3 rounded-xl shadow-lg transition-all"
           style={{
-            backgroundColor: toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+            backgroundColor:
+              toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
             border: `1px solid ${toast.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
             color: toast.type === 'success' ? '#22C55E' : '#EF4444',
           }}

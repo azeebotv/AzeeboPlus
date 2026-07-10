@@ -153,7 +153,11 @@ export class HealthCheckService {
       if (pong === 'PONG') {
         return { status: 'up', latencyMs: Date.now() - start };
       }
-      return { status: 'down', message: `Unexpected PING response: ${pong}`, latencyMs: Date.now() - start };
+      return {
+        status: 'down',
+        message: `Unexpected PING response: ${pong}`,
+        latencyMs: Date.now() - start,
+      };
     } catch (error) {
       return {
         status: 'down',
@@ -164,7 +168,7 @@ export class HealthCheckService {
   }
 
   async checkExternalService(
-    name: string,
+    _name: string,
     url: string,
     timeoutMs = 5000
   ): Promise<{ status: 'up' | 'down' | 'degraded'; message?: string; latencyMs?: number }> {

@@ -133,12 +133,13 @@ export class S3Service {
       });
     } catch (error: unknown) {
       if (error instanceof CircuitBreakerOpenError) {
-        this.logger.warn(`S3 circuit breaker open: ${error.message}`);
+        const err = error as CircuitBreakerOpenError;
+        this.logger.warn(`S3 circuit breaker open: ${err.message}`);
         throw new BadRequestException(
           'File upload service temporarily unavailable. Please try again later.'
         );
       }
-      this.logger.error(`Error uploading file to S3: ${error.message}`);
+      this.logger.error(`Error uploading file to S3: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
 
@@ -167,7 +168,7 @@ export class S3Service {
       const result = await fileTypeFromBuffer(buffer);
       return result?.mime;
     } catch (error: unknown) {
-      this.logger.warn(`Failed to sniff MIME type: ${error.message}`);
+      this.logger.warn(`Failed to sniff MIME type: ${error instanceof Error ? error.message : String(error)}`);
       return undefined;
     }
   }
@@ -205,7 +206,7 @@ export class S3Service {
         return await this.extractAudioDuration(buffer);
       }
     } catch (error: unknown) {
-      this.logger.warn(`Failed to extract duration: ${error.message}`);
+      this.logger.warn(`Failed to extract duration: ${error instanceof Error ? error.message : String(error)}`);
     }
     return undefined;
   }
@@ -232,12 +233,13 @@ export class S3Service {
       return url;
     } catch (error: unknown) {
       if (error instanceof CircuitBreakerOpenError) {
-        this.logger.warn(`S3 circuit breaker open: ${error.message}`);
+        const err = error as CircuitBreakerOpenError;
+        this.logger.warn(`S3 circuit breaker open: ${err.message}`);
         throw new BadRequestException(
           'File download service temporarily unavailable. Please try again later.'
         );
       }
-      this.logger.error(`Error getting signed download URL: ${error.message}`);
+      this.logger.error(`Error getting signed download URL: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
   }
@@ -265,12 +267,13 @@ export class S3Service {
       return { uploadUrl, key };
     } catch (error: unknown) {
       if (error instanceof CircuitBreakerOpenError) {
-        this.logger.warn(`S3 circuit breaker open: ${error.message}`);
+        const err = error as CircuitBreakerOpenError;
+        this.logger.warn(`S3 circuit breaker open: ${err.message}`);
         throw new BadRequestException(
           'File upload service temporarily unavailable. Please try again later.'
         );
       }
-      this.logger.error(`Error getting signed upload URL: ${error.message}`);
+      this.logger.error(`Error getting signed upload URL: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
   }
@@ -287,12 +290,13 @@ export class S3Service {
       });
     } catch (error: unknown) {
       if (error instanceof CircuitBreakerOpenError) {
-        this.logger.warn(`S3 circuit breaker open: ${error.message}`);
+        const err = error as CircuitBreakerOpenError;
+        this.logger.warn(`S3 circuit breaker open: ${err.message}`);
         throw new BadRequestException(
           'File deletion service temporarily unavailable. Please try again later.'
         );
       }
-      this.logger.error(`Error deleting file from S3: ${error.message}`);
+      this.logger.error(`Error deleting file from S3: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
   }
@@ -316,12 +320,13 @@ export class S3Service {
       };
     } catch (error: unknown) {
       if (error instanceof CircuitBreakerOpenError) {
-        this.logger.warn(`S3 circuit breaker open: ${error.message}`);
+        const err = error as CircuitBreakerOpenError;
+        this.logger.warn(`S3 circuit breaker open: ${err.message}`);
         throw new BadRequestException(
           'File metadata service temporarily unavailable. Please try again later.'
         );
       }
-      this.logger.error(`Error getting file metadata from S3: ${error.message}`);
+      this.logger.error(`Error getting file metadata from S3: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
   }
@@ -348,9 +353,7 @@ export class S3Service {
             await this.deleteFile(item.Key || '');
             deletedCount++;
           } catch (error: unknown) {
-            this.logger.error(
-              `Failed to delete orphaned file ${item.Key}: ${error.message}`
-            );
+            this.logger.error(`Failed to delete orphaned file ${item.Key}: ${error instanceof Error ? error.message : String(error)}`);
           }
         }
       }

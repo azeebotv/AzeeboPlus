@@ -104,7 +104,9 @@ export class SubscriptionService {
     }
 
     if (this.isCircuitOpen()) {
-      throw new BadRequestException('Payment service is temporarily unavailable. Please try again later.');
+      throw new BadRequestException(
+        'Payment service is temporarily unavailable. Please try again later.'
+      );
     }
 
     try {
@@ -115,11 +117,15 @@ export class SubscriptionService {
       this.recordPaymentSuccess();
 
       if (paymentVerification.data?.status !== 'completed') {
-        throw new BadRequestException('Payment has not been completed. Please complete payment first.');
+        throw new BadRequestException(
+          'Payment has not been completed. Please complete payment first.'
+        );
       }
 
       if (Number(paymentVerification.data?.amount).toFixed(2) !== Number(plan.price).toFixed(2)) {
-        throw new BadRequestException(`Payment amount (${paymentVerification.data?.amount}) does not match plan price (${plan.price})`);
+        throw new BadRequestException(
+          `Payment amount (${paymentVerification.data?.amount}) does not match plan price (${plan.price})`
+        );
       }
     } catch (error) {
       if (error instanceof BadRequestException || error instanceof NotFoundException) {
@@ -228,7 +234,11 @@ export class SubscriptionService {
     return result;
   }
 
-  async getSubscriptionHistory(userId: string, page = 1, limit = 20): Promise<{
+  async getSubscriptionHistory(
+    userId: string,
+    page = 1,
+    limit = 20
+  ): Promise<{
     subscriptions: Subscription[];
     pagination: { page: number; limit: number; total: number; totalPages: number };
   }> {

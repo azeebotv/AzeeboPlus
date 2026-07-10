@@ -110,6 +110,7 @@ describe('Support Workflow (Integration)', () => {
 
   beforeEach(async () => {
     const mockConfigService = {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       get: jest.fn((key: string, defaultValue?: any) => {
         const config: Record<string, string> = {
           PAYMENT_SERVICE_URL: 'http://localhost:3003',
@@ -161,7 +162,6 @@ describe('Support Workflow (Integration)', () => {
 
   describe('Full Support Workflow', () => {
     const userId = 'user-support-workflow-123';
-    const adminId = 'admin-support-workflow-456';
     let createdTicketId: string;
 
     it('should create a support ticket', async () => {

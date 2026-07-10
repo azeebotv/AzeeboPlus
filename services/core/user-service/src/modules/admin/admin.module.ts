@@ -12,10 +12,10 @@ import { AdminGuard } from '@azeebo/security';
     ConfigModule.forRoot(),
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         secret: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
         signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '1h') as string | number,
+          expiresIn: configService.get('JWT_EXPIRES_IN', '1h') as any,
         },
       }),
       inject: [ConfigService],

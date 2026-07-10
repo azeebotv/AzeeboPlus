@@ -89,7 +89,9 @@ describe('ComedyFeedService', () => {
       const result = await service.getFeed();
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).items).toBeDefined();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).items).toHaveLength(1);
     });
 
@@ -112,6 +114,7 @@ describe('ComedyFeedService', () => {
       const result = await service.getSpecials(1, 20);
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).items).toHaveLength(1);
     });
 
@@ -134,6 +137,7 @@ describe('ComedyFeedService', () => {
       const result = await service.getSpecialById('special-1');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).title).toBe('Test Special');
     });
 
@@ -156,6 +160,7 @@ describe('ComedyFeedService', () => {
       const result = await service.likeSpecial('user-1', 'special-1');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).message).toBe('Liked');
     });
 
@@ -170,6 +175,7 @@ describe('ComedyFeedService', () => {
       const result = await service.likeSpecial('user-1', 'special-1');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).message).toBe('Unliked');
     });
   });

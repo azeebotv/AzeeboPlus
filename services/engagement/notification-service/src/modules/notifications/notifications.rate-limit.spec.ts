@@ -1,5 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, UnauthorizedException, HttpException, HttpStatus, ExecutionContext } from '@nestjs/common';
+import {
+  INestApplication,
+  UnauthorizedException,
+  HttpException,
+  HttpStatus,
+  ExecutionContext,
+} from '@nestjs/common';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';

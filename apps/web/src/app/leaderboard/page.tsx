@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
@@ -22,7 +22,9 @@ export default function LeaderboardPage(): React.JSX.Element {
   const leaderboardQuery = useQuery({
     queryKey: ['leaderboard', timeframe],
     queryFn: async () => {
-      const response = await apiFetch<{ success: boolean; data: LeaderboardEntry[] | { items?: LeaderboardEntry[] } }>(`/engagement/leaderboard?timePeriod=${timeframe}`);
+      const response = await apiFetch<LeaderboardEntry[] | { items?: LeaderboardEntry[] }>(
+        `/engagement/leaderboard?timePeriod=${timeframe}`
+      );
       if (response.success && response.data) {
         const data = response.data;
         return Array.isArray(data) ? data : data.items || [];

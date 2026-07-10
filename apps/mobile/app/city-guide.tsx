@@ -13,8 +13,9 @@ import { useRouter } from 'expo-router';
 import { colors } from '../src/theme';
 import { apiClient } from '../src/api/client';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
+import { defaultImages } from '../src/theme';
 
-const PLACEHOLDER_IMAGE = '';
+const PLACEHOLDER_IMAGE = defaultImages.thumbnail;
 
 interface City {
   id: string;

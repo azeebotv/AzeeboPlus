@@ -374,7 +374,7 @@ export class PaymentsService {
     }
 
     const paymentProvider = this.getProvider(provider);
-    const isValid = paymentProvider.verifyWebhookSignature(body, signature);
+    const isValid = paymentProvider.verifyWebhookSignature(JSON.stringify(body), signature);
 
     if (!isValid) {
       throw new BadRequestException('Invalid webhook signature');

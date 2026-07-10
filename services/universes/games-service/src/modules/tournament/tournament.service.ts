@@ -2,7 +2,6 @@ import { Injectable, NotFoundException, BadRequestException, Logger } from '@nes
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import axios from 'axios';
-import { randomUUID } from 'crypto';
 
 interface Tournament {
   id: string;
@@ -42,11 +41,11 @@ export class TournamentService {
 
   constructor(
     private prisma: PrismaService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {
     this.walletServiceUrl = this.configService.get<string>(
       'WALLET_SERVICE_URL',
-      'http://wallet-service:3002',
+      'http://wallet-service:3002'
     );
   }
 
@@ -95,7 +94,10 @@ export class TournamentService {
       };
     } catch (error) {
       this.logger.error(`Failed to fetch tournaments: ${error}`);
-      return { success: false, error: { code: 'FETCH_ERROR', message: 'Failed to fetch tournaments' } };
+      return {
+        success: false,
+        error: { code: 'FETCH_ERROR', message: 'Failed to fetch tournaments' },
+      };
     }
   }
 
@@ -117,7 +119,10 @@ export class TournamentService {
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to fetch tournament ${id}: ${error}`);
-      return { success: false, error: { code: 'FETCH_ERROR', message: 'Failed to fetch tournament' } };
+      return {
+        success: false,
+        error: { code: 'FETCH_ERROR', message: 'Failed to fetch tournament' },
+      };
     }
   }
 
@@ -175,7 +180,10 @@ export class TournamentService {
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
       this.logger.error(`Failed to enter tournament ${tournamentId}: ${error}`);
-      return { success: false, error: { code: 'ENTER_ERROR', message: 'Failed to enter tournament' } };
+      return {
+        success: false,
+        error: { code: 'ENTER_ERROR', message: 'Failed to enter tournament' },
+      };
     }
   }
 
@@ -246,7 +254,10 @@ export class TournamentService {
       };
     } catch (error) {
       this.logger.error(`Failed to fetch leaderboard for tournament ${tournamentId}: ${error}`);
-      return { success: false, error: { code: 'LEADERBOARD_ERROR', message: 'Failed to fetch leaderboard' } };
+      return {
+        success: false,
+        error: { code: 'LEADERBOARD_ERROR', message: 'Failed to fetch leaderboard' },
+      };
     }
   }
 
@@ -323,16 +334,18 @@ export class TournamentService {
         prizeDistribution
           .filter((winner) => winner.prize > 0)
           .map((winner) =>
-            axios.post(`${this.walletServiceUrl}/wallet/credit`, {
-              userId: winner.userId,
-              amount: winner.prize,
-              description: `Tournament prize: ${tournament.title} (Rank #${winner.rank})`,
-              reference: `tournament-prize-${tournamentId}-${winner.rank}`,
-            }).then(() => {
-              this.logger.log(
-                `Credited ${winner.prize} to user ${winner.userId} for tournament ${tournamentId} rank #${winner.rank}`
-              );
-            })
+            axios
+              .post(`${this.walletServiceUrl}/wallet/credit`, {
+                userId: winner.userId,
+                amount: winner.prize,
+                description: `Tournament prize: ${tournament.title} (Rank #${winner.rank})`,
+                reference: `tournament-prize-${tournamentId}-${winner.rank}`,
+              })
+              .then(() => {
+                this.logger.log(
+                  `Credited ${winner.prize} to user ${winner.userId} for tournament ${tournamentId} rank #${winner.rank}`
+                );
+              })
           )
       );
 

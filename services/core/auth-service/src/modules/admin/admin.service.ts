@@ -30,7 +30,10 @@ export class AdminService {
       return ApiResponseWrapper.success({ totalUsers, activeUsersToday, signupsToday });
     } catch (error) {
       this.logger.error(`Failed to get auth stats: ${error}`);
-      return { success: false, error: { code: 'GET_STATS_FAILED', message: 'Failed to retrieve auth stats' } };
+      return {
+        success: false,
+        error: { code: 'GET_STATS_FAILED', message: 'Failed to retrieve auth stats' },
+      };
     }
   }
 
@@ -65,7 +68,10 @@ export class AdminService {
       return ApiResponseWrapper.paginated(users, page, limit, total);
     } catch (error) {
       this.logger.error(`Failed to get users: ${error}`);
-      return { success: false, error: { code: 'GET_USERS_FAILED', message: 'Failed to retrieve users' } };
+      return {
+        success: false,
+        error: { code: 'GET_USERS_FAILED', message: 'Failed to retrieve users' },
+      };
     }
   }
 
@@ -79,7 +85,10 @@ export class AdminService {
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to get user by id: ${error}`);
-      return { success: false, error: { code: 'GET_USER_FAILED', message: 'Failed to retrieve user' } };
+      return {
+        success: false,
+        error: { code: 'GET_USER_FAILED', message: 'Failed to retrieve user' },
+      };
     }
   }
 
@@ -94,7 +103,10 @@ export class AdminService {
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to suspend user: ${error}`);
-      return { success: false, error: { code: 'SUSPEND_USER_FAILED', message: 'Failed to suspend user' } };
+      return {
+        success: false,
+        error: { code: 'SUSPEND_USER_FAILED', message: 'Failed to suspend user' },
+      };
     }
   }
 
@@ -109,7 +121,10 @@ export class AdminService {
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to activate user: ${error}`);
-      return { success: false, error: { code: 'ACTIVATE_USER_FAILED', message: 'Failed to activate user' } };
+      return {
+        success: false,
+        error: { code: 'ACTIVATE_USER_FAILED', message: 'Failed to activate user' },
+      };
     }
   }
 }

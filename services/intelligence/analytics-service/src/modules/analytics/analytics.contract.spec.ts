@@ -4,7 +4,6 @@ import request from 'supertest';
 import { AnalyticsModule } from './analytics.module';
 import { AnalyticsService } from './analytics.service';
 import { PrismaService } from '../database/prisma.service';
-import { JwtService } from '@nestjs/jwt';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';
 
@@ -26,7 +25,13 @@ describe('Analytics Controller Contract Tests', () => {
   let app: INestApplication;
 
   const mockPrismaService = {
-    productEvent: { create: jest.fn(), count: jest.fn(), findMany: jest.fn(), groupBy: jest.fn(), aggregate: jest.fn() },
+    productEvent: {
+      create: jest.fn(),
+      count: jest.fn(),
+      findMany: jest.fn(),
+      groupBy: jest.fn(),
+      aggregate: jest.fn(),
+    },
     analyticsEvent: { count: jest.fn(), groupBy: jest.fn() },
     user: { count: jest.fn() },
     contentItem: { count: jest.fn() },
@@ -85,11 +90,20 @@ describe('Analytics Controller Contract Tests', () => {
     it('should track an event', async () => {
       const analyticsService = app.get(AnalyticsService);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       jest.spyOn(analyticsService, 'ingestEvents').mockResolvedValue({ success: true } as any);
 
-      const response = await request(app.getHttpServer()).post('/v1/analytics/events').send({
-        events: [{ type: 'content_view', userId: 'user-123', metadata: { session_id: 's1', platform: 'web', timestamp: '2026-01-01T00:00:00Z' } }],
-      });
+      const response = await request(app.getHttpServer())
+        .post('/v1/analytics/events')
+        .send({
+          events: [
+            {
+              type: 'content_view',
+              userId: 'user-123',
+              metadata: { session_id: 's1', platform: 'web', timestamp: '2026-01-01T00:00:00Z' },
+            },
+          ],
+        });
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({

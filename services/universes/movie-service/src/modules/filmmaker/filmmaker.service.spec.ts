@@ -69,6 +69,7 @@ describe('FilmmakerService', () => {
       const result = await service.getProjects(1, 20);
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).items).toHaveLength(1);
     });
   });
@@ -84,6 +85,7 @@ describe('FilmmakerService', () => {
       const result = await service.getProjectById('project-1');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).title).toBe('Test Project');
     });
 
@@ -105,6 +107,7 @@ describe('FilmmakerService', () => {
       });
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).title).toBe('Test Project');
     });
   });
@@ -122,6 +125,7 @@ describe('FilmmakerService', () => {
       });
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).title).toBe('Updated Title');
     });
 
@@ -156,6 +160,7 @@ describe('FilmmakerService', () => {
       const result = await service.backProject('user-1', 'project-1', 100);
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).message).toBe('Backed successfully');
     });
 
@@ -177,6 +182,7 @@ describe('FilmmakerService', () => {
       const result = await service.backProject('user-1', 'project-1', 100);
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).message).toBe('Backing updated');
     });
   });

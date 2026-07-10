@@ -3,8 +3,8 @@
 import React from 'react';
 import { useForm, UseFormProps, Controller, FieldValues, Path } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ZodType, ZodError, type z } from 'zod';
-import { Input, Textarea, Select, Checkbox, Radio } from './Input';
+import { ZodType, ZodError } from 'zod';
+import { Input } from './Input';
 import { Button } from './web-components';
 
 export type FormSchema<T extends FieldValues> = ZodType<T>;
@@ -29,8 +29,9 @@ export function Form<T extends FieldValues>({
 }: FormProps<T>) {
   const form = useForm<T>({
     ...props,
-    resolver: schema ? zodResolver(schema as z.ZodType<unknown>) : undefined,
-  });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: schema ? (zodResolver(schema as any) as any) : undefined,
+  } as UseFormProps<T>);
 
   const { register, control, handleSubmit, formState } = form;
   const { errors } = formState;
@@ -174,8 +175,9 @@ export function FormErrorMessageList({ errors, className = '' }: FormErrorMessag
 
 export function useFormValidation<T extends FieldValues>(schema: FormSchema<T>) {
   const form = useForm<T>({
-    resolver: zodResolver(schema as z.ZodType<unknown>),
-  });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(schema as any) as any,
+  } as UseFormProps<T>);
 
   return form;
 }

@@ -11,10 +11,7 @@ export class WalletManagementController {
   constructor(private readonly walletService: WalletManagementService) {}
 
   @Get()
-  async getWallets(
-    @Query('page') page = 1,
-    @Query('limit') limit = 20
-  ) {
+  async getWallets(@Query('page') page = 1, @Query('limit') limit = 20) {
     return this.walletService.getWallets(Number(page), Number(limit));
   }
 

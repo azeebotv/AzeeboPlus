@@ -24,18 +24,11 @@ export interface CacheOptions {
 export const Cache = (options: CacheOptions) => {
   return (
     target: object,
-    propertyKey?: string | symbol,
-    descriptor?: TypedPropertyDescriptor<(...args: unknown[]) => Promise<unknown>>
-  ) => {
-    if (descriptor) {
-      SetMetadata(CACHE_KEY_METADATA, options.key)(descriptor.value);
-      SetMetadata(CACHE_TTL_METADATA, options.ttl)(descriptor.value);
-      return descriptor;
-    }
-
-    // For class decorators, apply metadata to the constructor
-    SetMetadata(CACHE_KEY_METADATA, options.key)(target);
-    SetMetadata(CACHE_TTL_METADATA, options.ttl)(target);
-    return target;
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ): PropertyDescriptor => {
+    SetMetadata(CACHE_KEY_METADATA, options.key)(target, propertyKey, descriptor);
+    SetMetadata(CACHE_TTL_METADATA, options.ttl)(target, propertyKey, descriptor);
+    return descriptor;
   };
 };

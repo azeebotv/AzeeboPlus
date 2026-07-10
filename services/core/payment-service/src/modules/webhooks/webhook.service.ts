@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../prisma/client';
 import { WebhookRetryService } from '../payments/webhook-retry.service';
 
 export interface WebhookPayload {
@@ -154,7 +154,7 @@ export class WebhookService {
     eventId: string,
     provider: string,
     type: string,
-    result: WebhookProcessingResult,
+    _result: WebhookProcessingResult,
     payload: Prisma.InputJsonValue,
     failureReason?: string
   ): Promise<void> {
@@ -324,8 +324,8 @@ export class WebhookService {
     provider: string,
     data: PaystackWebhookData | FlutterwaveWebhookData,
     status: string
-  ): Prisma.PaymentUpdateInput {
-    const update: Prisma.PaymentUpdateInput = {
+  ): Record<string, unknown> {
+    const update: Record<string, unknown> = {
       status,
       updatedAt: new Date(),
     };
