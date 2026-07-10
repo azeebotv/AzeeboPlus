@@ -44,6 +44,7 @@ model Season {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  show     RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
   episodes Episode[]
 
   @@map("reality_seasons")
@@ -64,6 +65,8 @@ model Episode {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  show        RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
+  season      Season?     @relation(fields: [seasonId], references: [id])
   votes       Vote[]
   predictions Prediction[]
 
@@ -83,6 +86,7 @@ model Contestant {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  show        RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
   votes       Vote[]
   supervotes  Supervote[]
   predictions Prediction[]
