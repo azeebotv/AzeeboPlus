@@ -16,13 +16,16 @@ audit-evidence/
 docs/
 docx/
 infra/
-scripts/
-!scripts/demo-content/
 ci/
 .github/
 .qoder/
 .trae/
 docker-bake.hcl
+
+# Scripts - exclude non-production scripts, keep build essentials
+scripts/
+!scripts/demo-content/
+!scripts/patch-prisma-client.sh
 
 # Markdown (except README)
 *.md
