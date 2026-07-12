@@ -24,7 +24,7 @@ spec:
         fsGroup: 65532
       containers:
         - name: recommendation-service
-          image: ghcr.io/azeebotv/azeebo-recommendation-service:latest
+          image: ghcr.io/azeebotv/azeebo-recommendation-service:stable
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

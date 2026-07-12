@@ -24,7 +24,7 @@ spec:
         fsGroup: 65532
       containers:
         - name: movie-service
-          image: ghcr.io/azeebotv/azeebo-movie-service:latest
+          image: ghcr.io/azeebotv/azeebo-movie-service:stable
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

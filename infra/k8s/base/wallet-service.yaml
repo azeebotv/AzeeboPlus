@@ -24,7 +24,7 @@ spec:
         fsGroup: 65532
       containers:
         - name: wallet-service
-          image: ghcr.io/azeebotv/azeebo-wallet-service:latest
+          image: ghcr.io/azeebotv/azeebo-wallet-service:stable
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3002
