@@ -2,9 +2,9 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 
-import { HealthModule } from './modules/health/health.module';
-import { ReferralModule } from './modules/referral/referral.module';
-import { DatabaseModule } from './modules/database/database.module';
+import { HealthModule } from './modules/health/health.module.js';
+import { ReferralModule } from './modules/referral/referral.module.js';
+import { DatabaseModule } from './modules/database/database.module.js';
 import { ServiceAuthGuard } from '@azeebo/security';
 
 @Module({

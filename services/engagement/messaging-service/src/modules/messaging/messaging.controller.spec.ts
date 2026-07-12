@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Reflector } from '@nestjs/core';
-import { MessagingController } from './messaging.controller';
-import { MessagingService } from './messaging.service';
+import { MessagingController } from './messaging.controller.js';
+import { MessagingService } from './messaging.service.js';
 import { RateLimitService } from '@azeebo/security';
 
 describe('MessagingController', () => {

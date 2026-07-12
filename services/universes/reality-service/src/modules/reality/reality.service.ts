@@ -6,9 +6,9 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '@prisma/client';
-import { RealityResponse } from './interfaces/reality-response.interface';
+import { RealityResponse } from './interfaces/reality-response.interface.js';
 import axios from 'axios';
 import { randomUUID } from 'crypto';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
@@ -316,7 +316,11 @@ export class RealityService {
       throw new ConflictException('User has already supervoted for this contestant');
     }
 
-    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    const walletResponse = await axios.get(
+      `${this.walletServiceBaseUrl}/wallets/user/${userId}`,
+      { timeout: 10000 }
+    );
+    const wallet = walletResponse.data?.wallet || walletResponse.data;
     if (!wallet) {
       throw new NotFoundException(`Wallet not found for user`);
     }
@@ -486,7 +490,11 @@ export class RealityService {
       throw new NotFoundException('Contestant not found');
     }
 
-    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    const walletResponse = await axios.get(
+      `${this.walletServiceBaseUrl}/wallets/user/${userId}`,
+      { timeout: 10000 }
+    );
+    const wallet = walletResponse.data?.wallet || walletResponse.data;
     if (!wallet) {
       throw new NotFoundException('Wallet not found');
     }
@@ -575,15 +583,11 @@ export class RealityService {
   }
 
   async getWalletBalance(userId: string): Promise<RealityResponse> {
-    const wallet = await this.prisma.wallet.findUnique({
-      where: { userId },
-      include: {
-        transactions: {
-          orderBy: { createdAt: 'desc' },
-          take: 10,
-        },
-      },
-    });
+    const walletResponse = await axios.get(
+      `${this.walletServiceBaseUrl}/wallets/user/${userId}`,
+      { timeout: 10000 }
+    );
+    const wallet = walletResponse.data?.wallet || walletResponse.data;
 
     if (!wallet) {
       throw new NotFoundException('Wallet not found');
@@ -596,7 +600,7 @@ export class RealityService {
         bonusBalance: wallet.bonusBalance,
         promoBalance: wallet.promoBalance,
         currency: wallet.currency,
-        recentTransactions: wallet.transactions,
+        recentTransactions: wallet.transactions || [],
       },
     };
   }
@@ -625,7 +629,11 @@ export class RealityService {
       throw new NotFoundException('Premium extra not found');
     }
 
-    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    const walletResponse = await axios.get(
+      `${this.walletServiceBaseUrl}/wallets/user/${userId}`,
+      { timeout: 10000 }
+    );
+    const wallet = walletResponse.data?.wallet || walletResponse.data;
     if (!wallet) {
       throw new NotFoundException('Wallet not found');
     }

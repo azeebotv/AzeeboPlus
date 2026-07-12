@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
-import { ModerationModule } from './modules/moderation/moderation.module';
-import { DatabaseModule } from './modules/database/database.module';
-import { HealthModule } from './modules/health/health.module';
+import { ModerationModule } from './modules/moderation/moderation.module.js';
+import { DatabaseModule } from './modules/database/database.module.js';
+import { HealthModule } from './modules/health/health.module.js';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { CacheModule } from '@azeebo/shared-services';
 

@@ -2,8 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, UnauthorizedException } from '@nestjs/common';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
-import { GamesController } from './games.controller';
-import { GamesService } from './games.service';
+import { GamesController } from './games.controller.js';
+import { GamesService } from './games.service.js';
 import { RateLimitGuard } from '@azeebo/security';
 
 describe('Games Service Authorization Tests', () => {

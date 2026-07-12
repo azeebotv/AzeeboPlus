@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { AuthRepository } from '../auth/auth.repository';
-import { PrismaService } from '../database/prisma.service';
+import { AuthRepository } from '../auth/auth.repository.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
 @Injectable()

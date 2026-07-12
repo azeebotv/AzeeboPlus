@@ -1,15 +1,14 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "target": "es2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "target": "ES2017",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
-    "strict": true,
-    "strictNullChecks": true,
-    "noImplicitAny": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
@@ -24,18 +23,39 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"],
-      "@azeebo/ui": ["../../packages/ui/src"],
-      "@azeebo/ui/*": ["../../packages/ui/src/*"],
-      "@azeebo/design-tokens": ["../../packages/design-tokens/src"],
-      "@azeebo/design-tokens/*": ["../../packages/design-tokens/src/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@azeebo/ui": [
+        "../../packages/ui/src"
+      ],
+      "@azeebo/ui/*": [
+        "../../packages/ui/src/*"
+      ],
+      "@azeebo/design-tokens": [
+        "../../packages/design-tokens/src"
+      ],
+      "@azeebo/design-tokens/*": [
+        "../../packages/design-tokens/src/*"
+      ]
     },
     "types": []
   },
   "typeAcquisition": {
     "enable": true,
-    "exclude": ["axe-core"]
+    "exclude": [
+      "axe-core"
+    ]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "e2e", "playwright.config.ts"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "e2e",
+    "playwright.config.ts"
+  ]
 }

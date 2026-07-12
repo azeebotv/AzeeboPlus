@@ -4,10 +4,10 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import type { StringValue } from 'ms';
 
-import { ReferralController } from './referral.controller';
-import { ReferralService } from './referral.service';
-import { JwtStrategy } from './jwt.strategy';
-import { DatabaseModule } from '../database/database.module';
+import { ReferralController } from './referral.controller.js';
+import { ReferralService } from './referral.service.js';
+import { JwtStrategy } from './jwt.strategy.js';
+import { DatabaseModule } from '../database/database.module.js';
 
 @Module({
   imports: [

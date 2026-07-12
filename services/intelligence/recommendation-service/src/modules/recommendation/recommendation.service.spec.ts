@@ -1,17 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RecommendationService } from './recommendation.service';
 import { PrismaService } from '../database/prisma.service';
+import { CacheService } from '@azeebo/shared-services';
 
 describe('RecommendationService', () => {
   let service: RecommendationService;
   let prismaService: jest.Mocked<PrismaService>;
-
-  const mockUser = {
-    id: 'user-1',
-    username: 'testuser',
-    displayName: 'Test User',
-    preferences: {},
-  };
 
   const mockContentItem = {
     id: 'content-1',
@@ -38,21 +32,22 @@ describe('RecommendationService', () => {
         {
           provide: PrismaService,
           useValue: {
-            watchHistory: {
-              findMany: jest.fn(),
-            },
-            user: {
-              findUnique: jest.fn(),
-            },
-            rewardAccount: {
-              findUnique: jest.fn(),
-            },
             contentItem: {
               findMany: jest.fn(),
+            },
+            userSegment: {
+              findFirst: jest.fn(),
             },
             creatorProfile: {
               findMany: jest.fn(),
             },
+          },
+        },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],
@@ -77,10 +72,8 @@ describe('RecommendationService', () => {
     });
 
     it('should return recommendations for authenticated user', async () => {
-      (prismaService.watchHistory.findMany as jest.Mock).mockResolvedValue([]);
-      (prismaService.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
-      (prismaService.rewardAccount.findUnique as jest.Mock).mockResolvedValue(null);
       (prismaService.contentItem.findMany as jest.Mock).mockResolvedValue([mockContentItem]);
+      (prismaService.userSegment.findFirst as jest.Mock).mockResolvedValue(null);
 
       const result = await service.getContentRecommendations({ userId: 'user-1', limit: 10 });
 
@@ -119,8 +112,7 @@ describe('RecommendationService', () => {
 
   describe('getCrossUniverseRecommendations', () => {
     it('should return cross-universe recommendations', async () => {
-      (prismaService.watchHistory.findMany as jest.Mock).mockResolvedValue([]);
-      (prismaService.contentItem.findMany as jest.Mock).mockResolvedValue([mockContentItem]);
+      (prismaService.contentItem.findMany as jest.Mock).mockResolvedValue([]);
 
       const result = await service.getCrossUniverseRecommendations('user-1', 10);
 
@@ -128,12 +120,7 @@ describe('RecommendationService', () => {
     });
 
     it('should return recommendations even without user preferences', async () => {
-      (prismaService.watchHistory.findMany as jest.Mock).mockResolvedValue([]);
-      (prismaService.user.findUnique as jest.Mock).mockResolvedValue({
-        ...mockUser,
-        preferences: {},
-      });
-      (prismaService.contentItem.findMany as jest.Mock).mockResolvedValue([mockContentItem]);
+      (prismaService.contentItem.findMany as jest.Mock).mockResolvedValue([]);
 
       const result = await service.getCrossUniverseRecommendations('user-1', 10);
 

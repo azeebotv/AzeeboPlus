@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../database/prisma.service';
-import { MovieResponse } from './interfaces/movie-response.interface';
+import { PrismaService } from '../database/prisma.service.js';
+import { MovieResponse } from './interfaces/movie-response.interface.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 import axios from 'axios';
 import { randomUUID } from 'crypto';
@@ -30,8 +30,6 @@ export class MoviesService {
 
     const movies = await this.prisma.movie.findMany({
       include: {
-        creator: true,
-        categories: true,
         viewingWindows: {
           where: { isActive: true },
           orderBy: { startsAt: 'asc' },
@@ -63,8 +61,6 @@ export class MoviesService {
     const movie = await this.prisma.movie.findUnique({
       where: { id: movieId },
       include: {
-        creator: true,
-        categories: true,
         rentals: true,
         watchlistItems: true,
         viewingWindows: {
@@ -106,7 +102,10 @@ export class MoviesService {
       throw new NotFoundException('Movie not found');
     }
 
-    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    const walletResponse = await axios
+      .get(`${this.walletServiceBaseUrl}/wallet/user/${userId}`, { timeout: 10000 })
+      .then((res) => res.data);
+    const wallet = walletResponse?.data;
     if (!wallet) {
       throw new NotFoundException('Wallet not found for user');
     }

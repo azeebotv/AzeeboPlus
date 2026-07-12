@@ -13,10 +13,10 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Public, RateLimitGuard, RateLimit } from '@azeebo/security';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { WebhookService, WebhookPayload } from './webhook.service';
-import { WebhookSecurityService } from './webhook-security.service';
-import { PaystackWebhookGuard } from './guards/paystack-webhook.guard';
-import { FlutterwaveWebhookGuard } from './guards/flutterwave-webhook.guard';
+import { WebhookService, WebhookPayload } from './webhook.service.js';
+import { WebhookSecurityService } from './webhook-security.service.js';
+import { PaystackWebhookGuard } from './guards/paystack-webhook.guard.js';
+import { FlutterwaveWebhookGuard } from './guards/flutterwave-webhook.guard.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
 @ApiTags('Webhooks')

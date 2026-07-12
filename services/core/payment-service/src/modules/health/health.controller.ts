@@ -1,12 +1,12 @@
 import { Controller, Get, HttpCode, HttpStatus, HttpException } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Public } from '@azeebo/security';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service.js';
 import {
   HealthCheckResult,
   ComponentStatus,
   ExternalService,
-} from './interfaces/health.interfaces';
+} from './interfaces/health.interfaces.js';
 
 @Public()
 @ApiTags('Health')

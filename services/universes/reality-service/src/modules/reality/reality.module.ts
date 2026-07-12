@@ -3,10 +3,10 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
-import { RealityController } from './reality.controller';
-import { RealityService } from './reality.service';
-import { DatabaseModule } from '../database/database.module';
-import { RedisService } from '../../common/services/redis.service';
+import { RealityController } from './reality.controller.js';
+import { RealityService } from './reality.service.js';
+import { DatabaseModule } from '../database/database.module.js';
+import { RedisService } from '../../common/services/redis.service.js';
 
 @Module({
   imports: [

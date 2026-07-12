@@ -220,11 +220,14 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
     }
   }, [playerState.isPlaying, playerPlay, playerPause]);
 
-  const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>): void => {
-    const newVolume = parseFloat(e.target.value);
-    playerSetVolume(newVolume);
-    announceToScreenReader(`Volume: ${Math.round(newVolume * 100)}%`);
-  }, [playerSetVolume]);
+  const handleVolumeChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>): void => {
+      const newVolume = parseFloat(e.target.value);
+      playerSetVolume(newVolume);
+      announceToScreenReader(`Volume: ${Math.round(newVolume * 100)}%`);
+    },
+    [playerSetVolume]
+  );
 
   const toggleMute = useCallback((): void => {
     playerToggleMute();
@@ -586,9 +589,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
               )}
 
               {/* Video Controls */}
-              <div
-                className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent transition-opacity duration-300"
-              >
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent transition-opacity duration-300">
                 <div className="p-4">
                   {/* Progress Bar */}
                   <div className="mb-3">

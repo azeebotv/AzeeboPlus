@@ -3,7 +3,7 @@ import {
   CreatePredictionDto,
   SubmitPredictionDto,
   ResolvePredictionDto,
-} from './dto/prediction.dto';
+} from './dto/prediction.dto.js';
 
 describe('Prediction Markets Validation Tests', () => {
   describe('CreatePredictionDto', () => {

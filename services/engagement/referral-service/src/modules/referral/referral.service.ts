@@ -5,15 +5,15 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 import { Prisma } from '@prisma/client';
 import {
   ReferralResponse,
   ReferralStats,
   PaginationData,
-} from './interfaces/referral-response.interface';
-import { GenerateReferralCodeDto, ApplyReferralCodeDto } from './dto/referral.dto';
+} from './interfaces/referral-response.interface.js';
+import { GenerateReferralCodeDto, ApplyReferralCodeDto } from './dto/referral.dto.js';
 import { randomBytes } from 'crypto';
 
 @Injectable()

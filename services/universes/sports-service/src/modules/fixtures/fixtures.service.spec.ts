@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { FixturesService } from './fixtures.service';
-import { PrismaService } from '../database/prisma.service';
+import { FixturesService } from './fixtures.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { NotFoundException } from '@nestjs/common';
 
 describe('FixturesService', () => {

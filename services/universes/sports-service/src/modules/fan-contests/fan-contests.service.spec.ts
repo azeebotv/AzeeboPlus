@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { FanContestsService } from './fan-contests.service';
-import { PrismaService } from '../database/prisma.service';
+import { FanContestsService } from './fan-contests.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 jest.mock('../database/prisma.service');

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { FixturesController } from './fixtures.controller';
-import { FixturesService } from './fixtures.service';
-import { DatabaseModule } from '../database/database.module';
+import { FixturesController } from './fixtures.controller.js';
+import { FixturesService } from './fixtures.service.js';
+import { DatabaseModule } from '../database/database.module.js';
 
 @Module({
   imports: [DatabaseModule],

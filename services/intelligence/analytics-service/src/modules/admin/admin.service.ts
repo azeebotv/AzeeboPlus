@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service.js';
 
 @Injectable()
 export class AdminService {
@@ -88,11 +88,7 @@ export class AdminService {
           skip,
           take: limit,
           orderBy: { createdAt: 'desc' },
-          include: {
-            user: {
-              select: { id: true, displayName: true, email: true },
-            },
-          },
+          include: {},
         }),
         this.prisma.productEvent.count({ where }),
       ]);

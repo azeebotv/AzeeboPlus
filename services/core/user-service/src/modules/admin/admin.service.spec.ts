@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AdminService } from './admin.service';
-import { PrismaService } from '../database/prisma.service';
+import { AdminService } from './admin.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { NotFoundException } from '@nestjs/common';
 
 describe('AdminService', () => {

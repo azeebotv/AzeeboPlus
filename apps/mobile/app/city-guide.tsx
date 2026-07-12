@@ -75,9 +75,9 @@ export default function CityGuideScreen() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await apiClient.get<Event[]>('/v1/lifestyle/events', {
-        params: { cityId: selectedCity, limit: 20 },
-      });
+      const response = await apiClient.get<Event[]>(
+        `/v1/lifestyle/events?cityId=${selectedCity}&limit=20`
+      );
       setEvents(response || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load events');

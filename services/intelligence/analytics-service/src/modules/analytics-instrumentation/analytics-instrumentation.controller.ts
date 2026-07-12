@@ -6,7 +6,7 @@ import {
   AnalyticsInstrumentationService,
   AnalyticsEvent,
   EVENT_NAMES,
-} from './analytics-instrumentation.service';
+} from './analytics-instrumentation.service.js';
 
 interface AuthenticatedRequest extends Request {
   user: { sub: string; id: string };

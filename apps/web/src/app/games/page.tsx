@@ -33,11 +33,7 @@ export default function GamesPage(): React.JSX.Element {
     queryKey: ['games-content', gamesUniverse?.id],
     queryFn: async () => {
       if (!gamesUniverse?.id) throw new Error('Games universe not found');
-      const result = await api.content.getContentByUniverse(
-        gamesUniverse.id,
-        1,
-        20
-      );
+      const result = await api.content.getContentByUniverse(gamesUniverse.id, 1, 20);
       if (result.success && result.data) {
         return Array.isArray(result.data) ? result.data : result.data.items || [];
       }

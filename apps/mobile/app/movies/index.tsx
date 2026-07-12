@@ -51,12 +51,12 @@ export default function MoviesUniverseHome() {
       ]);
       const featured = Array.isArray(featuredRes)
         ? featuredRes[0]
-        : (featuredRes?.data?.[0] ?? null);
+        : ((featuredRes as any)?.data?.[0] ?? null);
       setFeaturedMovie(featured ?? null);
-      setTrendingMovies(Array.isArray(trendingRes) ? trendingRes : (trendingRes?.data ?? []));
-      setAfricanCinema(Array.isArray(africanRes) ? africanRes : (africanRes?.data ?? []));
-      setHollywoodHits(Array.isArray(hollywoodRes) ? hollywoodRes : (hollywoodRes?.data ?? []));
-      setPasses(Array.isArray(passesRes) ? passesRes : (passesRes?.data ?? []));
+      setTrendingMovies(Array.isArray(trendingRes) ? trendingRes : ((trendingRes as any)?.data ?? []));
+      setAfricanCinema(Array.isArray(africanRes) ? africanRes : ((africanRes as any)?.data ?? []));
+      setHollywoodHits(Array.isArray(hollywoodRes) ? hollywoodRes : ((hollywoodRes as any)?.data ?? []));
+      setPasses(Array.isArray(passesRes) ? passesRes : ((passesRes as any)?.data ?? []));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load');
     } finally {

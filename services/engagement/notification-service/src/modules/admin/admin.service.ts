@@ -71,11 +71,6 @@ export class AdminService {
           skip,
           take: limit,
           orderBy: { createdAt: 'desc' },
-          include: {
-            user: {
-              select: { id: true, displayName: true, email: true },
-            },
-          },
         }),
         this.prisma.notification.count({ where }),
       ]);
@@ -125,28 +120,10 @@ export class AdminService {
         return { sentCount: notifications.length, userIds };
       }
 
-      const allUsers = await this.prisma.user.findMany({
-        select: { id: true },
-      });
-
-      const batchSize = 1000;
-      let sentCount = 0;
-
-      for (let i = 0; i < allUsers.length; i += batchSize) {
-        const batch = allUsers.slice(i, i + batchSize);
-        await this.prisma.notification.createMany({
-          data: batch.map((user) => ({
-            userId: user.id,
-            title,
-            message,
-            type: type || 'system',
-          })),
-        });
-        sentCount += batch.length;
-      }
-
-      this.logger.log(`Sent system notification to all ${sentCount} users`);
-      return { sentCount, broadcast: true };
+      // Without a User model in this service, broadcast to all users is not supported.
+      // Use the user-service to fetch user IDs and send targeted notifications.
+      this.logger.warn('Broadcast notification without userIds is not supported — use targeted notifications');
+      return { sentCount: 0, userIds: [] };
     } catch (error) {
       this.logger.error(
         `sendSystemNotification failed: ${(error as Error).message}`,

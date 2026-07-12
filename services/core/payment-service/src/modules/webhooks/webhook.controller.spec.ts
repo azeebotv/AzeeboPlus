@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { WebhookController } from './webhook.controller';
-import { WebhookService, WebhookPayload } from './webhook.service';
-import { WebhookSecurityService } from './webhook-security.service';
+import { WebhookController } from './webhook.controller.js';
+import { WebhookService, WebhookPayload } from './webhook.service.js';
+import { WebhookSecurityService } from './webhook-security.service.js';
 import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@nestjs/common';
 

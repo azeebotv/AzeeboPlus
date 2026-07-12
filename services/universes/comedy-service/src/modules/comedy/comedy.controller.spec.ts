@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Reflector } from '@nestjs/core';
-import { ComedyController } from './comedy.controller';
-import { ComedyService } from './comedy.service';
+import { ComedyController } from './comedy.controller.js';
+import { ComedyService } from './comedy.service.js';
 import { RateLimitService } from '@azeebo/security';
 
 describe('ComedyController', () => {
@@ -90,7 +90,7 @@ describe('ComedyController', () => {
 
   describe('submitChallenge', () => {
     it('should submit a challenge entry', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { challengeId: 'challenge-1', clipUrl: 'https://example.com/clip.mp4' };
       const result = {
         success: true,
@@ -103,7 +103,7 @@ describe('ComedyController', () => {
     });
 
     it('should throw NotFoundException when challenge not found', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { challengeId: 'nonexistent', clipUrl: 'https://example.com/clip.mp4' };
       mockComedyService.submitChallenge.mockRejectedValue(
         new (require('@nestjs/common').NotFoundException)('Challenge not found')
@@ -113,7 +113,7 @@ describe('ComedyController', () => {
     });
 
     it('should throw BadRequestException when challenge is not active', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { challengeId: 'challenge-1', clipUrl: 'https://example.com/clip.mp4' };
       mockComedyService.submitChallenge.mockRejectedValue(
         new (require('@nestjs/common').BadRequestException)('Challenge is not active')
@@ -137,7 +137,7 @@ describe('ComedyController', () => {
 
   describe('shareClip', () => {
     it('should share a clip', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const clipId = 'clip-1';
       const result = { success: true, data: { message: 'Clip shared' } };
       mockComedyService.shareClip.mockResolvedValue(result);
@@ -147,7 +147,7 @@ describe('ComedyController', () => {
     });
 
     it('should throw NotFoundException when clip not found', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       mockComedyService.shareClip.mockRejectedValue(
         new (require('@nestjs/common').NotFoundException)('Clip not found')
       );

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
-import { PrismaService } from '../../database/prisma.service';
-import { UpdateDeviceInfoDto } from '../dto/device.dto';
-import { DeviceInfo } from './device.controller';
+import { PrismaService } from '../../database/prisma.service.js';
+import { UpdateDeviceInfoDto } from '../dto/device.dto.js';
+import { DeviceInfo } from './device.controller.js';
 
 @Injectable()
 export class DeviceService {

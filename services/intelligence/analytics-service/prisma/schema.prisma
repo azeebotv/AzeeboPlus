@@ -8,6 +8,89 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Stub models for cross-service references
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  displayName String?
+  role        String   @default("user")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("users")
+}
+
+model ContentItem {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  universeId  String
+  universe    String
+  contentType String
+  status      String   @default("published")
+  viewCount   Int      @default(0)
+  creatorId   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("content_items")
+}
+
+model Universe {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  displayName String
+  isEnabled   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("universes")
+}
+
+model PaymentIntent {
+  id        String   @id @default(uuid())
+  userId    String
+  amount    Decimal  @db.Decimal(18, 2)
+  currency  String   @default("NGN")
+  status    String
+  provider  String?
+  reference String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("payment_intents")
+  @@index([userId])
+  @@index([status])
+}
+
+model WatchHistory {
+  id          String   @id @default(uuid())
+  userId      String
+  contentId   String
+  contentType String
+  universe    String   @default("unknown")
+  progress    Float    @default(0)
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("watch_history")
+  @@index([userId])
+  @@index([contentId])
+}
+
+model RewardAccount {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  points      Int      @default(0)
+  level       Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("reward_accounts")
+  @@index([userId])
+}
+
 model ProductEvent {
   id          String   @id @default(uuid())
   eventName   String   // screen_view, content_impression, payment_success, etc.

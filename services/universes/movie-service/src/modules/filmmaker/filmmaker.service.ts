@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service.js';
 import axios from 'axios';
 import { randomUUID } from 'crypto';
 
@@ -63,7 +63,7 @@ export class FilmmakerService {
     return {
       id: project.id as string,
       filmmakerId: project.filmmakerId as string,
-      filmmakerName: (project.filmmaker as { displayName: string })?.displayName || '',
+      filmmakerName: '',
       title: project.title as string,
       description: (project.description as string) || '',
       thumbnail: (project.thumbnail as string) || '',
@@ -88,7 +88,6 @@ export class FilmmakerService {
     const [items, total] = await Promise.all([
       this.prisma.filmmakerProject.findMany({
         where,
-        include: { filmmaker: true },
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: 'desc' },
@@ -112,7 +111,6 @@ export class FilmmakerService {
     const project = await this.prisma.filmmakerProject.findUnique({
       where: { id },
       include: {
-        filmmaker: true,
         updates: { orderBy: { createdAt: 'desc' } },
         _count: { select: { backers: true } },
       },
@@ -152,7 +150,6 @@ export class FilmmakerService {
         fundingGoal: data.fundingGoal,
         targetDate: data.targetDate ? new Date(data.targetDate) : null,
       },
-      include: { filmmaker: true },
     });
 
     return { success: true, data: this.formatProject(project) };
@@ -190,7 +187,6 @@ export class FilmmakerService {
         fundingGoal: data.fundingGoal,
         targetDate: data.targetDate ? new Date(data.targetDate) : undefined,
       },
-      include: { filmmaker: true },
     });
 
     return { success: true, data: this.formatProject(updated) };
@@ -238,7 +234,10 @@ export class FilmmakerService {
       throw new NotFoundException(`Project not found: ${projectId}`);
     }
 
-    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    const walletResponse = await axios
+      .get(`${this.walletServiceBaseUrl}/wallet/user/${userId}`, { timeout: 10000 })
+      .then((res) => res.data);
+    const wallet = walletResponse?.data;
     if (!wallet) {
       throw new NotFoundException('Wallet not found');
     }

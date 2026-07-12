@@ -1,14 +1,23 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "target": "ES2020",
-    "lib": ["ES2020"],
+    "target": "ES2022",
+    "lib": [
+      "ES2020"
+    ],
     "declaration": true,
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "outDir": "./dist",
-    "rootDir": "./src",
-    "paths": {}
+    "rootDir": "./src"
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "src/**/*.spec.ts"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/**/*.spec.ts"
+  ]
 }

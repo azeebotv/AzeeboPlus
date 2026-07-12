@@ -50,3 +50,115 @@ model RankingRule {
   @@index([isActive])
   @@index([priority])
 }
+
+model UserSearch {
+  id            String   @id @default(uuid())
+  userId        String
+  query         String
+  filters       Json?
+  resultCount   Int      @default(0)
+  clickedId     String?
+  lastSearchAt  DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  @@map("user_searches")
+  @@index([userId])
+  @@index([query])
+  @@index([createdAt])
+  @@index([lastSearchAt])
+}
+
+model SearchQueryLog {
+  id          String   @id @default(uuid())
+  query       String
+  userId      String?
+  resultCount Int      @default(0)
+  clickedId   String?
+  session     String?
+  createdAt   DateTime @default(now())
+
+  @@map("search_query_logs")
+  @@index([query])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model ContentItem {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  universeId  String
+  universe    String
+  contentType String
+  status      String   @default("published")
+  viewCount   Int      @default(0)
+  creatorId   String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("content_items")
+  @@index([universeId])
+  @@index([universe])
+  @@index([contentType])
+  @@index([status])
+}
+
+model CreatorProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  displayName String
+  avatar      String?
+  bio         String?
+  universe    String?
+  email       String?
+  verified    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("creator_profiles")
+  @@index([userId])
+  @@index([universe])
+}
+
+model Universe {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  displayName String
+  description String?
+  icon        String?
+  isEnabled   Boolean  @default(true)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("universes")
+  @@index([name])
+  @@index([isEnabled])
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  universeId  String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("categories")
+  @@index([name])
+  @@index([universeId])
+}
+
+model Tag {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("tags")
+  @@index([name])
+}

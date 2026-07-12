@@ -28,11 +28,7 @@ export default function VerticalPage(): React.JSX.Element {
     queryKey: ['vertical-content', verticalUniverse?.id],
     queryFn: async () => {
       if (!verticalUniverse?.id) throw new Error('Vertical universe not found');
-      const result = await api.content.getContentByUniverse(
-        verticalUniverse.id,
-        1,
-        20
-      );
+      const result = await api.content.getContentByUniverse(verticalUniverse.id, 1, 20);
       if (result.success && result.data) {
         return Array.isArray(result.data) ? result.data : result.data.items || [];
       }

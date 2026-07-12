@@ -15,7 +15,7 @@ const TABS = [
 
 export default function LibraryScreen() {
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  useAuth();
   const [activeTab, setActiveTab] = useState('watchlist');
 
   const { data: savedData, isLoading: savedLoading, error: savedError, refetch: refetchSaved } = useSavedContent(1, 50);

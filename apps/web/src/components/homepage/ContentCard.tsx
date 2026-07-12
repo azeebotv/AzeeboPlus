@@ -38,7 +38,9 @@ export default function ContentCard({
   };
 
   const thumbnailSrc =
-    item.mediaAsset?.thumbnailUrl || item.thumbnail || 'https://placehold.co/800x600/1a1a1a/ffffff?text=Azeebo%2B';
+    item.mediaAsset?.thumbnailUrl ||
+    item.thumbnail ||
+    'https://placehold.co/800x600/1a1a1a/ffffff?text=Azeebo%2B';
 
   return (
     <motion.div

@@ -2,19 +2,19 @@ import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { PaymentsController } from './modules/payments/payments.controller';
-import { PaymentsService } from './modules/payments/payments.service';
-import { PaymentProviderModule } from './modules/payments/providers/payment-provider.module';
-import { DatabaseModule } from './modules/database/database.module';
-import { HealthModule } from './modules/health/health.module';
-import { WebhookModule } from './modules/webhooks/webhook.module';
-import { ScheduledTasksModule } from './modules/scheduled-tasks/scheduled-tasks.module';
-import { PricingModule } from './modules/pricing/pricing.module';
+import { PaymentsController } from './modules/payments/payments.controller.js';
+import { PaymentsService } from './modules/payments/payments.service.js';
+import { PaymentProviderModule } from './modules/payments/providers/payment-provider.module.js';
+import { DatabaseModule } from './modules/database/database.module.js';
+import { HealthModule } from './modules/health/health.module.js';
+import { WebhookModule } from './modules/webhooks/webhook.module.js';
+import { ScheduledTasksModule } from './modules/scheduled-tasks/scheduled-tasks.module.js';
+import { PricingModule } from './modules/pricing/pricing.module.js';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
-import { MetricsModule } from './modules/metrics/metrics.module';
+import { MetricsModule } from './modules/metrics/metrics.module.js';
 import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
-import { RedisModule } from './common/redis.module';
+import { RedisModule } from './common/redis.module.js';
 
 @Module({
   imports: [

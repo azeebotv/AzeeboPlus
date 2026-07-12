@@ -33,13 +33,13 @@ export const AgbalaSpoilerGuard: React.FC<AgbalaSpoilerGuardProps> = ({
   const getSpoilLevelColor = () => {
     switch (spoilerLevel) {
       case 'mild':
-        return colors.warning;
+        return colors.warning[500];
       case 'moderate':
-        return colors.error;
+        return colors.error[500];
       case 'major':
         return colors.error[500];
       default:
-        return colors.warning;
+        return colors.warning[500];
     }
   };
 
@@ -196,7 +196,11 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
   },
   blurOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: `${colors.bg.secondary}E6`,
     justifyContent: 'center',
     alignItems: 'center',

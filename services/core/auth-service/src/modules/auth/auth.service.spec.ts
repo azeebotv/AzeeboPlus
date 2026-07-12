@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthService } from './auth.service';
-import { AuthRepository } from './auth.repository';
-import { RedisService } from '../../common/services/redis.service';
-import { OtpService } from './otp/otp.service';
+import { AuthService } from './auth.service.js';
+import { AuthRepository } from './auth.repository.js';
+import { RedisService } from '../../common/services/redis.service.js';
+import { OtpService } from './otp/otp.service.js';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { ConflictException, UnauthorizedException, BadRequestException } from '@nestjs/common';

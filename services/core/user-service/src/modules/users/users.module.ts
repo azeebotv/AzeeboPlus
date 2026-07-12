@@ -4,11 +4,11 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CacheModule } from '@azeebo/shared-services';
 
-import { UsersController } from './users.controller';
-import { InteractionsController } from './interactions.controller';
-import { UsersService } from './users.service';
-import { DatabaseModule } from '../database/database.module';
-import { UserDeletionController } from '../user/user-deletion.controller';
+import { UsersController } from './users.controller.js';
+import { InteractionsController } from './interactions.controller.js';
+import { UsersService } from './users.service.js';
+import { DatabaseModule } from '../database/database.module.js';
+import { UserDeletionController } from '../user/user-deletion.controller.js';
 
 @Module({
   imports: [

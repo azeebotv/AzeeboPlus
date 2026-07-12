@@ -18,7 +18,6 @@ export class QuizService {
       const [quizzes, total] = await Promise.all([
         this.prisma.quiz.findMany({
           where,
-          include: { createdBy: { select: { displayName: true, avatarUrl: true } } },
           orderBy: { playCount: 'desc' },
           skip,
           take: limit,
@@ -44,7 +43,6 @@ export class QuizService {
       const quiz = await this.prisma.quiz.findUnique({
         where: { id },
         include: {
-          createdBy: { select: { displayName: true, avatarUrl: true } },
           questions: { orderBy: { order: 'asc' } },
         },
       });
@@ -217,7 +215,6 @@ export class QuizService {
     try {
       const attempts = await this.prisma.quizAttempt.findMany({
         where: { quizId, completedAt: { not: null } },
-        include: { user: { select: { displayName: true, avatarUrl: true } } },
         orderBy: [{ score: 'desc' }, { completedAt: 'asc' }],
         take: limit,
       });
@@ -226,7 +223,7 @@ export class QuizService {
         success: true,
         data: {
           leaderboard: attempts.map((a) => ({
-            user: a.user,
+            userId: a.userId,
             score: a.score,
             completedAt: a.completedAt,
           })),

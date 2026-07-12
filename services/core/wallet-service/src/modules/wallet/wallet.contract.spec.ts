@@ -2,10 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ExecutionContext, NestInterceptor } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
-import { WalletController } from './wallet.controller';
-import { WalletService } from './wallet.service';
-import { PrismaService } from '../database/prisma.service';
-import { CacheService, CacheInterceptor } from '../../cache';
+import { WalletController } from './wallet.controller.js';
+import { WalletService } from './wallet.service.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { CacheService, CacheInterceptor } from '../../cache/index.js';
 import { RateLimitGuard, AdminGuard, ServiceAuthGuard } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 

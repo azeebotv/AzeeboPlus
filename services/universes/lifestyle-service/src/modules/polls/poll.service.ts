@@ -17,7 +17,6 @@ export class PollService {
         this.prisma.poll.findMany({
           where,
           include: {
-            createdBy: { select: { displayName: true, avatarUrl: true } },
             options: { orderBy: { voteCount: 'desc' } },
           },
           orderBy: { createdAt: 'desc' },
@@ -44,7 +43,6 @@ export class PollService {
     const poll = await this.prisma.poll.findUnique({
       where: { id },
       include: {
-        createdBy: { select: { displayName: true, avatarUrl: true } },
         options: { orderBy: { voteCount: 'desc' } },
       },
     });

@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../database/prisma.service';
-import { InitializePaymentDto } from './dto/initialize-payment.dto';
-import { PaystackProvider } from './providers/paystack.provider';
-import { FlutterwaveProvider } from './providers/flutterwave.provider';
-import { WebhookRetryService } from './webhook-retry.service';
-import { RedisService } from '../../common/services/redis.service';
+import { PrismaService } from '../database/prisma.service.js';
+import { InitializePaymentDto } from './dto/initialize-payment.dto.js';
+import { PaystackProvider } from './providers/paystack.provider.js';
+import { FlutterwaveProvider } from './providers/flutterwave.provider.js';
+import { WebhookRetryService } from './webhook-retry.service.js';
+import { RedisService } from '../../common/services/redis.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 import axios from 'axios';
 import { Prisma } from '@prisma/client';
@@ -14,7 +14,7 @@ import {
   InitializePaymentResponse,
   VerifyPaymentResponse,
   TransactionHistoryResponse,
-} from './interfaces/payment-response.interface';
+} from './interfaces/payment-response.interface.js';
 import { toNumber } from '@azeebo/utils';
 
 interface ProviderResponse {

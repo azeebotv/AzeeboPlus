@@ -6,7 +6,7 @@ import { LoggingInterceptor } from '@azeebo/logger';
 import helmet from 'helmet';
 import { validateEnvironment } from '@azeebo/shared-types';
 
-import { AppModule } from './app.module';
+import { AppModule } from './app.module.js';
 
 async function bootstrap() {
   validateEnvironment(process.env);

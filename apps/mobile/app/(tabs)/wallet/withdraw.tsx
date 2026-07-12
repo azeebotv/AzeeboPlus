@@ -40,7 +40,7 @@ export default function WithdrawFundsScreen() {
         setBalance(res.data.balance);
       }
     } catch (err: unknown) {
-      setBalanceError(err.message || 'Failed to load balance');
+      setBalanceError((err instanceof Error ? err.message : null) || 'Failed to load balance');
     } finally {
       setIsLoadingBalance(false);
     }
@@ -103,7 +103,7 @@ export default function WithdrawFundsScreen() {
         setAccountName('');
         setErrors((prev) => ({
           ...prev,
-          accountName: result.error?.message || 'Could not verify account',
+          accountName: result.error || 'Could not verify account',
         }));
       }
     } catch {
@@ -138,7 +138,7 @@ export default function WithdrawFundsScreen() {
                 { text: 'OK', onPress: () => router.back() },
               ]);
             } catch (error: unknown) {
-              Alert.alert('Error', error?.message || 'Failed to withdraw funds. Please try again.');
+              Alert.alert('Error', (error instanceof Error ? error.message : null) || 'Failed to withdraw funds. Please try again.');
             } finally {
               setIsLoading(false);
             }

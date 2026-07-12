@@ -36,7 +36,7 @@ export function PasswordStrengthMeter({ password, onStrengthChange }: PasswordSt
       case 0:
       case 1:
         label = 'Very Weak';
-        color = colors.error;
+        color = colors.error[500];
         break;
       case 2:
         label = 'Weak';
@@ -52,7 +52,7 @@ export function PasswordStrengthMeter({ password, onStrengthChange }: PasswordSt
         break;
       case 5:
         label = 'Very Strong';
-        color = colors.success;
+        color = colors.success[500];
         break;
       default:
         label = '';

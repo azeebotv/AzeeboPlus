@@ -4,13 +4,27 @@ export * from './integration-test-utils';
 
 /** Test database wrapper providing setup, teardown, and seed helpers for integration tests. */
 export class TestDatabase {
-  private prisma: { $connect(): Promise<void>; $disconnect(): Promise<void>; $executeRawUnsafe(query: string): Promise<unknown> };
+  private prisma: {
+    $connect(): Promise<void>;
+    $disconnect(): Promise<void>;
+    $executeRawUnsafe(query: string): Promise<unknown>;
+  };
 
-  constructor(prismaClient?: { $connect(): Promise<void>; $disconnect(): Promise<void>; $executeRawUnsafe(query: string): Promise<unknown> }) {
+  constructor(prismaClient?: {
+    $connect(): Promise<void>;
+    $disconnect(): Promise<void>;
+    $executeRawUnsafe(query: string): Promise<unknown>;
+  }) {
     this.prisma = prismaClient || {
-      async $connect() { /* noop */ },
-      async $disconnect() { /* noop */ },
-      async $executeRawUnsafe() { /* noop */ },
+      async $connect() {
+        /* noop */
+      },
+      async $disconnect() {
+        /* noop */
+      },
+      async $executeRawUnsafe() {
+        /* noop */
+      },
     };
   }
 

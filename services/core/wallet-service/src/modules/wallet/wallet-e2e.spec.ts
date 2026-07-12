@@ -6,12 +6,12 @@ import {
   NestInterceptor,
 } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { WalletModule } from './wallet.module';
-import { PrismaService } from '../database/prisma.service';
-import { WalletController } from './wallet.controller';
-import { WalletService } from './wallet.service';
+import { WalletModule } from './wallet.module.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { WalletController } from './wallet.controller.js';
+import { WalletService } from './wallet.service.js';
 import { RateLimitGuard, RateLimitService, AdminGuard } from '@azeebo/security';
-import { CacheInterceptor, CacheService } from '../../cache';
+import { CacheInterceptor, CacheService } from '../../cache/index.js';
 import { randomUUID } from 'crypto';
 
 class MockRateLimitGuard {

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ComedyFeedService } from './comedy-feed.service';
-import { PrismaService } from '../database/prisma.service';
+import { ComedyFeedService } from './comedy-feed.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { NotFoundException } from '@nestjs/common';
 
 describe('ComedyFeedService', () => {

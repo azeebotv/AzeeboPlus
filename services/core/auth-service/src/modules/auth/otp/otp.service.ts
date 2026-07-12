@@ -4,7 +4,7 @@ import { randomInt } from 'crypto';
 import * as bcrypt from 'bcrypt';
 import axios from 'axios';
 
-import { AuthRepository } from '../auth.repository';
+import { AuthRepository } from '../auth.repository.js';
 
 @Injectable()
 export class OtpService {

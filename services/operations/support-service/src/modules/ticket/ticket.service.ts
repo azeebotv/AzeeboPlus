@@ -222,7 +222,7 @@ export class TicketService {
   async addMessage(
     ticketId: string,
     senderId: string,
-    senderType: 'USER' | 'ADMIN' | 'SYSTEM',
+    senderType: 'USER' | 'AGENT' | 'SYSTEM',
     message: string,
     isInternal = false
   ) {

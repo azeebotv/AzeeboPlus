@@ -3,10 +3,10 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
-import { GamesService } from './games.service';
-import { GameResponse } from './interfaces/game-response.interface';
-import { SubmitAnswerDto } from './dto/submit-answer.dto';
-import { StartSessionDto } from './dto/start-session.dto';
+import { GamesService } from './games.service.js';
+import { GameResponse } from './interfaces/game-response.interface.js';
+import { SubmitAnswerDto } from './dto/submit-answer.dto.js';
+import { StartSessionDto } from './dto/start-session.dto.js';
 
 @ApiTags('Games')
 @Controller('v1/games')
@@ -28,10 +28,10 @@ export class GamesController {
   @ApiResponse({ status: 200, description: 'Answer submitted' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async submitDailyChallenge(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Body() body: SubmitAnswerDto
   ): Promise<GameResponse> {
-    return this.gamesService.submitDailyChallenge(req.user.sub, body.answer);
+    return this.gamesService.submitDailyChallenge(req.user.id, body.answer);
   }
 
   @Get('daily-challenge')
@@ -39,8 +39,8 @@ export class GamesController {
   @ApiOperation({ summary: 'Daily challenge' })
   @ApiResponse({ status: 200, description: 'Daily challenge' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getDailyChallenge(@Request() req: { user: { sub: string } }): Promise<GameResponse> {
-    return this.gamesService.getDailyChallenge(req.user.sub);
+  async getDailyChallenge(@Request() req: { user: { id: string } }): Promise<GameResponse> {
+    return this.gamesService.getDailyChallenge(req.user.id);
   }
 
   @Post('sessions')
@@ -49,10 +49,10 @@ export class GamesController {
   @ApiResponse({ status: 201, description: 'Session started' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async startSession(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Body() body: StartSessionDto
   ): Promise<GameResponse> {
-    return this.gamesService.startSession(req.user.sub, body.challengeId);
+    return this.gamesService.startSession(req.user.id, body.challengeId);
   }
 
   @Post('sessions/:sessionId/submit')
@@ -61,11 +61,11 @@ export class GamesController {
   @ApiResponse({ status: 200, description: 'Answer submitted' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async submitAnswer(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Param('sessionId') sessionId: string,
     @Body() body: SubmitAnswerDto
   ): Promise<GameResponse> {
-    return this.gamesService.submitAnswer(req.user.sub, sessionId, body.answer);
+    return this.gamesService.submitAnswer(req.user.id, sessionId, body.answer);
   }
 
   @Get('leaderboard')
@@ -90,9 +90,9 @@ export class GamesController {
   @ApiResponse({ status: 201, description: 'Entered tournament' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async enterTournament(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Param('tournamentId') tournamentId: string
   ): Promise<GameResponse> {
-    return this.gamesService.enterTournament(req.user.sub, tournamentId);
+    return this.gamesService.enterTournament(req.user.id, tournamentId);
   }
 }

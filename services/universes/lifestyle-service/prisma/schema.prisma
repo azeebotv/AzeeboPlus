@@ -9,6 +9,18 @@ datasource db {
 
 }
 
+// Stub model for cross-service references
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  displayName String?
+  role        String   @default("user")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("users")
+}
+
 model CultureStory {
   id          String   @id @default(uuid())
   title       String

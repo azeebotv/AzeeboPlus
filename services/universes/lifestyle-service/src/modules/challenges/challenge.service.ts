@@ -33,7 +33,6 @@ export class ChallengeService {
       const [challenges, total] = await Promise.all([
         this.prisma.challenge.findMany({
           where,
-          include: { createdBy: { select: { displayName: true, avatarUrl: true } } },
           orderBy: { createdAt: 'desc' },
           skip,
           take: limit,
@@ -61,9 +60,7 @@ export class ChallengeService {
     const challenge = await this.prisma.challenge.findUnique({
       where: { id },
       include: {
-        createdBy: { select: { displayName: true, avatarUrl: true } },
         submissions: {
-          include: { user: { select: { displayName: true, avatarUrl: true } } },
           orderBy: { votes: 'desc' },
           take: 50,
         },

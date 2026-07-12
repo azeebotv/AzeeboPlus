@@ -1,9 +1,9 @@
 import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { TournamentService } from './tournament.service';
+import { TournamentService } from './tournament.service.js';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
-import { JoinTournamentDto, SubmitScoreDto } from './dto/tournament.dto';
+import { JoinTournamentDto, SubmitScoreDto } from './dto/tournament.dto.js';
 
 @ApiTags('Tournament')
 @ApiBearerAuth()

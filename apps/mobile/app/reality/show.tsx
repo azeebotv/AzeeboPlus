@@ -59,7 +59,7 @@ export default function RealityShowPage() {
         setContestants(contestantsRes.data);
       }
       if (showRes) {
-        setShowData(Array.isArray(showRes) ? showRes[0] : (showRes?.data?.[0] ?? showRes));
+        setShowData(Array.isArray(showRes) ? showRes[0] : ((showRes as any)?.data?.[0] ?? showRes));
       }
     } catch (err) {
       setError('Failed to load show data');
@@ -248,7 +248,7 @@ export default function RealityShowPage() {
                 >
                   <Text style={styles.packageVotes}>{pkg.votes.toLocaleString()} votes</Text>
                   <Text style={styles.packagePrice}>₦{pkg.price.toLocaleString()}</Text>
-                  {pkg.bonus > 0 && <Text style={styles.packageBonus}>+{pkg.bonus} bonus</Text>}
+                  {pkg.bonus != null && pkg.bonus > 0 && <Text style={styles.packageBonus}>+{pkg.bonus} bonus</Text>}
                 </TouchableOpacity>
               ))}
             </View>

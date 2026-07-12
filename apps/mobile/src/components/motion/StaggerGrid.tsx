@@ -1,3 +1,4 @@
+import React from 'react';
 import { useEffect } from 'react';
 import { AccessibilityInfo, type ViewStyle, type StyleProp } from 'react-native';
 import Animated, {

@@ -2,21 +2,21 @@ import { Controller, Get, Post, UseGuards, Request, Body } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
-import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { AuthService } from './auth.service.js';
+import { LoginDto } from './dto/login.dto.js';
+import { RegisterDto } from './dto/register.dto.js';
+import { RefreshTokenDto } from './dto/refresh-token.dto.js';
 import {
   ForgotPasswordDto,
   ResetPasswordDto,
   VerifyEmailDto,
   ResendVerificationDto,
-} from './dto/password-reset.dto';
-import { RequestOtpDto } from './dto/request-otp.dto';
-import { VerifyOtpDto } from './dto/verify-otp.dto';
-import { SelectRoleDto } from './dto/select-role.dto';
-import { AuthResponse } from './interfaces/auth-response.interface';
-import { RefreshTokenResponse } from './interfaces/refresh-token-response.interface';
+} from './dto/password-reset.dto.js';
+import { RequestOtpDto } from './dto/request-otp.dto.js';
+import { VerifyOtpDto } from './dto/verify-otp.dto.js';
+import { SelectRoleDto } from './dto/select-role.dto.js';
+import { AuthResponse } from './interfaces/auth-response.interface.js';
+import { RefreshTokenResponse } from './interfaces/refresh-token-response.interface.js';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import { User } from '@azeebo/shared-types';
 

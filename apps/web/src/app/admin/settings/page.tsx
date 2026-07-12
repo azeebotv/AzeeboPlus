@@ -404,9 +404,7 @@ export default function AdminSettingsPage(): React.JSX.Element {
     enabled: isEnabled,
   });
 
-  const {
-    data: roles = {},
-  } = useQuery({
+  const { data: roles = {} } = useQuery({
     queryKey: ['admin', 'roles'],
     queryFn: async () => {
       const res = await api.admin.getRoles();

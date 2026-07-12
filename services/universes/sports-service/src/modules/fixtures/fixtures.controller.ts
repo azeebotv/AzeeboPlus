@@ -2,9 +2,9 @@ import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/co
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
-import { FixturesService } from './fixtures.service';
+import { FixturesService } from './fixtures.service.js';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
-import { UpdateFixtureResultDto } from './dto/update-fixture-result.dto';
+import { UpdateFixtureResultDto } from './dto/update-fixture-result.dto.js';
 
 @ApiTags('Fixtures')
 @ApiBearerAuth()

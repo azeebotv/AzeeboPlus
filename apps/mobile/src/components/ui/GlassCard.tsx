@@ -1,6 +1,6 @@
 import { StyleSheet, type ViewStyle, type StyleProp } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
-import { colors, radius, shadows, spring } from '../../theme';
+import Animated, { useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
+import { colors, radius, shadows } from '../../theme';
 
 interface GlassCardProps {
   children: React.ReactNode;
@@ -20,16 +20,6 @@ export function GlassCard({
   animated = false,
 }: GlassCardProps) {
   const scale = useSharedValue(1);
-
-  const _handlePressIn = () => {
-    if (!animated) return;
-    scale.value = withSpring(0.98, spring.snappy);
-  };
-
-  const _handlePressOut = () => {
-    if (!animated) return;
-    scale.value = withSpring(1, spring.gentle);
-  };
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],

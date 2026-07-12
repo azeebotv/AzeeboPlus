@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from '@azeebo/security';
-import { IntelligenceService } from './intelligence.service';
+import { IntelligenceService } from './intelligence.service.js';
 
 @ApiTags('Intelligence Layer')
 @UseGuards(AuthGuard('jwt'))

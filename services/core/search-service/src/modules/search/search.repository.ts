@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service.js';
 
 interface SearchContentResult {
   id: string;
@@ -54,7 +54,6 @@ export class SearchRepository {
       },
       skip,
       take: limit,
-      include: { universe: true },
     });
 
     const total = await this.prisma.contentItem.count({
@@ -90,19 +89,18 @@ export class SearchRepository {
     const creators = await this.prisma.creatorProfile.findMany({
       where: {
         OR: [
-          { user: { displayName: { contains: query, mode: 'insensitive' } } },
+          { displayName: { contains: query, mode: 'insensitive' } },
           { bio: { contains: query, mode: 'insensitive' } },
         ],
       },
       skip,
       take: limit,
-      include: { user: true },
     });
 
     const total = await this.prisma.creatorProfile.count({
       where: {
         OR: [
-          { user: { displayName: { contains: query, mode: 'insensitive' } } },
+          { displayName: { contains: query, mode: 'insensitive' } },
           { bio: { contains: query, mode: 'insensitive' } },
         ],
       },
@@ -111,7 +109,7 @@ export class SearchRepository {
     return {
       data: creators.map((creator) => ({
         id: creator.id,
-        displayName: creator.user?.displayName || '',
+        displayName: creator.displayName || '',
         score: 0.85,
       })),
       page,
@@ -135,12 +133,11 @@ export class SearchRepository {
       this.prisma.creatorProfile.findMany({
         where: {
           OR: [
-            { user: { displayName: { contains: query, mode: 'insensitive' } } },
+            { displayName: { contains: query, mode: 'insensitive' } },
             { bio: { contains: query, mode: 'insensitive' } },
           ],
         },
         take: 10,
-        include: { user: true },
       }),
     ]);
 
@@ -152,7 +149,7 @@ export class SearchRepository {
       })),
       creators: creators.map((creator) => ({
         id: creator.id,
-        displayName: creator.user?.displayName || '',
+        displayName: creator.displayName || '',
       })),
       totalResults: contentItems.length + creators.length,
     };
@@ -170,14 +167,14 @@ export class SearchRepository {
 
   async getTrending(): Promise<TrendingResult[]> {
     const trending = await this.prisma.searchQueryLog.findMany({
-      orderBy: { count: 'desc' },
+      orderBy: { createdAt: 'desc' },
       take: 20,
     });
 
     return trending.map((item) => ({
       id: item.id,
       title: item.query,
-      viewCount: item.count,
+      viewCount: item.resultCount,
     }));
   }
 }

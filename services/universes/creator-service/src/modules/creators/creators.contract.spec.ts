@@ -6,10 +6,10 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import request from 'supertest';
-import { CreatorsController } from './creators.controller';
-import { CreatorsService } from './creators.service';
+import { CreatorsController } from './creators.controller.js';
+import { CreatorsService } from './creators.service.js';
 import { RateLimitGuard } from '@azeebo/security';
-import { JwtStrategy } from '../../common/strategies/jwt.strategy';
+import { JwtStrategy } from '../../common/strategies/jwt.strategy.js';
 
 describe('Creators Controller Contract Tests', () => {
   let app: INestApplication;

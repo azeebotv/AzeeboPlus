@@ -6,8 +6,8 @@ import {
   SafetyAction,
   Appeal,
   TrustScore,
-} from './moderation.repository';
-import { PrismaService } from '../database/prisma.service';
+} from './moderation.repository.js';
+import { PrismaService } from '../database/prisma.service.js';
 
 export interface ScanResult {
   scanId: string;

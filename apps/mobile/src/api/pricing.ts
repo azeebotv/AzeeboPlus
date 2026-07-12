@@ -16,6 +16,7 @@ export interface VotePackage {
   name?: string;
   description?: string;
   isPopular?: boolean;
+  label?: string;
 }
 
 export interface SubscriptionPlan {

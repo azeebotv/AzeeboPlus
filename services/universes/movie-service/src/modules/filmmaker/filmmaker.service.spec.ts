@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { FilmmakerService } from './filmmaker.service';
-import { PrismaService } from '../database/prisma.service';
+import { FilmmakerService } from './filmmaker.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 jest.mock('../database/prisma.service');

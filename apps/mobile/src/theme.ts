@@ -8,6 +8,7 @@ export const colors = {
   // Primary brand
   primaryColor: '#E8420A', // Azeebo Orange — CTAs, logo accent, highlights
   primaryDark: '#C83A08', // Darker orange for pressed states
+  secondary: '#1A1A1A', // Secondary surface color
   red: '#CC1C1C', // Deep Red — buttons, active states, glow
   redDark: '#B91818', // Darker red for pressed states
 
@@ -28,6 +29,7 @@ export const colors = {
     primary: '#FFFFFF', // White — primary text
     secondary: '#9A8A7A', // Warm grey — secondary text
     tertiary: '#6B5B4B', // Muted grey — hints, captions
+    muted: '#6B5B4B', // Alias for tertiary
     inverse: '#0A0A0A', // Dark text on light backgrounds
     accent: '#E8420A', // Orange accent text
     link: '#E8420A', // Link color
@@ -98,6 +100,7 @@ export const colors = {
   // Borders
   border: {
     default: 'rgba(255,255,255,0.2)',
+    primary: 'rgba(255,255,255,0.2)',
     focus: '#E8420A',
     subtle: 'rgba(255,255,255,0.04)',
   },

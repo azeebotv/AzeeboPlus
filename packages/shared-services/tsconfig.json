@@ -4,9 +4,17 @@
     "outDir": "dist",
     "rootDir": "./src",
     "declaration": true,
-    "types": ["jest", "node"],
-    "paths": {}
+    "types": [
+      "jest",
+      "node"
+    ]
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "src/**/*.spec.ts"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/**/*.spec.ts"
+  ]
 }

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { MoviesService } from './movies.service';
-import { PrismaService } from '../database/prisma.service';
+import { MoviesService } from './movies.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('MoviesService', () => {

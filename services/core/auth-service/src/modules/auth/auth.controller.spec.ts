@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
-import { AuthRepository } from './auth.repository';
+import { AuthController } from './auth.controller.js';
+import { AuthService } from './auth.service.js';
+import { AuthRepository } from './auth.repository.js';
 import { RateLimitService } from '@azeebo/security';
 import { Reflector } from '@nestjs/core';
 

@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Reflector } from '@nestjs/core';
-import { EngagementController } from './engagement.controller';
-import { EngagementService } from './engagement.service';
+import { EngagementController } from './engagement.controller.js';
+import { EngagementService } from './engagement.service.js';
 import { RateLimitService } from '@azeebo/security';
 
 describe('EngagementController', () => {

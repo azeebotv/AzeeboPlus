@@ -139,10 +139,11 @@ export class CreatorService {
     // Get real subscriber count from following table
     let subscriberCount = 0;
     try {
-      subscriberCount = await this.prisma.$queryRawUnsafe<{ count: bigint }[]>(
-        'SELECT COUNT(*) as count FROM "following" WHERE "followingId" = $1',
-        userId
-      ).then((rows) => Number(rows[0]?.count ?? 0));
+      subscriberCount = await this.prisma
+        .$queryRawUnsafe<
+          { count: bigint }[]
+        >('SELECT COUNT(*) as count FROM "following" WHERE "followingId" = $1', userId)
+        .then((rows) => Number(rows[0]?.count ?? 0));
     } catch {
       // following table may not exist in this database
     }

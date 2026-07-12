@@ -8,7 +8,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { realityApi } from '../../../src/api';
 import { logger } from '../../../src/utils/logger';
 
@@ -48,7 +48,7 @@ export default function PredictionResultsScreen() {
     try {
       const response = await realityApi.getPredictionResults(predictionId);
       if (response.success && response.data) {
-        setResult(response.data as PredictionResult);
+        setResult(response.data as unknown as PredictionResult);
       }
     } catch (error) {
       logger.error('Failed to load prediction results', error);

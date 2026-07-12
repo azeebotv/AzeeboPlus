@@ -1,12 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ContentService } from './content.service';
-import { PrismaService } from '../database/prisma.service';
-import { MediaService } from '../media/media.service';
-import { TranscodingService } from '../media/transcoding.service';
-import { ContentRepository } from './content.repository';
+import { ContentService } from './content.service.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { MediaService } from '../media/media.service.js';
+import { TranscodingService } from '../media/transcoding.service.js';
+import { ContentRepository } from './content.repository.js';
 import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { RedisService } from '../../cache/redis.service';
+import { RedisService } from '../../cache/redis.service.js';
 
 describe('ContentService', () => {
   let service: ContentService;

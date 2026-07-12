@@ -1,3 +1,4 @@
+import React from 'react';
 import { Tabs, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
@@ -260,7 +261,7 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.success,
+    backgroundColor: colors.success[500],
   },
   liveText: {
     color: '#FFFFFF',

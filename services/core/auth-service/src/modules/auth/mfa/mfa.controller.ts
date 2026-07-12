@@ -2,8 +2,8 @@ import { Controller, Get, Post, Body, UseGuards, Request } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
-import { MfaService } from './mfa.service';
-import { EnableMfaDto } from '../dto/enable-mfa.dto';
+import { MfaService } from './mfa.service.js';
+import { EnableMfaDto } from '../dto/enable-mfa.dto.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
 interface MfaRequest {

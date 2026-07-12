@@ -158,7 +158,7 @@ export class CityGuideService {
   async getEntryBySlug(slug: string): Promise<CityGuideResponse> {
     const entry = await this.prisma.cityGuideEntry.findUnique({
       where: { slug },
-      include: { tags: true, createdBy: true },
+      include: { tags: true },
     });
 
     if (!entry) {

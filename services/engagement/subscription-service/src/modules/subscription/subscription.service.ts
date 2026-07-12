@@ -1,10 +1,10 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
-import { CreateSubscriptionPlanDto } from './dto/create-subscription-plan.dto';
-import { SubscribeToPlanDto } from './dto/subscribe-to-plan.dto';
-import type { SubscriptionPlan, Subscription } from '../../prisma/client';
+import { CreateSubscriptionPlanDto } from './dto/create-subscription-plan.dto.js';
+import { SubscribeToPlanDto } from './dto/subscribe-to-plan.dto.js';
+import type { SubscriptionPlan, Subscription } from '../../prisma/client/index.js';
 import axios from 'axios';
 
 @Injectable()

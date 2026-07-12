@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
-import { RealityModule } from './reality.module';
-import { RealityService } from './reality.service';
+import { RealityModule } from './reality.module.js';
+import { RealityService } from './reality.service.js';
 import { JwtService } from '@nestjs/jwt';
-import { RedisService } from '../../common/services/redis.service';
-import { PrismaService } from '../database/prisma.service';
+import { RedisService } from '../../common/services/redis.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';

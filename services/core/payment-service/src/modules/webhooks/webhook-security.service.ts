@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHmac, timingSafeEqual } from 'crypto';
-import { RedisService } from '../../common/services/redis.service';
+import { RedisService } from '../../common/services/redis.service.js';
 
 @Injectable()
 export class WebhookSecurityService {

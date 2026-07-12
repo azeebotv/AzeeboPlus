@@ -191,7 +191,7 @@ export default function ProfileScreen() {
                 <Text
                   style={[styles.statValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
                 >
-                  {(user as Record<string, unknown>)?.watchHistoryCount ?? 0}
+                  {(user as unknown as Record<string, number>)?.watchHistoryCount ?? 0}
                 </Text>
                 <Text style={styles.statLabel}>Watched</Text>
               </View>
@@ -205,7 +205,7 @@ export default function ProfileScreen() {
                 <Text
                   style={[styles.statValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
                 >
-                  {(user as Record<string, unknown>)?.savedListsCount ?? 0}
+                  {(user as unknown as Record<string, number>)?.savedListsCount ?? 0}
                 </Text>
                 <Text style={styles.statLabel}>Lists</Text>
               </View>
@@ -219,7 +219,7 @@ export default function ProfileScreen() {
                 <Text
                   style={[styles.statValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
                 >
-                  {(user as Record<string, unknown>)?.reviewsCount ?? 0}
+                  {(user as unknown as Record<string, number>)?.reviewsCount ?? 0}
                 </Text>
                 <Text style={styles.statLabel}>Reviews</Text>
               </View>
