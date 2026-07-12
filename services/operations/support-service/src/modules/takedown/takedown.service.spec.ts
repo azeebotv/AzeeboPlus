@@ -28,6 +28,14 @@ describe('TakedownService', () => {
   };
 
   const mockConfigService = {
+    get: jest.fn((key: string, defaultValue?: string) => {
+      const config: Record<string, string> = {
+        CONTENT_SERVICE_URL: 'http://localhost:3004',
+        MODERATION_SERVICE_URL: 'http://localhost:3022',
+        INTERNAL_API_KEY: 'test-key',
+      };
+      return config[key] || defaultValue;
+    }),
     getOrThrow: jest.fn().mockReturnValue('http://mock-url'),
   };
 

@@ -5,34 +5,34 @@
 -- Passwords are bcrypt hashes of "Demo123!" for all test users.
 -- =============================================================================
 
-BEGIN;
+-- BEGIN removed: each INSERT is now independent so failures don't cascade
 
 -- ============================================================================
 -- SECTION 1: SYSTEM SETTINGS
 -- ============================================================================
 
-INSERT INTO "system_settings" ("key", value, category, "description", "isPublic") VALUES
-  ('site_name', '"Azeebo+"', 'general', 'Platform name', true),
-  ('site_description', '"Nigeria''s premier entertainment streaming platform"', 'general', 'Platform tagline', true),
-  ('maintenance_mode', 'false', 'general', 'Maintenance mode toggle', false),
-  ('registration_enabled', 'true', 'auth', 'Allow new registrations', false),
-  ('max_upload_size_mb', '500', 'uploads', 'Maximum file upload size in MB', false),
-  ('default_currency', '"NGN"', 'payments', 'Default transaction currency', true),
-  ('currency_symbol', '"₦"', 'payments', 'Currency display symbol', true),
-  ('min_rental_price', '200', 'payments', 'Minimum rental price in NGN', false),
-  ('max_rental_price', '50000', 'payments', 'Maximum rental price in NGN', false),
-  ('featured_content_limit', '6', 'content', 'Max featured items on homepage', true),
-  ('trending_window_hours', '168', 'content', 'Hours to consider for trending calc', false),
-  ('comment_max_length', '2000', 'content', 'Max comment character length', false),
-  ('screening_max_viewers', '10000', 'screenings', 'Default max viewers per screening', false),
-  ('otp_expiry_minutes', '10', 'auth', 'OTP code expiration in minutes', false),
-  ('social_google_enabled', 'true', 'social', 'Google OAuth login enabled', true),
-  ('social_apple_enabled', 'true', 'social', 'Apple Sign-In enabled', true),
-  ('seo_title', '"Azeebo+ - Stream Nigerian Entertainment"', 'seo', 'Default SEO title', true),
-  ('seo_description', '"Watch reality shows, creator content, lifestyle, movies and more on Azeebo+"', 'seo', 'Default SEO description', true),
-  ('support_email', '"support@azeeboplus.com"', 'contact', 'Support email address', true),
-  ('terms_url', '"https://azeeboplus.com/terms"', 'legal', 'Terms of service URL', true)
-ON CONFLICT ("key") DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO "system_settings" (id, "key", value, category, "description", "isPublic", "createdAt", "updatedAt") VALUES
+  ('ss00001-0000-0000-0000-000000000001', 'site_name', '"Azeebo+"', 'general', 'Platform name', true, NOW(), NOW()),
+  ('ss00001-0000-0000-0000-000000000002', 'site_description', '"Nigeria''s premier entertainment streaming platform"', 'general', 'Platform tagline', true, NOW(), NOW()),
+  ('ss00001-0000-0000-0000-000000000003', 'maintenance_mode', 'false', 'general', 'Maintenance mode toggle', false, NOW(), NOW()),
+  ('ss00001-0000-0000-0000-000000000004', 'registration_enabled', 'true', 'auth', 'Allow new registrations', false, NOW(), NOW()),
+  ('ss00001-0000-0000-0000-000000000005', 'max_upload_size_mb', '500', 'uploads', 'Maximum file upload size in MB', false, NOW(), NOW()),
+  ('ss00001-0000-0000-0000-000000000006', 'default_currency', '"NGN"', 'payments', 'Default transaction currency', true, NOW(), NOW()),
+  ('ss00001-0000-0000-0000-000000000007', 'currency_symbol', '"₦"', 'payments', 'Currency display symbol', true, NOW(), NOW()),
+  ('ss00001-0000-0000-0000-000000000008', 'min_rental_price', '200', 'payments', 'Minimum rental price in NGN', false, NOW(), NOW()),
+  ('ss00001-0000-0000-0000-000000000009', 'max_rental_price', '50000', 'payments', 'Maximum rental price in NGN', false, NOW(), NOW()),
+  ('ss00001-0000-0000-0000-000000000010', 'featured_content_limit', '6', 'content', 'Max featured items on homepage', true, NOW(), NOW()),
+  ('ss00001-0000-0000-0000-000000000011', 'trending_window_hours', '168', 'content', 'Hours to consider for trending calc', false, NOW(), NOW()),
+  ('ss00001-0000-0000-0000-000000000012', 'comment_max_length', '2000', 'content', 'Max comment character length', false, NOW(), NOW()),
+  ('ss00001-0000-0000-0000-000000000013', 'screening_max_viewers', '10000', 'screenings', 'Default max viewers per screening', false, NOW(), NOW()),
+  ('ss00001-0000-0000-0000-000000000014', 'otp_expiry_minutes', '10', 'auth', 'OTP code expiration in minutes', false, NOW(), NOW()),
+  ('ss00001-0000-0000-0000-000000000015', 'social_google_enabled', 'true', 'social', 'Google OAuth login enabled', true, NOW(), NOW()),
+  ('ss00001-0000-0000-0000-000000000016', 'social_apple_enabled', 'true', 'social', 'Apple Sign-In enabled', true, NOW(), NOW()),
+  ('ss00001-0000-0000-0000-000000000017', 'seo_title', '"Azeebo+ - Stream Nigerian Entertainment"', 'seo', 'Default SEO title', true, NOW(), NOW()),
+  ('ss00001-0000-0000-0000-000000000018', 'seo_description', '"Watch reality shows, creator content, lifestyle, movies and more on Azeebo+"', 'seo', 'Default SEO description', true, NOW(), NOW()),
+  ('ss00001-0000-0000-0000-000000000019', 'support_email', '"support@azeeboplus.com"', 'contact', 'Support email address', true, NOW(), NOW()),
+  ('ss00001-0000-0000-0000-000000000020', 'terms_url', '"https://azeeboplus.com/terms"', 'legal', 'Terms of service URL', true, NOW(), NOW())
+ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
 -- SECTION 2: USERS (Auth Service)
@@ -1127,4 +1127,4 @@ INSERT INTO "support_tickets" (id, "userId", subject, description, status, prior
   ('st00001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000008', 'Payment not reflecting', 'I funded my wallet 30 minutes ago but the balance has not updated. Transaction ID: PSK-TXN-003.', 'in_progress', 'medium')
 ON CONFLICT (id) DO NOTHING;
 
-COMMIT;
+-- COMMIT removed: no transaction wrapper

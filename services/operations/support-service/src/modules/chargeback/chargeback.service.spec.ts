@@ -30,6 +30,15 @@ describe('ChargebackService', () => {
   };
 
   const mockConfigService = {
+    get: jest.fn((key: string, defaultValue?: string) => {
+      const config: Record<string, string> = {
+        PAYMENT_SERVICE_URL: 'http://localhost:3003',
+        WALLET_SERVICE_URL: 'http://localhost:3002',
+        MODERATION_SERVICE_URL: 'http://localhost:3022',
+        INTERNAL_API_KEY: 'test-key',
+      };
+      return config[key] || defaultValue;
+    }),
     getOrThrow: jest.fn().mockReturnValue('http://mock-url'),
   };
 
