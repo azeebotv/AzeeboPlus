@@ -126,7 +126,7 @@ export class ChargebackService {
           evidence,
         });
 
-        const walletResponse = await this.walletServiceClient.post('/api/wallet/credit', {
+        const walletData = await this.walletServiceClient.post<{ id?: string }>('/api/wallet/credit', {
           userId: chargeback.userId,
           amount: chargeback.amount.toNumber(),
           currency: chargeback.currency,
@@ -135,7 +135,6 @@ export class ChargebackService {
           transactionType: 'chargeback_reversal',
         });
 
-        const walletData = walletResponse.data as { id?: string };
         this.logger.log(
           `Chargeback won: payment ${chargeback.paymentId}, wallet txn: ${walletData?.id}`
         );

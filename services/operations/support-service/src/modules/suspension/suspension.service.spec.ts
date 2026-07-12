@@ -29,6 +29,14 @@ describe('SuspensionService', () => {
   };
 
   const mockConfigService = {
+    get: jest.fn((key: string, defaultValue?: string) => {
+      const config: Record<string, string> = {
+        NOTIFICATION_SERVICE_URL: 'http://localhost:3006',
+        MODERATION_SERVICE_URL: 'http://localhost:3022',
+        INTERNAL_API_KEY: 'test-key',
+      };
+      return config[key] || defaultValue;
+    }),
     getOrThrow: jest.fn().mockReturnValue('http://mock-url'),
   };
 
