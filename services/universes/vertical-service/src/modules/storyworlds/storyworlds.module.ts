@@ -7,6 +7,7 @@ import { SanitizationService } from './agbala/sanitization.service';
 import { AgbalaAnalyticsService } from './agbala/analytics.service';
 import { RoomService } from './agbala/room.service';
 import { TheoryService } from './agbala/theory.service';
+import { StoryworldMetadataService } from './agbala/storyworld-metadata.service';
 import { StoryworldsController } from './storyworlds.controller';
 
 @Module({
@@ -20,6 +21,7 @@ import { StoryworldsController } from './storyworlds.controller';
     CharactersService,
     RoomService,
     TheoryService,
+    StoryworldMetadataService,
   ],
   exports: [
     CacheService,
@@ -29,6 +31,7 @@ import { StoryworldsController } from './storyworlds.controller';
     CharactersService,
     RoomService,
     TheoryService,
+    StoryworldMetadataService,
   ],
 })
 export class StoryworldsModule {}
