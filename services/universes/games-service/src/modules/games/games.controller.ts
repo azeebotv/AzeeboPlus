@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Request, Param } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Body, UseGuards, Request, Param  } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
@@ -11,7 +11,7 @@ import { StartSessionDto } from './dto/start-session.dto.js';
 @ApiTags('Games')
 @Controller('v1/games')
 export class GamesController {
-  constructor(private readonly gamesService: GamesService) {}
+  constructor(@Inject(GamesService) private readonly gamesService: GamesService) {}
 
   @Get('home')
   @UseGuards(RateLimitGuard)

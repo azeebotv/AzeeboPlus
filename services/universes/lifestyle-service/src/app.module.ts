@@ -20,6 +20,7 @@ import { CommonModule } from './common/common.module';
 import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
+import { CacheModule } from '@azeebo/shared-services';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@az
     }),
     CommonModule,
     RateLimiterModule.forRoot(),
+    CacheModule,
     DatabaseModule,
     HealthModule,
     StoriesModule,

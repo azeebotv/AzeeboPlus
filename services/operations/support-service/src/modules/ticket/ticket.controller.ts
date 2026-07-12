@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -8,7 +8,7 @@ import {
   Query,
   Request,
   UseGuards,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
 import { TicketService } from './ticket.service';
@@ -25,7 +25,7 @@ interface AuthenticatedRequest {
 @ApiTags('Support Tickets')
 @Controller('support/tickets')
 export class TicketController {
-  constructor(private ticketService: TicketService) {}
+  constructor(@Inject(TicketService) private ticketService: TicketService) {}
 
   @Post('/')
   @UseGuards(RateLimitGuard)

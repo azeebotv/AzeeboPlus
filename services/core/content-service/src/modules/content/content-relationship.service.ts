@@ -1,4 +1,4 @@
-import {
+import {Inject, 
   Injectable,
   NotFoundException,
   BadRequestException,
@@ -22,7 +22,7 @@ type ContentWithUniverseMediaAsset = Prisma.ContentItemGetPayload<{
 export class ContentRelationshipService {
   private readonly logger = new Logger(ContentRelationshipService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   private canModifyContent(
     userId: string,

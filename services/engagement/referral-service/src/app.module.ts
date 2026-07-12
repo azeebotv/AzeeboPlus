@@ -5,13 +5,16 @@ import { ConfigModule } from '@nestjs/config';
 import { HealthModule } from './modules/health/health.module.js';
 import { ReferralModule } from './modules/referral/referral.module.js';
 import { DatabaseModule } from './modules/database/database.module.js';
-import { ServiceAuthGuard } from '@azeebo/security';
+import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
+import { CacheModule } from '@azeebo/shared-services';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    RateLimiterModule.forRoot(),
+    CacheModule,
     DatabaseModule,
     HealthModule,
     ReferralModule,

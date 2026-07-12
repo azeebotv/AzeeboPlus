@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {Inject,  Injectable, Logger, NotFoundException } from '@nestjs/common';
 import {
   ModerationRepository,
   ModerationScan,
@@ -32,8 +32,8 @@ export class ModerationService {
   private readonly logger = new Logger(ModerationService.name);
 
   constructor(
-    private readonly moderationRepository: ModerationRepository,
-    private readonly prisma: PrismaService
+    @Inject(ModerationRepository) private readonly moderationRepository: ModerationRepository,
+    @Inject(PrismaService) private readonly prisma: PrismaService
   ) {}
 
   async scanContent(contentId: string, type: string = 'malware'): Promise<ScanResult> {

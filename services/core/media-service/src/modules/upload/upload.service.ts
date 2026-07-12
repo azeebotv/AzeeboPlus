@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {Inject,  Injectable, Logger } from '@nestjs/common';
 import { S3Service } from './s3.service';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from '../../common/services/redis.service';
@@ -39,10 +39,10 @@ export class UploadService {
   private readonly redisKeyPrefix = 'transcoding_job:';
 
   constructor(
-    private readonly s3Service: S3Service,
-    private readonly configService: ConfigService,
-    private readonly redisService: RedisService,
-    private readonly fileValidationService: FileValidationService
+    @Inject(S3Service) private readonly s3Service: S3Service,
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(RedisService) private readonly redisService: RedisService,
+    @Inject(FileValidationService) private readonly fileValidationService: FileValidationService
   ) {
     this.cdnUrl = this.configService.get<string>('CDN_URL') || '';
     this.transcodingEnabled = this.configService.get<boolean>('TRANSCODING_ENABLED', true);

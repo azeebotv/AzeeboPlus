@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {Inject,  Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 export interface CreateChallengeInput {
@@ -21,7 +21,7 @@ export interface ChallengeSubmissionInput {
 @Injectable()
 export class ChallengeService {
   private readonly logger = new Logger(ChallengeService.name);
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async getChallenges(page = 1, limit = 20, type?: string, status?: string) {
     try {

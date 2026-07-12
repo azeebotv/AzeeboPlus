@@ -1,4 +1,4 @@
-import { Controller, Get, Post, UseGuards, Request, Body } from '@nestjs/common';
+import { Inject, Controller, Get, Post, UseGuards, Request, Body  } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
@@ -17,7 +17,7 @@ import { VerifyOtpDto } from './dto/verify-otp.dto.js';
 import { SelectRoleDto } from './dto/select-role.dto.js';
 import { AuthResponse } from './interfaces/auth-response.interface.js';
 import { RefreshTokenResponse } from './interfaces/refresh-token-response.interface.js';
-import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, Public } from '@azeebo/security';
 import { User } from '@azeebo/shared-types';
 
 interface AuthRequest extends Request {
@@ -27,9 +27,10 @@ interface AuthRequest extends Request {
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(@Inject(AuthService) private readonly authService: AuthService) {}
 
   @Post('signup')
+  @Public()
   @UseGuards(RateLimitGuard)
   @RateLimit(3, 3600000) // 3 requests per hour
   @ApiOperation({ summary: 'Create a new account' })
@@ -41,6 +42,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @Public()
   @UseGuards(RateLimitGuard)
   @RateLimit(10, 60000) // 10 attempts per minute
   @ApiOperation({ summary: 'User login' })
@@ -52,6 +54,7 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @Public()
   @UseGuards(RateLimitGuard)
   @RateLimit(10, 60000) // 10 requests per minute
   @ApiOperation({ summary: 'Refresh access token' })
@@ -85,6 +88,7 @@ export class AuthController {
   }
 
   @Post('forgot-password')
+  @Public()
   @UseGuards(RateLimitGuard)
   @RateLimit(3, 3600000)
   @ApiOperation({ summary: 'Request password reset' })
@@ -96,6 +100,7 @@ export class AuthController {
   }
 
   @Post('reset-password')
+  @Public()
   @UseGuards(RateLimitGuard)
   @RateLimit(3, 3600000)
   @ApiOperation({ summary: 'Reset password with token' })
@@ -107,6 +112,7 @@ export class AuthController {
   }
 
   @Post('verify-email')
+  @Public()
   @UseGuards(RateLimitGuard)
   @RateLimit(3, 3600000)
   @ApiOperation({ summary: 'Verify email address' })
@@ -118,6 +124,7 @@ export class AuthController {
   }
 
   @Post('resend-verification')
+  @Public()
   @UseGuards(RateLimitGuard)
   @RateLimit(3, 3600000)
   @ApiOperation({ summary: 'Resend verification email' })
@@ -142,6 +149,7 @@ export class AuthController {
   }
 
   @Post('request-otp')
+  @Public()
   @UseGuards(RateLimitGuard)
   @RateLimit(3, 3600000)
   @ApiOperation({ summary: 'Request an OTP code for email verification' })
@@ -153,6 +161,7 @@ export class AuthController {
   }
 
   @Post('verify-otp')
+  @Public()
   @UseGuards(RateLimitGuard)
   @RateLimit(5, 900000)
   @ApiOperation({ summary: 'Verify an OTP code' })

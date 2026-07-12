@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -8,7 +8,7 @@ import {
   Param,
   Query,
   UseGuards,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { NightlifeService } from './nightlife.service';
@@ -35,7 +35,7 @@ interface CreateNightlifeData {
 @UseGuards(AuthGuard('jwt'))
 @Controller('v1/lifestyle/nightlife')
 export class NightlifeController {
-  constructor(private readonly nightlifeService: NightlifeService) {}
+  constructor(@Inject(NightlifeService) private readonly nightlifeService: NightlifeService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get nightlife entries' })

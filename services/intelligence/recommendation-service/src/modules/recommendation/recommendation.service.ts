@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {Inject,  Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 
@@ -69,8 +69,8 @@ export class RecommendationService {
   private readonly logger = new Logger(RecommendationService.name);
 
   constructor(
-    private prisma: PrismaService,
-    private readonly cache: CacheService
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(CacheService) private readonly cache: CacheService
   ) {}
 
   async getContentRecommendations(

@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -10,7 +10,7 @@ import {
   UseGuards,
   Logger,
   Req,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { Prisma } from '../../generated/prisma';
 import { SystemSettingsService } from './system-settings.service';
@@ -52,8 +52,8 @@ export class SystemSettingsController {
   private readonly logger = new Logger(SystemSettingsController.name);
 
   constructor(
-    private readonly systemSettingsService: SystemSettingsService,
-    private readonly auditLogService: AuditLogService
+    @Inject(SystemSettingsService) private readonly systemSettingsService: SystemSettingsService,
+    @Inject(AuditLogService) private readonly auditLogService: AuditLogService
   ) {}
 
   private getActorId(req: { user?: { sub: string; id?: string } }): string | undefined {

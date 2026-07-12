@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import {Inject,  Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { SafetyScanningService, ScanRequest, ScanResult } from './safety-scanning.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
@@ -105,9 +105,9 @@ const SAFETY_ACTION_TYPES = [
 @Injectable()
 export class ModerationService {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly safetyScanningService: SafetyScanningService,
-    private readonly cache: CacheService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(SafetyScanningService) private readonly safetyScanningService: SafetyScanningService,
+    @Inject(CacheService) private readonly cache: CacheService
   ) {}
 
   async createCase(request: CreateCaseRequest): Promise<ModerationCase> {

@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Put,
@@ -10,7 +10,7 @@ import {
   Query,
   UseGuards,
   Req,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IsString, IsOptional, IsObject } from 'class-validator';
 import { AdminService } from './admin.service.js';
@@ -53,7 +53,7 @@ interface AuthenticatedRequest extends Request {
 @Controller('admin')
 @UseGuards(AdminGuard)
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(@Inject(AdminService) private readonly adminService: AdminService) {}
 
   @Get('stats')
   @ApiOperation({ summary: 'Get user service statistics (admin)' })

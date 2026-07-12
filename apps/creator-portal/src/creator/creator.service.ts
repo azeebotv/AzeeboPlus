@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Prisma } from '../generated/prisma';
 import { PrismaService } from '../database/prisma.service';
 import { WalletClientService } from '../api/clients/wallet-client.service';
@@ -54,8 +54,8 @@ export interface EarningsData {
 @Injectable()
 export class CreatorService {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly walletClient: WalletClientService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(WalletClientService) private readonly walletClient: WalletClientService
   ) {}
 
   async getDashboardStats(userId: string): Promise<DashboardStats> {

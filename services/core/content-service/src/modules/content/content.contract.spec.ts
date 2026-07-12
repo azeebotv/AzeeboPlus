@@ -16,7 +16,7 @@ import { ConfigModule } from '@nestjs/config';
 class MockAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest();
-    request.user = { sub: 'user-123' };
+    request.user = { id: 'user-123', sub: 'user-123', role: 'admin' };
     return true;
   }
 }
@@ -148,6 +148,12 @@ describe('Content Controller Contract Tests', () => {
         set: jest.fn().mockResolvedValue(undefined),
         del: jest.fn().mockResolvedValue(undefined),
         delPattern: jest.fn().mockResolvedValue(undefined),
+      })
+      .overrideProvider('CacheService')
+      .useValue({
+        get: jest.fn().mockResolvedValue(null),
+        set: jest.fn().mockResolvedValue(undefined),
+        delete: jest.fn().mockResolvedValue(0),
       })
       .overrideGuard(AuthGuard('jwt'))
       .useClass(MockAuthGuard)

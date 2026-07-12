@@ -1,4 +1,4 @@
-import {
+import {Inject, 
   Injectable,
   NotFoundException,
   BadRequestException,
@@ -22,9 +22,9 @@ export class ReferralService {
   private readonly defaultReferralReward: number;
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly cache: CacheService,
-    private readonly configService: ConfigService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(CacheService) private readonly cache: CacheService,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.defaultPaginationLimit = this.configService.get<number>('DEFAULT_PAGINATION_LIMIT', 20);
     this.defaultReferralReward = this.configService.get<number>('DEFAULT_REFERRAL_REWARD', 50);

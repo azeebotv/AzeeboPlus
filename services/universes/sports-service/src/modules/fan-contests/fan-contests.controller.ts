@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Body, Param, Query, UseGuards, Request  } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
@@ -11,7 +11,7 @@ import { JoinContestDto, SubmitContestScoreDto } from './dto/contest.dto.js';
 @UseGuards(AuthGuard('jwt'))
 @Controller('v1/sports/fan-contests')
 export class FanContestsController {
-  constructor(private readonly fanContestsService: FanContestsService) {}
+  constructor(@Inject(FanContestsService) private readonly fanContestsService: FanContestsService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get contests' })

@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {Inject,  Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { AuthRepository } from '../auth/auth.repository.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
@@ -8,8 +8,8 @@ export class AdminService {
   private readonly logger = new Logger(AdminService.name);
 
   constructor(
-    private readonly authRepository: AuthRepository,
-    private readonly prisma: PrismaService
+    @Inject(AuthRepository) private readonly authRepository: AuthRepository,
+    @Inject(PrismaService) private readonly prisma: PrismaService
   ) {}
 
   async getStats() {

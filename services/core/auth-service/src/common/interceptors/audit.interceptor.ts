@@ -9,7 +9,7 @@ import { AUDIT_LOG_METADATA } from '../decorators/audit-log.decorator.js';
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {
   constructor(
-    private reflector: Reflector,
+    @Inject(Reflector) private reflector: Reflector,
     @Inject(AuditLogService) private auditService: AuditLogService
   ) {}
 

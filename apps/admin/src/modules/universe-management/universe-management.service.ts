@@ -1,4 +1,5 @@
 import {
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -20,7 +21,7 @@ import { InputJsonValue } from '@prisma/client/runtime/library';
 export class UniverseManagementService {
   private readonly logger = new Logger(UniverseManagementService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async getAllUniverses(query: QueryUniverseDto) {
     try {

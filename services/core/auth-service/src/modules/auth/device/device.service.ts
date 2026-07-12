@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service.js';
 import { UpdateDeviceInfoDto } from '../dto/device.dto.js';
 import { DeviceInfo } from './device.controller.js';
@@ -7,7 +7,7 @@ import { DeviceInfo } from './device.controller.js';
 export class DeviceService {
   private readonly logger = new Logger(DeviceService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async getUserDevices(userId: string): Promise<DeviceInfo[]> {
     try {

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Param, Body, UseGuards, Request } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Delete, Param, Body, UseGuards, Request  } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UsersService } from './users.service.js';
@@ -8,7 +8,7 @@ import { ContentIdDto } from './dto/content-id.dto.js';
 @Controller('interactions')
 @UseGuards(AuthGuard('jwt'))
 export class InteractionsController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(@Inject(UsersService) private readonly usersService: UsersService) {}
 
   @Get('watchlist')
   @ApiOperation({ summary: 'Get user watchlist' })

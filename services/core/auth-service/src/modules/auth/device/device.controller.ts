@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -8,7 +8,7 @@ import {
   Param,
   UseGuards,
   Request,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
@@ -38,7 +38,7 @@ export interface DeviceInfo {
 @Controller('auth/devices')
 @UseGuards(AuthGuard('jwt'), RateLimitGuard)
 export class DeviceController {
-  constructor(private readonly deviceService: DeviceService) {}
+  constructor(@Inject(DeviceService) private readonly deviceService: DeviceService) {}
 
   @Get()
   @RateLimit(10, 60000)

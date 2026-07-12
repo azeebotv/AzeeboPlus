@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -8,7 +8,7 @@ import {
   Query,
   UseGuards,
   Request,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AppealService } from './appeal.service';
 import { CreateAppealDto, DecideAppealDto, AppealQueryDto } from './dto/appeal.dto';
@@ -28,7 +28,7 @@ interface AuthenticatedRequest {
 @UseGuards(AuthGuard)
 @ApiBearerAuth()
 export class AppealController {
-  constructor(private appealService: AppealService) {}
+  constructor(@Inject(AppealService) private appealService: AppealService) {}
 
   @Post()
   @ApiOperation({ summary: 'Submit an appeal' })

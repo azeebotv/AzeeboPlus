@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {Inject,  Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '../../prisma/client/index.js';
 import { WebhookRetryService } from '../payments/webhook-retry.service.js';
@@ -45,8 +45,8 @@ export class WebhookService {
   private readonly logger = new Logger(WebhookService.name);
 
   constructor(
-    private prisma: PrismaService,
-    private webhookRetryService: WebhookRetryService
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(WebhookRetryService) private webhookRetryService: WebhookRetryService
   ) {}
 
   async handlePaystackWebhook(payload: WebhookPayload): Promise<void> {

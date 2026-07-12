@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {Inject,  Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 interface LocationData {
@@ -58,7 +58,7 @@ interface ListResponse<T> {
 export class UniverseService {
   private readonly logger = new Logger(UniverseService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async getUniverses(page = 1, limit = 20): Promise<PaginatedResponse<UniverseData>> {
     try {

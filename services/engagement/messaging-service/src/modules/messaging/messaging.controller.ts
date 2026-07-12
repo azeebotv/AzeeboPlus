@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -8,7 +8,7 @@ import {
   Query,
   UseGuards,
   Request,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
 import { MessagingService } from './messaging.service.js';
@@ -26,7 +26,7 @@ interface AuthRequest extends Request {
 @Controller('v1/messaging')
 @UseGuards(AuthGuard('jwt'), RateLimitGuard)
 export class MessagingController {
-  constructor(private readonly messagingService: MessagingService) {}
+  constructor(@Inject(MessagingService) private readonly messagingService: MessagingService) {}
 
   @Get('conversations')
   @RateLimit(30, 60000)

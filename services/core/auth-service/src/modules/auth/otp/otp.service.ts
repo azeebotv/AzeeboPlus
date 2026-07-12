@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomInt } from 'crypto';
 import * as bcrypt from 'bcrypt';
@@ -13,8 +13,8 @@ export class OtpService {
   private readonly logger = new Logger(OtpService.name);
 
   constructor(
-    private readonly authRepository: AuthRepository,
-    private readonly configService: ConfigService
+    @Inject(AuthRepository) private readonly authRepository: AuthRepository,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.otpExpiry = this.configService.get<number>('OTP_EXPIRY', 300);
     this.saltRounds = this.configService.get<number>('SALT_ROUNDS', 10);

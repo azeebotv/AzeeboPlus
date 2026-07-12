@@ -1,4 +1,4 @@
-import {
+import {Inject, 
   Injectable,
   CanActivate,
   ExecutionContext,
@@ -28,9 +28,9 @@ export class RateLimitGuard implements CanActivate {
   private readonly blockDuration: number;
 
   constructor(
-    private reflector: Reflector,
-    private redisService: RedisService,
-    private configService: ConfigService
+    @Inject(Reflector) private reflector: Reflector,
+    @Inject(RedisService) private redisService: RedisService,
+    @Inject(ConfigService) private configService: ConfigService
   ) {
     this.blockDuration = this.configService.get<number>('RATE_LIMIT_BLOCK_DURATION', 3600);
   }

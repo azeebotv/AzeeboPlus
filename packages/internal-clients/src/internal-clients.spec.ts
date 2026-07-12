@@ -131,16 +131,16 @@ describe('ServiceClient', () => {
   });
 
   describe('retry logic', () => {
-    it('should retry on 500 errors', async () => {
-      const error500 = new Error('Server Error');
+    it('should retry on 502 errors', async () => {
+      const error502 = new Error('Bad Gateway');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (error500 as any).response = { status: 500 };
+      (error502 as any).response = { status: 502 };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (error500 as any).code = undefined;
+      (error502 as any).code = undefined;
       mockedAxios.isAxiosError.mockReturnValue(true);
 
       mockAxiosInstance.get
-        .mockRejectedValueOnce(error500)
+        .mockRejectedValueOnce(error502)
         .mockResolvedValueOnce({ data: { id: 1 } });
 
       const result = await client.get('/users/1');
@@ -179,16 +179,16 @@ describe('ServiceClient', () => {
     });
 
     it('should throw after all retries exhausted', async () => {
-      const error500 = new Error('Server Error');
+      const error502 = new Error('Bad Gateway');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (error500 as any).response = { status: 500 };
+      (error502 as any).response = { status: 502 };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (error500 as any).code = undefined;
+      (error502 as any).code = undefined;
       mockedAxios.isAxiosError.mockReturnValue(true);
 
-      mockAxiosInstance.get.mockRejectedValue(error500);
+      mockAxiosInstance.get.mockRejectedValue(error502);
 
-      await expect(client.get('/users/1')).rejects.toThrow('Server Error');
+      await expect(client.get('/users/1')).rejects.toThrow('Bad Gateway');
       // Default maxRetries is 3, so 1 initial + 3 retries = 4 calls
       expect(mockAxiosInstance.get).toHaveBeenCalledTimes(4);
     }, 15000);

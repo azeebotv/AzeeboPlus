@@ -1,11 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {Inject,  Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
 export class SupportDashboardService {
   private readonly logger = new Logger(SupportDashboardService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async getStats() {
     try {

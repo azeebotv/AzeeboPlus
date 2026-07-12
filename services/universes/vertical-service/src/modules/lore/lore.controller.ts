@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -8,7 +8,7 @@ import {
   Param,
   Query,
   UseGuards,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from '@azeebo/security';
@@ -19,7 +19,7 @@ import { UpdateLoreDto } from './dto/update-lore.dto';
 @ApiTags('Lore')
 @Controller('v1/vertical/lore')
 export class LoreController {
-  constructor(private readonly loreService: LoreService) {}
+  constructor(@Inject(LoreService) private readonly loreService: LoreService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get lore entries' })

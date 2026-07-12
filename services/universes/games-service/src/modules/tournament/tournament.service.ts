@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import axios from 'axios';
@@ -40,8 +40,8 @@ export class TournamentService {
   private readonly walletServiceUrl: string;
 
   constructor(
-    private prisma: PrismaService,
-    private readonly configService: ConfigService
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.walletServiceUrl = this.configService.get<string>(
       'WALLET_SERVICE_URL',

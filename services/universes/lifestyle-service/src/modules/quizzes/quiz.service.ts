@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateQuizDto, QuizQuestionDto } from './dto/create-quiz.dto';
 
@@ -6,7 +6,7 @@ import { CreateQuizDto, QuizQuestionDto } from './dto/create-quiz.dto';
 export class QuizService {
   private readonly logger = new Logger(QuizService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async getQuizzes(page = 1, limit = 20, category?: string, difficulty?: string) {
     try {

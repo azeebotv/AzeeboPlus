@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException } from '@nestjs/common';
 import { UploadService } from '../upload/upload.service';
 import { S3Service } from '../upload/s3.service';
 import { RedisService } from '../../common/services/redis.service';
@@ -6,9 +6,9 @@ import { RedisService } from '../../common/services/redis.service';
 @Injectable()
 export class AdminService {
   constructor(
-    private readonly uploadService: UploadService,
-    _s3Service: S3Service,
-    private readonly redisService: RedisService
+    @Inject(UploadService) private readonly uploadService: UploadService,
+    @Inject(S3Service) _s3Service: S3Service,
+    @Inject(RedisService) private readonly redisService: RedisService
   ) {}
 
   async getStats() {

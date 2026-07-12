@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -8,7 +8,7 @@ import {
   Param,
   Query,
   UseGuards,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { MusicService } from './music.service';
@@ -31,7 +31,7 @@ interface CreateMusicData {
 @ApiTags('Music')
 @Controller('v1/lifestyle/music')
 export class MusicController {
-  constructor(private readonly musicService: MusicService) {}
+  constructor(@Inject(MusicService) private readonly musicService: MusicService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get music entries' })

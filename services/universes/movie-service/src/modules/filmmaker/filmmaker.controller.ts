@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -8,7 +8,7 @@ import {
   Query,
   UseGuards,
   Request,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { FilmmakerService } from './filmmaker.service.js';
@@ -16,7 +16,7 @@ import { FilmmakerService } from './filmmaker.service.js';
 @ApiTags('Filmmaker')
 @Controller('v1/movies/filmmakers')
 export class FilmmakerController {
-  constructor(private readonly filmmakerService: FilmmakerService) {}
+  constructor(@Inject(FilmmakerService) private readonly filmmakerService: FilmmakerService) {}
 
   @Get('projects')
   @ApiOperation({ summary: 'Get filmmaker projects' })

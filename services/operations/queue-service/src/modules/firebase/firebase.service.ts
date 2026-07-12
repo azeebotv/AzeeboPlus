@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import {Inject,  Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import {
   initializeApp,
   cert,
@@ -18,7 +18,7 @@ export class FirebaseService implements OnModuleInit, OnModuleDestroy {
   private firebaseEnabled: boolean = false;
   private readonly circuitBreaker: CircuitBreaker;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(@Inject(ConfigService) private readonly configService: ConfigService) {
     this.circuitBreaker = new CircuitBreaker({
       failureThreshold: 5,
       resetTimeout: 60000,

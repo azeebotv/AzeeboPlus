@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma';
 import { PrismaService } from '../../database/prisma.service';
 import { AuditLogService } from '../audit/audit.service';
@@ -23,8 +23,8 @@ export interface UserWithStats {
 @Injectable()
 export class UserManagementService {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly auditService: AuditLogService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(AuditLogService) private readonly auditService: AuditLogService
   ) {}
 
   async getUsers(page = 1, limit = 20, role?: string, search?: string): Promise<unknown> {

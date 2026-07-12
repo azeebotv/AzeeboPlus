@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Inject, Controller, Get, Query, UseGuards  } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { AdminService } from './admin.service.js';
 import { AdminGuard } from '@azeebo/security';
@@ -9,7 +9,7 @@ import { AuthGuard } from '@nestjs/passport';
 @Controller('admin')
 @UseGuards(AuthGuard('jwt'), AdminGuard)
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(@Inject(AdminService) private readonly adminService: AdminService) {}
 
   @Get('stats')
   @ApiOperation({ summary: 'Get analytics service stats (admin)' })

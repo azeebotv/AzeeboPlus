@@ -1,4 +1,4 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import {Inject,  Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 
@@ -42,8 +42,8 @@ export class EngagementService {
   private readonly logger = new Logger(EngagementService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly cache: CacheService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(CacheService) private readonly cache: CacheService
   ) {}
 
   async getLeaderboard(timePeriod = 'weekly', category = 'all', limit = 50) {

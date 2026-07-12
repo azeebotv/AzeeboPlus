@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Request, Param } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Body, UseGuards, Request, Param  } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
@@ -10,7 +10,7 @@ import { SubmitChallengeDto } from './dto/submit-challenge.dto.js';
 @ApiTags('Comedy')
 @Controller('v1/comedy')
 export class ComedyController {
-  constructor(private readonly comedyService: ComedyService) {}
+  constructor(@Inject(ComedyService) private readonly comedyService: ComedyService) {}
 
   @Get('clips')
   @UseGuards(RateLimitGuard)

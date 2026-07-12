@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -9,7 +9,7 @@ import {
   NotFoundException,
   Param,
   UseInterceptors,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { PrismaService } from '../database/prisma.service.js';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
@@ -39,8 +39,8 @@ interface AuthenticatedRequest {
 @UseInterceptors(CacheInterceptor)
 export class WalletController {
   constructor(
-    private readonly walletService: WalletService,
-    private readonly prisma: PrismaService
+    @Inject(WalletService) private readonly walletService: WalletService,
+    @Inject(PrismaService) private readonly prisma: PrismaService
   ) {}
 
   @Get()

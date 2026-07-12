@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 interface LoreEntry {
@@ -50,7 +50,7 @@ interface UpdateLoreData {
 
 @Injectable()
 export class LoreService {
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   private formatEntry(entry: Record<string, unknown>): LoreEntry {
     return {

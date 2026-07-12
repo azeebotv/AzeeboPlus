@@ -6,13 +6,14 @@ import { UploadModule } from './modules/upload/upload.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { HealthModule } from './modules/health/health.module';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
-import { ServiceAuthGuard } from '@azeebo/security';
+import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    RateLimiterModule.forRoot(),
     ThrottlerModule.forRoot([
       {
         ttl: 60000,

@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Delete, Param, Query, Body, UseGuards, Req } from '@nestjs/common';
+import { Inject, Controller, Get, Put, Delete, Param, Query, Body, UseGuards, Req  } from '@nestjs/common';
 import { Request } from 'express';
 import { UserManagementService } from './user-management.service';
 import { AuditLogService } from '../audit/audit.service';
@@ -15,8 +15,8 @@ interface AuthRequest extends Request {
 @Roles('admin')
 export class UserManagementController {
   constructor(
-    private readonly userService: UserManagementService,
-    private readonly auditLogService: AuditLogService
+    @Inject(UserManagementService) private readonly userService: UserManagementService,
+    @Inject(AuditLogService) private readonly auditLogService: AuditLogService
   ) {}
 
   @Get()

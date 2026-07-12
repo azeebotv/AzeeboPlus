@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '@prisma/client';
 import { FirebaseService } from '../firebase/firebase.service.js';
@@ -10,11 +10,11 @@ import { CacheService, cacheKey } from '@azeebo/shared-services';
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly firebaseService: FirebaseService,
-    private readonly emailService: EmailService,
-    private readonly smsService: SmsService,
-    private readonly cache: CacheService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(FirebaseService) private readonly firebaseService: FirebaseService,
+    @Inject(EmailService) private readonly emailService: EmailService,
+    @Inject(SmsService) private readonly smsService: SmsService,
+    @Inject(CacheService) private readonly cache: CacheService
   ) {}
 
   async getNotifications(

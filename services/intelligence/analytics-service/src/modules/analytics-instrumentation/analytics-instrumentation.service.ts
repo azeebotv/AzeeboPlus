@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {Inject,  Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service.js';
 
@@ -69,7 +69,7 @@ export const EVENT_NAMES = {
 @Injectable()
 export class AnalyticsInstrumentationService {
   private readonly logger = new Logger(AnalyticsInstrumentationService.name);
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async track(event: AnalyticsEvent): Promise<{ id: string }> {
     try {

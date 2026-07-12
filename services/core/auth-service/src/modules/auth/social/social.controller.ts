@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -8,7 +8,7 @@ import {
   UseGuards,
   BadRequestException,
   Logger,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 
@@ -45,7 +45,7 @@ interface UnlinkRequest {
 export class SocialAuthController {
   private readonly logger = new Logger(SocialAuthController.name);
 
-  constructor(private readonly socialAuthService: SocialAuthService) {}
+  constructor(@Inject(SocialAuthService) private readonly socialAuthService: SocialAuthService) {}
 
   // ─── Authorize endpoints (initiate OAuth flow) ──────────────────────
 

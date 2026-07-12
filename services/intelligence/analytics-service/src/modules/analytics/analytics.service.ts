@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service.js';
 import { AnalyticsResponse } from './interfaces/analytics-response.interface.js';
@@ -76,8 +76,8 @@ const REQUIRED_METADATA_FIELDS = ['session_id', 'platform', 'timestamp'];
 export class AnalyticsService {
   private readonly logger = new Logger(AnalyticsService.name);
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly cache: CacheService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(CacheService) private readonly cache: CacheService
   ) {}
 
   private validateEventEnvelope(event: Event): { valid: boolean; error?: string } {

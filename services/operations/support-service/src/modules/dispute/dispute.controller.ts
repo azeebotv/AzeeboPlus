@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -8,7 +8,7 @@ import {
   Query,
   UseGuards,
   Request,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { DisputeService } from './dispute.service';
 import { CreateDisputeDto, ResolveDisputeDto, DisputeQueryDto } from './dto/dispute.dto';
@@ -29,7 +29,7 @@ interface AuthenticatedRequest {
 @UseGuards(AuthGuard)
 @ApiBearerAuth()
 export class DisputeController {
-  constructor(private disputeService: DisputeService) {}
+  constructor(@Inject(DisputeService) private disputeService: DisputeService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create payout dispute' })

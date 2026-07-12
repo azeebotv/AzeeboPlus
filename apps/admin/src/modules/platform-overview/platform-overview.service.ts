@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 
 @Injectable()
@@ -7,7 +7,7 @@ export class PlatformOverviewService {
   private readonly subscriptionServiceUrl =
     process.env.SUBSCRIPTION_SERVICE_URL || 'http://localhost:3026';
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async getOverview() {
     const now = new Date();

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {Inject,  Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import type { SafetyScan } from '../../prisma/client/index.js';
@@ -34,8 +34,8 @@ export class SafetyScanningService {
   private readonly copyrightApiConfig: SafetyApiConfig;
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly configService: ConfigService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.scanningEnabled = this.configService.get<boolean>('SAFETY_SCANNING_ENABLED', true);
     this.useMockScanning = this.configService.get<boolean>('USE_MOCK_SCANNING', false);

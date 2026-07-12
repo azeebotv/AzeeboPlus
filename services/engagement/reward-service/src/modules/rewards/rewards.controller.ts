@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -8,7 +8,7 @@ import {
   HttpCode,
   HttpStatus,
   Query,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
@@ -21,7 +21,7 @@ import { RewardResponse } from './interfaces/reward-response.interface.js';
 @UseGuards(RateLimitGuard)
 @Controller('v1/rewards')
 export class RewardsController {
-  constructor(private readonly rewardsService: RewardsService) {}
+  constructor(@Inject(RewardsService) private readonly rewardsService: RewardsService) {}
 
   @Get()
   @UseGuards(AuthGuard('jwt'))

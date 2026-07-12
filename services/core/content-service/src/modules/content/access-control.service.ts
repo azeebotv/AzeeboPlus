@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 
 export interface AccessCheckResult {
@@ -12,7 +12,7 @@ export interface AccessCheckResult {
 export class AccessControlService {
   private readonly logger = new Logger(AccessControlService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async checkContentAccess(userId: string, contentId: string): Promise<AccessCheckResult> {
     try {

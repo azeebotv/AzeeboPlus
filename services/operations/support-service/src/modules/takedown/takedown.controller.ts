@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -8,7 +8,7 @@ import {
   Query,
   UseGuards,
   Request,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { TakedownService } from './takedown.service';
 import { CreateTakedownDto, DecideTakedownDto, TakedownQueryDto } from './dto/takedown.dto';
@@ -28,7 +28,7 @@ interface AuthenticatedRequest {
 @UseGuards(AuthGuard)
 @ApiBearerAuth()
 export class TakedownController {
-  constructor(private takedownService: TakedownService) {}
+  constructor(@Inject(TakedownService) private takedownService: TakedownService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create content takedown request' })

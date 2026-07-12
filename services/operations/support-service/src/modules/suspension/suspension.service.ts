@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { createApiClient, noopTokenStorage } from '@azeebo/api-client';
@@ -10,8 +10,8 @@ export class SuspensionService {
   private readonly auditServiceClient;
 
   constructor(
-    private prisma: PrismaService,
-    private configService: ConfigService
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(ConfigService) private configService: ConfigService
   ) {
     this.notificationServiceClient = createApiClient({
       baseUrl: this.configService.getOrThrow<string>('NOTIFICATION_SERVICE_URL'),

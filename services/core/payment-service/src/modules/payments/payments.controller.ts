@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Post,
   Body,
@@ -9,7 +9,7 @@ import {
   HttpStatus,
   Headers,
   Param,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -40,7 +40,7 @@ import { RateLimitGuard, RateLimit } from '@azeebo/security';
 @ApiBearerAuth()
 @Controller('v1/payments')
 export class PaymentsController {
-  constructor(private readonly paymentsService: PaymentsService) {}
+  constructor(@Inject(PaymentsService) private readonly paymentsService: PaymentsService) {}
 
   @Post('initialize')
   @UseGuards(AuthGuard('jwt'), RateLimitGuard)

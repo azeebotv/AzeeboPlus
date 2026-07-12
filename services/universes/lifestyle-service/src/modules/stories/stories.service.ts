@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {Inject,  Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 interface Story {
@@ -62,7 +62,7 @@ interface WhereClause {
 export class StoriesService {
   private readonly logger = new Logger(StoriesService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async getStories(page = 1, limit = 20, category?: string): Promise<StoryResponse> {
     try {

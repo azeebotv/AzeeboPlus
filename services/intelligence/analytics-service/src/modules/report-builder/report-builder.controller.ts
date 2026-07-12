@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -11,7 +11,7 @@ import {
   Request,
   HttpCode,
   HttpStatus,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -30,7 +30,7 @@ interface AuthenticatedRequest extends Request {
 @Controller('v1/reports')
 @UseGuards(AuthGuard('jwt'))
 export class ReportBuilderController {
-  constructor(private readonly reportBuilderService: ReportBuilderService) {}
+  constructor(@Inject(ReportBuilderService) private readonly reportBuilderService: ReportBuilderService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)

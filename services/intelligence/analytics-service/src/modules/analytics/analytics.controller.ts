@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Post,
   Get,
@@ -9,7 +9,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
@@ -23,7 +23,7 @@ import { IngestEventsDto } from './dto/analytics.dto.js';
 @Controller('v1/analytics')
 @UseGuards(RateLimitGuard)
 export class AnalyticsController {
-  constructor(private readonly analyticsService: AnalyticsService) {}
+  constructor(@Inject(AnalyticsService) private readonly analyticsService: AnalyticsService) {}
 
   @Post('events')
   @UseGuards(AuthGuard('jwt'))

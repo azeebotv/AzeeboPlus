@@ -5,7 +5,7 @@ import { RewardsModule } from './modules/rewards/rewards.module.js';
 import { AdminModule } from './modules/admin/admin.module.js';
 import { DatabaseModule } from './modules/database/database.module.js';
 import { HealthModule } from './modules/health/health.module.js';
-import { ServiceAuthGuard } from '@azeebo/security';
+import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
 import { CacheModule } from '@azeebo/shared-services';
 
 @Module({
@@ -14,6 +14,7 @@ import { CacheModule } from '@azeebo/shared-services';
       isGlobal: true,
       envFilePath: ['.env', '../../.env'],
     }),
+    RateLimiterModule.forRoot(),
     DatabaseModule,
     RewardsModule,
     AdminModule,
