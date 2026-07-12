@@ -24,7 +24,7 @@ spec:
         fsGroup: 65532
       containers:
         - name: api-gateway
-          image: ghcr.io/azeebotv/azeebo-api-gateway:latest
+          image: ghcr.io/azeebotv/azeebo-api-gateway:stable
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3013

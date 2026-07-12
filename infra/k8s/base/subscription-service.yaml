@@ -24,7 +24,7 @@ spec:
         fsGroup: 65532
       containers:
         - name: subscription-service
-          image: ghcr.io/azeebotv/azeebo-subscription-service:latest
+          image: ghcr.io/azeebotv/azeebo-subscription-service:stable
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

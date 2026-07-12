@@ -24,7 +24,7 @@ spec:
         fsGroup: 65532
       containers:
         - name: analytics-service
-          image: ghcr.io/azeebotv/azeebo-analytics-service:latest
+          image: ghcr.io/azeebotv/azeebo-analytics-service:stable
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

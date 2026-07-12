@@ -24,7 +24,7 @@ spec:
         fsGroup: 65532
       containers:
         - name: search-service
-          image: ghcr.io/azeebotv/azeebo-search-service:latest
+          image: ghcr.io/azeebotv/azeebo-search-service:stable
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
