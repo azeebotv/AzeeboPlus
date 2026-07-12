@@ -253,7 +253,7 @@ export default function MovieDetailPage() {
               <Text style={styles.purchaseButtonText}>Pay {selectedOption.price}</Text>
             </TouchableOpacity>
 
-            {selectedOption.id === '3' && (
+            {selectedOption.id === moviePricing.pass.id && (
               <Text style={styles.passNote}>
                 Cancel anytime. Includes access to all movies in the Cinema Plus library.
               </Text>

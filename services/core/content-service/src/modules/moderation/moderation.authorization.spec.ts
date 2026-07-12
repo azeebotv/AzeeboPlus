@@ -2,9 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
-import { ModerationController } from './moderation.controller';
-import { ModerationService } from './moderation.service';
-import { RolesGuard } from '../../common/guards/roles.guard';
+import { ModerationController } from './moderation.controller.js';
+import { ModerationService } from './moderation.service.js';
+import { RolesGuard } from '../../common/guards/roles.guard.js';
 import { Reflector } from '@nestjs/core';
 
 describe('Moderation Authorization Tests', () => {

@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { StyleProp, Style } from 'react-native';
+
 import {
   Button,
   Card,
@@ -265,12 +265,14 @@ describe('Skeleton', () => {
 
   it('applies custom width', () => {
     render(<Skeleton width="200px" />);
-    expect(screen.getByRole('progressbar')).toHaveStyle({ width: '200px' } as StyleProp<Style>);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect(screen.getByRole('progressbar')).toHaveStyle({ width: '200px' } as any);
   });
 
   it('applies custom height', () => {
     render(<Skeleton height="40px" />);
-    expect(screen.getByRole('progressbar')).toHaveStyle({ height: '40px' } as StyleProp<Style>);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect(screen.getByRole('progressbar')).toHaveStyle({ height: '40px' } as any);
   });
 
   it('applies custom border radius', () => {

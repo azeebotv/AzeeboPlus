@@ -1,4 +1,4 @@
-export { AuthClient, createMemoryAuthClient } from './auth-client';
+export { AuthClient, createMemoryAuthClient } from './auth-client.js';
 export type {
   AuthClientConfig,
   AuthApiResponse,
@@ -9,12 +9,12 @@ export type {
   AuthEventType,
   LoginRequest,
   RegisterRequest,
-} from './auth-client';
+} from './auth-client.js';
 export type { TokenStorage } from '@azeebo/shared-types';
 
-export { ProtectedRoute, ProtectedAuthProvider, useProtectedAuth } from './web/ProtectedRoute';
+export { ProtectedRoute, ProtectedAuthProvider, useProtectedAuth } from './web/ProtectedRoute.js';
 export type {
   AuthState as WebAuthState,
   ProtectedAuthProviderProps,
   ProtectedRouteProps,
-} from './web/ProtectedRoute';
+} from './web/ProtectedRoute.js';

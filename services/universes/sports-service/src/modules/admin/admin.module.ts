@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { AdminController } from './admin.controller';
-import { AdminService } from './admin.service';
-import { PrismaService } from '../database/prisma.service';
+import { AdminController } from './admin.controller.js';
+import { AdminService } from './admin.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 
 @Module({
   imports: [

@@ -2,10 +2,10 @@ import { Controller, Get, Post, Body, Query, Param, UseGuards, Request } from '@
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
-import { EngagementService } from './engagement.service';
+import { EngagementService } from './engagement.service.js';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import { User } from '@azeebo/shared-types';
-import { SubmitPredictionDto } from './dto/submit-prediction.dto';
+import { SubmitPredictionDto } from './dto/submit-prediction.dto.js';
 
 interface AuthRequest extends Request {
   user: User;

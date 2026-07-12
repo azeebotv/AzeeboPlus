@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '@prisma/client';
-import { CreatorResponse } from './interfaces/creator-response.interface';
+import { CreatorResponse } from './interfaces/creator-response.interface.js';
 import axios from 'axios';
 import { randomUUID } from 'crypto';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
@@ -636,14 +636,26 @@ export class CreatorsService {
       throw new BadRequestException('Cannot tip yourself');
     }
 
-    const senderWallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    let senderWallet: any;
+    try {
+      const response = await axios.get(`${this.walletServiceBaseUrl}/wallets/user/${userId}`);
+      senderWallet = response.data;
+    } catch (error) {
+      throw new NotFoundException('Sender wallet not found');
+    }
     if (!senderWallet) {
-      throw new NotFoundException(`Sender wallet not found`);
+      throw new NotFoundException('Sender wallet not found');
     }
 
-    const creatorWallet = await this.prisma.wallet.findUnique({ where: { userId: creatorId } });
+    let creatorWallet: any;
+    try {
+      const response = await axios.get(`${this.walletServiceBaseUrl}/wallets/user/${creatorId}`);
+      creatorWallet = response.data;
+    } catch (error) {
+      throw new NotFoundException('Creator wallet not found');
+    }
     if (!creatorWallet) {
-      throw new NotFoundException(`Creator wallet not found`);
+      throw new NotFoundException('Creator wallet not found');
     }
 
     const idempotencyKey = `tip:${userId}:${creatorId}:${amount}`;

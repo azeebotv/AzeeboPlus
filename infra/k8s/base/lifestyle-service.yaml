@@ -24,7 +24,7 @@ spec:
         fsGroup: 65532
       containers:
         - name: lifestyle-service
-          image: ghcr.io/azeebotv/azeebo-lifestyle-service:latest
+          image: ghcr.io/azeebotv/azeebo-lifestyle-service:stable
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

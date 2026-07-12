@@ -68,6 +68,7 @@ describe('Auth — Edge Cases & Error Scenarios', () => {
 
     expect(result.success).toBe(false);
     expect(result.statusCode).toBe(409);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect((result as any).code).toBe('EMAIL_EXISTS');
   });
 
@@ -313,6 +314,7 @@ describe('Wallet — Edge Cases & Error Scenarios', () => {
     const result = await wallet.withdraw(999999, { bankCode: '001', accountNumber: '1234567890' });
 
     expect(result.success).toBe(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect((result as any).code).toBe('INSUFFICIENT_BALANCE');
   });
 

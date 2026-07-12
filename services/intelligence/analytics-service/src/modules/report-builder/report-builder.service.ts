@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
-import { Prisma } from '../../prisma/client';
-import { PrismaService } from '../database/prisma.service';
+import { Prisma } from '../../prisma/client/index.js';
+import { PrismaService } from '../database/prisma.service.js';
 import {
   CreateReportDto,
   ExecuteReportDto,
@@ -8,7 +8,7 @@ import {
   MetricConfig,
   MetricType,
   DimensionConfig,
-} from './dto/report-builder.dto';
+} from './dto/report-builder.dto.js';
 
 type ReportRow = Record<string, unknown>;
 

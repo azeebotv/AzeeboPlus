@@ -216,7 +216,7 @@ export class ModerationService {
         signal: AbortSignal.timeout(5000),
       });
       if (response.ok) {
-        const data = await response.json() as { data?: unknown };
+        const data = (await response.json()) as { data?: unknown };
         if (data.data) return data.data;
       }
     } catch {

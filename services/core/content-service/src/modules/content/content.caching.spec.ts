@@ -1,12 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, CanActivate, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
-import { ContentController } from './content.controller';
-import { ContentService } from './content.service';
-import { AccessControlService } from './access-control.service';
+import { ContentController } from './content.controller.js';
+import { ContentService } from './content.service.js';
+import { AccessControlService } from './access-control.service.js';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, AdminGuard } from '@azeebo/security';
-import { CacheInterceptor } from '../../cache';
+import { CacheInterceptor } from '../../cache/index.js';
 
 class MockAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext) {

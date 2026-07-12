@@ -11,10 +11,10 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { ModerationService } from './moderation.service';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { ResolveModerationDto, ModerationDecisionDto } from './dto/moderation.dto';
+import { ModerationService } from './moderation.service.js';
+import { RolesGuard } from '../../common/guards/roles.guard.js';
+import { Roles } from '../../common/decorators/roles.decorator.js';
+import { ResolveModerationDto, ModerationDecisionDto } from './dto/moderation.dto.js';
 
 @ApiTags('Moderation')
 @ApiBearerAuth()
@@ -118,9 +118,9 @@ export class ModerationController {
   @ApiResponse({ status: 200, description: 'Case assigned' })
   async assignCase(
     @Param('caseId') caseId: string,
-    @Request() req: { user: { sub: string } }
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.moderationService.assignCase(caseId, req.user.sub);
+    return this.moderationService.assignCase(caseId, req.user.id);
   }
 
   @Patch('cases/:caseId/resolve')
@@ -132,11 +132,11 @@ export class ModerationController {
   async resolveCase(
     @Param('caseId') caseId: string,
     @Body() body: ResolveModerationDto,
-    @Request() req: { user: { sub: string } }
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
     return this.moderationService.resolveCase(caseId, {
       resolution: body.resolution,
-      resolvedBy: req.user.sub,
+      resolvedBy: req.user.id,
       notes: body.notes,
     });
   }
@@ -163,11 +163,11 @@ export class ModerationController {
       reason: string;
       durationDays?: number;
     },
-    @Request() req: { user: { sub: string } }
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
     return this.moderationService.executeAction({
       ...data,
-      performedBy: req.user.sub,
+      performedBy: req.user.id,
     });
   }
 
@@ -194,11 +194,11 @@ export class ModerationController {
       reason: string;
       evidence?: Record<string, unknown>;
     },
-    @Request() req: { user: { sub: string } }
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
     return this.moderationService.submitAppeal({
       caseId: data.caseId,
-      userId: req.user.sub,
+      userId: req.user.id,
       reason: data.reason,
     });
   }
@@ -212,11 +212,11 @@ export class ModerationController {
   async reviewAppeal(
     @Param('appealId') appealId: string,
     @Body() body: ModerationDecisionDto,
-    @Request() req: { user: { sub: string } }
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
     return this.moderationService.reviewAppeal(
       appealId,
-      req.user.sub,
+      req.user.id,
       body.decision as 'successful' | 'rejected',
       body.notes
     );

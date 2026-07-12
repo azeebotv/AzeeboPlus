@@ -14,6 +14,7 @@ export interface Movie {
   thumbnail?: string;
   mediaUrl?: string;
   isPremium?: boolean;
+  emoji?: string;
 }
 
 export interface CastMember {
@@ -32,6 +33,9 @@ export interface Game {
   difficulty?: string;
   thumbnail?: string;
   isPremium?: boolean;
+  highScore?: number;
+  emoji?: string;
+  yourBest?: number;
 }
 
 export interface GameLevel {
@@ -39,23 +43,30 @@ export interface GameLevel {
   name: string;
   difficulty: string;
   order: number;
+  unlocked?: boolean;
+  stars?: number;
 }
 
 export interface LeaderboardEntry {
   id: string;
   userId: string;
   displayName: string;
+  name?: string;
   avatar?: string;
   score: number;
   rank: number;
+  isYou?: boolean;
 }
 
 export interface Achievement {
   id: string;
   name: string;
+  title?: string;
   description: string;
   icon: string;
   unlockedAt?: string;
+  earned?: boolean;
+  emoji?: string;
 }
 
 export interface Contestant {

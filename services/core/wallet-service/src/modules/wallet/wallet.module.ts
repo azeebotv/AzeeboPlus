@@ -3,10 +3,10 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
-import { WalletController } from './wallet.controller';
-import { WalletService } from './wallet.service';
-import { WalletRepository } from './wallet.repository';
-import { DatabaseModule } from '../database/database.module';
+import { WalletController } from './wallet.controller.js';
+import { WalletService } from './wallet.service.js';
+import { WalletRepository } from './wallet.repository.js';
+import { DatabaseModule } from '../database/database.module.js';
 
 @Module({
   imports: [

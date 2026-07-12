@@ -1,4 +1,4 @@
-import { AuthClient, createMemoryAuthClient } from './auth-client';
+import { AuthClient, createMemoryAuthClient } from './auth-client.js';
 
 // Mock global fetch
 const mockFetch = jest.fn();

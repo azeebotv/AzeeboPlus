@@ -14,12 +14,6 @@ import { universeApi, contentApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 
-interface UniverseOption {
-  id: string;
-  name: string;
-  icon: string;
-}
-
 const uploadOptions = [
   { id: 'video', name: 'Video', icon: '📹', color: '#FF6B6B' },
   { id: 'image', name: 'Image', icon: '📷', color: '#4ECDC4' },
@@ -47,7 +41,7 @@ export default function CreateScreen() {
       const res = await universeApi.getUniverses();
       if (res.success && res.data) {
         setUniverseOptions(
-          res.data.items.map((u: Record<string, unknown>) => ({
+          res.data.items.map((u: any) => ({
             id: (u.slug || u.id) as string,
             name: u.name as string,
             icon: '🌐',

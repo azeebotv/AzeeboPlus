@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { ComedyFeedService } from './comedy-feed.service';
+import { ComedyFeedService } from './comedy-feed.service.js';
 
 @ApiTags('Comedy Feed')
 @Controller('v1/comedy')

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../database/prisma.service';
-import { GameResponse } from './interfaces/game-response.interface';
+import { PrismaService } from '../database/prisma.service.js';
+import { GameResponse } from './interfaces/game-response.interface.js';
 import axios from 'axios';
 
 @Injectable()
@@ -39,9 +39,6 @@ export class GamesService {
   async getHome(): Promise<GameResponse> {
     const dailyChallenge = await this.prisma.challenge.findFirst({
       where: { type: 'daily' },
-      include: {
-        questions: true,
-      },
     });
 
     const tournaments = await this.prisma.tournament.findMany({
@@ -53,7 +50,6 @@ export class GamesService {
     const topPlayers = await this.prisma.scoreEntry.findMany({
       orderBy: { score: 'desc' },
       take: 10,
-      include: { user: true },
     });
 
     return {
@@ -69,9 +65,6 @@ export class GamesService {
   async getDailyChallenge(userId?: string): Promise<GameResponse> {
     const challenge = await this.prisma.challenge.findFirst({
       where: { type: 'daily' },
-      include: {
-        questions: true,
-      },
     });
 
     if (!challenge) {
@@ -99,7 +92,6 @@ export class GamesService {
   async submitDailyChallenge(userId: string, answer: string): Promise<GameResponse> {
     const challenge = await this.prisma.challenge.findFirst({
       where: { type: 'daily' },
-      include: { questions: true },
     });
 
     if (!challenge) {
@@ -115,7 +107,11 @@ export class GamesService {
       throw new BadRequestException('Daily challenge already completed');
     }
 
-    const firstQuestion = challenge.questions?.[0] as Record<string, unknown> | undefined;
+    const challengeQuestions = await this.prisma.question.findMany({
+      where: { challengeId: challenge.id },
+      orderBy: { order: 'asc' },
+    });
+    const firstQuestion = challengeQuestions[0] as Record<string, unknown> | undefined;
     const correctAnswer =
       (firstQuestion?.correctAnswer as string) || (firstQuestion?.answer as string);
     const isCorrect = answer === correctAnswer;
@@ -250,7 +246,6 @@ export class GamesService {
     const leaderboard = await this.prisma.scoreEntry.findMany({
       orderBy: { score: 'desc' },
       take: 100,
-      include: { user: true },
     });
 
     return {
@@ -262,12 +257,6 @@ export class GamesService {
   async listTournaments(): Promise<GameResponse> {
     const tournaments = await this.prisma.tournament.findMany({
       where: { status: 'active' },
-      include: {
-        prizes: true,
-        _count: {
-          select: { entries: true },
-        },
-      },
       orderBy: { startsAt: 'asc' },
     });
 
@@ -301,21 +290,14 @@ export class GamesService {
     }
 
     if (tournament.entryFee && Number(tournament.entryFee) > 0) {
-      const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
-      if (!wallet) {
-        throw new NotFoundException('Wallet not found');
-      }
-
-      if (Number(wallet.balance) < Number(tournament.entryFee)) {
-        throw new BadRequestException('Insufficient balance for tournament entry fee');
-      }
+      const entryFeeAmount = Number(tournament.entryFee);
 
       await axios
         .post(
           `${this.walletServiceBaseUrl}/v1/wallet/debit`,
           {
-            walletId: wallet.id,
-            amount: Number(tournament.entryFee),
+            userId,
+            amount: entryFeeAmount,
             description: `Tournament entry fee: ${tournamentId}`,
           },
           { timeout: 10000 }

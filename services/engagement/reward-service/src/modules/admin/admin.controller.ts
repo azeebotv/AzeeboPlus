@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Put, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AdminService } from './admin.service';
+import { AdminService } from './admin.service.js';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard, RateLimitGuard, RateLimit } from '@azeebo/security';
 

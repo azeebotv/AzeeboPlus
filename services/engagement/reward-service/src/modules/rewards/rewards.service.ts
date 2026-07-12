@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../database/prisma.service';
-import { RewardResponse } from './interfaces/reward-response.interface';
+import { PrismaService } from '../database/prisma.service.js';
+import { RewardResponse } from './interfaces/reward-response.interface.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 
 interface MissionWithCompletion {

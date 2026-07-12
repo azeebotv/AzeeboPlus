@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
-import { Prisma } from '../../prisma/client';
-import { WebhookRetryService } from '../payments/webhook-retry.service';
+import { PrismaService } from '../database/prisma.service.js';
+import { Prisma } from '../../prisma/client/index.js';
+import { WebhookRetryService } from '../payments/webhook-retry.service.js';
 
 export interface WebhookPayload {
   id: string;

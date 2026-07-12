@@ -28,11 +28,7 @@ export default function LifestylePage(): React.JSX.Element {
     queryKey: ['lifestyle-content', lifestyleUniverse?.id],
     queryFn: async () => {
       if (!lifestyleUniverse?.id) throw new Error('Lifestyle universe not found');
-      const result = await api.content.getContentByUniverse(
-        lifestyleUniverse.id,
-        1,
-        20
-      );
+      const result = await api.content.getContentByUniverse(lifestyleUniverse.id, 1, 20);
       if (result.success && result.data) {
         return Array.isArray(result.data) ? result.data : result.data.items || [];
       }

@@ -133,7 +133,7 @@ export class EventsService {
       const [items, total] = await Promise.all([
         this.prisma.event.findMany({
           where,
-          include: { category: true, creator: true },
+          include: { category: true },
           skip: (page - 1) * limit,
           take: limit,
           orderBy: { startDate: 'desc' },
@@ -158,7 +158,7 @@ export class EventsService {
         categoryId: event.categoryId || '',
         categoryName: event.category?.name || '',
         creatorId: event.creatorId,
-        creatorName: event.creator.displayName || event.creator.username,
+        creatorName: '',
         viewCount: event.viewCount,
         rsvpCount: event.rsvpCount,
         publishedAt: event.publishedAt?.toISOString() || '',
@@ -235,7 +235,7 @@ export class EventsService {
           status: 'published',
           startDate: { gt: now },
         },
-        include: { category: true, creator: true },
+        include: { category: true },
         take: limit,
         orderBy: { startDate: 'asc' },
       });
@@ -257,7 +257,7 @@ export class EventsService {
         categoryId: event.categoryId || '',
         categoryName: event.category?.name || '',
         creatorId: event.creatorId,
-        creatorName: event.creator.displayName || event.creator.username,
+        creatorName: '',
         viewCount: event.viewCount,
         rsvpCount: event.rsvpCount,
         publishedAt: event.publishedAt?.toISOString() || '',
@@ -289,14 +289,14 @@ export class EventsService {
 
       const event = await this.prisma.event.findUnique({
         where: { slug },
-        include: { category: true, creator: true, rsvps: true },
+        include: { category: true, rsvps: true },
       });
 
       if (!event) {
         throw new NotFoundException(`Event not found: ${slug}`);
       }
 
-      const formattedRsvps: Rsvp[] = event.rsvps.map((rsvp) => ({
+      const formattedRsvps: Rsvp[] = event.rsvps.map((rsvp: { id: string; userId: string; eventId: string; status: string; guests: number; note: string | null; createdAt: Date }) => ({
         id: rsvp.id,
         userId: rsvp.userId,
         eventId: rsvp.eventId,
@@ -323,7 +323,7 @@ export class EventsService {
         categoryId: event.categoryId || '',
         categoryName: event.category?.name || '',
         creatorId: event.creatorId,
-        creatorName: event.creator.displayName || event.creator.username,
+        creatorName: '',
         viewCount: event.viewCount,
         rsvpCount: event.rsvpCount,
         publishedAt: event.publishedAt?.toISOString() || '',
@@ -376,7 +376,7 @@ export class EventsService {
           rsvpCount: 0,
           publishedAt: null,
         },
-        include: { category: true, creator: true },
+        include: { category: true },
       });
 
       const formattedEvent: Event = {
@@ -396,7 +396,7 @@ export class EventsService {
         categoryId: event.categoryId || '',
         categoryName: event.category?.name || 'General',
         creatorId: event.creatorId,
-        creatorName: event.creator.displayName || event.creator.username,
+        creatorName: '',
         viewCount: event.viewCount,
         rsvpCount: event.rsvpCount,
         publishedAt: event.publishedAt?.toISOString() || '',
@@ -453,7 +453,7 @@ export class EventsService {
       const updated = await this.prisma.event.update({
         where: { id },
         data: updateData,
-        include: { category: true, creator: true },
+        include: { category: true },
       });
 
       const formatted: Event = {
@@ -473,7 +473,7 @@ export class EventsService {
         categoryId: updated.categoryId || '',
         categoryName: updated.category?.name || '',
         creatorId: updated.creatorId,
-        creatorName: updated.creator.displayName || updated.creator.username,
+        creatorName: '',
         viewCount: updated.viewCount,
         rsvpCount: updated.rsvpCount,
         publishedAt: updated.publishedAt?.toISOString() || '',

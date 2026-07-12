@@ -4,7 +4,8 @@ import { PrismaService } from '../../database/prisma.service';
 @Injectable()
 export class PlatformOverviewService {
   private readonly logger = new Logger(PlatformOverviewService.name);
-  private readonly subscriptionServiceUrl = process.env.SUBSCRIPTION_SERVICE_URL || 'http://localhost:3026';
+  private readonly subscriptionServiceUrl =
+    process.env.SUBSCRIPTION_SERVICE_URL || 'http://localhost:3026';
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -63,7 +64,7 @@ export class PlatformOverviewService {
         signal: AbortSignal.timeout(5000),
       });
       if (response.ok) {
-        const data = await response.json() as { data?: { count?: number } };
+        const data = (await response.json()) as { data?: { count?: number } };
         return data.data?.count ?? 0;
       }
       return 0;

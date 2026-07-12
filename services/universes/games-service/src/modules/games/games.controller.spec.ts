@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Reflector } from '@nestjs/core';
-import { GamesController } from './games.controller';
-import { GamesService } from './games.service';
+import { GamesController } from './games.controller.js';
+import { GamesService } from './games.service.js';
 import { RateLimitService } from '@azeebo/security';
 
 describe('GamesController', () => {
@@ -69,7 +69,7 @@ describe('GamesController', () => {
 
   describe('submitDailyChallenge', () => {
     it('should submit daily challenge answer', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { answer: '42' };
       const result = { success: true, data: { isCorrect: true, score: 100 } };
       mockGamesService.submitDailyChallenge.mockResolvedValue(result);
@@ -79,7 +79,7 @@ describe('GamesController', () => {
     });
 
     it('should throw NotFoundException when no daily challenge available', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { answer: '42' };
       mockGamesService.submitDailyChallenge.mockRejectedValue(
         new (require('@nestjs/common').NotFoundException)('No daily challenge available')
@@ -91,7 +91,7 @@ describe('GamesController', () => {
     });
 
     it('should throw BadRequestException when challenge already completed', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { answer: '42' };
       mockGamesService.submitDailyChallenge.mockRejectedValue(
         new (require('@nestjs/common').BadRequestException)('Daily challenge already completed')
@@ -105,7 +105,7 @@ describe('GamesController', () => {
 
   describe('getDailyChallenge', () => {
     it('should return daily challenge', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const result = { success: true, data: { id: 'challenge-1', questions: [] } };
       mockGamesService.getDailyChallenge.mockResolvedValue(result);
 
@@ -114,7 +114,7 @@ describe('GamesController', () => {
     });
 
     it('should throw NotFoundException when no daily challenge available', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       mockGamesService.getDailyChallenge.mockRejectedValue(
         new (require('@nestjs/common').NotFoundException)('No daily challenge available')
       );
@@ -127,7 +127,7 @@ describe('GamesController', () => {
 
   describe('startSession', () => {
     it('should start a game session', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { challengeId: 'challenge-1' };
       const result = {
         success: true,
@@ -140,7 +140,7 @@ describe('GamesController', () => {
     });
 
     it('should throw BadRequestException when user already has active session', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { challengeId: 'challenge-1' };
       mockGamesService.startSession.mockRejectedValue(
         new (require('@nestjs/common').BadRequestException)('User already has an active session')
@@ -154,7 +154,7 @@ describe('GamesController', () => {
 
   describe('submitAnswer', () => {
     it('should submit answer for a session', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const sessionId = 'session-1';
       const body = { answer: 'correct' };
       const result = {
@@ -172,7 +172,7 @@ describe('GamesController', () => {
     });
 
     it('should throw NotFoundException when session not found', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       mockGamesService.submitAnswer.mockRejectedValue(
         new (require('@nestjs/common').NotFoundException)('Session not found')
       );
@@ -183,7 +183,7 @@ describe('GamesController', () => {
     });
 
     it('should throw BadRequestException when session does not belong to user', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       mockGamesService.submitAnswer.mockRejectedValue(
         new (require('@nestjs/common').BadRequestException)('Session does not belong to user')
       );
@@ -216,7 +216,7 @@ describe('GamesController', () => {
 
   describe('enterTournament', () => {
     it('should enter a tournament', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const tournamentId = 'tournament-1';
       const result = { success: true, data: { entryId: 'entry-1', message: 'Entered tournament' } };
       mockGamesService.enterTournament.mockResolvedValue(result);
@@ -226,7 +226,7 @@ describe('GamesController', () => {
     });
 
     it('should throw NotFoundException when tournament not found', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       mockGamesService.enterTournament.mockRejectedValue(
         new (require('@nestjs/common').NotFoundException)('Tournament not found')
       );
@@ -237,7 +237,7 @@ describe('GamesController', () => {
     });
 
     it('should throw BadRequestException when tournament is not active', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       mockGamesService.enterTournament.mockRejectedValue(
         new (require('@nestjs/common').BadRequestException)('Tournament is not active')
       );

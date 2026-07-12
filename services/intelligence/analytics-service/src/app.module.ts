@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
-import { AnalyticsModule } from './modules/analytics/analytics.module';
-import { AnalyticsInstrumentationModule } from './modules/analytics-instrumentation/analytics-instrumentation.module';
-import { AdminModule } from './modules/admin/admin.module';
-import { IntelligenceModule } from './modules/intelligence/intelligence.module';
-import { HealthModule } from './modules/health/health.module';
-import { MetricsModule } from './modules/metrics/metrics.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module.js';
+import { AnalyticsInstrumentationModule } from './modules/analytics-instrumentation/analytics-instrumentation.module.js';
+import { AdminModule } from './modules/admin/admin.module.js';
+import { IntelligenceModule } from './modules/intelligence/intelligence.module.js';
+import { HealthModule } from './modules/health/health.module.js';
+import { MetricsModule } from './modules/metrics/metrics.module.js';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { CacheModule } from '@azeebo/shared-services';
 

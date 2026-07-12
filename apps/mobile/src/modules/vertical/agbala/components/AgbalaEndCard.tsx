@@ -3,8 +3,11 @@ import { colors, typography, spacing, radius } from '../../../../theme';
 
 interface AgbalaEndCardProps {
   title: string;
-  message: string;
+  message?: string;
+  description?: string;
+  buttonText?: string;
   isCliffhanger?: boolean;
+  onPress?: () => void;
   onContinue?: () => void;
   onShare?: () => void;
   nextEpisodeTitle?: string;
@@ -13,16 +16,21 @@ interface AgbalaEndCardProps {
 export const AgbalaEndCard: React.FC<AgbalaEndCardProps> = ({
   title,
   message,
+  description,
+  buttonText,
   isCliffhanger = false,
+  onPress,
   onContinue,
   onShare,
   nextEpisodeTitle,
 }) => {
+  const displayMessage = message || description || '';
+  const handlePress = onPress || onContinue;
   return (
     <View
       style={styles.container}
       accessibilityRole="summary"
-      accessibilityLabel={`${title}. ${message}. ${isCliffhanger ? 'This is a cliffhanger episode.' : ''}`}
+      accessibilityLabel={`${title}. ${displayMessage}. ${isCliffhanger ? 'This is a cliffhanger episode.' : ''}`}
       accessibilityLiveRegion="polite"
     >
       <View style={styles.header} accessibilityRole="header">
@@ -41,7 +49,7 @@ export const AgbalaEndCard: React.FC<AgbalaEndCardProps> = ({
       </View>
 
       <Text style={styles.message} accessibilityRole="text">
-        {message}
+        {displayMessage}
       </Text>
 
       {nextEpisodeTitle && (
@@ -56,18 +64,18 @@ export const AgbalaEndCard: React.FC<AgbalaEndCardProps> = ({
       )}
 
       <View style={styles.buttonContainer}>
-        {onContinue && (
+        {handlePress && (
           <TouchableOpacity
             style={styles.continueButton}
-            onPress={onContinue}
+            onPress={handlePress}
             accessibilityRole="button"
-            accessibilityLabel={nextEpisodeTitle ? `Continue to ${nextEpisodeTitle}` : 'Continue'}
+            accessibilityLabel={nextEpisodeTitle ? `Continue to ${nextEpisodeTitle}` : (buttonText || 'Continue')}
             accessibilityHint="Double tap to proceed to the next episode"
             accessibilityState={{ disabled: false }}
             activeOpacity={0.7}
           >
             <Text style={styles.continueButtonText}>
-              {nextEpisodeTitle ? 'Continue Watching' : 'Continue'}
+              {buttonText || (nextEpisodeTitle ? 'Continue Watching' : 'Continue')}
             </Text>
           </TouchableOpacity>
         )}

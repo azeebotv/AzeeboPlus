@@ -8,6 +8,37 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  displayName String?
+  avatar      String?
+  role        String   @default("user")
+  trustScore  Int      @default(100)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  moderationCases ModerationCase[] @relation("CaseUser")
+  resolvedCases   ModerationCase[] @relation("CaseResolver")
+  reportedReports Report[]         @relation("ReportReporter")
+  reportsAgainst  Report[]         @relation("ReportedUser")
+
+  @@map("users")
+}
+
+model Content {
+  id        String   @id @default(uuid())
+  title     String?
+  type      String?
+  status    String?  @default("active")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reports Report[]
+
+  @@map("contents")
+}
+
 model Report {
   id               String    @id @default(uuid())
   reportingUserId  String
@@ -24,6 +55,9 @@ model Report {
   updatedAt        DateTime  @updatedAt
 
   ModerationCase ModerationCase?
+  reportingUser  User?    @relation("ReportReporter", fields: [reportingUserId], references: [id])
+  reportedUser   User?    @relation("ReportedUser", fields: [userId], references: [id])
+  content        Content? @relation(fields: [contentId], references: [id])
 
   @@map("reports")
   @@index([reportingUserId])
@@ -47,6 +81,8 @@ model ModerationCase {
   updatedAt        DateTime  @updatedAt
 
   report              Report                @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  user                User?                 @relation("CaseUser", fields: [userId], references: [id])
+  resolvedByUser      User?                 @relation("CaseResolver", fields: [resolvedBy], references: [id])
   Appeal              Appeal[]
   reviewerAssignments ReviewerAssignment[]
 

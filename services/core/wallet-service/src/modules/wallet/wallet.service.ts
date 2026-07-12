@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
-import { Prisma, WalletTransaction } from '../../prisma/client';
-import { PrismaService } from '../database/prisma.service';
-import { FundWalletDto } from './dto/fund-wallet.dto';
-import { WithdrawWalletDto, TransferWalletDto } from './dto/withdraw-transfer.dto';
-import { WalletResponse } from './interfaces/wallet-response.interface';
+import { Prisma, WalletTransaction } from '../../prisma/client/index.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { FundWalletDto } from './dto/fund-wallet.dto.js';
+import { WithdrawWalletDto, TransferWalletDto } from './dto/withdraw-transfer.dto.js';
+import { WalletResponse } from './interfaces/wallet-response.interface.js';
 import { toNumber, addDecimals } from '@azeebo/utils';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 

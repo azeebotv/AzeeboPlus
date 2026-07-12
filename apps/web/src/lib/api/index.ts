@@ -79,7 +79,9 @@ class ApiClient {
     // before AuthContext's useEffect runs (children effects fire first)
     if (typeof window !== 'undefined') {
       if (process.env.NODE_ENV === 'production') {
-        console.warn('ApiClient: localStorage token storage is not recommended for production. Use httpOnly cookies instead.');
+        console.warn(
+          'ApiClient: localStorage token storage is not recommended for production. Use httpOnly cookies instead.'
+        );
       }
       const storedToken = localStorage.getItem(ACCESS_TOKEN_KEY);
       if (storedToken) {

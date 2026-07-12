@@ -2,13 +2,13 @@ import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
-import { PredictionMarketsService } from './prediction-markets.service';
+import { PredictionMarketsService } from './prediction-markets.service.js';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
 import {
   CreatePredictionDto,
   SubmitPredictionDto,
   ResolvePredictionDto,
-} from './dto/prediction.dto';
+} from './dto/prediction.dto.js';
 
 @ApiTags('Prediction Markets')
 @ApiBearerAuth()

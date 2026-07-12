@@ -5,8 +5,8 @@ import {
   ForbiddenException,
   Logger,
 } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
-import { Prisma } from '../../prisma/client';
+import { PrismaService } from '../database/prisma.service.js';
+import { Prisma } from '../../prisma/client/index.js';
 
 type ContentRelationshipWithContent = Prisma.ContentRelationshipGetPayload<{
   include: { content: true; relatedContent: true };

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { TournamentService } from './tournament.service';
-import { PrismaService } from '../database/prisma.service';
+import { TournamentService } from './tournament.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('TournamentService', () => {

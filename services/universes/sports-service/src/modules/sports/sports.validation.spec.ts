@@ -2,8 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, UnauthorizedException } from '@nestjs/common';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
-import { SportsController } from './sports.controller';
-import { SportsService } from './sports.service';
+import { SportsController } from './sports.controller.js';
+import { SportsService } from './sports.service.js';
 
 const mockAuthGuard = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

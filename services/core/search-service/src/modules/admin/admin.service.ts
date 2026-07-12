@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
 @Injectable()
@@ -24,7 +24,7 @@ export class AdminService {
           })
           .then((groups) => groups.length),
         this.prisma.searchQueryLog.findMany({
-          orderBy: { count: 'desc' },
+          orderBy: { createdAt: 'desc' },
           take: 10,
         }),
       ]);
@@ -67,7 +67,7 @@ export class AdminService {
           where,
           skip,
           take: limit,
-          orderBy: { lastSearchAt: 'desc' },
+          orderBy: { createdAt: 'desc' },
         }),
         this.prisma.searchQueryLog.count({ where }),
       ]);

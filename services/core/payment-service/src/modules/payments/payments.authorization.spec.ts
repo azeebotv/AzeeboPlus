@@ -3,12 +3,12 @@ import { ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';
-import { PaymentsController } from './payments.controller';
-import { PaymentsService } from './payments.service';
-import { PrismaService } from '../database/prisma.service';
-import { PaystackProvider } from './providers/paystack.provider';
-import { FlutterwaveProvider } from './providers/flutterwave.provider';
-import { WebhookRetryService } from './webhook-retry.service';
+import { PaymentsController } from './payments.controller.js';
+import { PaymentsService } from './payments.service.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { PaystackProvider } from './providers/paystack.provider.js';
+import { FlutterwaveProvider } from './providers/flutterwave.provider.js';
+import { WebhookRetryService } from './webhook-retry.service.js';
 
 describe('Payments Service Authorization Tests', () => {
   const mockPaymentsService = {

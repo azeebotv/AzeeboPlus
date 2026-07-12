@@ -5,10 +5,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RateLimiterModule } from '@azeebo/security';
 import { CacheModule } from '@azeebo/shared-services';
 
-import { CreatorsController } from './creators.controller';
-import { CreatorsService } from './creators.service';
-import { DatabaseModule } from '../database/database.module';
-import { JwtStrategy } from '../../common/strategies/jwt.strategy';
+import { CreatorsController } from './creators.controller.js';
+import { CreatorsService } from './creators.service.js';
+import { DatabaseModule } from '../database/database.module.js';
+import { JwtStrategy } from '../../common/strategies/jwt.strategy.js';
 
 @Module({
   imports: [

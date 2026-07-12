@@ -4,9 +4,9 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import type { StringValue } from 'ms';
 
-import { AnalyticsController } from './analytics.controller';
-import { AnalyticsService } from './analytics.service';
-import { DatabaseModule } from '../database/database.module';
+import { AnalyticsController } from './analytics.controller.js';
+import { AnalyticsService } from './analytics.service.js';
+import { DatabaseModule } from '../database/database.module.js';
 
 @Module({
   imports: [

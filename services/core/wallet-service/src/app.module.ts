@@ -4,15 +4,15 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TerminusModule } from '@nestjs/terminus';
 import { ThrottlerModule } from '@nestjs/throttler';
 
-import { WalletModule } from './modules/wallet/wallet.module';
+import { WalletModule } from './modules/wallet/wallet.module.js';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { HealthModule } from './modules/health/health.module';
+import { HealthModule } from './modules/health/health.module.js';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
-import { MetricsModule } from './modules/metrics/metrics.module';
+import { MetricsModule } from './modules/metrics/metrics.module.js';
 import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
-import { CacheModule } from './cache';
+import { CacheModule } from './cache/index.js';
 
 @Module({
   imports: [

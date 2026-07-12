@@ -56,10 +56,10 @@ export class ChallengeController {
   @ApiResponse({ status: 201, description: 'Challenge created' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async createChallenge(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Body() data: CreateChallengeInput
   ) {
-    return this.challengeService.createChallenge(req.user.sub, data);
+    return this.challengeService.createChallenge(req.user.id, data);
   }
 
   @Post(':id/submit')
@@ -70,11 +70,11 @@ export class ChallengeController {
   @ApiResponse({ status: 400, description: 'Invalid request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async submitToChallenge(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Param('id') challengeId: string,
     @Body() data: ChallengeSubmissionInput
   ) {
-    return this.challengeService.submitToChallenge(challengeId, req.user.sub, data);
+    return this.challengeService.submitToChallenge(challengeId, req.user.id, data);
   }
 
   @Post('submissions/:id/vote')
@@ -84,9 +84,9 @@ export class ChallengeController {
   @ApiResponse({ status: 200, description: 'Vote recorded' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async voteSubmission(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Param('id') submissionId: string
   ) {
-    return this.challengeService.voteSubmission(submissionId, req.user.sub);
+    return this.challengeService.voteSubmission(submissionId, req.user.id);
   }
 }

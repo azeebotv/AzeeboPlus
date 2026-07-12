@@ -73,7 +73,7 @@ export function BrandInput({
     <View style={[styles.container, style]}>
       <Text style={styles.label}>{label}</Text>
       <Animated.View
-        style={[styles.inputWrapper, error ? styles.inputWrapperError : null, focusBorderStyle]}
+        style={[styles.inputWrapper, error ? styles.inputWrapperError : null, focusBorderStyle as any]}
       >
         <TextInput
           style={styles.input}
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     borderLeftColor: 'transparent',
   },
   inputWrapperError: {
-    borderColor: colors.error,
+    borderColor: colors.error[500],
   },
   input: {
     flex: 1,
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.fontWeight.semibold,
   },
   errorText: {
-    color: colors.error,
+    color: colors.error[500],
     fontSize: typography.fontSize.xs,
     marginTop: spacing.xs,
   },

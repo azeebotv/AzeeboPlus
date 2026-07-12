@@ -11,26 +11,26 @@ import * as bcrypt from 'bcrypt';
 import axios from 'axios';
 import { randomUUID } from 'crypto';
 
-import { AuthRepository } from './auth.repository';
-import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { AuthRepository } from './auth.repository.js';
+import { LoginDto } from './dto/login.dto.js';
+import { RegisterDto } from './dto/register.dto.js';
+import { RefreshTokenDto } from './dto/refresh-token.dto.js';
 import {
   ForgotPasswordDto,
   ResetPasswordDto,
   VerifyEmailDto,
   ResendVerificationDto,
-} from './dto/password-reset.dto';
-import { SelectRoleDto } from './dto/select-role.dto';
-import { RequestOtpDto } from './dto/request-otp.dto';
-import { VerifyOtpDto } from './dto/verify-otp.dto';
-import { AuthResponse } from './interfaces/auth-response.interface';
-import { RefreshTokenResponse } from './interfaces/refresh-token-response.interface';
-import { UserEntity } from './interfaces/auth-entity.interface';
+} from './dto/password-reset.dto.js';
+import { SelectRoleDto } from './dto/select-role.dto.js';
+import { RequestOtpDto } from './dto/request-otp.dto.js';
+import { VerifyOtpDto } from './dto/verify-otp.dto.js';
+import { AuthResponse } from './interfaces/auth-response.interface.js';
+import { RefreshTokenResponse } from './interfaces/refresh-token-response.interface.js';
+import { UserEntity } from './interfaces/auth-entity.interface.js';
 import { User } from '@azeebo/shared-types';
 import { createSuccessResponse } from '@azeebo/shared-types';
-import { OtpService } from './otp/otp.service';
-import { RedisService } from '../../common/services/redis.service';
+import { OtpService } from './otp/otp.service.js';
+import { RedisService } from '../../common/services/redis.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 import type { StringValue } from 'ms';
 

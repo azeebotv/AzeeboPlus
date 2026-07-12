@@ -114,9 +114,9 @@ export function clearPricingCache(): void {
 // Synchronous fallback accessors (for components that can't use async)
 // These return cached values or defaults - prefer async functions above
 export const moviePricing = {
-  rent48h: { id: 'rent-48h', type: 'Rent (48h)', price: cachedMoviePricing?.rent48h?.price ?? 500, label: '₦500' },
-  buy: { id: 'buy', type: 'Buy', price: cachedMoviePricing?.buy?.price ?? 1500, label: '₦1,500' },
-  pass: { id: 'pass', type: 'Pass', price: cachedMoviePricing?.pass?.price ?? 4500, label: '₦4,500/mo' },
+  rent48h: { id: 'rent-48h', type: 'Rent (48h)', price: (cachedMoviePricing as MoviePricing | null)?.rent48h?.price ?? 500, label: '₦500' },
+  buy: { id: 'buy', type: 'Buy', price: (cachedMoviePricing as MoviePricing | null)?.buy?.price ?? 1500, label: '₦1,500' },
+  pass: { id: 'pass', type: 'Pass', price: (cachedMoviePricing as MoviePricing | null)?.pass?.price ?? 4500, label: '₦4,500/mo' },
 } as const;
 
 export const moviePassPrice = { monthly: 4500, label: '₦4,500/month' } as const;

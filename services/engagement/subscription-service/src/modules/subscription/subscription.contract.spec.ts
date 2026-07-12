@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import request from 'supertest';
-import { SubscriptionModule } from './subscription.module';
-import { SubscriptionService } from './subscription.service';
-import { PrismaService } from '../database/prisma.service';
+import { SubscriptionModule } from './subscription.module.js';
+import { SubscriptionService } from './subscription.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, AdminGuard } from '@azeebo/security';
 

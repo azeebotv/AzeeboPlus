@@ -2,9 +2,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import type { StringValue } from 'ms';
-import { AdminController } from './admin.controller';
-import { AdminService } from './admin.service';
-import { DatabaseModule } from '../database/database.module';
+import { AdminController } from './admin.controller.js';
+import { AdminService } from './admin.service.js';
+import { DatabaseModule } from '../database/database.module.js';
 
 @Module({
   imports: [

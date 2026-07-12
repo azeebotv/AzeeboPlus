@@ -2,8 +2,8 @@ import { Controller, Post, Request, BadRequestException, UseGuards } from '@nest
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 
-import { OtpService } from './otp.service';
-import { RateLimitGuard } from '../../../common/guards/rate-limit.guard';
+import { OtpService } from './otp.service.js';
+import { RateLimitGuard } from '../../../common/guards/rate-limit.guard.js';
 
 interface OtpRequest {
   user: { sub: string; id: string };

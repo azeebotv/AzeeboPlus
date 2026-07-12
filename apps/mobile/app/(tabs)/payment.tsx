@@ -54,7 +54,7 @@ export default function PaymentScreen() {
         }
       }
     } catch (err: unknown) {
-      setProvidersError(err.message || 'Failed to load payment providers');
+      setProvidersError((err instanceof Error ? err.message : null) || 'Failed to load payment providers');
     } finally {
       setIsLoadingProviders(false);
     }
@@ -133,7 +133,7 @@ export default function PaymentScreen() {
         Alert.alert('Error', response.message || 'Failed to initialize payment');
       }
     } catch (error: unknown) {
-      Alert.alert('Error', error.message || 'Failed to initialize payment');
+      Alert.alert('Error', (error instanceof Error ? error.message : null) || 'Failed to initialize payment');
     } finally {
       setIsLoading(false);
     }

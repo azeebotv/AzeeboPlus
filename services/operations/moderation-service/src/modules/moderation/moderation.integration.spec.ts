@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ModerationService, CreateCaseRequest, ResolveCaseRequest } from './moderation.service';
-import { PrismaService } from '../database/prisma.service';
-import { SafetyScanningService } from './safety-scanning.service';
+import { ModerationService, CreateCaseRequest, ResolveCaseRequest } from './moderation.service.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { SafetyScanningService } from './safety-scanning.service.js';
 import axios from 'axios';
 
 jest.mock('axios');

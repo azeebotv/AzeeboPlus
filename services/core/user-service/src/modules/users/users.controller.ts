@@ -14,11 +14,11 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 
-import { UsersService } from './users.service';
-import { UpdateUniverseAffinityDto } from './dto/update-universe-affinity.dto';
-import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
-import { CompleteProfileSetupDto } from './dto/complete-profile-setup.dto';
-import { ContentIdDto } from './dto/content-id.dto';
+import { UsersService } from './users.service.js';
+import { UpdateUniverseAffinityDto } from './dto/update-universe-affinity.dto.js';
+import { UpdateUserProfileDto } from './dto/update-user-profile.dto.js';
+import { CompleteProfileSetupDto } from './dto/complete-profile-setup.dto.js';
+import { ContentIdDto } from './dto/content-id.dto.js';
 import { RateLimitGuard, RateLimit, Public } from '@azeebo/security';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 

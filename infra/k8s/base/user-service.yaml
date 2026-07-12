@@ -24,7 +24,7 @@ spec:
         fsGroup: 65532
       containers:
         - name: user-service
-          image: ghcr.io/azeebotv/azeebo-user-service:latest
+          image: ghcr.io/azeebotv/azeebo-user-service:stable
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3001

@@ -14,10 +14,10 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
 
-import { RealityService } from './reality.service';
-import { RealityResponse } from './interfaces/reality-response.interface';
+import { RealityService } from './reality.service.js';
+import { RealityResponse } from './interfaces/reality-response.interface.js';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
-import { CastVoteDto, BuyVoteDto, MakePredictionDto } from './dto/vote.dto';
+import { CastVoteDto, BuyVoteDto, MakePredictionDto } from './dto/vote.dto.js';
 import {
   CreateShowDto,
   UpdateShowDto,
@@ -26,7 +26,7 @@ import {
   CreateSeasonDto,
   CreateContestantDto,
   UpdateContestantDto,
-} from './dto/show.dto';
+} from './dto/show.dto.js';
 
 @ApiTags('Reality')
 @ApiBearerAuth()
@@ -198,11 +198,11 @@ export class RealityController {
   @ApiResponse({ status: 201, description: 'Vote submitted' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async voteForContestant(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Param('showId') showId: string,
     @Body() body: { contestantId: string }
   ): Promise<RealityResponse> {
-    return this.realityService.submitVote(req.user.sub, {
+    return this.realityService.submitVote(req.user.id, {
       contestantId: body.contestantId,
       showId,
     });
@@ -215,10 +215,10 @@ export class RealityController {
   @ApiResponse({ status: 201, description: 'Vote submitted' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async submitVote(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Body() body: CastVoteDto
   ): Promise<RealityResponse> {
-    return this.realityService.submitVote(req.user.sub, body);
+    return this.realityService.submitVote(req.user.id, body);
   }
 
   @Post('votes/quantity')
@@ -227,10 +227,10 @@ export class RealityController {
   @ApiOperation({ summary: 'Submit multiple votes with quantity selector' })
   @ApiResponse({ status: 201, description: 'Votes submitted' })
   async submitVotesWithQuantity(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Body() body: BuyVoteDto
   ): Promise<RealityResponse> {
-    return this.realityService.submitVotesWithQuantity(req.user.sub, body);
+    return this.realityService.submitVotesWithQuantity(req.user.id, body);
   }
 
   @Post('supervotes')
@@ -240,10 +240,10 @@ export class RealityController {
   @ApiResponse({ status: 201, description: 'Supervote submitted' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async submitSupervote(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Body() body: CastVoteDto
   ): Promise<RealityResponse> {
-    return this.realityService.submitSupervote(req.user.sub, body);
+    return this.realityService.submitSupervote(req.user.id, body);
   }
 
   @Post('predictions')
@@ -253,10 +253,10 @@ export class RealityController {
   @ApiResponse({ status: 201, description: 'Prediction submitted' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async submitPrediction(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Body() body: MakePredictionDto
   ): Promise<RealityResponse> {
-    return this.realityService.submitPrediction(req.user.sub, body);
+    return this.realityService.submitPrediction(req.user.id, body);
   }
 
   @Get('predictions/:showId')
@@ -265,10 +265,10 @@ export class RealityController {
   @ApiResponse({ status: 200, description: 'Prediction dashboard' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getPredictionDashboard(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Param('showId') showId: string
   ): Promise<RealityResponse> {
-    return this.realityService.getPredictionDashboard(req.user.sub, showId);
+    return this.realityService.getPredictionDashboard(req.user.id, showId);
   }
 
   @Get('clips')
@@ -282,8 +282,8 @@ export class RealityController {
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get wallet balance for voting' })
   @ApiResponse({ status: 200, description: 'Wallet balance' })
-  async getWalletBalance(@Request() req: { user: { sub: string } }): Promise<RealityResponse> {
-    return this.realityService.getWalletBalance(req.user.sub);
+  async getWalletBalance(@Request() req: { user: { id: string } }): Promise<RealityResponse> {
+    return this.realityService.getWalletBalance(req.user.id);
   }
 
   @Get('pricing')
@@ -305,10 +305,10 @@ export class RealityController {
   @ApiOperation({ summary: 'Purchase premium extra' })
   @ApiResponse({ status: 201, description: 'Purchase successful' })
   async purchasePremiumExtra(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Param('extraId') extraId: string
   ): Promise<RealityResponse> {
-    return this.realityService.purchasePremiumExtra(req.user.sub, extraId);
+    return this.realityService.purchasePremiumExtra(req.user.id, extraId);
   }
 
   @Post('rewards/:showId/confirm')
@@ -316,10 +316,10 @@ export class RealityController {
   @ApiOperation({ summary: 'Confirm reward for show participation' })
   @ApiResponse({ status: 200, description: 'Reward confirmed' })
   async confirmReward(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Param('showId') showId: string
   ): Promise<RealityResponse> {
-    return this.realityService.confirmReward(req.user.sub, showId);
+    return this.realityService.confirmReward(req.user.id, showId);
   }
 
   @Get('admin/dashboard')

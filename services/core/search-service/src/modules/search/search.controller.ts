@@ -14,9 +14,9 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
-import { SearchService } from './search.service';
-import { SearchResponse } from './interfaces/search-response.interface';
-import { LogSearchDto } from './dto/log-search.dto';
+import { SearchService } from './search.service.js';
+import { SearchResponse } from './interfaces/search-response.interface.js';
+import { LogSearchDto } from './dto/log-search.dto.js';
 
 @ApiTags('Search')
 @Controller('v1/search')

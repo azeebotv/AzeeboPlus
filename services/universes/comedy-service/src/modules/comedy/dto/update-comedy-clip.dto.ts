@@ -10,7 +10,7 @@ import {
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PartialType } from '@nestjs/swagger';
-import { CreateComedyClipDto } from './create-comedy-clip.dto';
+import { CreateComedyClipDto } from './create-comedy-clip.dto.js';
 
 export class UpdateComedyClipDto extends PartialType(CreateComedyClipDto) {
   @ApiPropertyOptional({

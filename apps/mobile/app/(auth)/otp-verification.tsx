@@ -17,7 +17,7 @@ import { colors } from '../../src/theme';
 
 export default function OTPVerificationScreen() {
   const router = useRouter();
-  const { user, verifyOTP, resendOTP, isLoading } = useAuth();
+  const { verifyOTP, resendOTP, isLoading } = useAuth();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(60);
   const [error, setError] = useState<string | null>(null);

@@ -109,7 +109,7 @@ export class TicketController {
     @Param('id') id: string,
     @Body() dto: AddMessageDto
   ) {
-    const senderType = req.user.role === 'admin' || req.user.role === 'ADMIN' ? 'ADMIN' : 'USER';
+    const senderType = req.user.role === 'admin' || req.user.role === 'ADMIN' ? 'AGENT' : 'USER';
     const isInternal =
       req.user.role === 'admin' || req.user.role === 'ADMIN' ? dto.isInternal : false;
     const message = await this.ticketService.addMessage(

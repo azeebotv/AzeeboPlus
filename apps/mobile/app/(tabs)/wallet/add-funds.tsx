@@ -55,7 +55,7 @@ export default function AddFundsScreen() {
         setProviders(res.data);
       }
     } catch (err: unknown) {
-      setProvidersError(err.message || 'Failed to load payment methods');
+      setProvidersError((err instanceof Error ? err.message : null) || 'Failed to load payment methods');
     } finally {
       setIsLoadingProviders(false);
     }
@@ -138,7 +138,7 @@ export default function AddFundsScreen() {
         }
       }
     } catch (error: unknown) {
-      Alert.alert('Error', error?.message || 'Failed to add funds. Please try again.');
+      Alert.alert('Error', (error instanceof Error ? error.message : null) || 'Failed to add funds. Please try again.');
     } finally {
       setIsLoading(false);
     }

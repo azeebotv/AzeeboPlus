@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { WalletService } from './wallet.service';
-import { PrismaService } from '../database/prisma.service';
+import { WalletService } from './wallet.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';

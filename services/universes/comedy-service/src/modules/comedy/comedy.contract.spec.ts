@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, UnauthorizedException } from '@nestjs/common';
 import request from 'supertest';
-import { ComedyModule } from './comedy.module';
-import { ComedyService } from './comedy.service';
-import { PrismaService } from '../database/prisma.service';
-import { RedisService } from '../../common/services/redis.service';
+import { ComedyModule } from './comedy.module.js';
+import { ComedyService } from './comedy.service.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { RedisService } from '../../common/services/redis.service.js';
 import { ConfigService } from '@nestjs/config';
 import { RateLimitGuard } from '@azeebo/security';
 import { AuthGuard } from '@nestjs/passport';

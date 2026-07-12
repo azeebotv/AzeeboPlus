@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
-import { AuthModule } from './auth.module';
-import { RedisService } from '../../common/services/redis.service';
-import { PrismaService } from '../database/prisma.service';
+import { AuthModule } from './auth.module.js';
+import { RedisService } from '../../common/services/redis.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
 import { RateLimitGuard } from '@azeebo/security';

@@ -25,6 +25,12 @@ model UniverseMap {
   timeline    TimelineEvent[]
   titles      Title[]
   loreEntries LoreEntry[]
+  realms      Realm[]
+  orisaFiles  OrisaFile[]
+  artifacts   Artifact[]
+  prophecies  Prophecy[]
+  worldMaps   WorldMap[]
+  rooms       Room[]
 
   @@index([slug])
   @@index([status])
@@ -251,4 +257,168 @@ model Recap {
   title       Title    @relation(fields: [titleId], references: [id], onDelete: Cascade)
 
   @@index([titleId])
+}
+
+model Realm {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  imageUrl    String?
+  universeId  String
+  type        String   @default("physical") // physical, spiritual, ancestral, divine
+  parentId    String?
+  data        Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  universe    UniverseMap @relation(fields: [universeId], references: [id], onDelete: Cascade)
+  parent      Realm?      @relation("RealmHierarchy", fields: [parentId], references: [id])
+  children    Realm[]     @relation("RealmHierarchy")
+
+  @@index([universeId])
+  @@index([slug])
+  @@index([type])
+}
+
+model OrisaFile {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  title       String
+  description String?
+  imageUrl    String?
+  universeId  String
+  domain      String? // wind, iron, love, justice, etc.
+  symbols     String[] // thunderstone, mirror, etc.
+  status      String   @default("active")
+  data        Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  universe    UniverseMap @relation(fields: [universeId], references: [id], onDelete: Cascade)
+
+  @@index([universeId])
+  @@index([slug])
+  @@index([domain])
+}
+
+model Artifact {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  imageUrl    String?
+  universeId  String
+  type        String   @default("physical") // physical, spiritual, ancestral
+  power       String? // description of the artifact's power
+  origin      String? // where the artifact came from
+  status      String   @default("active")
+  data        Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  universe    UniverseMap @relation(fields: [universeId], references: [id], onDelete: Cascade)
+
+  @@index([universeId])
+  @@index([slug])
+  @@index([type])
+}
+
+model Prophecy {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  content     String
+  excerpt     String?
+  imageUrl    String?
+  universeId  String
+  source      String? // who or what delivered the prophecy
+  status      String   @default("active") // active, fulfilled, broken
+  fulfilledAt DateTime?
+  data        Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  universe    UniverseMap @relation(fields: [universeId], references: [id], onDelete: Cascade)
+
+  @@index([universeId])
+  @@index([slug])
+  @@index([status])
+}
+
+model WorldMap {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  imageUrl    String?
+  universeId  String
+  type        String   @default("geographic") // geographic, spiritual, timeline
+  data        Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  universe    UniverseMap @relation(fields: [universeId], references: [id], onDelete: Cascade)
+
+  @@index([universeId])
+  @@index([slug])
+  @@index([type])
+}
+
+model Room {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  imageUrl    String?
+  universeId  String
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  universe    UniverseMap @relation(fields: [universeId], references: [id], onDelete: Cascade)
+  posts       RoomPost[]
+
+  @@index([universeId])
+  @@index([slug])
+}
+
+model RoomPost {
+  id          String   @id @default(uuid())
+  roomId      String
+  content     String
+  authorId    String
+  authorName  String
+  authorAvatar String?
+  spoilerLevel String  @default("none")
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  room        Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId])
+  @@index([authorId])
+}
+
+model Theory {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  content     String
+  authorId    String
+  authorName  String
+  spoilerLevel String  @default("none")
+  accessLevel String   @default("public") // public, followers, premium
+  status      String   @default("published")
+  viewCount   Int      @default(0)
+  likeCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([authorId])
+  @@index([slug])
+  @@index([status])
+  @@index([accessLevel])
 }

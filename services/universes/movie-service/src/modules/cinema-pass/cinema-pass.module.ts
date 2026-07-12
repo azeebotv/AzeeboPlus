@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { CinemaPassController } from './cinema-pass.controller';
-import { CinemaPassService } from './cinema-pass.service';
-import { DatabaseModule } from '../database/database.module';
+import { CinemaPassController } from './cinema-pass.controller.js';
+import { CinemaPassService } from './cinema-pass.service.js';
+import { DatabaseModule } from '../database/database.module.js';
 
 @Module({
   imports: [DatabaseModule],

@@ -6,21 +6,21 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../database/prisma.service';
-import { Prisma } from '../../prisma/client';
-import { CreateContentDto } from './dto/create-content.dto';
-import { UpdateContentDto } from './dto/update-content.dto';
-import { CreateMediaAssetDto } from './dto/create-media-asset.dto';
-import { UpdateMediaAssetDto } from './dto/update-media-asset.dto';
-import { MediaService } from '../media/media.service';
-import { TranscodingService } from '../media/transcoding.service';
-import { ContentRepository } from './content.repository';
-import { RedisService } from '../../cache/redis.service';
-import { ContentFeedService } from './content-feed.service';
-import { ContentModerationService } from './content-moderation.service';
-import { ContentRelationshipService } from './content-relationship.service';
-import { ContentCategoryService } from './content-category.service';
-import { ContentIngestionService } from './content-ingestion.service';
+import { PrismaService } from '../database/prisma.service.js';
+import { Prisma } from '../../prisma/client/index.js';
+import { CreateContentDto } from './dto/create-content.dto.js';
+import { UpdateContentDto } from './dto/update-content.dto.js';
+import { CreateMediaAssetDto } from './dto/create-media-asset.dto.js';
+import { UpdateMediaAssetDto } from './dto/update-media-asset.dto.js';
+import { MediaService } from '../media/media.service.js';
+import { TranscodingService } from '../media/transcoding.service.js';
+import { ContentRepository } from './content.repository.js';
+import { RedisService } from '../../cache/redis.service.js';
+import { ContentFeedService } from './content-feed.service.js';
+import { ContentModerationService } from './content-moderation.service.js';
+import { ContentRelationshipService } from './content-relationship.service.js';
+import { ContentCategoryService } from './content-category.service.js';
+import { ContentIngestionService } from './content-ingestion.service.js';
 
 type ContentWithUniverse = Prisma.ContentItemGetPayload<{ include: { universe: true } }>;
 type ContentWithUniverseCategories = Prisma.ContentItemGetPayload<{

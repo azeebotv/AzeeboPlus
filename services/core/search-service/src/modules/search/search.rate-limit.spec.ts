@@ -3,8 +3,8 @@ import { INestApplication, HttpException, HttpStatus } from '@nestjs/common';
 import request from 'supertest';
 import { Reflector } from '@nestjs/core';
 import { RateLimitGuard } from '@azeebo/security';
-import { SearchController } from './search.controller';
-import { SearchService } from './search.service';
+import { SearchController } from './search.controller.js';
+import { SearchService } from './search.service.js';
 
 const mockRateLimitGuard = {
   canActivate: jest.fn().mockImplementation(() => {

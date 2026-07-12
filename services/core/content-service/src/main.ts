@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { AppModule } from './app.module';
+import { AppModule } from './app.module.js';
 import helmet from 'helmet';
 import { validateEnvironment } from '@azeebo/shared-types';
 import { LoggingInterceptor } from '@azeebo/logger';

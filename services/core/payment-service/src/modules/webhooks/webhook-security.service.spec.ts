@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { WebhookSecurityService } from './webhook-security.service';
-import { RedisService } from '../../common/services/redis.service';
+import { WebhookSecurityService } from './webhook-security.service.js';
+import { RedisService } from '../../common/services/redis.service.js';
 import { ConfigService } from '@nestjs/config';
 import { createHmac } from 'crypto';
 

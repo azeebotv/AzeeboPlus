@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { PrismaService } from '../database/prisma.service';
-import { SearchController } from './search.controller';
-import { SearchService } from './search.service';
-import { SearchRepository } from './search.repository';
+import { PrismaService } from '../database/prisma.service.js';
+import { SearchController } from './search.controller.js';
+import { SearchService } from './search.service.js';
+import { SearchRepository } from './search.repository.js';
 import { RateLimitGuard } from '@azeebo/security';
 
 describe('Search Service Integration Tests', () => {

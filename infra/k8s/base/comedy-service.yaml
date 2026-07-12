@@ -24,7 +24,7 @@ spec:
         fsGroup: 65532
       containers:
         - name: comedy-service
-          image: ghcr.io/azeebotv/azeebo-comedy-service:latest
+          image: ghcr.io/azeebotv/azeebo-comedy-service:stable
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

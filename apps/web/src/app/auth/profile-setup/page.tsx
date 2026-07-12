@@ -8,8 +8,16 @@ import { Alert, Spinner } from '@/components/auth/FormBits';
 
 // Default interests - can be overridden via user-service API
 const DEFAULT_INTERESTS = [
-  'Comedy', 'Movies', 'Sports', 'Music', 'Gaming',
-  'Reality Shows', 'Lifestyle', 'Education', 'News', 'Technology',
+  'Comedy',
+  'Movies',
+  'Sports',
+  'Music',
+  'Gaming',
+  'Reality Shows',
+  'Lifestyle',
+  'Education',
+  'News',
+  'Technology',
 ];
 
 const DEFAULT_GENDERS = ['Male', 'Female', 'Non-binary', 'Prefer not to say'];
@@ -44,10 +52,18 @@ export default function ProfileSetupPage(): React.JSX.Element {
           apiFetch<string[]>('/v1/users/profile-options/interests'),
           apiFetch<string[]>('/v1/users/profile-options/genders'),
         ]);
-        if (interestsRes.status === 'fulfilled' && interestsRes.value.success && interestsRes.value.data) {
+        if (
+          interestsRes.status === 'fulfilled' &&
+          interestsRes.value.success &&
+          interestsRes.value.data
+        ) {
           setInterests(interestsRes.value.data);
         }
-        if (gendersRes.status === 'fulfilled' && gendersRes.value.success && gendersRes.value.data) {
+        if (
+          gendersRes.status === 'fulfilled' &&
+          gendersRes.value.success &&
+          gendersRes.value.data
+        ) {
           setGenders(gendersRes.value.data);
         }
       } catch {

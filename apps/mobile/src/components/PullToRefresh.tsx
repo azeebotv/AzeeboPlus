@@ -1,8 +1,10 @@
+import React from 'react';
 import {
   RefreshControl,
   ScrollView,
   FlatList,
   SectionList,
+  type SectionListData,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';

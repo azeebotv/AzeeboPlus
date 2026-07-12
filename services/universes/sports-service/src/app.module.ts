@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
-import { DatabaseModule } from './modules/database/database.module';
-import { SportsModule } from './modules/sports/sports.module';
-import { PredictionMarketsModule } from './modules/prediction-markets/prediction-markets.module';
-import { FixturesModule } from './modules/fixtures/fixtures.module';
-import { FanContestsModule } from './modules/fan-contests/fan-contests.module';
-import { HealthModule } from './modules/health/health.module';
+import { DatabaseModule } from './modules/database/database.module.js';
+import { SportsModule } from './modules/sports/sports.module.js';
+import { PredictionMarketsModule } from './modules/prediction-markets/prediction-markets.module.js';
+import { FixturesModule } from './modules/fixtures/fixtures.module.js';
+import { FanContestsModule } from './modules/fan-contests/fan-contests.module.js';
+import { HealthModule } from './modules/health/health.module.js';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
-import { AdminModule } from './modules/admin/admin.module';
+import { AdminModule } from './modules/admin/admin.module.js';
 import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
 

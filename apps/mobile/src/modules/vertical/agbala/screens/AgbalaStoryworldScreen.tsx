@@ -1,12 +1,12 @@
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import type { StackNavigationProp } from '@react-navigation/native';
+import type { NavigationProp } from '@react-navigation/native';
 import { AgbalaPathCard } from '../components/AgbalaPathCard';
 import { colors, typography, spacing, pathColors } from '../../../../theme';
 import type { AgbalaStackParamList } from '../types';
 
-type NavigationProp = StackNavigationProp<AgbalaStackParamList, 'AgbalaStoryworld'>;
+type StoryworldNavigationProp = NavigationProp<AgbalaStackParamList, 'AgbalaStoryworld'>;
 
-export default function AgbalaStoryworldScreen({ navigation }: { navigation: NavigationProp }) {
+export default function AgbalaStoryworldScreen({ navigation }: { navigation: StoryworldNavigationProp }) {
   const paths = [
     {
       id: 'warrior',
@@ -71,7 +71,7 @@ export default function AgbalaStoryworldScreen({ navigation }: { navigation: Nav
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.primary,
+    backgroundColor: colors.bg.primary,
   },
   header: {
     padding: spacing.xl,

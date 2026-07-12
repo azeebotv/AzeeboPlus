@@ -40,20 +40,50 @@ export default function SuperVotePage(): React.JSX.Element {
       try {
         const response = await apiFetch<VotePackage[]>('/v1/pricing/vote-packages/superVote');
         if (response.success && response.data) {
-          setVotePackages(response.data.map((pkg, index) => ({
-            ...pkg,
-            name: pkg.name || `${pkg.votes} Super Votes`,
-            description: pkg.description || `${pkg.votes} votes at 2x power`,
-            isPopular: pkg.isPopular || index === 1,
-          })));
+          setVotePackages(
+            response.data.map((pkg, index) => ({
+              ...pkg,
+              name: pkg.name || `${pkg.votes} Super Votes`,
+              description: pkg.description || `${pkg.votes} votes at 2x power`,
+              isPopular: pkg.isPopular || index === 1,
+            }))
+          );
         }
       } catch (err) {
         // Fallback to default packages
         setVotePackages([
-          { id: 'pkg-10', name: '10 Super Votes', votes: 10, price: 500, description: '10 votes at 2x power', isPopular: false },
-          { id: 'pkg-25', name: '25 Super Votes', votes: 25, price: 1000, description: '25 votes at 2x power + bonus', isPopular: true },
-          { id: 'pkg-50', name: '50 Super Votes', votes: 50, price: 1800, description: '50 votes at 2x power + big bonus', isPopular: false },
-          { id: 'pkg-100', name: '100 Super Votes', votes: 100, price: 3000, description: '100 votes at 2x power + mega bonus', isPopular: false },
+          {
+            id: 'pkg-10',
+            name: '10 Super Votes',
+            votes: 10,
+            price: 500,
+            description: '10 votes at 2x power',
+            isPopular: false,
+          },
+          {
+            id: 'pkg-25',
+            name: '25 Super Votes',
+            votes: 25,
+            price: 1000,
+            description: '25 votes at 2x power + bonus',
+            isPopular: true,
+          },
+          {
+            id: 'pkg-50',
+            name: '50 Super Votes',
+            votes: 50,
+            price: 1800,
+            description: '50 votes at 2x power + big bonus',
+            isPopular: false,
+          },
+          {
+            id: 'pkg-100',
+            name: '100 Super Votes',
+            votes: 100,
+            price: 3000,
+            description: '100 votes at 2x power + mega bonus',
+            isPopular: false,
+          },
         ]);
       }
     };

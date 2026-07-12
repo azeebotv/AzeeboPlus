@@ -10,7 +10,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
-import { RedisService } from '../services/redis.service';
+import { RedisService } from '../services/redis.service.js';
 
 export const RateLimit = (limit: number, windowMs: number): ReturnType<typeof SetMetadata> =>
   SetMetadata('rateLimit', { limit, windowMs });

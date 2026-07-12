@@ -2,15 +2,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, CanActivate, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
-import { ContentModule } from './content.module';
-import { ContentRepository } from './content.repository';
-import { PrismaService } from '../database/prisma.service';
-import { RedisService } from '../../cache/redis.service';
-import { MediaService } from '../media/media.service';
-import { TranscodingService } from '../media/transcoding.service';
+import { ContentModule } from './content.module.js';
+import { ContentRepository } from './content.repository.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { RedisService } from '../../cache/redis.service.js';
+import { MediaService } from '../media/media.service.js';
+import { TranscodingService } from '../media/transcoding.service.js';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, AdminGuard } from '@azeebo/security';
-import { CacheInterceptor } from '../../cache';
+import { CacheInterceptor } from '../../cache/index.js';
 import { ConfigModule } from '@nestjs/config';
 
 class MockAuthGuard implements CanActivate {

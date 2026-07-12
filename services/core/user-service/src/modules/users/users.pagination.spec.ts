@@ -3,8 +3,8 @@ import { INestApplication, ExecutionContext, VersioningType } from '@nestjs/comm
 import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
 import { RateLimitGuard, ServiceAuthGuard } from '@azeebo/security';
-import { UsersController } from './users.controller';
-import { UsersService } from './users.service';
+import { UsersController } from './users.controller.js';
+import { UsersService } from './users.service.js';
 
 describe('User Service Pagination Tests', () => {
   let app: INestApplication;

@@ -32,7 +32,6 @@ export default function EpisodePlayerScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const episodeId = params.id as string;
-  const _contentId = params.contentId as string;
 
   const [episode, setEpisode] = useState<Episode | null>(null);
   const [isLoading, setIsLoading] = useState(true);

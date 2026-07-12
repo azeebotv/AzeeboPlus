@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotificationsService } from './notifications.service';
-import { PrismaService } from '../database/prisma.service';
-import { FirebaseService } from '../firebase/firebase.service';
-import { EmailService } from '../email/email.service';
-import { SmsService } from '../sms/sms.service';
+import { NotificationsService } from './notifications.service.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { FirebaseService } from '../firebase/firebase.service.js';
+import { EmailService } from '../email/email.service.js';
+import { SmsService } from '../sms/sms.service.js';
 import { NotFoundException } from '@nestjs/common';
 
 describe('NotificationsService', () => {
