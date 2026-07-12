@@ -2,33 +2,34 @@ import {Inject,  Injectable, Logger, NotFoundException, BadRequestException } fr
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '@prisma/client';
-import { createApiClient, noopTokenStorage } from '@azeebo/api-client';
+import { ServiceClient } from '@azeebo/http-client';
 
 @Injectable()
 export class AppealService {
   private readonly logger = new Logger(AppealService.name);
-  private readonly contentServiceClient;
-  private readonly moderationServiceClient;
-  private readonly userServiceClient;
+  private readonly contentServiceClient: ServiceClient;
+  private readonly moderationServiceClient: ServiceClient;
+  private readonly userServiceClient: ServiceClient;
 
   constructor(
     @Inject(PrismaService) private prisma: PrismaService,
     @Inject(ConfigService) private configService: ConfigService
   ) {
-    this.contentServiceClient = createApiClient({
-      baseUrl: this.configService.getOrThrow<string>('CONTENT_SERVICE_URL'),
+    const apiKey = this.configService.get<string>('INTERNAL_API_KEY', '');
+    this.contentServiceClient = new ServiceClient({
+      baseURL: this.configService.getOrThrow<string>('CONTENT_SERVICE_URL'),
       timeout: 30000,
-      tokenStorage: noopTokenStorage,
+      apiKey,
     });
-    this.moderationServiceClient = createApiClient({
-      baseUrl: this.configService.getOrThrow<string>('MODERATION_SERVICE_URL'),
+    this.moderationServiceClient = new ServiceClient({
+      baseURL: this.configService.getOrThrow<string>('MODERATION_SERVICE_URL'),
       timeout: 30000,
-      tokenStorage: noopTokenStorage,
+      apiKey,
     });
-    this.userServiceClient = createApiClient({
-      baseUrl: this.configService.getOrThrow<string>('USER_SERVICE_URL'),
+    this.userServiceClient = new ServiceClient({
+      baseURL: this.configService.getOrThrow<string>('USER_SERVICE_URL'),
       timeout: 30000,
-      tokenStorage: noopTokenStorage,
+      apiKey,
     });
   }
 

@@ -61,8 +61,6 @@ export class MoviesService {
     const movie = await this.prisma.movie.findUnique({
       where: { id: movieId },
       include: {
-        rentals: true,
-        watchlistItems: true,
         viewingWindows: {
           where: { isActive: true },
           orderBy: { startsAt: 'asc' },

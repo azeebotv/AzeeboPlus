@@ -283,7 +283,6 @@ export class GameCatalogService {
         data: {
           message: isCorrect ? 'Correct!' : 'Incorrect',
           pointsEarned,
-          correctAnswer: question.answer,
         },
       };
     } catch (error) {

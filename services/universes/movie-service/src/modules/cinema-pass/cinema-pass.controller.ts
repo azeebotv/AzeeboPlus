@@ -63,12 +63,13 @@ export class CinemaPassController {
   }
 
   @Get('access/:movieId')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Check access to movie' })
   @ApiResponse({ status: 200, description: 'Access status' })
   async checkAccess(
     @Param('movieId') movieId: string,
-    @Query('userId') userId: string
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.cinemaPassService.checkAccess(userId, movieId);
+    return this.cinemaPassService.checkAccess(req.user.id, movieId);
   }
 }

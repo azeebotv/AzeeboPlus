@@ -86,6 +86,8 @@ export class RealityController {
   }
 
   @Get('shows/:showId/episodes')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'List show episodes' })
   @ApiResponse({ status: 200, description: 'Episodes list' })
   async listEpisodes(@Param('showId') showId: string): Promise<RealityResponse> {
@@ -138,6 +140,8 @@ export class RealityController {
   }
 
   @Get('shows/:showId/contestants')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'List show contestants' })
   @ApiResponse({ status: 200, description: 'Contestants list' })
   async listContestants(@Param('showId') showId: string): Promise<RealityResponse> {
@@ -177,6 +181,8 @@ export class RealityController {
   }
 
   @Get('shows/:showId/leaderboard')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(60, 60000)
   @ApiOperation({ summary: 'Get show leaderboard' })
   @ApiResponse({ status: 200, description: 'Leaderboard' })
   async getLeaderboard(@Param('showId') showId: string): Promise<RealityResponse> {

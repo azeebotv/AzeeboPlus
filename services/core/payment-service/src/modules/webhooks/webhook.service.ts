@@ -158,16 +158,24 @@ export class WebhookService {
     payload: Prisma.InputJsonValue,
     failureReason?: string
   ): Promise<void> {
-    await this.prisma.webhookEvent.create({
-      data: {
-        eventId,
-        provider,
-        type,
-        payload,
-        processedAt: new Date(),
-        failureReason,
-      },
-    });
+    try {
+      await this.prisma.webhookEvent.create({
+        data: {
+          eventId,
+          provider,
+          type,
+          payload,
+          processedAt: new Date(),
+          failureReason,
+        },
+      });
+    } catch (error: unknown) {
+      if (error instanceof Error && 'code' in error && (error as { code: string }).code === 'P2002') {
+        this.logger.log(`Webhook event ${eventId} already processed (concurrent write)`);
+        return;
+      }
+      throw error;
+    }
   }
 
   private async handlePaymentCompleted(
@@ -236,7 +244,7 @@ export class WebhookService {
           where: { id: paymentId },
           data: {
             status: 'FAILED',
-            providerReference: reason,
+            failureReason: reason,
             updatedAt: new Date(),
           },
         });
