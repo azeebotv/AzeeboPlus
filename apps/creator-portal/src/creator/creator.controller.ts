@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -10,7 +10,7 @@ import {
   Query,
   UseGuards,
   Request,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { CreatorService, ContentItem } from './creator.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -24,7 +24,7 @@ interface AuthRequest extends Request {
 @Roles('creator')
 @Controller('creator')
 export class CreatorController {
-  constructor(private readonly creatorService: CreatorService) {}
+  constructor(@Inject(CreatorService) private readonly creatorService: CreatorService) {}
 
   @Get('dashboard')
   async getDashboard(@Request() req: AuthRequest): Promise<{ success: boolean; data: unknown }> {

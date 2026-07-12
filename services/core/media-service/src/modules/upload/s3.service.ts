@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   S3Client,
@@ -54,7 +54,7 @@ export class S3Service {
     'application/pdf': ['.pdf'],
   };
 
-  constructor(private configService: ConfigService) {
+  constructor(@Inject(ConfigService) private configService: ConfigService) {
     this.region = this.configService.get<string>('AWS_REGION') || 'us-east-1';
     this.bucketName = this.configService.get<string>('AWS_S3_BUCKET') || 'azeebo-media';
     this.cdnUrl = this.configService.get<string>('CDN_URL') || '';

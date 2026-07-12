@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ModerationController } from './moderation.controller';
 import { ModerationService } from './moderation.service';
+import { AuditLogService } from '../audit/audit.service';
 
 describe('ModerationController', () => {
   let controller: ModerationController;
@@ -20,6 +21,12 @@ describe('ModerationController', () => {
             dismissReport: jest.fn().mockResolvedValue(null),
             takeSafetyAction: jest.fn().mockResolvedValue(null),
             getSafetyActions: jest.fn().mockResolvedValue([]),
+          },
+        },
+        {
+          provide: AuditLogService,
+          useValue: {
+            log: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],

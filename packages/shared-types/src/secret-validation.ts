@@ -70,10 +70,11 @@ export function isPlaceholderSecret(value: string): boolean {
 
     /^placeholder.*$/i,
     /^dummy.*$/i,
-    /^=secret$/i,
-    /^=password$/i,
-    /^=key$/i,
-    /^=token$/i,
+    /^test[_-].*$/i,
+    /^secret[_-].*$/i,
+    /^password.*$/i,
+    /^key[_-].*$/i,
+    /^token[_-].*$/i,
   ];
 
   return placeholderPatterns.some((pattern) => pattern.test(value));

@@ -947,8 +947,8 @@ export class ProxyController {
 
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-    private configService: ConfigService,
-    private circuitBreakerProxyService: CircuitBreakerProxyService
+    @Inject(ConfigService) private configService: ConfigService,
+    @Inject(CircuitBreakerProxyService) private circuitBreakerProxyService: CircuitBreakerProxyService
   ) {
     this.UPSTREAM_TIMEOUT = this.configService.get<number>('UPSTREAM_TIMEOUT', 30000);
   }

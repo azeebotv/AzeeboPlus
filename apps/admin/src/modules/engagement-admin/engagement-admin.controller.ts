@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Inject, Controller, Get, Query, UseGuards  } from '@nestjs/common';
 import { EngagementAdminService } from './engagement-admin.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -8,7 +8,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin')
 export class EngagementAdminController {
-  constructor(private readonly engagementService: EngagementAdminService) {}
+  constructor(@Inject(EngagementAdminService) private readonly engagementService: EngagementAdminService) {}
 
   @Get('metrics')
   async getMetrics() {

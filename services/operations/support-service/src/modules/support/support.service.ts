@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { SupportRepository, CreateTicketDto, Ticket, TicketReply } from './support.repository';
 
 interface CreateTicketInput {
@@ -11,7 +11,7 @@ interface CreateTicketInput {
 // Should be consolidated into the canonical ticket module and removed.
 @Injectable()
 export class SupportService {
-  constructor(private readonly supportRepository: SupportRepository) {}
+  constructor(@Inject(SupportRepository) private readonly supportRepository: SupportRepository) {}
 
   async createTicket(userId: string, data: CreateTicketInput): Promise<Ticket> {
     const ticketData: CreateTicketDto = {

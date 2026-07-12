@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -8,7 +8,7 @@ import {
   Param,
   Query,
   UseGuards,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { CityGuideService } from './city-guide.service';
@@ -37,7 +37,7 @@ interface CreateCityGuideData {
 @UseGuards(AuthGuard('jwt'))
 @Controller('v1/lifestyle/city-guide')
 export class CityGuideController {
-  constructor(private readonly cityGuideService: CityGuideService) {}
+  constructor(@Inject(CityGuideService) private readonly cityGuideService: CityGuideService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get city guide entries' })

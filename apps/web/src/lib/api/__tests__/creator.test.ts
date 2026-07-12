@@ -23,7 +23,7 @@ describe('Creator API Methods', () => {
 
     await creator.getCreators(1, 20);
 
-    expect(client.request).toHaveBeenCalledWith('/api/v1/creators?page=1&limit=20');
+    expect(client.request).toHaveBeenCalledWith('/api/v1/creators/discover?page=1&limit=20');
   });
 
   it('getCreator should GET /api/v1/creators/:id', async () => {

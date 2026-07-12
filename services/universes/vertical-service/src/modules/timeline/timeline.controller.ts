@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Body, Param, Query, UseGuards  } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { TimelineService } from './timeline.service';
@@ -7,7 +7,7 @@ import { CreateTimelineEventDto } from './dto/create-timeline-event.dto';
 @ApiTags('Timeline')
 @Controller('v1/vertical/timeline')
 export class TimelineController {
-  constructor(private readonly timelineService: TimelineService) {}
+  constructor(@Inject(TimelineService) private readonly timelineService: TimelineService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get timeline events' })

@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -8,7 +8,7 @@ import {
   Param,
   Put,
   Delete,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
@@ -22,7 +22,7 @@ import { AddToWatchlistDto } from './dto/watchlist.dto.js';
 @ApiBearerAuth()
 @Controller('v1/movies')
 export class MoviesController {
-  constructor(private readonly moviesService: MoviesService) {}
+  constructor(@Inject(MoviesService) private readonly moviesService: MoviesService) {}
 
   @Get()
   @UseGuards(RateLimitGuard)

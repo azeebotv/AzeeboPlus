@@ -1,10 +1,10 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 
 @Injectable()
 export class IntelligenceService {
   private readonly logger = new Logger(IntelligenceService.name);
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async getPersonalization(userId: string): Promise<{ success: boolean; data?: unknown }> {
     try {

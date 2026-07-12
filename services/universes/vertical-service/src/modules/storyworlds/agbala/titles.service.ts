@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { CacheService } from './cache.service';
 import { buildOffsetPagination } from './pagination.helper';
@@ -78,8 +78,8 @@ export class AgbalaTitlesService {
   private readonly logger = new Logger(AgbalaTitlesService.name);
 
   constructor(
-    private prisma: PrismaService,
-    private cache: CacheService
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(CacheService) private cache: CacheService
   ) {}
 
   private formatTitle(title: Record<string, unknown>): Title {

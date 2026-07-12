@@ -10,6 +10,7 @@ import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@az
 import { AdminModule } from './modules/admin/admin.module.js';
 import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
+import { CacheModule } from '@azeebo/shared-services';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { ServiceAuthGuard } from '@azeebo/security';
       isGlobal: true,
     }),
     RateLimiterModule.forRoot(),
+    CacheModule,
     DatabaseModule,
     GamesModule,
     GameCatalogModule,

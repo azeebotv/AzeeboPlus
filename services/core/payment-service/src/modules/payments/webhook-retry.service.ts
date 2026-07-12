@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import {Inject,  Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '@prisma/client';
 
@@ -7,7 +7,7 @@ export class WebhookRetryService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(WebhookRetryService.name);
   private retryInterval: ReturnType<typeof setInterval> | null = null;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   onModuleInit() {
     this.startRetryProcessor();

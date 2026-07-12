@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import {Inject,  Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../database/prisma.service';
 import {
@@ -43,7 +43,7 @@ export interface PaginatedTickets {
 // Should be consolidated into the canonical ticket module and removed.
 @Injectable()
 export class SupportRepository {
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async createTicket(data: CreateTicketDto): Promise<Ticket> {
     const priorityMap: Record<string, SupportTicketPriority> = {

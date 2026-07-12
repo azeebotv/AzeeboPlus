@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -8,7 +8,7 @@ import {
   Param,
   Query,
   UseGuards,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { TitlesService } from './titles.service';
@@ -18,7 +18,7 @@ import { UpdateTitleDto } from './dto/update-title.dto';
 @ApiTags('Titles')
 @Controller('v1/vertical/titles')
 export class TitlesController {
-  constructor(private readonly titlesService: TitlesService) {}
+  constructor(@Inject(TitlesService) private readonly titlesService: TitlesService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get titles' })

@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {Inject,  Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 
@@ -30,8 +30,8 @@ interface FeedResponse {
 export class ComedyFeedService {
   private readonly logger = new Logger(ComedyFeedService.name);
   constructor(
-    private prisma: PrismaService,
-    private cache: CacheService
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(CacheService) private cache: CacheService
   ) {}
 
   async getFeed(page = 1, limit = 20, type?: string): Promise<FeedResponse> {

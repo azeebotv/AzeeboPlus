@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Body, Param, Query, UseGuards, Request  } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from '@azeebo/security';
@@ -8,7 +8,7 @@ import { IntelligenceService } from './intelligence.service.js';
 @UseGuards(AuthGuard('jwt'))
 @Controller('intelligence')
 export class IntelligenceController {
-  constructor(private readonly intelligenceService: IntelligenceService) {}
+  constructor(@Inject(IntelligenceService) private readonly intelligenceService: IntelligenceService) {}
 
   @Get('personalization')
   @ApiOperation({ summary: 'Get personalization data for user' })

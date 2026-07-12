@@ -1,4 +1,4 @@
-import {
+import {Inject, 
   Injectable,
   UnauthorizedException,
   ConflictException,
@@ -46,12 +46,12 @@ export class AuthService {
   private readonly lockoutDurationSeconds: number;
 
   constructor(
-    private readonly authRepository: AuthRepository,
-    private readonly jwtService: JwtService,
-    private readonly otpService: OtpService,
-    private readonly redisService: RedisService,
-    private readonly cacheService: CacheService,
-    private readonly configService: ConfigService
+    @Inject(AuthRepository) private readonly authRepository: AuthRepository,
+    @Inject(JwtService) private readonly jwtService: JwtService,
+    @Inject(OtpService) private readonly otpService: OtpService,
+    @Inject(RedisService) private readonly redisService: RedisService,
+    @Inject(CacheService) private readonly cacheService: CacheService,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.saltRounds = this.configService.get<number>('SALT_ROUNDS', 10);
     this.accessTokenExpiry = this.configService.get<string>('JWT_EXPIRES_IN', '30m');

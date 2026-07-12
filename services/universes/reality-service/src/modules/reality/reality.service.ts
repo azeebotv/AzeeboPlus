@@ -1,4 +1,4 @@
-import {
+import {Inject, 
   Injectable,
   NotFoundException,
   ConflictException,
@@ -37,9 +37,9 @@ export class RealityService {
   private readonly voteCost: number;
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
-    private readonly cache: CacheService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(CacheService) private readonly cache: CacheService
   ) {
     this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
     this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
@@ -262,26 +262,24 @@ export class RealityService {
   ): Promise<RealityResponse> {
     const { contestantId, showId } = body;
 
-    const existingVote = await this.prisma.vote.findUnique({
-      where: {
-        userId_contestantId: { userId, contestantId },
-      },
-    });
-
-    if (existingVote) {
-      throw new ConflictException('User has already voted for this contestant');
-    }
-
     const vote = await this.prisma.$transaction(async (tx) => {
-      const newVote = await tx.vote.create({
+      const existingVote = await tx.vote.findUnique({
+        where: {
+          userId_contestantId: { userId, contestantId },
+        },
+      });
+
+      if (existingVote) {
+        throw new ConflictException('User has already voted for this contestant');
+      }
+
+      return tx.vote.create({
         data: {
           userId,
           contestantId,
           showId,
         },
       });
-
-      return newVote;
     });
 
     await this.cache.invalidate(`reality:*`);
@@ -305,16 +303,6 @@ export class RealityService {
     body: { contestantId: string; showId: string }
   ): Promise<RealityResponse> {
     const { contestantId, showId } = body;
-
-    const existingSupervote = await this.prisma.supervote.findUnique({
-      where: {
-        userId_contestantId: { userId, contestantId },
-      },
-    });
-
-    if (existingSupervote) {
-      throw new ConflictException('User has already supervoted for this contestant');
-    }
 
     const walletResponse = await axios.get(
       `${this.walletServiceBaseUrl}/wallets/user/${userId}`,
@@ -350,6 +338,16 @@ export class RealityService {
 
     try {
       const supervote = await this.prisma.$transaction(async (tx) => {
+        const existingSupervote = await tx.supervote.findUnique({
+          where: {
+            userId_contestantId: { userId, contestantId },
+          },
+        });
+
+        if (existingSupervote) {
+          throw new ConflictException('User has already supervoted for this contestant');
+        }
+
         return tx.supervote.create({
           data: {
             userId,
@@ -528,6 +526,16 @@ export class RealityService {
         const createdVotes = [];
 
         for (let i = 0; i < quantity; i++) {
+          const existingVote = await tx.vote.findUnique({
+            where: {
+              userId_contestantId: { userId, contestantId },
+            },
+          });
+
+          if (existingVote) {
+            throw new ConflictException('User has already voted for this contestant');
+          }
+
           const vote = await tx.vote.create({
             data: {
               userId,

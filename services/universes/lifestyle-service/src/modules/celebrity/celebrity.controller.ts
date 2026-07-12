@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -8,7 +8,7 @@ import {
   Param,
   Query,
   UseGuards,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { CelebrityService } from './celebrity.service';
@@ -37,7 +37,7 @@ interface CreateNewsData {
 @ApiTags('Celebrity')
 @Controller('v1/lifestyle/celebrities')
 export class CelebrityController {
-  constructor(private readonly celebrityService: CelebrityService) {}
+  constructor(@Inject(CelebrityService) private readonly celebrityService: CelebrityService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get celebrities' })

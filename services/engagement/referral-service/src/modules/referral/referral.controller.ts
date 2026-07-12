@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -9,7 +9,7 @@ import {
   HttpStatus,
   Query,
   Param,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
@@ -22,7 +22,7 @@ import { ReferralResponse } from './interfaces/referral-response.interface.js';
 @UseGuards(RateLimitGuard)
 @Controller('referrals')
 export class ReferralController {
-  constructor(private readonly referralService: ReferralService) {}
+  constructor(@Inject(ReferralService) private readonly referralService: ReferralService) {}
 
   @Get('code')
   @UseGuards(AuthGuard('jwt'))

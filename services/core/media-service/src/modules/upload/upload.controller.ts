@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Post,
   Get,
@@ -9,9 +9,10 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  ForbiddenException,
   UseGuards,
   Request,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
@@ -25,8 +26,8 @@ import { ApiResponseWrapper } from '@azeebo/shared-types';
 @UseGuards(RateLimitGuard)
 export class UploadController {
   constructor(
-    private readonly uploadService: UploadService,
-    private readonly premiumContentService: PremiumContentService
+    @Inject(UploadService) private readonly uploadService: UploadService,
+    @Inject(PremiumContentService) private readonly premiumContentService: PremiumContentService
   ) {}
 
   @Post('upload/image')
@@ -231,8 +232,16 @@ export class UploadController {
   @ApiOperation({ summary: 'Delete a file by key' })
   @ApiResponse({ status: 200, description: 'File deleted successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async deleteFile(@Param('key') key: string): Promise<unknown> {
-    await this.uploadService.deleteFile(decodeURIComponent(key));
+  async deleteFile(
+    @Request() req: { user: { id: string; role?: string } },
+    @Param('key') key: string
+  ): Promise<unknown> {
+    const decodedKey = decodeURIComponent(key);
+    const metadata = await this.uploadService.getFileMetadata(decodedKey);
+    if (metadata && metadata.userId && metadata.userId !== req.user.id && req.user.role !== 'admin') {
+      throw new ForbiddenException('You can only delete your own files');
+    }
+    await this.uploadService.deleteFile(decodedKey);
     return ApiResponseWrapper.success({ message: 'File deleted successfully' });
   }
 

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Body, Param, Query, UseGuards  } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { CrossoversService } from './crossovers.service';
@@ -7,7 +7,7 @@ import { CreateCrossoverData, CreateRecapData } from './crossovers.service';
 @ApiTags('Crossovers')
 @Controller('v1/vertical/crossovers')
 export class CrossoversController {
-  constructor(private readonly crossoversService: CrossoversService) {}
+  constructor(@Inject(CrossoversService) private readonly crossoversService: CrossoversService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get crossovers' })

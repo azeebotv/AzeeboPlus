@@ -6,6 +6,7 @@ import { OtpService } from './otp/otp.service.js';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { ConflictException, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { CacheService } from '@azeebo/shared-services';
 import * as bcrypt from 'bcrypt';
 
 jest.mock('bcrypt');
@@ -105,6 +106,14 @@ describe('AuthService', () => {
             generateOtp: jest.fn().mockResolvedValue({ otp: '123456', expiresAt: new Date() }),
             verifyOtp: jest.fn().mockResolvedValue(true),
             sendOtpToUser: jest.fn().mockResolvedValue({ message: 'OTP sent' }),
+          },
+        },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            delete: jest.fn().mockResolvedValue(0),
           },
         },
         {

@@ -1,4 +1,4 @@
-import { Controller, Get, Logger } from '@nestjs/common';
+import { Inject, Controller, Get, Logger  } from '@nestjs/common';
 import { Public } from '@azeebo/security';
 import {
   HealthCheck,
@@ -16,8 +16,8 @@ export class HealthController {
   private readonly logger = new Logger(HealthController.name);
 
   constructor(
-    private health: HealthCheckService,
-    private prisma: PrismaService
+    @Inject(HealthCheckService) private health: HealthCheckService,
+    @Inject(PrismaService) private prisma: PrismaService
   ) {}
 
   @Get()

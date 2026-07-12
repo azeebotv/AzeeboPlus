@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {Inject,  Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 import { UpdateUniverseAffinityDto } from './dto/update-universe-affinity.dto.js';
@@ -23,8 +23,8 @@ export class UsersService {
   private readonly logger = new Logger(UsersService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly cache: CacheService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(CacheService) private readonly cache: CacheService
   ) {}
 
   async getPreferences(userId: string): Promise<Record<string, unknown>> {

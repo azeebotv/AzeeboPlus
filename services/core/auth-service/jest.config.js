@@ -8,6 +8,9 @@ module.exports = {
   transformIgnorePatterns: [
     'node_modules/(?!uuid)',
   ],
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+  },
   collectCoverageFrom: [
     '**/*.(t|j)s',
     '!main.ts',

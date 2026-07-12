@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 interface CityGuideEntry {
@@ -87,7 +87,7 @@ interface WhereClause {
 
 @Injectable()
 export class CityGuideService {
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   private formatEntry(entry: Record<string, unknown>, _tags?: Tag[]): CityGuideEntry {
     return {

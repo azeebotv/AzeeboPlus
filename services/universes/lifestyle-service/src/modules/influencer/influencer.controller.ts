@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -8,7 +8,7 @@ import {
   Param,
   Query,
   UseGuards,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { InfluencerService } from './influencer.service';
@@ -47,7 +47,7 @@ interface UpdateInfluencerData {
 @ApiTags('Influencer')
 @Controller('v1/lifestyle/influencers')
 export class InfluencerController {
-  constructor(private readonly influencerService: InfluencerService) {}
+  constructor(@Inject(InfluencerService) private readonly influencerService: InfluencerService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get influencers' })

@@ -6,7 +6,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { RecommendationModule } from './modules/recommendation/recommendation.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { HealthModule } from './modules/health/health.module';
-import { ServiceAuthGuard } from '@azeebo/security';
+import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
 
 @Module({
   imports: [
@@ -14,6 +14,7 @@ import { ServiceAuthGuard } from '@azeebo/security';
       isGlobal: true,
       envFilePath: ['.env', '../../.env'],
     }),
+    RateLimiterModule.forRoot(),
     ThrottlerModule.forRoot([
       {
         ttl: 60000,

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Body, Param, Query, UseGuards, Request  } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
@@ -14,7 +14,7 @@ import {
 @ApiBearerAuth()
 @Controller('v1/sports/predictions')
 export class PredictionMarketsController {
-  constructor(private readonly predictionMarketsService: PredictionMarketsService) {}
+  constructor(@Inject(PredictionMarketsService) private readonly predictionMarketsService: PredictionMarketsService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get prediction markets' })

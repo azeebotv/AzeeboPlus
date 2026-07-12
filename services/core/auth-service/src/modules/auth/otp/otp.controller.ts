@@ -1,4 +1,4 @@
-import { Controller, Post, Request, BadRequestException, UseGuards } from '@nestjs/common';
+import { Inject, Controller, Post, Request, BadRequestException, UseGuards  } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -17,7 +17,7 @@ interface OtpRequest {
 @ApiTags('OTP')
 @Controller('otp')
 export class OtpController {
-  constructor(private readonly otpService: OtpService) {}
+  constructor(@Inject(OtpService) private readonly otpService: OtpService) {}
 
   @Post('send')
   @UseGuards(AuthGuard('jwt'), RateLimitGuard)

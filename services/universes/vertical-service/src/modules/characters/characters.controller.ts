@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Patch, Body, Param, Query, UseGuards  } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { CharactersService } from './characters.service';
@@ -8,7 +8,7 @@ import { CreateRelationshipDto } from './dto/create-relationship.dto';
 @ApiTags('Characters')
 @Controller('v1/vertical/characters')
 export class CharactersController {
-  constructor(private readonly charactersService: CharactersService) {}
+  constructor(@Inject(CharactersService) private readonly charactersService: CharactersService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all characters' })

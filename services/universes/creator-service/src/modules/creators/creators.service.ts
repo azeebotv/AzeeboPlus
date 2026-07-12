@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '@prisma/client';
@@ -48,16 +48,18 @@ export class CreatorsService {
   private readonly walletServiceBaseUrl: string;
   private readonly mediaServiceBaseUrl: string;
   private readonly analyticsServiceBaseUrl: string;
+  private readonly notificationServiceBaseUrl: string;
   private readonly minimumPayout: number;
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
-    private readonly cache: CacheService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(CacheService) private readonly cache: CacheService
   ) {
     this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
     this.mediaServiceBaseUrl = this.configService.getOrThrow<string>('MEDIA_SERVICE_URL');
     this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
+    this.notificationServiceBaseUrl = this.configService.get<string>('NOTIFICATION_SERVICE_URL', 'http://notification-service:3006');
     this.minimumPayout = parseInt(this.configService.get<string>('MINIMUM_PAYOUT', '5000'), 10);
   }
 
@@ -97,20 +99,27 @@ export class CreatorsService {
         },
       });
 
-      await (
-        tx as unknown as { notification: { create: (args: unknown) => Promise<void> } }
-      ).notification.create({
-        data: {
+      return creatorProfile;
+    });
+
+    // Send welcome notification via notification service (outside transaction)
+    try {
+      await axios.post(
+        `${this.notificationServiceBaseUrl}/v1/notifications`,
+        {
           userId,
           type: 'system',
           title: 'Welcome to Creator Program',
           message:
             'Your creator profile has been created. Complete verification to unlock all features.',
         },
-      });
+        { timeout: 5000 }
+      );
+    } catch (error) {
+      this.logger.warn('Failed to send welcome notification:', error);
+    }
 
-      return creatorProfile;
-    });
+    return profile;
 
     await this.trackAnalyticsEvent('creator_onboarded', userId, {});
 
@@ -118,7 +127,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: profile as unknown as Record<string, unknown>,
+      data: profile,
     };
   }
 
@@ -398,7 +407,7 @@ export class CreatorsService {
 
     const result: CreatorResponse = {
       success: true,
-      data: profile as unknown as Record<string, unknown>,
+      data: profile,
     };
 
     await this.cache.set(cacheK, result, 600);
@@ -429,7 +438,7 @@ export class CreatorsService {
         ...profile,
         subscriberCount: (profile as { subscriptions?: unknown[] }).subscriptions?.length || 0,
         isSubscribed: false,
-      } as unknown as Record<string, unknown>,
+      } Record<string, unknown>,
     };
 
     await this.cache.set(cacheK, result, 600);
@@ -457,7 +466,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: updatedProfile as unknown as Record<string, unknown>,
+      data: updatedProfile Record<string, unknown>,
     };
   }
 
@@ -500,7 +509,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: { channels } as unknown as Record<string, unknown>,
+      data: { channels } Record<string, unknown>,
     };
   }
 
@@ -553,7 +562,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: contentItem as unknown as Record<string, unknown>,
+      data: contentItem Record<string, unknown>,
     };
   }
 
@@ -587,7 +596,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: contentItem as unknown as Record<string, unknown>,
+      data: contentItem Record<string, unknown>,
     };
   }
 
@@ -599,7 +608,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: contentItems as unknown as Record<string, unknown>,
+      data: contentItems Record<string, unknown>,
     };
   }
 
@@ -615,7 +624,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: creators as unknown as Record<string, unknown>,
+      data: creators Record<string, unknown>,
     };
   }
 
@@ -903,20 +912,18 @@ export class CreatorsService {
       throw new NotFoundException('Creator not found');
     }
 
-    const senderWallet = await (
-      this.prisma as unknown as {
-        wallet: { findUnique: (args: unknown) => Promise<{ id: string } | null> };
-      }
-    ).wallet.findUnique({ where: { userId } });
+    const senderWalletResponse = await axios
+      .get(`${this.walletServiceBaseUrl}/wallets/user/${userId}`, { timeout: 10000 })
+      .catch(() => null);
+    const senderWallet = senderWalletResponse?.data?.wallet || senderWalletResponse?.data;
     if (!senderWallet) {
       throw new NotFoundException('Wallet not found');
     }
 
-    const creatorWallet = await (
-      this.prisma as unknown as {
-        wallet: { findUnique: (args: unknown) => Promise<{ id: string } | null> };
-      }
-    ).wallet.findUnique({ where: { userId: creatorId } });
+    const creatorWalletResponse = await axios
+      .get(`${this.walletServiceBaseUrl}/wallets/user/${creatorId}`, { timeout: 10000 })
+      .catch(() => null);
+    const creatorWallet = creatorWalletResponse?.data?.wallet || creatorWalletResponse?.data;
     if (!creatorWallet) {
       throw new NotFoundException('Creator wallet not found');
     }
@@ -1083,7 +1090,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: { subscriptions } as unknown as Record<string, unknown>,
+      data: { subscriptions } Record<string, unknown>,
     };
   }
 
@@ -1094,7 +1101,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: { subscribers } as unknown as Record<string, unknown>,
+      data: { subscribers } Record<string, unknown>,
     };
   }
 
@@ -1244,7 +1251,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: { payouts } as unknown as Record<string, unknown>,
+      data: { payouts } Record<string, unknown>,
     };
   }
 
@@ -1423,7 +1430,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: { challenges } as unknown as Record<string, unknown>,
+      data: { challenges } Record<string, unknown>,
     };
   }
 
@@ -1447,7 +1454,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: { challenges } as unknown as Record<string, unknown>,
+      data: { challenges } Record<string, unknown>,
     };
   }
 
@@ -1584,7 +1591,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: { challenges: entries } as unknown as Record<string, unknown>,
+      data: { challenges: entries } Record<string, unknown>,
     };
   }
 
@@ -1592,19 +1599,25 @@ export class CreatorsService {
     const profile = await this.prisma.creatorProfile.findUnique({ where: { userId } });
     if (!profile) throw new NotFoundException('Creator profile not found');
 
-    const [contentCount, earnings, subscribers] = await Promise.all([
+    const [contentCount, earnings, subscribers, contentItems] = await Promise.all([
       this.prisma.contentItem.count({ where: { creatorId: userId } }),
       this.prisma.creatorEarning.aggregate({
         where: { creatorId: profile.id },
         _sum: { amount: true },
       }),
       this.prisma.subscription.count({ where: { creatorId: profile.id, status: 'active' } }),
+      this.prisma.contentItem.findMany({
+        where: { creatorId: userId },
+        select: { viewCount: true },
+      }),
     ]);
+
+    const totalViews = contentItems.reduce((sum, item) => sum + (item.viewCount || 0), 0);
 
     return {
       success: true,
       data: {
-        totalViews: 0,
+        totalViews,
         totalLikes: 0,
         totalComments: 0,
         followerCount: subscribers,
@@ -1618,29 +1631,55 @@ export class CreatorsService {
         likesChange: 0,
         commentsChange: 0,
         followersChange: 0,
-      } as unknown as Record<string, unknown>,
+      } Record<string, unknown>,
     };
   }
 
-  async getSettings(_userId: string): Promise<CreatorResponse> {
+  async getSettings(userId: string): Promise<CreatorResponse> {
+    const profile = await this.prisma.creatorProfile.findUnique({
+      where: { userId },
+      select: { settings: true },
+    });
+
+    const defaultSettings = {
+      emailNotifications: true,
+      pushNotifications: true,
+      smsNotifications: false,
+      marketingNotifications: false,
+      profileVisibility: 'public',
+      showEarnings: false,
+      allowMessages: true,
+    };
+
     return {
       success: true,
-      data: {
-        emailNotifications: true,
-        pushNotifications: true,
-        smsNotifications: false,
-        marketingNotifications: false,
-        profileVisibility: 'public',
-        showEarnings: false,
-        allowMessages: true,
-      } as unknown as Record<string, unknown>,
+      data: (profile?.settings as Record<string, unknown>) || defaultSettings,
     };
   }
 
-  async updateSettings(_userId: string, data: Record<string, unknown>): Promise<CreatorResponse> {
+  async updateSettings(userId: string, data: Record<string, unknown>): Promise<CreatorResponse> {
+    const profile = await this.prisma.creatorProfile.findUnique({
+      where: { userId },
+      select: { id: true, settings: true },
+    });
+
+    if (!profile) {
+      throw new NotFoundException('Creator profile not found');
+    }
+
+    const currentSettings = (profile.settings as Record<string, unknown>) || {};
+    const updatedSettings = { ...currentSettings, ...data };
+
+    await this.prisma.creatorProfile.update({
+      where: { id: profile.id },
+      data: { settings: updatedSettings as Prisma.InputJsonValue },
+    });
+
+    await this.cache.invalidate(`creator:profile:${userId}*`);
+
     return {
       success: true,
-      data: { message: 'Settings updated', ...data } as unknown as Record<string, unknown>,
+      data: updatedSettings,
     };
   }
 
@@ -1668,7 +1707,7 @@ export class CreatorsService {
         page,
         limit,
         hasMore: skip + limit < total,
-      } as unknown as Record<string, unknown>,
+      } Record<string, unknown>,
     };
 
     await this.cache.set(cacheK, result, 300);

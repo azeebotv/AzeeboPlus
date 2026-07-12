@@ -1,21 +1,48 @@
-import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '@prisma/client';
 import { FirebaseService } from '../firebase/firebase.service.js';
 import { EmailService } from '../email/email.service.js';
 import { SmsService } from '../sms/sms.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import axios from 'axios';
+
+interface UserData {
+  id: string;
+  email: string;
+  displayName: string;
+  phone?: string;
+}
 
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
+  private readonly userServiceBaseUrl: string;
+
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly firebaseService: FirebaseService,
-    private readonly emailService: EmailService,
-    private readonly smsService: SmsService,
-    private readonly cache: CacheService
-  ) {}
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(FirebaseService) private readonly firebaseService: FirebaseService,
+    @Inject(EmailService) private readonly emailService: EmailService,
+    @Inject(SmsService) private readonly smsService: SmsService,
+    @Inject(CacheService) private readonly cache: CacheService,
+    @Inject(ConfigService) private readonly configService: ConfigService
+  ) {
+    this.userServiceBaseUrl = this.configService.get<string>('USER_SERVICE_URL', 'http://user-service:3001');
+  }
+
+  private async getUserData(userId: string): Promise<UserData | null> {
+    try {
+      const response = await axios.get(`${this.userServiceBaseUrl}/users/${userId}`, {
+        timeout: 5000,
+        headers: { 'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', '') },
+      });
+      return response.data?.data || response.data;
+    } catch (error) {
+      this.logger.warn(`Failed to fetch user data for ${userId}: ${error}`);
+      return null;
+    }
+  }
 
   async getNotifications(
     userId: string,
@@ -64,7 +91,7 @@ export class NotificationsService {
         `getNotifications failed: ${(error as Error).message}`,
         (error as Error).stack
       );
-      return { success: false, error: (error as Error).message } as never;
+      throw error;
     }
   }
 
@@ -105,7 +132,7 @@ export class NotificationsService {
         throw error;
       }
       this.logger.error(`markAsRead failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message } as never;
+      throw error;
     }
   }
 
@@ -131,7 +158,7 @@ export class NotificationsService {
         `markAllAsRead failed: ${(error as Error).message}`,
         (error as Error).stack
       );
-      return { success: false, error: (error as Error).message } as never;
+      throw error;
     }
   }
 
@@ -172,7 +199,7 @@ export class NotificationsService {
         `updatePreferences failed: ${(error as Error).message}`,
         (error as Error).stack
       );
-      return { success: false, error: (error as Error).message } as never;
+      throw error;
     }
   }
 
@@ -204,7 +231,7 @@ export class NotificationsService {
         `getPreferences failed: ${(error as Error).message}`,
         (error as Error).stack
       );
-      return { success: false, error: (error as Error).message } as never;
+      throw error;
     }
   }
 
@@ -236,7 +263,7 @@ export class NotificationsService {
         `getUnreadCount failed: ${(error as Error).message}`,
         (error as Error).stack
       );
-      return { success: false, error: (error as Error).message } as never;
+      throw error;
     }
   }
 
@@ -266,7 +293,7 @@ export class NotificationsService {
         `createNotification failed: ${(error as Error).message}`,
         (error as Error).stack
       );
-      return { success: false, error: (error as Error).message } as never;
+      throw error;
     }
   }
 
@@ -299,7 +326,7 @@ export class NotificationsService {
         `savePushToken failed: ${(error as Error).message}`,
         (error as Error).stack
       );
-      return { success: false, error: (error as Error).message } as never;
+      throw error;
     }
   }
 
@@ -322,7 +349,7 @@ export class NotificationsService {
         `getPushTokens failed: ${(error as Error).message}`,
         (error as Error).stack
       );
-      return { success: false, error: (error as Error).message } as never;
+      throw error;
     }
   }
 
@@ -359,7 +386,7 @@ export class NotificationsService {
         `deletePushTokenById failed: ${(error as Error).message}`,
         (error as Error).stack
       );
-      return { success: false, error: (error as Error).message } as never;
+      throw error;
     }
   }
 
@@ -393,16 +420,16 @@ export class NotificationsService {
     }
   }
 
-  async sendEmailNotification(_userId: string, subject: string, body: string): Promise<boolean> {
+  async sendEmailNotification(userId: string, subject: string, body: string): Promise<boolean> {
     try {
-      // User email lookup not available in this service
-      // In production, call user-service to get email
-      const userEmail = 'user@example.com';
+      const user = await this.getUserData(userId);
+      if (!user?.email) {
+        this.logger.error(`User ${userId} not found or has no email`);
+        return false;
+      }
 
-      // NOTE: This regex-based strip is naive and will not handle nested/malformed tags.
-      // For production use, replace with a proper sanitization library (e.g., DOMPurify, sanitize-html).
       const sanitizedBody = body.replace(/<[^>]*>/g, '');
-      return this.emailService.sendCustomEmail(userEmail, subject, sanitizedBody);
+      return this.emailService.sendCustomEmail(user.email, subject, sanitizedBody);
     } catch (error) {
       this.logger.error(
         `sendEmailNotification failed: ${(error as Error).message}`,
@@ -414,9 +441,7 @@ export class NotificationsService {
 
   async sendWelcomeEmail(userId: string): Promise<boolean> {
     try {
-      // User lookup not available in this service — use user-service
-      const user: { id: string; email: string; displayName: string; phone?: string } = { id: userId, email: 'user@example.com', displayName: 'User' };
-
+      const user = await this.getUserData(userId);
       if (!user) {
         this.logger.error(`User ${userId} not found`);
         return false;
@@ -436,9 +461,7 @@ export class NotificationsService {
 
   async sendPasswordResetEmail(userId: string, resetLink: string): Promise<boolean> {
     try {
-      // User lookup not available in this service — use user-service
-      const user: { id: string; email: string; displayName: string; phone?: string } = { id: userId, email: 'user@example.com', displayName: 'User' };
-
+      const user = await this.getUserData(userId);
       if (!user) {
         this.logger.error(`User ${userId} not found`);
         return false;
@@ -465,9 +488,7 @@ export class NotificationsService {
     description: string
   ): Promise<boolean> {
     try {
-      // User lookup not available in this service — use user-service
-      const user: { id: string; email: string; displayName: string; phone?: string } = { id: userId, email: 'user@example.com', displayName: 'User' };
-
+      const user = await this.getUserData(userId);
       if (!user) {
         this.logger.error(`User ${userId} not found`);
         return false;
@@ -501,9 +522,7 @@ export class NotificationsService {
     contentLink: string
   ): Promise<boolean> {
     try {
-      // User lookup not available in this service — use user-service
-      const user: { id: string; email: string; displayName: string; phone?: string } = { id: userId, email: 'user@example.com', displayName: 'User' };
-
+      const user = await this.getUserData(userId);
       if (!user) {
         this.logger.error(`User ${userId} not found`);
         return false;
@@ -534,9 +553,7 @@ export class NotificationsService {
     contentLink: string
   ): Promise<boolean> {
     try {
-      // User lookup not available in this service — use user-service
-      const user: { id: string; email: string; displayName: string; phone?: string } = { id: userId, email: 'user@example.com', displayName: 'User' };
-
+      const user = await this.getUserData(userId);
       if (!user) {
         this.logger.error(`User ${userId} not found`);
         return false;
@@ -590,9 +607,7 @@ export class NotificationsService {
 
   async sendWelcomeSms(userId: string): Promise<boolean> {
     try {
-      // User lookup not available in this service — use user-service
-      const user: { id: string; email: string; displayName: string; phone?: string } = { id: userId, email: 'user@example.com', displayName: 'User' };
-
+      const user = await this.getUserData(userId);
       if (!user || !user.phone) {
         this.logger.error(`User ${userId} not found or has no phone number`);
         return false;
@@ -612,9 +627,7 @@ export class NotificationsService {
 
   async sendPasswordResetSms(userId: string, resetCode: string): Promise<boolean> {
     try {
-      // User lookup not available in this service — use user-service
-      const user: { id: string; email: string; displayName: string; phone?: string } = { id: userId, email: 'user@example.com', displayName: 'User' };
-
+      const user = await this.getUserData(userId);
       if (!user || !user.phone) {
         this.logger.error(`User ${userId} not found or has no phone number`);
         return false;
@@ -639,9 +652,7 @@ export class NotificationsService {
     currency: string
   ): Promise<boolean> {
     try {
-      // User lookup not available in this service — use user-service
-      const user: { id: string; email: string; displayName: string; phone?: string } = { id: userId, email: 'user@example.com', displayName: 'User' };
-
+      const user = await this.getUserData(userId);
       if (!user || !user.phone) {
         this.logger.error(`User ${userId} not found or has no phone number`);
         return false;
@@ -663,9 +674,7 @@ export class NotificationsService {
 
   async sendContentPublishedSms(userId: string, contentTitle: string): Promise<boolean> {
     try {
-      // User lookup not available in this service — use user-service
-      const user: { id: string; email: string; displayName: string; phone?: string } = { id: userId, email: 'user@example.com', displayName: 'User' };
-
+      const user = await this.getUserData(userId);
       if (!user || !user.phone) {
         this.logger.error(`User ${userId} not found or has no phone number`);
         return false;
@@ -685,9 +694,7 @@ export class NotificationsService {
 
   async sendContentFeaturedSms(userId: string, contentTitle: string): Promise<boolean> {
     try {
-      // User lookup not available in this service — use user-service
-      const user: { id: string; email: string; displayName: string; phone?: string } = { id: userId, email: 'user@example.com', displayName: 'User' };
-
+      const user = await this.getUserData(userId);
       if (!user || !user.phone) {
         this.logger.error(`User ${userId} not found or has no phone number`);
         return false;
@@ -707,9 +714,7 @@ export class NotificationsService {
 
   async sendAccountVerificationSms(userId: string, verificationCode: string): Promise<boolean> {
     try {
-      // User lookup not available in this service — use user-service
-      const user: { id: string; email: string; displayName: string; phone?: string } = { id: userId, email: 'user@example.com', displayName: 'User' };
-
+      const user = await this.getUserData(userId);
       if (!user || !user.phone) {
         this.logger.error(`User ${userId} not found or has no phone number`);
         return false;

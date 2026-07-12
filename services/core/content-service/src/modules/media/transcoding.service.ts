@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -9,7 +9,7 @@ export class TranscodingService {
   private s3Client: S3Client;
   private bucketName: string;
 
-  constructor(private configService: ConfigService) {
+  constructor(@Inject(ConfigService) private configService: ConfigService) {
     this.bucketName = this.configService.get('AWS_S3_BUCKET') || '';
     this.s3Client = new S3Client({
       region: this.configService.get('AWS_REGION') || 'us-east-1',

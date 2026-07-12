@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { MovieResponse } from './interfaces/movie-response.interface.js';
@@ -13,9 +13,9 @@ export class MoviesService {
   private readonly rentalFee: number;
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly cache: CacheService,
-    private readonly configService: ConfigService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(CacheService) private readonly cache: CacheService,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
     this.rentalFee = this.configService.get<number>('MOVIE_RENTAL_FEE', 500);
@@ -61,8 +61,6 @@ export class MoviesService {
     const movie = await this.prisma.movie.findUnique({
       where: { id: movieId },
       include: {
-        rentals: true,
-        watchlistItems: true,
         viewingWindows: {
           where: { isActive: true },
           orderBy: { startsAt: 'asc' },

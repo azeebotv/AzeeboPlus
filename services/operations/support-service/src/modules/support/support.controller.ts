@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Param, Put, UseGuards, Request } from '@nestjs/common';
+import { Inject, Controller, Post, Get, Body, Param, Put, UseGuards, Request  } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
@@ -27,7 +27,7 @@ interface AuthRequest extends Request {
 @Controller('support')
 @UseGuards(AuthGuard('jwt'))
 export class SupportController {
-  constructor(private readonly supportService: SupportService) {}
+  constructor(@Inject(SupportService) private readonly supportService: SupportService) {}
 
   @Post('tickets')
   @UseGuards(RateLimitGuard)

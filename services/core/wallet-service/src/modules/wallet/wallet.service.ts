@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
 import { Prisma, WalletTransaction } from '../../prisma/client/index.js';
@@ -27,9 +27,9 @@ export class WalletService {
   private readonly logger = new Logger(WalletService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly cacheService: CacheService,
-    private readonly configService: ConfigService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(CacheService) private readonly cacheService: CacheService,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.pointsToNairaRate = this.configService.get<number>('POINTS_TO_NAIRA_RATE', 100);
     this.webhookSecret = this.configService.getOrThrow<string>('WEBHOOK_SECRET');
@@ -108,11 +108,9 @@ export class WalletService {
       await this.cacheService.set(cacheK, result, 60);
       return result;
     } catch (error: unknown) {
+      if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to get balance for user ${userId}: ${error}`);
-      return {
-        success: false,
-        error: { code: 'GET_BALANCE_FAILED', message: 'Failed to retrieve wallet balance' },
-      };
+      throw error;
     }
   }
 
@@ -1041,6 +1039,14 @@ export class WalletService {
       }
 
       const updatedWallet = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        const [lockedWallet] = await tx.$queryRaw<WalletRow[]>`
+          SELECT * FROM "wallets" WHERE "id" = ${walletId} FOR UPDATE
+        `;
+
+        if (!lockedWallet) {
+          throw new NotFoundException('Wallet not found');
+        }
+
         await tx.walletTransaction.create({
           data: {
             walletId,

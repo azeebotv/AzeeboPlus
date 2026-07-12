@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -9,7 +9,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -22,7 +22,7 @@ import {
 @ApiTags('Challenges')
 @Controller('challenges')
 export class ChallengeController {
-  constructor(private readonly challengeService: ChallengeService) {}
+  constructor(@Inject(ChallengeService) private readonly challengeService: ChallengeService) {}
 
   @Get()
   @ApiOperation({ summary: 'List challenges' })

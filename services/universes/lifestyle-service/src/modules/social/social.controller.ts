@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Body, Query, UseGuards } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Delete, Body, Query, UseGuards  } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { SocialService } from './social.service';
@@ -7,7 +7,7 @@ import { SocialService } from './social.service';
 @UseGuards(AuthGuard('jwt'))
 @Controller('v1/lifestyle/social')
 export class SocialController {
-  constructor(private readonly socialService: SocialService) {}
+  constructor(@Inject(SocialService) private readonly socialService: SocialService) {}
 
   @Post('save')
   @ApiOperation({ summary: 'Save an item' })

@@ -50,6 +50,7 @@ model WalletTransaction {
   @@index([createdAt])
   @@index([idempotencyKey])
   @@index([provider])
+  @@index([reference])
   @@unique([provider, providerRef])
 }
 

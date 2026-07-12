@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Delete,
   Get,
@@ -8,7 +8,7 @@ import {
   Req,
   UseGuards,
   ForbiddenException,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { UsersService } from '../users/users.service.js';
 import { Request } from 'express';
@@ -22,7 +22,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 export class UserDeletionController {
   private readonly logger = createLogger('user-deletion');
 
-  constructor(private readonly userService: UsersService) {}
+  constructor(@Inject(UsersService) private readonly userService: UsersService) {}
 
   @Post('deletion-request')
   @ApiBearerAuth()

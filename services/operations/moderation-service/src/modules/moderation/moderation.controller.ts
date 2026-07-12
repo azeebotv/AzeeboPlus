@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Request, Param, Query } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Body, UseGuards, Request, Param, Query  } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
@@ -11,7 +11,7 @@ import { CreateReportDto, EscalateCaseDto, ScanContentDto } from './dto/moderati
 @UseGuards(RateLimitGuard)
 @Controller('v1/moderation')
 export class ModerationController {
-  constructor(private readonly moderationService: ModerationService) {}
+  constructor(@Inject(ModerationService) private readonly moderationService: ModerationService) {}
 
   @Post('report')
   @RateLimit(20, 60000)

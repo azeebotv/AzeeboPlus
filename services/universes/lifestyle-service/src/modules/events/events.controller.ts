@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -9,7 +9,7 @@ import {
   Query,
   UseGuards,
   Request,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { EventsService } from './events.service';
@@ -21,7 +21,7 @@ import { RsvpDto } from './dto/rsvp.dto';
 @ApiTags('Events')
 @Controller('v1/lifestyle/events')
 export class EventsController {
-  constructor(private readonly eventsService: EventsService) {}
+  constructor(@Inject(EventsService) private readonly eventsService: EventsService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all events' })

@@ -1,8 +1,9 @@
-import { Injectable, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
+import axios from 'axios';
 
 import { AuthRepository } from '../auth.repository.js';
 import { RedisService } from '../../../common/services/redis.service.js';
@@ -35,6 +36,20 @@ interface SocialLoginResponse {
   };
 }
 
+interface GoogleTokenInfo {
+  email: string;
+  email_verified: string;
+  name: string;
+  picture: string;
+  sub: string;
+}
+
+interface AppleUserInfo {
+  email: string;
+  sub: string;
+  name?: string;
+}
+
 const STATE_TTL_SECONDS = 600; // 10 minutes
 const STATE_PREFIX = 'social_state:';
 
@@ -44,12 +59,99 @@ export class SocialAuthService {
   private readonly logger = new Logger(SocialAuthService.name);
 
   constructor(
-    private readonly authRepository: AuthRepository,
-    private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
-    private readonly redisService: RedisService
+    @Inject(AuthRepository) private readonly authRepository: AuthRepository,
+    @Inject(JwtService) private readonly jwtService: JwtService,
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(RedisService) private readonly redisService: RedisService
   ) {
     this.saltRounds = this.configService.get<number>('SALT_ROUNDS', 10);
+  }
+
+  // ─── OAuth token verification ──────────────────────────────────────
+
+  async verifyGoogleToken(idToken: string): Promise<GoogleTokenInfo> {
+    try {
+      const response = await axios.get<GoogleTokenInfo>(
+        'https://oauth2.googleapis.com/tokeninfo',
+        { params: { id_token: idToken }, timeout: 10000 }
+      );
+
+      const tokenInfo = response.data;
+      if (!tokenInfo.email || !tokenInfo.email_verified) {
+        throw new UnauthorizedException('Google token invalid or email not verified');
+      }
+
+      return tokenInfo;
+    } catch (error) {
+      if (error instanceof UnauthorizedException) throw error;
+      this.logger.error(`Google token verification failed: ${error}`);
+      throw new UnauthorizedException('Failed to verify Google token');
+    }
+  }
+
+  async verifyAppleToken(identityToken: string): Promise<AppleUserInfo> {
+    try {
+      // Decode the JWT header to get the key ID
+      const headerParts = identityToken.split('.');
+      if (headerParts.length !== 3) {
+        throw new UnauthorizedException('Invalid Apple token format');
+      }
+
+      const header = JSON.parse(Buffer.from(headerParts[0], 'base64url').toString());
+      const kid = header.kid;
+
+      // Fetch Apple's public keys
+      const keysResponse = await axios.get(
+        'https://appleid.apple.com/auth/keys',
+        { timeout: 10000 }
+      );
+      const keys = keysResponse.data.keys;
+
+      // Find the matching key
+      const key = keys.find((k: { kid: string }) => k.kid === kid);
+      if (!key) {
+        throw new UnauthorizedException('Apple signing key not found');
+      }
+
+      // Verify the token signature using the public key
+      // For simplicity, we'll use jwt.verify with the Apple public key
+      const applePublicKey = this.convertAppleKeyToPem(key);
+      const payload = this.jwtService.verify(identityToken, {
+        publicKey: applePublicKey,
+        algorithms: ['RS256'],
+      });
+
+      if (!payload.email) {
+        throw new UnauthorizedException('Apple token does not contain email');
+      }
+
+      return {
+        email: payload.email,
+        sub: payload.sub,
+        name: payload.name,
+      };
+    } catch (error) {
+      if (error instanceof UnauthorizedException) throw error;
+      this.logger.error(`Apple token verification failed: ${error}`);
+      throw new UnauthorizedException('Failed to verify Apple token');
+    }
+  }
+
+  private convertAppleKeyToPem(key: { kty: string; n: string; e: string }): string {
+    // Convert Apple's JWK to PEM format for JWT verification
+    // This is a simplified implementation - in production, use a proper JWK-to-PEM library
+    const { createPublicKey } = require('crypto');
+    const publicKey = createPublicKey({
+      key: {
+        kty: key.kty,
+        n: key.n,
+        e: key.e,
+        alg: 'RS256',
+        use: 'sig',
+      },
+      format: 'jwk',
+    });
+    return publicKey.export({ type: 'spki', format: 'pem' }) as string;
   }
 
   // ─── State management for CSRF protection ──────────────────────────

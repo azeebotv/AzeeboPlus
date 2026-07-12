@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { GameResponse } from './interfaces/game-response.interface.js';
@@ -11,8 +11,8 @@ export class GamesService {
   private readonly walletServiceBaseUrl: string;
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly configService: ConfigService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
     this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
@@ -292,13 +292,22 @@ export class GamesService {
     if (tournament.entryFee && Number(tournament.entryFee) > 0) {
       const entryFeeAmount = Number(tournament.entryFee);
 
+      const walletResponse = await axios
+        .get(`${this.walletServiceBaseUrl}/wallets/user/${userId}`, { timeout: 10000 })
+        .catch(() => null);
+      const wallet = walletResponse?.data?.wallet || walletResponse?.data;
+      if (!wallet) {
+        throw new NotFoundException('Wallet not found');
+      }
+
       await axios
         .post(
-          `${this.walletServiceBaseUrl}/v1/wallet/debit`,
+          `${this.walletServiceBaseUrl}/wallet/debit`,
           {
-            userId,
+            walletId: wallet.id,
             amount: entryFeeAmount,
             description: `Tournament entry fee: ${tournamentId}`,
+            idempotencyKey: `tournament-entry:${userId}:${tournamentId}`,
           },
           { timeout: 10000 }
         )

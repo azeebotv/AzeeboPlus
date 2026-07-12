@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -12,7 +12,7 @@ import {
   UseInterceptors,
   HttpException,
   HttpStatus,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit, Public, AdminGuard } from '@azeebo/security';
@@ -32,8 +32,8 @@ import { ApiResponseWrapper } from '@azeebo/shared-types';
 @UseInterceptors(CacheInterceptor)
 export class ContentController {
   constructor(
-    private readonly contentService: ContentService,
-    private readonly accessControlService: AccessControlService
+    @Inject(ContentService) private readonly contentService: ContentService,
+    @Inject(AccessControlService) private readonly accessControlService: AccessControlService
   ) {}
 
   // ========================
@@ -589,10 +589,10 @@ export class ContentController {
   @ApiResponse({ status: 404, description: 'Content not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async publishContent(
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string; role?: string } },
     @Param('id') id: string
   ): Promise<ContentResponse> {
-    return this.contentService.publishContent(req.user.id, id);
+    return this.contentService.publishContent(req.user.id, id, req.user.role);
   }
 
   @Post(':id/unpublish')
@@ -602,10 +602,10 @@ export class ContentController {
   @ApiResponse({ status: 404, description: 'Content not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async unpublishContent(
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string; role?: string } },
     @Param('id') id: string
   ): Promise<ContentResponse> {
-    return this.contentService.unpublishContent(req.user.id, id);
+    return this.contentService.unpublishContent(req.user.id, id, req.user.role);
   }
 
   @Post(':id/report')
@@ -708,11 +708,11 @@ export class ContentController {
   @ApiResponse({ status: 404, description: 'Content not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateContent(
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string; role?: string } },
     @Param('id') id: string,
     @Body() updateContentDto: UpdateContentDto
   ): Promise<ContentResponse> {
-    return this.contentService.updateContent(req.user.id, id, updateContentDto);
+    return this.contentService.updateContent(req.user.id, id, updateContentDto, req.user.role);
   }
 
   @Patch(':id/media')
@@ -781,10 +781,10 @@ export class ContentController {
   @ApiResponse({ status: 404, description: 'Content not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async deleteContent(
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string; role?: string } },
     @Param('id') id: string
   ): Promise<ContentResponse> {
-    return this.contentService.deleteContent(req.user.id, id);
+    return this.contentService.deleteContent(req.user.id, id, req.user.role);
   }
 
   @Delete(':id/media')

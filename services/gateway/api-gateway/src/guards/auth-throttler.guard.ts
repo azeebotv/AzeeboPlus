@@ -1,4 +1,4 @@
-import { Injectable, ExecutionContext } from '@nestjs/common';
+import {Inject,  Injectable, ExecutionContext } from '@nestjs/common';
 import {
   ThrottlerGuard,
   ThrottlerException,
@@ -38,9 +38,9 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
   ];
 
   constructor(
-    options: ThrottlerModuleOptions,
-    storageService: ThrottlerStorage,
-    reflector: Reflector
+    @Inject('THROTTLER:MODULE_OPTIONS') options: ThrottlerModuleOptions,
+    @Inject(ThrottlerStorage) storageService: ThrottlerStorage,
+    @Inject(Reflector) reflector: Reflector
   ) {
     super(options, storageService, reflector);
     if (process.env.REDIS_URL) {

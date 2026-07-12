@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Inject, Controller, Get  } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Public } from '@azeebo/security';
 import {
@@ -12,7 +12,7 @@ import {
 @Controller()
 @Public()
 export class HealthController {
-  constructor(private health: HealthCheckService) {}
+  constructor(@Inject(HealthCheckService) private health: HealthCheckService) {}
 
   @Get('health')
   @HealthCheck()

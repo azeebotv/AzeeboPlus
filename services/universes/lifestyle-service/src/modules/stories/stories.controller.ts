@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -8,7 +8,7 @@ import {
   Param,
   Query,
   UseGuards,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { StoriesService } from './stories.service';
@@ -33,7 +33,7 @@ interface UpdateStoryDto {
 @ApiTags('Stories')
 @Controller('v1/lifestyle/stories')
 export class StoriesController {
-  constructor(private readonly storiesService: StoriesService) {}
+  constructor(@Inject(StoriesService) private readonly storiesService: StoriesService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all stories' })

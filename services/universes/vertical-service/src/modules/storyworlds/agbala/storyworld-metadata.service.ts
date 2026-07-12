@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { CacheService } from './cache.service';
 
@@ -18,8 +18,8 @@ export interface StoryworldMetadataItem {
 @Injectable()
 export class StoryworldMetadataService {
   constructor(
-    private prisma: PrismaService,
-    private readonly cache: CacheService
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(CacheService) private readonly cache: CacheService
   ) {}
 
   async getRealms(universeId: string, page = 1, limit = 20): Promise<{ data: StoryworldMetadataItem[]; total: number }> {

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import {Inject,  Injectable } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import * as OTPAuth from 'otpauth';
 import { toDataURL } from 'qrcode';
@@ -12,8 +12,8 @@ const MFA_PENDING_TTL = 600; // 10 minutes
 @Injectable()
 export class MfaService {
   constructor(
-    private readonly authRepository: AuthRepository,
-    private readonly redisService: RedisService
+    @Inject(AuthRepository) private readonly authRepository: AuthRepository,
+    @Inject(RedisService) private readonly redisService: RedisService
   ) {}
 
   async generateMfaSecret(

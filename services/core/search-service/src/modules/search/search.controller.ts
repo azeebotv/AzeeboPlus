@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -9,7 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   UnauthorizedException,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
@@ -20,12 +20,11 @@ import { LogSearchDto } from './dto/log-search.dto.js';
 
 @ApiTags('Search')
 @Controller('v1/search')
-@UseGuards(AuthGuard('jwt'))
 export class SearchController {
-  constructor(private readonly searchService: SearchService) {}
+  constructor(@Inject(SearchService) private readonly searchService: SearchService) {}
 
   @Get()
-  @UseGuards(RateLimitGuard)
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
   @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Universal search' })
   @ApiResponse({ status: 200, description: 'Search results' })
@@ -54,6 +53,8 @@ export class SearchController {
   }
 
   @Get('faceted')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Search with faceted filtering' })
   @ApiResponse({ status: 200, description: 'Search results with facets' })
   async searchWithFacets(
@@ -77,7 +78,7 @@ export class SearchController {
   }
 
   @Get('suggestions')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
   @RateLimit(60, 60000)
   @ApiOperation({ summary: 'Get search suggestions' })
   @ApiResponse({ status: 200, description: 'Search suggestions' })
@@ -86,7 +87,7 @@ export class SearchController {
   }
 
   @Get('trending')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
   @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get trending searches' })
   @ApiResponse({ status: 200, description: 'Trending searches' })
@@ -95,6 +96,8 @@ export class SearchController {
   }
 
   @Get('facets')
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get search facets' })
   @ApiResponse({ status: 200, description: 'Search facets' })
   async getFacets(

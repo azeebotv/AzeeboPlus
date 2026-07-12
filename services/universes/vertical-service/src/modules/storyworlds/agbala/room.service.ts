@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { CacheService } from './cache.service';
 import { SanitizationService, SpoilerLevel } from './sanitization.service';
@@ -75,9 +75,9 @@ export class RoomService {
   };
 
   constructor(
-    private prisma: PrismaService,
-    private cache: CacheService,
-    private sanitization: SanitizationService
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(CacheService) private cache: CacheService,
+    @Inject(SanitizationService) private sanitization: SanitizationService
   ) {}
 
   private formatRoom(room: Record<string, unknown>): Room {

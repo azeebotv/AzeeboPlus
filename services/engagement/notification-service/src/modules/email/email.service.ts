@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+import {Inject,  Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import sgMail from '@sendgrid/mail';
 import * as Handlebars from 'handlebars';
 import { ConfigService } from '@nestjs/config';
@@ -11,7 +11,7 @@ export class EmailService implements OnModuleInit {
   private readonly circuitBreaker: CircuitBreaker;
   private emailEnabled: boolean = false;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(@Inject(ConfigService) private readonly configService: ConfigService) {
     this.circuitBreaker = new CircuitBreaker({
       failureThreshold: 5,
       resetTimeout: 60000,

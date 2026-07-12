@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Body, Param, Query, UseGuards  } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
@@ -10,7 +10,7 @@ import { UpdateFixtureResultDto } from './dto/update-fixture-result.dto.js';
 @ApiBearerAuth()
 @Controller('v1/sports/fixtures')
 export class FixturesController {
-  constructor(private readonly fixturesService: FixturesService) {}
+  constructor(@Inject(FixturesService) private readonly fixturesService: FixturesService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get fixtures' })

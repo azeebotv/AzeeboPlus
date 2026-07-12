@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -11,7 +11,7 @@ import {
   UseGuards,
   Req,
   Logger,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { Request } from 'express';
 import { ContentManagementService } from './content-management.service';
 import { AuditLogService } from '../audit/audit.service';
@@ -30,8 +30,8 @@ export class ContentManagementController {
   private readonly logger = new Logger(ContentManagementController.name);
 
   constructor(
-    private readonly contentService: ContentManagementService,
-    private readonly auditLogService: AuditLogService
+    @Inject(ContentManagementService) private readonly contentService: ContentManagementService,
+    @Inject(AuditLogService) private readonly auditLogService: AuditLogService
   ) {}
 
   // ─── Content CRUD ──────────────────────────────────────────────────────────

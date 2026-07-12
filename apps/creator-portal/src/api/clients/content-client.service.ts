@@ -1,4 +1,4 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as https from 'https';
 import * as http from 'http';
@@ -46,7 +46,7 @@ export interface ContentStats {
 export class ContentClientService {
   private readonly contentServiceUrl: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(@Inject(ConfigService) private readonly configService: ConfigService) {
     const url = this.configService.get<string>('API_GATEWAY_URL');
     if (!url && process.env.NODE_ENV === 'production') {
       throw new Error('API_GATEWAY_URL environment variable must be set in production');

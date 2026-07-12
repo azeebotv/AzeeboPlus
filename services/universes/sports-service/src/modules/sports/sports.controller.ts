@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Request } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Body, Param, UseGuards, Request  } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
@@ -12,7 +12,7 @@ import { CreatePredictionDto, EnterContestDto } from './dto/prediction.dto.js';
 @UseGuards(RateLimitGuard)
 @RateLimit(100, 60000)
 export class SportsController {
-  constructor(private readonly sportsService: SportsService) {}
+  constructor(@Inject(SportsService) private readonly sportsService: SportsService) {}
 
   @Get('home')
   @ApiOperation({ summary: 'Sports home' })

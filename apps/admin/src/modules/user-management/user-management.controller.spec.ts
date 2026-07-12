@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserManagementController } from './user-management.controller';
 import { UserManagementService } from './user-management.service';
+import { AuditLogService } from '../audit/audit.service';
 
 describe('UserManagementController', () => {
   let controller: UserManagementController;
@@ -17,6 +18,12 @@ describe('UserManagementController', () => {
             updateUser: jest.fn().mockResolvedValue(null),
             suspendUser: jest.fn().mockResolvedValue(null),
             unsuspendUser: jest.fn().mockResolvedValue(null),
+          },
+        },
+        {
+          provide: AuditLogService,
+          useValue: {
+            log: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],

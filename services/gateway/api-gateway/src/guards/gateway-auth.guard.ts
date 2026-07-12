@@ -1,4 +1,4 @@
-import {
+import {Inject, 
   CanActivate,
   ExecutionContext,
   Injectable,
@@ -36,8 +36,8 @@ export class GatewayAuthGuard implements CanActivate {
   ];
 
   constructor(
-    private readonly reflector: Reflector,
-    private readonly configService: ConfigService
+    @Inject(Reflector) private readonly reflector: Reflector,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

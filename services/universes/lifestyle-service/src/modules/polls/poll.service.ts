@@ -1,11 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreatePollDto, PollOptionDto } from './dto/create-poll.dto';
 
 @Injectable()
 export class PollService {
   private readonly logger = new Logger(PollService.name);
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async getPolls(page = 1, limit = 20, status?: string) {
     const skip = (page - 1) * limit;

@@ -1,11 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {Inject,  Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 
 @Injectable()
 export class CronTasksService {
   private readonly logger = new Logger(CronTasksService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async cleanupStalePaymentIntents(): Promise<void> {
     this.logger.log('Running stale payment intent cleanup...');

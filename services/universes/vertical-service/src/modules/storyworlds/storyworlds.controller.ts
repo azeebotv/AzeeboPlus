@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards, Request, Logger } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Body, Param, Query, UseGuards, Request, Logger  } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AgbalaTitlesService as TitlesService } from './agbala/titles.service';
@@ -14,12 +14,12 @@ export class StoryworldsController {
   private readonly logger = new Logger(StoryworldsController.name);
 
   constructor(
-    private readonly titlesService: TitlesService,
-    private readonly charactersService: CharactersService,
-    private readonly theoryService: TheoryService,
-    private readonly roomService: RoomService,
-    private readonly sanitizationService: SanitizationService,
-    private readonly metadataService: StoryworldMetadataService
+    @Inject(TitlesService) private readonly titlesService: TitlesService,
+    @Inject(CharactersService) private readonly charactersService: CharactersService,
+    @Inject(TheoryService) private readonly theoryService: TheoryService,
+    @Inject(RoomService) private readonly roomService: RoomService,
+    @Inject(SanitizationService) private readonly sanitizationService: SanitizationService,
+    @Inject(StoryworldMetadataService) private readonly metadataService: StoryworldMetadataService
   ) {}
 
   @Get()

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Request } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Body, UseGuards, Request  } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
@@ -19,7 +19,7 @@ interface MfaRequest {
 @ApiTags('MFA')
 @Controller('mfa')
 export class MfaController {
-  constructor(private readonly mfaService: MfaService) {}
+  constructor(@Inject(MfaService) private readonly mfaService: MfaService) {}
 
   @Get('setup')
   @UseGuards(AuthGuard('jwt'))
