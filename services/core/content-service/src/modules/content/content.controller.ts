@@ -589,10 +589,10 @@ export class ContentController {
   @ApiResponse({ status: 404, description: 'Content not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async publishContent(
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string; role?: string } },
     @Param('id') id: string
   ): Promise<ContentResponse> {
-    return this.contentService.publishContent(req.user.id, id);
+    return this.contentService.publishContent(req.user.id, id, req.user.role);
   }
 
   @Post(':id/unpublish')
@@ -602,10 +602,10 @@ export class ContentController {
   @ApiResponse({ status: 404, description: 'Content not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async unpublishContent(
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string; role?: string } },
     @Param('id') id: string
   ): Promise<ContentResponse> {
-    return this.contentService.unpublishContent(req.user.id, id);
+    return this.contentService.unpublishContent(req.user.id, id, req.user.role);
   }
 
   @Post(':id/report')
@@ -708,11 +708,11 @@ export class ContentController {
   @ApiResponse({ status: 404, description: 'Content not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateContent(
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string; role?: string } },
     @Param('id') id: string,
     @Body() updateContentDto: UpdateContentDto
   ): Promise<ContentResponse> {
-    return this.contentService.updateContent(req.user.id, id, updateContentDto);
+    return this.contentService.updateContent(req.user.id, id, updateContentDto, req.user.role);
   }
 
   @Patch(':id/media')
@@ -781,10 +781,10 @@ export class ContentController {
   @ApiResponse({ status: 404, description: 'Content not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async deleteContent(
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string; role?: string } },
     @Param('id') id: string
   ): Promise<ContentResponse> {
-    return this.contentService.deleteContent(req.user.id, id);
+    return this.contentService.deleteContent(req.user.id, id, req.user.role);
   }
 
   @Delete(':id/media')

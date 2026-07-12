@@ -4,14 +4,14 @@ import { PrismaService } from '../database/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { NotFoundException } from '@nestjs/common';
 
-jest.mock('@azeebo/api-client', () => ({
-  createApiClient: jest.fn().mockReturnValue({
+jest.mock('@azeebo/http-client', () => ({
+  ServiceClient: jest.fn().mockImplementation(() => ({
     get: jest.fn(),
     post: jest.fn(),
     put: jest.fn(),
+    patch: jest.fn(),
     delete: jest.fn(),
-  }),
-  noopTokenStorage: {},
+  })),
 }));
 
 describe('TakedownService', () => {

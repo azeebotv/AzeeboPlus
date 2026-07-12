@@ -292,13 +292,22 @@ export class GamesService {
     if (tournament.entryFee && Number(tournament.entryFee) > 0) {
       const entryFeeAmount = Number(tournament.entryFee);
 
+      const walletResponse = await axios
+        .get(`${this.walletServiceBaseUrl}/wallets/user/${userId}`, { timeout: 10000 })
+        .catch(() => null);
+      const wallet = walletResponse?.data?.wallet || walletResponse?.data;
+      if (!wallet) {
+        throw new NotFoundException('Wallet not found');
+      }
+
       await axios
         .post(
-          `${this.walletServiceBaseUrl}/v1/wallet/debit`,
+          `${this.walletServiceBaseUrl}/wallet/debit`,
           {
-            userId,
+            walletId: wallet.id,
             amount: entryFeeAmount,
             description: `Tournament entry fee: ${tournamentId}`,
+            idempotencyKey: `tournament-entry:${userId}:${tournamentId}`,
           },
           { timeout: 10000 }
         )

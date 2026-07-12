@@ -108,11 +108,9 @@ export class WalletService {
       await this.cacheService.set(cacheK, result, 60);
       return result;
     } catch (error: unknown) {
+      if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to get balance for user ${userId}: ${error}`);
-      return {
-        success: false,
-        error: { code: 'GET_BALANCE_FAILED', message: 'Failed to retrieve wallet balance' },
-      };
+      throw error;
     }
   }
 
@@ -1041,6 +1039,14 @@ export class WalletService {
       }
 
       const updatedWallet = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        const [lockedWallet] = await tx.$queryRaw<WalletRow[]>`
+          SELECT * FROM "wallets" WHERE "id" = ${walletId} FOR UPDATE
+        `;
+
+        if (!lockedWallet) {
+          throw new NotFoundException('Wallet not found');
+        }
+
         await tx.walletTransaction.create({
           data: {
             walletId,

@@ -81,7 +81,8 @@ export class AdminService {
       if (!user) {
         throw new NotFoundException('User not found');
       }
-      return ApiResponseWrapper.success(user);
+      const { password: _password, ...userWithoutPassword } = user as Record<string, unknown>;
+      return ApiResponseWrapper.success(userWithoutPassword);
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to get user by id: ${error}`);
@@ -98,7 +99,7 @@ export class AdminService {
       if (!user) {
         throw new NotFoundException('User not found');
       }
-      const updated = await this.authRepository.update(id, { role: 'suspended' } as never);
+      const updated = await this.authRepository.update(id, { role: 'suspended' });
       return ApiResponseWrapper.success(updated);
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
@@ -116,7 +117,7 @@ export class AdminService {
       if (!user) {
         throw new NotFoundException('User not found');
       }
-      const updated = await this.authRepository.update(id, { role: 'user' } as never);
+      const updated = await this.authRepository.update(id, { role: 'user' });
       return ApiResponseWrapper.success(updated);
     } catch (error) {
       if (error instanceof NotFoundException) throw error;

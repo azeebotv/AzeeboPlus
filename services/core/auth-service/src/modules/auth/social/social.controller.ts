@@ -128,6 +128,8 @@ export class SocialAuthController {
   }
 
   // ─── Direct login endpoints (legacy, kept for backward compat) ──────
+  // NOTE: These endpoints accept idToken/identityToken directly.
+  // In production, tokens should be verified against the provider's API.
 
   @Post('google')
   @UseGuards(RateLimitGuard)
@@ -147,14 +149,17 @@ export class SocialAuthController {
   ): Promise<SocialLoginResponse> {
     this.logger.warn('Legacy Google login endpoint used - migrate to /authorize + /callback flow');
 
-    if (!dto.email) {
-      throw new BadRequestException('Email is required for social login');
+    if (!dto.idToken) {
+      throw new BadRequestException('idToken is required for Google login');
     }
 
+    // Verify the Google token to extract email and validate authenticity
+    const tokenInfo = await this.socialAuthService.verifyGoogleToken(dto.idToken);
+
     const socialUser = {
-      email: dto.email,
-      displayName: dto.displayName || 'Google User',
-      socialId: dto.idToken,
+      email: tokenInfo.email,
+      displayName: dto.displayName || tokenInfo.name || 'Google User',
+      socialId: tokenInfo.sub,
       provider: 'google' as const,
       accessToken: dto.accessToken ?? '',
       refreshToken: dto.refreshToken ?? '',
@@ -181,14 +186,17 @@ export class SocialAuthController {
   ): Promise<SocialLoginResponse> {
     this.logger.warn('Legacy Apple login endpoint used - migrate to /authorize + /callback flow');
 
-    if (!dto.email) {
-      throw new BadRequestException('Email is required for social login');
+    if (!dto.identityToken) {
+      throw new BadRequestException('identityToken is required for Apple login');
     }
 
+    // Verify the Apple token to extract email and validate authenticity
+    const tokenInfo = await this.socialAuthService.verifyAppleToken(dto.identityToken);
+
     const socialUser = {
-      email: dto.email,
-      displayName: dto.displayName || 'Apple User',
-      socialId: dto.identityToken,
+      email: tokenInfo.email,
+      displayName: dto.displayName || tokenInfo.name || 'Apple User',
+      socialId: tokenInfo.sub,
       provider: 'apple' as const,
       accessToken: dto.accessToken ?? '',
       refreshToken: dto.refreshToken ?? '',

@@ -2,27 +2,28 @@ import {Inject,  Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '@prisma/client';
-import { createApiClient, noopTokenStorage } from '@azeebo/api-client';
+import { ServiceClient } from '@azeebo/http-client';
 
 @Injectable()
 export class TakedownService {
   private readonly logger = new Logger(TakedownService.name);
-  private readonly contentServiceClient;
-  private readonly auditServiceClient;
+  private readonly contentServiceClient: ServiceClient;
+  private readonly auditServiceClient: ServiceClient;
 
   constructor(
     @Inject(PrismaService) private prisma: PrismaService,
     @Inject(ConfigService) private configService: ConfigService
   ) {
-    this.contentServiceClient = createApiClient({
-      baseUrl: this.configService.getOrThrow<string>('CONTENT_SERVICE_URL'),
+    const apiKey = this.configService.get<string>('INTERNAL_API_KEY', '');
+    this.contentServiceClient = new ServiceClient({
+      baseURL: this.configService.getOrThrow<string>('CONTENT_SERVICE_URL'),
       timeout: 30000,
-      tokenStorage: noopTokenStorage,
+      apiKey,
     });
-    this.auditServiceClient = createApiClient({
-      baseUrl: this.configService.getOrThrow<string>('MODERATION_SERVICE_URL'),
+    this.auditServiceClient = new ServiceClient({
+      baseURL: this.configService.getOrThrow<string>('MODERATION_SERVICE_URL'),
       timeout: 30000,
-      tokenStorage: noopTokenStorage,
+      apiKey,
     });
   }
 

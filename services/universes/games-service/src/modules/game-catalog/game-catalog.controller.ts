@@ -28,6 +28,7 @@ export class GameCatalogController {
   }
 
   @Get('stats/:userId')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get user stats' })
   @ApiResponse({ status: 200, description: 'User stats' })
   async getUserStats(@Param('userId') userId: string): Promise<unknown> {

@@ -177,7 +177,6 @@ export class QuizService {
           questionId: q.id,
           correct: isCorrect,
           userAnswer,
-          correctAnswer: q.correctAnswer,
         };
       });
 

@@ -38,16 +38,8 @@ export interface CreatorAnalytics {
 
 export interface CreatorResponse {
   success: boolean;
-  data?: {
-    user?: Record<string, unknown>;
-    profile?: CreatorProfile;
-    profiles?: CreatorProfile[];
-    uploads?: CreatorUpload[];
-    earnings?: CreatorEarnings;
-    analytics?: CreatorAnalytics;
-    message?: string;
-    [key: string]: unknown;
-  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data?: Record<string, any>;
   error?: {
     code: string;
     message: string;

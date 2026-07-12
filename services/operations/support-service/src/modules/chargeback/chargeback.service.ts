@@ -2,33 +2,34 @@ import {Inject,  Injectable, Logger, NotFoundException, BadRequestException } fr
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '@prisma/client';
-import { createApiClient, noopTokenStorage } from '@azeebo/api-client';
+import { ServiceClient } from '@azeebo/http-client';
 
 @Injectable()
 export class ChargebackService {
   private readonly logger = new Logger(ChargebackService.name);
-  private readonly paymentServiceClient;
-  private readonly walletServiceClient;
-  private readonly auditServiceClient;
+  private readonly paymentServiceClient: ServiceClient;
+  private readonly walletServiceClient: ServiceClient;
+  private readonly auditServiceClient: ServiceClient;
 
   constructor(
     @Inject(PrismaService) private prisma: PrismaService,
     @Inject(ConfigService) private configService: ConfigService
   ) {
-    this.paymentServiceClient = createApiClient({
-      baseUrl: this.configService.getOrThrow<string>('PAYMENT_SERVICE_URL'),
+    const apiKey = this.configService.get<string>('INTERNAL_API_KEY', '');
+    this.paymentServiceClient = new ServiceClient({
+      baseURL: this.configService.getOrThrow<string>('PAYMENT_SERVICE_URL'),
       timeout: 30000,
-      tokenStorage: noopTokenStorage,
+      apiKey,
     });
-    this.walletServiceClient = createApiClient({
-      baseUrl: this.configService.getOrThrow<string>('WALLET_SERVICE_URL'),
+    this.walletServiceClient = new ServiceClient({
+      baseURL: this.configService.getOrThrow<string>('WALLET_SERVICE_URL'),
       timeout: 30000,
-      tokenStorage: noopTokenStorage,
+      apiKey,
     });
-    this.auditServiceClient = createApiClient({
-      baseUrl: this.configService.getOrThrow<string>('MODERATION_SERVICE_URL'),
+    this.auditServiceClient = new ServiceClient({
+      baseURL: this.configService.getOrThrow<string>('MODERATION_SERVICE_URL'),
       timeout: 30000,
-      tokenStorage: noopTokenStorage,
+      apiKey,
     });
   }
 

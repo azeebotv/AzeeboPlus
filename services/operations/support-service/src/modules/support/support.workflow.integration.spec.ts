@@ -12,13 +12,14 @@ import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
-jest.mock('@azeebo/api-client', () => ({
-  createApiClient: jest.fn().mockReturnValue({
+jest.mock('@azeebo/http-client', () => ({
+  ServiceClient: jest.fn().mockImplementation(() => ({
     get: jest.fn(),
     post: jest.fn(),
     put: jest.fn(),
+    patch: jest.fn(),
     delete: jest.fn(),
-  }),
+  })),
 }));
 
 describe('Support Workflow (Integration)', () => {

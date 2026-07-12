@@ -17,8 +17,8 @@
     "prisma:deploy": "prisma migrate deploy"
   },
   "dependencies": {
-    "@azeebo/api-client": "workspace:*",
     "@azeebo/error-handling": "workspace:*",
+    "@azeebo/http-client": "workspace:*",
     "@azeebo/logger": "workspace:*",
     "@azeebo/security": "workspace:*",
     "@azeebo/shared-types": "workspace:*",
