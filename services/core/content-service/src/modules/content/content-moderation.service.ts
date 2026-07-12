@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import axios from 'axios';
@@ -17,8 +17,8 @@ export class ContentModerationService {
   private readonly safetyScanEnabled: boolean;
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly configService: ConfigService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.moderationServiceUrl = this.configService.get<string>(
       'MODERATION_SERVICE_URL',

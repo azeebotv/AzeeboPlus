@@ -248,7 +248,8 @@ load_env() {
   for env_file in "${env_files[@]}"; do
     if [[ -f "$env_file" ]]; then
       set -a
-      source "$env_file"
+      # shellcheck disable=SC1090
+      source "$env_file" || log_warn "Failed to source $env_file — skipping"
       set +a
     fi
   done
@@ -399,8 +400,7 @@ run_prisma_generate() {
 
     local db_url="${DB_BASE_URL}/${db_name}?schema=public"
     local gen_output
-    gen_output="$(cd "$service_dir" && DATABASE_URL="$db_url" npx prisma generate 2>&1)"
-    if [[ $? -eq 0 ]]; then
+    if gen_output="$(cd "$service_dir" && DATABASE_URL="$db_url" npx prisma generate 2>&1)"; then
       log_ok "  [$count] $svc_name: generated"
     else
       log_warn "  [$count] $svc_name: failed"
@@ -557,13 +557,16 @@ check_port() {
 }
 
 kill_port() {
-  local pid
-  pid="$(lsof -ti :"$1" -sTCP:LISTEN 2>/dev/null || true)"
-  if [[ -n "$pid" ]]; then
-    log_info "  Stopping port $1 (PID $pid)"
-    kill "$pid" 2>/dev/null || true
+  local pids
+  pids="$(lsof -ti :"$1" -sTCP:LISTEN 2>/dev/null || true)"
+  if [[ -n "$pids" ]]; then
+    log_info "  Stopping port $1 (PIDs: $pids)"
+    echo "$pids" | xargs kill 2>/dev/null || true
     sleep 1
-    kill -0 "$pid" 2>/dev/null && kill -9 "$pid" 2>/dev/null || true
+    # Force-kill any survivors
+    local survivors
+    survivors="$(lsof -ti :"$1" -sTCP:LISTEN 2>/dev/null || true)"
+    [[ -n "$survivors" ]] && echo "$survivors" | xargs kill -9 2>/dev/null || true
   fi
 }
 
@@ -590,17 +593,20 @@ start_service() {
   # Load service .env — each service has its own DATABASE_URL
   if [[ -f "$service_dir/.env" ]]; then
     set -a
-    source "$service_dir/.env"
+    # shellcheck disable=SC1090
+    source "$service_dir/.env" || log_warn "  $pkg: failed to source .env — using defaults"
     set +a
   fi
 
-  # Re-apply real JWT secrets from .env.local over service .env placeholders
+  # Re-apply real JWT secrets and gateway secret from .env.local over service .env placeholders
   if [[ -f "$ROOT_DIR/.env.local" ]]; then
-    local jwt_access jwt_refresh
+    local jwt_access jwt_refresh gateway_secret
     jwt_access="$(grep '^JWT_ACCESS_SECRET=' "$ROOT_DIR/.env.local" | tail -1 | cut -d= -f2-)"
     jwt_refresh="$(grep '^JWT_REFRESH_SECRET=' "$ROOT_DIR/.env.local" | tail -1 | cut -d= -f2-)"
+    gateway_secret="$(grep '^GATEWAY_SECRET=' "$ROOT_DIR/.env.local" | tail -1 | cut -d= -f2-)"
     [[ -n "$jwt_access" ]] && export JWT_ACCESS_SECRET="$jwt_access"
     [[ -n "$jwt_refresh" ]] && export JWT_REFRESH_SECRET="$jwt_refresh"
+    [[ -n "$gateway_secret" ]] && export GATEWAY_SECRET="$gateway_secret"
   fi
 
   # Warn if placeholder secrets are in use
@@ -620,11 +626,11 @@ start_service() {
     export NEXT_PUBLIC_API_URL="http://localhost:3013"
     export WATCHPACK_POLLING=true
     export CHOKIDAR_USEPOLLING=true
-    run_cmd_str="cd $service_dir && pnpm dev"
+    run_cmd_str="cd \"$service_dir\" && PORT=$port pnpm dev"
   elif grep -q '"start:dev"' "$service_dir/package.json" 2>/dev/null; then
-    run_cmd_str="cd $service_dir && pnpm start:dev"
+    run_cmd_str="cd \"$service_dir\" && pnpm start:dev"
   elif grep -q '"start"' "$service_dir/package.json" 2>/dev/null; then
-    run_cmd_str="cd $service_dir && pnpm start"
+    run_cmd_str="cd \"$service_dir\" && pnpm start"
   else
     log_warn "  $pkg: no start script — skipping"
     return 1
@@ -636,9 +642,32 @@ start_service() {
   PIDS+=("$pid")
   echo "$pid" >> "$PID_FILE"
 
-  sleep 2
+  # Wait for service to be healthy (up to 30s)
+  local waited=0
+  while (( waited < HEALTH_CHECK_TIMEOUT )); do
+    sleep "$HEALTH_CHECK_INTERVAL"
+    waited=$((waited + HEALTH_CHECK_INTERVAL))
+
+    # Process died — immediate failure
+    if ! kill -0 "$pid" 2>/dev/null; then
+      log_error "  $pkg failed — check $log_file"
+      tail -3 "$log_file" 2>/dev/null | sed 's/^/    /'
+      return 1
+    fi
+
+    # HTTP health check (try versioned and unversioned paths)
+    if curl -sf "http://localhost:$port/api/health" >/dev/null 2>&1 || \
+       curl -sf "http://localhost:$port/v1/health" >/dev/null 2>&1 || \
+       curl -sf "http://localhost:$port/health" >/dev/null 2>&1 || \
+       curl -sf "http://localhost:$port/" >/dev/null 2>&1; then
+      log_ok "  $pkg healthy on port $port (PID $pid, ${waited}s)"
+      return 0
+    fi
+  done
+
+  # Timed out — process alive but not responding
   if kill -0 "$pid" 2>/dev/null; then
-    log_ok "  $pkg started on port $port (PID $pid)"
+    log_warn "  $pkg started on port $port (PID $pid) but health check timed out"
     return 0
   else
     log_error "  $pkg failed — check $log_file"
@@ -749,7 +778,9 @@ show_status() {
   printf "  %-35s %-8s %-10s %s\n" "---" "---" "---" "---"
 
   local all_entries=(
-    "${CORE_SERVICES[@]}" "${GATEWAY_SERVICES[@]}" "${FRONTEND_SERVICES[@]}"
+    "${CORE_SERVICES[@]}" "${ENGAGEMENT_SERVICES[@]}" "${INTELLIGENCE_SERVICES[@]}"
+    "${UNIVERSE_SERVICES[@]}" "${OPERATIONS_SERVICES[@]}" "${GATEWAY_SERVICES[@]}"
+    "${FRONTEND_SERVICES[@]}"
   )
   for entry in "${all_entries[@]}"; do
     IFS='|' read -r pkg dir port <<< "$entry"
@@ -782,6 +813,7 @@ tail_logs() {
     return 1
   fi
   log_info "Tailing logs (Ctrl+C to stop)..."
+  # shellcheck disable=SC2086
   tail -f $log_files
 }
 
@@ -828,6 +860,35 @@ cmd_start() {
     validate_prereqs || return 1
   fi
   validate_env || return 1
+
+  # Kill any orphaned processes from previous sessions before starting
+  section "Cleaning up orphaned processes"
+  local all_ports=(
+    3000 3001 3002 3003 3004 3005 3006 3007 3008 3009
+    3010 3011 3012 3013 3014 3015 3016 3017 3018 3019
+    3020 3021 3022 3023 3024 3025 3026 4000 4014 4016
+  )
+  local cleaned=0
+  for port in "${all_ports[@]}"; do
+    local pids
+    pids="$(lsof -ti :"$port" -sTCP:LISTEN 2>/dev/null || true)"
+    if [[ -n "$pids" ]]; then
+      echo "$pids" | xargs kill 2>/dev/null || true
+      cleaned=$((cleaned + 1))
+    fi
+  done
+  if (( cleaned > 0 )); then
+    sleep 1
+    # Force-kill survivors
+    for port in "${all_ports[@]}"; do
+      local survivors
+      survivors="$(lsof -ti :"$port" -sTCP:LISTEN 2>/dev/null || true)"
+      [[ -n "$survivors" ]] && echo "$survivors" | xargs kill -9 2>/dev/null || true
+    done
+    log_ok "Stopped $cleaned orphaned process(es)"
+  else
+    log_ok "No orphaned processes found"
+  fi
 
   mkdir -p "$STATE_DIR" "$LOG_DIR"
   : > "$PID_FILE"
@@ -876,11 +937,7 @@ cmd_start() {
   [[ "$do_operations" == "true" ]] && start_group "operations" "${OPERATIONS_SERVICES[@]}"
   [[ "$do_gateway" == "true" ]]    && start_group "gateway" "${GATEWAY_SERVICES[@]}"
   if [[ "$do_frontend" == "true" ]]; then
-    if [[ "$do_local_frontend" == "true" ]]; then
-      start_group "frontend" "${FRONTEND_SERVICES[@]}"
-    else
-      start_frontend_via_docker
-    fi
+    start_group "frontend" "${FRONTEND_SERVICES[@]}"
   fi
 
   local elapsed=$(( $(date +%s) - START_TIME ))
@@ -907,7 +964,7 @@ cmd_start_interactive() {
   echo "  9)  Quick Start         (core + gateway + web)"
   echo "  0)  Exit"
   echo ""
-  echo "${YELLOW}Tip: option 9 for most dev work. ~200-300MB per NestJS service.${RESET}"
+  printf "${YELLOW}Tip: option 9 for most dev work. ~200-300MB per NestJS service.${RESET}\n"
   echo ""
 
   local choice=""
@@ -927,7 +984,7 @@ cmd_start_interactive() {
       4) start_group "universes" "${UNIVERSE_SERVICES[@]}" ;;
       5) start_group "operations" "${OPERATIONS_SERVICES[@]}" ;;
       6) start_group "gateway" "${GATEWAY_SERVICES[@]}" ;;
-      7) start_frontend_via_docker ;;
+      7) start_group "frontend" "${FRONTEND_SERVICES[@]}" ;;
       8)
         start_group "core" "${CORE_SERVICES[@]}"
         start_group "engagement" "${ENGAGEMENT_SERVICES[@]}"
@@ -935,12 +992,12 @@ cmd_start_interactive() {
         start_group "universes" "${UNIVERSE_SERVICES[@]}"
         start_group "operations" "${OPERATIONS_SERVICES[@]}"
         start_group "gateway" "${GATEWAY_SERVICES[@]}"
-        start_frontend_via_docker
+        start_group "frontend" "${FRONTEND_SERVICES[@]}"
         ;;
       9)
         start_group "core" "${CORE_SERVICES[@]}"
         start_group "gateway" "${GATEWAY_SERVICES[@]}"
-        start_frontend_via_docker
+        start_group "frontend" "${FRONTEND_SERVICES[@]}"
         ;;
       *) log_error "Invalid choice: $sel" ;;
     esac
@@ -961,11 +1018,11 @@ cmd_stop() {
     3020 3021 3022 3023 3024 3025 3026 4000 4014 4016
   )
   for port in "${all_ports[@]}"; do
-    local pid
-    pid="$(lsof -ti :"$port" -sTCP:LISTEN 2>/dev/null || true)"
-    if [[ -n "$pid" ]]; then
-      log_info "  Stopping port $port (PID $pid)"
-      kill "$pid" 2>/dev/null || true
+    local pids
+    pids="$(lsof -ti :"$port" -sTCP:LISTEN 2>/dev/null || true)"
+    if [[ -n "$pids" ]]; then
+      log_info "  Stopping port $port (PIDs: $pids)"
+      echo "$pids" | xargs kill 2>/dev/null || true
       stopped=$((stopped + 1))
     fi
   done
@@ -975,6 +1032,12 @@ cmd_stop() {
 
   if (( stopped > 0 )); then
     sleep 1
+    # Force-kill any survivors
+    for port in "${all_ports[@]}"; do
+      local survivors
+      survivors="$(lsof -ti :"$port" -sTCP:LISTEN 2>/dev/null || true)"
+      [[ -n "$survivors" ]] && echo "$survivors" | xargs kill -9 2>/dev/null || true
+    done
     log_ok "Stopped $stopped service(s)"
   else
     log_info "No running services found"
@@ -1031,7 +1094,15 @@ cmd_db() {
           psql -U postgres -c "CREATE DATABASE $db_name OWNER $DB_USER;" 2>/dev/null
           local db_url="${DB_BASE_URL}/${db_name}?schema=public"
           if [[ -f "$ROOT_DIR/$svc_dir/prisma/schema.prisma" ]]; then
-            cd "$ROOT_DIR/$svc_dir" && DATABASE_URL="$db_url" npx prisma migrate deploy 2>&1 | tail -3
+            local migrate_out
+            set +e
+            migrate_out="$(cd "$ROOT_DIR/$svc_dir" && DATABASE_URL="$db_url" npx prisma migrate deploy 2>&1)"
+            local migrate_rc=$?
+            set -e
+            echo "$migrate_out" | tail -3
+            if [[ $migrate_rc -ne 0 ]]; then
+              log_warn "  Migration failed for $service (rc=$migrate_rc)"
+            fi
           fi
           log_ok "Database for $service reset and migrated"
           found=true
@@ -1079,11 +1150,13 @@ cmd_db() {
       (cd "$dir" && DATABASE_URL="$svc_db_url" npx prisma studio)
       ;;
     help|*)
-      echo "Usage: $0 db [migrate|seed|reset|studio] [service-name]"
+      echo "Usage: $0 db [migrate|seed|reset|reset-service|test|studio] [service-name]"
       echo ""
       echo "  migrate              Run Prisma migrations for all per-service databases"
       echo "  seed                 Seed all databases with demo data"
       echo "  reset                Drop, recreate, migrate, and seed (DESTRUCTIVE)"
+      echo "  reset-service <svc>  Reset a specific service's database"
+      echo "  test                 Test all database connections"
       echo "  studio [service]     Open Prisma Studio (default: auth-service)"
       ;;
   esac

@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -44,10 +44,10 @@ export class SocialAuthService {
   private readonly logger = new Logger(SocialAuthService.name);
 
   constructor(
-    private readonly authRepository: AuthRepository,
-    private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
-    private readonly redisService: RedisService
+    @Inject(AuthRepository) private readonly authRepository: AuthRepository,
+    @Inject(JwtService) private readonly jwtService: JwtService,
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(RedisService) private readonly redisService: RedisService
   ) {
     this.saltRounds = this.configService.get<number>('SALT_ROUNDS', 10);
   }

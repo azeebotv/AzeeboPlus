@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {Inject,  Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 
@@ -38,8 +38,8 @@ interface GameResponse {
 export class GameCatalogService {
   private readonly logger = new Logger(GameCatalogService.name);
   constructor(
-    private prisma: PrismaService,
-    private cache: CacheService
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(CacheService) private cache: CacheService
   ) {}
 
   private formatGame(game: Record<string, unknown>): Game {

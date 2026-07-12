@@ -7,8 +7,10 @@ import { AdminModule } from './modules/admin/admin.module.js';
 import { IntelligenceModule } from './modules/intelligence/intelligence.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { MetricsModule } from './modules/metrics/metrics.module.js';
-import { ServiceAuthGuard } from '@azeebo/security';
+import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
 import { CacheModule } from '@azeebo/shared-services';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -16,6 +18,15 @@ import { CacheModule } from '@azeebo/shared-services';
       isGlobal: true,
       envFilePath: ['.env', '../../.env'],
     }),
+    JwtModule.registerAsync({
+      global: true,
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_ACCESS_SECRET'),
+      }),
+      inject: [ConfigService],
+    }),
+    RateLimiterModule.forRoot(),
     CacheModule,
     AnalyticsModule,
     AnalyticsInstrumentationModule,

@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -9,7 +9,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -20,7 +20,7 @@ import { VotePollDto } from './dto/vote-poll.dto';
 @ApiTags('Polls')
 @Controller('polls')
 export class PollController {
-  constructor(private readonly pollService: PollService) {}
+  constructor(@Inject(PollService) private readonly pollService: PollService) {}
 
   @Get()
   @ApiOperation({ summary: 'List polls' })

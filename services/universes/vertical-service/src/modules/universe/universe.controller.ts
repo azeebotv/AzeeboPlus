@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Patch, Body, Param, Query, UseGuards  } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
@@ -9,7 +9,7 @@ import { UpdateLocationDto } from './dto/update-location.dto';
 @ApiTags('Universe')
 @Controller('v1/vertical/universes')
 export class UniverseController {
-  constructor(private readonly universeService: UniverseService) {}
+  constructor(@Inject(UniverseService) private readonly universeService: UniverseService) {}
 
   @Get()
   @UseGuards(RateLimitGuard)

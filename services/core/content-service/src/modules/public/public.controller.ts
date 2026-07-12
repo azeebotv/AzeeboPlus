@@ -1,4 +1,4 @@
-import { Controller, Get, Logger, UseGuards } from '@nestjs/common';
+import { Inject, Controller, Get, Logger, UseGuards  } from '@nestjs/common';
 import { Public, RateLimitGuard, RateLimit } from '@azeebo/security';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PrismaService } from '../database/prisma.service.js';
@@ -10,7 +10,7 @@ import { PrismaService } from '../database/prisma.service.js';
 export class PublicController {
   private readonly logger = new Logger(PublicController.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   @Get('universes')
   @RateLimit(100, 60000)

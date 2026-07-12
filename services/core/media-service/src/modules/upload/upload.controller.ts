@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Post,
   Get,
@@ -11,7 +11,7 @@ import {
   BadRequestException,
   UseGuards,
   Request,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
@@ -25,8 +25,8 @@ import { ApiResponseWrapper } from '@azeebo/shared-types';
 @UseGuards(RateLimitGuard)
 export class UploadController {
   constructor(
-    private readonly uploadService: UploadService,
-    private readonly premiumContentService: PremiumContentService
+    @Inject(UploadService) private readonly uploadService: UploadService,
+    @Inject(PremiumContentService) private readonly premiumContentService: PremiumContentService
   ) {}
 
   @Post('upload/image')

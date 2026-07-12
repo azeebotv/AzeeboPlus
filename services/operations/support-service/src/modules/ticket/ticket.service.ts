@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {Inject,  Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '@prisma/client';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
@@ -13,8 +13,8 @@ export class TicketService {
   private readonly logger = new Logger(TicketService.name);
 
   constructor(
-    private prisma: PrismaService,
-    private readonly cache: CacheService
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(CacheService) private readonly cache: CacheService
   ) {}
 
   async createTicket(data: {

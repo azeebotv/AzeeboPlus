@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Post,
   Body,
@@ -9,7 +9,7 @@ import {
   BadRequestException,
   Logger,
   Request,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Public, RateLimitGuard, RateLimit } from '@azeebo/security';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -28,9 +28,9 @@ export class WebhookController {
   private readonly webhookTimeout: number;
 
   constructor(
-    private webhookService: WebhookService,
-    private webhookSecurity: WebhookSecurityService,
-    private configService: ConfigService
+    @Inject(WebhookService) private webhookService: WebhookService,
+    @Inject(WebhookSecurityService) private webhookSecurity: WebhookSecurityService,
+    @Inject(ConfigService) private configService: ConfigService
   ) {
     this.webhookTimeout = this.configService.get<number>('WEBHOOK_TIMEOUT', 30000);
   }

@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Patch,
@@ -10,7 +10,7 @@ import {
   Body,
   Param,
   Query,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
@@ -23,7 +23,7 @@ import { NotificationResponse } from './interfaces/notification-response.interfa
 @ApiTags('Notifications')
 @Controller('v1/notifications')
 export class NotificationsController {
-  constructor(private readonly notificationsService: NotificationsService) {}
+  constructor(@Inject(NotificationsService) private readonly notificationsService: NotificationsService) {}
 
   @Get()
   @UseGuards(AuthGuard('jwt'), RateLimitGuard)

@@ -1,4 +1,4 @@
-import {
+import {Inject, 
   Injectable,
   CanActivate,
   ExecutionContext,
@@ -24,8 +24,8 @@ export class RateLimitGuard implements CanActivate {
   private readonly logger = new Logger(RateLimitGuard.name);
 
   constructor(
-    private reflector: Reflector,
-    private redisService: RedisService
+    @Inject(Reflector) private reflector: Reflector,
+    @Inject(RedisService) private redisService: RedisService
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

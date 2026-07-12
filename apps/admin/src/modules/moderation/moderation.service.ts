@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma';
 import { PrismaService } from '../../database/prisma.service';
 import { AuditLogService } from '../audit/audit.service';
@@ -13,8 +13,8 @@ export interface ModerationStats {
 @Injectable()
 export class ModerationService {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly auditService: AuditLogService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(AuditLogService) private readonly auditService: AuditLogService
   ) {}
 
   async getReports(page = 1, limit = 20, status?: string, type?: string): Promise<unknown> {

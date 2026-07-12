@@ -39,7 +39,7 @@ describe('Admin API Methods', () => {
 
       const result = await admin.getDashboard();
 
-      expect(client.request).toHaveBeenCalledWith('/api/v1/admin/analytics');
+      expect(client.request).toHaveBeenCalledWith('/api/v1/admin/dashboard/stats');
       expect(result.success).toBe(true);
       expect(result.data!.totalUsers).toBe(15000);
       expect(result.data!.topCreators).toHaveLength(1);
@@ -145,7 +145,7 @@ describe('Admin API Methods', () => {
 
       await admin.getPlatformOverview();
 
-      expect(client.request).toHaveBeenCalledWith('/api/v1/admin/platform-overview');
+      expect(client.request).toHaveBeenCalledWith('/api/v1/admin/dashboard/platform-overview');
     });
   });
 
@@ -187,7 +187,7 @@ describe('Admin API Methods', () => {
 
       await admin.getCreators();
 
-      expect(client.request).toHaveBeenCalledWith('/api/v1/admin/creators?page=1&limit=20');
+      expect(client.request).toHaveBeenCalledWith('/api/v1/admin/users?page=1&limit=20&role=creator');
     });
   });
 
@@ -197,9 +197,9 @@ describe('Admin API Methods', () => {
 
       await admin.updateCreatorStatus('cr1', 'approved');
 
-      expect(client.request).toHaveBeenCalledWith('/api/v1/admin/creators/cr1/status', {
+      expect(client.request).toHaveBeenCalledWith('/api/v1/admin/users/cr1/role', {
         method: 'PUT',
-        body: JSON.stringify({ status: 'approved' }),
+        body: JSON.stringify({ role: 'creator' }),
       });
     });
   });
@@ -210,8 +210,9 @@ describe('Admin API Methods', () => {
 
       await admin.verifyCreator('cr1');
 
-      expect(client.request).toHaveBeenCalledWith('/api/v1/admin/creators/cr1/verify', {
-        method: 'POST',
+      expect(client.request).toHaveBeenCalledWith('/api/v1/admin/users/cr1/role', {
+        method: 'PUT',
+        body: JSON.stringify({ role: 'creator' }),
       });
     });
   });
@@ -387,7 +388,7 @@ describe('Admin API Methods', () => {
 
       await admin.getNotificationStats();
 
-      expect(client.request).toHaveBeenCalledWith('/api/v1/admin/notification-stats');
+      expect(client.request).toHaveBeenCalledWith('/api/v1/admin/notifications/stats');
     });
   });
 
@@ -443,7 +444,7 @@ describe('Admin API Methods', () => {
 
       await admin.getCustomReports();
 
-      expect(client.request).toHaveBeenCalledWith('/api/v1/reports');
+      expect(client.request).toHaveBeenCalledWith('/api/v1/admin/reports');
     });
 
     it('should create a custom report', async () => {
@@ -464,7 +465,7 @@ describe('Admin API Methods', () => {
 
       await admin.createCustomReport(report);
 
-      expect(client.request).toHaveBeenCalledWith('/api/v1/reports', {
+      expect(client.request).toHaveBeenCalledWith('/api/v1/admin/reports', {
         method: 'POST',
         body: JSON.stringify(report),
       });
@@ -475,7 +476,7 @@ describe('Admin API Methods', () => {
 
       await admin.executeReport('r1');
 
-      expect(client.request).toHaveBeenCalledWith('/api/v1/reports/execute', {
+      expect(client.request).toHaveBeenCalledWith('/api/v1/admin/reports/execute', {
         method: 'POST',
         body: JSON.stringify({ reportId: 'r1' }),
       });
@@ -486,7 +487,7 @@ describe('Admin API Methods', () => {
 
       await admin.deleteCustomReport('r1');
 
-      expect(client.request).toHaveBeenCalledWith('/api/v1/reports/r1', {
+      expect(client.request).toHaveBeenCalledWith('/api/v1/admin/reports/r1', {
         method: 'DELETE',
       });
     });

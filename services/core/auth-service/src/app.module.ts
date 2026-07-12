@@ -6,11 +6,11 @@ import { AuthModule } from './modules/auth/auth.module.js';
 import { AuditModule } from './modules/audit/audit.module.js';
 import { AdminModule } from './modules/admin/admin.module.js';
 import { RedisService } from './common/services/redis.service.js';
-import { RateLimitGuard } from './common/guards/rate-limit.guard.js';
 import { CommonModule } from './common/common.module.js';
 import { MetricsModule } from './modules/metrics/metrics.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { CacheModule } from '@azeebo/shared-services';
+import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
 
 @Module({
   imports: [
@@ -18,6 +18,7 @@ import { CacheModule } from '@azeebo/shared-services';
       isGlobal: true,
       envFilePath: ['.env', '../../.env'],
     }),
+    RateLimiterModule.forRoot(),
     TerminusModule,
     AuditModule,
     AuthModule,
@@ -31,7 +32,7 @@ import { CacheModule } from '@azeebo/shared-services';
     RedisService,
     {
       provide: APP_GUARD,
-      useClass: RateLimitGuard,
+      useClass: ServiceAuthGuard,
     },
   ],
 })

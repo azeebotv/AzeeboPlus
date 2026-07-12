@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -8,7 +8,7 @@ import {
   Query,
   UseGuards,
   Request,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { RefundService } from './refund.service';
 import {
@@ -34,7 +34,7 @@ interface AuthenticatedRequest {
 @UseGuards(AuthGuard)
 @ApiBearerAuth()
 export class RefundController {
-  constructor(private refundService: RefundService) {}
+  constructor(@Inject(RefundService) private refundService: RefundService) {}
 
   @Post()
   @ApiOperation({ summary: 'Request a refund' })

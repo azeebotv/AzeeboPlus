@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 
 @Injectable()
 export class ReportsAdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async getReports(range: '7d' | '30d' | '90d' | 'all' = '30d') {
     const days = range === 'all' ? 365 : range === '7d' ? 7 : range === '30d' ? 30 : 90;

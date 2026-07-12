@@ -1,4 +1,4 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import {Inject,  Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { createHmac, timingSafeEqual } from 'crypto';
@@ -41,7 +41,7 @@ export class PaystackProvider {
   private readonly baseUrl: string;
   private readonly circuitBreaker: CircuitBreaker;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(@Inject(ConfigService) private readonly configService: ConfigService) {
     this.apiKey = this.configService.get<string>('PAYSTACK_SECRET_KEY') || '';
     this.baseUrl = this.configService.get<string>('PAYSTACK_API_URL', 'https://api.paystack.co');
     if (!this.apiKey) {

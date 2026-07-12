@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, UseGuards, Req } from '@nestjs/common';
+import { Inject, Controller, Post, Body, Get, UseGuards, Req  } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
@@ -17,7 +17,7 @@ interface AuthenticatedRequest extends Request {
 @UseGuards(AuthGuard('jwt'), RateLimitGuard)
 @Controller('instrumentation')
 export class AnalyticsInstrumentationController {
-  constructor(private readonly analyticsInstrumentationService: AnalyticsInstrumentationService) {}
+  constructor(@Inject(AnalyticsInstrumentationService) private readonly analyticsInstrumentationService: AnalyticsInstrumentationService) {}
 
   @Post('track')
   @ApiOperation({ summary: 'Track a single event' })

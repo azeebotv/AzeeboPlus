@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {Inject,  Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '@prisma/client';
@@ -12,8 +12,8 @@ export class AppealService {
   private readonly userServiceClient;
 
   constructor(
-    private prisma: PrismaService,
-    private configService: ConfigService
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(ConfigService) private configService: ConfigService
   ) {
     this.contentServiceClient = createApiClient({
       baseUrl: this.configService.getOrThrow<string>('CONTENT_SERVICE_URL'),

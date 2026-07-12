@@ -1,11 +1,11 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Inject, Controller, Get, Param  } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { PricingService } from './pricing.service.js';
 
 @ApiTags('Pricing')
 @Controller('v1/pricing')
 export class PricingController {
-  constructor(private readonly pricingService: PricingService) {}
+  constructor(@Inject(PricingService) private readonly pricingService: PricingService) {}
 
   @Get('movie')
   @ApiOperation({ summary: 'Get movie pricing' })

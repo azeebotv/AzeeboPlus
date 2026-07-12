@@ -10,6 +10,7 @@ import { AdminModule } from './modules/admin/admin.module.js';
 import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
+import { CacheModule } from '@azeebo/shared-services';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@az
       isGlobal: true,
     }),
     RateLimiterModule.forRoot(),
+    CacheModule,
     DatabaseModule,
     MoviesModule,
     CinemaPassModule,

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { CacheService } from './cache.service';
 import { buildOffsetPagination } from './pagination.helper';
@@ -54,8 +54,8 @@ export class AgbalaCharactersService {
   private readonly logger = new Logger(AgbalaCharactersService.name);
 
   constructor(
-    private prisma: PrismaService,
-    private cache: CacheService
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(CacheService) private cache: CacheService
   ) {}
 
   async getCharacters(

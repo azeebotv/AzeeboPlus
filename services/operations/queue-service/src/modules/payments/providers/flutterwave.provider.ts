@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { createHmac, timingSafeEqual } from 'crypto';
@@ -31,7 +31,7 @@ export class FlutterwaveProvider {
   private readonly apiKey: string;
   private readonly baseUrl: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(@Inject(ConfigService) private readonly configService: ConfigService) {
     this.apiKey = this.configService.get<string>('FLUTTERWAVE_SECRET_KEY') || '';
     this.baseUrl = this.configService.get<string>(
       'FLUTTERWAVE_API_URL',

@@ -3,6 +3,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { JwtModule } from '@nestjs/jwt';
 import { HealthModule } from './modules/health/health.module';
 import { ProxyModule } from './modules/proxy/proxy.module';
 import { GatewayAuthGuard } from './guards/gateway-auth.guard';
@@ -36,6 +37,10 @@ import { CsrfMiddleware } from './common/csrf.middleware';
           limit: parseInt(process.env.RATE_LIMIT_MAX || '1000', 10) || 1000,
         },
       ],
+    }),
+    JwtModule.register({
+      global: true,
+      secret: process.env.JWT_ACCESS_SECRET,
     }),
     HealthModule,
     ProxyModule,

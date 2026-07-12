@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -9,7 +9,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -20,7 +20,7 @@ import { SubmitQuizDto } from './dto/submit-quiz.dto';
 @ApiTags('Quizzes')
 @Controller('quizzes')
 export class QuizController {
-  constructor(private readonly quizService: QuizService) {}
+  constructor(@Inject(QuizService) private readonly quizService: QuizService) {}
 
   @Get()
   @ApiOperation({ summary: 'List quizzes' })

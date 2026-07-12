@@ -1,4 +1,4 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Inject, Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as https from 'https';
 import * as http from 'http';
@@ -50,7 +50,7 @@ export interface PayoutRequest {
 export class WalletClientService {
   private readonly walletServiceUrl: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(@Inject(ConfigService) private readonly configService: ConfigService) {
     this.walletServiceUrl =
       this.configService.get<string>('API_GATEWAY_URL') || 'http://localhost:3013';
   }

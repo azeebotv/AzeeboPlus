@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {Inject,  Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '../../prisma/client/index.js';
 import { RedisService } from '../../cache/redis.service.js';
@@ -12,9 +12,9 @@ export class ContentFeedService {
   private readonly cacheTTL: number;
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly redisService: RedisService,
-    private readonly configService: ConfigService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(RedisService) private readonly redisService: RedisService,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.cacheTTL = this.configService.get<number>('CONTENT_CACHE_TTL', 300);
   }

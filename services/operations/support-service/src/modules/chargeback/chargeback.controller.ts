@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -8,7 +8,7 @@ import {
   Query,
   UseGuards,
   Request,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { ChargebackService } from './chargeback.service';
 import {
@@ -34,7 +34,7 @@ interface AuthenticatedRequest {
 @UseGuards(AuthGuard)
 @ApiBearerAuth()
 export class ChargebackController {
-  constructor(private chargebackService: ChargebackService) {}
+  constructor(@Inject(ChargebackService) private chargebackService: ChargebackService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a chargeback case' })

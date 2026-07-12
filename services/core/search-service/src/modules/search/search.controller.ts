@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -9,7 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   UnauthorizedException,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
@@ -22,7 +22,7 @@ import { LogSearchDto } from './dto/log-search.dto.js';
 @Controller('v1/search')
 @UseGuards(AuthGuard('jwt'))
 export class SearchController {
-  constructor(private readonly searchService: SearchService) {}
+  constructor(@Inject(SearchService) private readonly searchService: SearchService) {}
 
   @Get()
   @UseGuards(RateLimitGuard)

@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -10,7 +10,7 @@ import {
   Request,
   Param,
   Query,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit, Public } from '@azeebo/security';
@@ -66,7 +66,7 @@ interface PayoutBody {
 @ApiBearerAuth()
 @Controller('v1/creators')
 export class CreatorsController {
-  constructor(private readonly creatorsService: CreatorsService) {}
+  constructor(@Inject(CreatorsService) private readonly creatorsService: CreatorsService) {}
 
   @Post('onboard')
   @UseGuards(AuthGuard('jwt'))

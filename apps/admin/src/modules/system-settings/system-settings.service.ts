@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Inject, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateSettingDto, SubscriptionPlanDto, EmailTemplateDto } from './dto/create-setting.dto';
@@ -24,7 +24,7 @@ export interface AuditEntry {
 export class SystemSettingsService {
   private readonly logger = new Logger(SystemSettingsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   // ─── General CRUD ──────────────────────────────────────────────────────────────
 

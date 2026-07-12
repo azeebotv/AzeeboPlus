@@ -222,7 +222,7 @@ describe('Functional Workflow — Content Discovery & Consumption', () => {
     // Step 4: Get signed URL for playback
     client.request.mockResolvedValueOnce({
       success: true,
-      data: { url: 'https://signed.example.com/video.mp4', expiresIn: 3600 },
+      data: { signedUrl: 'https://signed.example.com/video.mp4', expiresIn: 3600 },
     });
 
     const signedUrl = await content.getSignedUrl('c2');

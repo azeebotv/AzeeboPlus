@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma';
 import { PrismaService } from '../../database/prisma.service';
 import { AuditLogService } from '../audit/audit.service';
@@ -40,8 +40,8 @@ export class ContentManagementService {
   private readonly logger = new Logger(ContentManagementService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly auditService: AuditLogService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(AuditLogService) private readonly auditService: AuditLogService
   ) {}
 
   // ─── Content List ────────────────────────────────────────────────────────

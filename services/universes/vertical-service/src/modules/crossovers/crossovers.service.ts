@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 interface Crossover {
@@ -65,7 +65,7 @@ export interface CreateRecapData {
 export class CrossoversService {
   private readonly logger = new Logger(CrossoversService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   private formatCrossover(crossover: Record<string, unknown>): Crossover {
     return {

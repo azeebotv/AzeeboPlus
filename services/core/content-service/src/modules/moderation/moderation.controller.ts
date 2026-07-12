@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -8,7 +8,7 @@ import {
   Body,
   UseGuards,
   Request,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { ModerationService } from './moderation.service.js';
@@ -20,7 +20,7 @@ import { ResolveModerationDto, ModerationDecisionDto } from './dto/moderation.dt
 @ApiBearerAuth()
 @Controller('v1/moderation')
 export class ModerationController {
-  constructor(private readonly moderationService: ModerationService) {}
+  constructor(@Inject(ModerationService) private readonly moderationService: ModerationService) {}
 
   @Post('scan/:contentId')
   @UseGuards(AuthGuard('jwt'))

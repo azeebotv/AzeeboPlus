@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Body, Param, Query, UseGuards, Request  } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { TournamentService } from './tournament.service.js';
@@ -10,7 +10,7 @@ import { JoinTournamentDto, SubmitScoreDto } from './dto/tournament.dto.js';
 @UseGuards(AuthGuard('jwt'))
 @Controller('v1/games/tournaments')
 export class TournamentController {
-  constructor(private readonly tournamentService: TournamentService) {}
+  constructor(@Inject(TournamentService) private readonly tournamentService: TournamentService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get tournaments' })

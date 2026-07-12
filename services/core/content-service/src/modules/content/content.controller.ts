@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -12,7 +12,7 @@ import {
   UseInterceptors,
   HttpException,
   HttpStatus,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit, Public, AdminGuard } from '@azeebo/security';
@@ -32,8 +32,8 @@ import { ApiResponseWrapper } from '@azeebo/shared-types';
 @UseInterceptors(CacheInterceptor)
 export class ContentController {
   constructor(
-    private readonly contentService: ContentService,
-    private readonly accessControlService: AccessControlService
+    @Inject(ContentService) private readonly contentService: ContentService,
+    @Inject(AccessControlService) private readonly accessControlService: AccessControlService
   ) {}
 
   // ========================

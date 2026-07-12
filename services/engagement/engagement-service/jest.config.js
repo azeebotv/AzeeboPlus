@@ -8,6 +8,86 @@ module.exports = {
   transformIgnorePatterns: [
     'node_modules/(?!uuid)',
   ],
+/.*)\\.js
+/.*)\\.js
+  collectCoverageFrom: [
+    '**/*.(t|j)s',
+    '!main.ts',
+    '!**/*.module.ts',
+    '!**/*.dto.ts',
+    '!**/*.entity.ts',
+    '!**/*.interface.ts',
+    '!**/index.ts',
+  ],
+  coverageDirectory: '../coverage',
+  testEnvironment: 'node',
+  coverageThreshold: {
+    global: {
+      branches: 70,
+      functions: 70,
+      lines: 70,
+      statements: 70,
+    },
+  },
+  passWithNoTests: false,
+};
+: '
+  transformIgnorePatterns: [
+    'node_modules/(?!uuid)',
+  ],',
+  },
+  collectCoverageFrom: [
+    '**/*.(t|j)s',
+    '!main.ts',
+    '!**/*.module.ts',
+    '!**/*.dto.ts',
+    '!**/*.entity.ts',
+    '!**/*.interface.ts',
+    '!**/index.ts',
+  ],
+  coverageDirectory: '../coverage',
+  testEnvironment: 'node',
+  coverageThreshold: {
+    global: {
+      branches: 70,
+      functions: 70,
+      lines: 70,
+      statements: 70,
+    },
+  },
+  passWithNoTests: false,
+};
+: 'transformIgnorePatterns: [
+    'node_modules/(?!uuid)',
+  ],',
+  },
+/.*)\\.js
+  collectCoverageFrom: [
+    '**/*.(t|j)s',
+    '!main.ts',
+    '!**/*.module.ts',
+    '!**/*.dto.ts',
+    '!**/*.entity.ts',
+    '!**/*.interface.ts',
+    '!**/index.ts',
+  ],
+  coverageDirectory: '../coverage',
+  testEnvironment: 'node',
+  coverageThreshold: {
+    global: {
+      branches: 70,
+      functions: 70,
+      lines: 70,
+      statements: 70,
+    },
+  },
+  passWithNoTests: false,
+};
+: '
+  transformIgnorePatterns: [
+    'node_modules/(?!uuid)',
+  ],',
+  },
   collectCoverageFrom: [
     '**/*.(t|j)s',
     '!main.ts',

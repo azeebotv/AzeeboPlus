@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -8,7 +8,7 @@ import {
   Query,
   UseGuards,
   Request,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
@@ -27,7 +27,7 @@ interface AuthenticatedRequest {
 @ApiTags('Subscriptions')
 @Controller('v1/subscription')
 export class SubscriptionController {
-  constructor(private readonly subscriptionService: SubscriptionService) {}
+  constructor(@Inject(SubscriptionService) private readonly subscriptionService: SubscriptionService) {}
 
   @Get('plans')
   @UseGuards(RateLimitGuard)

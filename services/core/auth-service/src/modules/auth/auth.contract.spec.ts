@@ -5,12 +5,14 @@ import { AuthModule } from './auth.module.js';
 import { AuthRepository } from './auth.repository.js';
 import { JwtService } from '@nestjs/jwt';
 import { RedisService } from '../../common/services/redis.service.js';
+import { CacheService } from '@azeebo/shared-services';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { RateLimitGuard } from '@azeebo/security';
 import { AuthGuard } from '@nestjs/passport';
 import { ExecutionContext } from '@nestjs/common';
 import { User } from '@azeebo/shared-types';
+import * as bcrypt from 'bcrypt';
 
 class MockAuthGuard {
   canActivate(context: ExecutionContext) {
@@ -36,8 +38,11 @@ class MockRateLimitGuard {
 
 describe('Auth Controller Contract Tests', () => {
   let app: INestApplication;
+  let hashedPassword: string;
 
   beforeAll(async () => {
+    hashedPassword = bcrypt.hashSync('password123', 10);
+
     process.env.JWT_ACCESS_SECRET = 'test-jwt-secret';
     process.env.JWT_REFRESH_SECRET = 'test-refresh-token-secret';
     process.env.JWT_EXPIRES_IN = '60s';
@@ -90,6 +95,12 @@ describe('Auth Controller Contract Tests', () => {
         expire: jest.fn().mockResolvedValue(1),
         exists: jest.fn().mockResolvedValue(0),
       })
+      .overrideProvider(CacheService)
+      .useValue({
+        get: jest.fn().mockResolvedValue(null),
+        set: jest.fn().mockResolvedValue(undefined),
+        delete: jest.fn().mockResolvedValue(0),
+      })
       .overrideGuard(AuthGuard('jwt'))
       .useClass(MockAuthGuard)
       .overrideGuard(RateLimitGuard)
@@ -115,7 +126,7 @@ describe('Auth Controller Contract Tests', () => {
       jest.spyOn(authRepository, 'create').mockResolvedValue({
         id: 'user-123',
         email: 'test@example.com',
-        password: 'hashed-password',
+        password: hashedPassword,
         displayName: 'Test User',
         role: 'user',
         avatar: null,
@@ -161,7 +172,7 @@ describe('Auth Controller Contract Tests', () => {
       jest.spyOn(authRepository, 'findByEmail').mockResolvedValue({
         id: 'user-123',
         email: 'test@example.com',
-        password: 'hashed-password',
+        password: hashedPassword,
         displayName: 'Test User',
         role: 'user',
         avatar: null,
@@ -202,6 +213,7 @@ describe('Auth Controller Contract Tests', () => {
     it('should return new access token', async () => {
       const authRepository = app.get(AuthRepository);
       const jwtService = app.get(JwtService);
+      const hashedRefreshToken = bcrypt.hashSync('valid-refresh-token', 10);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       jest.spyOn(jwtService, 'verify').mockImplementation((_token: string, _options?: any) => {
@@ -210,7 +222,7 @@ describe('Auth Controller Contract Tests', () => {
       jest.spyOn(authRepository, 'findById').mockResolvedValue({
         id: 'user-123',
         email: 'test@example.com',
-        password: 'hashed-password',
+        password: hashedPassword,
         displayName: 'Test User',
         role: 'user',
         avatar: null,
@@ -224,7 +236,7 @@ describe('Auth Controller Contract Tests', () => {
       jest.spyOn(authRepository, 'findSessionByUserId').mockResolvedValue({
         id: 'session-123',
         userId: 'user-123',
-        refreshToken: 'hashed-refresh-token',
+        refreshToken: hashedRefreshToken,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -282,7 +294,7 @@ describe('Auth Controller Contract Tests', () => {
       jest.spyOn(authRepository, 'findById').mockResolvedValue({
         id: 'user-123',
         email: 'test@example.com',
-        password: 'hashed-password',
+        password: hashedPassword,
         displayName: 'Test User',
         role: 'user',
         avatar: null,
@@ -318,6 +330,8 @@ describe('Auth Controller Contract Tests', () => {
         .overrideProvider(AuthRepository)
         .useValue({})
         .overrideProvider(RedisService)
+        .useValue({})
+        .overrideProvider(CacheService)
         .useValue({})
         .overrideGuard(RateLimitGuard)
         .useClass(MockRateLimitGuard)

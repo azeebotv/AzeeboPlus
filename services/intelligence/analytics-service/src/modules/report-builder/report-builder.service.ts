@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {Inject,  Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { Prisma } from '../../prisma/client/index.js';
 import { PrismaService } from '../database/prisma.service.js';
 import {
@@ -49,7 +49,7 @@ interface QueryOptions {
 
 @Injectable()
 export class ReportBuilderService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async createReport(userId: string, dto: CreateReportDto): Promise<ReportResult> {
     try {

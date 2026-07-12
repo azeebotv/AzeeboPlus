@@ -4,7 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ModerationModule } from './modules/moderation/moderation.module.js';
 import { DatabaseModule } from './modules/database/database.module.js';
 import { HealthModule } from './modules/health/health.module.js';
-import { ServiceAuthGuard } from '@azeebo/security';
+import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
 import { CacheModule } from '@azeebo/shared-services';
 
 @Module({
@@ -13,6 +13,7 @@ import { CacheModule } from '@azeebo/shared-services';
       isGlobal: true,
       envFilePath: ['.env', '../../.env'],
     }),
+    RateLimiterModule.forRoot(),
     CacheModule,
     DatabaseModule,
     ModerationModule,

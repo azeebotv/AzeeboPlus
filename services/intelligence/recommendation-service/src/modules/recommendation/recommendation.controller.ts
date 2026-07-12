@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Inject, Controller, Get, Query, UseGuards  } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit, Public } from '@azeebo/security';
 import { AuthGuard } from '@nestjs/passport';
@@ -8,7 +8,7 @@ import { RecommendationService } from './recommendation.service';
 @UseGuards(AuthGuard('jwt'), RateLimitGuard)
 @Controller('recommendation')
 export class RecommendationController {
-  constructor(private readonly recommendationService: RecommendationService) {}
+  constructor(@Inject(RecommendationService) private readonly recommendationService: RecommendationService) {}
 
   @Public()
   @Get('content')

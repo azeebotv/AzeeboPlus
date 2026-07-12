@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { RewardResponse } from './interfaces/reward-response.interface.js';
@@ -20,9 +20,9 @@ export class RewardsService {
   private readonly defaultPaginationLimit: number;
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly cacheService: CacheService,
-    private readonly configService: ConfigService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(CacheService) private readonly cacheService: CacheService,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.defaultPaginationLimit = this.configService.get<number>('DEFAULT_PAGINATION_LIMIT', 100);
   }

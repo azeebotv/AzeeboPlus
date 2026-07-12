@@ -3,6 +3,7 @@ import { INestApplication, ValidationPipe, ExecutionContext } from '@nestjs/comm
 import request from 'supertest';
 import { AuthModule } from './auth.module.js';
 import { RedisService } from '../../common/services/redis.service.js';
+import { CacheService } from '@azeebo/shared-services';
 import { PrismaService } from '../database/prisma.service.js';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
@@ -116,6 +117,12 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
       .useValue(mockPrismaService)
       .overrideProvider(RedisService)
       .useValue(mockRedisService)
+      .overrideProvider(CacheService)
+      .useValue({
+        get: jest.fn().mockResolvedValue(null),
+        set: jest.fn().mockResolvedValue(undefined),
+        delete: jest.fn().mockResolvedValue(0),
+      })
       .overrideGuard(AuthGuard('jwt'))
       .useClass(MockAuthGuard)
       .overrideGuard(RateLimitGuard)

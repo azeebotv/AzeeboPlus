@@ -1,4 +1,4 @@
-import {
+import {Inject, 
   Injectable,
   NotFoundException,
   BadRequestException,
@@ -68,17 +68,17 @@ export class ContentService {
   private readonly logger = new Logger(ContentService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly contentRepository: ContentRepository,
-    private readonly mediaService: MediaService,
-    private readonly transcodingService: TranscodingService,
-    _configService: ConfigService,
-    _redisService: RedisService,
-    private readonly contentFeedService: ContentFeedService,
-    private readonly contentModerationService: ContentModerationService,
-    private readonly contentRelationshipService: ContentRelationshipService,
-    private readonly contentCategoryService: ContentCategoryService,
-    private readonly contentIngestionService: ContentIngestionService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(ContentRepository) private readonly contentRepository: ContentRepository,
+    @Inject(MediaService) private readonly mediaService: MediaService,
+    @Inject(TranscodingService) private readonly transcodingService: TranscodingService,
+    @Inject(ConfigService) _configService: ConfigService,
+    @Inject(RedisService) _redisService: RedisService,
+    @Inject(ContentFeedService) private readonly contentFeedService: ContentFeedService,
+    @Inject(ContentModerationService) private readonly contentModerationService: ContentModerationService,
+    @Inject(ContentRelationshipService) private readonly contentRelationshipService: ContentRelationshipService,
+    @Inject(ContentCategoryService) private readonly contentCategoryService: ContentCategoryService,
+    @Inject(ContentIngestionService) private readonly contentIngestionService: ContentIngestionService
   ) {}
 
   private canModifyContent(

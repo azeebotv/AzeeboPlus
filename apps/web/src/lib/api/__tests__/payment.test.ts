@@ -29,7 +29,7 @@ describe('Payment API Methods', () => {
     });
   });
 
-  it('verify should GET /api/v1/payments/verify', async () => {
+  it('verify should POST to /api/v1/payments/verify', async () => {
     client.request.mockResolvedValue({
       success: true,
       data: { status: 'success', amount: 5000, currency: 'NGN', reference: 'ref-123' },
@@ -37,7 +37,10 @@ describe('Payment API Methods', () => {
 
     await payment.verify('ref-123');
 
-    expect(client.request).toHaveBeenCalledWith('/api/v1/payments/verify?reference=ref-123');
+    expect(client.request).toHaveBeenCalledWith('/api/v1/payments/verify', {
+      method: 'POST',
+      body: JSON.stringify({ reference: 'ref-123' }),
+    });
   });
 
   it('getTransactions should GET /api/v1/payments/history', async () => {

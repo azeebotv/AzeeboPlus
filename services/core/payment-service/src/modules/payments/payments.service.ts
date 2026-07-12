@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { InitializePaymentDto } from './dto/initialize-payment.dto.js';
@@ -37,13 +37,13 @@ export class PaymentsService {
   private readonly MIN_PAYMENT_AMOUNT_NGN: number;
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly paystackProvider: PaystackProvider,
-    private readonly flutterwaveProvider: FlutterwaveProvider,
-    private readonly webhookRetryService: WebhookRetryService,
-    private readonly redisService: RedisService,
-    private readonly cache: CacheService,
-    private readonly configService: ConfigService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(PaystackProvider) private readonly paystackProvider: PaystackProvider,
+    @Inject(FlutterwaveProvider) private readonly flutterwaveProvider: FlutterwaveProvider,
+    @Inject(WebhookRetryService) private readonly webhookRetryService: WebhookRetryService,
+    @Inject(RedisService) private readonly redisService: RedisService,
+    @Inject(CacheService) private readonly cache: CacheService,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
     this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');

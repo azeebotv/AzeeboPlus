@@ -8,6 +8,7 @@ import { HealthModule } from './modules/health/health.module.js';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
 import { AdminModule } from './modules/admin/admin.module.js';
 import { RateLimiterModule, RateLimitGuard } from '@azeebo/security';
+import { CacheModule } from '@azeebo/shared-services';
 
 @Global()
 @Module({
@@ -15,6 +16,7 @@ import { RateLimiterModule, RateLimitGuard } from '@azeebo/security';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    CacheModule,
     DatabaseModule,
     RateLimiterModule.forRoot(),
     ComedyModule,

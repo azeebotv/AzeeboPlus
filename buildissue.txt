@@ -5,17 +5,17 @@ Run docker/build-push-action@v6
     file: Dockerfile.all-in-one
     push: true
     tags: ghcr.io/azeebotv/azeebo-all-in-one:dev
-  ghcr.io/azeebotv/azeebo-all-in-one:2bd305c
-    labels: org.opencontainers.image.created=2026-07-12T08:08:26.491Z
+  ghcr.io/azeebotv/azeebo-all-in-one:22ebdb2
+    labels: org.opencontainers.image.created=2026-07-12T11:25:24.053Z
   org.opencontainers.image.description=
   org.opencontainers.image.licenses=NOASSERTION
-  org.opencontainers.image.revision=2bd305c3110bf36be22f84cbc6569bacafb61d79
+  org.opencontainers.image.revision=22ebdb25b8075625c73b75fca1d646164ce0475a
   org.opencontainers.image.source=https://github.com/azeebotv/AzeeboPlus
   org.opencontainers.image.title=AzeeboPlus
   org.opencontainers.image.url=https://github.com/azeebotv/AzeeboPlus
   org.opencontainers.image.version=dev
     no-cache: true
-    build-args: CACHEBUST=2bd305c3110bf36be22f84cbc6569bacafb61d79
+    build-args: CACHEBUST=22ebdb25b8075625c73b75fca1d646164ce0475a
   NEXT_PUBLIC_API_URL=https://app.azeeboplus.com
   NEXT_PUBLIC_BASE_URL=
   NEXT_PUBLIC_AUTH_URL=https://app.azeeboplus.com
@@ -33,37 +33,37 @@ Run docker/build-push-action@v6
     IMAGE_NAME: azeebotv/azeebo-all-in-one
     DOCKER_METADATA_OUTPUT_VERSION: dev
     DOCKER_METADATA_OUTPUT_TAGS: ghcr.io/azeebotv/azeebo-all-in-one:dev
-  ghcr.io/azeebotv/azeebo-all-in-one:2bd305c
-    DOCKER_METADATA_OUTPUT_LABELS: org.opencontainers.image.created=2026-07-12T08:08:26.491Z
+  ghcr.io/azeebotv/azeebo-all-in-one:22ebdb2
+    DOCKER_METADATA_OUTPUT_LABELS: org.opencontainers.image.created=2026-07-12T11:25:24.053Z
   org.opencontainers.image.description=
   org.opencontainers.image.licenses=NOASSERTION
-  org.opencontainers.image.revision=2bd305c3110bf36be22f84cbc6569bacafb61d79
+  org.opencontainers.image.revision=22ebdb25b8075625c73b75fca1d646164ce0475a
   org.opencontainers.image.source=https://github.com/azeebotv/AzeeboPlus
   org.opencontainers.image.title=AzeeboPlus
   org.opencontainers.image.url=https://github.com/azeebotv/AzeeboPlus
   org.opencontainers.image.version=dev
-    DOCKER_METADATA_OUTPUT_ANNOTATIONS: manifest:org.opencontainers.image.created=2026-07-12T08:08:26.491Z
+    DOCKER_METADATA_OUTPUT_ANNOTATIONS: manifest:org.opencontainers.image.created=2026-07-12T11:25:24.053Z
   manifest:org.opencontainers.image.description=
   manifest:org.opencontainers.image.licenses=NOASSERTION
-  manifest:org.opencontainers.image.revision=2bd305c3110bf36be22f84cbc6569bacafb61d79
+  manifest:org.opencontainers.image.revision=22ebdb25b8075625c73b75fca1d646164ce0475a
   manifest:org.opencontainers.image.source=https://github.com/azeebotv/AzeeboPlus
   manifest:org.opencontainers.image.title=AzeeboPlus
   manifest:org.opencontainers.image.url=https://github.com/azeebotv/AzeeboPlus
   manifest:org.opencontainers.image.version=dev
-    DOCKER_METADATA_OUTPUT_JSON: {"tags":["ghcr.io/azeebotv/azeebo-all-in-one:dev","ghcr.io/azeebotv/azeebo-all-in-one:2bd305c"],"labels":{"org.opencontainers.image.created":"2026-07-12T08:08:26.491Z","org.opencontainers.image.description":"","org.opencontainers.image.licenses":"NOASSERTION","org.opencontainers.image.revision":"2bd305c3110bf36be22f84cbc6569bacafb61d79","org.opencontainers.image.source":"https://github.com/azeebotv/AzeeboPlus","org.opencontainers.image.title":"AzeeboPlus","org.opencontainers.image.url":"https://github.com/azeebotv/AzeeboPlus","org.opencontainers.image.version":"dev"},"annotations":["manifest:org.opencontainers.image.created=2026-07-12T08:08:26.491Z","manifest:org.opencontainers.image.description=","manifest:org.opencontainers.image.licenses=NOASSERTION","manifest:org.opencontainers.image.revision=2bd305c3110bf36be22f84cbc6569bacafb61d79","manifest:org.opencontainers.image.source=https://github.com/azeebotv/AzeeboPlus","manifest:org.opencontainers.image.title=AzeeboPlus","manifest:org.opencontainers.image.url=https://github.com/azeebotv/AzeeboPlus","manifest:org.opencontainers.image.version=dev"]}
-    DOCKER_METADATA_OUTPUT_BAKE_FILE_TAGS: /home/runner/work/_temp/docker-actions-toolkit-YCI3cJ/docker-metadata-action-bake-tags.json
-    DOCKER_METADATA_OUTPUT_BAKE_FILE_LABELS: /home/runner/work/_temp/docker-actions-toolkit-YCI3cJ/docker-metadata-action-bake-labels.json
-    DOCKER_METADATA_OUTPUT_BAKE_FILE_ANNOTATIONS: /home/runner/work/_temp/docker-actions-toolkit-YCI3cJ/docker-metadata-action-bake-annotations.json
-    DOCKER_METADATA_OUTPUT_BAKE_FILE: /home/runner/work/_temp/docker-actions-toolkit-YCI3cJ/docker-metadata-action-bake.json
-(node:2500) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+    DOCKER_METADATA_OUTPUT_JSON: {"tags":["ghcr.io/azeebotv/azeebo-all-in-one:dev","ghcr.io/azeebotv/azeebo-all-in-one:22ebdb2"],"labels":{"org.opencontainers.image.created":"2026-07-12T11:25:24.053Z","org.opencontainers.image.description":"","org.opencontainers.image.licenses":"NOASSERTION","org.opencontainers.image.revision":"22ebdb25b8075625c73b75fca1d646164ce0475a","org.opencontainers.image.source":"https://github.com/azeebotv/AzeeboPlus","org.opencontainers.image.title":"AzeeboPlus","org.opencontainers.image.url":"https://github.com/azeebotv/AzeeboPlus","org.opencontainers.image.version":"dev"},"annotations":["manifest:org.opencontainers.image.created=2026-07-12T11:25:24.053Z","manifest:org.opencontainers.image.description=","manifest:org.opencontainers.image.licenses=NOASSERTION","manifest:org.opencontainers.image.revision=22ebdb25b8075625c73b75fca1d646164ce0475a","manifest:org.opencontainers.image.source=https://github.com/azeebotv/AzeeboPlus","manifest:org.opencontainers.image.title=AzeeboPlus","manifest:org.opencontainers.image.url=https://github.com/azeebotv/AzeeboPlus","manifest:org.opencontainers.image.version=dev"]}
+    DOCKER_METADATA_OUTPUT_BAKE_FILE_TAGS: /home/runner/work/_temp/docker-actions-toolkit-N1VbSN/docker-metadata-action-bake-tags.json
+    DOCKER_METADATA_OUTPUT_BAKE_FILE_LABELS: /home/runner/work/_temp/docker-actions-toolkit-N1VbSN/docker-metadata-action-bake-labels.json
+    DOCKER_METADATA_OUTPUT_BAKE_FILE_ANNOTATIONS: /home/runner/work/_temp/docker-actions-toolkit-N1VbSN/docker-metadata-action-bake-annotations.json
+    DOCKER_METADATA_OUTPUT_BAKE_FILE: /home/runner/work/_temp/docker-actions-toolkit-N1VbSN/docker-metadata-action-bake.json
+(node:2506) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
 (Use `node --trace-deprecation ...` to show where the warning was created)
 GitHub Actions runtime token ACs
 Docker info
 Proxy configuration
 Buildx version
 Builder info
-/usr/bin/docker buildx build --build-arg CACHEBUST=2bd305c3110bf36be22f84cbc6569bacafb61d79 --build-arg NEXT_PUBLIC_API_URL=https://app.azeeboplus.com --build-arg NEXT_PUBLIC_BASE_URL= --build-arg NEXT_PUBLIC_AUTH_URL=https://app.azeeboplus.com --build-arg NEXT_PUBLIC_STRIPE_PUBLIC_KEY= --build-arg NEXT_PUBLIC_FIREBASE_API_KEY= --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN= --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_ID= --build-arg NEXT_PUBLIC_SENTRY_DSN= --file Dockerfile.all-in-one --iidfile /home/runner/work/_temp/docker-actions-toolkit-Fa2m7J/build-iidfile-18308e705b.txt --label org.opencontainers.image.created=2026-07-12T08:08:26.491Z --label org.opencontainers.image.description= --label org.opencontainers.image.licenses=NOASSERTION --label org.opencontainers.image.revision=2bd305c3110bf36be22f84cbc6569bacafb61d79 --label org.opencontainers.image.source=https://github.com/azeebotv/AzeeboPlus --label org.opencontainers.image.title=AzeeboPlus --label org.opencontainers.image.url=https://github.com/azeebotv/AzeeboPlus --label org.opencontainers.image.version=dev --attest type=provenance,mode=min,inline-only=true,builder-id=https://github.com/azeebotv/AzeeboPlus/actions/runs/29185350517/attempts/1 --tag ghcr.io/azeebotv/azeebo-all-in-one:dev --tag ghcr.io/azeebotv/azeebo-all-in-one:2bd305c --metadata-file /home/runner/work/_temp/docker-actions-toolkit-Fa2m7J/build-metadata-eda48c54b2.json --no-cache --push .
-#0 building with "builder-d2e5b8a3-4af9-4e89-8d34-5c8526c356a9" instance using docker-container driver
+/usr/bin/docker buildx build --build-arg CACHEBUST=22ebdb25b8075625c73b75fca1d646164ce0475a --build-arg NEXT_PUBLIC_API_URL=https://app.azeeboplus.com --build-arg NEXT_PUBLIC_BASE_URL= --build-arg NEXT_PUBLIC_AUTH_URL=https://app.azeeboplus.com --build-arg NEXT_PUBLIC_STRIPE_PUBLIC_KEY= --build-arg NEXT_PUBLIC_FIREBASE_API_KEY= --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN= --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_ID= --build-arg NEXT_PUBLIC_SENTRY_DSN= --file Dockerfile.all-in-one --iidfile /home/runner/work/_temp/docker-actions-toolkit-gq9Ppa/build-iidfile-9f51333812.txt --label org.opencontainers.image.created=2026-07-12T11:25:24.053Z --label org.opencontainers.image.description= --label org.opencontainers.image.licenses=NOASSERTION --label org.opencontainers.image.revision=22ebdb25b8075625c73b75fca1d646164ce0475a --label org.opencontainers.image.source=https://github.com/azeebotv/AzeeboPlus --label org.opencontainers.image.title=AzeeboPlus --label org.opencontainers.image.url=https://github.com/azeebotv/AzeeboPlus --label org.opencontainers.image.version=dev --attest type=provenance,mode=min,inline-only=true,builder-id=https://github.com/azeebotv/AzeeboPlus/actions/runs/29190788901/attempts/1 --tag ghcr.io/azeebotv/azeebo-all-in-one:dev --tag ghcr.io/azeebotv/azeebo-all-in-one:22ebdb2 --metadata-file /home/runner/work/_temp/docker-actions-toolkit-gq9Ppa/build-metadata-6bf7daf1e5.json --no-cache --push .
+#0 building with "builder-e862d261-282c-4576-9b6a-6942173aaff2" instance using docker-container driver
 
 #1 [internal] load build definition from Dockerfile.all-in-one
 #1 transferring dockerfile: 25.88kB done
@@ -73,31 +73,38 @@ Builder info
 #2 DONE 0.0s
 
 #3 [internal] load metadata for docker.io/library/node:22.16.0-bookworm-slim
-#3 DONE 0.4s
+#3 DONE 0.6s
 
 #4 [internal] load .dockerignore
-#4 transferring context: 1.26kB done
+#4 transferring context: 1.35kB done
 #4 DONE 0.0s
 
 #5 [builder  1/59] FROM docker.io/library/node:22.16.0-bookworm-slim@sha256:048ed02c5fd52e86fda6fbd2f6a76cf0d4492fd6c6fee9e2c463ed5108da0e34
 #5 resolve docker.io/library/node:22.16.0-bookworm-slim@sha256:048ed02c5fd52e86fda6fbd2f6a76cf0d4492fd6c6fee9e2c463ed5108da0e34 done
 #5 sha256:6e47fd428ce2ef20a944a68030a77247c323ef7a40899a801372b822c44a1f0f 446B / 446B 0.0s done
-#5 sha256:40361bc5801b31cff2081770d009a16902e9f5aafd4d72b13c047796eb1efae5 1.71MB / 1.71MB 0.1s done
+#5 sha256:40361bc5801b31cff2081770d009a16902e9f5aafd4d72b13c047796eb1efae5 1.05MB / 1.71MB 0.2s
+#5 sha256:40361bc5801b31cff2081770d009a16902e9f5aafd4d72b13c047796eb1efae5 1.71MB / 1.71MB 0.2s done
+#5 sha256:32106569f4b871cbcc375743a505d013b694ca1b4b0876e3a8093ca29f193d51 0B / 48.94MB 0.2s
 #5 sha256:9d6aefa8c9bbec07defc52b35b25c4238a485881251b31d74cf91aa6b60156c6 3.31kB / 3.31kB 0.1s done
-#5 sha256:32106569f4b871cbcc375743a505d013b694ca1b4b0876e3a8093ca29f193d51 18.87MB / 48.94MB 0.2s
-#5 sha256:dad67da3f26bce15939543965e09c4059533b025f707aad72ed3d3f3a09c66f8 6.29MB / 28.23MB 0.2s
-#5 sha256:dad67da3f26bce15939543965e09c4059533b025f707aad72ed3d3f3a09c66f8 28.23MB / 28.23MB 0.3s done
-#5 sha256:32106569f4b871cbcc375743a505d013b694ca1b4b0876e3a8093ca29f193d51 48.94MB / 48.94MB 0.4s done
-#5 extracting sha256:dad67da3f26bce15939543965e09c4059533b025f707aad72ed3d3f3a09c66f8
+#5 sha256:dad67da3f26bce15939543965e09c4059533b025f707aad72ed3d3f3a09c66f8 0B / 28.23MB 0.2s
+#5 sha256:32106569f4b871cbcc375743a505d013b694ca1b4b0876e3a8093ca29f193d51 7.34MB / 48.94MB 0.3s
+#5 sha256:dad67da3f26bce15939543965e09c4059533b025f707aad72ed3d3f3a09c66f8 3.15MB / 28.23MB 0.3s
+#5 sha256:32106569f4b871cbcc375743a505d013b694ca1b4b0876e3a8093ca29f193d51 23.07MB / 48.94MB 0.5s
+#5 sha256:32106569f4b871cbcc375743a505d013b694ca1b4b0876e3a8093ca29f193d51 45.09MB / 48.94MB 0.6s
+#5 sha256:dad67da3f26bce15939543965e09c4059533b025f707aad72ed3d3f3a09c66f8 8.39MB / 28.23MB 0.5s
+#5 sha256:32106569f4b871cbcc375743a505d013b694ca1b4b0876e3a8093ca29f193d51 48.94MB / 48.94MB 0.6s done
+#5 sha256:dad67da3f26bce15939543965e09c4059533b025f707aad72ed3d3f3a09c66f8 16.78MB / 28.23MB 0.6s
 #5 ...
 
 #6 [internal] load build context
-#6 transferring context: 6.96MB 1.0s done
-#6 DONE 1.0s
+#6 transferring context: 7.04MB 0.8s done
+#6 DONE 0.8s
 
 #5 [builder  1/59] FROM docker.io/library/node:22.16.0-bookworm-slim@sha256:048ed02c5fd52e86fda6fbd2f6a76cf0d4492fd6c6fee9e2c463ed5108da0e34
-#5 extracting sha256:dad67da3f26bce15939543965e09c4059533b025f707aad72ed3d3f3a09c66f8 1.3s done
-#5 DONE 1.6s
+#5 sha256:dad67da3f26bce15939543965e09c4059533b025f707aad72ed3d3f3a09c66f8 28.23MB / 28.23MB 0.7s done
+#5 extracting sha256:dad67da3f26bce15939543965e09c4059533b025f707aad72ed3d3f3a09c66f8
+#5 extracting sha256:dad67da3f26bce15939543965e09c4059533b025f707aad72ed3d3f3a09c66f8 0.9s done
+#5 DONE 1.7s
 
 #5 [builder  1/59] FROM docker.io/library/node:22.16.0-bookworm-slim@sha256:048ed02c5fd52e86fda6fbd2f6a76cf0d4492fd6c6fee9e2c463ed5108da0e34
 #5 extracting sha256:9d6aefa8c9bbec07defc52b35b25c4238a485881251b31d74cf91aa6b60156c6 done
@@ -108,27 +115,29 @@ Builder info
 #5 [builder  1/59] FROM docker.io/library/node:22.16.0-bookworm-slim@sha256:048ed02c5fd52e86fda6fbd2f6a76cf0d4492fd6c6fee9e2c463ed5108da0e34
 #5 extracting sha256:40361bc5801b31cff2081770d009a16902e9f5aafd4d72b13c047796eb1efae5 0.0s done
 #5 extracting sha256:6e47fd428ce2ef20a944a68030a77247c323ef7a40899a801372b822c44a1f0f done
-#5 DONE 3.0s
+#5 DONE 3.1s
 
 #7 [builder  2/59] RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
-#7 0.271 Preparing pnpm@10.33.2 for immediate activation...
+#7 0.282 Preparing pnpm@10.33.2 for immediate activation...
 #7 DONE 3.0s
 
 #8 [stage-1  2/16] RUN corepack enable && corepack prepare pnpm@10.33.2 --activate &&     apt-get update && apt-get install -y --no-install-recommends       postgresql-15       redis-server       pgbouncer       supervisor       nginx       curl       locales       openssl       procps     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen     && locale-gen en_US.UTF-8     && useradd -r -s /bin/false pgbouncer || true     && mkdir -p /var/lib/redis /var/run/pgbouncer /var/log/supervisor /var/log/postgresql     && chown -R redis:redis /var/lib/redis     && chown -R pgbouncer:pgbouncer /var/run/pgbouncer     && chown -R postgres:postgres /var/log/postgresql     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-#8 0.233 Preparing pnpm@10.33.2 for immediate activation...
-#8 1.909 Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
-#8 1.988 Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
-#8 2.045 Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [48.0 kB]
-#8 2.104 Get:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8790 kB]
-#8 2.256 Get:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [6924 B]
-#8 2.288 Get:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [316 kB]
+#8 0.248 Preparing pnpm@10.33.2 for immediate activation...
+#8 1.629 Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+#8 1.668 Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+#8 1.682 Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [48.0 kB]
+#8 1.804 Get:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8790 kB]
+#8 1.994 Get:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [6924 B]
+#8 2.050 Get:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [316 kB]
+#8 2.848 Fetched 9367 kB in 1s (7506 kB/s)
+#8 2.848 Reading package lists...
 #8 ...
 
 #9 [builder  3/59] WORKDIR /app
 #9 DONE 0.1s
 
 #10 [builder  4/59] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-#10 DONE 0.1s
+#10 DONE 0.0s
 
 #11 [builder  5/59] COPY apps/web/package.json apps/web/
 #11 DONE 0.0s
@@ -142,16 +151,15 @@ Builder info
 #14 [builder  8/59] COPY packages/api-client/package.json packages/api-client/
 #14 DONE 0.0s
 
-#8 [stage-1  2/16] RUN corepack enable && corepack prepare pnpm@10.33.2 --activate &&     apt-get update && apt-get install -y --no-install-recommends       postgresql-15       redis-server       pgbouncer       supervisor       nginx       curl       locales       openssl       procps     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen     && locale-gen en_US.UTF-8     && useradd -r -s /bin/false pgbouncer || true     && mkdir -p /var/lib/redis /var/run/pgbouncer /var/log/supervisor /var/log/postgresql     && chown -R redis:redis /var/lib/redis     && chown -R pgbouncer:pgbouncer /var/run/pgbouncer     && chown -R postgres:postgres /var/log/postgresql     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-#8 3.161 Fetched 9367 kB in 1s (7396 kB/s)
-#8 3.161 Reading package lists...
-#8 ...
-
 #15 [builder  9/59] COPY packages/error-handling/package.json packages/error-handling/
 #15 DONE 0.0s
 
 #16 [builder 10/59] COPY packages/logger/package.json packages/logger/
 #16 DONE 0.0s
+
+#8 [stage-1  2/16] RUN corepack enable && corepack prepare pnpm@10.33.2 --activate &&     apt-get update && apt-get install -y --no-install-recommends       postgresql-15       redis-server       pgbouncer       supervisor       nginx       curl       locales       openssl       procps     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen     && locale-gen en_US.UTF-8     && useradd -r -s /bin/false pgbouncer || true     && mkdir -p /var/lib/redis /var/run/pgbouncer /var/log/supervisor /var/log/postgresql     && chown -R redis:redis /var/lib/redis     && chown -R pgbouncer:pgbouncer /var/run/pgbouncer     && chown -R postgres:postgres /var/log/postgresql     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+#8 2.848 Reading package lists...
+#8 ...
 
 #17 [builder 11/59] COPY packages/shared-types/package.json packages/shared-types/
 #17 DONE 0.0s
@@ -189,10 +197,6 @@ Builder info
 #28 [builder 22/59] COPY packages/test-utils/package.json packages/test-utils/
 #28 DONE 0.0s
 
-#8 [stage-1  2/16] RUN corepack enable && corepack prepare pnpm@10.33.2 --activate &&     apt-get update && apt-get install -y --no-install-recommends       postgresql-15       redis-server       pgbouncer       supervisor       nginx       curl       locales       openssl       procps     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen     && locale-gen en_US.UTF-8     && useradd -r -s /bin/false pgbouncer || true     && mkdir -p /var/lib/redis /var/run/pgbouncer /var/log/supervisor /var/log/postgresql     && chown -R redis:redis /var/lib/redis     && chown -R pgbouncer:pgbouncer /var/run/pgbouncer     && chown -R postgres:postgres /var/log/postgresql     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-#8 3.161 Reading package lists...
-#8 ...
-
 #29 [builder 23/59] COPY packages/contract-tests/package.json packages/contract-tests/
 #29 DONE 0.0s
 
@@ -201,6 +205,11 @@ Builder info
 
 #31 [builder 25/59] COPY packages/http-client/package.json packages/http-client/
 #31 DONE 0.0s
+
+#8 [stage-1  2/16] RUN corepack enable && corepack prepare pnpm@10.33.2 --activate &&     apt-get update && apt-get install -y --no-install-recommends       postgresql-15       redis-server       pgbouncer       supervisor       nginx       curl       locales       openssl       procps     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen     && locale-gen en_US.UTF-8     && useradd -r -s /bin/false pgbouncer || true     && mkdir -p /var/lib/redis /var/run/pgbouncer /var/log/supervisor /var/log/postgresql     && chown -R redis:redis /var/lib/redis     && chown -R pgbouncer:pgbouncer /var/run/pgbouncer     && chown -R postgres:postgres /var/log/postgresql     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+#8 2.848 Reading package lists...
+
+#8 ...
 
 #32 [builder 26/59] COPY packages/event-bus/package.json packages/event-bus/
 #32 DONE 0.0s
@@ -223,6 +232,10 @@ Builder info
 #38 [builder 32/59] COPY services/core/payment-service/package.json services/core/payment-service/
 #38 DONE 0.0s
 
+#8 [stage-1  2/16] RUN corepack enable && corepack prepare pnpm@10.33.2 --activate &&     apt-get update && apt-get install -y --no-install-recommends       postgresql-15       redis-server       pgbouncer       supervisor       nginx       curl       locales       openssl       procps     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen     && locale-gen en_US.UTF-8     && useradd -r -s /bin/false pgbouncer || true     && mkdir -p /var/lib/redis /var/run/pgbouncer /var/log/supervisor /var/log/postgresql     && chown -R redis:redis /var/lib/redis     && chown -R pgbouncer:pgbouncer /var/run/pgbouncer     && chown -R postgres:postgres /var/log/postgresql     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+#8 3.487 Reading package lists...
+#8 ...
+
 #39 [builder 33/59] COPY services/core/content-service/package.json services/core/content-service/
 #39 DONE 0.0s
 
@@ -240,9 +253,6 @@ Builder info
 
 #44 [builder 38/59] COPY services/engagement/engagement-service/package.json services/engagement/engagement-service/
 #44 DONE 0.0s
-
-#8 [stage-1  2/16] RUN corepack enable && corepack prepare pnpm@10.33.2 --activate &&     apt-get update && apt-get install -y --no-install-recommends       postgresql-15       redis-server       pgbouncer       supervisor       nginx       curl       locales       openssl       procps     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen     && locale-gen en_US.UTF-8     && useradd -r -s /bin/false pgbouncer || true     && mkdir -p /var/lib/redis /var/run/pgbouncer /var/log/supervisor /var/log/postgresql     && chown -R redis:redis /var/lib/redis     && chown -R pgbouncer:pgbouncer /var/run/pgbouncer     && chown -R postgres:postgres /var/log/postgresql     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-#8 3.161 Reading package lists...#8 ...
 
 #45 [builder 39/59] COPY services/engagement/messaging-service/package.json services/engagement/messaging-service/
 #45 DONE 0.0s
@@ -265,16 +275,15 @@ Builder info
 #51 [builder 45/59] COPY services/universes/movie-service/package.json services/universes/movie-service/
 #51 DONE 0.0s
 
-#8 [stage-1  2/16] RUN corepack enable && corepack prepare pnpm@10.33.2 --activate &&     apt-get update && apt-get install -y --no-install-recommends       postgresql-15       redis-server       pgbouncer       supervisor       nginx       curl       locales       openssl       procps     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen     && locale-gen en_US.UTF-8     && useradd -r -s /bin/false pgbouncer || true     && mkdir -p /var/lib/redis /var/run/pgbouncer /var/log/supervisor /var/log/postgresql     && chown -R redis:redis /var/lib/redis     && chown -R pgbouncer:pgbouncer /var/run/pgbouncer     && chown -R postgres:postgres /var/log/postgresql     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-#8 3.161 Reading package lists...
-
-#8 ...
-
 #52 [builder 46/59] COPY services/universes/comedy-service/package.json services/universes/comedy-service/
 #52 DONE 0.0s
 
 #53 [builder 47/59] COPY services/universes/games-service/package.json services/universes/games-service/
 #53 DONE 0.0s
+
+#8 [stage-1  2/16] RUN corepack enable && corepack prepare pnpm@10.33.2 --activate &&     apt-get update && apt-get install -y --no-install-recommends       postgresql-15       redis-server       pgbouncer       supervisor       nginx       curl       locales       openssl       procps     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen     && locale-gen en_US.UTF-8     && useradd -r -s /bin/false pgbouncer || true     && mkdir -p /var/lib/redis /var/run/pgbouncer /var/log/supervisor /var/log/postgresql     && chown -R redis:redis /var/lib/redis     && chown -R pgbouncer:pgbouncer /var/run/pgbouncer     && chown -R postgres:postgres /var/log/postgresql     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+#8 3.487 Reading package lists...
+#8 ...
 
 #54 [builder 48/59] COPY services/universes/sports-service/package.json services/universes/sports-service/
 #54 DONE 0.0s
@@ -294,10 +303,6 @@ Builder info
 #59 [builder 53/59] COPY services/operations/support-service/package.json services/operations/support-service/
 #59 DONE 0.0s
 
-#8 [stage-1  2/16] RUN corepack enable && corepack prepare pnpm@10.33.2 --activate &&     apt-get update && apt-get install -y --no-install-recommends       postgresql-15       redis-server       pgbouncer       supervisor       nginx       curl       locales       openssl       procps     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen     && locale-gen en_US.UTF-8     && useradd -r -s /bin/false pgbouncer || true     && mkdir -p /var/lib/redis /var/run/pgbouncer /var/log/supervisor /var/log/postgresql     && chown -R redis:redis /var/lib/redis     && chown -R pgbouncer:pgbouncer /var/run/pgbouncer     && chown -R postgres:postgres /var/log/postgresql     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-#8 3.810 Reading package lists...
-#8 ...
-
 #60 [builder 54/59] COPY services/operations/moderation-service/package.json services/operations/moderation-service/
 #60 DONE 0.0s
 
@@ -305,156 +310,156 @@ Builder info
 #61 DONE 0.0s
 
 #62 [builder 56/59] RUN --mount=type=cache,target=/root/.local/share/pnpm/store     pnpm install --frozen-lockfile
-#62 0.766 Scope: all 52 workspace projects
-#62 1.255 Lockfile is up to date, resolution step is skipped
-#62 1.642 Progress: resolved 1, reused 0, downloaded 0, added 0
-#62 2.312 Packages: +1766
-#62 2.312 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#62 2.667 Progress: resolved 1766, reused 0, downloaded 0, added 0
-#62 3.161 
-#62 3.161    ╭───────────────────────────────────────────────╮
-#62 3.161    │                                               │
-#62 3.161    │     Update available! 10.33.2 → 11.12.0.      │
-#62 3.161    │     Changelog: https://pnpm.io/v/11.12.0      │
-#62 3.161    │   To update, run: corepack use pnpm@11.12.0   │
-#62 3.161    │                                               │
-#62 3.161    ╰───────────────────────────────────────────────╯
-#62 3.161 
-#62 3.676 Progress: resolved 1766, reused 0, downloaded 8, added 0
-#62 4.682 Progress: resolved 1766, reused 0, downloaded 12, added 0
+#62 0.785 Scope: all 52 workspace projects
+#62 1.354 Lockfile is up to date, resolution step is skipped
+#62 1.580 Progress: resolved 1, reused 0, downloaded 0, added 0
+#62 1.889 Packages: +1727
+#62 1.889 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#62 2.492 
+#62 2.492    ╭───────────────────────────────────────────────╮
+#62 2.492    │                                               │
+#62 2.492    │     Update available! 10.33.2 → 11.12.0.      │
+#62 2.492    │     Changelog: https://pnpm.io/v/11.12.0      │
+#62 2.492    │   To update, run: corepack use pnpm@11.12.0   │
+#62 2.492    │                                               │
+#62 2.492    ╰───────────────────────────────────────────────╯
+#62 2.492 
+#62 2.582 Progress: resolved 1727, reused 0, downloaded 0, added 0
+#62 3.584 Progress: resolved 1727, reused 0, downloaded 15, added 0
+#62 4.614 Progress: resolved 1727, reused 0, downloaded 54, added 12
 #62 ...
 
 #8 [stage-1  2/16] RUN corepack enable && corepack prepare pnpm@10.33.2 --activate &&     apt-get update && apt-get install -y --no-install-recommends       postgresql-15       redis-server       pgbouncer       supervisor       nginx       curl       locales       openssl       procps     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen     && locale-gen en_US.UTF-8     && useradd -r -s /bin/false pgbouncer || true     && mkdir -p /var/lib/redis /var/run/pgbouncer /var/log/supervisor /var/log/postgresql     && chown -R redis:redis /var/lib/redis     && chown -R pgbouncer:pgbouncer /var/run/pgbouncer     && chown -R postgres:postgres /var/log/postgresql     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-#8 3.810 Reading package lists...
-#8 4.478 Building dependency tree...
-#8 4.662 Reading state information...
-#8 4.846 The following additional packages will be installed:
-#8 4.847   iproute2 libatomic1 libbpf1 libbrotli1 libbsd0 libc-ares2 libc-bin libc-l10n
-#8 4.847   libc6 libcap2 libcap2-bin libcurl4 libedit2 libelf1 libevent-2.1-7 libexpat1
-#8 4.848   libgdbm-compat4 libgdbm6 libgssapi-krb5-2 libicu72 libjemalloc2 libjson-perl
-#8 4.849   libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0 libldap-2.5-0 libllvm14
-#8 4.850   liblzf1 libmnl0 libncursesw6 libnghttp2-14 libnsl2 libperl5.36 libpq5
-#8 4.850   libproc2-0 libpsl5 libpython3-stdlib libpython3.11-minimal
-#8 4.851   libpython3.11-stdlib libreadline8 librtmp1 libsasl2-2 libsasl2-modules-db
-#8 4.852   libsqlite3-0 libssh2-1 libssl3 libtirpc-common libtirpc3 libxml2 libxslt1.1
-#8 4.853   libxtables12 libz3-4 media-types netbase nginx-common perl perl-base
-#8 4.853   perl-modules-5.36 postgresql-client-15 postgresql-client-common
-#8 4.854   postgresql-common python3 python3-minimal python3-pkg-resources python3.11
-#8 4.855   python3.11-minimal readline-common redis-tools sensible-utils ssl-cert ucf
-#8 4.858 Suggested packages:
-#8 4.859   iproute2-doc glibc-doc libnss-nis libnss-nisplus gdbm-l10n krb5-doc
-#8 4.860   krb5-user fcgiwrap nginx-doc ca-certificates perl-doc
-#8 4.860   libterm-readline-gnu-perl | libterm-readline-perl-perl make
-#8 4.861   libtap-harness-archive-perl python3-psycopg2 postgresql-doc-15 python3-doc
-#8 4.862   python3-tk python3-venv python3-setuptools python3.11-venv python3.11-doc
-#8 4.863   binutils binfmt-support readline-doc ruby-redis supervisor-doc
-#8 4.863 Recommended packages:
-#8 4.864   libatm1 manpages libpam-cap ca-certificates libjson-xs-perl krb5-locales
-#8 4.865   libldap-common libgpm2 publicsuffix libsasl2-modules sysstat logrotate
-#8 4.866   psmisc
-#8 5.614 The following NEW packages will be installed:
-#8 5.615   curl iproute2 libatomic1 libbpf1 libbrotli1 libbsd0 libc-ares2 libc-l10n
-#8 5.615   libcap2-bin libcurl4 libedit2 libelf1 libevent-2.1-7 libexpat1
-#8 5.615   libgdbm-compat4 libgdbm6 libgssapi-krb5-2 libicu72 libjemalloc2 libjson-perl
-#8 5.615   libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0 libldap-2.5-0 libllvm14
-#8 5.615   liblzf1 libmnl0 libncursesw6 libnghttp2-14 libnsl2 libperl5.36 libpq5
-#8 5.615   libproc2-0 libpsl5 libpython3-stdlib libpython3.11-minimal
-#8 5.615   libpython3.11-stdlib libreadline8 librtmp1 libsasl2-2 libsasl2-modules-db
-#8 5.615   libsqlite3-0 libssh2-1 libssl3 libtirpc-common libtirpc3 libxml2 libxslt1.1
-#8 5.615   libxtables12 libz3-4 locales media-types netbase nginx nginx-common openssl
-#8 5.615   perl perl-modules-5.36 pgbouncer postgresql-15 postgresql-client-15
-#8 5.615   postgresql-client-common postgresql-common procps python3 python3-minimal
-#8 5.615   python3-pkg-resources python3.11 python3.11-minimal readline-common
-#8 5.615   redis-server redis-tools sensible-utils ssl-cert supervisor ucf
-#8 5.616 The following packages will be upgraded:
-#8 5.616   libc-bin libc6 libcap2 perl-base
-#8 5.658 4 upgraded, 77 newly installed, 0 to remove and 23 not upgraded.
-#8 5.658 Need to get 93.6 MB of archives.
-#8 5.658 After this operation, 368 MB of additional disk space will be used.
-#8 5.658 Get:1 http://deb.debian.org/debian bookworm/main amd64 perl-base amd64 5.36.0-7+deb12u3 [1608 kB]
-#8 5.713 Get:2 http://deb.debian.org/debian bookworm/main amd64 libc6 amd64 2.36-9+deb12u14 [2759 kB]
-#8 5.745 Get:3 http://deb.debian.org/debian bookworm/main amd64 libc-bin amd64 2.36-9+deb12u14 [609 kB]
-#8 5.755 Get:4 http://deb.debian.org/debian bookworm/main amd64 perl-modules-5.36 all 5.36.0-7+deb12u3 [2815 kB]
-#8 5.784 Get:5 http://deb.debian.org/debian bookworm/main amd64 libgdbm6 amd64 1.23-3 [72.2 kB]
-#8 5.787 Get:6 http://deb.debian.org/debian bookworm/main amd64 libgdbm-compat4 amd64 1.23-3 [48.2 kB]
-#8 5.789 Get:7 http://deb.debian.org/debian bookworm/main amd64 libperl5.36 amd64 5.36.0-7+deb12u3 [4196 kB]
-#8 5.829 Get:8 http://deb.debian.org/debian bookworm/main amd64 perl amd64 5.36.0-7+deb12u3 [239 kB]
-#8 5.833 Get:9 http://deb.debian.org/debian bookworm/main amd64 libjson-perl all 4.10000-1 [87.5 kB]
-#8 5.837 Get:10 http://deb.debian.org/debian bookworm/main amd64 netbase all 6.4 [12.8 kB]
-#8 5.840 Get:11 http://deb.debian.org/debian bookworm/main amd64 postgresql-client-common all 248+deb12u1 [35.2 kB]
-#8 5.841 Get:12 http://deb.debian.org/debian bookworm/main amd64 libssl3 amd64 3.0.20-1~deb12u2 [2036 kB]
-#8 5.864 Get:13 http://deb.debian.org/debian bookworm/main amd64 openssl amd64 3.0.20-1~deb12u2 [1439 kB]
-#8 5.881 Get:14 http://deb.debian.org/debian bookworm/main amd64 ssl-cert all 1.1.2 [21.1 kB]
-#8 5.883 Get:15 http://deb.debian.org/debian bookworm/main amd64 sensible-utils all 0.0.17+nmu1 [19.0 kB]
-#8 5.886 Get:16 http://deb.debian.org/debian bookworm/main amd64 ucf all 3.0043+nmu1+deb12u1 [55.3 kB]
-#8 5.889 Get:17 http://deb.debian.org/debian bookworm/main amd64 postgresql-common all 248+deb12u1 [179 kB]
-#8 5.891 Get:18 http://deb.debian.org/debian bookworm/main amd64 libc-ares2 amd64 1.18.1-3 [102 kB]
-#8 5.895 Get:19 http://deb.debian.org/debian bookworm/main amd64 libevent-2.1-7 amd64 2.1.12-stable-8 [180 kB]
-#8 5.899 Get:20 http://deb.debian.org/debian bookworm/main amd64 pgbouncer amd64 1.18.0-1+deb12u1 [208 kB]
-#8 5.904 Get:21 http://deb.debian.org/debian bookworm/main amd64 libpython3.11-minimal amd64 3.11.2-6+deb12u8 [818 kB]
-#8 5.911 Get:22 http://deb.debian.org/debian bookworm/main amd64 libexpat1 amd64 2.5.0-1+deb12u2 [99.9 kB]
-#8 5.914 Get:23 http://deb.debian.org/debian bookworm/main amd64 python3.11-minimal amd64 3.11.2-6+deb12u8 [2065 kB]
-#8 5.933 Get:24 http://deb.debian.org/debian bookworm/main amd64 python3-minimal amd64 3.11.2-1+b1 [26.3 kB]
-#8 5.934 Get:25 http://deb.debian.org/debian bookworm/main amd64 media-types all 10.0.0 [26.1 kB]
-#8 5.936 Get:26 http://deb.debian.org/debian bookworm/main amd64 libncursesw6 amd64 6.4-4 [134 kB]
-#8 5.939 Get:27 http://deb.debian.org/debian bookworm/main amd64 libkrb5support0 amd64 1.20.1-2+deb12u5 [33.2 kB]
-#8 5.941 Get:28 http://deb.debian.org/debian bookworm/main amd64 libk5crypto3 amd64 1.20.1-2+deb12u5 [79.7 kB]
-#8 5.943 Get:29 http://deb.debian.org/debian bookworm/main amd64 libkeyutils1 amd64 1.6.3-2 [8808 B]
-#8 5.944 Get:30 http://deb.debian.org/debian bookworm/main amd64 libkrb5-3 amd64 1.20.1-2+deb12u5 [332 kB]
-#8 5.950 Get:31 http://deb.debian.org/debian bookworm/main amd64 libgssapi-krb5-2 amd64 1.20.1-2+deb12u5 [135 kB]
-#8 5.951 Get:32 http://deb.debian.org/debian bookworm/main amd64 libtirpc-common all 1.3.3+ds-1 [14.0 kB]
-#8 5.954 Get:33 http://deb.debian.org/debian bookworm/main amd64 libtirpc3 amd64 1.3.3+ds-1 [85.2 kB]
-#8 5.958 Get:34 http://deb.debian.org/debian bookworm/main amd64 libnsl2 amd64 1.3.0-2 [39.5 kB]
-#8 5.959 Get:35 http://deb.debian.org/debian bookworm/main amd64 readline-common all 8.2-1.3 [69.0 kB]
-#8 5.960 Get:36 http://deb.debian.org/debian bookworm/main amd64 libreadline8 amd64 8.2-1.3 [166 kB]
-#8 5.965 Get:37 http://deb.debian.org/debian bookworm/main amd64 libsqlite3-0 amd64 3.40.1-2+deb12u2 [839 kB]
-#8 5.976 Get:38 http://deb.debian.org/debian bookworm/main amd64 libpython3.11-stdlib amd64 3.11.2-6+deb12u8 [1799 kB]
-#8 5.993 Get:39 http://deb.debian.org/debian bookworm/main amd64 python3.11 amd64 3.11.2-6+deb12u8 [574 kB]
-#8 6.001 Get:40 http://deb.debian.org/debian bookworm/main amd64 libpython3-stdlib amd64 3.11.2-1+b1 [9312 B]
-#8 6.003 Get:41 http://deb.debian.org/debian bookworm/main amd64 python3 amd64 3.11.2-1+b1 [26.3 kB]
-#8 6.005 Get:42 http://deb.debian.org/debian bookworm/main amd64 libatomic1 amd64 12.2.0-14+deb12u1 [9376 B]
-#8 6.006 Get:43 http://deb.debian.org/debian bookworm/main amd64 libjemalloc2 amd64 5.3.0-1 [275 kB]
-#8 6.010 Get:44 http://deb.debian.org/debian bookworm/main amd64 liblzf1 amd64 3.6-3 [10.2 kB]
-#8 6.014 Get:45 http://deb.debian.org/debian bookworm/main amd64 redis-tools amd64 5:7.0.15-1~deb12u7 [992 kB]
-#8 6.022 Get:46 http://deb.debian.org/debian bookworm/main amd64 redis-server amd64 5:7.0.15-1~deb12u7 [73.4 kB]
-#8 6.025 Get:47 http://deb.debian.org/debian bookworm/main amd64 python3-pkg-resources all 66.1.1-1+deb12u2 [297 kB]
-#8 6.031 Get:48 http://deb.debian.org/debian bookworm/main amd64 supervisor all 4.2.5-1 [311 kB]
-#8 6.035 Get:49 http://deb.debian.org/debian bookworm/main amd64 libcap2 amd64 1:2.66-4+deb12u3+b1 [27.7 kB]
-#8 6.037 Get:50 http://deb.debian.org/debian bookworm/main amd64 libelf1 amd64 0.188-2.1 [174 kB]
-#8 6.042 Get:51 http://deb.debian.org/debian bookworm/main amd64 libbpf1 amd64 1:1.1.2-0+deb12u1 [145 kB]
-#8 6.045 Get:52 http://deb.debian.org/debian bookworm/main amd64 libbsd0 amd64 0.11.7-2 [117 kB]
-#8 6.047 Get:53 http://deb.debian.org/debian bookworm/main amd64 libmnl0 amd64 1.0.4-3 [12.5 kB]
-#8 6.050 Get:54 http://deb.debian.org/debian bookworm/main amd64 libxtables12 amd64 1.8.9-2 [30.8 kB]
-#8 6.051 Get:55 http://deb.debian.org/debian bookworm/main amd64 libcap2-bin amd64 1:2.66-4+deb12u3+b1 [35.2 kB]
-#8 6.055 Get:56 http://deb.debian.org/debian bookworm/main amd64 iproute2 amd64 6.1.0-3 [1046 kB]
-#8 6.064 Get:57 http://deb.debian.org/debian bookworm/main amd64 libproc2-0 amd64 2:4.0.2-3 [62.8 kB]
-#8 6.068 Get:58 http://deb.debian.org/debian bookworm/main amd64 procps amd64 2:4.0.2-3 [709 kB]
-#8 6.078 Get:59 http://deb.debian.org/debian bookworm/main amd64 libc-l10n all 2.36-9+deb12u14 [676 kB]
-#8 6.085 Get:60 http://deb.debian.org/debian bookworm/main amd64 locales all 2.36-9+deb12u14 [3906 kB]
-#8 6.124 Get:61 http://deb.debian.org/debian bookworm/main amd64 libbrotli1 amd64 1.0.9-2+b6 [275 kB]
-#8 6.127 Get:62 http://deb.debian.org/debian bookworm/main amd64 libsasl2-modules-db amd64 2.1.28+dfsg-10 [20.3 kB]
-#8 6.130 Get:63 http://deb.debian.org/debian bookworm/main amd64 libsasl2-2 amd64 2.1.28+dfsg-10 [59.7 kB]
-#8 6.133 Get:64 http://deb.debian.org/debian bookworm/main amd64 libldap-2.5-0 amd64 2.5.13+dfsg-5 [183 kB]
-#8 6.140 Get:65 http://deb.debian.org/debian bookworm/main amd64 libnghttp2-14 amd64 1.52.0-1+deb12u3 [72.4 kB]
-#8 6.141 Get:66 http://deb.debian.org/debian bookworm/main amd64 libpsl5 amd64 0.21.2-1 [58.7 kB]
-#8 6.142 Get:67 http://deb.debian.org/debian bookworm/main amd64 librtmp1 amd64 2.4+20151223.gitfa8646d.1-2+b2 [60.8 kB]
-#8 6.144 Get:68 http://deb.debian.org/debian bookworm/main amd64 libssh2-1 amd64 1.10.0-3+b1 [179 kB]
-#8 6.149 Get:69 http://deb.debian.org/debian bookworm/main amd64 libcurl4 amd64 7.88.1-10+deb12u15 [392 kB]
-#8 6.154 Get:70 http://deb.debian.org/debian bookworm/main amd64 curl amd64 7.88.1-10+deb12u15 [316 kB]
-#8 6.161 Get:71 http://deb.debian.org/debian bookworm/main amd64 libedit2 amd64 3.1-20221030-2 [93.0 kB]
-#8 6.162 Get:72 http://deb.debian.org/debian bookworm/main amd64 libicu72 amd64 72.1-3+deb12u1 [9376 kB]
-#8 6.248 Get:73 http://deb.debian.org/debian bookworm/main amd64 libxml2 amd64 2.9.14+dfsg-1.3~deb12u6 [689 kB]
-#8 6.257 Get:74 http://deb.debian.org/debian bookworm/main amd64 libz3-4 amd64 4.8.12-3.1 [7216 kB]
-#8 6.433 Get:75 http://deb.debian.org/debian bookworm/main amd64 libllvm14 amd64 1:14.0.6-12 [21.8 MB]
-#8 6.637 Get:76 http://deb.debian.org/debian bookworm/main amd64 libpq5 amd64 15.18-0+deb12u1 [197 kB]
-#8 6.639 Get:77 http://deb.debian.org/debian bookworm/main amd64 libxslt1.1 amd64 1.1.35-1+deb12u4 [232 kB]
-#8 6.643 Get:78 http://deb.debian.org/debian bookworm/main amd64 nginx-common all 1.22.1-9+deb12u9 [115 kB]
-#8 6.645 Get:79 http://deb.debian.org/debian bookworm/main amd64 nginx amd64 1.22.1-9+deb12u9 [530 kB]
-#8 6.651 Get:80 http://deb.debian.org/debian bookworm/main amd64 postgresql-client-15 amd64 15.18-0+deb12u1 [1747 kB]
-#8 6.674 Get:81 http://deb.debian.org/debian bookworm/main amd64 postgresql-15 amd64 15.18-0+deb12u1 [16.9 MB]
-#8 7.401 debconf: delaying package configuration, since apt-utils is not installed
-#8 7.477 Fetched 93.6 MB in 1s (76.2 MB/s)
-#8 7.510 (Reading database ... 
+#8 3.487 Reading package lists...
+#8 4.186 Building dependency tree...
+#8 4.381 Reading state information...
+#8 4.573 The following additional packages will be installed:
+#8 4.574   iproute2 libatomic1 libbpf1 libbrotli1 libbsd0 libc-ares2 libc-bin libc-l10n
+#8 4.574   libc6 libcap2 libcap2-bin libcurl4 libedit2 libelf1 libevent-2.1-7 libexpat1
+#8 4.574   libgdbm-compat4 libgdbm6 libgssapi-krb5-2 libicu72 libjemalloc2 libjson-perl
+#8 4.574   libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0 libldap-2.5-0 libllvm14
+#8 4.575   liblzf1 libmnl0 libncursesw6 libnghttp2-14 libnsl2 libperl5.36 libpq5
+#8 4.575   libproc2-0 libpsl5 libpython3-stdlib libpython3.11-minimal
+#8 4.575   libpython3.11-stdlib libreadline8 librtmp1 libsasl2-2 libsasl2-modules-db
+#8 4.576   libsqlite3-0 libssh2-1 libssl3 libtirpc-common libtirpc3 libxml2 libxslt1.1
+#8 4.576   libxtables12 libz3-4 media-types netbase nginx-common perl perl-base
+#8 4.576   perl-modules-5.36 postgresql-client-15 postgresql-client-common
+#8 4.577   postgresql-common python3 python3-minimal python3-pkg-resources python3.11
+#8 4.577   python3.11-minimal readline-common redis-tools sensible-utils ssl-cert ucf
+#8 4.579 Suggested packages:
+#8 4.579   iproute2-doc glibc-doc libnss-nis libnss-nisplus gdbm-l10n krb5-doc
+#8 4.579   krb5-user fcgiwrap nginx-doc ca-certificates perl-doc
+#8 4.579   libterm-readline-gnu-perl | libterm-readline-perl-perl make
+#8 4.579   libtap-harness-archive-perl python3-psycopg2 postgresql-doc-15 python3-doc
+#8 4.579   python3-tk python3-venv python3-setuptools python3.11-venv python3.11-doc
+#8 4.579   binutils binfmt-support readline-doc ruby-redis supervisor-doc
+#8 4.579 Recommended packages:
+#8 4.579   libatm1 manpages libpam-cap ca-certificates libjson-xs-perl krb5-locales
+#8 4.579   libldap-common libgpm2 publicsuffix libsasl2-modules sysstat logrotate
+#8 4.579   psmisc
+#8 5.287 The following NEW packages will be installed:
+#8 5.288   curl iproute2 libatomic1 libbpf1 libbrotli1 libbsd0 libc-ares2 libc-l10n
+#8 5.289   libcap2-bin libcurl4 libedit2 libelf1 libevent-2.1-7 libexpat1
+#8 5.289   libgdbm-compat4 libgdbm6 libgssapi-krb5-2 libicu72 libjemalloc2 libjson-perl
+#8 5.289   libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0 libldap-2.5-0 libllvm14
+#8 5.289   liblzf1 libmnl0 libncursesw6 libnghttp2-14 libnsl2 libperl5.36 libpq5
+#8 5.289   libproc2-0 libpsl5 libpython3-stdlib libpython3.11-minimal
+#8 5.290   libpython3.11-stdlib libreadline8 librtmp1 libsasl2-2 libsasl2-modules-db
+#8 5.290   libsqlite3-0 libssh2-1 libssl3 libtirpc-common libtirpc3 libxml2 libxslt1.1
+#8 5.291   libxtables12 libz3-4 locales media-types netbase nginx nginx-common openssl
+#8 5.292   perl perl-modules-5.36 pgbouncer postgresql-15 postgresql-client-15
+#8 5.292   postgresql-client-common postgresql-common procps python3 python3-minimal
+#8 5.293   python3-pkg-resources python3.11 python3.11-minimal readline-common
+#8 5.293   redis-server redis-tools sensible-utils ssl-cert supervisor ucf
+#8 5.295 The following packages will be upgraded:
+#8 5.296   libc-bin libc6 libcap2 perl-base
+#8 5.354 4 upgraded, 77 newly installed, 0 to remove and 23 not upgraded.
+#8 5.354 Need to get 93.6 MB of archives.
+#8 5.354 After this operation, 368 MB of additional disk space will be used.
+#8 5.354 Get:1 http://deb.debian.org/debian bookworm/main amd64 perl-base amd64 5.36.0-7+deb12u3 [1608 kB]
+#8 5.472 Get:2 http://deb.debian.org/debian bookworm/main amd64 libc6 amd64 2.36-9+deb12u14 [2759 kB]
+#8 5.528 Get:3 http://deb.debian.org/debian bookworm/main amd64 libc-bin amd64 2.36-9+deb12u14 [609 kB]
+#8 5.534 Get:4 http://deb.debian.org/debian bookworm/main amd64 perl-modules-5.36 all 5.36.0-7+deb12u3 [2815 kB]
+#8 5.557 Get:5 http://deb.debian.org/debian bookworm/main amd64 libgdbm6 amd64 1.23-3 [72.2 kB]
+#8 5.558 Get:6 http://deb.debian.org/debian bookworm/main amd64 libgdbm-compat4 amd64 1.23-3 [48.2 kB]
+#8 5.561 Get:7 http://deb.debian.org/debian bookworm/main amd64 libperl5.36 amd64 5.36.0-7+deb12u3 [4196 kB]
+#8 5.591 Get:8 http://deb.debian.org/debian bookworm/main amd64 perl amd64 5.36.0-7+deb12u3 [239 kB]
+#8 5.594 Get:9 http://deb.debian.org/debian bookworm/main amd64 libjson-perl all 4.10000-1 [87.5 kB]
+#8 5.596 Get:10 http://deb.debian.org/debian bookworm/main amd64 netbase all 6.4 [12.8 kB]
+#8 5.598 Get:11 http://deb.debian.org/debian bookworm/main amd64 postgresql-client-common all 248+deb12u1 [35.2 kB]
+#8 5.600 Get:12 http://deb.debian.org/debian bookworm/main amd64 libssl3 amd64 3.0.20-1~deb12u2 [2036 kB]
+#8 5.609 Get:13 http://deb.debian.org/debian bookworm/main amd64 openssl amd64 3.0.20-1~deb12u2 [1439 kB]
+#8 5.619 Get:14 http://deb.debian.org/debian bookworm/main amd64 ssl-cert all 1.1.2 [21.1 kB]
+#8 5.620 Get:15 http://deb.debian.org/debian bookworm/main amd64 sensible-utils all 0.0.17+nmu1 [19.0 kB]
+#8 5.621 Get:16 http://deb.debian.org/debian bookworm/main amd64 ucf all 3.0043+nmu1+deb12u1 [55.3 kB]
+#8 5.623 Get:17 http://deb.debian.org/debian bookworm/main amd64 postgresql-common all 248+deb12u1 [179 kB]
+#8 5.625 Get:18 http://deb.debian.org/debian bookworm/main amd64 libc-ares2 amd64 1.18.1-3 [102 kB]
+#8 5.627 Get:19 http://deb.debian.org/debian bookworm/main amd64 libevent-2.1-7 amd64 2.1.12-stable-8 [180 kB]
+#8 5.629 Get:20 http://deb.debian.org/debian bookworm/main amd64 pgbouncer amd64 1.18.0-1+deb12u1 [208 kB]
+#8 5.630 Get:21 http://deb.debian.org/debian bookworm/main amd64 libpython3.11-minimal amd64 3.11.2-6+deb12u8 [818 kB]
+#8 5.636 Get:22 http://deb.debian.org/debian bookworm/main amd64 libexpat1 amd64 2.5.0-1+deb12u2 [99.9 kB]
+#8 5.636 Get:23 http://deb.debian.org/debian bookworm/main amd64 python3.11-minimal amd64 3.11.2-6+deb12u8 [2065 kB]
+#8 5.648 Get:24 http://deb.debian.org/debian bookworm/main amd64 python3-minimal amd64 3.11.2-1+b1 [26.3 kB]
+#8 5.649 Get:25 http://deb.debian.org/debian bookworm/main amd64 media-types all 10.0.0 [26.1 kB]
+#8 5.650 Get:26 http://deb.debian.org/debian bookworm/main amd64 libncursesw6 amd64 6.4-4 [134 kB]
+#8 5.653 Get:27 http://deb.debian.org/debian bookworm/main amd64 libkrb5support0 amd64 1.20.1-2+deb12u5 [33.2 kB]
+#8 5.654 Get:28 http://deb.debian.org/debian bookworm/main amd64 libk5crypto3 amd64 1.20.1-2+deb12u5 [79.7 kB]
+#8 5.656 Get:29 http://deb.debian.org/debian bookworm/main amd64 libkeyutils1 amd64 1.6.3-2 [8808 B]
+#8 5.657 Get:30 http://deb.debian.org/debian bookworm/main amd64 libkrb5-3 amd64 1.20.1-2+deb12u5 [332 kB]
+#8 5.661 Get:31 http://deb.debian.org/debian bookworm/main amd64 libgssapi-krb5-2 amd64 1.20.1-2+deb12u5 [135 kB]
+#8 5.663 Get:32 http://deb.debian.org/debian bookworm/main amd64 libtirpc-common all 1.3.3+ds-1 [14.0 kB]
+#8 5.672 Get:33 http://deb.debian.org/debian bookworm/main amd64 libtirpc3 amd64 1.3.3+ds-1 [85.2 kB]
+#8 5.676 Get:34 http://deb.debian.org/debian bookworm/main amd64 libnsl2 amd64 1.3.0-2 [39.5 kB]
+#8 5.677 Get:35 http://deb.debian.org/debian bookworm/main amd64 readline-common all 8.2-1.3 [69.0 kB]
+#8 5.693 Get:36 http://deb.debian.org/debian bookworm/main amd64 libreadline8 amd64 8.2-1.3 [166 kB]
+#8 5.694 Get:37 http://deb.debian.org/debian bookworm/main amd64 libsqlite3-0 amd64 3.40.1-2+deb12u2 [839 kB]
+#8 5.699 Get:38 http://deb.debian.org/debian bookworm/main amd64 libpython3.11-stdlib amd64 3.11.2-6+deb12u8 [1799 kB]
+#8 5.709 Get:39 http://deb.debian.org/debian bookworm/main amd64 python3.11 amd64 3.11.2-6+deb12u8 [574 kB]
+#8 5.714 Get:40 http://deb.debian.org/debian bookworm/main amd64 libpython3-stdlib amd64 3.11.2-1+b1 [9312 B]
+#8 5.715 Get:41 http://deb.debian.org/debian bookworm/main amd64 python3 amd64 3.11.2-1+b1 [26.3 kB]
+#8 5.716 Get:42 http://deb.debian.org/debian bookworm/main amd64 libatomic1 amd64 12.2.0-14+deb12u1 [9376 B]
+#8 5.720 Get:43 http://deb.debian.org/debian bookworm/main amd64 libjemalloc2 amd64 5.3.0-1 [275 kB]
+#8 5.723 Get:44 http://deb.debian.org/debian bookworm/main amd64 liblzf1 amd64 3.6-3 [10.2 kB]
+#8 5.736 Get:45 http://deb.debian.org/debian bookworm/main amd64 redis-tools amd64 5:7.0.15-1~deb12u7 [992 kB]
+#8 5.741 Get:46 http://deb.debian.org/debian bookworm/main amd64 redis-server amd64 5:7.0.15-1~deb12u7 [73.4 kB]
+#8 5.743 Get:47 http://deb.debian.org/debian bookworm/main amd64 python3-pkg-resources all 66.1.1-1+deb12u2 [297 kB]
+#8 5.752 Get:48 http://deb.debian.org/debian bookworm/main amd64 supervisor all 4.2.5-1 [311 kB]
+#8 5.754 Get:49 http://deb.debian.org/debian bookworm/main amd64 libcap2 amd64 1:2.66-4+deb12u3+b1 [27.7 kB]
+#8 5.756 Get:50 http://deb.debian.org/debian bookworm/main amd64 libelf1 amd64 0.188-2.1 [174 kB]
+#8 5.758 Get:51 http://deb.debian.org/debian bookworm/main amd64 libbpf1 amd64 1:1.1.2-0+deb12u1 [145 kB]
+#8 5.760 Get:52 http://deb.debian.org/debian bookworm/main amd64 libbsd0 amd64 0.11.7-2 [117 kB]
+#8 5.762 Get:53 http://deb.debian.org/debian bookworm/main amd64 libmnl0 amd64 1.0.4-3 [12.5 kB]
+#8 5.764 Get:54 http://deb.debian.org/debian bookworm/main amd64 libxtables12 amd64 1.8.9-2 [30.8 kB]
+#8 5.766 Get:55 http://deb.debian.org/debian bookworm/main amd64 libcap2-bin amd64 1:2.66-4+deb12u3+b1 [35.2 kB]
+#8 5.768 Get:56 http://deb.debian.org/debian bookworm/main amd64 iproute2 amd64 6.1.0-3 [1046 kB]
+#8 5.775 Get:57 http://deb.debian.org/debian bookworm/main amd64 libproc2-0 amd64 2:4.0.2-3 [62.8 kB]
+#8 5.788 Get:58 http://deb.debian.org/debian bookworm/main amd64 procps amd64 2:4.0.2-3 [709 kB]
+#8 5.801 Get:59 http://deb.debian.org/debian bookworm/main amd64 libc-l10n all 2.36-9+deb12u14 [676 kB]
+#8 5.805 Get:60 http://deb.debian.org/debian bookworm/main amd64 locales all 2.36-9+deb12u14 [3906 kB]
+#8 5.848 Get:61 http://deb.debian.org/debian bookworm/main amd64 libbrotli1 amd64 1.0.9-2+b6 [275 kB]
+#8 5.851 Get:62 http://deb.debian.org/debian bookworm/main amd64 libsasl2-modules-db amd64 2.1.28+dfsg-10 [20.3 kB]
+#8 5.851 Get:63 http://deb.debian.org/debian bookworm/main amd64 libsasl2-2 amd64 2.1.28+dfsg-10 [59.7 kB]
+#8 5.853 Get:64 http://deb.debian.org/debian bookworm/main amd64 libldap-2.5-0 amd64 2.5.13+dfsg-5 [183 kB]
+#8 5.855 Get:65 http://deb.debian.org/debian bookworm/main amd64 libnghttp2-14 amd64 1.52.0-1+deb12u3 [72.4 kB]
+#8 5.856 Get:66 http://deb.debian.org/debian bookworm/main amd64 libpsl5 amd64 0.21.2-1 [58.7 kB]
+#8 5.857 Get:67 http://deb.debian.org/debian bookworm/main amd64 librtmp1 amd64 2.4+20151223.gitfa8646d.1-2+b2 [60.8 kB]
+#8 5.859 Get:68 http://deb.debian.org/debian bookworm/main amd64 libssh2-1 amd64 1.10.0-3+b1 [179 kB]
+#8 5.861 Get:69 http://deb.debian.org/debian bookworm/main amd64 libcurl4 amd64 7.88.1-10+deb12u15 [392 kB]
+#8 5.865 Get:70 http://deb.debian.org/debian bookworm/main amd64 curl amd64 7.88.1-10+deb12u15 [316 kB]
+#8 5.877 Get:71 http://deb.debian.org/debian bookworm/main amd64 libedit2 amd64 3.1-20221030-2 [93.0 kB]
+#8 5.882 Get:72 http://deb.debian.org/debian bookworm/main amd64 libicu72 amd64 72.1-3+deb12u1 [9376 kB]
+#8 5.939 Get:73 http://deb.debian.org/debian bookworm/main amd64 libxml2 amd64 2.9.14+dfsg-1.3~deb12u6 [689 kB]
+#8 5.944 Get:74 http://deb.debian.org/debian bookworm/main amd64 libz3-4 amd64 4.8.12-3.1 [7216 kB]
+#8 5.988 Get:75 http://deb.debian.org/debian bookworm/main amd64 libllvm14 amd64 1:14.0.6-12 [21.8 MB]
+#8 6.083 Get:76 http://deb.debian.org/debian bookworm/main amd64 libpq5 amd64 15.18-0+deb12u1 [197 kB]
+#8 6.085 Get:77 http://deb.debian.org/debian bookworm/main amd64 libxslt1.1 amd64 1.1.35-1+deb12u4 [232 kB]
+#8 6.087 Get:78 http://deb.debian.org/debian bookworm/main amd64 nginx-common all 1.22.1-9+deb12u9 [115 kB]
+#8 6.090 Get:79 http://deb.debian.org/debian bookworm/main amd64 nginx amd64 1.22.1-9+deb12u9 [530 kB]
+#8 6.093 Get:80 http://deb.debian.org/debian bookworm/main amd64 postgresql-client-15 amd64 15.18-0+deb12u1 [1747 kB]
+#8 6.105 Get:81 http://deb.debian.org/debian bookworm/main amd64 postgresql-15 amd64 15.18-0+deb12u1 [16.9 MB]
+#8 6.409 debconf: delaying package configuration, since apt-utils is not installed
+#8 6.444 Fetched 93.6 MB in 1s (107 MB/s)
+#8 6.464 (Reading database ... 
 (Reading database ... 5%
 (Reading database ... 10%
 (Reading database ... 15%
@@ -476,10 +481,10 @@ Builder info
 (Reading database ... 95%
 (Reading database ... 100%
 (Reading database ... 6089 files and directories currently installed.)
-#8 7.530 Preparing to unpack .../perl-base_5.36.0-7+deb12u3_amd64.deb ...
-#8 7.559 Unpacking perl-base (5.36.0-7+deb12u3) over (5.36.0-7+deb12u2) ...
-#8 9.425 Setting up perl-base (5.36.0-7+deb12u3) ...
-#8 9.515 (Reading database ... 
+#8 6.477 Preparing to unpack .../perl-base_5.36.0-7+deb12u3_amd64.deb ...
+#8 6.493 Unpacking perl-base (5.36.0-7+deb12u3) over (5.36.0-7+deb12u2) ...
+#8 7.839 Setting up perl-base (5.36.0-7+deb12u3) ...
+#8 7.911 (Reading database ... 
 (Reading database ... 5%
 (Reading database ... 10%
 (Reading database ... 15%
@@ -501,22 +506,22 @@ Builder info
 (Reading database ... 95%
 (Reading database ... 100%
 (Reading database ... 6089 files and directories currently installed.)
-#8 9.538 Preparing to unpack .../libc6_2.36-9+deb12u14_amd64.deb ...
+#8 7.942 Preparing to unpack .../libc6_2.36-9+deb12u14_amd64.deb ...
+#8 8.539 Unpacking libc6:amd64 (2.36-9+deb12u14) over (2.36-9+deb12u10) ...
+#8 9.336 Setting up libc6:amd64 (2.36-9+deb12u14) ...
 #8 ...
 
 #62 [builder 56/59] RUN --mount=type=cache,target=/root/.local/share/pnpm/store     pnpm install --frozen-lockfile
-#62 5.715 Progress: resolved 1766, reused 0, downloaded 89, added 23
-#62 6.698 Progress: resolved 1766, reused 0, downloaded 137, added 38
-#62 7.699 Progress: resolved 1766, reused 0, downloaded 173, added 50
-#62 8.704 Progress: resolved 1766, reused 0, downloaded 272, added 80
-#62 9.707 Progress: resolved 1766, reused 0, downloaded 326, added 102
-#62 10.71 Progress: resolved 1766, reused 0, downloaded 341, added 106
+#62 5.586 Progress: resolved 1727, reused 0, downloaded 111, added 30
+#62 6.587 Progress: resolved 1727, reused 0, downloaded 149, added 43
+#62 7.588 Progress: resolved 1727, reused 0, downloaded 155, added 44
+#62 8.588 Progress: resolved 1727, reused 0, downloaded 230, added 70
+#62 9.589 Progress: resolved 1727, reused 0, downloaded 312, added 102
+#62 10.59 Progress: resolved 1727, reused 0, downloaded 326, added 106
 #62 ...
 
 #8 [stage-1  2/16] RUN corepack enable && corepack prepare pnpm@10.33.2 --activate &&     apt-get update && apt-get install -y --no-install-recommends       postgresql-15       redis-server       pgbouncer       supervisor       nginx       curl       locales       openssl       procps     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen     && locale-gen en_US.UTF-8     && useradd -r -s /bin/false pgbouncer || true     && mkdir -p /var/lib/redis /var/run/pgbouncer /var/log/supervisor /var/log/postgresql     && chown -R redis:redis /var/lib/redis     && chown -R pgbouncer:pgbouncer /var/run/pgbouncer     && chown -R postgres:postgres /var/log/postgresql     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-#8 9.756 Unpacking libc6:amd64 (2.36-9+deb12u14) over (2.36-9+deb12u10) ...
-#8 10.54 Setting up libc6:amd64 (2.36-9+deb12u14) ...
-#8 12.05 (Reading database ... 
+#8 10.69 (Reading database ... 
 (Reading database ... 5%
 (Reading database ... 10%
 (Reading database ... 15%
@@ -538,11 +543,11 @@ Builder info
 (Reading database ... 95%
 (Reading database ... 100%
 (Reading database ... 6089 files and directories currently installed.)
-#8 12.06 Preparing to unpack .../libc-bin_2.36-9+deb12u14_amd64.deb ...
-#8 12.06 Unpacking libc-bin (2.36-9+deb12u14) over (2.36-9+deb12u10) ...
-#8 12.17 Setting up libc-bin (2.36-9+deb12u14) ...
-#8 12.22 Selecting previously unselected package perl-modules-5.36.
-#8 12.22 (Reading database ... 
+#8 10.71 Preparing to unpack .../libc-bin_2.36-9+deb12u14_amd64.deb ...
+#8 10.72 Unpacking libc-bin (2.36-9+deb12u14) over (2.36-9+deb12u10) ...
+#8 10.90 Setting up libc-bin (2.36-9+deb12u14) ...
+#8 11.13 Selecting previously unselected package perl-modules-5.36.
+#8 11.13 (Reading database ... 
 (Reading database ... 5%
 (Reading database ... 10%
 (Reading database ... 15%
@@ -564,73 +569,73 @@ Builder info
 (Reading database ... 95%
 (Reading database ... 100%
 (Reading database ... 6089 files and directories currently installed.)
-#8 12.23 Preparing to unpack .../00-perl-modules-5.36_5.36.0-7+deb12u3_all.deb ...
-#8 12.24 Unpacking perl-modules-5.36 (5.36.0-7+deb12u3) ...
-#8 12.70 Selecting previously unselected package libgdbm6:amd64.
-#8 12.70 Preparing to unpack .../01-libgdbm6_1.23-3_amd64.deb ...
-#8 12.71 Unpacking libgdbm6:amd64 (1.23-3) ...
-#8 12.73 Selecting previously unselected package libgdbm-compat4:amd64.
-#8 12.74 Preparing to unpack .../02-libgdbm-compat4_1.23-3_amd64.deb ...
-#8 12.74 Unpacking libgdbm-compat4:amd64 (1.23-3) ...
-#8 12.77 Selecting previously unselected package libperl5.36:amd64.
-#8 12.77 Preparing to unpack .../03-libperl5.36_5.36.0-7+deb12u3_amd64.deb ...
-#8 12.78 Unpacking libperl5.36:amd64 (5.36.0-7+deb12u3) ...
-#8 13.32 Selecting previously unselected package perl.
-#8 13.32 Preparing to unpack .../04-perl_5.36.0-7+deb12u3_amd64.deb ...
-#8 13.33 Unpacking perl (5.36.0-7+deb12u3) ...
-#8 13.38 Selecting previously unselected package libjson-perl.
-#8 13.39 Preparing to unpack .../05-libjson-perl_4.10000-1_all.deb ...
-#8 13.39 Unpacking libjson-perl (4.10000-1) ...
-#8 13.43 Selecting previously unselected package netbase.
-#8 13.44 Preparing to unpack .../06-netbase_6.4_all.deb ...
-#8 13.44 Unpacking netbase (6.4) ...
-#8 13.46 Selecting previously unselected package postgresql-client-common.
-#8 13.46 Preparing to unpack .../07-postgresql-client-common_248+deb12u1_all.deb ...
-#8 13.47 Unpacking postgresql-client-common (248+deb12u1) ...
-#8 13.50 Selecting previously unselected package libssl3:amd64.
-#8 13.51 Preparing to unpack .../08-libssl3_3.0.20-1~deb12u2_amd64.deb ...
-#8 13.51 Unpacking libssl3:amd64 (3.0.20-1~deb12u2) ...
-#8 13.73 Selecting previously unselected package openssl.
-#8 13.73 Preparing to unpack .../09-openssl_3.0.20-1~deb12u2_amd64.deb ...
-#8 13.73 Unpacking openssl (3.0.20-1~deb12u2) ...
-#8 13.89 Selecting previously unselected package ssl-cert.
-#8 13.89 Preparing to unpack .../10-ssl-cert_1.1.2_all.deb ...
-#8 13.90 Unpacking ssl-cert (1.1.2) ...
-#8 13.92 Selecting previously unselected package sensible-utils.
-#8 13.92 Preparing to unpack .../11-sensible-utils_0.0.17+nmu1_all.deb ...
-#8 13.93 Unpacking sensible-utils (0.0.17+nmu1) ...
-#8 13.96 Selecting previously unselected package ucf.
-#8 13.97 Preparing to unpack .../12-ucf_3.0043+nmu1+deb12u1_all.deb ...
-#8 13.97 Moving old data out of the way
-#8 13.98 Unpacking ucf (3.0043+nmu1+deb12u1) ...
-#8 14.01 Selecting previously unselected package postgresql-common.
-#8 14.02 Preparing to unpack .../13-postgresql-common_248+deb12u1_all.deb ...
-#8 14.02 Adding 'diversion of /usr/bin/pg_config to /usr/bin/pg_config.libpq-dev by postgresql-common'
-#8 14.03 Unpacking postgresql-common (248+deb12u1) ...
-#8 14.09 Selecting previously unselected package libc-ares2:amd64.
-#8 14.09 Preparing to unpack .../14-libc-ares2_1.18.1-3_amd64.deb ...
-#8 14.09 Unpacking libc-ares2:amd64 (1.18.1-3) ...
-#8 14.12 Selecting previously unselected package libevent-2.1-7:amd64.
-#8 14.12 Preparing to unpack .../15-libevent-2.1-7_2.1.12-stable-8_amd64.deb ...
-#8 14.12 Unpacking libevent-2.1-7:amd64 (2.1.12-stable-8) ...
-#8 14.16 Selecting previously unselected package pgbouncer.
-#8 14.16 Preparing to unpack .../16-pgbouncer_1.18.0-1+deb12u1_amd64.deb ...
-#8 14.17 Unpacking pgbouncer (1.18.0-1+deb12u1) ...
-#8 14.21 Selecting previously unselected package libpython3.11-minimal:amd64.
-#8 14.22 Preparing to unpack .../17-libpython3.11-minimal_3.11.2-6+deb12u8_amd64.deb ...
-#8 14.22 Unpacking libpython3.11-minimal:amd64 (3.11.2-6+deb12u8) ...
-#8 14.35 Selecting previously unselected package libexpat1:amd64.
-#8 14.35 Preparing to unpack .../18-libexpat1_2.5.0-1+deb12u2_amd64.deb ...
-#8 14.35 Unpacking libexpat1:amd64 (2.5.0-1+deb12u2) ...
-#8 14.38 Selecting previously unselected package python3.11-minimal.
-#8 14.38 Preparing to unpack .../19-python3.11-minimal_3.11.2-6+deb12u8_amd64.deb ...
-#8 14.39 Unpacking python3.11-minimal (3.11.2-6+deb12u8) ...
-#8 14.64 Setting up libssl3:amd64 (3.0.20-1~deb12u2) ...
-#8 14.64 Setting up libpython3.11-minimal:amd64 (3.11.2-6+deb12u8) ...
-#8 14.65 Setting up libexpat1:amd64 (2.5.0-1+deb12u2) ...
-#8 14.65 Setting up python3.11-minimal (3.11.2-6+deb12u8) ...
-#8 15.51 Selecting previously unselected package python3-minimal.
-#8 15.51 (Reading database ... 
+#8 11.14 Preparing to unpack .../00-perl-modules-5.36_5.36.0-7+deb12u3_all.deb ...
+#8 11.14 Unpacking perl-modules-5.36 (5.36.0-7+deb12u3) ...
+#8 11.86 Selecting previously unselected package libgdbm6:amd64.
+#8 11.86 Preparing to unpack .../01-libgdbm6_1.23-3_amd64.deb ...
+#8 11.86 Unpacking libgdbm6:amd64 (1.23-3) ...
+#8 11.91 Selecting previously unselected package libgdbm-compat4:amd64.
+#8 11.91 Preparing to unpack .../02-libgdbm-compat4_1.23-3_amd64.deb ...
+#8 11.91 Unpacking libgdbm-compat4:amd64 (1.23-3) ...
+#8 11.95 Selecting previously unselected package libperl5.36:amd64.
+#8 11.95 Preparing to unpack .../03-libperl5.36_5.36.0-7+deb12u3_amd64.deb ...
+#8 11.96 Unpacking libperl5.36:amd64 (5.36.0-7+deb12u3) ...
+#8 12.58 Selecting previously unselected package perl.
+#8 12.59 Preparing to unpack .../04-perl_5.36.0-7+deb12u3_amd64.deb ...
+#8 12.61 Unpacking perl (5.36.0-7+deb12u3) ...
+#8 12.66 Selecting previously unselected package libjson-perl.
+#8 12.66 Preparing to unpack .../05-libjson-perl_4.10000-1_all.deb ...
+#8 12.66 Unpacking libjson-perl (4.10000-1) ...
+#8 12.70 Selecting previously unselected package netbase.
+#8 12.70 Preparing to unpack .../06-netbase_6.4_all.deb ...
+#8 12.71 Unpacking netbase (6.4) ...
+#8 12.74 Selecting previously unselected package postgresql-client-common.
+#8 12.74 Preparing to unpack .../07-postgresql-client-common_248+deb12u1_all.deb ...
+#8 12.74 Unpacking postgresql-client-common (248+deb12u1) ...
+#8 12.82 Selecting previously unselected package libssl3:amd64.
+#8 12.82 Preparing to unpack .../08-libssl3_3.0.20-1~deb12u2_amd64.deb ...
+#8 12.82 Unpacking libssl3:amd64 (3.0.20-1~deb12u2) ...
+#8 13.02 Selecting previously unselected package openssl.
+#8 13.02 Preparing to unpack .../09-openssl_3.0.20-1~deb12u2_amd64.deb ...
+#8 13.02 Unpacking openssl (3.0.20-1~deb12u2) ...
+#8 13.17 Selecting previously unselected package ssl-cert.
+#8 13.17 Preparing to unpack .../10-ssl-cert_1.1.2_all.deb ...
+#8 13.17 Unpacking ssl-cert (1.1.2) ...
+#8 13.20 Selecting previously unselected package sensible-utils.
+#8 13.21 Preparing to unpack .../11-sensible-utils_0.0.17+nmu1_all.deb ...
+#8 13.21 Unpacking sensible-utils (0.0.17+nmu1) ...
+#8 13.24 Selecting previously unselected package ucf.
+#8 13.24 Preparing to unpack .../12-ucf_3.0043+nmu1+deb12u1_all.deb ...
+#8 13.24 Moving old data out of the way
+#8 13.25 Unpacking ucf (3.0043+nmu1+deb12u1) ...
+#8 13.29 Selecting previously unselected package postgresql-common.
+#8 13.29 Preparing to unpack .../13-postgresql-common_248+deb12u1_all.deb ...
+#8 13.30 Adding 'diversion of /usr/bin/pg_config to /usr/bin/pg_config.libpq-dev by postgresql-common'
+#8 13.31 Unpacking postgresql-common (248+deb12u1) ...
+#8 13.38 Selecting previously unselected package libc-ares2:amd64.
+#8 13.38 Preparing to unpack .../14-libc-ares2_1.18.1-3_amd64.deb ...
+#8 13.38 Unpacking libc-ares2:amd64 (1.18.1-3) ...
+#8 13.42 Selecting previously unselected package libevent-2.1-7:amd64.
+#8 13.43 Preparing to unpack .../15-libevent-2.1-7_2.1.12-stable-8_amd64.deb ...
+#8 13.43 Unpacking libevent-2.1-7:amd64 (2.1.12-stable-8) ...
+#8 13.47 Selecting previously unselected package pgbouncer.
+#8 13.47 Preparing to unpack .../16-pgbouncer_1.18.0-1+deb12u1_amd64.deb ...
+#8 13.48 Unpacking pgbouncer (1.18.0-1+deb12u1) ...
+#8 13.53 Selecting previously unselected package libpython3.11-minimal:amd64.
+#8 13.53 Preparing to unpack .../17-libpython3.11-minimal_3.11.2-6+deb12u8_amd64.deb ...
+#8 13.53 Unpacking libpython3.11-minimal:amd64 (3.11.2-6+deb12u8) ...
+#8 13.69 Selecting previously unselected package libexpat1:amd64.
+#8 13.69 Preparing to unpack .../18-libexpat1_2.5.0-1+deb12u2_amd64.deb ...
+#8 13.69 Unpacking libexpat1:amd64 (2.5.0-1+deb12u2) ...
+#8 13.73 Selecting previously unselected package python3.11-minimal.
+#8 13.73 Preparing to unpack .../19-python3.11-minimal_3.11.2-6+deb12u8_amd64.deb ...
+#8 13.74 Unpacking python3.11-minimal (3.11.2-6+deb12u8) ...
+#8 13.94 Setting up libssl3:amd64 (3.0.20-1~deb12u2) ...
+#8 13.95 Setting up libpython3.11-minimal:amd64 (3.11.2-6+deb12u8) ...
+#8 13.95 Setting up libexpat1:amd64 (2.5.0-1+deb12u2) ...
+#8 13.96 Setting up python3.11-minimal (3.11.2-6+deb12u8) ...
+#8 14.78 Selecting previously unselected package python3-minimal.
+#8 14.78 (Reading database ... 
 (Reading database ... 5%
 (Reading database ... 10%
 (Reading database ... 15%
@@ -652,59 +657,59 @@ Builder info
 (Reading database ... 95%
 (Reading database ... 100%
 (Reading database ... 9046 files and directories currently installed.)
-#8 15.52 Preparing to unpack .../00-python3-minimal_3.11.2-1+b1_amd64.deb ...
-#8 15.53 Unpacking python3-minimal (3.11.2-1+b1) ...
-#8 15.56 Selecting previously unselected package media-types.
-#8 15.56 Preparing to unpack .../01-media-types_10.0.0_all.deb ...
-#8 15.56 Unpacking media-types (10.0.0) ...
-#8 15.59 Selecting previously unselected package libncursesw6:amd64.
-#8 15.60 Preparing to unpack .../02-libncursesw6_6.4-4_amd64.deb ...
-#8 15.60 Unpacking libncursesw6:amd64 (6.4-4) ...
-#8 15.64 Selecting previously unselected package libkrb5support0:amd64.
-#8 15.64 Preparing to unpack .../03-libkrb5support0_1.20.1-2+deb12u5_amd64.deb ...
-#8 15.64 Unpacking libkrb5support0:amd64 (1.20.1-2+deb12u5) ...
-#8 15.67 Selecting previously unselected package libk5crypto3:amd64.
-#8 15.68 Preparing to unpack .../04-libk5crypto3_1.20.1-2+deb12u5_amd64.deb ...
-#8 15.68 Unpacking libk5crypto3:amd64 (1.20.1-2+deb12u5) ...
-#8 15.72 Selecting previously unselected package libkeyutils1:amd64.
-#8 15.72 Preparing to unpack .../05-libkeyutils1_1.6.3-2_amd64.deb ...
-#8 15.72 Unpacking libkeyutils1:amd64 (1.6.3-2) ...
-#8 15.75 Selecting previously unselected package libkrb5-3:amd64.
-#8 15.75 Preparing to unpack .../06-libkrb5-3_1.20.1-2+deb12u5_amd64.deb ...
-#8 15.75 Unpacking libkrb5-3:amd64 (1.20.1-2+deb12u5) ...
-#8 15.84 Selecting previously unselected package libgssapi-krb5-2:amd64.
-#8 15.84 Preparing to unpack .../07-libgssapi-krb5-2_1.20.1-2+deb12u5_amd64.deb ...
-#8 15.85 Unpacking libgssapi-krb5-2:amd64 (1.20.1-2+deb12u5) ...
-#8 15.88 Selecting previously unselected package libtirpc-common.
-#8 15.88 Preparing to unpack .../08-libtirpc-common_1.3.3+ds-1_all.deb ...
-#8 15.88 Unpacking libtirpc-common (1.3.3+ds-1) ...
-#8 15.91 Selecting previously unselected package libtirpc3:amd64.
-#8 15.91 Preparing to unpack .../09-libtirpc3_1.3.3+ds-1_amd64.deb ...
-#8 15.92 Unpacking libtirpc3:amd64 (1.3.3+ds-1) ...
-#8 15.95 Selecting previously unselected package libnsl2:amd64.
-#8 15.96 Preparing to unpack .../10-libnsl2_1.3.0-2_amd64.deb ...
-#8 15.96 Unpacking libnsl2:amd64 (1.3.0-2) ...
-#8 15.99 Selecting previously unselected package readline-common.
-#8 15.99 Preparing to unpack .../11-readline-common_8.2-1.3_all.deb ...
-#8 15.99 Unpacking readline-common (8.2-1.3) ...
-#8 16.03 Selecting previously unselected package libreadline8:amd64.
-#8 16.03 Preparing to unpack .../12-libreadline8_8.2-1.3_amd64.deb ...
-#8 16.03 Unpacking libreadline8:amd64 (8.2-1.3) ...
-#8 16.07 Selecting previously unselected package libsqlite3-0:amd64.
-#8 16.07 Preparing to unpack .../13-libsqlite3-0_3.40.1-2+deb12u2_amd64.deb ...
-#8 16.08 Unpacking libsqlite3-0:amd64 (3.40.1-2+deb12u2) ...
-#8 16.16 Selecting previously unselected package libpython3.11-stdlib:amd64.
-#8 16.17 Preparing to unpack .../14-libpython3.11-stdlib_3.11.2-6+deb12u8_amd64.deb ...
-#8 16.17 Unpacking libpython3.11-stdlib:amd64 (3.11.2-6+deb12u8) ...
-#8 16.45 Selecting previously unselected package python3.11.
-#8 16.45 Preparing to unpack .../15-python3.11_3.11.2-6+deb12u8_amd64.deb ...
-#8 16.46 Unpacking python3.11 (3.11.2-6+deb12u8) ...
-#8 16.50 Selecting previously unselected package libpython3-stdlib:amd64.
-#8 16.51 Preparing to unpack .../16-libpython3-stdlib_3.11.2-1+b1_amd64.deb ...
-#8 16.51 Unpacking libpython3-stdlib:amd64 (3.11.2-1+b1) ...
-#8 16.54 Setting up python3-minimal (3.11.2-1+b1) ...
-#8 16.81 Selecting previously unselected package python3.
-#8 16.81 (Reading database ... 
+#8 14.81 Preparing to unpack .../00-python3-minimal_3.11.2-1+b1_amd64.deb ...
+#8 14.81 Unpacking python3-minimal (3.11.2-1+b1) ...
+#8 14.84 Selecting previously unselected package media-types.
+#8 14.84 Preparing to unpack .../01-media-types_10.0.0_all.deb ...
+#8 14.84 Unpacking media-types (10.0.0) ...
+#8 14.87 Selecting previously unselected package libncursesw6:amd64.
+#8 14.87 Preparing to unpack .../02-libncursesw6_6.4-4_amd64.deb ...
+#8 14.87 Unpacking libncursesw6:amd64 (6.4-4) ...
+#8 14.90 Selecting previously unselected package libkrb5support0:amd64.
+#8 14.91 Preparing to unpack .../03-libkrb5support0_1.20.1-2+deb12u5_amd64.deb ...
+#8 14.91 Unpacking libkrb5support0:amd64 (1.20.1-2+deb12u5) ...
+#8 14.93 Selecting previously unselected package libk5crypto3:amd64.
+#8 14.93 Preparing to unpack .../04-libk5crypto3_1.20.1-2+deb12u5_amd64.deb ...
+#8 14.93 Unpacking libk5crypto3:amd64 (1.20.1-2+deb12u5) ...
+#8 14.96 Selecting previously unselected package libkeyutils1:amd64.
+#8 14.97 Preparing to unpack .../05-libkeyutils1_1.6.3-2_amd64.deb ...
+#8 14.97 Unpacking libkeyutils1:amd64 (1.6.3-2) ...
+#8 14.99 Selecting previously unselected package libkrb5-3:amd64.
+#8 14.99 Preparing to unpack .../06-libkrb5-3_1.20.1-2+deb12u5_amd64.deb ...
+#8 15.03 Unpacking libkrb5-3:amd64 (1.20.1-2+deb12u5) ...
+#8 15.08 Selecting previously unselected package libgssapi-krb5-2:amd64.
+#8 15.08 Preparing to unpack .../07-libgssapi-krb5-2_1.20.1-2+deb12u5_amd64.deb ...
+#8 15.08 Unpacking libgssapi-krb5-2:amd64 (1.20.1-2+deb12u5) ...
+#8 15.11 Selecting previously unselected package libtirpc-common.
+#8 15.12 Preparing to unpack .../08-libtirpc-common_1.3.3+ds-1_all.deb ...
+#8 15.12 Unpacking libtirpc-common (1.3.3+ds-1) ...
+#8 15.14 Selecting previously unselected package libtirpc3:amd64.
+#8 15.14 Preparing to unpack .../09-libtirpc3_1.3.3+ds-1_amd64.deb ...
+#8 15.14 Unpacking libtirpc3:amd64 (1.3.3+ds-1) ...
+#8 15.17 Selecting previously unselected package libnsl2:amd64.
+#8 15.17 Preparing to unpack .../10-libnsl2_1.3.0-2_amd64.deb ...
+#8 15.17 Unpacking libnsl2:amd64 (1.3.0-2) ...
+#8 15.19 Selecting previously unselected package readline-common.
+#8 15.19 Preparing to unpack .../11-readline-common_8.2-1.3_all.deb ...
+#8 15.19 Unpacking readline-common (8.2-1.3) ...
+#8 15.22 Selecting previously unselected package libreadline8:amd64.
+#8 15.22 Preparing to unpack .../12-libreadline8_8.2-1.3_amd64.deb ...
+#8 15.22 Unpacking libreadline8:amd64 (8.2-1.3) ...
+#8 15.26 Selecting previously unselected package libsqlite3-0:amd64.
+#8 15.26 Preparing to unpack .../13-libsqlite3-0_3.40.1-2+deb12u2_amd64.deb ...
+#8 15.27 Unpacking libsqlite3-0:amd64 (3.40.1-2+deb12u2) ...
+#8 15.35 Selecting previously unselected package libpython3.11-stdlib:amd64.
+#8 15.35 Preparing to unpack .../14-libpython3.11-stdlib_3.11.2-6+deb12u8_amd64.deb ...
+#8 15.36 Unpacking libpython3.11-stdlib:amd64 (3.11.2-6+deb12u8) ...
+#8 15.60 Selecting previously unselected package python3.11.
+#8 15.60 Preparing to unpack .../15-python3.11_3.11.2-6+deb12u8_amd64.deb ...
+#8 15.60 Unpacking python3.11 (3.11.2-6+deb12u8) ...
+#8 15.64 Selecting previously unselected package libpython3-stdlib:amd64.
+#8 15.64 Preparing to unpack .../16-libpython3-stdlib_3.11.2-1+b1_amd64.deb ...
+#8 15.65 Unpacking libpython3-stdlib:amd64 (3.11.2-1+b1) ...
+#8 15.67 Setting up python3-minimal (3.11.2-1+b1) ...
+#8 15.90 Selecting previously unselected package python3.
+#8 15.90 (Reading database ... 
 (Reading database ... 5%
 (Reading database ... 10%
 (Reading database ... 15%
@@ -726,34 +731,34 @@ Builder info
 (Reading database ... 95%
 (Reading database ... 100%
 (Reading database ... 9553 files and directories currently installed.)
-#8 16.82 Preparing to unpack .../0-python3_3.11.2-1+b1_amd64.deb ...
-#8 16.83 Unpacking python3 (3.11.2-1+b1) ...
-#8 16.86 Selecting previously unselected package libatomic1:amd64.
-#8 16.86 Preparing to unpack .../1-libatomic1_12.2.0-14+deb12u1_amd64.deb ...
-#8 16.86 Unpacking libatomic1:amd64 (12.2.0-14+deb12u1) ...
-#8 16.89 Selecting previously unselected package libjemalloc2:amd64.
-#8 16.89 Preparing to unpack .../2-libjemalloc2_5.3.0-1_amd64.deb ...
-#8 16.89 Unpacking libjemalloc2:amd64 (5.3.0-1) ...
-#8 16.94 Selecting previously unselected package liblzf1:amd64.
-#8 16.95 Preparing to unpack .../3-liblzf1_3.6-3_amd64.deb ...
-#8 16.95 Unpacking liblzf1:amd64 (3.6-3) ...
-#8 16.98 Selecting previously unselected package redis-tools.
-#8 16.99 Preparing to unpack .../4-redis-tools_5%3a7.0.15-1~deb12u7_amd64.deb ...
-#8 16.99 Unpacking redis-tools (5:7.0.15-1~deb12u7) ...
-#8 17.11 Selecting previously unselected package redis-server.
-#8 17.11 Preparing to unpack .../5-redis-server_5%3a7.0.15-1~deb12u7_amd64.deb ...
-#8 17.16 Unpacking redis-server (5:7.0.15-1~deb12u7) ...
-#8 17.20 Selecting previously unselected package python3-pkg-resources.
-#8 17.20 Preparing to unpack .../6-python3-pkg-resources_66.1.1-1+deb12u2_all.deb ...
-#8 17.20 Unpacking python3-pkg-resources (66.1.1-1+deb12u2) ...
-#8 17.28 Selecting previously unselected package supervisor.
-#8 17.28 Preparing to unpack .../7-supervisor_4.2.5-1_all.deb ...
-#8 17.29 Unpacking supervisor (4.2.5-1) ...
-#8 17.37 Preparing to unpack .../8-libcap2_1%3a2.66-4+deb12u3+b1_amd64.deb ...
-#8 17.39 Unpacking libcap2:amd64 (1:2.66-4+deb12u3+b1) over (1:2.66-4+deb12u1) ...
-#8 17.42 Setting up libcap2:amd64 (1:2.66-4+deb12u3+b1) ...
-#8 17.45 Selecting previously unselected package libelf1:amd64.
-#8 17.45 (Reading database ... 
+#8 15.92 Preparing to unpack .../0-python3_3.11.2-1+b1_amd64.deb ...
+#8 15.92 Unpacking python3 (3.11.2-1+b1) ...
+#8 15.96 Selecting previously unselected package libatomic1:amd64.
+#8 15.96 Preparing to unpack .../1-libatomic1_12.2.0-14+deb12u1_amd64.deb ...
+#8 15.96 Unpacking libatomic1:amd64 (12.2.0-14+deb12u1) ...
+#8 15.99 Selecting previously unselected package libjemalloc2:amd64.
+#8 15.99 Preparing to unpack .../2-libjemalloc2_5.3.0-1_amd64.deb ...
+#8 15.99 Unpacking libjemalloc2:amd64 (5.3.0-1) ...
+#8 16.05 Selecting previously unselected package liblzf1:amd64.
+#8 16.05 Preparing to unpack .../3-liblzf1_3.6-3_amd64.deb ...
+#8 16.06 Unpacking liblzf1:amd64 (3.6-3) ...
+#8 16.08 Selecting previously unselected package redis-tools.
+#8 16.08 Preparing to unpack .../4-redis-tools_5%3a7.0.15-1~deb12u7_amd64.deb ...
+#8 16.09 Unpacking redis-tools (5:7.0.15-1~deb12u7) ...
+#8 16.22 Selecting previously unselected package redis-server.
+#8 16.22 Preparing to unpack .../5-redis-server_5%3a7.0.15-1~deb12u7_amd64.deb ...
+#8 16.25 Unpacking redis-server (5:7.0.15-1~deb12u7) ...
+#8 16.30 Selecting previously unselected package python3-pkg-resources.
+#8 16.30 Preparing to unpack .../6-python3-pkg-resources_66.1.1-1+deb12u2_all.deb ...
+#8 16.30 Unpacking python3-pkg-resources (66.1.1-1+deb12u2) ...
+#8 16.35 Selecting previously unselected package supervisor.
+#8 16.35 Preparing to unpack .../7-supervisor_4.2.5-1_all.deb ...
+#8 16.35 Unpacking supervisor (4.2.5-1) ...
+#8 16.43 Preparing to unpack .../8-libcap2_1%3a2.66-4+deb12u3+b1_amd64.deb ...
+#8 16.43 Unpacking libcap2:amd64 (1:2.66-4+deb12u3+b1) over (1:2.66-4+deb12u1) ...
+#8 16.46 Setting up libcap2:amd64 (1:2.66-4+deb12u3+b1) ...
+#8 16.50 Selecting previously unselected package libelf1:amd64.
+#8 16.50 (Reading database ... 
 (Reading database ... 5%
 (Reading database ... 10%
 (Reading database ... 15%
@@ -775,407 +780,480 @@ Builder info
 (Reading database ... 95%
 (Reading database ... 100%
 (Reading database ... 9844 files and directories currently installed.)
-#8 17.46 Preparing to unpack .../00-libelf1_0.188-2.1_amd64.deb ...
-#8 17.46 Unpacking libelf1:amd64 (0.188-2.1) ...
-#8 17.51 Selecting previously unselected package libbpf1:amd64.
-#8 17.52 Preparing to unpack .../01-libbpf1_1%3a1.1.2-0+deb12u1_amd64.deb ...
-#8 17.52 Unpacking libbpf1:amd64 (1:1.1.2-0+deb12u1) ...
-#8 17.57 Selecting previously unselected package libbsd0:amd64.
-#8 17.57 Preparing to unpack .../02-libbsd0_0.11.7-2_amd64.deb ...
-#8 17.57 Unpacking libbsd0:amd64 (0.11.7-2) ...
-#8 17.60 Selecting previously unselected package libmnl0:amd64.
-#8 17.61 Preparing to unpack .../03-libmnl0_1.0.4-3_amd64.deb ...
-#8 17.61 Unpacking libmnl0:amd64 (1.0.4-3) ...
-#8 17.65 Selecting previously unselected package libxtables12:amd64.
-#8 17.65 Preparing to unpack .../04-libxtables12_1.8.9-2_amd64.deb ...
-#8 17.65 Unpacking libxtables12:amd64 (1.8.9-2) ...
-#8 17.69 Selecting previously unselected package libcap2-bin.
-#8 17.70 Preparing to unpack .../05-libcap2-bin_1%3a2.66-4+deb12u3+b1_amd64.deb ...
-#8 17.70 Unpacking libcap2-bin (1:2.66-4+deb12u3+b1) ...
-#8 17.74 Selecting previously unselected package iproute2.
-#8 17.75 Preparing to unpack .../06-iproute2_6.1.0-3_amd64.deb ...
-#8 17.75 Unpacking iproute2 (6.1.0-3) ...
-#8 17.89 Selecting previously unselected package libproc2-0:amd64.
-#8 17.89 Preparing to unpack .../07-libproc2-0_2%3a4.0.2-3_amd64.deb ...
-#8 17.89 Unpacking libproc2-0:amd64 (2:4.0.2-3) ...
-#8 17.95 Selecting previously unselected package procps.
-#8 17.95 Preparing to unpack .../08-procps_2%3a4.0.2-3_amd64.deb ...
-#8 17.97 Unpacking procps (2:4.0.2-3) ...
-#8 18.08 Selecting previously unselected package libc-l10n.
-#8 18.08 Preparing to unpack .../09-libc-l10n_2.36-9+deb12u14_all.deb ...
-#8 18.08 Unpacking libc-l10n (2.36-9+deb12u14) ...
-#8 18.21 Selecting previously unselected package locales.
-#8 18.21 Preparing to unpack .../10-locales_2.36-9+deb12u14_all.deb ...
-#8 18.24 Unpacking locales (2.36-9+deb12u14) ...
-#8 18.89 Selecting previously unselected package libbrotli1:amd64.
-#8 18.89 Preparing to unpack .../11-libbrotli1_1.0.9-2+b6_amd64.deb ...
-#8 18.89 Unpacking libbrotli1:amd64 (1.0.9-2+b6) ...
-#8 18.96 Selecting previously unselected package libsasl2-modules-db:amd64.
-#8 18.96 Preparing to unpack .../12-libsasl2-modules-db_2.1.28+dfsg-10_amd64.deb ...
-#8 18.97 Unpacking libsasl2-modules-db:amd64 (2.1.28+dfsg-10) ...
-#8 18.99 Selecting previously unselected package libsasl2-2:amd64.
-#8 18.99 Preparing to unpack .../13-libsasl2-2_2.1.28+dfsg-10_amd64.deb ...
-#8 19.00 Unpacking libsasl2-2:amd64 (2.1.28+dfsg-10) ...
-#8 19.04 Selecting previously unselected package libldap-2.5-0:amd64.
-#8 19.04 Preparing to unpack .../14-libldap-2.5-0_2.5.13+dfsg-5_amd64.deb ...
-#8 19.04 Unpacking libldap-2.5-0:amd64 (2.5.13+dfsg-5) ...
-#8 19.09 Selecting previously unselected package libnghttp2-14:amd64.
-#8 19.09 Preparing to unpack .../15-libnghttp2-14_1.52.0-1+deb12u3_amd64.deb ...
-#8 19.09 Unpacking libnghttp2-14:amd64 (1.52.0-1+deb12u3) ...
-#8 19.14 Selecting previously unselected package libpsl5:amd64.
-#8 19.15 Preparing to unpack .../16-libpsl5_0.21.2-1_amd64.deb ...
-#8 19.15 Unpacking libpsl5:amd64 (0.21.2-1) ...
-#8 19.25 Selecting previously unselected package librtmp1:amd64.
-#8 19.25 Preparing to unpack .../17-librtmp1_2.4+20151223.gitfa8646d.1-2+b2_amd64.deb ...
-#8 19.26 Unpacking librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2+b2) ...
-#8 19.31 Selecting previously unselected package libssh2-1:amd64.
-#8 19.31 Preparing to unpack .../18-libssh2-1_1.10.0-3+b1_amd64.deb ...
-#8 19.31 Unpacking libssh2-1:amd64 (1.10.0-3+b1) ...
-#8 19.37 Selecting previously unselected package libcurl4:amd64.
-#8 19.38 Preparing to unpack .../19-libcurl4_7.88.1-10+deb12u15_amd64.deb ...
-#8 19.38 Unpacking libcurl4:amd64 (7.88.1-10+deb12u15) ...
-#8 19.44 Selecting previously unselected package curl.
-#8 19.45 Preparing to unpack .../20-curl_7.88.1-10+deb12u15_amd64.deb ...
-#8 19.45 Unpacking curl (7.88.1-10+deb12u15) ...
-#8 19.56 Selecting previously unselected package libedit2:amd64.
-#8 19.56 Preparing to unpack .../21-libedit2_3.1-20221030-2_amd64.deb ...
-#8 19.56 Unpacking libedit2:amd64 (3.1-20221030-2) ...
-#8 19.61 Selecting previously unselected package libicu72:amd64.
-#8 19.62 Preparing to unpack .../22-libicu72_72.1-3+deb12u1_amd64.deb ...
-#8 19.62 Unpacking libicu72:amd64 (72.1-3+deb12u1) ...
-#8 20.55 Selecting previously unselected package libxml2:amd64.
-#8 20.55 Preparing to unpack .../23-libxml2_2.9.14+dfsg-1.3~deb12u6_amd64.deb ...
-#8 20.55 Unpacking libxml2:amd64 (2.9.14+dfsg-1.3~deb12u6) ...
-#8 20.62 Selecting previously unselected package libz3-4:amd64.
-#8 20.62 Preparing to unpack .../24-libz3-4_4.8.12-3.1_amd64.deb ...
-#8 20.63 Unpacking libz3-4:amd64 (4.8.12-3.1) ...
-#8 21.30 Selecting previously unselected package libllvm14:amd64.
-#8 21.31 Preparing to unpack .../25-libllvm14_1%3a14.0.6-12_amd64.deb ...
-#8 21.31 Unpacking libllvm14:amd64 (1:14.0.6-12) ...
-#8 23.19 Selecting previously unselected package libpq5:amd64.
-#8 23.19 Preparing to unpack .../26-libpq5_15.18-0+deb12u1_amd64.deb ...
-#8 23.19 Unpacking libpq5:amd64 (15.18-0+deb12u1) ...
-#8 23.24 Selecting previously unselected package libxslt1.1:amd64.
-#8 23.24 Preparing to unpack .../27-libxslt1.1_1.1.35-1+deb12u4_amd64.deb ...
-#8 23.24 Unpacking libxslt1.1:amd64 (1.1.35-1+deb12u4) ...
-#8 23.29 Selecting previously unselected package nginx-common.
-#8 23.29 Preparing to unpack .../28-nginx-common_1.22.1-9+deb12u9_all.deb ...
-#8 23.30 Unpacking nginx-common (1.22.1-9+deb12u9) ...
-#8 23.33 Selecting previously unselected package nginx.
-#8 23.33 Preparing to unpack .../29-nginx_1.22.1-9+deb12u9_amd64.deb ...
-#8 23.34 Unpacking nginx (1.22.1-9+deb12u9) ...
-#8 23.40 Selecting previously unselected package postgresql-client-15.
-#8 23.41 Preparing to unpack .../30-postgresql-client-15_15.18-0+deb12u1_amd64.deb ...
-#8 23.41 Unpacking postgresql-client-15 (15.18-0+deb12u1) ...
-#8 23.64 Selecting previously unselected package postgresql-15.
-#8 23.64 Preparing to unpack .../31-postgresql-15_15.18-0+deb12u1_amd64.deb ...
-#8 23.64 Unpacking postgresql-15 (15.18-0+deb12u1) ...
-#8 25.39 Setting up media-types (10.0.0) ...
-#8 25.45 Setting up libkeyutils1:amd64 (1.6.3-2) ...
-#8 25.49 Setting up libc-l10n (2.36-9+deb12u14) ...
-#8 25.53 Setting up libpsl5:amd64 (0.21.2-1) ...
-#8 25.59 Setting up libicu72:amd64 (72.1-3+deb12u1) ...
-#8 25.63 Setting up libtirpc-common (1.3.3+ds-1) ...
-#8 25.64 Setting up libbrotli1:amd64 (1.0.9-2+b6) ...
-#8 25.75 Setting up libsqlite3-0:amd64 (3.40.1-2+deb12u2) ...
+#8 16.53 Preparing to unpack .../00-libelf1_0.188-2.1_amd64.deb ...
+#8 16.53 Unpacking libelf1:amd64 (0.188-2.1) ...
+#8 16.58 Selecting previously unselected package libbpf1:amd64.
+#8 16.58 Preparing to unpack .../01-libbpf1_1%3a1.1.2-0+deb12u1_amd64.deb ...
+#8 16.58 Unpacking libbpf1:amd64 (1:1.1.2-0+deb12u1) ...
+#8 16.63 Selecting previously unselected package libbsd0:amd64.
+#8 16.63 Preparing to unpack .../02-libbsd0_0.11.7-2_amd64.deb ...
+#8 16.63 Unpacking libbsd0:amd64 (0.11.7-2) ...
+#8 16.69 Selecting previously unselected package libmnl0:amd64.
+#8 16.69 Preparing to unpack .../03-libmnl0_1.0.4-3_amd64.deb ...
+#8 16.69 Unpacking libmnl0:amd64 (1.0.4-3) ...
+#8 16.74 Selecting previously unselected package libxtables12:amd64.
+#8 16.74 Preparing to unpack .../04-libxtables12_1.8.9-2_amd64.deb ...
+#8 16.74 Unpacking libxtables12:amd64 (1.8.9-2) ...
+#8 16.80 Selecting previously unselected package libcap2-bin.
+#8 16.81 Preparing to unpack .../05-libcap2-bin_1%3a2.66-4+deb12u3+b1_amd64.deb ...
+#8 16.83 Unpacking libcap2-bin (1:2.66-4+deb12u3+b1) ...
+#8 16.86 Selecting previously unselected package iproute2.
+#8 16.87 Preparing to unpack .../06-iproute2_6.1.0-3_amd64.deb ...
+#8 16.88 Unpacking iproute2 (6.1.0-3) ...
+#8 17.02 Selecting previously unselected package libproc2-0:amd64.
+#8 17.02 Preparing to unpack .../07-libproc2-0_2%3a4.0.2-3_amd64.deb ...
+#8 17.02 Unpacking libproc2-0:amd64 (2:4.0.2-3) ...
+#8 17.06 Selecting previously unselected package procps.
+#8 17.07 Preparing to unpack .../08-procps_2%3a4.0.2-3_amd64.deb ...
+#8 17.10 Unpacking procps (2:4.0.2-3) ...
+#8 17.20 Selecting previously unselected package libc-l10n.
+#8 17.21 Preparing to unpack .../09-libc-l10n_2.36-9+deb12u14_all.deb ...
+#8 17.21 Unpacking libc-l10n (2.36-9+deb12u14) ...
+#8 17.33 Selecting previously unselected package locales.
+#8 17.33 Preparing to unpack .../10-locales_2.36-9+deb12u14_all.deb ...
+#8 17.34 Unpacking locales (2.36-9+deb12u14) ...
+#8 17.90 Selecting previously unselected package libbrotli1:amd64.
+#8 17.90 Preparing to unpack .../11-libbrotli1_1.0.9-2+b6_amd64.deb ...
+#8 17.93 Unpacking libbrotli1:amd64 (1.0.9-2+b6) ...
+#8 17.99 Selecting previously unselected package libsasl2-modules-db:amd64.
+#8 18.00 Preparing to unpack .../12-libsasl2-modules-db_2.1.28+dfsg-10_amd64.deb ...
+#8 18.00 Unpacking libsasl2-modules-db:amd64 (2.1.28+dfsg-10) ...
+#8 18.03 Selecting previously unselected package libsasl2-2:amd64.
+#8 18.03 Preparing to unpack .../13-libsasl2-2_2.1.28+dfsg-10_amd64.deb ...
+#8 18.03 Unpacking libsasl2-2:amd64 (2.1.28+dfsg-10) ...
+#8 18.06 Selecting previously unselected package libldap-2.5-0:amd64.
+#8 18.07 Preparing to unpack .../14-libldap-2.5-0_2.5.13+dfsg-5_amd64.deb ...
+#8 18.07 Unpacking libldap-2.5-0:amd64 (2.5.13+dfsg-5) ...
+#8 18.11 Selecting previously unselected package libnghttp2-14:amd64.
+#8 18.11 Preparing to unpack .../15-libnghttp2-14_1.52.0-1+deb12u3_amd64.deb ...
+#8 18.12 Unpacking libnghttp2-14:amd64 (1.52.0-1+deb12u3) ...
+#8 18.15 Selecting previously unselected package libpsl5:amd64.
+#8 18.15 Preparing to unpack .../16-libpsl5_0.21.2-1_amd64.deb ...
+#8 18.15 Unpacking libpsl5:amd64 (0.21.2-1) ...
+#8 18.20 Selecting previously unselected package librtmp1:amd64.
+#8 18.20 Preparing to unpack .../17-librtmp1_2.4+20151223.gitfa8646d.1-2+b2_amd64.deb ...
+#8 18.20 Unpacking librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2+b2) ...
+#8 18.23 Selecting previously unselected package libssh2-1:amd64.
+#8 18.24 Preparing to unpack .../18-libssh2-1_1.10.0-3+b1_amd64.deb ...
+#8 18.24 Unpacking libssh2-1:amd64 (1.10.0-3+b1) ...
+#8 18.30 Selecting previously unselected package libcurl4:amd64.
+#8 18.30 Preparing to unpack .../19-libcurl4_7.88.1-10+deb12u15_amd64.deb ...
+#8 18.30 Unpacking libcurl4:amd64 (7.88.1-10+deb12u15) ...
+#8 18.36 Selecting previously unselected package curl.
+#8 18.36 Preparing to unpack .../20-curl_7.88.1-10+deb12u15_amd64.deb ...
+#8 18.36 Unpacking curl (7.88.1-10+deb12u15) ...
+#8 18.42 Selecting previously unselected package libedit2:amd64.
+#8 18.42 Preparing to unpack .../21-libedit2_3.1-20221030-2_amd64.deb ...
+#8 18.42 Unpacking libedit2:amd64 (3.1-20221030-2) ...
+#8 18.48 Selecting previously unselected package libicu72:amd64.
+#8 18.48 Preparing to unpack .../22-libicu72_72.1-3+deb12u1_amd64.deb ...
+#8 18.48 Unpacking libicu72:amd64 (72.1-3+deb12u1) ...
+#8 19.39 Selecting previously unselected package libxml2:amd64.
+#8 19.40 Preparing to unpack .../23-libxml2_2.9.14+dfsg-1.3~deb12u6_amd64.deb ...
+#8 19.41 Unpacking libxml2:amd64 (2.9.14+dfsg-1.3~deb12u6) ...
+#8 19.83 Selecting previously unselected package libz3-4:amd64.
+#8 19.83 Preparing to unpack .../24-libz3-4_4.8.12-3.1_amd64.deb ...
+#8 19.83 Unpacking libz3-4:amd64 (4.8.12-3.1) ...
+#8 20.54 Selecting previously unselected package libllvm14:amd64.
+#8 20.54 Preparing to unpack .../25-libllvm14_1%3a14.0.6-12_amd64.deb ...
+#8 20.55 Unpacking libllvm14:amd64 (1:14.0.6-12) ...
+#8 22.12 Selecting previously unselected package libpq5:amd64.
+#8 22.13 Preparing to unpack .../26-libpq5_15.18-0+deb12u1_amd64.deb ...
+#8 22.13 Unpacking libpq5:amd64 (15.18-0+deb12u1) ...
+#8 22.17 Selecting previously unselected package libxslt1.1:amd64.
+#8 22.17 Preparing to unpack .../27-libxslt1.1_1.1.35-1+deb12u4_amd64.deb ...
+#8 22.18 Unpacking libxslt1.1:amd64 (1.1.35-1+deb12u4) ...
+#8 22.23 Selecting previously unselected package nginx-common.
+#8 22.23 Preparing to unpack .../28-nginx-common_1.22.1-9+deb12u9_all.deb ...
+#8 22.24 Unpacking nginx-common (1.22.1-9+deb12u9) ...
+#8 22.28 Selecting previously unselected package nginx.
+#8 22.28 Preparing to unpack .../29-nginx_1.22.1-9+deb12u9_amd64.deb ...
+#8 22.29 Unpacking nginx (1.22.1-9+deb12u9) ...
+#8 22.36 Selecting previously unselected package postgresql-client-15.
+#8 22.36 Preparing to unpack .../30-postgresql-client-15_15.18-0+deb12u1_amd64.deb ...
+#8 22.36 Unpacking postgresql-client-15 (15.18-0+deb12u1) ...
+#8 22.61 Selecting previously unselected package postgresql-15.
+#8 22.61 Preparing to unpack .../31-postgresql-15_15.18-0+deb12u1_amd64.deb ...
+#8 22.62 Unpacking postgresql-15 (15.18-0+deb12u1) ...
+#8 24.01 Setting up media-types (10.0.0) ...
+#8 24.02 Setting up libkeyutils1:amd64 (1.6.3-2) ...
+#8 24.02 Setting up libc-l10n (2.36-9+deb12u14) ...
+#8 24.02 Setting up libpsl5:amd64 (0.21.2-1) ...
+#8 24.03 Setting up libicu72:amd64 (72.1-3+deb12u1) ...
+#8 24.03 Setting up libtirpc-common (1.3.3+ds-1) ...
+#8 24.03 Setting up libbrotli1:amd64 (1.0.9-2+b6) ...
+#8 24.03 Setting up libsqlite3-0:amd64 (3.40.1-2+deb12u2) ...
+#8 24.04 Setting up libnghttp2-14:amd64 (1.52.0-1+deb12u3) ...
+#8 24.04 Setting up nginx-common (1.22.1-9+deb12u9) ...
+#8 24.29 Setting up libc-ares2:amd64 (1.18.1-3) ...
+#8 24.30 Setting up libjemalloc2:amd64 (5.3.0-1) ...
+#8 24.30 Setting up locales (2.36-9+deb12u14) ...
+#8 24.94 Generating locales (this might take a while)...
+#8 24.96 Generation complete.
+#8 25.04 Setting up libkrb5support0:amd64 (1.20.1-2+deb12u5) ...
+#8 25.04 Setting up libsasl2-modules-db:amd64 (2.1.28+dfsg-10) ...
+#8 25.05 Setting up libcap2-bin (1:2.66-4+deb12u3+b1) ...
+#8 25.05 Setting up perl-modules-5.36 (5.36.0-7+deb12u3) ...
+#8 25.06 Setting up libz3-4:amd64 (4.8.12-3.1) ...
+#8 25.06 Setting up librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2+b2) ...
+#8 25.06 Setting up liblzf1:amd64 (3.6-3) ...
+#8 25.07 Setting up libproc2-0:amd64 (2:4.0.2-3) ...
+#8 25.07 Setting up libmnl0:amd64 (1.0.4-3) ...
+#8 25.07 Setting up libatomic1:amd64 (12.2.0-14+deb12u1) ...
+#8 25.08 Setting up libevent-2.1-7:amd64 (2.1.12-stable-8) ...
+#8 25.08 Setting up libncursesw6:amd64 (6.4-4) ...
+#8 25.09 Setting up libk5crypto3:amd64 (1.20.1-2+deb12u5) ...
+#8 25.09 Setting up libxtables12:amd64 (1.8.9-2) ...
+#8 25.09 Setting up libsasl2-2:amd64 (2.1.28+dfsg-10) ...
+#8 25.10 Setting up sensible-utils (0.0.17+nmu1) ...
+#8 25.10 Setting up procps (2:4.0.2-3) ...
+#8 25.13 Setting up libssh2-1:amd64 (1.10.0-3+b1) ...
+#8 25.13 Setting up netbase (6.4) ...
+#8 25.14 Setting up libkrb5-3:amd64 (1.20.1-2+deb12u5) ...
+#8 25.15 Setting up openssl (3.0.20-1~deb12u2) ...
+#8 25.15 Setting up libbsd0:amd64 (0.11.7-2) ...
+#8 25.16 Setting up libelf1:amd64 (0.188-2.1) ...
+#8 25.16 Setting up readline-common (8.2-1.3) ...
+#8 25.16 Setting up libxml2:amd64 (2.9.14+dfsg-1.3~deb12u6) ...
+#8 25.17 Setting up libbpf1:amd64 (1:1.1.2-0+deb12u1) ...
+#8 25.17 Setting up libgdbm6:amd64 (1.23-3) ...
+#8 25.17 Setting up libedit2:amd64 (3.1-20221030-2) ...
+#8 25.18 Setting up libreadline8:amd64 (8.2-1.3) ...
+#8 25.18 Setting up libldap-2.5-0:amd64 (2.5.13+dfsg-5) ...
+#8 25.18 Setting up ssl-cert (1.1.2) ...
 #8 ...
 
 #62 [builder 56/59] RUN --mount=type=cache,target=/root/.local/share/pnpm/store     pnpm install --frozen-lockfile
-#62 11.71 Progress: resolved 1766, reused 0, downloaded 393, added 120
-#62 12.71 Progress: resolved 1766, reused 0, downloaded 491, added 151
-#62 13.71 Progress: resolved 1766, reused 0, downloaded 554, added 172
-#62 14.72 Progress: resolved 1766, reused 0, downloaded 598, added 184
-#62 15.72 Progress: resolved 1766, reused 0, downloaded 610, added 188
-#62 16.72 Progress: resolved 1766, reused 0, downloaded 614, added 190
-#62 18.67 Progress: resolved 1766, reused 0, downloaded 615, added 190
-#62 19.67 Progress: resolved 1766, reused 0, downloaded 625, added 192
-#62 20.73 Progress: resolved 1766, reused 0, downloaded 626, added 192
-#62 21.73 Progress: resolved 1766, reused 0, downloaded 643, added 197
+#62 11.59 Progress: resolved 1727, reused 0, downloaded 327, added 106
+#62 12.59 Progress: resolved 1727, reused 0, downloaded 434, added 142
+#62 13.60 Progress: resolved 1727, reused 0, downloaded 469, added 154
+#62 14.59 Progress: resolved 1727, reused 0, downloaded 572, added 192
+#62 15.60 Progress: resolved 1727, reused 0, downloaded 583, added 194
+#62 16.60 Progress: resolved 1727, reused 0, downloaded 586, added 196
+#62 17.60 Progress: resolved 1727, reused 0, downloaded 589, added 198
+#62 19.42 Progress: resolved 1727, reused 0, downloaded 590, added 198
+#62 20.42 Progress: resolved 1727, reused 0, downloaded 591, added 198
+#62 21.43 Progress: resolved 1727, reused 0, downloaded 599, added 199
 #62 ...
 
 #8 [stage-1  2/16] RUN corepack enable && corepack prepare pnpm@10.33.2 --activate &&     apt-get update && apt-get install -y --no-install-recommends       postgresql-15       redis-server       pgbouncer       supervisor       nginx       curl       locales       openssl       procps     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen     && locale-gen en_US.UTF-8     && useradd -r -s /bin/false pgbouncer || true     && mkdir -p /var/lib/redis /var/run/pgbouncer /var/log/supervisor /var/log/postgresql     && chown -R redis:redis /var/lib/redis     && chown -R pgbouncer:pgbouncer /var/run/pgbouncer     && chown -R postgres:postgres /var/log/postgresql     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-#8 25.79 Setting up libnghttp2-14:amd64 (1.52.0-1+deb12u3) ...
-#8 25.80 Setting up nginx-common (1.22.1-9+deb12u9) ...
-#8 26.28 Setting up libc-ares2:amd64 (1.18.1-3) ...
-#8 26.29 Setting up libjemalloc2:amd64 (5.3.0-1) ...
-#8 26.29 Setting up locales (2.36-9+deb12u14) ...
-#8 26.97 Generating locales (this might take a while)...
-#8 26.99 Generation complete.
-#8 27.03 Setting up libkrb5support0:amd64 (1.20.1-2+deb12u5) ...
-#8 27.03 Setting up libsasl2-modules-db:amd64 (2.1.28+dfsg-10) ...
-#8 27.04 Setting up libcap2-bin (1:2.66-4+deb12u3+b1) ...
-#8 27.04 Setting up perl-modules-5.36 (5.36.0-7+deb12u3) ...
-#8 27.05 Setting up libz3-4:amd64 (4.8.12-3.1) ...
-#8 27.05 Setting up librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2+b2) ...
-#8 27.06 Setting up liblzf1:amd64 (3.6-3) ...
-#8 27.06 Setting up libproc2-0:amd64 (2:4.0.2-3) ...
-#8 27.07 Setting up libmnl0:amd64 (1.0.4-3) ...
-#8 27.07 Setting up libatomic1:amd64 (12.2.0-14+deb12u1) ...
-#8 27.08 Setting up libevent-2.1-7:amd64 (2.1.12-stable-8) ...
-#8 27.08 Setting up libncursesw6:amd64 (6.4-4) ...
-#8 27.08 Setting up libk5crypto3:amd64 (1.20.1-2+deb12u5) ...
-#8 27.09 Setting up libxtables12:amd64 (1.8.9-2) ...
-#8 27.09 Setting up libsasl2-2:amd64 (2.1.28+dfsg-10) ...
-#8 27.09 Setting up sensible-utils (0.0.17+nmu1) ...
-#8 27.10 Setting up procps (2:4.0.2-3) ...
-#8 27.13 Setting up libssh2-1:amd64 (1.10.0-3+b1) ...
-#8 27.13 Setting up netbase (6.4) ...
-#8 27.15 Setting up libkrb5-3:amd64 (1.20.1-2+deb12u5) ...
-#8 27.15 Setting up openssl (3.0.20-1~deb12u2) ...
-#8 27.16 Setting up libbsd0:amd64 (0.11.7-2) ...
-#8 27.16 Setting up libelf1:amd64 (0.188-2.1) ...
-#8 27.17 Setting up readline-common (8.2-1.3) ...
-#8 27.17 Setting up libxml2:amd64 (2.9.14+dfsg-1.3~deb12u6) ...
-#8 27.18 Setting up libbpf1:amd64 (1:1.1.2-0+deb12u1) ...
-#8 27.19 Setting up libgdbm6:amd64 (1.23-3) ...
-#8 27.19 Setting up libedit2:amd64 (3.1-20221030-2) ...
-#8 27.19 Setting up libreadline8:amd64 (8.2-1.3) ...
-#8 27.20 Setting up libldap-2.5-0:amd64 (2.5.13+dfsg-5) ...
-#8 27.20 Setting up ssl-cert (1.1.2) ...
-#8 27.93 Setting up redis-tools (5:7.0.15-1~deb12u7) ...
-#8 28.05 Setting up libgssapi-krb5-2:amd64 (1.20.1-2+deb12u5) ...
-#8 28.05 Setting up libgdbm-compat4:amd64 (1.23-3) ...
-#8 28.06 Setting up ucf (3.0043+nmu1+deb12u1) ...
-#8 28.30 Setting up libllvm14:amd64 (1:14.0.6-12) ...
-#8 28.31 Setting up libxslt1.1:amd64 (1.1.35-1+deb12u4) ...
-#8 28.31 Setting up libcurl4:amd64 (7.88.1-10+deb12u15) ...
-#8 28.31 Setting up curl (7.88.1-10+deb12u15) ...
-#8 28.32 Setting up libperl5.36:amd64 (5.36.0-7+deb12u3) ...
-#8 28.32 Setting up libtirpc3:amd64 (1.3.3+ds-1) ...
-#8 28.32 Setting up iproute2 (6.1.0-3) ...
-#8 28.45 Setting up libpq5:amd64 (15.18-0+deb12u1) ...
-#8 28.46 Setting up redis-server (5:7.0.15-1~deb12u7) ...
-#8 28.51 invoke-rc.d: could not determine current runlevel
-#8 28.52 invoke-rc.d: policy-rc.d denied execution of start.
-#8 28.67 Setting up perl (5.36.0-7+deb12u3) ...
-#8 28.68 Setting up libjson-perl (4.10000-1) ...
-#8 28.68 Setting up libnsl2:amd64 (1.3.0-2) ...
-#8 28.69 Setting up postgresql-client-common (248+deb12u1) ...
-#8 28.69 Setting up nginx (1.22.1-9+deb12u9) ...
-#8 28.75 invoke-rc.d: could not determine current runlevel
-#8 28.75 invoke-rc.d: policy-rc.d denied execution of start.
-#8 28.76 Setting up libpython3.11-stdlib:amd64 (3.11.2-6+deb12u8) ...
-#8 28.76 Setting up postgresql-client-15 (15.18-0+deb12u1) ...
-#8 29.40 update-alternatives: using /usr/share/postgresql/15/man/man1/psql.1.gz to provide /usr/share/man/man1/psql.1.gz (psql.1.gz) in auto mode
-#8 29.50 Setting up postgresql-common (248+deb12u1) ...
-#8 29.81 
-#8 29.81 Creating config file /etc/postgresql-common/createcluster.conf with new version
-#8 29.92 Building PostgreSQL dictionaries from installed myspell/hunspell packages...
-#8 29.92 Removing obsolete dictionary files:
-#8 29.93 invoke-rc.d: could not determine current runlevel
-#8 29.94 invoke-rc.d: policy-rc.d denied execution of start.
-#8 30.14 Setting up postgresql-15 (15.18-0+deb12u1) ...
-#8 30.40 Creating new PostgreSQL cluster 15/main ...
-#8 30.41 /usr/lib/postgresql/15/bin/initdb -D /var/lib/postgresql/15/main --auth-local peer --auth-host scram-sha-256 --no-instructions
-#8 30.43 The files belonging to this database system will be owned by user "postgres".
-#8 30.43 This user must also own the server process.
-#8 30.43 
-#8 30.43 The database cluster will be initialized with locale "C.UTF-8".
-#8 30.43 The default database encoding has accordingly been set to "UTF8".
-#8 30.43 The default text search configuration will be set to "english".
-#8 30.44 
-#8 30.44 Data page checksums are disabled.
-#8 30.44 
-#8 30.44 fixing permissions on existing directory /var/lib/postgresql/15/main ... ok
-#8 30.44 creating subdirectories ... ok
-#8 30.44 selecting dynamic shared memory implementation ... posix
-#8 30.44 selecting default max_connections ... 100
-#8 30.47 selecting default shared_buffers ... 128MB
-#8 30.51 selecting default time zone ... Etc/UTC
-#8 30.54 creating configuration files ... ok
-#8 30.59 running bootstrap script ... ok
-#8 30.81 performing post-bootstrap initialization ... ok
-#8 31.39 syncing data to disk ... ok
-#8 32.39 update-alternatives: using /usr/share/postgresql/15/man/man1/postmaster.1.gz to provide /usr/share/man/man1/postmaster.1.gz (postmaster.1.gz) in auto mode
-#8 32.57 invoke-rc.d: could not determine current runlevel
-#8 32.58 invoke-rc.d: policy-rc.d denied execution of start.
-#8 32.61 Setting up libpython3-stdlib:amd64 (3.11.2-1+b1) ...
-#8 32.61 Setting up python3.11 (3.11.2-6+deb12u8) ...
-#8 33.52 Setting up python3 (3.11.2-1+b1) ...
-#8 33.63 Setting up pgbouncer (1.18.0-1+deb12u1) ...
-#8 33.65 invoke-rc.d: could not determine current runlevel
-#8 33.66 invoke-rc.d: policy-rc.d denied execution of start.
-#8 33.82 Setting up python3-pkg-resources (66.1.1-1+deb12u2) ...
-#8 34.18 Setting up supervisor (4.2.5-1) ...
-#8 34.65 invoke-rc.d: could not determine current runlevel
-#8 34.65 invoke-rc.d: policy-rc.d denied execution of start.
-#8 34.84 Processing triggers for libc-bin (2.36-9+deb12u14) ...
-#8 34.94 Generating locales (this might take a while)...
-#8 34.95   en_US.UTF-8... done
-#8 36.60 Generation complete.
+#8 25.74 Setting up redis-tools (5:7.0.15-1~deb12u7) ...
+#8 25.99 Setting up libgssapi-krb5-2:amd64 (1.20.1-2+deb12u5) ...
+#8 25.99 Setting up libgdbm-compat4:amd64 (1.23-3) ...
+#8 25.99 Setting up ucf (3.0043+nmu1+deb12u1) ...
+#8 26.09 Setting up libllvm14:amd64 (1:14.0.6-12) ...
+#8 26.10 Setting up libxslt1.1:amd64 (1.1.35-1+deb12u4) ...
+#8 26.10 Setting up libcurl4:amd64 (7.88.1-10+deb12u15) ...
+#8 26.11 Setting up curl (7.88.1-10+deb12u15) ...
+#8 26.11 Setting up libperl5.36:amd64 (5.36.0-7+deb12u3) ...
+#8 26.12 Setting up libtirpc3:amd64 (1.3.3+ds-1) ...
+#8 26.12 Setting up iproute2 (6.1.0-3) ...
+#8 26.22 Setting up libpq5:amd64 (15.18-0+deb12u1) ...
+#8 26.23 Setting up redis-server (5:7.0.15-1~deb12u7) ...
+#8 26.27 invoke-rc.d: could not determine current runlevel
+#8 26.28 invoke-rc.d: policy-rc.d denied execution of start.
+#8 26.44 Setting up perl (5.36.0-7+deb12u3) ...
+#8 26.46 Setting up libjson-perl (4.10000-1) ...
+#8 26.46 Setting up libnsl2:amd64 (1.3.0-2) ...
+#8 26.46 Setting up postgresql-client-common (248+deb12u1) ...
+#8 26.47 Setting up nginx (1.22.1-9+deb12u9) ...
+#8 26.53 invoke-rc.d: could not determine current runlevel
+#8 26.54 invoke-rc.d: policy-rc.d denied execution of start.
+#8 26.55 Setting up libpython3.11-stdlib:amd64 (3.11.2-6+deb12u8) ...
+#8 26.55 Setting up postgresql-client-15 (15.18-0+deb12u1) ...
+#8 27.16 update-alternatives: using /usr/share/postgresql/15/man/man1/psql.1.gz to provide /usr/share/man/man1/psql.1.gz (psql.1.gz) in auto mode
+#8 27.21 Setting up postgresql-common (248+deb12u1) ...
+#8 27.54 
+#8 27.54 Creating config file /etc/postgresql-common/createcluster.conf with new version
+#8 27.65 Building PostgreSQL dictionaries from installed myspell/hunspell packages...
+#8 27.65 Removing obsolete dictionary files:
+#8 27.67 invoke-rc.d: could not determine current runlevel
+#8 27.67 invoke-rc.d: policy-rc.d denied execution of start.
+#8 27.90 Setting up postgresql-15 (15.18-0+deb12u1) ...
+#8 28.21 Creating new PostgreSQL cluster 15/main ...
+#8 28.22 /usr/lib/postgresql/15/bin/initdb -D /var/lib/postgresql/15/main --auth-local peer --auth-host scram-sha-256 --no-instructions
+#8 28.24 The files belonging to this database system will be owned by user "postgres".
+#8 28.24 This user must also own the server process.
+#8 28.24 
+#8 28.25 The database cluster will be initialized with locale "C.UTF-8".
+#8 28.25 The default database encoding has accordingly been set to "UTF8".
+#8 28.25 The default text search configuration will be set to "english".
+#8 28.25 
+#8 28.25 Data page checksums are disabled.
+#8 28.25 
+#8 28.25 fixing permissions on existing directory /var/lib/postgresql/15/main ... ok
+#8 28.25 creating subdirectories ... ok
+#8 28.25 selecting dynamic shared memory implementation ... posix
+#8 28.25 selecting default max_connections ... 100
+#8 28.28 selecting default shared_buffers ... 128MB
+#8 28.32 selecting default time zone ... Etc/UTC
+#8 28.36 creating configuration files ... ok
+#8 28.36 running bootstrap script ... ok
+#8 28.59 performing post-bootstrap initialization ... ok
+#8 29.21 syncing data to disk ... ok
+#8 29.94 update-alternatives: using /usr/share/postgresql/15/man/man1/postmaster.1.gz to provide /usr/share/man/man1/postmaster.1.gz (postmaster.1.gz) in auto mode
+#8 30.10 invoke-rc.d: could not determine current runlevel
+#8 30.12 invoke-rc.d: policy-rc.d denied execution of start.
+#8 30.18 Setting up libpython3-stdlib:amd64 (3.11.2-1+b1) ...
+#8 30.19 Setting up python3.11 (3.11.2-6+deb12u8) ...
+#8 31.30 Setting up python3 (3.11.2-1+b1) ...
+#8 31.41 Setting up pgbouncer (1.18.0-1+deb12u1) ...
+#8 31.43 invoke-rc.d: could not determine current runlevel
+#8 31.43 invoke-rc.d: policy-rc.d denied execution of start.
+#8 31.59 Setting up python3-pkg-resources (66.1.1-1+deb12u2) ...
+#8 31.93 Setting up supervisor (4.2.5-1) ...
+#8 32.39 invoke-rc.d: could not determine current runlevel
+#8 32.40 invoke-rc.d: policy-rc.d denied execution of start.
+#8 32.55 Processing triggers for libc-bin (2.36-9+deb12u14) ...
+#8 32.60 Generating locales (this might take a while)...
+#8 32.61   en_US.UTF-8... done
+#8 34.36 Generation complete.
 #8 ...
 
 #62 [builder 56/59] RUN --mount=type=cache,target=/root/.local/share/pnpm/store     pnpm install --frozen-lockfile
-#62 22.74 Progress: resolved 1766, reused 0, downloaded 705, added 218
-#62 23.74 Progress: resolved 1766, reused 0, downloaded 792, added 246
-#62 24.74 Progress: resolved 1766, reused 0, downloaded 908, added 285
-#62 25.74 Progress: resolved 1766, reused 0, downloaded 974, added 306
-#62 26.74 Progress: resolved 1766, reused 0, downloaded 988, added 310
-#62 27.74 Progress: resolved 1766, reused 0, downloaded 1015, added 316
-#62 28.74 Progress: resolved 1766, reused 0, downloaded 1054, added 330
-#62 29.75 Progress: resolved 1766, reused 0, downloaded 1069, added 334
-#62 30.75 Progress: resolved 1766, reused 0, downloaded 1108, added 344
-#62 31.75 Progress: resolved 1766, reused 0, downloaded 1128, added 349
-#62 32.75 Progress: resolved 1766, reused 0, downloaded 1205, added 375
-#62 33.75 Progress: resolved 1766, reused 0, downloaded 1235, added 385
-#62 34.75 Progress: resolved 1766, reused 0, downloaded 1287, added 400
-#62 35.75 Progress: resolved 1766, reused 0, downloaded 1301, added 404
+#62 22.44 Progress: resolved 1727, reused 0, downloaded 633, added 211
+#62 23.44 Progress: resolved 1727, reused 0, downloaded 720, added 238
+#62 24.44 Progress: resolved 1727, reused 0, downloaded 845, added 282
+#62 25.44 Progress: resolved 1727, reused 0, downloaded 919, added 302
+#62 26.44 Progress: resolved 1727, reused 0, downloaded 950, added 310
+#62 27.44 Progress: resolved 1727, reused 0, downloaded 984, added 322
+#62 28.44 Progress: resolved 1727, reused 0, downloaded 1007, added 326
+#62 29.44 Progress: resolved 1727, reused 0, downloaded 1041, added 338
+#62 30.45 Progress: resolved 1727, reused 0, downloaded 1053, added 342
+#62 31.45 Progress: resolved 1727, reused 0, downloaded 1079, added 350
+#62 32.45 Progress: resolved 1727, reused 0, downloaded 1122, added 362
+#62 33.45 Progress: resolved 1727, reused 0, downloaded 1195, added 386
 #62 ...
 
 #8 [stage-1  2/16] RUN corepack enable && corepack prepare pnpm@10.33.2 --activate &&     apt-get update && apt-get install -y --no-install-recommends       postgresql-15       redis-server       pgbouncer       supervisor       nginx       curl       locales       openssl       procps     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen     && locale-gen en_US.UTF-8     && useradd -r -s /bin/false pgbouncer || true     && mkdir -p /var/lib/redis /var/run/pgbouncer /var/log/supervisor /var/log/postgresql     && chown -R redis:redis /var/lib/redis     && chown -R pgbouncer:pgbouncer /var/run/pgbouncer     && chown -R postgres:postgres /var/log/postgresql     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-#8 DONE 39.8s
+#8 DONE 37.5s
 
 #63 [stage-1  3/16] WORKDIR /app
-#63 DONE 0.5s
+#63 DONE 0.6s
 
 #62 [builder 56/59] RUN --mount=type=cache,target=/root/.local/share/pnpm/store     pnpm install --frozen-lockfile
-#62 36.75 Progress: resolved 1766, reused 0, downloaded 1366, added 423
-#62 37.76 Progress: resolved 1766, reused 0, downloaded 1500, added 473
-#62 38.76 Progress: resolved 1766, reused 0, downloaded 1625, added 515
-#62 39.76 Progress: resolved 1766, reused 0, downloaded 1737, added 629
-#62 40.76 Progress: resolved 1766, reused 0, downloaded 1737, added 637
-#62 41.93 Progress: resolved 1766, reused 0, downloaded 1737, added 638
-#62 42.93 Progress: resolved 1766, reused 0, downloaded 1737, added 653
-#62 43.93 Progress: resolved 1766, reused 0, downloaded 1737, added 728
-#62 44.93 Progress: resolved 1766, reused 0, downloaded 1737, added 852
-#62 45.93 Progress: resolved 1766, reused 0, downloaded 1737, added 933
-#62 46.93 Progress: resolved 1766, reused 0, downloaded 1737, added 1028
-#62 47.93 Progress: resolved 1766, reused 0, downloaded 1737, added 1077
-#62 48.93 Progress: resolved 1766, reused 0, downloaded 1737, added 1092
-#62 49.93 Progress: resolved 1766, reused 0, downloaded 1737, added 1227
-#62 50.93 Progress: resolved 1766, reused 0, downloaded 1737, added 1313
-#62 51.93 Progress: resolved 1766, reused 0, downloaded 1737, added 1325
-#62 52.93 Progress: resolved 1766, reused 0, downloaded 1737, added 1415
-#62 53.93 Progress: resolved 1766, reused 0, downloaded 1737, added 1531
-#62 54.93 Progress: resolved 1766, reused 0, downloaded 1737, added 1616
-#62 55.78 Progress: resolved 1766, reused 0, downloaded 1737, added 1766, done
-#62 57.10 .../node_modules/@prisma/engines postinstall$ node scripts/postinstall.js
-#62 57.10 .../node_modules/protobufjs postinstall$ node scripts/postinstall
-#62 57.14 .../bcrypt@6.0.0/node_modules/bcrypt install$ node-gyp-build
-#62 57.14 .../esbuild@0.25.12/node_modules/esbuild postinstall$ node install.js
-#62 57.15 .../node_modules/unrs-resolver postinstall$ node postinstall.js
-#62 57.23 .../node_modules/protobufjs postinstall: Done
-#62 57.33 .../sharp@0.34.5/node_modules/sharp install$ node install/check.js || npm run build
-#62 57.37 .../esbuild@0.25.12/node_modules/esbuild postinstall: Done
-#62 57.40 .../bcrypt@6.0.0/node_modules/bcrypt install: Done
-#62 57.44 .../node_modules/unrs-resolver postinstall: Done
-#62 57.47 .../node_modules/msgpackr-extract install$ node-gyp-build-optional-packages
-#62 57.49 .../sharp@0.34.5/node_modules/sharp install: Done
-#62 57.58 .../node_modules/@prisma/engines postinstall: prisma:warn Prisma failed to detect the libssl/openssl version to use, and may not work as expected. Defaulting to "openssl-1.1.x".
-#62 57.58 .../node_modules/@prisma/engines postinstall: Please manually install OpenSSL via `apt-get update -y && apt-get install -y openssl` and try installing Prisma again. If you're running Prisma on Docker, add this command to your Dockerfile, or switch to an image that already has OpenSSL installed.
-#62 57.64 .../node_modules/msgpackr-extract install: Done
-#62 58.34 .../node_modules/@prisma/engines postinstall: Done
-#62 58.46 .../node_modules/prisma preinstall$ node scripts/preinstall-entry.js
-#62 58.52 .../node_modules/prisma preinstall: Done
-#62 58.65 .../node_modules/@prisma/client postinstall$ node scripts/postinstall.js
-#62 61.46 .../node_modules/@prisma/client postinstall: prisma:warn Prisma failed to detect the libssl/openssl version to use, and may not work as expected. Defaulting to "openssl-1.1.x".
-#62 61.46 .../node_modules/@prisma/client postinstall: Please manually install OpenSSL via `apt-get update -y && apt-get install -y openssl` and try installing Prisma again. If you're running Prisma on Docker, add this command to your Dockerfile, or switch to an image that already has OpenSSL installed.
-#62 61.59 .../node_modules/@prisma/client postinstall: prisma:warn We could not find your Prisma schema in the default locations (see: https://pris.ly/d/prisma-schema-location).
-#62 61.59 .../node_modules/@prisma/client postinstall: If you have a Prisma schema file in a custom path, you will need to run
-#62 61.59 .../node_modules/@prisma/client postinstall: `prisma generate --schema=./path/to/your/schema.prisma` to generate Prisma Client.
-#62 61.59 .../node_modules/@prisma/client postinstall: If you do not have a Prisma schema file yet, you can ignore this message.
-#62 61.61 .../node_modules/@prisma/client postinstall: Done
-#62 62.83 
-#62 62.83 dependencies:
-#62 62.83 + glob 13.0.6
-#62 62.83 + js-yaml 4.2.0
-#62 62.83 
-#62 62.83 devDependencies:
-#62 62.83 + @types/node 25.9.3
-#62 62.83 + eslint 9.39.4
-#62 62.83 + eslint-config-prettier 10.1.8
-#62 62.83 + eslint-plugin-prettier 5.5.6
-#62 62.83 + globals 17.6.0
-#62 62.83 + nodemon 3.1.14
-#62 62.83 + ts-node 10.9.2
-#62 62.83 + typescript 5.9.3
-#62 62.83 + typescript-eslint 8.61.1
-#62 62.83 
-#62 63.42 ╭ Warning ─────────────────────────────────────────────────────────────────────╮
-#62 63.42 │                                                                              │
-#62 63.42 │   Ignored build scripts: @firebase/util@1.15.1, @scarf/scarf@1.4.0.          │
-#62 63.42 │   Run "pnpm approve-builds" to pick which dependencies should be allowed     │
-#62 63.42 │   to run scripts.                                                            │
-#62 63.42 │                                                                              │
-#62 63.42 ╰──────────────────────────────────────────────────────────────────────────────╯
-#62 63.45 Done in 1m 3.2s using pnpm v10.33.2
-#62 DONE 65.0s
+#62 34.45 Progress: resolved 1727, reused 0, downloaded 1253, added 405
+#62 35.45 Progress: resolved 1727, reused 0, downloaded 1329, added 432
+#62 36.45 Progress: resolved 1727, reused 0, downloaded 1444, added 489
+#62 37.45 Progress: resolved 1727, reused 0, downloaded 1615, added 566
+#62 38.45 Progress: resolved 1727, reused 0, downloaded 1683, added 586
+#62 39.45 Progress: resolved 1727, reused 0, downloaded 1693, added 589
+#62 40.45 Progress: resolved 1727, reused 0, downloaded 1696, added 590
+#62 41.45 Progress: resolved 1727, reused 0, downloaded 1726, added 613
+#62 42.45 Progress: resolved 1727, reused 0, downloaded 1726, added 705
+#62 43.45 Progress: resolved 1727, reused 0, downloaded 1726, added 760
+#62 44.45 Progress: resolved 1727, reused 0, downloaded 1726, added 928
+#62 45.45 Progress: resolved 1727, reused 0, downloaded 1726, added 986
+#62 46.45 Progress: resolved 1727, reused 0, downloaded 1726, added 1041
+#62 47.45 Progress: resolved 1727, reused 0, downloaded 1726, added 1053
+#62 48.45 Progress: resolved 1727, reused 0, downloaded 1726, added 1183
+#62 49.46 Progress: resolved 1727, reused 0, downloaded 1726, added 1283
+#62 50.46 Progress: resolved 1727, reused 0, downloaded 1726, added 1290
+#62 51.46 Progress: resolved 1727, reused 0, downloaded 1726, added 1400
+#62 52.46 Progress: resolved 1727, reused 0, downloaded 1726, added 1478
+#62 53.46 Progress: resolved 1727, reused 0, downloaded 1726, added 1579
+#62 54.46 Progress: resolved 1727, reused 0, downloaded 1726, added 1723
+#62 54.70 Progress: resolved 1727, reused 0, downloaded 1726, added 1727, done
+#62 55.85 .../node_modules/@prisma/engines postinstall$ node scripts/postinstall.js
+#62 55.87 .../node_modules/unrs-resolver postinstall$ node postinstall.js
+#62 55.87 .../bcrypt@6.0.0/node_modules/bcrypt install$ node-gyp-build
+#62 55.89 .../sharp@0.34.5/node_modules/sharp install$ node install/check.js || npm run build
+#62 55.96 .../esbuild@0.25.12/node_modules/esbuild postinstall$ node install.js
+#62 56.04 .../node_modules/unrs-resolver postinstall: Done
+#62 56.08 .../node_modules/msgpackr-extract install$ node-gyp-build-optional-packages
+#62 56.14 .../bcrypt@6.0.0/node_modules/bcrypt install: Done
+#62 56.14 .../esbuild@0.25.12/node_modules/esbuild postinstall: Done
+#62 56.17 .../sharp@0.34.5/node_modules/sharp install: Done
+#62 56.27 .../node_modules/msgpackr-extract install: Done
+#62 56.29 .../node_modules/@prisma/engines postinstall: prisma:warn Prisma failed to detect the libssl/openssl version to use, and may not work as expected. Defaulting to "openssl-1.1.x".
+#62 56.29 .../node_modules/@prisma/engines postinstall: Please manually install OpenSSL via `apt-get update -y && apt-get install -y openssl` and try installing Prisma again. If you're running Prisma on Docker, add this command to your Dockerfile, or switch to an image that already has OpenSSL installed.
+#62 56.97 .../node_modules/@prisma/engines postinstall: Done
+#62 57.09 .../node_modules/prisma preinstall$ node scripts/preinstall-entry.js
+#62 57.15 .../node_modules/prisma preinstall: Done
+#62 57.33 .../node_modules/@prisma/client postinstall$ node scripts/postinstall.js
+#62 60.13 .../node_modules/@prisma/client postinstall: prisma:warn Prisma failed to detect the libssl/openssl version to use, and may not work as expected. Defaulting to "openssl-1.1.x".
+#62 60.13 .../node_modules/@prisma/client postinstall: Please manually install OpenSSL via `apt-get update -y && apt-get install -y openssl` and try installing Prisma again. If you're running Prisma on Docker, add this command to your Dockerfile, or switch to an image that already has OpenSSL installed.
+#62 60.25 .../node_modules/@prisma/client postinstall: prisma:warn We could not find your Prisma schema in the default locations (see: https://pris.ly/d/prisma-schema-location).
+#62 60.25 .../node_modules/@prisma/client postinstall: If you have a Prisma schema file in a custom path, you will need to run
+#62 60.25 .../node_modules/@prisma/client postinstall: `prisma generate --schema=./path/to/your/schema.prisma` to generate Prisma Client.
+#62 60.25 .../node_modules/@prisma/client postinstall: If you do not have a Prisma schema file yet, you can ignore this message.
+#62 60.28 .../node_modules/@prisma/client postinstall: Done
+#62 61.40 
+#62 61.40 dependencies:
+#62 61.40 + glob 13.0.6
+#62 61.40 + js-yaml 4.2.0
+#62 61.40 
+#62 61.40 devDependencies:
+#62 61.40 + @types/node 25.9.3
+#62 61.40 + eslint 10.7.0
+#62 61.40 + eslint-config-prettier 10.1.8
+#62 61.40 + eslint-plugin-prettier 5.5.6
+#62 61.40 + globals 17.6.0
+#62 61.40 + nodemon 3.1.14
+#62 61.40 + ts-node 10.9.2
+#62 61.40 + typescript 5.9.3
+#62 61.40 + typescript-eslint 8.61.1
+#62 61.40 
+#62 61.98 ╭ Warning ─────────────────────────────────────────────────────────────────────╮
+#62 61.98 │                                                                              │
+#62 61.98 │   Ignored build scripts: @firebase/util@1.15.1, @scarf/scarf@1.4.0.          │
+#62 61.98 │   Run "pnpm approve-builds" to pick which dependencies should be allowed     │
+#62 61.98 │   to run scripts.                                                            │
+#62 61.98 │                                                                              │
+#62 61.98 ╰──────────────────────────────────────────────────────────────────────────────╯
+#62 62.01 Done in 1m 1.8s using pnpm v10.33.2
+#62 DONE 63.8s
 
 #64 [builder 57/59] COPY . .
-#64 DONE 1.3s
+#64 DONE 1.5s
 
-#65 [builder 58/59] RUN --mount=type=cache,target=/root/.local/share/pnpm/store     echo "Cache bust: 2bd305c3110bf36be22f84cbc6569bacafb61d79" &&     pnpm --filter @azeebo/shared-types run build &&     pnpm --filter @azeebo/http-client run build &&     pnpm --filter @azeebo/utils run build &&     pnpm --filter @azeebo/validation run build &&     pnpm --filter @azeebo/error-handling run build &&     pnpm --filter @azeebo/logger run build &&     pnpm --filter @azeebo/api-client run build &&     pnpm --filter @azeebo/design-tokens run build &&     pnpm --filter @azeebo/shared-services prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/shared-services run build &&     pnpm --filter @azeebo/security run build &&     pnpm --filter @azeebo/ui run build &&     pnpm --filter @azeebo/auth-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/auth-service run build &&     pnpm --filter @azeebo/user-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/user-service run build &&     pnpm --filter @azeebo/wallet-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/wallet-service run build &&     pnpm --filter @azeebo/payment-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/payment-service run build &&     pnpm --filter @azeebo/search-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/search-service run build &&     pnpm --filter @azeebo/media-service run build &&     pnpm --filter @azeebo/notification-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/notification-service run build &&     pnpm --filter @azeebo/reward-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/reward-service run build &&     pnpm --filter @azeebo/engagement-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/engagement-service run build &&     pnpm --filter @azeebo/messaging-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/messaging-service run build &&     pnpm --filter @azeebo/referral-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/referral-service run build &&     pnpm --filter @azeebo/subscription-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/subscription-service run build &&     pnpm --filter @azeebo/analytics-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/analytics-service run build &&     pnpm --filter @azeebo/recommendation-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/recommendation-service run build &&     pnpm --filter @azeebo/reality-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/reality-service run build &&     pnpm --filter @azeebo/movie-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/movie-service run build &&     pnpm --filter @azeebo/comedy-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/comedy-service run build &&     pnpm --filter @azeebo/games-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/games-service run build &&     pnpm --filter @azeebo/sports-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/sports-service run build &&     pnpm --filter @azeebo/lifestyle-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/lifestyle-service run build &&     pnpm --filter @azeebo/vertical-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/vertical-service run build &&     pnpm --filter @azeebo/creator-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/creator-service run build &&     pnpm --filter @azeebo/queue-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/queue-service run build &&     pnpm --filter @azeebo/support-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/support-service run build &&     pnpm --filter @azeebo/moderation-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/moderation-service run build &&     pnpm --filter @azeebo/content-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/content-service run build &&     pnpm --filter @azeebo/api-gateway run build &&     pnpm --filter @azeebo/admin prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/admin run build &&     pnpm --filter @azeebo/creator-portal prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/creator-portal run build &&     mkdir -p apps/admin/dist/generated && cp -r apps/admin/src/generated/prisma apps/admin/dist/generated/prisma &&     mkdir -p apps/creator-portal/dist/generated && cp -r apps/creator-portal/src/generated/prisma apps/creator-portal/dist/generated/prisma &&     echo "=== Flattening nested dist directories ===" &&     for svc_dir in $(find services -maxdepth 2 -mindepth 2 -type d -not -path "*/node_modules/*" | sort); do       dist="$svc_dir/dist";       [ -d "$dist" ] || continue;       nested_main=$(find "$dist" -maxdepth 5 -name "main.js" -path "*/src/*" ! -path "$dist/main.js" 2>/dev/null | head -1);       if [ -n "$nested_main" ]; then         nested_src=$(echo "$nested_main" | sed 's|/src/.*||');         echo "Flattening: $nested_src/src/ -> $dist/";         find "$nested_src/src" -maxdepth 1 -type f ( -name "*.js" -o -name "*.d.ts" ) -exec cp {} "$dist/" ; 2>/dev/null;         find "$nested_src/src" -mindepth 2 -type f ( -name "*.js" -o -name "*.d.ts" ) | while read f; do           rel="${f#$nested_src/src/}";           mkdir -p "$dist/$(dirname "$rel")" && cp "$f" "$dist/$rel";         done 2>/dev/null;         rm -rf "$nested_src" 2>/dev/null;       fi;     done &&     echo "=== Flattened dist inventory ===" &&     find services -name "main.js" -path "*/dist/*" | sort &&     pnpm --filter @azeebo/web run build;     echo "=== Web .next/ contents ===" && ls -la apps/web/.next/ 2>&1 | head -20;     echo "=== .next/standalone check ===" && ls -la apps/web/.next/standalone/ 2>&1 | head -10;     echo "=== .next/standalone/apps/web check ===" && ls -la apps/web/.next/standalone/apps/web/ 2>&1 | head -10;     true
-#65 0.093 Cache bust: 2bd305c3110bf36be22f84cbc6569bacafb61d79
-#65 0.491 
-#65 0.491 > @azeebo/shared-types@0.1.0 build /app/packages/shared-types
-#65 0.491 > tsc -p tsconfig.json
-#65 0.491 
-#65 2.577 
-#65 2.577 > @azeebo/http-client@0.1.0 build /app/packages/http-client
-#65 2.577 > tsc
-#65 2.577 
-#65 4.656 
-#65 4.656 > @azeebo/utils@0.1.0 build /app/packages/utils
-#65 4.656 > tsc -p tsconfig.json
-#65 4.656 
-#65 7.185 
-#65 7.185 > @azeebo/validation@1.0.0 build /app/packages/validation
-#65 7.185 > tsc
-#65 7.185 
-#65 9.514 
-#65 9.514 > @azeebo/error-handling@1.0.0 build /app/packages/error-handling
-#65 9.514 > tsc
-#65 9.514 
-#65 11.27 
-#65 11.27 > @azeebo/logger@1.0.0 build /app/packages/logger
-#65 11.27 > tsc
-#65 11.27 
-#65 13.66 
-#65 13.66 > @azeebo/api-client@0.1.0 build /app/packages/api-client
-#65 13.66 > tsc -p tsconfig.json
-#65 13.66 
-#65 16.10 
-#65 16.10 > @azeebo/design-tokens@0.1.0 build /app/packages/design-tokens
-#65 16.10 > tsc -p tsconfig.json
-#65 16.10 
-#65 17.57 
-#65 17.57 > @azeebo/shared-services@0.1.0 prisma:generate /app/packages/shared-services
-#65 17.57 > prisma generate --schema=prisma/schema.prisma
-#65 17.57 
-#65 18.75 prisma:warn Prisma failed to detect the libssl/openssl version to use, and may not work as expected. Defaulting to "openssl-1.1.x".
-#65 18.75 Please manually install OpenSSL via `apt-get update -y && apt-get install -y openssl` and try installing Prisma again. If you're running Prisma on Docker, add this command to your Dockerfile, or switch to an image that already has OpenSSL installed.
-#65 18.75 prisma:warn Prisma failed to detect the libssl/openssl version to use, and may not work as expected. Defaulting to "openssl-1.1.x".
-#65 18.75 Please manually install OpenSSL via `apt-get update -y && apt-get install -y openssl` and try installing Prisma again. If you're running Prisma on Docker, add this command to your Dockerfile, or switch to an image that already has OpenSSL installed.
-#65 18.94 Prisma schema loaded from prisma/schema.prisma
-#65 19.11 
-#65 19.11 ✔ Generated Prisma Client (v6.19.3) to ./../../node_modules/.pnpm/@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3/node_modules/@prisma/client in 50ms
-#65 19.11 
-#65 19.11 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#65 19.11 
-#65 19.11 Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
-#65 19.11 
-#65 19.15 bash: scripts/patch-prisma-client.sh: No such file or directory
-#65 19.15 === Web .next/ contents ===
-#65 19.15 ls: cannot access 'apps/web/.next/': No such file or directory
-#65 19.15 === .next/standalone check ===
-#65 19.15 ls: cannot access 'apps/web/.next/standalone/': No such file or directory
-#65 19.15 === .next/standalone/apps/web check ===
-#65 19.15 ls: cannot access 'apps/web/.next/standalone/apps/web/': No such file or directory
-#65 DONE 19.2s
+#65 [builder 58/59] RUN --mount=type=cache,target=/root/.local/share/pnpm/store     echo "Cache bust: 22ebdb25b8075625c73b75fca1d646164ce0475a" &&     pnpm --filter @azeebo/shared-types run build &&     pnpm --filter @azeebo/http-client run build &&     pnpm --filter @azeebo/utils run build &&     pnpm --filter @azeebo/validation run build &&     pnpm --filter @azeebo/error-handling run build &&     pnpm --filter @azeebo/logger run build &&     pnpm --filter @azeebo/api-client run build &&     pnpm --filter @azeebo/design-tokens run build &&     pnpm --filter @azeebo/shared-services prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/shared-services run build &&     pnpm --filter @azeebo/security run build &&     pnpm --filter @azeebo/ui run build &&     pnpm --filter @azeebo/auth-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/auth-service run build &&     pnpm --filter @azeebo/user-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/user-service run build &&     pnpm --filter @azeebo/wallet-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/wallet-service run build &&     pnpm --filter @azeebo/payment-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/payment-service run build &&     pnpm --filter @azeebo/search-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/search-service run build &&     pnpm --filter @azeebo/media-service run build &&     pnpm --filter @azeebo/notification-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/notification-service run build &&     pnpm --filter @azeebo/reward-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/reward-service run build &&     pnpm --filter @azeebo/engagement-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/engagement-service run build &&     pnpm --filter @azeebo/messaging-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/messaging-service run build &&     pnpm --filter @azeebo/referral-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/referral-service run build &&     pnpm --filter @azeebo/subscription-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/subscription-service run build &&     pnpm --filter @azeebo/analytics-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/analytics-service run build &&     pnpm --filter @azeebo/recommendation-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/recommendation-service run build &&     pnpm --filter @azeebo/reality-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/reality-service run build &&     pnpm --filter @azeebo/movie-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/movie-service run build &&     pnpm --filter @azeebo/comedy-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/comedy-service run build &&     pnpm --filter @azeebo/games-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/games-service run build &&     pnpm --filter @azeebo/sports-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/sports-service run build &&     pnpm --filter @azeebo/lifestyle-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/lifestyle-service run build &&     pnpm --filter @azeebo/vertical-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/vertical-service run build &&     pnpm --filter @azeebo/creator-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/creator-service run build &&     pnpm --filter @azeebo/queue-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/queue-service run build &&     pnpm --filter @azeebo/support-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/support-service run build &&     pnpm --filter @azeebo/moderation-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/moderation-service run build &&     pnpm --filter @azeebo/content-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/content-service run build &&     pnpm --filter @azeebo/api-gateway run build &&     pnpm --filter @azeebo/admin prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/admin run build &&     pnpm --filter @azeebo/creator-portal prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/creator-portal run build &&     mkdir -p apps/admin/dist/generated && cp -r apps/admin/src/generated/prisma apps/admin/dist/generated/prisma &&     mkdir -p apps/creator-portal/dist/generated && cp -r apps/creator-portal/src/generated/prisma apps/creator-portal/dist/generated/prisma &&     echo "=== Flattening nested dist directories ===" &&     for svc_dir in $(find services -maxdepth 2 -mindepth 2 -type d -not -path "*/node_modules/*" | sort); do       dist="$svc_dir/dist";       [ -d "$dist" ] || continue;       nested_main=$(find "$dist" -maxdepth 5 -name "main.js" -path "*/src/*" ! -path "$dist/main.js" 2>/dev/null | head -1);       if [ -n "$nested_main" ]; then         nested_src=$(echo "$nested_main" | sed 's|/src/.*||');         echo "Flattening: $nested_src/src/ -> $dist/";         find "$nested_src/src" -maxdepth 1 -type f ( -name "*.js" -o -name "*.d.ts" ) -exec cp {} "$dist/" ; 2>/dev/null;         find "$nested_src/src" -mindepth 2 -type f ( -name "*.js" -o -name "*.d.ts" ) | while read f; do           rel="${f#$nested_src/src/}";           mkdir -p "$dist/$(dirname "$rel")" && cp "$f" "$dist/$rel";         done 2>/dev/null;         rm -rf "$nested_src" 2>/dev/null;       fi;     done &&     echo "=== Flattened dist inventory ===" &&     find services -name "main.js" -path "*/dist/*" | sort &&     pnpm --filter @azeebo/web run build;     echo "=== Web .next/ contents ===" && ls -la apps/web/.next/ 2>&1 | head -20;     echo "=== .next/standalone check ===" && ls -la apps/web/.next/standalone/ 2>&1 | head -10;     echo "=== .next/standalone/apps/web check ===" && ls -la apps/web/.next/standalone/apps/web/ 2>&1 | head -10;     true
+#65 0.083 Cache bust: 22ebdb25b8075625c73b75fca1d646164ce0475a
+#65 0.492 
+#65 0.492 > @azeebo/shared-types@0.1.0 build /app/packages/shared-types
+#65 0.492 > tsc -p tsconfig.json
+#65 0.492 
+#65 2.528 
+#65 2.528 > @azeebo/http-client@0.1.0 build /app/packages/http-client
+#65 2.528 > tsc
+#65 2.528 
+#65 4.571 
+#65 4.571 > @azeebo/utils@0.1.0 build /app/packages/utils
+#65 4.571 > tsc -p tsconfig.json
+#65 4.571 
+#65 7.129 
+#65 7.129 > @azeebo/validation@1.0.0 build /app/packages/validation
+#65 7.129 > tsc
+#65 7.129 
+#65 9.377 
+#65 9.377 > @azeebo/error-handling@1.0.0 build /app/packages/error-handling
+#65 9.377 > tsc
+#65 9.377 
+#65 11.09 
+#65 11.09 > @azeebo/logger@1.0.0 build /app/packages/logger
+#65 11.09 > tsc
+#65 11.09 
+#65 13.46 
+#65 13.46 > @azeebo/api-client@0.1.0 build /app/packages/api-client
+#65 13.46 > tsc -p tsconfig.json
+#65 13.46 
+#65 15.79 
+#65 15.79 > @azeebo/design-tokens@0.1.0 build /app/packages/design-tokens
+#65 15.79 > tsc -p tsconfig.json
+#65 15.79 
+#65 17.22 
+#65 17.22 > @azeebo/shared-services@0.1.0 prisma:generate /app/packages/shared-services
+#65 17.22 > prisma generate --schema=prisma/schema.prisma
+#65 17.22 
+#65 18.41 prisma:warn Prisma failed to detect the libssl/openssl version to use, and may not work as expected. Defaulting to "openssl-1.1.x".
+#65 18.41 Please manually install OpenSSL via `apt-get update -y && apt-get install -y openssl` and try installing Prisma again. If you're running Prisma on Docker, add this command to your Dockerfile, or switch to an image that already has OpenSSL installed.
+#65 18.42 prisma:warn Prisma failed to detect the libssl/openssl version to use, and may not work as expected. Defaulting to "openssl-1.1.x".
+#65 18.42 Please manually install OpenSSL via `apt-get update -y && apt-get install -y openssl` and try installing Prisma again. If you're running Prisma on Docker, add this command to your Dockerfile, or switch to an image that already has OpenSSL installed.
+#65 18.62 Prisma schema loaded from prisma/schema.prisma
+#65 18.79 
+#65 18.79 ✔ Generated Prisma Client (v6.19.3) to ./../../node_modules/.pnpm/@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3/node_modules/@prisma/client in 53ms
+#65 18.79 
+#65 18.79 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#65 18.79 
+#65 18.79 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
+#65 18.79 
+#65 19.25 
+#65 19.25 > @azeebo/shared-services@0.1.0 prebuild /app/packages/shared-services
+#65 19.25 > prisma generate --schema=prisma/schema.prisma
+#65 19.25 
+#65 20.43 prisma:warn Prisma failed to detect the libssl/openssl version to use, and may not work as expected. Defaulting to "openssl-1.1.x".
+#65 20.43 Please manually install OpenSSL via `apt-get update -y && apt-get install -y openssl` and try installing Prisma again. If you're running Prisma on Docker, add this command to your Dockerfile, or switch to an image that already has OpenSSL installed.
+#65 20.43 prisma:warn Prisma failed to detect the libssl/openssl version to use, and may not work as expected. Defaulting to "openssl-1.1.x".
+#65 20.43 Please manually install OpenSSL via `apt-get update -y && apt-get install -y openssl` and try installing Prisma again. If you're running Prisma on Docker, add this command to your Dockerfile, or switch to an image that already has OpenSSL installed.
+#65 20.64 Prisma schema loaded from prisma/schema.prisma
+#65 20.79 ┌─────────────────────────────────────────────────────────┐
+#65 20.79 │  Update available 6.19.3 -> 7.8.0                       │
+#65 20.79 │                                                         │
+#65 20.79 │  This is a major update - please follow the guide at    │
+#65 20.79 │  https://pris.ly/d/major-version-upgrade                │
+#65 20.79 │                                                         │
+#65 20.79 │  Run the following to update                            │
+#65 20.79 │    npm i --save-dev prisma@latest                       │
+#65 20.79 │    npm i @prisma/client@latest                          │
+#65 20.79 └─────────────────────────────────────────────────────────┘
+#65 20.79 
+#65 20.79 ✔ Generated Prisma Client (v6.19.3) to ./../../node_modules/.pnpm/@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3/node_modules/@prisma/client in 53ms
+#65 20.79 
+#65 20.79 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#65 20.79 
+#65 20.79 Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+#65 20.79 
+#65 20.81 
+#65 20.81 > @azeebo/shared-services@0.1.0 build /app/packages/shared-services
+#65 20.81 > tsc -p tsconfig.json
+#65 20.81 
+#65 23.68 
+#65 23.68 > @azeebo/security@1.0.0 build /app/packages/security
+#65 23.68 > tsc
+#65 23.68 
+#65 26.74 
+#65 26.74 > @azeebo/ui@0.1.0 build /app/packages/ui
+#65 26.74 > tsc -p tsconfig.json
+#65 26.74 
+#65 32.66 
+#65 32.66 > @azeebo/auth-service@0.1.0 prisma:generate /app/services/core/auth-service
+#65 32.66 > prisma generate
+#65 32.66 
+#65 33.84 prisma:warn Prisma failed to detect the libssl/openssl version to use, and may not work as expected. Defaulting to "openssl-1.1.x".
+#65 33.84 Please manually install OpenSSL via `apt-get update -y && apt-get install -y openssl` and try installing Prisma again. If you're running Prisma on Docker, add this command to your Dockerfile, or switch to an image that already has OpenSSL installed.
+#65 33.85 prisma:warn Prisma failed to detect the libssl/openssl version to use, and may not work as expected. Defaulting to "openssl-1.1.x".
+#65 33.85 Please manually install OpenSSL via `apt-get update -y && apt-get install -y openssl` and try installing Prisma again. If you're running Prisma on Docker, add this command to your Dockerfile, or switch to an image that already has OpenSSL installed.
+#65 34.04 Prisma schema loaded from prisma/schema.prisma
+#65 34.30 
+#65 34.30 ✔ Generated Prisma Client (v6.19.3) to ./src/prisma/client in 98ms
+#65 34.30 
+#65 34.30 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#65 34.30 
+#65 34.30 Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+#65 34.30 
+#65 34.39 Patched: services/core/auth-service/src/prisma/client/package.json
+#65 34.79 
+#65 34.79 > @azeebo/auth-service@0.1.0 build /app/services/core/auth-service
+#65 34.79 > tsc -p tsconfig.build.json
+#65 34.79 
+#65 38.48 src/main.ts(6,36): error TS2307: Cannot find module '@azeebo/logger' or its corresponding type declarations.
+#65 38.48 src/main.ts(10,31): error TS2307: Cannot find module '@azeebo/security' or its corresponding type declarations.
+#65 38.48 src/modules/admin/admin.controller.ts(4,28): error TS2307: Cannot find module '@azeebo/security' or its corresponding type declarations.
+#65 38.48 src/modules/auth/auth.controller.ts(20,43): error TS2307: Cannot find module '@azeebo/security' or its corresponding type declarations.
+#65 38.48 src/modules/auth/auth.module.ts(4,34): error TS2307: Cannot find module 'ms' or its corresponding type declarations.
+#65 38.48 src/modules/auth/auth.module.ts(21,35): error TS2307: Cannot find module '@azeebo/security' or its corresponding type declarations.
+#65 38.48 src/modules/auth/auth.service.ts(11,19): error TS2307: Cannot find module 'axios' or its corresponding type declarations.
+#65 38.48 src/modules/auth/auth.service.ts(35,34): error TS2307: Cannot find module 'ms' or its corresponding type declarations.
+#65 38.48 src/modules/auth/device/device.controller.ts(17,43): error TS2307: Cannot find module '@azeebo/security' or its corresponding type declarations.
+#65 38.48 src/modules/auth/otp/otp.service.ts(5,19): error TS2307: Cannot find module 'axios' or its corresponding type declarations.
+#65 38.48 src/modules/health/health.controller.ts(2,24): error TS2307: Cannot find module '@azeebo/security' or its corresponding type declarations.
+#65 38.48 src/modules/metrics/metrics.controller.ts(3,24): error TS2307: Cannot find module '@azeebo/security' or its corresponding type declarations.
+#65 38.52 /app/services/core/auth-service:
+#65 38.52  ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @azeebo/auth-service@0.1.0 build: `tsc -p tsconfig.build.json`
+#65 38.52 Exit status 2
+#65 38.54 === Web .next/ contents ===
+#65 38.54 ls: cannot access 'apps/web/.next/': No such file or directory
+#65 38.54 === .next/standalone check ===
+#65 38.54 ls: cannot access 'apps/web/.next/standalone/': No such file or directory
+#65 38.54 === .next/standalone/apps/web check ===
+#65 38.54 ls: cannot access 'apps/web/.next/standalone/apps/web/': No such file or directory
+#65 DONE 38.6s
 
-#66 [builder 59/59] RUN echo "Cache bust: 2bd305c3110bf36be22f84cbc6569bacafb61d79" &&     mkdir -p /runtime/node_modules &&     cp package.json pnpm-lock.yaml pnpm-workspace.yaml /runtime/ &&     find . -maxdepth 4 -name "package.json"       -not -path "*/node_modules/*"       -not -path "*/dist/*"       -not -path "*/.next/*"       -not -path "*/.prisma/*"       | while read f; do         mkdir -p "/runtime/$(dirname "$f")" && cp "$f" "/runtime/$f";       done;     find services -maxdepth 2 -mindepth 2 -type d | while read svc; do       if [ -d "$svc/dist" ]; then         mkdir -p "/runtime/$svc/dist" && cp -r "$svc/dist/." "/runtime/$svc/dist/";       fi;       if [ -d "$svc/prisma" ]; then         mkdir -p "/runtime/$svc/prisma" && cp -r "$svc/prisma/." "/runtime/$svc/prisma/";       fi;     done;     find packages -maxdepth 1 -mindepth 1 -type d | while read pkg; do       if [ -d "$pkg/dist" ]; then         mkdir -p "/runtime/$pkg/dist" && cp -r "$pkg/dist/." "/runtime/$pkg/dist/";       fi;     done;     mkdir -p /runtime/apps/admin/dist && cp -r apps/admin/dist/. /runtime/apps/admin/dist/ &&     mkdir -p /runtime/apps/admin/prisma && cp -r apps/admin/prisma/. /runtime/apps/admin/prisma/ 2>/dev/null;     mkdir -p /runtime/apps/creator-portal/dist && cp -r apps/creator-portal/dist/. /runtime/apps/creator-portal/dist/ &&     mkdir -p /runtime/apps/creator-portal/prisma && cp -r apps/creator-portal/prisma/. /runtime/apps/creator-portal/prisma/ 2>/dev/null;     mkdir -p /runtime/apps/web/standalone &&     if [ -d apps/web/.next/standalone/apps/web ]; then       cp -r apps/web/.next/standalone/apps/web/. /runtime/apps/web/standalone/ &&       echo "Standalone: copied from .next/standalone/apps/web/ (nested)";     elif [ -f apps/web/.next/standalone/server.js ]; then       cp -r apps/web/.next/standalone/. /runtime/apps/web/standalone/ &&       echo "Standalone: copied from .next/standalone/ (direct)";     else       echo "WARNING: No standalone output found in apps/web/.next/standalone/";     fi;     mkdir -p /runtime/apps/web/standalone/.next/static &&     cp -r apps/web/.next/static/. /runtime/apps/web/standalone/.next/static/ 2>/dev/null;     cp -r apps/web/public/. /runtime/apps/web/standalone/public/ 2>/dev/null;     cp apps/web/next.config.js /runtime/apps/web/standalone/ 2>/dev/null;     echo "=== Builder dist inventory ===" &&     find services -name "main.js" -path "*/dist/*" | sort &&     echo "=== Web standalone inventory ===" &&     ls -la apps/web/.next/standalone/apps/web/server.js 2>/dev/null && echo "OK: standalone/apps/web/server.js exists in builder" || echo "INFO: standalone at nested path (apps/web/.next/standalone/apps/web/)" &&     echo "=== /runtime dist inventory ===" &&     find /runtime/services -name "main.js" -path "*/dist/*" 2>/dev/null | sort &&     echo "=== Verifying critical dist files ===" &&     test -f /runtime/services/core/content-service/dist/main.js && echo "OK: content-service" || echo "MISSING: content-service/dist/main.js";     test -f /runtime/services/core/wallet-service/dist/main.js && echo "OK: wallet-service" || echo "MISSING: wallet-service/dist/main.js";     test -f /runtime/apps/web/standalone/server.js && echo "OK: web-app standalone" || echo "MISSING: web-app/standalone/server.js";     true
-#66 0.056 Cache bust: 2bd305c3110bf36be22f84cbc6569bacafb61d79
-#66 0.362 cp: cannot stat 'apps/admin/dist/.': No such file or directory
-#66 0.365 cp: cannot stat 'apps/creator-portal/dist/.': No such file or directory
-#66 0.366 WARNING: No standalone output found in apps/web/.next/standalone/
-#66 0.371 === Builder dist inventory ===
-#66 0.391 === Web standalone inventory ===
-#66 0.393 INFO: standalone at nested path (apps/web/.next/standalone/apps/web/)
-#66 0.393 === /runtime dist inventory ===
-#66 0.397 === Verifying critical dist files ===
-#66 0.397 MISSING: content-service/dist/main.js
-#66 0.398 MISSING: wallet-service/dist/main.js
-#66 0.398 MISSING: web-app/standalone/server.js
+#66 [builder 59/59] RUN echo "Cache bust: 22ebdb25b8075625c73b75fca1d646164ce0475a" &&     mkdir -p /runtime/node_modules &&     cp package.json pnpm-lock.yaml pnpm-workspace.yaml /runtime/ &&     find . -maxdepth 4 -name "package.json"       -not -path "*/node_modules/*"       -not -path "*/dist/*"       -not -path "*/.next/*"       -not -path "*/.prisma/*"       | while read f; do         mkdir -p "/runtime/$(dirname "$f")" && cp "$f" "/runtime/$f";       done;     find services -maxdepth 2 -mindepth 2 -type d | while read svc; do       if [ -d "$svc/dist" ]; then         mkdir -p "/runtime/$svc/dist" && cp -r "$svc/dist/." "/runtime/$svc/dist/";       fi;       if [ -d "$svc/prisma" ]; then         mkdir -p "/runtime/$svc/prisma" && cp -r "$svc/prisma/." "/runtime/$svc/prisma/";       fi;     done;     find packages -maxdepth 1 -mindepth 1 -type d | while read pkg; do       if [ -d "$pkg/dist" ]; then         mkdir -p "/runtime/$pkg/dist" && cp -r "$pkg/dist/." "/runtime/$pkg/dist/";       fi;     done;     mkdir -p /runtime/apps/admin/dist && cp -r apps/admin/dist/. /runtime/apps/admin/dist/ &&     mkdir -p /runtime/apps/admin/prisma && cp -r apps/admin/prisma/. /runtime/apps/admin/prisma/ 2>/dev/null;     mkdir -p /runtime/apps/creator-portal/dist && cp -r apps/creator-portal/dist/. /runtime/apps/creator-portal/dist/ &&     mkdir -p /runtime/apps/creator-portal/prisma && cp -r apps/creator-portal/prisma/. /runtime/apps/creator-portal/prisma/ 2>/dev/null;     mkdir -p /runtime/apps/web/standalone &&     if [ -d apps/web/.next/standalone/apps/web ]; then       cp -r apps/web/.next/standalone/apps/web/. /runtime/apps/web/standalone/ &&       echo "Standalone: copied from .next/standalone/apps/web/ (nested)";     elif [ -f apps/web/.next/standalone/server.js ]; then       cp -r apps/web/.next/standalone/. /runtime/apps/web/standalone/ &&       echo "Standalone: copied from .next/standalone/ (direct)";     else       echo "WARNING: No standalone output found in apps/web/.next/standalone/";     fi;     mkdir -p /runtime/apps/web/standalone/.next/static &&     cp -r apps/web/.next/static/. /runtime/apps/web/standalone/.next/static/ 2>/dev/null;     cp -r apps/web/public/. /runtime/apps/web/standalone/public/ 2>/dev/null;     cp apps/web/next.config.js /runtime/apps/web/standalone/ 2>/dev/null;     echo "=== Builder dist inventory ===" &&     find services -name "main.js" -path "*/dist/*" | sort &&     echo "=== Web standalone inventory ===" &&     ls -la apps/web/.next/standalone/apps/web/server.js 2>/dev/null && echo "OK: standalone/apps/web/server.js exists in builder" || echo "INFO: standalone at nested path (apps/web/.next/standalone/apps/web/)" &&     echo "=== /runtime dist inventory ===" &&     find /runtime/services -name "main.js" -path "*/dist/*" 2>/dev/null | sort &&     echo "=== Verifying critical dist files ===" &&     test -f /runtime/services/core/content-service/dist/main.js && echo "OK: content-service" || echo "MISSING: content-service/dist/main.js";     test -f /runtime/services/core/wallet-service/dist/main.js && echo "OK: wallet-service" || echo "MISSING: wallet-service/dist/main.js";     test -f /runtime/apps/web/standalone/server.js && echo "OK: web-app standalone" || echo "MISSING: web-app/standalone/server.js";     true
+#66 0.057 Cache bust: 22ebdb25b8075625c73b75fca1d646164ce0475a
+#66 0.385 cp: cannot stat 'apps/admin/dist/.': No such file or directory
+#66 0.388 cp: cannot stat 'apps/creator-portal/dist/.': No such file or directory
+#66 0.390 WARNING: No standalone output found in apps/web/.next/standalone/
+#66 0.394 === Builder dist inventory ===
+#66 0.414 services/core/auth-service/dist/main.js
+#66 0.414 === Web standalone inventory ===
+#66 0.415 INFO: standalone at nested path (apps/web/.next/standalone/apps/web/)
+#66 0.415 === /runtime dist inventory ===
+#66 0.421 /runtime/services/core/auth-service/dist/main.js
+#66 0.421 === Verifying critical dist files ===
+#66 0.421 MISSING: content-service/dist/main.js
+#66 0.421 MISSING: wallet-service/dist/main.js
+#66 0.422 MISSING: web-app/standalone/server.js
 #66 DONE 0.4s
 
 #67 [stage-1  4/16] COPY --from=builder /runtime /app
@@ -1185,319 +1263,318 @@ Builder info
 #68 DONE 0.1s
 
 #69 [stage-1  6/16] RUN echo "==> Verifying critical build artifacts..." &&     OK=true &&     test -f /app/apps/web/standalone/server.js && echo "  OK: web-app standalone server.js" ||       (echo "  WARN: web-app standalone server.js not found — will retry in entrypoint" && OK=false) &&     test -f /app/services/core/auth-service/dist/main.js && echo "  OK: auth-service" ||       (echo "  WARN: auth-service/dist/main.js not found" && OK=false) &&     test -f /app/services/gateway/api-gateway/dist/main.js && echo "  OK: api-gateway" ||       (echo "  WARN: api-gateway/dist/main.js not found" && OK=false) &&     echo "  Build artifact check complete (warnings are non-fatal)"
-#69 0.053 ==> Verifying critical build artifacts...
-#69 0.053   WARN: web-app standalone server.js not found — will retry in entrypoint
-#69 0.054   WARN: auth-service/dist/main.js not found
+#69 0.052 ==> Verifying critical build artifacts...
+#69 0.055   WARN: web-app standalone server.js not found — will retry in entrypoint
+#69 0.055   OK: auth-service
 #69 0.055   WARN: api-gateway/dist/main.js not found
 #69 0.055   Build artifact check complete (warnings are non-fatal)
 #69 DONE 0.1s
 
 #70 [stage-1  7/16] RUN pnpm install --prod --frozen-lockfile --ignore-scripts
-#70 0.530 Scope: all 52 workspace projects
-#70 0.757 Lockfile is up to date, resolution step is skipped
-#70 0.853 Progress: resolved 1, reused 0, downloaded 0, added 0
-#70 0.959 Packages: +946
-#70 0.959 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#70 1.856 Progress: resolved 946, reused 0, downloaded 26, added 4
-#70 2.855 Progress: resolved 946, reused 0, downloaded 86, added 28
-#70 3.856 Progress: resolved 946, reused 0, downloaded 206, added 77
-#70 4.858 Progress: resolved 946, reused 0, downloaded 221, added 81
-#70 5.861 Progress: resolved 946, reused 0, downloaded 241, added 87
-#70 6.862 Progress: resolved 946, reused 0, downloaded 244, added 87
-#70 7.862 Progress: resolved 946, reused 0, downloaded 245, added 89
-#70 8.867 Progress: resolved 946, reused 0, downloaded 297, added 109
-#70 9.867 Progress: resolved 946, reused 0, downloaded 310, added 113
-#70 10.87 Progress: resolved 946, reused 0, downloaded 437, added 158
-#70 11.87 Progress: resolved 946, reused 0, downloaded 497, added 178
-#70 12.87 Progress: resolved 946, reused 0, downloaded 515, added 182
-#70 13.87 Progress: resolved 946, reused 0, downloaded 623, added 221
-#70 14.87 Progress: resolved 946, reused 0, downloaded 690, added 245
-#70 15.87 Progress: resolved 946, reused 0, downloaded 710, added 251
-#70 16.87 Progress: resolved 946, reused 0, downloaded 807, added 288
-#70 17.89 Progress: resolved 946, reused 0, downloaded 901, added 317
-#70 18.89 Progress: resolved 946, reused 0, downloaded 928, added 325
-#70 19.89 Progress: resolved 946, reused 0, downloaded 945, added 648
-#70 20.89 Progress: resolved 946, reused 0, downloaded 945, added 923
-#70 20.91 Progress: resolved 946, reused 0, downloaded 945, added 946, done
-#70 22.62 
-#70 22.62 dependencies:
-#70 22.62 + glob 13.0.6
-#70 22.62 + js-yaml 4.2.0
-#70 22.62 
-#70 22.62 devDependencies: skipped
-#70 22.62 
-#70 22.66 Done in 22.5s using pnpm v10.33.2
-#70 DONE 24.2s
+#70 0.533 Scope: all 52 workspace projects
+#70 0.755 Lockfile is up to date, resolution step is skipped
+#70 0.847 Progress: resolved 1, reused 0, downloaded 0, added 0
+#70 0.956 Packages: +943
+#70 0.956 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#70 1.849 Progress: resolved 943, reused 0, downloaded 26, added 4
+#70 2.852 Progress: resolved 943, reused 0, downloaded 103, added 36
+#70 3.852 Progress: resolved 943, reused 0, downloaded 193, added 69
+#70 4.854 Progress: resolved 943, reused 0, downloaded 217, added 77
+#70 5.855 Progress: resolved 943, reused 0, downloaded 231, added 81
+#70 6.856 Progress: resolved 943, reused 0, downloaded 236, added 81
+#70 7.856 Progress: resolved 943, reused 0, downloaded 271, added 97
+#70 8.857 Progress: resolved 943, reused 0, downloaded 288, added 105
+#70 9.858 Progress: resolved 943, reused 0, downloaded 318, added 113
+#70 10.86 Progress: resolved 943, reused 0, downloaded 421, added 159
+#70 11.87 Progress: resolved 943, reused 0, downloaded 432, added 163
+#70 12.87 Progress: resolved 943, reused 0, downloaded 500, added 183
+#70 13.87 Progress: resolved 943, reused 0, downloaded 518, added 189
+#70 14.87 Progress: resolved 943, reused 0, downloaded 634, added 231
+#70 15.87 Progress: resolved 943, reused 0, downloaded 697, added 253
+#70 16.87 Progress: resolved 943, reused 0, downloaded 736, added 271
+#70 17.87 Progress: resolved 943, reused 0, downloaded 781, added 283
+#70 18.87 Progress: resolved 943, reused 0, downloaded 883, added 327
+#70 19.87 Progress: resolved 943, reused 0, downloaded 943, added 503
+#70 20.78 Progress: resolved 943, reused 0, downloaded 943, added 943, done
+#70 22.26 
+#70 22.26 dependencies:
+#70 22.26 + glob 13.0.6
+#70 22.26 + js-yaml 4.2.0
+#70 22.26 
+#70 22.26 devDependencies: skipped
+#70 22.26 
+#70 22.29 Done in 22.1s using pnpm v10.33.2
+#70 DONE 24.8s
 
 #71 [stage-1  8/16] RUN test -f /app/apps/web/standalone/server.js && echo "  OK: server.js after pnpm install" ||     (echo "  WARN: server.js MISSING after pnpm install — entrypoint will handle" &&      echo "  /app/apps/web/ contents:" && ls -la /app/apps/web/ 2>&1)
-#71 1.193   WARN: server.js MISSING after pnpm install — entrypoint will handle
-#71 1.193   /app/apps/web/ contents:
-#71 1.199 total 24
-#71 1.199 drwxr-xr-x 1 root root 4096 Jul 12 08:10 .
-#71 1.199 drwxr-xr-x 1 root root 4096 Jul 12 08:10 ..
-#71 1.199 drwxr-xr-x 5 root root 4096 Jul 12 08:10 node_modules
-#71 1.199 -rw-r--r-- 1 root root 1291 Jul 12 08:10 package.json
-#71 1.199 drwxr-xr-x 4 root root 4096 Jul 12 08:10 standalone
+#71 1.180   WARN: server.js MISSING after pnpm install — entrypoint will handle
+#71 1.180   /app/apps/web/ contents:
+#71 1.183 total 24
+#71 1.183 drwxr-xr-x 1 root root 4096 Jul 12 11:27 .
+#71 1.183 drwxr-xr-x 1 root root 4096 Jul 12 11:27 ..
+#71 1.183 drwxr-xr-x 5 root root 4096 Jul 12 11:27 node_modules
+#71 1.183 -rw-r--r-- 1 root root 1291 Jul 12 11:27 package.json
+#71 1.183 drwxr-xr-x 4 root root 4096 Jul 12 11:27 standalone
 #71 DONE 1.2s
 
 #72 [stage-1  9/16] RUN mkdir -p /app/node_modules/@azeebo &&     for pkg_json in $(find packages services apps -maxdepth 3 -name "package.json"       -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/.prisma/*"); do       name=$(node -e "process.stdout.write(require('./$pkg_json').name||'')" 2>/dev/null);       if [ -n "$name" ]; then         target=$(realpath "$(dirname "$pkg_json")");         rm -rf "/app/node_modules/$name" &&         ln -sfn "$target" "/app/node_modules/$name";       fi;     done &&     find /app/node_modules/.pnpm -maxdepth 1 -type d -name "*@azeebo*" -exec rm -rf {} + 2>/dev/null;     rm -rf /root/.local/share/pnpm 2>/dev/null;     npm install -g prisma@6.19.3 && npm cache clean --force 2>/dev/null;     true
-#72 13.20 
-#72 13.20 added 34 packages in 8s
-#72 13.20 
-#72 13.20 5 packages are looking for funding
-#72 13.20   run `npm fund` for details
-#72 DONE 13.9s
+#72 14.21 
+#72 14.21 added 34 packages in 10s
+#72 14.21 
+#72 14.21 5 packages are looking for funding
+#72 14.21   run `npm fund` for details
+#72 DONE 14.9s
 
 #73 [stage-1 10/16] RUN DATABASE_URL="***localhost:5432/placeholder" &&     export DATABASE_URL &&     SHARED_CLIENT_DIR=$(cd /app/services/core/auth-service && node -e "console.log(require('path').dirname(require.resolve('@prisma/client')))" 2>/dev/null) &&     echo "  Shared @prisma/client: $SHARED_CLIENT_DIR" &&     for schema in $(find services apps -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*"); do       proj_root=$(dirname "$schema");       svc_root=$(dirname "$proj_root");       echo "  Generating Prisma client for $svc_root...";       SVC_NM="/app/$svc_root/node_modules";       rm -rf "$SVC_NM/@prisma/client";       mkdir -p "$SVC_NM/@prisma/client";       cp -r "$SHARED_CLIENT_DIR/." "$SVC_NM/@prisma/client/";       rm -rf "$SVC_NM/@prisma/client/node_modules";       CUSTOM_OUTPUT=$(grep -m1 'output\s*=' "/app/$schema" | sed 's/.*"\(.*\)".*/\1/');       if [ -n "$CUSTOM_OUTPUT" ]; then         FULL_OUTPUT="/app/$proj_root/$CUSTOM_OUTPUT";         (cd "/app/$proj_root" && prisma generate --schema=schema.prisma 2>&1) ||           echo "  WARNING: prisma generate failed for $proj_root";         if [ -d "$FULL_OUTPUT" ]; then           echo "module.exports = { ...require('$FULL_OUTPUT') }" > "$SVC_NM/@prisma/client/index.js";           echo "module.exports = { ...require('$FULL_OUTPUT') }" > "$SVC_NM/@prisma/client/default.js";         else           echo "  WARNING: Custom output $FULL_OUTPUT not found for $svc_root";         fi;       else         (cd "/app/$proj_root" && prisma generate --schema=schema.prisma 2>&1) ||           echo "  WARNING: prisma generate failed for $proj_root";         if [ -d "$SVC_NM/.prisma/client" ]; then           echo "  Generated Prisma client for $svc_root at $SVC_NM/.prisma/client";         else           echo "  WARNING: No .prisma/client found for $svc_root after generate!";         fi;       fi;       cd /app;     done &&     SHARED_ENGINE="";     for engine in $(find /app/services /app/apps -path "*/.prisma/client/libquery_engine-*.node" -type f 2>/dev/null); do       if [ -z "$SHARED_ENGINE" ]; then         SHARED_ENGINE="$engine";       else         rm -f "$engine" && ln -sfn "$SHARED_ENGINE" "$engine";       fi;     done;     npm cache clean --force 2>/dev/null;     rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache /root/.local 2>/dev/null;     find /app/node_modules -name "*.md" -o -name "*.txt" -o -name "*.map" -o -name "LICENSE*" -o -name "CHANGELOG*" | xargs rm -f 2>/dev/null;     find /app/node_modules -name "__tests__" -type d -exec rm -rf {} + 2>/dev/null;     find /app/node_modules -name "test" -type d -exec rm -rf {} + 2>/dev/null;     find /app/node_modules -name "docs" -type d -exec rm -rf {} + 2>/dev/null;     true
-#73 0.121   Shared @prisma/client: /app/node_modules/.pnpm/@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3/node_modules/@prisma/client
-#73 0.135   Generating Prisma client for services/core/wallet-service...
-#73 1.486 Prisma schema loaded from schema.prisma
-#73 1.671 
-#73 1.671 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 66ms
-#73 1.671 
-#73 1.671 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#73 1.671 
-#73 1.671 Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
-#73 1.671 
-#73 1.699   Generating Prisma client for services/core/user-service...
-#73 3.153 Prisma schema loaded from schema.prisma
-#73 3.379 ┌─────────────────────────────────────────────────────────┐
-#73 3.379 │  Update available 6.19.3 -> 7.8.0                       │
-#73 3.379 │                                                         │
-#73 3.379 │  This is a major update - please follow the guide at    │
-#73 3.379 │  https://pris.ly/d/major-version-upgrade                │
-#73 3.379 │                                                         │
-#73 3.379 │  Run the following to update                            │
-#73 3.379 │    npm i -g prisma@latest                               │
-#73 3.379 │    npm i @prisma/client@latest                          │
-#73 3.379 └─────────────────────────────────────────────────────────┘
-#73 3.379 
-#73 3.379 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 105ms
-#73 3.379 
-#73 3.379 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#73 3.379 
-#73 3.379 Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
-#73 3.379 
-#73 3.408   Generating Prisma client for services/core/media-service...
-#73 4.760 Prisma schema loaded from schema.prisma
-#73 4.906 
-#73 4.906 ✔ Generated Prisma Client (v6.19.3) to ./../src/generated/prisma in 64ms
-#73 4.906 
-#73 4.906 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#73 4.906 
-#73 4.906 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
-#73 4.906 
-#73 4.936   Generating Prisma client for services/core/content-service...
-#73 6.667 Prisma schema loaded from schema.prisma
-#73 7.186 
-#73 7.186 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 298ms
-#73 7.186 
-#73 7.186 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#73 7.186 
-#73 7.186 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
-#73 7.186 
-#73 7.224   Generating Prisma client for services/core/auth-service...
-#73 8.563 Prisma schema loaded from schema.prisma
-#73 8.786 
-#73 8.786 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 106ms
-#73 8.786 
-#73 8.786 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#73 8.786 
-#73 8.786 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
-#73 8.786 
-#73 8.816   Generating Prisma client for services/core/payment-service...
-#73 10.19 Prisma schema loaded from schema.prisma
-#73 10.41 
-#73 10.41 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 109ms
-#73 10.41 
-#73 10.41 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#73 10.41 
-#73 10.41 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
-#73 10.41 
-#73 10.44   Generating Prisma client for services/core/search-service...
-#73 11.82 Prisma schema loaded from schema.prisma
-#73 12.05 
-#73 12.05 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 115ms
-#73 12.05 
-#73 12.05 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#73 12.05 
-#73 12.05 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
-#73 12.05 
-#73 12.09   Generating Prisma client for services/operations/queue-service...
-#73 13.43 Prisma schema loaded from schema.prisma
-#73 13.64 
-#73 13.64 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 90ms
-#73 13.64 
-#73 13.64 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#73 13.64 
-#73 13.64 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
-#73 13.64 
-#73 13.67   Generating Prisma client for services/operations/moderation-service...
-#73 15.07 Prisma schema loaded from schema.prisma
-#73 15.43 
-#73 15.43 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 174ms
-#73 15.43 
-#73 15.43 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#73 15.43 
-#73 15.43 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
-#73 15.43 
-#73 15.46   Generating Prisma client for services/operations/support-service...
-#73 16.89 Prisma schema loaded from schema.prisma
-#73 17.24 
-#73 17.24 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 170ms
-#73 17.24 
-#73 17.24 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#73 17.24 
-#73 17.24 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
-#73 17.24 
-#73 17.27   Generating Prisma client for services/intelligence/analytics-service...
-#73 18.70 Prisma schema loaded from schema.prisma
-#73 19.18 
-#73 19.18 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 289ms
-#73 19.18 
-#73 19.18 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#73 19.18 
-#73 19.18 Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
-#73 19.18 
-#73 19.22   Generating Prisma client for services/intelligence/recommendation-service...
-#73 20.65 Prisma schema loaded from schema.prisma
-#73 20.89 
-#73 20.89 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 125ms
-#73 20.89 
-#73 20.89 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#73 20.89 
-#73 20.89 Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
-#73 20.89 
-#73 20.93   Generating Prisma client for services/universes/sports-service...
-#73 22.33 Prisma schema loaded from schema.prisma
-#73 22.89 
-#73 22.89 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 362ms
-#73 22.89 
-#73 22.89 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#73 22.89 
-#73 22.89 Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
-#73 22.89 
-#73 23.19   Generating Prisma client for services/universes/reality-service...
-#73 25.73 Prisma schema loaded from schema.prisma
-#73 26.04 
-#73 26.04 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 141ms
-#73 26.04 
-#73 26.04 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#73 26.04 
-#73 26.04 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
-#73 26.04 
-#73 26.08   Generating Prisma client for services/universes/creator-service...
-#73 27.44 Prisma schema loaded from schema.prisma
-#73 27.79 
-#73 27.79 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 174ms
-#73 27.79 
-#73 27.79 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#73 27.79 
-#73 27.79 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
-#73 27.79 
-#73 27.82   Generating Prisma client for services/universes/vertical-service...
-#73 29.23 Prisma schema loaded from schema.prisma
-#73 29.83 
-#73 29.83 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 318ms
-#73 29.83 
-#73 29.83 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#73 29.83 
-#73 29.83 Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
-#73 29.83 
-#73 29.86   Generating Prisma client for services/universes/comedy-service...
-#73 31.24 Prisma schema loaded from schema.prisma
-#73 31.61 
-#73 31.61 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 182ms
-#73 31.61 
-#73 31.61 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#73 31.61 
-#73 31.61 Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
-#73 31.61 
-#73 31.63   Generating Prisma client for services/universes/games-service...
-#73 32.99 Prisma schema loaded from schema.prisma
-#73 33.31 
-#73 33.31 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 160ms
-#73 33.31 
-#73 33.31 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#73 33.31 
-#73 33.31 Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
-#73 33.31 
-#73 33.34   Generating Prisma client for services/universes/lifestyle-service...
-#73 34.74 Prisma schema loaded from schema.prisma
-#73 35.27 
-#73 35.27 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 320ms
-#73 35.27 
-#73 35.27 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#73 35.27 
-#73 35.27 Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
-#73 35.27 
-#73 35.30   Generating Prisma client for services/universes/movie-service...
-#73 36.66 Prisma schema loaded from schema.prisma
-#73 36.96 
-#73 36.96 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 165ms
-#73 36.96 
-#73 36.96 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#73 36.96 
-#73 36.96 Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
-#73 36.96 
-#73 36.99   Generating Prisma client for services/engagement/notification-service...
-#73 38.60 Prisma schema loaded from schema.prisma
-#73 39.20 
-#73 39.20 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 352ms
-#73 39.20 
-#73 39.20 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#73 39.20 
-#73 39.20 Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
-#73 39.20 
-#73 39.23   Generating Prisma client for services/engagement/reward-service...
-#73 40.58 Prisma schema loaded from schema.prisma
-#73 40.81 
-#73 40.81 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 111ms
-#73 40.81 
-#73 40.81 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#73 40.81 
-#73 40.81 Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
-#73 40.81 
-#73 40.84   Generating Prisma client for services/engagement/messaging-service...
-#73 42.17 Prisma schema loaded from schema.prisma
-#73 42.33 
-#73 42.33 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 63ms
-#73 42.33 
-#73 42.33 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#73 42.33 
-#73 42.33 Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
-#73 42.33 
-#73 42.36   Generating Prisma client for services/engagement/referral-service...
-#73 43.71 Prisma schema loaded from schema.prisma
-#73 43.88 
-#73 43.88 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 69ms
-#73 43.88 
-#73 43.88 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#73 43.88 
-#73 43.88 Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
-#73 43.88 
-#73 43.91   Generating Prisma client for services/engagement/engagement-service...
-#73 45.25 Prisma schema loaded from schema.prisma
-#73 45.41 
-#73 45.41 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 62ms
-#73 45.41 
-#73 45.41 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#73 45.41 
-#73 45.41 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
-#73 45.41 
-#73 45.44   Generating Prisma client for services/engagement/subscription-service...
-#73 46.80 Prisma schema loaded from schema.prisma
-#73 46.96 
-#73 46.96 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 67ms
-#73 46.96 
-#73 46.96 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#73 46.96 
-#73 46.96 Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
-#73 46.96 
-#73 DONE 55.3s
+#73 0.123   Shared @prisma/client: /app/node_modules/.pnpm/@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3/node_modules/@prisma/client
+#73 0.137   Generating Prisma client for services/core/wallet-service...
+#73 1.438 Prisma schema loaded from schema.prisma
+#73 1.617 
+#73 1.617 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 63ms
+#73 1.617 
+#73 1.617 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#73 1.617 
+#73 1.617 Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
+#73 1.617 
+#73 1.647   Generating Prisma client for services/core/user-service...
+#73 2.936 Prisma schema loaded from schema.prisma
+#73 3.179 ┌─────────────────────────────────────────────────────────┐
+#73 3.179 │  Update available 6.19.3 -> 7.8.0                       │
+#73 3.179 │                                                         │
+#73 3.179 │  This is a major update - please follow the guide at    │
+#73 3.179 │  https://pris.ly/d/major-version-upgrade                │
+#73 3.179 │                                                         │
+#73 3.179 │  Run the following to update                            │
+#73 3.179 │    npm i -g prisma@latest                               │
+#73 3.179 │    npm i @prisma/client@latest                          │
+#73 3.179 └─────────────────────────────────────────────────────────┘
+#73 3.179 
+#73 3.179 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 92ms
+#73 3.179 
+#73 3.179 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#73 3.179 
+#73 3.179 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
+#73 3.179 
+#73 3.205   Generating Prisma client for services/core/media-service...
+#73 4.496 Prisma schema loaded from schema.prisma
+#73 4.628 
+#73 4.628 ✔ Generated Prisma Client (v6.19.3) to ./../src/generated/prisma in 53ms
+#73 4.628 
+#73 4.628 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#73 4.628 
+#73 4.628 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
+#73 4.628 
+#73 4.653   Generating Prisma client for services/core/content-service...
+#73 5.958 Prisma schema loaded from schema.prisma
+#73 6.390 
+#73 6.390 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 261ms
+#73 6.390 
+#73 6.390 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#73 6.390 
+#73 6.390 Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+#73 6.390 
+#73 6.418   Generating Prisma client for services/core/auth-service...
+#73 7.755 Prisma schema loaded from schema.prisma
+#73 7.970 
+#73 7.970 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 100ms
+#73 7.970 
+#73 7.970 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#73 7.970 
+#73 7.970 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
+#73 7.970 
+#73 7.998   Generating Prisma client for services/core/payment-service...
+#73 9.302 Prisma schema loaded from schema.prisma
+#73 9.591 
+#73 9.591 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 102ms
+#73 9.591 
+#73 9.591 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#73 9.591 
+#73 9.591 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
+#73 9.591 
+#73 9.619   Generating Prisma client for services/core/search-service...
+#73 10.95 Prisma schema loaded from schema.prisma
+#73 11.17 
+#73 11.17 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 109ms
+#73 11.17 
+#73 11.17 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#73 11.17 
+#73 11.17 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
+#73 11.17 
+#73 11.20   Generating Prisma client for services/operations/queue-service...
+#73 12.74 Prisma schema loaded from schema.prisma
+#73 12.97 
+#73 12.97 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 90ms
+#73 12.97 
+#73 12.97 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#73 12.97 
+#73 12.97 Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
+#73 12.97 
+#73 13.00   Generating Prisma client for services/operations/moderation-service...
+#73 14.46 Prisma schema loaded from schema.prisma
+#73 14.75 
+#73 14.75 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 156ms
+#73 14.75 
+#73 14.75 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#73 14.75 
+#73 14.75 Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
+#73 14.75 
+#73 14.77   Generating Prisma client for services/operations/support-service...
+#73 16.08 Prisma schema loaded from schema.prisma
+#73 16.41 
+#73 16.41 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 153ms
+#73 16.41 
+#73 16.41 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#73 16.41 
+#73 16.41 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
+#73 16.41 
+#73 16.44   Generating Prisma client for services/intelligence/analytics-service...
+#73 17.76 Prisma schema loaded from schema.prisma
+#73 18.23 
+#73 18.23 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 203ms
+#73 18.23 
+#73 18.23 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#73 18.23 
+#73 18.23 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
+#73 18.23 
+#73 18.25   Generating Prisma client for services/intelligence/recommendation-service...
+#73 19.73 Prisma schema loaded from schema.prisma
+#73 19.99 
+#73 19.99 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 109ms
+#73 19.99 
+#73 19.99 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#73 19.99 
+#73 19.99 Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
+#73 19.99 
+#73 20.02   Generating Prisma client for services/universes/sports-service...
+#73 21.34 Prisma schema loaded from schema.prisma
+#73 21.70 
+#73 21.70 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 180ms
+#73 21.70 
+#73 21.70 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#73 21.70 
+#73 21.70 Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+#73 21.70 
+#73 21.73   Generating Prisma client for services/universes/reality-service...
+#73 23.07 Prisma schema loaded from schema.prisma
+#73 23.35 
+#73 23.35 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 153ms
+#73 23.35 
+#73 23.35 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#73 23.35 
+#73 23.35 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
+#73 23.35 
+#73 23.38   Generating Prisma client for services/universes/creator-service...
+#73 24.70 Prisma schema loaded from schema.prisma
+#73 25.02 
+#73 25.02 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 143ms
+#73 25.02 
+#73 25.02 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#73 25.02 
+#73 25.02 Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+#73 25.02 
+#73 25.05   Generating Prisma client for services/universes/vertical-service...
+#73 26.37 Prisma schema loaded from schema.prisma
+#73 26.92 
+#73 26.92 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 297ms
+#73 26.92 
+#73 26.92 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#73 26.92 
+#73 26.92 Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+#73 26.92 
+#73 26.95   Generating Prisma client for services/universes/comedy-service...
+#73 28.24 Prisma schema loaded from schema.prisma
+#73 28.59 
+#73 28.59 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 162ms
+#73 28.59 
+#73 28.59 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#73 28.59 
+#73 28.59 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
+#73 28.59 
+#73 28.62   Generating Prisma client for services/universes/games-service...
+#73 29.94 Prisma schema loaded from schema.prisma
+#73 30.26 
+#73 30.26 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 154ms
+#73 30.26 
+#73 30.26 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#73 30.26 
+#73 30.26 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
+#73 30.26 
+#73 30.29   Generating Prisma client for services/universes/lifestyle-service...
+#73 31.62 Prisma schema loaded from schema.prisma
+#73 32.16 
+#73 32.16 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 296ms
+#73 32.16 
+#73 32.16 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#73 32.16 
+#73 32.16 Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+#73 32.16 
+#73 32.19   Generating Prisma client for services/universes/movie-service...
+#73 33.53 Prisma schema loaded from schema.prisma
+#73 33.85 
+#73 33.85 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 152ms
+#73 33.85 
+#73 33.85 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#73 33.85 
+#73 33.85 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
+#73 33.85 
+#73 33.88   Generating Prisma client for services/engagement/notification-service...
+#73 35.18 Prisma schema loaded from schema.prisma
+#73 35.43 
+#73 35.43 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 92ms
+#73 35.43 
+#73 35.43 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#73 35.43 
+#73 35.43 Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+#73 35.43 
+#73 35.46   Generating Prisma client for services/engagement/reward-service...
+#73 36.76 Prisma schema loaded from schema.prisma
+#73 36.99 
+#73 36.99 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 106ms
+#73 36.99 
+#73 36.99 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#73 36.99 
+#73 36.99 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
+#73 36.99 
+#73 37.02   Generating Prisma client for services/engagement/messaging-service...
+#73 38.33 Prisma schema loaded from schema.prisma
+#73 38.49 
+#73 38.49 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 65ms
+#73 38.49 
+#73 38.49 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#73 38.49 
+#73 38.49 Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
+#73 38.49 
+#73 38.52   Generating Prisma client for services/engagement/referral-service...
+#73 39.84 Prisma schema loaded from schema.prisma
+#73 40.01 
+#73 40.01 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 69ms
+#73 40.01 
+#73 40.01 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#73 40.01 
+#73 40.01 Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
+#73 40.01 
+#73 40.04   Generating Prisma client for services/engagement/engagement-service...
+#73 41.34 Prisma schema loaded from schema.prisma
+#73 41.49 
+#73 41.49 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 65ms
+#73 41.49 
+#73 41.49 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#73 41.49 
+#73 41.49 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
+#73 41.49 
+#73 41.52   Generating Prisma client for services/engagement/subscription-service...
+#73 42.82 Prisma schema loaded from schema.prisma
+#73 42.99 
+#73 42.99 ✔ Generated Prisma Client (v6.19.3) to ./../src/prisma/client in 76ms
+#73 42.99 
+#73 42.99 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#73 42.99 
+#73 42.99 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
+#73 42.99 
+#73 DONE 51.1s
 
 #74 [stage-1 11/16] COPY supervisord.conf /etc/supervisord.conf
-#74 DONE 0.3s
+#74 DONE 0.2s
 
 #75 [stage-1 12/16] COPY nginx.conf /etc/nginx/nginx.conf
 #75 DONE 0.0s
@@ -1512,39 +1589,33 @@ Builder info
 #78 DONE 0.1s
 
 #79 [stage-1 16/16] RUN useradd -r -s /bin/false -u 65532 nodejs &&     chown -R nodejs:nodejs /app
-#79 0.063 useradd warning: nodejs's uid 65532 is greater than SYS_UID_MAX 999
-#79 DONE 66.0s
+#79 0.065 useradd warning: nodejs's uid 65532 is greater than SYS_UID_MAX 999
+#79 DONE 66.2s
 
 #80 exporting to image
 #80 exporting layers
-#80 exporting layers 274.2s done
+#80 exporting layers 271.9s done
+#80 exporting manifest sha256:1164c3a8a311c0a570358c764b4d6beb88c560c9ed5ac72a0637430be1dd89e3 done
+#80 exporting config sha256:9b7281abb0700115bd49743d1e0003ff16920c29e7259afeaa72c398c6c4c804 done
+#80 exporting attestation manifest sha256:230478776021bb04452928efb3f3cf77b6a21784ae63f80409a76ecd4dad9cfe done
+#80 exporting manifest list sha256:1c915901d2348ca04709e760fa5868c86d555d7c1f198672a68583e93b790989 done
+#80 pushing layers
 #80 ...
 
 #81 [auth] azeebotv/azeebo-all-in-one:pull,push token for ghcr.io
 #81 DONE 0.0s
 
 #80 exporting to image
-#80 exporting manifest sha256:f93c2b6a0daf75e65840dce7a425db2125e86da8c44349c22a500daab09af5d9 done
-#80 exporting config sha256:bb4b9f3c4ff3b0725b9a79e8e2cdafb4870d3b3b81a8193f78e5ca321d335bb9 done
-#80 exporting attestation manifest sha256:32a34fbd3ceb02e2ec7b17e0b91795c5081db49efb2e3f55705c0dc611879f25 done
-#80 exporting manifest list sha256:10e42fc34bd0307ed24e993d11d88cfcc7fa3fd6e8fcc9568c2049056f95766d done
-#80 pushing layers
-#80 pushing layers 317.9s done
-#80 pushing manifest for ghcr.io/azeebotv/azeebo-all-in-one:dev@sha256:10e42fc34bd0307ed24e993d11d88cfcc7fa3fd6e8fcc9568c2049056f95766d
-#80 ...
+#80 pushing layers 15.7s done
+#80 pushing manifest for ghcr.io/azeebotv/azeebo-all-in-one:dev@sha256:1c915901d2348ca04709e760fa5868c86d555d7c1f198672a68583e93b790989
+#80 pushing manifest for ghcr.io/azeebotv/azeebo-all-in-one:dev@sha256:1c915901d2348ca04709e760fa5868c86d555d7c1f198672a68583e93b790989 1.1s done
+#80 pushing layers 0.3s done
+#80 pushing manifest for ghcr.io/azeebotv/azeebo-all-in-one:22ebdb2@sha256:1c915901d2348ca04709e760fa5868c86d555d7c1f198672a68583e93b790989
+#80 pushing manifest for ghcr.io/azeebotv/azeebo-all-in-one:22ebdb2@sha256:1c915901d2348ca04709e760fa5868c86d555d7c1f198672a68583e93b790989 0.4s done
+#80 DONE 289.4s
 
-#82 [auth] azeebotv/azeebo-all-in-one:pull,push token for ghcr.io
+#82 resolving provenance for metadata file
 #82 DONE 0.0s
-
-#80 exporting to image
-#80 pushing manifest for ghcr.io/azeebotv/azeebo-all-in-one:dev@sha256:10e42fc34bd0307ed24e993d11d88cfcc7fa3fd6e8fcc9568c2049056f95766d 1.1s done
-#80 pushing layers 0.2s done
-#80 pushing manifest for ghcr.io/azeebotv/azeebo-all-in-one:2bd305c@sha256:10e42fc34bd0307ed24e993d11d88cfcc7fa3fd6e8fcc9568c2049056f95766d
-#80 pushing manifest for ghcr.io/azeebotv/azeebo-all-in-one:2bd305c@sha256:10e42fc34bd0307ed24e993d11d88cfcc7fa3fd6e8fcc9568c2049056f95766d 0.4s done
-#80 DONE 593.7s
-
-#83 resolving provenance for metadata file
-#83 DONE 0.0s
 ImageID
 Digest
 Metadata

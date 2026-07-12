@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Patch,
@@ -11,7 +11,7 @@ import {
   Param,
   Query,
   UnauthorizedException,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 
 import { UsersService } from './users.service.js';
@@ -34,7 +34,7 @@ interface AuthenticatedRequest {
 @ApiBearerAuth()
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(@Inject(UsersService) private readonly usersService: UsersService) {}
 
   private getUserId(req: AuthenticatedRequest): string {
     const userId = req.user?.sub;

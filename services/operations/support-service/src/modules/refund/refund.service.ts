@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {Inject,  Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '@prisma/client';
@@ -16,8 +16,8 @@ export class RefundService {
   private notificationServiceClient!: ApiClient;
 
   constructor(
-    private prisma: PrismaService,
-    private configService: ConfigService
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(ConfigService) private configService: ConfigService
   ) {
     const timeout = parseInt(this.configService.get<string>('DEFAULT_API_TIMEOUT') || '30000', 10);
     this.paymentServiceClient = createApiClient({

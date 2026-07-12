@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {Inject,  Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '@prisma/client';
@@ -12,8 +12,8 @@ export class ChargebackService {
   private readonly auditServiceClient;
 
   constructor(
-    private prisma: PrismaService,
-    private configService: ConfigService
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(ConfigService) private configService: ConfigService
   ) {
     this.paymentServiceClient = createApiClient({
       baseUrl: this.configService.getOrThrow<string>('PAYMENT_SERVICE_URL'),

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import {Inject,  Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '../../prisma/client/index.js';
 import { CreateContentDto } from './dto/create-content.dto.js';
@@ -29,7 +29,7 @@ interface PaginatedResult<T> {
 
 @Injectable()
 export class ContentRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async findAll(
     filters?: { universe?: string; creatorId?: string; status?: string },

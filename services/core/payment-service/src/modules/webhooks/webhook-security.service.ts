@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {Inject,  Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { RedisService } from '../../common/services/redis.service.js';
@@ -12,8 +12,8 @@ export class WebhookSecurityService {
   private readonly replayPrefix = 'webhook_replay:';
 
   constructor(
-    private readonly redisService: RedisService,
-    private readonly configService: ConfigService
+    @Inject(RedisService) private readonly redisService: RedisService,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.idempotencyTTL = this.configService.get<number>('WEBHOOK_IDEMPOTENCY_TTL', 86400);
     this.maxAge = this.configService.get<number>('WEBHOOK_MAX_AGE', 300);

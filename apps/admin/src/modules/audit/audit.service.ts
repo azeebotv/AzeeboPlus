@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 
 export interface AuditLogEntry {
@@ -31,7 +31,7 @@ interface PaginatedResult {
 
 @Injectable()
 export class AuditLogService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async log(entry: AuditLogEntry): Promise<void> {
     await this.prisma.auditLog.create({

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '../../prisma/client/index.js';
 import { CreateContentDto } from './dto/create-content.dto.js';
@@ -9,7 +9,7 @@ type ContentWithUniverse = Prisma.ContentItemGetPayload<{ include: { universe: t
 export class ContentIngestionService {
   private readonly logger = new Logger(ContentIngestionService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   private async createContentRecord(
     userId: string,

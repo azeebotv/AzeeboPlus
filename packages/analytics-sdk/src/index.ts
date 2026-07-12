@@ -353,6 +353,7 @@ export class Analytics {
   predictionSubmitted(predictionId: string, answer: string): void {
     this.track({
       name: 'prediction_placed',
+      category: ConsentCategory.ESSENTIAL,
       properties: {
         prediction_id: predictionId,
         answer,
@@ -384,6 +385,7 @@ export class Analytics {
   share(contentId: string): void {
     this.track({
       name: 'share',
+      category: ConsentCategory.ESSENTIAL,
       properties: {
         content_id: contentId,
       },
@@ -413,6 +415,7 @@ export class Analytics {
   playStart(contentId: string, contentType: string, universe: string): void {
     this.track({
       name: 'play_start',
+      category: ConsentCategory.ESSENTIAL,
       properties: {
         content_id: contentId,
         content_type: contentType,
@@ -424,6 +427,7 @@ export class Analytics {
   playComplete(contentId: string, contentType: string, universe: string): void {
     this.track({
       name: 'play_complete',
+      category: ConsentCategory.ESSENTIAL,
       properties: {
         content_id: contentId,
         content_type: contentType,
@@ -447,6 +451,7 @@ export class Analytics {
   rewardRedeemed(rewardType: string, points: number, rewardId: string): void {
     this.track({
       name: 'reward_redeemed',
+      category: ConsentCategory.ESSENTIAL,
       properties: {
         reward_type: rewardType,
         points,
@@ -458,6 +463,7 @@ export class Analytics {
   creatorTipSent(creatorId: string, amount: number, currency: string = 'NGN'): void {
     this.track({
       name: 'creator_tip_sent',
+      category: ConsentCategory.ESSENTIAL,
       properties: {
         creator_id: creatorId,
         amount,
@@ -492,6 +498,7 @@ export class Analytics {
   creatorFollowed(creatorId: string): void {
     this.track({
       name: 'creator_followed',
+      category: ConsentCategory.ESSENTIAL,
       properties: {
         creator_id: creatorId,
       },
@@ -501,6 +508,7 @@ export class Analytics {
   creatorTipped(creatorId: string, amount: number, currency: string = 'NGN'): void {
     this.track({
       name: 'creator_tipped',
+      category: ConsentCategory.ESSENTIAL,
       properties: {
         creator_id: creatorId,
         amount,
@@ -512,6 +520,7 @@ export class Analytics {
   shareInitiated(contentId: string, platform?: string): void {
     this.track({
       name: 'share_initiated',
+      category: ConsentCategory.ESSENTIAL,
       properties: {
         content_id: contentId,
         ...(platform ? { platform } : {}),
@@ -522,6 +531,7 @@ export class Analytics {
   notificationOpened(notificationId: string): void {
     this.track({
       name: 'notification_opened',
+      category: ConsentCategory.ESSENTIAL,
       properties: {
         notification_id: notificationId,
       },

@@ -15,6 +15,7 @@ import { MetricsModule } from './modules/metrics/metrics.module.js';
 import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { RedisModule } from './common/redis.module.js';
+import { CacheModule } from '@azeebo/shared-services';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { RedisModule } from './common/redis.module.js';
       isGlobal: true,
     }),
     RedisModule,
+    CacheModule,
     RateLimiterModule.forRoot(),
     ThrottlerModule.forRoot([
       {

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { CreateConversationDto, SendMessageDto } from './dto/messaging.dto.js';
 
@@ -6,7 +6,7 @@ import { CreateConversationDto, SendMessageDto } from './dto/messaging.dto.js';
 export class MessagingService {
   private readonly logger = new Logger(MessagingService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async getConversations(userId: string) {
     try {

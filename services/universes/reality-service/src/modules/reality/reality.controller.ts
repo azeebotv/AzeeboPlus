@@ -1,4 +1,4 @@
-import {
+import { Inject,
   Controller,
   Get,
   Post,
@@ -9,7 +9,7 @@ import {
   Request,
   Param,
   Query,
-} from '@nestjs/common';
+ } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
@@ -32,7 +32,7 @@ import {
 @ApiBearerAuth()
 @Controller('v1/reality')
 export class RealityController {
-  constructor(private readonly realityService: RealityService) {}
+  constructor(@Inject(RealityService) private readonly realityService: RealityService) {}
 
   @Get('shows')
   @UseGuards(RateLimitGuard)
