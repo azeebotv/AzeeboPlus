@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { WebhookController } from './webhook.controller';
-import { WebhookService } from './webhook.service';
-import { WebhookSecurityService } from './webhook-security.service';
-import { DatabaseModule } from '../database/database.module';
-import { WebhookRetryService } from '../payments/webhook-retry.service';
-import { RedisModule } from '../../common/redis.module';
+import { WebhookController } from './webhook.controller.js';
+import { WebhookService } from './webhook.service.js';
+import { WebhookSecurityService } from './webhook-security.service.js';
+import { DatabaseModule } from '../database/database.module.js';
+import { WebhookRetryService } from '../payments/webhook-retry.service.js';
+import { RedisModule } from '../../common/redis.module.js';
 
 @Module({
   imports: [DatabaseModule, RedisModule],

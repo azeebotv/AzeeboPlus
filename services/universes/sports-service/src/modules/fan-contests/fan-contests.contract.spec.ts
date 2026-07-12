@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { FanContestsModule } from './fan-contests.module';
-import { FanContestsService } from './fan-contests.service';
-import { PrismaService } from '../database/prisma.service';
+import { FanContestsModule } from './fan-contests.module.js';
+import { FanContestsService } from './fan-contests.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { RateLimitGuard } from '@azeebo/security';
 
 describe('Fan Contests Controller Contract Tests', () => {

@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { PaymentsService } from './payments.service';
-import { PrismaService } from '../database/prisma.service';
-import { PaystackProvider } from './providers/paystack.provider';
-import { FlutterwaveProvider } from './providers/flutterwave.provider';
-import { WebhookRetryService } from './webhook-retry.service';
+import { PaymentsService } from './payments.service.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { PaystackProvider } from './providers/paystack.provider.js';
+import { FlutterwaveProvider } from './providers/flutterwave.provider.js';
+import { WebhookRetryService } from './webhook-retry.service.js';
 import { ConfigService } from '@nestjs/config';
-import { RedisService } from '../../common/services/redis.service';
+import { RedisService } from '../../common/services/redis.service.js';
 
 jest.mock('../database/prisma.service');
 jest.mock('./providers/paystack.provider');

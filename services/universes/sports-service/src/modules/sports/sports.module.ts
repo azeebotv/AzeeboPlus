@@ -3,9 +3,9 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
-import { SportsController } from './sports.controller';
-import { SportsService } from './sports.service';
-import { DatabaseModule } from '../database/database.module';
+import { SportsController } from './sports.controller.js';
+import { SportsService } from './sports.service.js';
+import { DatabaseModule } from '../database/database.module.js';
 
 @Module({
   imports: [

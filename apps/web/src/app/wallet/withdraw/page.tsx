@@ -57,19 +57,21 @@ export default function WithdrawPage(): React.JSX.Element {
   useEffect(() => {
     const loadData = async (): Promise<void> => {
       try {
-        const [accountsRes, methodsRes, pricingRes, balanceRes, walletPricingRes] = await Promise.all([
-          apiFetch<BankAccount[]>('/v1/wallet/accounts'),
-          apiFetch<WithdrawalMethods>('/v1/wallet/withdrawal-methods'),
-          apiFetch<Pricing>('/v1/wallet/withdrawal-pricing'),
-          apiFetch<{ balance: number }>('/v1/wallet/balance'),
-          apiFetch<WalletPricing>('/v1/pricing/wallet'),
-        ]);
+        const [accountsRes, methodsRes, pricingRes, balanceRes, walletPricingRes] =
+          await Promise.all([
+            apiFetch<BankAccount[]>('/v1/wallet/accounts'),
+            apiFetch<WithdrawalMethods>('/v1/wallet/withdrawal-methods'),
+            apiFetch<Pricing>('/v1/wallet/withdrawal-pricing'),
+            apiFetch<{ balance: number }>('/v1/wallet/balance'),
+            apiFetch<WalletPricing>('/v1/pricing/wallet'),
+          ]);
         if (accountsRes.success && accountsRes.data)
           setAccounts(Array.isArray(accountsRes.data) ? accountsRes.data : []);
         if (methodsRes.success && methodsRes.data) setMethods(methodsRes.data);
         if (pricingRes.success && pricingRes.data) setPricing(pricingRes.data);
         if (balanceRes.success && balanceRes.data) setWalletBalance(balanceRes.data.balance);
-        if (walletPricingRes.success && walletPricingRes.data) setWalletPricing(walletPricingRes.data);
+        if (walletPricingRes.success && walletPricingRes.data)
+          setWalletPricing(walletPricingRes.data);
       } catch (error) {
         webLogger.error('Failed to load data', error);
       } finally {

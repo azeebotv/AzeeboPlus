@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
-import { RewardsModule } from './rewards.module';
-import { RewardsService } from './rewards.service';
-import { PrismaService } from '../database/prisma.service';
+import { RewardsModule } from './rewards.module.js';
+import { RewardsService } from './rewards.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { AuthGuard } from '@nestjs/passport';
 
 class MockAuthGuard {

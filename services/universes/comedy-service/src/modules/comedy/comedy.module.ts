@@ -3,10 +3,10 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
-import { ComedyController } from './comedy.controller';
-import { ComedyService } from './comedy.service';
-import { DatabaseModule } from '../database/database.module';
-import { RedisService } from '../../common/services/redis.service';
+import { ComedyController } from './comedy.controller.js';
+import { ComedyService } from './comedy.service.js';
+import { DatabaseModule } from '../database/database.module.js';
+import { RedisService } from '../../common/services/redis.service.js';
 
 @Module({
   imports: [

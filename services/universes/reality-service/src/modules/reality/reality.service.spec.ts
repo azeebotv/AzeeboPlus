@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ConflictException } from '@nestjs/common';
-import { RealityService } from './reality.service';
-import { PrismaService } from '../database/prisma.service';
+import { RealityService } from './reality.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
-import { RedisService } from '../../common/services/redis.service';
+import { RedisService } from '../../common/services/redis.service.js';
 
 describe('RealityService', () => {
   let service: RealityService;

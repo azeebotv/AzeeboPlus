@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
-import { JwtModule, type JwtModuleOptions } from '@nestjs/jwt';
+import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CacheModule } from '@azeebo/shared-services';
 
-import { SearchController } from './search.controller';
-import { SearchService } from './search.service';
-import { SearchRepository } from './search.repository';
-import { DatabaseModule } from '../database/database.module';
+import { SearchController } from './search.controller.js';
+import { SearchService } from './search.service.js';
+import { SearchRepository } from './search.repository.js';
+import { DatabaseModule } from '../database/database.module.js';
 
 @Module({
   imports: [
@@ -16,10 +16,10 @@ import { DatabaseModule } from '../database/database.module';
     CacheModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService): Promise<JwtModuleOptions> => ({
+      useFactory: async (configService: ConfigService) => ({
         secret: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
         signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as string | number,
+          expiresIn: configService.get('JWT_EXPIRES_IN', '30m'),
         },
       }),
       inject: [ConfigService],

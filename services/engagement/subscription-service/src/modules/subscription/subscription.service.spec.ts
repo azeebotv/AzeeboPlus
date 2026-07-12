@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { SubscriptionService } from './subscription.service';
-import { PrismaService } from '../database/prisma.service';
+import { SubscriptionService } from './subscription.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { NotFoundException } from '@nestjs/common';
 
 describe('SubscriptionService', () => {

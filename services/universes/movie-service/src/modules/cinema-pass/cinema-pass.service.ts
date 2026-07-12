@@ -1,5 +1,7 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../database/prisma.service.js';
+import axios from 'axios';
 
 interface CinemaPass {
   id: string;
@@ -39,8 +41,14 @@ interface CinemaPassResponse {
 @Injectable()
 export class CinemaPassService {
   private readonly logger = new Logger(CinemaPassService.name);
+  private readonly walletServiceBaseUrl: string;
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService
+  ) {
+    this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
+  }
 
   async getPasses(): Promise<CinemaPassResponse> {
     try {
@@ -116,15 +124,7 @@ export class CinemaPassService {
         throw new NotFoundException(`Pass not found: ${passId}`);
       }
 
-      const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
-      if (!wallet) {
-        throw new NotFoundException('Wallet not found');
-      }
-
       const passPrice = Number(pass.price);
-      if (passPrice > 0 && Number(wallet.balance) < passPrice) {
-        throw new BadRequestException('Insufficient balance');
-      }
 
       const now = new Date();
       const endDate = new Date();
@@ -134,42 +134,44 @@ export class CinemaPassService {
         endDate.setFullYear(endDate.getFullYear() + 1);
       }
 
-      const subscription = await this.prisma.$transaction(async (tx) => {
-        if (passPrice > 0) {
-          await tx.wallet.update({
-            where: { userId },
-            data: { balance: { decrement: passPrice } },
-          });
+      const idempotencyKey = `${userId}-${passId}-${now.getTime()}`;
 
-          await tx.walletTransaction.create({
-            data: {
-              walletId: wallet.id,
-              type: 'debit',
+      if (passPrice > 0) {
+        try {
+          await axios.post(
+            `${this.walletServiceBaseUrl}/wallet/debit`,
+            {
+              userId,
               amount: passPrice,
-              status: 'completed',
               description: `Cinema pass subscription: ${pass.name}`,
+              idempotencyKey,
             },
-          });
+            { timeout: 10000 }
+          );
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : 'Failed to process payment';
+          throw new BadRequestException(errorMessage);
         }
+      }
 
-        return tx.cinemaPassSubscription.upsert({
-          where: { userId_passId: { userId, passId } },
-          create: {
-            userId,
-            passId,
-            status: 'active',
-            startDate: now,
-            endDate,
-            autoRenew,
-          },
-          update: {
-            status: 'active',
-            startDate: now,
-            endDate,
-            autoRenew,
-          },
-          include: { pass: true },
-        });
+      const subscription = await this.prisma.cinemaPassSubscription.upsert({
+        where: { userId_passId: { userId, passId } },
+        create: {
+          userId,
+          passId,
+          status: 'active',
+          startDate: now,
+          endDate,
+          autoRenew,
+        },
+        update: {
+          status: 'active',
+          startDate: now,
+          endDate,
+          autoRenew,
+        },
+        include: { pass: true },
       });
 
       return {

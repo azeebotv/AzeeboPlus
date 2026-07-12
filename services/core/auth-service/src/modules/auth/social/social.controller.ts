@@ -12,9 +12,9 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 
-import { SocialAuthService } from './social.service';
-import { RateLimitGuard, RateLimit } from '../../../common/guards/rate-limit.guard';
-import { SocialAuthCallbackDto, SocialAuthAuthorizeResponseDto } from '../dto/social-auth.dto';
+import { SocialAuthService } from './social.service.js';
+import { RateLimitGuard, RateLimit } from '../../../common/guards/rate-limit.guard.js';
+import { SocialAuthCallbackDto, SocialAuthAuthorizeResponseDto } from '../dto/social-auth.dto.js';
 
 interface SocialLoginResponse {
   success: boolean;

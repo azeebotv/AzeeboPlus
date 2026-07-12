@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { subscriptionApi } from '../src/api';
 import { logger } from '../src/utils/logger';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';

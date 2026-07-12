@@ -12,8 +12,8 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
-import { DeviceService } from './device.service';
-import { UpdateDeviceInfoDto } from '../dto/device.dto';
+import { DeviceService } from './device.service.js';
+import { UpdateDeviceInfoDto } from '../dto/device.dto.js';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import { User, ApiResponseWrapper } from '@azeebo/shared-types';
 

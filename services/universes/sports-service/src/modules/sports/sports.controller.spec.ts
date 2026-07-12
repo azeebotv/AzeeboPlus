@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Reflector } from '@nestjs/core';
-import { SportsController } from './sports.controller';
-import { SportsService } from './sports.service';
+import { SportsController } from './sports.controller.js';
+import { SportsService } from './sports.service.js';
 import { RateLimitService } from '@azeebo/security';
 
 describe('SportsController', () => {
@@ -116,7 +116,7 @@ describe('SportsController', () => {
 
   describe('submitPrediction', () => {
     it('should submit a prediction', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { eventId: 'event-1', prediction: { winner: 'team-a' } };
       const result = {
         success: true,
@@ -129,7 +129,7 @@ describe('SportsController', () => {
     });
 
     it('should throw NotFoundException when event not found', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { eventId: 'nonexistent', prediction: {} };
       mockSportsService.submitPrediction.mockRejectedValue(
         new (require('@nestjs/common').NotFoundException)('Event not found')
@@ -139,7 +139,7 @@ describe('SportsController', () => {
     });
 
     it('should throw BadRequestException when predictions not allowed', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { eventId: 'event-1', prediction: {} };
       mockSportsService.submitPrediction.mockRejectedValue(
         new (require('@nestjs/common').BadRequestException)(
@@ -153,7 +153,7 @@ describe('SportsController', () => {
     });
 
     it('should throw BadRequestException when insufficient balance', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { eventId: 'event-1', prediction: {} };
       mockSportsService.submitPrediction.mockRejectedValue(
         new (require('@nestjs/common').BadRequestException)(
@@ -199,7 +199,7 @@ describe('SportsController', () => {
 
   describe('enterFanContest', () => {
     it('should enter a fan contest', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { contestId: 'contest-1' };
       const result = {
         success: true,
@@ -212,7 +212,7 @@ describe('SportsController', () => {
     });
 
     it('should throw NotFoundException when contest not found', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { contestId: 'nonexistent' };
       mockSportsService.enterFanContest.mockRejectedValue(
         new (require('@nestjs/common').NotFoundException)('Contest not found')
@@ -222,7 +222,7 @@ describe('SportsController', () => {
     });
 
     it('should throw BadRequestException when contest is not active', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { contestId: 'contest-1' };
       mockSportsService.enterFanContest.mockRejectedValue(
         new (require('@nestjs/common').BadRequestException)('Contest is not active')
@@ -232,7 +232,7 @@ describe('SportsController', () => {
     });
 
     it('should throw BadRequestException when insufficient balance', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { contestId: 'contest-1' };
       mockSportsService.enterFanContest.mockRejectedValue(
         new (require('@nestjs/common').BadRequestException)(

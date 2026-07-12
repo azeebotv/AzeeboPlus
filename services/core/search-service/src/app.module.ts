@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
-import { SearchModule } from './modules/search/search.module';
-import { AdminModule } from './modules/admin/admin.module';
-import { DatabaseModule } from './modules/database/database.module';
-import { HealthModule } from './modules/health/health.module';
+import { SearchModule } from './modules/search/search.module.js';
+import { AdminModule } from './modules/admin/admin.module.js';
+import { DatabaseModule } from './modules/database/database.module.js';
+import { HealthModule } from './modules/health/health.module.js';
 import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
 

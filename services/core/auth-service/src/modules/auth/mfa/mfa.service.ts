@@ -3,8 +3,8 @@ import { randomBytes } from 'crypto';
 import * as OTPAuth from 'otpauth';
 import { toDataURL } from 'qrcode';
 
-import { AuthRepository } from '../auth.repository';
-import { RedisService } from '../../../common/services/redis.service';
+import { AuthRepository } from '../auth.repository.js';
+import { RedisService } from '../../../common/services/redis.service.js';
 
 const MFA_PENDING_PREFIX = 'mfa_pending:';
 const MFA_PENDING_TTL = 600; // 10 minutes

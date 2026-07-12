@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { ReportBuilderService } from './report-builder.service';
-import { ReportBuilderController } from './report-builder.controller';
-import { DatabaseModule } from '../database/database.module';
+import { ReportBuilderService } from './report-builder.service.js';
+import { ReportBuilderController } from './report-builder.controller.js';
+import { DatabaseModule } from '../database/database.module.js';
 
 @Module({
   imports: [DatabaseModule],

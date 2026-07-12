@@ -4,8 +4,8 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 
-import { AuthRepository } from '../auth.repository';
-import { RedisService } from '../../../common/services/redis.service';
+import { AuthRepository } from '../auth.repository.js';
+import { RedisService } from '../../../common/services/redis.service.js';
 
 interface SocialUser {
   email: string;

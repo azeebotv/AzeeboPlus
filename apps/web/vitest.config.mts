@@ -1,5 +1,4 @@
 import path from 'path';
-// @ts-expect-error vitest/config ESM interop
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({

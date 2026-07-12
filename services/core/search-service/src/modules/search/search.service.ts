@@ -1,8 +1,8 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 // Prisma client types available via PrismaService
-import { SearchResponse } from './interfaces/search-response.interface';
+import { SearchResponse } from './interfaces/search-response.interface.js';
 
 interface FacetedFilters {
   universe?: string;
@@ -133,12 +133,6 @@ export class SearchService {
           skip,
           take: limit,
           orderBy,
-          include: {
-            creator: true,
-            universe: true,
-            categories: true,
-            tags: true,
-          },
         }),
         this.prisma.contentItem.count({ where: whereCondition }),
       ]);
@@ -148,7 +142,6 @@ export class SearchService {
           bio: { contains: escapedQuery, mode: 'insensitive' },
         },
         take: Math.min(limit, 20),
-        include: { user: true },
       });
 
       const universes = await this.prisma.universe.findMany({
@@ -180,8 +173,8 @@ export class SearchService {
               bio: creator.bio,
               user: {
                 id: creator.userId,
-                username: creator.user?.displayName || '',
-                email: creator.user?.email || '',
+                username: creator.displayName || '',
+                email: creator.email || '',
               },
             })),
             universes: universes.map((uni) => ({
@@ -242,7 +235,6 @@ export class SearchService {
           },
           take: 50,
           orderBy: { createdAt: 'desc' },
-          include: { creator: true, universe: true, categories: true, tags: true },
         }),
         this.computeFacets(query),
       ]);
@@ -250,7 +242,6 @@ export class SearchService {
       const creators = await this.prisma.creatorProfile.findMany({
         where: { bio: { contains: escapedQuery, mode: 'insensitive' } },
         take: 20,
-        include: { user: true },
       });
 
       const universes = await this.prisma.universe.findMany({
@@ -282,8 +273,8 @@ export class SearchService {
               bio: creator.bio,
               user: {
                 id: creator.userId,
-                username: creator.user?.displayName || '',
-                email: creator.user?.email || '',
+                username: creator.displayName || '',
+                email: creator.email || '',
               },
             })),
             universes: universes.map((uni) => ({
@@ -313,19 +304,11 @@ export class SearchService {
       status: 'published',
     };
 
-    const [universeCounts, categoryCounts, tagCounts, dateCounts] = await Promise.all([
+    const [universeCounts, dateCounts] = await Promise.all([
       this.prisma.contentItem.groupBy({
         by: ['universeId'],
         where: baseCondition,
         _count: { id: true },
-      }),
-      this.prisma.category.findMany({
-        where: { contentItems: { some: baseCondition } },
-        include: { _count: { select: { contentItems: true } } },
-      }),
-      this.prisma.tag.findMany({
-        where: { contentItems: { some: baseCondition } },
-        include: { _count: { select: { contentItems: true } } },
       }),
       this.getDateRangeFacets(baseCondition),
     ]);
@@ -335,8 +318,6 @@ export class SearchService {
     });
 
     type UniverseCount = (typeof universeCounts)[number];
-    type CategoryCount = (typeof categoryCounts)[number];
-    type TagCount = (typeof tagCounts)[number];
 
     return {
       universes: universeCounts.map((u: UniverseCount) => ({
@@ -344,16 +325,8 @@ export class SearchService {
         name: universes.find((univ) => univ.id === u.universeId)?.name || 'Unknown',
         count: u._count.id,
       })),
-      categories: categoryCounts.map((c: CategoryCount) => ({
-        id: c.id,
-        name: c.name,
-        count: c._count.contentItems,
-      })),
-      tags: tagCounts.map((t: TagCount) => ({
-        id: t.id,
-        name: t.name,
-        count: t._count.contentItems,
-      })),
+      categories: [],
+      tags: [],
       contentTypes: [],
       dateRanges: dateCounts,
     };
@@ -408,8 +381,8 @@ export class SearchService {
         where: {
           query: { contains: this.escapeRegex(query), mode: 'insensitive' },
         },
-        select: { query: true, count: true },
-        orderBy: { count: 'desc' },
+        select: { query: true, resultCount: true },
+        orderBy: { resultCount: 'desc' },
         take: 10,
       });
 
@@ -431,14 +404,14 @@ export class SearchService {
   async getTrending(): Promise<SearchResponse> {
     try {
       const trending = await this.prisma.searchQueryLog.findMany({
-        orderBy: { count: 'desc' },
+        orderBy: { resultCount: 'desc' },
         take: 20,
       });
 
       return {
         success: true,
         data: {
-          trending: trending.map((t) => ({ query: t.query, count: t.count })),
+          trending: trending.map((t) => ({ query: t.query, count: t.resultCount })),
         },
       };
     } catch (error: unknown) {
@@ -447,88 +420,20 @@ export class SearchService {
     }
   }
 
-  async getFacets(query?: string, universe?: string): Promise<SearchResponse> {
-    const contentWhere: Record<string, unknown> = {
-      status: 'published',
-      ...(universe ? { universeId: universe } : {}),
-      ...(query
-        ? {
-            OR: [
-              { title: { contains: this.escapeRegex(query), mode: 'insensitive' } },
-              { description: { contains: this.escapeRegex(query), mode: 'insensitive' } },
-            ],
-          }
-        : {}),
-    };
-
+  async getFacets(_query?: string, _universe?: string): Promise<SearchResponse> {
     try {
-      const [universes, categories, tags] = await Promise.all([
-        this.prisma.universe.findMany({
-          select: {
-            id: true,
-            name: true,
-            displayName: true,
-            _count: {
-              select: {
-                contentItems: {
-                  where: contentWhere,
-                },
-              },
-            },
-          },
-        }),
-        this.prisma.category.findMany({
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            _count: {
-              select: {
-                contentItems: {
-                  where: contentWhere,
-                },
-              },
-            },
-          },
-        }),
-        this.prisma.tag.findMany({
-          select: {
-            id: true,
-            name: true,
-            _count: {
-              select: {
-                contentItems: {
-                  where: contentWhere,
-                },
-              },
-            },
-          },
-          orderBy: {
-            contentItems: {
-              _count: 'desc',
-            },
-          },
-          take: 50,
-        }),
-      ]);
-
-      type UniverseWithCount = (typeof universes)[number];
-      type CategoryWithCount = (typeof categories)[number];
-      type TagWithCount = (typeof tags)[number];
+      const universes = await this.prisma.universe.findMany({
+        select: { id: true, name: true, displayName: true },
+        where: { isEnabled: true },
+      });
 
       return {
         success: true,
         data: {
           facets: {
-            universes: universes
-              .filter((u: UniverseWithCount) => u._count.contentItems > 0)
-              .map((u) => ({ id: u.id, name: u.name, count: u._count.contentItems })),
-            categories: categories
-              .filter((c: CategoryWithCount) => c._count.contentItems > 0)
-              .map((c) => ({ id: c.id, name: c.name, count: c._count.contentItems })),
-            tags: tags
-              .filter((t: TagWithCount) => t._count.contentItems > 0)
-              .map((t) => ({ id: t.id, name: t.name, count: t._count.contentItems })),
+            universes: universes.map((u) => ({ id: u.id, name: u.name, count: 0 })),
+            categories: [],
+            tags: [],
             contentTypes: [],
             dateRanges: [],
           },
@@ -540,20 +445,14 @@ export class SearchService {
     }
   }
 
-  async logSearch(userId: string, query: string, resultsCount: number): Promise<SearchResponse> {
+    async logSearch(userId: string, query: string, resultCount: number): Promise<SearchResponse> {
     try {
-      const searchQuery = await this.prisma.searchQueryLog.upsert({
-        where: { query },
-        update: { count: { increment: 1 }, lastSearchAt: new Date() },
-        create: { query, count: 1, lastSearchAt: new Date() },
+      await this.prisma.searchQueryLog.create({
+        data: { query, userId, resultCount },
       });
 
       await this.prisma.userSearch.create({
-        data: {
-          userId,
-          queryId: searchQuery.id,
-          resultsCount,
-        },
+        data: { userId, query, resultCount },
       });
 
       // Invalidate suggestions cache since search log affects trending

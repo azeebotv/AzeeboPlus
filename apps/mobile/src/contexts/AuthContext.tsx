@@ -177,7 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = async () => {
+  async function logout() {
     try {
       await authApi.logout();
     } catch (error) {
@@ -190,7 +190,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       apiClient.setToken(null);
       setUser(null);
     }
-  };
+  }
 
   const forgotPassword = async (email: string) => {
     await authApi.forgotPassword(email);

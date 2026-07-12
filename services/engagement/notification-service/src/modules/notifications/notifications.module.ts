@@ -5,12 +5,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CacheModule } from '@azeebo/shared-services';
 import type { StringValue } from 'ms';
 
-import { NotificationsController } from './notifications.controller';
-import { NotificationsService } from './notifications.service';
-import { DatabaseModule } from '../database/database.module';
-import { FirebaseModule } from '../firebase/firebase.module';
-import { EmailModule } from '../email/email.module';
-import { SmsModule } from '../sms/sms.module';
+import { NotificationsController } from './notifications.controller.js';
+import { NotificationsService } from './notifications.service.js';
+import { DatabaseModule } from '../database/database.module.js';
+import { FirebaseModule } from '../firebase/firebase.module.js';
+import { EmailModule } from '../email/email.module.js';
+import { SmsModule } from '../sms/sms.module.js';
 
 @Module({
   imports: [

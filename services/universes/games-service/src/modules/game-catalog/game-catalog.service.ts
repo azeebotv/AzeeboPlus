@@ -1,5 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 
 interface Game {
@@ -77,7 +77,6 @@ export class GameCatalogService {
       const [items, total] = await Promise.all([
         this.prisma.game.findMany({
           where,
-          include: { _count: { select: { questions: true } } },
           skip: (page - 1) * limit,
           take: limit,
           orderBy: { playCount: 'desc' },
@@ -85,10 +84,24 @@ export class GameCatalogService {
         this.prisma.game.count({ where }),
       ]);
 
+      // Count questions per game in a single query
+      const gameIds = items.map((g) => g.id);
+      const questionCountsMap = new Map<string, number>();
+      if (gameIds.length > 0) {
+        const counts = await this.prisma.gameQuestion.groupBy({
+          by: ['gameId'],
+          _count: { id: true },
+          where: { gameId: { in: gameIds } },
+        });
+        for (const c of counts) {
+          questionCountsMap.set(c.gameId, c._count.id);
+        }
+      }
+
       const result: GameResponse = {
         success: true,
         data: {
-          items: items.map((g) => this.formatGame(g)),
+          items: items.map((g) => this.formatGame({ ...g, _count: { questions: questionCountsMap.get(g.id) || 0 } })),
           total,
           page,
           limit,
@@ -112,10 +125,6 @@ export class GameCatalogService {
 
       const game = await this.prisma.game.findUnique({
         where: { slug },
-        include: {
-          _count: { select: { questions: true } },
-          questions: { orderBy: { order: 'asc' }, take: 10 },
-        },
       });
 
       if (!game) {
@@ -127,7 +136,8 @@ export class GameCatalogService {
         data: { playCount: { increment: 1 } },
       });
 
-      const result: GameResponse = { success: true, data: this.formatGame(game) };
+      const questionCount = await this.prisma.gameQuestion.count({ where: { gameId: game.id } });
+      const result: GameResponse = { success: true, data: this.formatGame({ ...game, _count: { questions: questionCount } }) };
       await this.cache.set(cacheK, result, 60);
       return result;
     } catch (error) {
@@ -170,7 +180,6 @@ export class GameCatalogService {
 
       const game = await this.prisma.game.findUnique({
         where: { id: gameId },
-        include: { questions: { orderBy: { order: 'asc' } } },
       });
 
       if (!game) {
@@ -185,7 +194,12 @@ export class GameCatalogService {
         },
       });
 
-      const questions = game.questions.map((q) => ({
+      const gameQuestions = await this.prisma.gameQuestion.findMany({
+        where: { gameId },
+        orderBy: { order: 'asc' },
+      });
+
+      const questions = gameQuestions.map((q: { id: string; question: string; options: unknown; points: number; timeLimit: number }) => ({
         id: q.id,
         question: q.question,
         options: q.options,

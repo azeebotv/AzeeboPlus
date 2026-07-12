@@ -103,17 +103,17 @@ export class RecommendationService {
       if (cached) return cached;
 
       const [watchHistory, rewardAccount] = await Promise.all([
-        this.prisma.watchHistory.findMany({
+        this.prisma.contentItem.findMany({
           where: { userId },
           orderBy: { watchedAt: 'desc' },
           take: 100,
         }),
-        this.prisma.rewardAccount.findUnique({
+        this.prisma.userSegment.findFirst({
           where: { userId },
         }),
       ]);
 
-      const watchedContentIds = watchHistory.map((h) => h.contentId);
+      const watchedContentIds = watchHistory.map((h) => h.contentId).filter((id): id is string => !!id);
 
       if (watchedContentIds.length === 0) {
         return this.getFallbackRecommendations(limit, universe, freshnessDays);
@@ -121,12 +121,11 @@ export class RecommendationService {
 
       const watchedContent = await this.prisma.contentItem.findMany({
         where: { id: { in: watchedContentIds } },
-        include: { universe: true, categories: true },
-      });
+        });
 
       const universeCounts = watchedContent.reduce(
         (acc, c) => {
-          const name = c.universe?.name || 'unknown';
+          const name = c.universe || 'unknown';
           acc[name] = (acc[name] || 0) + 1;
           return acc;
         },
@@ -135,8 +134,8 @@ export class RecommendationService {
 
       const categoryCounts = watchedContent.reduce(
         (acc, c) => {
-          c.categories?.forEach((cat) => {
-            acc[cat.name] = (acc[cat.name] || 0) + 1;
+          (Array.isArray(c.categories) ? c.categories : []).forEach((cat) => {
+            if (cat) acc[cat] = (acc[cat] || 0) + 1;
           });
           return acc;
         },
@@ -156,17 +155,18 @@ export class RecommendationService {
           status: 'published',
           id: { notIn: watchedContentIds },
           publishedAt: { gte: freshnessCutoff },
-          ...(universe && { universe: { name: universe } }),
-          ...(topUniverse && !universe && { universe: { name: topUniverse } }),
-        },
-        include: {
-          creator: { select: { id: true, displayName: true, avatar: true } },
-          universe: true,
-          categories: true,
+          ...(universe && { universe }),
+          ...(topUniverse && !universe && { universe: topUniverse }),
         },
         orderBy: { viewCount: 'desc' },
         take: limit * 3,
       });
+
+      const creatorIds = [...new Set(candidateContent.map((c) => c.creatorId).filter((id): id is string => !!id))];
+      const creatorProfiles = creatorIds.length > 0
+        ? await this.prisma.creatorProfile.findMany({ where: { userId: { in: creatorIds } } })
+        : [];
+      const creatorMap = new Map(creatorProfiles.map((cp) => [cp.userId, cp]));
 
       const scored = candidateContent.map((content) => {
         const factors: { name: string; weight: number }[] = [];
@@ -174,13 +174,13 @@ export class RecommendationService {
 
         let baseScore = content.viewCount * 0.3;
 
-        if (content.universe?.name === topUniverse) {
+        if (content.universe === topUniverse) {
           baseScore += 30;
           factors.push({ name: 'universe_match', weight: 30 });
           reason = `You frequently watch ${topUniverse}`;
         }
 
-        const contentCategories = content.categories?.map((c) => c.name) || [];
+        const contentCategories = (content.categories || []).filter((c): c is string => !!c);
         const categoryMatches = contentCategories.filter((c) => topCategories.includes(c));
         if (categoryMatches.length > 0) {
           baseScore += categoryMatches.length * 10;
@@ -203,16 +203,16 @@ export class RecommendationService {
           id: content.id,
           title: content.title,
           description: content.description || '',
-          thumbnail: content.thumbnail,
+          thumbnail: content.thumbnail ?? '',
           creator: {
-            id: content.creator.id,
-            displayName: content.creator.displayName || '',
-            avatar: content.creator.avatar || '',
+            id: content.creatorId ?? '',
+            displayName: creatorMap.get(content.creatorId ?? '')?.displayName ?? '',
+            avatar: creatorMap.get(content.creatorId ?? '')?.avatar ?? '',
           },
           universe: {
-            id: content.universe.id,
-            name: content.universe.name,
-            slug: content.universe.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+            id: content.universeId,
+            name: content.universe,
+            slug: content.universe.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
           },
           score: Math.round(baseScore * 100) / 100,
           explainability: {
@@ -254,15 +254,17 @@ export class RecommendationService {
         where: {
           status: 'published',
           publishedAt: { gte: freshnessCutoff },
-          ...(universe && { universe: { name: universe } }),
-        },
-        include: {
-          creator: { select: { id: true, displayName: true, avatar: true } },
-          universe: true,
+          ...(universe && { universe }),
         },
         orderBy: { viewCount: 'desc' },
         take: limit,
       });
+
+      const fallbackCreatorIds = [...new Set(trending.map((c) => c.creatorId).filter((id): id is string => !!id))];
+      const fallbackCreators = fallbackCreatorIds.length > 0
+        ? await this.prisma.creatorProfile.findMany({ where: { userId: { in: fallbackCreatorIds } } })
+        : [];
+      const fallbackCreatorMap = new Map(fallbackCreators.map((cp) => [cp.userId, cp]));
 
       return {
         success: true,
@@ -270,16 +272,16 @@ export class RecommendationService {
           id: content.id,
           title: content.title,
           description: content.description || '',
-          thumbnail: content.thumbnail,
+          thumbnail: content.thumbnail ?? '',
           creator: {
-            id: content.creator.id,
-            displayName: content.creator.displayName || '',
-            avatar: content.creator.avatar || '',
+            id: content.creatorId ?? '',
+            displayName: fallbackCreatorMap.get(content.creatorId ?? '')?.displayName ?? '',
+            avatar: fallbackCreatorMap.get(content.creatorId ?? '')?.avatar ?? '',
           },
           universe: {
-            id: content.universe.id,
-            name: content.universe.name,
-            slug: content.universe.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+            id: content.universeId,
+            name: content.universe,
+            slug: content.universe.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
           },
           score: content.viewCount,
           explainability: {
@@ -344,9 +346,6 @@ export class RecommendationService {
         where: {
           userId: { not: userId },
         },
-        include: {
-          user: { select: { id: true, displayName: true, avatar: true } },
-        },
         take: limit,
       });
 
@@ -354,9 +353,9 @@ export class RecommendationService {
         success: true,
         data: recommendedCreators.map((creator) => ({
           id: creator.id,
-          displayName: creator.user.displayName || '',
+          displayName: creator.displayName || '',
           bio: creator.bio || '',
-          avatar: creator.user.avatar || '',
+          avatar: creator.avatar || '',
           followerCount: 0,
           contentCount: 0,
           explainability: {
@@ -385,15 +384,15 @@ export class RecommendationService {
       );
       if (cached) return cached;
 
-      const watchHistory = await this.prisma.watchHistory.findMany({
+      const watchHistory = await this.prisma.contentItem.findMany({
         where: { userId },
         orderBy: { watchedAt: 'desc' },
         take: 50,
       });
 
       const watchedContent = await this.prisma.contentItem.findMany({
-        where: { id: { in: watchHistory.map((h) => h.contentId) } },
-        include: { universe: true },
+        where: { id: { in: watchHistory.map((h) => h.contentId).filter((id): id is string => !!id) } },
+        // universe is a string field
       });
 
       const watchedUniverseIds = watchedContent
@@ -407,15 +406,17 @@ export class RecommendationService {
           status: 'published',
           universeId: { notIn: watchedUniverseIds },
           publishedAt: { gte: freshnessCutoff },
-          id: { notIn: watchHistory.map((h) => h.contentId) },
-        },
-        include: {
-          creator: { select: { id: true, displayName: true, avatar: true } },
-          universe: true,
+          id: { notIn: watchHistory.map((h) => h.contentId).filter((id): id is string => !!id) },
         },
         orderBy: { viewCount: 'desc' },
         take: limit,
       });
+
+      const crossCreatorIds = [...new Set(recommendations.map((c) => c.creatorId).filter((id): id is string => !!id))];
+      const crossCreators = crossCreatorIds.length > 0
+        ? await this.prisma.creatorProfile.findMany({ where: { userId: { in: crossCreatorIds } } })
+        : [];
+      const crossCreatorMap = new Map(crossCreators.map((cp) => [cp.userId, cp]));
 
       const result = {
         success: true,
@@ -423,16 +424,16 @@ export class RecommendationService {
           id: content.id,
           title: content.title,
           description: content.description || '',
-          thumbnail: content.thumbnail,
+          thumbnail: content.thumbnail ?? '',
           creator: {
-            id: content.creator.id,
-            displayName: content.creator.displayName || '',
-            avatar: content.creator.avatar || '',
+            id: content.creatorId ?? '',
+            displayName: crossCreatorMap.get(content.creatorId ?? '')?.displayName ?? '',
+            avatar: crossCreatorMap.get(content.creatorId ?? '')?.avatar ?? '',
           },
           universe: {
-            id: content.universe.id,
-            name: content.universe.name,
-            slug: content.universe.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+            id: content.universeId,
+            name: content.universe,
+            slug: content.universe.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
           },
           score: content.viewCount,
           explainability: {
@@ -468,7 +469,7 @@ export class RecommendationService {
 
       const [user, watchHistory, payments, rewards] = await Promise.all([
         this.prisma.user.findUnique({ where: { id: userId } }),
-        this.prisma.watchHistory.count({ where: { userId, watchedAt: { gte: thirtyDaysAgo } } }),
+        this.prisma.contentItem.count({ where: { userId, watchedAt: { gte: thirtyDaysAgo } } }),
         this.prisma.paymentIntent.count({
           where: { userId, status: 'completed', createdAt: { gte: thirtyDaysAgo } },
         }),
@@ -568,9 +569,9 @@ export class RecommendationService {
         this.prisma.contentItem.count({ where: { creatorId } }),
         this.prisma.productEvent.count({
           where: {
-            type: 'content_view',
+            eventName: 'content_view',
             metadata: { path: ['creatorId'], equals: creatorId },
-            timestamp: { gte: thirtyDaysAgo },
+            createdAt: { gte: thirtyDaysAgo },
           },
         }),
       ]);
@@ -623,8 +624,8 @@ export class RecommendationService {
 
       const [user, recentActivity, lastActivity, payments, rewards] = await Promise.all([
         this.prisma.user.findUnique({ where: { id: userId } }),
-        this.prisma.productEvent.count({ where: { userId, timestamp: { gte: sevenDaysAgo } } }),
-        this.prisma.productEvent.findFirst({ where: { userId }, orderBy: { timestamp: 'desc' } }),
+        this.prisma.productEvent.count({ where: { userId, createdAt: { gte: sevenDaysAgo } } }),
+        this.prisma.productEvent.findFirst({ where: { userId }, orderBy: { createdAt: 'desc' } }),
         this.prisma.paymentIntent.count({ where: { userId, status: 'completed' } }),
         this.prisma.pointsLedger.count({
           where: { userId, type: 'credit', createdAt: { gte: thirtyDaysAgo } },
@@ -633,7 +634,7 @@ export class RecommendationService {
       const subscriptions = 0; // Subscription model not available in this service
 
       const daysSinceLastActivity = lastActivity
-        ? Math.floor((Date.now() - lastActivity.timestamp.getTime()) / (1000 * 60 * 60 * 24))
+        ? Math.floor((Date.now() - lastActivity.createdAt.getTime()) / (1000 * 60 * 60 * 24))
         : 999;
 
       const factors: string[] = [];
@@ -718,7 +719,7 @@ export class RecommendationService {
           _sum: { amount: true },
           where: { userId, status: 'completed' },
         }),
-        this.prisma.watchHistory.count({ where: { userId, watchedAt: { gte: thirtyDaysAgo } } }),
+        this.prisma.contentItem.count({ where: { userId, watchedAt: { gte: thirtyDaysAgo } } }),
         this.prisma.pointsLedger.aggregate({
           _sum: { points: true },
           where: { userId, type: 'credit' },
@@ -843,15 +844,15 @@ export class RecommendationService {
       if (contentId) {
         const content = await this.prisma.contentItem.findUnique({
           where: { id: contentId },
-          include: { creator: true },
+          // creator is a string field
         });
-        if (content && content.createdAt && content.creator) {
+        if (content && content.createdAt && content.creatorId) {
           const hoursSinceUpload = Math.floor(
             (Date.now() - content.createdAt.getTime()) / (1000 * 60 * 60)
           );
           if (hoursSinceUpload < 1) {
             const viewCount = await this.prisma.productEvent.count({
-              where: { type: 'content_view', metadata: { path: ['contentId'], equals: contentId } },
+              where: { eventName: 'content_view', metadata: { path: ['contentId'], equals: contentId } },
             });
             if (viewCount > 100) {
               riskScore += 30;

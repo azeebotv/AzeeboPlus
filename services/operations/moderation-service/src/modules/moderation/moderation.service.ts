@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
-import { SafetyScanningService, ScanRequest, ScanResult } from './safety-scanning.service';
+import { PrismaService } from '../database/prisma.service.js';
+import { SafetyScanningService, ScanRequest, ScanResult } from './safety-scanning.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 import type {
   ModerationCase,
@@ -10,8 +10,8 @@ import type {
   AuditEvent,
   ReviewerAssignment,
   Report,
-} from '../../prisma/client';
-import { ModerationResponse } from './interfaces/moderation-response.interface';
+} from '../../prisma/client/index.js';
+import { ModerationResponse } from './interfaces/moderation-response.interface.js';
 
 export interface CreateCaseRequest {
   reportId: string;

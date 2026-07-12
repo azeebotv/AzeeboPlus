@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { PaystackProvider } from './paystack.provider';
-import { FlutterwaveProvider } from './flutterwave.provider';
+import { PaystackProvider } from './paystack.provider.js';
+import { FlutterwaveProvider } from './flutterwave.provider.js';
 
 @Module({
   providers: [PaystackProvider, FlutterwaveProvider],

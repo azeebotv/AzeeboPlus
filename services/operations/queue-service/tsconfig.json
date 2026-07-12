@@ -2,17 +2,33 @@
   "extends": "../../../tsconfig.json",
   "compilerOptions": {
     "declaration": true,
-    "types": ["node", "jest"],
+    "types": [
+      "node",
+      "jest"
+    ],
     "removeComments": true,
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "outDir": "./dist",
     "incremental": true,
     "paths": {
-      "@azeebo/*": ["../../../packages/*/dist"],
-      "@queue/*": ["./*"]
-    }
+      "@azeebo/*": [
+        "../../../packages/*/dist"
+      ],
+      "@queue/*": [
+        "./*"
+      ]
+    },
+    "module": "Node16",
+    "target": "ES2022",
+    "moduleResolution": "Node16"
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "src/**/*.spec.ts"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/**/*.spec.ts"
+  ]
 }

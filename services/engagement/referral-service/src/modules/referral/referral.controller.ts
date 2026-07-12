@@ -14,9 +14,9 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
 
-import { ReferralService } from './referral.service';
-import { GenerateReferralCodeDto, ApplyReferralCodeDto } from './dto/referral.dto';
-import { ReferralResponse } from './interfaces/referral-response.interface';
+import { ReferralService } from './referral.service.js';
+import { GenerateReferralCodeDto, ApplyReferralCodeDto } from './dto/referral.dto.js';
+import { ReferralResponse } from './interfaces/referral-response.interface.js';
 
 @ApiTags('Referrals')
 @UseGuards(RateLimitGuard)
@@ -29,8 +29,8 @@ export class ReferralController {
   @ApiOperation({ summary: 'Get user referral code' })
   @ApiResponse({ status: 200, description: 'Referral code' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getReferralCode(@Request() req: { user: { sub: string } }): Promise<ReferralResponse> {
-    return this.referralService.getReferralCode(req.user.sub);
+  async getReferralCode(@Request() req: { user: { id: string } }): Promise<ReferralResponse> {
+    return this.referralService.getReferralCode(req.user.id);
   }
 
   @Post('generate')
@@ -41,10 +41,10 @@ export class ReferralController {
   @ApiResponse({ status: 201, description: 'Referral code generated' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async generateReferralCode(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Body() generateDto: GenerateReferralCodeDto
   ): Promise<ReferralResponse> {
-    return this.referralService.generateReferralCode(req.user.sub, generateDto);
+    return this.referralService.generateReferralCode(req.user.id, generateDto);
   }
 
   @Post('apply')
@@ -57,10 +57,10 @@ export class ReferralController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 409, description: 'Already used a referral code' })
   async applyReferralCode(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Body() applyDto: ApplyReferralCodeDto
   ): Promise<ReferralResponse> {
-    return this.referralService.applyReferralCode(req.user.sub, applyDto);
+    return this.referralService.applyReferralCode(req.user.id, applyDto);
   }
 
   @Get()
@@ -69,11 +69,11 @@ export class ReferralController {
   @ApiResponse({ status: 200, description: 'User referrals' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getReferrals(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Query('page') page?: number,
     @Query('limit') limit?: number
   ): Promise<ReferralResponse> {
-    return this.referralService.getReferrals(req.user.sub, Number(page) || 1, Number(limit) || 20);
+    return this.referralService.getReferrals(req.user.id, Number(page) || 1, Number(limit) || 20);
   }
 
   @Get('stats')
@@ -81,8 +81,8 @@ export class ReferralController {
   @ApiOperation({ summary: 'Get referral statistics' })
   @ApiResponse({ status: 200, description: 'Referral statistics' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getStats(@Request() req: { user: { sub: string } }): Promise<ReferralResponse> {
-    return this.referralService.getStats(req.user.sub);
+  async getStats(@Request() req: { user: { id: string } }): Promise<ReferralResponse> {
+    return this.referralService.getStats(req.user.id);
   }
 
   @Post('complete/:referralId')
@@ -96,9 +96,9 @@ export class ReferralController {
   @ApiResponse({ status: 403, description: 'Forbidden - not authorized' })
   @ApiResponse({ status: 404, description: 'Referral not found' })
   async completeReferral(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Param('referralId') referralId: string
   ): Promise<ReferralResponse> {
-    return this.referralService.completeReferral(referralId, req.user.sub);
+    return this.referralService.completeReferral(referralId, req.user.id);
   }
 }

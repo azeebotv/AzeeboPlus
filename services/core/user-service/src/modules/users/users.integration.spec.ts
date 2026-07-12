@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UsersService } from './users.service';
-import { PrismaService } from '../database/prisma.service';
+import { UsersService } from './users.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { NotFoundException } from '@nestjs/common';
 
 jest.mock('../database/prisma.service');

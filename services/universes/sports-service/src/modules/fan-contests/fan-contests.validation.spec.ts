@@ -1,5 +1,5 @@
 import { validate } from 'class-validator';
-import { JoinContestDto, SubmitContestScoreDto } from './dto/contest.dto';
+import { JoinContestDto, SubmitContestScoreDto } from './dto/contest.dto.js';
 
 describe('Fan Contests Validation Tests', () => {
   describe('JoinContestDto', () => {

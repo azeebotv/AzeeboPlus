@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
-import { RealityController } from './reality.controller';
-import { RealityService } from './reality.service';
+import { RealityController } from './reality.controller.js';
+import { RealityService } from './reality.service.js';
 import { RateLimitService } from '@azeebo/security';
 
 describe('RealityController', () => {
@@ -347,7 +347,7 @@ describe('RealityController', () => {
 
   describe('voteForContestant', () => {
     it('should submit vote via show alias', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { contestantId: 'c-1' };
       const result = {
         success: true,
@@ -365,7 +365,7 @@ describe('RealityController', () => {
 
   describe('submitVote', () => {
     it('should submit a vote', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { contestantId: 'c-1', showId: 'show-1' };
       const result = {
         success: true,
@@ -378,7 +378,7 @@ describe('RealityController', () => {
     });
 
     it('should throw ConflictException when user already voted', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { contestantId: 'c-1', showId: 'show-1' };
       mockRealityService.submitVote.mockRejectedValue(
         new (require('@nestjs/common').ConflictException)(
@@ -394,7 +394,7 @@ describe('RealityController', () => {
 
   describe('submitVotesWithQuantity', () => {
     it('should submit multiple votes', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { contestantId: 'c-1', showId: 'show-1', quantity: 5 };
       const result = {
         success: true,
@@ -407,7 +407,7 @@ describe('RealityController', () => {
     });
 
     it('should throw BadRequestException when quantity is invalid', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { contestantId: 'c-1', showId: 'show-1', quantity: 0 };
       mockRealityService.submitVotesWithQuantity.mockRejectedValue(
         new (require('@nestjs/common').BadRequestException)(
@@ -423,7 +423,7 @@ describe('RealityController', () => {
 
   describe('submitSupervote', () => {
     it('should submit a supervote', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { contestantId: 'c-1', showId: 'show-1' };
       const result = {
         success: true,
@@ -436,7 +436,7 @@ describe('RealityController', () => {
     });
 
     it('should throw ConflictException when user already supervoted', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { contestantId: 'c-1', showId: 'show-1' };
       mockRealityService.submitSupervote.mockRejectedValue(
         new (require('@nestjs/common').ConflictException)(
@@ -452,7 +452,7 @@ describe('RealityController', () => {
 
   describe('submitPrediction', () => {
     it('should submit a prediction', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { showId: 'show-1', prediction: { winner: 'c-1' } };
       const result = {
         success: true,
@@ -467,7 +467,7 @@ describe('RealityController', () => {
 
   describe('getPredictionDashboard', () => {
     it('should return prediction dashboard', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const result = { success: true, data: { predictions: [], userPrediction: null } };
       mockRealityService.getPredictionDashboard.mockResolvedValue(result);
 
@@ -496,7 +496,7 @@ describe('RealityController', () => {
 
   describe('getWalletBalance', () => {
     it('should return wallet balance', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const result = { success: true, data: { balance: 1000 } };
       mockRealityService.getWalletBalance.mockResolvedValue(result);
 
@@ -505,7 +505,7 @@ describe('RealityController', () => {
     });
 
     it('should throw NotFoundException when wallet not found', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       mockRealityService.getWalletBalance.mockRejectedValue(
         new (require('@nestjs/common').NotFoundException)('Wallet not found')
       );
@@ -536,7 +536,7 @@ describe('RealityController', () => {
 
   describe('purchasePremiumExtra', () => {
     it('should purchase a premium extra', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const result = {
         success: true,
         data: { purchaseId: 'p-1', message: 'Successfully purchased Early Voting' },
@@ -548,7 +548,7 @@ describe('RealityController', () => {
     });
 
     it('should throw NotFoundException when extra not found', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       mockRealityService.purchasePremiumExtra.mockRejectedValue(
         new (require('@nestjs/common').NotFoundException)('Premium extra not found')
       );
@@ -561,7 +561,7 @@ describe('RealityController', () => {
 
   describe('confirmReward', () => {
     it('should confirm reward for show participation', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const result = {
         success: true,
         data: { pointsEarned: 10, message: 'Reward confirmed! You earned 10 points' },
@@ -573,7 +573,7 @@ describe('RealityController', () => {
     });
 
     it('should throw NotFoundException when reward account not found', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       mockRealityService.confirmReward.mockRejectedValue(
         new (require('@nestjs/common').NotFoundException)('Reward account not found')
       );

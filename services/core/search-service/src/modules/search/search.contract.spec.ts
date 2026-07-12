@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, BadRequestException } from '@nestjs/common';
 import request from 'supertest';
-import { SearchController } from './search.controller';
-import { SearchService } from './search.service';
+import { SearchController } from './search.controller.js';
+import { SearchService } from './search.service.js';
 import { RateLimitGuard } from '@azeebo/security';
 
 describe('Search Controller Contract Tests', () => {

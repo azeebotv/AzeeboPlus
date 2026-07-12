@@ -4,9 +4,9 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import type { StringValue } from 'ms';
 
-import { RewardsController } from './rewards.controller';
-import { RewardsService } from './rewards.service';
-import { DatabaseModule } from '../database/database.module';
+import { RewardsController } from './rewards.controller.js';
+import { RewardsService } from './rewards.service.js';
+import { DatabaseModule } from '../database/database.module.js';
 
 @Module({
   imports: [

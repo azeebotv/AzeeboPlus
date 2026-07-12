@@ -36,7 +36,7 @@ export default function SettingsScreen() {
 
   const {
     data: preferences,
-    isLoading: isPreferencesLoading,
+    isLoading: _isPreferencesLoading,
   } = useQuery({
     queryKey: ['notification', 'preferences'],
     queryFn: async () => {

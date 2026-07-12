@@ -46,7 +46,7 @@ export default function SuperVoteScreen() {
   const [isVoting, setIsVoting] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
 
-  const votePackages: VotePackage[] = defaultVotePackages.superVote;
+  const votePackages: VotePackage[] = defaultVotePackages.superVote as unknown as VotePackage[];
 
   useEffect(() => {
     loadData();
@@ -137,7 +137,7 @@ export default function SuperVoteScreen() {
         ]
       );
     } catch (error: unknown) {
-      Alert.alert('Error', error?.message || 'Failed to submit super vote');
+      Alert.alert('Error', (error instanceof Error ? error.message : null) || 'Failed to submit super vote');
     } finally {
       setIsVoting(false);
     }

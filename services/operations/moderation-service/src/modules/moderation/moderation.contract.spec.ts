@@ -2,8 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, CanActivate, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
-import { ModerationController } from './moderation.controller';
-import { ModerationService } from './moderation.service';
+import { ModerationController } from './moderation.controller.js';
+import { ModerationService } from './moderation.service.js';
 
 class MockAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext) {

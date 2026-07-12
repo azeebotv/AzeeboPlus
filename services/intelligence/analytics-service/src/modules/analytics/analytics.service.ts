@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { PrismaService } from '../database/prisma.service';
-import { AnalyticsResponse } from './interfaces/analytics-response.interface';
+import { PrismaService } from '../database/prisma.service.js';
+import { AnalyticsResponse } from './interfaces/analytics-response.interface.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 
 interface Event {

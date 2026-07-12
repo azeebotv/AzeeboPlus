@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service.js';
 
 export interface AccessCheckResult {
   hasAccess: boolean;

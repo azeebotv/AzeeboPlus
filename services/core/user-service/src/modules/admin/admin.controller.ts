@@ -13,13 +13,13 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IsString, IsOptional, IsObject } from 'class-validator';
-import { AdminService } from './admin.service';
+import { AdminService } from './admin.service.js';
 import { AdminGuard } from '@azeebo/security';
 import { Request } from 'express';
-import { SuspendUserDto } from './dto/suspend-user.dto';
-import { ModerateContentDto } from './dto/moderate-content.dto';
-import { ResolveReportDto } from './dto/resolve-report.dto';
-import { VerifyCreatorDto } from './dto/verify-creator.dto';
+import { SuspendUserDto } from './dto/suspend-user.dto.js';
+import { ModerateContentDto } from './dto/moderate-content.dto.js';
+import { ResolveReportDto } from './dto/resolve-report.dto.js';
+import { VerifyCreatorDto } from './dto/verify-creator.dto.js';
 
 class UpdateSubscriptionDto {
   @IsString()

@@ -19,7 +19,7 @@ export default function AgbalaPathScreen({ route }: { route: RouteProps }) {
   const { pathId } = route?.params || {};
   const [pathData, setPathData] = useState<Record<string, PathData>>({});
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, _setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadPathData();
@@ -108,7 +108,7 @@ export default function AgbalaPathScreen({ route }: { route: RouteProps }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.primary,
+    backgroundColor: colors.bg.primary,
   },
   header: {
     padding: spacing.xl,

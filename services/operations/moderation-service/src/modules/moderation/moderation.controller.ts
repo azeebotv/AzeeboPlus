@@ -3,9 +3,9 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
 
-import { ModerationService } from './moderation.service';
-import { ModerationResponse } from './interfaces/moderation-response.interface';
-import { CreateReportDto, EscalateCaseDto, ScanContentDto } from './dto/moderation.dto';
+import { ModerationService } from './moderation.service.js';
+import { ModerationResponse } from './interfaces/moderation-response.interface.js';
+import { CreateReportDto, EscalateCaseDto, ScanContentDto } from './dto/moderation.dto.js';
 
 @ApiTags('Moderation')
 @UseGuards(RateLimitGuard)

@@ -1,4 +1,4 @@
-export { PaystackProvider } from './paystack.provider';
-export { FlutterwaveProvider } from './flutterwave.provider';
-export { PaymentProvider } from './payment-provider.interface';
-export { PaymentProviderModule } from './payment-provider.module';
+export { PaystackProvider } from './paystack.provider.js';
+export { FlutterwaveProvider } from './flutterwave.provider.js';
+export { PaymentProvider } from './payment-provider.interface.js';
+export { PaymentProviderModule } from './payment-provider.module.js';

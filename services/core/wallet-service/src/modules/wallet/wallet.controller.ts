@@ -11,17 +11,17 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service.js';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
-import { CacheInterceptor, Cache } from '../../cache';
+import { CacheInterceptor, Cache } from '../../cache/index.js';
 
-import { WalletService } from './wallet.service';
-import { FundWalletDto } from './dto/fund-wallet.dto';
-import { RedeemRewardDto } from './dto/redeem-reward.dto';
-import { AddBonusCreditDto } from './dto/add-bonus-credit.dto';
-import { AddPromoCreditDto } from './dto/add-promo-credit.dto';
-import { DebitWalletDto, CreditWalletDto } from './dto/wallet-operation.dto';
-import { WithdrawWalletDto, TransferWalletDto } from './dto/withdraw-transfer.dto';
+import { WalletService } from './wallet.service.js';
+import { FundWalletDto } from './dto/fund-wallet.dto.js';
+import { RedeemRewardDto } from './dto/redeem-reward.dto.js';
+import { AddBonusCreditDto } from './dto/add-bonus-credit.dto.js';
+import { AddPromoCreditDto } from './dto/add-promo-credit.dto.js';
+import { DebitWalletDto, CreditWalletDto } from './dto/wallet-operation.dto.js';
+import { WithdrawWalletDto, TransferWalletDto } from './dto/withdraw-transfer.dto.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
 interface AuthenticatedRequest {

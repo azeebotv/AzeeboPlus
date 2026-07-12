@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { FilmmakerService } from './filmmaker.service';
+import { FilmmakerService } from './filmmaker.service.js';
 
 @ApiTags('Filmmaker')
 @Controller('v1/movies/filmmakers')

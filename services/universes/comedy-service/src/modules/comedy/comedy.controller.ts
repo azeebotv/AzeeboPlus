@@ -3,9 +3,9 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
-import { ComedyService } from './comedy.service';
-import { ComedyResponse } from './interfaces/comedy-response.interface';
-import { SubmitChallengeDto } from './dto/submit-challenge.dto';
+import { ComedyService } from './comedy.service.js';
+import { ComedyResponse } from './interfaces/comedy-response.interface.js';
+import { SubmitChallengeDto } from './dto/submit-challenge.dto.js';
 
 @ApiTags('Comedy')
 @Controller('v1/comedy')
@@ -41,10 +41,10 @@ export class ComedyController {
   @ApiResponse({ status: 201, description: 'Entry submitted' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async submitChallenge(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Body() body: SubmitChallengeDto
   ): Promise<ComedyResponse> {
-    return this.comedyService.submitChallenge(req.user.sub, body);
+    return this.comedyService.submitChallenge(req.user.id, body);
   }
 
   @Get('challenges')
@@ -60,10 +60,10 @@ export class ComedyController {
   @ApiResponse({ status: 200, description: 'Clip shared' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async shareClip(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Param('clipId') clipId: string
   ): Promise<ComedyResponse> {
-    return this.comedyService.shareClip(req.user.sub, clipId);
+    return this.comedyService.shareClip(req.user.id, clipId);
   }
 
   @Get('trending')

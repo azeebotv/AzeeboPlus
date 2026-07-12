@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { SportsService } from './sports.service';
-import { PrismaService } from '../database/prisma.service';
+import { SportsService } from './sports.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import axios from 'axios';

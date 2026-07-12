@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service.js';
 
 @Injectable()
 export class IntelligenceService {
@@ -8,15 +8,14 @@ export class IntelligenceService {
 
   async getPersonalization(userId: string): Promise<{ success: boolean; data?: unknown }> {
     try {
-      const [watchHistory, preferences, rewardAccount] = await Promise.all([
+      const [watchHistory, _preferences, rewardAccount] = await Promise.all([
         this.prisma.watchHistory.findMany({
           where: { userId },
-          orderBy: { watchedAt: 'desc' },
+          orderBy: { createdAt: 'desc' },
           take: 100,
         }),
         this.prisma.user.findUnique({
           where: { id: userId },
-          select: { preferences: true },
         }),
         this.prisma.rewardAccount.findUnique({
           where: { userId },
@@ -26,12 +25,12 @@ export class IntelligenceService {
       const contentIds = watchHistory.map((h) => h.contentId);
       const watchedContent = await this.prisma.contentItem.findMany({
         where: { id: { in: contentIds } },
-        include: { universe: true },
+        // universe is a string field, not a relation
       });
 
       const universePreferences = watchedContent.reduce(
         (acc, c) => {
-          const universe = c.universe?.name || 'unknown';
+          const universe = c.universe || 'unknown';
           acc[universe] = (acc[universe] || 0) + 1;
           return acc;
         },
@@ -50,7 +49,7 @@ export class IntelligenceService {
           topUniverses,
           recentCategories: [],
           engagementLevel: rewardAccount ? 'active' : 'new',
-          preferences: preferences?.preferences || {},
+          preferences: {},
         },
       };
     } catch (error) {
@@ -232,7 +231,7 @@ export class IntelligenceService {
         this.prisma.rewardAccount.findUnique({ where: { userId } }),
         this.prisma.watchHistory.findMany({
           where: { userId },
-          orderBy: { watchedAt: 'desc' },
+          orderBy: { createdAt: 'desc' },
           take: 30,
         }),
       ]);
@@ -241,7 +240,7 @@ export class IntelligenceService {
         return { success: true, data: { error: 'User not found' } };
       }
 
-      const lastActivity = watchHistory[0]?.watchedAt;
+      const lastActivity = watchHistory[0]?.createdAt;
       const daysSinceActivity = lastActivity
         ? Math.floor((Date.now() - lastActivity.getTime()) / (1000 * 60 * 60 * 24))
         : 999;
@@ -426,7 +425,7 @@ export class IntelligenceService {
       const [watchHistory, rewardAccount] = await Promise.all([
         this.prisma.watchHistory.findMany({
           where: { userId },
-          orderBy: { watchedAt: 'desc' },
+          orderBy: { createdAt: 'desc' },
           take: 50,
         }),
         this.prisma.rewardAccount.findUnique({ where: { userId } }),
@@ -436,7 +435,7 @@ export class IntelligenceService {
 
       const watchedContent = await this.prisma.contentItem.findMany({
         where: { id: { in: contentIds } },
-        include: { universe: true },
+        // universe is a string field, not a relation
       });
 
       const contentById = new Map(watchedContent.map((c) => [c.id, c]));
@@ -444,9 +443,9 @@ export class IntelligenceService {
       const universePreferences: Record<string, number> = {};
       for (const history of watchHistory) {
         const content = contentById.get(history.contentId);
-        if (content?.universe?.name) {
-          universePreferences[content.universe.name] =
-            (universePreferences[content.universe.name] || 0) + 1;
+        if (content?.universe) {
+          universePreferences[content.universe] =
+            (universePreferences[content.universe] || 0) + 1;
         }
       }
 
@@ -475,16 +474,16 @@ export class IntelligenceService {
 
       for (const universe of unexploredUniverses.slice(0, 3)) {
         const content = await this.prisma.contentItem.findMany({
-          where: { universe: { name: universe } },
+          where: { universe: universe },
           orderBy: { viewCount: 'desc' },
           take: 5,
-          include: { universe: true },
+          // universe is a string field, not a relation
         });
         if (content.length > 0) {
           recommendedContent[universe] = content.map((c) => ({
             id: c.id,
             title: c.title,
-            universe: c.universe?.displayName,
+            universe: c.universe,
             viewCount: c.viewCount,
           }));
         }

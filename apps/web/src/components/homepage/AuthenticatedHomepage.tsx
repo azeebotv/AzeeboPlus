@@ -347,7 +347,14 @@ export default function AuthenticatedHomepage({
           items={continueWatching}
           isLoading={isLoadingSupplementary}
           showProgress
-          progressMap={Object.fromEntries(continueWatching.map((c) => [c.id, (c as ContentItem & { progress?: number }).progress ?? 0.5])) as Record<string, number>}
+          progressMap={
+            Object.fromEntries(
+              continueWatching.map((c) => [
+                c.id,
+                (c as ContentItem & { progress?: number }).progress ?? 0.5,
+              ])
+            ) as Record<string, number>
+          }
         />
 
         {/* Trending Now */}

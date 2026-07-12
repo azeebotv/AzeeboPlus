@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(204,28,28,0.3)',
   },
   errorText: {
-    color: colors.error,
+    color: colors.error[500],
     fontSize: typography.fontSize.sm,
     textAlign: 'center',
   },

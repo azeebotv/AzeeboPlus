@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 
-import { AuthModule } from '../auth.module';
-import { SocialAuthController } from './social.controller';
-import { SocialAuthService } from './social.service';
+import { AuthModule } from '../auth.module.js';
+import { SocialAuthController } from './social.controller.js';
+import { SocialAuthService } from './social.service.js';
 
 @Module({
   imports: [AuthModule],

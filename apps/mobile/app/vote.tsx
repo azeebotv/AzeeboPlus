@@ -69,7 +69,7 @@ export default function VoteScreen() {
       }
 
       if (showRes) {
-        setShowData(Array.isArray(showRes) ? showRes[0] : (showRes?.data?.[0] ?? showRes));
+        setShowData(Array.isArray(showRes) ? showRes[0] : ((showRes as any)?.data?.[0] ?? showRes));
       }
     } catch (err) {
       logger.error('Failed to load vote data:', err);
@@ -94,7 +94,7 @@ export default function VoteScreen() {
     try {
       const response = await realityApi.submitVote({
         showId: showId || 'default',
-        contestantId: selectedContestant?.id,
+        contestantId: selectedContestant?.id ?? null,
         votes: totalVotes,
       });
       if (!response.success) {

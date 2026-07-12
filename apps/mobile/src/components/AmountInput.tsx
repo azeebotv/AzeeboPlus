@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   inputError: {
-    borderColor: colors.error,
+    borderColor: colors.error[500],
   },
   currencySymbol: {
     fontSize: 18,
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   errorText: {
-    color: colors.error,
+    color: colors.error[500],
     fontSize: 12,
     marginTop: 4,
   },

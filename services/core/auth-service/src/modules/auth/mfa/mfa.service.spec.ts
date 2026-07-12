@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { MfaService } from './mfa.service';
-import { AuthRepository } from '../auth.repository';
+import { MfaService } from './mfa.service.js';
+import { AuthRepository } from '../auth.repository.js';
 import * as QRCode from 'qrcode';
 
 jest.mock('qrcode');

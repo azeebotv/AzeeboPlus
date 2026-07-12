@@ -3,9 +3,9 @@ import { INestApplication, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';
-import { NotificationsController } from './notifications.controller';
-import { NotificationsService } from './notifications.service';
-import { PrismaService } from '../database/prisma.service';
+import { NotificationsController } from './notifications.controller.js';
+import { NotificationsService } from './notifications.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 
 describe('Notifications Controller Contract Tests', () => {
   let app: INestApplication;

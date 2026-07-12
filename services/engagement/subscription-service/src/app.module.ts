@@ -2,9 +2,9 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { SubscriptionModule } from './modules/subscription/subscription.module';
-import { DatabaseModule } from './modules/database/database.module';
-import { HealthModule } from './modules/health/health.module';
+import { SubscriptionModule } from './modules/subscription/subscription.module.js';
+import { DatabaseModule } from './modules/database/database.module.js';
+import { HealthModule } from './modules/health/health.module.js';
 import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
 
 @Module({

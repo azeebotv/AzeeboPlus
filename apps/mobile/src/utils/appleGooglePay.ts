@@ -20,7 +20,6 @@ export interface PaymentConfig {
 export class AppleGooglePayService {
   private static instance: AppleGooglePayService;
   private config: PaymentConfig | null = null;
-  private stripeInitialized = false;
 
   static getInstance(): AppleGooglePayService {
     if (!AppleGooglePayService.instance) {
@@ -31,7 +30,6 @@ export class AppleGooglePayService {
 
   initialize(config: PaymentConfig): void {
     this.config = config;
-    this.stripeInitialized = true;
   }
 
   isAvailable(): boolean {

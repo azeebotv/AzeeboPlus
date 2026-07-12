@@ -3,9 +3,9 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
-import { SportsService } from './sports.service';
-import { SportsResponse } from './interfaces/sports-response.interface';
-import { CreatePredictionDto, EnterContestDto } from './dto/prediction.dto';
+import { SportsService } from './sports.service.js';
+import { SportsResponse } from './interfaces/sports-response.interface.js';
+import { CreatePredictionDto, EnterContestDto } from './dto/prediction.dto.js';
 
 @ApiTags('Sports')
 @Controller('v1/sports')
@@ -56,10 +56,10 @@ export class SportsController {
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async submitPrediction(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Body() body: CreatePredictionDto
   ): Promise<SportsResponse> {
-    return this.sportsService.submitPrediction(req.user.sub, body);
+    return this.sportsService.submitPrediction(req.user.id, body);
   }
 
   @Get('leaderboard')
@@ -90,9 +90,9 @@ export class SportsController {
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async enterFanContest(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Body() body: EnterContestDto
   ): Promise<SportsResponse> {
-    return this.sportsService.enterFanContest(req.user.sub, body);
+    return this.sportsService.enterFanContest(req.user.id, body);
   }
 }

@@ -23,17 +23,17 @@ import {
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 
-import { PaymentsService } from './payments.service';
-import { InitializePaymentDto } from './dto/initialize-payment.dto';
-import { VerifyPaymentDto } from './dto/verify-payment.dto';
-import { RequestRefundDto } from './dto/request-refund.dto';
-import { WebhookPayloadDto } from '../webhooks/dto/webhook-payload.dto';
+import { PaymentsService } from './payments.service.js';
+import { InitializePaymentDto } from './dto/initialize-payment.dto.js';
+import { VerifyPaymentDto } from './dto/verify-payment.dto.js';
+import { RequestRefundDto } from './dto/request-refund.dto.js';
+import { WebhookPayloadDto } from '../webhooks/dto/webhook-payload.dto.js';
 import {
   PaymentResponse,
   InitializePaymentResponse,
   VerifyPaymentResponse,
   TransactionHistoryResponse,
-} from './interfaces/payment-response.interface';
+} from './interfaces/payment-response.interface.js';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 @ApiTags('Payments')

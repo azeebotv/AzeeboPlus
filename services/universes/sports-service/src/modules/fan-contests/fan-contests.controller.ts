@@ -2,9 +2,9 @@ import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
-import { FanContestsService } from './fan-contests.service';
+import { FanContestsService } from './fan-contests.service.js';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
-import { JoinContestDto, SubmitContestScoreDto } from './dto/contest.dto';
+import { JoinContestDto, SubmitContestScoreDto } from './dto/contest.dto.js';
 
 @ApiTags('Fan Contests')
 @ApiBearerAuth()
@@ -35,9 +35,9 @@ export class FanContestsController {
   async enterContest(
     @Param('id') contestId: string,
     @Body() body: JoinContestDto,
-    @Request() req: { user: { sub: string } }
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.fanContestsService.enterContest(req.user.sub, contestId, body.entryData);
+    return this.fanContestsService.enterContest(req.user.id, contestId, body.entryData);
   }
 
   @Post(':id/score')
@@ -45,9 +45,9 @@ export class FanContestsController {
   async updateScore(
     @Param('id') contestId: string,
     @Body() body: SubmitContestScoreDto,
-    @Request() req: { user: { sub: string } }
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.fanContestsService.updateEntryScore(req.user.sub, contestId, body.score);
+    return this.fanContestsService.updateEntryScore(req.user.id, contestId, body.score);
   }
 
   @Get(':id/leaderboard')

@@ -1,11 +1,11 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
-import { UpdateUniverseAffinityDto } from './dto/update-universe-affinity.dto';
-import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
-import { CompleteProfileSetupDto } from './dto/complete-profile-setup.dto';
-import { UpdatePreferencesDto } from './dto/update-preferences.dto';
-import { Prisma } from '../../prisma/client';
+import { UpdateUniverseAffinityDto } from './dto/update-universe-affinity.dto.js';
+import { UpdateUserProfileDto } from './dto/update-user-profile.dto.js';
+import { CompleteProfileSetupDto } from './dto/complete-profile-setup.dto.js';
+import { UpdatePreferencesDto } from './dto/update-preferences.dto.js';
+import { Prisma } from '../../prisma/client/index.js';
 
 interface UniverseAffinityResponse {
   userId: string;

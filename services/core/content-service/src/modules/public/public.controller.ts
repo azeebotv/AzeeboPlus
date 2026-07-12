@@ -1,7 +1,7 @@
 import { Controller, Get, Logger, UseGuards } from '@nestjs/common';
 import { Public, RateLimitGuard, RateLimit } from '@azeebo/security';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service.js';
 
 @ApiTags('Public')
 @Public()

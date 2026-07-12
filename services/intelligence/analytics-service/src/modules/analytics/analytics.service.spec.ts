@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AnalyticsService } from './analytics.service';
-import { PrismaService } from '../database/prisma.service';
+import { AnalyticsService } from './analytics.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { BadRequestException } from '@nestjs/common';
 
 describe('AnalyticsService', () => {

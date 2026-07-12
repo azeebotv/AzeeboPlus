@@ -10,7 +10,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { UsersService } from '../users/users.service';
+import { UsersService } from '../users/users.service.js';
 import { Request } from 'express';
 import { createLogger } from '@azeebo/logger';
 import { AuthGuard } from '@nestjs/passport';
@@ -33,15 +33,15 @@ export class UserDeletionController {
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   async requestDataDeletion(
     @Body() body: { reason?: string },
-    @Req() req: Request & { user: { sub: string; role: string; email: string } }
+    @Req() req: Request & { user: { id: string; role: string; email: string } }
   ) {
     this.logger.log('Data deletion requested', {
-      userId: req.user.sub,
+      userId: req.user.id,
       reason: body.reason,
       ipAddress: req.ip,
     });
 
-    const result = await this.userService.scheduleDataDeletion(req.user.sub, body.reason);
+    const result = await this.userService.scheduleDataDeletion(req.user.id, body.reason);
 
     return {
       success: true,
@@ -58,9 +58,9 @@ export class UserDeletionController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async deleteUserData(
     @Param('userId') userId: string,
-    @Req() req: Request & { user: { sub: string; role: string; email: string } }
+    @Req() req: Request & { user: { id: string; role: string; email: string } }
   ) {
-    if (req.user.sub !== userId && req.user.role !== 'admin') {
+    if (req.user.id !== userId && req.user.role !== 'admin') {
       throw new ForbiddenException('You can only delete your own data');
     }
     this.logger.log('User data deletion confirmed', {
@@ -85,9 +85,9 @@ export class UserDeletionController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async exportUserData(
     @Param('userId') userId: string,
-    @Req() req: Request & { user: { sub: string; role: string; email: string } }
+    @Req() req: Request & { user: { id: string; role: string; email: string } }
   ) {
-    if (req.user.sub !== userId && req.user.role !== 'admin') {
+    if (req.user.id !== userId && req.user.role !== 'admin') {
       throw new ForbiddenException('You can only export your own data');
     }
     this.logger.log('User data export requested', {
@@ -112,9 +112,9 @@ export class UserDeletionController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getDeletionStatus(
     @Param('userId') userId: string,
-    @Req() req: Request & { user: { sub: string; role: string; email: string } }
+    @Req() req: Request & { user: { id: string; role: string; email: string } }
   ) {
-    if (req.user.sub !== userId && req.user.role !== 'admin') {
+    if (req.user.id !== userId && req.user.role !== 'admin') {
       throw new ForbiddenException('You can only check your own deletion status');
     }
     const status = await this.userService.getDeletionStatus(userId);

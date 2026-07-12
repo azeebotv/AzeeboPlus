@@ -16,7 +16,7 @@ import { realityApi } from '../../src/api/engagement';
 import { walletApi } from '../../src/api/wallet';
 import { apiClient } from '../../src/api/client';
 import { logger } from '../../src/utils/logger';
-import { ApiResponse, Contestant } from '../../src/types/api';
+import { ApiResponse } from '../../src/types/api';
 import { defaultImages } from '../../src/theme';
 
 const PLACEHOLDER_IMAGE = defaultImages.thumbnail;
@@ -75,8 +75,8 @@ export default function RealityShowScreen() {
       ]);
 
       if (contestantsRes.success && contestantsRes.data) {
-        setContestants(contestantsRes.data);
-        setTotalVotes(contestantsRes.data.reduce((sum: number, c: ShowContestant) => sum + (c.votes || 0), 0));
+        setContestants(contestantsRes.data as unknown as ShowContestant[]);
+        setTotalVotes(contestantsRes.data.reduce((sum: number, c: { votes?: number }) => sum + (c.votes || 0), 0));
       }
 
       if (walletRes.success && walletRes.data) {
@@ -84,7 +84,7 @@ export default function RealityShowScreen() {
       }
 
       if (showRes) {
-        setShowData(Array.isArray(showRes) ? showRes[0] : (showRes?.data?.[0] ?? showRes));
+        setShowData((Array.isArray(showRes) ? showRes[0] : (showRes?.data?.[0] ?? showRes)) as unknown as ShowData);
       }
     } catch (err) {
       logger.error('Failed to load reality show data:', err);

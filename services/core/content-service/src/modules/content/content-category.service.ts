@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
-import { Prisma } from '../../prisma/client';
+import { PrismaService } from '../database/prisma.service.js';
+import { Prisma } from '../../prisma/client/index.js';
 
 type CategoryModel = Prisma.CategoryGetPayload<{}>;
 type TagModel = Prisma.TagGetPayload<{}>;

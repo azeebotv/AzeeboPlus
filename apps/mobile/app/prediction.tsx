@@ -67,7 +67,7 @@ export default function PredictionScreen() {
       }
 
       if (showRes) {
-        setShowData(Array.isArray(showRes) ? showRes[0] : (showRes?.data?.[0] ?? showRes));
+        setShowData(Array.isArray(showRes) ? showRes[0] : ((showRes as any)?.data?.[0] ?? showRes));
       }
     } catch (err) {
       logger.error('Failed to load prediction data:', err);

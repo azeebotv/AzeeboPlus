@@ -2,25 +2,40 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { colors, typography, spacing, radius } from '../../../../theme';
 
 interface AgbalaPathCardProps {
-  path: 'chronological' | 'thematic';
-  title: string;
+  name?: string;
+  title?: string;
   description: string;
+  color?: string;
   icon?: string;
+  progress?: number;
+  totalSteps?: number;
   isSelected?: boolean;
-  onSelect: (path: 'chronological' | 'thematic') => void;
+  path?: 'chronological' | 'thematic';
+  onPress?: () => void;
+  onSelect?: (path: 'chronological' | 'thematic') => void;
 }
 
 export const AgbalaPathCard: React.FC<AgbalaPathCardProps> = ({
-  path,
+  name,
   title,
   description,
+  color: _color,
   icon,
+  progress: _progress,
+  totalSteps: _totalSteps,
   isSelected = false,
+  path = 'thematic',
+  onPress,
   onSelect,
 }) => {
   const handlePress = () => {
-    onSelect(path);
+    if (onPress) {
+      onPress();
+    } else if (onSelect) {
+      onSelect(path);
+    }
   };
+  const displayTitle = name || title || '';
 
   return (
     <TouchableOpacity
@@ -46,7 +61,7 @@ export const AgbalaPathCard: React.FC<AgbalaPathCardProps> = ({
             style={[styles.title, isSelected && styles.selectedTitle]}
             accessibilityRole="header"
           >
-            {title}
+            {displayTitle}
           </Text>
           <Text
             style={[styles.description, isSelected && styles.selectedDescription]}

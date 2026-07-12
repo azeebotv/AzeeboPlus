@@ -28,11 +28,7 @@ export default function SportsPage(): React.JSX.Element {
     queryKey: ['sports-content', sportsUniverse?.id],
     queryFn: async () => {
       if (!sportsUniverse?.id) throw new Error('Sports universe not found');
-      const result = await api.content.getContentByUniverse(
-        sportsUniverse.id,
-        1,
-        20
-      );
+      const result = await api.content.getContentByUniverse(sportsUniverse.id, 1, 20);
       if (result.success && result.data) {
         return Array.isArray(result.data) ? result.data : result.data.items || [];
       }

@@ -1,4 +1,12 @@
-import { Logger, Module, Global, DynamicModule, Provider, InjectionToken, OptionalFactoryDependency } from '@nestjs/common';
+import {
+  Logger,
+  Module,
+  Global,
+  DynamicModule,
+  Provider,
+  InjectionToken,
+  OptionalFactoryDependency,
+} from '@nestjs/common';
 import Redis from 'ioredis';
 import { randomUUID } from 'crypto';
 

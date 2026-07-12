@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { PaymentsService } from '../payments/payments.service';
-import { PrismaService } from '../database/prisma.service';
-import { PaystackProvider } from '../payments/providers/paystack.provider';
-import { FlutterwaveProvider } from '../payments/providers/flutterwave.provider';
-import { WebhookRetryService } from '../payments/webhook-retry.service';
-import { RedisService } from '../../common/services/redis.service';
+import { PaymentsService } from '../payments/payments.service.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { PaystackProvider } from '../payments/providers/paystack.provider.js';
+import { FlutterwaveProvider } from '../payments/providers/flutterwave.provider.js';
+import { WebhookRetryService } from '../payments/webhook-retry.service.js';
+import { RedisService } from '../../common/services/redis.service.js';
 import { BadRequestException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import axios from 'axios';

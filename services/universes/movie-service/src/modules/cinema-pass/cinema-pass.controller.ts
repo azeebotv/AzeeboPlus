@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { CinemaPassService } from './cinema-pass.service';
+import { CinemaPassService } from './cinema-pass.service.js';
 
 @ApiTags('Cinema Pass')
 @Controller('v1/movies/passes')
@@ -36,8 +36,8 @@ export class CinemaPassController {
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get user subscriptions' })
   @ApiResponse({ status: 200, description: 'Subscriptions list' })
-  async getUserSubscriptions(@Request() req: { user: { sub: string } }): Promise<unknown> {
-    return this.cinemaPassService.getUserSubscriptions(req.user.sub);
+  async getUserSubscriptions(@Request() req: { user: { id: string } }): Promise<unknown> {
+    return this.cinemaPassService.getUserSubscriptions(req.user.id);
   }
 
   @Post('subscribe')
@@ -46,9 +46,9 @@ export class CinemaPassController {
   @ApiResponse({ status: 201, description: 'Subscribed' })
   async subscribe(
     @Body() body: { passId: string; autoRenew?: boolean },
-    @Request() req: { user: { sub: string } }
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.cinemaPassService.subscribe(req.user.sub, body.passId, body.autoRenew);
+    return this.cinemaPassService.subscribe(req.user.id, body.passId, body.autoRenew);
   }
 
   @Delete('cancel')
@@ -57,9 +57,9 @@ export class CinemaPassController {
   @ApiResponse({ status: 200, description: 'Cancelled' })
   async cancelSubscription(
     @Query('passId') passId: string,
-    @Request() req: { user: { sub: string } }
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.cinemaPassService.cancelSubscription(req.user.sub, passId);
+    return this.cinemaPassService.cancelSubscription(req.user.id, passId);
   }
 
   @Get('access/:movieId')

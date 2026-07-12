@@ -18,7 +18,7 @@ export default function AgbalaQuizResultScreen({ route }: { route: RouteProps })
   const { answers = [] } = route?.params || {};
   const [pathDescriptions, setPathDescriptions] = useState<Record<string, PathDescription>>({});
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, _setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadPathDescriptions();
@@ -70,6 +70,7 @@ export default function AgbalaQuizResultScreen({ route }: { route: RouteProps })
         path={dominantPath}
         title={pathDescriptions[dominantPath]?.title || dominantPath}
         description={pathDescriptions[dominantPath]?.description || ''}
+        onContinue={() => {}}
       />
     </ScrollView>
   );
@@ -78,6 +79,6 @@ export default function AgbalaQuizResultScreen({ route }: { route: RouteProps })
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.primary,
+    backgroundColor: colors.bg.primary,
   },
 });

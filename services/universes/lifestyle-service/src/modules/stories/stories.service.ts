@@ -77,7 +77,7 @@ export class StoriesService {
           where,
           skip: (page - 1) * limit,
           take: limit,
-          include: { category: true, author: true },
+          include: { category: true },
         }),
         this.prisma.cultureStory.count({ where }),
       ]);
@@ -92,7 +92,7 @@ export class StoriesService {
         categoryId: story.categoryId || '',
         categoryName: story.category?.name || '',
         authorId: story.authorId,
-        authorName: story.author.displayName || story.author.username,
+        authorName: '',
         status: story.status,
         viewCount: story.viewCount,
         readTime: story.readTime || Math.ceil(story.content.split(' ').length / 200),
@@ -147,7 +147,7 @@ export class StoriesService {
     try {
       const story = await this.prisma.cultureStory.findUnique({
         where: { slug },
-        include: { category: true, author: true },
+        include: { category: true },
       });
 
       if (!story) {
@@ -164,7 +164,7 @@ export class StoriesService {
         categoryId: story.categoryId || '',
         categoryName: story.category?.name || '',
         authorId: story.authorId,
-        authorName: story.author.displayName || story.author.username,
+        authorName: '',
         status: story.status,
         viewCount: story.viewCount,
         readTime: story.readTime || Math.ceil(story.content.split(' ').length / 200),
@@ -208,7 +208,7 @@ export class StoriesService {
           readTime,
           publishedAt: null,
         },
-        include: { category: true, author: true },
+        include: { category: true },
       });
 
       const formattedStory: Story = {
@@ -221,7 +221,7 @@ export class StoriesService {
         categoryId: story.categoryId || '',
         categoryName: story.category?.name || 'Uncategorized',
         authorId: story.authorId,
-        authorName: story.author.displayName || story.author.username,
+        authorName: '',
         status: story.status,
         viewCount: story.viewCount,
         readTime: story.readTime || readTime,
@@ -275,7 +275,7 @@ export class StoriesService {
       const updatedStory = await this.prisma.cultureStory.update({
         where: { id },
         data: updateData,
-        include: { category: true, author: true },
+        include: { category: true },
       });
 
       const formattedStory: Story = {
@@ -288,7 +288,7 @@ export class StoriesService {
         categoryId: updatedStory.categoryId || '',
         categoryName: updatedStory.category?.name || '',
         authorId: updatedStory.authorId,
-        authorName: updatedStory.author.displayName || updatedStory.author.username,
+        authorName: '',
         status: updatedStory.status,
         viewCount: updatedStory.viewCount,
         readTime: updatedStory.readTime || Math.ceil(updatedStory.content.split(' ').length / 200),

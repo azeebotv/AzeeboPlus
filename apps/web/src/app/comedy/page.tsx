@@ -38,11 +38,7 @@ export default function ComedyPage(): React.JSX.Element {
     queryKey: ['comedy-content', comedyUniverse?.id],
     queryFn: async () => {
       if (!comedyUniverse?.id) throw new Error('Comedy universe not found');
-      const result = await api.content.getContentByUniverse(
-        comedyUniverse.id,
-        1,
-        20
-      );
+      const result = await api.content.getContentByUniverse(comedyUniverse.id, 1, 20);
       if (result.success && result.data) {
         return Array.isArray(result.data) ? result.data : result.data.items || [];
       }

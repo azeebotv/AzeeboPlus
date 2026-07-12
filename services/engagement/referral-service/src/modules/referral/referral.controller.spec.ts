@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ReferralController } from './referral.controller';
-import { ReferralService } from './referral.service';
+import { ReferralController } from './referral.controller.js';
+import { ReferralService } from './referral.service.js';
 
 describe('ReferralController', () => {
   let controller: ReferralController;

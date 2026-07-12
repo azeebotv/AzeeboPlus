@@ -53,9 +53,6 @@ export class AdminService {
           take: limit,
           orderBy: { createdAt: 'desc' },
           include: {
-            user: {
-              select: { id: true, email: true, displayName: true },
-            },
             level: true,
             badges: true,
           },

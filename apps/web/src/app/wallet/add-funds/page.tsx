@@ -55,7 +55,8 @@ export default function AddFundsPage(): React.JSX.Element {
         if (methodsResult.success && methodsResult.data) {
           setPaymentMethods(Array.isArray(methodsResult.data) ? methodsResult.data : []);
         }
-        if (walletPricingResult.success && walletPricingResult.data) setWalletPricing(walletPricingResult.data);
+        if (walletPricingResult.success && walletPricingResult.data)
+          setWalletPricing(walletPricingResult.data);
       } catch (error) {
         webLogger.error('Failed to load data', error);
       } finally {

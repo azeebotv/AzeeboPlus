@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
-import { PredictionMarketsModule } from './prediction-markets.module';
-import { PredictionMarketsService } from './prediction-markets.service';
-import { PrismaService } from '../database/prisma.service';
+import { PredictionMarketsModule } from './prediction-markets.module.js';
+import { PredictionMarketsService } from './prediction-markets.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';
 

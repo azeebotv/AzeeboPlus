@@ -43,7 +43,9 @@ export function initializeOpenTelemetry(config: Partial<OpenTelemetryConfig> = {
       [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: finalConfig.environment,
     }),
     traceExporter,
-    sampler: new ParentBasedSampler({ root: new TraceIdRatioBasedSampler(finalConfig.samplingRatio!) }),
+    sampler: new ParentBasedSampler({
+      root: new TraceIdRatioBasedSampler(finalConfig.samplingRatio!),
+    }),
   });
 
   registerInstrumentations({

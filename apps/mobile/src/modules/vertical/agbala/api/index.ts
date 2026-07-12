@@ -2,11 +2,13 @@ import { ApiClient } from '@azeebo/api-client';
 import type { AgbalaStoryworld, AgbalaQuiz, AgbalaTheory, AgbalaRoom } from '../types';
 
 const apiClient = new ApiClient({
-  baseURL: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3013',
+  baseUrl: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3013',
   tokenStorage: {
-    getToken: async () => null,
-    setToken: async () => {},
-    removeToken: async () => {},
+    getAccessToken: async () => null,
+    getRefreshToken: async () => null,
+    setAccessToken: async () => {},
+    setRefreshToken: async () => {},
+    clearTokens: async () => {},
   },
 });
 
@@ -15,22 +17,22 @@ export const agbalaApi = {
     const response = await apiClient.get<{ items: AgbalaStoryworld[] }>(
       '/v1/vertical/agbala/storyworlds'
     );
-    return response.data.items;
+    return response.data!.items;
   },
 
   async getStoryworld(id: string): Promise<AgbalaStoryworld> {
     const response = await apiClient.get<AgbalaStoryworld>(`/v1/vertical/agbala/storyworlds/${id}`);
-    return response.data;
+    return response.data!;
   },
 
   async getQuizzes(): Promise<AgbalaQuiz[]> {
     const response = await apiClient.get<{ items: AgbalaQuiz[] }>('/v1/vertical/agbala/quizzes');
-    return response.data.items;
+    return response.data!.items;
   },
 
   async getQuiz(id: string): Promise<AgbalaQuiz> {
     const response = await apiClient.get<AgbalaQuiz>(`/v1/vertical/agbala/quizzes/${id}`);
-    return response.data;
+    return response.data!;
   },
 
   async submitQuizAnswer(quizId: string, questionId: string, answerIndex: number) {
@@ -43,7 +45,7 @@ export const agbalaApi = {
 
   async getTheories(): Promise<AgbalaTheory[]> {
     const response = await apiClient.get<{ items: AgbalaTheory[] }>('/v1/vertical/agbala/theories');
-    return response.data.items;
+    return response.data!.items;
   },
 
   async createTheory(data: { title: string; content: string }) {
@@ -53,7 +55,7 @@ export const agbalaApi = {
 
   async getRooms(): Promise<AgbalaRoom[]> {
     const response = await apiClient.get<{ items: AgbalaRoom[] }>('/v1/vertical/agbala/rooms');
-    return response.data.items;
+    return response.data!.items;
   },
 
   async joinRoom(roomId: string) {

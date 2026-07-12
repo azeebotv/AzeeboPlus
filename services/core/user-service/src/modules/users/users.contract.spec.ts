@@ -7,9 +7,9 @@ import {
 } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
-import { UsersModule } from './users.module';
+import { UsersModule } from './users.module.js';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service.js';
 import { RateLimitGuard, ServiceAuthGuard } from '@azeebo/security';
 
 describe('Users Controller Contract Tests', () => {

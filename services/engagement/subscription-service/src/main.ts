@@ -4,7 +4,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
 import { LoggingInterceptor } from '@azeebo/logger';
 import helmet from 'helmet';
-import { AppModule } from './app.module';
+import { AppModule } from './app.module.js';
 import { validateEnvironment } from '@azeebo/shared-types';
 
 async function bootstrap() {

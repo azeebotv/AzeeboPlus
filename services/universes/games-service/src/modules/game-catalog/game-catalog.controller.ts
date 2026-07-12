@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { GameCatalogService } from './game-catalog.service';
+import { GameCatalogService } from './game-catalog.service.js';
 
 @ApiTags('Game Catalog')
 @Controller('v1/games')

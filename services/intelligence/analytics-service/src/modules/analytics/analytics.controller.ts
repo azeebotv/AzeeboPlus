@@ -14,9 +14,9 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
-import { AnalyticsService } from './analytics.service';
-import { AnalyticsResponse } from './interfaces/analytics-response.interface';
-import { IngestEventsDto } from './dto/analytics.dto';
+import { AnalyticsService } from './analytics.service.js';
+import { AnalyticsResponse } from './interfaces/analytics-response.interface.js';
+import { IngestEventsDto } from './dto/analytics.dto.js';
 
 @ApiTags('Analytics')
 @ApiBearerAuth()

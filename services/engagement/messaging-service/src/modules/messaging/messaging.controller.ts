@@ -11,8 +11,8 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
-import { MessagingService } from './messaging.service';
-import { CreateConversationDto, SendMessageDto, MarkAsReadDto } from './dto/messaging.dto';
+import { MessagingService } from './messaging.service.js';
+import { CreateConversationDto, SendMessageDto, MarkAsReadDto } from './dto/messaging.dto.js';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import { User } from '@azeebo/shared-types';

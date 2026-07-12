@@ -6,9 +6,11 @@ export interface LeaderboardEntry {
   rank: number;
   userId: string;
   displayName: string;
+  name?: string;
   avatar: string;
   score: number;
   category?: string;
+  isYou?: boolean;
 }
 
 export interface RankingCategory {

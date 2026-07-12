@@ -53,8 +53,8 @@ export class QuizController {
   @ApiOperation({ summary: 'Create a quiz' })
   @ApiResponse({ status: 201, description: 'Quiz created' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async createQuiz(@Request() req: { user: { sub: string } }, @Body() data: CreateQuizDto) {
-    return this.quizService.createQuiz(req.user.sub, data);
+  async createQuiz(@Request() req: { user: { id: string } }, @Body() data: CreateQuizDto) {
+    return this.quizService.createQuiz(req.user.id, data);
   }
 
   @Post(':id/start')
@@ -64,8 +64,8 @@ export class QuizController {
   @ApiResponse({ status: 200, description: 'Quiz started' })
   @ApiResponse({ status: 400, description: 'Invalid request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async startQuiz(@Request() req: { user: { sub: string } }, @Param('id') quizId: string) {
-    return this.quizService.startQuiz(quizId, req.user.sub);
+  async startQuiz(@Request() req: { user: { id: string } }, @Param('id') quizId: string) {
+    return this.quizService.startQuiz(quizId, req.user.id);
   }
 
   @Post('attempts/:attemptId/submit')
