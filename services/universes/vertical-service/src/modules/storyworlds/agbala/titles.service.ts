@@ -143,6 +143,17 @@ export class AgbalaTitlesService {
     }
   }
 
+  async getStoryworldBySlug(slug: string): Promise<{ id: string; name: string; slug: string }> {
+    const storyworld = await this.prisma.universeMap.findUnique({
+      where: { slug },
+      select: { id: true, name: true, slug: true },
+    });
+    if (!storyworld) {
+      throw new NotFoundException(`Storyworld '${slug}' not found`);
+    }
+    return storyworld;
+  }
+
   async getTitles(
     page = 1,
     limit = 20,
