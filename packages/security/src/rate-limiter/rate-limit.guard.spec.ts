@@ -133,6 +133,7 @@ describe('RateLimitGuard', () => {
           getRequest: () => ({
             ip: undefined,
             headers: {
+              'x-gateway-secret': 'valid-secret',
               'x-forwarded-for': '10.0.0.1, 10.0.0.2',
             },
             path: '/api/test',

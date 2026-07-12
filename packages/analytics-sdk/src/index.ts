@@ -269,6 +269,7 @@ export class Analytics {
   contentImpression(contentId: string, contentType: string, universe: string): void {
     this.track({
       name: 'content_impression',
+      category: ConsentCategory.ESSENTIAL,
       properties: {
         content_id: contentId,
         content_type: contentType,
@@ -280,6 +281,7 @@ export class Analytics {
   contentClick(contentId: string, contentType: string, universe: string): void {
     this.track({
       name: 'content_click',
+      category: ConsentCategory.ESSENTIAL,
       properties: {
         content_id: contentId,
         content_type: contentType,
@@ -330,6 +332,7 @@ export class Analytics {
   rewardEarned(rewardType: string, points: number): void {
     this.track({
       name: 'reward_earned',
+      category: ConsentCategory.ESSENTIAL,
       properties: {
         reward_type: rewardType,
         points,
@@ -340,6 +343,7 @@ export class Analytics {
   creatorFollow(creatorId: string): void {
     this.track({
       name: 'creator_follow',
+      category: ConsentCategory.ESSENTIAL,
       properties: {
         creator_id: creatorId,
       },
@@ -359,6 +363,7 @@ export class Analytics {
   gameStarted(gameId: string): void {
     this.track({
       name: 'game_started',
+      category: ConsentCategory.ESSENTIAL,
       properties: {
         game_id: gameId,
       },
@@ -368,6 +373,7 @@ export class Analytics {
   gameCompleted(gameId: string, score: number): void {
     this.track({
       name: 'game_completed',
+      category: ConsentCategory.ESSENTIAL,
       properties: {
         game_id: gameId,
         score,
@@ -387,6 +393,7 @@ export class Analytics {
   notificationReceived(notificationId: string): void {
     this.track({
       name: 'notification_received',
+      category: ConsentCategory.ESSENTIAL,
       properties: {
         notification_id: notificationId,
       },
@@ -396,6 +403,7 @@ export class Analytics {
   notificationClicked(notificationId: string): void {
     this.track({
       name: 'notification_clicked',
+      category: ConsentCategory.ESSENTIAL,
       properties: {
         notification_id: notificationId,
       },
