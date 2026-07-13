@@ -238,7 +238,8 @@ export class UploadController {
   ): Promise<unknown> {
     const decodedKey = decodeURIComponent(key);
     const metadata = await this.uploadService.getFileMetadata(decodedKey);
-    if (metadata && metadata.userId && metadata.userId !== req.user.id && req.user.role !== 'admin') {
+    const ownerId = metadata?.metadata?.userId;
+    if (ownerId && ownerId !== req.user.id && req.user.role !== 'admin') {
       throw new ForbiddenException('You can only delete your own files');
     }
     await this.uploadService.deleteFile(decodedKey);

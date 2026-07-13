@@ -430,15 +430,6 @@ export class RealityService {
   async getPredictionDashboard(userId: string, showId: string): Promise<RealityResponse> {
     const predictions = await this.prisma.prediction.findMany({
       where: { showId },
-      include: {
-        user: {
-          select: {
-            id: true,
-            displayName: true,
-            avatar: true,
-          },
-        },
-      },
       orderBy: { createdAt: 'desc' },
       take: 50,
     });
@@ -461,7 +452,6 @@ export class RealityService {
       where: showId ? { showId } : {},
       include: {
         show: true,
-        creator: true,
       },
       orderBy: { createdAt: 'desc' },
       take: 50,
@@ -719,11 +709,10 @@ export class RealityService {
       })
     );
 
-    const recentActivity = await this.prisma.productEvent.findMany({
-      where: { metadata: { path: ['showId'], equals: showId } },
-      orderBy: { timestamp: 'desc' },
-      take: 50,
-    });
+    // Activity events are owned by analytics-service (ProductEvent model lives there,
+    // not in reality-service's schema). This service emits events via HTTP
+    // (see trackAnalyticsEvent) but cannot query them back from its own database.
+    const recentActivity: unknown[] = [];
 
     return {
       success: true,
@@ -1059,48 +1048,15 @@ export class RealityService {
   }
 
   async confirmReward(userId: string, showId: string): Promise<RealityResponse> {
-    const rewardAccount = await this.prisma.rewardAccount.findUnique({ where: { userId } });
-    if (!rewardAccount) {
-      throw new NotFoundException('Reward account not found');
-    }
-
-    const existingClaim = await this.prisma.pointsLedger.findFirst({
-      where: {
-        userId,
-        reason: `Reward for participation in show ${showId}`,
-      },
-    });
-
-    if (existingClaim) {
-      return {
-        success: true,
-        data: {
-          pointsEarned: 0,
-          message: 'Reward already claimed for this show',
-        },
-      };
-    }
-
+    // Reward accounting (RewardAccount / PointsLedger) is owned by reward-service and is
+    // not part of reality-service's schema. Points are computed here from this service's
+    // own vote/supervote records and the reward event is emitted to analytics-service.
     const votes = await this.prisma.vote.count({ where: { userId, showId } });
     const supervotes = await this.prisma.supervote.count({ where: { userId, showId } });
 
     const pointsEarned = votes + supervotes * 10;
 
     if (pointsEarned > 0) {
-      await this.prisma.rewardAccount.update({
-        where: { userId },
-        data: { points: { increment: pointsEarned } },
-      });
-
-      await this.prisma.pointsLedger.create({
-        data: {
-          userId,
-          points: pointsEarned,
-          type: 'credit',
-          reason: `Reward for participation in show ${showId}`,
-        },
-      });
-
       await this.trackAnalyticsEvent('reward_earned', userId, {
         showId,
         pointsEarned,

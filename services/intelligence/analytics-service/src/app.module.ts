@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
-import { ConfigModule } from '@nestjs/config';
 import { AnalyticsModule } from './modules/analytics/analytics.module.js';
 import { AnalyticsInstrumentationModule } from './modules/analytics-instrumentation/analytics-instrumentation.module.js';
 import { AdminModule } from './modules/admin/admin.module.js';

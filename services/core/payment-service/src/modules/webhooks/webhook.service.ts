@@ -244,7 +244,10 @@ export class WebhookService {
           where: { id: paymentId },
           data: {
             status: 'FAILED',
-            failureReason: reason,
+            metadata: {
+              ...((paymentIntent.metadata as Record<string, unknown>) ?? {}),
+              failureReason: reason,
+            } as Prisma.InputJsonValue,
             updatedAt: new Date(),
           },
         });
