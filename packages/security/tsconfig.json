@@ -9,6 +9,10 @@
     "rootDir": "./src",
     "outDir": "./dist",
     "incremental": true,
+    "paths": {
+      "@azeebo/shared-types": ["../shared-types/dist"],
+      "@azeebo/shared-types/*": ["../shared-types/dist/*"]
+    },
     "types": [
       "node",
       "jest"

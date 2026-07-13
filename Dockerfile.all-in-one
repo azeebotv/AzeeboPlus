@@ -128,7 +128,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     (pnpm --filter @azeebo/wallet-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/wallet-service run build) || { echo "WARN: wallet-service build failed"; BUILD_FAIL=1; } && \
     (pnpm --filter @azeebo/payment-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/payment-service run build) || { echo "WARN: payment-service build failed"; BUILD_FAIL=1; } && \
     (pnpm --filter @azeebo/search-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/search-service run build) || { echo "WARN: search-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/media-service run build) || { echo "WARN: media-service build failed"; BUILD_FAIL=1; } && \
+    (pnpm --filter @azeebo/media-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/media-service run build) || { echo "WARN: media-service build failed"; BUILD_FAIL=1; } && \
     (pnpm --filter @azeebo/notification-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/notification-service run build) || { echo "WARN: notification-service build failed"; BUILD_FAIL=1; } && \
     (pnpm --filter @azeebo/reward-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/reward-service run build) || { echo "WARN: reward-service build failed"; BUILD_FAIL=1; } && \
     (pnpm --filter @azeebo/engagement-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/engagement-service run build) || { echo "WARN: engagement-service build failed"; BUILD_FAIL=1; } && \
@@ -178,6 +178,24 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     echo "=== .next/standalone check ===" && ls -la apps/web/.next/standalone/ 2>&1 | head -10; \
     echo "=== .next/standalone/apps/web check ===" && ls -la apps/web/.next/standalone/apps/web/ 2>&1 | head -10; \
     echo "=== Build summary: $([ $BUILD_FAIL -eq 0 ] && echo 'ALL OK' || echo 'Some builds failed — see warnings above') ===" && \
+    echo "=== Verifying every service/app produced runnable output ===" && \
+    MISSING=0; \
+    for svc_dir in $(find services -maxdepth 2 -mindepth 2 -type d -not -path "*/node_modules/*" | sort); do \
+      name=$(basename "$svc_dir"); \
+      if [ -f "$svc_dir/package.json" ] && grep -q '"@azeebo/' "$svc_dir/package.json"; then \
+        if [ ! -f "$svc_dir/dist/main.js" ]; then \
+          echo "  MISSING: $name/dist/main.js"; MISSING=$((MISSING+1)); \
+        fi; \
+      fi; \
+    done; \
+    for app in apps/admin apps/creator-portal; do \
+      if [ ! -f "$app/dist/main.js" ]; then echo "  MISSING: $app/dist/main.js"; MISSING=$((MISSING+1)); fi; \
+    done; \
+    if [ "$MISSING" -ne 0 ] || [ "$BUILD_FAIL" -ne 0 ]; then \
+      echo "=== BUILD GATE FAILED: $MISSING missing service outputs, BUILD_FAIL=$BUILD_FAIL ==="; \
+      exit 1; \
+    fi; \
+    echo "=== BUILD GATE PASSED: all services produced dist/main.js ===" && \
     echo "=== Packaging workspace package dists for runtime ===" && \
     tar czf /tmp/pkg-dist.tar.gz -C /app \
       packages/*/dist \

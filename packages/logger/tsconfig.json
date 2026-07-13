@@ -8,6 +8,10 @@
     "declaration": true,
     "rootDir": "./src",
     "outDir": "./dist",
+    "paths": {
+      "@azeebo/shared-types": ["../shared-types/dist"],
+      "@azeebo/shared-types/*": ["../shared-types/dist/*"]
+    },
     "types": [
       "node",
       "jest"

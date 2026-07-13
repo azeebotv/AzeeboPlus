@@ -119,8 +119,6 @@ export class CreatorsService {
       this.logger.warn('Failed to send welcome notification:', error);
     }
 
-    return profile;
-
     await this.trackAnalyticsEvent('creator_onboarded', userId, {});
 
     await this.cache.invalidate(`creator:profile:${userId}*`);
@@ -438,7 +436,7 @@ export class CreatorsService {
         ...profile,
         subscriberCount: (profile as { subscriptions?: unknown[] }).subscriptions?.length || 0,
         isSubscribed: false,
-      } Record<string, unknown>,
+      } as Record<string, unknown>,
     };
 
     await this.cache.set(cacheK, result, 600);
@@ -466,7 +464,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: updatedProfile Record<string, unknown>,
+      data: updatedProfile as Record<string, unknown>,
     };
   }
 
@@ -509,7 +507,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: { channels } Record<string, unknown>,
+      data: { channels } as Record<string, unknown>,
     };
   }
 
@@ -562,7 +560,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: contentItem Record<string, unknown>,
+      data: contentItem as Record<string, unknown>,
     };
   }
 
@@ -596,7 +594,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: contentItem Record<string, unknown>,
+      data: contentItem as Record<string, unknown>,
     };
   }
 
@@ -608,7 +606,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: contentItems Record<string, unknown>,
+      data: contentItems as unknown as Record<string, unknown>,
     };
   }
 
@@ -624,7 +622,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: creators Record<string, unknown>,
+      data: creators as unknown as Record<string, unknown>,
     };
   }
 
@@ -1090,7 +1088,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: { subscriptions } Record<string, unknown>,
+      data: { subscriptions } as Record<string, unknown>,
     };
   }
 
@@ -1101,7 +1099,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: { subscribers } Record<string, unknown>,
+      data: { subscribers } as Record<string, unknown>,
     };
   }
 
@@ -1251,7 +1249,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: { payouts } Record<string, unknown>,
+      data: { payouts } as Record<string, unknown>,
     };
   }
 
@@ -1430,7 +1428,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: { challenges } Record<string, unknown>,
+      data: { challenges } as Record<string, unknown>,
     };
   }
 
@@ -1454,7 +1452,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: { challenges } Record<string, unknown>,
+      data: { challenges } as Record<string, unknown>,
     };
   }
 
@@ -1591,7 +1589,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: { challenges: entries } Record<string, unknown>,
+      data: { challenges: entries } as Record<string, unknown>,
     };
   }
 
@@ -1599,20 +1597,18 @@ export class CreatorsService {
     const profile = await this.prisma.creatorProfile.findUnique({ where: { userId } });
     if (!profile) throw new NotFoundException('Creator profile not found');
 
-    const [contentCount, earnings, subscribers, contentItems] = await Promise.all([
+    const [contentCount, earnings, subscribers] = await Promise.all([
       this.prisma.contentItem.count({ where: { creatorId: userId } }),
       this.prisma.creatorEarning.aggregate({
         where: { creatorId: profile.id },
         _sum: { amount: true },
       }),
       this.prisma.subscription.count({ where: { creatorId: profile.id, status: 'active' } }),
-      this.prisma.contentItem.findMany({
-        where: { creatorId: userId },
-        select: { viewCount: true },
-      }),
     ]);
 
-    const totalViews = contentItems.reduce((sum, item) => sum + (item.viewCount || 0), 0);
+    // ContentItem has no view-tracking field in this service's schema; view
+    // aggregation is owned by analytics-service. Default to 0 here.
+    const totalViews = 0;
 
     return {
       success: true,
@@ -1631,7 +1627,7 @@ export class CreatorsService {
         likesChange: 0,
         commentsChange: 0,
         followersChange: 0,
-      } Record<string, unknown>,
+      } as Record<string, unknown>,
     };
   }
 
@@ -1707,7 +1703,7 @@ export class CreatorsService {
         page,
         limit,
         hasMore: skip + limit < total,
-      } Record<string, unknown>,
+      } as Record<string, unknown>,
     };
 
     await this.cache.set(cacheK, result, 300);

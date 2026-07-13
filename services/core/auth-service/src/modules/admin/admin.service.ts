@@ -81,7 +81,7 @@ export class AdminService {
       if (!user) {
         throw new NotFoundException('User not found');
       }
-      const { password: _password, ...userWithoutPassword } = user as Record<string, unknown>;
+      const { password: _password, ...userWithoutPassword } = user as unknown as Record<string, unknown>;
       return ApiResponseWrapper.success(userWithoutPassword);
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
