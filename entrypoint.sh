@@ -14,6 +14,8 @@ POSTGRES_PASSWORD="${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}"
 POSTGRES_DB="${POSTGRES_DB:-azeebo_dev}"
 REDIS_PASSWORD="${REDIS_PASSWORD:?REDIS_PASSWORD is required}"
 
+export NO_COLOR=1
+
 echo "==> Starting Azeebo+ all-in-one container..."
 
 # ============================================================
@@ -271,9 +273,31 @@ for entry in "${MIGRATE_SERVICES[@]}"; do
   IFS=':' read -r svc_dir svc_name db_name db_user db_pass <<< "$entry"
   echo "    Migrating $svc_name..."
 
-  DATABASE_URL="postgresql://$db_user:$db_pass@127.0.0.1:5432/$db_name?schema=public" \
-    prisma migrate deploy --schema="$svc_dir/prisma/schema.prisma" 2>&1 || \
-    echo "    WARNING: Migration failed for $svc_name (may not have migrations yet)"
+  db_url="postgresql://$db_user:$db_pass@127.0.0.1:5432/$db_name?schema=public"
+  migrate_output=$(DATABASE_URL="$db_url" \
+    prisma migrate deploy --schema="$svc_dir/prisma/schema.prisma" 2>&1) || {
+    if echo "$migrate_output" | grep -q "P3005"; then
+      echo "    Baseline existing schema for $svc_name (P3005)..."
+      if [ -d "$svc_dir/prisma/migrations" ]; then
+        for migration_dir in "$svc_dir/prisma/migrations"/*/; do
+          [ -d "$migration_dir" ] || continue
+          migration_name=$(basename "$migration_dir")
+          DATABASE_URL="$db_url" \
+            prisma migrate resolve --applied "$migration_name" --schema="$svc_dir/prisma/schema.prisma" 2>&1 || \
+            echo "      WARNING: Could not baseline $migration_name"
+        done
+        echo "    Re-running migration for $svc_name after baseline..."
+        DATABASE_URL="$db_url" \
+          prisma migrate deploy --schema="$svc_dir/prisma/schema.prisma" 2>&1 || \
+          echo "    WARNING: Migration still failed for $svc_name after baseline"
+      else
+        echo "    WARNING: No migrations directory found for $svc_name"
+      fi
+    else
+      echo "    WARNING: Migration failed for $svc_name"
+      echo "$migrate_output" | head -5
+    fi
+  }
 done
 
 # ============================================================
