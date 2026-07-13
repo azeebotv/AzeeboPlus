@@ -177,7 +177,11 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     echo "=== Web .next/ contents ===" && ls -la apps/web/.next/ 2>&1 | head -20; \
     echo "=== .next/standalone check ===" && ls -la apps/web/.next/standalone/ 2>&1 | head -10; \
     echo "=== .next/standalone/apps/web check ===" && ls -la apps/web/.next/standalone/apps/web/ 2>&1 | head -10; \
-    echo "=== Build summary: $([ $BUILD_FAIL -eq 0 ] && echo 'ALL OK' || echo 'Some builds failed — see warnings above') ==="; \
+    echo "=== Build summary: $([ $BUILD_FAIL -eq 0 ] && echo 'ALL OK' || echo 'Some builds failed — see warnings above') ===" && \
+    echo "=== Packaging workspace package dists for runtime ===" && \
+    tar czf /tmp/pkg-dist.tar.gz -C /app \
+      packages/*/dist \
+      packages/*/src/prisma/client 2>/dev/null; \
     true
 
 # Create /runtime with only what the container needs at runtime.
@@ -312,15 +316,10 @@ RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
 # pnpm install --prod can wipe workspace package dist/ directories.
 # Restore them from the builder stage so workspace package symlinks resolve.
-COPY --from=builder /app/packages/*/dist /tmp/pkg-dist-restore/
-RUN for d in /tmp/pkg-dist-restore/*/; do \
-      pkg_name=$(basename "$d"); \
-      target="/app/packages/$pkg_name/dist"; \
-      if [ ! -d "$target" ] || [ -z "$(ls -A "$target" 2>/dev/null)" ]; then \
-        mkdir -p "$target" && cp -r "$d"/* "$target/"; \
-        echo "  Restored dist for $pkg_name"; \
-      fi; \
-    done && rm -rf /tmp/pkg-dist-restore
+COPY --from=builder /tmp/pkg-dist.tar.gz /tmp/pkg-dist.tar.gz
+RUN tar xzf /tmp/pkg-dist.tar.gz -C /app 2>/dev/null && \
+    rm -f /tmp/pkg-dist.tar.gz && \
+    echo "  Restored workspace package dist directories from builder"
 
 # Verify standalone output survived pnpm install (warn only)
 RUN test -f /app/apps/web/standalone/server.js && echo "  OK: server.js after pnpm install" || \
