@@ -9,7 +9,7 @@ on:
         description: "Force full rebuild (skip all cache)"
         required: false
         type: boolean
-        default: false
+        default: true
 
 env:
   REGISTRY: ghcr.io

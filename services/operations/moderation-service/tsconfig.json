@@ -7,18 +7,14 @@
       "node"
     ],
     "paths": {
+      "@azeebo/*": ["../../../packages/*/src"],
       "@prisma/client": [
         "./src/prisma/client"
-      ],
-      "@azeebo/*": [
-        "../../../packages/*/dist"
       ],
       "@moderation/*": [
         "./*"
       ]
-    },
-    "module": "Node16",
-    "moduleResolution": "Node16"
+    }
   },
   "include": [
     "src/**/*"
