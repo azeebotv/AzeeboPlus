@@ -394,7 +394,7 @@ RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholde
     export DATABASE_URL && \
     SHARED_CLIENT_DIR=$(cd /app/services/core/auth-service && node -e "console.log(require('path').dirname(require.resolve('@prisma/client')))" 2>/dev/null) && \
     echo "  Shared @prisma/client: $SHARED_CLIENT_DIR" && \
-    for schema in $(find services apps -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*"); do \
+    for schema in $(find services apps packages -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*"); do \
       proj_root=$(dirname "$schema"); \
       svc_root=$(dirname "$proj_root"); \
       echo "  Generating Prisma client for $svc_root..."; \
