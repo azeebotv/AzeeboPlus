@@ -21,13 +21,12 @@ echo "==> Starting Azeebo+ all-in-one container..."
 # ============================================================
 if [ ! -f "$POSTGRES_DATA/PG_VERSION" ]; then
   echo "==> Initializing PostgreSQL data directory..."
-  mkdir -p "$POSTGRES_DATA"
-  chown -R postgres:postgres "$POSTGRES_DATA"
+  su - postgres -c "mkdir -p $POSTGRES_DATA && chown -R postgres:postgres $POSTGRES_DATA"
   su - postgres -c "/usr/lib/postgresql/15/bin/initdb -D $POSTGRES_DATA --encoding=UTF8 --locale=C"
 fi
 
 # Configure PostgreSQL
-chown -R postgres:postgres "$POSTGRES_DATA"
+su - postgres -c "chown -R postgres:postgres $POSTGRES_DATA"
 cat > "$POSTGRES_DATA/postgresql.conf" << PGCONF
 listen_addresses = 'localhost'
 port = 5432
@@ -150,14 +149,13 @@ requirepass $REDIS_PASSWORD
 dir /var/lib/redis
  logfile ""
 REDISCONF
-mkdir -p /var/lib/redis
-chown -R redis:redis /var/lib/redis
+mkdir -p /var/lib/redis 2>/dev/null || true
 
 # ============================================================
 # 6. Configure PgBouncer
 # ============================================================
 echo "==> Configuring PgBouncer..."
-mkdir -p /etc/pgbouncer /var/log/pgbouncer /var/run/pgbouncer
+mkdir -p /etc/pgbouncer /var/log/pgbouncer /var/run/pgbouncer 2>/dev/null || true
 cat > /etc/pgbouncer/pgbouncer.ini << PGBOUNCERINI
 [databases]
 $POSTGRES_DB = host=127.0.0.1 port=5432 dbname=$POSTGRES_DB
@@ -205,15 +203,12 @@ admin_users = $POSTGRES_USER
 stats_users = $POSTGRES_USER
 unix_socket_dir = /var/run/pgbouncer
 PGBOUNCERINI
-chown -R pgbouncer:pgbouncer /var/run/pgbouncer
-
 # Generate PgBouncer userlist from PostgreSQL password hashes
 echo "    Generating PgBouncer userlist..."
 su - postgres -c "psql -d postgres -t -A -c \"SELECT '\" || rolname || '\" \"' || password || '\"' FROM pg_authid WHERE rolname != 'postgres' AND rolname != '$POSTGRES_USER' AND password IS NOT NULL;\"" > /etc/pgbouncer/userlist.txt 2>/dev/null || true
 # Also add the superuser
 su - postgres -c "psql -d postgres -t -A -c \"SELECT '\" || rolname || '\" \"' || password || '\"' FROM pg_authid WHERE rolname = '$POSTGRES_USER' AND password IS NOT NULL;\"" >> /etc/pgbouncer/userlist.txt 2>/dev/null || true
-chown pgbouncer:pgbouncer /etc/pgbouncer/userlist.txt
-chmod 600 /etc/pgbouncer/userlist.txt
+chmod 644 /etc/pgbouncer/userlist.txt 2>/dev/null || true
 echo "    PgBouncer userlist generated."
 
 # ============================================================
