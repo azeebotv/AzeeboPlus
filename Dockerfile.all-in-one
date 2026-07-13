@@ -310,6 +310,18 @@ RUN echo "==> Verifying critical build artifacts..." && \
 ENV CI=true
 RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
+# pnpm install --prod can wipe workspace package dist/ directories.
+# Restore them from the builder stage so workspace package symlinks resolve.
+COPY --from=builder /app/packages/*/dist /tmp/pkg-dist-restore/
+RUN for d in /tmp/pkg-dist-restore/*/; do \
+      pkg_name=$(basename "$d"); \
+      target="/app/packages/$pkg_name/dist"; \
+      if [ ! -d "$target" ] || [ -z "$(ls -A "$target" 2>/dev/null)" ]; then \
+        mkdir -p "$target" && cp -r "$d"/* "$target/"; \
+        echo "  Restored dist for $pkg_name"; \
+      fi; \
+    done && rm -rf /tmp/pkg-dist-restore
+
 # Verify standalone output survived pnpm install (warn only)
 RUN test -f /app/apps/web/standalone/server.js && echo "  OK: server.js after pnpm install" || \
     (echo "  WARN: server.js MISSING after pnpm install — entrypoint will handle" && \
@@ -382,6 +394,10 @@ RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholde
         if [ -d "$FULL_OUTPUT" ]; then \
           echo "module.exports = { ...require('$FULL_OUTPUT') }" > "$SVC_NM/@prisma/client/index.js"; \
           echo "module.exports = { ...require('$FULL_OUTPUT') }" > "$SVC_NM/@prisma/client/default.js"; \
+          if [ -d "/app/$svc_root/dist" ]; then \
+            mkdir -p "/app/$svc_root/dist/prisma/client" && \
+            cp -r "$FULL_OUTPUT/." "/app/$svc_root/dist/prisma/client/" 2>/dev/null; \
+          fi; \
         else \
           echo "  WARNING: Custom output $FULL_OUTPUT not found for $svc_root"; \
         fi; \
