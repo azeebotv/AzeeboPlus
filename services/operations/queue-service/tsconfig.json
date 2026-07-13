@@ -12,16 +12,11 @@
     "outDir": "./dist",
     "incremental": true,
     "paths": {
-      "@azeebo/*": [
-        "../../../packages/*/dist"
-      ],
+      "@azeebo/*": ["../../../packages/*/src"],
       "@queue/*": [
         "./*"
       ]
-    },
-    "module": "Node16",
-    "target": "ES2022",
-    "moduleResolution": "Node16"
+    }
   },
   "include": [
     "src/**/*"

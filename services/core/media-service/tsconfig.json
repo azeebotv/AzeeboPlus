@@ -14,16 +14,11 @@
       "multer"
     ],
     "paths": {
-      "@azeebo/*": [
-        "../../../packages/*/dist"
-      ],
+      "@azeebo/*": ["../../../packages/*/src"],
       "@media/*": [
         "./*"
       ]
-    },
-    "module": "Node16",
-    "target": "ES2022",
-    "moduleResolution": "Node16"
+    }
   },
   "include": [
     "src/**/*"
