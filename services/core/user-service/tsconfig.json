@@ -8,15 +8,11 @@
       "supertest"
     ],
     "paths": {
-      "@azeebo/*": [
-        "../../../packages/*/dist"
-      ],
+      "@azeebo/*": ["../../../packages/*/src"],
       "@user/*": [
         "./*"
       ]
-    },
-    "module": "Node16",
-    "moduleResolution": "Node16"
+    }
   },
   "include": [
     "src/**/*"
