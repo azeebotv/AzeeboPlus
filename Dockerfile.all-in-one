@@ -333,6 +333,8 @@ RUN mkdir -p /app/node_modules/@azeebo && \
       fi; \
     done && \
     find /app/node_modules/.pnpm -maxdepth 1 -type d -name "*@azeebo*" -exec rm -rf {} + 2>/dev/null; \
+    find /app/services /app/apps -path "*/node_modules/@azeebo" -type d -exec rm -rf {} + 2>/dev/null; \
+    find /app/services /app/apps -path "*/node_modules/.pnpm" -type d -exec rm -rf {} + 2>/dev/null; \
     rm -rf /root/.local/share/pnpm 2>/dev/null; \
     npm install -g prisma@6.19.3 && npm cache clean --force 2>/dev/null; \
     true
