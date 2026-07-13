@@ -266,6 +266,7 @@ RUN corepack enable && corepack prepare pnpm@10.33.2 --activate && \
       locales \
       openssl \
       procps \
+      gosu \
     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
     && locale-gen en_US.UTF-8 \
     && useradd -r -s /bin/false pgbouncer || true \
