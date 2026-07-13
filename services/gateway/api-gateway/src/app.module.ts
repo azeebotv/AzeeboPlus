@@ -62,17 +62,17 @@ export class AppModule implements NestModule {
     consumer
       .apply(CsrfMiddleware)
       .exclude(
-        { path: 'api/v1/auth/(.*)', method: RequestMethod.ALL },
-        { path: 'api/auth/(.*)', method: RequestMethod.ALL },
-        { path: 'api/v1/users/(.*)', method: RequestMethod.GET },
-        { path: 'api/v1/users/(.*)', method: RequestMethod.HEAD },
-        { path: 'api/v1/users/(.*)', method: RequestMethod.OPTIONS },
-        { path: 'api/users/(.*)', method: RequestMethod.GET },
-        { path: 'api/users/(.*)', method: RequestMethod.HEAD },
-        { path: 'api/users/(.*)', method: RequestMethod.OPTIONS },
+        { path: 'api/v1/auth/*path', method: RequestMethod.ALL },
+        { path: 'api/auth/*path', method: RequestMethod.ALL },
+        { path: 'api/v1/users/*path', method: RequestMethod.GET },
+        { path: 'api/v1/users/*path', method: RequestMethod.HEAD },
+        { path: 'api/v1/users/*path', method: RequestMethod.OPTIONS },
+        { path: 'api/users/*path', method: RequestMethod.GET },
+        { path: 'api/users/*path', method: RequestMethod.HEAD },
+        { path: 'api/users/*path', method: RequestMethod.OPTIONS },
         { path: 'api/health', method: RequestMethod.ALL },
         { path: 'api/routes', method: RequestMethod.ALL },
-        { path: '(.*)', method: RequestMethod.GET }
+        { path: '*path', method: RequestMethod.GET }
       )
       .forRoutes('api');
 
