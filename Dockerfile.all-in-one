@@ -422,13 +422,12 @@ RUN rm -f /etc/nginx/sites-enabled/default && chmod +x /entrypoint.sh && \
     rm -rf /var/cache/apt /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN useradd -r -s /bin/false -u 65532 nodejs && \
-    chown -R nodejs:nodejs /app
+    chown -R nodejs:nodejs /app && \
+    gosu nodejs true
 
 EXPOSE 80 443 3013 4000 4014 4016
 
 HEALTHCHECK --interval=30s --timeout=10s --retries=5 --start-period=300s \
   CMD curl -f http://localhost:80/health || exit 1
-
-USER nodejs
 
 ENTRYPOINT ["/entrypoint.sh"]
