@@ -113,8 +113,11 @@ export function useVideoPlayer({
     if (state.isPlaying && onProgress) {
       progressIntervalRef.current = setInterval(() => {
         if (videoRef.current) {
-          const progress = (videoRef.current.currentTime / videoRef.current.duration) * 100;
-          onProgress(progress);
+          const duration = videoRef.current.duration;
+          if (duration && duration > 0 && !isNaN(duration)) {
+            const progress = (videoRef.current.currentTime / duration) * 100;
+            onProgress(progress);
+          }
         }
       }, 10000);
     }
@@ -128,9 +131,13 @@ export function useVideoPlayer({
 
   const play = useCallback((): void => {
     if (videoRef.current) {
-      videoRef.current.play().catch(() => {});
+      videoRef.current.play().then(() => {
+        setState((prev) => ({ ...prev, isPlaying: true }));
+      }).catch((error) => {
+        console.warn('Video play failed:', error);
+        setState((prev) => ({ ...prev, isPlaying: false }));
+      });
     }
-    setState((prev) => ({ ...prev, isPlaying: true }));
   }, []);
 
   const pause = useCallback((): void => {

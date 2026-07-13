@@ -9,6 +9,13 @@ import { pricingApi, type MoviePricing, type VotePackage, type WalletPricing, ty
 
 export const CURRENCY = '₦';
 
+// Simple console logger for pricing module
+const log = {
+  warn: (msg: string, ...args: unknown[]) => {
+    if (__DEV__) console.warn(`[Pricing] ${msg}`, ...args);
+  },
+};
+
 // Cache for API responses
 let cachedMoviePricing: MoviePricing | null = null;
 let cachedVotePackages: Record<string, VotePackage[]> = {};
@@ -64,7 +71,9 @@ export async function getMoviePricing(): Promise<MoviePricing> {
       cachedMoviePricing = res.data;
       return res.data;
     }
-  } catch {}
+  } catch (e) {
+    log.warn('Failed to fetch movie pricing, using fallback', e);
+  }
   return FALLBACK_MOVIE_PRICING;
 }
 
@@ -76,7 +85,9 @@ export async function getVotePackages(type: string): Promise<VotePackage[]> {
       cachedVotePackages[type] = res.data;
       return res.data;
     }
-  } catch {}
+  } catch (e) {
+    log.warn('Failed to fetch vote packages, using fallback', e);
+  }
   return FALLBACK_VOTE_PACKAGES[type] || FALLBACK_VOTE_PACKAGES.standard;
 }
 
@@ -88,7 +99,9 @@ export async function getWalletPricing(): Promise<WalletPricing> {
       cachedWalletPricing = res.data;
       return res.data;
     }
-  } catch {}
+  } catch (e) {
+    log.warn('Failed to fetch wallet pricing, using fallback', e);
+  }
   return FALLBACK_WALLET_PRICING;
 }
 
@@ -100,7 +113,9 @@ export async function getPassesPricing(): Promise<PassPricing> {
       cachedPassesPricing = res.data;
       return res.data;
     }
-  } catch {}
+  } catch (e) {
+    log.warn('Failed to fetch passes pricing, using fallback', e);
+  }
   return FALLBACK_PASSES_PRICING;
 }
 
@@ -113,25 +128,37 @@ export function clearPricingCache(): void {
 
 // Synchronous fallback accessors (for components that can't use async)
 // These return cached values or defaults - prefer async functions above
+// WARNING: These are fallback defaults. Always fetch from API when possible.
+// Per CLAUDE.md: "Never hardcode prices in frontend or backend code"
 export const moviePricing = {
   rent48h: { id: 'rent-48h', type: 'Rent (48h)', price: (cachedMoviePricing as MoviePricing | null)?.rent48h?.price ?? 500, label: '₦500' },
   buy: { id: 'buy', type: 'Buy', price: (cachedMoviePricing as MoviePricing | null)?.buy?.price ?? 1500, label: '₦1,500' },
   pass: { id: 'pass', type: 'Pass', price: (cachedMoviePricing as MoviePricing | null)?.pass?.price ?? 4500, label: '₦4,500/mo' },
 } as const;
 
+// DEPRECATED: Use getMoviePricing() async function instead
 export const moviePassPrice = { monthly: 4500, label: '₦4,500/month' } as const;
+// DEPRECATED: Use getMoviePricing() async function instead
 export const rentPrice = 500;
 
+// DEPRECATED: Use getVotePackages() async function instead
 export const votePackages = FALLBACK_VOTE_PACKAGES;
 
+// DEPRECATED: Use getSubscriptionPricing() async function instead
 export const verticalSubscription = { monthly: 2000, label: '₦2,000/month' } as const;
+// DEPRECATED: Use getSubscriptionPricing() async function instead
 export const comedySubscription = { monthly: 1500, label: '₦1,500/month' } as const;
+// DEPRECATED: Use getCityGuidePricing() async function instead
 export const cityGuidePricing = { premium: 5000, standard: 3000 } as const;
 
+// Wallet preset amounts - these are UI hints, not prices
 export const walletPresetAmounts = [500, 1000, 2500, 5000, 10000] as const;
+// DEPRECATED: Use walletPresetAmounts instead
 export const paymentPresetAmounts = [500, 1000, 2500, 5000, 10000] as const;
+// DEPRECATED: Use walletPresetAmounts instead
 export const addFundsPresetAmounts = [500, 1000, 2000, 5000, 10000, 20000] as const;
 
+// DEPRECATED: Use getWalletLimits() async function instead
 export const walletLimits = {
   minimumWithdrawal: 500,
   minimumDeposit: 100,

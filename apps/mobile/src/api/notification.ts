@@ -59,8 +59,8 @@ export const notificationApi = {
   },
 
   deleteNotification: async (notificationId: string): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.patch<ApiResponse<{ message: string }>>(
-      `/v1/notifications/${notificationId}/read`
+    return apiClient.delete<ApiResponse<{ message: string }>>(
+      `/v1/notifications/${notificationId}`
     );
   },
 
