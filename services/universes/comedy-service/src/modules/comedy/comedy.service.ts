@@ -48,7 +48,6 @@ export class ComedyService {
     const clips = await this.prisma.comedyClip.findMany({
       include: {
         comedian: true,
-        creator: true,
         _count: {
           select: { shares: true, likes: true },
         },
@@ -68,7 +67,6 @@ export class ComedyService {
   async getComedians(): Promise<ComedyResponse> {
     const comedians = await this.prisma.comedianProfile.findMany({
       include: {
-        user: true,
         _count: {
           select: { clips: true },
         },
@@ -195,7 +193,6 @@ export class ComedyService {
     const clips = await this.prisma.comedyClip.findMany({
       include: {
         comedian: true,
-        creator: true,
         _count: {
           select: { shares: true, likes: true, comments: true },
         },

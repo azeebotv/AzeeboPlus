@@ -103,9 +103,15 @@ importers:
       class-validator:
         specifier: ^0.15.1
         version: 0.15.1
+      cookie-parser:
+        specifier: ^1.4.7
+        version: 1.4.7
       helmet:
         specifier: ^8.2.0
         version: 8.2.0
+      ms:
+        specifier: ^2.1.3
+        version: 2.1.3
       passport:
         specifier: ^0.7.0
         version: 0.7.0
@@ -125,12 +131,18 @@ importers:
       '@types/bcrypt':
         specifier: ^6.0.0
         version: 6.0.0
+      '@types/cookie-parser':
+        specifier: ^1.4.8
+        version: 1.4.10(@types/express@5.0.6)
       '@types/express':
         specifier: ^5.0.6
         version: 5.0.6
       '@types/jest':
         specifier: ^29.5.0
         version: 29.5.14
+      '@types/ms':
+        specifier: ^2.1.0
+        version: 2.1.0
       '@types/node':
         specifier: ^25.9.3
         version: 25.9.3
@@ -209,9 +221,15 @@ importers:
       class-validator:
         specifier: ^0.15.1
         version: 0.15.1
+      cookie-parser:
+        specifier: ^1.4.7
+        version: 1.4.7
       helmet:
         specifier: ^8.2.0
         version: 8.2.0
+      ms:
+        specifier: ^2.1.3
+        version: 2.1.3
       passport:
         specifier: ^0.7.0
         version: 0.7.0
@@ -231,12 +249,18 @@ importers:
       '@types/bcrypt':
         specifier: ^6.0.0
         version: 6.0.0
+      '@types/cookie-parser':
+        specifier: ^1.4.8
+        version: 1.4.10(@types/express@5.0.6)
       '@types/express':
         specifier: ^5.0.6
         version: 5.0.6
       '@types/jest':
         specifier: ^29.5.0
         version: 29.5.14
+      '@types/ms':
+        specifier: ^2.1.0
+        version: 2.1.0
       '@types/node':
         specifier: ^25.9.3
         version: 25.9.3
@@ -1588,6 +1612,9 @@ importers:
       ioredis:
         specifier: ^5.11.1
         version: 5.11.1
+      ms:
+        specifier: ^2.1.3
+        version: 2.1.3
       passport-jwt:
         specifier: ^4.0.1
         version: 4.0.1
@@ -1610,6 +1637,9 @@ importers:
       '@types/jest':
         specifier: ^29.5.0
         version: 29.5.14
+      '@types/ms':
+        specifier: ^2.1.0
+        version: 2.1.0
       '@types/node':
         specifier: ^25.9.3
         version: 25.9.3
@@ -1721,6 +1751,9 @@ importers:
       ioredis:
         specifier: ^5.11.1
         version: 5.11.1
+      ms:
+        specifier: ^2.1.3
+        version: 2.1.3
       multer:
         specifier: '>=2.2.0'
         version: 2.2.0
@@ -1740,6 +1773,9 @@ importers:
       '@types/jest':
         specifier: ^29.5.0
         version: 29.5.14
+      '@types/ms':
+        specifier: ^2.1.0
+        version: 2.1.0
       '@types/multer':
         specifier: ^2.1.0
         version: 2.1.0
@@ -1975,6 +2011,12 @@ importers:
       '@prisma/client':
         specifier: ^6.19.3
         version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
+      class-transformer:
+        specifier: ^0.5.1
+        version: 0.5.1
+      class-validator:
+        specifier: ^0.15.1
+        version: 0.15.1
       helmet:
         specifier: ^8.2.0
         version: 8.2.0
@@ -2505,6 +2547,9 @@ importers:
       '@sendgrid/mail':
         specifier: ^8.1.6
         version: 8.1.6
+      axios:
+        specifier: ^1.18.0
+        version: 1.18.0
       class-transformer:
         specifier: ^0.5.1
         version: 0.5.1
@@ -2520,6 +2565,9 @@ importers:
       helmet:
         specifier: ^8.2.0
         version: 8.2.0
+      ms:
+        specifier: ^2.1.3
+        version: 2.1.3
       passport-jwt:
         specifier: ^4.0.1
         version: 4.0.1
@@ -2542,6 +2590,9 @@ importers:
       '@types/jest':
         specifier: ^29.5.0
         version: 29.5.14
+      '@types/ms':
+        specifier: ^2.1.0
+        version: 2.1.0
       '@types/node':
         specifier: ^25.9.3
         version: 25.9.3
@@ -2644,6 +2695,9 @@ importers:
       helmet:
         specifier: ^8.2.0
         version: 8.2.0
+      ms:
+        specifier: ^2.1.3
+        version: 2.1.3
       passport-jwt:
         specifier: ^4.0.1
         version: 4.0.1
@@ -2666,6 +2720,9 @@ importers:
       '@types/jest':
         specifier: ^29.5.0
         version: 29.5.14
+      '@types/ms':
+        specifier: ^2.1.0
+        version: 2.1.0
       '@types/node':
         specifier: ^25.9.3
         version: 25.9.3
@@ -2768,6 +2825,9 @@ importers:
       helmet:
         specifier: ^8.2.0
         version: 8.2.0
+      ms:
+        specifier: ^2.1.3
+        version: 2.1.3
       passport-jwt:
         specifier: ^4.0.1
         version: 4.0.1
@@ -2790,6 +2850,9 @@ importers:
       '@types/jest':
         specifier: ^29.5.0
         version: 29.5.14
+      '@types/ms':
+        specifier: ^2.1.0
+        version: 2.1.0
       '@types/node':
         specifier: ^25.9.3
         version: 25.9.3
@@ -2877,6 +2940,9 @@ importers:
       '@prisma/client':
         specifier: ^6.19.3
         version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
+      axios:
+        specifier: ^1.18.0
+        version: 1.18.0
       class-transformer:
         specifier: ^0.5.1
         version: 0.5.1
@@ -3113,6 +3179,9 @@ importers:
       helmet:
         specifier: ^8.2.0
         version: 8.2.0
+      ms:
+        specifier: ^2.1.3
+        version: 2.1.3
       passport-jwt:
         specifier: ^4.0.1
         version: 4.0.1
@@ -3135,6 +3204,9 @@ importers:
       '@types/jest':
         specifier: ^29.5.0
         version: 29.5.14
+      '@types/ms':
+        specifier: ^2.1.0
+        version: 2.1.0
       '@types/node':
         specifier: ^25.9.3
         version: 25.9.3
@@ -3234,6 +3306,9 @@ importers:
       helmet:
         specifier: ^8.2.0
         version: 8.2.0
+      ms:
+        specifier: ^2.1.3
+        version: 2.1.3
       passport-jwt:
         specifier: ^4.0.1
         version: 4.0.1
@@ -3253,6 +3328,9 @@ importers:
       '@types/jest':
         specifier: ^29.5.0
         version: 29.5.14
+      '@types/ms':
+        specifier: ^2.1.0
+        version: 2.1.0
       '@types/node':
         specifier: ^25.9.3
         version: 25.9.3
@@ -3352,6 +3430,9 @@ importers:
       helmet:
         specifier: ^8.2.0
         version: 8.2.0
+      ms:
+        specifier: ^2.1.3
+        version: 2.1.3
       passport-jwt:
         specifier: ^4.0.1
         version: 4.0.1
@@ -3374,6 +3455,9 @@ importers:
       '@types/jest':
         specifier: ^29.5.0
         version: 29.5.14
+      '@types/ms':
+        specifier: ^2.1.0
+        version: 2.1.0
       '@types/node':
         specifier: ^25.9.3
         version: 25.9.3
@@ -8601,6 +8685,9 @@ packages:
 
   '@types/ms@0.7.34':
     resolution: {integrity: sha512-nG96G3Wp6acyAgJqGasjODb+acrI7KltPiRxzHPXnP3NgI28bpQDRv53olbqGXbfcgF5aiiHmO3xpwEpS5Ld9g==}
+
+  '@types/ms@2.1.0':
+    resolution: {integrity: sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==}
 
   '@types/multer@2.1.0':
     resolution: {integrity: sha512-zYZb0+nJhOHtPpGDb3vqPjwpdeGlGC157VpkqNQL+UU2qwoacoQ7MpsAmUptI/0Oa127X32JzWDqQVEXp2RcIA==}
@@ -19279,6 +19366,8 @@ snapshots:
   '@types/mime@1.3.5': {}
 
   '@types/ms@0.7.34': {}
+
+  '@types/ms@2.1.0': {}
 
   '@types/multer@2.1.0':
     dependencies:

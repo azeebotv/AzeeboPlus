@@ -52,9 +52,6 @@ export class ComedyFeedService {
         where: {
           createdAt: { gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) },
         },
-        include: {
-          creator: { select: { id: true, displayName: true, avatar: true } },
-        },
         orderBy: { viewCount: 'desc' },
         take: 20,
       });
@@ -70,8 +67,9 @@ export class ComedyFeedService {
           likeCount: clip.likeCount,
           shareCount: clip.shareCount,
           creator: {
-            ...clip.creator,
-            avatar: clip.creator.avatar ?? undefined,
+            id: clip.creatorId,
+            displayName: '',
+            avatar: undefined,
           },
           createdAt: clip.createdAt.toISOString(),
         })),
@@ -112,11 +110,9 @@ export class ComedyFeedService {
       const clip = await this.prisma.comedyClip.findUnique({
         where: { id: clipId },
         include: {
-          creator: { select: { id: true, displayName: true, avatar: true } },
           comedian: true,
           likes: userId ? { where: { userId } } : false,
           comments: {
-            include: { user: { select: { id: true, displayName: true, avatar: true } } },
             orderBy: { createdAt: 'desc' },
             take: 20,
           },
@@ -136,7 +132,7 @@ export class ComedyFeedService {
         success: true,
         data: {
           ...clip,
-          isLiked: userId ? clip.likes.length > 0 : false,
+          isLiked: userId ? (clip.likes?.length ?? 0) > 0 : false,
         },
       };
 
@@ -232,7 +228,7 @@ export class ComedyFeedService {
         this.prisma.comedySpecial.findMany({
           where,
           include: {
-            comedian: { include: { user: { select: { displayName: true, avatar: true } } } },
+            comedian: true,
           },
           skip: (page - 1) * limit,
           take: limit,
@@ -262,7 +258,7 @@ export class ComedyFeedService {
       const special = await this.prisma.comedySpecial.findUnique({
         where: { id: specialId },
         include: {
-          comedian: { include: { user: { select: { displayName: true, avatar: true } } } },
+          comedian: true,
         },
       });
 
@@ -332,9 +328,6 @@ export class ComedyFeedService {
       if (cached) return cached;
 
       const clips = await this.prisma.comedyClip.findMany({
-        include: {
-          creator: { select: { id: true, displayName: true, avatar: true } },
-        },
         orderBy: { viewCount: 'desc' },
         take: limit,
       });
