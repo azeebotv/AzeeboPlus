@@ -32,7 +32,6 @@ import { createSuccessResponse } from '@azeebo/shared-types';
 import { OtpService } from './otp/otp.service.js';
 import { RedisService } from '../../common/services/redis.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
-import type { StringValue } from 'ms';
 
 @Injectable()
 export class AuthService {
@@ -420,7 +419,7 @@ export class AuthService {
         iat: now,
       } as Record<string, unknown>,
       {
-        expiresIn: this.accessTokenExpiry as StringValue,
+        expiresIn: this.accessTokenExpiry,
         secret: jwtAccessSecret,
       }
     );
@@ -438,7 +437,7 @@ export class AuthService {
         iat: now,
       } as Record<string, unknown>,
       {
-        expiresIn: this.refreshTokenExpiryDays as unknown as StringValue,
+        expiresIn: this.refreshTokenExpiryDays,
         secret: jwtRefreshSecret,
       }
     );

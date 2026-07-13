@@ -18,6 +18,7 @@ import { AuditLogService } from '../audit/audit.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { CreateContentDto, UpdateContentDto } from './dto/create-content.dto';
 
 interface AuthRequest extends Request {
   user: { id: string; email: string; role: string };
@@ -106,9 +107,9 @@ export class ContentManagementController {
   // ─── Content Mutations ─────────────────────────────────────────────────────
 
   @Post()
-  async createContent(@Req() req: AuthRequest, @Body() body: Record<string, unknown>) {
+  async createContent(@Req() req: AuthRequest, @Body() body: CreateContentDto) {
     this.logger.log(`Creating content: ${body.title}`);
-    const result = await this.contentService.createContent(body);
+    const result = await this.contentService.createContent(body as unknown as Record<string, unknown>);
     await this.auditLogService.log({
       actorId: req.user.id,
       action: 'content.created',
@@ -123,10 +124,10 @@ export class ContentManagementController {
   async updateContent(
     @Param('id') id: string,
     @Req() req: AuthRequest,
-    @Body() body: Record<string, unknown>
+    @Body() body: UpdateContentDto
   ) {
     this.logger.log(`Updating content: ${id}`);
-    const result = await this.contentService.updateContent(id, body);
+    const result = await this.contentService.updateContent(id, body as unknown as Record<string, unknown>);
     await this.auditLogService.log({
       actorId: req.user.id,
       action: 'content.updated',
