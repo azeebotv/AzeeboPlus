@@ -89,7 +89,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const persistTokens = useCallback(
-    (accessToken: string, newRefreshToken: string, userData: User) => {
+    async (accessToken: string, newRefreshToken: string, userData: User) => {
       setToken(accessToken);
       setRefreshToken(newRefreshToken);
       setUser(userData);
@@ -97,7 +97,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
       localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
       localStorage.setItem(USER_KEY, JSON.stringify(userData));
-      setAuthCookie(accessToken);
+      await setAuthCookie(accessToken);
     },
     []
   );
@@ -129,9 +129,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [clearSession]);
 
   const handleAuthResponse = useCallback(
-    (response: AuthResponse) => {
+    async (response: AuthResponse) => {
       const { access_token, refresh_token, user: userData } = response;
-      persistTokens(access_token, refresh_token, userData);
+      await persistTokens(access_token, refresh_token, userData);
     },
     [persistTokens]
   );
@@ -264,7 +264,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await api.auth.login({ email, password });
       if (response.success && response.data) {
-        handleAuthResponse(response.data);
+        await handleAuthResponse(response.data);
         return { success: true };
       } else {
         const r = response as {
@@ -301,7 +301,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         password,
       });
       if (response.success && response.data) {
-        handleAuthResponse(response.data);
+        await handleAuthResponse(response.data);
         return { success: true };
       } else {
         const r = response as {
