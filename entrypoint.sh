@@ -21,12 +21,12 @@ echo "==> Starting Azeebo+ all-in-one container..."
 # ============================================================
 if [ ! -f "$POSTGRES_DATA/PG_VERSION" ]; then
   echo "==> Initializing PostgreSQL data directory..."
-  su - postgres -c "mkdir -p $POSTGRES_DATA && chown -R postgres:postgres $POSTGRES_DATA"
-  su - postgres -c "/usr/lib/postgresql/15/bin/initdb -D $POSTGRES_DATA --encoding=UTF8 --locale=C"
+  gosu postgres sh -c "mkdir -p $POSTGRES_DATA && chown -R postgres:postgres $POSTGRES_DATA"
+  gosu postgres sh -c "/usr/lib/postgresql/15/bin/initdb -D $POSTGRES_DATA --encoding=UTF8 --locale=C"
 fi
 
 # Configure PostgreSQL
-su - postgres -c "chown -R postgres:postgres $POSTGRES_DATA"
+gosu postgres sh -c "chown -R postgres:postgres $POSTGRES_DATA"
 cat > "$POSTGRES_DATA/postgresql.conf" << PGCONF
 listen_addresses = 'localhost'
 port = 5432
@@ -53,11 +53,11 @@ PGHBA
 # 2. Start PostgreSQL temporarily
 # ============================================================
 echo "==> Starting PostgreSQL temporarily..."
-su - postgres -c "/usr/lib/postgresql/15/bin/pg_ctl -D $POSTGRES_DATA -l /var/log/postgresql/postgresql-temp.log start -w"
+gosu postgres sh -c "/usr/lib/postgresql/15/bin/pg_ctl -D $POSTGRES_DATA -l /var/log/postgresql/postgresql-temp.log start -w"
 
 # Wait for PostgreSQL to be ready
 for i in $(seq 1 60); do
-  if su - postgres -c "pg_isready -h localhost -p 5432" > /dev/null 2>&1; then
+  if gosu postgres sh -c "pg_isready -h localhost -p 5432" > /dev/null 2>&1; then
     echo "==> PostgreSQL is ready."
     break
   fi
@@ -70,11 +70,11 @@ done
 # ============================================================
 echo "==> Configuring PostgreSQL user and database..."
 export PGPASSWORD="$POSTGRES_PASSWORD"
-su - postgres -c "psql -v ON_ERROR_STOP=0 -c \"ALTER USER postgres WITH PASSWORD '${POSTGRES_PASSWORD}'\"" || true
-su - postgres -c "psql -v ON_ERROR_STOP=0 -t -A -c \"SELECT 1 FROM pg_roles WHERE rolname='${POSTGRES_USER}'\" | grep -q 1" || \
-  su - postgres -c "psql -c \"CREATE USER ${POSTGRES_USER} WITH SUPERUSER PASSWORD '${POSTGRES_PASSWORD}'\""
-su - postgres -c "psql -v ON_ERROR_STOP=0 -t -A -c \"SELECT 1 FROM pg_database WHERE datname='${POSTGRES_DB}'\" | grep -q 1" || \
-  su - postgres -c "psql -c \"CREATE DATABASE ${POSTGRES_DB} OWNER ${POSTGRES_USER}\""
+gosu postgres sh -c "psql -v ON_ERROR_STOP=0 -c \"ALTER USER postgres WITH PASSWORD '${POSTGRES_PASSWORD}'\"" || true
+gosu postgres sh -c "psql -v ON_ERROR_STOP=0 -t -A -c \"SELECT 1 FROM pg_roles WHERE rolname='${POSTGRES_USER}'\" | grep -q 1" || \
+  gosu postgres sh -c "psql -c \"CREATE USER ${POSTGRES_USER} WITH SUPERUSER PASSWORD '${POSTGRES_PASSWORD}'\""
+gosu postgres sh -c "psql -v ON_ERROR_STOP=0 -t -A -c \"SELECT 1 FROM pg_database WHERE datname='${POSTGRES_DB}'\" | grep -q 1" || \
+  gosu postgres sh -c "psql -c \"CREATE DATABASE ${POSTGRES_DB} OWNER ${POSTGRES_USER}\""
 
 # ============================================================
 # 4. Create all service databases
@@ -116,13 +116,13 @@ for entry in "${DBS[@]}"; do
   IFS=':' read -r db_name db_user db_pass <<< "$entry"
 
   # Create user
-  su - postgres -c "psql -c \"SELECT 1 FROM pg_roles WHERE rolname='$db_user'\" | grep -q 1" || \
-    su - postgres -c "psql -c \"CREATE USER $db_user WITH PASSWORD '$db_pass';\""
+  gosu postgres sh -c "psql -c \"SELECT 1 FROM pg_roles WHERE rolname='$db_user'\" | grep -q 1" || \
+    gosu postgres sh -c "psql -c \"CREATE USER $db_user WITH PASSWORD '$db_pass';\""
   echo "    User $db_user ready."
 
   # Create database
-  su - postgres -c "psql -c \"SELECT 1 FROM pg_database WHERE datname='$db_name'\" | grep -q 1" || \
-    su - postgres -c "psql -c \"CREATE DATABASE $db_name OWNER $db_user;\""
+  gosu postgres sh -c "psql -c \"SELECT 1 FROM pg_database WHERE datname='$db_name'\" | grep -q 1" || \
+    gosu postgres sh -c "psql -c \"CREATE DATABASE $db_name OWNER $db_user;\""
   echo "    Database $db_name ready."
 done
 
@@ -205,9 +205,9 @@ unix_socket_dir = /var/run/pgbouncer
 PGBOUNCERINI
 # Generate PgBouncer userlist from PostgreSQL password hashes
 echo "    Generating PgBouncer userlist..."
-su - postgres -c "psql -d postgres -t -A -c \"SELECT '\" || rolname || '\" \"' || password || '\"' FROM pg_authid WHERE rolname != 'postgres' AND rolname != '$POSTGRES_USER' AND password IS NOT NULL;\"" > /etc/pgbouncer/userlist.txt 2>/dev/null || true
+gosu postgres sh -c "psql -d postgres -t -A -c \"SELECT '\" || rolname || '\" \"' || password || '\"' FROM pg_authid WHERE rolname != 'postgres' AND rolname != '$POSTGRES_USER' AND password IS NOT NULL;\"" > /etc/pgbouncer/userlist.txt 2>/dev/null || true
 # Also add the superuser
-su - postgres -c "psql -d postgres -t -A -c \"SELECT '\" || rolname || '\" \"' || password || '\"' FROM pg_authid WHERE rolname = '$POSTGRES_USER' AND password IS NOT NULL;\"" >> /etc/pgbouncer/userlist.txt 2>/dev/null || true
+gosu postgres sh -c "psql -d postgres -t -A -c \"SELECT '\" || rolname || '\" \"' || password || '\"' FROM pg_authid WHERE rolname = '$POSTGRES_USER' AND password IS NOT NULL;\"" >> /etc/pgbouncer/userlist.txt 2>/dev/null || true
 chmod 644 /etc/pgbouncer/userlist.txt 2>/dev/null || true
 echo "    PgBouncer userlist generated."
 
@@ -312,7 +312,7 @@ fi
 # 8. Stop temporary PostgreSQL (supervisord will restart it)
 # ============================================================
 echo "==> Stopping temporary PostgreSQL..."
-su - postgres -c "/usr/lib/postgresql/15/bin/pg_ctl -D $POSTGRES_DATA stop -m fast" || true
+gosu postgres sh -c "/usr/lib/postgresql/15/bin/pg_ctl -D $POSTGRES_DATA stop -m fast" || true
 
 # ============================================================
 # 9. Export DATABASE_URL and REDIS_URL for all services
