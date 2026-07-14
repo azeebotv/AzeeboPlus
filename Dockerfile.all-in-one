@@ -214,16 +214,28 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
         rm -rf "$nested_src" 2>/dev/null; \
       fi; \
     done && \
-    # ---- Web build (MUST succeed — this is the frontend) ----
-    echo "==> Building web app..." && \
-    pnpm --filter @azeebo/web run build && \
-    # ---- Verify ALL outputs exist — crash if anything is missing ----
-    echo "==> Verifying build outputs..." && \
-    echo "=== Service dist inventory ===" && \
+    echo "==> Flattened dist inventory:" && \
     find services -name "main.js" -path "*/dist/*" | sort && \
-    echo "=== Web standalone check ===" && \
-    ls -la apps/web/.next/standalone/server.js 2>&1 && \
-    MISSING=0; \
+    echo "==> Packaging workspace package dists for runtime" && \
+    tar czf /tmp/pkg-dist.tar.gz -C /app \
+      packages/*/dist \
+      packages/*/src/prisma/client 2>/dev/null; \
+    true
+
+# ---- Web build (separate RUN for clearer error reporting) ----
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    echo "==> Building web app..." && \
+    set -e && \
+    pnpm --filter @azeebo/web run build && \
+    echo "=== Web .next/ contents ===" && \
+    ls -la apps/web/.next/ 2>&1 | head -20 && \
+    echo "=== .next/standalone check ===" && \
+    ls -la apps/web/.next/standalone/ 2>&1 | head -10
+
+# ---- Verify ALL outputs exist — crash if anything is missing ----
+RUN echo "==> Verifying build outputs..." && \
+    set -e && \
+    MISSING=0 && \
     for svc_dir in $(find services -maxdepth 2 -mindepth 2 -type d -not -path "*/node_modules/*" | sort); do \
       name=$(basename "$svc_dir"); \
       if [ -f "$svc_dir/package.json" ] && grep -q '"@azeebo/' "$svc_dir/package.json"; then \
@@ -233,26 +245,21 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
           echo "  OK: $name/dist/main.js"; \
         fi; \
       fi; \
-    done; \
+    done && \
     for app in apps/admin apps/creator-portal; do \
       if [ ! -f "$app/dist/main.js" ]; then echo "  FATAL: MISSING $app/dist/main.js"; MISSING=$((MISSING+1)); \
       else echo "  OK: $app/dist/main.js"; fi; \
-    done; \
+    done && \
     if [ ! -f "apps/web/.next/standalone/server.js" ]; then \
       echo "  FATAL: MISSING apps/web/.next/standalone/server.js"; MISSING=$((MISSING+1)); \
     else \
       echo "  OK: apps/web/standalone/server.js"; \
-    fi; \
+    fi && \
     if [ "$MISSING" -ne 0 ]; then \
       echo "=== BUILD FAILED: $MISSING critical output(s) missing ==="; \
       exit 1; \
-    fi; \
-    echo "=== ALL BUILDS PASSED ===" && \
-    echo "=== Packaging workspace package dists for runtime ===" && \
-    tar czf /tmp/pkg-dist.tar.gz -C /app \
-      packages/*/dist \
-      packages/*/src/prisma/client 2>/dev/null; \
-    true
+    fi && \
+    echo "=== ALL BUILDS PASSED ==="
 
 # Create /runtime with only what the container needs at runtime.
 # Each copy section is independent (;) so a failure in one section does NOT
