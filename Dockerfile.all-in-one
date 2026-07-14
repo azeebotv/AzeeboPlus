@@ -429,14 +429,21 @@ RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholde
       fi; \
       cd /app; \
     done && \
-    echo "  Generating Prisma client for shared @prisma/client..." && \
-    (cd /app/services/core/auth-service && prisma generate --schema=schema.prisma 2>&1) || \
+    echo "  Generating Prisma client for shared @prisma/client (no custom output)..." && \
+    (cd /app/packages/shared-services && prisma generate --schema=prisma/schema.prisma 2>&1) || \
       echo "  WARNING: prisma generate failed for shared client"; \
-    if [ -d "/app/services/core/auth-service/node_modules/.prisma/client" ]; then \
-      cp -r "/app/services/core/auth-service/node_modules/.prisma/client" "$SHARED_CLIENT_DIR/.prisma/client" 2>/dev/null; \
+    if [ -d "/app/packages/shared-services/node_modules/.prisma/client" ]; then \
+      cp -r "/app/packages/shared-services/node_modules/.prisma/client" "$SHARED_CLIENT_DIR/.prisma/client" 2>/dev/null; \
       echo "  Generated shared @prisma/client at $SHARED_CLIENT_DIR/.prisma/client"; \
     else \
-      echo "  WARNING: No .prisma/client found for shared client!"; \
+      echo "  WARNING: No .prisma/client found for shared client, trying fallback..."; \
+      for fallback_dir in $(find /app/services /app/apps -path "*/node_modules/.prisma/client" -type d 2>/dev/null | head -1); do \
+        if [ -d "$fallback_dir" ]; then \
+          cp -r "$fallback_dir" "$SHARED_CLIENT_DIR/.prisma/client" 2>/dev/null; \
+          echo "  Fallback: copied .prisma/client from $fallback_dir to $SHARED_CLIENT_DIR/.prisma/client"; \
+          break; \
+        fi; \
+      done; \
     fi && \
     SHARED_ENGINE=""; \
     for engine in $(find /app/services /app/apps -path "*/.prisma/client/libquery_engine-*.node" -type f 2>/dev/null); do \
