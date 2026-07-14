@@ -1597,31 +1597,48 @@ export class CreatorsService {
     const profile = await this.prisma.creatorProfile.findUnique({ where: { userId } });
     if (!profile) throw new NotFoundException('Creator profile not found');
 
-    const [contentCount, earnings, subscribers] = await Promise.all([
+    const [contentCount, earnings, subscribers, contentItems] = await Promise.all([
       this.prisma.contentItem.count({ where: { creatorId: userId } }),
       this.prisma.creatorEarning.aggregate({
         where: { creatorId: profile.id },
         _sum: { amount: true },
       }),
       this.prisma.subscription.count({ where: { creatorId: profile.id, status: 'active' } }),
+      this.prisma.contentItem.findMany({
+        where: { creatorId: userId },
+        select: { views: true, likes: true, comments: true },
+      }),
     ]);
 
-    // ContentItem has no view-tracking field in this service's schema; view
-    // aggregation is owned by analytics-service. Default to 0 here.
-    const totalViews = 0;
+    // Aggregate view/like/comment counts from local content items
+    // These fields exist on ContentItem in this service's schema
+    const totalViews = contentItems.reduce((sum, item) => sum + (item.views || 0), 0);
+    const totalLikes = contentItems.reduce((sum, item) => sum + (item.likes || 0), 0);
+    const totalComments = contentItems.reduce((sum, item) => sum + (item.comments || 0), 0);
+
+    // Calculate pending earnings (earnings not yet paid out)
+    const pendingEarnings = await this.prisma.creatorEarning.aggregate({
+      where: { creatorId: profile.id, status: 'pending' },
+      _sum: { amount: true },
+    });
+
+    // Calculate engagement rate (likes + comments / views)
+    const avgEngagementRate = totalViews > 0
+      ? Math.round(((totalLikes + totalComments) / totalViews) * 100 * 100) / 100
+      : 0;
 
     return {
       success: true,
       data: {
         totalViews,
-        totalLikes: 0,
-        totalComments: 0,
+        totalLikes,
+        totalComments,
         followerCount: subscribers,
         contentCount,
         totalEarnings: Number(earnings._sum.amount) || 0,
-        pendingEarnings: 0,
+        pendingEarnings: Number(pendingEarnings._sum.amount) || 0,
         viewsChangePercentage: 0,
-        avgEngagementRate: 0,
+        avgEngagementRate,
         totalFollowers: subscribers,
         viewsChange: 0,
         likesChange: 0,

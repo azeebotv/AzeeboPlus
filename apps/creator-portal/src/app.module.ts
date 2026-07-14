@@ -5,7 +5,8 @@ import { AuthModule } from './auth/auth.module';
 import { CreatorModule } from './creator/creator.module';
 import { DatabaseModule } from './database/database.module';
 import { ApiModule } from './api/api.module';
-import { ServiceAuthGuard } from '@azeebo/security';
+import { HealthModule } from './modules/health/health.module';
+import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
 import { CsrfMiddleware } from './common/csrf.middleware';
 
 @Module({
@@ -13,10 +14,12 @@ import { CsrfMiddleware } from './common/csrf.middleware';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    RateLimiterModule.forRoot(),
     DatabaseModule,
     AuthModule,
     ApiModule,
     CreatorModule,
+    HealthModule,
   ],
   providers: [
     {

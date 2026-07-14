@@ -101,9 +101,24 @@ export class ContentFeedService {
     return result;
   }
 
-  async getWatchFeed(_userId?: string): Promise<{ success: boolean; data: ContentWithUniverse[] }> {
+  async getWatchFeed(userId?: string): Promise<{ success: boolean; data: ContentWithUniverse[] }> {
+    const where: Record<string, unknown> = { status: 'published' };
+
+    if (userId) {
+      const watchedIds = await this.prisma.watchHistory.findMany({
+        where: { userId },
+        select: { contentId: true },
+        orderBy: { watchedAt: 'desc' },
+        take: 100,
+      });
+      const excludeIds = watchedIds.map((w) => w.contentId);
+      if (excludeIds.length > 0) {
+        where.id = { notIn: excludeIds };
+      }
+    }
+
     const content = await this.prisma.contentItem.findMany({
-      where: { status: 'published' },
+      where,
       select: {
         id: true,
         title: true,

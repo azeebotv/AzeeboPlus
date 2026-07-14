@@ -1,4 +1,5 @@
 import * as Linking from 'expo-linking';
+import { useRouter } from 'expo-router';
 import { logger } from './logger';
 
 const PREFIX = Linking.createURL('/');
@@ -103,5 +104,47 @@ export class DeepLinkService {
   static getShareText(title: string, description: string, contentId: string): string {
     const link = this.createContentLink(contentId, title);
     return `${title}\n\n${description}\n\nOpen in Azeebo+: ${link}`;
+  }
+
+  /**
+   * Handle an incoming deep link by parsing it and navigating to the correct screen.
+   * Call this from the app's URL event listener (Linking.addEventListener('url', ...)).
+   */
+  static handleDeepLink(url: string, router: ReturnType<typeof useRouter>): boolean {
+    const data = this.parseUrl(url);
+    if (!data) {
+      logger.warn('Failed to handle deep link', undefined, { url });
+      return false;
+    }
+
+    try {
+      switch (data.type) {
+        case 'content':
+          router.push(`/(tabs)/home?contentId=${data.id}`);
+          break;
+        case 'universe':
+          router.push(`/(tabs)/home?universeId=${data.id}`);
+          break;
+        case 'creator':
+          router.push(`/(tabs)/home?creatorId=${data.id}`);
+          break;
+        case 'referral':
+          router.push(`/(auth)/register?referral=${data.id}`);
+          break;
+        case 'payment':
+          router.push(`/(tabs)/wallet?paymentId=${data.id}`);
+          break;
+        case 'wallet':
+          router.push('/(tabs)/wallet');
+          break;
+        default:
+          logger.warn('Unhandled deep link type', undefined, { type: data.type });
+          return false;
+      }
+      return true;
+    } catch (error) {
+      logger.error('Failed to navigate from deep link', error);
+      return false;
+    }
   }
 }

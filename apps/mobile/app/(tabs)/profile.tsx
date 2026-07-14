@@ -124,7 +124,12 @@ export default function ProfileScreen() {
           <Text style={[styles.lockText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
             Please log in to view your profile
           </Text>
-          <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/(auth)/login')}>
+          <TouchableOpacity
+            style={styles.loginButton}
+            onPress={() => router.push('/(auth)/login')}
+            accessibilityLabel="Log In"
+            accessibilityRole="button"
+          >
             <Text style={styles.loginButtonText}>Log In</Text>
           </TouchableOpacity>
         </View>
@@ -326,7 +331,12 @@ export default function ProfileScreen() {
           </ScrollReveal>
 
           <ScrollReveal direction="up" delay={300}>
-            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={handleLogout}
+              accessibilityLabel="Logout"
+              accessibilityRole="button"
+            >
               <Text style={styles.logoutButtonText}>Logout</Text>
             </TouchableOpacity>
 
@@ -361,7 +371,11 @@ export default function ProfileScreen() {
               >
                 Edit Profile
               </Text>
-              <TouchableOpacity onPress={() => setShowEditModal(false)}>
+              <TouchableOpacity
+                onPress={() => setShowEditModal(false)}
+                accessibilityLabel="Close edit profile"
+                accessibilityRole="button"
+              >
                 <Text style={styles.modalClose}>✕</Text>
               </TouchableOpacity>
             </View>

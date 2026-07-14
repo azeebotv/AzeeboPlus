@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 import { OfflineModeService, OfflineAction } from '../utils/offlineMode';
 
 interface UseOfflineState {
@@ -15,6 +16,7 @@ export function useOffline() {
     cacheSize: 0,
     offlineQueueLength: 0,
   });
+  const previousOnlineRef = useRef(true);
 
   useEffect(() => {
     const checkConnection = async () => {
@@ -36,9 +38,33 @@ export function useOffline() {
 
     checkConnection();
 
-    const interval = setInterval(checkConnection, 30000);
+    // Event-based connectivity monitoring — replays queue immediately on reconnect
+    const unsubscribe = NetInfo.addEventListener((state: NetInfoState) => {
+      const online = state.isConnected ?? false;
+      const wasOffline = !previousOnlineRef.current;
+      previousOnlineRef.current = online;
 
-    return () => clearInterval(interval);
+      setState((prev) => ({
+        ...prev,
+        isOnline: online,
+        isOfflineMode: !online,
+      }));
+
+      // When coming back online, replay queued operations immediately
+      if (online && wasOffline) {
+        OfflineModeService.getOfflineQueue().then((queue) => {
+          if (queue.length > 0) {
+            OfflineModeService.processOfflineQueue().then(() => {
+              OfflineModeService.getCacheSize().then((cacheSize) => {
+                setState((prev) => ({ ...prev, cacheSize, offlineQueueLength: 0 }));
+              });
+            });
+          }
+        });
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const cacheContent = useCallback(

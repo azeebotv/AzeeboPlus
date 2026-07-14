@@ -127,7 +127,7 @@ export class SearchService {
     }
 
     try {
-      const [contentItems, contentTotal] = await Promise.all([
+      const [contentItems, contentTotal, creators, universes] = await Promise.all([
         this.prisma.contentItem.findMany({
           where: whereCondition,
           skip,
@@ -135,24 +135,22 @@ export class SearchService {
           orderBy,
         }),
         this.prisma.contentItem.count({ where: whereCondition }),
+        this.prisma.creatorProfile.findMany({
+          where: {
+            bio: { contains: escapedQuery, mode: 'insensitive' },
+          },
+          take: Math.min(limit, 20),
+        }),
+        this.prisma.universe.findMany({
+          where: {
+            OR: [
+              { name: { contains: escapedQuery, mode: 'insensitive' } },
+              { displayName: { contains: escapedQuery, mode: 'insensitive' } },
+            ],
+          },
+          take: Math.min(limit, 10),
+        }),
       ]);
-
-      const creators = await this.prisma.creatorProfile.findMany({
-        where: {
-          bio: { contains: escapedQuery, mode: 'insensitive' },
-        },
-        take: Math.min(limit, 20),
-      });
-
-      const universes = await this.prisma.universe.findMany({
-        where: {
-          OR: [
-            { name: { contains: escapedQuery, mode: 'insensitive' } },
-            { displayName: { contains: escapedQuery, mode: 'insensitive' } },
-          ],
-        },
-        take: Math.min(limit, 10),
-      });
 
       const result: SearchResponse = {
         success: true,
@@ -304,9 +302,14 @@ export class SearchService {
       status: 'published',
     };
 
-    const [universeCounts, dateCounts] = await Promise.all([
+    const [universeCounts, contentTypeCounts, dateCounts] = await Promise.all([
       this.prisma.contentItem.groupBy({
         by: ['universeId'],
+        where: baseCondition,
+        _count: { id: true },
+      }),
+      this.prisma.contentItem.groupBy({
+        by: ['contentType'],
         where: baseCondition,
         _count: { id: true },
       }),
@@ -318,6 +321,7 @@ export class SearchService {
     });
 
     type UniverseCount = (typeof universeCounts)[number];
+    type ContentTypeCount = (typeof contentTypeCounts)[number];
 
     return {
       universes: universeCounts.map((u: UniverseCount) => ({
@@ -327,7 +331,11 @@ export class SearchService {
       })),
       categories: [],
       tags: [],
-      contentTypes: [],
+      contentTypes: contentTypeCounts.map((ct: ContentTypeCount) => ({
+        id: ct.contentType,
+        name: ct.contentType,
+        count: ct._count.id,
+      })),
       dateRanges: dateCounts,
     };
   }

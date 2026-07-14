@@ -11,6 +11,7 @@ import { Inject,
  } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard, Roles } from '@azeebo/shared-services';
 import { MusicService } from './music.service';
 import { UpdateMusicDto } from './dto/update-music.dto';
 
@@ -68,7 +69,8 @@ export class MusicController {
   }
 
   @Post()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Create music entry' })
   @ApiResponse({ status: 201, description: 'Entry created' })
   async createEntry(@Body() body: CreateMusicData): Promise<unknown> {
@@ -76,7 +78,8 @@ export class MusicController {
   }
 
   @Patch(':id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Update music entry' })
   @ApiResponse({ status: 200, description: 'Entry updated' })
   async updateEntry(@Param('id') id: string, @Body() body: UpdateMusicDto): Promise<unknown> {
@@ -84,7 +87,8 @@ export class MusicController {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN')
   @ApiOperation({ summary: 'Delete music entry' })
   @ApiResponse({ status: 200, description: 'Entry deleted' })
   async deleteEntry(@Param('id') id: string): Promise<unknown> {

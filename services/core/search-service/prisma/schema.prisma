@@ -102,6 +102,7 @@ model ContentItem {
   @@index([universe])
   @@index([contentType])
   @@index([status])
+  @@index([creatorId])
 }
 
 model CreatorProfile {

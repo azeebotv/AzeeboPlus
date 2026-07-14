@@ -83,8 +83,13 @@ export default function OTPVerificationPage(): React.JSX.Element {
     }
   };
 
-  const handleResend = (): void => {
+  const handleResend = async (): Promise<void> => {
     if (resendIn > 0) return;
+    try {
+      await apiFetch('/v1/auth/resend-otp', { method: 'POST' });
+    } catch {
+      // Resend failed silently — user can try again after timer
+    }
     setResendIn(RESEND_SECONDS);
     setDigits(Array(OTP_LENGTH).fill(''));
     inputsRef.current[0]?.focus();
@@ -137,7 +142,7 @@ export default function OTPVerificationPage(): React.JSX.Element {
                 }}
                 type="text"
                 inputMode="numeric"
-                maxLength={OTP_LENGTH}
+                maxLength={1}
                 value={d}
                 onChange={(e) => handleChange(i, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(i, e)}

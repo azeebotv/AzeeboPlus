@@ -504,17 +504,29 @@ export class SportsService {
         .map((r) => [r.userId, r.wallet])
     );
 
-    const rewardAmount = 100;
+    // Cap total payout pool to prevent catastrophic financial loss
+    const MAX_REWARD_PER_USER = 100;
+    const MAX_TOTAL_POOL = 10000;
+    const baseReward = MAX_REWARD_PER_USER;
+    const totalPool = Math.min(baseReward * correctPredictions.length, MAX_TOTAL_POOL);
+    const rewardPerUser = correctPredictions.length > 0
+      ? Math.floor(totalPool / correctPredictions.length)
+      : 0;
+
+    if (rewardPerUser <= 0) {
+      this.logger.warn(`No rewards distributed for event ${eventId}: ${correctPredictions.length} correct predictions exceed pool`);
+    }
+
     await Promise.all(
       correctPredictions.map(async (prediction) => {
         const wallet = walletMap.get(prediction.userId);
-        if (wallet) {
+        if (wallet && rewardPerUser > 0) {
           await axios
             .post(
               `${this.walletServiceBaseUrl}/wallet/credit`,
               {
                 walletId: wallet.id,
-                amount: rewardAmount,
+                amount: rewardPerUser,
                 description: `Correct prediction reward for event ${eventId}`,
               },
               { timeout: 10000 }
@@ -527,7 +539,7 @@ export class SportsService {
         await this.trackAnalyticsEvent('prediction_correct', prediction.userId, {
           predictionId: prediction.id,
           eventId,
-          reward: 100,
+          reward: rewardPerUser,
         });
       })
     );

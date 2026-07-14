@@ -162,9 +162,8 @@ export class NotificationsService {
     }
   }
 
-  // NOTE: updatePreferences currently writes to the deprecated `notificationPreferences` JSON
-  // field on the User model. This should be migrated to use the canonical
-  // NotificationPreference model for proper relational storage and querying.
+  // updatePreferences writes to the canonical NotificationPreference model
+  // for proper relational storage and querying.
   async updatePreferences(
     userId: string,
     preferences: Record<string, boolean>
@@ -580,9 +579,8 @@ export class NotificationsService {
 
   async sendSmsNotification(userId: string, message: string): Promise<boolean> {
     try {
-      // Get user phone number (assuming user has a phone field)
-      // User lookup not available in this service — use user-service
-      const user: { id: string; email: string; displayName: string; phone?: string } = { id: userId, email: 'user@example.com', displayName: 'User' };
+      // Get user phone number via user-service
+      const user = await this.getUserData(userId);
 
       if (!user) {
         this.logger.error(`User ${userId} not found`);

@@ -1,12 +1,21 @@
-import {Inject,  Injectable } from '@nestjs/common';
+import {Inject,  Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class PricingService {
+  private readonly logger = new Logger(PricingService.name);
+
   constructor(@Inject(ConfigService) private readonly configService: ConfigService) {}
 
   private getConfig(key: string, defaultValue: string): string {
-    return this.configService.get(key, defaultValue);
+    const value = this.configService.get<string>(key);
+    if (!value) {
+      if (process.env.NODE_ENV === 'production') {
+        this.logger.warn(`Missing required pricing config: ${key}, using default: ${defaultValue}`);
+      }
+      return defaultValue;
+    }
+    return value;
   }
 
   async getMoviePricing() {

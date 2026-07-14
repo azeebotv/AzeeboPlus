@@ -2,6 +2,7 @@ import {Inject,  Injectable, BadRequestException, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import axios from 'axios';
 
 @Injectable()
 export class TranscodingService {
@@ -66,6 +67,19 @@ export class TranscodingService {
 
   async getTranscodingJobStatus(jobId: string): Promise<unknown> {
     this.logger.log('Getting transcoding job status:', jobId);
+
+    const mediaServiceUrl = this.configService.get<string>('MEDIA_SERVICE_URL');
+    if (mediaServiceUrl) {
+      try {
+        const response = await axios.get(`${mediaServiceUrl}/v1/upload/transcoding/${jobId}`, {
+          timeout: 5000,
+          headers: { 'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', '') },
+        });
+        return response.data?.data || response.data;
+      } catch (error) {
+        this.logger.warn(`Failed to fetch transcoding status from media-service: ${(error as Error).message}`);
+      }
+    }
 
     return {
       jobId,

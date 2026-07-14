@@ -77,7 +77,11 @@ export class ServiceAuthGuard implements CanActivate {
           'Gateway authentication not configured. Requests with x-user-* headers require a valid x-gateway-secret.'
         );
       }
-      if (gatewaySecret !== expectedSecret) {
+      // Use timing-safe comparison to prevent timing side-channel attacks
+      const crypto = await import('crypto');
+      const secretBuffer = Buffer.from(gatewaySecret || '');
+      const expectedBuffer = Buffer.from(expectedSecret);
+      if (secretBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(secretBuffer, expectedBuffer)) {
         throw new UnauthorizedException(
           'Gateway authentication required. Requests with x-user-* headers must include a valid x-gateway-secret.'
         );

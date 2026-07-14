@@ -43,10 +43,7 @@ export class TournamentService {
     @Inject(PrismaService) private prisma: PrismaService,
     @Inject(ConfigService) private readonly configService: ConfigService
   ) {
-    this.walletServiceUrl = this.configService.get<string>(
-      'WALLET_SERVICE_URL',
-      'http://wallet-service:3002'
-    );
+    this.walletServiceUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
   }
 
   private formatTournament(

@@ -177,6 +177,78 @@ export class SocialAuthService {
     return provider;
   }
 
+  // ─── OAuth code exchange ──────────────────────────────────────────
+
+  async exchangeGoogleCode(code: string): Promise<{ id_token: string; access_token: string }> {
+    const clientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
+    const clientSecret = this.configService.get<string>('GOOGLE_CLIENT_SECRET');
+    const redirectUri = this.configService.get<string>('GOOGLE_REDIRECT_URI', `${this.configService.get<string>('BASE_URL', 'http://localhost:3000')}/auth/social/callback?provider=google`);
+
+    if (!clientId || !clientSecret) {
+      throw new BadRequestException('Google OAuth credentials not configured');
+    }
+
+    try {
+      const response = await axios.post(
+        'https://oauth2.googleapis.com/token',
+        new URLSearchParams({
+          code,
+          client_id: clientId,
+          client_secret: clientSecret,
+          redirect_uri: redirectUri,
+          grant_type: 'authorization_code',
+        }).toString(),
+        {
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          timeout: 10000,
+        }
+      );
+
+      return {
+        id_token: response.data.id_token,
+        access_token: response.data.access_token,
+      };
+    } catch (error) {
+      this.logger.error(`Google code exchange failed: ${error}`);
+      throw new UnauthorizedException('Failed to exchange Google authorization code');
+    }
+  }
+
+  async exchangeAppleCode(code: string): Promise<{ id_token: string; access_token: string }> {
+    const clientId = this.configService.get<string>('APPLE_CLIENT_ID');
+    const clientSecret = this.configService.get<string>('APPLE_CLIENT_SECRET');
+    const redirectUri = this.configService.get<string>('APPLE_REDIRECT_URI', `${this.configService.get<string>('BASE_URL', 'http://localhost:3000')}/auth/social/callback?provider=apple`);
+
+    if (!clientId || !clientSecret) {
+      throw new BadRequestException('Apple OAuth credentials not configured');
+    }
+
+    try {
+      const response = await axios.post(
+        'https://appleid.apple.com/auth/token',
+        new URLSearchParams({
+          code,
+          client_id: clientId,
+          client_secret: clientSecret,
+          redirect_uri: redirectUri,
+          grant_type: 'authorization_code',
+        }).toString(),
+        {
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          timeout: 10000,
+        }
+      );
+
+      return {
+        id_token: response.data.id_token,
+        access_token: response.data.access_token,
+      };
+    } catch (error) {
+      this.logger.error(`Apple code exchange failed: ${error}`);
+      throw new UnauthorizedException('Failed to exchange Apple authorization code');
+    }
+  }
+
   /**
    * Build the OAuth authorization URL for the given provider.
    * The state parameter is embedded in the URL and will be returned

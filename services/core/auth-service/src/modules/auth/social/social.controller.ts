@@ -107,18 +107,25 @@ export class SocialAuthController {
       `Social callback: state validated, provider=${provider}, code=${dto.code.substring(0, 8)}...`
     );
 
-    // In production, the code would be exchanged for tokens via the provider's API
-    // and the id_token would be verified to extract the email. For now, the caller
-    // must supply email via the callback DTO. Reject social logins without a verified email.
-    if (!dto.email) {
-      throw new BadRequestException('Email is required from social provider');
+    // Exchange the authorization code for tokens with the OAuth provider
+    // This verifies the code is valid and retrieves the id_token
+    let tokenInfo: { email: string; sub: string; name?: string };
+
+    if (provider === 'google') {
+      const tokens = await this.socialAuthService.exchangeGoogleCode(dto.code);
+      tokenInfo = await this.socialAuthService.verifyGoogleToken(tokens.id_token);
+    } else if (provider === 'apple') {
+      const tokens = await this.socialAuthService.exchangeAppleCode(dto.code);
+      tokenInfo = await this.socialAuthService.verifyAppleToken(tokens.id_token);
+    } else {
+      throw new BadRequestException(`Unsupported provider: ${provider}`);
     }
 
     const socialUser = {
-      email: dto.email,
+      email: tokenInfo.email,
       displayName:
-        dto.displayName || `${provider.charAt(0).toUpperCase() + provider.slice(1)} User`,
-      socialId: dto.code,
+        dto.displayName || tokenInfo.name || `${provider.charAt(0).toUpperCase() + provider.slice(1)} User`,
+      socialId: tokenInfo.sub,
       provider: provider as 'google' | 'apple',
       accessToken: '',
       refreshToken: '',

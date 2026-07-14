@@ -4,24 +4,11 @@ import { useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
+import type { ContentItem } from '../../lib/api';
 import { announceToScreenReader } from '../../lib/keyboard';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-
-interface ContentItem {
-  id: string;
-  title: string;
-  description?: string;
-  thumbnail: string;
-  duration?: number;
-  category?: string;
-  universe?: { id: string; name: string; icon?: string };
-  creator?: { name: string };
-  rating?: number;
-  year?: number;
-  language?: string;
-}
 
 interface ContentResponse {
   items?: ContentItem[];

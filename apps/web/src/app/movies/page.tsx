@@ -136,18 +136,20 @@ export default function MoviesPage(): React.JSX.Element {
                     Play Now
                   </motion.button>
                 </Link>
-                <motion.button
-                  type="button"
-                  className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
-                  style={{
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    backgroundColor: 'rgba(255,255,255,0.08)',
-                  }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Add to Library
-                </motion.button>
+                <Link href={`/watch/${movies[0].id}`}>
+                  <motion.button
+                    type="button"
+                    className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
+                    style={{
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      backgroundColor: 'rgba(255,255,255,0.08)',
+                    }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Add to Library
+                  </motion.button>
+                </Link>
               </motion.div>
             </div>
           </div>
@@ -163,7 +165,7 @@ export default function MoviesPage(): React.JSX.Element {
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           <motion.div
             className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-4 scrollbar-hide"
-            role="listbox"
+            role="group"
             aria-label="Movie categories"
             initial="hidden"
             animate="visible"
@@ -176,7 +178,6 @@ export default function MoviesPage(): React.JSX.Element {
               <motion.button
                 key={category.id}
                 type="button"
-                role="option"
                 className="whitespace-nowrap px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium text-white/70 hover:text-white transition-colors flex-shrink-0"
                 style={{
                   border: '1px solid rgba(255,255,255,0.1)',

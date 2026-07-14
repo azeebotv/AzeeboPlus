@@ -8,6 +8,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { colors } from '../theme';
 import { logger } from '../utils/logger';
 
@@ -177,7 +178,9 @@ export function usePullToRefresh() {
   const onRefresh = React.useCallback(async (refreshFn: () => Promise<void>) => {
     setRefreshing(true);
     try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       await refreshFn();
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
       logger.error('Pull-to-refresh failed', error);
     } finally {

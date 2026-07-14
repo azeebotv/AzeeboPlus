@@ -359,9 +359,12 @@ export class UploadController {
   }
 
   @Post('premium/url/validate')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Validate a premium content URL token' })
   @ApiResponse({ status: 200, description: 'Token validation result' })
   @ApiResponse({ status: 400, description: 'token is required' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async validatePremiumUrl(@Body() body: { token: string }): Promise<unknown> {
     const { token } = body;
     if (!token) {

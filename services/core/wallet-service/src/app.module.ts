@@ -2,8 +2,6 @@ import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TerminusModule } from '@nestjs/terminus';
-import { ThrottlerModule } from '@nestjs/throttler';
-
 import { WalletModule } from './modules/wallet/wallet.module.js';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -22,20 +20,14 @@ import { CacheModule } from './cache/index.js';
     }),
     RateLimiterModule.forRoot(),
     CacheModule,
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60000,
-        limit: 100,
-      },
-    ]),
-    TerminusModule,
+TerminusModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_ACCESS_SECRET') || '',
+        secret: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
         signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as any,
+          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '30m'),
         },
       }),
       inject: [ConfigService],

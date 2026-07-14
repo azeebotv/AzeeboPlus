@@ -150,8 +150,11 @@ export class AdminService {
         throw new NotFoundException('Content not found');
       }
 
-      return this.prisma.contentItem.delete({
+      // Soft delete: set status to 'deleted' instead of hard delete
+      // This preserves referential integrity with comments, rentals, and media
+      return this.prisma.contentItem.update({
         where: { id: contentId },
+        data: { status: 'deleted' },
       });
     } catch (error) {
       if (error instanceof NotFoundException) throw error;

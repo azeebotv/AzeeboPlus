@@ -93,6 +93,7 @@ export default function ProfilePage(): React.JSX.Element {
             title="Failed to load profile"
             description="Please try again later."
             buttonText="Retry"
+            onButtonPress={() => window.location.reload()}
           />
         ) : profile ? (
           <motion.div

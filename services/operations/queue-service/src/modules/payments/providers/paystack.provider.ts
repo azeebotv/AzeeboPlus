@@ -245,9 +245,34 @@ export class PaystackProvider {
     this.logger.log(
       `Processing Paystack payout of ${amount} to ${recipient}, reference: ${reference}`
     );
-    throw new Error(
-      'Paystack payout is not implemented. Please use wallet-service direct transfer for payouts.'
+
+    if (!this.apiKey) {
+      throw new Error('Paystack API key not configured');
+    }
+
+    const response = await axios.post(
+      'https://api.paystack.co/transfer',
+      {
+        source: 'balance',
+        amount: amount * 100, // Paystack uses kobo
+        recipient,
+        reference,
+        currency: 'NGN',
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 30000,
+      }
     );
+
+    return {
+      success: response.data.status === 'success',
+      reference,
+      providerResponse: response.data,
+    };
   }
 
   async verifyWebhookSignature(

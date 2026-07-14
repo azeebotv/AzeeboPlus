@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { api, ContentItem } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import { AmbientGlow } from '@/components/motion/AmbientGlow';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { StaggerGrid } from '@/components/motion/StaggerGrid';
@@ -131,18 +132,20 @@ export default function GamesPage(): React.JSX.Element {
                     Play Now
                   </motion.button>
                 </Link>
-                <motion.button
-                  type="button"
-                  className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
-                  style={{
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    backgroundColor: 'rgba(255,255,255,0.08)',
-                  }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Leaderboard
-                </motion.button>
+                <Link href="/rankings">
+                  <motion.button
+                    type="button"
+                    className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
+                    style={{
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      backgroundColor: 'rgba(255,255,255,0.08)',
+                    }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Leaderboard
+                  </motion.button>
+                </Link>
               </motion.div>
             </div>
           </div>
@@ -182,9 +185,11 @@ export default function GamesPage(): React.JSX.Element {
               <Link key={game.id} href={`/watch/${game.id}`}>
                 <GlowCard universe="games" className="overflow-hidden">
                   <div className="relative">
-                    <img
+                    <OptimizedImage
                       src={game.thumbnail}
                       alt={game.title}
+                      width={400}
+                      height={192}
                       className="w-full h-44 sm:h-48 object-cover"
                     />
                     <span

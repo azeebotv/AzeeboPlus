@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 interface Device {
   id: string;
@@ -28,6 +29,13 @@ export default function DevicesPage(): React.JSX.Element {
   const router = useRouter();
   const [devices, setDevices] = useState<Device[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    destructive?: boolean;
+    onConfirm: () => void;
+  }>({ open: false, title: '', message: '', onConfirm: () => {} });
 
   useEffect(() => {
     if (authLoading) return;
@@ -52,14 +60,22 @@ export default function DevicesPage(): React.JSX.Element {
     }
   };
 
-  const handleRemove = async (deviceId: string) => {
-    if (!confirm('Remove this device?')) return;
-    try {
-      await apiFetch<RemoveDeviceResult>(`/auth/devices/${deviceId}`, { method: 'DELETE' });
-      setDevices(devices.filter((d) => d.id !== deviceId));
-    } catch {
-      /* ignore */
-    }
+  const handleRemove = (deviceId: string) => {
+    setConfirmDialog({
+      open: true,
+      title: 'Remove Device',
+      message: 'Are you sure you want to remove this device?',
+      destructive: true,
+      onConfirm: async () => {
+        setConfirmDialog((prev) => ({ ...prev, open: false }));
+        try {
+          await apiFetch<RemoveDeviceResult>(`/auth/devices/${deviceId}`, { method: 'DELETE' });
+          setDevices(devices.filter((d) => d.id !== deviceId));
+        } catch {
+          /* ignore */
+        }
+      },
+    });
   };
 
   if (authLoading) return <></>;
@@ -207,6 +223,14 @@ export default function DevicesPage(): React.JSX.Element {
         )}
       </main>
       <AppFooter />
+      <ConfirmDialog
+        open={confirmDialog.open}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        destructive={confirmDialog.destructive}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
+      />
     </div>
   );
 }

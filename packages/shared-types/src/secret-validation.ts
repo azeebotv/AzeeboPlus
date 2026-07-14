@@ -2,9 +2,8 @@ import { validateEnvironment, EnvValidationError } from './env-validation';
 
 const log = (service: string, level: 'info' | 'warn' | 'error', message: string) => {
   const prefix = `[${service}]`;
-  if (level === 'error') console.error(prefix, message);
-  else if (level === 'warn') console.warn(prefix, message);
-  else console.log(prefix, message);
+  if (level === 'error') process.stderr.write(`${prefix} ${message}\n`);
+  else process.stdout.write(`${prefix} ${message}\n`);
 };
 
 /**

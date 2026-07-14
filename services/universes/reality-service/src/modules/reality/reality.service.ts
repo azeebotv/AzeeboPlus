@@ -69,40 +69,44 @@ export class RealityService {
     }
   }
 
-  private premiumExtras: PremiumExtra[] = [
-    {
-      id: '1',
-      name: 'Early Voting',
-      description: 'Vote before regular voting opens',
-      price: 5,
-      type: 'feature',
-      duration: 7,
-    },
-    {
-      id: '2',
-      name: 'Vote Multiplier',
-      description: 'Your votes count double',
-      price: 20,
-      type: 'feature',
-      duration: 3,
-    },
-    {
-      id: '3',
-      name: 'Exclusive Content',
-      description: 'Access behind-the-scenes footage',
-      price: 15,
-      type: 'content',
-      duration: 30,
-    },
-    {
-      id: '4',
-      name: 'Live Chat',
-      description: 'Join exclusive live chats with contestants',
-      price: 10,
-      type: 'feature',
-      duration: 7,
-    },
-  ];
+  // Premium extras loaded from config with sensible defaults
+  // Prices are configurable via environment variables to avoid hardcoded values
+  private getPremiumExtras(): PremiumExtra[] {
+    return [
+      {
+        id: '1',
+        name: 'Early Voting',
+        description: 'Vote before regular voting opens',
+        price: this.configService.get<number>('PREMIUM_EXTRA_EARLY_VOTING_PRICE', 5),
+        type: 'feature',
+        duration: this.configService.get<number>('PREMIUM_EXTRA_EARLY_VOTING_DURATION', 7),
+      },
+      {
+        id: '2',
+        name: 'Vote Multiplier',
+        description: 'Your votes count double',
+        price: this.configService.get<number>('PREMIUM_EXTRA_VOTE_MULTIPLIER_PRICE', 20),
+        type: 'feature',
+        duration: this.configService.get<number>('PREMIUM_EXTRA_VOTE_MULTIPLIER_DURATION', 3),
+      },
+      {
+        id: '3',
+        name: 'Exclusive Content',
+        description: 'Access behind-the-scenes footage',
+        price: this.configService.get<number>('PREMIUM_EXTRA_EXCLUSIVE_CONTENT_PRICE', 15),
+        type: 'content',
+        duration: this.configService.get<number>('PREMIUM_EXTRA_EXCLUSIVE_CONTENT_DURATION', 30),
+      },
+      {
+        id: '4',
+        name: 'Live Chat',
+        description: 'Join exclusive live chats with contestants',
+        price: this.configService.get<number>('PREMIUM_EXTRA_LIVE_CHAT_PRICE', 10),
+        type: 'feature',
+        duration: this.configService.get<number>('PREMIUM_EXTRA_LIVE_CHAT_DURATION', 7),
+      },
+    ];
+  }
 
   async listShows(): Promise<RealityResponse> {
     const cacheK = cacheKey('reality', 'shows:list');
@@ -609,7 +613,7 @@ export class RealityService {
       data: {
         voteCost: this.voteCost,
         supervoteCost: this.supervoteCost,
-        premiumExtras: this.premiumExtras,
+        premiumExtras: this.getPremiumExtras(),
       },
     };
   }
@@ -617,12 +621,12 @@ export class RealityService {
   async getPremiumExtras(): Promise<RealityResponse> {
     return {
       success: true,
-      data: { premiumExtras: this.premiumExtras },
+      data: { premiumExtras: this.getPremiumExtras() },
     };
   }
 
   async purchasePremiumExtra(userId: string, extraId: string): Promise<RealityResponse> {
-    const extra = this.premiumExtras.find((e) => e.id === extraId);
+    const extra = this.getPremiumExtras().find((e) => e.id === extraId);
     if (!extra) {
       throw new NotFoundException('Premium extra not found');
     }
@@ -653,6 +657,11 @@ export class RealityService {
         },
         { timeout: 10000 }
       );
+
+      // TODO: Create a PremiumPurchase record in the database after wallet debit.
+      // Currently no Purchase model exists in reality-service schema.
+      // This means there is no server-side record of premium extra purchases.
+      // A PremiumPurchase model should be added to track: userId, extraId, purchaseId, price, purchasedAt, expiresAt.
 
       await this.trackAnalyticsEvent('premium_extra_purchased', userId, {
         purchaseId: idempotencyKey,
@@ -696,7 +705,13 @@ export class RealityService {
       take: 10,
     });
 
-    const contestants = await Promise.all(
+    // Activity events are owned by analytics-service (ProductEvent model lives there,
+    // not in reality-service's schema). This service emits events via HTTP
+    // (see trackAnalyticsEvent) but cannot query them back from its own database.
+    // TODO: Implement analytics-service integration to fetch activity events.
+    const recentActivity: unknown[] = [];
+
+    const votesByContestantWithNames = await Promise.all(
       votesByContestant.map(async (v) => {
         const contestant = await this.prisma.contestant.findUnique({
           where: { id: v.contestantId },
@@ -709,11 +724,6 @@ export class RealityService {
       })
     );
 
-    // Activity events are owned by analytics-service (ProductEvent model lives there,
-    // not in reality-service's schema). This service emits events via HTTP
-    // (see trackAnalyticsEvent) but cannot query them back from its own database.
-    const recentActivity: unknown[] = [];
-
     return {
       success: true,
       data: {
@@ -723,7 +733,7 @@ export class RealityService {
         totalSupervotes: supervoteCount,
         totalPredictions: predictionCount,
         totalClips: clipCount,
-        contestants,
+        contestants: votesByContestantWithNames,
         recentActivity,
       },
     };
