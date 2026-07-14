@@ -127,9 +127,16 @@ export class ContentCategoryService {
     }
   }
 
-  async getCategories(): Promise<{ success: boolean; data: CategoryModel[] }> {
+  async getCategories(
+    page = 1,
+    limit = 50
+  ): Promise<{ success: boolean; data: CategoryModel[] }> {
     try {
-      const categories = await this.prisma.category.findMany();
+      const skip = (page - 1) * limit;
+      const categories = await this.prisma.category.findMany({
+        skip,
+        take: limit,
+      });
 
       return {
         success: true,
@@ -234,9 +241,16 @@ export class ContentCategoryService {
     }
   }
 
-  async getTags(): Promise<{ success: boolean; data: TagModel[] }> {
+  async getTags(
+    page = 1,
+    limit = 50
+  ): Promise<{ success: boolean; data: TagModel[] }> {
     try {
-      const tags = await this.prisma.tag.findMany();
+      const skip = (page - 1) * limit;
+      const tags = await this.prisma.tag.findMany({
+        skip,
+        take: limit,
+      });
 
       return {
         success: true,

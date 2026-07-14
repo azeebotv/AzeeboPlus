@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_INTERCEPTOR, APP_GUARD } from '@nestjs/core';
 import { TerminusModule } from '@nestjs/terminus';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { UsersModule } from './modules/users/users.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { AdminModule } from './modules/admin/admin.module.js';
@@ -17,12 +16,6 @@ import { ServiceAuthGuard } from '@azeebo/security';
       envFilePath: ['.env', '../../.env'],
     }),
     RateLimiterModule.forRoot(),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60000,
-        limit: 100,
-      },
-    ]),
     TerminusModule,
     UsersModule,
     HealthModule,

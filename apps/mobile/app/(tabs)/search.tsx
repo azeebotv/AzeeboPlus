@@ -147,6 +147,7 @@ export default function SearchScreen() {
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.resultsList}
+          keyboardDismissMode="on-drag"
           ListEmptyComponent={
             <EmptyState
               icon="⌕"

@@ -59,7 +59,7 @@ export default function ResetPasswordPage(): React.JSX.Element {
 
     setIsLoading(true);
     try {
-      const result = await apiFetch('/auth/reset-password', {
+      const result = await apiFetch('/v1/auth/reset-password', {
         method: 'POST',
         body: JSON.stringify({ token, newPassword }),
       });

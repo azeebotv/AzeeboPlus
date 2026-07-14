@@ -128,6 +128,7 @@ export default function WatchScreen() {
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
+          keyboardDismissMode="on-drag"
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}

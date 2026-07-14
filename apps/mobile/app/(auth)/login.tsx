@@ -24,6 +24,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [showBiometricOption, setShowBiometricOption] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isAvailable && isEnabled) {
@@ -59,6 +60,7 @@ export default function LoginScreen() {
       return;
     }
     setError(null);
+    setIsSubmitting(true);
     try {
       const result = await login(email, password);
       if (result.success) {
@@ -68,6 +70,8 @@ export default function LoginScreen() {
       }
     } catch {
       setError('Invalid email or password');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -135,7 +139,8 @@ export default function LoginScreen() {
               <BrandButton
                 title="Sign In to Azeebo+"
                 onPress={handleLogin}
-                loading={isLoading}
+                loading={isLoading || isSubmitting}
+                disabled={isSubmitting}
                 variant="primary"
               />
 

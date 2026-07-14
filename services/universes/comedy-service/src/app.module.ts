@@ -7,7 +7,7 @@ import { ComedyFeedModule } from './modules/comedy-feed/comedy-feed.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
 import { AdminModule } from './modules/admin/admin.module.js';
-import { RateLimiterModule, RateLimitGuard } from '@azeebo/security';
+import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
 import { CacheModule } from '@azeebo/shared-services';
 
 @Global()
@@ -35,7 +35,7 @@ import { CacheModule } from '@azeebo/shared-services';
     },
     {
       provide: APP_GUARD,
-      useClass: RateLimitGuard,
+      useClass: ServiceAuthGuard,
     },
   ],
 })

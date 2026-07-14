@@ -162,16 +162,8 @@ export const spacing = {
   '4xl': 64,
 };
 
-export const spacingNative = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 24,
-  '2xl': 32,
-  '3xl': 48,
-  '4xl': 64,
-};
+/** @deprecated Use `spacing` instead. This was a duplicate for React Native. */
+export const spacingNative = spacing;
 
 export const typography = {
   fontSizes: {
@@ -202,19 +194,8 @@ export const typography = {
   },
 };
 
-export const fontSizeNative = {
-  xs: 10,
-  sm: 12,
-  base: 14,
-  md: 16,
-  lg: 18,
-  xl: 20,
-  '2xl': 24,
-  '3xl': 28,
-  '4xl': 32,
-  '5xl': 40,
-  '6xl': 48,
-};
+/** @deprecated Use `typography.fontSizes` instead. This was a duplicate for React Native. */
+export const fontSizeNative = typography.fontSizes;
 
 export const fontWeightNative = {
   thin: '300' as const,

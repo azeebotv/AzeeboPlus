@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { api, ContentItem, Category } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 export default function ComedyPage(): React.JSX.Element {
   const universesQuery = useQuery({
@@ -65,23 +66,23 @@ export default function ComedyPage(): React.JSX.Element {
               specials.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
-              <button
-                type="button"
-                className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
+              <Link
+                href="/browse?category=comedy"
+                className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all inline-block"
                 style={{
                   backgroundColor: 'rgba(255,255,255,0.2)',
                   border: '1px solid rgba(255,255,255,0.3)',
                 }}
               >
                 Browse Comedy
-              </button>
-              <button
-                type="button"
-                className="px-6 py-3 rounded-full text-sm font-semibold text-[#E8420A] transition-all"
+              </Link>
+              <Link
+                href="/creator/upload"
+                className="px-6 py-3 rounded-full text-sm font-semibold text-[#E8420A] transition-all inline-block"
                 style={{ backgroundColor: '#fff' }}
               >
                 Submit Your Clip
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -129,9 +130,11 @@ export default function ComedyPage(): React.JSX.Element {
                   style={{ boxShadow: '0 0 20px rgba(255,255,255,0.05)' }}
                 >
                   <div className="relative">
-                    <img
+                    <OptimizedImage
                       src={clip.thumbnail}
                       alt={clip.title}
+                      width={400}
+                      height={160}
                       className="w-full h-40 object-cover group-hover:scale-105 transition-transform"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 via-transparent to-transparent" />
@@ -172,14 +175,13 @@ export default function ComedyPage(): React.JSX.Element {
 
         <div
           className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4"
-          role="listbox"
+          role="group"
           aria-label="Comedy categories"
         >
           {(categoriesQuery.data || []).slice(0, 6).map((category) => (
             <button
               key={category.id}
               type="button"
-              role="option"
               className="az-glass text-center cursor-pointer transition-all hover:scale-[1.02]"
             >
               <div className="p-4">

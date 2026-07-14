@@ -55,13 +55,13 @@ export function initializeOpenTelemetry(config: Partial<OpenTelemetryConfig> = {
           const pathOnly = request.path.split('?')[0];
           span.setAttribute('http.request.path', pathOnly);
         },
-      } as never),
+      }),
       new ExpressInstrumentation({
         requestHook: (span: Span, request: { path: string; method: string }) => {
           span.setAttribute('http.route', request.path);
           span.setAttribute('http.method', request.method);
         },
-      } as never),
+      }),
       new PrismaInstrumentation(),
     ],
   });

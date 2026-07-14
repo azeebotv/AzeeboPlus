@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { api, ContentItem } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 export default function VerticalPage(): React.JSX.Element {
   const universesQuery = useQuery({
@@ -89,16 +90,16 @@ export default function VerticalPage(): React.JSX.Element {
                     Start Watching
                   </button>
                 </Link>
-                <button
-                  type="button"
-                  className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
+                <Link
+                  href={`/watch/${series[0].id}`}
+                  className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all inline-block"
                   style={{
                     border: '1px solid rgba(255,255,255,0.2)',
                     backgroundColor: 'rgba(255,255,255,0.08)',
                   }}
                 >
                   Character Lore
-                </button>
+                </Link>
               </div>
             </div>
           </div>
@@ -139,9 +140,11 @@ export default function VerticalPage(): React.JSX.Element {
                   style={{ boxShadow: '0 0 20px rgba(255,255,255,0.05)' }}
                 >
                   <div className="relative">
-                    <img
+                    <OptimizedImage
                       src={show.thumbnail}
                       alt={show.title}
+                      width={400}
+                      height={192}
                       className="w-full h-48 object-cover"
                     />
                     <span

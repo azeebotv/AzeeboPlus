@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import BrandLogo from '@/components/auth/BrandLogo';
 import { Alert, Spinner } from '@/components/auth/FormBits';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 // Default interests - can be overridden via user-service API
 const DEFAULT_INTERESTS = [
@@ -238,7 +239,7 @@ export default function ProfileSetupPage(): React.JSX.Element {
                 {isUploadingAvatar ? (
                   <Spinner />
                 ) : avatarUrl ? (
-                  <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                  <OptimizedImage src={avatarUrl} alt="Profile" fill className="object-cover" />
                 ) : (
                   profileInitial
                 )}
@@ -259,9 +260,9 @@ export default function ProfileSetupPage(): React.JSX.Element {
               </span>
             </div>
             <p className="az-headline text-white text-lg">
-              {fullName.trim() || 'Yetunde Williams'}
+              {fullName.trim() || 'Your Name'}
             </p>
-            <p className="text-white/50 text-sm">@{username.trim() || 'YetyWilly'}</p>
+            <p className="text-white/50 text-sm">@{username.trim() || 'username'}</p>
           </div>
 
           {/* Right: form grid */}

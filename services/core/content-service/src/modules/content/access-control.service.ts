@@ -1,5 +1,7 @@
 import {Inject,  Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
+import axios from 'axios';
 
 export interface AccessCheckResult {
   hasAccess: boolean;
@@ -12,7 +14,10 @@ export interface AccessCheckResult {
 export class AccessControlService {
   private readonly logger = new Logger(AccessControlService.name);
 
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(ConfigService) private readonly configService: ConfigService
+  ) {}
 
   async checkContentAccess(userId: string, contentId: string): Promise<AccessCheckResult> {
     try {
@@ -384,6 +389,32 @@ export class AccessControlService {
           canPlay: false,
           reason: 'Media not available',
         };
+      }
+
+      const mediaServiceUrl = this.configService.get<string>('MEDIA_SERVICE_URL');
+      if (mediaServiceUrl && mediaAsset.originalUrl) {
+        try {
+          // Extract storage key from the original URL (S3 path)
+          const url = new URL(mediaAsset.originalUrl);
+          const storageKey = url.pathname.substring(1); // Remove leading /
+          const response = await axios.get(
+            `${mediaServiceUrl}/v1/upload/signed-url/${encodeURIComponent(storageKey)}`,
+            {
+              timeout: 5000,
+              headers: { 'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', '') },
+            }
+          );
+          const signedUrl = response.data?.data?.url || response.data?.url;
+          if (signedUrl) {
+            return {
+              canPlay: true,
+              signedUrl,
+              expiresIn: 3600,
+            };
+          }
+        } catch (error) {
+          this.logger.warn(`Failed to get signed URL from media-service: ${(error as Error).message}`);
+        }
       }
 
       return {

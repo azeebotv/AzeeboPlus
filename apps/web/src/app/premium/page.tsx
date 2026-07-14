@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 
@@ -11,6 +11,12 @@ export default function PremiumAccessPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 5000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   const plansQuery = useQuery({
     queryKey: ['premium', 'plans'],

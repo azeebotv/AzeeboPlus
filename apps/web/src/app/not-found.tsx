@@ -11,7 +11,7 @@ export default function NotFound(): React.JSX.Element {
         </p>
         <Link
           href="/"
-          className="inline-block px-6 py-3 bg-[#E8420A] text-white rounded-lg font-semibold hover:bg-[#D03A08] transition-colors"
+          className="az-btn-primary inline-block"
         >
           Go Home
         </Link>

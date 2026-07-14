@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { PaymentsController } from './modules/payments/payments.controller.js';
 import { PaymentsService } from './modules/payments/payments.service.js';
 import { PaymentProviderModule } from './modules/payments/providers/payment-provider.module.js';
@@ -21,16 +20,11 @@ import { CacheModule } from '@azeebo/shared-services';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['.env', '../../.env'],
     }),
     RedisModule,
     CacheModule,
     RateLimiterModule.forRoot(),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60000,
-        limit: 100,
-      },
-    ]),
     PaymentProviderModule,
     DatabaseModule,
     HealthModule,

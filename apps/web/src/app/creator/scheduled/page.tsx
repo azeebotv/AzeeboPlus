@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
@@ -6,6 +7,7 @@ import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 interface ScheduledContent {
   id: string;
@@ -22,6 +24,13 @@ export default function ScheduledPage(): React.JSX.Element {
   const router = useRouter();
   const queryClient = useQueryClient();
   const isEnabled = !authLoading && !!isAuthenticated && !!user;
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    destructive?: boolean;
+    onConfirm: () => void;
+  }>({ open: false, title: '', message: '', onConfirm: () => {} });
 
   const {
     data: scheduled = [],
@@ -166,7 +175,16 @@ export default function ScheduledPage(): React.JSX.Element {
                 </div>
                 <button
                   onClick={() => {
-                    if (confirm('Cancel this scheduled content?')) cancelMutation.mutate(item.id);
+                    setConfirmDialog({
+                      open: true,
+                      title: 'Cancel Scheduled Content',
+                      message: 'Are you sure you want to cancel this scheduled content?',
+                      destructive: true,
+                      onConfirm: () => {
+                        setConfirmDialog((prev) => ({ ...prev, open: false }));
+                        cancelMutation.mutate(item.id);
+                      },
+                    });
                   }}
                   style={{
                     padding: '8px 20px',
@@ -187,6 +205,14 @@ export default function ScheduledPage(): React.JSX.Element {
         )}
       </main>
       <AppFooter />
+      <ConfirmDialog
+        open={confirmDialog.open}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        destructive={confirmDialog.destructive}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
+      />
     </div>
   );
 }

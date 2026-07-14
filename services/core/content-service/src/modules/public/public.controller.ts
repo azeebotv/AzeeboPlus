@@ -55,7 +55,7 @@ export class PublicController {
       return {
         success: false,
         message: 'Failed to fetch universes',
-        error: error instanceof Error ? (error as Error).message : 'Unknown error',
+        error: 'Internal server error',
       };
     }
   }
@@ -84,7 +84,7 @@ export class PublicController {
       return {
         success: false,
         message: 'Failed to fetch settings',
-        error: error instanceof Error ? (error as Error).message : 'Unknown error',
+        error: 'Internal server error',
       };
     }
   }
@@ -122,7 +122,7 @@ export class PublicController {
       return {
         success: false,
         message: 'Failed to fetch setting',
-        error: error instanceof Error ? (error as Error).message : 'Unknown error',
+        error: 'Internal server error',
       };
     }
   }
@@ -174,7 +174,7 @@ export class PublicController {
       return {
         success: false,
         message: 'Failed to fetch features',
-        error: error instanceof Error ? (error as Error).message : 'Unknown error',
+        error: 'Internal server error',
       };
     }
   }

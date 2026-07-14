@@ -1,4 +1,4 @@
-import { Inject, Controller, Get, Post, Body, Param, Query, UseGuards, Request, Logger  } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Body, Param, Query, UseGuards, Request, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AgbalaTitlesService as TitlesService } from './agbala/titles.service';
@@ -24,12 +24,13 @@ export class StoryworldsController {
 
   @Get()
   @ApiOperation({ summary: 'List all storyworlds' })
-  async getStoryworlds(): Promise<{ success: boolean; data: unknown[] }> {
+  async getStoryworlds() {
     try {
       const storyworlds = await this.titlesService.getStoryworlds();
       return { success: true, data: storyworlds };
     } catch (error) {
-      return { success: true, data: [] };
+      this.logger.error(`getStoryworlds failed: ${(error as Error).message}`, (error as Error).stack);
+      throw error;
     }
   }
 
@@ -212,10 +213,14 @@ export class StoryworldsController {
     }
 
     // Check against configured valid codes from environment
-    // In production, these should be stored in the database
     const validCodes = (process.env.UNLOCK_CODES || '').split(',').filter(Boolean);
     
-    if (validCodes.length > 0 && !validCodes.includes(body.code.trim())) {
+    if (validCodes.length === 0) {
+      this.logger.warn('No unlock codes configured — rejecting unlock attempt');
+      return { success: false, error: { code: 'UNLOCK_UNAVAILABLE', message: 'Unlock codes not configured' } };
+    }
+
+    if (!validCodes.includes(body.code.trim())) {
       return { success: false, error: { code: 'WRONG_CODE', message: 'Invalid unlock code' } };
     }
 

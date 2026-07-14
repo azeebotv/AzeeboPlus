@@ -219,8 +219,9 @@ export class ModerationService {
         const data = (await response.json()) as { data?: unknown };
         if (data.data) return data.data;
       }
-    } catch {
+    } catch (error) {
       // Fall back to defaults
+      console.warn(`Failed to fetch report types from moderation-service: ${(error as Error).message}`);
     }
 
     return [

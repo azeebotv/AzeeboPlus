@@ -117,7 +117,7 @@ export class PaystackProvider {
               app: 'azeebo-plus',
             },
             callback_url:
-              process.env.PAYSTACK_CALLBACK_URL || 'http://localhost:3003/webhooks/paystack',
+              process.env.PAYSTACK_CALLBACK_URL || (process.env.NODE_ENV === 'production' ? (() => { throw new Error('PAYSTACK_CALLBACK_URL must be configured in production'); })() : 'http://localhost:3003/webhooks/paystack'),
           },
           {
             headers: {

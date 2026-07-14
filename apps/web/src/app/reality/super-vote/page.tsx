@@ -5,6 +5,7 @@ import { apiFetch } from '../../../lib/api';
 import { webLogger } from '../../../lib/logger';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 interface Contestant {
   id: string;
@@ -34,6 +35,13 @@ export default function SuperVotePage(): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(true);
   const [isVoting, setIsVoting] = useState(false);
   const [votePackages, setVotePackages] = useState<VotePackage[]>([]);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    destructive?: boolean;
+    onConfirm: () => void;
+  }>({ open: false, title: '', message: '', onConfirm: () => {} });
 
   useEffect(() => {
     const fetchVotePackages = async () => {
@@ -127,30 +135,40 @@ export default function SuperVotePage(): React.JSX.Element {
     const pkg = votePackages.find((p) => p.id === selectedPackage);
     if (!pkg) return;
     if (walletBalance < pkg.price) {
-      if (
-        confirm(
-          `You need ₦${pkg.price.toLocaleString()} but your balance is ₦${walletBalance.toLocaleString()}. Add funds?`
-        )
-      )
-        router.push('/wallet/add-funds');
+      setConfirmDialog({
+        open: true,
+        title: 'Insufficient Balance',
+        message: `You need ₦${pkg.price.toLocaleString()} but your balance is ₦${walletBalance.toLocaleString()}. Add funds?`,
+        onConfirm: () => {
+          setConfirmDialog((prev) => ({ ...prev, open: false }));
+          router.push('/wallet/add-funds');
+        },
+      });
       return;
     }
-    if (!confirm(`Purchase ${pkg.votes} Super Vote(s) for ₦${pkg.price.toLocaleString()}?`)) return;
-    setIsVoting(true);
-    try {
-      const result = await apiFetch('/v1/content/super-vote', {
-        method: 'POST',
-        body: JSON.stringify({ contestantId: selectedContestant, episodeId, voteCount: pkg.votes }),
-      });
-      if (!result.success) throw new Error(result.message || 'Failed to submit super vote');
-      alert(`Your ${pkg.votes} Super Vote(s) submitted! Each counts as 2x.`);
-      setSelectedContestant(null);
-      setSelectedPackage(null);
-    } catch (error: unknown) {
-      alert(error instanceof Error ? error.message : 'Failed to submit super vote');
-    } finally {
-      setIsVoting(false);
-    }
+    setConfirmDialog({
+      open: true,
+      title: 'Confirm Purchase',
+      message: `Purchase ${pkg.votes} Super Vote(s) for ₦${pkg.price.toLocaleString()}?`,
+      onConfirm: async () => {
+        setConfirmDialog((prev) => ({ ...prev, open: false }));
+        setIsVoting(true);
+        try {
+          const result = await apiFetch('/v1/content/super-vote', {
+            method: 'POST',
+            body: JSON.stringify({ contestantId: selectedContestant, episodeId, voteCount: pkg.votes }),
+          });
+          if (!result.success) throw new Error(result.message || 'Failed to submit super vote');
+          alert(`Your ${pkg.votes} Super Vote(s) submitted! Each counts as 2x.`);
+          setSelectedContestant(null);
+          setSelectedPackage(null);
+        } catch (error: unknown) {
+          alert(error instanceof Error ? error.message : 'Failed to submit super vote');
+        } finally {
+          setIsVoting(false);
+        }
+      },
+    });
   };
 
   if (isLoading) {
@@ -290,6 +308,14 @@ export default function SuperVotePage(): React.JSX.Element {
           {isVoting ? 'Processing...' : '🗳 Submit Super Vote'}
         </button>
       </div>
+      <ConfirmDialog
+        open={confirmDialog.open}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        destructive={confirmDialog.destructive}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
+      />
       <AppFooter />
     </div>
   );

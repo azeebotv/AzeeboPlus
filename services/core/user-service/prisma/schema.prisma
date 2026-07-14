@@ -160,3 +160,19 @@ model AuditLog {
   @@index([targetType])
   @@index([createdAt])
 }
+
+model DataDeletionRequest {
+  id          String    @id @default(uuid())
+  userId      String
+  reason      String?
+  status      String    @default("scheduled") // scheduled, in_progress, completed, failed
+  scheduledAt DateTime  @default(now())
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("data_deletion_requests")
+  @@index([userId])
+  @@index([status])
+  @@index([scheduledAt])
+}

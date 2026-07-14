@@ -5,17 +5,17 @@ import { CacheService, cacheKey } from '@azeebo/shared-services';
 import { CreateSubscriptionPlanDto } from './dto/create-subscription-plan.dto.js';
 import { SubscribeToPlanDto } from './dto/subscribe-to-plan.dto.js';
 import type { SubscriptionPlan, Subscription } from '../../prisma/client/index.js';
+import { CircuitBreaker, CircuitBreakerOpenError } from '@azeebo/shared-types';
 import axios from 'axios';
 
 @Injectable()
 export class SubscriptionService {
   private readonly logger = new Logger(SubscriptionService.name);
   private readonly paymentServiceBaseUrl: string;
-  private paymentFailures = 0;
-  private circuitOpen = false;
-  private circuitResetTime = 0;
-  private static readonly FAILURE_THRESHOLD = 5;
-  private static readonly RESET_TIMEOUT = 60000;
+  private readonly circuitBreaker = new CircuitBreaker({
+    failureThreshold: 5,
+    resetTimeout: 60000,
+  });
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
@@ -23,30 +23,6 @@ export class SubscriptionService {
     @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.paymentServiceBaseUrl = this.configService.getOrThrow<string>('PAYMENT_SERVICE_URL');
-  }
-
-  private isCircuitOpen(): boolean {
-    if (!this.circuitOpen) return false;
-    if (Date.now() > this.circuitResetTime) {
-      this.circuitOpen = false;
-      this.paymentFailures = 0;
-      return false;
-    }
-    return true;
-  }
-
-  private recordPaymentFailure(): void {
-    this.paymentFailures++;
-    if (this.paymentFailures >= SubscriptionService.FAILURE_THRESHOLD) {
-      this.circuitOpen = true;
-      this.circuitResetTime = Date.now() + SubscriptionService.RESET_TIMEOUT;
-      this.logger.warn('Payment service circuit breaker OPEN — requests will be rejected');
-    }
-  }
-
-  private recordPaymentSuccess(): void {
-    this.paymentFailures = 0;
-    this.circuitOpen = false;
   }
 
   async getPlans(): Promise<SubscriptionPlan[]> {
@@ -103,37 +79,34 @@ export class SubscriptionService {
       );
     }
 
-    if (this.isCircuitOpen()) {
+    let paymentVerification;
+    try {
+      paymentVerification = await this.circuitBreaker.execute(() =>
+        axios.get(
+          `${this.paymentServiceBaseUrl}/v1/payments/${dto.paymentReference}`,
+          { timeout: 10000 }
+        )
+      );
+    } catch (error) {
+      if (error instanceof CircuitBreakerOpenError) {
+        throw new BadRequestException(
+          'Payment service is temporarily unavailable. Please try again later.'
+        );
+      }
+      this.logger.error(`Failed to verify payment reference: ${(error as Error).message}`);
+      throw new BadRequestException('Unable to verify payment. Please try again.');
+    }
+
+    if (paymentVerification.data?.status !== 'completed') {
       throw new BadRequestException(
-        'Payment service is temporarily unavailable. Please try again later.'
+        'Payment has not been completed. Please complete payment first.'
       );
     }
 
-    try {
-      const paymentVerification = await axios.get(
-        `${this.paymentServiceBaseUrl}/v1/payments/${dto.paymentReference}`,
-        { timeout: 10000 }
+    if (Number(paymentVerification.data?.amount).toFixed(2) !== Number(plan.price).toFixed(2)) {
+      throw new BadRequestException(
+        `Payment amount (${paymentVerification.data?.amount}) does not match plan price (${plan.price})`
       );
-      this.recordPaymentSuccess();
-
-      if (paymentVerification.data?.status !== 'completed') {
-        throw new BadRequestException(
-          'Payment has not been completed. Please complete payment first.'
-        );
-      }
-
-      if (Number(paymentVerification.data?.amount).toFixed(2) !== Number(plan.price).toFixed(2)) {
-        throw new BadRequestException(
-          `Payment amount (${paymentVerification.data?.amount}) does not match plan price (${plan.price})`
-        );
-      }
-    } catch (error) {
-      if (error instanceof BadRequestException || error instanceof NotFoundException) {
-        throw error;
-      }
-      this.recordPaymentFailure();
-      this.logger.error(`Failed to verify payment reference: ${(error as Error).message}`);
-      throw new BadRequestException('Unable to verify payment. Please try again.');
     }
 
     const subscription = await this.prisma.$transaction(async (tx) => {

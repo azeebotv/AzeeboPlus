@@ -179,7 +179,7 @@ export function useVideoPlayer({
       videoRef.current.play().then(() => {
         setState((prev) => ({ ...prev, isPlaying: true }));
       }).catch((error) => {
-        console.warn('Video play failed:', error);
+        // Video play failed — state updated below
         setState((prev) => ({ ...prev, isPlaying: false }));
       });
     }

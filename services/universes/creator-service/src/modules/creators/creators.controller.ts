@@ -322,7 +322,7 @@ export class CreatorsController {
   @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get creator challenges' })
   @ApiResponse({ status: 200, description: 'Challenges list' })
-  async getChallenges(@Param('creatorId') creatorId?: string): Promise<CreatorResponse> {
+  async getChallenges(@Query('creatorId') creatorId?: string): Promise<CreatorResponse> {
     return this.creatorsService.getChallenges(creatorId);
   }
 

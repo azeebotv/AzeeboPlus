@@ -15,7 +15,8 @@ import { ContentReviewModule } from './modules/content-review/content-review.mod
 import { EngagementAdminModule } from './modules/engagement-admin/engagement-admin.module';
 import { NotificationAdminModule } from './modules/notification-admin/notification-admin.module';
 import { ReportsAdminModule } from './modules/reports-admin/reports-admin.module';
-import { ServiceAuthGuard } from '@azeebo/security';
+import { HealthModule } from './modules/health/health.module';
+import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
 import { CsrfMiddleware } from './common/csrf.middleware';
 
 @Module({
@@ -23,6 +24,7 @@ import { CsrfMiddleware } from './common/csrf.middleware';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    RateLimiterModule.forRoot(),
     AuthModule,
     DatabaseModule,
     UserManagementModule,
@@ -37,6 +39,7 @@ import { CsrfMiddleware } from './common/csrf.middleware';
     EngagementAdminModule,
     NotificationAdminModule,
     ReportsAdminModule,
+    HealthModule,
   ],
   providers: [
     {

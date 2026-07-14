@@ -159,6 +159,7 @@ export default function WalletScreen() {
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
+        keyboardDismissMode="on-drag"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#E8420A" />
         }
