@@ -433,9 +433,7 @@ RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholde
     if [ ! -f "$SHARED_CLIENT_DIR/.prisma/client/default.js" ]; then \
       echo "  .prisma/client not found at shared location, generating with explicit output..." && \
       mkdir -p /tmp/prisma-shared && \
-      echo 'generator client { provider = "prisma-client-js" output = "'"$SHARED_CLIENT_DIR/.prisma/client"'" }' > /tmp/prisma-shared/schema.prisma && \
-      echo 'datasource db { provider = "postgresql" url = env("DATABASE_URL") }' >> /tmp/prisma-shared/schema.prisma && \
-      echo 'model AuditLog { id String @id @default(uuid()) actorId String actorType String action String resourceType String resourceId String previousValue String? newValue String? ipAddress String? userAgent String? status String errorMessage String? metadata Json? createdAt DateTime @default(now()) updatedAt DateTime @updatedAt }' >> /tmp/prisma-shared/schema.prisma && \
+      printf 'generator client {\n  provider = "prisma-client-js"\n  output   = "%s"\n}\n\ndatasource db {\n  provider = "postgresql"\n  url      = env("DATABASE_URL")\n}\n\nmodel AuditLog {\n  id            String   @id @default(uuid())\n  actorId       String\n  actorType     String\n  action        String\n  resourceType  String\n  resourceId    String\n  previousValue String?\n  newValue      String?\n  ipAddress     String?\n  userAgent     String?\n  status        String\n  errorMessage  String?\n  metadata      Json?\n  createdAt     DateTime @default(now())\n  updatedAt     DateTime @updatedAt\n}\n' "$SHARED_CLIENT_DIR/.prisma/client" > /tmp/prisma-shared/schema.prisma && \
       (cd /tmp/prisma-shared && prisma generate --schema=schema.prisma 2>&1) || \
         echo "  WARNING: explicit prisma generate failed"; \
       rm -rf /tmp/prisma-shared 2>/dev/null; \
