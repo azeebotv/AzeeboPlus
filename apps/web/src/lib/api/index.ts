@@ -78,9 +78,10 @@ class ApiClient {
     // Restore token from localStorage immediately so requests work
     // before AuthContext's useEffect runs (children effects fire first)
     if (typeof window !== 'undefined') {
-      if (process.env.NODE_ENV === 'production') {
-        console.warn(
-          'ApiClient: localStorage token storage is not recommended for production. Use httpOnly cookies instead.'
+      if (process.env.NODE_ENV === 'production' && !(globalThis as Record<string, unknown>).__azeebo_cookie_warned) {
+        (globalThis as Record<string, unknown>).__azeebo_cookie_warned = true;
+        console.info(
+          '[Azeebo] Tip: Consider migrating from localStorage to httpOnly cookies for token storage.',
         );
       }
       const storedToken = localStorage.getItem(ACCESS_TOKEN_KEY);
@@ -211,22 +212,37 @@ class ApiClient {
 
       if (!response.ok) {
         // T-CORE: On 401, attempt automatic token refresh and retry the request
-        if (
-          response.status === 401 &&
-          !retryOptions?.skipAuthRetry &&
-          !endpoint.includes('/auth/refresh') &&
-          !endpoint.includes('/auth/login')
-        ) {
-          const refreshed = await this.attemptRefresh();
-          if (refreshed) {
-            // Retry the original request with the new token
-            return this.request<T>(endpoint, options, retryOptions, attempt);
+        // T-M15: When retryOn401 is set (e.g. refresh-token path), retry with
+        // backoff instead of triggering a full auth refresh cycle.
+        if (response.status === 401) {
+          if (
+            retryOptions?.retryOn401 &&
+            attempt < RETRY_CONFIG.maxRetries &&
+            !endpoint.includes('/auth/refresh') &&
+            !endpoint.includes('/auth/login')
+          ) {
+            const retryAfter = response.headers.get('Retry-After');
+            const delay = this.calculateDelay(attempt, retryAfter);
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            return this.request<T>(endpoint, options, retryOptions, attempt + 1);
           }
-          // Refresh failed — redirect to login page
-          if (typeof window !== 'undefined') {
-            const loginUrl = new URL('/auth/login', window.location.origin);
-            loginUrl.searchParams.set('redirect', window.location.pathname);
-            window.location.href = loginUrl.toString();
+
+          if (
+            !retryOptions?.skipAuthRetry &&
+            !endpoint.includes('/auth/refresh') &&
+            !endpoint.includes('/auth/login')
+          ) {
+            const refreshed = await this.attemptRefresh();
+            if (refreshed) {
+              // Retry the original request with the new token
+              return this.request<T>(endpoint, options, retryOptions, attempt);
+            }
+            // Refresh failed — redirect to login page
+            if (typeof window !== 'undefined') {
+              const loginUrl = new URL('/auth/login', window.location.origin);
+              loginUrl.searchParams.set('redirect', window.location.pathname);
+              window.location.href = loginUrl.toString();
+            }
           }
         }
 

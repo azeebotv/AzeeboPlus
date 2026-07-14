@@ -24,6 +24,7 @@ interface CachedUniverses {
 }
 
 function readStoredId(): string | null {
+  if (typeof window === 'undefined') return null;
   try {
     return localStorage.getItem(STORAGE_KEY);
   } catch {
@@ -32,14 +33,16 @@ function readStoredId(): string | null {
 }
 
 function writeStoredId(id: string): void {
+  if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(STORAGE_KEY, id);
   } catch {
-    // localStorage unavailable (SSR, private browsing quota, etc.)
+    // localStorage unavailable (private browsing quota, etc.)
   }
 }
 
 function readCache(): UniverseOption[] | null {
+  if (typeof window === 'undefined') return null;
   try {
     const raw = localStorage.getItem(CACHE_KEY);
     if (!raw) return null;
@@ -52,6 +55,7 @@ function readCache(): UniverseOption[] | null {
 }
 
 function writeCache(data: UniverseOption[]): void {
+  if (typeof window === 'undefined') return;
   try {
     const payload: CachedUniverses = { data, timestamp: Date.now() };
     localStorage.setItem(CACHE_KEY, JSON.stringify(payload));
@@ -169,10 +173,12 @@ export function useUniverses(): UseUniversesReturn {
 
   const refetch = useCallback(() => {
     // Clear cache before re-fetching
-    try {
-      localStorage.removeItem(CACHE_KEY);
-    } catch {
-      // ignore
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem(CACHE_KEY);
+      } catch {
+        // ignore
+      }
     }
     fetchUniverses();
   }, [fetchUniverses]);
