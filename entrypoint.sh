@@ -288,14 +288,24 @@ for entry in "${MIGRATE_SERVICES[@]}"; do
         done
         echo "    Re-running migration for $svc_name after baseline..."
         DATABASE_URL="$db_url" \
-          prisma migrate deploy --schema="$svc_dir/prisma/schema.prisma" 2>&1 || \
-          echo "    WARNING: Migration still failed for $svc_name after baseline"
+          prisma migrate deploy --schema="$svc_dir/prisma/schema.prisma" 2>&1 || {
+          echo "    FATAL: Migration still failed for $svc_name after baseline"
+          echo "    Migration output:"
+          echo "$migrate_output" | head -20
+          echo "    Aborting deployment — old container will keep running"
+          exit 1
+        }
       else
-        echo "    WARNING: No migrations directory found for $svc_name"
+        echo "    FATAL: No migrations directory found for $svc_name"
+        echo "    Aborting deployment — old container will keep running"
+        exit 1
       fi
     else
-      echo "    WARNING: Migration failed for $svc_name"
-      echo "$migrate_output" | head -5
+      echo "    FATAL: Migration failed for $svc_name"
+      echo "    Migration output:"
+      echo "$migrate_output" | head -20
+      echo "    Aborting deployment — old container will keep running"
+      exit 1
     fi
   }
 done
