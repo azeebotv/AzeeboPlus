@@ -1,4 +1,4 @@
-import {Inject,  Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {Inject,  Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { SupportRepository, CreateTicketDto, Ticket, TicketReply } from './support.repository';
 
 interface CreateTicketInput {
@@ -7,10 +7,18 @@ interface CreateTicketInput {
   priority: 'low' | 'medium' | 'high';
 }
 
-// NOTE: Legacy service — duplicates ticket.service.ts functionality.
-// Should be consolidated into the canonical ticket module and removed.
+/**
+ * @deprecated Legacy service — duplicates ticket.service.ts functionality.
+ * Use TicketService from '../ticket/ticket.service' instead.
+ * This module will be removed in the next major version.
+ */
 @Injectable()
 export class SupportService {
+  private readonly logger = new Logger(SupportService.name);
+
+  constructor(@Inject(SupportRepository) private readonly supportRepository: SupportRepository) {
+    this.logger.warn('SupportService is deprecated. Migrate to TicketService.');
+  }
   constructor(@Inject(SupportRepository) private readonly supportRepository: SupportRepository) {}
 
   async createTicket(userId: string, data: CreateTicketInput): Promise<Ticket> {
