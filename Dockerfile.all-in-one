@@ -141,6 +141,10 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     # ================================================================
     echo "==> [T1] Building critical path (web, gateway, auth, user)..." && \
     pnpm --filter @azeebo/web run build && \
+    echo "==> Web build complete. Checking standalone output..." && \
+    (ls -la apps/web/.next/standalone/apps/web/server.js 2>/dev/null && echo "  OK: standalone at nested path") || \
+    (ls -la apps/web/.next/standalone/server.js 2>/dev/null && echo "  OK: standalone at direct path") || \
+    (echo "  WARN: standalone server.js not found, checking directory..." && ls -la apps/web/.next/standalone/ 2>&1) && \
     pnpm --filter @azeebo/api-gateway run build && \
     pnpm --filter @azeebo/auth-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/auth-service run build && \
     pnpm --filter @azeebo/user-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/user-service run build && \
@@ -220,16 +224,6 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     find packages -maxdepth 2 -name "dist" -type d -o -path "*/src/prisma/client" -type d 2>/dev/null | \
       tar czf /tmp/pkg-dist.tar.gz -C /app -T - 2>/dev/null || true
 
-# ---- Web build (separate RUN for clearer error reporting) ----
-RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
-    echo "==> Building web app..." && \
-    set -e && \
-    pnpm --filter @azeebo/web run build && \
-    echo "=== Web .next/ contents ===" && \
-    ls -la apps/web/.next/ 2>&1 | head -20 && \
-    echo "=== .next/standalone check ===" && \
-    ls -la apps/web/.next/standalone/ 2>&1 | head -10
-
 # ---- Verify ALL outputs exist — crash if anything is missing ----
 RUN echo "==> Verifying build outputs..." && \
     set -e && \
@@ -248,10 +242,15 @@ RUN echo "==> Verifying build outputs..." && \
       if [ ! -f "$app/dist/main.js" ]; then echo "  FATAL: MISSING $app/dist/main.js"; MISSING=$((MISSING+1)); \
       else echo "  OK: $app/dist/main.js"; fi; \
     done && \
-    if [ ! -f "apps/web/.next/standalone/server.js" ]; then \
-      echo "  FATAL: MISSING apps/web/.next/standalone/server.js"; MISSING=$((MISSING+1)); \
+    if [ -f "apps/web/.next/standalone/apps/web/server.js" ]; then \
+      echo "  OK: apps/web/.next/standalone/apps/web/server.js (nested)"; \
+    elif [ -f "apps/web/.next/standalone/server.js" ]; then \
+      echo "  OK: apps/web/.next/standalone/server.js (direct)"; \
     else \
-      echo "  OK: apps/web/standalone/server.js"; \
+      echo "  FATAL: MISSING apps/web/.next/standalone/server.js"; \
+      echo "  Contents of apps/web/.next/standalone/:"; \
+      ls -la apps/web/.next/standalone/ 2>&1; \
+      MISSING=$((MISSING+1)); \
     fi && \
     if [ "$MISSING" -ne 0 ]; then \
       echo "=== BUILD FAILED: $MISSING critical output(s) missing ==="; \
@@ -377,7 +376,8 @@ RUN if [ -d /app/apps/web/standalone/apps/web ] && [ ! -f /app/apps/web/standalo
 # Verify critical files exist before proceeding (warn only — entrypoint will retry)
 RUN echo "==> Verifying critical build artifacts..." && \
     OK=true && \
-    test -f /app/apps/web/standalone/server.js && echo "  OK: web-app standalone server.js" || \
+    (test -f /app/apps/web/standalone/server.js || test -f /app/apps/web/standalone/apps/web/server.js) && \
+      echo "  OK: web-app standalone server.js" || \
       (echo "  WARN: web-app standalone server.js not found — will retry in entrypoint" && OK=false) && \
     test -f /app/services/core/auth-service/dist/main.js && echo "  OK: auth-service" || \
       (echo "  WARN: auth-service/dist/main.js not found" && OK=false) && \
@@ -397,9 +397,11 @@ RUN tar xzf /tmp/pkg-dist.tar.gz -C /app 2>/dev/null && \
     echo "  Restored workspace package dist directories from builder"
 
 # Verify standalone output survived pnpm install (warn only)
-RUN test -f /app/apps/web/standalone/server.js && echo "  OK: server.js after pnpm install" || \
+RUN (test -f /app/apps/web/standalone/server.js || test -f /app/apps/web/standalone/apps/web/server.js) && \
+      echo "  OK: server.js after pnpm install" || \
     (echo "  WARN: server.js MISSING after pnpm install — entrypoint will handle" && \
-     echo "  /app/apps/web/ contents:" && ls -la /app/apps/web/ 2>&1)
+     echo "  /app/apps/web/ contents:" && ls -la /app/apps/web/ 2>&1 && \
+     echo "  Standalone contents:" && ls -la /app/apps/web/standalone/ 2>&1)
 
 # All post-install setup in a single layer:
 #   1. Symlink workspace packages (avoid duplicate node_modules copies)

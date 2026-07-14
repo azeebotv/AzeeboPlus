@@ -360,8 +360,11 @@ const STATE_CHANGING_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
 export async function apiFetch<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  retryOptions?: { maxRetries?: number; timeoutMs?: number }
 ): Promise<ApiResponse<T>> {
+  const maxRetries = retryOptions?.maxRetries ?? 0;
+  const timeoutMs = retryOptions?.timeoutMs ?? 15000;
   const storedToken = typeof window !== 'undefined' ? localStorage.getItem(ACCESS_TOKEN_KEY) : null;
 
   const headers: Record<string, string> = {
@@ -381,46 +384,102 @@ export async function apiFetch<T>(
     }
   }
 
-  try {
-    const response = await fetch(`${resolvedApiUrl}${gatewayPath(endpoint)}`, {
-      ...options,
-      headers,
-      credentials: 'include',
-    });
+  let lastError: Error | null = null;
 
-    const data = await response.json();
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-    if (!response.ok) {
+    try {
+      const response = await fetch(`${resolvedApiUrl}${gatewayPath(endpoint)}`, {
+        ...options,
+        headers,
+        credentials: 'include',
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Don't retry on client errors (4xx except 408, 429)
+        if (response.status >= 400 && response.status < 500 && response.status !== 408 && response.status !== 429) {
+          return {
+            success: false,
+            type: data.type,
+            title: data.title,
+            status: response.status,
+            detail: data.detail,
+            instance: data.instance,
+            code: data.code,
+            message: data.message || data.detail || 'An error occurred',
+            error: data.error,
+            statusCode: response.status,
+            details: data.details,
+            timestamp: data.timestamp,
+            path: data.path,
+          } as ApiError;
+        }
+
+        // Retry on retryable server errors
+        if (attempt < maxRetries) {
+          const retryAfter = response.headers.get('Retry-After');
+          const delay = retryAfter
+            ? Math.min(parseInt(retryAfter, 10) * 1000, 5000)
+            : Math.min(1000 * Math.pow(2, attempt), 5000);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
+        }
+
+        return {
+          success: false,
+          type: data.type,
+          title: data.title,
+          status: response.status,
+          detail: data.detail,
+          instance: data.instance,
+          code: data.code,
+          message: data.message || data.detail || 'An error occurred',
+          error: data.error,
+          statusCode: response.status,
+          details: data.details,
+          timestamp: data.timestamp,
+          path: data.path,
+        } as ApiError;
+      }
+
       return {
-        success: false,
-        // RFC 7807 fields (passthrough from backend)
-        type: data.type,
-        title: data.title,
-        status: response.status,
-        detail: data.detail,
-        instance: data.instance,
-        // Application-level fields
-        code: data.code,
-        message: data.message || data.detail || 'An error occurred',
-        error: data.error,
-        statusCode: response.status,
-        details: data.details,
-        timestamp: data.timestamp,
-        path: data.path,
-      } as ApiError;
-    }
+        success: true,
+        data: data.data !== undefined ? data.data : data,
+        message: data.message,
+      };
+    } catch (error) {
+      clearTimeout(timeoutId);
+      lastError = error instanceof Error ? error : new Error(String(error));
 
-    return {
-      success: true,
-      data: data.data !== undefined ? data.data : data,
-      message: data.message,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message: 'Network error. Please check your connection.',
-      error: error instanceof Error ? (error as Error).message : 'Unknown error',
-      statusCode: 0,
-    } as ApiError;
+      // Don't retry on abort (user cancelled) or if max retries reached
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return {
+          success: false,
+          message: 'Request timed out. Please try again.',
+          error: 'Request timeout',
+          statusCode: 408,
+        } as ApiError;
+      }
+
+      if (attempt < maxRetries) {
+        const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        continue;
+      }
+    }
   }
+
+  return {
+    success: false,
+    message: 'Network error. Please check your connection.',
+    error: lastError?.message || 'Unknown error',
+    statusCode: 0,
+  } as ApiError;
 }
