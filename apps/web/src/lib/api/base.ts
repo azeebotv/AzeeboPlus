@@ -45,13 +45,17 @@ export type {
 // API base URL resolution
 // ---------------------------------------------------------------------------
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-if (!API_BASE_URL) {
-  throw new Error(
-    'NEXT_PUBLIC_API_BASE_URL is required — set it in .env.local or environment variables'
-  );
-}
-export const resolvedApiUrl = API_BASE_URL;
+// NEXT_PUBLIC_API_BASE_URL is inlined at build time by Next.js.
+// At runtime (server-side / standalone mode) it may be absent.
+// Check both env var names for compatibility with different build configs.
+// - Client-side: empty string works (relative URLs resolve via nginx proxy)
+// - Server-side: fall back to localhost gateway for SSR / getServerSideProps
+const _envUrl =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  '';
+export const resolvedApiUrl =
+  _envUrl || (typeof window === 'undefined' ? 'http://localhost:3013' : '');
 
 // ---------------------------------------------------------------------------
 // Retry configuration

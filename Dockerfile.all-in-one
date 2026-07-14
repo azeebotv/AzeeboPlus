@@ -431,17 +431,47 @@ RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholde
     done && \
     echo "  Ensuring shared Prisma client at $SHARED_CLIENT_DIR/.prisma/client/..." && \
     if [ ! -f "$SHARED_CLIENT_DIR/.prisma/client/default.js" ]; then \
-      echo "  .prisma/client not found at shared location, generating..." && \
-      (cd /app/packages/shared-services && prisma generate --schema=prisma/schema.prisma 2>&1) || \
-        echo "  WARNING: prisma generate failed for shared client"; \
+      echo "  .prisma/client not found at shared location, generating with explicit output..." && \
+      mkdir -p /tmp/prisma-shared && \
+      cat > /tmp/prisma-shared/schema.prisma << 'SCHEMA_EOF'
+generator client {
+  provider = "prisma-client-js"
+  output   = "SHARED_PRISMA_OUTPUT"
+}
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+model AuditLog {
+  id           String   @id @default(uuid())
+  actorId      String
+  actorType    String
+  action       String
+  resourceType String
+  resourceId   String
+  previousValue String?
+  newValue     String?
+  ipAddress    String?
+  userAgent    String?
+  status       String
+  errorMessage String?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+SCHEMA_EOF
+      sed -i "s|SHARED_PRISMA_OUTPUT|$SHARED_CLIENT_DIR/.prisma/client|" /tmp/prisma-shared/schema.prisma && \
+      (cd /tmp/prisma-shared && prisma generate --schema=schema.prisma 2>&1) || \
+        echo "  WARNING: explicit prisma generate failed"; \
+      rm -rf /tmp/prisma-shared 2>/dev/null; \
     fi; \
     if [ ! -f "$SHARED_CLIENT_DIR/.prisma/client/default.js" ]; then \
-      echo "  Still missing. Looking for .prisma/client in all locations..." && \
+      echo "  Still missing after explicit generate. Searching all locations..." && \
       FOUND=0; \
       for check_dir in \
-        $(find /app/node_modules -maxdepth 3 -path "*/.prisma/client" -type d 2>/dev/null) \
-        $(find /tmp -maxdepth 4 -path "*/.prisma/client" -type d 2>/dev/null) \
-        $(find /app/services -maxdepth 6 -path "*/.prisma/client" -type d 2>/dev/null); do \
+        $(find /app/node_modules -maxdepth 4 -path "*/.prisma/client" -type d 2>/dev/null) \
+        $(find /app/services -maxdepth 8 -path "*/.prisma/client" -type d 2>/dev/null) \
+        $(find /app/packages -maxdepth 8 -path "*/.prisma/client" -type d 2>/dev/null); do \
         if [ -f "$check_dir/default.js" ] && [ "$FOUND" -eq 0 ]; then \
           echo "  Found .prisma/client at $check_dir"; \
           rm -rf "$SHARED_CLIENT_DIR/.prisma/client" 2>/dev/null; \
@@ -452,11 +482,10 @@ RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholde
         fi; \
       done; \
       if [ "$FOUND" -eq 0 ]; then \
-        echo "  FATAL: No .prisma/client found anywhere! Services will fail to start."; \
-        echo "  Creating minimal stub to prevent crash..." && \
+        echo "  FATAL: No .prisma/client found anywhere! Creating minimal stub..." && \
         mkdir -p "$SHARED_CLIENT_DIR/.prisma/client" && \
-        echo 'module.exports = {};' > "$SHARED_CLIENT_DIR/.prisma/client/default.js" && \
-        echo 'module.exports = {};' > "$SHARED_CLIENT_DIR/.prisma/client/index.js"; \
+        echo 'const { PrismaClient } = require("@prisma/client"); module.exports = { PrismaClient };' > "$SHARED_CLIENT_DIR/.prisma/client/default.js" && \
+        cp "$SHARED_CLIENT_DIR/.prisma/client/default.js" "$SHARED_CLIENT_DIR/.prisma/client/index.js"; \
       fi; \
     fi; \
     echo "  Verifying: $SHARED_CLIENT_DIR/.prisma/client/default.js exists:" && \
