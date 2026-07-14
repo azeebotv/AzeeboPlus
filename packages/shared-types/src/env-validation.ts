@@ -140,8 +140,8 @@ function validateProductionEnvironment(env: EnvironmentVariables): void {
     errors.push('JWT_REFRESH_SECRET should be at least 64 characters in production');
   }
 
-  // Check that payment secrets are configured
-  if (!env.PAYSTACK_SECRET_KEY && !env.FLUTTERWAVE_SECRET_KEY) {
+  // Check that payment secrets are configured (skip in all-in-one mode - can be configured later)
+  if (!isAllInOne && !env.PAYSTACK_SECRET_KEY && !env.FLUTTERWAVE_SECRET_KEY) {
     errors.push('At least one payment provider secret must be configured in production');
   }
 
