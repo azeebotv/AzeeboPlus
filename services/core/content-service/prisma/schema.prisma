@@ -98,6 +98,8 @@ model ContentItem {
   @@index([releaseDate])
   @@index([isExclusive])
   @@index([isPremiere])
+  @@index([universeId, status])
+  @@index([creatorId, status])
 }
 
 model MediaAsset {

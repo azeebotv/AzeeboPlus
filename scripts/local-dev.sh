@@ -61,11 +61,11 @@ HEALTH_CHECK_TIMEOUT=30
 HEALTH_CHECK_INTERVAL=2
 
 # ---- Database ----
-# All services use user 'azeebo' with password 'azeebo_dev_2024'
-DB_USER="azeebo"
-DB_PASS="azeebo_dev_2024"
-DB_HOST="localhost"
-DB_PORT="5432"
+# All services use user 'azeebo' with password from env or default for local dev
+DB_USER="${DB_USER:-azeebo}"
+DB_PASS="${DB_PASS:-azeebo_dev_2024}"
+DB_HOST="${DB_HOST:-localhost}"
+DB_PORT="${DB_PORT:-5432}"
 DB_BASE_URL="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}"
 
 # ---- State ----
