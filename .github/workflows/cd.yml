@@ -90,13 +90,14 @@ jobs:
       - name: Run health checks
         run: |
           echo "Running post-deploy health checks..."
-          # Wait for rollout to complete
-          kubectl rollout status deployment/api-gateway -n default --timeout=120s || true
-          # Check health endpoints
+          # Wait for rollout to complete — fail if it doesn't
+          kubectl rollout status deployment/api-gateway -n default --timeout=120s
+          # Check health endpoints — fail if any is down
           for port in 3013; do
             if curl -sf --max-time 10 "http://localhost:${port}/health" > /dev/null 2>&1; then
               echo "Health check passed on port ${port}"
             else
-              echo "Health check failed on port ${port}"
+              echo "FATAL: Health check failed on port ${port}"
+              exit 1
             fi
           done

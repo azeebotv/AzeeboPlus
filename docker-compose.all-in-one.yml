@@ -122,6 +122,20 @@ services:
     # covers everything, so unless-stopped is the right trade-off.
     restart: unless-stopped
     shm_size: 1g
+    # Give the old container 60s to finish in-flight requests before being killed
+    stop_grace_period: 60s
+
+    # Health check — Coolify uses this to wait for the new container to be
+    # healthy BEFORE stopping the old one, eliminating the "no available
+    # server" window during deployments.
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:80/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      # Give the container 5 minutes to start (Prisma migrations + 27 services)
+      start_period: 300s
+
     deploy:
       resources:
         limits:
