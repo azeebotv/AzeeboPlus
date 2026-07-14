@@ -38,9 +38,9 @@ export default function LibraryPage(): React.JSX.Element {
     queryKey: ['library'],
     queryFn: async () => {
       const [watchlistRes, historyRes, favoritesRes] = await Promise.all([
-        apiFetch<ContentItem[]>('/interactions/watchlist'),
-        apiFetch<ContentItem[]>('/interactions/history'),
-        apiFetch<ContentItem[]>('/interactions/favorites'),
+        apiFetch<ContentItem[]>('/interactions/watchlist', {}, { maxRetries: 2, timeoutMs: 10000 }),
+        apiFetch<ContentItem[]>('/interactions/history', {}, { maxRetries: 2, timeoutMs: 10000 }),
+        apiFetch<ContentItem[]>('/interactions/favorites', {}, { maxRetries: 2, timeoutMs: 10000 }),
       ]);
       return {
         watchlist:
