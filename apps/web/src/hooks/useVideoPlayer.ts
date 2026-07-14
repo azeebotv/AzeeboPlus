@@ -73,6 +73,19 @@ export function useVideoPlayer({
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const fetchInProgressRef = useRef<boolean>(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Store callbacks in refs to avoid re-creating refreshSignedUrl on every render.
+  // Without this, changing onError/onEnded triggers refreshSignedUrl recreation,
+  // which triggers the useEffect([refreshSignedUrl]) to fire again, causing an
+  // infinite loop of signed-url requests that exhausts browser connections.
+  const onErrorRef = useRef(onError);
+  onErrorRef.current = onError;
+  const onEndedRef = useRef(onEnded);
+  onEndedRef.current = onEnded;
+  const onProgressRef = useRef(onProgress);
+  onProgressRef.current = onProgress;
 
   const refreshSignedUrl = useCallback(async (): Promise<void> => {
     if (!isAuthenticated || !contentId) {
@@ -80,9 +93,28 @@ export function useVideoPlayer({
       return;
     }
 
+    // Prevent duplicate concurrent requests
+    if (fetchInProgressRef.current) {
+      return;
+    }
+
+    // Cancel any in-flight request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    fetchInProgressRef.current = true;
+
     try {
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
       const response = await api.content.getSignedUrl(contentId);
+
+      // Check if request was aborted
+      if (controller.signal.aborted) {
+        return;
+      }
 
       if (response.success && response.data) {
         setSignedUrl(response.data.signedUrl);
@@ -90,17 +122,30 @@ export function useVideoPlayer({
       } else {
         const errorMsg = response.message || 'Failed to load video';
         setState((prev) => ({ ...prev, error: errorMsg, isLoading: false }));
-        onError?.(errorMsg);
+        onErrorRef.current?.(errorMsg);
       }
     } catch (error) {
+      // Don't update state if request was aborted
+      if (controller.signal.aborted) {
+        return;
+      }
       const errorMessage = 'Failed to load video';
       setState((prev) => ({ ...prev, error: errorMessage, isLoading: false }));
-      onError?.(errorMessage);
+      onErrorRef.current?.(errorMessage);
+    } finally {
+      fetchInProgressRef.current = false;
     }
-  }, [isAuthenticated, contentId, onError]);
+  }, [isAuthenticated, contentId]);
 
   useEffect(() => {
     refreshSignedUrl();
+
+    return () => {
+      // Cleanup: abort any in-flight request on unmount
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [refreshSignedUrl]);
 
   useEffect(() => {
@@ -110,13 +155,13 @@ export function useVideoPlayer({
   }, [autoPlay, signedUrl]);
 
   useEffect(() => {
-    if (state.isPlaying && onProgress) {
+    if (state.isPlaying && onProgressRef.current) {
       progressIntervalRef.current = setInterval(() => {
         if (videoRef.current) {
           const duration = videoRef.current.duration;
           if (duration && duration > 0 && !isNaN(duration)) {
             const progress = (videoRef.current.currentTime / duration) * 100;
-            onProgress(progress);
+            onProgressRef.current?.(progress);
           }
         }
       }, 10000);
@@ -127,7 +172,7 @@ export function useVideoPlayer({
         clearInterval(progressIntervalRef.current);
       }
     };
-  }, [state.isPlaying, onProgress]);
+  }, [state.isPlaying]);
 
   const play = useCallback((): void => {
     if (videoRef.current) {
@@ -208,13 +253,13 @@ export function useVideoPlayer({
 
     const handleEnded = (): void => {
       setState((prev) => ({ ...prev, isPlaying: false }));
-      onEnded?.();
+      onEndedRef.current?.();
     };
 
     const handleError = (): void => {
       const errorMessage = 'Video playback error occurred';
       setState((prev) => ({ ...prev, error: errorMessage, isPlaying: false }));
-      onError?.(errorMessage);
+      onErrorRef.current?.(errorMessage);
     };
 
     video.addEventListener('timeupdate', handleTimeUpdate);
@@ -230,7 +275,7 @@ export function useVideoPlayer({
       video.removeEventListener('ended', handleEnded);
       video.removeEventListener('error', handleError);
     };
-  }, [onEnded, onError]);
+  }, []);
 
   return {
     state,

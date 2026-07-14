@@ -73,6 +73,14 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   const commentsRef = useRef<HTMLDivElement>(null);
   const focusTrapRef = useRef<HTMLDivElement>(null);
 
+  const handleVideoEnded = useCallback(() => {
+    announceToScreenReader('Video finished');
+  }, []);
+
+  const handleVideoError = useCallback((errorMsg: string) => {
+    setError(errorMsg);
+  }, []);
+
   const {
     state: playerState,
     signedUrl,
@@ -85,12 +93,8 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   } = useVideoPlayer({
     contentId: id,
     autoPlay: false,
-    onEnded: () => {
-      announceToScreenReader('Video finished');
-    },
-    onError: (errorMsg) => {
-      setError(errorMsg);
-    },
+    onEnded: handleVideoEnded,
+    onError: handleVideoError,
   });
 
   const formatTime = useCallback((seconds: number): string => {
@@ -112,7 +116,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
             likeCount?: number;
             dislikeCount?: number;
           }
-        >(`/content/${id}`);
+        >(`/content/${id}`, {}, { maxRetries: 2, timeoutMs: 10000 });
         if (response.success && response.data) {
           const data = response.data;
           const creatorId = data.creatorId || data.creator?.id || 'unknown';
@@ -142,7 +146,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                 name?: string;
                 avatarUrl?: string;
                 avatar?: string;
-              }>(`/creators/${creatorId}`);
+              }>(`/creators/${creatorId}`, {}, { maxRetries: 1, timeoutMs: 8000 });
               if (creatorResponse.success && creatorResponse.data) {
                 const creatorData = creatorResponse.data;
                 setSubscriberCount(creatorData.subscriberCount || 0);
@@ -188,7 +192,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   useEffect(() => {
     const loadComments = async (): Promise<void> => {
       try {
-        const response = await apiFetch<RawComment[]>(`/content/${id}/comments`);
+        const response = await apiFetch<RawComment[]>(`/content/${id}/comments`, {}, { maxRetries: 1, timeoutMs: 8000 });
         if (response.success && response.data) {
           const commentsData = Array.isArray(response.data) ? response.data : [];
           setComments(

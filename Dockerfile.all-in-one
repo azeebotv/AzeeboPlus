@@ -103,14 +103,25 @@ ENV NEXT_PUBLIC_SENTRY_DSN=${NEXT_PUBLIC_SENTRY_DSN}
 # Cache-bust: set to a unique value (e.g. git hash or timestamp) to force rebuild
 ARG CACHEBUST
 
-# Build shared packages, then all services, then apps — single merged layer.
-# Each service build is wrapped in `|| echo WARN` so a failure in one does NOT
-# prevent subsequent builds from running.  The web build MUST run last because
-# it depends on all packages being available.
+# Build order by CRITICALITY — most important first to minimise downtime.
+# If the build fails partway, at least the critical services are already in the image.
+#
+# Priority tiers:
+#   T0: Shared packages (dependencies for everything)
+#   T1: Web + Gateway + Auth + User (frontend, routing, login)
+#   T2: Core business (media, content, wallet, payment, search)
+#   T3: Apps (admin, creator-portal)
+#   T4: Engagement (notification, reward, messaging, etc.)
+#   T5: Intelligence (analytics, recommendation)
+#   T6: Universe services (reality, movie, comedy, etc.)
+#   T7: Operations (queue, support, moderation)
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     echo "Cache bust: $CACHEBUST" && \
-    BUILD_FAIL=0 && \
-    # ---- Shared packages (no || — these MUST succeed) ----
+    set -e && \
+    # ================================================================
+    # T0: Shared packages — every service depends on these
+    # ================================================================
+    echo "==> [T0] Building shared packages..." && \
     pnpm --filter @azeebo/shared-types run build && \
     pnpm --filter @azeebo/http-client run build && \
     pnpm --filter @azeebo/utils run build && \
@@ -119,43 +130,79 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/logger run build && \
     pnpm --filter @azeebo/api-client run build && \
     pnpm --filter @azeebo/design-tokens run build && \
-    pnpm --filter @azeebo/shared-services prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/shared-services run build && \
+    pnpm --filter @azeebo/shared-services prisma:generate && \
+    bash scripts/patch-prisma-client.sh && \
+    pnpm --filter @azeebo/shared-services run build && \
     pnpm --filter @azeebo/security run build && \
     pnpm --filter @azeebo/ui run build && \
-    # ---- Service builds (|| echo — tolerate individual failures) ----
-    (pnpm --filter @azeebo/auth-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/auth-service run build) || { echo "WARN: auth-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/user-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/user-service run build) || { echo "WARN: user-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/wallet-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/wallet-service run build) || { echo "WARN: wallet-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/payment-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/payment-service run build) || { echo "WARN: payment-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/search-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/search-service run build) || { echo "WARN: search-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/media-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/media-service run build) || { echo "WARN: media-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/notification-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/notification-service run build) || { echo "WARN: notification-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/reward-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/reward-service run build) || { echo "WARN: reward-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/engagement-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/engagement-service run build) || { echo "WARN: engagement-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/messaging-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/messaging-service run build) || { echo "WARN: messaging-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/referral-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/referral-service run build) || { echo "WARN: referral-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/subscription-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/subscription-service run build) || { echo "WARN: subscription-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/analytics-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/analytics-service run build) || { echo "WARN: analytics-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/recommendation-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/recommendation-service run build) || { echo "WARN: recommendation-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/reality-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/reality-service run build) || { echo "WARN: reality-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/movie-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/movie-service run build) || { echo "WARN: movie-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/comedy-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/comedy-service run build) || { echo "WARN: comedy-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/games-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/games-service run build) || { echo "WARN: games-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/sports-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/sports-service run build) || { echo "WARN: sports-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/lifestyle-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/lifestyle-service run build) || { echo "WARN: lifestyle-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/vertical-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/vertical-service run build) || { echo "WARN: vertical-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/creator-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/creator-service run build) || { echo "WARN: creator-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/queue-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/queue-service run build) || { echo "WARN: queue-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/support-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/support-service run build) || { echo "WARN: support-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/moderation-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/moderation-service run build) || { echo "WARN: moderation-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/content-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/content-service run build) || { echo "WARN: content-service build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/api-gateway run build) || { echo "WARN: api-gateway build failed"; BUILD_FAIL=1; } && \
-    # ---- App builds ----
-    (pnpm --filter @azeebo/admin prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/admin run build) || { echo "WARN: admin build failed"; BUILD_FAIL=1; } && \
-    (pnpm --filter @azeebo/creator-portal prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/creator-portal run build) || { echo "WARN: creator-portal build failed"; BUILD_FAIL=1; } && \
-    (test -d apps/admin/src/generated/prisma && mkdir -p apps/admin/dist/generated && cp -r apps/admin/src/generated/prisma apps/admin/dist/generated/prisma) || true && \
-    (test -d apps/creator-portal/src/generated/prisma && mkdir -p apps/creator-portal/dist/generated && cp -r apps/creator-portal/src/generated/prisma apps/creator-portal/dist/generated/prisma) || true && \
-    echo "=== Flattening nested dist directories ===" && \
+    # ================================================================
+    # T1: Critical path — Web, Gateway, Auth, User
+    #     These MUST be up for anyone to use the platform.
+    # ================================================================
+    echo "==> [T1] Building critical path (web, gateway, auth, user)..." && \
+    pnpm --filter @azeebo/web run build && \
+    echo "==> Web build complete. Checking standalone output..." && \
+    (ls -la apps/web/.next/standalone/apps/web/server.js 2>/dev/null && echo "  OK: standalone at nested path") || \
+    (ls -la apps/web/.next/standalone/server.js 2>/dev/null && echo "  OK: standalone at direct path") || \
+    (echo "  WARN: standalone server.js not found, checking directory..." && ls -la apps/web/.next/standalone/ 2>&1) && \
+    pnpm --filter @azeebo/api-gateway run build && \
+    pnpm --filter @azeebo/auth-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/auth-service run build && \
+    pnpm --filter @azeebo/user-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/user-service run build && \
+    # ================================================================
+    # T2: Core business — media, content, wallet, payment, search
+    #     Required for basic platform functionality.
+    # ================================================================
+    echo "==> [T2] Building core business services..." && \
+    pnpm --filter @azeebo/media-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/media-service run build && \
+    pnpm --filter @azeebo/content-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/content-service run build && \
+    pnpm --filter @azeebo/wallet-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/wallet-service run build && \
+    pnpm --filter @azeebo/payment-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/payment-service run build && \
+    pnpm --filter @azeebo/search-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/search-service run build && \
+    # ================================================================
+    # T3: Admin & Creator apps
+    # ================================================================
+    echo "==> [T3] Building admin and creator-portal apps..." && \
+    pnpm --filter @azeebo/admin prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/admin run build && \
+    pnpm --filter @azeebo/creator-portal prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/creator-portal run build && \
+    (test -d apps/admin/src/generated/prisma && mkdir -p apps/admin/dist/generated && cp -r apps/admin/src/generated/prisma apps/admin/dist/generated/prisma) && \
+    (test -d apps/creator-portal/src/generated/prisma && mkdir -p apps/creator-portal/dist/generated && cp -r apps/creator-portal/src/generated/prisma apps/creator-portal/dist/generated/prisma) && \
+    # ================================================================
+    # T4: Engagement services — notifications, rewards, messaging
+    # ================================================================
+    echo "==> [T4] Building engagement services..." && \
+    pnpm --filter @azeebo/notification-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/notification-service run build && \
+    pnpm --filter @azeebo/reward-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/reward-service run build && \
+    pnpm --filter @azeebo/engagement-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/engagement-service run build && \
+    pnpm --filter @azeebo/messaging-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/messaging-service run build && \
+    pnpm --filter @azeebo/referral-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/referral-service run build && \
+    pnpm --filter @azeebo/subscription-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/subscription-service run build && \
+    # ================================================================
+    # T5: Intelligence — analytics, recommendation
+    # ================================================================
+    echo "==> [T5] Building intelligence services..." && \
+    pnpm --filter @azeebo/analytics-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/analytics-service run build && \
+    pnpm --filter @azeebo/recommendation-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/recommendation-service run build && \
+    # ================================================================
+    # T6: Universe services — reality, movie, comedy, games, etc.
+    # ================================================================
+    echo "==> [T6] Building universe services..." && \
+    pnpm --filter @azeebo/reality-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/reality-service run build && \
+    pnpm --filter @azeebo/movie-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/movie-service run build && \
+    pnpm --filter @azeebo/comedy-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/comedy-service run build && \
+    pnpm --filter @azeebo/games-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/games-service run build && \
+    pnpm --filter @azeebo/sports-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/sports-service run build && \
+    pnpm --filter @azeebo/lifestyle-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/lifestyle-service run build && \
+    pnpm --filter @azeebo/vertical-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/vertical-service run build && \
+    pnpm --filter @azeebo/creator-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/creator-service run build && \
+    # ================================================================
+    # T7: Operations — queue, support, moderation
+    # ================================================================
+    echo "==> [T7] Building operations services..." && \
+    pnpm --filter @azeebo/queue-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/queue-service run build && \
+    pnpm --filter @azeebo/support-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/support-service run build && \
+    pnpm --filter @azeebo/moderation-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/moderation-service run build && \
+    # ---- Flatten nested dist directories ----
+    echo "==> Flattening nested dist directories..." && \
     for svc_dir in $(find services -maxdepth 2 -mindepth 2 -type d -not -path "*/node_modules/*" | sort); do \
       dist="$svc_dir/dist"; \
       [ -d "$dist" ] || continue; \
@@ -171,36 +218,45 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
         rm -rf "$nested_src" 2>/dev/null; \
       fi; \
     done && \
-    echo "=== Flattened dist inventory ===" && \
+    echo "==> Flattened dist inventory:" && \
     find services -name "main.js" -path "*/dist/*" | sort && \
-    pnpm --filter @azeebo/web run build; \
-    echo "=== Web .next/ contents ===" && ls -la apps/web/.next/ 2>&1 | head -20; \
-    echo "=== .next/standalone check ===" && ls -la apps/web/.next/standalone/ 2>&1 | head -10; \
-    echo "=== .next/standalone/apps/web check ===" && ls -la apps/web/.next/standalone/apps/web/ 2>&1 | head -10; \
-    echo "=== Build summary: $([ $BUILD_FAIL -eq 0 ] && echo 'ALL OK' || echo 'Some builds failed — see warnings above') ===" && \
-    echo "=== Verifying every service/app produced runnable output ===" && \
-    MISSING=0; \
+    echo "==> Packaging workspace package dists for runtime" && \
+    find packages -maxdepth 2 -name "dist" -type d -o -path "*/src/prisma/client" -type d 2>/dev/null | \
+      tar czf /tmp/pkg-dist.tar.gz -C /app -T - 2>/dev/null || true
+
+# ---- Verify ALL outputs exist — crash if anything is missing ----
+RUN echo "==> Verifying build outputs..." && \
+    set -e && \
+    MISSING=0 && \
     for svc_dir in $(find services -maxdepth 2 -mindepth 2 -type d -not -path "*/node_modules/*" | sort); do \
       name=$(basename "$svc_dir"); \
       if [ -f "$svc_dir/package.json" ] && grep -q '"@azeebo/' "$svc_dir/package.json"; then \
         if [ ! -f "$svc_dir/dist/main.js" ]; then \
-          echo "  MISSING: $name/dist/main.js"; MISSING=$((MISSING+1)); \
+          echo "  FATAL: MISSING $name/dist/main.js"; MISSING=$((MISSING+1)); \
+        else \
+          echo "  OK: $name/dist/main.js"; \
         fi; \
       fi; \
-    done; \
+    done && \
     for app in apps/admin apps/creator-portal; do \
-      if [ ! -f "$app/dist/main.js" ]; then echo "  MISSING: $app/dist/main.js"; MISSING=$((MISSING+1)); fi; \
-    done; \
-    if [ "$MISSING" -ne 0 ] || [ "$BUILD_FAIL" -ne 0 ]; then \
-      echo "=== BUILD GATE FAILED: $MISSING missing service outputs, BUILD_FAIL=$BUILD_FAIL ==="; \
+      if [ ! -f "$app/dist/main.js" ]; then echo "  FATAL: MISSING $app/dist/main.js"; MISSING=$((MISSING+1)); \
+      else echo "  OK: $app/dist/main.js"; fi; \
+    done && \
+    if [ -f "apps/web/.next/standalone/apps/web/server.js" ]; then \
+      echo "  OK: apps/web/.next/standalone/apps/web/server.js (nested)"; \
+    elif [ -f "apps/web/.next/standalone/server.js" ]; then \
+      echo "  OK: apps/web/.next/standalone/server.js (direct)"; \
+    else \
+      echo "  FATAL: MISSING apps/web/.next/standalone/server.js"; \
+      echo "  Contents of apps/web/.next/standalone/:"; \
+      ls -la apps/web/.next/standalone/ 2>&1; \
+      MISSING=$((MISSING+1)); \
+    fi && \
+    if [ "$MISSING" -ne 0 ]; then \
+      echo "=== BUILD FAILED: $MISSING critical output(s) missing ==="; \
       exit 1; \
-    fi; \
-    echo "=== BUILD GATE PASSED: all services produced dist/main.js ===" && \
-    echo "=== Packaging workspace package dists for runtime ===" && \
-    tar czf /tmp/pkg-dist.tar.gz -C /app \
-      packages/*/dist \
-      packages/*/src/prisma/client 2>/dev/null; \
-    true
+    fi && \
+    echo "=== ALL BUILDS PASSED ==="
 
 # Create /runtime with only what the container needs at runtime.
 # Each copy section is independent (;) so a failure in one section does NOT
@@ -320,7 +376,8 @@ RUN if [ -d /app/apps/web/standalone/apps/web ] && [ ! -f /app/apps/web/standalo
 # Verify critical files exist before proceeding (warn only — entrypoint will retry)
 RUN echo "==> Verifying critical build artifacts..." && \
     OK=true && \
-    test -f /app/apps/web/standalone/server.js && echo "  OK: web-app standalone server.js" || \
+    (test -f /app/apps/web/standalone/server.js || test -f /app/apps/web/standalone/apps/web/server.js) && \
+      echo "  OK: web-app standalone server.js" || \
       (echo "  WARN: web-app standalone server.js not found — will retry in entrypoint" && OK=false) && \
     test -f /app/services/core/auth-service/dist/main.js && echo "  OK: auth-service" || \
       (echo "  WARN: auth-service/dist/main.js not found" && OK=false) && \
@@ -340,9 +397,11 @@ RUN tar xzf /tmp/pkg-dist.tar.gz -C /app 2>/dev/null && \
     echo "  Restored workspace package dist directories from builder"
 
 # Verify standalone output survived pnpm install (warn only)
-RUN test -f /app/apps/web/standalone/server.js && echo "  OK: server.js after pnpm install" || \
+RUN (test -f /app/apps/web/standalone/server.js || test -f /app/apps/web/standalone/apps/web/server.js) && \
+      echo "  OK: server.js after pnpm install" || \
     (echo "  WARN: server.js MISSING after pnpm install — entrypoint will handle" && \
-     echo "  /app/apps/web/ contents:" && ls -la /app/apps/web/ 2>&1)
+     echo "  /app/apps/web/ contents:" && ls -la /app/apps/web/ 2>&1 && \
+     echo "  Standalone contents:" && ls -la /app/apps/web/standalone/ 2>&1)
 
 # All post-install setup in a single layer:
 #   1. Symlink workspace packages (avoid duplicate node_modules copies)
