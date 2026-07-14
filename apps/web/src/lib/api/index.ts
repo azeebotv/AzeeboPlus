@@ -248,8 +248,11 @@ class ApiClient {
 
         // T-M15: retry on standard retryable codes, but skip retry for auth/refresh
         // to prevent generating multiple refresh requests that hit rate limits
+        // T-M16: skipRetry option allows callers to fail immediately on server errors
         const retryable =
-          this.isRetryableError(response.status) && !endpoint.includes('/auth/refresh');
+          !retryOptions?.skipRetry &&
+          this.isRetryableError(response.status) &&
+          !endpoint.includes('/auth/refresh');
 
         if (retryable && attempt < RETRY_CONFIG.maxRetries) {
           const retryAfter = response.headers.get('Retry-After');

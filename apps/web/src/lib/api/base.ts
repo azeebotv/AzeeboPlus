@@ -321,6 +321,8 @@ export interface RetryOptions {
   retryOn401?: boolean;
   /** Skip the automatic 401 refresh handling in ApiClient (caller handles refresh itself) */
   skipAuthRetry?: boolean;
+  /** Skip retrying on server errors (5xx) — fail immediately */
+  skipRetry?: boolean;
 }
 
 // ---------------------------------------------------------------------------
