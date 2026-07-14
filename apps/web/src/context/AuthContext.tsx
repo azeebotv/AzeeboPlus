@@ -82,9 +82,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setRefreshToken(null);
     setUser(null);
     api.setToken(null);
-    localStorage.removeItem(ACCESS_TOKEN_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(ACCESS_TOKEN_KEY);
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+    }
     clearAuthCookie();
   }, []);
 
@@ -94,16 +96,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setRefreshToken(newRefreshToken);
       setUser(userData);
       api.setToken(accessToken);
-      localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-      localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
-      localStorage.setItem(USER_KEY, JSON.stringify(userData));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+        localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
+        localStorage.setItem(USER_KEY, JSON.stringify(userData));
+      }
       await setAuthCookie(accessToken);
     },
     []
   );
 
   const refreshAccessToken = useCallback(async (): Promise<boolean> => {
-    const currentRefreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+    const currentRefreshToken = typeof window !== 'undefined'
+      ? localStorage.getItem(REFRESH_TOKEN_KEY)
+      : null;
     if (!currentRefreshToken) {
       return false;
     }
@@ -335,7 +341,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const updateUser = (updatedUser: User): void => {
     setUser(updatedUser);
-    localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+    }
   };
 
   const refreshUser = async (): Promise<void> => {
@@ -354,8 +362,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           updatedAt: userData.updatedAt,
         };
         setUser(userObj);
-        localStorage.setItem(USER_KEY, JSON.stringify(userObj));
-        const currentToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(USER_KEY, JSON.stringify(userObj));
+        }
+        const currentToken = typeof window !== 'undefined'
+          ? localStorage.getItem(ACCESS_TOKEN_KEY)
+          : null;
         if (currentToken) setAuthCookie(currentToken);
       }
     } catch (error) {
