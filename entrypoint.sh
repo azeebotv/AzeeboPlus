@@ -55,6 +55,9 @@ PGHBA
 # 2. Start PostgreSQL temporarily
 # ============================================================
 echo "==> Starting PostgreSQL temporarily..."
+# Kill any stale PostgreSQL processes from previous container runs
+gosu postgres sh -c "/usr/lib/postgresql/15/bin/pg_ctl -D $POSTGRES_DATA stop -m fast" 2>/dev/null || true
+sleep 1
 gosu postgres sh -c "/usr/lib/postgresql/15/bin/pg_ctl -D $POSTGRES_DATA -l /var/log/postgresql/postgresql-temp.log start -w"
 
 # Wait for PostgreSQL to be ready
