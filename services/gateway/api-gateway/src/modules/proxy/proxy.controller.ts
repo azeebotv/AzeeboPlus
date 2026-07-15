@@ -1329,9 +1329,8 @@ export class ProxyController {
 
     // Admin role check BEFORE any upstream communication (SEC: fail-fast authorization)
     if (service === 'admin') {
-      const user =
-        (req.user as { role?: string } | undefined) ??
-        ((req as unknown as Record<string, unknown>)['user'] as { role?: string } | undefined);
+      const reqWithUser = req as Request & { user?: { role?: string } };
+      const user = reqWithUser.user;
       if (!user || (user.role !== 'admin' && user.role !== 'superadmin')) {
         this.logger.warn(`Admin access denied for request [${requestId}]`);
         res.status(HttpStatus.FORBIDDEN).json({ message: 'Admin access required' });
