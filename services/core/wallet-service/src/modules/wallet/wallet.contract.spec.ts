@@ -6,7 +6,7 @@ import { WalletController } from './wallet.controller.js';
 import { WalletService } from './wallet.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, CacheInterceptor } from '../../cache/index.js';
-import { RateLimitGuard, AdminGuard, ServiceAuthGuard } from '@azeebo/security';
+import { RateLimitGuard, AdminGuard } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 
 class MockAuthGuard {
@@ -119,11 +119,9 @@ describe('Wallet Controller Contract Tests', () => {
         },
         { provide: CacheService, useValue: { get: jest.fn(), set: jest.fn(), del: jest.fn() } },
         { provide: ConfigService, useValue: { get: jest.fn((_k: string, d?: unknown) => d) } },
-        { provide: APP_GUARD, useClass: ServiceAuthGuard },
+        { provide: APP_GUARD, useValue: new MockAuthGuard() },
       ],
     })
-      .overrideGuard(ServiceAuthGuard)
-      .useClass(MockAuthGuard)
       .overrideGuard(RateLimitGuard)
       .useClass(MockRateLimitGuard)
       .overrideGuard(AdminGuard)

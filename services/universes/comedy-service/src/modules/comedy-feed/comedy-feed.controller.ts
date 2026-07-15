@@ -1,6 +1,14 @@
-import { Inject, Controller, Get, Post, Body, Param, Query, UseGuards, Request  } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  Request,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { ComedyFeedService } from './comedy-feed.service.js';
 
 @ApiTags('Comedy Feed')
@@ -48,7 +56,6 @@ export class ComedyFeedController {
   }
 
   @Post('specials/:id/like')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Like/unlike special' })
   @ApiResponse({ status: 200, description: 'Result' })
   async likeSpecial(
@@ -66,7 +73,6 @@ export class ComedyFeedController {
   }
 
   @Post('clips/:id/like')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Like/unlike clip' })
   @ApiResponse({ status: 200, description: 'Result' })
   async likeClip(
@@ -77,7 +83,6 @@ export class ComedyFeedController {
   }
 
   @Post('clips/:id/comment')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Comment on clip' })
   @ApiResponse({ status: 200, description: 'Comment added' })
   async comment(
@@ -89,7 +94,6 @@ export class ComedyFeedController {
   }
 
   @Post('trends/record')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Record trends (admin)' })
   @ApiResponse({ status: 200, description: 'Recorded' })
   async recordTrends(@Body() body: { period?: string }): Promise<unknown> {

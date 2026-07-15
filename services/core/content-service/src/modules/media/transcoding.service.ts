@@ -1,4 +1,4 @@
-import {Inject,  Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -77,7 +77,9 @@ export class TranscodingService {
         });
         return response.data?.data || response.data;
       } catch (error) {
-        this.logger.warn(`Failed to fetch transcoding status from media-service: ${(error as Error).message}`);
+        this.logger.warn(
+          `Failed to fetch transcoding status from media-service: ${(error as Error).message}`
+        );
       }
     }
 

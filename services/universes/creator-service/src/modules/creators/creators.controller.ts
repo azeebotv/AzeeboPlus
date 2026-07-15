@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -10,9 +11,8 @@ import { Inject,
   Request,
   Param,
   Query,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit, Public } from '@azeebo/security';
 
 import { CreatorsService } from './creators.service.js';
@@ -69,7 +69,6 @@ export class CreatorsController {
   constructor(@Inject(CreatorsService) private readonly creatorsService: CreatorsService) {}
 
   @Post('onboard')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Creator onboarding' })
   @ApiResponse({ status: 201, description: 'Creator profile created' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -78,7 +77,6 @@ export class CreatorsController {
   }
 
   @Post('verification/submit')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Submit verification documents' })
   @ApiResponse({ status: 201, description: 'Verification submitted' })
   async submitVerification(
@@ -89,7 +87,6 @@ export class CreatorsController {
   }
 
   @Get('verification/status')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get verification status' })
   @ApiResponse({ status: 200, description: 'Verification status' })
   async getVerificationStatus(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
@@ -97,7 +94,6 @@ export class CreatorsController {
   }
 
   @Post('upload/initiate')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Initiate media upload' })
   @ApiResponse({ status: 201, description: 'Upload initiated' })
   async uploadMedia(
@@ -108,7 +104,6 @@ export class CreatorsController {
   }
 
   @Post('upload/complete')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Complete media upload' })
   @ApiResponse({ status: 201, description: 'Upload completed' })
   async completeUpload(
@@ -119,7 +114,6 @@ export class CreatorsController {
   }
 
   @Get('me')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get creator profile' })
   @ApiResponse({ status: 200, description: 'Creator profile' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -128,7 +122,6 @@ export class CreatorsController {
   }
 
   @Patch('me')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Update creator profile' })
   @ApiResponse({ status: 200, description: 'Profile updated' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -140,7 +133,6 @@ export class CreatorsController {
   }
 
   @Get('channels')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'List my channels' })
   @ApiResponse({ status: 200, description: 'Channels list' })
   async listChannels(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
@@ -148,7 +140,6 @@ export class CreatorsController {
   }
 
   @Post('channels')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Create channel' })
   @ApiResponse({ status: 201, description: 'Channel created' })
   async createChannel(
@@ -177,7 +168,6 @@ export class CreatorsController {
   }
 
   @Post('uploads')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Create upload' })
   @ApiResponse({ status: 201, description: 'Upload created' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -189,7 +179,6 @@ export class CreatorsController {
   }
 
   @Post('channels/:channelId/uploads')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Create upload for channel' })
   @ApiResponse({ status: 201, description: 'Upload created' })
   async createChannelUpload(
@@ -201,7 +190,6 @@ export class CreatorsController {
   }
 
   @Get('uploads')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'List own uploads' })
   @ApiResponse({ status: 200, description: 'Uploads list' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -220,7 +208,6 @@ export class CreatorsController {
   }
 
   @Post('tips/:creatorId')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Send tip to creator' })
   @ApiResponse({ status: 201, description: 'Tip sent' })
   async sendTip(
@@ -232,7 +219,6 @@ export class CreatorsController {
   }
 
   @Post('subscribe/:creatorId')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Subscribe to creator' })
   @ApiResponse({ status: 201, description: 'Subscribed' })
   async subscribe(
@@ -244,7 +230,6 @@ export class CreatorsController {
   }
 
   @Delete('subscribe/:creatorId')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Cancel subscription' })
   @ApiResponse({ status: 200, description: 'Subscription cancelled' })
   async cancelSubscription(
@@ -255,7 +240,6 @@ export class CreatorsController {
   }
 
   @Get('subscriptions')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get my subscriptions' })
   @ApiResponse({ status: 200, description: 'Subscriptions list' })
   async getMySubscriptions(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
@@ -263,7 +247,6 @@ export class CreatorsController {
   }
 
   @Get('subscribers')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get my subscribers' })
   @ApiResponse({ status: 200, description: 'Subscribers list' })
   async getMySubscribers(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
@@ -271,7 +254,6 @@ export class CreatorsController {
   }
 
   @Get('earnings')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get creator earnings' })
   @ApiResponse({ status: 200, description: 'Earnings data' })
   async getEarnings(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
@@ -279,7 +261,6 @@ export class CreatorsController {
   }
 
   @Post('payouts')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Request payout' })
   @ApiResponse({ status: 201, description: 'Payout requested' })
   async requestPayout(
@@ -290,7 +271,6 @@ export class CreatorsController {
   }
 
   @Get('payouts')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get payout history' })
   @ApiResponse({ status: 200, description: 'Payout history' })
   async getPayoutHistory(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
@@ -298,7 +278,6 @@ export class CreatorsController {
   }
 
   @Get('analytics')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get creator analytics' })
   @ApiResponse({ status: 200, description: 'Analytics data' })
   async getAnalytics(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
@@ -306,7 +285,7 @@ export class CreatorsController {
   }
 
   @Post('challenges')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Create creator challenge' })
   @ApiResponse({ status: 201, description: 'Challenge created' })
@@ -327,7 +306,6 @@ export class CreatorsController {
   }
 
   @Post('challenges/:challengeId/participate')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Participate in challenge' })
   @ApiResponse({ status: 201, description: 'Participated' })
   async participateInChallenge(
@@ -339,21 +317,18 @@ export class CreatorsController {
   }
 
   @Get('stats')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get creator stats' })
   async getStats(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
     return this.creatorsService.getStats(req.user.id);
   }
 
   @Get('settings')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get creator settings' })
   async getSettings(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
     return this.creatorsService.getSettings(req.user.id);
   }
 
   @Put('settings')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Update creator settings' })
   async updateSettings(
     @Request() req: { user: { id: string } },
@@ -374,7 +349,6 @@ export class CreatorsController {
   }
 
   @Put('monetization/settings')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Update monetization settings' })
   async updateMonetizationSettings(
     @Request() req: { user: { id: string } },

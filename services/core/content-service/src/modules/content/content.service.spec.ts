@@ -149,7 +149,10 @@ describe('ContentService', () => {
             moderateContent: jest.fn().mockResolvedValue({ approved: true }),
             checkContentSafety: jest.fn().mockResolvedValue({ isSafe: true }),
             scanContentForSafety: jest.fn().mockResolvedValue({ isSafe: true }),
-            reportContent: jest.fn().mockResolvedValue({ success: true, data: { message: 'Content reported successfully' } }),
+            reportContent: jest.fn().mockResolvedValue({
+              success: true,
+              data: { message: 'Content reported successfully' },
+            }),
             getContentModerationStatus: jest.fn().mockResolvedValue({ status: 'approved' }),
           },
         },
@@ -177,7 +180,9 @@ describe('ContentService', () => {
               success: true,
               data: { id: 'cat-1', name: 'Updated', slug: 'updated' },
             }),
-            deleteCategory: jest.fn().mockResolvedValue({ success: true, data: { message: 'Deleted' } }),
+            deleteCategory: jest
+              .fn()
+              .mockResolvedValue({ success: true, data: { message: 'Deleted' } }),
             createTag: jest.fn().mockResolvedValue({
               success: true,
               data: { id: 'tag-1', name: 'Test', description: '' },

@@ -1,4 +1,4 @@
-import {Inject,  Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { SportsResponse } from './interfaces/sports-response.interface.js';
@@ -509,12 +509,13 @@ export class SportsService {
     const MAX_TOTAL_POOL = 10000;
     const baseReward = MAX_REWARD_PER_USER;
     const totalPool = Math.min(baseReward * correctPredictions.length, MAX_TOTAL_POOL);
-    const rewardPerUser = correctPredictions.length > 0
-      ? Math.floor(totalPool / correctPredictions.length)
-      : 0;
+    const rewardPerUser =
+      correctPredictions.length > 0 ? Math.floor(totalPool / correctPredictions.length) : 0;
 
     if (rewardPerUser <= 0) {
-      this.logger.warn(`No rewards distributed for event ${eventId}: ${correctPredictions.length} correct predictions exceed pool`);
+      this.logger.warn(
+        `No rewards distributed for event ${eventId}: ${correctPredictions.length} correct predictions exceed pool`
+      );
     }
 
     await Promise.all(

@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -9,9 +10,8 @@ import { Inject,
   HttpStatus,
   Query,
   Param,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
 
 import { ReferralService } from './referral.service.js';
@@ -25,7 +25,6 @@ export class ReferralController {
   constructor(@Inject(ReferralService) private readonly referralService: ReferralService) {}
 
   @Get('code')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get user referral code' })
   @ApiResponse({ status: 200, description: 'Referral code' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -35,7 +34,6 @@ export class ReferralController {
 
   @Post('generate')
   @RateLimit(10, 3600000)
-  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Generate a new referral code' })
   @ApiResponse({ status: 201, description: 'Referral code generated' })
@@ -49,7 +47,6 @@ export class ReferralController {
 
   @Post('apply')
   @RateLimit(10, 3600000)
-  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Apply a referral code' })
   @ApiResponse({ status: 200, description: 'Referral code applied' })
@@ -64,7 +61,6 @@ export class ReferralController {
   }
 
   @Get()
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get user referrals' })
   @ApiResponse({ status: 200, description: 'User referrals' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -77,7 +73,6 @@ export class ReferralController {
   }
 
   @Get('stats')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get referral statistics' })
   @ApiResponse({ status: 200, description: 'Referral statistics' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -87,7 +82,7 @@ export class ReferralController {
 
   @Post('complete/:referralId')
   @RateLimit(10, 3600000)
-  @UseGuards(AuthGuard('jwt'), ServiceAuthGuard)
+  @UseGuards(ServiceAuthGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Complete a referral' })
   @ApiResponse({ status: 200, description: 'Referral completed' })

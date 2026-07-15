@@ -1,4 +1,4 @@
-import {Inject,  Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -48,22 +48,82 @@ export class PricingService {
   async getVotePackages(type: string) {
     const packages: Record<string, unknown[]> = {
       standard: [
-        { id: 'std-1', votes: 10, price: parseInt(this.getConfig('VOTE_STANDARD_10', '100'), 10), bonus: 0 },
-        { id: 'std-2', votes: 50, price: parseInt(this.getConfig('VOTE_STANDARD_50', '450'), 10), bonus: 5 },
-        { id: 'std-3', votes: 100, price: parseInt(this.getConfig('VOTE_STANDARD_100', '850'), 10), bonus: 15 },
-        { id: 'std-4', votes: 500, price: parseInt(this.getConfig('VOTE_STANDARD_500', '4000'), 10), bonus: 100 },
+        {
+          id: 'std-1',
+          votes: 10,
+          price: parseInt(this.getConfig('VOTE_STANDARD_10', '100'), 10),
+          bonus: 0,
+        },
+        {
+          id: 'std-2',
+          votes: 50,
+          price: parseInt(this.getConfig('VOTE_STANDARD_50', '450'), 10),
+          bonus: 5,
+        },
+        {
+          id: 'std-3',
+          votes: 100,
+          price: parseInt(this.getConfig('VOTE_STANDARD_100', '850'), 10),
+          bonus: 15,
+        },
+        {
+          id: 'std-4',
+          votes: 500,
+          price: parseInt(this.getConfig('VOTE_STANDARD_500', '4000'), 10),
+          bonus: 100,
+        },
       ],
       reality: [
-        { id: 'rty-1', votes: 100, price: parseInt(this.getConfig('VOTE_REALITY_100', '100'), 10), bonus: 0 },
-        { id: 'rty-2', votes: 500, price: parseInt(this.getConfig('VOTE_REALITY_500', '450'), 10), bonus: 50 },
-        { id: 'rty-3', votes: 1000, price: parseInt(this.getConfig('VOTE_REALITY_1000', '850'), 10), bonus: 100 },
-        { id: 'rty-4', votes: 5000, price: parseInt(this.getConfig('VOTE_REALITY_5000', '4000'), 10), bonus: 500 },
+        {
+          id: 'rty-1',
+          votes: 100,
+          price: parseInt(this.getConfig('VOTE_REALITY_100', '100'), 10),
+          bonus: 0,
+        },
+        {
+          id: 'rty-2',
+          votes: 500,
+          price: parseInt(this.getConfig('VOTE_REALITY_500', '450'), 10),
+          bonus: 50,
+        },
+        {
+          id: 'rty-3',
+          votes: 1000,
+          price: parseInt(this.getConfig('VOTE_REALITY_1000', '850'), 10),
+          bonus: 100,
+        },
+        {
+          id: 'rty-4',
+          votes: 5000,
+          price: parseInt(this.getConfig('VOTE_REALITY_5000', '4000'), 10),
+          bonus: 500,
+        },
       ],
       superVote: [
-        { id: 'sv-1', votes: 1, price: parseInt(this.getConfig('SUPER_VOTE_1', '500'), 10), multiplier: 10 },
-        { id: 'sv-2', votes: 5, price: parseInt(this.getConfig('SUPER_VOTE_5', '2000'), 10), multiplier: 10 },
-        { id: 'sv-3', votes: 10, price: parseInt(this.getConfig('SUPER_VOTE_10', '3500'), 10), multiplier: 10 },
-        { id: 'sv-4', votes: 25, price: parseInt(this.getConfig('SUPER_VOTE_25', '8000'), 10), multiplier: 10 },
+        {
+          id: 'sv-1',
+          votes: 1,
+          price: parseInt(this.getConfig('SUPER_VOTE_1', '500'), 10),
+          multiplier: 10,
+        },
+        {
+          id: 'sv-2',
+          votes: 5,
+          price: parseInt(this.getConfig('SUPER_VOTE_5', '2000'), 10),
+          multiplier: 10,
+        },
+        {
+          id: 'sv-3',
+          votes: 10,
+          price: parseInt(this.getConfig('SUPER_VOTE_10', '3500'), 10),
+          multiplier: 10,
+        },
+        {
+          id: 'sv-4',
+          votes: 25,
+          price: parseInt(this.getConfig('SUPER_VOTE_25', '8000'), 10),
+          multiplier: 10,
+        },
       ],
     };
 
@@ -83,7 +143,10 @@ export class PricingService {
           price: parseInt(this.getConfig('SUB_BASIC_PRICE', '0'), 10),
           currency: 'NGN',
           period: 'monthly',
-          features: this.getConfig('SUB_BASIC_FEATURES', 'HD Streaming,Limited Content,1 Device').split(','),
+          features: this.getConfig(
+            'SUB_BASIC_FEATURES',
+            'HD Streaming,Limited Content,1 Device'
+          ).split(','),
         },
         premium: {
           id: 'sub-premium',
@@ -91,7 +154,10 @@ export class PricingService {
           price: parseInt(this.getConfig('SUB_PREMIUM_PRICE', '2000'), 10),
           currency: 'NGN',
           period: 'monthly',
-          features: this.getConfig('SUB_PREMIUM_FEATURES', '4K Streaming,All Content,3 Devices,Offline Download').split(','),
+          features: this.getConfig(
+            'SUB_PREMIUM_FEATURES',
+            '4K Streaming,All Content,3 Devices,Offline Download'
+          ).split(','),
         },
         vip: {
           id: 'sub-vip',
@@ -99,15 +165,24 @@ export class PricingService {
           price: parseInt(this.getConfig('SUB_VIP_PRICE', '5000'), 10),
           currency: 'NGN',
           period: 'monthly',
-          features: this.getConfig('SUB_VIP_FEATURES', '4K Streaming,All Content,5 Devices,Offline Download,Early Access,Exclusive Content').split(','),
+          features: this.getConfig(
+            'SUB_VIP_FEATURES',
+            '4K Streaming,All Content,5 Devices,Offline Download,Early Access,Exclusive Content'
+          ).split(','),
         },
       },
     };
   }
 
   async getWalletPricing() {
-    const presetAmountsStr = this.getConfig('WALLET_PRESET_AMOUNTS', '500,1000,2000,5000,10000,20000');
-    const withdrawalQuickStr = this.getConfig('WALLET_WITHDRAWAL_QUICK_AMOUNTS', '1000,5000,10000,20000');
+    const presetAmountsStr = this.getConfig(
+      'WALLET_PRESET_AMOUNTS',
+      '500,1000,2000,5000,10000,20000'
+    );
+    const withdrawalQuickStr = this.getConfig(
+      'WALLET_WITHDRAWAL_QUICK_AMOUNTS',
+      '1000,5000,10000,20000'
+    );
 
     return {
       success: true,

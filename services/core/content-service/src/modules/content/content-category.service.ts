@@ -1,4 +1,4 @@
-import {Inject,  Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '../../prisma/client/index.js';
 
@@ -127,10 +127,7 @@ export class ContentCategoryService {
     }
   }
 
-  async getCategories(
-    page = 1,
-    limit = 50
-  ): Promise<{ success: boolean; data: CategoryModel[] }> {
+  async getCategories(page = 1, limit = 50): Promise<{ success: boolean; data: CategoryModel[] }> {
     try {
       const skip = (page - 1) * limit;
       const categories = await this.prisma.category.findMany({
@@ -241,10 +238,7 @@ export class ContentCategoryService {
     }
   }
 
-  async getTags(
-    page = 1,
-    limit = 50
-  ): Promise<{ success: boolean; data: TagModel[] }> {
+  async getTags(page = 1, limit = 50): Promise<{ success: boolean; data: TagModel[] }> {
     try {
       const skip = (page - 1) * limit;
       const tags = await this.prisma.tag.findMany({

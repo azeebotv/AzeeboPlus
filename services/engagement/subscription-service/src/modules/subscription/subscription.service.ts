@@ -1,4 +1,4 @@
-import {Inject,  Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
@@ -33,6 +33,7 @@ export class SubscriptionService {
     const plans = await this.prisma.subscriptionPlan.findMany({
       where: { isActive: true },
       orderBy: { price: 'asc' },
+      take: 50,
     });
 
     await this.cache.set(cacheK, plans, 3600);
@@ -82,10 +83,9 @@ export class SubscriptionService {
     let paymentVerification;
     try {
       paymentVerification = await this.circuitBreaker.execute(() =>
-        axios.get(
-          `${this.paymentServiceBaseUrl}/v1/payments/${dto.paymentReference}`,
-          { timeout: 10000 }
-        )
+        axios.get(`${this.paymentServiceBaseUrl}/v1/payments/${dto.paymentReference}`, {
+          timeout: 10000,
+        })
       );
     } catch (error) {
       if (error instanceof CircuitBreakerOpenError) {

@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -9,7 +10,7 @@ import { Inject,
   NotFoundException,
   Param,
   UseInterceptors,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { PrismaService } from '../database/prisma.service.js';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
@@ -60,19 +61,20 @@ export class WalletController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getTransactions(
     @Request() req: AuthenticatedRequest,
-    @Query('page') page = 1,
-    @Query('limit') limit = 20,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 20,
     @Query('cursor') cursor?: string
   ) {
+    const safeLimit = Math.min(Math.max(1, Number(limit) || 20), 100);
     const result = await this.walletService.getTransactions(
       req.user.id,
       Number(page),
-      Number(limit),
+      safeLimit,
       cursor
     );
     const data = (result as { data: unknown }).data;
     if (Array.isArray(data)) {
-      return ApiResponseWrapper.paginated(data, Number(page), Number(limit), data.length);
+      return ApiResponseWrapper.paginated(data, Number(page), safeLimit, data.length);
     }
     return ApiResponseWrapper.success(data);
   }

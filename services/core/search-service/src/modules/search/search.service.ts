@@ -1,4 +1,4 @@
-import {Inject,  Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 // Prisma client types available via PrismaService
@@ -453,7 +453,7 @@ export class SearchService {
     }
   }
 
-    async logSearch(userId: string, query: string, resultCount: number): Promise<SearchResponse> {
+  async logSearch(userId: string, query: string, resultCount: number): Promise<SearchResponse> {
     try {
       await this.prisma.searchQueryLog.create({
         data: { query, userId, resultCount },

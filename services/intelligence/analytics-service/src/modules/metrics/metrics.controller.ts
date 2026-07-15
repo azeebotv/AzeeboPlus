@@ -1,4 +1,4 @@
-import { Inject, Controller, Get, Header  } from '@nestjs/common';
+import { Inject, Controller, Get, Header } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Public } from '@azeebo/security';
 import { MetricsService } from './metrics.service.js';

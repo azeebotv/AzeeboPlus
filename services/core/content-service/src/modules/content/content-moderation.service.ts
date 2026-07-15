@@ -1,4 +1,4 @@
-import {Inject,  Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import axios from 'axios';
@@ -139,15 +139,19 @@ export class ContentModerationService {
     }
 
     try {
-      const response = await axios.post(`${this.moderationServiceUrl}/moderation/report`, {
-        reportingUserId: userId,
-        type: reportData.type,
-        contentId,
-        reason: reportData.reason,
-      }, {
-        timeout: 5000,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const response = await axios.post(
+        `${this.moderationServiceUrl}/moderation/report`,
+        {
+          reportingUserId: userId,
+          type: reportData.type,
+          contentId,
+          reason: reportData.reason,
+        },
+        {
+          timeout: 5000,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
 
       const result = response.data;
       return {

@@ -1,9 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { CanActivate, ExecutionContext } from '@nestjs/common';
 import { WebhookController } from './webhook.controller.js';
 import { WebhookService, WebhookPayload } from './webhook.service.js';
 import { WebhookSecurityService } from './webhook-security.service.js';
 import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@nestjs/common';
+import { RateLimitGuard } from '@azeebo/security';
+
+class MockRateLimitGuard implements CanActivate {
+  canActivate(_context: ExecutionContext) {
+    return true;
+  }
+}
 
 describe('WebhookController', () => {
   let controller: WebhookController;
@@ -30,7 +38,10 @@ describe('WebhookController', () => {
         { provide: WebhookService, useValue: mockWebhookService },
         { provide: ConfigService, useValue: { get: jest.fn().mockReturnValue(30000) } },
       ],
-    }).compile();
+    })
+      .overrideGuard(RateLimitGuard)
+      .useClass(MockRateLimitGuard)
+      .compile();
 
     controller = module.get<WebhookController>(WebhookController);
   });

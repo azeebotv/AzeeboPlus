@@ -1,9 +1,8 @@
 import { Module, Global } from '@nestjs/common';
-import { RedisService } from './services/redis.service';
+import { RedisModule } from '@azeebo/shared-services';
 
 @Global()
 @Module({
-  providers: [RedisService],
-  exports: [RedisService],
+  imports: [RedisModule],
 })
 export class CommonModule {}

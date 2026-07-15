@@ -1,4 +1,4 @@
-import {Inject,  Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 import { UpdateUniverseAffinityDto } from './dto/update-universe-affinity.dto.js';
@@ -726,7 +726,9 @@ export class UsersService {
     } catch {
       // If DataDeletionRequest model doesn't exist, log and continue
       // The deletion will be handled by the anonymizeUserData method
-      this.logger.warn('DataDeletionRequest model not found, deletion scheduled without persistence');
+      this.logger.warn(
+        'DataDeletionRequest model not found, deletion scheduled without persistence'
+      );
     }
 
     return { userId, reason, scheduledAt, status: 'scheduled' };
@@ -744,14 +746,18 @@ export class UsersService {
         data: {
           email: anonymizedEmail,
           displayName: anonymizedName,
-          fullName: null,
           avatar: null,
-          phone: null,
+        },
+      });
+
+      // Update user profile if it exists
+      await this.prisma.userProfile?.updateMany({
+        where: { userId },
+        data: {
+          displayName: null,
+          avatar: null,
           bio: null,
           location: null,
-          dob: null,
-          gender: null,
-          interests: [],
         },
       });
 

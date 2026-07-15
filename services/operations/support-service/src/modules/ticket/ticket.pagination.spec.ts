@@ -1,10 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
-import { AuthGuard } from '@nestjs/passport';
-import { RateLimitGuard } from '@azeebo/security';
 import { TicketController } from './ticket.controller';
 import { TicketService } from './ticket.service';
+import { RateLimitGuard, AdminGuard } from '@azeebo/security';
 // Ticket DTO types used implicitly by mock data in tests
 
 describe('Support Service Pagination Tests', () => {
@@ -50,10 +49,10 @@ describe('Support Service Pagination Tests', () => {
         },
       ],
     })
-      .overrideGuard(AuthGuard('jwt'))
-      .useValue(mockAuthGuard)
       .overrideGuard(RateLimitGuard)
       .useValue(mockRateLimitGuard)
+      .overrideGuard(AdminGuard)
+      .useValue(mockAuthGuard)
       .compile();
 
     app = moduleFixture.createNestApplication();

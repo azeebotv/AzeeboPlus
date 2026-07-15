@@ -1,4 +1,4 @@
-import {Inject,  Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 
@@ -113,7 +113,9 @@ export class RecommendationService {
         }),
       ]);
 
-      const watchedContentIds = watchHistory.map((h) => h.contentId).filter((id): id is string => !!id);
+      const watchedContentIds = watchHistory
+        .map((h) => h.contentId)
+        .filter((id): id is string => !!id);
 
       if (watchedContentIds.length === 0) {
         return this.getFallbackRecommendations(limit, universe, freshnessDays);
@@ -121,7 +123,7 @@ export class RecommendationService {
 
       const watchedContent = await this.prisma.contentItem.findMany({
         where: { id: { in: watchedContentIds } },
-        });
+      });
 
       const universeCounts = watchedContent.reduce(
         (acc, c) => {
@@ -162,10 +164,13 @@ export class RecommendationService {
         take: limit * 3,
       });
 
-      const creatorIds = [...new Set(candidateContent.map((c) => c.creatorId).filter((id): id is string => !!id))];
-      const creatorProfiles = creatorIds.length > 0
-        ? await this.prisma.creatorProfile.findMany({ where: { userId: { in: creatorIds } } })
-        : [];
+      const creatorIds = [
+        ...new Set(candidateContent.map((c) => c.creatorId).filter((id): id is string => !!id)),
+      ];
+      const creatorProfiles =
+        creatorIds.length > 0
+          ? await this.prisma.creatorProfile.findMany({ where: { userId: { in: creatorIds } } })
+          : [];
       const creatorMap = new Map(creatorProfiles.map((cp) => [cp.userId, cp]));
 
       const scored = candidateContent.map((content) => {
@@ -260,10 +265,15 @@ export class RecommendationService {
         take: limit,
       });
 
-      const fallbackCreatorIds = [...new Set(trending.map((c) => c.creatorId).filter((id): id is string => !!id))];
-      const fallbackCreators = fallbackCreatorIds.length > 0
-        ? await this.prisma.creatorProfile.findMany({ where: { userId: { in: fallbackCreatorIds } } })
-        : [];
+      const fallbackCreatorIds = [
+        ...new Set(trending.map((c) => c.creatorId).filter((id): id is string => !!id)),
+      ];
+      const fallbackCreators =
+        fallbackCreatorIds.length > 0
+          ? await this.prisma.creatorProfile.findMany({
+              where: { userId: { in: fallbackCreatorIds } },
+            })
+          : [];
       const fallbackCreatorMap = new Map(fallbackCreators.map((cp) => [cp.userId, cp]));
 
       return {
@@ -391,7 +401,9 @@ export class RecommendationService {
       });
 
       const watchedContent = await this.prisma.contentItem.findMany({
-        where: { id: { in: watchHistory.map((h) => h.contentId).filter((id): id is string => !!id) } },
+        where: {
+          id: { in: watchHistory.map((h) => h.contentId).filter((id): id is string => !!id) },
+        },
         // universe is a string field
       });
 
@@ -412,10 +424,15 @@ export class RecommendationService {
         take: limit,
       });
 
-      const crossCreatorIds = [...new Set(recommendations.map((c) => c.creatorId).filter((id): id is string => !!id))];
-      const crossCreators = crossCreatorIds.length > 0
-        ? await this.prisma.creatorProfile.findMany({ where: { userId: { in: crossCreatorIds } } })
-        : [];
+      const crossCreatorIds = [
+        ...new Set(recommendations.map((c) => c.creatorId).filter((id): id is string => !!id)),
+      ];
+      const crossCreators =
+        crossCreatorIds.length > 0
+          ? await this.prisma.creatorProfile.findMany({
+              where: { userId: { in: crossCreatorIds } },
+            })
+          : [];
       const crossCreatorMap = new Map(crossCreators.map((cp) => [cp.userId, cp]));
 
       const result = {
@@ -852,7 +869,10 @@ export class RecommendationService {
           );
           if (hoursSinceUpload < 1) {
             const viewCount = await this.prisma.productEvent.count({
-              where: { eventName: 'content_view', metadata: { path: ['contentId'], equals: contentId } },
+              where: {
+                eventName: 'content_view',
+                metadata: { path: ['contentId'], equals: contentId },
+              },
             });
             if (viewCount > 100) {
               riskScore += 30;

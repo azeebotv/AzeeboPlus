@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Post,
   Body,
@@ -9,7 +10,7 @@ import { Inject,
   HttpStatus,
   Headers,
   Param,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -21,7 +22,6 @@ import {
   ApiBadRequestResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 
 import { PaymentsService } from './payments.service.js';
 import { InitializePaymentDto } from './dto/initialize-payment.dto.js';
@@ -43,7 +43,7 @@ export class PaymentsController {
   constructor(@Inject(PaymentsService) private readonly paymentsService: PaymentsService) {}
 
   @Post('initialize')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(10, 60000)
   @ApiOperation({
     summary: 'Initialize a payment',
@@ -125,7 +125,7 @@ export class PaymentsController {
   }
 
   @Post('verify')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(20, 60000)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -187,7 +187,6 @@ export class PaymentsController {
   }
 
   @Get('history')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({
     summary: 'Get payment history',
     description: 'Retrieves the payment transaction history for the authenticated user',
@@ -239,7 +238,6 @@ export class PaymentsController {
   }
 
   @Get(':id')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({
     summary: 'Get payment details',
     description: 'Retrieves details of a specific payment transaction',
@@ -300,7 +298,7 @@ export class PaymentsController {
   }
 
   @Post('refund-request')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(5, 3600000)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Request a refund' })

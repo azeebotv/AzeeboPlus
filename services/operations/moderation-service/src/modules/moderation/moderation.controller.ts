@@ -1,6 +1,15 @@
-import { Inject, Controller, Get, Post, Body, UseGuards, Request, Param, Query  } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Body,
+  UseGuards,
+  Request,
+  Param,
+  Query,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
 
 import { ModerationService } from './moderation.service.js';
@@ -15,7 +24,6 @@ export class ModerationController {
 
   @Post('report')
   @RateLimit(20, 60000)
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Report content or user' })
   @ApiResponse({ status: 201, description: 'Report created' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
@@ -36,7 +44,6 @@ export class ModerationController {
 
   @Post('appeal')
   @RateLimit(20, 60000)
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Submit appeal' })
   @ApiResponse({ status: 201, description: 'Appeal created' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
@@ -49,7 +56,7 @@ export class ModerationController {
   }
 
   @Get('queue')
-  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Get moderation queue' })
   @ApiResponse({ status: 200, description: 'Moderation queue' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -61,7 +68,7 @@ export class ModerationController {
   }
 
   @Get('trust-score/:userId')
-  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Get user trust score' })
   @ApiResponse({ status: 200, description: 'Trust score' })
   @ApiResponse({ status: 404, description: 'User not found' })
@@ -76,7 +83,7 @@ export class ModerationController {
 
   @Post('safety-action')
   @RateLimit(20, 60000)
-  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Take safety action' })
   @ApiResponse({ status: 200, description: 'Safety action taken' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
@@ -98,7 +105,7 @@ export class ModerationController {
   }
 
   @Get('safety-actions')
-  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Get safety actions' })
   @ApiResponse({ status: 200, description: 'Safety actions' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -119,7 +126,6 @@ export class ModerationController {
   }
 
   @Get('safety-action-types')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get safety action types' })
   @ApiResponse({ status: 200, description: 'Safety action types' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -129,7 +135,7 @@ export class ModerationController {
 
   @Post('scan')
   @RateLimit(20, 60000)
-  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Scan content media for safety issues' })
   @ApiResponse({ status: 200, description: 'Scan result' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
@@ -143,7 +149,6 @@ export class ModerationController {
   }
 
   @Get('scan/:scanId')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get scan result by ID' })
   @ApiResponse({ status: 200, description: 'Scan result' })
   @ApiResponse({ status: 404, description: 'Scan not found' })
@@ -153,7 +158,6 @@ export class ModerationController {
   }
 
   @Get('content/:contentId/safety')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Check content safety status' })
   @ApiResponse({ status: 200, description: 'Safety status' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })

@@ -1,4 +1,4 @@
-import {Inject,  Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { createHmac, timingSafeEqual } from 'crypto';
@@ -107,7 +107,8 @@ export class FlutterwaveProvider {
           amount,
           currency: currency || 'NGN',
           redirect_url:
-            process.env.FLUTTERWAVE_CALLBACK_URL || 'http://localhost:3003/webhooks/flutterwave',
+            this.configService.get<string>('FLUTTERWAVE_CALLBACK_URL') ||
+            'http://localhost:3003/webhooks/flutterwave',
           customer: {
             email: `user-${userId}@azeebo.plus`,
             name: `User ${userId}`,

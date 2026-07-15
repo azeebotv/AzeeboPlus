@@ -3,8 +3,7 @@ module.exports = function (api) {
   return {
     presets: ['babel-preset-expo'],
     plugins: [
-      // Disable react-native-worklets plugin to fix prebuild error
-      // The plugin is not needed for the build process
+      'react-native-reanimated/plugin',
     ],
   };
 };

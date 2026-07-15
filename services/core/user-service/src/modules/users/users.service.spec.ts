@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service.js';
 import { PrismaService } from '../database/prisma.service.js';
+import { CacheService } from '@azeebo/shared-services';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 jest.mock('../database/prisma.service');
@@ -55,6 +56,15 @@ describe('UsersService', () => {
               delete: jest.fn(),
             },
             $transaction: jest.fn(),
+          },
+        },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            delete: jest.fn().mockResolvedValue(0),
+            invalidate: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],

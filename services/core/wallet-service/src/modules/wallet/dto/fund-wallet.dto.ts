@@ -1,4 +1,4 @@
-import { IsNumber, IsPositive, IsString, IsOptional } from 'class-validator';
+import { IsNumber, IsPositive, Min, IsString, IsOptional } from 'class-validator';
 
 /**
  * Data transfer object for funding a wallet.
@@ -11,6 +11,7 @@ export class FundWalletDto {
    */
   @IsNumber()
   @IsPositive()
+  @Min(0.01)
   amount!: number;
 
   /**

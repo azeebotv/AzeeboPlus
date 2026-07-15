@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
 import { AuthModule } from './auth.module.js';
-import { RedisService } from '../../common/services/redis.service.js';
+import { RedisService } from '@azeebo/shared-services';
 import { CacheService } from '@azeebo/shared-services';
 import { PrismaService } from '../database/prisma.service.js';
 import { JwtService } from '@nestjs/jwt';
@@ -138,6 +138,18 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
         transform: true,
       })
     );
+    // Mock ServiceAuthGuard behavior: set req.user for authenticated routes
+    app.use((req: { headers: { authorization?: string }; user?: unknown }, _res: unknown, next: () => void) => {
+      if (req.headers.authorization && !req.user) {
+        req.user = {
+          id: testUser.id,
+          sub: testUser.id,
+          email: testUser.email,
+          role: testUser.role,
+        };
+      }
+      next();
+    });
     await app.init();
 
     jwtService = moduleFixture.get<JwtService>(JwtService);

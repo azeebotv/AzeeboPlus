@@ -1,12 +1,22 @@
-import { Inject, Controller, Get, Post, Body, Param, Query, UseGuards, Request  } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  Request,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { GameCatalogService } from './game-catalog.service.js';
 
 @ApiTags('Game Catalog')
 @Controller('v1/games')
 export class GameCatalogController {
-  constructor(@Inject(GameCatalogService) private readonly gameCatalogService: GameCatalogService) {}
+  constructor(
+    @Inject(GameCatalogService) private readonly gameCatalogService: GameCatalogService
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Get games' })
@@ -28,7 +38,6 @@ export class GameCatalogController {
   }
 
   @Get('stats/:userId')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get user stats' })
   @ApiResponse({ status: 200, description: 'User stats' })
   async getUserStats(@Param('userId') userId: string): Promise<unknown> {
@@ -43,7 +52,6 @@ export class GameCatalogController {
   }
 
   @Post(':gameId/start')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Start a game' })
   @ApiResponse({ status: 201, description: 'Game started' })
   async startGame(
@@ -54,7 +62,6 @@ export class GameCatalogController {
   }
 
   @Post('answer')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Submit answer' })
   @ApiResponse({ status: 200, description: 'Answer result' })
   async submitAnswer(
@@ -77,7 +84,6 @@ export class GameCatalogController {
   }
 
   @Post(':sessionId/complete')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Complete game' })
   @ApiResponse({ status: 200, description: 'Game completed' })
   async completeGame(

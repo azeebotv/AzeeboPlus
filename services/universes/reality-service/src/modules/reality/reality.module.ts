@@ -1,17 +1,16 @@
 import { Module } from '@nestjs/common';
-import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { RealityController } from './reality.controller.js';
 import { RealityService } from './reality.service.js';
 import { DatabaseModule } from '../database/database.module.js';
-import { RedisService } from '../../common/services/redis.service.js';
+import { RedisModule } from '@azeebo/shared-services';
 
 @Module({
   imports: [
     DatabaseModule,
-    PassportModule,
+    RedisModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
@@ -24,7 +23,7 @@ import { RedisService } from '../../common/services/redis.service.js';
     }),
   ],
   controllers: [RealityController],
-  providers: [RealityService, RedisService],
+  providers: [RealityService],
   exports: [RealityService, DatabaseModule],
 })
 export class RealityModule {}

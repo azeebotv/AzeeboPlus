@@ -1,15 +1,15 @@
 module.exports = {
   moduleFileExtensions: ['js', 'json', 'ts'],
   rootDir: 'src',
-  testRegex: '.*\.spec\.ts$',
+  testRegex: '.*\\.spec\\.ts$',
   transform: {
-    '^.+\.(t|j)s$': 'ts-jest',
+    '^.+\\.(t|j)s$': 'ts-jest',
   },
   transformIgnorePatterns: [
-    'node_modules/(?!uuid)',
+    'node_modules/(?!uuid|zod|date-fns)',
   ],
   moduleNameMapper: {
-    '^(\\.{1,2}/.*)\.js$': '$1',
+    '^(\\.{1,2}/.*)\\.js$': '$1',
   },
   collectCoverageFrom: [
     '**/*.(t|j)s',

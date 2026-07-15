@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -8,9 +9,8 @@ import { Inject,
   Param,
   Query,
   UseGuards,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
 import { MusicService } from './music.service';
 import { UpdateMusicDto } from './dto/update-music.dto';
@@ -69,7 +69,7 @@ export class MusicController {
   }
 
   @Post()
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Create music entry' })
   @ApiResponse({ status: 201, description: 'Entry created' })
@@ -78,7 +78,7 @@ export class MusicController {
   }
 
   @Patch(':id')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Update music entry' })
   @ApiResponse({ status: 200, description: 'Entry updated' })
@@ -87,7 +87,7 @@ export class MusicController {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN')
   @ApiOperation({ summary: 'Delete music entry' })
   @ApiResponse({ status: 200, description: 'Entry deleted' })

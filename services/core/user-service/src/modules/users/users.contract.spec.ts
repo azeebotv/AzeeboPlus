@@ -5,12 +5,12 @@ import {
   UnauthorizedException,
   VersioningType,
 } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
 import { UsersModule } from './users.module.js';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../database/prisma.service.js';
 import { RateLimitGuard, ServiceAuthGuard } from '@azeebo/security';
+import { CacheService } from '@azeebo/shared-services';
 
 describe('Users Controller Contract Tests', () => {
   let app: INestApplication;
@@ -62,12 +62,6 @@ describe('Users Controller Contract Tests', () => {
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [UsersModule],
-      providers: [
-        {
-          provide: APP_GUARD,
-          useClass: ServiceAuthGuard,
-        },
-      ],
     })
       .overrideProvider(PrismaService)
       .useValue(mockPrismaService)
@@ -82,10 +76,24 @@ describe('Users Controller Contract Tests', () => {
       .useValue({
         canActivate: jest.fn(() => true),
       })
+      .overrideProvider(CacheService)
+      .useValue({
+        get: jest.fn().mockResolvedValue(null),
+        set: jest.fn().mockResolvedValue(undefined),
+        delete: jest.fn().mockResolvedValue(0),
+        invalidate: jest.fn().mockResolvedValue(undefined),
+      })
       .compile();
 
     app = moduleFixture.createNestApplication();
     app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
+    // Mock ServiceAuthGuard behavior
+    app.use((req: { headers: { authorization?: string }; user?: unknown }, _res: unknown, next: () => void) => {
+      if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ') && !req.user) {
+        req.user = { id: 'user-123', sub: 'user-123', role: 'user' };
+      }
+      next();
+    });
     await app.init();
   });
 
@@ -241,7 +249,7 @@ describe('Users Controller Contract Tests', () => {
       });
 
       const response = await request(app.getHttpServer())
-        .post('/v1/users/user-456/follow')
+        .post('/v1/users/550e8400-e29b-41d4-a716-446655440000/follow')
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(201);
@@ -256,16 +264,16 @@ describe('Users Controller Contract Tests', () => {
     it('should unfollow a user', async () => {
       mockPrismaService.following.findUnique.mockResolvedValue({
         followerId: 'user-123',
-        followingId: 'user-456',
+        followingId: '550e8400-e29b-41d4-a716-446655440000',
       });
 
       mockPrismaService.following.delete.mockResolvedValue({
         followerId: 'user-123',
-        followingId: 'user-456',
+        followingId: '550e8400-e29b-41d4-a716-446655440000',
       });
 
       const response = await request(app.getHttpServer())
-        .delete('/v1/users/user-456/follow')
+        .delete('/v1/users/550e8400-e29b-41d4-a716-446655440000/follow')
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(200);

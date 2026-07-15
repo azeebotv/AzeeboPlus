@@ -5,6 +5,12 @@
   "description": "Azeebo+ UI components",
   "main": "src/index.ts",
   "types": "src/index.ts",
+  "typesVersions": {
+    "*": {
+      "web": ["src/web-index.ts"],
+      "mobile": ["src/mobile-index.ts"]
+    }
+  },
   "react-native": "src/mobile-index.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -19,8 +25,14 @@
       "react-native": "./src/mobile-index.ts",
       "default": "./src/index.ts"
     },
-    "./web": "./src/web-index.ts",
-    "./mobile": "./src/mobile-index.ts"
+    "./web": {
+      "types": "./src/web-index.ts",
+      "default": "./src/web-index.ts"
+    },
+    "./mobile": {
+      "types": "./src/mobile-index.ts",
+      "default": "./src/mobile-index.ts"
+    }
   },
   "dependencies": {
     "@azeebo/design-tokens": "workspace:*",

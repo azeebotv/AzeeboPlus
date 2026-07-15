@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -7,10 +8,8 @@ import { Inject,
   Body,
   Param,
   Query,
-  UseGuards,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { CityGuideService } from './city-guide.service';
 import { UpdateCityGuideDto } from './dto/update-city-guide.dto';
 
@@ -34,7 +33,6 @@ interface CreateCityGuideData {
 }
 
 @ApiTags('City Guide')
-@UseGuards(AuthGuard('jwt'))
 @Controller('v1/lifestyle/city-guide')
 export class CityGuideController {
   constructor(@Inject(CityGuideService) private readonly cityGuideService: CityGuideService) {}

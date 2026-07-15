@@ -1,4 +1,4 @@
-import {Inject,  Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 
 @Injectable()
@@ -444,8 +444,7 @@ export class IntelligenceService {
       for (const history of watchHistory) {
         const content = contentById.get(history.contentId);
         if (content?.universe) {
-          universePreferences[content.universe] =
-            (universePreferences[content.universe] || 0) + 1;
+          universePreferences[content.universe] = (universePreferences[content.universe] || 0) + 1;
         }
       }
 
@@ -464,8 +463,14 @@ export class IntelligenceService {
       } catch {
         // Fall back to hardcoded list if universe table doesn't exist
         allUniverses = [
-          'reality', 'creator', 'lifestyle', 'games',
-          'comedy', 'sports', 'movie', 'vertical',
+          'reality',
+          'creator',
+          'lifestyle',
+          'games',
+          'comedy',
+          'sports',
+          'movie',
+          'vertical',
         ];
       }
       const unexploredUniverses = allUniverses.filter((u) => !topUniverses.includes(u));

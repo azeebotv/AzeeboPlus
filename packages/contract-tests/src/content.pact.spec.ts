@@ -85,14 +85,11 @@ describe('Content API Contract', () => {
           });
         })
         .executeTest(async (mockServer) => {
-          const response = await fetch(
-            `${mockServer.url}/v1/content?page=1&limit=10`,
-            {
-              headers: {
-                Authorization: 'Bearer some-jwt-token',
-              },
-            }
-          );
+          const response = await fetch(`${mockServer.url}/v1/content?page=1&limit=10`, {
+            headers: {
+              Authorization: 'Bearer some-jwt-token',
+            },
+          });
 
           expect(response.status).toBe(200);
           const body = await response.json();

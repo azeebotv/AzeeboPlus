@@ -1,4 +1,4 @@
-import {Inject,  Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { createHmac, timingSafeEqual } from 'crypto';
@@ -123,7 +123,8 @@ export class PaystackProvider {
               app: 'azeebo-plus',
             },
             callback_url:
-              process.env.PAYSTACK_CALLBACK_URL || 'http://localhost:3003/webhooks/paystack',
+              this.configService.get<string>('PAYSTACK_CALLBACK_URL') ||
+              'http://localhost:3003/webhooks/paystack',
           },
           {
             headers: {

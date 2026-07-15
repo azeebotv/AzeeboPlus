@@ -46,6 +46,7 @@ model Subscription {
   @@index([status])
   @@index([userId, status])
   @@index([endDate])
+  @@index([status, endDate])
   @@map("subscriptions")
 }
 

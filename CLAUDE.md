@@ -73,7 +73,7 @@ azeebo-plus/
 │   └── gateway/                   # API gateway & routing
 │       └── api-gateway/           # Central API gateway
 │
-├── packages/                      # Shared code libraries
+├── packages/                      # Shared code libraries (21 packages)
 │   ├── ui/                        # Reusable UI components (web + mobile)
 │   ├── design-tokens/             # Design system tokens
 │   ├── shared-types/              # TypeScript type definitions
@@ -91,7 +91,10 @@ azeebo-plus/
 │   ├── internal-clients/          # Internal service clients
 │   ├── shared-services/           # Shared NestJS service modules (prisma, redis, cache, rate-limit, queue, audit, analytics, validation, pagination, api-versioning, sanitize, middleware)
 │   ├── contract-tests/            # Pact contract tests for service boundaries
-│   └── opentelemetry/             # OpenTelemetry initialization and tracing
+│   ├── opentelemetry/             # OpenTelemetry initialization and tracing
+│   ├── event-bus/                 # Event-driven communication between services
+│   ├── http-client/               # HTTP client utilities for inter-service calls
+│   └── shared-queue/              # Shared queue configuration and utilities
 │
 ├── infra/                         # Infrastructure configurations
 │   ├── k8s/                       # Kubernetes manifests

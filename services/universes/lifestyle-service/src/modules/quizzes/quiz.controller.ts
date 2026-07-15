@@ -1,17 +1,16 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
-  UseGuards,
   Request,
   Body,
   Param,
   Query,
   HttpCode,
   HttpStatus,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 
 import { QuizService } from './quiz.service';
 import { CreateQuizDto } from './dto/create-quiz.dto';
@@ -48,7 +47,6 @@ export class QuizController {
   }
 
   @Post()
-  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a quiz' })
   @ApiResponse({ status: 201, description: 'Quiz created' })
@@ -58,7 +56,6 @@ export class QuizController {
   }
 
   @Post(':id/start')
-  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Start a quiz' })
   @ApiResponse({ status: 200, description: 'Quiz started' })
@@ -69,7 +66,6 @@ export class QuizController {
   }
 
   @Post('attempts/:attemptId/submit')
-  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Submit quiz answers' })
   @ApiResponse({ status: 200, description: 'Quiz submitted' })

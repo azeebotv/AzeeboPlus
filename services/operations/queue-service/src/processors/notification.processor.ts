@@ -137,7 +137,7 @@ export class NotificationProcessor extends WorkerHost {
   @OnWorkerEvent('error')
   onError(error: Error) {
     this.logger.error(`Worker encountered an error: ${(error as Error).message}`, {
-      stack: (error as Error).message,
+      stack: (error as Error).stack,
     });
   }
 }

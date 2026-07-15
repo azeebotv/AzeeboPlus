@@ -1,4 +1,4 @@
-import {Inject,  Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import {
   ModerationRepository,
   ModerationScan,

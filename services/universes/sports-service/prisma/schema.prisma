@@ -66,6 +66,7 @@ model PredictionEntry {
   @@map("prediction_entries")
   @@index([userId])
   @@index([eventId])
+  @@index([eventId, userId])
   @@index([predictionMarketId])
   @@index([createdAt])
 }

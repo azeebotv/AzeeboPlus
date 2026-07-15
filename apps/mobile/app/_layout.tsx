@@ -7,8 +7,12 @@ import { NotificationProvider } from '../src/contexts/NotificationContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
+import { initializeCertificatePinning } from '../src/utils/certificatePinning';
 
 const queryClient = new QueryClient();
+
+// Initialize certificate pinning at app startup
+initializeCertificatePinning();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();

@@ -1,4 +1,4 @@
-import {Inject,  Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 
@@ -296,15 +296,25 @@ export class EventsService {
         throw new NotFoundException(`Event not found: ${slug}`);
       }
 
-      const formattedRsvps: Rsvp[] = event.rsvps.map((rsvp: { id: string; userId: string; eventId: string; status: string; guests: number; note: string | null; createdAt: Date }) => ({
-        id: rsvp.id,
-        userId: rsvp.userId,
-        eventId: rsvp.eventId,
-        status: rsvp.status,
-        guests: rsvp.guests,
-        note: rsvp.note || '',
-        createdAt: rsvp.createdAt.toISOString(),
-      }));
+      const formattedRsvps: Rsvp[] = event.rsvps.map(
+        (rsvp: {
+          id: string;
+          userId: string;
+          eventId: string;
+          status: string;
+          guests: number;
+          note: string | null;
+          createdAt: Date;
+        }) => ({
+          id: rsvp.id,
+          userId: rsvp.userId,
+          eventId: rsvp.eventId,
+          status: rsvp.status,
+          guests: rsvp.guests,
+          note: rsvp.note || '',
+          createdAt: rsvp.createdAt.toISOString(),
+        })
+      );
 
       const formattedEvent: Event & { rsvps: Rsvp[] } = {
         id: event.id,

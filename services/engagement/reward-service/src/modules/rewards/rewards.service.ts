@@ -1,4 +1,4 @@
-import {Inject,  Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { RewardResponse } from './interfaces/reward-response.interface.js';
@@ -99,7 +99,10 @@ export class RewardsService {
         `getRewardAccount failed: ${(error as Error).message}`,
         (error as Error).stack
       );
-      return { success: false, error: { code: 'UNKNOWN_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -145,7 +148,10 @@ export class RewardsService {
       return result;
     } catch (error) {
       this.logger.error(`getMissions failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'UNKNOWN_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -184,7 +190,10 @@ export class RewardsService {
       return result;
     } catch (error) {
       this.logger.error(`getBadges failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'UNKNOWN_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -225,7 +234,10 @@ export class RewardsService {
       };
     } catch (error) {
       this.logger.error(`getStreak failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'UNKNOWN_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -289,7 +301,10 @@ export class RewardsService {
       };
     } catch (error) {
       this.logger.error(`redeemReward failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'UNKNOWN_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -337,7 +352,10 @@ export class RewardsService {
       };
     } catch (error) {
       this.logger.error(`getLevel failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'UNKNOWN_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -393,7 +411,10 @@ export class RewardsService {
       };
     } catch (error) {
       this.logger.error(`addPoints failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'UNKNOWN_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -463,7 +484,10 @@ export class RewardsService {
       };
     } catch (error) {
       this.logger.error(`checkIn failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'UNKNOWN_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -517,7 +541,10 @@ export class RewardsService {
       };
     } catch (error) {
       this.logger.error(`earnPoints failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'UNKNOWN_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -566,7 +593,10 @@ export class RewardsService {
       return result;
     } catch (error) {
       this.logger.error(`getBalance failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'UNKNOWN_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -604,7 +634,10 @@ export class RewardsService {
       };
     } catch (error) {
       this.logger.error(`getHistory failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'UNKNOWN_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: (error as Error).message },
+      };
     }
   }
 }

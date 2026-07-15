@@ -4,7 +4,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TerminusModule } from '@nestjs/terminus';
 import { WalletModule } from './modules/wallet/wallet.module.js';
 import { JwtModule } from '@nestjs/jwt';
-import { PassportModule } from '@nestjs/passport';
 import { HealthModule } from './modules/health/health.module.js';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
 import { MetricsModule } from './modules/metrics/metrics.module.js';
@@ -20,8 +19,7 @@ import { CacheModule } from './cache/index.js';
     }),
     RateLimiterModule.forRoot(),
     CacheModule,
-TerminusModule,
-    PassportModule,
+    TerminusModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({

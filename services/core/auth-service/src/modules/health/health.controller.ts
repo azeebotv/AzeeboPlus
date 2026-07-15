@@ -1,4 +1,4 @@
-import { Inject, Controller, Get, Logger  } from '@nestjs/common';
+import { Inject, Controller, Get, Logger } from '@nestjs/common';
 import { Public } from '@azeebo/security';
 import {
   HealthCheck,
@@ -32,7 +32,9 @@ export class HealthController {
           await this.prisma.$queryRaw`SELECT 1`;
           return { db: { status: 'up' } };
         } catch (error) {
-          this.logger.debug(`Health check failed: ${error instanceof Error ? error.message : 'unknown'}`);
+          this.logger.debug(
+            `Health check failed: ${error instanceof Error ? error.message : 'unknown'}`
+          );
           return { db: { status: 'down' } };
         }
       },
@@ -61,7 +63,9 @@ export class HealthController {
           await this.prisma.$queryRaw`SELECT 1`;
           return { db: { status: 'up' } };
         } catch (error) {
-          this.logger.debug(`Readiness check failed: ${error instanceof Error ? error.message : 'unknown'}`);
+          this.logger.debug(
+            `Readiness check failed: ${error instanceof Error ? error.message : 'unknown'}`
+          );
           return { db: { status: 'down' } };
         }
       },

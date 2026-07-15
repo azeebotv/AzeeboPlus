@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -8,7 +9,7 @@ import { Inject,
   Query,
   Request,
   UseGuards,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
 import { TicketService } from './ticket.service';

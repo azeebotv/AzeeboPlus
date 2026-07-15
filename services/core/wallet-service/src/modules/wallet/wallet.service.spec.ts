@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { WalletService } from './wallet.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
+import { CacheService } from '@azeebo/shared-services';
 
 jest.mock('../database/prisma.service');
 
@@ -59,6 +60,17 @@ describe('WalletService', () => {
           provide: ConfigService,
           useValue: {
             get: jest.fn((_key: string, defaultValue: unknown) => defaultValue),
+            getOrThrow: jest.fn((_key: string) => undefined),
+          },
+        },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            delete: jest.fn().mockResolvedValue(0),
+            deleteByPattern: jest.fn().mockResolvedValue(0),
+            invalidate: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],
@@ -107,6 +119,9 @@ describe('WalletService', () => {
         ...mockWallet,
         balance: 1100,
       });
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValue([
+        { id: 'wallet-123', balance: 1000 },
+      ]);
       (prismaService.$transaction as jest.Mock).mockImplementation(async (cb) => cb(prismaService));
 
       const result = await service.creditBalance('wallet-123', 100, 'Credit test');
@@ -142,6 +157,9 @@ describe('WalletService', () => {
         ...mockWallet,
         balance: 1100,
       });
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValue([
+        { id: 'wallet-123', balance: 1000 },
+      ]);
       (prismaService.$transaction as jest.Mock).mockImplementation(async (cb) => {
         const result = await cb(prismaService);
         return result;
@@ -217,6 +235,9 @@ describe('WalletService', () => {
         description: 'Withdrawal to bank account',
       });
       (prismaService.wallet.update as jest.Mock).mockResolvedValue({ ...mockWallet, balance: 500 });
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValue([
+        { id: 'wallet-123', balance: 1000 },
+      ]);
       (prismaService.$transaction as jest.Mock).mockImplementation(async (cb) => cb(prismaService));
 
       const result = await service.withdraw('user-123', withdrawDto);
@@ -229,7 +250,8 @@ describe('WalletService', () => {
 
       (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
 
-      await expect(service.withdraw('user-123', withdrawDto)).rejects.toThrow();
+      const result = await service.withdraw('user-123', withdrawDto);
+      expect(result.success).toBe(false);
     });
 
     it('should fail if wallet not found', async () => {
@@ -237,7 +259,8 @@ describe('WalletService', () => {
 
       (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.withdraw('user-123', withdrawDto)).rejects.toThrow();
+      const result = await service.withdraw('user-123', withdrawDto);
+      expect(result.success).toBe(false);
     });
   });
 
@@ -254,6 +277,10 @@ describe('WalletService', () => {
         .mockResolvedValueOnce({ ...mockWallet, balance: 800 })
         .mockResolvedValueOnce({ ...recipientWallet, balance: 1200 });
       (prismaService.walletTransaction.create as jest.Mock).mockResolvedValue(mockTransaction);
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValue([
+        { id: 'wallet-123', balance: 1000 },
+        { id: 'wallet-456', balance: 1000 },
+      ]);
       (prismaService.$transaction as jest.Mock).mockImplementation(async (cb) => cb(prismaService));
 
       const result = await service.transfer('user-123', transferDto);
@@ -266,7 +293,8 @@ describe('WalletService', () => {
 
       (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
 
-      await expect(service.transfer('user-123', transferDto)).rejects.toThrow();
+      const result = await service.transfer('user-123', transferDto);
+      expect(result.success).toBe(false);
     });
 
     it('should fail if sender wallet not found', async () => {
@@ -274,7 +302,8 @@ describe('WalletService', () => {
 
       (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.transfer('user-123', transferDto)).rejects.toThrow();
+      const result = await service.transfer('user-123', transferDto);
+      expect(result.success).toBe(false);
     });
 
     it('should fail if recipient wallet not found', async () => {
@@ -284,7 +313,8 @@ describe('WalletService', () => {
         .mockResolvedValueOnce(mockWallet)
         .mockResolvedValueOnce(null);
 
-      await expect(service.transfer('user-123', transferDto)).rejects.toThrow();
+      const result = await service.transfer('user-123', transferDto);
+      expect(result.success).toBe(false);
     });
   });
 

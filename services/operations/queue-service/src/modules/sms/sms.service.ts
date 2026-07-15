@@ -1,4 +1,4 @@
-import {Inject,  Injectable, OnModuleInit, Logger } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import twilio from 'twilio';
 import { CircuitBreaker, CircuitBreakerOpenError } from '@azeebo/shared-types';

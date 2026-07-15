@@ -41,6 +41,15 @@ export class RedisService implements OnModuleDestroy {
     return this.redis.del(key);
   }
 
+  async setIfNotExists(key: string, value: string, ttlSeconds: number): Promise<boolean> {
+    const result = await this.redis.set(key, value, 'EX', ttlSeconds, 'NX');
+    return result === 'OK';
+  }
+
+  async exists(key: string): Promise<number> {
+    return this.redis.exists(key);
+  }
+
   async scanKeys(pattern: string, count = 100): Promise<string[]> {
     const keys: string[] = [];
     let cursor = '0';

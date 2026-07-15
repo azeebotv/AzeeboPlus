@@ -1,4 +1,4 @@
-import {Inject,  Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '../../prisma/client/index.js';
 import { RedisService } from '../../cache/redis.service.js';
@@ -145,7 +145,11 @@ export class ContentFeedService {
     };
   }
 
-  async getFeatured(): Promise<{ success: boolean; data: ContentWithUniverse[]; error?: { code: string; message: string } }> {
+  async getFeatured(): Promise<{
+    success: boolean;
+    data: ContentWithUniverse[];
+    error?: { code: string; message: string };
+  }> {
     try {
       const content = await this.prisma.contentItem.findMany({
         where: {
@@ -170,7 +174,11 @@ export class ContentFeedService {
       return { success: true, data: content };
     } catch (error) {
       this.logger.error(`getFeatured failed: ${(error as Error).message}`);
-      return { success: false, data: [], error: { code: 'FEED_ERROR', message: 'Failed to fetch featured content' } };
+      return {
+        success: false,
+        data: [],
+        error: { code: 'FEED_ERROR', message: 'Failed to fetch featured content' },
+      };
     }
   }
 
@@ -196,7 +204,11 @@ export class ContentFeedService {
     }
   }
 
-  async getNewReleases(limit?: number): Promise<{ success: boolean; data: ContentWithUniverse[]; error?: { code: string; message: string } }> {
+  async getNewReleases(limit?: number): Promise<{
+    success: boolean;
+    data: ContentWithUniverse[];
+    error?: { code: string; message: string };
+  }> {
     try {
       const take = Math.min(limit || 12, 50);
       const content = await this.prisma.contentItem.findMany({
@@ -212,13 +224,19 @@ export class ContentFeedService {
       return { success: true, data: content };
     } catch (error) {
       this.logger.error(`getNewReleases failed: ${(error as Error).message}`);
-      return { success: false, data: [], error: { code: 'FEED_ERROR', message: 'Failed to fetch new releases' } };
+      return {
+        success: false,
+        data: [],
+        error: { code: 'FEED_ERROR', message: 'Failed to fetch new releases' },
+      };
     }
   }
 
-  async getFeaturedSlides(
-    limit?: number
-  ): Promise<{ success: boolean; data: ContentWithUniverse[]; error?: { code: string; message: string } }> {
+  async getFeaturedSlides(limit?: number): Promise<{
+    success: boolean;
+    data: ContentWithUniverse[];
+    error?: { code: string; message: string };
+  }> {
     try {
       const take = Math.min(limit || 5, 10);
       const content = await this.prisma.contentItem.findMany({
@@ -244,13 +262,19 @@ export class ContentFeedService {
       return { success: true, data: content };
     } catch (error) {
       this.logger.error(`getFeaturedSlides failed: ${(error as Error).message}`);
-      return { success: false, data: [], error: { code: 'FEED_ERROR', message: 'Failed to fetch featured slides' } };
+      return {
+        success: false,
+        data: [],
+        error: { code: 'FEED_ERROR', message: 'Failed to fetch featured slides' },
+      };
     }
   }
 
-  async getPopularInRegion(
-    limit?: number
-  ): Promise<{ success: boolean; data: ContentWithUniverse[]; error?: { code: string; message: string } }> {
+  async getPopularInRegion(limit?: number): Promise<{
+    success: boolean;
+    data: ContentWithUniverse[];
+    error?: { code: string; message: string };
+  }> {
     try {
       const take = Math.min(limit || 12, 50);
       const content = await this.prisma.contentItem.findMany({
@@ -263,7 +287,11 @@ export class ContentFeedService {
       return { success: true, data: content };
     } catch (error) {
       this.logger.error(`getPopularInRegion failed: ${(error as Error).message}`);
-      return { success: false, data: [], error: { code: 'FEED_ERROR', message: 'Failed to fetch popular content' } };
+      return {
+        success: false,
+        data: [],
+        error: { code: 'FEED_ERROR', message: 'Failed to fetch popular content' },
+      };
     }
   }
 

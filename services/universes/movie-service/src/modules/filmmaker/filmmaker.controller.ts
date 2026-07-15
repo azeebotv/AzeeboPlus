@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -6,11 +7,9 @@ import { Inject,
   Body,
   Param,
   Query,
-  UseGuards,
   Request,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { FilmmakerService } from './filmmaker.service.js';
 
 @ApiTags('Filmmaker')
@@ -38,7 +37,6 @@ export class FilmmakerController {
   }
 
   @Post('projects')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Create project' })
   @ApiResponse({ status: 201, description: 'Project created' })
   async createProject(
@@ -56,7 +54,6 @@ export class FilmmakerController {
   }
 
   @Patch('projects/:id')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Update project' })
   @ApiResponse({ status: 200, description: 'Project updated' })
   async updateProject(
@@ -76,7 +73,6 @@ export class FilmmakerController {
   }
 
   @Post('projects/:id/updates')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Add project update' })
   @ApiResponse({ status: 201, description: 'Update added' })
   async addUpdate(
@@ -88,7 +84,6 @@ export class FilmmakerController {
   }
 
   @Post('back')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Back a project' })
   @ApiResponse({ status: 201, description: 'Backed' })
   async backProject(

@@ -57,10 +57,12 @@ export default function LifestylePage(): React.JSX.Element {
           </div>
         ) : events.length > 0 ? (
           <div className="relative h-[500px]">
-            <img
+            <OptimizedImage
               src={events[0].thumbnail}
               alt={events[0].title}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              priority
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/50 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">

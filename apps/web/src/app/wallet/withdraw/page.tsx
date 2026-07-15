@@ -5,6 +5,7 @@ import { apiFetch } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { useToast } from '@/components/ToastProvider';
 
 interface BankAccount {
   id: string;
@@ -38,6 +39,7 @@ interface Pricing {
 
 export default function WithdrawPage(): React.JSX.Element {
   const router = useRouter();
+  const toast = useToast();
   const [amount, setAmount] = useState<string>('');
   const [selectedAccount, setSelectedAccount] = useState<string>('');
   const [selectedMethod, _setSelectedMethod] = useState<string>('bank_transfer');
@@ -98,10 +100,10 @@ export default function WithdrawPage(): React.JSX.Element {
         }),
       });
       if (!result.success) throw new Error(result.message || 'Failed to process withdrawal');
-      alert('Withdrawal request submitted successfully!');
+      toast.showToast('Withdrawal request submitted successfully!', 'success');
       router.push('/wallet/transactions');
     } catch (error: unknown) {
-      alert(error instanceof Error ? error.message : 'Failed to process withdrawal');
+      toast.showToast(error instanceof Error ? error.message : 'Failed to process withdrawal', 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -350,9 +352,9 @@ export default function WithdrawPage(): React.JSX.Element {
                       ...accounts,
                       { id: Date.now().toString(), ...newBank, bankLogo: '' },
                     ]);
-                    alert('Bank account saved');
+                    toast.showToast('Bank account saved', 'success');
                   } catch {
-                    alert('Bank account saved locally (server unavailable)');
+                    toast.showToast('Bank account saved locally (server unavailable)', 'success');
                     setAccounts([
                       ...accounts,
                       { id: Date.now().toString(), ...newBank, bankLogo: '' },

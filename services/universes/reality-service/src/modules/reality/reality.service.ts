@@ -1,4 +1,5 @@
-import {Inject, 
+import {
+  Inject,
   Injectable,
   NotFoundException,
   ConflictException,
@@ -71,7 +72,7 @@ export class RealityService {
 
   // Premium extras loaded from config with sensible defaults
   // Prices are configurable via environment variables to avoid hardcoded values
-  private getPremiumExtras(): PremiumExtra[] {
+  private getPremiumExtrasData(): PremiumExtra[] {
     return [
       {
         id: '1',
@@ -286,7 +287,11 @@ export class RealityService {
       });
     });
 
-    await this.cache.invalidate(`reality:*`);
+    await Promise.all([
+      this.cache.invalidate(`reality:show:${showId}`),
+      this.cache.invalidate(`reality:contestants:${showId}`),
+      this.cache.invalidate('reality:shows:list'),
+    ]);
     await this.trackAnalyticsEvent('vote_submitted', userId, {
       voteId: vote.id,
       contestantId,
@@ -308,10 +313,9 @@ export class RealityService {
   ): Promise<RealityResponse> {
     const { contestantId, showId } = body;
 
-    const walletResponse = await axios.get(
-      `${this.walletServiceBaseUrl}/wallets/user/${userId}`,
-      { timeout: 10000 }
-    );
+    const walletResponse = await axios.get(`${this.walletServiceBaseUrl}/wallets/user/${userId}`, {
+      timeout: 10000,
+    });
     const wallet = walletResponse.data?.wallet || walletResponse.data;
     if (!wallet) {
       throw new NotFoundException(`Wallet not found for user`);
@@ -362,7 +366,11 @@ export class RealityService {
         });
       });
 
-      await this.cache.invalidate(`reality:*`);
+      await Promise.all([
+        this.cache.invalidate(`reality:show:${showId}`),
+        this.cache.invalidate(`reality:contestants:${showId}`),
+        this.cache.invalidate('reality:shows:list'),
+      ]);
       await this.trackAnalyticsEvent('supervote_submitted', userId, {
         supervoteId: supervote.id,
         contestantId,
@@ -482,10 +490,9 @@ export class RealityService {
       throw new NotFoundException('Contestant not found');
     }
 
-    const walletResponse = await axios.get(
-      `${this.walletServiceBaseUrl}/wallets/user/${userId}`,
-      { timeout: 10000 }
-    );
+    const walletResponse = await axios.get(`${this.walletServiceBaseUrl}/wallets/user/${userId}`, {
+      timeout: 10000,
+    });
     const wallet = walletResponse.data?.wallet || walletResponse.data;
     if (!wallet) {
       throw new NotFoundException('Wallet not found');
@@ -543,7 +550,11 @@ export class RealityService {
         return createdVotes;
       });
 
-      await this.cache.invalidate(`reality:*`);
+      await Promise.all([
+        this.cache.invalidate(`reality:show:${showId}`),
+        this.cache.invalidate(`reality:contestants:${showId}`),
+        this.cache.invalidate('reality:shows:list'),
+      ]);
       await this.trackAnalyticsEvent('vote_submitted', userId, {
         voteIds: votes.map((v) => v.id),
         contestantId,
@@ -585,10 +596,9 @@ export class RealityService {
   }
 
   async getWalletBalance(userId: string): Promise<RealityResponse> {
-    const walletResponse = await axios.get(
-      `${this.walletServiceBaseUrl}/wallets/user/${userId}`,
-      { timeout: 10000 }
-    );
+    const walletResponse = await axios.get(`${this.walletServiceBaseUrl}/wallets/user/${userId}`, {
+      timeout: 10000,
+    });
     const wallet = walletResponse.data?.wallet || walletResponse.data;
 
     if (!wallet) {
@@ -613,7 +623,7 @@ export class RealityService {
       data: {
         voteCost: this.voteCost,
         supervoteCost: this.supervoteCost,
-        premiumExtras: this.getPremiumExtras(),
+        premiumExtras: this.getPremiumExtrasData(),
       },
     };
   }
@@ -621,20 +631,19 @@ export class RealityService {
   async getPremiumExtras(): Promise<RealityResponse> {
     return {
       success: true,
-      data: { premiumExtras: this.getPremiumExtras() },
+      data: { premiumExtras: this.getPremiumExtrasData() },
     };
   }
 
   async purchasePremiumExtra(userId: string, extraId: string): Promise<RealityResponse> {
-    const extra = this.getPremiumExtras().find((e) => e.id === extraId);
+    const extra = this.getPremiumExtrasData().find((e) => e.id === extraId);
     if (!extra) {
       throw new NotFoundException('Premium extra not found');
     }
 
-    const walletResponse = await axios.get(
-      `${this.walletServiceBaseUrl}/wallets/user/${userId}`,
-      { timeout: 10000 }
-    );
+    const walletResponse = await axios.get(`${this.walletServiceBaseUrl}/wallets/user/${userId}`, {
+      timeout: 10000,
+    });
     const wallet = walletResponse.data?.wallet || walletResponse.data;
     if (!wallet) {
       throw new NotFoundException('Wallet not found');
@@ -658,10 +667,26 @@ export class RealityService {
         { timeout: 10000 }
       );
 
-      // TODO: Create a PremiumPurchase record in the database after wallet debit.
-      // Currently no Purchase model exists in reality-service schema.
-      // This means there is no server-side record of premium extra purchases.
-      // A PremiumPurchase model should be added to track: userId, extraId, purchaseId, price, purchasedAt, expiresAt.
+      // Create a PremiumPurchase record in the database after wallet debit
+      const expiresAt = new Date();
+      if (extra.duration) {
+        expiresAt.setDate(expiresAt.getDate() + extra.duration);
+      }
+
+      await this.prisma.premiumPurchase.create({
+        data: {
+          userId,
+          extraId: extra.id,
+          extraName: extra.name,
+          extraType: extra.type,
+          price: extra.price,
+          duration: extra.duration,
+          purchaseId: idempotencyKey,
+          purchasedAt: new Date(),
+          expiresAt: extra.duration ? expiresAt : null,
+          status: 'active',
+        },
+      });
 
       await this.trackAnalyticsEvent('premium_extra_purchased', userId, {
         purchaseId: idempotencyKey,
@@ -705,11 +730,23 @@ export class RealityService {
       take: 10,
     });
 
-    // Activity events are owned by analytics-service (ProductEvent model lives there,
-    // not in reality-service's schema). This service emits events via HTTP
-    // (see trackAnalyticsEvent) but cannot query them back from its own database.
-    // TODO: Implement analytics-service integration to fetch activity events.
-    const recentActivity: unknown[] = [];
+    // Fetch recent activity events from analytics-service
+    let recentActivity: unknown[] = [];
+    try {
+      const activityResponse = await axios.get(`${this.analyticsServiceBaseUrl}/analytics/events`, {
+        params: {
+          universe: 'reality',
+          limit: 10,
+        },
+        timeout: 5000,
+      });
+      if (activityResponse.data?.success && activityResponse.data?.data) {
+        recentActivity = activityResponse.data.data;
+      }
+    } catch (error) {
+      this.logger.warn('Failed to fetch activity events from analytics-service:', error);
+      // Return empty array on failure - non-critical
+    }
 
     const votesByContestantWithNames = await Promise.all(
       votesByContestant.map(async (v) => {
@@ -816,7 +853,10 @@ export class RealityService {
       data,
     });
 
-    await this.cache.invalidate(`reality:*`);
+    await Promise.all([
+      this.cache.invalidate(`reality:show:${showId}`),
+      this.cache.invalidate('reality:shows:list'),
+    ]);
 
     return {
       success: true,
@@ -834,7 +874,11 @@ export class RealityService {
     }
 
     await this.prisma.realityShow.delete({ where: { id: showId } });
-    await this.cache.invalidate(`reality:*`);
+    await Promise.all([
+      this.cache.invalidate(`reality:show:${showId}`),
+      this.cache.invalidate(`reality:contestants:${showId}`),
+      this.cache.invalidate('reality:shows:list'),
+    ]);
 
     return {
       success: true,

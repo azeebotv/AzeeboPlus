@@ -1,4 +1,4 @@
-import {Inject,  Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 
 @Injectable()
@@ -48,7 +48,7 @@ export class WalletRepository {
     if (!wallet) {
       throw new Error('Wallet not found');
     }
-    if (wallet.balance < amount) {
+    if (Number(wallet.balance) < amount) {
       throw new Error('Insufficient balance');
     }
     return this.prisma.$transaction([
@@ -74,7 +74,7 @@ export class WalletRepository {
     if (!fromWallet || !toWallet) {
       throw new Error('Wallet not found');
     }
-    if (fromWallet.balance < amount) {
+    if (Number(fromWallet.balance) < amount) {
       throw new Error('Insufficient balance');
     }
     return this.prisma.$transaction([
@@ -181,7 +181,7 @@ export class WalletRepository {
     if (!wallet) {
       throw new Error('Wallet not found');
     }
-    if (wallet.balance < amount) {
+    if (Number(wallet.balance) < amount) {
       throw new Error('Insufficient balance');
     }
     return this.prisma.$transaction([

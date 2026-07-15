@@ -5,7 +5,7 @@ import { PaystackProvider } from './providers/paystack.provider.js';
 import { FlutterwaveProvider } from './providers/flutterwave.provider.js';
 import { WebhookRetryService } from './webhook-retry.service.js';
 import { ConfigService } from '@nestjs/config';
-import { RedisService } from '../../common/services/redis.service.js';
+import { RedisService, CacheService } from '@azeebo/shared-services';
 
 jest.mock('../database/prisma.service');
 jest.mock('./providers/paystack.provider');
@@ -149,6 +149,15 @@ describe('PaymentsService E2E Tests', () => {
             get: jest.fn().mockResolvedValue(null),
             set: jest.fn().mockResolvedValue(undefined),
             exists: jest.fn().mockResolvedValue(false),
+          },
+        },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            delete: jest.fn().mockResolvedValue(0),
+            invalidate: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],

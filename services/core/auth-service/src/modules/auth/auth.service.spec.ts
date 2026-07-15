@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service.js';
 import { AuthRepository } from './auth.repository.js';
-import { RedisService } from '../../common/services/redis.service.js';
+import { RedisService } from '@azeebo/shared-services';
 import { OtpService } from './otp/otp.service.js';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -11,7 +11,26 @@ import * as bcrypt from 'bcrypt';
 
 jest.mock('bcrypt');
 jest.mock('./auth.repository');
-jest.mock('../../common/services/redis.service');
+jest.mock('@azeebo/shared-services', () => {
+  const actual = jest.requireActual('@azeebo/shared-services');
+  return {
+    ...actual,
+    RedisService: jest.fn().mockImplementation(() => ({
+      get: jest.fn(),
+      set: jest.fn(),
+      del: jest.fn(),
+      incr: jest.fn(),
+      expire: jest.fn(),
+      ttl: jest.fn(),
+      exists: jest.fn(),
+    })),
+    CacheService: jest.fn().mockImplementation(() => ({
+      get: jest.fn(),
+      set: jest.fn(),
+      delete: jest.fn(),
+    })),
+  };
+});
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -124,12 +143,28 @@ describe('AuthService', () => {
                 SALT_ROUNDS: 10,
                 JWT_EXPIRES_IN: '30m',
                 JWT_REFRESH_EXPIRES_IN: '7d',
+                JWT_ACCESS_SECRET: 'test-jwt-secret-for-access-tokens-min-32-chars',
+                JWT_REFRESH_SECRET: 'test-refresh-secret-for-refresh-tokens-min-32',
+                JWT_AUDIENCE: 'azeebo-api',
+                JWT_ISSUER: 'azeebo-auth',
                 REFRESH_TOKEN_EXPIRY_DAYS: 7,
                 MAX_FAILED_ATTEMPTS: 5,
                 LOCKOUT_DURATION_SECONDS: 900,
                 OTP_EXPIRY: 300,
               };
               return config[key] ?? defaultValue;
+            }),
+            getOrThrow: jest.fn().mockImplementation((key: string) => {
+              const config: Record<string, unknown> = {
+                JWT_REFRESH_SECRET: 'test-refresh-secret-for-refresh-tokens-min-32',
+                JWT_ACCESS_SECRET: 'test-jwt-secret-for-access-tokens-min-32-chars',
+                JWT_AUDIENCE: 'azeebo-api',
+                JWT_ISSUER: 'azeebo-auth',
+              };
+              if (config[key] === undefined) {
+                throw new Error(`Missing required config: ${key}`);
+              }
+              return config[key];
             }),
           },
         },
@@ -421,15 +456,13 @@ describe('AuthService', () => {
   });
 
   describe('resendVerification', () => {
-    it('should resend verification email for existing user', async () => {
+    it('should return success for existing user (email sent via notification-service)', async () => {
       (authRepository.findByEmail as jest.Mock).mockResolvedValue(mockUser);
-      (redisService.set as jest.Mock).mockResolvedValue(undefined);
 
       const result = await service.resendVerification({ email: 'test@example.com' });
 
       expect(result.success).toBe(true);
       expect(result.message).toContain('verification');
-      expect(redisService.set).toHaveBeenCalled();
     });
 
     it('should return success even for non-existent user (security)', async () => {
@@ -438,7 +471,6 @@ describe('AuthService', () => {
       const result = await service.resendVerification({ email: 'nonexistent@example.com' });
 
       expect(result.success).toBe(true);
-      expect(redisService.set).not.toHaveBeenCalled();
     });
   });
 });

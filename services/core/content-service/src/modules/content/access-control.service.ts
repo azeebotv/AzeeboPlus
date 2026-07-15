@@ -1,4 +1,4 @@
-import {Inject,  Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import axios from 'axios';
@@ -401,7 +401,9 @@ export class AccessControlService {
             `${mediaServiceUrl}/v1/upload/signed-url/${encodeURIComponent(storageKey)}`,
             {
               timeout: 5000,
-              headers: { 'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', '') },
+              headers: {
+                'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', ''),
+              },
             }
           );
           const signedUrl = response.data?.data?.url || response.data?.url;
@@ -413,7 +415,9 @@ export class AccessControlService {
             };
           }
         } catch (error) {
-          this.logger.warn(`Failed to get signed URL from media-service: ${(error as Error).message}`);
+          this.logger.warn(
+            `Failed to get signed URL from media-service: ${(error as Error).message}`
+          );
         }
       }
 

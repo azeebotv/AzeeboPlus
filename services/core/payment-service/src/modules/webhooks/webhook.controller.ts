@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Post,
   Body,
@@ -9,7 +10,7 @@ import { Inject,
   BadRequestException,
   Logger,
   Request,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Public, RateLimitGuard, RateLimit } from '@azeebo/security';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';

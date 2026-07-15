@@ -1,12 +1,19 @@
-import { Inject, Controller, Get, Post, Delete, Param, Body, UseGuards, Request  } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Param,
+  Body,
+  Request,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UsersService } from './users.service.js';
 import { ContentIdDto } from './dto/content-id.dto.js';
 
 @ApiTags('Interactions')
 @Controller('interactions')
-@UseGuards(AuthGuard('jwt'))
 export class InteractionsController {
   constructor(@Inject(UsersService) private readonly usersService: UsersService) {}
 
@@ -60,10 +67,7 @@ export class InteractionsController {
   @Post('favorites')
   @ApiOperation({ summary: 'Add to favorites' })
   @ApiResponse({ status: 201, description: 'Added to favorites' })
-  async addFavorite(
-    @Request() req: { user: { id: string } },
-    @Body() body: ContentIdDto
-  ) {
+  async addFavorite(@Request() req: { user: { id: string } }, @Body() body: ContentIdDto) {
     await this.usersService.saveItem(req.user.id, body.contentId);
     return { success: true };
   }

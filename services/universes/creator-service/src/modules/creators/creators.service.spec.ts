@@ -105,6 +105,7 @@ describe('CreatorsService', () => {
             contentItem: {
               findMany: jest.fn(),
               create: jest.fn(),
+              count: jest.fn(),
             },
             mediaUpload: {
               findFirst: jest.fn(),
@@ -140,9 +141,6 @@ describe('CreatorsService', () => {
               findUnique: jest.fn(),
               create: jest.fn(),
               findMany: jest.fn(),
-            },
-            wallet: {
-              findUnique: jest.fn(),
             },
             notification: {
               create: jest.fn(),
@@ -580,9 +578,6 @@ describe('CreatorsService', () => {
 
       (prismaService.subscription.findUnique as jest.Mock).mockResolvedValue(null);
       (prismaService.creatorProfile.findUnique as jest.Mock).mockResolvedValue(mockCreatorProfile);
-      (prismaService.wallet.findUnique as jest.Mock)
-        .mockResolvedValueOnce({ id: 'wallet-sender', userId })
-        .mockResolvedValueOnce({ id: 'wallet-creator', userId: creatorId });
       mockedAxios.post.mockResolvedValue({ data: { success: true } });
       (prismaService.subscription.create as jest.Mock).mockResolvedValue(mockSubscription);
       (prismaService.creatorEarning.create as jest.Mock).mockResolvedValue({});
@@ -909,9 +904,6 @@ describe('CreatorsService', () => {
       const mockTip = { id: 'tip-1', fromUserId: userId, toUserId: creatorId, amount };
 
       (prismaService.creatorProfile.findUnique as jest.Mock).mockResolvedValue(mockCreatorProfile);
-      (prismaService.wallet.findUnique as jest.Mock)
-        .mockResolvedValueOnce({ id: 'wallet-sender', userId })
-        .mockResolvedValueOnce({ id: 'wallet-creator', userId: creatorId });
       (prismaService.tip.findFirst as jest.Mock).mockResolvedValue(null);
       mockedAxios.post.mockResolvedValue({ data: { success: true } });
       (prismaService.tip.create as jest.Mock).mockResolvedValue(mockTip);

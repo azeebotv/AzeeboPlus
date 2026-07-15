@@ -5,6 +5,7 @@ import { apiFetch } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { useToast } from '@/components/ToastProvider';
 
 interface PaymentMethod {
   id: string;
@@ -33,6 +34,7 @@ interface WalletPricing {
 
 export default function AddFundsPage(): React.JSX.Element {
   const router = useRouter();
+  const toast = useToast();
   const [amount, setAmount] = useState<string>('');
   const [selectedMethod, setSelectedMethod] = useState<string>('');
   const [pricing, setPricing] = useState<Pricing | null>(null);
@@ -78,10 +80,10 @@ export default function AddFundsPage(): React.JSX.Element {
         body: JSON.stringify({ amount: numAmount, paymentMethodId: selectedMethod }),
       });
       if (!result.success) throw new Error(result.message || 'Failed to process deposit');
-      alert('Deposit initiated successfully!');
+      toast.showToast('Deposit initiated successfully!', 'success');
       router.push('/wallet/transactions');
     } catch (error: unknown) {
-      alert(error instanceof Error ? error.message : 'Failed to process deposit');
+      toast.showToast(error instanceof Error ? error.message : 'Failed to process deposit', 'error');
     } finally {
       setIsProcessing(false);
     }

@@ -1,4 +1,4 @@
-import { Inject, Controller, Get, Query, UseGuards  } from '@nestjs/common';
+import { Inject, Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import { LifestyleFeedService } from './feed.service';
