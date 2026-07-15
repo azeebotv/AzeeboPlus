@@ -58,7 +58,6 @@
     },
     "owner": "iamdeprof",
     "extra": {
-      "apiBaseURL": "http://localhost:3013",
       "eas": {
         "projectId": "3627eb83-fb81-4f76-bae5-668a14102705"
       },

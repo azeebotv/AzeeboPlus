@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CacheModule } from '@azeebo/shared-services';
@@ -18,7 +17,6 @@ import { SmsModule } from '../sms/sms.module.js';
     FirebaseModule,
     EmailModule,
     SmsModule,
-    PassportModule,
     CacheModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

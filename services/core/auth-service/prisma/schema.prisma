@@ -45,8 +45,8 @@ model SocialAccount {
   userId      String
   provider    String
   socialId    String
-  accessToken String?
-  refreshToken String?
+  accessToken String?  // Not stored — always empty string in application code
+  refreshToken String? // Hashed with bcrypt before storage (see social.service.ts)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

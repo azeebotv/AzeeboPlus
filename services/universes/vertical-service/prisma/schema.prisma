@@ -34,6 +34,7 @@ model UniverseMap {
 
   @@index([slug])
   @@index([status])
+  @@map("universe_maps")
 }
 
 model Location {
@@ -58,6 +59,7 @@ model Location {
 
   @@index([universeId])
   @@index([parentId])
+  @@map("locations")
 }
 
 model Character {
@@ -82,6 +84,7 @@ model Character {
 
   @@index([universeId])
   @@index([slug])
+  @@map("characters")
 }
 
 model CharacterLocation {
@@ -100,6 +103,7 @@ model CharacterLocation {
   @@unique([characterId, locationId])
   @@index([characterId])
   @@index([locationId])
+  @@map("character_locations")
 }
 
 model CharacterRelationship {
@@ -120,6 +124,7 @@ model CharacterRelationship {
   @@index([fromId])
   @@index([toId])
   @@index([type])
+  @@map("character_relationships")
 }
 
 model TimelineEvent {
@@ -144,6 +149,7 @@ model TimelineEvent {
   @@index([universeId])
   @@index([characterId])
   @@index([date])
+  @@map("timeline_events")
 }
 
 model Title {
@@ -169,6 +175,7 @@ model Title {
 
   @@index([universeId])
   @@index([status])
+  @@map("titles")
 }
 
 model Chapter {
@@ -187,6 +194,7 @@ model Chapter {
   title       Title    @relation(fields: [titleId], references: [id], onDelete: Cascade)
 
   @@index([titleId])
+  @@map("chapters")
 }
 
 model LoreEntry {
@@ -208,6 +216,7 @@ model LoreEntry {
 
   @@index([universeId])
   @@index([category])
+  @@map("lore_entries")
 }
 
 model Crossover {
@@ -225,6 +234,7 @@ model Crossover {
   titles      CrossoverTitle[]
 
   @@index([status])
+  @@map("crossovers")
 }
 
 model CrossoverTitle {
@@ -238,6 +248,7 @@ model CrossoverTitle {
   @@unique([crossoverId, titleId])
   @@index([crossoverId])
   @@index([titleId])
+  @@map("crossover_titles")
 }
 
 model Recap {
@@ -257,6 +268,7 @@ model Recap {
   title       Title    @relation(fields: [titleId], references: [id], onDelete: Cascade)
 
   @@index([titleId])
+  @@map("recaps")
 }
 
 model Realm {
@@ -279,6 +291,7 @@ model Realm {
   @@index([universeId])
   @@index([slug])
   @@index([type])
+  @@map("realms")
 }
 
 model OrisaFile {
@@ -301,6 +314,7 @@ model OrisaFile {
   @@index([universeId])
   @@index([slug])
   @@index([domain])
+  @@map("orisa_files")
 }
 
 model Artifact {
@@ -323,6 +337,7 @@ model Artifact {
   @@index([universeId])
   @@index([slug])
   @@index([type])
+  @@map("artifacts")
 }
 
 model Prophecy {
@@ -345,6 +360,7 @@ model Prophecy {
   @@index([universeId])
   @@index([slug])
   @@index([status])
+  @@map("prophecies")
 }
 
 model WorldMap {
@@ -364,6 +380,7 @@ model WorldMap {
   @@index([universeId])
   @@index([slug])
   @@index([type])
+  @@map("world_maps")
 }
 
 model Room {
@@ -382,6 +399,7 @@ model Room {
 
   @@index([universeId])
   @@index([slug])
+  @@map("rooms")
 }
 
 model RoomPost {
@@ -400,6 +418,7 @@ model RoomPost {
 
   @@index([roomId])
   @@index([authorId])
+  @@map("room_posts")
 }
 
 model Theory {
@@ -421,4 +440,5 @@ model Theory {
   @@index([slug])
   @@index([status])
   @@index([accessLevel])
+  @@map("theories")
 }

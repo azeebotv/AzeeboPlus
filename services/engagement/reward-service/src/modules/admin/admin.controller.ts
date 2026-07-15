@@ -1,12 +1,11 @@
-import { Inject, Controller, Get, Post, Put, Param, Body, Query, UseGuards  } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Put, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AdminService } from './admin.service.js';
-import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard, RateLimitGuard, RateLimit } from '@azeebo/security';
 
 @ApiTags('Admin - Reward Service')
-@Controller('admin')
-@UseGuards(AuthGuard('jwt'), AdminGuard, RateLimitGuard)
+@Controller('v1/admin')
+@UseGuards(AdminGuard, RateLimitGuard)
 export class AdminController {
   constructor(@Inject(AdminService) private readonly adminService: AdminService) {}
 

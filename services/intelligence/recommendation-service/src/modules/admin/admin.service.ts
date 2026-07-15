@@ -1,11 +1,15 @@
-import {Inject,  Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
 @Injectable()
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(ConfigService) private readonly configService: ConfigService
+  ) {}
 
   async getStats() {
     try {
@@ -31,10 +35,15 @@ export class AdminService {
 
   async getModels() {
     // Models can be configured via RECOMMENDATION_MODELS env var (JSON array)
-    const envModels = process.env.RECOMMENDATION_MODELS;
+    const envModels = this.configService.get<string>('RECOMMENDATION_MODELS');
     if (envModels) {
       try {
-        const parsed = JSON.parse(envModels) as Array<{ id: string; name: string; description: string; active: boolean }>;
+        const parsed = JSON.parse(envModels) as Array<{
+          id: string;
+          name: string;
+          description: string;
+          active: boolean;
+        }>;
         return ApiResponseWrapper.success(parsed);
       } catch {
         // Fall back to defaults if JSON is invalid

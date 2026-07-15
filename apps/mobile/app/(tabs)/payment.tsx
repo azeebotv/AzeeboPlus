@@ -95,7 +95,7 @@ export default function PaymentScreen() {
     try {
       const response = await paymentApi.initialize({
         amount,
-        currency: 'USD',
+        currency: 'NGN',
         email: user.email,
         metadata: {
           userId: user.id,

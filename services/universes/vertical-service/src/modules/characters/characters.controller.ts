@@ -1,6 +1,15 @@
-import { Inject, Controller, Get, Post, Patch, Body, Param, Query, UseGuards  } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from '@azeebo/security';
 import { CharactersService } from './characters.service';
 import { CreateCharacterDto } from './dto/create-character.dto';
@@ -37,7 +46,7 @@ export class CharactersController {
   }
 
   @Post()
-  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Create new character' })
   @ApiResponse({ status: 201, description: 'Character created' })
   async createCharacter(@Body() data: CreateCharacterDto): Promise<unknown> {
@@ -45,7 +54,7 @@ export class CharactersController {
   }
 
   @Patch(':id')
-  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Update character' })
   @ApiResponse({ status: 200, description: 'Character updated' })
   async updateCharacter(
@@ -56,7 +65,7 @@ export class CharactersController {
   }
 
   @Post(':id/relationships')
-  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Add character relationship' })
   @ApiResponse({ status: 201, description: 'Relationship added' })
   async addRelationship(

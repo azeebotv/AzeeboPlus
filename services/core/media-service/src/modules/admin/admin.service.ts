@@ -1,7 +1,7 @@
-import {Inject,  Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { UploadService } from '../upload/upload.service';
 import { S3Service } from '../upload/s3.service';
-import { RedisService } from '../../common/services/redis.service';
+import { RedisService } from '@azeebo/shared-services';
 
 @Injectable()
 export class AdminService {

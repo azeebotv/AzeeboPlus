@@ -48,9 +48,13 @@ export default function ContentManagerPage(): React.JSX.Element {
           description: String(item.description || ''),
           thumbnail: String(item.thumbnail || ''),
           status: String(item.status || 'draft') as ContentItem['status'],
+          universeId: String(item.universeId || ''),
+          createdAt: String(item.createdAt || ''),
+          updatedAt: String(item.updatedAt || ''),
+          creator: item.creator || { id: '', name: '' },
+          universe: item.universe || { id: '', name: '' },
           views: Number(item.viewCount ?? item.views ?? 0),
           earnings: Number(item.earnings ?? 0),
-          createdAt: String(item.createdAt || ''),
           type: String(item.contentType || item.type || 'video') as ContentItem['type'],
         }));
       }

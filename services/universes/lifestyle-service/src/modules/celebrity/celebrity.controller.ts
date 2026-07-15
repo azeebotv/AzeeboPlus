@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -8,9 +9,8 @@ import { Inject,
   Param,
   Query,
   UseGuards,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
 import { CelebrityService } from './celebrity.service';
 import { UpdateCelebrityDto } from './dto/update-celebrity.dto';
@@ -86,7 +86,7 @@ export class CelebrityController {
   }
 
   @Post()
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Create celebrity entry' })
   @ApiResponse({ status: 201, description: 'Entry created' })
@@ -95,7 +95,7 @@ export class CelebrityController {
   }
 
   @Post('news')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Create celebrity news' })
   @ApiResponse({ status: 201, description: 'News created' })
@@ -104,7 +104,7 @@ export class CelebrityController {
   }
 
   @Patch(':id')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Update celebrity entry' })
   @ApiResponse({ status: 200, description: 'Entry updated' })
@@ -113,7 +113,7 @@ export class CelebrityController {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN')
   @ApiOperation({ summary: 'Delete celebrity entry' })
   @ApiResponse({ status: 200, description: 'Entry deleted' })

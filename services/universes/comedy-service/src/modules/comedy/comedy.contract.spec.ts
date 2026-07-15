@@ -4,7 +4,7 @@ import request from 'supertest';
 import { ComedyModule } from './comedy.module.js';
 import { ComedyService } from './comedy.service.js';
 import { PrismaService } from '../database/prisma.service.js';
-import { RedisService } from '../../common/services/redis.service.js';
+import { RedisService } from '@azeebo/shared-services';
 import { ConfigService } from '@nestjs/config';
 import { RateLimitGuard } from '@azeebo/security';
 import { AuthGuard } from '@nestjs/passport';

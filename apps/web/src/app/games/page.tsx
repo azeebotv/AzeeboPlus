@@ -68,14 +68,20 @@ export default function GamesPage(): React.JSX.Element {
           </div>
         ) : games.length > 0 ? (
           <div className="relative h-[400px] sm:h-[500px]">
-            <motion.img
-              src={games[0].thumbnail}
-              alt={games[0].title}
-              className="w-full h-full object-cover"
+            <motion.div
+              className="absolute inset-0"
               initial={{ scale: 1.1, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-            />
+            >
+              <OptimizedImage
+                src={games[0].thumbnail}
+                alt={games[0].title}
+                fill
+                className="object-cover"
+                priority
+              />
+            </motion.div>
             <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/50 to-transparent" />
             <AmbientGlow color="rgba(59,130,246,0.25)" size={500} className="bottom-0 right-0" />
 

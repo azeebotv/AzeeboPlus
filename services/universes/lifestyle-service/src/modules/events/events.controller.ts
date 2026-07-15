@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -9,9 +10,8 @@ import { Inject,
   Query,
   UseGuards,
   Request,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { EventsService } from './events.service';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
 import { CreateEventDto } from './dto/create-event.dto';
@@ -57,7 +57,7 @@ export class EventsController {
   }
 
   @Post()
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Create new event' })
   @ApiResponse({ status: 201, description: 'Event created' })
@@ -69,7 +69,7 @@ export class EventsController {
   }
 
   @Patch(':id')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Update event' })
   @ApiResponse({ status: 200, description: 'Event updated' })
@@ -78,7 +78,7 @@ export class EventsController {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Delete event' })
   @ApiResponse({ status: 200, description: 'Event deleted' })
@@ -87,7 +87,6 @@ export class EventsController {
   }
 
   @Post(':id/rsvp')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'RSVP to event' })
   @ApiResponse({ status: 200, description: 'RSVP successful' })
   async rsvpEvent(
@@ -99,7 +98,6 @@ export class EventsController {
   }
 
   @Delete(':id/rsvp')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Cancel RSVP' })
   @ApiResponse({ status: 200, description: 'RSVP cancelled' })
   async cancelRsvp(

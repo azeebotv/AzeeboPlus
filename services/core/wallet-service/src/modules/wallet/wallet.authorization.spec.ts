@@ -2,11 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ExecutionContext, NestInterceptor, UnauthorizedException } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
-import { RateLimitGuard, AdminGuard, ServiceAuthGuard } from '@azeebo/security';
+import { RateLimitGuard, AdminGuard } from '@azeebo/security';
 import { WalletController } from './wallet.controller.js';
 import { WalletService } from './wallet.service.js';
 import { PrismaService } from '../database/prisma.service.js';
-import { CacheInterceptor } from '../../cache/index.js';
+import { CacheService, CacheInterceptor } from '../../cache/index.js';
 
 describe('Wallet Service Authorization Tests', () => {
   const mockWalletService = {
@@ -122,11 +122,19 @@ describe('Wallet Service Authorization Tests', () => {
       providers: [
         { provide: WalletService, useValue: mockWalletService },
         { provide: PrismaService, useValue: {} },
-        { provide: APP_GUARD, useClass: ServiceAuthGuard },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            delete: jest.fn().mockResolvedValue(0),
+            deleteByPattern: jest.fn().mockResolvedValue(0),
+            invalidate: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        { provide: APP_GUARD, useValue: mockAuthGuard },
       ],
     })
-      .overrideGuard(ServiceAuthGuard)
-      .useValue(mockAuthGuard)
       .overrideGuard(RateLimitGuard)
       .useValue(createMockRateLimitGuard())
       .overrideGuard(AdminGuard)
@@ -311,6 +319,16 @@ describe('Wallet Service Authorization Tests', () => {
         providers: [
           { provide: WalletService, useValue: mockWalletService },
           { provide: PrismaService, useValue: {} },
+          {
+            provide: CacheService,
+            useValue: {
+              get: jest.fn().mockResolvedValue(null),
+              set: jest.fn().mockResolvedValue(undefined),
+              delete: jest.fn().mockResolvedValue(0),
+              deleteByPattern: jest.fn().mockResolvedValue(0),
+              invalidate: jest.fn().mockResolvedValue(undefined),
+            },
+          },
           { provide: APP_GUARD, useValue: mockAuthGuard },
         ],
       })
@@ -348,6 +366,16 @@ describe('Wallet Service Authorization Tests', () => {
         providers: [
           { provide: WalletService, useValue: mockWalletService },
           { provide: PrismaService, useValue: {} },
+          {
+            provide: CacheService,
+            useValue: {
+              get: jest.fn().mockResolvedValue(null),
+              set: jest.fn().mockResolvedValue(undefined),
+              delete: jest.fn().mockResolvedValue(0),
+              deleteByPattern: jest.fn().mockResolvedValue(0),
+              invalidate: jest.fn().mockResolvedValue(undefined),
+            },
+          },
           { provide: APP_GUARD, useValue: mockAuthGuard },
         ],
       })

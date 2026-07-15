@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -8,7 +9,7 @@ import { Inject,
   UseGuards,
   BadRequestException,
   Logger,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 
@@ -124,7 +125,9 @@ export class SocialAuthController {
     const socialUser = {
       email: tokenInfo.email,
       displayName:
-        dto.displayName || tokenInfo.name || `${provider.charAt(0).toUpperCase() + provider.slice(1)} User`,
+        dto.displayName ||
+        tokenInfo.name ||
+        `${provider.charAt(0).toUpperCase() + provider.slice(1)} User`,
       socialId: tokenInfo.sub,
       provider: provider as 'google' | 'apple',
       accessToken: '',

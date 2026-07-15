@@ -1,5 +1,4 @@
-import { Inject, Controller, Get, Post, UseGuards, Request, Body  } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Inject, Controller, Get, Post, UseGuards, Request, Body } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
 import { AuthService } from './auth.service.js';
@@ -66,7 +65,6 @@ export class AuthController {
   }
 
   @Post('logout')
-  @UseGuards(AuthGuard('jwt'))
   @UseGuards(RateLimitGuard)
   @ApiOperation({ summary: 'User logout' })
   @ApiResponse({ status: 200, description: 'Logout successful' })
@@ -77,7 +75,6 @@ export class AuthController {
   }
 
   @Get('me')
-  @UseGuards(AuthGuard('jwt'))
   @UseGuards(RateLimitGuard)
   @ApiOperation({ summary: 'Get current user' })
   @ApiResponse({ status: 200, description: 'User profile' })
@@ -136,7 +133,7 @@ export class AuthController {
   }
 
   @Post('select-role')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(3, 3600000)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Select user role after registration' })

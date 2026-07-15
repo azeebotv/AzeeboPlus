@@ -1,4 +1,5 @@
-import {Inject, 
+import {
+  Inject,
   Injectable,
   CanActivate,
   ExecutionContext,
@@ -10,7 +11,7 @@ import {Inject,
 import { Reflector } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
-import { RedisService } from '../services/redis.service.js';
+import { RedisService } from '@azeebo/shared-services';
 
 export const RateLimit = (limit: number, windowMs: number): ReturnType<typeof SetMetadata> =>
   SetMetadata('rateLimit', { limit, windowMs });
@@ -129,7 +130,9 @@ export class RateLimitGuard implements CanActivate {
       const exists = await this.redisService.get(key);
       return !!exists;
     } catch (error) {
-      this.logger.warn(`Failed to check block status for ${ip}: ${error instanceof Error ? error.message : 'unknown'}`);
+      this.logger.warn(
+        `Failed to check block status for ${ip}: ${error instanceof Error ? error.message : 'unknown'}`
+      );
       return false;
     }
   }
@@ -139,7 +142,9 @@ export class RateLimitGuard implements CanActivate {
       const key = `${this.blockListPrefix}${ip}`;
       await this.redisService.set(key, 'blocked', duration);
     } catch (error) {
-      this.logger.warn(`Failed to block IP ${ip}: ${error instanceof Error ? error.message : 'unknown'}`);
+      this.logger.warn(
+        `Failed to block IP ${ip}: ${error instanceof Error ? error.message : 'unknown'}`
+      );
     }
   }
 
@@ -153,7 +158,9 @@ export class RateLimitGuard implements CanActivate {
         await this.block(ip);
       }
     } catch (error) {
-      this.logger.warn(`Failed to record violation for ${ip}: ${error instanceof Error ? error.message : 'unknown'}`);
+      this.logger.warn(
+        `Failed to record violation for ${ip}: ${error instanceof Error ? error.message : 'unknown'}`
+      );
     }
   }
 }

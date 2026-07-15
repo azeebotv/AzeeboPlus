@@ -1,6 +1,5 @@
-import { Inject, Controller, Get, Post, Body, Param, UseGuards, Request  } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Body, Param, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { SportsService } from './sports.service.js';
@@ -50,7 +49,6 @@ export class SportsController {
   }
 
   @Post('predictions')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Submit prediction' })
   @ApiResponse({ status: 201, description: 'Prediction submitted' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
@@ -84,7 +82,6 @@ export class SportsController {
   }
 
   @Post('fan-contests/:id/enter')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Enter fan contest' })
   @ApiResponse({ status: 201, description: 'Contest entered' })
   @ApiResponse({ status: 400, description: 'Invalid input' })

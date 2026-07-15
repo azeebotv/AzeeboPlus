@@ -9,7 +9,7 @@ import request from 'supertest';
 import { CreatorsController } from './creators.controller.js';
 import { CreatorsService } from './creators.service.js';
 import { RateLimitGuard } from '@azeebo/security';
-import { JwtStrategy } from '../../common/strategies/jwt.strategy.js';
+import { JwtStrategy } from '@azeebo/shared-services';
 
 describe('Creators Controller Contract Tests', () => {
   let app: INestApplication;

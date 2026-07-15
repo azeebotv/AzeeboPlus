@@ -1,4 +1,4 @@
-import {Inject,  Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { SupportRepository, CreateTicketDto, Ticket, TicketReply } from './support.repository';
 
 interface CreateTicketInput {
@@ -19,7 +19,6 @@ export class SupportService {
   constructor(@Inject(SupportRepository) private readonly supportRepository: SupportRepository) {
     this.logger.warn('SupportService is deprecated. Migrate to TicketService.');
   }
-  constructor(@Inject(SupportRepository) private readonly supportRepository: SupportRepository) {}
 
   async createTicket(userId: string, data: CreateTicketInput): Promise<Ticket> {
     const ticketData: CreateTicketDto = {

@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Delete,
   Get,
@@ -6,19 +7,16 @@ import { Inject,
   Post,
   Body,
   Req,
-  UseGuards,
   ForbiddenException,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { UsersService } from '../users/users.service.js';
 import { Request } from 'express';
 import { createLogger } from '@azeebo/logger';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiTags('Privacy & Data Deletion')
 @Controller('privacy')
-@UseGuards(AuthGuard('jwt'))
 export class UserDeletionController {
   private readonly logger = createLogger('user-deletion');
 

@@ -1,6 +1,5 @@
-import { Inject, Controller, Get, Post, Body, UseGuards, Request, Param  } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Body, UseGuards, Request, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { ComedyService } from './comedy.service.js';
@@ -36,7 +35,6 @@ export class ComedyController {
   }
 
   @Post('challenges')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Submit comedy challenge entry' })
   @ApiResponse({ status: 201, description: 'Entry submitted' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -55,7 +53,6 @@ export class ComedyController {
   }
 
   @Post('clips/:clipId/share')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Share clip' })
   @ApiResponse({ status: 200, description: 'Clip shared' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })

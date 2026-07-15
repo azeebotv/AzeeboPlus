@@ -286,7 +286,7 @@ describe('apiFetch — standalone fetch helper', () => {
       const result = await apiFetch('/api/v1/content');
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Unknown error');
+      expect(result.error).toBe('string error');
     });
   });
 

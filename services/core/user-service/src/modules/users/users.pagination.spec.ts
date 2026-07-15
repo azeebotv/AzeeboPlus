@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ExecutionContext, VersioningType } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
 import { RateLimitGuard, ServiceAuthGuard } from '@azeebo/security';
 import { UsersController } from './users.controller.js';
 import { UsersService } from './users.service.js';
+import { CacheService } from '@azeebo/shared-services';
 
 describe('User Service Pagination Tests', () => {
   let app: INestApplication;
@@ -57,8 +57,13 @@ describe('User Service Pagination Tests', () => {
           useValue: mockUsersService,
         },
         {
-          provide: APP_GUARD,
-          useClass: ServiceAuthGuard,
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            delete: jest.fn().mockResolvedValue(0),
+            invalidate: jest.fn().mockResolvedValue(undefined),
+          },
         },
       ],
     })
@@ -70,6 +75,13 @@ describe('User Service Pagination Tests', () => {
 
     app = moduleFixture.createNestApplication();
     app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
+    // Mock ServiceAuthGuard behavior
+    app.use((req: { user?: unknown }, _res: unknown, next: () => void) => {
+      if (!req.user) {
+        req.user = { id: 'test-user-123', sub: 'test-user-123', role: 'user' };
+      }
+      next();
+    });
     await app.init();
   });
 

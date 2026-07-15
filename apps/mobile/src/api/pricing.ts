@@ -46,22 +46,22 @@ export interface PassPricing {
 
 export const pricingApi = {
   getMoviePricing: async (): Promise<ApiResponse<MoviePricing>> => {
-    return apiClient.get<ApiResponse<MoviePricing>>('/api/v1/pricing/movie');
+    return apiClient.get<ApiResponse<MoviePricing>>('/pricing/movie');
   },
 
   getVotePackages: async (type: string): Promise<ApiResponse<VotePackage[]>> => {
-    return apiClient.get<ApiResponse<VotePackage[]>>(`/api/v1/pricing/vote-packages/${type}`);
+    return apiClient.get<ApiResponse<VotePackage[]>>(`/pricing/vote-packages/${type}`);
   },
 
   getSubscriptionPlans: async (): Promise<ApiResponse<Record<string, SubscriptionPlan>>> => {
-    return apiClient.get<ApiResponse<Record<string, SubscriptionPlan>>>('/api/v1/pricing/subscriptions');
+    return apiClient.get<ApiResponse<Record<string, SubscriptionPlan>>>('/pricing/subscriptions');
   },
 
   getWalletPricing: async (): Promise<ApiResponse<WalletPricing>> => {
-    return apiClient.get<ApiResponse<WalletPricing>>('/api/v1/pricing/wallet');
+    return apiClient.get<ApiResponse<WalletPricing>>('/pricing/wallet');
   },
 
   getPassesPricing: async (): Promise<ApiResponse<PassPricing>> => {
-    return apiClient.get<ApiResponse<PassPricing>>('/api/v1/pricing/passes');
+    return apiClient.get<ApiResponse<PassPricing>>('/pricing/passes');
   },
 };

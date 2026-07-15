@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -8,9 +9,8 @@ import { Inject,
   Param,
   Put,
   Delete,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { MoviesService } from './movies.service.js';
@@ -41,7 +41,6 @@ export class MoviesController {
   }
 
   @Get('watchlist')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'User watchlist' })
   @ApiResponse({ status: 200, description: 'Watchlist' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -50,7 +49,6 @@ export class MoviesController {
   }
 
   @Post('watchlist')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Add to watchlist' })
   @ApiResponse({ status: 201, description: 'Added to watchlist' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -62,7 +60,6 @@ export class MoviesController {
   }
 
   @Delete('watchlist/:movieId')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Remove from watchlist' })
   @ApiResponse({ status: 200, description: 'Removed from watchlist' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -84,7 +81,6 @@ export class MoviesController {
   }
 
   @Post(':movieId/rent')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Rent/unlock movie' })
   @ApiResponse({ status: 201, description: 'Rental created' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -96,7 +92,6 @@ export class MoviesController {
   }
 
   @Get('me/library')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'User purchased library' })
   @ApiResponse({ status: 200, description: 'Library' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -105,7 +100,7 @@ export class MoviesController {
   }
 
   @Post(':movieId/viewing-windows')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Create viewing window' })
   @ApiResponse({ status: 201, description: 'Viewing window created' })
@@ -124,7 +119,7 @@ export class MoviesController {
   }
 
   @Put('viewing-windows/:windowId')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Update viewing window' })
   @ApiResponse({ status: 200, description: 'Viewing window updated' })

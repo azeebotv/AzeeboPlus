@@ -1,4 +1,4 @@
-import {Inject,  Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import axios from 'axios';
@@ -149,8 +149,7 @@ export class CinemaPassService {
             { timeout: 10000 }
           );
         } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : 'Failed to process payment';
+          const errorMessage = error instanceof Error ? error.message : 'Failed to process payment';
           throw new BadRequestException(errorMessage);
         }
       }

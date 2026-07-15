@@ -85,9 +85,11 @@ export interface AnimatePresenceProps {
 
 export function AnimatePresence({
   children,
-  mode = 'popRemove',
+  mode: _mode = 'popRemove',
 }: AnimatePresenceProps): React.ReactElement {
-  return <div className={`animate-presence-${mode}`}>{children}</div>;
+  // Basic presence tracking - children are rendered/removed based on their presence
+  // For full exit animations, use framer-motion's AnimatePresence
+  return <div className="relative">{children}</div>;
 }
 
 export interface FadeProps {

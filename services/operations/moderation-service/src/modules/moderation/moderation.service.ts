@@ -1,4 +1,5 @@
-import {Inject,  Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { SafetyScanningService, ScanRequest, ScanResult } from './safety-scanning.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
@@ -107,7 +108,8 @@ export class ModerationService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(SafetyScanningService) private readonly safetyScanningService: SafetyScanningService,
-    @Inject(CacheService) private readonly cache: CacheService
+    @Inject(CacheService) private readonly cache: CacheService,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {}
 
   async createCase(request: CreateCaseRequest): Promise<ModerationCase> {
@@ -432,7 +434,7 @@ export class ModerationService {
 
   async getReportTypes(): Promise<ModerationResponse> {
     // Check for environment variable override
-    const envTypes = process.env.MODERATION_REPORT_TYPES;
+    const envTypes = this.configService.get<string>('MODERATION_REPORT_TYPES');
     if (envTypes) {
       try {
         const parsed = JSON.parse(envTypes) as ReportType[];

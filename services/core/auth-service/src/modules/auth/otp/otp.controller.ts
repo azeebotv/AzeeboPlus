@@ -1,6 +1,5 @@
-import { Inject, Controller, Post, Request, BadRequestException, UseGuards  } from '@nestjs/common';
+import { Inject, Controller, Post, Request, BadRequestException, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 
 import { OtpService } from './otp.service.js';
 import { RateLimitGuard } from '../../../common/guards/rate-limit.guard.js';
@@ -20,7 +19,7 @@ export class OtpController {
   constructor(@Inject(OtpService) private readonly otpService: OtpService) {}
 
   @Post('send')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @ApiOperation({ summary: 'Send OTP to user phone' })
   @ApiResponse({ status: 200, description: 'OTP sent successfully' })
   @ApiResponse({ status: 400, description: 'Invalid request' })
@@ -38,7 +37,7 @@ export class OtpController {
   }
 
   @Post('verify')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @ApiOperation({ summary: 'Verify OTP code' })
   @ApiResponse({ status: 200, description: 'OTP verified successfully' })
   @ApiResponse({ status: 400, description: 'Invalid OTP' })

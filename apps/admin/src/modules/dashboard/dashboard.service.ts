@@ -64,9 +64,6 @@ export class DashboardService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async getDashboardStats(): Promise<DashboardStats> {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
     const [totalUsers, totalContent, pendingReports, activeCreators] = await Promise.all([
       this.prisma.user.count(),
       this.prisma.contentItem.count(),

@@ -9,9 +9,9 @@ import {
 } from 'react-native';
 import {
   colors,
-  spacingNative,
-  fontSizeNative,
-  fontWeightNative,
+  spacingNative, // Deprecated: use spacing instead
+  fontSizeNative, // Deprecated: use fontSize instead
+  fontWeightNative, // Deprecated: use fontWeight instead
 } from '@azeebo/design-tokens';
 
 interface LoadingProps {

@@ -1,4 +1,4 @@
-import {Inject,  Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '@prisma/client';
@@ -126,14 +126,17 @@ export class ChargebackService {
           evidence,
         });
 
-        const walletData = await this.walletServiceClient.post<{ id?: string }>('/api/wallet/credit', {
-          userId: chargeback.userId,
-          amount: chargeback.amount.toNumber(),
-          currency: chargeback.currency,
-          description: `Chargeback reversal for payment ${chargeback.paymentId}`,
-          reference: chargeback.chargebackRef || id,
-          transactionType: 'chargeback_reversal',
-        });
+        const walletData = await this.walletServiceClient.post<{ id?: string }>(
+          '/api/wallet/credit',
+          {
+            userId: chargeback.userId,
+            amount: chargeback.amount.toNumber(),
+            currency: chargeback.currency,
+            description: `Chargeback reversal for payment ${chargeback.paymentId}`,
+            reference: chargeback.chargebackRef || id,
+            transactionType: 'chargeback_reversal',
+          }
+        );
 
         this.logger.log(
           `Chargeback won: payment ${chargeback.paymentId}, wallet txn: ${walletData?.id}`

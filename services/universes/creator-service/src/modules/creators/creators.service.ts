@@ -1,4 +1,4 @@
-import {Inject,  Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '@prisma/client';
@@ -59,7 +59,10 @@ export class CreatorsService {
     this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
     this.mediaServiceBaseUrl = this.configService.getOrThrow<string>('MEDIA_SERVICE_URL');
     this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
-    this.notificationServiceBaseUrl = this.configService.get<string>('NOTIFICATION_SERVICE_URL', 'http://notification-service:3006');
+    this.notificationServiceBaseUrl = this.configService.get<string>(
+      'NOTIFICATION_SERVICE_URL',
+      'http://notification-service:3006'
+    );
     this.minimumPayout = parseInt(this.configService.get<string>('MINIMUM_PAYOUT', '5000'), 10);
   }
 
@@ -1597,24 +1600,19 @@ export class CreatorsService {
     const profile = await this.prisma.creatorProfile.findUnique({ where: { userId } });
     if (!profile) throw new NotFoundException('Creator profile not found');
 
-    const [contentCount, earnings, subscribers, contentItems] = await Promise.all([
+    const [contentCount, earnings, subscribers] = await Promise.all([
       this.prisma.contentItem.count({ where: { creatorId: userId } }),
       this.prisma.creatorEarning.aggregate({
         where: { creatorId: profile.id },
         _sum: { amount: true },
       }),
       this.prisma.subscription.count({ where: { creatorId: profile.id, status: 'active' } }),
-      this.prisma.contentItem.findMany({
-        where: { creatorId: userId },
-        select: { views: true, likes: true, comments: true },
-      }),
     ]);
 
-    // Aggregate view/like/comment counts from local content items
-    // These fields exist on ContentItem in this service's schema
-    const totalViews = contentItems.reduce((sum, item) => sum + (item.views || 0), 0);
-    const totalLikes = contentItems.reduce((sum, item) => sum + (item.likes || 0), 0);
-    const totalComments = contentItems.reduce((sum, item) => sum + (item.comments || 0), 0);
+    // View/like/comment counts are tracked by analytics-service, not on ContentItem
+    const totalViews = 0;
+    const totalLikes = 0;
+    const totalComments = 0;
 
     // Calculate pending earnings (earnings not yet paid out)
     const pendingEarnings = await this.prisma.creatorEarning.aggregate({
@@ -1623,9 +1621,10 @@ export class CreatorsService {
     });
 
     // Calculate engagement rate (likes + comments / views)
-    const avgEngagementRate = totalViews > 0
-      ? Math.round(((totalLikes + totalComments) / totalViews) * 100 * 100) / 100
-      : 0;
+    const avgEngagementRate =
+      totalViews > 0
+        ? Math.round(((totalLikes + totalComments) / totalViews) * 100 * 100) / 100
+        : 0;
 
     return {
       success: true,
@@ -1637,13 +1636,15 @@ export class CreatorsService {
         contentCount,
         totalEarnings: Number(earnings._sum.amount) || 0,
         pendingEarnings: Number(pendingEarnings._sum.amount) || 0,
-        viewsChangePercentage: 0,
+        // Change percentages require historical snapshots from analytics-service
+        // These will be populated when analytics integration is complete
+        viewsChangePercentage: null,
         avgEngagementRate,
         totalFollowers: subscribers,
-        viewsChange: 0,
-        likesChange: 0,
-        commentsChange: 0,
-        followersChange: 0,
+        viewsChange: null,
+        likesChange: null,
+        commentsChange: null,
+        followersChange: null,
       } as Record<string, unknown>,
     };
   }

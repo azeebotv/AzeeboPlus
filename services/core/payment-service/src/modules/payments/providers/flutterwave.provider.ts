@@ -1,4 +1,4 @@
-import {Inject,  Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 
@@ -89,7 +89,11 @@ export class FlutterwaveProvider {
           currency: currency || 'NGN',
           redirect_url:
             this.configService.get<string>('FLUTTERWAVE_CALLBACK_URL') ||
-            (process.env.NODE_ENV === 'production' ? (() => { throw new Error('FLUTTERWAVE_CALLBACK_URL must be configured in production'); })() : 'http://localhost:3003/webhooks/flutterwave'),
+            (process.env.NODE_ENV === 'production'
+              ? (() => {
+                  throw new Error('FLUTTERWAVE_CALLBACK_URL must be configured in production');
+                })()
+              : 'http://localhost:3003/webhooks/flutterwave'),
           customer: {
             email: `user-${userId}@azeebo.plus`,
             name: `User ${userId}`,

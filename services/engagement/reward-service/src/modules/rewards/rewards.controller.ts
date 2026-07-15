@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -8,9 +9,8 @@ import { Inject,
   HttpCode,
   HttpStatus,
   Query,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
 
 import { RewardsService } from './rewards.service.js';
@@ -24,7 +24,6 @@ export class RewardsController {
   constructor(@Inject(RewardsService) private readonly rewardsService: RewardsService) {}
 
   @Get()
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get reward account overview' })
   @ApiResponse({ status: 200, description: 'Reward account' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -33,7 +32,6 @@ export class RewardsController {
   }
 
   @Get('missions')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'List active missions' })
   @ApiResponse({ status: 200, description: 'Active missions' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -42,7 +40,6 @@ export class RewardsController {
   }
 
   @Get('badges')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'List badges' })
   @ApiResponse({ status: 200, description: 'User badges' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -51,7 +48,6 @@ export class RewardsController {
   }
 
   @Get('streak')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get current streak' })
   @ApiResponse({ status: 200, description: 'Streak info' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -61,7 +57,6 @@ export class RewardsController {
 
   @Post('redeem')
   @RateLimit(30, 60000)
-  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Redeem reward' })
   @ApiResponse({ status: 200, description: 'Reward redeemed' })
@@ -75,7 +70,6 @@ export class RewardsController {
   }
 
   @Get('level')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get user level' })
   @ApiResponse({ status: 200, description: 'User level' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -85,7 +79,7 @@ export class RewardsController {
 
   @Post('earn')
   @RateLimit(30, 60000)
-  @UseGuards(AuthGuard('jwt'), ServiceAuthGuard)
+  @UseGuards(ServiceAuthGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Earn points for activity' })
   @ApiResponse({ status: 200, description: 'Points earned' })
@@ -98,7 +92,6 @@ export class RewardsController {
   }
 
   @Get('balance')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get points balance' })
   @ApiResponse({ status: 200, description: 'Points balance' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -107,7 +100,6 @@ export class RewardsController {
   }
 
   @Get('history')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get reward history' })
   @ApiResponse({ status: 200, description: 'Reward history' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })

@@ -1,10 +1,7 @@
-import {Inject,  Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../database/prisma.service';
-import {
-  SupportTicketPriority,
-  SupportTicketStatus,
-} from '../ticket/dto/ticket.dto';
+import { SupportTicketPriority, SupportTicketStatus } from '../ticket/dto/ticket.dto';
 
 export interface CreateTicketDto {
   userId: string;

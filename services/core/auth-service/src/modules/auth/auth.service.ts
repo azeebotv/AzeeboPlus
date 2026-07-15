@@ -1,4 +1,5 @@
-import {Inject, 
+import {
+  Inject,
   Injectable,
   UnauthorizedException,
   ConflictException,
@@ -30,8 +31,7 @@ import { UserEntity } from './interfaces/auth-entity.interface.js';
 import { User } from '@azeebo/shared-types';
 import { createSuccessResponse } from '@azeebo/shared-types';
 import { OtpService } from './otp/otp.service.js';
-import { RedisService } from '../../common/services/redis.service.js';
-import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { RedisService, CacheService, cacheKey } from '@azeebo/shared-services';
 
 @Injectable()
 export class AuthService {
@@ -148,15 +148,12 @@ export class AuthService {
     const { refreshToken } = refreshTokenDto;
 
     try {
-      const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET;
-      if (!jwtRefreshSecret) {
-        throw new Error('JWT_REFRESH_SECRET environment variable is not configured');
-      }
+      const jwtRefreshSecret = this.configService.getOrThrow<string>('JWT_REFRESH_SECRET');
 
       const decoded = this.jwtService.verify(refreshToken, {
         secret: jwtRefreshSecret,
-        audience: process.env.JWT_AUDIENCE,
-        issuer: process.env.JWT_ISSUER,
+        audience: this.configService.get<string>('JWT_AUDIENCE'),
+        issuer: this.configService.get<string>('JWT_ISSUER'),
       });
 
       const user = await this.authRepository.findById((decoded as { sub: string }).sub);
@@ -212,13 +209,13 @@ export class AuthService {
 
   async validateToken(token: string): Promise<User | null> {
     try {
-      const jwtAccessSecret = process.env.JWT_ACCESS_SECRET;
+      const jwtAccessSecret = this.configService.get<string>('JWT_ACCESS_SECRET');
       if (!jwtAccessSecret) return null;
 
       const decoded = this.jwtService.verify(token, {
         secret: jwtAccessSecret,
-        audience: process.env.JWT_AUDIENCE,
-        issuer: process.env.JWT_ISSUER,
+        audience: this.configService.get<string>('JWT_AUDIENCE'),
+        issuer: this.configService.get<string>('JWT_ISSUER'),
       }) as {
         jti: string;
         sub: string;
@@ -238,7 +235,9 @@ export class AuthService {
       if (!user) return null;
       return this.mapToUser(user);
     } catch (error) {
-      this.logger.debug(`Token validation failed: ${error instanceof Error ? error.message : 'unknown'}`);
+      this.logger.debug(
+        `Token validation failed: ${error instanceof Error ? error.message : 'unknown'}`
+      );
       return null;
     }
   }
@@ -274,7 +273,9 @@ export class AuthService {
         },
       });
     } catch (error: unknown) {
-      this.logger.error(`Failed to send password reset email: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Failed to send password reset email: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
 
     return { success: true, message: 'If the email exists, a reset link has been sent' };
@@ -341,10 +342,7 @@ export class AuthService {
       return { success: true, message: 'Email is already verified' };
     }
 
-    const verificationToken = randomUUID();
-    const verificationTokenKey = `email_verification:${verificationToken}`;
-    await this.redisService.set(verificationTokenKey, user.id, 86400);
-
+    // TODO: Send verification email via notification-service
     return { success: true, message: 'If the email exists, a verification link has been sent' };
   }
 
@@ -357,7 +355,7 @@ export class AuthService {
       throw new BadRequestException('User not found');
     }
 
-    const allowedRoles = ['user', 'creator', 'moderator'];
+    const allowedRoles = ['user', 'creator', 'admin', 'super_admin'];
     if (!allowedRoles.includes(selectRoleDto.role)) {
       throw new BadRequestException('Invalid role selection');
     }
@@ -399,18 +397,14 @@ export class AuthService {
     refreshToken: string;
     expiresAt: string;
   }> {
-    const jwtAccessSecret = process.env.JWT_ACCESS_SECRET;
-    const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET;
-
-    if (!jwtAccessSecret || !jwtRefreshSecret) {
-      throw new Error('JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must be configured');
-    }
+    const jwtAccessSecret = this.configService.getOrThrow<string>('JWT_ACCESS_SECRET');
+    const jwtRefreshSecret = this.configService.getOrThrow<string>('JWT_REFRESH_SECRET');
 
     const now = Math.floor(Date.now() / 1000);
     const accessToken = this.jwtService.sign(
       {
-        iss: process.env.JWT_ISSUER || 'azeebo-auth',
-        aud: process.env.JWT_AUDIENCE || 'azeebo-api',
+        iss: this.configService.get<string>('JWT_ISSUER', 'azeebo-auth'),
+        aud: this.configService.get<string>('JWT_AUDIENCE', 'azeebo-api'),
         jti: randomUUID(),
         sub: user.id,
         email: user.email,
@@ -429,8 +423,8 @@ export class AuthService {
 
     const refreshToken = this.jwtService.sign(
       {
-        iss: process.env.JWT_ISSUER || 'azeebo-auth',
-        aud: process.env.JWT_AUDIENCE || 'azeebo-api',
+        iss: this.configService.get<string>('JWT_ISSUER', 'azeebo-auth'),
+        aud: this.configService.get<string>('JWT_AUDIENCE', 'azeebo-api'),
         jti: randomUUID(),
         sub: user.id,
         type: 'refresh',

@@ -1,5 +1,14 @@
-import { Inject, Controller, Post, Get, Body, Param, Put, UseGuards, Request  } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import {
+  Inject,
+  Controller,
+  Post,
+  Get,
+  Body,
+  Param,
+  Put,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { SupportService } from './support.service';
@@ -25,7 +34,6 @@ interface AuthRequest extends Request {
 // Should be consolidated into the canonical ticket module and removed.
 @ApiTags('Support (Legacy)')
 @Controller('support')
-@UseGuards(AuthGuard('jwt'))
 export class SupportController {
   constructor(@Inject(SupportService) private readonly supportService: SupportService) {}
 

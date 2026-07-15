@@ -102,13 +102,17 @@ export class TracingService {
       }
     }
     this.activeSpans.set(span.spanId, span);
-    // NOTE: enterWith is deprecated in Node.js 22+ but remains functional.
-    // TODO: Migrate to run() pattern when observability module is actively used.
-    this.asyncLocalStorage.enterWith({
-      traceId: span.traceId,
-      spanId: span.spanId,
-      parentId: span.parentId,
-    });
+    // Use run() pattern instead of deprecated enterWith() for Node.js 22+ compatibility
+    this.asyncLocalStorage.run(
+      {
+        traceId: span.traceId,
+        spanId: span.spanId,
+        parentId: span.parentId,
+      },
+      () => {
+        // Context is now set for the duration of this callback
+      }
+    );
     return span;
   }
 

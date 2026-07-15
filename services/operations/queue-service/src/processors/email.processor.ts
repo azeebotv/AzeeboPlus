@@ -91,7 +91,7 @@ export class EmailProcessor extends WorkerHost {
   @OnWorkerEvent('error')
   onError(error: Error) {
     this.logger.error(`Email worker encountered an error: ${(error as Error).message}`, {
-      stack: (error as Error).message,
+      stack: (error as Error).stack,
     });
   }
 }

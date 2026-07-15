@@ -248,3 +248,14 @@ model WebhookEvent {
   @@index([type])
   @@map("webhook_events")
 }
+
+model SupportAnalyticsEvent {
+  id        String   @id @default(uuid())
+  event     String
+  data      Json
+  createdAt DateTime @default(now())
+
+  @@index([event])
+  @@index([createdAt])
+  @@map("support_analytics_events")
+}

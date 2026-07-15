@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LifestyleFeedService } from './feed.service';
 import { PrismaService } from '../database/prisma.service';
-import { RedisService } from '../../common/services/redis.service';
+import { RedisService } from '@azeebo/shared-services';
 import { ConfigService } from '@nestjs/config';
 
 describe('LifestyleFeedService', () => {

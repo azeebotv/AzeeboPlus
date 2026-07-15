@@ -1,4 +1,4 @@
-import {Inject,  Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '@prisma/client';
@@ -28,7 +28,10 @@ export class NotificationsService {
     @Inject(CacheService) private readonly cache: CacheService,
     @Inject(ConfigService) private readonly configService: ConfigService
   ) {
-    this.userServiceBaseUrl = this.configService.get<string>('USER_SERVICE_URL', 'http://user-service:3001');
+    this.userServiceBaseUrl = this.configService.get<string>(
+      'USER_SERVICE_URL',
+      'http://user-service:3001'
+    );
   }
 
   private async getUserData(userId: string): Promise<UserData | null> {

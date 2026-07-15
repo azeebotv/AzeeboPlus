@@ -1,9 +1,9 @@
-import {Inject,  Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { ComedyResponse } from './interfaces/comedy-response.interface.js';
 import axios from 'axios';
-import { RedisService } from '../../common/services/redis.service.js';
+import { RedisService } from '@azeebo/shared-services';
 import { SubmitChallengeDto } from './dto/submit-challenge.dto.js';
 
 @Injectable()

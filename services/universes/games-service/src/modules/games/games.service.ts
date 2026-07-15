@@ -1,4 +1,4 @@
-import {Inject,  Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { GameResponse } from './interfaces/game-response.interface.js';
@@ -8,14 +8,12 @@ import axios from 'axios';
 export class GamesService {
   private readonly logger = new Logger(GamesService.name);
   private readonly analyticsServiceBaseUrl: string;
-  private readonly walletServiceBaseUrl: string;
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
-    this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
   }
 
   private async trackAnalyticsEvent(
@@ -263,6 +261,48 @@ export class GamesService {
     return {
       success: true,
       data: { tournaments },
+    };
+  }
+
+  async enterTournament(userId: string, tournamentId: string): Promise<GameResponse> {
+    const tournament = await this.prisma.tournament.findUnique({
+      where: { id: tournamentId },
+    });
+
+    if (!tournament) {
+      throw new NotFoundException('Tournament not found');
+    }
+
+    if (tournament.status !== 'active') {
+      throw new BadRequestException('Tournament is not active');
+    }
+
+    const existingEntry = await this.prisma.tournamentEntry.findUnique({
+      where: {
+        userId_tournamentId: { userId, tournamentId },
+      },
+    });
+
+    if (existingEntry) {
+      throw new BadRequestException('Already entered this tournament');
+    }
+
+    const entry = await this.prisma.tournamentEntry.create({
+      data: {
+        userId,
+        tournamentId,
+        score: 0,
+      },
+    });
+
+    await this.trackAnalyticsEvent('tournament_entered', userId, {
+      tournamentId,
+      tournamentName: tournament.title,
+    });
+
+    return {
+      success: true,
+      data: { entry },
     };
   }
 }

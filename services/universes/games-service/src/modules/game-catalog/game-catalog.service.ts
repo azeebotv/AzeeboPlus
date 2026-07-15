@@ -1,4 +1,4 @@
-import {Inject,  Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 
@@ -101,7 +101,9 @@ export class GameCatalogService {
       const result: GameResponse = {
         success: true,
         data: {
-          items: items.map((g) => this.formatGame({ ...g, _count: { questions: questionCountsMap.get(g.id) || 0 } })),
+          items: items.map((g) =>
+            this.formatGame({ ...g, _count: { questions: questionCountsMap.get(g.id) || 0 } })
+          ),
           total,
           page,
           limit,
@@ -137,7 +139,10 @@ export class GameCatalogService {
       });
 
       const questionCount = await this.prisma.gameQuestion.count({ where: { gameId: game.id } });
-      const result: GameResponse = { success: true, data: this.formatGame({ ...game, _count: { questions: questionCount } }) };
+      const result: GameResponse = {
+        success: true,
+        data: this.formatGame({ ...game, _count: { questions: questionCount } }),
+      };
       await this.cache.set(cacheK, result, 60);
       return result;
     } catch (error) {
@@ -199,13 +204,21 @@ export class GameCatalogService {
         orderBy: { order: 'asc' },
       });
 
-      const questions = gameQuestions.map((q: { id: string; question: string; options: unknown; points: number; timeLimit: number }) => ({
-        id: q.id,
-        question: q.question,
-        options: q.options,
-        points: q.points,
-        timeLimit: q.timeLimit,
-      }));
+      const questions = gameQuestions.map(
+        (q: {
+          id: string;
+          question: string;
+          options: unknown;
+          points: number;
+          timeLimit: number;
+        }) => ({
+          id: q.id,
+          question: q.question,
+          options: q.options,
+          points: q.points,
+          timeLimit: q.timeLimit,
+        })
+      );
 
       return {
         success: true,

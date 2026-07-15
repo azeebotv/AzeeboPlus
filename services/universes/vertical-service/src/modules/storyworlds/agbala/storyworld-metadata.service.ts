@@ -1,4 +1,4 @@
-import {Inject,  Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { CacheService } from './cache.service';
 
@@ -22,7 +22,11 @@ export class StoryworldMetadataService {
     @Inject(CacheService) private readonly cache: CacheService
   ) {}
 
-  async getRealms(universeId: string, page = 1, limit = 20): Promise<{ data: StoryworldMetadataItem[]; total: number }> {
+  async getRealms(
+    universeId: string,
+    page = 1,
+    limit = 20
+  ): Promise<{ data: StoryworldMetadataItem[]; total: number }> {
     const cacheK = `realms:${universeId}:${page}:${limit}`;
     const cached = this.cache.get<{ data: StoryworldMetadataItem[]; total: number }>(cacheK);
     if (cached) return cached;
@@ -48,7 +52,11 @@ export class StoryworldMetadataService {
     return realm;
   }
 
-  async getOrisaFiles(universeId: string, page = 1, limit = 20): Promise<{ data: StoryworldMetadataItem[]; total: number }> {
+  async getOrisaFiles(
+    universeId: string,
+    page = 1,
+    limit = 20
+  ): Promise<{ data: StoryworldMetadataItem[]; total: number }> {
     const cacheK = `orisa:${universeId}:${page}:${limit}`;
     const cached = this.cache.get<{ data: StoryworldMetadataItem[]; total: number }>(cacheK);
     if (cached) return cached;
@@ -74,7 +82,11 @@ export class StoryworldMetadataService {
     return orisa;
   }
 
-  async getArtifacts(universeId: string, page = 1, limit = 20): Promise<{ data: StoryworldMetadataItem[]; total: number }> {
+  async getArtifacts(
+    universeId: string,
+    page = 1,
+    limit = 20
+  ): Promise<{ data: StoryworldMetadataItem[]; total: number }> {
     const cacheK = `artifacts:${universeId}:${page}:${limit}`;
     const cached = await this.cache.get<{ data: StoryworldMetadataItem[]; total: number }>(cacheK);
     if (cached) return cached;
@@ -100,7 +112,11 @@ export class StoryworldMetadataService {
     return artifact;
   }
 
-  async getProphecies(universeId: string, page = 1, limit = 20): Promise<{ data: StoryworldMetadataItem[]; total: number }> {
+  async getProphecies(
+    universeId: string,
+    page = 1,
+    limit = 20
+  ): Promise<{ data: StoryworldMetadataItem[]; total: number }> {
     const cacheK = `prophecies:${universeId}:${page}:${limit}`;
     const cached = await this.cache.get<{ data: StoryworldMetadataItem[]; total: number }>(cacheK);
     if (cached) return cached;
@@ -126,7 +142,11 @@ export class StoryworldMetadataService {
     return prophecy;
   }
 
-  async getWorldMaps(universeId: string, page = 1, limit = 20): Promise<{ data: StoryworldMetadataItem[]; total: number }> {
+  async getWorldMaps(
+    universeId: string,
+    page = 1,
+    limit = 20
+  ): Promise<{ data: StoryworldMetadataItem[]; total: number }> {
     const cacheK = `maps:${universeId}:${page}:${limit}`;
     const cached = await this.cache.get<{ data: StoryworldMetadataItem[]; total: number }>(cacheK);
     if (cached) return cached;

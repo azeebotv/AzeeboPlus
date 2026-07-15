@@ -1,4 +1,4 @@
-import {Inject,  Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '../../prisma/client/index.js';
 import { WebhookRetryService } from '../payments/webhook-retry.service.js';
@@ -170,7 +170,11 @@ export class WebhookService {
         },
       });
     } catch (error: unknown) {
-      if (error instanceof Error && 'code' in error && (error as { code: string }).code === 'P2002') {
+      if (
+        error instanceof Error &&
+        'code' in error &&
+        (error as { code: string }).code === 'P2002'
+      ) {
         this.logger.log(`Webhook event ${eventId} already processed (concurrent write)`);
         return;
       }

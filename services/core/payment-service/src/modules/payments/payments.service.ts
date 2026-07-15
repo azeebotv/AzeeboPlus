@@ -1,12 +1,11 @@
-import {Inject,  Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { InitializePaymentDto } from './dto/initialize-payment.dto.js';
 import { PaystackProvider } from './providers/paystack.provider.js';
 import { FlutterwaveProvider } from './providers/flutterwave.provider.js';
 import { WebhookRetryService } from './webhook-retry.service.js';
-import { RedisService } from '../../common/services/redis.service.js';
-import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { RedisService, CacheService, cacheKey } from '@azeebo/shared-services';
 import axios from 'axios';
 import { Prisma } from '@prisma/client';
 import {

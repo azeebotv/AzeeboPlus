@@ -1,4 +1,4 @@
-import {Inject,  Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import {
   initializeApp,
   cert,

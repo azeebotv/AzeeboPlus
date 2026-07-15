@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service.js';
 import {
   SupportAnalyticsEvent,
   SupportTicketCreatedEvent,
@@ -9,10 +10,8 @@ import {
 @Injectable()
 export class AnalyticsService {
   private readonly logger = new Logger(AnalyticsService.name);
-  // SECURITY: This in-memory array is a temporary solution and should be replaced
-  // with database persistence. It is capped at MAX_EVENTS to prevent OOM attacks.
-  private static readonly MAX_EVENTS = 10000;
-  private events: Array<{ event: string; data: Record<string, unknown>; timestamp: Date }> = [];
+
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async trackTicketCreated(data: SupportTicketCreatedEvent): Promise<void> {
     await this.track(SupportAnalyticsEvent.TICKET_CREATED, { ...data });
@@ -47,15 +46,22 @@ export class AnalyticsService {
   }
 
   private async track(event: string, data: Record<string, unknown>): Promise<void> {
-    const eventRecord = { event, data, timestamp: new Date() };
-    if (this.events.length >= AnalyticsService.MAX_EVENTS) {
-      this.events.shift();
+    try {
+      await this.prisma.supportAnalyticsEvent.create({
+        data: { event, data: data as Record<string, string> },
+      });
+      this.logger.log(JSON.stringify({ event, data }), 'AnalyticsEvent');
+    } catch (error: unknown) {
+      this.logger.error(
+        `Failed to persist analytics event: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
-    this.events.push(eventRecord);
-    this.logger.log(JSON.stringify(eventRecord), 'AnalyticsEvent');
   }
 
-  getEvents() {
-    return this.events;
+  async getEvents(limit = 100): Promise<Array<{ event: string; data: unknown; createdAt: Date }>> {
+    return this.prisma.supportAnalyticsEvent.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: Math.min(limit, 500),
+    });
   }
 }

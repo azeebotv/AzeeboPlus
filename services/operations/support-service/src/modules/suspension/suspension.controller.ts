@@ -1,4 +1,14 @@
-import { Inject, Controller, Get, Post, Body, Param, Query, Request, UseGuards  } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { SuspensionService } from './suspension.service';
 import { CreateSuspensionDto, SuspensionQueryDto } from './dto/suspension.dto';

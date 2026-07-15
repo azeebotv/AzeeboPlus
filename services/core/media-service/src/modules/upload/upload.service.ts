@@ -1,7 +1,7 @@
-import {Inject,  Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { S3Service } from './s3.service';
 import { ConfigService } from '@nestjs/config';
-import { RedisService } from '../../common/services/redis.service';
+import { RedisService } from '@azeebo/shared-services';
 import { FileValidationService } from '../../common/services/file-validation.service';
 
 export interface UploadResponse {

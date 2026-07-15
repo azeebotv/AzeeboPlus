@@ -18,8 +18,7 @@ import { DatabaseModule } from '../database/database.module.js';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_ACCESS_SECRET'),
         signOptions: {
-          expiresIn: configService.get<string | undefined>('JWT_EXPIRES_IN', '30m') as
-            | StringValue,
+          expiresIn: configService.get<string | undefined>('JWT_EXPIRES_IN', '30m') as StringValue,
         },
       }),
       inject: [ConfigService],

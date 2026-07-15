@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { Skeleton } from '@azeebo/ui/web';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { useToast } from '@/components/ToastProvider';
 
 type Tab =
   | 'general'
@@ -254,6 +255,7 @@ function Modal({
 
 export default function AdminSettingsPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<Tab>('general');
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -670,11 +672,13 @@ export default function AdminSettingsPage(): React.JSX.Element {
     setTestingProvider(provider);
     try {
       const res = await api.admin.testIntegration(provider);
-      alert(
-        res.success ? `Connection successful: ${res.data?.message || 'OK'}` : 'Connection failed'
-      );
+      if (res.success) {
+        toast.showToast(`Connection successful: ${res.data?.message || 'OK'}`, 'success');
+      } else {
+        toast.showToast('Connection failed', 'error');
+      }
     } catch {
-      alert('Connection test failed');
+      toast.showToast('Connection test failed', 'error');
     }
     setTestingProvider(null);
   };
@@ -741,6 +745,7 @@ export default function AdminSettingsPage(): React.JSX.Element {
   const currencies = ['NGN', 'USD', 'GBP', 'EUR', 'GHS', 'KES', 'ZAR'];
 
   return (
+    <>
     <AdminLayout>
       {/* Header */}
       <div
@@ -2073,5 +2078,6 @@ export default function AdminSettingsPage(): React.JSX.Element {
       onConfirm={confirmDialog.onConfirm}
       onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
     />
+    </>
   );
 }

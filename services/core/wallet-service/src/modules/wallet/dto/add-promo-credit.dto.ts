@@ -1,4 +1,4 @@
-import { IsNumber, IsPositive, IsString, IsNotEmpty, IsDateString } from 'class-validator';
+import { IsNumber, IsPositive, Min, IsString, IsNotEmpty, IsDateString } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 /**
@@ -12,6 +12,7 @@ export class AddPromoCreditDto {
    */
   @IsNumber()
   @IsPositive()
+  @Min(0.01)
   @Transform(({ value }) => Number(value))
   amount!: number;
 

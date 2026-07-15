@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -8,9 +9,8 @@ import { Inject,
   Body,
   UseGuards,
   Request,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { ModerationService } from './moderation.service.js';
 import { RolesGuard } from '../../common/guards/roles.guard.js';
 import { Roles } from '../../common/decorators/roles.decorator.js';
@@ -23,7 +23,6 @@ export class ModerationController {
   constructor(@Inject(ModerationService) private readonly moderationService: ModerationService) {}
 
   @Post('scan/:contentId')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Scan content for policy violations' })
   @ApiResponse({ status: 201, description: 'Content scan initiated' })
@@ -44,7 +43,6 @@ export class ModerationController {
   }
 
   @Get('risk/:contentId')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Assess content risk' })
   @ApiResponse({ status: 200, description: 'Risk assessment' })
@@ -53,7 +51,6 @@ export class ModerationController {
   }
 
   @Get('scans/:contentId')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get content scan history' })
   @ApiResponse({ status: 200, description: 'Scan history' })
@@ -62,7 +59,7 @@ export class ModerationController {
   }
 
   @Post('cases')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('moderator', 'admin')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create moderation case' })
@@ -83,7 +80,7 @@ export class ModerationController {
   }
 
   @Get('cases')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('moderator', 'admin')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get moderation cases' })
@@ -101,7 +98,7 @@ export class ModerationController {
   }
 
   @Get('cases/:caseId')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('moderator', 'admin')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get moderation case by ID' })
@@ -111,7 +108,7 @@ export class ModerationController {
   }
 
   @Patch('cases/:caseId/assign')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('moderator', 'admin')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Assign case to moderator' })
@@ -124,7 +121,7 @@ export class ModerationController {
   }
 
   @Patch('cases/:caseId/resolve')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('moderator', 'admin')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Resolve moderation case' })
@@ -142,7 +139,7 @@ export class ModerationController {
   }
 
   @Post('actions')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('moderator', 'admin')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Execute safety action' })
@@ -172,7 +169,7 @@ export class ModerationController {
   }
 
   @Get('actions/case/:caseId')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('moderator', 'admin')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get safety actions for case' })
@@ -182,7 +179,6 @@ export class ModerationController {
   }
 
   @Post('appeals')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Submit appeal' })
   @ApiResponse({ status: 201, description: 'Appeal submitted' })
@@ -204,7 +200,7 @@ export class ModerationController {
   }
 
   @Patch('appeals/:appealId/review')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('admin')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Review appeal' })
@@ -223,7 +219,6 @@ export class ModerationController {
   }
 
   @Get('trust/:userId')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get user trust score' })
   @ApiResponse({ status: 200, description: 'Trust score' })
@@ -232,7 +227,7 @@ export class ModerationController {
   }
 
   @Patch('trust/:userId')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('moderator', 'admin')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update user trust score' })
@@ -245,7 +240,7 @@ export class ModerationController {
   }
 
   @Get('stats')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('moderator', 'admin')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get moderation statistics' })

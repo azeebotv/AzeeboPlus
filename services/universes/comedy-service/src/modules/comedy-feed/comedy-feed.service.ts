@@ -1,4 +1,4 @@
-import {Inject,  Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 
@@ -90,7 +90,10 @@ export class ComedyFeedService {
       return result;
     } catch (error) {
       this.logger.error(`Failed to get feed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'FEED_ERROR', message: (error as Error).message } } as never;
+      return {
+        success: false,
+        error: { code: 'FEED_ERROR', message: (error as Error).message },
+      } as never;
     }
   }
 
@@ -144,7 +147,10 @@ export class ComedyFeedService {
         (error as Error).stack
       );
       if (error instanceof NotFoundException) throw error;
-      return { success: false, error: { code: 'CLIP_ERROR', message: (error as Error).message } } as never;
+      return {
+        success: false,
+        error: { code: 'CLIP_ERROR', message: (error as Error).message },
+      } as never;
     }
   }
 
@@ -177,7 +183,10 @@ export class ComedyFeedService {
       return { success: true, data: { message: 'Liked', likeCount: updated.likeCount } };
     } catch (error) {
       this.logger.error(`Failed to like clip: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'LIKE_ERROR', message: (error as Error).message } } as never;
+      return {
+        success: false,
+        error: { code: 'LIKE_ERROR', message: (error as Error).message },
+      } as never;
     }
   }
 
@@ -312,7 +321,10 @@ export class ComedyFeedService {
         `Failed to like special: ${(error as Error).message}`,
         (error as Error).stack
       );
-      return { success: false, error: { code: 'LIKE_ERROR', message: (error as Error).message } } as never;
+      return {
+        success: false,
+        error: { code: 'LIKE_ERROR', message: (error as Error).message },
+      } as never;
     }
   }
 

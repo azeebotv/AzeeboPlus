@@ -1,7 +1,7 @@
-import {Inject,  Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHmac, timingSafeEqual } from 'crypto';
-import { RedisService } from '../../common/services/redis.service.js';
+import { RedisService } from '@azeebo/shared-services';
 
 @Injectable()
 export class WebhookSecurityService {
@@ -37,7 +37,7 @@ export class WebhookSecurityService {
 
   async isDuplicate(reference: string): Promise<boolean> {
     const key = `${this.idempotencyPrefix}${reference}`;
-    return this.redisService.exists(key);
+    return (await this.redisService.exists(key)) === 1;
   }
 
   async markAsProcessed(reference: string): Promise<void> {
@@ -54,7 +54,7 @@ export class WebhookSecurityService {
     }
 
     const key = `${this.replayPrefix}${reference}`;
-    const exists = await this.redisService.exists(key);
+    const exists = (await this.redisService.exists(key)) === 1;
     return exists;
   }
 

@@ -1,4 +1,4 @@
-import {Inject,  Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { createHmac, timingSafeEqual } from 'crypto';
@@ -117,7 +117,12 @@ export class PaystackProvider {
               app: 'azeebo-plus',
             },
             callback_url:
-              process.env.PAYSTACK_CALLBACK_URL || (process.env.NODE_ENV === 'production' ? (() => { throw new Error('PAYSTACK_CALLBACK_URL must be configured in production'); })() : 'http://localhost:3003/webhooks/paystack'),
+              process.env.PAYSTACK_CALLBACK_URL ||
+              (process.env.NODE_ENV === 'production'
+                ? (() => {
+                    throw new Error('PAYSTACK_CALLBACK_URL must be configured in production');
+                  })()
+                : 'http://localhost:3003/webhooks/paystack'),
           },
           {
             headers: {
@@ -145,7 +150,9 @@ export class PaystackProvider {
         this.logger.warn(`Paystack circuit breaker open: ${err.message}`);
         throw new Error('Payment service temporarily unavailable. Please try again later.');
       }
-      this.logger.error(`Paystack initialization failed: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Paystack initialization failed: ${error instanceof Error ? error.message : String(error)}`
+      );
       throw error;
     }
   }
@@ -187,7 +194,9 @@ export class PaystackProvider {
         this.logger.warn(`Paystack circuit breaker open: ${err.message}`);
         throw new Error('Payment verification temporarily unavailable. Please try again later.');
       }
-      this.logger.error(`Paystack verification failed: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Paystack verification failed: ${error instanceof Error ? error.message : String(error)}`
+      );
       throw error;
     }
   }
@@ -231,7 +240,9 @@ export class PaystackProvider {
         this.logger.warn(`Paystack circuit breaker open: ${err.message}`);
         throw new Error('Refund service temporarily unavailable. Please try again later.');
       }
-      this.logger.error(`Paystack refund failed: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Paystack refund failed: ${error instanceof Error ? error.message : String(error)}`
+      );
       throw error;
     }
   }

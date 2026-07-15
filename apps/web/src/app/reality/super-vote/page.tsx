@@ -6,6 +6,7 @@ import { webLogger } from '../../../lib/logger';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { useToast } from '@/components/ToastProvider';
 
 interface Contestant {
   id: string;
@@ -26,6 +27,7 @@ interface VotePackage {
 
 export default function SuperVotePage(): React.JSX.Element {
   const router = useRouter();
+  const toast = useToast();
   const searchParams = useSearchParams();
   const episodeId = searchParams.get('episodeId') || '';
   const [contestants, setContestants] = useState<Contestant[]>([]);
@@ -58,41 +60,9 @@ export default function SuperVotePage(): React.JSX.Element {
           );
         }
       } catch (err) {
-        // Fallback to default packages
-        setVotePackages([
-          {
-            id: 'pkg-10',
-            name: '10 Super Votes',
-            votes: 10,
-            price: 500,
-            description: '10 votes at 2x power',
-            isPopular: false,
-          },
-          {
-            id: 'pkg-25',
-            name: '25 Super Votes',
-            votes: 25,
-            price: 1000,
-            description: '25 votes at 2x power + bonus',
-            isPopular: true,
-          },
-          {
-            id: 'pkg-50',
-            name: '50 Super Votes',
-            votes: 50,
-            price: 1800,
-            description: '50 votes at 2x power + big bonus',
-            isPopular: false,
-          },
-          {
-            id: 'pkg-100',
-            name: '100 Super Votes',
-            votes: 100,
-            price: 3000,
-            description: '100 votes at 2x power + mega bonus',
-            isPopular: false,
-          },
-        ]);
+        // On API failure, show error state instead of hardcoded prices
+        webLogger.error('Failed to fetch vote packages', err);
+        setVotePackages([]);
       }
     };
     fetchVotePackages();
@@ -129,7 +99,7 @@ export default function SuperVotePage(): React.JSX.Element {
 
   const handleVote = async (): Promise<void> => {
     if (!selectedContestant || !selectedPackage) {
-      alert('Please select a contestant and vote package');
+      toast.showToast('Please select a contestant and vote package', 'error');
       return;
     }
     const pkg = votePackages.find((p) => p.id === selectedPackage);
@@ -159,11 +129,11 @@ export default function SuperVotePage(): React.JSX.Element {
             body: JSON.stringify({ contestantId: selectedContestant, episodeId, voteCount: pkg.votes }),
           });
           if (!result.success) throw new Error(result.message || 'Failed to submit super vote');
-          alert(`Your ${pkg.votes} Super Vote(s) submitted! Each counts as 2x.`);
+          toast.showToast(`Your ${pkg.votes} Super Vote(s) submitted! Each counts as 2x.`, 'success');
           setSelectedContestant(null);
           setSelectedPackage(null);
         } catch (error: unknown) {
-          alert(error instanceof Error ? error.message : 'Failed to submit super vote');
+          toast.showToast(error instanceof Error ? error.message : 'Failed to submit super vote', 'error');
         } finally {
           setIsVoting(false);
         }

@@ -1,4 +1,4 @@
-import {Inject,  Injectable, OnModuleInit, Logger } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import sgMail from '@sendgrid/mail';
 import * as Handlebars from 'handlebars';
 import { ConfigService } from '@nestjs/config';

@@ -13,8 +13,7 @@ import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@az
 import { MetricsModule } from './modules/metrics/metrics.module.js';
 import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
-import { RedisModule } from './common/redis.module.js';
-import { CacheModule } from '@azeebo/shared-services';
+import { RedisModule, CacheModule } from '@azeebo/shared-services';
 
 @Module({
   imports: [

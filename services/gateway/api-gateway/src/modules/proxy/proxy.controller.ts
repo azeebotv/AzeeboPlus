@@ -16,7 +16,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from '@azeebo/security';
 import { AuthThrottlerGuard } from '../../guards/auth-throttler.guard';
 import { Request, Response } from 'express';
@@ -948,10 +947,13 @@ export class ProxyController {
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @Inject(ConfigService) private configService: ConfigService,
-    @Inject(CircuitBreakerProxyService) private circuitBreakerProxyService: CircuitBreakerProxyService
+    @Inject(CircuitBreakerProxyService)
+    private circuitBreakerProxyService: CircuitBreakerProxyService
   ) {
     this.UPSTREAM_TIMEOUT = this.configService.get<number>('UPSTREAM_TIMEOUT', 30000);
   }
+
+  // ─── Versioned routes with path: /api/:version/:service/*path ──────
 
   @Get(':version/:service/*path')
   @HttpCode(HttpStatus.OK)
@@ -961,7 +963,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.proxyRequest('GET', version, service, (req.params['path'] as string) || '', req, res);
+    return this.handleProxy('GET', version, service, (req.params['path'] as string) || '', req, res);
   }
 
   @Post(':version/:service/*path')
@@ -972,7 +974,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.proxyRequest('POST', version, service, (req.params['path'] as string) || '', req, res);
+    return this.handleProxy('POST', version, service, (req.params['path'] as string) || '', req, res);
   }
 
   @Put(':version/:service/*path')
@@ -983,7 +985,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.proxyRequest('PUT', version, service, (req.params['path'] as string) || '', req, res);
+    return this.handleProxy('PUT', version, service, (req.params['path'] as string) || '', req, res);
   }
 
   @Patch(':version/:service/*path')
@@ -994,7 +996,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.proxyRequest('PATCH', version, service, (req.params['path'] as string) || '', req, res);
+    return this.handleProxy('PATCH', version, service, (req.params['path'] as string) || '', req, res);
   }
 
   @Delete(':version/:service/*path')
@@ -1005,8 +1007,10 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.proxyRequest('DELETE', version, service, (req.params['path'] as string) || '', req, res);
+    return this.handleProxy('DELETE', version, service, (req.params['path'] as string) || '', req, res);
   }
+
+  // ─── Versioned routes without path: /api/:version/:service ─────────
 
   @Get(':version/:service')
   @HttpCode(HttpStatus.OK)
@@ -1016,7 +1020,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.proxyRequest('GET', version, service, '', req, res);
+    return this.handleProxy('GET', version, service, '', req, res);
   }
 
   @Post(':version/:service')
@@ -1027,7 +1031,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.proxyRequest('POST', version, service, '', req, res);
+    return this.handleProxy('POST', version, service, '', req, res);
   }
 
   @Put(':version/:service')
@@ -1038,7 +1042,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.proxyRequest('PUT', version, service, '', req, res);
+    return this.handleProxy('PUT', version, service, '', req, res);
   }
 
   @Patch(':version/:service')
@@ -1049,7 +1053,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.proxyRequest('PATCH', version, service, '', req, res);
+    return this.handleProxy('PATCH', version, service, '', req, res);
   }
 
   @Delete(':version/:service')
@@ -1060,8 +1064,10 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.proxyRequest('DELETE', version, service, '', req, res);
+    return this.handleProxy('DELETE', version, service, '', req, res);
   }
+
+  // ─── Legacy unversioned routes: /api/:service/*path ────────────────
 
   @Get(':service/*path')
   @HttpCode(HttpStatus.OK)
@@ -1070,13 +1076,8 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    const version = ApiVersioningConfig.parseVersion(
-      req.headers[API_VERSION_HEADER.toLowerCase()] as string
-    );
-    const route = this.findRoute(service);
-    const validatedVersion =
-      route && this.validateVersion(version, route) ? version : route?.defaultVersion || version;
-    return this.proxyRequest('GET', validatedVersion, service, (req.params['path'] as string) || '', req, res);
+    const version = this.resolveVersionFromHeader(req);
+    return this.handleProxy('GET', version, service, (req.params['path'] as string) || '', req, res);
   }
 
   @Post(':service/*path')
@@ -1086,13 +1087,8 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    const version = ApiVersioningConfig.parseVersion(
-      req.headers[API_VERSION_HEADER.toLowerCase()] as string
-    );
-    const route = this.findRoute(service);
-    const validatedVersion =
-      route && this.validateVersion(version, route) ? version : route?.defaultVersion || version;
-    return this.proxyRequest('POST', validatedVersion, service, (req.params['path'] as string) || '', req, res);
+    const version = this.resolveVersionFromHeader(req);
+    return this.handleProxy('POST', version, service, (req.params['path'] as string) || '', req, res);
   }
 
   @Put(':service/*path')
@@ -1102,13 +1098,8 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    const version = ApiVersioningConfig.parseVersion(
-      req.headers[API_VERSION_HEADER.toLowerCase()] as string
-    );
-    const route = this.findRoute(service);
-    const validatedVersion =
-      route && this.validateVersion(version, route) ? version : route?.defaultVersion || version;
-    return this.proxyRequest('PUT', validatedVersion, service, (req.params['path'] as string) || '', req, res);
+    const version = this.resolveVersionFromHeader(req);
+    return this.handleProxy('PUT', version, service, (req.params['path'] as string) || '', req, res);
   }
 
   @Patch(':service/*path')
@@ -1118,20 +1109,8 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    const version = ApiVersioningConfig.parseVersion(
-      req.headers[API_VERSION_HEADER.toLowerCase()] as string
-    );
-    const route = this.findRoute(service);
-    const validatedVersion =
-      route && this.validateVersion(version, route) ? version : route?.defaultVersion || version;
-    return this.proxyRequest(
-      'PATCH',
-      validatedVersion,
-      service,
-      (req.params['path'] as string) || '',
-      req,
-      res
-    );
+    const version = this.resolveVersionFromHeader(req);
+    return this.handleProxy('PATCH', version, service, (req.params['path'] as string) || '', req, res);
   }
 
   @Delete(':service/*path')
@@ -1141,24 +1120,46 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
+    const version = this.resolveVersionFromHeader(req);
+    return this.handleProxy('DELETE', version, service, (req.params['path'] as string) || '', req, res);
+  }
+
+  // ─── Unified proxy handler ─────────────────────────────────────────
+
+  /**
+   * Resolve API version from the request header (for legacy unversioned routes).
+   * Validates against the route's supported versions; falls back to default.
+   */
+  private resolveVersionFromHeader(req: Request): string {
+    const headerValue = req.headers[API_VERSION_HEADER.toLowerCase()];
     const version = ApiVersioningConfig.parseVersion(
-      req.headers[API_VERSION_HEADER.toLowerCase()] as string
+      Array.isArray(headerValue) ? headerValue[0] : headerValue || ''
     );
+    const serviceParam = req.params['service'];
+    const service = Array.isArray(serviceParam) ? serviceParam[0] : serviceParam || '';
     const route = this.findRoute(service);
-    const validatedVersion =
-      route && this.validateVersion(version, route) ? version : route?.defaultVersion || version;
-    return this.proxyRequest(
-      'DELETE',
-      validatedVersion,
-      service,
-      (req.params['path'] as string) || '',
-      req,
-      res
-    );
+    if (route && this.validateVersion(version, route)) {
+      return version;
+    }
+    return route?.defaultVersion || version;
+  }
+
+  /**
+   * Single entry point for all proxy requests. Resolves version, validates, and forwards.
+   */
+  private async handleProxy(
+    method: string,
+    version: string,
+    service: string,
+    path: string,
+    req: Request,
+    res: Response
+  ): Promise<void> {
+    return this.proxyRequest(method, version, service, path, req, res);
   }
 
   @Get('routes')
-  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @UseGuards(AdminGuard)
   @Header('Content-Type', 'application/json')
   getRoutes(): {
     success: boolean;
@@ -1323,7 +1324,8 @@ export class ProxyController {
     requestId: string,
     route: ServiceRoute
   ): Promise<unknown> {
-    const service = req.params['service'];
+    const serviceParam = req.params['service'];
+    const service = Array.isArray(serviceParam) ? serviceParam[0] : serviceParam || '';
 
     // Admin role check BEFORE any upstream communication (SEC: fail-fast authorization)
     if (service === 'admin') {

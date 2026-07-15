@@ -1,6 +1,5 @@
-import { Inject, Controller, Get, Post, Body, UseGuards, Request, Param  } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Body, UseGuards, Request, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { GamesService } from './games.service.js';
@@ -23,7 +22,6 @@ export class GamesController {
   }
 
   @Post('daily-challenge/submit')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Submit daily challenge answer' })
   @ApiResponse({ status: 200, description: 'Answer submitted' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -35,7 +33,6 @@ export class GamesController {
   }
 
   @Get('daily-challenge')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Daily challenge' })
   @ApiResponse({ status: 200, description: 'Daily challenge' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -44,7 +41,6 @@ export class GamesController {
   }
 
   @Post('sessions')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Start game session' })
   @ApiResponse({ status: 201, description: 'Session started' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -56,7 +52,6 @@ export class GamesController {
   }
 
   @Post('sessions/:sessionId/submit')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Submit answer' })
   @ApiResponse({ status: 200, description: 'Answer submitted' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -85,7 +80,6 @@ export class GamesController {
   }
 
   @Post('tournaments/:tournamentId/enter')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Enter tournament' })
   @ApiResponse({ status: 201, description: 'Entered tournament' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })

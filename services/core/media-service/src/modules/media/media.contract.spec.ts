@@ -1,19 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ExecutionContext } from '@nestjs/common';
+import { INestApplication, CanActivate, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
 import { UploadModule } from '../upload/upload.module';
 import { UploadService } from '../upload/upload.service';
 import { S3Service } from '../upload/s3.service';
 import { PremiumContentService } from '../upload/premium-content.service';
-import { RedisService } from '../../common/services/redis.service';
+import { RedisService } from '@azeebo/shared-services';
 import { FileValidationService } from '../../common/services/file-validation.service';
-import { AuthGuard } from '@nestjs/passport';
+import { RateLimitGuard, AdminGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 
-class MockAuthGuard {
-  canActivate(context: ExecutionContext) {
-    const request = context.switchToHttp().getRequest();
-    request.user = { sub: 'user-123' };
+class MockRateLimitGuard implements CanActivate {
+  canActivate(_context: ExecutionContext) {
+    return true;
+  }
+}
+
+class MockAdminGuard implements CanActivate {
+  canActivate(_context: ExecutionContext) {
     return true;
   }
 }
@@ -72,12 +76,21 @@ describe('Media Controller Contract Tests', () => {
         validateFile: jest.fn(),
         validatePresignedUpload: jest.fn(),
       })
-      .overrideGuard(AuthGuard('jwt'))
-      .useClass(MockAuthGuard)
+      .overrideGuard(RateLimitGuard)
+      .useClass(MockRateLimitGuard)
+      .overrideGuard(AdminGuard)
+      .useClass(MockAdminGuard)
       .compile();
 
     app = moduleFixture.createNestApplication();
     app.useGlobalInterceptors(new ResponseWrapperInterceptor());
+    // Mock ServiceAuthGuard behavior: set req.user when Authorization header present
+    app.use((req: { headers: { authorization?: string }; user?: unknown }, _res: unknown, next: () => void) => {
+      if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ') && !req.user) {
+        req.user = { id: 'user-123', sub: 'user-123', role: 'user' };
+      }
+      next();
+    });
     await app.init();
   });
 
