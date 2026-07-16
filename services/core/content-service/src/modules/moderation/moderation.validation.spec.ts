@@ -1,16 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, CanActivate, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
-import { AuthGuard } from '@nestjs/passport';
 import { ModerationController } from './moderation.controller.js';
 import { ModerationService } from './moderation.service.js';
 import { RolesGuard } from '../../common/guards/roles.guard.js';
 import { Reflector } from '@nestjs/core';
 
-class MockAuthGuard implements CanActivate {
-  canActivate(context: ExecutionContext) {
-    const req = context.switchToHttp().getRequest();
-    req.user = { userId: 'user-1', role: 'admin' };
+class MockRolesGuard implements CanActivate {
+  canActivate(_context: ExecutionContext) {
     return true;
   }
 }
@@ -41,14 +38,19 @@ describe('Moderation Validation Tests', () => {
         Reflector,
       ],
     })
-      .overrideGuard(AuthGuard('jwt'))
-      .useClass(MockAuthGuard)
       .overrideGuard(RolesGuard)
-      .useClass(RolesGuard)
+      .useClass(MockRolesGuard)
       .compile();
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
+    // Mock ServiceAuthGuard behavior
+    app.use((req: { user?: unknown }, _res: unknown, next: () => void) => {
+      if (!req.user) {
+        req.user = { id: 'user-1', sub: 'user-1', role: 'admin' };
+      }
+      next();
+    });
     await app.init();
   });
 

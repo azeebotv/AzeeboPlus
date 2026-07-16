@@ -168,6 +168,13 @@ describe('Content Controller Contract Tests', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    // Mock ServiceAuthGuard behavior: always set req.user for tests
+    app.use((req: { user?: unknown }, _res: unknown, next: () => void) => {
+      if (!req.user) {
+        req.user = { id: 'user-123', sub: 'user-123', role: 'admin' };
+      }
+      next();
+    });
     await app.init();
   });
 
@@ -228,7 +235,7 @@ describe('Content Controller Contract Tests', () => {
   describe('PATCH /v1/content/:id', () => {
     it('should update content', async () => {
       const response = await request(app.getHttpServer())
-        .patch('/v1/content/content-1')
+        .patch('/v1/content/550e8400-e29b-41d4-a716-446655440000')
         .send({ title: 'Updated Title' });
 
       expect(response.status).toBe(200);
@@ -243,7 +250,7 @@ describe('Content Controller Contract Tests', () => {
 
   describe('DELETE /v1/content/:id', () => {
     it('should delete content', async () => {
-      const response = await request(app.getHttpServer()).delete('/v1/content/content-1');
+      const response = await request(app.getHttpServer()).delete('/v1/content/550e8400-e29b-41d4-a716-446655440000');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -255,7 +262,7 @@ describe('Content Controller Contract Tests', () => {
 
   describe('GET /v1/content/:id/comments', () => {
     it('should get content comments', async () => {
-      const response = await request(app.getHttpServer()).get('/v1/content/content-1/comments');
+      const response = await request(app.getHttpServer()).get('/v1/content/550e8400-e29b-41d4-a716-446655440000/comments');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -268,7 +275,7 @@ describe('Content Controller Contract Tests', () => {
   describe('POST /v1/content/:id/comments', () => {
     it('should add comment', async () => {
       const response = await request(app.getHttpServer())
-        .post('/v1/content/content-1/comments')
+        .post('/v1/content/550e8400-e29b-41d4-a716-446655440000/comments')
         .send({ text: 'New comment' });
 
       expect(response.status).toBe(201);

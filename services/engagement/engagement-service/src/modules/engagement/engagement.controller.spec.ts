@@ -115,7 +115,7 @@ describe('EngagementController', () => {
 
       const result = await controller.submitPrediction(mockReq, body);
 
-      expect(service.submitPrediction).toHaveBeenCalledWith('user-1', 'content-1', 'yes', 100);
+      expect(service.submitPrediction).toHaveBeenCalledWith('user-1', 'content-1', 'yes');
       expect(result).toEqual(mockResult);
     });
   });

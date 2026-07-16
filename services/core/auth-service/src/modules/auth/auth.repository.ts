@@ -1,4 +1,4 @@
-import {Inject,  Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import {
@@ -27,14 +27,14 @@ export class AuthRepository {
 
   async create(data: CreateUserDto): Promise<UserEntity> {
     return this.prisma.user.create({
-      data,
+      data: data as Parameters<typeof this.prisma.user.create>[0]['data'],
     }) as Promise<UserEntity>;
   }
 
   async update(id: string, data: Partial<UserEntity>): Promise<UserEntity> {
     return this.prisma.user.update({
       where: { id },
-      data,
+      data: data as Parameters<typeof this.prisma.user.update>[0]['data'],
     }) as Promise<UserEntity>;
   }
 
@@ -138,7 +138,7 @@ export class AuthRepository {
   async updateRole(userId: string, role: string): Promise<UserEntity> {
     return this.prisma.user.update({
       where: { id: userId },
-      data: { role },
+      data: { role: role as Parameters<typeof this.prisma.user.update>[0]['data']['role'] },
     }) as Promise<UserEntity>;
   }
 }

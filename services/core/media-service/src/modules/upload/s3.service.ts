@@ -1,4 +1,4 @@
-import {Inject,  Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   S3Client,
@@ -10,6 +10,10 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'crypto';
+import { execFile } from 'child_process';
+import { writeFile, unlink } from 'fs/promises';
+import { tmpdir } from 'os';
+import { join } from 'path';
 import { CircuitBreaker, CircuitBreakerOpenError, CircuitBreakerStats } from '@azeebo/shared-types';
 
 interface FileMetadata {
@@ -139,7 +143,9 @@ export class S3Service {
           'File upload service temporarily unavailable. Please try again later.'
         );
       }
-      this.logger.error(`Error uploading file to S3: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Error uploading file to S3: ${error instanceof Error ? error.message : String(error)}`
+      );
       throw error;
     }
 
@@ -152,7 +158,7 @@ export class S3Service {
     }
 
     const maxDuration = this.getMaxDuration(validatedType);
-    if (duration && duration > maxDuration) {
+    if (duration && duration > 0 && duration > maxDuration) {
       await this.deleteFile(key);
       throw new BadRequestException(
         `File duration ${duration} seconds exceeds maximum allowed duration of ${maxDuration} seconds`
@@ -168,7 +174,9 @@ export class S3Service {
       const result = await fileTypeFromBuffer(buffer);
       return result?.mime;
     } catch (error: unknown) {
-      this.logger.warn(`Failed to sniff MIME type: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.warn(
+        `Failed to sniff MIME type: ${error instanceof Error ? error.message : String(error)}`
+      );
       return undefined;
     }
   }
@@ -206,17 +214,49 @@ export class S3Service {
         return await this.extractAudioDuration(buffer);
       }
     } catch (error: unknown) {
-      this.logger.warn(`Failed to extract duration: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.warn(
+        `Failed to extract duration: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
     return undefined;
   }
 
-  private async extractVideoDuration(_buffer: Buffer): Promise<number> {
-    return 120; // Mock: 2 minutes default
+  private async extractVideoDuration(buffer: Buffer): Promise<number> {
+    return this.extractDurationWithFfprobe(buffer);
   }
 
-  private async extractAudioDuration(_buffer: Buffer): Promise<number> {
-    return 300; // Mock: 5 minutes default
+  private async extractAudioDuration(buffer: Buffer): Promise<number> {
+    return this.extractDurationWithFfprobe(buffer);
+  }
+
+  private async extractDurationWithFfprobe(buffer: Buffer): Promise<number> {
+    const tmpFile = join(tmpdir(), `media-${randomUUID()}`);
+    try {
+      await writeFile(tmpFile, buffer);
+      const duration = await new Promise<number>((resolve, reject) => {
+        execFile(
+          'ffprobe',
+          ['-v', 'quiet', '-show_entries', 'format=duration', '-of', 'csv=p=0', tmpFile],
+          { timeout: 30000 },
+          (error, stdout) => {
+            if (error) {
+              reject(error);
+              return;
+            }
+            const parsed = parseFloat(stdout.trim());
+            resolve(Number.isFinite(parsed) ? parsed : 0);
+          }
+        );
+      });
+      return Math.round(duration);
+    } catch (error: unknown) {
+      this.logger.warn(
+        `ffprobe not available or failed: ${error instanceof Error ? error.message : String(error)}. Duration validation skipped.`
+      );
+      return 0;
+    } finally {
+      await unlink(tmpFile).catch(() => {});
+    }
   }
 
   async getSignedDownloadUrl(key: string, expiresIn = 3600): Promise<string> {
@@ -239,7 +279,9 @@ export class S3Service {
           'File download service temporarily unavailable. Please try again later.'
         );
       }
-      this.logger.error(`Error getting signed download URL: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Error getting signed download URL: ${error instanceof Error ? error.message : String(error)}`
+      );
       throw error;
     }
   }
@@ -273,7 +315,9 @@ export class S3Service {
           'File upload service temporarily unavailable. Please try again later.'
         );
       }
-      this.logger.error(`Error getting signed upload URL: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Error getting signed upload URL: ${error instanceof Error ? error.message : String(error)}`
+      );
       throw error;
     }
   }
@@ -296,7 +340,9 @@ export class S3Service {
           'File deletion service temporarily unavailable. Please try again later.'
         );
       }
-      this.logger.error(`Error deleting file from S3: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Error deleting file from S3: ${error instanceof Error ? error.message : String(error)}`
+      );
       throw error;
     }
   }
@@ -326,7 +372,9 @@ export class S3Service {
           'File metadata service temporarily unavailable. Please try again later.'
         );
       }
-      this.logger.error(`Error getting file metadata from S3: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Error getting file metadata from S3: ${error instanceof Error ? error.message : String(error)}`
+      );
       throw error;
     }
   }
@@ -353,7 +401,9 @@ export class S3Service {
             await this.deleteFile(item.Key || '');
             deletedCount++;
           } catch (error: unknown) {
-            this.logger.error(`Failed to delete orphaned file ${item.Key}: ${error instanceof Error ? error.message : String(error)}`);
+            this.logger.error(
+              `Failed to delete orphaned file ${item.Key}: ${error instanceof Error ? error.message : String(error)}`
+            );
           }
         }
       }

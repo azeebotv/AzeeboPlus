@@ -1,11 +1,11 @@
-import { Inject, Controller, Get, Delete, Param, Query, UseGuards  } from '@nestjs/common';
+import { Inject, Controller, Get, Delete, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { AdminGuard } from '@azeebo/security';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
 @ApiTags('Admin - Media Service')
-@Controller('admin')
+@Controller('v1/admin')
 @UseGuards(AdminGuard)
 export class AdminController {
   constructor(@Inject(AdminService) private readonly adminService: AdminService) {}

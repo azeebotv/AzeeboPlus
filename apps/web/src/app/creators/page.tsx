@@ -4,6 +4,7 @@ import { api, User, ContentItem } from '../../lib/api';
 import { webLogger } from '@/lib/logger';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 interface CreatorProfile extends User {
   contentCount: number;
@@ -16,6 +17,8 @@ export default function CreatorsPage(): React.JSX.Element {
   const [selectedCreator, setSelectedCreator] = useState<CreatorProfile | null>(null);
   const [creatorContent, setCreatorContent] = useState<ContentItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isContentLoading, setIsContentLoading] = useState<boolean>(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCreators = async (): Promise<void> => {
@@ -27,6 +30,7 @@ export default function CreatorsPage(): React.JSX.Element {
         }
       } catch (error) {
         webLogger.error('Failed to load creators', error);
+        setFetchError('Failed to load creators. Please try again.');
       } finally {
         setIsLoading(false);
       }
@@ -37,6 +41,7 @@ export default function CreatorsPage(): React.JSX.Element {
   useEffect(() => {
     const fetchCreatorContent = async (): Promise<void> => {
       if (!selectedCreator) return;
+      setIsContentLoading(true);
       try {
         const response = await api.creator.getCreatorContent(selectedCreator.id, 1, 10);
         if (response.success && response.data) {
@@ -44,6 +49,8 @@ export default function CreatorsPage(): React.JSX.Element {
         }
       } catch (error) {
         webLogger.error('Failed to load creator content', error);
+      } finally {
+        setIsContentLoading(false);
       }
     };
     fetchCreatorContent();
@@ -73,6 +80,24 @@ export default function CreatorsPage(): React.JSX.Element {
               </div>
             ))}
           </div>
+        ) : fetchError ? (
+          <div className="text-center py-16">
+            <p className="text-lg text-red-400 mb-4">{fetchError}</p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="az-btn-primary"
+              style={{ width: 'auto', paddingInline: '2rem' }}
+            >
+              Try Again
+            </button>
+          </div>
+        ) : creators.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-6xl mb-4">🎬</p>
+            <h3 className="text-xl font-bold text-white mb-2">No Creators Yet</h3>
+            <p className="text-white/50">Check back later for amazing content creators.</p>
+          </div>
         ) : (
           <>
             <div
@@ -84,8 +109,15 @@ export default function CreatorsPage(): React.JSX.Element {
                 <div
                   key={creator.id}
                   onClick={() => setSelectedCreator(creator)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedCreator(creator);
+                    }
+                  }}
                   role="option"
                   aria-selected={selectedCreator?.id === creator.id}
+                  tabIndex={0}
                   className={`az-glass p-6 cursor-pointer transition-all hover:scale-[1.02] text-center ${
                     selectedCreator?.id === creator.id ? 'ring-2' : ''
                   }`}
@@ -102,7 +134,7 @@ export default function CreatorsPage(): React.JSX.Element {
                     {creator.name?.charAt(0) || 'C'}
                   </div>
                   <h3 className="text-lg font-bold text-white">{creator.name}</h3>
-                  <p className="text-sm text-white/50 mb-1">{creator.email}</p>
+                  <p className="text-sm text-white/50 mb-1">{creator.bio || `${creator.contentCount} videos`}</p>
                   <div className="flex items-center justify-center gap-4 mt-3 text-sm">
                     <span className="text-white/60">{creator.contentCount} videos</span>
                     <span className="text-white/60">{creator.subscriberCount} subscribers</span>
@@ -120,7 +152,16 @@ export default function CreatorsPage(): React.JSX.Element {
               ))}
             </div>
 
-            {selectedCreator && creatorContent.length > 0 && (
+            {selectedCreator && isContentLoading && (
+              <div className="flex items-center justify-center py-12">
+                <div
+                  className="animate-spin rounded-full h-8 w-8"
+                  style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }}
+                />
+              </div>
+            )}
+
+            {selectedCreator && !isContentLoading && creatorContent.length > 0 && (
               <section>
                 <h2 className="text-2xl font-bold text-white mb-6">
                   {selectedCreator.name}&apos;s Content
@@ -128,9 +169,11 @@ export default function CreatorsPage(): React.JSX.Element {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {creatorContent.map((content) => (
                     <div key={content.id} className="az-glass overflow-hidden">
-                      <img
+                      <OptimizedImage
                         src={content.thumbnail}
                         alt={content.title}
+                        width={400}
+                        height={192}
                         className="w-full h-48 object-cover"
                       />
                       <div className="p-4">

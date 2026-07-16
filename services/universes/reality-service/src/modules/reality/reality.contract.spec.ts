@@ -4,7 +4,7 @@ import request from 'supertest';
 import { RealityModule } from './reality.module.js';
 import { RealityService } from './reality.service.js';
 import { JwtService } from '@nestjs/jwt';
-import { RedisService } from '../../common/services/redis.service.js';
+import { RedisService } from '@azeebo/shared-services';
 import { PrismaService } from '../database/prisma.service.js';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';

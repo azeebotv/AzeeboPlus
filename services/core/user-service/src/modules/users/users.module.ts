@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CacheModule } from '@azeebo/shared-services';
@@ -13,7 +12,6 @@ import { UserDeletionController } from '../user/user-deletion.controller.js';
 @Module({
   imports: [
     DatabaseModule,
-    PassportModule,
     CacheModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

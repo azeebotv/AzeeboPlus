@@ -1,4 +1,5 @@
-import {Inject, 
+import {
+  Inject,
   Injectable,
   CanActivate,
   ExecutionContext,
@@ -9,7 +10,7 @@ import {Inject,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
-import { RedisService } from '../services/redis.service.js';
+import { RedisService } from '@azeebo/shared-services';
 
 export const RateLimit = (limit: number, windowMs: number): ReturnType<typeof SetMetadata> =>
   SetMetadata('rateLimit', { limit, windowMs });

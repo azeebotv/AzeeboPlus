@@ -1,4 +1,4 @@
-import {Inject,  Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '@prisma/client';
@@ -143,14 +143,17 @@ export class RefundService {
         processedBy,
       });
 
-      const walletData = await this.walletServiceClient.post<{ id?: string }>('/api/wallet/credit', {
-        userId: refund.userId,
-        amount: refund.amount.toNumber(),
-        currency: refund.currency,
-        description: `Refund for payment ${refund.paymentId}`,
-        reference: refundReference,
-        transactionType: 'refund',
-      });
+      const walletData = await this.walletServiceClient.post<{ id?: string }>(
+        '/api/wallet/credit',
+        {
+          userId: refund.userId,
+          amount: refund.amount.toNumber(),
+          currency: refund.currency,
+          description: `Refund for payment ${refund.paymentId}`,
+          reference: refundReference,
+          transactionType: 'refund',
+        }
+      );
 
       this.logger.log(
         `Refund processed: payment ${refund.paymentId}, wallet txn: ${walletData?.id}`

@@ -1,7 +1,7 @@
-import {Inject,  Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHmac, timingSafeEqual } from 'crypto';
-import { RedisService } from '../../common/services/redis.service.js';
+import { RedisService } from '@azeebo/shared-services';
 
 @Injectable()
 export class WebhookSecurityService {
@@ -37,7 +37,7 @@ export class WebhookSecurityService {
 
   async isDuplicate(reference: string): Promise<boolean> {
     const key = `${this.idempotencyPrefix}${reference}`;
-    return this.redisService.exists(key);
+    return (await this.redisService.exists(key)) === 1;
   }
 
   async markAsProcessed(reference: string): Promise<void> {
@@ -54,7 +54,7 @@ export class WebhookSecurityService {
     }
 
     const key = `${this.replayPrefix}${reference}`;
-    const exists = await this.redisService.exists(key);
+    const exists = (await this.redisService.exists(key)) === 1;
     return exists;
   }
 
@@ -64,11 +64,18 @@ export class WebhookSecurityService {
   }
 
   private constantTimeCompare(a: string, b: string): boolean {
-    if (a.length !== b.length) {
-      return false;
-    }
     const bufferA = Buffer.from(a, 'utf8');
     const bufferB = Buffer.from(b, 'utf8');
+
+    if (bufferA.length !== bufferB.length) {
+      const maxLen = Math.max(bufferA.length, bufferB.length);
+      const paddedA = Buffer.alloc(maxLen, 0);
+      const paddedB = Buffer.alloc(maxLen, 0);
+      bufferA.copy(paddedA);
+      bufferB.copy(paddedB);
+      return timingSafeEqual(paddedA, paddedB);
+    }
+
     return timingSafeEqual(bufferA, bufferB);
   }
 }

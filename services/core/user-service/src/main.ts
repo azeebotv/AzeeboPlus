@@ -49,14 +49,13 @@ async function bootstrap(): Promise<void> {
     credentials: true,
   });
 
-  const config = new DocumentBuilder()
-    .setTitle('User Service')
-    .setDescription('Azeebo+ User Service API')
-    .setVersion('1.0.0')
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-
   if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('User Service')
+      .setDescription('Azeebo+ User Service API')
+      .setVersion('1.0.0')
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('docs', app, document);
     Logger.log('Swagger documentation enabled at /docs');
   }

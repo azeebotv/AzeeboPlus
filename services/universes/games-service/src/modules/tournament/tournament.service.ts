@@ -1,4 +1,4 @@
-import {Inject,  Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import axios from 'axios';
@@ -43,10 +43,7 @@ export class TournamentService {
     @Inject(PrismaService) private prisma: PrismaService,
     @Inject(ConfigService) private readonly configService: ConfigService
   ) {
-    this.walletServiceUrl = this.configService.get<string>(
-      'WALLET_SERVICE_URL',
-      'http://wallet-service:3002'
-    );
+    this.walletServiceUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
   }
 
   private formatTournament(
@@ -138,7 +135,10 @@ export class TournamentService {
         this.prisma.tournamentPrize.count({ where: { tournamentId: id } }),
       ]);
 
-      return { success: true, data: this.formatTournament(tournament, { entries: entryCount, prizes: prizeCount }) };
+      return {
+        success: true,
+        data: this.formatTournament(tournament, { entries: entryCount, prizes: prizeCount }),
+      };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to fetch tournament ${id}: ${error}`);
@@ -258,9 +258,13 @@ export class TournamentService {
       ]);
 
       const userIds = entries.map((e) => e.userId);
-      const users = userIds.length > 0
-        ? await this.prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, displayName: true } })
-        : [];
+      const users =
+        userIds.length > 0
+          ? await this.prisma.user.findMany({
+              where: { id: { in: userIds } },
+              select: { id: true, displayName: true },
+            })
+          : [];
       const userMap = new Map(users.map((u) => [u.id, u.displayName]));
 
       const leaderboard = entries.map((e, index) => ({

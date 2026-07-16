@@ -9,13 +9,20 @@ datasource db {
 
 }
 
+enum UserRole {
+  user
+  creator
+  admin
+  super_admin
+}
+
 model User {
   id              String   @id @default(uuid())
   email           String   @unique
   password        String   @default("")
   displayName     String
   avatar          String?
-  role            String   @default("user")
+  role            UserRole @default(user)
   preferences     Json?
   isVerified      Boolean  @default(false)
   mfaEnabled      Boolean  @default(false)
@@ -38,8 +45,8 @@ model SocialAccount {
   userId      String
   provider    String
   socialId    String
-  accessToken String?
-  refreshToken String?
+  accessToken String?  // Not stored — always empty string in application code
+  refreshToken String? // Hashed with bcrypt before storage (see social.service.ts)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

@@ -1,4 +1,4 @@
-import { Inject, Controller, Get, HttpCode, HttpStatus, HttpException  } from '@nestjs/common';
+import { Inject, Controller, Get, HttpCode, HttpStatus, HttpException } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Public } from '@azeebo/security';
 import { PrismaService } from '../database/prisma.service.js';
@@ -16,7 +16,7 @@ export class HealthController {
       await this.prisma.$queryRaw`SELECT 1`;
     } catch {
       throw new HttpException(
-        { status: 'error', db: 'disconnected' },
+        { status: 'error', database: 'disconnected' },
         HttpStatus.SERVICE_UNAVAILABLE
       );
     }
@@ -46,7 +46,7 @@ export class HealthController {
       };
     } catch {
       throw new HttpException(
-        { status: 'error', db: 'disconnected' },
+        { status: 'error', database: 'disconnected' },
         HttpStatus.SERVICE_UNAVAILABLE
       );
     }

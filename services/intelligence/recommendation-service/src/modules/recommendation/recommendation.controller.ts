@@ -1,14 +1,15 @@
-import { Inject, Controller, Get, Query, UseGuards, Request  } from '@nestjs/common';
+import { Inject, Controller, Get, Query, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit, Public } from '@azeebo/security';
-import { AuthGuard } from '@nestjs/passport';
 import { RecommendationService } from './recommendation.service';
 
 @ApiTags('Recommendation')
-@UseGuards(AuthGuard('jwt'), RateLimitGuard)
+@UseGuards(RateLimitGuard)
 @Controller('recommendation')
 export class RecommendationController {
-  constructor(@Inject(RecommendationService) private readonly recommendationService: RecommendationService) {}
+  constructor(
+    @Inject(RecommendationService) private readonly recommendationService: RecommendationService
+  ) {}
 
   @Public()
   @Get('content')
@@ -108,7 +109,11 @@ export class RecommendationController {
     @Query('contentId') contentId?: string,
     @Query('transactionId') transactionId?: string
   ): Promise<unknown> {
-    return this.recommendationService.assessFraudRisk({ userId: req.user.id, contentId, transactionId });
+    return this.recommendationService.assessFraudRisk({
+      userId: req.user.id,
+      contentId,
+      transactionId,
+    });
   }
 
   @Get('personalized-feed')
@@ -118,6 +123,9 @@ export class RecommendationController {
     @Request() req: { user: { id: string } },
     @Query('limit') limit?: string
   ): Promise<unknown> {
-    return this.recommendationService.getPersonalizedFeed(req.user.id, limit ? parseInt(limit, 10) : 20);
+    return this.recommendationService.getPersonalizedFeed(
+      req.user.id,
+      limit ? parseInt(limit, 10) : 20
+    );
   }
 }

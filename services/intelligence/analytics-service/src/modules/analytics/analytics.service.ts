@@ -1,4 +1,4 @@
-import {Inject,  Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service.js';
 import { AnalyticsResponse } from './interfaces/analytics-response.interface.js';
@@ -425,6 +425,10 @@ export class AnalyticsService {
   async trackBatch(
     events: Array<{ type: string; userId?: string; metadata?: Record<string, unknown> }>
   ): Promise<{ success: boolean }> {
+    if (events.length > 1000) {
+      throw new BadRequestException('Maximum 1000 events per batch');
+    }
+
     const invalidEvents = events.filter(
       (e) => !ALLOWED_EVENT_NAMES.includes(e.type) && !e.type.startsWith('custom_')
     );

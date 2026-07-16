@@ -97,9 +97,9 @@ model SavedItem {
 model Wallet {
   id           String   @id @default(uuid())
   userId       String   @unique
-  balance      Decimal  @default(0)
-  bonusBalance Decimal  @default(0)
-  promoBalance Decimal  @default(0)
+  balance      Decimal  @db.Decimal(18, 2) @default(0)
+  bonusBalance Decimal  @db.Decimal(18, 2) @default(0)
+  promoBalance Decimal  @db.Decimal(18, 2) @default(0)
   currency     String   @default("NGN")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -114,7 +114,7 @@ model WalletTransaction {
   id           String   @id @default(uuid())
   walletId     String
   type         String
-  amount       Decimal
+  amount       Decimal  @db.Decimal(18, 2)
   status       String
   description  String?
   reference    String?

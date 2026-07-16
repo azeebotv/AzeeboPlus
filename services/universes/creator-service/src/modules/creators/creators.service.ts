@@ -1,4 +1,4 @@
-import {Inject,  Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '@prisma/client';
@@ -59,7 +59,10 @@ export class CreatorsService {
     this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
     this.mediaServiceBaseUrl = this.configService.getOrThrow<string>('MEDIA_SERVICE_URL');
     this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
-    this.notificationServiceBaseUrl = this.configService.get<string>('NOTIFICATION_SERVICE_URL', 'http://notification-service:3006');
+    this.notificationServiceBaseUrl = this.configService.get<string>(
+      'NOTIFICATION_SERVICE_URL',
+      'http://notification-service:3006'
+    );
     this.minimumPayout = parseInt(this.configService.get<string>('MINIMUM_PAYOUT', '5000'), 10);
   }
 
@@ -1606,27 +1609,42 @@ export class CreatorsService {
       this.prisma.subscription.count({ where: { creatorId: profile.id, status: 'active' } }),
     ]);
 
-    // ContentItem has no view-tracking field in this service's schema; view
-    // aggregation is owned by analytics-service. Default to 0 here.
+    // View/like/comment counts are tracked by analytics-service, not on ContentItem
     const totalViews = 0;
+    const totalLikes = 0;
+    const totalComments = 0;
+
+    // Calculate pending earnings (earnings not yet paid out)
+    const pendingEarnings = await this.prisma.creatorEarning.aggregate({
+      where: { creatorId: profile.id, status: 'pending' },
+      _sum: { amount: true },
+    });
+
+    // Calculate engagement rate (likes + comments / views)
+    const avgEngagementRate =
+      totalViews > 0
+        ? Math.round(((totalLikes + totalComments) / totalViews) * 100 * 100) / 100
+        : 0;
 
     return {
       success: true,
       data: {
         totalViews,
-        totalLikes: 0,
-        totalComments: 0,
+        totalLikes,
+        totalComments,
         followerCount: subscribers,
         contentCount,
         totalEarnings: Number(earnings._sum.amount) || 0,
-        pendingEarnings: 0,
-        viewsChangePercentage: 0,
-        avgEngagementRate: 0,
+        pendingEarnings: Number(pendingEarnings._sum.amount) || 0,
+        // Change percentages require historical snapshots from analytics-service
+        // These will be populated when analytics integration is complete
+        viewsChangePercentage: null,
+        avgEngagementRate,
         totalFollowers: subscribers,
-        viewsChange: 0,
-        likesChange: 0,
-        commentsChange: 0,
-        followersChange: 0,
+        viewsChange: null,
+        likesChange: null,
+        commentsChange: null,
+        followersChange: null,
       } as Record<string, unknown>,
     };
   }

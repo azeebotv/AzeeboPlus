@@ -94,14 +94,11 @@ describe('Payment API Contract', () => {
           });
         })
         .executeTest(async (mockServer) => {
-          const response = await fetch(
-            `${mockServer.url}/v1/payments/payment-id-123`,
-            {
-              headers: {
-                Authorization: 'Bearer some-jwt-token',
-              },
-            }
-          );
+          const response = await fetch(`${mockServer.url}/v1/payments/payment-id-123`, {
+            headers: {
+              Authorization: 'Bearer some-jwt-token',
+            },
+          });
 
           expect(response.status).toBe(200);
           const body = await response.json();

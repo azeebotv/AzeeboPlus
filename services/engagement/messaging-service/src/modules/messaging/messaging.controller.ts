@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -8,12 +9,11 @@ import { Inject,
   Query,
   UseGuards,
   Request,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
 import { MessagingService } from './messaging.service.js';
 import { CreateConversationDto, SendMessageDto, MarkAsReadDto } from './dto/messaging.dto.js';
-import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import { User } from '@azeebo/shared-types';
 
@@ -24,7 +24,7 @@ interface AuthRequest extends Request {
 @ApiTags('Messaging')
 @ApiBearerAuth()
 @Controller('v1/messaging')
-@UseGuards(AuthGuard('jwt'), RateLimitGuard)
+@UseGuards(RateLimitGuard)
 export class MessagingController {
   constructor(@Inject(MessagingService) private readonly messagingService: MessagingService) {}
 

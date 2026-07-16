@@ -1,5 +1,4 @@
-import { Inject, Controller, Get, Post, Body, UseGuards, Request  } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Inject, Controller, Get, Post, Body, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 import { MfaService } from './mfa.service.js';
@@ -22,7 +21,6 @@ export class MfaController {
   constructor(@Inject(MfaService) private readonly mfaService: MfaService) {}
 
   @Get('setup')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Setup MFA for user' })
   @ApiResponse({ status: 200, description: 'MFA setup information' })
   async setup(@Request() req: MfaRequest): Promise<unknown> {
@@ -37,7 +35,6 @@ export class MfaController {
   }
 
   @Post('verify')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Verify MFA code' })
   @ApiResponse({ status: 200, description: 'MFA verification result' })
   async verify(@Request() req: MfaRequest, @Body() dto: EnableMfaDto): Promise<unknown> {
@@ -50,7 +47,6 @@ export class MfaController {
   }
 
   @Post('enable')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Enable MFA for user' })
   @ApiResponse({ status: 200, description: 'MFA enabled' })
   async enable(@Request() req: MfaRequest, @Body() dto: EnableMfaDto): Promise<unknown> {
@@ -72,7 +68,6 @@ export class MfaController {
   }
 
   @Post('disable')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Disable MFA for user' })
   @ApiResponse({ status: 200, description: 'MFA disabled' })
   async disable(@Request() req: MfaRequest): Promise<unknown> {

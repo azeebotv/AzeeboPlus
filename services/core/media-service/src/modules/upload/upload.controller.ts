@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Post,
   Get,
@@ -12,9 +13,8 @@ import { Inject,
   ForbiddenException,
   UseGuards,
   Request,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { UploadService } from './upload.service';
@@ -31,7 +31,6 @@ export class UploadController {
   ) {}
 
   @Post('upload/image')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @RateLimit(10, 60000)
   @UseInterceptors(FileInterceptor('file'))
@@ -47,7 +46,6 @@ export class UploadController {
   }
 
   @Post('upload/video')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @RateLimit(5, 60000)
   @UseInterceptors(FileInterceptor('file'))
@@ -63,7 +61,6 @@ export class UploadController {
   }
 
   @Post('upload/audio')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @RateLimit(10, 60000)
   @UseInterceptors(FileInterceptor('file'))
@@ -79,7 +76,6 @@ export class UploadController {
   }
 
   @Post('upload/document')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @RateLimit(10, 60000)
   @UseInterceptors(FileInterceptor('file'))
@@ -95,7 +91,6 @@ export class UploadController {
   }
 
   @Post('upload/thumbnail')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @RateLimit(10, 60000)
   @UseInterceptors(FileInterceptor('file'))
@@ -111,7 +106,6 @@ export class UploadController {
   }
 
   @Post('upload/avatar')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @RateLimit(5, 60000)
   @UseInterceptors(FileInterceptor('file'))
@@ -127,7 +121,6 @@ export class UploadController {
   }
 
   @Post('upload/banner')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @RateLimit(5, 60000)
   @UseInterceptors(FileInterceptor('file'))
@@ -143,7 +136,6 @@ export class UploadController {
   }
 
   @Get('presigned/upload')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a presigned upload URL' })
   @ApiResponse({ status: 200, description: 'Presigned URL generated' })
@@ -171,7 +163,6 @@ export class UploadController {
   }
 
   @Get('presigned/download')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a presigned download URL' })
   @ApiResponse({ status: 200, description: 'Presigned URL generated' })
@@ -213,7 +204,6 @@ export class UploadController {
   }
 
   @Get('metadata')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get file metadata by key' })
   @ApiResponse({ status: 200, description: 'File metadata retrieved' })
@@ -227,7 +217,6 @@ export class UploadController {
   }
 
   @Delete(':key')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a file by key' })
   @ApiResponse({ status: 200, description: 'File deleted successfully' })
@@ -247,7 +236,6 @@ export class UploadController {
   }
 
   @Get('transcoding/:jobId/status')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get transcoding job status' })
   @ApiResponse({ status: 200, description: 'Job status retrieved' })
@@ -261,7 +249,6 @@ export class UploadController {
   }
 
   @Get('transcoding/jobs')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'List transcoding jobs' })
   @ApiResponse({ status: 200, description: 'Jobs retrieved successfully' })
@@ -274,7 +261,7 @@ export class UploadController {
   }
 
   @Post('transcoding/retry-failed')
-  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @UseGuards(AdminGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Retry failed transcoding jobs' })
   @ApiResponse({ status: 200, description: 'Failed jobs retried' })
@@ -286,7 +273,7 @@ export class UploadController {
   }
 
   @Post('cleanup/orphaned')
-  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @UseGuards(AdminGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Cleanup orphaned files' })
   @ApiResponse({ status: 200, description: 'Orphaned files cleaned up' })
@@ -309,7 +296,6 @@ export class UploadController {
   }
 
   @Post('premium/url')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Generate a premium content URL' })
   @ApiResponse({ status: 201, description: 'Premium URL generated' })
@@ -334,7 +320,6 @@ export class UploadController {
   }
 
   @Post('premium/url/cdn')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Generate a CDN premium content URL' })
   @ApiResponse({ status: 201, description: 'CDN premium URL generated' })
@@ -359,9 +344,11 @@ export class UploadController {
   }
 
   @Post('premium/url/validate')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Validate a premium content URL token' })
   @ApiResponse({ status: 200, description: 'Token validation result' })
   @ApiResponse({ status: 400, description: 'token is required' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async validatePremiumUrl(@Body() body: { token: string }): Promise<unknown> {
     const { token } = body;
     if (!token) {
@@ -376,7 +363,6 @@ export class UploadController {
   }
 
   @Delete('premium/url/:token')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Invalidate a premium content URL' })
   @ApiResponse({ status: 200, description: 'URL invalidated successfully' })
@@ -387,7 +373,6 @@ export class UploadController {
   }
 
   @Delete('premium/urls/user')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Invalidate all premium URLs for a user' })
   @ApiResponse({ status: 200, description: 'All user URLs invalidated' })
@@ -400,7 +385,6 @@ export class UploadController {
   }
 
   @Get('premium/url/:token/analytics')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get analytics for a premium content URL' })
   @ApiResponse({ status: 200, description: 'Analytics retrieved' })

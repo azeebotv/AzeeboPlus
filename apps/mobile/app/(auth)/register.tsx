@@ -25,6 +25,7 @@ export default function RegisterScreen() {
   });
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleRegister = async () => {
     if (!formData.name || !formData.email || !formData.password) {
@@ -48,11 +49,14 @@ export default function RegisterScreen() {
     }
 
     setError(null);
+    setIsSubmitting(true);
     try {
       await register(formData.email, formData.password, formData.name);
       router.push('/(auth)/otp-verification');
     } catch {
       setError('Registration failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -136,7 +140,8 @@ export default function RegisterScreen() {
               <BrandButton
                 title="Create Account"
                 onPress={handleRegister}
-                loading={isLoading}
+                loading={isLoading || isSubmitting}
+                disabled={isSubmitting}
                 variant="primary"
               />
 

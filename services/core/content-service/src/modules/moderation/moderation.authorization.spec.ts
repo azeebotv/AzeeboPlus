@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
-import { AuthGuard } from '@nestjs/passport';
 import { ModerationController } from './moderation.controller.js';
 import { ModerationService } from './moderation.service.js';
 import { RolesGuard } from '../../common/guards/roles.guard.js';
@@ -38,15 +37,6 @@ describe('Moderation Authorization Tests', () => {
         Reflector,
       ],
     })
-      .overrideGuard(AuthGuard('jwt'))
-      .useValue({
-        canActivate: jest.fn((context: ExecutionContext) => {
-          const req = context.switchToHttp().getRequest();
-          const role = req.headers['x-user-role'];
-          req.user = { userId: 'user-1', role: role || 'user' };
-          return true;
-        }),
-      })
       .overrideGuard(RolesGuard)
       .useValue({
         canActivate: jest.fn((context: ExecutionContext) => {
@@ -60,6 +50,14 @@ describe('Moderation Authorization Tests', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    // Mock ServiceAuthGuard behavior: set req.user from X-User-Role header
+    app.use((req: { headers: Record<string, string | undefined>; user?: unknown }, _res: unknown, next: () => void) => {
+      if (!req.user) {
+        const role = req.headers['x-user-role'] || 'user';
+        req.user = { id: 'user-1', sub: 'user-1', role };
+      }
+      next();
+    });
     await app.init();
   });
 

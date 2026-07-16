@@ -45,6 +45,13 @@ describe('Payments Controller Contract Tests', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    // Mock ServiceAuthGuard behavior
+    app.use((req: { user?: unknown }, _res: unknown, next: () => void) => {
+      if (!req.user) {
+        req.user = { id: 'test-user-id', sub: 'test-user-id', role: 'user' };
+      }
+      next();
+    });
     await app.init();
   });
 

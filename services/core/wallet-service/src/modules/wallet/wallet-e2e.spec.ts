@@ -5,8 +5,7 @@ import {
   ExecutionContext,
   NestInterceptor,
 } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { WalletModule } from './wallet.module.js';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { WalletController } from './wallet.controller.js';
 import { WalletService } from './wallet.service.js';
@@ -35,70 +34,79 @@ describe('Wallet E2E Tests - Webhooks, Retries, and Failures', () => {
   const testWalletId = randomUUID();
 
   beforeAll(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      imports: [ConfigModule.forRoot(), WalletModule],
-      controllers: [WalletController],
-    })
-      .overrideProvider(PrismaService)
-      .useValue({
-        wallet: {
-          findUnique: jest.fn(),
-          findFirst: jest.fn(),
-          create: jest.fn(),
-          update: jest.fn(),
-        },
-        walletTransaction: {
-          create: jest.fn(),
-          findMany: jest.fn(),
-          findUnique: jest.fn(),
-          findFirst: jest.fn(),
-        },
-        $transaction: jest.fn().mockImplementation(async (arg) => {
-          if (Array.isArray(arg)) {
-            const results = [];
-            for (const op of arg) {
-              if (typeof op === 'function') {
-                const result = await op();
-                results.push(result);
-              } else if (op.walletTransaction?.create) {
-                const createOp = op.walletTransaction.create;
-                const created = await prismaService.walletTransaction.create(createOp);
-                results.push(created);
-              } else if (op.wallet?.update) {
-                const updateOp = op.wallet.update;
-                const updated = await prismaService.wallet.update(updateOp);
-                results.push(updated);
-              } else {
-                results.push(op);
-              }
+    const prismaMock = {
+      wallet: {
+        findUnique: jest.fn(),
+        findFirst: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
+      },
+      walletTransaction: {
+        create: jest.fn(),
+        findMany: jest.fn(),
+        findUnique: jest.fn(),
+        findFirst: jest.fn(),
+      },
+      $queryRaw: jest.fn().mockResolvedValue([{ id: testWalletId, balance: '100000', bonusBalance: '0', promoBalance: '0', currency: 'NGN', userId: testUserId, createdAt: new Date(), updatedAt: new Date() }]),
+      $transaction: jest.fn().mockImplementation(async (arg) => {
+        if (Array.isArray(arg)) {
+          const results = [];
+          for (const op of arg) {
+            if (typeof op === 'function') {
+              const result = await op();
+              results.push(result);
+            } else if (op.walletTransaction?.create) {
+              const createOp = op.walletTransaction.create;
+              const created = await prismaMock.walletTransaction.create(createOp);
+              results.push(created);
+            } else if (op.wallet?.update) {
+              const updateOp = op.wallet.update;
+              const updated = await prismaMock.wallet.update(updateOp);
+              results.push(updated);
+            } else {
+              results.push(op);
             }
-            return results;
-          } else if (typeof arg === 'function') {
-            return arg(prismaService);
           }
-        }),
-        $connect: jest.fn(),
-        $disconnect: jest.fn(),
-      })
-      .overrideProvider(ConfigService)
-      .useValue({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        get: jest.fn((key: string, defaultValue?: any) => {
-          if (key === 'POINTS_TO_NAIRA_RATE') return defaultValue ?? 100;
-          return defaultValue;
-        }),
-      })
-      .overrideProvider(RateLimitService)
-      .useValue({
-        checkRateLimit: jest.fn().mockResolvedValue(true),
-        incrementUsage: jest.fn().mockResolvedValue(0),
-      })
-      .overrideProvider(CacheService)
-      .useValue({
-        get: jest.fn().mockResolvedValue(null),
-        set: jest.fn().mockResolvedValue(undefined),
-        delete: jest.fn().mockResolvedValue(undefined),
-      })
+          return results;
+        } else if (typeof arg === 'function') {
+          return arg(prismaMock);
+        }
+      }),
+      $connect: jest.fn(),
+      $disconnect: jest.fn(),
+    };
+
+    prismaService = prismaMock as unknown as PrismaService;
+
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [WalletController],
+      providers: [
+        WalletService,
+        { provide: PrismaService, useValue: prismaMock },
+        { provide: ConfigService, useValue: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          get: jest.fn((key: string, defaultValue?: any) => {
+            if (key === 'POINTS_TO_NAIRA_RATE') return defaultValue ?? 100;
+            return defaultValue;
+          }),
+          getOrThrow: jest.fn((key: string) => {
+            if (key === 'WEBHOOK_SECRET') return 'test-webhook-secret';
+            return undefined;
+          }),
+        }},
+        { provide: CacheService, useValue: {
+          get: jest.fn().mockResolvedValue(null),
+          set: jest.fn().mockResolvedValue(undefined),
+          delete: jest.fn().mockResolvedValue(undefined),
+          deleteByPattern: jest.fn().mockResolvedValue(0),
+          invalidate: jest.fn().mockResolvedValue(undefined),
+        }},
+        { provide: RateLimitService, useValue: {
+          checkRateLimit: jest.fn().mockResolvedValue(true),
+          incrementUsage: jest.fn().mockResolvedValue(0),
+        }},
+      ],
+    })
       .overrideInterceptor(CacheInterceptor)
       .useValue({
         intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle(),
@@ -117,7 +125,6 @@ describe('Wallet E2E Tests - Webhooks, Retries, and Failures', () => {
     await app.init();
 
     walletService = module.get<WalletService>(WalletService);
-    prismaService = module.get<PrismaService>(PrismaService);
   });
 
   afterAll(async () => {

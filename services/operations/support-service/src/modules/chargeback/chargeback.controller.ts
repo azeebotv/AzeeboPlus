@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -8,7 +9,7 @@ import { Inject,
   Query,
   UseGuards,
   Request,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { ChargebackService } from './chargeback.service';
 import {

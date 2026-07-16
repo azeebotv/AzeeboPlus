@@ -1,4 +1,4 @@
-import {Inject,  Injectable, OnModuleDestroy, Logger } from '@nestjs/common';
+import { Inject, Injectable, OnModuleDestroy, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 

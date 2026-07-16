@@ -8,6 +8,6 @@ declare module 'file-type' {
     mime: string;
   }
   export function fileTypeFromBuffer(
-    buffer: Uint8Array | ArrayBuffer,
+    buffer: Uint8Array | ArrayBuffer
   ): Promise<FileTypeResult | undefined>;
 }

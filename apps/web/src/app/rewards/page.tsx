@@ -6,6 +6,7 @@ import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
+import { useToast } from '@/components/ToastProvider';
 
 interface Mission {
   id: string;
@@ -36,6 +37,7 @@ interface RedeemResult {
 
 export default function RewardsPage(): React.JSX.Element {
   const { isAuthenticated: _isAuthenticated } = useAuth();
+  const toast = useToast();
 
   const missionsQuery = useQuery({
     queryKey: ['rewards', 'missions'],
@@ -110,11 +112,11 @@ export default function RewardsPage(): React.JSX.Element {
         body: JSON.stringify({ rewardId }),
       });
       if (result.success) {
-        alert('Reward claimed successfully!');
+        toast.showToast('Reward claimed successfully!', 'success');
         missionsQuery.refetch();
       }
     } catch (err) {
-      alert('Failed to claim reward');
+      toast.showToast('Failed to claim reward', 'error');
     }
   };
 

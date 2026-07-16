@@ -1,4 +1,4 @@
-import {Inject,  Injectable, OnModuleInit, Logger, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit, Logger, BadRequestException } from '@nestjs/common';
 import * as sgMail from '@sendgrid/mail';
 import * as Handlebars from 'handlebars';
 import { ConfigService } from '@nestjs/config';
@@ -44,7 +44,9 @@ export class EmailService implements OnModuleInit {
       'content-featured': this.configService.get('EMAIL_TEMPLATE_CONTENT_FEATURED_HTML'),
     };
 
-    this.templates['welcome'] = Handlebars.compile(templateOverrides.welcome || `
+    this.templates['welcome'] = Handlebars.compile(
+      templateOverrides.welcome ||
+        `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #333;">Welcome to Azeebo+!</h1>
         <p>Hello {{displayName}},</p>
@@ -52,9 +54,12 @@ export class EmailService implements OnModuleInit {
         <p>Start exploring our platform and discover amazing content from your favorite creators.</p>
         <p>Best regards,<br>The Azeebo+ Team</p>
       </div>
-    `);
+    `
+    );
 
-    this.templates['password-reset'] = Handlebars.compile(templateOverrides['password-reset'] || `
+    this.templates['password-reset'] = Handlebars.compile(
+      templateOverrides['password-reset'] ||
+        `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #333;">Password Reset Request</h1>
         <p>Hello {{displayName}},</p>
@@ -64,9 +69,12 @@ export class EmailService implements OnModuleInit {
         <p>If you didn't request a password reset, please ignore this email.</p>
         <p>Best regards,<br>The Azeebo+ Team</p>
       </div>
-    `);
+    `
+    );
 
-    this.templates['payment-confirmation'] = Handlebars.compile(templateOverrides['payment-confirmation'] || `
+    this.templates['payment-confirmation'] = Handlebars.compile(
+      templateOverrides['payment-confirmation'] ||
+        `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #333;">Payment Confirmation</h1>
         <p>Hello {{displayName}},</p>
@@ -80,9 +88,12 @@ export class EmailService implements OnModuleInit {
         <p>Thank you for your purchase!</p>
         <p>Best regards,<br>The Azeebo+ Team</p>
       </div>
-    `);
+    `
+    );
 
-    this.templates['content-published'] = Handlebars.compile(templateOverrides['content-published'] || `
+    this.templates['content-published'] = Handlebars.compile(
+      templateOverrides['content-published'] ||
+        `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #333;">Your Content Has Been Published</h1>
         <p>Hello {{displayName}},</p>
@@ -90,9 +101,12 @@ export class EmailService implements OnModuleInit {
         <p><a href="{{contentLink}}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">View Content</a></p>
         <p>Best regards,<br>The Azeebo+ Team</p>
       </div>
-    `);
+    `
+    );
 
-    this.templates['content-featured'] = Handlebars.compile(templateOverrides['content-featured'] || `
+    this.templates['content-featured'] = Handlebars.compile(
+      templateOverrides['content-featured'] ||
+        `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #333;">Your Content Has Been Featured!</h1>
         <p>Hello {{displayName}},</p>
@@ -102,7 +116,8 @@ export class EmailService implements OnModuleInit {
         <p>Keep creating amazing content!</p>
         <p>Best regards,<br>The Azeebo+ Team</p>
       </div>
-    `);
+    `
+    );
   }
 
   async sendEmail(

@@ -1,6 +1,5 @@
-import { Inject, Controller, Get, Post, Body, Param, Query, UseGuards  } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import { FixturesService } from './fixtures.service.js';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
@@ -47,7 +46,7 @@ export class FixturesController {
   }
 
   @Post(':id/metadata')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Create/update fixture metadata (admin)' })
   async createMetadata(
@@ -67,7 +66,7 @@ export class FixturesController {
   }
 
   @Post(':id/result')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Update event result (admin)' })
   async updateResult(

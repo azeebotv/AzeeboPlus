@@ -5,6 +5,8 @@ import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { Skeleton } from '@azeebo/ui/web';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { useToast } from '@/components/ToastProvider';
 
 type Tab =
   | 'general'
@@ -253,8 +255,16 @@ function Modal({
 
 export default function AdminSettingsPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<Tab>('general');
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    destructive?: boolean;
+    onConfirm: () => void;
+  }>({ open: false, title: '', message: '', onConfirm: () => {} });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -571,14 +581,22 @@ export default function AdminSettingsPage(): React.JSX.Element {
     }
   };
 
-  const deletePlan = async (id: string) => {
-    if (!confirm('Delete this plan?')) return;
-    try {
-      await api.admin.deleteSubscriptionPlan(id);
-      queryClient.invalidateQueries({ queryKey: ['admin', 'plans'] });
-    } catch {
-      /* ignore */
-    }
+  const deletePlan = (id: string) => {
+    setConfirmDialog({
+      open: true,
+      title: 'Delete Plan',
+      message: 'Are you sure you want to delete this plan?',
+      destructive: true,
+      onConfirm: async () => {
+        setConfirmDialog((prev) => ({ ...prev, open: false }));
+        try {
+          await api.admin.deleteSubscriptionPlan(id);
+          queryClient.invalidateQueries({ queryKey: ['admin', 'plans'] });
+        } catch {
+          /* ignore */
+        }
+      },
+    });
   };
 
   // Admin CRUD
@@ -593,14 +611,22 @@ export default function AdminSettingsPage(): React.JSX.Element {
     }
   };
 
-  const removeAdmin = async (id: string) => {
-    if (!confirm('Remove this admin?')) return;
-    try {
-      await api.admin.removeAdmin(id);
-      queryClient.invalidateQueries({ queryKey: ['admin', 'admins'] });
-    } catch {
-      /* ignore */
-    }
+  const removeAdmin = (id: string) => {
+    setConfirmDialog({
+      open: true,
+      title: 'Remove Admin',
+      message: 'Are you sure you want to remove this admin?',
+      destructive: true,
+      onConfirm: async () => {
+        setConfirmDialog((prev) => ({ ...prev, open: false }));
+        try {
+          await api.admin.removeAdmin(id);
+          queryClient.invalidateQueries({ queryKey: ['admin', 'admins'] });
+        } catch {
+          /* ignore */
+        }
+      },
+    });
   };
 
   // Template CRUD
@@ -646,11 +672,13 @@ export default function AdminSettingsPage(): React.JSX.Element {
     setTestingProvider(provider);
     try {
       const res = await api.admin.testIntegration(provider);
-      alert(
-        res.success ? `Connection successful: ${res.data?.message || 'OK'}` : 'Connection failed'
-      );
+      if (res.success) {
+        toast.showToast(`Connection successful: ${res.data?.message || 'OK'}`, 'success');
+      } else {
+        toast.showToast('Connection failed', 'error');
+      }
     } catch {
-      alert('Connection test failed');
+      toast.showToast('Connection test failed', 'error');
     }
     setTestingProvider(null);
   };
@@ -717,6 +745,7 @@ export default function AdminSettingsPage(): React.JSX.Element {
   const currencies = ['NGN', 'USD', 'GBP', 'EUR', 'GHS', 'KES', 'ZAR'];
 
   return (
+    <>
     <AdminLayout>
       {/* Header */}
       <div
@@ -2041,5 +2070,14 @@ export default function AdminSettingsPage(): React.JSX.Element {
         </div>
       )}
     </AdminLayout>
+    <ConfirmDialog
+      open={confirmDialog.open}
+      title={confirmDialog.title}
+      message={confirmDialog.message}
+      destructive={confirmDialog.destructive}
+      onConfirm={confirmDialog.onConfirm}
+      onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
+    />
+    </>
   );
 }

@@ -1,4 +1,5 @@
-import {Inject, 
+import {
+  Inject,
   CanActivate,
   ExecutionContext,
   Injectable,

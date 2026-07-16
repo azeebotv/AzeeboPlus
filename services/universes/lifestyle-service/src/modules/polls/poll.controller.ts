@@ -1,17 +1,16 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
-  UseGuards,
   Request,
   Body,
   Param,
   Query,
   HttpCode,
   HttpStatus,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 
 import { PollService } from './poll.service';
 import { CreatePollDto } from './dto/create-poll.dto';
@@ -42,7 +41,6 @@ export class PollController {
   }
 
   @Post()
-  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a poll' })
   @ApiResponse({ status: 201, description: 'Poll created' })
@@ -52,7 +50,6 @@ export class PollController {
   }
 
   @Post(':id/vote')
-  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Vote in a poll' })
   @ApiResponse({ status: 200, description: 'Vote recorded' })

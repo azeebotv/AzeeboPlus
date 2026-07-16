@@ -1,4 +1,4 @@
-import {Inject,  Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { Prisma } from '../../prisma/client/index.js';
 import { PrismaService } from '../database/prisma.service.js';
 import {
@@ -472,7 +472,7 @@ export class ReportBuilderService {
   }): Promise<Record<string, unknown>[]> {
     // Using unknown cast because Prisma's groupBy typing doesn't support dynamic field arrays
     const result = await this.prisma.productEvent.groupBy(
-      options as unknown as Parameters<typeof this.prisma.productEvent.groupBy>[0],
+      options as unknown as Parameters<typeof this.prisma.productEvent.groupBy>[0]
     );
     return result as unknown as Record<string, unknown>[];
   }

@@ -146,7 +146,7 @@ export class PaymentProcessor extends WorkerHost {
   @OnWorkerEvent('error')
   onError(error: Error) {
     this.logger.error(`Payment worker encountered an error: ${(error as Error).message}`, {
-      stack: (error as Error).message,
+      stack: (error as Error).stack,
     });
   }
 }

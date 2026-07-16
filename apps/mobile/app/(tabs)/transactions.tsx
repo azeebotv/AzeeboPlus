@@ -234,6 +234,7 @@ export default function TransactionsScreen() {
         renderItem={renderTransaction}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
+        keyboardDismissMode="on-drag"
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[colors.primary[500]]} />
         }

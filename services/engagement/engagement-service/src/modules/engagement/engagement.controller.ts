@@ -1,5 +1,14 @@
-import { Inject, Controller, Get, Post, Body, Query, Param, UseGuards, Request  } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Body,
+  Query,
+  Param,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
 import { EngagementService } from './engagement.service.js';
@@ -14,7 +23,7 @@ interface AuthRequest extends Request {
 @ApiTags('Engagement')
 @ApiBearerAuth()
 @Controller('v1/engagement')
-@UseGuards(AuthGuard('jwt'), RateLimitGuard)
+@UseGuards(RateLimitGuard)
 export class EngagementController {
   constructor(@Inject(EngagementService) private readonly engagementService: EngagementService) {}
 

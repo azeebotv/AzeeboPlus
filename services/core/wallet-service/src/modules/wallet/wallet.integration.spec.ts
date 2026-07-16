@@ -4,6 +4,7 @@ import { PrismaService } from '../database/prisma.service.js';
 import { BadRequestException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { ConfigModule } from '@nestjs/config';
+import { CacheService } from '@azeebo/shared-services';
 
 jest.mock('../database/prisma.service');
 
@@ -83,6 +84,7 @@ describe('WalletService Integration', () => {
               create: jest.fn(),
               findMany: jest.fn(),
             },
+            $queryRaw: jest.fn().mockResolvedValue([{ id: 'wallet-123', balance: 500 }]),
             $transaction: jest.fn((callback) => {
               const mockTx = {
                 walletTransaction: { create: jest.fn().mockResolvedValue(mockTransaction) },
@@ -91,9 +93,22 @@ describe('WalletService Integration', () => {
                     .fn()
                     .mockResolvedValue({ ...mockWallet, bonusBalance: new Prisma.Decimal(200) }),
                 },
+                $queryRaw: jest
+                  .fn()
+                  .mockResolvedValue([{ id: 'wallet-123', balance: 500 }]),
               };
               return callback(mockTx);
             }),
+          },
+        },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            delete: jest.fn().mockResolvedValue(0),
+            deleteByPattern: jest.fn().mockResolvedValue(0),
+            invalidate: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],

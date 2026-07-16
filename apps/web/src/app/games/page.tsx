@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { api, ContentItem } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import { AmbientGlow } from '@/components/motion/AmbientGlow';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { StaggerGrid } from '@/components/motion/StaggerGrid';
@@ -67,14 +68,20 @@ export default function GamesPage(): React.JSX.Element {
           </div>
         ) : games.length > 0 ? (
           <div className="relative h-[400px] sm:h-[500px]">
-            <motion.img
-              src={games[0].thumbnail}
-              alt={games[0].title}
-              className="w-full h-full object-cover"
+            <motion.div
+              className="absolute inset-0"
               initial={{ scale: 1.1, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-            />
+            >
+              <OptimizedImage
+                src={games[0].thumbnail}
+                alt={games[0].title}
+                fill
+                className="object-cover"
+                priority
+              />
+            </motion.div>
             <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/50 to-transparent" />
             <AmbientGlow color="rgba(59,130,246,0.25)" size={500} className="bottom-0 right-0" />
 
@@ -131,18 +138,20 @@ export default function GamesPage(): React.JSX.Element {
                     Play Now
                   </motion.button>
                 </Link>
-                <motion.button
-                  type="button"
-                  className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
-                  style={{
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    backgroundColor: 'rgba(255,255,255,0.08)',
-                  }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Leaderboard
-                </motion.button>
+                <Link href="/rankings">
+                  <motion.button
+                    type="button"
+                    className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
+                    style={{
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      backgroundColor: 'rgba(255,255,255,0.08)',
+                    }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Leaderboard
+                  </motion.button>
+                </Link>
               </motion.div>
             </div>
           </div>
@@ -182,9 +191,11 @@ export default function GamesPage(): React.JSX.Element {
               <Link key={game.id} href={`/watch/${game.id}`}>
                 <GlowCard universe="games" className="overflow-hidden">
                   <div className="relative">
-                    <img
+                    <OptimizedImage
                       src={game.thumbnail}
                       alt={game.title}
+                      width={400}
+                      height={192}
                       className="w-full h-44 sm:h-48 object-cover"
                     />
                     <span

@@ -1,4 +1,4 @@
-import {Inject,  Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 export interface CreateChallengeInput {
@@ -137,7 +137,7 @@ export class ChallengeService {
     return { success: true, data: { submission } };
   }
 
-  async voteSubmission(submissionId: string, _userId: string) {
+  async voteSubmission(submissionId: string, userId: string) {
     const submission = await this.prisma.challengeSubmission.findUnique({
       where: { id: submissionId },
     });
@@ -146,10 +146,27 @@ export class ChallengeService {
       throw new NotFoundException('Submission not found');
     }
 
-    await this.prisma.challengeSubmission.update({
-      where: { id: submissionId },
-      data: { votes: { increment: 1 } },
+    // Check if user has already voted on this submission
+    const existingVote = await this.prisma.challengeVote.findUnique({
+      where: {
+        userId_submissionId: { userId, submissionId },
+      },
     });
+
+    if (existingVote) {
+      throw new BadRequestException('You have already voted on this submission');
+    }
+
+    // Create vote record and increment count atomically
+    await this.prisma.$transaction([
+      this.prisma.challengeVote.create({
+        data: { userId, submissionId },
+      }),
+      this.prisma.challengeSubmission.update({
+        where: { id: submissionId },
+        data: { votes: { increment: 1 } },
+      }),
+    ]);
 
     return { success: true, data: { message: 'Vote recorded' } };
   }

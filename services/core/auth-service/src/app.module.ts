@@ -5,11 +5,10 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { AuditModule } from './modules/audit/audit.module.js';
 import { AdminModule } from './modules/admin/admin.module.js';
-import { RedisService } from './common/services/redis.service.js';
+import { CacheModule, RedisModule } from '@azeebo/shared-services';
 import { CommonModule } from './common/common.module.js';
 import { MetricsModule } from './modules/metrics/metrics.module.js';
 import { HealthModule } from './modules/health/health.module.js';
-import { CacheModule } from '@azeebo/shared-services';
 import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
 
 @Module({
@@ -18,6 +17,7 @@ import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
       isGlobal: true,
       envFilePath: ['.env', '../../.env'],
     }),
+    RedisModule,
     RateLimiterModule.forRoot(),
     TerminusModule,
     AuditModule,
@@ -29,7 +29,6 @@ import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
     CacheModule,
   ],
   providers: [
-    RedisService,
     {
       provide: APP_GUARD,
       useClass: ServiceAuthGuard,

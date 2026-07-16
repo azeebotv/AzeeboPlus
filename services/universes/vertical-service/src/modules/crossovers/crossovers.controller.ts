@@ -1,6 +1,6 @@
-import { Inject, Controller, Get, Post, Body, Param, Query, UseGuards  } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
+import { AdminGuard } from '@azeebo/security';
 import { CrossoversService } from './crossovers.service';
 import { CreateCrossoverData, CreateRecapData } from './crossovers.service';
 
@@ -28,7 +28,7 @@ export class CrossoversController {
   }
 
   @Post()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Create crossover' })
   @ApiResponse({ status: 201, description: 'Crossover created' })
   async createCrossover(@Body() body: CreateCrossoverData): Promise<unknown> {
@@ -54,7 +54,7 @@ export class CrossoversController {
   }
 
   @Post('recaps')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Create recap' })
   @ApiResponse({ status: 201, description: 'Recap created' })
   async createRecap(@Body() body: CreateRecapData): Promise<unknown> {

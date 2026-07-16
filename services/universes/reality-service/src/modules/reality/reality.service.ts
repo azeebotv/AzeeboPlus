@@ -1,4 +1,5 @@
-import {Inject, 
+import {
+  Inject,
   Injectable,
   NotFoundException,
   ConflictException,
@@ -69,40 +70,44 @@ export class RealityService {
     }
   }
 
-  private premiumExtras: PremiumExtra[] = [
-    {
-      id: '1',
-      name: 'Early Voting',
-      description: 'Vote before regular voting opens',
-      price: 5,
-      type: 'feature',
-      duration: 7,
-    },
-    {
-      id: '2',
-      name: 'Vote Multiplier',
-      description: 'Your votes count double',
-      price: 20,
-      type: 'feature',
-      duration: 3,
-    },
-    {
-      id: '3',
-      name: 'Exclusive Content',
-      description: 'Access behind-the-scenes footage',
-      price: 15,
-      type: 'content',
-      duration: 30,
-    },
-    {
-      id: '4',
-      name: 'Live Chat',
-      description: 'Join exclusive live chats with contestants',
-      price: 10,
-      type: 'feature',
-      duration: 7,
-    },
-  ];
+  // Premium extras loaded from config with sensible defaults
+  // Prices are configurable via environment variables to avoid hardcoded values
+  private getPremiumExtrasData(): PremiumExtra[] {
+    return [
+      {
+        id: '1',
+        name: 'Early Voting',
+        description: 'Vote before regular voting opens',
+        price: this.configService.get<number>('PREMIUM_EXTRA_EARLY_VOTING_PRICE', 5),
+        type: 'feature',
+        duration: this.configService.get<number>('PREMIUM_EXTRA_EARLY_VOTING_DURATION', 7),
+      },
+      {
+        id: '2',
+        name: 'Vote Multiplier',
+        description: 'Your votes count double',
+        price: this.configService.get<number>('PREMIUM_EXTRA_VOTE_MULTIPLIER_PRICE', 20),
+        type: 'feature',
+        duration: this.configService.get<number>('PREMIUM_EXTRA_VOTE_MULTIPLIER_DURATION', 3),
+      },
+      {
+        id: '3',
+        name: 'Exclusive Content',
+        description: 'Access behind-the-scenes footage',
+        price: this.configService.get<number>('PREMIUM_EXTRA_EXCLUSIVE_CONTENT_PRICE', 15),
+        type: 'content',
+        duration: this.configService.get<number>('PREMIUM_EXTRA_EXCLUSIVE_CONTENT_DURATION', 30),
+      },
+      {
+        id: '4',
+        name: 'Live Chat',
+        description: 'Join exclusive live chats with contestants',
+        price: this.configService.get<number>('PREMIUM_EXTRA_LIVE_CHAT_PRICE', 10),
+        type: 'feature',
+        duration: this.configService.get<number>('PREMIUM_EXTRA_LIVE_CHAT_DURATION', 7),
+      },
+    ];
+  }
 
   async listShows(): Promise<RealityResponse> {
     const cacheK = cacheKey('reality', 'shows:list');
@@ -282,7 +287,11 @@ export class RealityService {
       });
     });
 
-    await this.cache.invalidate(`reality:*`);
+    await Promise.all([
+      this.cache.invalidate(`reality:show:${showId}`),
+      this.cache.invalidate(`reality:contestants:${showId}`),
+      this.cache.invalidate('reality:shows:list'),
+    ]);
     await this.trackAnalyticsEvent('vote_submitted', userId, {
       voteId: vote.id,
       contestantId,
@@ -304,10 +313,9 @@ export class RealityService {
   ): Promise<RealityResponse> {
     const { contestantId, showId } = body;
 
-    const walletResponse = await axios.get(
-      `${this.walletServiceBaseUrl}/wallets/user/${userId}`,
-      { timeout: 10000 }
-    );
+    const walletResponse = await axios.get(`${this.walletServiceBaseUrl}/wallets/user/${userId}`, {
+      timeout: 10000,
+    });
     const wallet = walletResponse.data?.wallet || walletResponse.data;
     if (!wallet) {
       throw new NotFoundException(`Wallet not found for user`);
@@ -358,7 +366,11 @@ export class RealityService {
         });
       });
 
-      await this.cache.invalidate(`reality:*`);
+      await Promise.all([
+        this.cache.invalidate(`reality:show:${showId}`),
+        this.cache.invalidate(`reality:contestants:${showId}`),
+        this.cache.invalidate('reality:shows:list'),
+      ]);
       await this.trackAnalyticsEvent('supervote_submitted', userId, {
         supervoteId: supervote.id,
         contestantId,
@@ -478,10 +490,9 @@ export class RealityService {
       throw new NotFoundException('Contestant not found');
     }
 
-    const walletResponse = await axios.get(
-      `${this.walletServiceBaseUrl}/wallets/user/${userId}`,
-      { timeout: 10000 }
-    );
+    const walletResponse = await axios.get(`${this.walletServiceBaseUrl}/wallets/user/${userId}`, {
+      timeout: 10000,
+    });
     const wallet = walletResponse.data?.wallet || walletResponse.data;
     if (!wallet) {
       throw new NotFoundException('Wallet not found');
@@ -539,7 +550,11 @@ export class RealityService {
         return createdVotes;
       });
 
-      await this.cache.invalidate(`reality:*`);
+      await Promise.all([
+        this.cache.invalidate(`reality:show:${showId}`),
+        this.cache.invalidate(`reality:contestants:${showId}`),
+        this.cache.invalidate('reality:shows:list'),
+      ]);
       await this.trackAnalyticsEvent('vote_submitted', userId, {
         voteIds: votes.map((v) => v.id),
         contestantId,
@@ -581,10 +596,9 @@ export class RealityService {
   }
 
   async getWalletBalance(userId: string): Promise<RealityResponse> {
-    const walletResponse = await axios.get(
-      `${this.walletServiceBaseUrl}/wallets/user/${userId}`,
-      { timeout: 10000 }
-    );
+    const walletResponse = await axios.get(`${this.walletServiceBaseUrl}/wallets/user/${userId}`, {
+      timeout: 10000,
+    });
     const wallet = walletResponse.data?.wallet || walletResponse.data;
 
     if (!wallet) {
@@ -609,7 +623,7 @@ export class RealityService {
       data: {
         voteCost: this.voteCost,
         supervoteCost: this.supervoteCost,
-        premiumExtras: this.premiumExtras,
+        premiumExtras: this.getPremiumExtrasData(),
       },
     };
   }
@@ -617,20 +631,19 @@ export class RealityService {
   async getPremiumExtras(): Promise<RealityResponse> {
     return {
       success: true,
-      data: { premiumExtras: this.premiumExtras },
+      data: { premiumExtras: this.getPremiumExtrasData() },
     };
   }
 
   async purchasePremiumExtra(userId: string, extraId: string): Promise<RealityResponse> {
-    const extra = this.premiumExtras.find((e) => e.id === extraId);
+    const extra = this.getPremiumExtrasData().find((e) => e.id === extraId);
     if (!extra) {
       throw new NotFoundException('Premium extra not found');
     }
 
-    const walletResponse = await axios.get(
-      `${this.walletServiceBaseUrl}/wallets/user/${userId}`,
-      { timeout: 10000 }
-    );
+    const walletResponse = await axios.get(`${this.walletServiceBaseUrl}/wallets/user/${userId}`, {
+      timeout: 10000,
+    });
     const wallet = walletResponse.data?.wallet || walletResponse.data;
     if (!wallet) {
       throw new NotFoundException('Wallet not found');
@@ -653,6 +666,27 @@ export class RealityService {
         },
         { timeout: 10000 }
       );
+
+      // Create a PremiumPurchase record in the database after wallet debit
+      const expiresAt = new Date();
+      if (extra.duration) {
+        expiresAt.setDate(expiresAt.getDate() + extra.duration);
+      }
+
+      await this.prisma.premiumPurchase.create({
+        data: {
+          userId,
+          extraId: extra.id,
+          extraName: extra.name,
+          extraType: extra.type,
+          price: extra.price,
+          duration: extra.duration,
+          purchaseId: idempotencyKey,
+          purchasedAt: new Date(),
+          expiresAt: extra.duration ? expiresAt : null,
+          status: 'active',
+        },
+      });
 
       await this.trackAnalyticsEvent('premium_extra_purchased', userId, {
         purchaseId: idempotencyKey,
@@ -696,7 +730,25 @@ export class RealityService {
       take: 10,
     });
 
-    const contestants = await Promise.all(
+    // Fetch recent activity events from analytics-service
+    let recentActivity: unknown[] = [];
+    try {
+      const activityResponse = await axios.get(`${this.analyticsServiceBaseUrl}/analytics/events`, {
+        params: {
+          universe: 'reality',
+          limit: 10,
+        },
+        timeout: 5000,
+      });
+      if (activityResponse.data?.success && activityResponse.data?.data) {
+        recentActivity = activityResponse.data.data;
+      }
+    } catch (error) {
+      this.logger.warn('Failed to fetch activity events from analytics-service:', error);
+      // Return empty array on failure - non-critical
+    }
+
+    const votesByContestantWithNames = await Promise.all(
       votesByContestant.map(async (v) => {
         const contestant = await this.prisma.contestant.findUnique({
           where: { id: v.contestantId },
@@ -709,11 +761,6 @@ export class RealityService {
       })
     );
 
-    // Activity events are owned by analytics-service (ProductEvent model lives there,
-    // not in reality-service's schema). This service emits events via HTTP
-    // (see trackAnalyticsEvent) but cannot query them back from its own database.
-    const recentActivity: unknown[] = [];
-
     return {
       success: true,
       data: {
@@ -723,7 +770,7 @@ export class RealityService {
         totalSupervotes: supervoteCount,
         totalPredictions: predictionCount,
         totalClips: clipCount,
-        contestants,
+        contestants: votesByContestantWithNames,
         recentActivity,
       },
     };
@@ -806,7 +853,10 @@ export class RealityService {
       data,
     });
 
-    await this.cache.invalidate(`reality:*`);
+    await Promise.all([
+      this.cache.invalidate(`reality:show:${showId}`),
+      this.cache.invalidate('reality:shows:list'),
+    ]);
 
     return {
       success: true,
@@ -824,7 +874,11 @@ export class RealityService {
     }
 
     await this.prisma.realityShow.delete({ where: { id: showId } });
-    await this.cache.invalidate(`reality:*`);
+    await Promise.all([
+      this.cache.invalidate(`reality:show:${showId}`),
+      this.cache.invalidate(`reality:contestants:${showId}`),
+      this.cache.invalidate('reality:shows:list'),
+    ]);
 
     return {
       success: true,

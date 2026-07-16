@@ -1,6 +1,16 @@
-import { Inject, Controller, Get, Post, Body, Param, Query, UseGuards, Request, Logger  } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  Request,
+  Logger,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { AgbalaTitlesService as TitlesService } from './agbala/titles.service';
 import { AgbalaCharactersService as CharactersService } from './agbala/characters.service';
 import { TheoryService } from './agbala/theory.service';
@@ -19,17 +29,22 @@ export class StoryworldsController {
     @Inject(TheoryService) private readonly theoryService: TheoryService,
     @Inject(RoomService) private readonly roomService: RoomService,
     @Inject(SanitizationService) private readonly sanitizationService: SanitizationService,
-    @Inject(StoryworldMetadataService) private readonly metadataService: StoryworldMetadataService
+    @Inject(StoryworldMetadataService) private readonly metadataService: StoryworldMetadataService,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {}
 
   @Get()
   @ApiOperation({ summary: 'List all storyworlds' })
-  async getStoryworlds(): Promise<{ success: boolean; data: unknown[] }> {
+  async getStoryworlds() {
     try {
       const storyworlds = await this.titlesService.getStoryworlds();
       return { success: true, data: storyworlds };
     } catch (error) {
-      return { success: true, data: [] };
+      this.logger.error(
+        `getStoryworlds failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      throw error;
     }
   }
 
@@ -91,7 +106,6 @@ export class StoryworldsController {
   }
 
   @Post(':slug/theories')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Submit a theory' })
   @ApiParam({ name: 'slug', description: 'Storyworld slug' })
   async createTheory(
@@ -199,7 +213,6 @@ export class StoryworldsController {
   }
 
   @Post(':slug/unlock')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Validate unlock code' })
   @ApiParam({ name: 'slug', description: 'Storyworld slug' })
   async validateUnlock(
@@ -208,20 +221,32 @@ export class StoryworldsController {
     @Request() req: { user: { id: string } }
   ) {
     if (!body.code || !this.sanitizationService.validateUnlockCode(body.code)) {
-      return { success: false, error: { code: 'INVALID_CODE', message: 'Invalid unlock code format' } };
+      return {
+        success: false,
+        error: { code: 'INVALID_CODE', message: 'Invalid unlock code format' },
+      };
     }
 
     // Check against configured valid codes from environment
-    // In production, these should be stored in the database
-    const validCodes = (process.env.UNLOCK_CODES || '').split(',').filter(Boolean);
-    
-    if (validCodes.length > 0 && !validCodes.includes(body.code.trim())) {
+    const validCodes = (this.configService.get<string>('UNLOCK_CODES') || '')
+      .split(',')
+      .filter(Boolean);
+
+    if (validCodes.length === 0) {
+      this.logger.warn('No unlock codes configured — rejecting unlock attempt');
+      return {
+        success: false,
+        error: { code: 'UNLOCK_UNAVAILABLE', message: 'Unlock codes not configured' },
+      };
+    }
+
+    if (!validCodes.includes(body.code.trim())) {
       return { success: false, error: { code: 'WRONG_CODE', message: 'Invalid unlock code' } };
     }
 
     // Log the unlock attempt
     this.logger.log(`User ${req.user.id} unlocked storyworld: ${slug}`);
-    
+
     return { success: true, data: { unlocked: true, slug } };
   }
 
@@ -242,7 +267,6 @@ export class StoryworldsController {
   }
 
   @Post(':slug/rooms/:roomId/posts')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Create a room post' })
   @ApiParam({ name: 'slug', description: 'Storyworld slug' })
   @ApiParam({ name: 'roomId', description: 'Room ID' })

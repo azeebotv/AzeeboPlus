@@ -15,7 +15,13 @@ export class EngagementAdminService {
       await Promise.all([
         this.prisma.contentItem.aggregate({ _sum: { viewCount: true } }),
         this.prisma.contentItem.count({ where: { status: 'published' } }),
-        this.prisma.user.count({ where: { createdAt: { gte: weekAgo } } }),
+        this.prisma.walletTransaction
+          .findMany({
+            where: { createdAt: { gte: weekAgo }, status: 'completed' },
+            distinct: ['walletId'],
+            select: { walletId: true },
+          })
+          .then((txns) => txns.length),
         this.prisma.user.count({ where: { createdAt: { gte: weekAgo } } }),
         this.prisma.walletTransaction.count({
           where: { createdAt: { gte: today }, status: 'completed' },

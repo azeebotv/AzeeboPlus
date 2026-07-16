@@ -6,19 +6,15 @@ import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
+import { OptimizedImage } from '@/components/OptimizedImage';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import type { ContentItem as BaseContentItem } from '@/lib/api';
 
-interface ContentItem {
-  id: string;
-  title: string;
-  description: string;
-  thumbnail: string;
-  status: 'draft' | 'processing' | 'published' | 'archived';
+interface ContentItem extends BaseContentItem {
   views: number;
   viewCount?: number;
   earnings: number;
-  createdAt: string;
   type: 'video' | 'image' | 'audio';
-  contentType?: string;
 }
 
 export default function ContentManagerPage(): React.JSX.Element {
@@ -26,6 +22,13 @@ export default function ContentManagerPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<'all' | 'draft' | 'published' | 'archived'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    destructive?: boolean;
+    onConfirm: () => void;
+  }>({ open: false, title: '', message: '', onConfirm: () => {} });
 
   const {
     data: content = [],
@@ -45,9 +48,13 @@ export default function ContentManagerPage(): React.JSX.Element {
           description: String(item.description || ''),
           thumbnail: String(item.thumbnail || ''),
           status: String(item.status || 'draft') as ContentItem['status'],
+          universeId: String(item.universeId || ''),
+          createdAt: String(item.createdAt || ''),
+          updatedAt: String(item.updatedAt || ''),
+          creator: item.creator || { id: '', name: '' },
+          universe: item.universe || { id: '', name: '' },
           views: Number(item.viewCount ?? item.views ?? 0),
           earnings: Number(item.earnings ?? 0),
-          createdAt: String(item.createdAt || ''),
           type: String(item.contentType || item.type || 'video') as ContentItem['type'],
         }));
       }
@@ -177,13 +184,12 @@ export default function ContentManagerPage(): React.JSX.Element {
         </div>
 
         <div className="flex items-center justify-between mb-6">
-          <div className="flex gap-2" role="listbox" aria-label="Content filters">
+          <div className="flex gap-2" role="group" aria-label="Content filters">
             {(['all', 'draft', 'published', 'archived'] as const).map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                role="option"
-                aria-selected={filter === f}
+                aria-pressed={filter === f}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${filter === f ? 'az-btn-primary' : ''}`}
                 style={
                   filter !== f
@@ -239,7 +245,7 @@ export default function ContentManagerPage(): React.JSX.Element {
                 className="az-glass overflow-hidden cursor-pointer transition-all hover:scale-[1.02]"
               >
                 <div className="relative">
-                  <img src={item.thumbnail} alt={item.title} className="w-full h-40 object-cover" />
+                  <OptimizedImage src={item.thumbnail} alt={item.title} width={400} height={160} className="w-full h-40 object-cover" />
                   <div
                     className="absolute top-2 right-2 rounded-full w-8 h-8 flex items-center justify-center"
                     style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
@@ -265,7 +271,7 @@ export default function ContentManagerPage(): React.JSX.Element {
           <div className="space-y-4">
             {filteredContent.map((item: ContentItem) => (
               <div key={item.id} className="az-glass overflow-hidden flex">
-                <img src={item.thumbnail} alt={item.title} className="w-40 h-40 object-cover" />
+                <OptimizedImage src={item.thumbnail} alt={item.title} width={160} height={160} className="w-40 h-40 object-cover" />
                 <div className="flex-1 p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
@@ -307,8 +313,16 @@ export default function ContentManagerPage(): React.JSX.Element {
                       </button>
                       <button
                         onClick={() => {
-                          if (confirm('Are you sure you want to delete this content?'))
-                            deleteMutation.mutate(item.id);
+                          setConfirmDialog({
+                            open: true,
+                            title: 'Delete Content',
+                            message: 'Are you sure you want to delete this content?',
+                            destructive: true,
+                            onConfirm: () => {
+                              setConfirmDialog((prev) => ({ ...prev, open: false }));
+                              deleteMutation.mutate(item.id);
+                            },
+                          });
                         }}
                         className="px-3 py-2 rounded-full text-sm transition-colors"
                         style={{ backgroundColor: 'rgba(239,68,68,0.2)', color: '#EF4444' }}
@@ -324,6 +338,14 @@ export default function ContentManagerPage(): React.JSX.Element {
         )}
       </div>
       <AppFooter />
+      <ConfirmDialog
+        open={confirmDialog.open}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        destructive={confirmDialog.destructive}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
+      />
     </div>
   );
 }

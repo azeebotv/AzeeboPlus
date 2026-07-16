@@ -80,9 +80,7 @@ class ApiClient {
     if (typeof window !== 'undefined') {
       if (process.env.NODE_ENV === 'production' && !(globalThis as Record<string, unknown>).__azeebo_cookie_warned) {
         (globalThis as Record<string, unknown>).__azeebo_cookie_warned = true;
-        console.info(
-          '[Azeebo] Tip: Consider migrating from localStorage to httpOnly cookies for token storage.',
-        );
+        // Token storage tip — logged once per session in development only
       }
       const storedToken = localStorage.getItem(ACCESS_TOKEN_KEY);
       if (storedToken) {

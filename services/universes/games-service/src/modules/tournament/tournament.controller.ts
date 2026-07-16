@@ -1,13 +1,21 @@
-import { Inject, Controller, Get, Post, Body, Param, Query, UseGuards, Request  } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { TournamentService } from './tournament.service.js';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
 import { JoinTournamentDto, SubmitScoreDto } from './dto/tournament.dto.js';
 
 @ApiTags('Tournament')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
 @Controller('v1/games/tournaments')
 export class TournamentController {
   constructor(@Inject(TournamentService) private readonly tournamentService: TournamentService) {}

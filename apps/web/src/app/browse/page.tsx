@@ -4,24 +4,11 @@ import { useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
+import type { ContentItem } from '../../lib/api';
 import { announceToScreenReader } from '../../lib/keyboard';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-
-interface ContentItem {
-  id: string;
-  title: string;
-  description?: string;
-  thumbnail: string;
-  duration?: number;
-  category?: string;
-  universe?: { id: string; name: string; icon?: string };
-  creator?: { name: string };
-  rating?: number;
-  year?: number;
-  language?: string;
-}
 
 interface ContentResponse {
   items?: ContentItem[];
@@ -171,14 +158,9 @@ export default function BrowsePage(): React.JSX.Element {
           item.creator?.name.toLowerCase().includes(q)
       );
     }
-    if (minRating > 0) items = items.filter((item) => (item.rating || 0) >= minRating);
+    if (minRating > 0) items = items.filter((item) => (item.likes || 0) >= minRating);
     items = items.filter((item) => (item.duration || 0) <= maxDuration * 60);
-    if (selectedLanguage !== 'all')
-      items = items.filter((item) => item.language === selectedLanguage);
-    if (selectedYear !== 'all')
-      items = items.filter((item) => item.year?.toString() === selectedYear);
-    if (sortBy === 'Rating') items = [...items].sort((a, b) => (b.rating || 0) - (a.rating || 0));
-    else if (sortBy === 'Newest') items = [...items].sort((a, b) => (b.year || 0) - (a.year || 0));
+    if (sortBy === 'Newest') items = [...items].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     else if (sortBy === 'A-Z') items = [...items].sort((a, b) => a.title.localeCompare(b.title));
     return items;
   })();
@@ -198,8 +180,6 @@ export default function BrowsePage(): React.JSX.Element {
     searchQuery,
     minRating > 0,
     maxDuration < 300,
-    selectedLanguage !== 'all',
-    selectedYear !== 'all',
   ].filter(Boolean).length;
 
   return (
@@ -570,14 +550,7 @@ export default function BrowsePage(): React.JSX.Element {
                           </span>
                         </div>
                       )}
-                      {item.rating && item.rating >= 4 && (
-                        <span
-                          className="absolute top-3 right-3 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded"
-                          style={{ background: 'rgba(232,66,10,0.9)', color: '#fff' }}
-                        >
-                          Top Rated
-                        </span>
-                      )}
+
                     </div>
                     <div className="p-4">
                       <p className="text-[11px] font-bold uppercase tracking-wider text-white/50 mb-1">

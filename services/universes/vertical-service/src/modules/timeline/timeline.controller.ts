@@ -1,6 +1,6 @@
-import { Inject, Controller, Get, Post, Body, Param, Query, UseGuards  } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
+import { AdminGuard } from '@azeebo/security';
 import { TimelineService } from './timeline.service';
 import { CreateTimelineEventDto } from './dto/create-timeline-event.dto';
 
@@ -36,7 +36,7 @@ export class TimelineController {
   }
 
   @Post()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Create timeline event' })
   @ApiResponse({ status: 201, description: 'Event created' })
   async createEvent(@Body() data: CreateTimelineEventDto): Promise<unknown> {

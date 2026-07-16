@@ -3,12 +3,11 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RateLimiterModule } from '@azeebo/security';
-import { CacheModule } from '@azeebo/shared-services';
+import { CacheModule, JwtStrategy } from '@azeebo/shared-services';
 
 import { CreatorsController } from './creators.controller.js';
 import { CreatorsService } from './creators.service.js';
 import { DatabaseModule } from '../database/database.module.js';
-import { JwtStrategy } from '../../common/strategies/jwt.strategy.js';
 
 @Module({
   imports: [

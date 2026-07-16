@@ -4,7 +4,7 @@ import { PrismaService } from '../database/prisma.service.js';
 import { PaystackProvider } from '../payments/providers/paystack.provider.js';
 import { FlutterwaveProvider } from '../payments/providers/flutterwave.provider.js';
 import { WebhookRetryService } from '../payments/webhook-retry.service.js';
-import { RedisService } from '../../common/services/redis.service.js';
+import { RedisService, CacheService } from '@azeebo/shared-services';
 import { BadRequestException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import axios from 'axios';
@@ -85,6 +85,15 @@ describe('PaymentsService', () => {
         {
           provide: RedisService,
           useValue: redisService,
+        },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            delete: jest.fn().mockResolvedValue(0),
+            invalidate: jest.fn().mockResolvedValue(undefined),
+          },
         },
         {
           provide: require('@nestjs/config').ConfigService,

@@ -109,7 +109,7 @@ export default function SearchPage(): React.JSX.Element {
         sortBy: filters.sortBy,
       });
       const response = await apiFetch<SearchResponse | SearchResult[]>(
-        `/content/search?${params.toString()}`
+        `/v1/content/search?${params.toString()}`
       );
       if (response.success && response.data) {
         const data = response.data;
@@ -126,7 +126,7 @@ export default function SearchPage(): React.JSX.Element {
     queryFn: async () => {
       if (query.length < 2) return [];
       const response = await apiFetch<SuggestionsResponse | string[]>(
-        `/content/suggestions?q=${encodeURIComponent(query)}`
+        `/v1/content/suggestions?q=${encodeURIComponent(query)}`
       );
       if (response.success && response.data) {
         return Array.isArray(response.data)
@@ -302,6 +302,12 @@ export default function SearchPage(): React.JSX.Element {
                 role="listbox"
                 aria-label="Search suggestions"
                 className="absolute top-full left-0 right-0 mt-2 az-glass p-2 z-50 max-h-80 overflow-y-auto"
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setShowSuggestions(false);
+                    searchInputRef.current?.focus();
+                  }
+                }}
               >
                 {suggestions.length > 0 ? (
                   <div>

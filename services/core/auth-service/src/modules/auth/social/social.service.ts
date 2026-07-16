@@ -1,12 +1,18 @@
-import {Inject,  Injectable, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { randomUUID } from 'crypto';
+import { randomUUID, createPublicKey } from 'crypto';
 import axios from 'axios';
 
 import { AuthRepository } from '../auth.repository.js';
-import { RedisService } from '../../../common/services/redis.service.js';
+import { RedisService } from '@azeebo/shared-services';
 
 interface SocialUser {
   email: string;
@@ -71,10 +77,10 @@ export class SocialAuthService {
 
   async verifyGoogleToken(idToken: string): Promise<GoogleTokenInfo> {
     try {
-      const response = await axios.get<GoogleTokenInfo>(
-        'https://oauth2.googleapis.com/tokeninfo',
-        { params: { id_token: idToken }, timeout: 10000 }
-      );
+      const response = await axios.get<GoogleTokenInfo>('https://oauth2.googleapis.com/tokeninfo', {
+        params: { id_token: idToken },
+        timeout: 10000,
+      });
 
       const tokenInfo = response.data;
       if (!tokenInfo.email || !tokenInfo.email_verified) {
@@ -101,10 +107,9 @@ export class SocialAuthService {
       const kid = header.kid;
 
       // Fetch Apple's public keys
-      const keysResponse = await axios.get(
-        'https://appleid.apple.com/auth/keys',
-        { timeout: 10000 }
-      );
+      const keysResponse = await axios.get('https://appleid.apple.com/auth/keys', {
+        timeout: 10000,
+      });
       const keys = keysResponse.data.keys;
 
       // Find the matching key
@@ -139,8 +144,6 @@ export class SocialAuthService {
 
   private convertAppleKeyToPem(key: { kty: string; n: string; e: string }): string {
     // Convert Apple's JWK to PEM format for JWT verification
-    // This is a simplified implementation - in production, use a proper JWK-to-PEM library
-    const { createPublicKey } = require('crypto');
     const publicKey = createPublicKey({
       key: {
         kty: key.kty,
@@ -175,6 +178,84 @@ export class SocialAuthService {
 
     await this.redisService.del(`${STATE_PREFIX}${state}`);
     return provider;
+  }
+
+  // ─── OAuth code exchange ──────────────────────────────────────────
+
+  async exchangeGoogleCode(code: string): Promise<{ id_token: string; access_token: string }> {
+    const clientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
+    const clientSecret = this.configService.get<string>('GOOGLE_CLIENT_SECRET');
+    const redirectUri = this.configService.get<string>(
+      'GOOGLE_REDIRECT_URI',
+      `${this.configService.get<string>('BASE_URL', 'http://localhost:3000')}/auth/social/callback?provider=google`
+    );
+
+    if (!clientId || !clientSecret) {
+      throw new BadRequestException('Google OAuth credentials not configured');
+    }
+
+    try {
+      const response = await axios.post(
+        'https://oauth2.googleapis.com/token',
+        new URLSearchParams({
+          code,
+          client_id: clientId,
+          client_secret: clientSecret,
+          redirect_uri: redirectUri,
+          grant_type: 'authorization_code',
+        }).toString(),
+        {
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          timeout: 10000,
+        }
+      );
+
+      return {
+        id_token: response.data.id_token,
+        access_token: response.data.access_token,
+      };
+    } catch (error) {
+      this.logger.error(`Google code exchange failed: ${error}`);
+      throw new UnauthorizedException('Failed to exchange Google authorization code');
+    }
+  }
+
+  async exchangeAppleCode(code: string): Promise<{ id_token: string; access_token: string }> {
+    const clientId = this.configService.get<string>('APPLE_CLIENT_ID');
+    const clientSecret = this.configService.get<string>('APPLE_CLIENT_SECRET');
+    const redirectUri = this.configService.get<string>(
+      'APPLE_REDIRECT_URI',
+      `${this.configService.get<string>('BASE_URL', 'http://localhost:3000')}/auth/social/callback?provider=apple`
+    );
+
+    if (!clientId || !clientSecret) {
+      throw new BadRequestException('Apple OAuth credentials not configured');
+    }
+
+    try {
+      const response = await axios.post(
+        'https://appleid.apple.com/auth/token',
+        new URLSearchParams({
+          code,
+          client_id: clientId,
+          client_secret: clientSecret,
+          redirect_uri: redirectUri,
+          grant_type: 'authorization_code',
+        }).toString(),
+        {
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          timeout: 10000,
+        }
+      );
+
+      return {
+        id_token: response.data.id_token,
+        access_token: response.data.access_token,
+      };
+    } catch (error) {
+      this.logger.error(`Apple code exchange failed: ${error}`);
+      throw new UnauthorizedException('Failed to exchange Apple authorization code');
+    }
   }
 
   /**

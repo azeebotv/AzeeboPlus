@@ -1,4 +1,4 @@
-import { Inject, Controller, Get, HttpCode, HttpStatus, HttpException  } from '@nestjs/common';
+import { Inject, Controller, Get, HttpCode, HttpStatus, HttpException } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Public } from '@azeebo/security';
 import { PrismaService } from '../database/prisma.service';

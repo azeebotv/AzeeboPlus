@@ -1,4 +1,4 @@
-import {Inject,  Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { createHmac, timingSafeEqual } from 'crypto';
@@ -107,7 +107,8 @@ export class FlutterwaveProvider {
           amount,
           currency: currency || 'NGN',
           redirect_url:
-            process.env.FLUTTERWAVE_CALLBACK_URL || 'http://localhost:3003/webhooks/flutterwave',
+            this.configService.get<string>('FLUTTERWAVE_CALLBACK_URL') ||
+            'http://localhost:3003/webhooks/flutterwave',
           customer: {
             email: `user-${userId}@azeebo.plus`,
             name: `User ${userId}`,
@@ -214,9 +215,35 @@ export class FlutterwaveProvider {
     this.logger.log(
       `Processing Flutterwave payout of ${amount} to ${recipient}, reference: ${reference}`
     );
-    throw new Error(
-      'Flutterwave payout is not implemented. Please use wallet-service direct transfer for payouts.'
+
+    if (!this.apiKey) {
+      throw new Error('Flutterwave API key not configured');
+    }
+
+    const response = await axios.post(
+      'https://api.flutterwave.com/v3/transfers',
+      {
+        account_bank: '044', // Default to bank transfer
+        account_number: recipient,
+        amount,
+        currency: 'NGN',
+        reference,
+        narration: `Payout: ${reference}`,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 30000,
+      }
     );
+
+    return {
+      success: response.data.status === 'success',
+      reference,
+      providerResponse: response.data,
+    };
   }
 
   async verifyWebhookSignature(

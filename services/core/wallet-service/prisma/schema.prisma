@@ -52,6 +52,7 @@ model WalletTransaction {
   @@index([provider])
   @@index([reference])
   @@unique([provider, providerRef])
+  @@index([walletId, createdAt])
 }
 
 // Category A migration: point-in-time balance snapshots for reporting.

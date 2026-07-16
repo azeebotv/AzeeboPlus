@@ -1,17 +1,16 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
-  UseGuards,
   Request,
   Body,
   Param,
   Query,
   HttpCode,
   HttpStatus,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 
 import {
   ChallengeService,
@@ -50,7 +49,6 @@ export class ChallengeController {
   }
 
   @Post()
-  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a challenge' })
   @ApiResponse({ status: 201, description: 'Challenge created' })
@@ -63,7 +61,6 @@ export class ChallengeController {
   }
 
   @Post(':id/submit')
-  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Submit to a challenge' })
   @ApiResponse({ status: 201, description: 'Submission created' })
@@ -78,7 +75,6 @@ export class ChallengeController {
   }
 
   @Post('submissions/:id/vote')
-  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Vote for a submission' })
   @ApiResponse({ status: 200, description: 'Vote recorded' })

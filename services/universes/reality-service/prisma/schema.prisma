@@ -171,3 +171,23 @@ model RealityClip {
   @@index([showId])
   @@index([creatorId])
 }
+
+model PremiumPurchase {
+  id          String   @id @default(uuid())
+  userId      String
+  extraId     String
+  extraName   String
+  extraType   String
+  price       Decimal  @db.Decimal(18, 2)
+  duration    Int?
+  purchaseId  String   @unique
+  purchasedAt DateTime @default(now())
+  expiresAt   DateTime?
+  status      String   @default("active") // active, expired, cancelled
+
+  @@map("reality_premium_purchases")
+  @@index([userId])
+  @@index([extraId])
+  @@index([purchaseId])
+  @@index([status])
+}

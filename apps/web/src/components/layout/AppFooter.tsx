@@ -312,7 +312,9 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
             </h3>
             <div className="flex flex-row gap-3">
               <a
-                href="#"
+                href="https://apps.apple.com/app/azeebo-plus/id6499489987"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center gap-3 px-5 py-3 min-w-[180px] rounded-xl text-white/50 hover:text-white hover:bg-white/5 transition-all duration-200 border border-white/8 whitespace-nowrap"
                 aria-label="Download on the App Store"
               >
@@ -332,7 +334,9 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
                 </div>
               </a>
               <a
-                href="#"
+                href="https://play.google.com/store/apps/details?id=com.azeebo.plus"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center gap-3 px-5 py-3 min-w-[180px] rounded-xl text-white/50 hover:text-white hover:bg-white/5 transition-all duration-200 border border-white/8 whitespace-nowrap"
                 aria-label="Get it on Google Play"
               >

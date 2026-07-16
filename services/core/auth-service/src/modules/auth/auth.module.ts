@@ -18,8 +18,7 @@ import { DeviceService } from './device/device.service.js';
 import { JwtStrategy } from './strategies/jwt.strategy.js';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy.js';
 import { RateLimiterModule } from '@azeebo/security';
-import { CacheModule } from '@azeebo/shared-services';
-import { RedisService } from '../../common/services/redis.service.js';
+import { CacheModule, RedisModule } from '@azeebo/shared-services';
 
 @Module({
   imports: [
@@ -27,6 +26,7 @@ import { RedisService } from '../../common/services/redis.service.js';
     PassportModule,
     ConfigModule,
     CacheModule,
+    RedisModule,
     RateLimiterModule.forRoot(),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -55,7 +55,6 @@ import { RedisService } from '../../common/services/redis.service.js';
     DeviceService,
     JwtStrategy,
     JwtRefreshStrategy,
-    RedisService,
   ],
   exports: [
     AuthService,

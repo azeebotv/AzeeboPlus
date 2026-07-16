@@ -1,4 +1,4 @@
-import {Inject,  Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '@prisma/client';
@@ -28,7 +28,10 @@ export class NotificationsService {
     @Inject(CacheService) private readonly cache: CacheService,
     @Inject(ConfigService) private readonly configService: ConfigService
   ) {
-    this.userServiceBaseUrl = this.configService.get<string>('USER_SERVICE_URL', 'http://user-service:3001');
+    this.userServiceBaseUrl = this.configService.get<string>(
+      'USER_SERVICE_URL',
+      'http://user-service:3001'
+    );
   }
 
   private async getUserData(userId: string): Promise<UserData | null> {
@@ -162,9 +165,8 @@ export class NotificationsService {
     }
   }
 
-  // NOTE: updatePreferences currently writes to the deprecated `notificationPreferences` JSON
-  // field on the User model. This should be migrated to use the canonical
-  // NotificationPreference model for proper relational storage and querying.
+  // updatePreferences writes to the canonical NotificationPreference model
+  // for proper relational storage and querying.
   async updatePreferences(
     userId: string,
     preferences: Record<string, boolean>
@@ -580,9 +582,8 @@ export class NotificationsService {
 
   async sendSmsNotification(userId: string, message: string): Promise<boolean> {
     try {
-      // Get user phone number (assuming user has a phone field)
-      // User lookup not available in this service — use user-service
-      const user: { id: string; email: string; displayName: string; phone?: string } = { id: userId, email: 'user@example.com', displayName: 'User' };
+      // Get user phone number via user-service
+      const user = await this.getUserData(userId);
 
       if (!user) {
         this.logger.error(`User ${userId} not found`);

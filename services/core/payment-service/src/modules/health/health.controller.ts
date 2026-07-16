@@ -1,4 +1,4 @@
-import { Inject, Controller, Get, HttpCode, HttpStatus, HttpException  } from '@nestjs/common';
+import { Inject, Controller, Get, HttpCode, HttpStatus, HttpException } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Public } from '@azeebo/security';
 import { PrismaService } from '../database/prisma.service.js';
@@ -7,6 +7,7 @@ import {
   ComponentStatus,
   ExternalService,
 } from './interfaces/health.interfaces.js';
+import checkDiskSpace from 'check-disk-space';
 
 @Public()
 @ApiTags('Health')
@@ -148,9 +149,6 @@ export class HealthController {
 
   private async checkDisk(): Promise<ComponentStatus> {
     try {
-      const checkDiskSpace = (await import('check-disk-space')).default as unknown as (
-        path: string
-      ) => Promise<{ size: number; free: number }>;
       const diskSpace = await checkDiskSpace('/');
 
       const used = diskSpace.size - diskSpace.free;

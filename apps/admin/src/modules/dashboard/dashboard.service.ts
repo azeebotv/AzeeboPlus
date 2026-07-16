@@ -64,9 +64,6 @@ export class DashboardService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async getDashboardStats(): Promise<DashboardStats> {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
     const [totalUsers, totalContent, pendingReports, activeCreators] = await Promise.all([
       this.prisma.user.count(),
       this.prisma.contentItem.count(),
@@ -173,27 +170,28 @@ export class DashboardService {
   }
 
   async getTopCreators(limit = 10): Promise<TopCreatorItem[]> {
-    const creators = await this.prisma.user.findMany({
-      where: { role: 'creator' },
-      include: {
-        _count: { select: { contentItems: true } },
-        contentItems: {
-          where: { status: 'published' },
-          select: { viewCount: true },
-        },
-      },
-      take: limit,
-    });
+    const creators = await this.prisma.$queryRawUnsafe<
+      { id: string; displayName: string; avatar: string | null; contentCount: bigint; totalViews: bigint }[]
+    >(
+      `SELECT u.id, u."displayName", u.avatar,
+              COUNT(DISTINCT ci.id) as "contentCount",
+              COALESCE(SUM(ci."viewCount"), 0) as "totalViews"
+       FROM "User" u
+       LEFT JOIN "ContentItem" ci ON ci."creatorId" = u.id AND ci.status = 'published'
+       WHERE u.role = 'creator'
+       GROUP BY u.id, u."displayName", u.avatar
+       ORDER BY "totalViews" DESC
+       LIMIT $1`,
+      limit
+    );
 
-    return creators
-      .map((c) => ({
-        id: c.id,
-        displayName: c.displayName,
-        avatar: c.avatar,
-        contentCount: c._count.contentItems,
-        totalViews: c.contentItems.reduce((sum, item) => sum + item.viewCount, 0),
-      }))
-      .sort((a, b) => b.totalViews - a.totalViews);
+    return creators.map((c) => ({
+      id: c.id,
+      displayName: c.displayName,
+      avatar: c.avatar,
+      contentCount: Number(c.contentCount),
+      totalViews: Number(c.totalViews),
+    }));
   }
 
   async getRecentActivity(limit = 20): Promise<RecentActivityData> {

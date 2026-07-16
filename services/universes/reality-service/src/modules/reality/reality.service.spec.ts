@@ -3,7 +3,7 @@ import { NotFoundException, ConflictException } from '@nestjs/common';
 import { RealityService } from './reality.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
-import { RedisService } from '../../common/services/redis.service.js';
+import { RedisService } from '@azeebo/shared-services';
 
 describe('RealityService', () => {
   let service: RealityService;

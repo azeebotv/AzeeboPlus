@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -8,9 +9,8 @@ import { Inject,
   Param,
   Query,
   UseGuards,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { StoriesService } from './stories.service';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
 
@@ -61,7 +61,7 @@ export class StoriesController {
   }
 
   @Post()
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Create new story' })
   @ApiResponse({ status: 201, description: 'Story created' })
@@ -70,7 +70,7 @@ export class StoriesController {
   }
 
   @Patch(':id')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Update story' })
   @ApiResponse({ status: 200, description: 'Story updated' })
@@ -79,7 +79,7 @@ export class StoriesController {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Delete story' })
   @ApiResponse({ status: 200, description: 'Story deleted' })

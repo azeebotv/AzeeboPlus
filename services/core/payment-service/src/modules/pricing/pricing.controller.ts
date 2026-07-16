@@ -1,4 +1,4 @@
-import { Inject, Controller, Get, Param  } from '@nestjs/common';
+import { Inject, Controller, Get, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { PricingService } from './pricing.service.js';
 

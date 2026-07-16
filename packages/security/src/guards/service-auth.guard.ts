@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
+import { timingSafeEqual } from 'crypto';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 /**
@@ -35,7 +36,7 @@ export class ServiceAuthGuard implements CanActivate {
     @Optional() private readonly jwtService?: JwtService
   ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     // 1. Check @Public() decorator on class or method
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
@@ -77,13 +78,20 @@ export class ServiceAuthGuard implements CanActivate {
           'Gateway authentication not configured. Requests with x-user-* headers require a valid x-gateway-secret.'
         );
       }
-      if (gatewaySecret !== expectedSecret) {
+      // Use timing-safe comparison to prevent timing side-channel attacks
+      const secretBuffer = Buffer.from(gatewaySecret || '');
+      const expectedBuffer = Buffer.from(expectedSecret);
+      if (
+        secretBuffer.length !== expectedBuffer.length ||
+        !timingSafeEqual(secretBuffer, expectedBuffer)
+      ) {
         throw new UnauthorizedException(
           'Gateway authentication required. Requests with x-user-* headers must include a valid x-gateway-secret.'
         );
       }
 
       request.user = {
+        id: userId,
         sub: userId,
         role: userRole || 'user',
         email: userEmail || '',
@@ -111,6 +119,7 @@ export class ServiceAuthGuard implements CanActivate {
         );
 
         request.user = {
+          id: payload.sub,
           sub: payload.sub,
           role: payload.role || 'user',
           email: payload.email || '',

@@ -1,4 +1,4 @@
-import {Inject,  Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { createHmac, timingSafeEqual } from 'crypto';
@@ -123,7 +123,8 @@ export class PaystackProvider {
               app: 'azeebo-plus',
             },
             callback_url:
-              process.env.PAYSTACK_CALLBACK_URL || 'http://localhost:3003/webhooks/paystack',
+              this.configService.get<string>('PAYSTACK_CALLBACK_URL') ||
+              'http://localhost:3003/webhooks/paystack',
           },
           {
             headers: {
@@ -245,9 +246,34 @@ export class PaystackProvider {
     this.logger.log(
       `Processing Paystack payout of ${amount} to ${recipient}, reference: ${reference}`
     );
-    throw new Error(
-      'Paystack payout is not implemented. Please use wallet-service direct transfer for payouts.'
+
+    if (!this.apiKey) {
+      throw new Error('Paystack API key not configured');
+    }
+
+    const response = await axios.post(
+      'https://api.paystack.co/transfer',
+      {
+        source: 'balance',
+        amount: amount * 100, // Paystack uses kobo
+        recipient,
+        reference,
+        currency: 'NGN',
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 30000,
+      }
     );
+
+    return {
+      success: response.data.status === 'success',
+      reference,
+      providerResponse: response.data,
+    };
   }
 
   async verifyWebhookSignature(

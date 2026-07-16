@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -6,11 +7,9 @@ import { Inject,
   Body,
   Param,
   Query,
-  UseGuards,
   Request,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { CinemaPassService } from './cinema-pass.service.js';
 
 @ApiTags('Cinema Pass')
@@ -33,7 +32,6 @@ export class CinemaPassController {
   }
 
   @Get('user/subscriptions')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get user subscriptions' })
   @ApiResponse({ status: 200, description: 'Subscriptions list' })
   async getUserSubscriptions(@Request() req: { user: { id: string } }): Promise<unknown> {
@@ -41,7 +39,6 @@ export class CinemaPassController {
   }
 
   @Post('subscribe')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Subscribe to a pass' })
   @ApiResponse({ status: 201, description: 'Subscribed' })
   async subscribe(
@@ -52,7 +49,6 @@ export class CinemaPassController {
   }
 
   @Delete('cancel')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Cancel subscription' })
   @ApiResponse({ status: 200, description: 'Cancelled' })
   async cancelSubscription(
@@ -63,7 +59,6 @@ export class CinemaPassController {
   }
 
   @Get('access/:movieId')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Check access to movie' })
   @ApiResponse({ status: 200, description: 'Access status' })
   async checkAccess(

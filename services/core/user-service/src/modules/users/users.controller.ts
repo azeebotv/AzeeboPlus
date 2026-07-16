@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Patch,
@@ -9,9 +10,10 @@ import { Inject,
   Post,
   Delete,
   Param,
+  ParseUUIDPipe,
   Query,
   UnauthorizedException,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 
 import { UsersService } from './users.service.js';
@@ -79,7 +81,7 @@ export class UsersController {
   @ApiResponse({ status: 201, description: 'User followed' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async followUser(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
+  async followUser(@Request() req: AuthenticatedRequest, @Param('id', ParseUUIDPipe) id: string) {
     return this.usersService.followUser(this.getUserId(req), id);
   }
 
@@ -89,7 +91,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Unfollow a user' })
   @ApiResponse({ status: 200, description: 'User unfollowed' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async unfollowUser(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
+  async unfollowUser(@Request() req: AuthenticatedRequest, @Param('id', ParseUUIDPipe) id: string) {
     return this.usersService.unfollowUser(this.getUserId(req), id);
   }
 
@@ -100,8 +102,9 @@ export class UsersController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'User followers' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getFollowers(@Param('id') id: string, @Query('page') page = 1, @Query('limit') limit = 20) {
-    return this.usersService.getFollowers(id, Number(page), Number(limit));
+  async getFollowers(@Param('id') id: string, @Query('page') page: number = 1, @Query('limit') limit: number = 20) {
+    const safeLimit = Math.min(Math.max(1, Number(limit) || 20), 100);
+    return this.usersService.getFollowers(id, Number(page), safeLimit);
   }
 
   @Public()
@@ -111,8 +114,9 @@ export class UsersController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Users being followed' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getFollowing(@Param('id') id: string, @Query('page') page = 1, @Query('limit') limit = 20) {
-    return this.usersService.getFollowing(id, Number(page), Number(limit));
+  async getFollowing(@Param('id') id: string, @Query('page') page: number = 1, @Query('limit') limit: number = 20) {
+    const safeLimit = Math.min(Math.max(1, Number(limit) || 20), 100);
+    return this.usersService.getFollowing(id, Number(page), safeLimit);
   }
 
   @Get('me/preferences')
@@ -143,10 +147,11 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getHistory(
     @Request() req: AuthenticatedRequest,
-    @Query('page') page = 1,
-    @Query('limit') limit = 20
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 20
   ): Promise<unknown> {
-    return this.usersService.getWatchHistory(this.getUserId(req), Number(page), Number(limit));
+    const safeLimit = Math.min(Math.max(1, Number(limit) || 20), 100);
+    return this.usersService.getWatchHistory(this.getUserId(req), Number(page), safeLimit);
   }
 
   @Get('me/saved')
@@ -157,10 +162,11 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getSavedItems(
     @Request() req: AuthenticatedRequest,
-    @Query('page') page = 1,
-    @Query('limit') limit = 20
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 20
   ): Promise<unknown> {
-    return this.usersService.getSavedItems(this.getUserId(req), Number(page), Number(limit));
+    const safeLimit = Math.min(Math.max(1, Number(limit) || 20), 100);
+    return this.usersService.getSavedItems(this.getUserId(req), Number(page), safeLimit);
   }
 
   @Post('me/saved')
@@ -180,7 +186,7 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async unsaveItem(
     @Request() req: AuthenticatedRequest,
-    @Param('contentId') contentId: string
+    @Param('contentId', ParseUUIDPipe) contentId: string
   ): Promise<{ message: string }> {
     return this.usersService.unsaveItem(this.getUserId(req), contentId);
   }
@@ -240,8 +246,9 @@ export class UsersController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Continue watching items' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getContinueWatching(@Request() req: AuthenticatedRequest, @Query('limit') limit = 10) {
-    const result = await this.usersService.getContinueWatching(this.getUserId(req), Number(limit));
+  async getContinueWatching(@Request() req: AuthenticatedRequest, @Query('limit') limit: number = 10) {
+    const safeLimit = Math.min(Math.max(1, Number(limit) || 10), 50);
+    const result = await this.usersService.getContinueWatching(this.getUserId(req), safeLimit);
     return ApiResponseWrapper.success((result as { data: unknown }).data ?? result);
   }
 

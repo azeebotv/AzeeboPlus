@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '../../../lib/api';
 import { webLogger } from '../../../lib/logger';
 import AppHeader from '@/components/layout/AppHeader';
+import { useToast } from '@/components/ToastProvider';
 
 interface EpisodeDetail {
   id: string;
@@ -19,6 +20,7 @@ interface EpisodeDetail {
 
 export default function EpisodePlayerPage(): React.JSX.Element {
   const router = useRouter();
+  const toast = useToast();
   const searchParams = useSearchParams();
   const episodeId = searchParams.get('id') || '';
   const [episode, setEpisode] = useState<EpisodeDetail | null>(null);
@@ -97,9 +99,9 @@ export default function EpisodePlayerPage(): React.JSX.Element {
       });
       if (!result.success) throw new Error(result.message || 'Failed to submit vote');
       setShowVoteModal(false);
-      alert(`Your ${isSuper ? 'Super ' : ''}vote has been submitted!`);
+      toast.showToast(`Your ${isSuper ? 'Super ' : ''}vote has been submitted!`, 'success');
     } catch (error: unknown) {
-      alert(error instanceof Error ? error.message : 'Failed to submit vote');
+      toast.showToast(error instanceof Error ? error.message : 'Failed to submit vote', 'error');
     }
   };
 

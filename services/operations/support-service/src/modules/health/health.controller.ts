@@ -1,4 +1,4 @@
-import { Inject, Controller, Get  } from '@nestjs/common';
+import { Inject, Controller, Get } from '@nestjs/common';
 import { Public } from '@azeebo/security';
 import { HealthCheck, HealthCheckService, PrismaHealthIndicator } from '@nestjs/terminus';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';

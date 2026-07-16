@@ -1,4 +1,4 @@
-import {Inject,  Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateQuizDto, QuizQuestionDto } from './dto/create-quiz.dto';
 

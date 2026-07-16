@@ -1,13 +1,12 @@
-import { Inject, Controller, Get, Query, UseGuards  } from '@nestjs/common';
+import { Inject, Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { AdminService } from './admin.service.js';
 import { AdminGuard } from '@azeebo/security';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
-import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Admin - Analytics Service')
-@Controller('admin')
-@UseGuards(AuthGuard('jwt'), AdminGuard)
+@Controller('v1/admin')
+@UseGuards(AdminGuard)
 export class AdminController {
   constructor(@Inject(AdminService) private readonly adminService: AdminService) {}
 

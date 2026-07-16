@@ -1,7 +1,7 @@
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { ParentBasedSampler, TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace-base';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { Resource } from '@opentelemetry/resources';
+import { resourceFromAttributes } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
@@ -37,7 +37,7 @@ export function initializeOpenTelemetry(config: Partial<OpenTelemetryConfig> = {
   });
 
   const sdk = new NodeSDK({
-    resource: new Resource({
+    resource: resourceFromAttributes({
       [SemanticResourceAttributes.SERVICE_NAME]: finalConfig.serviceName,
       [SemanticResourceAttributes.SERVICE_VERSION]: finalConfig.serviceVersion,
       [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: finalConfig.environment,
@@ -51,17 +51,21 @@ export function initializeOpenTelemetry(config: Partial<OpenTelemetryConfig> = {
   registerInstrumentations({
     instrumentations: [
       new HttpInstrumentation({
-        requestHook: (span: Span, request: { path: string }) => {
-          const pathOnly = request.path.split('?')[0];
-          span.setAttribute('http.request.path', pathOnly);
+        requestHook: (span: Span, request: unknown) => {
+          const req = request as { path?: string };
+          if (req.path) {
+            const pathOnly = req.path.split('?')[0];
+            span.setAttribute('http.request.path', pathOnly);
+          }
         },
-      } as never),
+      }),
       new ExpressInstrumentation({
-        requestHook: (span: Span, request: { path: string; method: string }) => {
-          span.setAttribute('http.route', request.path);
-          span.setAttribute('http.method', request.method);
+        requestHook: (span: Span, request: unknown) => {
+          const req = request as { path?: string; method?: string };
+          if (req.path) span.setAttribute('http.route', req.path);
+          if (req.method) span.setAttribute('http.method', req.method);
         },
-      } as never),
+      }),
       new PrismaInstrumentation(),
     ],
   });

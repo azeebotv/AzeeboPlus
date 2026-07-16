@@ -1,4 +1,4 @@
-import {Inject,  Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { GameResponse } from './interfaces/game-response.interface.js';
@@ -8,14 +8,12 @@ import axios from 'axios';
 export class GamesService {
   private readonly logger = new Logger(GamesService.name);
   private readonly analyticsServiceBaseUrl: string;
-  private readonly walletServiceBaseUrl: string;
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
-    this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
   }
 
   private async trackAnalyticsEvent(
@@ -286,51 +284,25 @@ export class GamesService {
     });
 
     if (existingEntry) {
-      throw new BadRequestException('Already entered tournament');
-    }
-
-    if (tournament.entryFee && Number(tournament.entryFee) > 0) {
-      const entryFeeAmount = Number(tournament.entryFee);
-
-      const walletResponse = await axios
-        .get(`${this.walletServiceBaseUrl}/wallets/user/${userId}`, { timeout: 10000 })
-        .catch(() => null);
-      const wallet = walletResponse?.data?.wallet || walletResponse?.data;
-      if (!wallet) {
-        throw new NotFoundException('Wallet not found');
-      }
-
-      await axios
-        .post(
-          `${this.walletServiceBaseUrl}/wallet/debit`,
-          {
-            walletId: wallet.id,
-            amount: entryFeeAmount,
-            description: `Tournament entry fee: ${tournamentId}`,
-            idempotencyKey: `tournament-entry:${userId}:${tournamentId}`,
-          },
-          { timeout: 10000 }
-        )
-        .catch((error: unknown) => {
-          const errorMessage =
-            error instanceof Error ? (error as Error).message : 'Failed to debit wallet';
-          throw new BadRequestException(errorMessage);
-        });
+      throw new BadRequestException('Already entered this tournament');
     }
 
     const entry = await this.prisma.tournamentEntry.create({
       data: {
         userId,
         tournamentId,
+        score: 0,
       },
+    });
+
+    await this.trackAnalyticsEvent('tournament_entered', userId, {
+      tournamentId,
+      tournamentName: tournament.title,
     });
 
     return {
       success: true,
-      data: {
-        entryId: entry.id,
-        message: 'Entered tournament',
-      },
+      data: { entry },
     };
   }
 }

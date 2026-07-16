@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -9,9 +10,8 @@ import { Inject,
   HttpCode,
   HttpStatus,
   UnauthorizedException,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { SearchService } from './search.service.js';
@@ -24,7 +24,7 @@ export class SearchController {
   constructor(@Inject(SearchService) private readonly searchService: SearchService) {}
 
   @Get()
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Universal search' })
   @ApiResponse({ status: 200, description: 'Search results' })
@@ -40,6 +40,7 @@ export class SearchController {
     @Query('page') page?: number,
     @Query('limit') limit?: number
   ): Promise<SearchResponse> {
+    const safeLimit = Math.min(Math.max(1, limit ? Number(limit) : 20), 100);
     return this.searchService.search(query, {
       universe,
       categories: categories ? categories.split(',') : undefined,
@@ -48,7 +49,7 @@ export class SearchController {
       dateRange: dateStart || dateEnd ? { start: dateStart, end: dateEnd } : undefined,
       sort,
       page: page ? Number(page) : 1,
-      limit: limit ? Number(limit) : 20,
+      limit: safeLimit,
     });
   }
 
@@ -78,7 +79,7 @@ export class SearchController {
   }
 
   @Get('suggestions')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(60, 60000)
   @ApiOperation({ summary: 'Get search suggestions' })
   @ApiResponse({ status: 200, description: 'Search suggestions' })
@@ -87,7 +88,7 @@ export class SearchController {
   }
 
   @Get('trending')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get trending searches' })
   @ApiResponse({ status: 200, description: 'Trending searches' })
@@ -96,7 +97,7 @@ export class SearchController {
   }
 
   @Get('facets')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get search facets' })
   @ApiResponse({ status: 200, description: 'Search facets' })
@@ -108,7 +109,6 @@ export class SearchController {
   }
 
   @Post('log')
-  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Log search query' })
   @ApiResponse({ status: 200, description: 'Search logged' })

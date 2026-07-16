@@ -8,7 +8,6 @@ import { HealthModule } from './modules/health/health.module';
 import { ProxyModule } from './modules/proxy/proxy.module';
 import { GatewayAuthGuard } from './guards/gateway-auth.guard';
 import { AuthThrottlerGuard } from './guards/auth-throttler.guard';
-import { LegacyRedirectMiddleware } from './common/legacy-redirect.middleware';
 import { CsrfMiddleware } from './common/csrf.middleware';
 
 @Module({
@@ -75,8 +74,5 @@ export class AppModule implements NestModule {
         { path: '*path', method: RequestMethod.GET }
       )
       .forRoutes('api');
-
-    // T-H21/T-H22/T-H24: redirect legacy unversioned paths to versioned
-    consumer.apply(LegacyRedirectMiddleware).forRoutes('api');
   }
 }

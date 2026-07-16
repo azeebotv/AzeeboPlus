@@ -1,4 +1,4 @@
-import {Inject,  Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { Inject, Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
 @Injectable()

@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -8,7 +9,7 @@ import { Inject,
   Query,
   UseGuards,
   Request,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { TakedownService } from './takedown.service';
 import { CreateTakedownDto, DecideTakedownDto, TakedownQueryDto } from './dto/takedown.dto';

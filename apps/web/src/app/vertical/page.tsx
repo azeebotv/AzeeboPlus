@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { api, ContentItem } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 export default function VerticalPage(): React.JSX.Element {
   const universesQuery = useQuery({
@@ -56,10 +57,12 @@ export default function VerticalPage(): React.JSX.Element {
           </div>
         ) : series.length > 0 ? (
           <div className="relative h-[500px]">
-            <img
+            <OptimizedImage
               src={series[0].thumbnail}
               alt={series[0].title}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              priority
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/50 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">
@@ -89,16 +92,16 @@ export default function VerticalPage(): React.JSX.Element {
                     Start Watching
                   </button>
                 </Link>
-                <button
-                  type="button"
-                  className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
+                <Link
+                  href={`/watch/${series[0].id}`}
+                  className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all inline-block"
                   style={{
                     border: '1px solid rgba(255,255,255,0.2)',
                     backgroundColor: 'rgba(255,255,255,0.08)',
                   }}
                 >
                   Character Lore
-                </button>
+                </Link>
               </div>
             </div>
           </div>
@@ -139,9 +142,11 @@ export default function VerticalPage(): React.JSX.Element {
                   style={{ boxShadow: '0 0 20px rgba(255,255,255,0.05)' }}
                 >
                   <div className="relative">
-                    <img
+                    <OptimizedImage
                       src={show.thumbnail}
                       alt={show.title}
+                      width={400}
+                      height={192}
                       className="w-full h-48 object-cover"
                     />
                     <span

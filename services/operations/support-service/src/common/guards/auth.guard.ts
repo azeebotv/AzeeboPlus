@@ -1,9 +1,19 @@
-import {Inject,  Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(@Inject(JwtService) private jwtService: JwtService) {}
+  constructor(
+    @Inject(JwtService) private jwtService: JwtService,
+    @Inject(ConfigService) private configService: ConfigService
+  ) {}
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
@@ -21,8 +31,8 @@ export class AuthGuard implements CanActivate {
 
     try {
       const payload = this.jwtService.verify(token, {
-        audience: 'azeebo-api',
-        issuer: 'azeebo-auth',
+        audience: this.configService.get<string>('JWT_AUDIENCE', 'azeebo-api'),
+        issuer: this.configService.get<string>('JWT_ISSUER', 'azeebo-auth'),
       });
       request.user = payload;
       return true;

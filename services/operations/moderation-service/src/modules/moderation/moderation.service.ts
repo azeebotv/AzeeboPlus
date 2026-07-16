@@ -1,4 +1,5 @@
-import {Inject,  Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { SafetyScanningService, ScanRequest, ScanResult } from './safety-scanning.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
@@ -107,7 +108,8 @@ export class ModerationService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(SafetyScanningService) private readonly safetyScanningService: SafetyScanningService,
-    @Inject(CacheService) private readonly cache: CacheService
+    @Inject(CacheService) private readonly cache: CacheService,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {}
 
   async createCase(request: CreateCaseRequest): Promise<ModerationCase> {
@@ -116,7 +118,7 @@ export class ModerationService {
     });
 
     if (!report) {
-      throw new Error('Report not found');
+      throw new NotFoundException('Report not found');
     }
 
     const moderationCase = await this.prisma.moderationCase.create({
@@ -185,7 +187,7 @@ export class ModerationService {
     });
 
     if (!moderationCase) {
-      throw new Error('Moderation case not found');
+      throw new NotFoundException('Moderation case not found');
     }
 
     const previousState = { ...moderationCase };
@@ -252,11 +254,11 @@ export class ModerationService {
     });
 
     if (!moderationCase) {
-      throw new Error('Moderation case not found');
+      throw new NotFoundException('Moderation case not found');
     }
 
     if (moderationCase.status !== 'resolved') {
-      throw new Error('Can only appeal resolved cases');
+      throw new BadRequestException('Can only appeal resolved cases');
     }
 
     const appeal = await this.prisma.appeal.create({
@@ -311,7 +313,7 @@ export class ModerationService {
     });
 
     if (!appeal) {
-      throw new Error('Appeal not found');
+      throw new NotFoundException('Appeal not found');
     }
 
     const status = request.successful ? 'successful' : 'rejected';
@@ -432,7 +434,7 @@ export class ModerationService {
 
   async getReportTypes(): Promise<ModerationResponse> {
     // Check for environment variable override
-    const envTypes = process.env.MODERATION_REPORT_TYPES;
+    const envTypes = this.configService.get<string>('MODERATION_REPORT_TYPES');
     if (envTypes) {
       try {
         const parsed = JSON.parse(envTypes) as ReportType[];
@@ -561,7 +563,7 @@ export class ModerationService {
     });
 
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundException('User not found');
     }
 
     const oldScore = user.trustScore;
@@ -752,7 +754,7 @@ export class ModerationService {
     });
 
     if (!report) {
-      throw new Error('Report not found');
+      throw new NotFoundException('Report not found');
     }
 
     const previousState = { status: report.status };

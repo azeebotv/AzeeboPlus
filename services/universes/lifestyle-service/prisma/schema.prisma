@@ -379,12 +379,26 @@ model ChallengeSubmission {
   submittedAt DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  challenge     Challenge       @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  challengeVotes ChallengeVote[]
 
   @@unique([challengeId, userId])
   @@index([challengeId])
   @@index([userId])
   @@index([status])
+}
+
+model ChallengeVote {
+  id           String   @id @default(uuid())
+  userId       String
+  submissionId String
+  createdAt    DateTime @default(now())
+
+  submission ChallengeSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, submissionId])
+  @@index([submissionId])
+  @@index([userId])
 }
 
 model Poll {

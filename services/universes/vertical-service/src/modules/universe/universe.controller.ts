@@ -1,7 +1,16 @@
-import { Inject, Controller, Get, Post, Patch, Body, Param, Query, UseGuards  } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
-import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
 import { UniverseService } from './universe.service';
 import { CreateLocationDto } from './dto/create-location.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
@@ -42,7 +51,7 @@ export class UniverseController {
   }
 
   @Post('locations')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Create new location' })
   @ApiResponse({ status: 201, description: 'Location created' })
   async createLocation(@Body() data: CreateLocationDto): Promise<unknown> {
@@ -50,7 +59,7 @@ export class UniverseController {
   }
 
   @Patch('locations/:id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Update location' })
   @ApiResponse({ status: 200, description: 'Location updated' })
   async updateLocation(@Param('id') id: string, @Body() data: UpdateLocationDto): Promise<unknown> {

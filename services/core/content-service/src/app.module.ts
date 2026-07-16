@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { ContentModule } from './modules/content/content.module.js';
 import { DatabaseModule } from './modules/database/database.module.js';
 import { HealthModule } from './modules/health/health.module.js';
@@ -19,12 +18,6 @@ import { JwtStrategy } from './modules/auth/jwt.strategy.js';
       envFilePath: ['.env', '../../.env'],
     }),
     RateLimiterModule.forRoot(),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60000,
-        limit: 100,
-      },
-    ]),
     DatabaseModule,
     CacheModule,
     ContentModule,

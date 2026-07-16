@@ -33,6 +33,12 @@
       "@azeebo/ui/*": [
         "../../packages/ui/src/*"
       ],
+      "@azeebo/ui/web": [
+        "../../packages/ui/src/web-index.ts"
+      ],
+      "@azeebo/ui/mobile": [
+        "../../packages/ui/src/mobile-index.ts"
+      ],
       "@azeebo/design-tokens": [
         "../../packages/design-tokens/src"
       ],

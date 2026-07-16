@@ -1,4 +1,4 @@
-import {Inject,  Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import axios from 'axios';
@@ -139,24 +139,21 @@ export class ContentModerationService {
     }
 
     try {
-      const response = await fetch(`${this.moderationServiceUrl}/moderation/report`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await axios.post(
+        `${this.moderationServiceUrl}/moderation/report`,
+        {
           reportingUserId: userId,
           type: reportData.type,
           contentId,
           reason: reportData.reason,
-        }),
-      });
+        },
+        {
+          timeout: 5000,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
 
-      if (!response.ok) {
-        this.logger.warn(`Moderation service returned ${response.status} for content report`);
-      }
-
-      const result = await response.json();
+      const result = response.data;
       return {
         success: true,
         data: {
@@ -177,33 +174,15 @@ export class ContentModerationService {
     data: ModerationStatusResult;
   }> {
     try {
-      const response = await fetch(
+      const response = await axios.get(
         `${this.moderationServiceUrl}/moderation/content/${contentId}/status`,
         {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          timeout: 5000,
+          headers: { 'Content-Type': 'application/json' },
         }
       );
 
-      if (!response.ok) {
-        if (response.status === 404) {
-          return {
-            success: true,
-            data: {
-              reports: 0,
-              openReports: 0,
-              moderationCases: 0,
-              currentStatus: 'none',
-            },
-          };
-        }
-        this.logger.warn(`Moderation service returned ${response.status} for status check`);
-      }
-
-      const result = await response.json();
-      return result;
+      return response.data;
     } catch (error) {
       this.logger.error(`Failed to get moderation status: ${(error as Error).message}`);
       return {

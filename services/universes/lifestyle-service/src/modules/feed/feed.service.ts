@@ -1,7 +1,7 @@
-import {Inject,  Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
-import { RedisService } from '../../common/services/redis.service';
+import { RedisService } from '@azeebo/shared-services';
 
 interface FeedItem {
   id: string;

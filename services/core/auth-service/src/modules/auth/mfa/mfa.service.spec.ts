@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MfaService } from './mfa.service.js';
 import { AuthRepository } from '../auth.repository.js';
-import { RedisService } from '../../../common/services/redis.service.js';
+import { RedisService } from '@azeebo/shared-services';
 
 jest.mock('otpauth', () => {
   const mockSecret = { base32: 'JBSWY3DPEHPK3PXP' };

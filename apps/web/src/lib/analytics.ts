@@ -1,26 +1,27 @@
+import { Analytics as AzeeboAnalytics } from '@azeebo/analytics-sdk';
 import { webLogger } from '@/lib/logger';
-type EventName = string;
+
 type EventProperties = Record<string, unknown>;
 
-interface AnalyticsEvent {
-  name: EventName;
-  properties?: EventProperties;
-  timestamp: Date;
-}
-
-const MAX_BUFFER_SIZE = 100;
+// Initialize the shared analytics SDK
+const sdk = new AzeeboAnalytics({
+  enabled: process.env.NODE_ENV !== 'test',
+  defaultConsent: {
+    essential: true,
+    analytics: true,
+    marketing: false,
+  },
+});
 
 class Analytics {
-  private events: AnalyticsEvent[] = [];
-  private isDevelopment = process.env.NODE_ENV === 'development';
   private userId: string | null = null;
 
-  private track(eventName: EventName, properties?: EventProperties): void {
-    if (this.isDevelopment) {
+  private track(eventName: string, properties?: EventProperties): void {
+    if (process.env.NODE_ENV === 'development') {
       webLogger.log(`[Analytics] ${eventName}`, properties);
     }
 
-    const event: AnalyticsEvent = {
+    sdk.track({
       name: eventName,
       properties: {
         ...properties,
@@ -28,49 +29,25 @@ class Analytics {
         environment: process.env.NODE_ENV,
         url: typeof window !== 'undefined' ? window.location.pathname : undefined,
       },
-      timestamp: new Date(),
-    };
-
-    if (this.events.length >= MAX_BUFFER_SIZE) {
-      this.events.shift();
-    }
-    this.events.push(event);
-
-    if (typeof window !== 'undefined' && window.dataLayer) {
-      window.dataLayer.push({
-        event: eventName,
-        ...properties,
-      });
-    }
-
-    if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', eventName, properties);
-    }
+    });
   }
 
   setUserId(userId: string): void {
     this.userId = userId;
-    if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('set', { user_id: userId });
-    }
+    sdk.setUser({ userId });
   }
 
   clearUser(): void {
     this.userId = null;
+    sdk.clearUser();
   }
 
   pageView(page: string, properties?: EventProperties): void {
-    this.track('page_view', {
-      page,
-      ...properties,
-    });
+    this.track('page_view', { page, ...properties });
   }
 
   userSignedUp(method: 'email' | 'google' | 'apple', properties?: EventProperties): void {
-    this.track('user_signup_viewed', {
-      method,
-      ...properties,
-    });
+    this.track('user_signup_viewed', { method, ...properties });
   }
 
   userSignupSubmitted(
@@ -78,11 +55,7 @@ class Analytics {
     data: Record<string, unknown>,
     properties?: EventProperties
   ): void {
-    this.track('user_signup_submitted', {
-      method,
-      data: Object.keys(data),
-      ...properties,
-    });
+    this.track('user_signup_submitted', { method, data: Object.keys(data), ...properties });
   }
 
   userSignupCompleted(
@@ -90,11 +63,7 @@ class Analytics {
     method: 'email' | 'google' | 'apple',
     properties?: EventProperties
   ): void {
-    this.track('user_signup_completed', {
-      userId,
-      method,
-      ...properties,
-    });
+    this.track('user_signup_completed', { userId, method, ...properties });
     this.setUserId(userId);
   }
 
@@ -103,25 +72,15 @@ class Analytics {
     error: string,
     properties?: EventProperties
   ): void {
-    this.track('user_signup_failed', {
-      method,
-      error,
-      ...properties,
-    });
+    this.track('user_signup_failed', { method, error, ...properties });
   }
 
   userLoggedIn(method: 'email' | 'google' | 'apple', properties?: EventProperties): void {
-    this.track('user_login_viewed', {
-      method,
-      ...properties,
-    });
+    this.track('user_login_viewed', { method, ...properties });
   }
 
   userLoginSubmitted(method: 'email' | 'google' | 'apple', properties?: EventProperties): void {
-    this.track('user_login_submitted', {
-      method,
-      ...properties,
-    });
+    this.track('user_login_submitted', { method, ...properties });
   }
 
   userLoginCompleted(
@@ -129,11 +88,7 @@ class Analytics {
     method: 'email' | 'google' | 'apple',
     properties?: EventProperties
   ): void {
-    this.track('user_login_completed', {
-      userId,
-      method,
-      ...properties,
-    });
+    this.track('user_login_completed', { userId, method, ...properties });
     this.setUserId(userId);
   }
 
@@ -142,11 +97,7 @@ class Analytics {
     error: string,
     properties?: EventProperties
   ): void {
-    this.track('user_login_failed', {
-      method,
-      error,
-      ...properties,
-    });
+    this.track('user_login_failed', { method, error, ...properties });
   }
 
   userLoggedOut(properties?: EventProperties): void {
@@ -159,10 +110,7 @@ class Analytics {
     _filters?: Record<string, unknown>,
     properties?: EventProperties
   ): void {
-    this.track('content_search_viewed', {
-      query,
-      ...properties,
-    });
+    this.track('content_search_viewed', { query, ...properties });
   }
 
   contentSearchSubmitted(
@@ -178,19 +126,11 @@ class Analytics {
   }
 
   contentSearchResults(query: string, resultsCount: number, properties?: EventProperties): void {
-    this.track('content_search_completed', {
-      query,
-      resultsCount,
-      ...properties,
-    });
+    this.track('content_search_completed', { query, resultsCount, ...properties });
   }
 
   contentSearchFailed(query: string, error: string, properties?: EventProperties): void {
-    this.track('content_search_failed', {
-      query,
-      error,
-      ...properties,
-    });
+    this.track('content_search_failed', { query, error, ...properties });
   }
 
   contentViewed(
@@ -200,21 +140,11 @@ class Analytics {
     universe: string,
     properties?: EventProperties
   ): void {
-    this.track('content_viewed', {
-      contentId,
-      contentType,
-      title,
-      universe,
-      ...properties,
-    });
+    this.track('content_viewed', { contentId, contentType, title, universe, ...properties });
   }
 
   contentPlayStarted(contentId: string, contentType: string, properties?: EventProperties): void {
-    this.track('play_start', {
-      contentId,
-      contentType,
-      ...properties,
-    });
+    this.track('play_start', { contentId, contentType, ...properties });
   }
 
   contentPlayCompleted(
@@ -223,12 +153,7 @@ class Analytics {
     watchDuration: number,
     properties?: EventProperties
   ): void {
-    this.track('play_complete', {
-      contentId,
-      contentType,
-      watchDuration,
-      ...properties,
-    });
+    this.track('play_complete', { contentId, contentType, watchDuration, ...properties });
   }
 
   contentPlayFailed(
@@ -237,12 +162,7 @@ class Analytics {
     error: string,
     properties?: EventProperties
   ): void {
-    this.track('content_play_failed', {
-      contentId,
-      contentType,
-      error,
-      ...properties,
-    });
+    this.track('content_play_failed', { contentId, contentType, error, ...properties });
   }
 
   contentPaused(
@@ -251,20 +171,11 @@ class Analytics {
     pausedAt: number,
     properties?: EventProperties
   ): void {
-    this.track('content_paused', {
-      contentId,
-      contentType,
-      pausedAt,
-      ...properties,
-    });
+    this.track('content_paused', { contentId, contentType, pausedAt, ...properties });
   }
 
   contentSaved(contentId: string, contentType: string, properties?: EventProperties): void {
-    this.track('content_saved', {
-      contentId,
-      contentType,
-      ...properties,
-    });
+    this.track('content_saved', { contentId, contentType, ...properties });
   }
 
   contentShared(
@@ -273,28 +184,15 @@ class Analytics {
     shareMethod: 'copy_link' | 'twitter' | 'facebook' | 'email',
     properties?: EventProperties
   ): void {
-    this.track('content_shared', {
-      contentId,
-      contentType,
-      shareMethod,
-      ...properties,
-    });
+    this.track('content_shared', { contentId, contentType, shareMethod, ...properties });
   }
 
   contentLiked(contentId: string, contentType: string, properties?: EventProperties): void {
-    this.track('content_liked', {
-      contentId,
-      contentType,
-      ...properties,
-    });
+    this.track('content_liked', { contentId, contentType, ...properties });
   }
 
   contentCommented(contentId: string, contentType: string, properties?: EventProperties): void {
-    this.track('content_commented', {
-      contentId,
-      contentType,
-      ...properties,
-    });
+    this.track('content_commented', { contentId, contentType, ...properties });
   }
 
   paymentViewed(
@@ -303,12 +201,7 @@ class Analytics {
     paymentMethod: string,
     properties?: EventProperties
   ): void {
-    this.track('payment_viewed', {
-      amount,
-      currency,
-      paymentMethod,
-      ...properties,
-    });
+    this.track('payment_viewed', { amount, currency, paymentMethod, ...properties });
   }
 
   paymentSubmitted(
@@ -317,12 +210,7 @@ class Analytics {
     paymentMethod: string,
     properties?: EventProperties
   ): void {
-    this.track('payment_submitted', {
-      amount,
-      currency,
-      paymentMethod,
-      ...properties,
-    });
+    this.track('payment_submitted', { amount, currency, paymentMethod, ...properties });
   }
 
   paymentProcessed(
@@ -332,13 +220,7 @@ class Analytics {
     paymentMethod: string,
     properties?: EventProperties
   ): void {
-    this.track('payment_completed', {
-      transactionId,
-      amount,
-      currency,
-      paymentMethod,
-      ...properties,
-    });
+    this.track('payment_completed', { transactionId, amount, currency, paymentMethod, ...properties });
   }
 
   paymentFailed(
@@ -348,13 +230,7 @@ class Analytics {
     error: string,
     properties?: EventProperties
   ): void {
-    this.track('payment_failed', {
-      amount,
-      currency,
-      paymentMethod,
-      error,
-      ...properties,
-    });
+    this.track('payment_failed', { amount, currency, paymentMethod, error, ...properties });
   }
 
   walletFunded(
@@ -363,12 +239,7 @@ class Analytics {
     fundingSource: string,
     properties?: EventProperties
   ): void {
-    this.track('wallet_funded', {
-      amount,
-      currency,
-      fundingSource,
-      ...properties,
-    });
+    this.track('wallet_funded', { amount, currency, fundingSource, ...properties });
   }
 
   walletWithdrawal(
@@ -377,12 +248,7 @@ class Analytics {
     withdrawalMethod: string,
     properties?: EventProperties
   ): void {
-    this.track('wallet_withdrawal_initiated', {
-      amount,
-      currency,
-      withdrawalMethod,
-      ...properties,
-    });
+    this.track('wallet_withdrawal_initiated', { amount, currency, withdrawalMethod, ...properties });
   }
 
   walletWithdrawalCompleted(
@@ -391,12 +257,7 @@ class Analytics {
     transactionId: string,
     properties?: EventProperties
   ): void {
-    this.track('wallet_withdrawal_completed', {
-      amount,
-      currency,
-      transactionId,
-      ...properties,
-    });
+    this.track('wallet_withdrawal_completed', { amount, currency, transactionId, ...properties });
   }
 
   subscriptionStarted(
@@ -405,12 +266,7 @@ class Analytics {
     billingCycle: 'monthly' | 'yearly',
     properties?: EventProperties
   ): void {
-    this.track('subscription_started', {
-      planId,
-      planName,
-      billingCycle,
-      ...properties,
-    });
+    this.track('subscription_started', { planId, planName, billingCycle, ...properties });
   }
 
   subscriptionCancelled(
@@ -419,12 +275,7 @@ class Analytics {
     reason?: string,
     properties?: EventProperties
   ): void {
-    this.track('subscription_cancelled', {
-      planId,
-      planName,
-      reason,
-      ...properties,
-    });
+    this.track('subscription_cancelled', { planId, planName, reason, ...properties });
   }
 
   subscriptionRenewed(
@@ -433,12 +284,7 @@ class Analytics {
     billingCycle: 'monthly' | 'yearly',
     properties?: EventProperties
   ): void {
-    this.track('subscription_renewed', {
-      planId,
-      planName,
-      billingCycle,
-      ...properties,
-    });
+    this.track('subscription_renewed', { planId, planName, billingCycle, ...properties });
   }
 
   rewardEarned(
@@ -447,12 +293,7 @@ class Analytics {
     reason: string,
     properties?: EventProperties
   ): void {
-    this.track('reward_earned', {
-      rewardType,
-      amount,
-      reason,
-      ...properties,
-    });
+    this.track('reward_earned', { rewardType, amount, reason, ...properties });
   }
 
   rewardRedeemed(
@@ -461,12 +302,7 @@ class Analytics {
     redeemedFor: string,
     properties?: EventProperties
   ): void {
-    this.track('reward_redeemed', {
-      rewardType,
-      amount,
-      redeemedFor,
-      ...properties,
-    });
+    this.track('reward_redeemed', { rewardType, amount, redeemedFor, ...properties });
   }
 
   creatorDashboardViewed(properties?: EventProperties): void {
@@ -482,50 +318,27 @@ class Analytics {
     contentType: string,
     properties?: EventProperties
   ): void {
-    this.track('content_upload_completed', {
-      contentId,
-      contentType,
-      ...properties,
-    });
+    this.track('content_upload_completed', { contentId, contentType, ...properties });
   }
 
   contentUploadFailed(contentType: string, error: string, properties?: EventProperties): void {
-    this.track('content_upload_failed', {
-      contentType,
-      error,
-      ...properties,
-    });
+    this.track('content_upload_failed', { contentType, error, ...properties });
   }
 
   errorOccurred(error: string, context: string, properties?: EventProperties): void {
-    this.track('error_occurred', {
-      error,
-      context,
-      ...properties,
-    });
+    this.track('error_occurred', { error, context, ...properties });
   }
 
   performanceMetric(metricName: string, value: number, properties?: EventProperties): void {
-    this.track(`performance_${metricName}`, {
-      value,
-      ...properties,
-    });
+    this.track(`performance_${metricName}`, { value, ...properties });
   }
-
-  // ---------------------------------------------------------------------------
-  // Homepage analytics
-  // ---------------------------------------------------------------------------
 
   homepageSectionViewed(
     sectionId: string,
     sectionName: string,
     properties?: EventProperties
   ): void {
-    this.track('homepage_section_viewed', {
-      sectionId,
-      sectionName,
-      ...properties,
-    });
+    this.track('homepage_section_viewed', { sectionId, sectionName, ...properties });
   }
 
   homepageSectionScrolled(
@@ -533,11 +346,7 @@ class Analytics {
     scrollDepth: number,
     properties?: EventProperties
   ): void {
-    this.track('homepage_section_scrolled', {
-      sectionId,
-      scrollDepth,
-      ...properties,
-    });
+    this.track('homepage_section_scrolled', { sectionId, scrollDepth, ...properties });
   }
 
   homepageHeroSlideViewed(
@@ -545,11 +354,7 @@ class Analytics {
     contentId: string,
     properties?: EventProperties
   ): void {
-    this.track('homepage_hero_slide_viewed', {
-      slideIndex,
-      contentId,
-      ...properties,
-    });
+    this.track('homepage_hero_slide_viewed', { slideIndex, contentId, ...properties });
   }
 
   homepageHeroSlideClicked(
@@ -557,11 +362,7 @@ class Analytics {
     contentId: string,
     properties?: EventProperties
   ): void {
-    this.track('homepage_hero_slide_clicked', {
-      slideIndex,
-      contentId,
-      ...properties,
-    });
+    this.track('homepage_hero_slide_clicked', { slideIndex, contentId, ...properties });
   }
 
   homepageCardClicked(
@@ -570,12 +371,7 @@ class Analytics {
     position: number,
     properties?: EventProperties
   ): void {
-    this.track('homepage_card_clicked', {
-      sectionId,
-      contentId,
-      position,
-      ...properties,
-    });
+    this.track('homepage_card_clicked', { sectionId, contentId, position, ...properties });
   }
 
   homepageSectionTimeSpent(
@@ -583,50 +379,19 @@ class Analytics {
     timeSpentMs: number,
     properties?: EventProperties
   ): void {
-    this.track('homepage_section_time_spent', {
-      sectionId,
-      timeSpentMs,
-      ...properties,
-    });
+    this.track('homepage_section_time_spent', { sectionId, timeSpentMs, ...properties });
   }
 
   homepageVersionServed(isAuthenticated: boolean, properties?: EventProperties): void {
-    this.track('homepage_version_served', {
-      isAuthenticated,
-      ...properties,
-    });
+    this.track('homepage_version_served', { isAuthenticated, ...properties });
   }
 
   homepageAccessed(path: string, isAuthenticated: boolean, properties?: EventProperties): void {
-    this.track('homepage_accessed', {
-      path,
-      isAuthenticated,
-      ...properties,
-    });
+    this.track('homepage_accessed', { path, isAuthenticated, ...properties });
   }
 
   homepageRedirected(from: string, to: string, reason: string, properties?: EventProperties): void {
-    this.track('homepage_redirected', {
-      from,
-      to,
-      reason,
-      ...properties,
-    });
-  }
-
-  getEvents(): AnalyticsEvent[] {
-    return [...this.events];
-  }
-
-  clearEvents(): void {
-    this.events = [];
-  }
-}
-
-declare global {
-  interface Window {
-    gtag?: (...args: unknown[]) => void;
-    dataLayer?: Record<string, unknown>[];
+    this.track('homepage_redirected', { from, to, reason, ...properties });
   }
 }
 

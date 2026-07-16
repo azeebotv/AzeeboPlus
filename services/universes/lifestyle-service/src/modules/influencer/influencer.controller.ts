@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -8,9 +9,9 @@ import { Inject,
   Param,
   Query,
   UseGuards,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard, Roles } from '@azeebo/shared-services';
 import { InfluencerService } from './influencer.service';
 
 interface CreateInfluencerData {
@@ -90,7 +91,8 @@ export class InfluencerController {
   }
 
   @Post()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Create influencer entry' })
   @ApiResponse({ status: 201, description: 'Entry created' })
   async createEntry(@Body() body: CreateInfluencerData): Promise<unknown> {
@@ -98,7 +100,8 @@ export class InfluencerController {
   }
 
   @Post('collaborations')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Create collaboration' })
   @ApiResponse({ status: 201, description: 'Collaboration created' })
   async createCollaboration(@Body() body: CreateCollaborationData): Promise<unknown> {
@@ -106,7 +109,8 @@ export class InfluencerController {
   }
 
   @Patch(':id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Update influencer entry' })
   @ApiResponse({ status: 200, description: 'Entry updated' })
   async updateEntry(@Param('id') id: string, @Body() body: UpdateInfluencerData): Promise<unknown> {
@@ -114,7 +118,8 @@ export class InfluencerController {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN')
   @ApiOperation({ summary: 'Delete influencer entry' })
   @ApiResponse({ status: 200, description: 'Entry deleted' })
   async deleteEntry(@Param('id') id: string): Promise<unknown> {

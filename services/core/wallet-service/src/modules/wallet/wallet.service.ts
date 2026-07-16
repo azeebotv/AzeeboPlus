@@ -1,4 +1,4 @@
-import {Inject,  Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
 import { Prisma, WalletTransaction } from '../../prisma/client/index.js';

@@ -144,8 +144,9 @@ export class CreatorService {
           { count: bigint }[]
         >('SELECT COUNT(*) as count FROM "following" WHERE "followingId" = $1', userId)
         .then((rows) => Number(rows[0]?.count ?? 0));
-    } catch {
+    } catch (error) {
       // following table may not exist in this database
+      console.warn(`Failed to fetch subscriber count: ${(error as Error).message}`);
     }
 
     return {

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { api, ContentItem } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 export default function LifestylePage(): React.JSX.Element {
   const universesQuery = useQuery({
@@ -56,10 +57,12 @@ export default function LifestylePage(): React.JSX.Element {
           </div>
         ) : events.length > 0 ? (
           <div className="relative h-[500px]">
-            <img
+            <OptimizedImage
               src={events[0].thumbnail}
               alt={events[0].title}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              priority
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/50 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">
@@ -72,23 +75,20 @@ export default function LifestylePage(): React.JSX.Element {
               <h2 className="text-4xl font-bold text-white mb-2">{events[0].title}</h2>
               <p className="text-white/60 text-lg mb-6 max-w-2xl">{events[0].description}</p>
               <div className="flex items-center gap-4">
-                <button
-                  type="button"
-                  className="az-btn-primary"
-                  style={{ width: 'auto', paddingInline: '2rem' }}
-                >
+                <Link href={`/watch/${events[0].id}`} className="az-btn-primary" style={{ width: 'auto', paddingInline: '2rem', display: 'inline-block', textAlign: 'center' }}>
                   Get Tickets
-                </button>
-                <button
-                  type="button"
+                </Link>
+                <Link
+                  href={`/watch/${events[0].id}`}
                   className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
                   style={{
                     border: '1px solid rgba(255,255,255,0.2)',
                     backgroundColor: 'rgba(255,255,255,0.08)',
+                    display: 'inline-block',
                   }}
                 >
                   View Details
-                </button>
+                </Link>
               </div>
             </div>
           </div>
@@ -131,9 +131,11 @@ export default function LifestylePage(): React.JSX.Element {
                   style={{ boxShadow: '0 0 20px rgba(255,255,255,0.05)' }}
                 >
                   <div className="relative">
-                    <img
+                    <OptimizedImage
                       src={event.thumbnail}
                       alt={event.title}
+                      width={400}
+                      height={192}
                       className="w-full h-48 object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />

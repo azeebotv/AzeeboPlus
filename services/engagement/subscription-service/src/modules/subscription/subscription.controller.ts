@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -8,9 +9,8 @@ import { Inject,
   Query,
   UseGuards,
   Request,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
 
 import { SubscriptionService } from './subscription.service.js';
@@ -27,7 +27,9 @@ interface AuthenticatedRequest {
 @ApiTags('Subscriptions')
 @Controller('v1/subscription')
 export class SubscriptionController {
-  constructor(@Inject(SubscriptionService) private readonly subscriptionService: SubscriptionService) {}
+  constructor(
+    @Inject(SubscriptionService) private readonly subscriptionService: SubscriptionService
+  ) {}
 
   @Get('plans')
   @UseGuards(RateLimitGuard)
@@ -49,7 +51,7 @@ export class SubscriptionController {
   }
 
   @Post('plans')
-  @UseGuards(AuthGuard('jwt'), AdminGuard, RateLimitGuard)
+  @UseGuards(AdminGuard, RateLimitGuard)
   @RateLimit(5, 3600000)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new subscription plan (admin only)' })
@@ -61,7 +63,7 @@ export class SubscriptionController {
   }
 
   @Post('subscribe')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(5, 3600000)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Subscribe to a plan' })
@@ -76,7 +78,6 @@ export class SubscriptionController {
   }
 
   @Get('current')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user subscription' })
   @ApiResponse({ status: 200, description: 'Current subscription' })
@@ -86,7 +87,7 @@ export class SubscriptionController {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(5, 3600000)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Cancel subscription' })
@@ -101,7 +102,6 @@ export class SubscriptionController {
   }
 
   @Get('history')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get subscription history' })
   @ApiResponse({ status: 200, description: 'Subscription history' })

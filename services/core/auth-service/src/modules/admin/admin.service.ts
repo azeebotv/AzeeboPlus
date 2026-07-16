@@ -1,4 +1,4 @@
-import {Inject,  Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { AuthRepository } from '../auth/auth.repository.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
@@ -81,7 +81,10 @@ export class AdminService {
       if (!user) {
         throw new NotFoundException('User not found');
       }
-      const { password: _password, ...userWithoutPassword } = user as unknown as Record<string, unknown>;
+      const { password: _password, ...userWithoutPassword } = user as unknown as Record<
+        string,
+        unknown
+      >;
       return ApiResponseWrapper.success(userWithoutPassword);
     } catch (error) {
       if (error instanceof NotFoundException) throw error;

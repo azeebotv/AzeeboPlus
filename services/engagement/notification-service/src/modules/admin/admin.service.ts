@@ -1,4 +1,4 @@
-import {Inject,  Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
@@ -122,7 +122,9 @@ export class AdminService {
 
       // Without a User model in this service, broadcast to all users is not supported.
       // Use the user-service to fetch user IDs and send targeted notifications.
-      this.logger.warn('Broadcast notification without userIds is not supported — use targeted notifications');
+      this.logger.warn(
+        'Broadcast notification without userIds is not supported — use targeted notifications'
+      );
       return { sentCount: 0, userIds: [] };
     } catch (error) {
       this.logger.error(

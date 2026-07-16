@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Post,
   Get,
@@ -9,9 +10,8 @@ import { Inject,
   Query,
   HttpCode,
   HttpStatus,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { AnalyticsService } from './analytics.service.js';
@@ -26,7 +26,6 @@ export class AnalyticsController {
   constructor(@Inject(AnalyticsService) private readonly analyticsService: AnalyticsService) {}
 
   @Post('events')
-  @UseGuards(AuthGuard('jwt'))
   @RateLimit(100, 60000)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Ingest product events' })
@@ -44,7 +43,6 @@ export class AnalyticsController {
   }
 
   @Get('me/summary')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get user analytics summary' })
   @ApiResponse({ status: 200, description: 'User analytics' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -55,7 +53,6 @@ export class AnalyticsController {
   }
 
   @Get('dashboard')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get dashboard metrics' })
   @ApiResponse({ status: 200, description: 'Dashboard metrics' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -64,7 +61,6 @@ export class AnalyticsController {
   }
 
   @Get('funnels')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get funnel metrics' })
   @ApiResponse({ status: 200, description: 'Funnel metrics' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -73,7 +69,6 @@ export class AnalyticsController {
   }
 
   @Get('cohorts')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get cohort metrics' })
   @ApiResponse({ status: 200, description: 'Cohort metrics' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -82,7 +77,6 @@ export class AnalyticsController {
   }
 
   @Get('universe-kpis')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get all universe KPIs' })
   @ApiResponse({ status: 200, description: 'Universe KPIs' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -91,7 +85,6 @@ export class AnalyticsController {
   }
 
   @Get('universe-kpis/:universeName')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get specific universe KPIs' })
   @ApiResponse({ status: 200, description: 'Universe KPIs' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -101,7 +94,6 @@ export class AnalyticsController {
   }
 
   @Get('retention')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get retention metrics' })
   @ApiResponse({ status: 200, description: 'Retention metrics' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -112,7 +104,6 @@ export class AnalyticsController {
   }
 
   @Get('revenue')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get revenue metrics' })
   @ApiResponse({ status: 200, description: 'Revenue metrics' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -123,7 +114,6 @@ export class AnalyticsController {
   }
 
   @Get('engagement')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get engagement metrics' })
   @ApiResponse({ status: 200, description: 'Engagement metrics' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -134,7 +124,6 @@ export class AnalyticsController {
   }
 
   @Get('dashboard/detailed')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get detailed dashboard' })
   @ApiResponse({ status: 200, description: 'Detailed dashboard' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -143,7 +132,6 @@ export class AnalyticsController {
   }
 
   @Get('daily-stats')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get daily stats' })
   @ApiResponse({ status: 200, description: 'Daily stats' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -153,7 +141,6 @@ export class AnalyticsController {
   }
 
   @Post('track')
-  @UseGuards(AuthGuard('jwt'))
   @RateLimit(100, 60000)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Track single event' })
@@ -167,7 +154,6 @@ export class AnalyticsController {
   }
 
   @Post('track-batch')
-  @UseGuards(AuthGuard('jwt'))
   @RateLimit(50, 60000)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Track batch events' })
@@ -185,7 +171,6 @@ export class AnalyticsController {
   }
 
   @Get('kpis')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get KPI metrics' })
   @ApiResponse({ status: 200, description: 'KPI metrics' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -194,7 +179,6 @@ export class AnalyticsController {
   }
 
   @Get('realtime')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get realtime analytics' })
   @ApiResponse({ status: 200, description: 'Realtime analytics' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })

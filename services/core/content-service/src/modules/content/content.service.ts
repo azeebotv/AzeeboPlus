@@ -1,4 +1,5 @@
-import {Inject, 
+import {
+  Inject,
   Injectable,
   NotFoundException,
   BadRequestException,
@@ -73,12 +74,15 @@ export class ContentService {
     @Inject(MediaService) private readonly mediaService: MediaService,
     @Inject(TranscodingService) private readonly transcodingService: TranscodingService,
     @Inject(ConfigService) _configService: ConfigService,
-    @Inject(RedisService) _redisService: RedisService,
+    @Inject(RedisService) private readonly redisService: RedisService,
     @Inject(ContentFeedService) private readonly contentFeedService: ContentFeedService,
-    @Inject(ContentModerationService) private readonly contentModerationService: ContentModerationService,
-    @Inject(ContentRelationshipService) private readonly contentRelationshipService: ContentRelationshipService,
+    @Inject(ContentModerationService)
+    private readonly contentModerationService: ContentModerationService,
+    @Inject(ContentRelationshipService)
+    private readonly contentRelationshipService: ContentRelationshipService,
     @Inject(ContentCategoryService) private readonly contentCategoryService: ContentCategoryService,
-    @Inject(ContentIngestionService) private readonly contentIngestionService: ContentIngestionService
+    @Inject(ContentIngestionService)
+    private readonly contentIngestionService: ContentIngestionService
   ) {}
 
   private canModifyContent(
@@ -454,11 +458,21 @@ export class ContentService {
 
   async getContent(id: string): Promise<{ success: boolean; data: ContentWithAll }> {
     try {
+      // Check cache first
+      const cacheKey = `content:${id}`;
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) {
+        return { success: true, data: JSON.parse(cached) };
+      }
+
       const content = (await this.contentRepository.findById(id)) as ContentWithAll | null;
 
       if (!content) {
         throw new NotFoundException(`Content not found`);
       }
+
+      // Cache for 2 minutes
+      await this.redisService.set(cacheKey, JSON.stringify(content), 120);
 
       await this.prisma.contentItem.update({
         where: { id },
@@ -541,6 +555,9 @@ export class ContentService {
         updateContentDto as Partial<Record<string, unknown>>
       )) as ContentWithUniverse;
 
+      // Invalidate content cache
+      await this.redisService.del(`content:${id}`);
+
       return {
         success: true,
         data: updatedContent,
@@ -559,7 +576,11 @@ export class ContentService {
     userId: string,
     id: string,
     userRole?: string
-  ): Promise<{ success: boolean; data?: { message: string }; error?: { code: string; message: string } }> {
+  ): Promise<{
+    success: boolean;
+    data?: { message: string };
+    error?: { code: string; message: string };
+  }> {
     try {
       const content = await this.contentRepository.findById(id);
 
@@ -572,6 +593,10 @@ export class ContentService {
       }
 
       await this.contentRepository.delete(id);
+
+      // Invalidate content cache
+      await this.redisService.del(`content:${id}`);
+
       return {
         success: true,
         data: { message: 'Content soft deleted successfully' },
@@ -627,6 +652,9 @@ export class ContentService {
         },
         include: { universe: true },
       });
+
+      // Invalidate content cache
+      await this.redisService.del(`content:${id}`);
 
       return {
         success: true,

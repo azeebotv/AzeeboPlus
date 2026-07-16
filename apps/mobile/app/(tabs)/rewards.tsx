@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -50,6 +50,7 @@ export default function RewardsScreen() {
   const [redeemOptions, setRedeemOptions] = useState<RedeemOption[]>([]);
   const [currentPoints, setCurrentPoints] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const isDark = colorScheme === 'dark';
@@ -88,6 +89,12 @@ export default function RewardsScreen() {
     fetchRewards();
   }, [authLoading, isAuthenticated]);
 
+  const onRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchRewards();
+    setIsRefreshing(false);
+  };
+
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.safeArea, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
@@ -110,7 +117,13 @@ export default function RewardsScreen() {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
-      <ScrollView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <ScrollView
+        style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#E8420A" />
+        }
+        keyboardDismissMode="on-drag"
+      >
         <PageTransition>
           <ScrollReveal direction="up">
             <View style={styles.header}>
@@ -151,7 +164,17 @@ export default function RewardsScreen() {
                 Earn Points
               </Text>
               <StaggerGrid staggerDelay={60}>
-                {rewards.map((reward) => (
+                {rewards.length === 0 ? (
+                  <View style={[styles.rewardItem, { backgroundColor: isDark ? '#1a1a1a' : '#f8f9fa', alignItems: 'center', paddingVertical: 24 }]}>
+                    <Text style={{ fontSize: 32, marginBottom: 8 }}>🎯</Text>
+                    <Text style={[styles.rewardTitle, { color: isDark ? '#ffffff' : '#1A0A0A', textAlign: 'center' }]}>
+                      No rewards available yet
+                    </Text>
+                    <Text style={[styles.rewardDescription, { textAlign: 'center' }]}>
+                      Earn points by watching content and engaging with the platform
+                    </Text>
+                  </View>
+                ) : rewards.map((reward) => (
                   <View
                     key={reward.id}
                     style={[styles.rewardItem, { backgroundColor: isDark ? '#1a1a1a' : '#f8f9fa' }]}
@@ -184,7 +207,17 @@ export default function RewardsScreen() {
                 Redeem Rewards
               </Text>
               <View style={styles.redeemGrid}>
-                {redeemOptions.map((option) => (
+                {redeemOptions.length === 0 ? (
+                  <View style={[styles.redeemCard, { alignItems: 'center', paddingVertical: 24, backgroundColor: isDark ? '#1a1a1a' : '#f8f9fa' }]}>
+                    <Text style={{ fontSize: 32, marginBottom: 8 }}>🎁</Text>
+                    <Text style={[styles.redeemName, { color: isDark ? '#ffffff' : '#1A0A0A', textAlign: 'center' }]}>
+                      No redeem options available
+                    </Text>
+                    <Text style={[styles.rewardDescription, { textAlign: 'center' }]}>
+                      Check back later for new rewards
+                    </Text>
+                  </View>
+                ) : redeemOptions.map((option) => (
                   <GlowCard
                     key={option.id}
                     variant="subtle"

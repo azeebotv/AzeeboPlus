@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { api, ContentItem } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 export default function SportsPage(): React.JSX.Element {
   const universesQuery = useQuery({
@@ -82,13 +83,13 @@ export default function SportsPage(): React.JSX.Element {
                       Watch Live
                     </button>
                   </Link>
-                  <button
-                    type="button"
-                    className="px-6 py-3 rounded-full text-sm font-semibold transition-all"
+                  <Link
+                    href={`/predictions`}
+                    className="px-6 py-3 rounded-full text-sm font-semibold transition-all inline-block"
                     style={{ backgroundColor: '#fff', color: '#0D3B2E' }}
                   >
                     Make Prediction
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -130,9 +131,11 @@ export default function SportsPage(): React.JSX.Element {
                   style={{ boxShadow: '0 0 20px rgba(255,255,255,0.05)' }}
                 >
                   <div className="relative">
-                    <img
+                    <OptimizedImage
                       src={match.thumbnail}
                       alt={match.title}
+                      width={400}
+                      height={192}
                       className="w-full h-48 object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
