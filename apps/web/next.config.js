@@ -18,6 +18,18 @@ const nextConfig = {
         hostname: 'api.azeeboplus.com',
       },
       {
+        protocol: 'https',
+        hostname: 'picsum.photos',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ui-avatars.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'azeebo-media-dev.s3.us-east-1.amazonaws.com',
+      },
+      {
         protocol: 'http',
         hostname: 'localhost',
       },
