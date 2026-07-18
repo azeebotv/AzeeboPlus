@@ -153,25 +153,6 @@ export const VisuallyHiddenText: React.FC<VisuallyHiddenTextProps> = ({
   </Text>
 );
 
-export const accessibilityColors = {
-  primary: colors.primary[500],
-  secondary: colors.primary[500],
-  success: colors.success[500],
-  error: colors.error[500],
-  warning: colors.warning[500],
-  text: {
-    primary: colors.text.primary,
-    secondary: colors.text.secondary,
-    tertiary: colors.text.tertiary,
-  },
-  bg: {
-    primary: colors.bg.primary,
-    secondary: colors.bg.secondary,
-    tertiary: colors.bg.tertiary,
-  },
-  border: colors.border.default,
-};
-
 const styles = StyleSheet.create({
   button: {
     paddingVertical: 12,

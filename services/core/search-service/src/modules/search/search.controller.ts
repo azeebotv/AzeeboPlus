@@ -19,7 +19,7 @@ import { SearchResponse } from './interfaces/search-response.interface.js';
 import { LogSearchDto } from './dto/log-search.dto.js';
 
 @ApiTags('Search')
-@Controller('v1/search')
+@Controller('search')
 export class SearchController {
   constructor(@Inject(SearchService) private readonly searchService: SearchService) {}
 

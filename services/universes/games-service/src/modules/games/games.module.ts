@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtConfigModule } from '@azeebo/shared-services';
 
 import { GamesController } from './games.controller.js';
 import { GamesService } from './games.service.js';
@@ -9,16 +8,7 @@ import { DatabaseModule } from '../database/database.module.js';
 @Module({
   imports: [
     DatabaseModule,
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService): Promise<Record<string, unknown>> => ({
-        secret: configService.get<string>('JWT_ACCESS_SECRET'),
-        signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as string | number,
-        },
-      }),
-      inject: [ConfigService],
-    }),
+    JwtConfigModule,
   ],
   controllers: [GamesController],
   providers: [GamesService],

@@ -1,14 +1,7 @@
 import { apiClient } from './client';
-import type { ApiResponse } from './auth';
+import type { ApiResponse, Notification } from '../types/api';
 
-export interface Notification {
-  id: string;
-  title: string;
-  body: string;
-  data?: Record<string, unknown>;
-  read: boolean;
-  createdAt: string;
-}
+export type { Notification } from '../types/api';
 
 export interface NotificationPreferences {
   email: boolean;

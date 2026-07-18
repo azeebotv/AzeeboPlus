@@ -13,7 +13,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CinemaPassService } from './cinema-pass.service.js';
 
 @ApiTags('Cinema Pass')
-@Controller('v1/movies/passes')
+@Controller('movies/passes')
 export class CinemaPassController {
   constructor(@Inject(CinemaPassService) private readonly cinemaPassService: CinemaPassService) {}
 

@@ -329,11 +329,11 @@ export class ComedyFeedService {
   }
 
   async getTrending(
-    _period = 'daily',
+    period = 'daily',
     limit = 20
   ): Promise<{ success: boolean; data?: { items: unknown[] } }> {
     try {
-      const cacheK = cacheKey('comedy', `trending:${_period}:${limit}`);
+      const cacheK = cacheKey('comedy', `trending:${period}:${limit}`);
       const cached = await this.cache.get<{ success: boolean; data?: { items: unknown[] } }>(
         cacheK
       );

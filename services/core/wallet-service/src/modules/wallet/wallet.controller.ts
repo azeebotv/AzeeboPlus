@@ -7,12 +7,12 @@ import {
   Request,
   Body,
   Query,
-  NotFoundException,
   Param,
   UseInterceptors,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
-import { PrismaService } from '../database/prisma.service.js';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
 import { CacheInterceptor, Cache } from '../../cache/index.js';
 
@@ -40,8 +40,7 @@ interface AuthenticatedRequest {
 @UseInterceptors(CacheInterceptor)
 export class WalletController {
   constructor(
-    @Inject(WalletService) private readonly walletService: WalletService,
-    @Inject(PrismaService) private readonly prisma: PrismaService
+    @Inject(WalletService) private readonly walletService: WalletService
   ) {}
 
   @Get()
@@ -90,6 +89,7 @@ export class WalletController {
   }
 
   @Post('fund')
+  @HttpCode(HttpStatus.CREATED)
   @UseGuards(RateLimitGuard)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Initialize wallet funding' })
@@ -127,16 +127,10 @@ export class WalletController {
     @Request() req: AuthenticatedRequest,
     @Body() addBonusCreditDto: AddBonusCreditDto
   ) {
-    const wallet = await this.prisma.wallet.findUnique({
-      where: { userId: req.user.id },
-    });
-
-    if (!wallet) {
-      throw new NotFoundException(`Wallet not found for user ${req.user.id}`);
-    }
+    const walletId = await this.walletService.getWalletIdByUserId(req.user.id);
 
     const result = await this.walletService.addBonusCredit(
-      wallet.id,
+      walletId,
       addBonusCreditDto.amount,
       addBonusCreditDto.reason
     );
@@ -154,16 +148,10 @@ export class WalletController {
     @Request() req: AuthenticatedRequest,
     @Body() addPromoCreditDto: AddPromoCreditDto
   ) {
-    const wallet = await this.prisma.wallet.findUnique({
-      where: { userId: req.user.id },
-    });
-
-    if (!wallet) {
-      throw new NotFoundException(`Wallet not found for user ${req.user.id}`);
-    }
+    const walletId = await this.walletService.getWalletIdByUserId(req.user.id);
 
     const result = await this.walletService.addPromoCredit(
-      wallet.id,
+      walletId,
       addPromoCreditDto.amount,
       addPromoCreditDto.promoCode,
       new Date(addPromoCreditDto.expiresAt)
@@ -180,18 +168,12 @@ export class WalletController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string
   ) {
-    const wallet = await this.prisma.wallet.findUnique({
-      where: { userId: req.user.id },
-    });
-
-    if (!wallet) {
-      throw new NotFoundException(`Wallet not found for user ${req.user.id}`);
-    }
+    const walletId = await this.walletService.getWalletIdByUserId(req.user.id);
 
     const start = startDate ? new Date(startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const end = endDate ? new Date(endDate) : new Date();
 
-    const result = await this.walletService.getTransactionAuditTrail(wallet.id, start, end);
+    const result = await this.walletService.getTransactionAuditTrail(walletId, start, end);
     return ApiResponseWrapper.success((result as { data: unknown }).data);
   }
 

@@ -16,7 +16,7 @@ import { JoinTournamentDto, SubmitScoreDto } from './dto/tournament.dto.js';
 
 @ApiTags('Tournament')
 @ApiBearerAuth()
-@Controller('v1/games/tournaments')
+@Controller('games/tournaments')
 export class TournamentController {
   constructor(@Inject(TournamentService) private readonly tournamentService: TournamentService) {}
 

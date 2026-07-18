@@ -1,7 +1,8 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
-import { PaystackProvider, FlutterwaveProvider } from '../modules/payments/providers';
+import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
 
 export interface PaymentJobData {
   transactionId: string;
@@ -15,16 +16,23 @@ export interface PaymentJobData {
   retryDelay?: number;
 }
 
+/**
+ * Payment processor that delegates to payment-service API.
+ * The actual payment provider integrations (Paystack/Flutterwave) live in
+ * payment-service. This processor only enqueues and monitors jobs.
+ */
 @Processor('payments')
 export class PaymentProcessor extends WorkerHost {
   private readonly logger = new Logger(PaymentProcessor.name);
   private static readonly DEFAULT_MAX_RETRIES = 5;
+  private readonly paymentServiceUrl: string;
 
-  constructor(
-    private readonly paystackProvider: PaystackProvider,
-    private readonly flutterwaveProvider: FlutterwaveProvider
-  ) {
+  constructor(private readonly configService: ConfigService) {
     super();
+    this.paymentServiceUrl = this.configService.get<string>(
+      'PAYMENT_SERVICE_URL',
+      'http://payment-service:3003'
+    );
   }
 
   async process(job: Job<PaymentJobData>): Promise<void> {
@@ -67,10 +75,11 @@ export class PaymentProcessor extends WorkerHost {
     _metadata?: Record<string, string>
   ): Promise<void> {
     this.logger.debug(`Processing charge ${transactionId} for ${userId}: ${amount} ${currency}`);
-    const paymentProvider =
-      provider === 'paystack' ? this.paystackProvider : this.flutterwaveProvider;
-    // For charge, we typically just verify the payment
-    await paymentProvider.verifyPayment(transactionId);
+    await axios.post(
+      `${this.paymentServiceUrl}/payments/verify`,
+      { transactionId, userId, provider },
+      { timeout: 15000 }
+    );
   }
 
   private async processRefund(
@@ -82,10 +91,12 @@ export class PaymentProcessor extends WorkerHost {
     metadata?: Record<string, string>
   ): Promise<void> {
     this.logger.debug(`Processing refund ${transactionId} for ${userId}: ${amount} ${currency}`);
-    const paymentProvider =
-      provider === 'paystack' ? this.paystackProvider : this.flutterwaveProvider;
     const reason = metadata?.reason || 'Refund requested';
-    await paymentProvider.processRefund(transactionId, reason);
+    await axios.post(
+      `${this.paymentServiceUrl}/payments/refund`,
+      { transactionId, userId, reason, provider },
+      { timeout: 15000 }
+    );
   }
 
   private async processPayout(
@@ -97,10 +108,12 @@ export class PaymentProcessor extends WorkerHost {
     metadata?: Record<string, string>
   ): Promise<void> {
     this.logger.debug(`Processing payout ${transactionId} for ${userId}: ${amount} ${currency}`);
-    const paymentProvider =
-      provider === 'paystack' ? this.paystackProvider : this.flutterwaveProvider;
     const recipient = metadata?.recipient || userId;
-    await paymentProvider.processPayout(amount, recipient, transactionId);
+    await axios.post(
+      `${this.paymentServiceUrl}/payments/payout`,
+      { transactionId, userId, amount, recipient, provider },
+      { timeout: 30000 }
+    );
   }
 
   @OnWorkerEvent('active')

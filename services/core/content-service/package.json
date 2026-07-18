@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
-    "start:dev": "tsx watch src/main.ts",
+    "start:dev": "bash start-dev.sh",
     "lint": "eslint src --fix",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -47,7 +47,6 @@
   "devDependencies": {
     "@nestjs/testing": "^11.1.27",
     "@types/express": "^5.0.6",
-
     "@types/jest": "^29.5.0",
     "@types/ms": "^2.1.0",
     "@types/node": "^25.9.3",

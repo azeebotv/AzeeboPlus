@@ -23,7 +23,7 @@ interface AuthRequest extends Request {
 
 @ApiTags('Messaging')
 @ApiBearerAuth()
-@Controller('v1/messaging')
+@Controller('messaging')
 @UseGuards(RateLimitGuard)
 export class MessagingController {
   constructor(@Inject(MessagingService) private readonly messagingService: MessagingService) {}

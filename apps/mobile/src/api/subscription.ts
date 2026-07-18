@@ -1,19 +1,7 @@
 import { apiClient } from './client';
-import type { ApiResponse } from './auth';
+import type { ApiResponse, SubscriptionPlan } from '../types/api';
 
-export interface SubscriptionPlan {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  currency: string;
-  duration: number;
-  features: string[];
-  isActive: boolean;
-  tier: string;
-  createdAt: string;
-  updatedAt: string;
-}
+export type { SubscriptionPlan } from '../types/api';
 
 export interface Subscription {
   id: string;

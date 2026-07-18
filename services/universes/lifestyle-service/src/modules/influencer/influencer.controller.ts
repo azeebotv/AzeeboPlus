@@ -46,7 +46,7 @@ interface UpdateInfluencerData {
 }
 
 @ApiTags('Influencer')
-@Controller('v1/lifestyle/influencers')
+@Controller('lifestyle/influencers')
 export class InfluencerController {
   constructor(@Inject(InfluencerService) private readonly influencerService: InfluencerService) {}
 

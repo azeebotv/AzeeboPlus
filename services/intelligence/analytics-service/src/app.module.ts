@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AnalyticsModule } from './modules/analytics/analytics.module.js';
 import { AnalyticsInstrumentationModule } from './modules/analytics-instrumentation/analytics-instrumentation.module.js';
 import { AdminModule } from './modules/admin/admin.module.js';
@@ -7,9 +7,9 @@ import { IntelligenceModule } from './modules/intelligence/intelligence.module.j
 import { HealthModule } from './modules/health/health.module.js';
 import { MetricsModule } from './modules/metrics/metrics.module.js';
 import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
-import { CacheModule } from '@azeebo/shared-services';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ResponseWrapperInterceptor } from '@azeebo/logger';
+import { CacheModule, JwtConfigModule } from '@azeebo/shared-services';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -17,14 +17,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       isGlobal: true,
       envFilePath: ['.env', '../../.env'],
     }),
-    JwtModule.registerAsync({
-      global: true,
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_ACCESS_SECRET'),
-      }),
-      inject: [ConfigService],
-    }),
+    JwtConfigModule,
     RateLimiterModule.forRoot(),
     CacheModule,
     AnalyticsModule,
@@ -35,6 +28,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     MetricsModule,
   ],
   providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseWrapperInterceptor,
+    },
     {
       provide: APP_GUARD,
       useClass: ServiceAuthGuard,

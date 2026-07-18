@@ -13,6 +13,14 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+function resolveTheme(t: Theme): 'light' | 'dark' {
+  if (typeof window === 'undefined') return 'dark';
+  if (t === 'system') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  return t;
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('system');
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');
@@ -25,13 +33,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const initialTheme = stored || 'system';
     setThemeState(initialTheme);
     themeRef.current = initialTheme;
-
-    const resolveTheme = (t: Theme): 'light' | 'dark' => {
-      if (t === 'system') {
-        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      }
-      return t;
-    };
 
     setResolvedTheme(resolveTheme(initialTheme));
 
@@ -51,13 +52,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-
-    const resolveTheme = (t: Theme): 'light' | 'dark' => {
-      if (t === 'system') {
-        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      }
-      return t;
-    };
 
     const newResolved = resolveTheme(theme);
     setResolvedTheme(newResolved);

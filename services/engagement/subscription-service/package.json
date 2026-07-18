@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "start": "nest start",
-    "start:dev": "tsx watch src/main.ts",
+    "start:dev": "bash start-dev.sh",
     "start:prod": "node dist/main",
     "test": "jest",
     "test:watch": "jest --watch",

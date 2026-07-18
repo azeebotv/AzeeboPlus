@@ -16,7 +16,7 @@ import { CreateLocationDto } from './dto/create-location.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
 
 @ApiTags('Universe')
-@Controller('v1/vertical/universes')
+@Controller('vertical/universes')
 export class UniverseController {
   constructor(@Inject(UniverseService) private readonly universeService: UniverseService) {}
 

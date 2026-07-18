@@ -33,7 +33,7 @@ interface CreateCityGuideData {
 }
 
 @ApiTags('City Guide')
-@Controller('v1/lifestyle/city-guide')
+@Controller('lifestyle/city-guide')
 export class CityGuideController {
   constructor(@Inject(CityGuideService) private readonly cityGuideService: CityGuideService) {}
 

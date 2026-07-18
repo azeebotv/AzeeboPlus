@@ -177,7 +177,7 @@ export default function TransactionsPage(): React.JSX.Element {
                   className="font-bold text-lg"
                   style={{ color: tx.type === 'credit' ? '#22C55E' : '#fff' }}
                 >
-                  {tx.type === 'credit' ? '+' : '-'}₦{tx.amount.toLocaleString()}
+                  {tx.type === 'credit' ? '+' : '-'}₦{(tx.amount ?? 0).toLocaleString()}
                 </p>
                 <span
                   className="inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize"

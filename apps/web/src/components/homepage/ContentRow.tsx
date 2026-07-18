@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect, useCallback } from 'react';
 import ContentCard from './ContentCard';
+import { Skeleton } from '@/components/Skeleton';
 import type { ContentItem } from '@/lib/api';
 import analytics from '@/lib/analytics';
 
@@ -196,19 +197,14 @@ export default function ContentRow({
         role="region"
         aria-label={`${title} content list`}
       >
-        <style>{`.content-row-scroll::-webkit-scrollbar { display: none; }`}</style>
-
         {isLoading
           ? skeletons.map((_, i) => (
-              <div
+              <Skeleton
                 key={i}
-                className="flex-shrink-0 rounded-xl overflow-hidden"
-                style={{
-                  width: cardWidth,
-                  height: cardSize === 'sm' ? 224 : cardSize === 'lg' ? 400 : 310,
-                  background: 'var(--brand-surface)',
-                  animation: 'pulse 1.5s ease-in-out infinite',
-                }}
+                width={`${cardWidth}px`}
+                height={`${cardSize === 'sm' ? 224 : cardSize === 'lg' ? 400 : 310}px`}
+                borderRadius="12px"
+                className="flex-shrink-0"
               />
             ))
           : items.map((item, index) => (

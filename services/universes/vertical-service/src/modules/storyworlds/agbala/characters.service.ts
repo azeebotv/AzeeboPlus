@@ -65,7 +65,7 @@ export class AgbalaCharactersService {
   ): Promise<PaginatedResponse<Character>> {
     try {
       const cacheKey = `characters:list:${universeSlug || 'all'}:${page}:${limit}`;
-      const cached = this.cache.get<PaginatedResponse<Character>>(cacheKey);
+      const cached = await this.cache.get<PaginatedResponse<Character>>(cacheKey);
       if (cached) return cached;
 
       const where: { universeId?: string } = {};
@@ -116,7 +116,7 @@ export class AgbalaCharactersService {
         },
       };
 
-      this.cache.set(cacheKey, response);
+      await this.cache.set(cacheKey, response);
       return response;
     } catch (error) {
       this.logger.error(`Failed to fetch characters: ${error}`);
@@ -130,7 +130,7 @@ export class AgbalaCharactersService {
     try {
       const cacheKey = `characters:detail:${slug}`;
       const cached =
-        this.cache.get<SingleResponse<Character & { relationships: Relationship[] }>>(cacheKey);
+        await this.cache.get<SingleResponse<Character & { relationships: Relationship[] }>>(cacheKey);
       if (cached) return cached;
 
       const character = await this.prisma.character.findUnique({
@@ -180,7 +180,7 @@ export class AgbalaCharactersService {
         },
       };
 
-      this.cache.set(cacheKey, response);
+      await this.cache.set(cacheKey, response);
       return response;
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
@@ -192,7 +192,7 @@ export class AgbalaCharactersService {
   async getCharacterRelationships(slug: string): Promise<ListResponse<Relationship>> {
     try {
       const cacheKey = `characters:relationships:${slug}`;
-      const cached = this.cache.get<ListResponse<Relationship>>(cacheKey);
+      const cached = await this.cache.get<ListResponse<Relationship>>(cacheKey);
       if (cached) return cached;
 
       const character = await this.prisma.character.findUnique({
@@ -224,7 +224,7 @@ export class AgbalaCharactersService {
         data: formattedRelationships,
       };
 
-      this.cache.set(cacheKey, response);
+      await this.cache.set(cacheKey, response);
       return response;
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
@@ -272,7 +272,7 @@ export class AgbalaCharactersService {
         createdAt: character.createdAt.toISOString(),
       };
 
-      this.cache.invalidate('characters:');
+      await this.cache.invalidate('characters:');
       return { success: true, data: formattedCharacter };
     } catch (error) {
       this.logger.error(`Failed to create character: ${error}`);
@@ -313,7 +313,7 @@ export class AgbalaCharactersService {
         createdAt: character.createdAt.toISOString(),
       };
 
-      this.cache.invalidate('characters:');
+      await this.cache.invalidate('characters:');
       return { success: true, data: formattedCharacter };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
@@ -354,8 +354,8 @@ export class AgbalaCharactersService {
         isOfficial: relationship.isOfficial,
       };
 
-      this.cache.invalidate(`characters:relationships:${fromCharacter.slug}`);
-      this.cache.invalidate(`characters:relationships:${toCharacter.slug}`);
+      await this.cache.invalidate(`characters:relationships:${fromCharacter.slug}`);
+      await this.cache.invalidate(`characters:relationships:${toCharacter.slug}`);
       return { success: true, data: formattedRelationship };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;

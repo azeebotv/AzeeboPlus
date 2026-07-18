@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUniverses } from '@/hooks/useDatabase';
-import { apiFetch } from '@/lib/api';
+import { api } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
 import BrandLogo from '@/components/auth/BrandLogo';
 
@@ -45,9 +45,9 @@ export default function OnboardingPage(): React.JSX.Element {
 
   const handleComplete = async (): Promise<void> => {
     try {
-      const result = await apiFetch('/users/me/preferences', {
-        method: 'PATCH',
-        body: JSON.stringify({ interests: selectedInterests, onboardingCompleted: true }),
+      const result = await api.user.updatePreferences({
+        interests: selectedInterests,
+        onboardingCompleted: true,
       });
       if (result.success) {
         localStorage.setItem('onboardingCompleted', 'true');

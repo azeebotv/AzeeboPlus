@@ -405,6 +405,45 @@ export async function apiFetch<T>(
       const data = await response.json();
 
       if (!response.ok) {
+        // Handle 401 — try to refresh token before returning error
+        if (response.status === 401 && !options.skipAuthRetry) {
+          const refreshToken = typeof window !== 'undefined' ? localStorage.getItem(REFRESH_TOKEN_KEY) : null;
+          if (refreshToken && attempt === 0) {
+            try {
+              const refreshResponse = await fetch(`${resolvedApiUrl}/api/v1/auth/refresh`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ refreshToken }),
+                credentials: 'include',
+              });
+
+              if (refreshResponse.ok) {
+                const refreshData = await refreshResponse.json();
+                if (refreshData.data?.access_token) {
+                  localStorage.setItem(ACCESS_TOKEN_KEY, refreshData.data.access_token);
+                  localStorage.setItem(REFRESH_TOKEN_KEY, refreshData.data.refresh_token);
+                  headers['Authorization'] = `Bearer ${refreshData.data.access_token}`;
+                  continue; // Retry with new token
+                }
+              }
+            } catch {
+              // Refresh failed — fall through to return error
+            }
+          }
+          // Refresh failed or no refresh token — clear session
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem(ACCESS_TOKEN_KEY);
+            localStorage.removeItem(REFRESH_TOKEN_KEY);
+            localStorage.removeItem(USER_KEY);
+          }
+          return {
+            success: false,
+            status: 401,
+            message: 'Session expired. Please login again.',
+            statusCode: 401,
+          } as ApiError;
+        }
+
         // Don't retry on client errors (4xx except 408, 429)
         if (response.status >= 400 && response.status < 500 && response.status !== 408 && response.status !== 429) {
           return {

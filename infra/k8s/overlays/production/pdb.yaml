@@ -1,3 +1,4 @@
+# Core services
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
@@ -34,17 +35,6 @@ spec:
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: api-gateway-pdb
-  namespace: azeebo
-spec:
-  minAvailable: 1
-  selector:
-    matchLabels:
-      app: api-gateway
----
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
   name: user-service-pdb
   namespace: azeebo
 spec:
@@ -67,6 +57,130 @@ spec:
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
+  name: search-service-pdb
+  namespace: azeebo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: search-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: media-service-pdb
+  namespace: azeebo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: media-service
+---
+# Gateway
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: api-gateway-pdb
+  namespace: azeebo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+---
+# Universe services
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: reality-service-pdb
+  namespace: azeebo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: reality-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: movie-service-pdb
+  namespace: azeebo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: movie-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: comedy-service-pdb
+  namespace: azeebo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: comedy-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: games-service-pdb
+  namespace: azeebo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: games-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: sports-service-pdb
+  namespace: azeebo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: sports-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: lifestyle-service-pdb
+  namespace: azeebo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: lifestyle-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: vertical-service-pdb
+  namespace: azeebo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: vertical-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: creator-service-pdb
+  namespace: azeebo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: creator-service
+---
+# Engagement services
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
   name: notification-service-pdb
   namespace: azeebo
 spec:
@@ -78,6 +192,62 @@ spec:
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
+  name: reward-service-pdb
+  namespace: azeebo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: reward-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: engagement-service-pdb
+  namespace: azeebo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: engagement-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: messaging-service-pdb
+  namespace: azeebo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: messaging-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: referral-service-pdb
+  namespace: azeebo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: referral-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: subscription-service-pdb
+  namespace: azeebo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: subscription-service
+---
+# Operations services
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
   name: moderation-service-pdb
   namespace: azeebo
 spec:
@@ -85,3 +255,48 @@ spec:
   selector:
     matchLabels:
       app: moderation-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: queue-service-pdb
+  namespace: azeebo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: queue-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: support-service-pdb
+  namespace: azeebo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: support-service
+---
+# Intelligence services
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: analytics-service-pdb
+  namespace: azeebo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: analytics-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: recommendation-service-pdb
+  namespace: azeebo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: recommendation-service

@@ -1,4 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { InjectRedis } from '@nestjs-modules/ioredis';
+import { Redis } from 'ioredis';
 
 export enum SpoilerLevel {
   NONE = 'none',
@@ -17,6 +19,8 @@ export enum AccessLevel {
 @Injectable()
 export class SanitizationService {
   private readonly logger = new Logger(SanitizationService.name);
+
+  constructor(@InjectRedis() private readonly redis: Redis) {}
 
   private readonly allowedTags = new Set([
     'p',
@@ -48,7 +52,7 @@ export class SanitizationService {
 
   private readonly disallowedProtocols = ['javascript:', 'data:', 'vbscript:'];
 
-  private readonly rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+  private readonly rateLimitPrefix = 'agbala:rate_limit:';
 
   sanitizeContent(content: string): string {
     if (!content || typeof content !== 'string') {
@@ -105,26 +109,29 @@ export class SanitizationService {
   }
 
   rateLimitKey(userId: string, action: string): string {
-    return `rate_limit:${action}:${userId}`;
+    return `${this.rateLimitPrefix}${action}:${userId}`;
   }
 
-  checkRateLimit(userId: string, action: string, maxRequests: number, windowMs: number): boolean {
+  async checkRateLimit(userId: string, action: string, maxRequests: number, windowMs: number): Promise<boolean> {
     const key = this.rateLimitKey(userId, action);
-    const now = Date.now();
-    const entry = this.rateLimitStore.get(key);
+    const windowSec = Math.ceil(windowMs / 1000);
 
-    if (!entry || now > entry.resetAt) {
-      this.rateLimitStore.set(key, { count: 1, resetAt: now + windowMs });
+    try {
+      const current = await this.redis.incr(key);
+      if (current === 1) {
+        await this.redis.expire(key, windowSec);
+      }
+
+      if (current > maxRequests) {
+        this.logValidationFailure('rate_limit', 'exceeded', `${userId}:${action}`);
+        return false;
+      }
+
       return true;
+    } catch (error) {
+      this.logger.warn(`Redis rate limit check failed: ${error}`);
+      return true; // Fail open
     }
-
-    if (entry.count >= maxRequests) {
-      this.logValidationFailure('rate_limit', 'exceeded', `${userId}:${action}`);
-      return false;
-    }
-
-    entry.count++;
-    return true;
   }
 
   private removeScriptTags(content: string): string {

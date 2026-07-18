@@ -20,7 +20,7 @@ import { AddToWatchlistDto } from './dto/watchlist.dto.js';
 
 @ApiTags('Movies')
 @ApiBearerAuth()
-@Controller('v1/movies')
+@Controller('movies')
 export class MoviesController {
   constructor(@Inject(MoviesService) private readonly moviesService: MoviesService) {}
 

@@ -1080,12 +1080,21 @@ importers:
       '@prisma/client':
         specifier: ^6.19.3
         version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
+      '@sendgrid/mail':
+        specifier: ^8.1.6
+        version: 8.1.6
       class-transformer:
         specifier: ^0.5.1
         version: 0.5.1
       class-validator:
         specifier: ^0.15.1
         version: 0.15.1
+      firebase-admin:
+        specifier: ^14.0.0
+        version: 14.0.0
+      handlebars:
+        specifier: ^4.7.9
+        version: 4.7.9
       ioredis:
         specifier: ^5.11.1
         version: 5.11.1
@@ -1098,6 +1107,9 @@ importers:
       rxjs:
         specifier: ^7.8.2
         version: 7.8.2
+      twilio:
+        specifier: ^6.0.2
+        version: 6.0.2
     devDependencies:
       '@nestjs/testing':
         specifier: ^11.1.27
@@ -2514,6 +2526,9 @@ importers:
       '@azeebo/security':
         specifier: workspace:*
         version: link:../../../packages/security
+      '@azeebo/shared-services':
+        specifier: workspace:*
+        version: link:../../../packages/shared-services
       '@azeebo/shared-types':
         specifier: workspace:*
         version: link:../../../packages/shared-types
@@ -3515,6 +3530,9 @@ importers:
       '@azeebo/security':
         specifier: workspace:*
         version: link:../../../packages/security
+      '@azeebo/shared-services':
+        specifier: workspace:*
+        version: link:../../../packages/shared-services
       '@azeebo/shared-types':
         specifier: workspace:*
         version: link:../../../packages/shared-types
@@ -18440,9 +18458,7 @@ snapshots:
       metro-runtime: 0.84.4
     transitivePeerDependencies:
       - '@babel/core'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 

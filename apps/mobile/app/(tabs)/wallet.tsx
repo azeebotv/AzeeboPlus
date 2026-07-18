@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { useWalletBalance, useWalletTransactions, useFundWallet, useWithdraw } from '../../src/hooks/useWalletQuery';
+import { colors } from '../../src/theme';
 
 export default function WalletScreen() {
   const colorScheme = useColorScheme();
@@ -127,7 +128,7 @@ export default function WalletScreen() {
         style={[
           styles.container,
           styles.centered,
-          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' },
+          { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#fff' },
         ]}
       >
         <ActivityIndicator size="large" color="#E8420A" />
@@ -141,11 +142,11 @@ export default function WalletScreen() {
         style={[
           styles.container,
           styles.centered,
-          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' },
+          { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#fff' },
         ]}
       >
         <Text style={styles.lockIcon}>🔒</Text>
-        <Text style={[styles.lockText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+        <Text style={[styles.lockText, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}>
           Please log in to view your wallet
         </Text>
       </SafeAreaView>
@@ -154,7 +155,7 @@ export default function WalletScreen() {
 
   return (
     <SafeAreaView
-      style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' }]}
+      style={[styles.container, { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#fff' }]}
     >
       <ScrollView
         style={styles.scrollView}
@@ -165,7 +166,7 @@ export default function WalletScreen() {
         }
       >
         <View style={styles.header}>
-          <Text style={[styles.greeting, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+          <Text style={[styles.greeting, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}>
             Hello, {user?.name || 'User'}
           </Text>
           <Text style={styles.title}>My Wallet</Text>
@@ -204,7 +205,7 @@ export default function WalletScreen() {
         </View>
 
         <View style={styles.transactionsSection}>
-          <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+          <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}>
             Recent Transactions
           </Text>
 
@@ -213,11 +214,11 @@ export default function WalletScreen() {
           ) : transactions.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>📭</Text>
-              <Text style={[styles.emptyText, { color: colorScheme === 'dark' ? '#666' : '#999' }]}>
+              <Text style={[styles.emptyText, { color: colorScheme === 'dark' ? colors.text.tertiary : '#999' }]}>
                 No transactions yet
               </Text>
               <Text
-                style={[styles.emptySubtext, { color: colorScheme === 'dark' ? '#444' : '#ccc' }]}
+                style={[styles.emptySubtext, { color: colorScheme === 'dark' ? colors.text.muted : '#ccc' }]}
               >
                 Your transaction history will appear here
               </Text>
@@ -229,7 +230,7 @@ export default function WalletScreen() {
                   key={transaction.id}
                   style={[
                     styles.transactionItem,
-                    { borderBottomColor: colorScheme === 'dark' ? '#333' : '#eee' },
+                    { borderBottomColor: colorScheme === 'dark' ? colors.bg.tertiary : '#eee' },
                   ]}
                 >
                   <View style={styles.transactionLeft}>
@@ -240,7 +241,7 @@ export default function WalletScreen() {
                       <Text
                         style={[
                           styles.transactionTitle,
-                          { color: colorScheme === 'dark' ? '#fff' : '#000' },
+                          { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
                         ]}
                       >
                         {transaction.description ||
@@ -280,7 +281,7 @@ export default function WalletScreen() {
               { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#fff' },
             ]}
           >
-            <Text style={[styles.modalTitle, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+            <Text style={[styles.modalTitle, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}>
               Fund Wallet
             </Text>
 
@@ -291,7 +292,7 @@ export default function WalletScreen() {
                   styles.input,
                   {
                     backgroundColor: colorScheme === 'dark' ? '#333' : '#f5f5f5',
-                    color: colorScheme === 'dark' ? '#fff' : '#000',
+                    color: colorScheme === 'dark' ? colors.text.primary : '#000',
                   },
                 ]}
                 placeholder="Enter amount"
@@ -320,7 +321,7 @@ export default function WalletScreen() {
               <TouchableOpacity
                 style={[
                   styles.cancelButton,
-                  { borderColor: colorScheme === 'dark' ? '#333' : '#eee' },
+                  { borderColor: colorScheme === 'dark' ? colors.bg.tertiary : '#eee' },
                 ]}
                 onPress={() => setShowFundModal(false)}
                 disabled={fundMutation.isPending}
@@ -329,7 +330,7 @@ export default function WalletScreen() {
                 <Text
                   style={[
                     styles.cancelButtonText,
-                    { color: colorScheme === 'dark' ? '#fff' : '#000' },
+                    { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
                   ]}
                 >
                   Cancel
@@ -365,7 +366,7 @@ export default function WalletScreen() {
               { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#fff' },
             ]}
           >
-            <Text style={[styles.modalTitle, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+            <Text style={[styles.modalTitle, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}>
               Withdraw Funds
             </Text>
 
@@ -376,7 +377,7 @@ export default function WalletScreen() {
                   styles.input,
                   {
                     backgroundColor: colorScheme === 'dark' ? '#333' : '#f5f5f5',
-                    color: colorScheme === 'dark' ? '#fff' : '#000',
+                    color: colorScheme === 'dark' ? colors.text.primary : '#000',
                   },
                 ]}
                 placeholder="Enter amount"
@@ -395,7 +396,7 @@ export default function WalletScreen() {
                   styles.input,
                   {
                     backgroundColor: colorScheme === 'dark' ? '#333' : '#f5f5f5',
-                    color: colorScheme === 'dark' ? '#fff' : '#000',
+                    color: colorScheme === 'dark' ? colors.text.primary : '#000',
                   },
                 ]}
                 placeholder="e.g., 044"
@@ -413,7 +414,7 @@ export default function WalletScreen() {
                   styles.input,
                   {
                     backgroundColor: colorScheme === 'dark' ? '#333' : '#f5f5f5',
-                    color: colorScheme === 'dark' ? '#fff' : '#000',
+                    color: colorScheme === 'dark' ? colors.text.primary : '#000',
                   },
                 ]}
                 placeholder="Enter account number"
@@ -429,7 +430,7 @@ export default function WalletScreen() {
               <TouchableOpacity
                 style={[
                   styles.cancelButton,
-                  { borderColor: colorScheme === 'dark' ? '#333' : '#eee' },
+                  { borderColor: colorScheme === 'dark' ? colors.bg.tertiary : '#eee' },
                 ]}
                 onPress={() => setShowWithdrawModal(false)}
                 disabled={withdrawMutation.isPending}
@@ -438,7 +439,7 @@ export default function WalletScreen() {
                 <Text
                   style={[
                     styles.cancelButtonText,
-                    { color: colorScheme === 'dark' ? '#fff' : '#000' },
+                    { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
                   ]}
                 >
                   Cancel

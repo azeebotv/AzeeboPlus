@@ -10,6 +10,8 @@ module.exports = {
   ],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\.js$': '$1',
+    '^@azeebo/shared-services$': '<rootDir>/../../../packages/shared-services/src',
+    '^@azeebo/shared-services/(.*)$': '<rootDir>/../../../packages/shared-services/src/$1',
   },
   collectCoverageFrom: [
     '**/*.(t|j)s',

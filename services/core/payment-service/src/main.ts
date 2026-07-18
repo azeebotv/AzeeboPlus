@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger } from '@nestjs/common';
+import { ValidationPipe, Logger, VersioningType } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
 import helmet from 'helmet';
@@ -21,6 +21,7 @@ async function bootstrap(): Promise<void> {
   // rawBody: true captures the raw request buffer as req.rawBody (Buffer) for
   // webhook signature verification, while still parsing JSON into req.body.
   const app = await NestFactory.create(AppModule, { rawBody: true });
+  app.enableVersioning({ type: VersioningType.URI, prefix: "v", defaultVersion: "1" });
 
   app.use(
     helmet({

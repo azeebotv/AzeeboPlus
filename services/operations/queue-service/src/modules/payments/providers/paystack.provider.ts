@@ -1,5 +1,7 @@
 import { Inject, Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectRedis } from '@nestjs-modules/ioredis';
+import { Redis } from 'ioredis';
 import axios from 'axios';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { CircuitBreaker, CircuitBreakerOpenError } from '@azeebo/shared-types';
@@ -41,7 +43,10 @@ export class PaystackProvider {
   private readonly baseUrl: string;
   private readonly circuitBreaker: CircuitBreaker;
 
-  constructor(@Inject(ConfigService) private readonly configService: ConfigService) {
+  constructor(
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @InjectRedis() private readonly redis: Redis
+  ) {
     this.apiKey = this.configService.get<string>('PAYSTACK_SECRET_KEY') || '';
     this.baseUrl = this.configService.get<string>('PAYSTACK_API_URL', 'https://api.paystack.co');
     if (!this.apiKey) {
@@ -58,32 +63,35 @@ export class PaystackProvider {
     });
   }
 
-  // PAY-003: In-memory idempotency store (production should use Redis/DB)
-  private readonly idempotencyStore = new Map<
-    string,
-    { result: Record<string, unknown>; timestamp: number }
-  >();
-  private readonly IDEMPOTENCY_TTL = 3600_000; // 1 hour
+  // PAY-003: Redis-backed idempotency store
+  private readonly IDEMPOTENCY_PREFIX = 'idempotency:paystack:';
+  private readonly IDEMPOTENCY_TTL_SECONDS = 3600; // 1 hour
 
-  private checkIdempotency(key: string | undefined): Record<string, unknown> | null {
+  private async checkIdempotency(key: string | undefined): Promise<Record<string, unknown> | null> {
     if (!key) return null;
-    const entry = this.idempotencyStore.get(key);
-    if (entry && Date.now() - entry.timestamp < this.IDEMPOTENCY_TTL) {
-      return entry.result;
+    try {
+      const cached = await this.redis.get(`${this.IDEMPOTENCY_PREFIX}${key}`);
+      if (cached) {
+        return JSON.parse(cached) as Record<string, unknown>;
+      }
+    } catch (error) {
+      this.logger.warn(`Redis idempotency check failed: ${error}`);
     }
-    if (entry) this.idempotencyStore.delete(key);
     return null;
   }
 
-  private storeIdempotency(key: string | undefined, result: Record<string, unknown>): void {
+  private async storeIdempotency(key: string | undefined, result: Record<string, unknown>): Promise<void> {
     if (!key) return;
-    if (this.idempotencyStore.size > 1000) {
-      const now = Date.now();
-      for (const [k, v] of this.idempotencyStore) {
-        if (now - v.timestamp >= this.IDEMPOTENCY_TTL) this.idempotencyStore.delete(k);
-      }
+    try {
+      await this.redis.set(
+        `${this.IDEMPOTENCY_PREFIX}${key}`,
+        JSON.stringify(result),
+        'EX',
+        this.IDEMPOTENCY_TTL_SECONDS
+      );
+    } catch (error) {
+      this.logger.warn(`Redis idempotency store failed: ${error}`);
     }
-    this.idempotencyStore.set(key, { result, timestamp: Date.now() });
   }
 
   async initializePayment(
@@ -107,7 +115,7 @@ export class PaystackProvider {
     }
 
     // PAY-003: Check idempotency key
-    const cached = this.checkIdempotency(idempotencyKey);
+    const cached = await this.checkIdempotency(idempotencyKey);
     if (cached) return cached;
 
     try {
@@ -146,7 +154,7 @@ export class PaystackProvider {
       });
 
       // PAY-003: Store result for idempotency
-      this.storeIdempotency(idempotencyKey, result);
+      await this.storeIdempotency(idempotencyKey, result);
 
       return result;
     } catch (error) {
@@ -251,29 +259,42 @@ export class PaystackProvider {
       throw new Error('Paystack API key not configured');
     }
 
-    const response = await axios.post(
-      'https://api.paystack.co/transfer',
-      {
-        source: 'balance',
-        amount: amount * 100, // Paystack uses kobo
-        recipient,
-        reference,
-        currency: 'NGN',
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        timeout: 30000,
-      }
-    );
+    try {
+      const result = await this.circuitBreaker.execute(async () => {
+        const response = await axios.post(
+          `${this.baseUrl}/transfer`,
+          {
+            source: 'balance',
+            amount: amount * 100, // Paystack uses kobo
+            recipient,
+            reference,
+            currency: 'NGN',
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${this.apiKey}`,
+              'Content-Type': 'application/json',
+            },
+            timeout: 30000,
+          }
+        );
 
-    return {
-      success: response.data.status === 'success',
-      reference,
-      providerResponse: response.data,
-    };
+        return {
+          success: response.data.status === 'success',
+          reference,
+          providerResponse: response.data,
+        };
+      });
+
+      return result;
+    } catch (error) {
+      if (error instanceof CircuitBreakerOpenError) {
+        this.logger.warn(`Paystack circuit breaker open: ${(error as Error).message}`);
+        throw new Error('Payout service temporarily unavailable. Please try again later.');
+      }
+      this.logger.error(`Paystack payout failed: ${(error as Error).message}`);
+      throw error;
+    }
   }
 
   async verifyWebhookSignature(

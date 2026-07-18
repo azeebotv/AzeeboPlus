@@ -45,7 +45,26 @@ export { AuditModule } from './audit/audit.module';
 export { AuditInterceptor } from './audit/audit.interceptor';
 export { AuditLog } from './audit/audit.decorator';
 
+// Firebase
+/** Firebase Cloud Messaging service and module. */
+export { FirebaseService } from './firebase/firebase.service';
+export { FirebaseModule } from './firebase/firebase.module';
+
+// Email
+/** SendGrid email service with Handlebars templates and module. */
+export { EmailService } from './email/email.service';
+export { EmailModule } from './email/email.module';
+
+// SMS
+/** Twilio SMS service and module. */
+export { SmsService } from './sms/sms.service';
+export { SmsModule } from './sms/sms.module';
+
 // Prisma
 /** Prisma ORM service and module for database access. */
 export { PrismaService } from './prisma/prisma.service';
 export { PrismaModule } from './prisma/prisma.module';
+
+// JWT
+/** Shared JWT configuration module - replaces per-service JwtModule.registerAsync boilerplate. */
+export { JwtConfigModule } from './jwt/jwt-config.module';

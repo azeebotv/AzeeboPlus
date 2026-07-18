@@ -1,14 +1,18 @@
 import { NestFactory } from '@nestjs/core';
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import { GlobalExceptionFilter } from '@azeebo/error-handling';
+import { configureCors } from '@azeebo/security';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
+  app.enableVersioning({ type: VersioningType.URI, prefix: "v", defaultVersion: "1" });
   const logger = new Logger('CreatorPortal');
 
+  app.useGlobalFilters(new GlobalExceptionFilter());
   app.use(cookieParser());
 
   app.use(
@@ -49,22 +53,8 @@ async function bootstrap(): Promise<void> {
     'http://localhost:4014',
   ];
 
-  app.enableCors({
-    origin: (
-      origin: string | undefined,
-      callback: (err: Error | null, allow?: boolean) => void
-    ) => {
-      if (origin && allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token'],
-    exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
-    maxAge: 86400,
+  configureCors(app, {
+    allowedOrigins,
   });
 
   // Swagger/OpenAPI setup

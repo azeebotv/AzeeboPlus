@@ -11,25 +11,18 @@ import { LoreModule } from './modules/lore/lore.module';
 import { CrossoversModule } from './modules/crossovers/crossovers.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
-import { CacheModule } from '@azeebo/shared-services';
+import { CacheModule, JwtConfigModule } from '@azeebo/shared-services';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['.env', '../../.env'],
     }),
     RateLimiterModule.forRoot(),
-    JwtModule.registerAsync({
-      global: true,
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_ACCESS_SECRET'),
-      }),
-      inject: [ConfigService],
-    }),
+    JwtConfigModule,
     ThrottlerModule.forRoot([
       {
         ttl: 60000,

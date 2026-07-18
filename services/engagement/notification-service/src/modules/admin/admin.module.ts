@@ -1,7 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { JwtModule } from '@nestjs/jwt';
-import type { StringValue } from 'ms';
+import { JwtConfigModule } from '@azeebo/shared-services';
 import { AdminController } from './admin.controller.js';
 import { AdminService } from './admin.service.js';
 import { DatabaseModule } from '../database/database.module.js';
@@ -9,16 +7,7 @@ import { DatabaseModule } from '../database/database.module.js';
 @Module({
   imports: [
     DatabaseModule,
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_ACCESS_SECRET') ?? '',
-        signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as StringValue,
-        },
-      }),
-      inject: [ConfigService],
-    }),
+    JwtConfigModule,
   ],
   controllers: [AdminController],
   providers: [AdminService],

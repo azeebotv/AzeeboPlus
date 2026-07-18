@@ -51,7 +51,7 @@ interface AuthenticatedRequest extends Request {
 }
 
 @ApiTags('Admin - User Service')
-@Controller('v1/admin')
+@Controller('admin')
 @UseGuards(AdminGuard)
 export class AdminController {
   constructor(@Inject(AdminService) private readonly adminService: AdminService) {}

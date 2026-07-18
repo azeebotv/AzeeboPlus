@@ -1,105 +1,51 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { InjectRedis } from '@nestjs-modules/ioredis';
+import { Redis } from 'ioredis';
 
-interface CacheEntry<T> {
-  value: T;
-  expiresAt: number;
-}
-
+/**
+ * Local cache service that wraps Redis for the agbala storyworld module.
+ * NOTE: This is a thin wrapper around Redis. Consider migrating callers
+ * to use @azeebo/shared-services CacheService directly (async API).
+ */
 @Injectable()
 export class CacheService {
   private readonly logger = new Logger(CacheService.name);
-  private readonly store = new Map<string, CacheEntry<unknown>>();
-  private cleanupInterval: ReturnType<typeof setInterval> | null = null;
+  private readonly prefix = 'agbala:';
+  private readonly defaultTtl = 300; // 5 minutes in seconds
 
-  constructor() {
-    this.cleanupInterval = setInterval(() => this.cleanup(), 60000);
-  }
+  constructor(@InjectRedis() private readonly redis: Redis) {}
 
-  onModuleDestroy(): void {
-    if (this.cleanupInterval) {
-      clearInterval(this.cleanupInterval);
-    }
-  }
-
-  get<T>(key: string): T | undefined {
-    const entry = this.store.get(key);
-    if (!entry) return undefined;
-
-    if (Date.now() > entry.expiresAt) {
-      this.store.delete(key);
+  async get<T>(key: string): Promise<T | undefined> {
+    try {
+      const value = await this.redis.get(`${this.prefix}${key}`);
+      if (!value) return undefined;
+      return JSON.parse(value) as T;
+    } catch (error) {
+      this.logger.warn(`Cache GET error for ${key}: ${error}`);
       return undefined;
     }
-
-    return entry.value as T;
   }
 
-  set(key: string, value: unknown, ttlMs?: number): void {
-    const defaultTtl = this.getDefaultTtl(key);
-    const ttl = ttlMs ?? defaultTtl;
-
-    this.store.set(key, {
-      value,
-      expiresAt: Date.now() + ttl,
-    });
+  async set(key: string, value: unknown, ttlMs?: number): Promise<void> {
+    try {
+      const ttlSeconds = ttlMs ? Math.ceil(ttlMs / 1000) : this.defaultTtl;
+      await this.redis.set(`${this.prefix}${key}`, JSON.stringify(value), 'EX', ttlSeconds);
+    } catch (error) {
+      this.logger.warn(`Cache SET error for ${key}: ${error}`);
+    }
   }
 
-  invalidate(pattern: string): number {
-    let count = 0;
-    const regex = new RegExp(pattern.replace(/\*/g, '.*'));
-
-    for (const key of this.store.keys()) {
-      if (regex.test(key)) {
-        this.store.delete(key);
-        count++;
+  async invalidate(pattern: string): Promise<number> {
+    try {
+      const fullPattern = `${this.prefix}${pattern}*`;
+      const keys = await this.redis.keys(fullPattern);
+      if (keys.length > 0) {
+        await this.redis.del(...keys);
       }
+      return keys.length;
+    } catch (error) {
+      this.logger.warn(`Cache INVALIDATE error for ${pattern}: ${error}`);
+      return 0;
     }
-
-    if (count > 0) {
-      this.logger.debug(`Invalidated ${count} cache entries matching pattern: ${pattern}`);
-    }
-
-    return count;
-  }
-
-  clear(): void {
-    const size = this.store.size;
-    this.store.clear();
-    this.logger.debug(`Cleared ${size} cache entries`);
-  }
-
-  getStats(): { size: number; keys: string[] } {
-    return {
-      size: this.store.size,
-      keys: Array.from(this.store.keys()),
-    };
-  }
-
-  private cleanup(): void {
-    const now = Date.now();
-    let expiredCount = 0;
-
-    for (const [key, entry] of this.store.entries()) {
-      if (now > entry.expiresAt) {
-        this.store.delete(key);
-        expiredCount++;
-      }
-    }
-
-    if (expiredCount > 0) {
-      this.logger.debug(`Cleaned up ${expiredCount} expired cache entries`);
-    }
-  }
-
-  private getDefaultTtl(key: string): number {
-    const fiveMinutes = 5 * 60 * 1000;
-    const tenMinutes = 10 * 60 * 1000;
-
-    if (key.includes('storyworld:config')) return fiveMinutes;
-    if (key.includes('characters') || key.includes('realms')) return tenMinutes;
-    if (key.includes('titles')) return tenMinutes;
-    if (key.includes('theories')) return fiveMinutes;
-    if (key.includes('rooms')) return fiveMinutes;
-
-    return fiveMinutes;
   }
 }

@@ -25,19 +25,3 @@ export class IngestEventsDto {
   @Type(() => AnalyticsEventDto)
   events!: AnalyticsEventDto[];
 }
-
-export class TrackEventDto {
-  @ApiProperty()
-  @IsString()
-  type!: string;
-
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
-  userId?: string;
-
-  @ApiPropertyOptional()
-  @IsObject()
-  @IsOptional()
-  metadata?: Record<string, unknown>;
-}

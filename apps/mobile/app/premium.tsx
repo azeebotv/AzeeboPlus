@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { subscriptionApi } from '../src/api';
+import type { SubscriptionPlan } from '../src/types/api';
 import { logger } from '../src/utils/logger';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 
@@ -53,20 +54,12 @@ export default function PremiumAccessScreen() {
 
       if (plansResponse.success && plansResponse.data) {
         setPlans(
-          plansResponse.data.map((plan: {
-            id: string;
-            name: string;
-            description: string;
-            price: number;
-            duration: number;
-            features: string[];
-            tier: string;
-          }) => ({
+          plansResponse.data.map((plan: SubscriptionPlan) => ({
             id: plan.id,
             name: plan.name,
-            description: plan.description,
+            description: plan.description || '',
             price: plan.price,
-            duration: plan.duration === 7 ? 'weekly' : plan.duration === 30 ? 'monthly' : 'yearly',
+            duration: (plan.interval || (plan.duration === 7 ? 'weekly' : plan.duration === 30 ? 'monthly' : 'yearly')) as 'weekly' | 'monthly' | 'yearly',
             features: plan.features,
             isPopular: plan.tier === 'premium',
           }))

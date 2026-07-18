@@ -12,7 +12,7 @@ import Animated, {
 import { animation } from '../../theme';
 
 interface StaggerGridProps {
-  children: React.ReactNode[];
+  children: React.ReactNode;
   staggerDelay?: number;
   duration?: number;
   style?: StyleProp<ViewStyle>;

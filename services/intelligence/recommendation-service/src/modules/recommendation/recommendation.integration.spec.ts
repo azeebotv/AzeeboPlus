@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { PrismaService } from '../database/prisma.service';
-import { RecommendationController } from './recommendation.controller';
-import { RecommendationService } from './recommendation.service';
+import { PrismaService } from '../database/prisma.service.js';
+import { RecommendationController } from './recommendation.controller.js';
+import { RecommendationService } from './recommendation.service.js';
 
 describe('Recommendation Service Integration Tests', () => {
   let app: INestApplication;

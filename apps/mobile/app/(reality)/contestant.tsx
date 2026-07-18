@@ -60,7 +60,7 @@ export default function ContestantProfileScreen() {
           name: response.data.name,
           age: 0,
           location: '',
-          bio: response.data.description,
+          bio: response.data.description || '',
           avatar: response.data.avatar,
           coverImage: '',
           socialLinks: {},

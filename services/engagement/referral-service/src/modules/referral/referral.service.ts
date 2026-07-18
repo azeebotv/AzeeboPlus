@@ -147,6 +147,10 @@ export class ReferralService {
         },
       });
 
+      // Deliberate use of raw SQL for atomic compare-and-increment.
+      // Prisma's update API lacks a conditional WHERE on the increment,
+      // so $executeRaw ensures currentUses is only bumped when below maxUses,
+      // preventing race-condition overuse of referral codes.
       const affectedRows = await tx.$executeRaw`
         UPDATE "referral_codes" SET "currentUses" = "currentUses" + 1
         WHERE "id" = ${referralCode.id} AND "currentUses" < ${referralCode.maxUses ?? 2147483647}

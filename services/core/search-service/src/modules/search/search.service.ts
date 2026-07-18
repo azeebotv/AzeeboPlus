@@ -435,15 +435,39 @@ export class SearchService {
         where: { isEnabled: true },
       });
 
+      const categories = await this.prisma.contentItem.groupBy({
+        by: ['universe'],
+        _count: { id: true },
+        orderBy: { _count: { id: 'desc' } },
+        take: 20,
+      });
+
+      const tags = await this.prisma.tag.findMany({
+        select: { id: true, name: true },
+        take: 50,
+      });
+
+      const contentTypes = await this.prisma.contentItem.groupBy({
+        by: ['universe'],
+        _count: { id: true },
+      });
+
       return {
         success: true,
         data: {
           facets: {
             universes: universes.map((u) => ({ id: u.id, name: u.name, count: 0 })),
-            categories: [],
-            tags: [],
-            contentTypes: [],
-            dateRanges: [],
+            categories: categories
+              .filter((c) => c.universe)
+              .map((c) => ({ id: c.universe!, name: c.universe!, count: c._count.id })),
+            tags: tags.map((t) => ({ id: t.id, name: t.name, count: 0 })),
+            contentTypes: contentTypes.map((ct) => ({ id: ct.universe || 'unknown', name: ct.universe || 'unknown', count: ct._count.id })),
+            dateRanges: [
+              { id: 'today', name: 'Today', count: 0 },
+              { id: 'week', name: 'This Week', count: 0 },
+              { id: 'month', name: 'This Month', count: 0 },
+              { id: 'year', name: 'This Year', count: 0 },
+            ],
           },
         },
       };

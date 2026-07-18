@@ -8,23 +8,25 @@ import {
   Body,
   Req,
   ForbiddenException,
+  UseGuards,
+  Logger,
 } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
 import { UsersService } from '../users/users.service.js';
 import { Request } from 'express';
-import { createLogger } from '@azeebo/logger';
+import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiTags('Privacy & Data Deletion')
 @Controller('privacy')
 export class UserDeletionController {
-  private readonly logger = createLogger('user-deletion');
+  private readonly logger = new Logger('user-deletion');
 
   constructor(@Inject(UsersService) private readonly userService: UsersService) {}
 
   @Post('deletion-request')
   @ApiBearerAuth()
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @UseGuards(RateLimitGuard)
+  @RateLimit(5, 60000)
   @ApiOperation({ summary: 'Request data deletion' })
   @ApiResponse({ status: 201, description: 'Deletion request scheduled' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -49,7 +51,8 @@ export class UserDeletionController {
 
   @Delete('data/:userId')
   @ApiBearerAuth()
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @UseGuards(RateLimitGuard)
+  @RateLimit(5, 60000)
   @ApiOperation({ summary: 'Delete user data' })
   @ApiResponse({ status: 200, description: 'Data deletion initiated' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
@@ -76,7 +79,8 @@ export class UserDeletionController {
 
   @Get('data/:userId/export')
   @ApiBearerAuth()
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @UseGuards(RateLimitGuard)
+  @RateLimit(5, 60000)
   @ApiOperation({ summary: 'Export user data' })
   @ApiResponse({ status: 200, description: 'Data exported successfully' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
@@ -103,7 +107,8 @@ export class UserDeletionController {
 
   @Get('deletion-status/:userId')
   @ApiBearerAuth()
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Check deletion status' })
   @ApiResponse({ status: 200, description: 'Status retrieved successfully' })
   @ApiResponse({ status: 403, description: 'Forbidden' })

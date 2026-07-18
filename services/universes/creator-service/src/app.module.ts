@@ -14,6 +14,7 @@ import { ServiceAuthGuard } from '@azeebo/security';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['.env', '../../.env'],
     }),
     RateLimiterModule.forRoot(),
     ThrottlerModule.forRoot([

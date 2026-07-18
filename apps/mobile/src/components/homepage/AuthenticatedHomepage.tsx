@@ -66,7 +66,7 @@ export default function AuthenticatedHomepage({
     let cancelled = false;
     const loadSlides = async () => {
       try {
-        const response = await api.homepageEngagement.getFeaturedSlides(5);
+        const response = await api.content.getFeaturedSlides(5);
         if (!cancelled && response.success && response.data) {
           setFeaturedSlides(response.data);
         }
@@ -86,16 +86,16 @@ export default function AuthenticatedHomepage({
   const loadRecentlyWatched = useCallback(
     async (cancelled?: boolean) => {
       try {
-        const response = await api.homepageEngagement.getRecentlyWatched(
-          HISTORY_PAGE_SIZE,
-          recentlyWatchedOffset
-        );
+        const response = await api.content.getContentList({
+          page: Math.floor(recentlyWatchedOffset / HISTORY_PAGE_SIZE) + 1,
+          limit: HISTORY_PAGE_SIZE,
+        });
         if (!cancelled && response.success && response.data) {
           const newItems = response.data.items || [];
           setRecentlyWatched((prev) =>
             recentlyWatchedOffset === 0 ? newItems : [...prev, ...newItems]
           );
-          setHasMoreHistory(response.data.hasMore);
+          setHasMoreHistory(newItems.length === HISTORY_PAGE_SIZE);
         }
       } catch (error) {
         if (!cancelled) logger.error('Failed to load recently watched:', error);
@@ -118,13 +118,13 @@ export default function AuthenticatedHomepage({
     const nextOffset = recentlyWatchedOffset + HISTORY_PAGE_SIZE;
     setRecentlyWatchedOffset(nextOffset);
     try {
-      const response = await api.homepageEngagement.getRecentlyWatched(
-        HISTORY_PAGE_SIZE,
-        nextOffset
-      );
+      const response = await api.content.getContentList({
+        page: Math.floor(nextOffset / HISTORY_PAGE_SIZE) + 1,
+        limit: HISTORY_PAGE_SIZE,
+      });
       if (response.success && response.data) {
         setRecentlyWatched((prev) => [...prev, ...(response.data?.items || [])]);
-        setHasMoreHistory(response.data.hasMore);
+        setHasMoreHistory(response.data.items?.length === HISTORY_PAGE_SIZE);
       }
     } catch (error) {
       logger.error('Failed to load more history:', error);
@@ -141,27 +141,50 @@ export default function AuthenticatedHomepage({
     let cancelled = false;
     const loadUniverseContent = async () => {
       try {
-        const engagementResponse = await api.homepageEngagement.getUniverseEngagement();
+        const contentResponse = await api.content.getContentList({ page: 1, limit: 50 });
         if (cancelled) return;
-        if (!engagementResponse.success || !engagementResponse.data) {
+        if (!contentResponse.success || !contentResponse.data) {
           setIsLoadingUniverses(false);
           return;
         }
 
-        const universeEngagement = engagementResponse.data.sort(
-          (a: UserUniverseEngagement, b: UserUniverseEngagement) =>
-            b.engagementCount - a.engagementCount
-        );
+        const items = contentResponse.data.items || [];
+        
+        // Group by universe
+        const universeMap = new Map<string, { universeId: string; universeName: string; universeIcon?: string; items: ContentItem[] }>();
+        
+        items.forEach((item: ContentItem) => {
+          const universeId = item.universeId || 'unknown';
+          const universeName = item.universe?.displayName || item.universe?.name || 'Unknown';
+          const universeIcon = item.universe?.icon;
+          
+          if (!universeMap.has(universeId)) {
+            universeMap.set(universeId, {
+              universeId,
+              universeName,
+              universeIcon,
+              items: [],
+            });
+          }
+          
+          const section = universeMap.get(universeId)!;
+          if (section.items.length < 12) {
+            section.items.push(item);
+          }
+        });
 
-        const contentPromises = universeEngagement.map(async (ue: UserUniverseEngagement) => {
-          try {
-            const contentResponse = await api.homepageEngagement.getContentByUniverse(
-              ue.universeId,
-              12
-            );
-            return {
-              universeId: ue.universeId,
-              universeName: ue.universeName,
+        setUniverseSections(Array.from(universeMap.values()).filter((s) => s.items.length > 0));
+      } catch (error) {
+        if (!cancelled) logger.error('Failed to load universe content:', error);
+      } finally {
+        if (!cancelled) setIsLoadingUniverses(false);
+      }
+    };
+    loadUniverseContent();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
               universeIcon: ue.universeIcon,
               items: contentResponse.success ? contentResponse.data || [] : [],
             };
@@ -198,39 +221,33 @@ export default function AuthenticatedHomepage({
     let cancelled = false;
     const loadRecommendations = async () => {
       try {
-        const response = await api.homepageEngagement.getPersonalizedRecommendations();
-        if (!cancelled && response.success && response.data) {
-          setRecommendationGroups(response.data);
-        }
-      } catch {
-        if (cancelled) return;
-        // Fallback to generic recommendations
-        try {
-          const [forYou, trending] = await Promise.allSettled([
-            api.recommendation.getForYou(12),
-            api.recommendation.getTrending(12),
-          ]);
+        // Use content list as fallback for recommendations
+        const [forYou, trending] = await Promise.allSettled([
+          api.content.getContentList({ page: 1, limit: 12 }),
+          api.content.getTrendingContent(12),
+        ]);
 
-          if (cancelled) return;
-          const fallbackGroups: HomepageRecommendationGroup[] = [];
-          if (forYou.status === 'fulfilled' && forYou.value.success && forYou.value.data) {
-            fallbackGroups.push({
-              title: t('home.topPicksForYou'),
-              reason: t('home.basedOnHistory'),
-              items: forYou.value.data,
-            });
-          }
-          if (trending.status === 'fulfilled' && trending.value.success && trending.value.data) {
-            fallbackGroups.push({
-              title: t('home.popularRightNow'),
-              reason: t('home.trendingAcrossPlatform'),
-              items: trending.value.data,
-            });
-          }
-          setRecommendationGroups(fallbackGroups);
-        } catch (error) {
-          if (!cancelled) logger.error('Failed to load fallback recommendations:', error);
+        if (cancelled) return;
+        const fallbackGroups: HomepageRecommendationGroup[] = [];
+        if (forYou.status === 'fulfilled' && forYou.value.success && forYou.value.data) {
+          const items = Array.isArray(forYou.value.data.items) ? forYou.value.data.items : [];
+          fallbackGroups.push({
+            title: t('home.topPicksForYou'),
+            reason: t('home.basedOnHistory'),
+            items,
+          });
         }
+        if (trending.status === 'fulfilled' && trending.value.success && trending.value.data) {
+          const items = Array.isArray(trending.value.data) ? trending.value.data : [];
+          fallbackGroups.push({
+            title: t('home.popularRightNow'),
+            reason: t('home.trendingAcrossPlatform'),
+            items,
+          });
+        }
+        setRecommendationGroups(fallbackGroups);
+      } catch (error) {
+        if (!cancelled) logger.error('Failed to load fallback recommendations:', error);
       } finally {
         if (!cancelled) setIsLoadingRecommendations(false);
       }
@@ -248,9 +265,8 @@ export default function AuthenticatedHomepage({
       try {
         const [trendingRes, continueRes, newRes, popularRes] = await Promise.allSettled([
           api.content.getTrendingContent(12),
-          api.homepageEngagement.getContinueWatching(10),
-          api.homepageEngagement.getNewReleases(12),
-          api.homepageEngagement.getPopularInRegion(12),
+          api.content.getNewReleases(12),
+          api.content.getPopularInRegion(12),
         ]);
 
         if (cancelled) return;
@@ -262,13 +278,10 @@ export default function AuthenticatedHomepage({
           setTrendingContent(trendingRes.value.data);
         }
         if (
-          continueRes.status === 'fulfilled' &&
-          continueRes.value.success &&
-          continueRes.value.data
+          newRes.status === 'fulfilled' &&
+          newRes.value.success &&
+          newRes.value.data
         ) {
-          setContinueWatching(continueRes.value.data);
-        }
-        if (newRes.status === 'fulfilled' && newRes.value.success && newRes.value.data) {
           setNewReleases(newRes.value.data);
         }
         if (

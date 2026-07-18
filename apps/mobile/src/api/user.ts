@@ -60,35 +60,30 @@ export interface SavedItem {
 
 export const userApi = {
   async getProfile(): Promise<ApiResponse<UserProfile>> {
-    const response = await apiClient.get<UserProfile>('/v1/users/me');
-    return { success: true, data: response };
+    return apiClient.get<ApiResponse<UserProfile>>('/v1/users/me');
   },
 
   async updateProfile(
     data: Partial<Pick<UserProfile, 'displayName' | 'avatar' | 'bio'>>
   ): Promise<ApiResponse<UserProfile>> {
-    const response = await apiClient.patch<UserProfile>('/v1/users/me', data);
-    return { success: true, data: response };
+    return apiClient.patch<ApiResponse<UserProfile>>('/v1/users/me', data);
   },
 
   async completeProfileSetup(data: CompleteProfileSetupDto): Promise<ApiResponse<UserProfile>> {
-    const response = await apiClient.post<UserProfile>('/v1/users/me/complete-profile', data);
-    return { success: true, data: response };
+    return apiClient.post<ApiResponse<UserProfile>>('/v1/users/me/complete-profile', data);
   },
 
   async getPreferences(): Promise<ApiResponse<UserPreferences>> {
-    const response = await apiClient.get<UserPreferences>('/v1/users/me/preferences');
-    return { success: true, data: response };
+    return apiClient.get<ApiResponse<UserPreferences>>('/v1/users/me/preferences');
   },
 
   async updatePreferences(
     preferences: Partial<UserPreferences>
   ): Promise<ApiResponse<UserPreferences>> {
-    const response = await apiClient.patch<UserPreferences>(
+    return apiClient.patch<ApiResponse<UserPreferences>>(
       '/v1/users/me/preferences',
       preferences
     );
-    return { success: true, data: response };
   },
 
   async getWatchHistory(
@@ -103,14 +98,15 @@ export const userApi = {
       totalPages: number;
     }>
   > {
-    const response = await apiClient.get<{
-      items: WatchHistoryItem[];
-      total: number;
-      page: number;
-      limit: number;
-      totalPages: number;
-    }>(`/v1/users/me/history?page=${page}&limit=${limit}`);
-    return { success: true, data: response };
+    return apiClient.get<
+      ApiResponse<{
+        items: WatchHistoryItem[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      }>
+    >(`/v1/users/me/history?page=${page}&limit=${limit}`);
   },
 
   async getSavedItems(
@@ -125,23 +121,22 @@ export const userApi = {
       totalPages: number;
     }>
   > {
-    const response = await apiClient.get<{
-      items: SavedItem[];
-      total: number;
-      page: number;
-      limit: number;
-      totalPages: number;
-    }>(`/v1/users/me/saved?page=${page}&limit=${limit}`);
-    return { success: true, data: response };
+    return apiClient.get<
+      ApiResponse<{
+        items: SavedItem[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      }>
+    >(`/v1/users/me/saved?page=${page}&limit=${limit}`);
   },
 
   async saveItem(contentId: string): Promise<ApiResponse<{ message: string }>> {
-    const response = await apiClient.post<{ message: string }>('/v1/users/me/saved', { contentId });
-    return { success: true, data: response };
+    return apiClient.post<ApiResponse<{ message: string }>>('/v1/users/me/saved', { contentId });
   },
 
   async unsaveItem(contentId: string): Promise<ApiResponse<{ message: string }>> {
-    const response = await apiClient.delete<{ message: string }>(`/v1/users/me/saved/${contentId}`);
-    return { success: true, data: response };
+    return apiClient.delete<ApiResponse<{ message: string }>>(`/v1/users/me/saved/${contentId}`);
   },
 };

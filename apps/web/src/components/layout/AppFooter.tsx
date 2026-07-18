@@ -121,9 +121,18 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
 
     setNewsletterStatus('loading');
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setNewsletterStatus('success');
-      setEmail('');
+      const response = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      if (response.ok) {
+        setNewsletterStatus('success');
+        setEmail('');
+      } else {
+        setNewsletterStatus('error');
+      }
       setTimeout(() => setNewsletterStatus('idle'), 5000);
     } catch {
       setNewsletterStatus('error');

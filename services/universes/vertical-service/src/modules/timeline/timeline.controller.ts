@@ -5,7 +5,7 @@ import { TimelineService } from './timeline.service';
 import { CreateTimelineEventDto } from './dto/create-timeline-event.dto';
 
 @ApiTags('Timeline')
-@Controller('v1/vertical/timeline')
+@Controller('vertical/timeline')
 export class TimelineController {
   constructor(@Inject(TimelineService) private readonly timelineService: TimelineService) {}
 

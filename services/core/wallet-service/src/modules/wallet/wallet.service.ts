@@ -8,6 +8,7 @@ import { WithdrawWalletDto, TransferWalletDto } from './dto/withdraw-transfer.dt
 import { WalletResponse } from './interfaces/wallet-response.interface.js';
 import { toNumber, addDecimals } from '@azeebo/utils';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import axios from 'axios';
 
 type WalletRow = {
   id: string;
@@ -33,6 +34,17 @@ export class WalletService {
   ) {
     this.pointsToNairaRate = this.configService.get<number>('POINTS_TO_NAIRA_RATE', 100);
     this.webhookSecret = this.configService.getOrThrow<string>('WEBHOOK_SECRET');
+  }
+
+  async getWalletIdByUserId(userId: string): Promise<string> {
+    const wallet = await this.prisma.wallet.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+    if (!wallet) {
+      throw new NotFoundException(`Wallet not found for user ${userId}`);
+    }
+    return wallet.id;
   }
 
   private async invalidateWalletCache(userId: string): Promise<void> {
@@ -1105,7 +1117,9 @@ export class WalletService {
   async getTransactionAuditTrail(
     walletId: string,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
+    skip = 0,
+    take = 100
   ): Promise<WalletResponse> {
     try {
       const transactions = await this.prisma.walletTransaction.findMany({
@@ -1117,6 +1131,8 @@ export class WalletService {
           },
         },
         orderBy: { createdAt: 'desc' },
+        skip,
+        take,
       });
 
       return {
@@ -1142,6 +1158,8 @@ export class WalletService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get transaction audit trail for wallet ${walletId}: ${error}`);
+      // TODO: Error response shapes are inconsistent across services.
+      // Migrate to createErrorResponse() from @azeebo/shared-types for uniform structure.
       return {
         success: false,
         error: {
@@ -1282,23 +1300,53 @@ export class WalletService {
         throw new NotFoundException(`Wallet not found for user ${userId}`);
       }
 
-      const reference = `${provider}_${randomUUID()}`;
+      // Call payment-service to initialize a real payment
+      const paymentServiceUrl = this.configService.get<string>(
+        'PAYMENT_SERVICE_URL',
+        'http://payment-service:3003'
+      );
 
-      await this.prisma.walletTransaction.create({
-        data: {
-          walletId: wallet.id,
-          type: 'credit',
-          amount,
-          status: 'pending',
-          description: `Deposit via ${provider}`,
-          reference,
-        },
-      });
+      try {
+        const response = await axios.post(
+          `${paymentServiceUrl}/payments/initialize`,
+          {
+            amount,
+            currency: 'NGN',
+            description: `Wallet deposit via ${provider}`,
+            metadata: { walletId: wallet.id, userId },
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', ''),
+            },
+            timeout: 15000,
+          }
+        );
 
-      return {
-        reference,
-        authorizationUrl: `https://${provider}.com/pay/${reference}`,
-      };
+        const result = response.data?.data;
+        return {
+          reference: result?.reference || `deposit_${randomUUID()}`,
+          authorizationUrl: result?.checkoutUrl,
+        };
+      } catch (paymentError: unknown) {
+        this.logger.warn(
+          `Payment-service unavailable, falling back to reference-only: ${paymentError instanceof Error ? paymentError.message : String(paymentError)}`
+        );
+        // Fallback: create a pending transaction without authorization URL
+        const reference = `${provider}_${randomUUID()}`;
+        await this.prisma.walletTransaction.create({
+          data: {
+            walletId: wallet.id,
+            type: 'credit',
+            amount,
+            status: 'pending',
+            description: `Deposit via ${provider}`,
+            reference,
+          },
+        });
+        return { reference };
+      }
     } catch (error: unknown) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to initiate deposit for user ${params.userId}: ${error}`);

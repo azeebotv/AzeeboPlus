@@ -8,6 +8,7 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
+  Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
@@ -132,8 +133,8 @@ export default function RegisterScreen() {
                   {agreed && <Text style={styles.checkmark}>✓</Text>}
                 </View>
                 <Text style={styles.termsText}>
-                  I agree to the <Text style={styles.termsLink}>Terms of Service</Text> and{' '}
-                  <Text style={styles.termsLink}>Privacy Policy</Text>
+                  I agree to the <Text style={styles.termsLink} onPress={() => Linking.openURL('https://azeebo.plus/terms')}>Terms of Service</Text> and{' '}
+                  <Text style={styles.termsLink} onPress={() => Linking.openURL('https://azeebo.plus/privacy')}>Privacy Policy</Text>
                 </Text>
               </TouchableOpacity>
 
@@ -286,11 +287,11 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   checkboxChecked: {
-    backgroundColor: '#E8420A',
-    borderColor: '#E8420A',
+    backgroundColor: colors.primaryColor,
+    borderColor: colors.primaryColor,
   },
   checkmark: {
-    color: '#fff',
+    color: colors.text.primary,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -301,7 +302,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   termsLink: {
-    color: '#E8420A',
+    color: colors.primaryColor,
     textDecorationLine: 'underline',
   },
 });

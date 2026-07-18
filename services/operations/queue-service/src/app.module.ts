@@ -1,13 +1,11 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
 import { ServiceAuthGuard } from '@azeebo/security';
+import { ResponseWrapperInterceptor } from '@azeebo/logger';
+import { EmailModule, FirebaseModule, SmsModule } from '@azeebo/shared-services';
 import { DatabaseModule } from './modules/database/database.module';
-import { EmailModule } from './modules/email/email.module';
-import { FirebaseModule } from './modules/firebase/firebase.module';
-import { SmsModule } from './modules/sms/sms.module';
-import { PaymentProviderModule } from './modules/payments/providers/payment-provider.module';
 import { HealthModule } from './modules/health/health.module';
 import { NotificationProcessor } from './processors/notification.processor';
 import { PaymentProcessor } from './processors/payment.processor';
@@ -61,7 +59,6 @@ const QUEUE_CONFIG = {
     EmailModule,
     FirebaseModule,
     SmsModule,
-    PaymentProviderModule,
     HealthModule,
     BullModule.forRoot({
       connection: {
@@ -89,6 +86,10 @@ const QUEUE_CONFIG = {
     ),
   ],
   providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseWrapperInterceptor,
+    },
     { provide: APP_GUARD, useClass: ServiceAuthGuard },
     NotificationProcessor,
     PaymentProcessor,

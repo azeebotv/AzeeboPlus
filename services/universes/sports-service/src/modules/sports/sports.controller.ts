@@ -4,10 +4,10 @@ import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { SportsService } from './sports.service.js';
 import { SportsResponse } from './interfaces/sports-response.interface.js';
-import { CreatePredictionDto, EnterContestDto } from './dto/prediction.dto.js';
+import { CreateSportsPredictionDto, EnterContestDto } from './dto/prediction.dto.js';
 
 @ApiTags('Sports')
-@Controller('v1/sports')
+@Controller('sports')
 @UseGuards(RateLimitGuard)
 @RateLimit(100, 60000)
 export class SportsController {
@@ -55,7 +55,7 @@ export class SportsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async submitPrediction(
     @Request() req: { user: { id: string } },
-    @Body() body: CreatePredictionDto
+    @Body() body: CreateSportsPredictionDto
   ): Promise<SportsResponse> {
     return this.sportsService.submitPrediction(req.user.id, body);
   }

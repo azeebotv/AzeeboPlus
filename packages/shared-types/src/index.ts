@@ -97,6 +97,16 @@ export type UserRole =
   | 'sponsor_manager';
 
 // Auth types
+/** Standard authenticated request shape used across all services. */
+export interface AuthenticatedRequest {
+  user: {
+    id: string;
+    sub?: string;
+    role?: string;
+    email?: string;
+  };
+}
+
 /** Response shape returned by login and register endpoints. */
 export interface AuthResponse {
   success: boolean;

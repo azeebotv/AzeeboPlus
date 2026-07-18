@@ -342,7 +342,30 @@ export class AuthService {
       return { success: true, message: 'Email is already verified' };
     }
 
-    // TODO: Send verification email via notification-service
+    const verificationToken = randomUUID();
+    const verificationKey = `email_verification:${verificationToken}`;
+    await this.redisService.set(verificationKey, user.id, 86400);
+
+    try {
+      const notificationServiceUrl = this.configService.get<string>(
+        'NOTIFICATION_SERVICE_URL',
+        'http://notification-service:3006'
+      );
+      await axios.post(`${notificationServiceUrl}/v1/notifications/email`, {
+        to: user.email,
+        template: 'email-verification',
+        data: {
+          verificationToken,
+          verificationUrl: `${this.configService.get<string>('FRONTEND_URL', 'http://localhost:4000')}/auth/verify-email?token=${verificationToken}`,
+          userName: user.displayName,
+        },
+      });
+    } catch (error: unknown) {
+      this.logger.error(
+        `Failed to send verification email: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+
     return { success: true, message: 'If the email exists, a verification link has been sent' };
   }
 

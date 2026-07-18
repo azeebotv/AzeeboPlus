@@ -2,20 +2,9 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { RedisService } from '@azeebo/shared-services';
+import { FeedItem } from './feed.helper';
 
-interface FeedItem {
-  id: string;
-  type: string;
-  title: string;
-  slug: string;
-  excerpt: string;
-  coverImage: string;
-  authorName: string;
-  categoryName: string;
-  viewCount: number;
-  publishedAt: string;
-  createdAt: string;
-}
+export type { FeedItem } from './feed.helper';
 
 interface FeedResponse {
   success: boolean;
@@ -41,6 +30,110 @@ export class LifestyleFeedService {
     this.cacheTTL = this.configService.get<number>('FEED_CACHE_TTL', 300); // 5 minutes default
   }
 
+  private mapToFeedItems(data: {
+    stories: any[];
+    events: any[];
+    cityGuides: any[];
+    music: any[];
+    celebrities: any[];
+    nightlife: any[];
+    influencers: any[];
+  }): FeedItem[] {
+    return [
+      ...data.stories.map((s) => ({
+        id: s.id,
+        type: 'story',
+        title: s.title,
+        slug: s.slug,
+        excerpt: s.excerpt || s.content.substring(0, 150),
+        coverImage: s.coverImage || '',
+        authorName: '',
+        categoryName: s.category?.name || 'General',
+        viewCount: s.viewCount,
+        publishedAt: s.publishedAt?.toISOString() || s.createdAt.toISOString(),
+        createdAt: s.createdAt.toISOString(),
+      })),
+      ...data.events.map((e) => ({
+        id: e.id,
+        type: 'event',
+        title: e.title,
+        slug: e.slug,
+        excerpt: e.description.substring(0, 150),
+        coverImage: e.coverImage || '',
+        authorName: '',
+        categoryName: e.category?.name || 'General',
+        viewCount: e.viewCount,
+        publishedAt: e.publishedAt?.toISOString() || e.createdAt.toISOString(),
+        createdAt: e.createdAt.toISOString(),
+      })),
+      ...data.cityGuides.map((c) => ({
+        id: c.id,
+        type: 'city_guide',
+        title: c.name,
+        slug: c.slug,
+        excerpt: c.description.substring(0, 150),
+        coverImage: c.coverImage || '',
+        authorName: 'City Guide',
+        categoryName: c.type,
+        viewCount: c.viewCount,
+        publishedAt: c.publishedAt?.toISOString() || c.createdAt.toISOString(),
+        createdAt: c.createdAt.toISOString(),
+      })),
+      ...data.music.map((m) => ({
+        id: m.id,
+        type: 'music',
+        title: m.title,
+        slug: m.slug,
+        excerpt: m.description || `By ${m.artistName || 'Unknown Artist'}`,
+        coverImage: m.coverImage || '',
+        authorName: m.artistName || 'Unknown',
+        categoryName: m.genre || m.type,
+        viewCount: m.playCount,
+        publishedAt: m.publishedAt?.toISOString() || m.createdAt.toISOString(),
+        createdAt: m.createdAt.toISOString(),
+      })),
+      ...data.celebrities.map((c) => ({
+        id: c.id,
+        type: 'celebrity',
+        title: c.name,
+        slug: c.slug,
+        excerpt: c.bio?.substring(0, 150) || '',
+        coverImage: c.coverImage || '',
+        authorName: c.profession || 'Celebrity',
+        categoryName: c.profession || 'Celebrity',
+        viewCount: c.viewCount,
+        publishedAt: c.publishedAt?.toISOString() || c.createdAt.toISOString(),
+        createdAt: c.createdAt.toISOString(),
+      })),
+      ...data.nightlife.map((n) => ({
+        id: n.id,
+        type: 'nightlife',
+        title: n.name,
+        slug: n.slug,
+        excerpt: n.description.substring(0, 150),
+        coverImage: n.coverImage || '',
+        authorName: 'Nightlife',
+        categoryName: n.type,
+        viewCount: n.viewCount,
+        publishedAt: n.publishedAt?.toISOString() || n.createdAt.toISOString(),
+        createdAt: n.createdAt.toISOString(),
+      })),
+      ...data.influencers.map((i) => ({
+        id: i.id,
+        type: 'influencer',
+        title: i.displayName,
+        slug: i.slug,
+        excerpt: i.bio?.substring(0, 150) || '',
+        coverImage: i.coverImage || '',
+        authorName: i.category || 'Influencer',
+        categoryName: i.category || 'Influencer',
+        viewCount: i.followerCount,
+        publishedAt: i.createdAt.toISOString(),
+        createdAt: i.createdAt.toISOString(),
+      })),
+    ];
+  }
+
   async getFeed(page = 1, limit = 20, category?: string): Promise<FeedResponse> {
     const offset = (page - 1) * limit;
     const cacheKey = `lifestyle:feed:${page}:${limit}:${category || 'all'}`;
@@ -57,8 +150,8 @@ export class LifestyleFeedService {
     }
 
     // Fetch only the records we need with database-level pagination
-    // We need to fetch more than the limit to account for filtering and sorting
-    const fetchLimit = limit * 2; // Fetch extra to ensure we have enough after filtering
+    // Cap per-table fetch to limit to reduce DB load
+    const fetchLimit = Math.min(limit, 50);
 
     const [stories, events, cityGuides, music, celebrities, nightlife, influencers] =
       await Promise.all([
@@ -102,99 +195,15 @@ export class LifestyleFeedService {
         }),
       ]);
 
-    const allItems: FeedItem[] = [
-      ...stories.map((s) => ({
-        id: s.id,
-        type: 'story',
-        title: s.title,
-        slug: s.slug,
-        excerpt: s.excerpt || s.content.substring(0, 150),
-        coverImage: s.coverImage || '',
-        authorName: '',
-        categoryName: s.category?.name || 'General',
-        viewCount: s.viewCount,
-        publishedAt: s.publishedAt?.toISOString() || s.createdAt.toISOString(),
-        createdAt: s.createdAt.toISOString(),
-      })),
-      ...events.map((e) => ({
-        id: e.id,
-        type: 'event',
-        title: e.title,
-        slug: e.slug,
-        excerpt: e.description.substring(0, 150),
-        coverImage: e.coverImage || '',
-        authorName: '',
-        categoryName: e.category?.name || 'General',
-        viewCount: e.viewCount,
-        publishedAt: e.publishedAt?.toISOString() || e.createdAt.toISOString(),
-        createdAt: e.createdAt.toISOString(),
-      })),
-      ...cityGuides.map((c) => ({
-        id: c.id,
-        type: 'city_guide',
-        title: c.name,
-        slug: c.slug,
-        excerpt: c.description.substring(0, 150),
-        coverImage: c.coverImage || '',
-        authorName: 'City Guide',
-        categoryName: c.type,
-        viewCount: c.viewCount,
-        publishedAt: c.publishedAt?.toISOString() || c.createdAt.toISOString(),
-        createdAt: c.createdAt.toISOString(),
-      })),
-      ...music.map((m) => ({
-        id: m.id,
-        type: 'music',
-        title: m.title,
-        slug: m.slug,
-        excerpt: m.description || `By ${m.artistName || 'Unknown Artist'}`,
-        coverImage: m.coverImage || '',
-        authorName: m.artistName || 'Unknown',
-        categoryName: m.genre || m.type,
-        viewCount: m.playCount,
-        publishedAt: m.publishedAt?.toISOString() || m.createdAt.toISOString(),
-        createdAt: m.createdAt.toISOString(),
-      })),
-      ...celebrities.map((c) => ({
-        id: c.id,
-        type: 'celebrity',
-        title: c.name,
-        slug: c.slug,
-        excerpt: c.bio?.substring(0, 150) || '',
-        coverImage: c.coverImage || '',
-        authorName: c.profession || 'Celebrity',
-        categoryName: c.profession || 'Celebrity',
-        viewCount: c.viewCount,
-        publishedAt: c.publishedAt?.toISOString() || c.createdAt.toISOString(),
-        createdAt: c.createdAt.toISOString(),
-      })),
-      ...nightlife.map((n) => ({
-        id: n.id,
-        type: 'nightlife',
-        title: n.name,
-        slug: n.slug,
-        excerpt: n.description.substring(0, 150),
-        coverImage: n.coverImage || '',
-        authorName: 'Nightlife',
-        categoryName: n.type,
-        viewCount: n.viewCount,
-        publishedAt: n.publishedAt?.toISOString() || n.createdAt.toISOString(),
-        createdAt: n.createdAt.toISOString(),
-      })),
-      ...influencers.map((i) => ({
-        id: i.id,
-        type: 'influencer',
-        title: i.displayName,
-        slug: i.slug,
-        excerpt: i.bio?.substring(0, 150) || '',
-        coverImage: i.coverImage || '',
-        authorName: i.category || 'Influencer',
-        categoryName: i.category || 'Influencer',
-        viewCount: i.followerCount,
-        publishedAt: i.createdAt.toISOString(),
-        createdAt: i.createdAt.toISOString(),
-      })),
-    ];
+    const allItems = this.mapToFeedItems({
+      stories,
+      events,
+      cityGuides,
+      music,
+      celebrities,
+      nightlife,
+      influencers,
+    });
 
     // Sort by published date
     const sortedItems = allItems.sort(
@@ -292,99 +301,15 @@ export class LifestyleFeedService {
         }),
       ]);
 
-    const allItems: FeedItem[] = [
-      ...stories.map((s) => ({
-        id: s.id,
-        type: 'story',
-        title: s.title,
-        slug: s.slug,
-        excerpt: s.excerpt || s.content.substring(0, 150),
-        coverImage: s.coverImage || '',
-        authorName: '',
-        categoryName: s.category?.name || 'General',
-        viewCount: s.viewCount,
-        publishedAt: s.publishedAt?.toISOString() || s.createdAt.toISOString(),
-        createdAt: s.createdAt.toISOString(),
-      })),
-      ...events.map((e) => ({
-        id: e.id,
-        type: 'event',
-        title: e.title,
-        slug: e.slug,
-        excerpt: e.description.substring(0, 150),
-        coverImage: e.coverImage || '',
-        authorName: '',
-        categoryName: e.category?.name || 'General',
-        viewCount: e.viewCount,
-        publishedAt: e.publishedAt?.toISOString() || e.createdAt.toISOString(),
-        createdAt: e.createdAt.toISOString(),
-      })),
-      ...cityGuides.map((c) => ({
-        id: c.id,
-        type: 'city_guide',
-        title: c.name,
-        slug: c.slug,
-        excerpt: c.description.substring(0, 150),
-        coverImage: c.coverImage || '',
-        authorName: 'City Guide',
-        categoryName: c.type,
-        viewCount: c.viewCount,
-        publishedAt: c.publishedAt?.toISOString() || c.createdAt.toISOString(),
-        createdAt: c.createdAt.toISOString(),
-      })),
-      ...music.map((m) => ({
-        id: m.id,
-        type: 'music',
-        title: m.title,
-        slug: m.slug,
-        excerpt: m.description || `By ${m.artistName || 'Unknown Artist'}`,
-        coverImage: m.coverImage || '',
-        authorName: m.artistName || 'Unknown',
-        categoryName: m.genre || m.type,
-        viewCount: m.playCount,
-        publishedAt: m.publishedAt?.toISOString() || m.createdAt.toISOString(),
-        createdAt: m.createdAt.toISOString(),
-      })),
-      ...celebrities.map((c) => ({
-        id: c.id,
-        type: 'celebrity',
-        title: c.name,
-        slug: c.slug,
-        excerpt: c.bio?.substring(0, 150) || '',
-        coverImage: c.coverImage || '',
-        authorName: c.profession || 'Celebrity',
-        categoryName: c.profession || 'Celebrity',
-        viewCount: c.viewCount,
-        publishedAt: c.publishedAt?.toISOString() || c.createdAt.toISOString(),
-        createdAt: c.createdAt.toISOString(),
-      })),
-      ...nightlife.map((n) => ({
-        id: n.id,
-        type: 'nightlife',
-        title: n.name,
-        slug: n.slug,
-        excerpt: n.description.substring(0, 150),
-        coverImage: n.coverImage || '',
-        authorName: 'Nightlife',
-        categoryName: n.type,
-        viewCount: n.viewCount,
-        publishedAt: n.publishedAt?.toISOString() || n.createdAt.toISOString(),
-        createdAt: n.createdAt.toISOString(),
-      })),
-      ...influencers.map((i) => ({
-        id: i.id,
-        type: 'influencer',
-        title: i.displayName,
-        slug: i.slug,
-        excerpt: i.bio?.substring(0, 150) || '',
-        coverImage: i.coverImage || '',
-        authorName: i.category || 'Influencer',
-        categoryName: i.category || 'Influencer',
-        viewCount: i.followerCount,
-        publishedAt: i.createdAt.toISOString(),
-        createdAt: i.createdAt.toISOString(),
-      })),
-    ];
+    const allItems = this.mapToFeedItems({
+      stories,
+      events,
+      cityGuides,
+      music,
+      celebrities,
+      nightlife,
+      influencers,
+    });
 
     // Sort by view count and take top items
     const trending = allItems.sort((a, b) => b.viewCount - a.viewCount).slice(0, limit);
