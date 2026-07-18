@@ -217,6 +217,10 @@ export class ModerationService {
     });
 
     if (request.action === 'suspend' || request.action === 'ban') {
+      // ARCHITECTURAL NOTE: trustScore is a moderation-specific field owned by this service's
+      // bounded context. The canonical User model lives in auth-service. If trustScore needs
+      // to be synced to the canonical User, emit an event via queue-service instead of
+      // directly modifying the User model here.
       const { oldScore, newScore } = await this.prisma.$transaction(async (tx) => {
         const before = await tx.user.findUnique({
           where: { id: moderationCase.userId },

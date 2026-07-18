@@ -11,8 +11,10 @@ import {
   Request,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { ReportBuilderService } from './report-builder.service.js';
 import { CreateReportDto, ExecuteReportDto } from './dto/report-builder.dto.js';
@@ -26,13 +28,15 @@ interface AuthenticatedRequest extends Request {
 
 @ApiTags('Report Builder')
 @ApiBearerAuth()
-@Controller('v1/reports')
+@Controller('reports')
 export class ReportBuilderController {
   constructor(
     @Inject(ReportBuilderService) private readonly reportBuilderService: ReportBuilderService
   ) {}
 
   @Post()
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a custom report' })
   @ApiResponse({ status: 201, description: 'Report created successfully' })
@@ -80,6 +84,8 @@ export class ReportBuilderController {
   }
 
   @Post('execute')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(20, 60000)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Execute a report' })
   @ApiResponse({ status: 200, description: 'Report executed successfully' })

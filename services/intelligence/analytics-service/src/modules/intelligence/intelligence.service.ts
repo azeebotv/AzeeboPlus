@@ -1,32 +1,74 @@
 import { Inject, Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
+import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
 
 @Injectable()
 export class IntelligenceService {
   private readonly logger = new Logger(IntelligenceService.name);
-  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
+  private readonly userServiceUrl: string;
+  private readonly contentServiceUrl: string;
+
+  constructor(
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(ConfigService) private configService: ConfigService
+  ) {
+    this.userServiceUrl = this.configService.get<string>('USER_SERVICE_URL', 'http://user-service:3001');
+    this.contentServiceUrl = this.configService.get<string>('CONTENT_SERVICE_URL', 'http://content-service:3004');
+  }
+
+  private async getUserById(userId: string): Promise<{ id: string; displayName?: string; email?: string } | null> {
+    try {
+      const response = await axios.get<{ data?: { id: string; displayName?: string; email?: string } }>(
+        `${this.userServiceUrl}/users/${userId}`,
+        { timeout: 5000 }
+      );
+      return response.data?.data || null;
+    } catch {
+      return null;
+    }
+  }
+
+  private async getContentByIds(ids: string[]): Promise<{ id: string; universe?: string }[]> {
+    try {
+      const response = await axios.get<{ data?: { items?: { id: string; universe?: string }[] } }>(
+        `${this.contentServiceUrl}/content`,
+        { params: { ids: ids.join(','), limit: 100 }, timeout: 5000 }
+      );
+      return response.data?.data?.items || [];
+    } catch {
+      return [];
+    }
+  }
+
+  private async getContentByCreator(creatorId: string): Promise<{ id: string; viewCount: number }[]> {
+    try {
+      const response = await axios.get<{ data?: { items?: { id: string; viewCount: number }[] } }>(
+        `${this.contentServiceUrl}/content/creator/${creatorId}`,
+        { timeout: 5000 }
+      );
+      return response.data?.data?.items || [];
+    } catch {
+      return [];
+    }
+  }
 
   async getPersonalization(userId: string): Promise<{ success: boolean; data?: unknown }> {
     try {
-      const [watchHistory, _preferences, rewardAccount] = await Promise.all([
+      const [watchHistory, , rewardAccount] = await Promise.all([
         this.prisma.watchHistory.findMany({
           where: { userId },
           orderBy: { createdAt: 'desc' },
           take: 100,
         }),
-        this.prisma.user.findUnique({
-          where: { id: userId },
-        }),
+        this.getUserById(userId),
         this.prisma.rewardAccount.findUnique({
           where: { userId },
         }),
       ]);
 
       const contentIds = watchHistory.map((h) => h.contentId);
-      const watchedContent = await this.prisma.contentItem.findMany({
-        where: { id: { in: contentIds } },
-        // universe is a string field, not a relation
-      });
+      const watchedContent = await this.getContentByIds(contentIds);
 
       const universePreferences = watchedContent.reduce(
         (acc, c) => {
@@ -145,6 +187,7 @@ export class IntelligenceService {
     }
   }
 
+  // TODO: add universe filtering logic when needed (requires join on contentItem table)
   async getCreatorScores(_universe?: string): Promise<{ success: boolean; data?: unknown }> {
     try {
       const scores = await this.prisma.creatorScore.findMany({
@@ -164,9 +207,7 @@ export class IntelligenceService {
 
   async calculateCreatorScore(creatorId: string): Promise<{ success: boolean; data?: unknown }> {
     try {
-      const contentItems = await this.prisma.contentItem.findMany({
-        where: { creatorId },
-      });
+      const contentItems = await this.getContentByCreator(creatorId);
 
       const totalViews = contentItems.reduce(
         (sum: number, c: { viewCount: number }) => sum + c.viewCount,
@@ -227,7 +268,7 @@ export class IntelligenceService {
   async calculateChurnRisk(userId: string): Promise<{ success: boolean; data?: unknown }> {
     try {
       const [user, rewardAccount, watchHistory] = await Promise.all([
-        this.prisma.user.findUnique({ where: { id: userId } }),
+        this.getUserById(userId),
         this.prisma.rewardAccount.findUnique({ where: { userId } }),
         this.prisma.watchHistory.findMany({
           where: { userId },

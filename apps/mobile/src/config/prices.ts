@@ -136,31 +136,20 @@ export const moviePricing = {
   pass: { id: 'pass', type: 'Pass', price: (cachedMoviePricing as MoviePricing | null)?.pass?.price ?? 4500, label: '₦4,500/mo' },
 } as const;
 
-// DEPRECATED: Use getMoviePricing() async function instead
-export const moviePassPrice = { monthly: 4500, label: '₦4,500/month' } as const;
-// DEPRECATED: Use getMoviePricing() async function instead
-export const rentPrice = 500;
-
-// DEPRECATED: Use getVotePackages() async function instead
-export const votePackages = FALLBACK_VOTE_PACKAGES;
-
-// DEPRECATED: Use getSubscriptionPricing() async function instead
-export const verticalSubscription = { monthly: 2000, label: '₦2,000/month' } as const;
-// DEPRECATED: Use getSubscriptionPricing() async function instead
-export const comedySubscription = { monthly: 1500, label: '₦1,500/month' } as const;
-// DEPRECATED: Use getCityGuidePricing() async function instead
-export const cityGuidePricing = { premium: 5000, standard: 3000 } as const;
-
 // Wallet preset amounts - these are UI hints, not prices
 export const walletPresetAmounts = [500, 1000, 2500, 5000, 10000] as const;
-// DEPRECATED: Use walletPresetAmounts instead
-export const paymentPresetAmounts = [500, 1000, 2500, 5000, 10000] as const;
-// DEPRECATED: Use walletPresetAmounts instead
-export const addFundsPresetAmounts = [500, 1000, 2000, 5000, 10000, 20000] as const;
 
-// DEPRECATED: Use getWalletLimits() async function instead
+// Legacy exports for backward compatibility
+export const votePackages = FALLBACK_VOTE_PACKAGES;
+export const paymentPresetAmounts = [500, 1000, 2500, 5000, 10000] as const;
+export const addFundsPresetAmounts = [500, 1000, 2000, 5000, 10000, 20000] as const;
 export const walletLimits = {
   minimumWithdrawal: 500,
   minimumDeposit: 100,
   maximumDeposit: 1000000,
 } as const;
+export const moviePassPrice = { monthly: 4500, label: '₦4,500/month' } as const;
+export const rentPrice = 500;
+export const verticalSubscription = { monthly: 2000, label: '₦2,000/month' } as const;
+export const comedySubscription = { monthly: 1500, label: '₦1,500/month' } as const;
+export const cityGuidePricing = { premium: 5000, standard: 3000 } as const;

@@ -31,7 +31,7 @@ interface CreateNightlifeData {
 }
 
 @ApiTags('Nightlife')
-@Controller('v1/lifestyle/nightlife')
+@Controller('lifestyle/nightlife')
 export class NightlifeController {
   constructor(@Inject(NightlifeService) private readonly nightlifeService: NightlifeService) {}
 

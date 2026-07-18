@@ -120,7 +120,11 @@ export interface VotePackage {
   votes: number;
   price: number;
   bonus?: number;
+  multiplier?: number;
   label?: string;
+  name?: string;
+  description?: string;
+  isPopular?: boolean;
 }
 
 export interface WalletBalance {
@@ -128,6 +132,7 @@ export interface WalletBalance {
   currency: string;
   bonusBalance?: number;
   promoBalance?: number;
+  pendingBalance?: number;
 }
 
 export interface PaymentProvider {
@@ -139,10 +144,14 @@ export interface PaymentProvider {
 export interface SubscriptionPlan {
   id: string;
   name: string;
+  description?: string;
   price: number;
   currency: string;
-  interval: 'monthly' | 'yearly';
+  interval?: 'monthly' | 'yearly';
+  duration?: number;
   features: string[];
+  tier?: string;
+  isActive?: boolean;
 }
 
 export interface Notification {
@@ -150,6 +159,8 @@ export interface Notification {
   type: string;
   title: string;
   message: string;
+  body: string;
+  read: boolean;
   readAt?: string;
   createdAt: string;
   metadata?: Record<string, unknown>;
@@ -178,11 +189,9 @@ export interface ApiResponse<T> {
 
 export interface PaginatedResponse<T> {
   success: boolean;
-  data?: T[];
-  meta?: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+  items?: T[];
+  total?: number;
+  page?: number;
+  limit?: number;
+  totalPages?: number;
 }

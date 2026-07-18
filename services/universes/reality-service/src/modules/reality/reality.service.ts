@@ -523,31 +523,24 @@ export class RealityService {
       });
 
     try {
-      const votes = await this.prisma.$transaction(async (tx) => {
-        const createdVotes = [];
+      const vote = await this.prisma.$transaction(async (tx) => {
+        // Use upsert to either create a new vote or increment quantity on existing
+        const result = await tx.vote.upsert({
+          where: {
+            userId_contestantId: { userId, contestantId },
+          },
+          create: {
+            userId,
+            contestantId,
+            showId,
+            quantity,
+          },
+          update: {
+            quantity: { increment: quantity },
+          },
+        });
 
-        for (let i = 0; i < quantity; i++) {
-          const existingVote = await tx.vote.findUnique({
-            where: {
-              userId_contestantId: { userId, contestantId },
-            },
-          });
-
-          if (existingVote) {
-            throw new ConflictException('User has already voted for this contestant');
-          }
-
-          const vote = await tx.vote.create({
-            data: {
-              userId,
-              contestantId,
-              showId,
-            },
-          });
-          createdVotes.push(vote);
-        }
-
-        return createdVotes;
+        return result;
       });
 
       await Promise.all([
@@ -556,7 +549,7 @@ export class RealityService {
         this.cache.invalidate('reality:shows:list'),
       ]);
       await this.trackAnalyticsEvent('vote_submitted', userId, {
-        voteIds: votes.map((v) => v.id),
+        voteId: vote.id,
         contestantId,
         showId,
         voteType: 'bulk',
@@ -567,8 +560,8 @@ export class RealityService {
       return {
         success: true,
         data: {
-          voteIds: votes.map((v) => v.id),
-          quantity,
+          voteId: vote.id,
+          quantity: vote.quantity,
           totalCost,
           balance: debitResult.data?.balance,
           message: `${quantity} votes submitted successfully`,
@@ -748,18 +741,17 @@ export class RealityService {
       // Return empty array on failure - non-critical
     }
 
-    const votesByContestantWithNames = await Promise.all(
-      votesByContestant.map(async (v) => {
-        const contestant = await this.prisma.contestant.findUnique({
-          where: { id: v.contestantId },
-        });
-        return {
-          contestantId: v.contestantId,
-          name: contestant?.name || 'Unknown',
-          voteCount: v._count.id,
-        };
-      })
-    );
+    const contestantIds = votesByContestant.map((v) => v.contestantId);
+    const contestants = await this.prisma.contestant.findMany({
+      where: { id: { in: contestantIds } },
+    });
+    const contestantMap = new Map(contestants.map((c) => [c.id, c]));
+
+    const votesByContestantWithNames = votesByContestant.map((v) => ({
+      contestantId: v.contestantId,
+      name: contestantMap.get(v.contestantId)?.name || 'Unknown',
+      voteCount: v._count.id,
+    }));
 
     return {
       success: true,

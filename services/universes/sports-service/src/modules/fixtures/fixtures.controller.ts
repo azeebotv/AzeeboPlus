@@ -7,7 +7,7 @@ import { UpdateFixtureResultDto } from './dto/update-fixture-result.dto.js';
 
 @ApiTags('Fixtures')
 @ApiBearerAuth()
-@Controller('v1/sports/fixtures')
+@Controller('sports/fixtures')
 export class FixturesController {
   constructor(@Inject(FixturesService) private readonly fixturesService: FixturesService) {}
 

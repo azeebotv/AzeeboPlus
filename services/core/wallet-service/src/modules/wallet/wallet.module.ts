@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
+import { JwtConfigModule } from '@azeebo/shared-services';
 
 import { WalletController } from './wallet.controller.js';
 import { WalletService } from './wallet.service.js';
@@ -11,16 +11,7 @@ import { DatabaseModule } from '../database/database.module.js';
   imports: [
     ConfigModule,
     DatabaseModule,
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_ACCESS_SECRET') || '',
-        signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as any,
-        },
-      }),
-      inject: [ConfigService],
-    }),
+    JwtConfigModule,
   ],
   controllers: [WalletController],
   providers: [WalletService, WalletRepository],

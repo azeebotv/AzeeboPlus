@@ -184,7 +184,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                   <div
                     style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}
                   >
-                    {plan.features.map((feature, i) => (
+                    {(plan.features ?? []).map((feature, i) => (
                       <div
                         key={i}
                         style={{

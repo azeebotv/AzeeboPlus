@@ -1,8 +1,10 @@
 import { Inject, Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service.js';
 import { AnalyticsResponse } from './interfaces/analytics-response.interface.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import axios from 'axios';
 
 interface Event {
   type: string;
@@ -77,8 +79,36 @@ export class AnalyticsService {
   private readonly logger = new Logger(AnalyticsService.name);
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
-    @Inject(CacheService) private readonly cache: CacheService
+    @Inject(CacheService) private readonly cache: CacheService,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {}
+
+  private async getSubscriptionCount(userId: string): Promise<number> {
+    try {
+      const baseUrl = this.configService.get<string>('SUBSCRIPTION_SERVICE_URL');
+      if (!baseUrl) return 0;
+      const res = await axios.get<{ pagination?: { total?: number } }>(
+        `${baseUrl}/v1/subscription/history`,
+        {
+          params: { userId, limit: 1 },
+          timeout: 5000,
+          headers: {
+            'x-user-id': userId,
+            'x-gateway-secret': this.configService.get<string>('INTERNAL_API_KEY', ''),
+          },
+        }
+      );
+      return res.data?.pagination?.total ?? 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  // ARCHITECTURAL DEBT (Issue 10.2): This service directly queries User and ContentItem
+  // tables which are owned by auth-service and content-service respectively. These models
+  // should be accessed via internal APIs or event-driven sync projections. Direct cross-
+  // service DB access creates tight coupling and violates bounded context boundaries.
+  // See also: intelligence.service.ts which has the same pattern.
 
   private validateEventEnvelope(event: Event): { valid: boolean; error?: string } {
     if (!event.type || typeof event.type !== 'string') {
@@ -261,6 +291,11 @@ export class AnalyticsService {
   }
 
   async getFunnels(name?: string): Promise<AnalyticsResponse> {
+    // Cache funnel results for 5 minutes to avoid sequential queries
+    const cacheK = cacheKey('analytics', `funnels:${name || 'all'}`);
+    const cached = await this.cache.get<AnalyticsResponse>(cacheK);
+    if (cached) return cached;
+
     const funnelDefinitions = {
       signup: {
         steps: ['screen_view', 'signup_started', 'signup_completed'],
@@ -329,10 +364,13 @@ export class AnalyticsService {
         funnelResults[funnelName] = stepMetrics;
       }
 
-      return {
+      const result = {
         success: true,
         data: { funnels: funnelResults },
       };
+
+      await this.cache.set(cacheK, result, 300);
+      return result;
     } catch (error) {
       this.logger.error(`getFunnels failed: ${(error as Error).message}`, (error as Error).stack);
       return {
@@ -713,8 +751,7 @@ export class AnalyticsService {
       const avgOrderValue =
         payments > 0 ? Math.round(Number(totalRevenue._sum.amount || 0) / payments) : 0;
 
-      // Subscription model not available in analytics-service schema
-      const subscriptions = 0;
+      const subscriptions = await this.getSubscriptionCount('');
 
       return {
         success: true,
@@ -808,6 +845,11 @@ export class AnalyticsService {
   }
 
   async getDetailedDashboard(): Promise<AnalyticsResponse> {
+    // Cache detailed dashboard for 5 minutes
+    const cacheK = cacheKey('analytics', 'detailed-dashboard');
+    const cached = await this.cache.get<AnalyticsResponse>(cacheK);
+    if (cached) return cached;
+
     try {
       const [dailyStats, weeklyRetention, monthlyRevenue, engagement, universeKpis] =
         await Promise.all([
@@ -818,7 +860,7 @@ export class AnalyticsService {
           this.getAllUniverseKpis(),
         ]);
 
-      return {
+      const result = {
         success: true,
         data: {
           today: dailyStats.data,
@@ -828,6 +870,9 @@ export class AnalyticsService {
           universes: universeKpis.data,
         },
       };
+
+      await this.cache.set(cacheK, result, 300);
+      return result;
     } catch (error) {
       this.logger.error(
         `getDetailedDashboard failed: ${(error as Error).message}`,
@@ -860,11 +905,6 @@ export class AnalyticsService {
         this.prisma.productEvent.groupBy({
           by: ['sessionId'],
           where: { timestamp: { gte: startDate }, sessionId: { not: null } },
-          _count: { id: true },
-        }),
-        this.prisma.productEvent.groupBy({
-          by: ['userId'],
-          where: { timestamp: { gte: startDate }, userId: { not: null } },
           _count: { id: true },
         }),
       ]);

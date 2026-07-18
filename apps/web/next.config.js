@@ -19,11 +19,11 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'picsum.photos',
+        hostname: 'placehold.co',
       },
       {
         protocol: 'https',
-        hostname: 'ui-avatars.com',
+        hostname: 'picsum.photos',
       },
       {
         protocol: 'https',
@@ -35,6 +35,9 @@ const nextConfig = {
       },
     ],
     qualities: [85],
+    minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
   async headers() {
     return [
@@ -68,7 +71,7 @@ const nextConfig = {
           {
             key: 'Content-Security-Policy',
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' http://localhost:* https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';",
+              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.youtube.com https://www.youtube-nocookie.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' http://localhost:* https:; frame-src https://www.youtube.com https://www.youtube-nocookie.com; media-src 'self' https: blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';",
           },
         ],
       },

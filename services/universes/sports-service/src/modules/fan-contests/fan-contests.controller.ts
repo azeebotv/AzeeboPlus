@@ -17,7 +17,7 @@ import { JoinContestDto, SubmitContestScoreDto } from './dto/contest.dto.js';
 
 @ApiTags('Fan Contests')
 @ApiBearerAuth()
-@Controller('v1/sports/fan-contests')
+@Controller('sports/fan-contests')
 export class FanContestsController {
   constructor(
     @Inject(FanContestsService) private readonly fanContestsService: FanContestsService

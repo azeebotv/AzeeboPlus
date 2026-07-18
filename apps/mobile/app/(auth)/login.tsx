@@ -75,11 +75,8 @@ export default function LoginScreen() {
     }
   };
 
-  const handleSocialLogin = (provider: 'google' | 'apple') => {
-    Alert.alert(
-      'Coming Soon',
-      `${provider.charAt(0).toUpperCase() + provider.slice(1)} login will be available soon`
-    );
+  const handleSocialLogin = (_provider: 'google' | 'apple') => {
+    // Social login not yet implemented - buttons should be disabled
   };
 
   return (

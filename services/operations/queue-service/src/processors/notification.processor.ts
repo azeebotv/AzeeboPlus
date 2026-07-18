@@ -1,9 +1,7 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
-import { EmailService } from '../modules/email/email.service';
-import { FirebaseService } from '../modules/firebase/firebase.service';
-import { SmsService } from '../modules/sms/sms.service';
+import { EmailService, FirebaseService, SmsService } from '@azeebo/shared-services';
 
 // Per CLAUDE.md § Cross-Service Model Duplication, queue-service references
 // `userId` as a plain string and does NOT query the User or PushToken tables.

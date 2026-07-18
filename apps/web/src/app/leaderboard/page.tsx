@@ -184,7 +184,7 @@ export default function LeaderboardPage(): React.JSX.Element {
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <p style={{ fontWeight: 700, fontSize: 18, color: '#E8420A' }}>
-                      {entry.score.toLocaleString()}
+                      {(entry.score ?? 0).toLocaleString()}
                     </p>
                     <p style={{ color: '#9A8A7A', fontSize: 11 }}>pts</p>
                   </div>

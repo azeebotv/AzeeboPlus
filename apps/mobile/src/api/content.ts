@@ -1,5 +1,7 @@
 import { apiClient } from './client';
-import type { ApiResponse } from './auth';
+import type { ApiResponse, PaginatedResponse, Contestant } from '../types/api';
+
+export type { PaginatedResponse, Contestant } from '../types/api';
 
 export interface ContentItem {
   id: string;
@@ -46,19 +48,6 @@ export interface Episode {
   releaseDate: string;
   isLocked: boolean;
   contentId: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Contestant {
-  id: string;
-  name: string;
-  description: string;
-  avatar: string;
-  votes: number;
-  rank: number;
-  eliminated?: boolean;
-  episodeId: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -166,14 +155,6 @@ export interface Recommendation {
   score: number;
 }
 
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
 export const contentApi = {
   getFeaturedContent: async (limit = 10): Promise<ApiResponse<ContentItem[]>> => {
     return apiClient.get<ApiResponse<ContentItem[]>>(`/api/v1/content/featured?limit=${limit}`);
@@ -184,10 +165,6 @@ export const contentApi = {
   },
 
   getContentById: async (contentId: string): Promise<ApiResponse<ContentItem>> => {
-    return apiClient.get<ApiResponse<ContentItem>>(`/api/v1/content/${contentId}`);
-  },
-
-  getContent: async (contentId: string): Promise<ApiResponse<ContentItem>> => {
     return apiClient.get<ApiResponse<ContentItem>>(`/api/v1/content/${contentId}`);
   },
 
@@ -224,6 +201,28 @@ export const contentApi = {
     return apiClient.post<ApiResponse<{ message: string }>>('/api/v1/users/me/history', {
       contentId,
     });
+  },
+
+  getContentList: async (params: { page?: number; limit?: number } = {}): Promise<ApiResponse<PaginatedResponse<ContentItem>>> => {
+    const searchParams = new URLSearchParams();
+    if (params.page) searchParams.append('page', params.page.toString());
+    if (params.limit) searchParams.append('limit', params.limit.toString());
+
+    return apiClient.get<ApiResponse<PaginatedResponse<ContentItem>>>(
+      `/api/v1/content?${searchParams.toString()}`
+    );
+  },
+
+  getFeaturedSlides: async (limit = 5): Promise<ApiResponse<ContentItem[]>> => {
+    return apiClient.get<ApiResponse<ContentItem[]>>(`/api/v1/content/featured-slides?limit=${limit}`);
+  },
+
+  getNewReleases: async (limit = 12): Promise<ApiResponse<ContentItem[]>> => {
+    return apiClient.get<ApiResponse<ContentItem[]>>(`/api/v1/content/new-releases?limit=${limit}`);
+  },
+
+  getPopularInRegion: async (limit = 12): Promise<ApiResponse<ContentItem[]>> => {
+    return apiClient.get<ApiResponse<ContentItem[]>>(`/api/v1/content/popular-region?limit=${limit}`);
   },
 
   getSavedContent: async (

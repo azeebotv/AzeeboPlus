@@ -1,9 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationsService } from './notifications.service.js';
 import { PrismaService } from '../database/prisma.service.js';
-import { FirebaseService } from '../firebase/firebase.service.js';
-import { EmailService } from '../email/email.service.js';
-import { SmsService } from '../sms/sms.service.js';
+import { FirebaseService, EmailService, SmsService } from '@azeebo/shared-services';
 import { NotFoundException } from '@nestjs/common';
 
 describe('NotificationsService', () => {

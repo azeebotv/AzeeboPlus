@@ -1,9 +1,10 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger } from '@nestjs/common';
+import { ValidationPipe, Logger, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
 import helmet from 'helmet';
 import { validateEnvironment } from '@azeebo/shared-types';
+import { configureCors } from '@azeebo/security';
 import { LoggingInterceptor } from '@azeebo/logger';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
 
@@ -11,6 +12,7 @@ async function bootstrap(): Promise<void> {
   validateEnvironment(process.env);
 
   const app = await NestFactory.create(AppModule);
+  app.enableVersioning({ type: VersioningType.URI, prefix: "v", defaultVersion: "1" });
 
   app.useGlobalFilters(new GlobalExceptionFilter());
 
@@ -44,19 +46,8 @@ async function bootstrap(): Promise<void> {
     throw new Error('ALLOWED_ORIGINS environment variable must be set');
   }
   const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim());
-  app.enableCors({
-    origin: (
-      origin: string | undefined,
-      callback: (err: Error | null, allow?: boolean) => void
-    ) => {
-      // Allow requests with no origin (server-to-server, curl, mobile apps)
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  configureCors(app, {
+    allowedOrigins,
     credentials: true,
   });
 

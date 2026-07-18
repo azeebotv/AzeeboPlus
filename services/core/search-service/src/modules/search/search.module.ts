@@ -1,7 +1,5 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { CacheModule } from '@azeebo/shared-services';
+import { CacheModule, JwtConfigModule } from '@azeebo/shared-services';
 
 import { SearchController } from './search.controller.js';
 import { SearchService } from './search.service.js';
@@ -12,16 +10,7 @@ import { DatabaseModule } from '../database/database.module.js';
   imports: [
     DatabaseModule,
     CacheModule,
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
-        signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '30m'),
-        },
-      }),
-      inject: [ConfigService],
-    }),
+    JwtConfigModule,
   ],
   controllers: [SearchController],
   providers: [SearchService, SearchRepository],

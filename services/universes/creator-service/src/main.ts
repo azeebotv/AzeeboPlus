@@ -1,11 +1,12 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger } from '@nestjs/common';
+import { ValidationPipe, Logger, VersioningType } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
 import helmet from 'helmet';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
 import { LoggingInterceptor } from '@azeebo/logger';
 import { validateEnvironment } from '@azeebo/shared-types';
+import { configureCors } from '@azeebo/security';
 
 async function bootstrap(): Promise<void> {
   try {
@@ -18,6 +19,7 @@ async function bootstrap(): Promise<void> {
   }
 
   const app = await NestFactory.create(AppModule);
+  app.enableVersioning({ type: VersioningType.URI, prefix: "v", defaultVersion: "1" });
 
   app.use(
     helmet({
@@ -51,24 +53,7 @@ async function bootstrap(): Promise<void> {
     throw new Error('ALLOWED_ORIGINS environment variable must be set');
   }
   const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim());
-
-  app.enableCors({
-    origin: (
-      origin: string | undefined,
-      callback: (err: Error | null, allow?: boolean) => void
-    ) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
-    credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    exposedHeaders: ['Content-Disposition'],
-    maxAge: 86400,
-  });
+  configureCors(app, { allowedOrigins, credentials: true });
 
   if (process.env.NODE_ENV !== 'production') {
     const swaggerConfig = new DocumentBuilder()

@@ -19,7 +19,7 @@ import { SanitizationService } from './agbala/sanitization.service';
 import { StoryworldMetadataService } from './agbala/storyworld-metadata.service';
 
 @ApiTags('Storyworlds')
-@Controller('v1/vertical/storyworlds')
+@Controller('vertical/storyworlds')
 export class StoryworldsController {
   private readonly logger = new Logger(StoryworldsController.name);
 

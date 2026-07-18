@@ -20,7 +20,7 @@ import { IngestEventsDto } from './dto/analytics.dto.js';
 
 @ApiTags('Analytics')
 @ApiBearerAuth()
-@Controller('v1/analytics')
+@Controller('analytics')
 @UseGuards(RateLimitGuard)
 export class AnalyticsController {
   constructor(@Inject(AnalyticsService) private readonly analyticsService: AnalyticsService) {}

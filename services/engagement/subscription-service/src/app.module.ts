@@ -1,25 +1,17 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ConfigModule } from '@nestjs/config';
 import { SubscriptionModule } from './modules/subscription/subscription.module.js';
 import { DatabaseModule } from './modules/database/database.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
-import { CacheModule } from '@azeebo/shared-services';
+import { ResponseWrapperInterceptor } from '@azeebo/logger';
+import { CacheModule, JwtConfigModule } from '@azeebo/shared-services';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env', '../../.env'] }),
-    JwtModule.registerAsync({
-      global: true,
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
-        signOptions: { expiresIn: '30m' },
-      }),
-      inject: [ConfigService],
-    }),
+    JwtConfigModule,
     RateLimiterModule.forRoot(),
     CacheModule,
     SubscriptionModule,
@@ -27,6 +19,10 @@ import { CacheModule } from '@azeebo/shared-services';
     HealthModule,
   ],
   providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseWrapperInterceptor,
+    },
     {
       provide: APP_GUARD,
       useClass: ServiceAuthGuard,

@@ -17,7 +17,7 @@ import { CreateLoreData } from './lore.service';
 import { UpdateLoreDto } from './dto/update-lore.dto';
 
 @ApiTags('Lore')
-@Controller('v1/vertical/lore')
+@Controller('vertical/lore')
 export class LoreController {
   constructor(@Inject(LoreService) private readonly loreService: LoreService) {}
 

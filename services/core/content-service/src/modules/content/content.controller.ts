@@ -29,7 +29,7 @@ import { ContentResponse } from './interfaces/content-response.interface.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
 @ApiTags('Content')
-@Controller('v1/content')
+@Controller('content')
 @UseInterceptors(CacheInterceptor)
 export class ContentController {
   constructor(
@@ -258,6 +258,7 @@ export class ContentController {
   // Parameterized GET routes (more specific patterns before :id catch-all)
   // ========================
 
+  @Public()
   @Get('universe/:universeId')
   @Cache({ key: 'content:universe:{universeId}:{page}:{limit}', ttl: 600 })
   @UseGuards(RateLimitGuard)
@@ -272,6 +273,7 @@ export class ContentController {
     return this.contentService.listContent({ universe: universeId }, page, limit);
   }
 
+  @Public()
   @Get('category/:categoryId')
   @Cache({ key: 'content:category:{categoryId}:{page}:{limit}', ttl: 600 })
   @UseGuards(RateLimitGuard)
@@ -309,6 +311,7 @@ export class ContentController {
     return this.contentService.listContent({ creatorId }, page, safeLimit);
   }
 
+  // Wildcard GET routes MUST come after all static GET routes
   @Public()
   @Get(':id')
   @Cache({ key: 'content:{id}', ttl: 300 })
@@ -466,6 +469,8 @@ export class ContentController {
   // ========================
 
   @Post()
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Create content' })
   @ApiResponse({ status: 201, description: 'Content created' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
@@ -511,6 +516,8 @@ export class ContentController {
   }
 
   @Post(':id/comments')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Add comment to content' })
   @ApiResponse({ status: 201, description: 'Comment added' })
   @ApiResponse({ status: 404, description: 'Content not found' })
@@ -528,6 +535,8 @@ export class ContentController {
   }
 
   @Post(':id/media')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(20, 60000)
   @ApiOperation({ summary: 'Create media asset for content' })
   @ApiResponse({ status: 201, description: 'Media asset created' })
   @ApiResponse({ status: 404, description: 'Content not found' })
@@ -546,6 +555,8 @@ export class ContentController {
   }
 
   @Post(':id/media/thumbnail')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Generate thumbnail for media asset' })
   @ApiResponse({ status: 200, description: 'Thumbnail generated' })
   @ApiResponse({ status: 404, description: 'Content or media asset not found' })

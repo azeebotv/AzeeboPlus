@@ -1,7 +1,5 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { CacheModule } from '@azeebo/shared-services';
+import { CacheModule, JwtConfigModule } from '@azeebo/shared-services';
 
 import { UsersController } from './users.controller.js';
 import { InteractionsController } from './interactions.controller.js';
@@ -13,16 +11,7 @@ import { UserDeletionController } from '../user/user-deletion.controller.js';
   imports: [
     DatabaseModule,
     CacheModule,
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_ACCESS_SECRET') || '',
-        signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as any,
-        },
-      }),
-      inject: [ConfigService],
-    }),
+    JwtConfigModule,
   ],
   controllers: [UsersController, InteractionsController, UserDeletionController],
   providers: [UsersService],

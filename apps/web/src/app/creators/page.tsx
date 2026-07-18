@@ -25,8 +25,10 @@ export default function CreatorsPage(): React.JSX.Element {
       try {
         setIsLoading(true);
         const response = await api.creator.getCreators(1, 20);
-        if (response.success && response.data) {
+        if (response.success && response.data?.items) {
           setCreators(response.data.items);
+        } else {
+          setCreators([]);
         }
       } catch (error) {
         webLogger.error('Failed to load creators', error);
@@ -44,8 +46,10 @@ export default function CreatorsPage(): React.JSX.Element {
       setIsContentLoading(true);
       try {
         const response = await api.creator.getCreatorContent(selectedCreator.id, 1, 10);
-        if (response.success && response.data) {
+        if (response.success && response.data?.items) {
           setCreatorContent(response.data.items);
+        } else {
+          setCreatorContent([]);
         }
       } catch (error) {
         webLogger.error('Failed to load creator content', error);

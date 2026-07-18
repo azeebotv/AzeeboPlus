@@ -1,10 +1,8 @@
-import { Inject, Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, ForbiddenException, ConflictException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '@prisma/client';
-import { FirebaseService } from '../firebase/firebase.service.js';
-import { EmailService } from '../email/email.service.js';
-import { SmsService } from '../sms/sms.service.js';
+import { FirebaseService, EmailService, SmsService } from '@azeebo/shared-services';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 import axios from 'axios';
 
@@ -112,7 +110,7 @@ export class NotificationsService {
       }
 
       if (notification.userId !== userId) {
-        throw new NotFoundException(`Notification not found`);
+        throw new ForbiddenException('You do not have access to this notification');
       }
 
       await this.prisma.notification.update({
@@ -430,8 +428,14 @@ export class NotificationsService {
         return false;
       }
 
-      const sanitizedBody = body.replace(/<[^>]*>/g, '');
-      return this.emailService.sendCustomEmail(user.email, subject, sanitizedBody);
+      // Escape HTML entities to prevent XSS while preserving text content
+      const sanitizedBody = body
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;');
+      return this.emailService.sendCustomEmail(user.email, subject, `<p>${sanitizedBody}</p>`);
     } catch (error) {
       this.logger.error(
         `sendEmailNotification failed: ${(error as Error).message}`,

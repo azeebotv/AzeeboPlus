@@ -2,8 +2,11 @@
 # ============================================================
 # Azeebo+ Local Development Environment
 # ============================================================
-# Production-grade development runner for all Azeebo+ services.
+# Native development runner for all Azeebo+ services.
+# Runs all services (backend + frontend) via pnpm on the host.
 # Uses per-service databases matching the Docker all-in-one setup.
+# Docker architecture (Dockerfile.all-in-one) is preserved for
+# staging/production deployment — this script is for local dev only.
 #
 # Usage:
 #   ./scripts/local-dev.sh [command] [options]
@@ -27,12 +30,11 @@
 #   --universes    Start universe services
 #   --operations   Start operations services
 #   --gateway      Start API gateway
-#   --frontend     Frontend apps
+#   --frontend     Frontend apps (web, admin, creator-portal)
 #   --all          Start everything
 #   --quick        Core + gateway + web (recommended for most dev work)
 #   --no-build     Skip prisma generate (fast start with cached builds)
 #   --skip-migrate Skip migration checks
-#   --local-frontend Start frontend on host via pnpm dev instead of Docker
 #
 # Options (for 'db'):
 #   migrate        Run Prisma migrations for all services
@@ -57,7 +59,7 @@ REQUIRED_PNPM_VERSION="10.33.2"
 LOG_LEVEL="${LOG_LEVEL:-info}"
 SKIP_PREREQS="${SKIP_PREREQS:-false}"
 DRY_RUN="${DRY_RUN:-false}"
-HEALTH_CHECK_TIMEOUT=30
+HEALTH_CHECK_TIMEOUT=90
 HEALTH_CHECK_INTERVAL=2
 
 # ---- Database ----
@@ -255,7 +257,11 @@ load_env() {
   done
 
   export NODE_ENV="${NODE_ENV:-development}"
-  export REDIS_URL="${REDIS_URL:-redis://localhost:6379}"
+  if [[ -n "${REDIS_PASSWORD:-}" ]]; then
+    export REDIS_URL="${REDIS_URL:-redis://:${REDIS_PASSWORD}@localhost:6379}"
+  else
+    export REDIS_URL="${REDIS_URL:-redis://localhost:6379}"
+  fi
   export ALLOWED_ORIGINS="${ALLOWED_ORIGINS:-http://localhost:4000,http://localhost:4014,http://localhost:4016}"
   export RATE_LIMIT_TTL="${RATE_LIMIT_TTL:-60}"
   export RATE_LIMIT_MAX="${RATE_LIMIT_MAX:-1000}"
@@ -691,61 +697,6 @@ start_group() {
   log_info "  $group_name: $started started, $failed failed"
 }
 
-ensure_docker_network() {
-  local network_name="${1:-azeebo-dev}"
-  if docker network inspect "$network_name" &>/dev/null 2>&1; then
-    log_debug "Docker network '$network_name' exists"
-  else
-    log_info "Creating Docker network '$network_name'..."
-    docker network create "$network_name" 2>/dev/null || true
-    log_ok "Docker network '$network_name' created"
-  fi
-}
-
-docker_frontend_stop() {
-  section "Stopping Frontend Docker Containers"
-  for app_dir in apps/web apps/admin apps/creator-portal; do
-    local compose_dir="$ROOT_DIR/$app_dir"
-    if [[ -f "$compose_dir/docker-compose.yml" ]]; then
-      log_info "  Stopping $app_dir..."
-      (cd "$compose_dir" && docker compose down 2>/dev/null) || true
-    fi
-  done
-  log_ok "Frontend Docker containers stopped"
-}
-
-start_frontend_via_docker() {
-  section "Starting Frontend Services (Docker)"
-  ensure_docker_network azeebo-dev
-
-  local started=0 failed=0
-  for entry in "${FRONTEND_SERVICES[@]}"; do
-    IFS='|' read -r pkg dir port <<< "$entry"
-    local compose_dir="$ROOT_DIR/$dir"
-
-    if [[ ! -f "$compose_dir/docker-compose.yml" ]]; then
-      log_warn "  $pkg: no docker-compose.yml — skipping"
-      failed=$((failed + 1))
-      continue
-    fi
-
-    log_info "  Building and starting $pkg on port $port..."
-    local output
-    output="$(cd "$compose_dir" && docker compose up -d --build 2>&1)"
-    local rc=$?
-    if [[ $rc -eq 0 ]] && docker ps --format '{{.Names}}' | grep -q "azeebo-${pkg##*/}"; then
-      log_ok "  $pkg container running"
-      started=$((started + 1))
-    else
-      log_warn "  $pkg: docker compose failed (rc=$rc)"
-      log_debug "    $output"
-      failed=$((failed + 1))
-    fi
-  done
-
-  log_info "  Frontend Docker: $started started, $failed failed"
-}
-
 # ============================================================
 # SECTION 7: Cleanup
 # ============================================================
@@ -753,7 +704,7 @@ start_frontend_via_docker() {
 cleanup() {
   echo ""
   log_info "Shutting down services..."
-  for pid in "${PIDS[@]}"; do
+  for pid in "${PIDS[@]+"${PIDS[@]}"}"; do
     kill "$pid" 2>/dev/null || true
   done
   if [[ -f "$PID_FILE" ]]; then
@@ -762,7 +713,6 @@ cleanup() {
     done < "$PID_FILE"
     rm -f "$PID_FILE"
   fi
-  docker_frontend_stop
   wait 2>/dev/null || true
   log_ok "All services stopped"
   exit 0
@@ -790,12 +740,7 @@ show_status() {
     if [[ -n "$pid" ]]; then
       printf "  %-35s %-8s ${GREEN}%-10s${RESET} %s\n" "$short_name" "$port" "RUNNING" "$pid"
     else
-      local container_name="azeebo-${short_name}"
-      if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "$container_name"; then
-        printf "  %-35s %-8s ${GREEN}%-10s${RESET} %s\n" "$short_name" "$port" "DOCKER" "$container_name"
-      else
-        printf "  %-35s %-8s ${RED}%-10s${RESET} %s\n" "$short_name" "$port" "STOPPED" "-"
-      fi
+      printf "  %-35s %-8s ${RED}%-10s${RESET} %s\n" "$short_name" "$port" "STOPPED" "-"
     fi
   done
 }
@@ -823,7 +768,7 @@ tail_logs() {
 
 cmd_setup() {
   section "Azeebo+ Development Environment Setup (v${SCRIPT_VERSION})"
-  log_info "Per-service databases — matches Docker all-in-one"
+  log_info "Per-service databases — native dev (Docker architecture for staging/production)"
 
   detect_os
   if [[ "$SKIP_PREREQS" != "true" ]]; then
@@ -848,6 +793,10 @@ cmd_setup() {
 
   run_prisma_generate
   run_migrations
+
+  # Seed demo data
+  section "Seeding Demo Data"
+  bash "$SCRIPT_DIR/database/seed-all.sh"
 
   log_ok "Setup complete! Run './scripts/local-dev.sh start --quick' to begin."
 }
@@ -906,7 +855,6 @@ cmd_start() {
   local do_universes=false do_operations=false do_gateway=false
   local do_frontend=false do_all=false do_quick=false
   local do_no_build=false do_skip_migrate=false
-  local do_local_frontend=false
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -921,7 +869,6 @@ cmd_start() {
       --quick)        do_quick=true ;;
       --no-build)     do_no_build=true ;;
       --skip-migrate) do_skip_migrate=true ;;
-      --local-frontend) do_local_frontend=true ;;
       *)              log_error "Unknown option: $1"; return 1 ;;
     esac
     shift
@@ -951,7 +898,7 @@ cmd_start() {
 cmd_start_interactive() {
   echo ""
   printf "${BOLD}${BLUE}Azeebo+ Local Dev Runner (v${SCRIPT_VERSION})${RESET}\n"
-  printf "${BLUE}Per-service databases — Docker parity${RESET}\n"
+  printf "${BLUE}Native dev — all services run via pnpm on host${RESET}\n"
   echo ""
   echo "  1)  Core Services       (auth, user, wallet, payment, content, search, media)"
   echo "  2)  Engagement Services (notification, reward, engagement, messaging, referral, subscription)"
@@ -1027,8 +974,6 @@ cmd_stop() {
     fi
   done
   [[ -f "$PID_FILE" ]] && while IFS= read -r pid; do kill "$pid" 2>/dev/null || true; done < "$PID_FILE" && rm -f "$PID_FILE"
-
-  docker_frontend_stop
 
   if (( stopped > 0 )); then
     sleep 1
@@ -1184,9 +1129,11 @@ cmd_clean() {
 
 cmd_help() {
   cat << 'HELPEOF'
-Azeebo+ Local Development Environment (v3.0)
+Azeebo+ Local Development Environment (v3.1)
 =============================================
-Per-service databases — matches Docker all-in-one.
+Native dev runner — all services run via pnpm on the host.
+Uses per-service databases matching the Docker all-in-one setup.
+Docker architecture is preserved for staging/production deployment.
 
 USAGE:
   ./scripts/local-dev.sh <command> [options]
@@ -1210,12 +1157,11 @@ START OPTIONS:
   --universes    Reality, movie, comedy, games, sports, lifestyle, vertical, creator
   --operations   Queue, support, moderation
   --gateway      API gateway
-  --frontend     Web app
+  --frontend     Web, admin, creator-portal (runs via pnpm dev)
   --all          Everything (~6GB+ RAM)
   --quick        Core + gateway + web (recommended)
   --no-build     Skip prisma generate (fast start with cached builds)
   --skip-migrate Skip migration checks (use --no-build for full skip)
-  --local-frontend Start frontend on host via pnpm dev instead of Docker
 
 DB ACTIONS:
   migrate        Run Prisma migrations for all services
@@ -1235,11 +1181,15 @@ DATABASES (one per service):
   azeebo_queue  azeebo_support  azeebo_moderation
 
 FIRST-TIME SETUP:
-  1. Ensure PostgreSQL and Redis are running
+  1. Ensure PostgreSQL and Redis are running (FlyEnv or brew services)
   2. ./scripts/local-dev.sh setup
   3. ./scripts/local-dev.sh db seed
   4. ./scripts/local-dev.sh start --quick
   5. Open http://localhost:4000
+
+DOCKER (staging/production):
+  The all-in-one Docker setup is in Dockerfile.all-in-one and
+  docker-compose.all-in-one.yml. This script is for local dev only.
 HELPEOF
 }
 

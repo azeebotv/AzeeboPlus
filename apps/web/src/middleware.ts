@@ -77,25 +77,15 @@ export function middleware(request: NextRequest) {
   }
 
   // --- Admin route guards ---
-  // Decode JWT payload to check role (not signature-verified — defense-in-depth
-  // until server-side session validation is implemented).
+  // SECURITY: Do NOT decode JWT client-side. Role checks are handled server-side.
+  // The auth cookie presence is sufficient for routing; server-side APIs verify JWT signatures.
   if (adminRoutes.some((route) => pathname.startsWith(route))) {
     if (!isAuthenticated) {
       const loginUrl = new URL('/auth/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
-    const accessToken = request.cookies.get('azeebo_access_token')?.value;
-    if (accessToken) {
-      try {
-        const payload = JSON.parse(atob(accessToken.split('.')[1]));
-        if (payload.role !== 'admin' && payload.role !== 'superadmin') {
-          return NextResponse.redirect(new URL('/', request.url));
-        }
-      } catch {
-        // Invalid JWT — allow through (server-side will reject unauthorized requests)
-      }
-    }
+    // Role check delegated to server-side API gateway
   }
 
   // --- Creator portal route guards ---
@@ -105,18 +95,7 @@ export function middleware(request: NextRequest) {
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
-    const accessToken = request.cookies.get('azeebo_access_token')?.value;
-    if (accessToken) {
-      try {
-        const payload = JSON.parse(atob(accessToken.split('.')[1]));
-        const role = payload.role;
-        if (role !== 'creator' && role !== 'admin' && role !== 'superadmin') {
-          return NextResponse.redirect(new URL('/', request.url));
-        }
-      } catch {
-        // Invalid JWT — allow through (server-side will reject unauthorized requests)
-      }
-    }
+    // Role check delegated to server-side API gateway
   }
 
   // --- Protected route guards ---

@@ -22,7 +22,7 @@ interface AuthRequest extends Request {
 
 @ApiTags('Engagement')
 @ApiBearerAuth()
-@Controller('v1/engagement')
+@Controller('engagement')
 @UseGuards(RateLimitGuard)
 export class EngagementController {
   constructor(@Inject(EngagementService) private readonly engagementService: EngagementService) {}

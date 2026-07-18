@@ -15,6 +15,7 @@ import { CacheModule, RedisModule } from '@azeebo/shared-services';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['.env', '../../.env'],
     }),
     CacheModule,
     RedisModule,

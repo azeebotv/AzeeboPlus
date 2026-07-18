@@ -198,11 +198,19 @@ export function useUniverses(): UseUniversesReturn {
     [getUniverse]
   );
 
-  const hasFeature = useCallback((_universeName: string, _featureKey: string) => {
-    // Feature flags are not yet available in the new API response.
-    // Default to true for backwards compatibility.
+  const hasFeature = useCallback((universeName: string, featureKey: string) => {
+    const universe = getUniverse(universeName);
+    if (!universe) return false;
+    // Check if the universe has the requested feature enabled
+    // Feature flags are stored in the universe's metadata or config
+    const universeData = universe as unknown as Record<string, unknown>;
+    const features = universeData.features as Record<string, boolean> | undefined;
+    if (features && featureKey in features) {
+      return features[featureKey];
+    }
+    // Default to true for backwards compatibility when feature not explicitly set
     return true;
-  }, []);
+  }, [getUniverse]);
 
   return {
     universes,

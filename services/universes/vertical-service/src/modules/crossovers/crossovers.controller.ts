@@ -5,7 +5,7 @@ import { CrossoversService } from './crossovers.service';
 import { CreateCrossoverData, CreateRecapData } from './crossovers.service';
 
 @ApiTags('Crossovers')
-@Controller('v1/vertical/crossovers')
+@Controller('vertical/crossovers')
 export class CrossoversController {
   constructor(@Inject(CrossoversService) private readonly crossoversService: CrossoversService) {}
 
@@ -18,21 +18,6 @@ export class CrossoversController {
     @Query('status') status?: string
   ): Promise<unknown> {
     return this.crossoversService.getCrossovers(Number(page), Number(limit), status);
-  }
-
-  @Get(':slug')
-  @ApiOperation({ summary: 'Get crossover by slug' })
-  @ApiResponse({ status: 200, description: 'Crossover details' })
-  async getCrossover(@Param('slug') slug: string): Promise<unknown> {
-    return this.crossoversService.getCrossoverBySlug(slug);
-  }
-
-  @Post()
-  @UseGuards(AdminGuard)
-  @ApiOperation({ summary: 'Create crossover' })
-  @ApiResponse({ status: 201, description: 'Crossover created' })
-  async createCrossover(@Body() body: CreateCrossoverData): Promise<unknown> {
-    return this.crossoversService.createCrossover(body);
   }
 
   @Get('recaps')
@@ -51,6 +36,22 @@ export class CrossoversController {
   @ApiResponse({ status: 200, description: 'Recap details' })
   async getRecap(@Param('id') id: string): Promise<unknown> {
     return this.crossoversService.getRecapById(id);
+  }
+
+  // Wildcard GET route MUST come after all static GET routes
+  @Get(':slug')
+  @ApiOperation({ summary: 'Get crossover by slug' })
+  @ApiResponse({ status: 200, description: 'Crossover details' })
+  async getCrossover(@Param('slug') slug: string): Promise<unknown> {
+    return this.crossoversService.getCrossoverBySlug(slug);
+  }
+
+  @Post()
+  @UseGuards(AdminGuard)
+  @ApiOperation({ summary: 'Create crossover' })
+  @ApiResponse({ status: 201, description: 'Crossover created' })
+  async createCrossover(@Body() body: CreateCrossoverData): Promise<unknown> {
+    return this.crossoversService.createCrossover(body);
   }
 
   @Post('recaps')

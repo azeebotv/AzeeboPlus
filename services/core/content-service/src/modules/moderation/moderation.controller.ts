@@ -18,7 +18,7 @@ import { ResolveModerationDto, ModerationDecisionDto } from './dto/moderation.dt
 
 @ApiTags('Moderation')
 @ApiBearerAuth()
-@Controller('v1/moderation')
+@Controller('moderation')
 export class ModerationController {
   constructor(@Inject(ModerationService) private readonly moderationService: ModerationService) {}
 

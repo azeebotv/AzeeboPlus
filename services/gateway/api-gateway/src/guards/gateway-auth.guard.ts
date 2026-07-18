@@ -28,12 +28,40 @@ export class GatewayAuthGuard implements CanActivate {
    * These are auth endpoints where the user doesn't have a token yet.
    */
   private static readonly PUBLIC_PATH_PATTERNS: RegExp[] = [
+    // Auth endpoints (pre-login)
     /^\/(api\/)?(v\d+\/)?auth\/(login|signup|register|refresh|forgot-password|reset-password|verify-email|resend-verification|social\/(google|apple)(\/authorize)?|social\/callback|otp\/(send|verify))$/,
     /^\/(api\/)?(v\d+\/)?auth\/health$/,
+    // Gateway health
     /^\/(health|ready|live)$/,
-    /^\/docs(\/.*)?$/, // Swagger UI
-    /^\/api\/v\d+\/public\//, // Public settings/universes (content-service)
-    /^\/api\/v\d+\/content\/(featured|trending)$/, // Public content endpoints
+    // Swagger UI
+    /^\/docs(\/.*)?$/,
+    // Public settings/universes (content-service)
+    /^\/api\/v\d+\/public\//,
+    // Public content browsing (home feed, featured, trending, new-releases, search, categories, tags)
+    // Universe and category content (read-only)
+    /^\/api\/v\d+\/content\/universe\/[^/]+$/,
+    /^\/api\/v\d+\/content\/category\/[^/]+$/,
+    /^\/api\/v\d+\/content\/[^/]+$/,  // Content detail
+    /^\/api\/v\d+\/content\/(home|watch|featured|trending|new-releases|featured-slides|popular-region|search|categories|tags)$/,
+    // Content detail (read-only, @Public on controller)
+    /^\/api\/v\d+\/content\/[^/]+$/,
+    // Content comments and related
+    /^\/api\/v\d+\/content\/[^/]+\/(comments|related)$/,
+    // Universe detail
+    /^\/api\/v\d+\/universe\/[^/]+$/,
+    // Creator discovery and public profiles
+    /^\/api\/v\d+\/creators\/(discover|[^/]+|[^/]+\/content)$/,
+    // Universe-specific trending and listing (read-only)
+    /^\/api\/v\d+\/(comedy|games|reality|movie|sports|lifestyle|vertical)\/(trending|[^/]+)$/,
+    /^\/api\/v\d+\/(comedy|games|reality|movie|sports|lifestyle|vertical)$/,
+    // Search suggestions and trending searches
+    /^\/api\/v\d+\/search\/(trending|suggestions)$/,
+    // Engagement public data (leaderboard, rankings, prediction results)
+    /^\/api\/v\d+\/engagement\/(leaderboard|rankings|predictions\/[^/]+\/results)$/,
+    // Subscription plans (public, for upsell)
+    /^\/api\/v\d+\/subscription\/plans(\/[^/]+)?$/,
+    // Moderation report types
+    /^\/api\/v\d+\/moderation\/report-types$/,
   ];
 
   constructor(

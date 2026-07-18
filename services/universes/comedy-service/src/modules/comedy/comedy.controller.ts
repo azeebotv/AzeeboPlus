@@ -7,7 +7,7 @@ import { ComedyResponse } from './interfaces/comedy-response.interface.js';
 import { SubmitChallengeDto } from './dto/submit-challenge.dto.js';
 
 @ApiTags('Comedy')
-@Controller('v1/comedy')
+@Controller('comedy')
 export class ComedyController {
   constructor(@Inject(ComedyService) private readonly comedyService: ComedyService) {}
 

@@ -1,10 +1,12 @@
 // src/main.ts
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
+import { GlobalExceptionFilter } from '@azeebo/error-handling';
+import { configureCors } from '@azeebo/security';
 
 // Ensure required env vars are present early
 if (!process.env.JWT_ACCESS_SECRET) {
@@ -13,8 +15,10 @@ if (!process.env.JWT_ACCESS_SECRET) {
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.enableVersioning({ type: VersioningType.URI, prefix: "v", defaultVersion: "1" });
   const logger = new Logger('AdminApp');
 
+  app.useGlobalFilters(new GlobalExceptionFilter());
   app.use(cookieParser());
 
   // Security middlewares — aligned with @azeebo/security package
@@ -56,28 +60,8 @@ async function bootstrap() {
     'http://localhost:4016',
   ];
 
-  app.enableCors({
-    origin: (
-      origin: string | undefined,
-      callback: (err: Error | null, allow?: boolean) => void
-    ) => {
-      if (origin && allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    credentials: true,
-    allowedHeaders: [
-      'Content-Type',
-      'Authorization',
-      'X-Requested-With',
-      'X-Request-ID',
-      'X-CSRF-Token',
-    ],
-    exposedHeaders: ['X-Total-Count', 'X-Page-Count', 'X-Request-ID'],
-    maxAge: 86400,
+  configureCors(app, {
+    allowedOrigins,
   });
 
   app.enableShutdownHooks();

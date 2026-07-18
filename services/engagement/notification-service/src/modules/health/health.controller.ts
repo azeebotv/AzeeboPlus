@@ -12,7 +12,6 @@ export class HealthController {
   @Get()
   @HttpCode(HttpStatus.OK)
   async check(): Promise<{ status: string; timestamp: string; database: string }> {
-    let database = 'ok';
     try {
       await this.prisma.$queryRaw`SELECT 1`;
     } catch {
@@ -24,7 +23,7 @@ export class HealthController {
     return {
       status: 'ok',
       timestamp: new Date().toISOString(),
-      database,
+      database: 'ok',
     };
   }
 

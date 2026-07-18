@@ -58,7 +58,19 @@ export class EngagementService {
 
     try {
       const cacheK = cacheKey('engagement', `leaderboard:${timePeriod}:${category}:${limit}`);
-      const cached = await this.cache.get(cacheK);
+      const cached = await this.cache.get<{
+        success: boolean;
+        data: Array<{
+          id: string;
+          userId: string;
+          displayName: string;
+          avatar: string;
+          score: number;
+          rank: number;
+          category: string;
+          timePeriod: string;
+        }>;
+      }>(cacheK);
       if (cached) return cached;
 
       const entries = await this.prisma.leaderboardEntry.findMany({
@@ -100,27 +112,30 @@ export class EngagementService {
   async getRankings() {
     try {
       const categories = ['all', 'gaming', 'content', 'social', 'predictions'];
-      const rankings = await Promise.all(
-        categories.map(async (category) => {
-          const entries = await this.prisma.ranking.findMany({
-            where: { category },
-            orderBy: { score: 'desc' },
-            take: 10,
-          });
+      // Single grouped query instead of N+1 per category
+      const allEntries = await this.prisma.ranking.findMany({
+        where: { category: { in: categories } },
+        orderBy: { score: 'desc' },
+      });
 
-          return {
-            category,
-            rankings: entries.map((entry: RankingData, index: number) => ({
-              id: entry.id,
-              userId: entry.userId,
-              displayName: entry.displayName,
-              avatar: entry.avatar,
-              score: entry.score,
-              rank: index + 1,
-            })),
-          };
-        })
-      );
+      const grouped = new Map<string, typeof allEntries>();
+      for (const cat of categories) grouped.set(cat, []);
+      for (const entry of allEntries) {
+        const list = grouped.get(entry.category);
+        if (list && list.length < 10) list.push(entry);
+      }
+
+      const rankings = categories.map((category) => ({
+        category,
+        rankings: (grouped.get(category) || []).map((entry: RankingData, index: number) => ({
+          id: entry.id,
+          userId: entry.userId,
+          displayName: entry.displayName,
+          avatar: entry.avatar,
+          score: entry.score,
+          rank: index + 1,
+        })),
+      }));
 
       return {
         success: true,

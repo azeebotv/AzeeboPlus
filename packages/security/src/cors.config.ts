@@ -48,6 +48,8 @@ export function configureCors(app: INestApplication, options: CorsOptions): void
       'Authorization',
       'X-Requested-With',
       'X-Request-ID',
+      'Idempotency-Key',
+      'X-Feature-Flag',
       'Accept',
       'Origin',
     ],

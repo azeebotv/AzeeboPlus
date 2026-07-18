@@ -30,7 +30,7 @@ interface CreateMusicData {
 }
 
 @ApiTags('Music')
-@Controller('v1/lifestyle/music')
+@Controller('lifestyle/music')
 export class MusicController {
   constructor(@Inject(MusicService) private readonly musicService: MusicService) {}
 

@@ -19,7 +19,7 @@ import { UpdateEventDto } from './dto/update-event.dto';
 import { RsvpDto } from './dto/rsvp.dto';
 
 @ApiTags('Events')
-@Controller('v1/lifestyle/events')
+@Controller('lifestyle/events')
 export class EventsController {
   constructor(@Inject(EventsService) private readonly eventsService: EventsService) {}
 

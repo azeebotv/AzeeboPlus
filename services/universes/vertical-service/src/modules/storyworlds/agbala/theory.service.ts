@@ -87,7 +87,7 @@ export class TheoryService {
   ): Promise<TheoryResponse> {
     try {
       const cacheKey = `theories:list:${authorId || 'all'}:${status}:${page}:${limit}`;
-      const cached = this.cache.get<TheoryResponse>(cacheKey);
+      const cached = await this.cache.get<TheoryResponse>(cacheKey);
       if (cached) return cached;
 
       const where: Record<string, unknown> = {};
@@ -117,7 +117,7 @@ export class TheoryService {
         },
       };
 
-      this.cache.set(cacheKey, response);
+      await this.cache.set(cacheKey, response);
       return response;
     } catch (error) {
       this.logger.error(`Failed to get theories: ${error}`);
@@ -131,7 +131,7 @@ export class TheoryService {
   async getTheoryBySlug(slug: string): Promise<TheoryResponse> {
     try {
       const cacheKey = `theories:detail:${slug}`;
-      const cached = this.cache.get<TheoryResponse>(cacheKey);
+      const cached = await this.cache.get<TheoryResponse>(cacheKey);
       if (cached) return cached;
 
       const theory = await this.prisma.theory.findUnique({
@@ -152,7 +152,7 @@ export class TheoryService {
         data: this.formatTheory(theory),
       };
 
-      this.cache.set(cacheKey, response);
+      await this.cache.set(cacheKey, response);
       return response;
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
@@ -198,7 +198,7 @@ export class TheoryService {
         },
       });
 
-      this.cache.invalidate('theories:');
+      await this.cache.invalidate('theories:');
       return { success: true, data: this.formatTheory(theory) };
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
@@ -244,7 +244,7 @@ export class TheoryService {
         data: updateData,
       });
 
-      this.cache.invalidate('theories:');
+      await this.cache.invalidate('theories:');
       return { success: true, data: this.formatTheory(updated) };
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
@@ -268,7 +268,7 @@ export class TheoryService {
       }
 
       await this.prisma.theory.delete({ where: { id } });
-      this.cache.invalidate('theories:');
+      await this.cache.invalidate('theories:');
       return { success: true, data: { message: 'Theory deleted' } };
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;

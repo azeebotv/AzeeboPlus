@@ -158,7 +158,7 @@ export default function AppHeader({ active: _active }: { active?: string }) {
   const { balance } = useWallet();
   const pathname = usePathname();
   const router = useRouter();
-  const isCreator = user?.role === 'creator' || user?.role === 'CREATOR';
+  const isCreator = user?.role?.toLowerCase() === 'creator';
 
   // UI state
   const [scrolled, setScrolled] = useState(false);

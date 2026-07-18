@@ -25,7 +25,7 @@ interface AuthenticatedRequest {
 }
 
 @ApiTags('Subscriptions')
-@Controller('v1/subscription')
+@Controller('subscription')
 export class SubscriptionController {
   constructor(
     @Inject(SubscriptionService) private readonly subscriptionService: SubscriptionService

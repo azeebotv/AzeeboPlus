@@ -48,113 +48,22 @@ export function registerKeyboardShortcut(shortcut: KeyboardShortcut): () => void
   };
 }
 
-export function focusElement(selector: string): void {
-  const element = document.querySelector<HTMLElement>(selector);
-  if (element) {
-    element.focus();
+let liveRegion: HTMLElement | null = null;
+
+function getLiveRegion(): HTMLElement {
+  if (!liveRegion) {
+    liveRegion = document.createElement('div');
+    liveRegion.setAttribute('aria-live', 'polite');
+    liveRegion.setAttribute('aria-atomic', 'true');
+    liveRegion.className = 'sr-only';
+    document.body.appendChild(liveRegion);
   }
-}
-
-export function focusNextElement(
-  currentElement: HTMLElement,
-  direction: 'next' | 'previous' = 'next'
-): void {
-  const focusableSelectors = [
-    'a[href]',
-    'button:not([disabled])',
-    'input:not([disabled])',
-    'select:not([disabled])',
-    'textarea:not([disabled])',
-    '[tabindex]:not([tabindex="-1"])',
-    '[contenteditable="true"]',
-  ].join(', ');
-
-  const focusableElements = Array.from(document.querySelectorAll<HTMLElement>(focusableSelectors));
-  const currentIndex = focusableElements.indexOf(currentElement);
-
-  if (currentIndex === -1) return;
-
-  let nextIndex: number;
-  if (direction === 'next') {
-    nextIndex = (currentIndex + 1) % focusableElements.length;
-  } else {
-    nextIndex = (currentIndex - 1 + focusableElements.length) % focusableElements.length;
-  }
-
-  focusableElements[nextIndex]?.focus();
-}
-
-export function trapFocus(container: HTMLElement): () => void {
-  const focusableSelectors = [
-    'a[href]',
-    'button:not([disabled])',
-    'input:not([disabled])',
-    'select:not([disabled])',
-    'textarea:not([disabled])',
-    '[tabindex]:not([tabindex="-1"])',
-  ].join(', ');
-
-  const focusableElements = Array.from(container.querySelectorAll<HTMLElement>(focusableSelectors));
-  const firstFocusable = focusableElements[0];
-  const lastFocusable = focusableElements[focusableElements.length - 1];
-
-  const handleKeyDown = (event: KeyboardEvent) => {
-    if (event.key === 'Tab') {
-      if (event.shiftKey) {
-        if (document.activeElement === firstFocusable) {
-          event.preventDefault();
-          lastFocusable?.focus();
-        }
-      } else {
-        if (document.activeElement === lastFocusable) {
-          event.preventDefault();
-          firstFocusable?.focus();
-        }
-      }
-    }
-
-    if (event.key === 'Escape') {
-      container.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    }
-  };
-
-  container.addEventListener('keydown', handleKeyDown);
-
-  firstFocusable?.focus();
-
-  return () => {
-    container.removeEventListener('keydown', handleKeyDown);
-  };
-}
-
-export function makeFocusable(element: HTMLElement, tabIndex: number = 0): void {
-  element.setAttribute('tabindex', tabIndex.toString());
-}
-
-export function addKeyboardRole(element: HTMLElement, role: string): void {
-  element.setAttribute('role', role);
-}
-
-export function addKeyboardLabel(element: HTMLElement, label: string): void {
-  element.setAttribute('aria-label', label);
-}
-
-export function addKeyboardDescription(element: HTMLElement, description: string): void {
-  element.setAttribute('aria-describedby', description);
+  return liveRegion;
 }
 
 export function announceToScreenReader(message: string): void {
-  const announcement = document.createElement('div');
-  announcement.setAttribute('aria-live', 'polite');
-  announcement.setAttribute('aria-atomic', 'true');
-  announcement.className = 'sr-only';
-  announcement.textContent = message;
-
-  document.body.appendChild(announcement);
-
-  setTimeout(() => {
-    document.body.removeChild(announcement);
-  }, 1000);
+  const region = getLiveRegion();
+  region.textContent = message;
 }
 
 export const DEFAULT_SHORTCUTS: KeyboardShortcut[] = [

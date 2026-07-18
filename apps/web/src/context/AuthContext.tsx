@@ -69,6 +69,12 @@ const USER_KEY = 'azeebo_user';
 // verify the JWT signature. Future improvement: migrate to HttpOnly cookies to
 // prevent XSS theft of tokens entirely. For now, strong CSP headers and XSS
 // prevention are critical to protect against token theft.
+//
+// RECOMMENDATION: Migrate to HttpOnly cookies for token storage. This requires:
+// 1. Server-side API to set/clear HttpOnly cookies on login/logout/refresh
+// 2. Remove localStorage token storage
+// 3. Update middleware to read from HttpOnly cookies
+// See: https://nextjs.org/docs/app/building-your-application/authentication
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);

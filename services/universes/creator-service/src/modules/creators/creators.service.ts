@@ -646,10 +646,12 @@ export class CreatorsService {
       throw new BadRequestException('Cannot tip yourself');
     }
 
-    let senderWallet: any;
+    let senderWallet: { id: string; balance: number | string } | undefined;
     try {
-      const response = await axios.get(`${this.walletServiceBaseUrl}/wallets/user/${userId}`);
-      senderWallet = response.data;
+      const response = await axios.get<{ data?: { id: string; balance: number | string } }>(
+        `${this.walletServiceBaseUrl}/wallets/user/${userId}`
+      );
+      senderWallet = response.data?.data;
     } catch (error) {
       throw new NotFoundException('Sender wallet not found');
     }
@@ -657,10 +659,12 @@ export class CreatorsService {
       throw new NotFoundException('Sender wallet not found');
     }
 
-    let creatorWallet: any;
+    let creatorWallet: { id: string; balance: number | string } | undefined;
     try {
-      const response = await axios.get(`${this.walletServiceBaseUrl}/wallets/user/${creatorId}`);
-      creatorWallet = response.data;
+      const response = await axios.get<{ data?: { id: string; balance: number | string } }>(
+        `${this.walletServiceBaseUrl}/wallets/user/${creatorId}`
+      );
+      creatorWallet = response.data?.data;
     } catch (error) {
       throw new NotFoundException('Creator wallet not found');
     }

@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  Pressable,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
@@ -48,6 +49,7 @@ export default function ContentRow({
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const scrollOffsetRef = useRef(0);
 
   const cardWidth = CARD_WIDTHS[cardSize];
 
@@ -83,30 +85,32 @@ export default function ContentRow({
           {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
         </View>
         <View style={styles.navButtons}>
-          <View
+          <Pressable
             style={[styles.navBtn, !canScrollLeft && styles.navBtnDisabled]}
             accessibilityLabel={`${title} ${t('home.scrollLeft')}`}
             accessibilityRole="button"
-            accessible
+            onPress={() => scrollRef.current?.scrollTo({ x: scrollOffsetRef.current - 300, animated: true })}
+            disabled={!canScrollLeft}
           >
             <Ionicons
               name="chevron-back"
               size={16}
               color={canScrollLeft ? colors.text.primary : 'rgba(255,255,255,0.3)'}
             />
-          </View>
-          <View
+          </Pressable>
+          <Pressable
             style={[styles.navBtn, !canScrollRight && styles.navBtnDisabled]}
             accessibilityLabel={`${title} ${t('home.scrollRight')}`}
             accessibilityRole="button"
-            accessible
+            onPress={() => scrollRef.current?.scrollTo({ x: scrollOffsetRef.current + 300, animated: true })}
+            disabled={!canScrollRight}
           >
             <Ionicons
               name="chevron-forward"
               size={16}
               color={canScrollRight ? colors.text.primary : 'rgba(255,255,255,0.3)'}
             />
-          </View>
+          </Pressable>
         </View>
       </View>
 

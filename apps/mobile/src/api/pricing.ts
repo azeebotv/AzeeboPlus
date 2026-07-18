@@ -1,31 +1,12 @@
 import { apiClient } from './client';
-import type { ApiResponse } from './auth';
+import type { ApiResponse, VotePackage, SubscriptionPlan } from '../types/api';
+
+export type { VotePackage, SubscriptionPlan } from '../types/api';
 
 export interface MoviePricing {
   rent48h: { id: string; type: string; price: number; currency: string };
   buy: { id: string; type: string; price: number; currency: string };
   pass: { id: string; type: string; price: number; currency: string; period: string };
-}
-
-export interface VotePackage {
-  id: string;
-  votes: number;
-  price: number;
-  bonus?: number;
-  multiplier?: number;
-  name?: string;
-  description?: string;
-  isPopular?: boolean;
-  label?: string;
-}
-
-export interface SubscriptionPlan {
-  id: string;
-  name: string;
-  price: number;
-  currency: string;
-  period: string;
-  features: string[];
 }
 
 export interface WalletPricing {

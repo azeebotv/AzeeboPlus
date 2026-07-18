@@ -103,7 +103,7 @@ export default function WithdrawFundsScreen() {
         setAccountName('');
         setErrors((prev) => ({
           ...prev,
-          accountName: result.error || 'Could not verify account',
+          accountName: (result.error as unknown as string) || 'Could not verify account',
         }));
       }
     } catch {

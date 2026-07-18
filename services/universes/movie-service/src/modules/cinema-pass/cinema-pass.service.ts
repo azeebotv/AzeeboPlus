@@ -137,11 +137,30 @@ export class CinemaPassService {
       const idempotencyKey = `${userId}-${passId}-${now.getTime()}`;
 
       if (passPrice > 0) {
+        let walletId: string;
+        try {
+          const walletResponse = await axios.get(
+            `${this.walletServiceBaseUrl}/wallet/user/${userId}`,
+            { timeout: 10000 }
+          );
+          const wallet = walletResponse.data?.data;
+          if (!wallet) {
+            throw new NotFoundException('Wallet not found');
+          }
+          walletId = wallet.id;
+          if (Number(wallet.balance) < passPrice) {
+            throw new BadRequestException('Insufficient balance');
+          }
+        } catch (error) {
+          if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
+          throw new NotFoundException('Wallet not found');
+        }
+
         try {
           await axios.post(
             `${this.walletServiceBaseUrl}/wallet/debit`,
             {
-              userId,
+              walletId,
               amount: passPrice,
               description: `Cinema pass subscription: ${pass.name}`,
               idempotencyKey,

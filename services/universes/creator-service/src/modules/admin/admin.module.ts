@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtConfigModule } from '@azeebo/shared-services';
 import { AdminController } from './admin.controller.js';
 import { AdminService } from './admin.service.js';
 import { CreatorsModule } from '../creators/creators.module.js';
@@ -8,16 +7,7 @@ import { CreatorsModule } from '../creators/creators.module.js';
 @Module({
   imports: [
     CreatorsModule,
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService): Promise<Record<string, unknown>> => ({
-        secret: configService.get<string>('JWT_ACCESS_SECRET'),
-        signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as string | number,
-        },
-      }),
-      inject: [ConfigService],
-    }),
+    JwtConfigModule,
   ],
   controllers: [AdminController],
   providers: [AdminService],

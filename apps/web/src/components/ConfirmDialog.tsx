@@ -48,8 +48,8 @@ export function ConfirmDialog({
       aria-label={title}
     >
       <div className="az-glass p-6 w-full max-w-sm text-center">
-        <h2 className="text-lg font-bold text-white mb-2">{title}</h2>
-        <p className="text-white/60 text-sm mb-6">{message}</p>
+        <h2 className="text-lg font-bold text-[var(--brand-white)] mb-2">{title}</h2>
+        <p className="text-[var(--brand-white)]/60 text-sm mb-6">{message}</p>
         <div className="flex gap-3 justify-center">
           <button
             ref={cancelRef}

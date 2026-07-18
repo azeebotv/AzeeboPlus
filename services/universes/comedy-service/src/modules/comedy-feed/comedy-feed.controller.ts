@@ -12,7 +12,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ComedyFeedService } from './comedy-feed.service.js';
 
 @ApiTags('Comedy Feed')
-@Controller('v1/comedy')
+@Controller('comedy')
 export class ComedyFeedController {
   constructor(@Inject(ComedyFeedService) private readonly comedyFeedService: ComedyFeedService) {}
 

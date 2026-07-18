@@ -36,7 +36,7 @@ interface CreateNewsData {
 }
 
 @ApiTags('Celebrity')
-@Controller('v1/lifestyle/celebrities')
+@Controller('lifestyle/celebrities')
 export class CelebrityController {
   constructor(@Inject(CelebrityService) private readonly celebrityService: CelebrityService) {}
 

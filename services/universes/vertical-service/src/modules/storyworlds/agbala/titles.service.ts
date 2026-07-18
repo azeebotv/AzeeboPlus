@@ -163,7 +163,7 @@ export class AgbalaTitlesService {
   ): Promise<TitleResponse> {
     try {
       const cacheKey = `titles:list:${universeSlug || 'all'}:${type || 'all'}:${status}:${page}:${limit}`;
-      const cached = this.cache.get<TitleResponse>(cacheKey);
+      const cached = await this.cache.get<TitleResponse>(cacheKey);
       if (cached) return cached;
 
       const where: Record<string, unknown> = {};
@@ -203,7 +203,7 @@ export class AgbalaTitlesService {
         },
       };
 
-      this.cache.set(cacheKey, response);
+      await this.cache.set(cacheKey, response);
       return response;
     } catch (error) {
       this.logger.error(`Failed to fetch titles: ${error}`);
@@ -214,7 +214,7 @@ export class AgbalaTitlesService {
   async getTitleBySlug(slug: string): Promise<TitleResponse> {
     try {
       const cacheKey = `titles:detail:${slug}`;
-      const cached = this.cache.get<TitleResponse>(cacheKey);
+      const cached = await this.cache.get<TitleResponse>(cacheKey);
       if (cached) return cached;
 
       const title = await this.prisma.title.findUnique({
@@ -239,7 +239,7 @@ export class AgbalaTitlesService {
         },
       };
 
-      this.cache.set(cacheKey, response);
+      await this.cache.set(cacheKey, response);
       return response;
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
@@ -251,7 +251,7 @@ export class AgbalaTitlesService {
   async getFeaturedTitles(limit = 10): Promise<TitleResponse> {
     try {
       const cacheKey = `titles:featured:${limit}`;
-      const cached = this.cache.get<TitleResponse>(cacheKey);
+      const cached = await this.cache.get<TitleResponse>(cacheKey);
       if (cached) return cached;
 
       const titles = await this.prisma.title.findMany({
@@ -266,7 +266,7 @@ export class AgbalaTitlesService {
         data: titles.map((t) => this.formatTitle(t)),
       };
 
-      this.cache.set(cacheKey, response, 10 * 60 * 1000);
+      await this.cache.set(cacheKey, response, 10 * 60 * 1000);
       return response;
     } catch (error) {
       this.logger.error(`Failed to fetch featured titles: ${error}`);
@@ -300,7 +300,7 @@ export class AgbalaTitlesService {
         include: { universe: true },
       });
 
-      this.cache.invalidate('titles:');
+      await this.cache.invalidate('titles:');
       return { success: true, data: this.formatTitle(title) };
     } catch (error) {
       this.logger.error(`Failed to create title: ${error}`);
@@ -337,7 +337,7 @@ export class AgbalaTitlesService {
         include: { universe: true },
       });
 
-      this.cache.invalidate('titles:');
+      await this.cache.invalidate('titles:');
       return { success: true, data: this.formatTitle(updated) };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
@@ -354,7 +354,7 @@ export class AgbalaTitlesService {
       }
 
       await this.prisma.title.delete({ where: { id } });
-      this.cache.invalidate('titles:');
+      await this.cache.invalidate('titles:');
       return { success: true, data: { message: 'Title deleted' } };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
@@ -386,7 +386,7 @@ export class AgbalaTitlesService {
         },
       });
 
-      this.cache.invalidate('titles:');
+      await this.cache.invalidate('titles:');
       return { success: true, data: this.formatChapter(chapter) };
     } catch (error) {
       this.logger.error(`Failed to create chapter for title ${data.titleId}: ${error}`);
@@ -400,7 +400,7 @@ export class AgbalaTitlesService {
   ): Promise<{ success: boolean; data: Chapter }> {
     try {
       const cacheKey = `titles:chapter:${titleId}:${chapterNumber}`;
-      const cached = this.cache.get<{ success: boolean; data: Chapter }>(cacheKey);
+      const cached = await this.cache.get<{ success: boolean; data: Chapter }>(cacheKey);
       if (cached) return cached;
 
       const chapter = await this.prisma.chapter.findFirst({
@@ -412,7 +412,7 @@ export class AgbalaTitlesService {
       }
 
       const response = { success: true, data: this.formatChapter(chapter) };
-      this.cache.set(cacheKey, response);
+      await this.cache.set(cacheKey, response);
       return response;
     } catch (error) {
       if (error instanceof NotFoundException) throw error;

@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SocialService } from './social.service';
 
 @ApiTags('Social')
-@Controller('v1/lifestyle/social')
+@Controller('lifestyle/social')
 export class SocialController {
   constructor(@Inject(SocialService) private readonly socialService: SocialService) {}
 

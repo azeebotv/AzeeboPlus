@@ -31,7 +31,7 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     CREATE DATABASE azeebo_admin;
     CREATE DATABASE azeebo_creator_portal;
 
-    CREATE USER azeebo WITH PASSWORD '${DB_PASSWORD:-azeebo_dev_2024}';
+    CREATE USER azeebo WITH PASSWORD '${DB_PASSWORD}';
 
     GRANT ALL PRIVILEGES ON DATABASE azeebo_auth TO azeebo;
     GRANT ALL PRIVILEGES ON DATABASE azeebo_user TO azeebo;
