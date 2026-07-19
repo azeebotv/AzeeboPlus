@@ -1098,9 +1098,6 @@ importers:
       ioredis:
         specifier: ^5.11.1
         version: 5.11.1
-      ms:
-        specifier: ^2.1.3
-        version: 2.1.3
       passport-jwt:
         specifier: ^4.0.1
         version: 4.0.1
@@ -18458,9 +18455,7 @@ snapshots:
       metro-runtime: 0.84.4
     transitivePeerDependencies:
       - '@babel/core'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 
