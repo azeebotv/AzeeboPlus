@@ -349,6 +349,8 @@ export function gatewayPath(endpoint: string): string {
 }
 
 const ACCESS_TOKEN_KEY = 'azeebo_access_token';
+const REFRESH_TOKEN_KEY = 'azeebo_refresh_token';
+const USER_KEY = 'azeebo_user';
 
 function getCookie(name: string): string | null {
   if (typeof document === 'undefined') return null;
@@ -362,7 +364,7 @@ const STATE_CHANGING_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
 export async function apiFetch<T>(
   endpoint: string,
-  options: RequestInit = {},
+  options: RequestInit & { skipAuthRetry?: boolean } = {},
   retryOptions?: { maxRetries?: number; timeoutMs?: number }
 ): Promise<ApiResponse<T>> {
   const maxRetries = retryOptions?.maxRetries ?? 0;
