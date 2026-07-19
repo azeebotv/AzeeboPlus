@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "start": "nest start",
-    "start:dev": "tsx watch src/main.ts",
+    "start:dev": "bash start-dev.sh",
     "start:prod": "node dist/main",
     "lint": "eslint src --fix",
     "test": "jest",

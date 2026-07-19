@@ -5,7 +5,7 @@ import { AdminGuard } from '@azeebo/security';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
 @ApiTags('Admin - Analytics Service')
-@Controller('v1/admin')
+@Controller('admin')
 @UseGuards(AdminGuard)
 export class AdminController {
   constructor(@Inject(AdminService) private readonly adminService: AdminService) {}

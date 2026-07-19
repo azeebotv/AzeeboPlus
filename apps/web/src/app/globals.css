@@ -835,3 +835,14 @@ html:not(.dark) {
   white-space: nowrap;
   border-width: 0;
 }
+
+/* ============================================================
+   Content Row Scrollbar Hiding
+   ============================================================ */
+.content-row-scroll::-webkit-scrollbar {
+  display: none;
+}
+.content-row-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

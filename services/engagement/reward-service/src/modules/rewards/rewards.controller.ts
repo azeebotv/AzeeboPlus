@@ -19,7 +19,7 @@ import { RewardResponse } from './interfaces/reward-response.interface.js';
 
 @ApiTags('Rewards')
 @UseGuards(RateLimitGuard)
-@Controller('v1/rewards')
+@Controller('rewards')
 export class RewardsController {
   constructor(@Inject(RewardsService) private readonly rewardsService: RewardsService) {}
 

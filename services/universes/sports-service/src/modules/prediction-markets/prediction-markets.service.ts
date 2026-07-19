@@ -22,7 +22,8 @@ export class PredictionMarketsService {
       const response = await axios.get(`${this.walletServiceBaseUrl}/wallet/user/${userId}`, {
         timeout: 10000,
       });
-      return response.data;
+      const data = response.data?.data ?? response.data;
+      return { id: data.id, balance: Number(data.balance) };
     } catch {
       return null;
     }
@@ -217,26 +218,50 @@ export class PredictionMarketsService {
           throw new BadRequestException(errorMessage);
         });
 
-      await this.prisma.predictionMarket.update({
-        where: { id: marketId },
-        data: { totalPool: { increment: stakeAmount } },
-      });
+      let entryId: string;
+      try {
+        await this.prisma.predictionMarket.update({
+          where: { id: marketId },
+          data: { totalPool: { increment: stakeAmount } },
+        });
 
-      const entry = await this.prisma.predictionEntry.create({
-        data: {
-          userId,
-          eventId: market.eventId,
-          prediction: { selectedOption, stake: stakeAmount } as unknown as Record<
-            string,
-            string | number | boolean | null
-          >,
-          predictionMarketId: marketId,
-        },
-      });
+        const entry = await this.prisma.predictionEntry.create({
+          data: {
+            userId,
+            eventId: market.eventId,
+            prediction: { selectedOption, stake: stakeAmount } as unknown as Record<
+              string,
+              string | number | boolean | null
+            >,
+            predictionMarketId: marketId,
+          },
+        });
+        entryId = entry.id;
+      } catch (dbError) {
+        // Compensate: credit wallet back if DB write fails after debit
+        await axios
+          .post(
+            `${this.walletServiceBaseUrl}/wallet/credit`,
+            {
+              walletId: wallet.id,
+              amount: stakeAmount,
+              description: `Refund: prediction market stake failed for ${marketId}`,
+              reference: `compensate:${idempotencyKey}`,
+            },
+            { timeout: 10000 }
+          )
+          .catch((compensateError: unknown) => {
+            this.logger.error(
+              'Failed to compensate wallet after prediction market DB failure:',
+              compensateError
+            );
+          });
+        throw dbError;
+      }
 
       return {
         success: true,
-        data: { entryId: entry.id, message: 'Prediction placed successfully' },
+        data: { entryId, message: 'Prediction placed successfully' },
       };
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
@@ -291,6 +316,7 @@ export class PredictionMarketsService {
                 walletId: wallet.id,
                 amount: 100,
                 description: `Prediction market winning: ${marketId}`,
+                reference: `prediction-win:${marketId}:${winner.userId}`,
               },
               { timeout: 10000 }
             )

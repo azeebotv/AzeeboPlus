@@ -4,7 +4,7 @@ import { AdminService } from './admin.service.js';
 import { AdminGuard, RateLimitGuard, RateLimit } from '@azeebo/security';
 
 @ApiTags('Admin - Reward Service')
-@Controller('v1/admin')
+@Controller('admin')
 @UseGuards(AdminGuard, RateLimitGuard)
 export class AdminController {
   constructor(@Inject(AdminService) private readonly adminService: AdminService) {}

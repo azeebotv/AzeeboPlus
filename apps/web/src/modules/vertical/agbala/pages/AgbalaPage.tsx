@@ -31,13 +31,13 @@ const PATHS = [
 
 export default function AgbalaPage() {
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-[var(--brand-near-black)] text-[var(--brand-white)]">
       <div className="max-w-6xl mx-auto px-4 py-12">
         <header className="text-center mb-16">
-          <h1 className="text-4xl font-bold mb-4" role="heading">
+          <h1 className="text-4xl font-bold mb-4">
             Agbala
           </h1>
-          <p className="text-xl text-gray-400">Choose your path. Shape your destiny.</p>
+          <p className="text-xl text-[var(--brand-white)]/50">Choose your path. Shape your destiny.</p>
         </header>
 
         <section className="mb-16">

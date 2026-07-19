@@ -223,6 +223,9 @@ export class RewardsService {
         currentStreak = 0;
       }
 
+      // NOTE: currentStreak is calculated but not persisted here.
+      // The check-in endpoint should update streak and lastCheckInAt in the same transaction.
+
       return {
         success: true,
         data: {
@@ -511,7 +514,7 @@ export class RewardsService {
 
       const activityPoints = this.getActivityPoints(activity);
 
-      await this.prisma.$transaction([
+      const [updatedAccount] = await this.prisma.$transaction([
         this.prisma.rewardAccount.update({
           where: { userId },
           data: {
@@ -536,7 +539,7 @@ export class RewardsService {
           message: 'Points earned successfully',
           activity,
           pointsEarned: activityPoints,
-          newBalance: rewardAccount.points + activityPoints,
+          newBalance: updatedAccount.points,
         },
       };
     } catch (error) {

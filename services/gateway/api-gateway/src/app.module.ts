@@ -1,5 +1,5 @@
 import { Module, NestModule, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -9,6 +9,7 @@ import { ProxyModule } from './modules/proxy/proxy.module';
 import { GatewayAuthGuard } from './guards/gateway-auth.guard';
 import { AuthThrottlerGuard } from './guards/auth-throttler.guard';
 import { CsrfMiddleware } from './common/csrf.middleware';
+import { ResponseWrapperInterceptor } from '@azeebo/logger';
 
 @Module({
   imports: [
@@ -45,6 +46,10 @@ import { CsrfMiddleware } from './common/csrf.middleware';
     ProxyModule,
   ],
   providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseWrapperInterceptor,
+    },
     {
       provide: APP_GUARD,
       useClass: GatewayAuthGuard,

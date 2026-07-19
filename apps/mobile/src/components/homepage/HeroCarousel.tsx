@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ContentItem } from '@/api';
 import { colors } from '@/theme';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
 interface HeroCarouselProps {
   slides: ContentItem[];

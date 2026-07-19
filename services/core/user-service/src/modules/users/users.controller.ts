@@ -64,6 +64,7 @@ export class UsersController {
     return this.usersService.updateProfile(this.getUserId(req), dto);
   }
 
+  // Wildcard GET route MUST come after all static GET routes
   @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Get user by ID' })

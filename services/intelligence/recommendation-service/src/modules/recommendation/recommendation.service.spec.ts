@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { RecommendationService } from './recommendation.service';
-import { PrismaService } from '../database/prisma.service';
+import { RecommendationService } from './recommendation.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { CacheService } from '@azeebo/shared-services';
 
 describe('RecommendationService', () => {

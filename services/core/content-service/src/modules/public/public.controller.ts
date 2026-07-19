@@ -6,7 +6,7 @@ import { PrismaService } from '../database/prisma.service.js';
 @ApiTags('Public')
 @Public()
 @UseGuards(RateLimitGuard)
-@Controller('v1/public')
+@Controller('public')
 export class PublicController {
   private readonly logger = new Logger(PublicController.name);
 

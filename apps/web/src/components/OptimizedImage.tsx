@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { useState, useCallback } from 'react';
 
 interface OptimizedImageProps {
   src: string;
@@ -13,12 +14,28 @@ interface OptimizedImageProps {
   blurDataURL?: string;
 }
 
+const FALLBACK_SRC = 'https://placehold.co/800x600/1a1a1a/ffffff?text=Azeebo%2B';
+
+// URLs that should bypass Next.js image optimization (SVG or already optimized)
+const UNOPTIMIZED_HOSTS = ['placehold.co'];
+
+function isUnoptimizedUrl(url: string): boolean {
+  try {
+    const hostname = new URL(url).hostname;
+    return UNOPTIMIZED_HOSTS.some(host => hostname.includes(host));
+  } catch {
+    return false;
+  }
+}
+
 /**
  * OptimizedImage component that wraps Next.js Image with default optimizations
  * - Automatic WebP/AVIF format conversion
  * - Lazy loading by default
  * - Responsive sizing
  * - Blur placeholder support
+ * - Error handling with fallback placeholder
+ * - Bypasses optimization for SVG/placeholder URLs
  */
 export function OptimizedImage({
   src,
@@ -32,9 +49,21 @@ export function OptimizedImage({
   placeholder = 'empty',
   blurDataURL,
 }: OptimizedImageProps) {
+  const [imgSrc, setImgSrc] = useState(src);
+  const [hasError, setHasError] = useState(false);
+
+  const handleError = useCallback(() => {
+    if (!hasError) {
+      setImgSrc(FALLBACK_SRC);
+      setHasError(true);
+    }
+  }, [hasError]);
+
+  const shouldUnoptimize = hasError || isUnoptimizedUrl(imgSrc);
+
   return (
     <Image
-      src={src}
+      src={imgSrc}
       alt={alt}
       width={fill ? undefined : width || 800}
       height={fill ? undefined : height || 600}
@@ -46,6 +75,8 @@ export function OptimizedImage({
       blurDataURL={blurDataURL}
       loading={priority ? 'eager' : 'lazy'}
       quality={85}
+      onError={handleError}
+      unoptimized={shouldUnoptimize}
     />
   );
 }

@@ -53,12 +53,12 @@ export function ToastProvider({ children }: { children: ReactNode }): React.JSX.
               borderRadius: 12,
               backgroundColor:
                 toast.type === 'error'
-                  ? '#CC1C1C'
+                  ? 'var(--brand-red, #CC1C1C)'
                   : toast.type === 'success'
-                    ? '#0D3B2E'
-                    : '#1A0A0A',
-              border: '1px solid #2A1A1A',
-              color: '#F5F0EB',
+                    ? 'var(--brand-forest, #0D3B2E)'
+                    : 'var(--brand-near-black, #1A0A0A)',
+              border: '1px solid var(--brand-surface, #2A1A1A)',
+              color: 'var(--brand-white, #F5F0EB)',
               fontSize: 14,
               fontWeight: 500,
               cursor: 'pointer',

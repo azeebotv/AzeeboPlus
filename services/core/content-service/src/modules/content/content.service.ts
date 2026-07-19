@@ -16,7 +16,7 @@ import { UpdateMediaAssetDto } from './dto/update-media-asset.dto.js';
 import { MediaService } from '../media/media.service.js';
 import { TranscodingService } from '../media/transcoding.service.js';
 import { ContentRepository } from './content.repository.js';
-import { RedisService } from '../../cache/redis.service.js';
+import { CacheService, cacheKey } from '@azeebo/shared-services';
 import { ContentFeedService } from './content-feed.service.js';
 import { ContentModerationService } from './content-moderation.service.js';
 import { ContentRelationshipService } from './content-relationship.service.js';
@@ -74,7 +74,7 @@ export class ContentService {
     @Inject(MediaService) private readonly mediaService: MediaService,
     @Inject(TranscodingService) private readonly transcodingService: TranscodingService,
     @Inject(ConfigService) _configService: ConfigService,
-    @Inject(RedisService) private readonly redisService: RedisService,
+    @Inject(CacheService) private readonly cache: CacheService,
     @Inject(ContentFeedService) private readonly contentFeedService: ContentFeedService,
     @Inject(ContentModerationService)
     private readonly contentModerationService: ContentModerationService,
@@ -459,10 +459,10 @@ export class ContentService {
   async getContent(id: string): Promise<{ success: boolean; data: ContentWithAll }> {
     try {
       // Check cache first
-      const cacheKey = `content:${id}`;
-      const cached = await this.redisService.get(cacheKey);
+      const cacheK = cacheKey('content', id);
+      const cached = await this.cache.get<ContentWithAll>(cacheK);
       if (cached) {
-        return { success: true, data: JSON.parse(cached) };
+        return { success: true, data: cached };
       }
 
       const content = (await this.contentRepository.findById(id)) as ContentWithAll | null;
@@ -472,7 +472,7 @@ export class ContentService {
       }
 
       // Cache for 2 minutes
-      await this.redisService.set(cacheKey, JSON.stringify(content), 120);
+      await this.cache.set(cacheK, content, 120);
 
       await this.prisma.contentItem.update({
         where: { id },
@@ -556,7 +556,7 @@ export class ContentService {
       )) as ContentWithUniverse;
 
       // Invalidate content cache
-      await this.redisService.del(`content:${id}`);
+      await this.cache.delete(cacheKey('content', id));
 
       return {
         success: true,
@@ -595,7 +595,7 @@ export class ContentService {
       await this.contentRepository.delete(id);
 
       // Invalidate content cache
-      await this.redisService.del(`content:${id}`);
+      await this.cache.delete(cacheKey('content', id));
 
       return {
         success: true,
@@ -654,7 +654,7 @@ export class ContentService {
       });
 
       // Invalidate content cache
-      await this.redisService.del(`content:${id}`);
+      await this.cache.delete(cacheKey('content', id));
 
       return {
         success: true,
@@ -1326,6 +1326,7 @@ export class ContentService {
         where,
         include: { universe: true },
         orderBy: { streamingReleaseDate: 'desc' },
+        take: 100,
       });
 
       const windows: Record<string, typeof content> = {

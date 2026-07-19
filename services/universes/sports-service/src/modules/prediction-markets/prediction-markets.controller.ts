@@ -21,7 +21,7 @@ import {
 
 @ApiTags('Prediction Markets')
 @ApiBearerAuth()
-@Controller('v1/sports/predictions')
+@Controller('sports/predictions')
 export class PredictionMarketsController {
   constructor(
     @Inject(PredictionMarketsService)

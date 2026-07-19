@@ -64,7 +64,7 @@ interface PayoutBody {
 
 @ApiTags('Creators')
 @ApiBearerAuth()
-@Controller('v1/creators')
+@Controller('creators')
 export class CreatorsController {
   constructor(@Inject(CreatorsService) private readonly creatorsService: CreatorsService) {}
 
@@ -158,6 +158,81 @@ export class CreatorsController {
   }
 
   @Public()
+  @Get('discover')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
+  @ApiOperation({ summary: 'Creator discovery' })
+  @ApiResponse({ status: 200, description: 'Discover creators' })
+  async discover(): Promise<CreatorResponse> {
+    return this.creatorsService.discover();
+  }
+
+  @Get('uploads')
+  @ApiOperation({ summary: 'List own uploads' })
+  @ApiResponse({ status: 200, description: 'Uploads list' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async listUploads(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
+    return this.creatorsService.listUploads(req.user.id);
+  }
+
+  @Get('subscriptions')
+  @ApiOperation({ summary: 'Get my subscriptions' })
+  @ApiResponse({ status: 200, description: 'Subscriptions list' })
+  async getMySubscriptions(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
+    return this.creatorsService.getMySubscriptions(req.user.id);
+  }
+
+  @Get('subscribers')
+  @ApiOperation({ summary: 'Get my subscribers' })
+  @ApiResponse({ status: 200, description: 'Subscribers list' })
+  async getMySubscribers(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
+    return this.creatorsService.getMySubscribers(req.user.id);
+  }
+
+  @Get('earnings')
+  @ApiOperation({ summary: 'Get creator earnings' })
+  @ApiResponse({ status: 200, description: 'Earnings data' })
+  async getEarnings(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
+    return this.creatorsService.getEarnings(req.user.id);
+  }
+
+  @Get('payouts')
+  @ApiOperation({ summary: 'Get payout history' })
+  @ApiResponse({ status: 200, description: 'Payout history' })
+  async getPayoutHistory(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
+    return this.creatorsService.getPayoutHistory(req.user.id);
+  }
+
+  @Get('analytics')
+  @ApiOperation({ summary: 'Get creator analytics' })
+  @ApiResponse({ status: 200, description: 'Analytics data' })
+  async getAnalytics(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
+    return this.creatorsService.getAnalytics(req.user.id);
+  }
+
+  @Get('challenges')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
+  @ApiOperation({ summary: 'Get creator challenges' })
+  @ApiResponse({ status: 200, description: 'Challenges list' })
+  async getChallenges(@Query('creatorId') creatorId?: string): Promise<CreatorResponse> {
+    return this.creatorsService.getChallenges(creatorId);
+  }
+
+  @Get('stats')
+  @ApiOperation({ summary: 'Get creator stats' })
+  async getStats(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
+    return this.creatorsService.getStats(req.user.id);
+  }
+
+  @Get('settings')
+  @ApiOperation({ summary: 'Get creator settings' })
+  async getSettings(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
+    return this.creatorsService.getSettings(req.user.id);
+  }
+
+  // Wildcard GET routes MUST come after all static GET routes
+  @Public()
   @Get(':creatorId')
   @UseGuards(RateLimitGuard)
   @RateLimit(200, 60000)
@@ -187,24 +262,6 @@ export class CreatorsController {
     @Body() body: CreateUploadBody
   ): Promise<CreatorResponse> {
     return this.creatorsService.createUploadForChannel(req.user.id, channelId, body);
-  }
-
-  @Get('uploads')
-  @ApiOperation({ summary: 'List own uploads' })
-  @ApiResponse({ status: 200, description: 'Uploads list' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async listUploads(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
-    return this.creatorsService.listUploads(req.user.id);
-  }
-
-  @Public()
-  @Get('discover')
-  @UseGuards(RateLimitGuard)
-  @RateLimit(100, 60000)
-  @ApiOperation({ summary: 'Creator discovery' })
-  @ApiResponse({ status: 200, description: 'Discover creators' })
-  async discover(): Promise<CreatorResponse> {
-    return this.creatorsService.discover();
   }
 
   @Post('tips/:creatorId')
@@ -239,27 +296,6 @@ export class CreatorsController {
     return this.creatorsService.cancelSubscription(req.user.id, creatorId);
   }
 
-  @Get('subscriptions')
-  @ApiOperation({ summary: 'Get my subscriptions' })
-  @ApiResponse({ status: 200, description: 'Subscriptions list' })
-  async getMySubscriptions(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
-    return this.creatorsService.getMySubscriptions(req.user.id);
-  }
-
-  @Get('subscribers')
-  @ApiOperation({ summary: 'Get my subscribers' })
-  @ApiResponse({ status: 200, description: 'Subscribers list' })
-  async getMySubscribers(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
-    return this.creatorsService.getMySubscribers(req.user.id);
-  }
-
-  @Get('earnings')
-  @ApiOperation({ summary: 'Get creator earnings' })
-  @ApiResponse({ status: 200, description: 'Earnings data' })
-  async getEarnings(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
-    return this.creatorsService.getEarnings(req.user.id);
-  }
-
   @Post('payouts')
   @ApiOperation({ summary: 'Request payout' })
   @ApiResponse({ status: 201, description: 'Payout requested' })
@@ -268,20 +304,6 @@ export class CreatorsController {
     @Body() body: PayoutBody
   ): Promise<CreatorResponse> {
     return this.creatorsService.requestPayout(req.user.id, body);
-  }
-
-  @Get('payouts')
-  @ApiOperation({ summary: 'Get payout history' })
-  @ApiResponse({ status: 200, description: 'Payout history' })
-  async getPayoutHistory(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
-    return this.creatorsService.getPayoutHistory(req.user.id);
-  }
-
-  @Get('analytics')
-  @ApiOperation({ summary: 'Get creator analytics' })
-  @ApiResponse({ status: 200, description: 'Analytics data' })
-  async getAnalytics(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
-    return this.creatorsService.getAnalytics(req.user.id);
   }
 
   @Post('challenges')
@@ -296,15 +318,6 @@ export class CreatorsController {
     return this.creatorsService.createChallenge(req.user.id, body);
   }
 
-  @Get('challenges')
-  @UseGuards(RateLimitGuard)
-  @RateLimit(100, 60000)
-  @ApiOperation({ summary: 'Get creator challenges' })
-  @ApiResponse({ status: 200, description: 'Challenges list' })
-  async getChallenges(@Query('creatorId') creatorId?: string): Promise<CreatorResponse> {
-    return this.creatorsService.getChallenges(creatorId);
-  }
-
   @Post('challenges/:challengeId/participate')
   @ApiOperation({ summary: 'Participate in challenge' })
   @ApiResponse({ status: 201, description: 'Participated' })
@@ -316,21 +329,18 @@ export class CreatorsController {
     return this.creatorsService.participateInChallenge(req.user.id, challengeId, body.contentUrl);
   }
 
-  @Get('stats')
-  @ApiOperation({ summary: 'Get creator stats' })
-  async getStats(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
-    return this.creatorsService.getStats(req.user.id);
-  }
-
-  @Get('settings')
-  @ApiOperation({ summary: 'Get creator settings' })
-  async getSettings(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
-    return this.creatorsService.getSettings(req.user.id);
-  }
-
   @Put('settings')
   @ApiOperation({ summary: 'Update creator settings' })
   async updateSettings(
+    @Request() req: { user: { id: string } },
+    @Body() body: Record<string, unknown>
+  ): Promise<CreatorResponse> {
+    return this.creatorsService.updateSettings(req.user.id, body);
+  }
+
+  @Put('monetization/settings')
+  @ApiOperation({ summary: 'Update monetization settings' })
+  async updateMonetizationSettings(
     @Request() req: { user: { id: string } },
     @Body() body: Record<string, unknown>
   ): Promise<CreatorResponse> {
@@ -346,14 +356,5 @@ export class CreatorsController {
     @Query('limit') limit = 20
   ): Promise<CreatorResponse> {
     return this.creatorsService.getCreatorContent(creatorId, Number(page), Number(limit));
-  }
-
-  @Put('monetization/settings')
-  @ApiOperation({ summary: 'Update monetization settings' })
-  async updateMonetizationSettings(
-    @Request() req: { user: { id: string } },
-    @Body() body: Record<string, unknown>
-  ): Promise<CreatorResponse> {
-    return this.creatorsService.updateSettings(req.user.id, body);
   }
 }

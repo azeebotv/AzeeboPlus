@@ -31,7 +31,7 @@ interface UpdateStoryDto {
 }
 
 @ApiTags('Stories')
-@Controller('v1/lifestyle/stories')
+@Controller('lifestyle/stories')
 export class StoriesController {
   constructor(@Inject(StoriesService) private readonly storiesService: StoriesService) {}
 

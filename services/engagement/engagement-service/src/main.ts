@@ -1,16 +1,18 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger } from '@nestjs/common';
+import { ValidationPipe, Logger, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
 import { LoggingInterceptor } from '@azeebo/logger';
 import { AppModule } from './app.module.js';
 import helmet from 'helmet';
 import { validateEnvironment } from '@azeebo/shared-types';
+import { configureCors } from '@azeebo/security';
 
 async function bootstrap() {
   validateEnvironment(process.env);
   const logger = new Logger('Engagement Service');
   const app = await NestFactory.create(AppModule);
+  app.enableVersioning({ type: VersioningType.URI, prefix: "v", defaultVersion: "1" });
 
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalInterceptors(new LoggingInterceptor());
@@ -23,10 +25,8 @@ async function bootstrap() {
   if (!process.env.ALLOWED_ORIGINS) {
     throw new Error('ALLOWED_ORIGINS environment variable must be set');
   }
-  app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()),
-    credentials: true,
-  });
+  const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim());
+  configureCors(app, { allowedOrigins, credentials: true });
 
   const config = new DocumentBuilder()
     .setTitle('Engagement API')

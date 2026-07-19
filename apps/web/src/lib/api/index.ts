@@ -32,9 +32,9 @@ export async function setAuthCookie(value: string, maxAge: number = 30 * 60): Pr
         credentials: 'include',
       });
     } catch {
-      // Fallback: set non-HttpOnly cookie for middleware compatibility
-      const secure = window.location.protocol === 'https:' ? '; Secure' : '';
-      document.cookie = `auth=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax${secure}`;
+      // SECURITY: Never use document.cookie fallback — it creates non-HttpOnly cookies
+      // vulnerable to XSS. The /api/auth/cookie endpoint is the only way to set auth cookies.
+      console.error('Failed to set auth cookie via API');
     }
   }
 }
@@ -47,9 +47,9 @@ export async function clearAuthCookie(): Promise<void> {
         credentials: 'include',
       });
     } catch {
-      // Fallback
-      const secure = window.location.protocol === 'https:' ? '; Secure' : '';
-      document.cookie = `auth=; path=/; max-age=0; SameSite=Lax${secure}`;
+      // SECURITY: Never use document.cookie fallback — it creates non-HttpOnly cookies
+      // vulnerable to XSS. The /api/auth/cookie endpoint is the only way to clear auth cookies.
+      console.error('Failed to clear auth cookie via API');
     }
   }
 }
@@ -60,6 +60,30 @@ class ApiClient {
   private refreshPromise: Promise<import('./base').RefreshTokensResponse | null> | null = null;
 
   auth: ReturnType<typeof createAuthMethods>;
+
+  private buildErrorResponse(data: Record<string, unknown>, statusCode: number): ApiError {
+    return {
+      success: false,
+      type: data.type as string,
+      title: data.title as string,
+      status: statusCode,
+      detail: data.detail as string,
+      instance: data.instance as string,
+      code: data.code as string,
+      message:
+        (data.message as string) ||
+        (Array.isArray((data.error as Record<string, unknown>)?.message)
+          ? ((data.error as Record<string, unknown>).message as string[]).join(', ')
+          : ((data.error as Record<string, unknown>)?.message as string)) ||
+        (data.detail as string) ||
+        'An error occurred',
+      error: data.error,
+      statusCode,
+      details: data.details,
+      timestamp: data.timestamp as string,
+      path: data.path as string,
+    } as ApiError;
+  }
   user: ReturnType<typeof createUserMethods>;
   content: ReturnType<typeof createContentMethods>;
   reality: ReturnType<typeof createRealityMethods>;
@@ -78,10 +102,6 @@ class ApiClient {
     // Restore token from localStorage immediately so requests work
     // before AuthContext's useEffect runs (children effects fire first)
     if (typeof window !== 'undefined') {
-      if (process.env.NODE_ENV === 'production' && !(globalThis as Record<string, unknown>).__azeebo_cookie_warned) {
-        (globalThis as Record<string, unknown>).__azeebo_cookie_warned = true;
-        // Token storage tip — logged once per session in development only
-      }
       const storedToken = localStorage.getItem(ACCESS_TOKEN_KEY);
       if (storedToken) {
         this.token = storedToken;
@@ -259,29 +279,7 @@ class ApiClient {
           return this.request<T>(endpoint, options, retryOptions, attempt + 1);
         }
 
-        return {
-          success: false,
-          // RFC 7807 fields (passthrough from backend)
-          type: data.type,
-          title: data.title,
-          status: response.status,
-          detail: data.detail,
-          instance: data.instance,
-          // Application-level fields
-          code: data.code,
-          message:
-            data.message ||
-            (Array.isArray(data.error?.message)
-              ? data.error.message.join(', ')
-              : data.error?.message) ||
-            data.detail ||
-            'An error occurred',
-          error: data.error,
-          statusCode: response.status,
-          details: data.details,
-          timestamp: data.timestamp,
-          path: data.path,
-        } as ApiError;
+        return this.buildErrorResponse(data, response.status);
       }
 
       return {

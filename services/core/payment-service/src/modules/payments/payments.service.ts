@@ -237,6 +237,35 @@ export class PaymentsService {
       };
     }
 
+    // SECURITY: Use a distributed lock to prevent double-crediting from concurrent verify calls.
+    const lockKey = `payment_verify_lock:${paymentIntent.id}`;
+    const lockAcquired = await this.redisService.setIfNotExists(lockKey, '1', 60);
+    if (!lockAcquired) {
+      this.logger.warn(
+        `Payment ${paymentIntent.id} verification is being processed by another request, skipping`
+      );
+      // Re-check status after lock contention — another request may have completed it
+      const freshIntent = await this.prisma.paymentIntent.findUnique({
+        where: { id: paymentIntent.id },
+      });
+      if (freshIntent?.status === 'completed') {
+        return {
+          success: true,
+          data: {
+            paymentId: paymentIntent.id,
+            provider: 'paystack',
+            reference: freshIntent.providerReference || '',
+            status: 'completed',
+            amount: toNumber(freshIntent.amount.toString()),
+            currency: freshIntent.currency,
+            paidAt: freshIntent.completedAt?.toISOString(),
+            transactionId: freshIntent.providerReference || undefined,
+          },
+        };
+      }
+      throw new BadRequestException('Payment verification already in progress');
+    }
+
     try {
       const providerReference = paymentIntent.providerReference;
       if (!providerReference) {
@@ -298,6 +327,8 @@ export class PaymentsService {
 
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new BadRequestException(`Payment verification failed: ${errorMessage}`);
+    } finally {
+      await this.redisService.del(lockKey);
     }
   }
 

@@ -155,7 +155,7 @@ export default function BrowsePage(): React.JSX.Element {
         (item) =>
           item.title.toLowerCase().includes(q) ||
           item.description?.toLowerCase().includes(q) ||
-          item.creator?.name.toLowerCase().includes(q)
+          item.creator?.name?.toLowerCase().includes(q)
       );
     }
     if (minRating > 0) items = items.filter((item) => (item.likes || 0) >= minRating);

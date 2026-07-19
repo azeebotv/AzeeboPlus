@@ -17,7 +17,7 @@ import { CreateTitleData, CreateChapterData } from './titles.service';
 import { UpdateTitleDto } from './dto/update-title.dto';
 
 @ApiTags('Titles')
-@Controller('v1/vertical/titles')
+@Controller('vertical/titles')
 export class TitlesController {
   constructor(@Inject(TitlesService) private readonly titlesService: TitlesService) {}
 

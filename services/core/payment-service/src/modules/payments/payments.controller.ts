@@ -8,7 +8,6 @@ import {
   Request,
   HttpCode,
   HttpStatus,
-  Headers,
   Param,
 } from '@nestjs/common';
 import {
@@ -27,7 +26,6 @@ import { PaymentsService } from './payments.service.js';
 import { InitializePaymentDto } from './dto/initialize-payment.dto.js';
 import { VerifyPaymentDto } from './dto/verify-payment.dto.js';
 import { RequestRefundDto } from './dto/request-refund.dto.js';
-import { WebhookPayloadDto } from '../webhooks/dto/webhook-payload.dto.js';
 import {
   PaymentResponse,
   InitializePaymentResponse,
@@ -38,7 +36,7 @@ import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 @ApiTags('Payments')
 @ApiBearerAuth()
-@Controller('v1/payments')
+@Controller('payments')
 export class PaymentsController {
   constructor(@Inject(PaymentsService) private readonly paymentsService: PaymentsService) {}
 
@@ -237,6 +235,7 @@ export class PaymentsController {
     return this.paymentsService.getPaymentHistory(req.user.id);
   }
 
+  // Wildcard GET route MUST come after all static GET routes
   @Get(':id')
   @ApiOperation({
     summary: 'Get payment details',
@@ -274,27 +273,6 @@ export class PaymentsController {
     @Param('id') id: string
   ): Promise<PaymentResponse> {
     return this.paymentsService.getPayment(req.user.id, id);
-  }
-
-  @Post('webhook')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Payment provider webhook' })
-  @ApiResponse({ status: 200, description: 'Webhook processed' })
-  async handleWebhook(
-    @Body() body: WebhookPayloadDto,
-    @Headers('x-paystack-signature') paystackSignature?: string,
-    @Headers('x-flutterwave-signature') flutterwaveSignature?: string
-  ): Promise<PaymentResponse> {
-    const payload = {
-      id: body.data?.id || '',
-      type: body.event,
-      data: body.data || {},
-    };
-
-    if (flutterwaveSignature) {
-      return this.paymentsService.handleWebhook(payload, flutterwaveSignature, 'flutterwave');
-    }
-    return this.paymentsService.handleWebhook(payload, paystackSignature, 'paystack');
   }
 
   @Post('refund-request')

@@ -1,6 +1,6 @@
 import { Module, NestModule, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UserManagementModule } from './modules/user-management/user-management.module';
@@ -17,12 +17,14 @@ import { NotificationAdminModule } from './modules/notification-admin/notificati
 import { ReportsAdminModule } from './modules/reports-admin/reports-admin.module';
 import { HealthModule } from './modules/health/health.module';
 import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
+import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { CsrfMiddleware } from './common/csrf.middleware';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['.env', '../../.env'],
     }),
     RateLimiterModule.forRoot(),
     AuthModule,
@@ -42,6 +44,10 @@ import { CsrfMiddleware } from './common/csrf.middleware';
     HealthModule,
   ],
   providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseWrapperInterceptor,
+    },
     {
       provide: APP_GUARD,
       useClass: ServiceAuthGuard,

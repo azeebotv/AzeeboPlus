@@ -1,6 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import axios from 'axios';
 
 interface RecommendationInput {
   userId?: string;
@@ -70,8 +72,70 @@ export class RecommendationService {
 
   constructor(
     @Inject(PrismaService) private prisma: PrismaService,
-    @Inject(CacheService) private readonly cache: CacheService
+    @Inject(CacheService) private readonly cache: CacheService,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {}
+
+  private async getSubscriptionCount(userId: string): Promise<number> {
+    try {
+      const baseUrl = this.configService.get<string>('SUBSCRIPTION_SERVICE_URL');
+      if (!baseUrl) return 0;
+      const res = await axios.get<{ pagination?: { total?: number } }>(
+        `${baseUrl}/v1/subscription/history`,
+        {
+          params: { userId, limit: 1 },
+          timeout: 5000,
+          headers: {
+            'x-user-id': userId,
+            'x-gateway-secret': this.configService.get<string>('INTERNAL_API_KEY', ''),
+          },
+        }
+      );
+      return res.data?.pagination?.total ?? 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  private async getFollowerCount(creatorId: string): Promise<number> {
+    try {
+      const baseUrl = this.configService.get<string>('CREATOR_SERVICE_URL');
+      if (!baseUrl) return 0;
+      const res = await axios.get<{ data?: { followerCount?: number } }>(
+        `${baseUrl}/v1/creators/stats`,
+        {
+          timeout: 5000,
+          headers: {
+            'x-user-id': creatorId,
+            'x-gateway-secret': this.configService.get<string>('INTERNAL_API_KEY', ''),
+          },
+        }
+      );
+      return res.data?.data?.followerCount ?? 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  private async getCreatorContentCount(creatorId: string): Promise<number> {
+    try {
+      const baseUrl = this.configService.get<string>('CREATOR_SERVICE_URL');
+      if (!baseUrl) return 0;
+      const res = await axios.get<{ data?: { contentCount?: number } }>(
+        `${baseUrl}/v1/creators/stats`,
+        {
+          timeout: 5000,
+          headers: {
+            'x-user-id': creatorId,
+            'x-gateway-secret': this.configService.get<string>('INTERNAL_API_KEY', ''),
+          },
+        }
+      );
+      return res.data?.data?.contentCount ?? 0;
+    } catch {
+      return 0;
+    }
+  }
 
   async getContentRecommendations(
     input: RecommendationInput
@@ -361,18 +425,20 @@ export class RecommendationService {
 
       return {
         success: true,
-        data: recommendedCreators.map((creator) => ({
-          id: creator.id,
-          displayName: creator.displayName || '',
-          bio: creator.bio || '',
-          avatar: creator.avatar || '',
-          followerCount: 0,
-          contentCount: 0,
-          explainability: {
-            factors: [{ name: 'not_followed', weight: 1 }],
-            reason: 'Creators you might like',
-          },
-        })),
+        data: await Promise.all(
+          recommendedCreators.map(async (creator) => ({
+            id: creator.id,
+            displayName: creator.displayName || '',
+            bio: creator.bio || '',
+            avatar: creator.avatar || '',
+            followerCount: await this.getFollowerCount(creator.userId),
+            contentCount: await this.getCreatorContentCount(creator.userId),
+            explainability: {
+              factors: [{ name: 'not_followed', weight: 1 }],
+              reason: 'Creators you might like',
+            },
+          }))
+        ),
       };
     } catch (error) {
       this.logger.error(
@@ -495,7 +561,7 @@ export class RecommendationService {
           where: { userId, type: 'credit', createdAt: { gte: thirtyDaysAgo } },
         }),
       ]);
-      const subscriptions = 0; // Subscription model not available in this service
+      const subscriptions = await this.getSubscriptionCount(userId);
 
       const totalPoints = rewards._sum.points || 0;
       const daysSinceSignup = Math.floor(
@@ -592,8 +658,8 @@ export class RecommendationService {
           },
         }),
       ]);
-      const followers = 0; // Follower model not available in this service
-      const subscriptions = 0; // Subscription model not available in this service
+      const followers = await this.getFollowerCount(creatorId);
+      const subscriptions = await this.getSubscriptionCount(creatorId);
       const tips = await this.prisma.paymentIntent.count({
         where: { userId: creatorId, status: 'completed', createdAt: { gte: thirtyDaysAgo } },
       });
@@ -648,7 +714,7 @@ export class RecommendationService {
           where: { userId, type: 'credit', createdAt: { gte: thirtyDaysAgo } },
         }),
       ]);
-      const subscriptions = 0; // Subscription model not available in this service
+      const subscriptions = await this.getSubscriptionCount(userId);
 
       const daysSinceLastActivity = lastActivity
         ? Math.floor((Date.now() - lastActivity.createdAt.getTime()) / (1000 * 60 * 60 * 24))
@@ -743,7 +809,7 @@ export class RecommendationService {
         }),
         this.prisma.user.findUnique({ where: { id: userId } }),
       ]);
-      const subscriptions = 0; // Subscription model not available in this service
+      const subscriptions = await this.getSubscriptionCount(userId);
 
       const totalSpent = Number(payments._sum.amount) || 0;
       const totalPoints = rewards._sum.points || 0;

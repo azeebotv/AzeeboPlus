@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import type { StringValue } from 'ms';
+import { ConfigModule } from '@nestjs/config';
+import { JwtConfigModule } from '@azeebo/shared-services';
 
 import { ContentController } from './content.controller.js';
 import { ContentService } from './content.service.js';
@@ -22,16 +21,7 @@ import { CacheModule } from '../../cache/cache.module.js';
     DatabaseModule,
     MediaModule,
     CacheModule,
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
-        signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as StringValue,
-        },
-      }),
-      inject: [ConfigService],
-    }),
+    JwtConfigModule,
   ],
   controllers: [ContentController],
   providers: [

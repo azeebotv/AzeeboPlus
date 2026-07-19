@@ -44,7 +44,8 @@ export default function AdminLayout({
 
   useEffect(() => {
     if (isLoading) return;
-    if (!isAuthenticated || !user || user.role !== 'admin') {
+    const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
+    if (!isAuthenticated || !user || !isAdmin) {
       router.push('/auth/login');
     }
   }, [isLoading, isAuthenticated, user, router]);
@@ -74,7 +75,8 @@ export default function AdminLayout({
     );
   }
 
-  if (!isAuthenticated || !user || user.role !== 'admin') {
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
+  if (!isAuthenticated || !user || !isAdmin) {
     return <></>;
   }
 

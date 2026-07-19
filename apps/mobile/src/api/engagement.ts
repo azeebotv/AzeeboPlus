@@ -51,22 +51,19 @@ export const engagementApi = {
     timePeriod = 'weekly',
     category = 'all'
   ): Promise<ApiResponse<LeaderboardEntry[]>> {
-    const response = await apiClient.get<LeaderboardEntry[]>(
+    return apiClient.get<ApiResponse<LeaderboardEntry[]>>(
       `/api/v1/engagement/leaderboard?timePeriod=${timePeriod}&category=${category}`
     );
-    return { success: true, data: response };
   },
 
   async getRankings(): Promise<ApiResponse<RankingCategory[]>> {
-    const response = await apiClient.get<RankingCategory[]>('/api/v1/engagement/rankings');
-    return { success: true, data: response };
+    return apiClient.get<ApiResponse<RankingCategory[]>>('/api/v1/engagement/rankings');
   },
 
   async getPredictionResults(predictionId: string): Promise<ApiResponse<PredictionResult>> {
-    const response = await apiClient.get<PredictionResult>(
+    return apiClient.get<ApiResponse<PredictionResult>>(
       `/api/v1/engagement/predictions/${predictionId}/results`
     );
-    return { success: true, data: response };
   },
 
   async placeBet(data: {
@@ -74,11 +71,10 @@ export const engagementApi = {
     optionId: string;
     amount: number;
   }): Promise<ApiResponse<{ success: boolean }>> {
-    const response = await apiClient.post<{ success: boolean }>(
+    return apiClient.post<ApiResponse<{ success: boolean }>>(
       '/api/v1/engagement/predictions/bet',
       data
     );
-    return { success: true, data: response };
   },
 };
 
@@ -127,36 +123,31 @@ export interface RealityContestant {
 
 export const realityApi = {
   async getLiveViewerCount(showId: string): Promise<ApiResponse<{ count: number }>> {
-    const response = await apiClient.get<{ count: number }>(
+    return apiClient.get<ApiResponse<{ count: number }>>(
       `/api/v1/reality/shows/${showId}/viewers`
     );
-    return { success: true, data: response };
   },
 
   async getShowDetails(showId: string): Promise<ApiResponse<RealityShow>> {
-    const response = await apiClient.get<RealityShow>(`/api/v1/reality/shows/${showId}`);
-    return { success: true, data: response };
+    return apiClient.get<ApiResponse<RealityShow>>(`/api/v1/reality/shows/${showId}`);
   },
 
   async getEpisodes(showId: string): Promise<ApiResponse<RealityEpisode[]>> {
-    const response = await apiClient.get<RealityEpisode[]>(
+    return apiClient.get<ApiResponse<RealityEpisode[]>>(
       `/api/v1/reality/shows/${showId}/episodes`
     );
-    return { success: true, data: response };
   },
 
   async getContestants(showId: string): Promise<ApiResponse<RealityContestant[]>> {
-    const response = await apiClient.get<RealityContestant[]>(
+    return apiClient.get<ApiResponse<RealityContestant[]>>(
       `/api/v1/reality/shows/${showId}/contestants`
     );
-    return { success: true, data: response };
   },
 
   async getPredictionResults(predictionId: string): Promise<ApiResponse<PredictionResult>> {
-    const response = await apiClient.get<PredictionResult>(
+    return apiClient.get<ApiResponse<PredictionResult>>(
       `/api/v1/reality/predictions/${predictionId}/results`
     );
-    return { success: true, data: response };
   },
 
   async submitVote(data: {
@@ -164,11 +155,10 @@ export const realityApi = {
     contestantId: string | null;
     votes: number;
   }): Promise<ApiResponse<{ success: boolean }>> {
-    const response = await apiClient.post<{ success: boolean }>(
+    return apiClient.post<ApiResponse<{ success: boolean }>>(
       `/api/v1/reality/shows/${data.showId}/vote`,
       { contestantId: data.contestantId, votes: data.votes }
     );
-    return { success: true, data: response };
   },
 };
 
@@ -202,25 +192,22 @@ export const homepageEngagementApi = {
     limit = 10,
     offset = 0
   ): Promise<ApiResponse<{ items: EngagementHistoryItem[]; hasMore: boolean }>> => {
-    const response = await apiClient.get<{ items: EngagementHistoryItem[]; hasMore: boolean }>(
+    return apiClient.get<ApiResponse<{ items: EngagementHistoryItem[]; hasMore: boolean }>>(
       `/api/v1/users/me/history?limit=${limit}&offset=${offset}`
     );
-    return { success: true, data: response };
   },
 
   getUniverseEngagement: async (): Promise<ApiResponse<UserUniverseEngagement[]>> => {
-    const response = await apiClient.get<UserUniverseEngagement[]>('/api/v1/users/me/universes');
-    return { success: true, data: response };
+    return apiClient.get<ApiResponse<UserUniverseEngagement[]>>('/api/v1/users/me/universes');
   },
 
   getContentByUniverse: async (
     universeId: string,
     limit = 12
   ): Promise<ApiResponse<ContentItem[]>> => {
-    const response = await apiClient.get<ContentItem[]>(
+    return apiClient.get<ApiResponse<ContentItem[]>>(
       `/api/v1/content/universe/${universeId}?limit=${limit}&sort=trending`
     );
-    return { success: true, data: response };
   },
 
   getNewReleases: async (limit = 12): Promise<ApiResponse<ContentItem[]>> => {

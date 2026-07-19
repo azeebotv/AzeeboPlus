@@ -82,6 +82,9 @@ export class PaystackProvider {
   constructor(@Inject(ConfigService) private readonly configService: ConfigService) {
     this.apiKey = this.configService.get<string>('PAYSTACK_SECRET_KEY') || '';
     this.baseUrl = this.configService.get<string>('PAYSTACK_API_URL', 'https://api.paystack.co');
+    if (!this.apiKey && this.configService.get<string>('NODE_ENV') === 'production') {
+      this.logger.error('PAYSTACK_SECRET_KEY must be configured in production');
+    }
     if (!this.apiKey) {
       this.logger.warn(
         'PAYSTACK_SECRET_KEY is not configured — Paystack payments will be unavailable'

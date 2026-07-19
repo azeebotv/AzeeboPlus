@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ConfigModule } from '@nestjs/config';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { HealthModule } from './modules/health/health.module';
@@ -17,6 +17,7 @@ import { DatabaseModule } from './modules/database/database.module';
 import { SupportModule } from './modules/support/support.module';
 import { AuthGuard } from './common/guards/auth.guard';
 import { RateLimiterModule, AdminGuard } from '@azeebo/security';
+import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { CacheModule } from '@azeebo/shared-services';
 
@@ -26,13 +27,9 @@ import { CacheModule } from '@azeebo/shared-services';
     CacheModule,
     RateLimiterModule.forRoot(),
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    JwtModule.registerAsync({
+    JwtModule.register({
       global: true,
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
-        signOptions: { expiresIn: '1h' },
-      }),
-      inject: [ConfigService],
+      secret: process.env.JWT_ACCESS_SECRET,
     }),
     DatabaseModule,
     HealthModule,
@@ -48,6 +45,10 @@ import { CacheModule } from '@azeebo/shared-services';
     AnalyticsModule,
   ],
   providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseWrapperInterceptor,
+    },
     AuthGuard,
     {
       provide: AdminGuard,

@@ -1,11 +1,7 @@
 import { apiClient } from './client';
-import type { ApiResponse } from './auth';
+import type { ApiResponse, WalletBalance } from '../types/api';
 
-export interface WalletBalance {
-  balance: number;
-  currency: string;
-  pendingBalance?: number;
-}
+export type { WalletBalance } from '../types/api';
 
 export interface Transaction {
   id: string;

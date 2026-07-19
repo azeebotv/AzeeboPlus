@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Tabs, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
@@ -6,6 +6,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-na
 import { colors, typography, spacing, radius, shadows, spring } from '../../src/theme';
 import { useWallet } from '../../src/contexts/WalletContext';
 import { useNotification } from '../../src/contexts/NotificationContext';
+import { useAuth } from '../../src/contexts/AuthContext';
 
 interface TabIconProps {
   name: string;
@@ -78,8 +79,27 @@ function CreateButton({ onPress }: { onPress: () => void }) {
 function HeaderUtilities({ router }: { router: ReturnType<typeof useRouter> }) {
   const { wallet } = useWallet();
   const { unreadCount } = useNotification();
+  const { user } = useAuth();
   const walletBalance = wallet?.balance?.toLocaleString() ?? '0';
-  const [isLive] = useState(true);
+  const [isLive, setIsLive] = useState(false);
+
+  useEffect(() => {
+    // Check if there are any live shows
+    const checkLive = async () => {
+      try {
+        const response = await fetch('/api/v1/reality/shows/live');
+        const data = await response.json();
+        setIsLive(data?.shows?.length > 0);
+      } catch {
+        setIsLive(false);
+      }
+    };
+    checkLive();
+    const interval = setInterval(checkLive, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const userInitial = user?.name?.charAt(0)?.toUpperCase() || user?.displayName?.charAt(0)?.toUpperCase() || 'U';
 
   return (
     <View style={styles.header}>
@@ -138,7 +158,7 @@ function HeaderUtilities({ router }: { router: ReturnType<typeof useRouter> }) {
           accessibilityRole="button"
         >
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>U</Text>
+            <Text style={styles.avatarText}>{userInitial}</Text>
           </View>
         </TouchableOpacity>
       </View>

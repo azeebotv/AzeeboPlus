@@ -158,6 +158,9 @@ mkdir -p /var/lib/redis 2>/dev/null || true
 
 # ============================================================
 # 6. Configure PgBouncer
+# NOTE: This generates a LOCAL-DEV config (host=127.0.0.1, no TLS).
+# Production config lives in infra/config/pgbouncer.ini (host=postgres, TLS required, larger pools).
+# Keep both in sync when adding/removing databases.
 # ============================================================
 echo "==> Configuring PgBouncer..."
 mkdir -p /etc/pgbouncer /var/log/pgbouncer /var/run/pgbouncer 2>/dev/null || true

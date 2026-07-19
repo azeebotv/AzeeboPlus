@@ -101,6 +101,7 @@ model Vote {
   contestantId String
   showId       String
   episodeId    String?
+  quantity     Int      @default(1)
   createdAt    DateTime @default(now())
 
   contestant Contestant  @relation(fields: [contestantId], references: [id], onDelete: Cascade)

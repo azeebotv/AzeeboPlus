@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TerminusModule } from '@nestjs/terminus';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { AuditModule } from './modules/audit/audit.module.js';
 import { AdminModule } from './modules/admin/admin.module.js';
@@ -10,6 +10,7 @@ import { CommonModule } from './common/common.module.js';
 import { MetricsModule } from './modules/metrics/metrics.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
+import { ResponseWrapperInterceptor } from '@azeebo/logger';
 
 @Module({
   imports: [
@@ -29,6 +30,10 @@ import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
     CacheModule,
   ],
   providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseWrapperInterceptor,
+    },
     {
       provide: APP_GUARD,
       useClass: ServiceAuthGuard,

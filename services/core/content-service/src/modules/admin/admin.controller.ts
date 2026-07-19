@@ -14,7 +14,7 @@ import { AdminService } from './admin.service.js';
 import { AdminGuard } from '@azeebo/security';
 
 @ApiTags('Admin - Content Service')
-@Controller('v1/admin')
+@Controller('admin')
 @UseGuards(AdminGuard)
 export class AdminController {
   constructor(@Inject(AdminService) private readonly adminService: AdminService) {}

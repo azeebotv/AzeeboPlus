@@ -160,5 +160,31 @@ export function createContentMethods(client: RequestClient) {
         `/api/v1/content/me?${searchParams.toString()}`
       );
     },
+
+    getFeaturedSlides: async (limit = 5): Promise<ApiResponse<ContentItem[]>> => {
+      return client.request<ContentItem[]>(`/api/v1/content/featured-slides?limit=${limit}`);
+    },
+
+    getContentList: async (params: { page?: number; limit?: number } = {}): Promise<ApiResponse<PaginatedResponse<ContentItem>>> => {
+      const searchParams = new URLSearchParams();
+      if (params.page) searchParams.append('page', params.page.toString());
+      if (params.limit) searchParams.append('limit', params.limit.toString());
+
+      return client.request<PaginatedResponse<ContentItem>>(
+        `/api/v1/content?${searchParams.toString()}`
+      );
+    },
+
+    getNewReleases: async (limit = 12): Promise<ApiResponse<ContentItem[]>> => {
+      return client.request<ContentItem[]>(`/api/v1/content/new-releases?limit=${limit}`);
+    },
+
+    getPopularInRegion: async (limit = 12): Promise<ApiResponse<ContentItem[]>> => {
+      return client.request<ContentItem[]>(`/api/v1/content/popular-region?limit=${limit}`);
+    },
+
+    getHomeFeed: async (): Promise<ApiResponse<{ trending: ContentItem[]; recommended: ContentItem[]; latest: ContentItem[] }>> => {
+      return client.request<{ trending: ContentItem[]; recommended: ContentItem[]; latest: ContentItem[] }>('/api/v1/content/home');
+    },
   };
 }

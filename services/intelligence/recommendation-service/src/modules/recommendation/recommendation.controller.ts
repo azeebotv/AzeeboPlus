@@ -1,7 +1,7 @@
 import { Inject, Controller, Get, Query, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit, Public } from '@azeebo/security';
-import { RecommendationService } from './recommendation.service';
+import { RecommendationService } from './recommendation.service.js';
 
 @ApiTags('Recommendation')
 @UseGuards(RateLimitGuard)

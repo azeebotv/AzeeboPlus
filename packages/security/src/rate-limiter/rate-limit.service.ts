@@ -84,7 +84,7 @@ export class RateLimitService {
       const resetAt = ttl > 0 ? now + ttl * 1000 : now + windowMs;
 
       return {
-        allowed: count < limit,
+        allowed: count <= limit,
         remaining,
         resetAt,
         limit,

@@ -1,8 +1,10 @@
+import MediaPlayer from '../../components/MediaPlayer';
 'use client';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { apiFetch } from '../../../lib/api';
 import { useVideoPlayer } from '../../../hooks/useVideoPlayer';
+import { detectMediaType } from "../../../lib/media-url";
 import { announceToScreenReader } from '../../../lib/keyboard';
 import AppHeader from '../../../components/layout/AppHeader';
 import AppFooter from '../../../components/layout/AppFooter';
@@ -77,7 +79,13 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
     announceToScreenReader('Video finished');
   }, []);
 
+  const mediaUrlRef = useRef(content?.mediaUrl);
+  mediaUrlRef.current = content?.mediaUrl;
+
   const handleVideoError = useCallback((errorMsg: string) => {
+    // Ignore errors from useVideoPlayer for embedded media (YouTube/iframe/FTP)
+    const mediaInfo = detectMediaType(mediaUrlRef.current || '');
+    if (['youtube', 'iframe', 'ftp'].includes(mediaInfo.type)) return;
     setError(errorMsg);
   }, []);
 
@@ -92,6 +100,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
     toggleMute: playerToggleMute,
   } = useVideoPlayer({
     contentId: id,
+    mediaUrl: content?.mediaUrl,
     autoPlay: false,
     onEnded: handleVideoEnded,
     onError: handleVideoError,
@@ -125,6 +134,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
             title: data.title || 'Untitled Content',
             description: data.description || 'No description available.',
             thumbnail: data.thumbnail || '/images/default-thumbnail.jpg',
+            mediaUrl: data.mediaUrl || '',
             duration: data.duration || 0,
             category: data.category || 'General',
             universe: data.universe || { id: 'unknown', name: 'General' },
@@ -535,55 +545,112 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
               style={{ aspectRatio: '16/9' }}
               onMouseMove={handleMouseMove}
               onMouseLeave={() => playerState.isPlaying && null}
-              onClick={handleVideoClick}
+              onClick={(() => {
+                const mediaInfo = detectMediaType(content?.mediaUrl || '');
+                if (mediaInfo.type === 'youtube' || mediaInfo.type === 'iframe') return undefined;
+                return handleVideoClick;
+              })()}
               role="region"
               aria-label="Video player"
               tabIndex={0}
             >
-              {signedUrl ? (
-                <video
-                  ref={videoRef}
-                  src={signedUrl}
-                  className="w-full h-full object-contain"
-                  style={{ aspectRatio: '16/9' }}
-                  playsInline
-                  preload="metadata"
-                />
-              ) : (
-                content.thumbnail && (
+              {(() => {
+                const mediaInfo = detectMediaType(content.mediaUrl || '');
+                if (mediaInfo.type === 'youtube' && mediaInfo.videoId) {
+                  return (
+                    <iframe
+                      width="100%"
+                      height="100%"
+                      src={`https://www.youtube.com/embed/${mediaInfo.videoId}`}
+                      title={content.title}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className="w-full h-full"
+                      style={{ aspectRatio: '16/9', borderRadius: '12px' }}
+                    />
+                  );
+                }
+                if (mediaInfo.type === 'iframe') {
+                  return (
+                    <iframe
+                      width="100%"
+                      height="100%"
+                      src={mediaInfo.url}
+                      title={content.title}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className="w-full h-full"
+                      style={{ aspectRatio: '16/9', borderRadius: '12px' }}
+                    />
+                  );
+                }
+                if (mediaInfo.type === 'ftp') {
+                  return (
+                    <div className="flex items-center justify-center h-full bg-gray-800 rounded-lg">
+                      <div className="text-center p-8">
+                        <p className="text-white text-lg mb-4">This content is available via FTP</p>
+                        <a
+                          href={mediaInfo.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#E8420A] hover:text-[#FF6B35] underline text-lg"
+                        >
+                          Download via FTP
+                        </a>
+                      </div>
+                    </div>
+                  );
+                }
+                if (signedUrl) {
+                  return (
+                    <video
+                      ref={videoRef}
+                      src={signedUrl}
+                      className="w-full h-full object-contain"
+                      style={{ aspectRatio: '16/9' }}
+                      playsInline
+                      preload="metadata"
+                    />
+                  );
+                }
+                return content.thumbnail ? (
                   <div
                     className="absolute inset-0 bg-cover bg-center"
                     style={{ backgroundImage: `url(${content.thumbnail})` }}
                   >
                     <div className="absolute inset-0 bg-black/40" />
                   </div>
-                )
-              )}
-
-              {/* Play Button Overlay */}
-              {!playerState.isPlaying && !playerState.isLoading && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    togglePlay();
-                  }}
-                  className="absolute inset-0 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#E8420A] focus:ring-offset-2 focus:ring-offset-black"
-                  aria-label="Play video"
-                >
-                  <div
-                    className="w-20 h-20 rounded-full flex items-center justify-center transition-transform hover:scale-110"
-                    style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
+                ) : null;
+              })()}
+              {(() => {
+                const mediaInfo = detectMediaType(content?.mediaUrl || '');
+                const isEmbedded = mediaInfo.type === 'youtube' || mediaInfo.type === 'iframe' || mediaInfo.type === 'ftp';
+                return !isEmbedded && !playerState.isPlaying && !playerState.isLoading && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      togglePlay();
+                    }}
+                    className="absolute inset-0 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#E8420A] focus:ring-offset-2 focus:ring-offset-black"
+                    aria-label="Play video"
                   >
-                    <svg
-                      className="w-10 h-10 text-white ml-1"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
+                    <div
+                      className="w-20 h-20 rounded-full flex items-center justify-center transition-transform hover:scale-110"
+                      style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
                     >
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                  </div>
-                </button>
-              )}
+                      <svg
+                        className="w-10 h-10 text-white ml-1"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                  </button>
+                );
+              })()}
 
               {/* Buffering Indicator */}
               {playerState.isLoading && (
@@ -592,7 +659,8 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                 </div>
               )}
 
-              {/* Video Controls */}
+              {/* Video Controls - hidden for embedded media (YouTube/iframe has own controls) */}
+              {!detectMediaType(content?.mediaUrl || '').type.match(/^(youtube|iframe)$/) && (
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent transition-opacity duration-300">
                 <div className="p-4">
                   {/* Progress Bar */}
@@ -745,6 +813,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                   </div>
                 </div>
               </div>
+              )}
 
               {/* Title Overlay */}
               {!playerState.isPlaying && (

@@ -16,7 +16,7 @@ import { CreateCharacterDto } from './dto/create-character.dto';
 import { CreateRelationshipDto } from './dto/create-relationship.dto';
 
 @ApiTags('Characters')
-@Controller('v1/vertical/characters')
+@Controller('vertical/characters')
 export class CharactersController {
   constructor(@Inject(CharactersService) private readonly charactersService: CharactersService) {}
 

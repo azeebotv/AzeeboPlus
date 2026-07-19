@@ -4,6 +4,10 @@ declare module 'react-i18next' {
     i18n: { language: string };
   };
   export function Trans(props: { i18nKey: string; children?: React.ReactNode }): React.ReactElement;
+  export function initReactI18next(): {
+    type: string;
+    init: (options: { resources: unknown; lng: string; fallbackLng: string; interpolation: { escapeValue: boolean } }) => void;
+  };
 }
 
 declare module '@expo/vector-icons' {

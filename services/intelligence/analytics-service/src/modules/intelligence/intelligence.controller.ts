@@ -10,7 +10,7 @@ import {
   Request,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { AdminGuard } from '@azeebo/security';
+import { AdminGuard, RateLimitGuard, RateLimit } from '@azeebo/security';
 import { IntelligenceService } from './intelligence.service.js';
 
 @ApiTags('Intelligence Layer')
@@ -29,12 +29,16 @@ export class IntelligenceController {
   }
 
   @Get('segments')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get audience segments' })
   async getSegments(): Promise<unknown> {
     return this.intelligenceService.getAudienceSegments();
   }
 
   @Post('segments')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Create audience segment' })
   async createSegment(
     @Body()
@@ -52,30 +56,40 @@ export class IntelligenceController {
   }
 
   @Get('creator-scores')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get creator scores' })
   async getCreatorScores(@Query('universe') universe?: string): Promise<unknown> {
     return this.intelligenceService.getCreatorScores(universe);
   }
 
   @Post('creator-scores/:creatorId/calculate')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Calculate creator score' })
   async calculateCreatorScore(@Param('creatorId') creatorId: string): Promise<unknown> {
     return this.intelligenceService.calculateCreatorScore(creatorId);
   }
 
   @Get('churn-risks')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get churn risks' })
   async getChurnRisks(@Query('threshold') threshold = 0.5): Promise<unknown> {
     return this.intelligenceService.getChurnRisks(Number(threshold));
   }
 
   @Post('churn-risks/:userId/calculate')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Calculate churn risk for user' })
   async calculateChurnRisk(@Param('userId') userId: string): Promise<unknown> {
     return this.intelligenceService.calculateChurnRisk(userId);
   }
 
   @Get('fraud-detections')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get fraud detections' })
   async getFraudDetections(@Query('status') status?: string): Promise<unknown> {
     return this.intelligenceService.getFraudDetections(status);
@@ -102,6 +116,8 @@ export class IntelligenceController {
   }
 
   @Post('fraud-detections/:id/review')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Review fraud detection' })
   async reviewFraudDetection(
     @Param('id') id: string,
@@ -113,6 +129,8 @@ export class IntelligenceController {
   }
 
   @Get('retention')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get retention metrics' })
   async getRetentionMetrics(
     @Query('fromDate') fromDate?: string,

@@ -1,5 +1,5 @@
 import { StyleSheet, type ViewStyle, type StyleProp } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { colors, radius, shadows } from '../../theme';
 
 interface GlassCardProps {
@@ -17,14 +17,7 @@ export function GlassCard({
   style,
   variant = 'default',
   padding = 16,
-  animated = false,
 }: GlassCardProps) {
-  const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
   return (
     <AnimatedView
       style={[
@@ -32,7 +25,6 @@ export function GlassCard({
         variant === 'strong' && styles.cardStrong,
         variant === 'subtle' && styles.cardSubtle,
         { padding },
-        animated && animatedStyle,
         style,
       ]}
       accessibilityRole="none"

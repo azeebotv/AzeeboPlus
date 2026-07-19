@@ -16,6 +16,8 @@ import { useAuth } from '../../src/contexts/AuthContext';
 import { notificationApi, type NotificationPreferences } from '../../src/api';
 import { useBiometric } from '../../src/hooks/useBiometric';
 import Constants from 'expo-constants';
+import { colors } from '../../src/theme';
+import * as Linking from 'expo-linking';
 
 // Type declaration for expo-constants
 const safeConstants = Constants as unknown as { expoConfig?: { version?: string; name?: string } };
@@ -174,7 +176,7 @@ export default function SettingsScreen() {
   if (authLoading) {
     return (
       <SafeAreaView
-        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' }]}
+        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#fff' }]}
         edges={['top']}
       >
         <View style={styles.unauthenticatedContainer}>
@@ -187,12 +189,12 @@ export default function SettingsScreen() {
   if (!isAuthenticated) {
     return (
       <SafeAreaView
-        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' }]}
+        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#fff' }]}
         edges={['top']}
       >
         <View style={styles.unauthenticatedContainer}>
           <Text style={styles.lockIcon}>🔒</Text>
-          <Text style={[styles.lockText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+          <Text style={[styles.lockText, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}>
             Please log in to access settings
           </Text>
         </View>
@@ -202,12 +204,12 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView
-      style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' }]}
+      style={[styles.container, { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#fff' }]}
       edges={['top']}
     >
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+          <Text style={[styles.title, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}>
             Settings
           </Text>
         </View>
@@ -227,14 +229,14 @@ export default function SettingsScreen() {
           <View
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
           >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>🔔</Text>
               <View>
                 <Text
-                  style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                  style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
                 >
                   Push Notifications
                 </Text>
@@ -252,14 +254,14 @@ export default function SettingsScreen() {
           <View
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
           >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>📧</Text>
               <View>
                 <Text
-                  style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                  style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
                 >
                   Email Notifications
                 </Text>
@@ -277,14 +279,14 @@ export default function SettingsScreen() {
           <View
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
           >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>📱</Text>
               <View>
                 <Text
-                  style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                  style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
                 >
                   SMS Notifications
                 </Text>
@@ -308,7 +310,7 @@ export default function SettingsScreen() {
           <View
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
           >
             <View style={styles.settingInfo}>
@@ -317,7 +319,7 @@ export default function SettingsScreen() {
               </Text>
               <View>
                 <Text
-                  style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                  style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
                 >
                   {getBiometricLabel()}
                 </Text>
@@ -350,13 +352,13 @@ export default function SettingsScreen() {
           <View
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
           >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>📺</Text>
               <Text
-                style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
               >
                 New Content
               </Text>
@@ -372,13 +374,13 @@ export default function SettingsScreen() {
           <View
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
           >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>💬</Text>
               <Text
-                style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
               >
                 Comments
               </Text>
@@ -394,13 +396,13 @@ export default function SettingsScreen() {
           <View
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
           >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>👍</Text>
               <Text
-                style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
               >
                 Likes
               </Text>
@@ -416,13 +418,13 @@ export default function SettingsScreen() {
           <View
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
           >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>👥</Text>
               <Text
-                style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
               >
                 Followers
               </Text>
@@ -438,13 +440,13 @@ export default function SettingsScreen() {
           <View
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
           >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>⚙️</Text>
               <Text
-                style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
               >
                 System Updates
               </Text>
@@ -460,13 +462,13 @@ export default function SettingsScreen() {
           <View
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
           >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>💰</Text>
               <Text
-                style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
               >
                 Payments
               </Text>
@@ -488,11 +490,11 @@ export default function SettingsScreen() {
           <View
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
           >
             <Text
-              style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+              style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
             >
               Version
             </Text>
@@ -502,11 +504,12 @@ export default function SettingsScreen() {
           <TouchableOpacity
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
+            onPress={() => Linking.openURL('https://azeebo.plus/terms')}
           >
             <Text
-              style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+              style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
             >
               Terms of Service
             </Text>
@@ -516,11 +519,12 @@ export default function SettingsScreen() {
           <TouchableOpacity
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
+            onPress={() => Linking.openURL('https://azeebo.plus/privacy')}
           >
             <Text
-              style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+              style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
             >
               Privacy Policy
             </Text>
@@ -530,11 +534,11 @@ export default function SettingsScreen() {
           <TouchableOpacity
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
           >
             <Text
-              style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+              style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
             >
               Licenses
             </Text>

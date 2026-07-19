@@ -28,7 +28,7 @@ export class StoryworldMetadataService {
     limit = 20
   ): Promise<{ data: StoryworldMetadataItem[]; total: number }> {
     const cacheK = `realms:${universeId}:${page}:${limit}`;
-    const cached = this.cache.get<{ data: StoryworldMetadataItem[]; total: number }>(cacheK);
+    const cached = await this.cache.get<{ data: StoryworldMetadataItem[]; total: number }>(cacheK);
     if (cached) return cached;
 
     const [data, total] = await Promise.all([
@@ -42,7 +42,7 @@ export class StoryworldMetadataService {
     ]);
 
     const result = { data, total };
-    this.cache.set(cacheK, result, 300);
+    await this.cache.set(cacheK, result, 300);
     return result;
   }
 
@@ -58,7 +58,7 @@ export class StoryworldMetadataService {
     limit = 20
   ): Promise<{ data: StoryworldMetadataItem[]; total: number }> {
     const cacheK = `orisa:${universeId}:${page}:${limit}`;
-    const cached = this.cache.get<{ data: StoryworldMetadataItem[]; total: number }>(cacheK);
+    const cached = await this.cache.get<{ data: StoryworldMetadataItem[]; total: number }>(cacheK);
     if (cached) return cached;
 
     const [data, total] = await Promise.all([
@@ -72,7 +72,7 @@ export class StoryworldMetadataService {
     ]);
 
     const result = { data, total };
-    this.cache.set(cacheK, result, 300);
+    await this.cache.set(cacheK, result, 300);
     return result;
   }
 
@@ -102,7 +102,7 @@ export class StoryworldMetadataService {
     ]);
 
     const result = { data, total };
-    this.cache.set(cacheK, result, 300);
+    await this.cache.set(cacheK, result, 300);
     return result;
   }
 
@@ -132,7 +132,7 @@ export class StoryworldMetadataService {
     ]);
 
     const result = { data, total };
-    this.cache.set(cacheK, result, 300);
+    await this.cache.set(cacheK, result, 300);
     return result;
   }
 
@@ -162,7 +162,7 @@ export class StoryworldMetadataService {
     ]);
 
     const result = { data, total };
-    this.cache.set(cacheK, result, 300);
+    await this.cache.set(cacheK, result, 300);
     return result;
   }
 

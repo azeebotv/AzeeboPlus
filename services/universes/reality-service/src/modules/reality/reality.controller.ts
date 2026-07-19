@@ -16,7 +16,6 @@ import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
 
 import { RealityService } from './reality.service.js';
 import { RealityResponse } from './interfaces/reality-response.interface.js';
-import { RolesGuard, Roles } from '@azeebo/shared-services';
 import { CastVoteDto, BuyVoteDto, MakePredictionDto } from './dto/vote.dto.js';
 import {
   CreateShowDto,
@@ -30,7 +29,7 @@ import {
 
 @ApiTags('Reality')
 @ApiBearerAuth()
-@Controller('v1/reality')
+@Controller('reality')
 export class RealityController {
   constructor(@Inject(RealityService) private readonly realityService: RealityService) {}
 
@@ -54,8 +53,7 @@ export class RealityController {
   }
 
   @Post('shows')
-  @UseGuards(RolesGuard)
-  @Roles('ADMIN', 'MODERATOR')
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Create reality show (admin)' })
   @ApiResponse({ status: 201, description: 'Show created' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
@@ -64,8 +62,7 @@ export class RealityController {
   }
 
   @Put('shows/:showId')
-  @UseGuards(RolesGuard)
-  @Roles('ADMIN', 'MODERATOR')
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Update reality show' })
   @ApiResponse({ status: 200, description: 'Show updated' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
@@ -77,8 +74,7 @@ export class RealityController {
   }
 
   @Delete('shows/:showId')
-  @UseGuards(RolesGuard)
-  @Roles('ADMIN', 'MODERATOR')
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Delete reality show' })
   @ApiResponse({ status: 200, description: 'Show deleted' })
   async deleteShow(@Param('showId') showId: string): Promise<RealityResponse> {
@@ -95,8 +91,7 @@ export class RealityController {
   }
 
   @Post('shows/:showId/episodes')
-  @UseGuards(RolesGuard)
-  @Roles('ADMIN', 'MODERATOR')
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Create episode' })
   @ApiResponse({ status: 201, description: 'Episode created' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
@@ -197,6 +192,8 @@ export class RealityController {
     return this.realityService.getShowAnalytics(showId);
   }
 
+  // NOTE: This is an alias for /votes with a stricter rate limit (10/min vs 50/min).
+  // Consider removing this endpoint and using /votes with a consistent rate limit.
   @Post('shows/:showId/vote')
   @UseGuards(RateLimitGuard)
   @RateLimit(10, 60000)

@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
-    "start:dev": "tsx watch src/main.ts",
+    "start:dev": "bash start-dev.sh",
     "lint": "eslint src --fix",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -20,6 +20,7 @@
     "@azeebo/error-handling": "workspace:*",
     "@azeebo/logger": "workspace:*",
     "@azeebo/security": "workspace:*",
+    "@azeebo/shared-services": "workspace:*",
     "@azeebo/shared-types": "workspace:*",
     "@nestjs/common": "^11.1.27",
     "@nestjs/config": "^4.0.4",

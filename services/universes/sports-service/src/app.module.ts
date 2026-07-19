@@ -17,6 +17,7 @@ import { CacheModule } from '@azeebo/shared-services';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['.env', '../../.env'],
     }),
     RateLimiterModule.forRoot(),
     CacheModule,

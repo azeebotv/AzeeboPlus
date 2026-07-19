@@ -8,6 +8,7 @@ import cookieParser from 'cookie-parser';
 import { LoggingInterceptor } from '@azeebo/logger';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
 import { validateEnvironment } from '@azeebo/shared-types';
+import { configureCors } from '@azeebo/security';
 
 async function bootstrap(): Promise<void> {
   validateEnvironment(process.env);
@@ -15,6 +16,12 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bodyParser: false,
   });
+
+  // NOTE: Global versioning prefix is intentionally REMOVED.
+  // The ProxyController handles versioning via URL path segments (:version/:service/*path).
+  // Adding enableVersioning here would create /v1/api/:version/:service/*path which
+  // mismatches the frontend's /api/v1/auth/login pattern.
+  // Routes are: /api/v1/:service/*path (versioned) and /api/:service/*path (unversioned)
 
   // Cookie parsing for CSRF protection and auth cookies
   app.use(cookieParser());
@@ -80,23 +87,7 @@ async function bootstrap(): Promise<void> {
     });
   }
 
-  app.enableCors({
-    origin: (
-      origin: string | undefined,
-      callback: (err: Error | null, allow?: boolean) => void
-    ) => {
-      // Allow requests with no origin only in development (server-to-server, curl, mobile apps)
-      if (!origin) {
-        callback(null, process.env.NODE_ENV !== 'production');
-      } else if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true,
-  });
+  configureCors(app, { allowedOrigins, credentials: true });
 
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()

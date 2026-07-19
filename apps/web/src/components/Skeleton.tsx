@@ -16,7 +16,7 @@ export function Skeleton({
   style,
 }: SkeletonProps): React.ReactElement {
   const skeletonStyle: React.CSSProperties = {
-    backgroundColor: '#2A1A1A',
+    backgroundColor: 'var(--brand-surface, #2A1A1A)',
     animation: 'pulse 1.5s ease-in-out infinite',
     ...style,
   };

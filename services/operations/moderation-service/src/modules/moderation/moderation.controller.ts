@@ -18,7 +18,7 @@ import { CreateReportDto, EscalateCaseDto, ScanContentDto } from './dto/moderati
 
 @ApiTags('Moderation')
 @UseGuards(RateLimitGuard)
-@Controller('v1/moderation')
+@Controller('moderation')
 export class ModerationController {
   constructor(@Inject(ModerationService) private readonly moderationService: ModerationService) {}
 

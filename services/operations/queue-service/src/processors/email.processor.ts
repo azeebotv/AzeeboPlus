@@ -1,7 +1,7 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
-import { EmailService } from '../modules/email/email.service';
+import { EmailService } from '@azeebo/shared-services';
 
 export interface EmailJobData {
   to: string;

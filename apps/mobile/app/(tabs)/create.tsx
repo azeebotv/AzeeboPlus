@@ -88,7 +88,7 @@ export default function CreateScreen() {
         setDescription('');
         setSelectedUniverse(null);
       } else {
-        Alert.alert('Error', result.error || 'Failed to create content');
+        Alert.alert('Error', (result.error as unknown as string) || 'Failed to create content');
       }
     } catch (err) {
       logger.error('Failed to upload content:', err);

@@ -4,12 +4,6 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 
-interface VideoQuality {
-  label: string;
-  url: string;
-  height: number;
-}
-
 interface VideoState {
   isPlaying: boolean;
   currentTime: number;
@@ -25,6 +19,7 @@ interface VideoState {
 
 interface UseVideoPlayerOptions {
   contentId: string;
+  mediaUrl?: string;
   autoPlay?: boolean;
   startTime?: number;
   onProgress?: (progress: number) => void;
@@ -35,7 +30,6 @@ interface UseVideoPlayerOptions {
 interface UseVideoPlayerReturn {
   state: VideoState;
   signedUrl: string | null;
-  qualities: VideoQuality[];
   videoRef: React.RefObject<HTMLVideoElement | null>;
   play: () => void;
   pause: () => void;
@@ -49,6 +43,7 @@ interface UseVideoPlayerReturn {
 
 export function useVideoPlayer({
   contentId,
+  mediaUrl,
   autoPlay = false,
   startTime = 0,
   onProgress,
@@ -57,7 +52,11 @@ export function useVideoPlayer({
 }: UseVideoPlayerOptions): UseVideoPlayerReturn {
   const { isAuthenticated } = useAuth();
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
-  const [qualities] = useState<VideoQuality[]>([]);
+
+  // Skip signed URL fetch for YouTube, iframe, and FTP content
+  const isEmbeddedMedia = mediaUrl
+    ? /youtube\.com\/watch|youtu\.be\/|iframe|ftp:\/\//.test(mediaUrl)
+    : false;
   const [state, setState] = useState<VideoState>({
     isPlaying: false,
     currentTime: startTime,
@@ -88,6 +87,13 @@ export function useVideoPlayer({
   onProgressRef.current = onProgress;
 
   const refreshSignedUrl = useCallback(async (): Promise<void> => {
+    // Skip signed URL fetch for embedded media (YouTube, iframe, FTP)
+    // Also skip if mediaUrl hasn't loaded yet (undefined = content not fetched yet)
+    if (isEmbeddedMedia) {
+      setState((prev) => ({ ...prev, isLoading: false }));
+      return;
+    }
+
     if (!isAuthenticated || !contentId) {
       setState((prev) => ({ ...prev, error: 'Authentication required', isLoading: false }));
       return;
@@ -135,7 +141,7 @@ export function useVideoPlayer({
     } finally {
       fetchInProgressRef.current = false;
     }
-  }, [isAuthenticated, contentId]);
+  }, [isAuthenticated, contentId, isEmbeddedMedia]);
 
   useEffect(() => {
     refreshSignedUrl();
@@ -280,7 +286,6 @@ export function useVideoPlayer({
   return {
     state,
     signedUrl,
-    qualities,
     videoRef,
     play,
     pause,

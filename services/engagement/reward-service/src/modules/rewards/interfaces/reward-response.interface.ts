@@ -37,14 +37,6 @@ export interface MissionData {
   isCompleted: boolean;
 }
 
-export interface RewardData {
-  id: string;
-  name: string;
-  description: string | null;
-  cost: number;
-  type: string;
-}
-
 export interface RewardResponse {
   success: boolean;
   data?: {

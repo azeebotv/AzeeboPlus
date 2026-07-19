@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule } from '@nestjs/config';
+import { JwtConfigModule } from '@azeebo/shared-services';
 import { UploadController } from './upload.controller';
 import { UploadService } from './upload.service';
 import { S3Service } from './s3.service';
@@ -11,13 +11,7 @@ import { CommonModule } from '../../common/common.module';
   imports: [
     ConfigModule,
     CommonModule,
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
-      }),
-      inject: [ConfigService],
-    }),
+    JwtConfigModule,
   ],
   controllers: [UploadController],
   providers: [UploadService, S3Service, PremiumContentService],

@@ -8,7 +8,7 @@ import { SubmitAnswerDto } from './dto/submit-answer.dto.js';
 import { StartSessionDto } from './dto/start-session.dto.js';
 
 @ApiTags('Games')
-@Controller('v1/games')
+@Controller('games')
 export class GamesController {
   constructor(@Inject(GamesService) private readonly gamesService: GamesService) {}
 
