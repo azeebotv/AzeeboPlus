@@ -1,4 +1,3 @@
-import MediaPlayer from '../../components/MediaPlayer';
 'use client';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '../../../context/AuthContext';

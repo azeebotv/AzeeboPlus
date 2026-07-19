@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { detectMediaType, type MediaType } from '../lib/media-url';
+import { detectMediaType } from '../lib/media-url';
 
 interface MediaPlayerProps {
   url: string;
