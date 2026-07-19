@@ -1842,6 +1842,9 @@ importers:
       '@azeebo/security':
         specifier: workspace:*
         version: link:../../../packages/security
+      '@azeebo/shared-services':
+        specifier: workspace:*
+        version: link:../../../packages/shared-services
       '@azeebo/shared-types':
         specifier: workspace:*
         version: link:../../../packages/shared-types
@@ -2526,9 +2529,6 @@ importers:
       '@azeebo/security':
         specifier: workspace:*
         version: link:../../../packages/security
-      '@azeebo/shared-services':
-        specifier: workspace:*
-        version: link:../../../packages/shared-services
       '@azeebo/shared-types':
         specifier: workspace:*
         version: link:../../../packages/shared-types
@@ -3530,9 +3530,6 @@ importers:
       '@azeebo/security':
         specifier: workspace:*
         version: link:../../../packages/security
-      '@azeebo/shared-services':
-        specifier: workspace:*
-        version: link:../../../packages/shared-services
       '@azeebo/shared-types':
         specifier: workspace:*
         version: link:../../../packages/shared-types
