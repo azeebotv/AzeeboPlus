@@ -133,8 +133,6 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/shared-services run build && \
     pnpm --filter @azeebo/security run build && \
     pnpm --filter @azeebo/ui run build && \
-    echo "==> Patching service tsconfig.build.json to resolve @azeebo/* from dist..." && \
-    bash scripts/patch-build-tsconfig.sh && \
     echo "==> [T1] Building critical path (web, gateway, auth, user)..." && \
     pnpm --filter @azeebo/web run build && \
     echo "==> Web build complete. Checking standalone output..." && \
