@@ -115,6 +115,7 @@ ARG CACHEBUST
 #   T5: Intelligence (analytics, recommendation)
 #   T6: Universe services (reality, movie, comedy, etc.)
 #   T7: Operations (queue, support, moderation)
+SHELL ["/bin/bash", "-eo", "pipefail", "-c"]
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     echo "Cache bust: $CACHEBUST" && \
     set -e && \
@@ -196,6 +197,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     echo "==> Packaging workspace package dists for runtime" && \
     find packages -maxdepth 2 -name "dist" -type d -o -path "*/src/prisma/client" -type d 2>/dev/null | \
       tar czf /tmp/pkg-dist.tar.gz -C /app -T - 2>/dev/null || true
+SHELL ["/bin/sh", "-c"]
 
 # ---- Verify ALL outputs exist — crash if anything is missing ----
 RUN echo "==> Verifying build outputs..." && \
