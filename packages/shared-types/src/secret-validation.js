@@ -11,6 +11,14 @@ const log = (service, level, message) => {
     else
         process.stdout.write(`${prefix} ${message}\n`);
 };
+/**
+ * Validates environment variables at service startup.
+ * Logs warnings for non-critical missing variables and exits for critical ones.
+ *
+ * @param env - The environment variables object (usually process.env)
+ * @param service - The name of the service being validated
+ * @param options - Validation options
+ */
 function validateStartup(env, service, options = {}) {
     const { requireAll = false } = options;
     log(service, 'info', 'Validating environment variables...');
@@ -46,6 +54,12 @@ function validateStartup(env, service, options = {}) {
         }
     }
 }
+/**
+ * Checks if a secret looks like a placeholder value.
+ *
+ * @param value - The secret value to check
+ * @returns true if the value appears to be a placeholder
+ */
 function isPlaceholderSecret(value) {
     const placeholderPatterns = [
         /^your[_-].*$/i,
@@ -63,6 +77,13 @@ function isPlaceholderSecret(value) {
     ];
     return placeholderPatterns.some((pattern) => pattern.test(value));
 }
+/**
+ * Validates that no placeholder secrets are in use.
+ *
+ * @param env - The environment variables object
+ * @param secretKeys - List of keys that should contain real secrets
+ * @returns Array of keys that contain placeholder values
+ */
 function validateNoPlaceholders(env, secretKeys) {
     const placeholders = [];
     for (const key of secretKeys) {
@@ -73,4 +94,3 @@ function validateNoPlaceholders(env, secretKeys) {
     }
     return placeholders;
 }
-//# sourceMappingURL=secret-validation.js.map

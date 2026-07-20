@@ -13,11 +13,11 @@ export interface DataClassificationMetadata {
     piiCategory?: PiiCategory;
 }
 export declare enum PiiCategory {
-    IDENTIFICATION = "IDENTIFICATION",
-    LOCATION = "LOCATION",
-    BEHAVIORAL = "BEHAVIORAL",
-    FINANCIAL = "FINANCIAL",
-    AUTHENTICATION = "AUTHENTICATION",
+    IDENTIFICATION = "IDENTIFICATION",// Name, email, phone, ID numbers
+    LOCATION = "LOCATION",// GPS, IP addresses
+    BEHAVIORAL = "BEHAVIORAL",// Usage data, preferences
+    FINANCIAL = "FINANCIAL",// Payment info, transactions
+    AUTHENTICATION = "AUTHENTICATION",// Passwords, tokens, biometric data
     COMMUNICATIONS = "COMMUNICATIONS"
 }
 export interface UserDataExport {
