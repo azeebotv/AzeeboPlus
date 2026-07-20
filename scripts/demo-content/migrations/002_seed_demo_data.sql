@@ -43,23 +43,23 @@ ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO "users" (id, email, password, "displayName", avatar, role, "isVerified", "createdAt") VALUES
   -- Admin users
-  ('a0000001-0000-0000-0000-000000000001', 'admin@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Admin Chidi', '/images/placeholders/avatars/100x100_09.png
-  ('a0000001-0000-0000-0000-000000000002', 'moderator@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Mod Amina', '/images/placeholders/avatars/100x100_10.png
+  ('a0000001-0000-0000-0000-000000000001', 'admin@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Admin Chidi', '/images/placeholders/avatars/100x100_09.png'),
+  ('a0000001-0000-0000-0000-000000000002', 'moderator@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Mod Amina', '/images/placeholders/avatars/100x100_10.png'),
   -- Creator users
-  ('a0000001-0000-0000-0000-000000000003', 'creator1@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Tunde Creates', '/images/placeholders/avatars/100x100_11.png
-  ('a0000001-0000-0000-0000-000000000004', 'creator2@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Ngozi Vibes', '/images/placeholders/avatars/100x100_12.png
-  ('a0000001-0000-0000-0000-000000000005', 'creator3@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Emeka Studios', '/images/placeholders/avatars/100x100_01.png
+  ('a0000001-0000-0000-0000-000000000003', 'creator1@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Tunde Creates', '/images/placeholders/avatars/100x100_11.png'),
+  ('a0000001-0000-0000-0000-000000000004', 'creator2@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Ngozi Vibes', '/images/placeholders/avatars/100x100_12.png'),
+  ('a0000001-0000-0000-0000-000000000005', 'creator3@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Emeka Studios', '/images/placeholders/avatars/100x100_01.png'),
   -- Regular user (viewer)
-  ('a0000001-0000-0000-0000-000000000006', 'user1@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Kemi Watch', '/images/placeholders/avatars/100x100_02.png
-  ('a0000001-0000-0000-0000-000000000007', 'user2@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Olumide F', '/images/placeholders/avatars/100x100_03.png
-  ('a0000001-0000-0000-0000-000000000008', 'user3@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Fatima A', '/images/placeholders/avatars/100x100_04.png
+  ('a0000001-0000-0000-0000-000000000006', 'user1@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Kemi Watch', '/images/placeholders/avatars/100x100_02.png'),
+  ('a0000001-0000-0000-0000-000000000007', 'user2@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Olumide F', '/images/placeholders/avatars/100x100_03.png'),
+  ('a0000001-0000-0000-0000-000000000008', 'user3@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Fatima A', '/images/placeholders/avatars/100x100_04.png'),
   -- Inactive / banned user (for edge-case testing)
   ('a0000001-0000-0000-0000-000000000009', 'banned@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Chukwu M', NULL, 'user', true, '2025-02-20T00:00:00Z'),
   ('a0000001-0000-0000-0000-000000000010', 'unverified@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Yemi O', NULL, 'user', false, '2025-05-01T00:00:00Z'),
   -- Sports creator
-  ('a0000001-0000-0000-0000-000000000011', 'sportscreator@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Chinedu Sports', '/images/placeholders/avatars/100x100_05.png
+  ('a0000001-0000-0000-0000-000000000011', 'sportscreator@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Chinedu Sports', '/images/placeholders/avatars/100x100_05.png'),
   -- Gaming creator
-  ('a0000001-0000-0000-0000-000000000012', 'gamer@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Tunde Gaming', '/images/placeholders/avatars/100x100_06.png
+  ('a0000001-0000-0000-0000-000000000012', 'gamer@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Tunde Gaming', '/images/placeholders/avatars/100x100_06.png'),
 ON CONFLICT (id) DO UPDATE SET
   email = EXCLUDED.email,
   password = EXCLUDED.password,
@@ -87,16 +87,16 @@ ON CONFLICT (id) DO NOTHING;
 -- ============================================================================
 
 INSERT INTO "user_profiles" (id, "userId", "displayName", avatar, bio, location, "isPublic", "createdAt", "updatedAt") VALUES
-   ('c0000001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000001', 'Admin Chidi', '/images/placeholders/avatars/100x100_07.png
-   ('c0000001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000002', 'Mod Amina', '/images/placeholders/avatars/100x100_08.png
-   ('c0000001-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000003', 'Tunde Creates', '/images/placeholders/avatars/100x100_09.png
-   ('c0000001-0000-0000-0000-000000000004', 'a0000001-0000-0000-0000-000000000004', 'Ngozi Vibes', '/images/placeholders/avatars/100x100_10.png
-   ('c0000001-0000-0000-0000-000000000005', 'a0000001-0000-0000-0000-000000000005', 'Emeka Studios', '/images/placeholders/avatars/100x100_11.png
-   ('c0000001-0000-0000-0000-000000000006', 'a0000001-0000-0000-0000-000000000006', 'Kemi Watch', '/images/placeholders/avatars/100x100_12.png
-   ('c0000001-0000-0000-0000-000000000007', 'a0000001-0000-0000-0000-000000000007', 'Olumide F', '/images/placeholders/avatars/100x100_01.png
-   ('c0000001-0000-0000-0000-000000000008', 'a0000001-0000-0000-0000-000000000008', 'Fatima A', '/images/placeholders/avatars/100x100_02.png
-   ('c0000001-0000-0000-0000-000000000011', 'a0000001-0000-0000-0000-000000000011', 'Chinedu Sports', '/images/placeholders/avatars/100x100_03.png
-   ('c0000001-0000-0000-0000-000000000012', 'a0000001-0000-0000-0000-000000000012', 'Tunde Gaming', '/images/placeholders/avatars/100x100_04.png
+   ('c0000001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000001', 'Admin Chidi', '/images/placeholders/avatars/100x100_07.png'),
+   ('c0000001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000002', 'Mod Amina', '/images/placeholders/avatars/100x100_08.png'),
+   ('c0000001-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000003', 'Tunde Creates', '/images/placeholders/avatars/100x100_09.png'),
+   ('c0000001-0000-0000-0000-000000000004', 'a0000001-0000-0000-0000-000000000004', 'Ngozi Vibes', '/images/placeholders/avatars/100x100_10.png'),
+   ('c0000001-0000-0000-0000-000000000005', 'a0000001-0000-0000-0000-000000000005', 'Emeka Studios', '/images/placeholders/avatars/100x100_11.png'),
+   ('c0000001-0000-0000-0000-000000000006', 'a0000001-0000-0000-0000-000000000006', 'Kemi Watch', '/images/placeholders/avatars/100x100_12.png'),
+   ('c0000001-0000-0000-0000-000000000007', 'a0000001-0000-0000-0000-000000000007', 'Olumide F', '/images/placeholders/avatars/100x100_01.png'),
+   ('c0000001-0000-0000-0000-000000000008', 'a0000001-0000-0000-0000-000000000008', 'Fatima A', '/images/placeholders/avatars/100x100_02.png'),
+   ('c0000001-0000-0000-0000-000000000011', 'a0000001-0000-0000-0000-000000000011', 'Chinedu Sports', '/images/placeholders/avatars/100x100_03.png'),
+   ('c0000001-0000-0000-0000-000000000012', 'a0000001-0000-0000-0000-000000000012', 'Tunde Gaming', '/images/placeholders/avatars/100x100_04.png'),
    ('c0000001-0000-0000-0000-000000000009', 'a0000001-0000-0000-0000-000000000009', 'Chukwu M', NULL, 'Former user (banned)', NULL, false, '2025-02-20T00:00:00Z', '2025-02-20T00:00:00Z'),
    ('c0000001-0000-0000-0000-000000000010', 'a0000001-0000-0000-0000-000000000010', 'Yemi O', NULL, 'Unverified account', NULL, false, '2025-05-01T00:00:00Z', '2025-05-01T00:00:00Z')
 ON CONFLICT (id) DO UPDATE SET "displayName" = EXCLUDED."displayName", avatar = EXCLUDED.avatar, bio = EXCLUDED.bio, location = EXCLUDED.location, "isPublic" = EXCLUDED."isPublic";
@@ -769,9 +769,9 @@ ON CONFLICT (id) DO NOTHING;
 -- ============================================================================
 
 INSERT INTO "creator_profiles" (id, "userId", "displayName", avatar, bio, banner, "socialLinks", verified) VALUES
-  ('cp00001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000003', 'Tunde Creates', '/images/placeholders/avatars/100x100_05.png"instagram":"@tundecreates","twitter":"@tunde_creates","youtube":"TundeCreates"}', true),
-  ('cp00001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000004', 'Ngozi Vibes', '/images/placeholders/avatars/100x100_06.png"instagram":"@ngozivibes","twitter":"@ngozi_vibes","tiktok":"@ngozivibes"}', true),
-  ('cp00001-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000005', 'Emeka Studios', '/images/placeholders/avatars/100x100_07.png"instagram":"@emekastudios","twitter":"@emeka_studios","youtube":"EmekaStudios"}', true)
+  ('cp00001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000003', 'Tunde Creates', '/images/placeholders/avatars/100x100_05.png', '{"instagram":"@tundecreates","twitter":"@tunde_creates","youtube":"TundeCreates"}', true),
+  ('cp00001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000004', 'Ngozi Vibes', '/images/placeholders/avatars/100x100_06.png', '{"instagram":"@ngozivibes","twitter":"@ngozi_vibes","tiktok":"@ngozivibes"}', true),
+  ('cp00001-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000005', 'Emeka Studios', '/images/placeholders/avatars/100x100_07.png', '{"instagram":"@emekastudios","twitter":"@emeka_studios","youtube":"EmekaStudios"}', true)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO "creator_channels" (id, "creatorId", name, description, category) VALUES
