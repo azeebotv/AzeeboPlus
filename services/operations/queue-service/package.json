@@ -38,7 +38,8 @@
     "ioredis": "^5.11.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
-    "twilio": "^6.0.2"
+    "twilio": "^6.0.2",
+    "@nestjs-modules/ioredis": "^3.0.0"
   },
   "devDependencies": {
     "@nestjs/testing": "^11.1.27",
