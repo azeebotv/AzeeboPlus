@@ -115,12 +115,10 @@ ARG CACHEBUST
 #   T5: Intelligence (analytics, recommendation)
 #   T6: Universe services (reality, movie, comedy, etc.)
 #   T7: Operations (queue, support, moderation)
+SHELL ["/bin/bash", "-eo", "pipefail", "-c"]
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     echo "Cache bust: $CACHEBUST" && \
     set -e && \
-    # ================================================================
-    # T0: Shared packages — every service depends on these
-    # ================================================================
     echo "==> [T0] Building shared packages..." && \
     pnpm --filter @azeebo/shared-types run build && \
     pnpm --filter @azeebo/http-client run build && \
@@ -130,15 +128,13 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/logger run build && \
     pnpm --filter @azeebo/api-client run build && \
     pnpm --filter @azeebo/design-tokens run build && \
+    pnpm --filter @azeebo/analytics-sdk run build && \
     pnpm --filter @azeebo/shared-services prisma:generate && \
     bash scripts/patch-prisma-client.sh && \
     pnpm --filter @azeebo/shared-services run build && \
+    echo "==> Verify shared-services dist:" && find packages/shared-services/dist/ -maxdepth 1 -name "index.*" 2>&1 && \
     pnpm --filter @azeebo/security run build && \
     pnpm --filter @azeebo/ui run build && \
-    # ================================================================
-    # T1: Critical path — Web, Gateway, Auth, User
-    #     These MUST be up for anyone to use the platform.
-    # ================================================================
     echo "==> [T1] Building critical path (web, gateway, auth, user)..." && \
     pnpm --filter @azeebo/web run build && \
     echo "==> Web build complete. Checking standalone output..." && \
@@ -148,27 +144,17 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/api-gateway run build && \
     pnpm --filter @azeebo/auth-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/auth-service run build && \
     pnpm --filter @azeebo/user-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/user-service run build && \
-    # ================================================================
-    # T2: Core business — media, content, wallet, payment, search
-    #     Required for basic platform functionality.
-    # ================================================================
     echo "==> [T2] Building core business services..." && \
     pnpm --filter @azeebo/media-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/media-service run build && \
     pnpm --filter @azeebo/content-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/content-service run build && \
     pnpm --filter @azeebo/wallet-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/wallet-service run build && \
     pnpm --filter @azeebo/payment-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/payment-service run build && \
     pnpm --filter @azeebo/search-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/search-service run build && \
-    # ================================================================
-    # T3: Admin & Creator apps
-    # ================================================================
     echo "==> [T3] Building admin and creator-portal apps..." && \
     pnpm --filter @azeebo/admin prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/admin run build && \
     pnpm --filter @azeebo/creator-portal prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/creator-portal run build && \
     (test -d apps/admin/src/generated/prisma && mkdir -p apps/admin/dist/generated && cp -r apps/admin/src/generated/prisma apps/admin/dist/generated/prisma) && \
     (test -d apps/creator-portal/src/generated/prisma && mkdir -p apps/creator-portal/dist/generated && cp -r apps/creator-portal/src/generated/prisma apps/creator-portal/dist/generated/prisma) && \
-    # ================================================================
-    # T4: Engagement services — notifications, rewards, messaging
-    # ================================================================
     echo "==> [T4] Building engagement services..." && \
     pnpm --filter @azeebo/notification-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/notification-service run build && \
     pnpm --filter @azeebo/reward-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/reward-service run build && \
@@ -176,15 +162,9 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/messaging-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/messaging-service run build && \
     pnpm --filter @azeebo/referral-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/referral-service run build && \
     pnpm --filter @azeebo/subscription-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/subscription-service run build && \
-    # ================================================================
-    # T5: Intelligence — analytics, recommendation
-    # ================================================================
     echo "==> [T5] Building intelligence services..." && \
     pnpm --filter @azeebo/analytics-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/analytics-service run build && \
     pnpm --filter @azeebo/recommendation-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/recommendation-service run build && \
-    # ================================================================
-    # T6: Universe services — reality, movie, comedy, games, etc.
-    # ================================================================
     echo "==> [T6] Building universe services..." && \
     pnpm --filter @azeebo/reality-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/reality-service run build && \
     pnpm --filter @azeebo/movie-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/movie-service run build && \
@@ -194,14 +174,10 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/lifestyle-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/lifestyle-service run build && \
     pnpm --filter @azeebo/vertical-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/vertical-service run build && \
     pnpm --filter @azeebo/creator-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/creator-service run build && \
-    # ================================================================
-    # T7: Operations — queue, support, moderation
-    # ================================================================
     echo "==> [T7] Building operations services..." && \
     pnpm --filter @azeebo/queue-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/queue-service run build && \
     pnpm --filter @azeebo/support-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/support-service run build && \
     pnpm --filter @azeebo/moderation-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/moderation-service run build && \
-    # ---- Flatten nested dist directories ----
     echo "==> Flattening nested dist directories..." && \
     for svc_dir in $(find services -maxdepth 2 -mindepth 2 -type d -not -path "*/node_modules/*" | sort); do \
       dist="$svc_dir/dist"; \
@@ -223,6 +199,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     echo "==> Packaging workspace package dists for runtime" && \
     find packages -maxdepth 2 -name "dist" -type d -o -path "*/src/prisma/client" -type d 2>/dev/null | \
       tar czf /tmp/pkg-dist.tar.gz -C /app -T - 2>/dev/null || true
+SHELL ["/bin/sh", "-c"]
 
 # ---- Verify ALL outputs exist — crash if anything is missing ----
 RUN echo "==> Verifying build outputs..." && \

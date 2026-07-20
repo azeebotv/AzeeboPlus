@@ -26,6 +26,7 @@ docker-bake.hcl
 scripts/
 !scripts/demo-content/
 !scripts/patch-prisma-client.sh
+!scripts/patch-build-tsconfig.sh
 
 # Markdown (except README)
 *.md

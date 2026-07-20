@@ -21,6 +21,7 @@
     "@azeebo/error-handling": "workspace:*",
     "@azeebo/logger": "workspace:*",
     "@azeebo/security": "workspace:*",
+    "@azeebo/shared-services": "workspace:*",
     "@azeebo/shared-types": "workspace:*",
     "@azeebo/validation": "workspace:*",
     "@nestjs/common": "^11.1.27",

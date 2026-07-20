@@ -67,6 +67,15 @@ importers:
 
   apps/admin:
     dependencies:
+      '@azeebo/error-handling':
+        specifier: workspace:*
+        version: link:../../packages/error-handling
+      '@azeebo/logger':
+        specifier: workspace:*
+        version: link:../../packages/logger
+      '@azeebo/security':
+        specifier: workspace:*
+        version: link:../../packages/security
       '@nestjs/common':
         specifier: ^11.1.27
         version: 11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -185,6 +194,15 @@ importers:
 
   apps/creator-portal:
     dependencies:
+      '@azeebo/error-handling':
+        specifier: workspace:*
+        version: link:../../packages/error-handling
+      '@azeebo/logger':
+        specifier: workspace:*
+        version: link:../../packages/logger
+      '@azeebo/security':
+        specifier: workspace:*
+        version: link:../../packages/security
       '@nestjs/common':
         specifier: ^11.1.27
         version: 11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -1404,6 +1422,9 @@ importers:
       '@azeebo/security':
         specifier: workspace:*
         version: link:../../../packages/security
+      '@azeebo/shared-services':
+        specifier: workspace:*
+        version: link:../../../packages/shared-services
       '@azeebo/shared-types':
         specifier: workspace:*
         version: link:../../../packages/shared-types
@@ -1715,6 +1736,9 @@ importers:
       '@azeebo/security':
         specifier: workspace:*
         version: link:../../../packages/security
+      '@azeebo/shared-services':
+        specifier: workspace:*
+        version: link:../../../packages/shared-services
       '@azeebo/shared-types':
         specifier: workspace:*
         version: link:../../../packages/shared-types
@@ -1842,9 +1866,15 @@ importers:
       '@azeebo/security':
         specifier: workspace:*
         version: link:../../../packages/security
+      '@azeebo/shared-services':
+        specifier: workspace:*
+        version: link:../../../packages/shared-services
       '@azeebo/shared-types':
         specifier: workspace:*
         version: link:../../../packages/shared-types
+      '@azeebo/utils':
+        specifier: workspace:*
+        version: link:../../../packages/utils
       '@nestjs/common':
         specifier: ^11.1.27
         version: 11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -1993,6 +2023,9 @@ importers:
       '@azeebo/security':
         specifier: workspace:*
         version: link:../../../packages/security
+      '@azeebo/shared-services':
+        specifier: workspace:*
+        version: link:../../../packages/shared-services
       '@azeebo/shared-types':
         specifier: workspace:*
         version: link:../../../packages/shared-types
@@ -2081,6 +2114,9 @@ importers:
       '@azeebo/security':
         specifier: workspace:*
         version: link:../../../packages/security
+      '@azeebo/shared-services':
+        specifier: workspace:*
+        version: link:../../../packages/shared-services
       '@azeebo/shared-types':
         specifier: workspace:*
         version: link:../../../packages/shared-types
@@ -2205,6 +2241,9 @@ importers:
       '@azeebo/shared-types':
         specifier: workspace:*
         version: link:../../../packages/shared-types
+      '@azeebo/utils':
+        specifier: workspace:*
+        version: link:../../../packages/utils
       '@nestjs/common':
         specifier: ^11.1.27
         version: 11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -2235,6 +2274,9 @@ importers:
       '@prisma/client':
         specifier: ^6.19.3
         version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
+      axios:
+        specifier: ^1.7.0
+        version: 1.18.0
       class-transformer:
         specifier: ^0.5.1
         version: 0.5.1
@@ -2332,6 +2374,9 @@ importers:
       '@azeebo/security':
         specifier: workspace:*
         version: link:../../../packages/security
+      '@azeebo/shared-services':
+        specifier: workspace:*
+        version: link:../../../packages/shared-services
       '@azeebo/shared-types':
         specifier: workspace:*
         version: link:../../../packages/shared-types
@@ -2429,6 +2474,9 @@ importers:
       '@azeebo/security':
         specifier: workspace:*
         version: link:../../../packages/security
+      '@azeebo/shared-services':
+        specifier: workspace:*
+        version: link:../../../packages/shared-services
       '@azeebo/shared-types':
         specifier: workspace:*
         version: link:../../../packages/shared-types
@@ -2665,6 +2713,9 @@ importers:
       '@azeebo/security':
         specifier: workspace:*
         version: link:../../../packages/security
+      '@azeebo/shared-services':
+        specifier: workspace:*
+        version: link:../../../packages/shared-services
       '@azeebo/shared-types':
         specifier: workspace:*
         version: link:../../../packages/shared-types
@@ -2795,6 +2846,9 @@ importers:
       '@azeebo/security':
         specifier: workspace:*
         version: link:../../../packages/security
+      '@azeebo/shared-services':
+        specifier: workspace:*
+        version: link:../../../packages/shared-services
       '@azeebo/shared-types':
         specifier: workspace:*
         version: link:../../../packages/shared-types
@@ -2925,6 +2979,9 @@ importers:
       '@azeebo/security':
         specifier: workspace:*
         version: link:../../../packages/security
+      '@azeebo/shared-services':
+        specifier: workspace:*
+        version: link:../../../packages/shared-services
       '@azeebo/shared-types':
         specifier: workspace:*
         version: link:../../../packages/shared-types
@@ -3158,6 +3215,9 @@ importers:
       '@azeebo/security':
         specifier: workspace:*
         version: link:../../../packages/security
+      '@azeebo/shared-services':
+        specifier: workspace:*
+        version: link:../../../packages/shared-services
       '@azeebo/shared-types':
         specifier: workspace:*
         version: link:../../../packages/shared-types
@@ -3185,6 +3245,9 @@ importers:
       '@prisma/client':
         specifier: ^6.19.3
         version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
+      axios:
+        specifier: ^1.7.0
+        version: 1.18.0
       class-transformer:
         specifier: ^0.5.1
         version: 0.5.1
@@ -3279,6 +3342,9 @@ importers:
       '@azeebo/security':
         specifier: workspace:*
         version: link:../../../packages/security
+      '@azeebo/shared-services':
+        specifier: workspace:*
+        version: link:../../../packages/shared-services
       '@azeebo/shared-types':
         specifier: workspace:*
         version: link:../../../packages/shared-types
@@ -3312,6 +3378,9 @@ importers:
       '@prisma/client':
         specifier: ^6.19.3
         version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
+      axios:
+        specifier: ^1.7.0
+        version: 1.18.0
       class-transformer:
         specifier: ^0.5.1
         version: 0.5.1
@@ -3400,6 +3469,9 @@ importers:
       '@azeebo/security':
         specifier: workspace:*
         version: link:../../../packages/security
+      '@azeebo/shared-services':
+        specifier: workspace:*
+        version: link:../../../packages/shared-services
       '@azeebo/shared-types':
         specifier: workspace:*
         version: link:../../../packages/shared-types
@@ -3536,6 +3608,9 @@ importers:
       '@azeebo/shared-types':
         specifier: workspace:*
         version: link:../../../packages/shared-types
+      '@nestjs-modules/ioredis':
+        specifier: ^2.2.1
+        version: 2.2.1(@grpc/grpc-js@1.14.4)(@grpc/proto-loader@0.8.1)(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@nestjs/microservices@11.1.27)(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(ioredis@5.11.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/bullmq':
         specifier: ^11.0.4
         version: 11.0.4(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(bullmq@5.78.1(redis@6.0.0(@opentelemetry/api@1.9.1)))
@@ -3621,6 +3696,9 @@ importers:
       '@azeebo/security':
         specifier: workspace:*
         version: link:../../../packages/security
+      '@azeebo/shared-services':
+        specifier: workspace:*
+        version: link:../../../packages/shared-services
       '@azeebo/shared-types':
         specifier: workspace:*
         version: link:../../../packages/shared-types
@@ -4583,6 +4661,9 @@ importers:
       '@azeebo/shared-types':
         specifier: workspace:*
         version: link:../../../packages/shared-types
+      '@nestjs-modules/ioredis':
+        specifier: ^2.2.1
+        version: 2.2.1(@grpc/grpc-js@1.14.4)(@grpc/proto-loader@0.8.1)(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@nestjs/microservices@11.1.27)(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(ioredis@5.11.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/common':
         specifier: ^11.1.27
         version: 11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -4622,6 +4703,9 @@ importers:
       helmet:
         specifier: ^8.2.0
         version: 8.2.0
+      ioredis:
+        specifier: ^5.11.1
+        version: 5.11.1
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -18458,7 +18542,9 @@ snapshots:
       metro-runtime: 0.84.4
     transitivePeerDependencies:
       - '@babel/core'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 

@@ -20,6 +20,7 @@
     "@azeebo/error-handling": "workspace:*",
     "@azeebo/logger": "workspace:*",
     "@azeebo/security": "workspace:*",
+    "@azeebo/shared-services": "workspace:*",
     "@azeebo/shared-types": "workspace:*",
     "@nestjs/common": "^11.1.27",
     "@nestjs/config": "^4.0.4",
@@ -37,7 +38,8 @@
     "ms": "^2.1.3",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.2"
+    "rxjs": "^7.8.2",
+    "axios": "^1.7.0"
   },
   "devDependencies": {
     "@nestjs/testing": "^11.1.27",

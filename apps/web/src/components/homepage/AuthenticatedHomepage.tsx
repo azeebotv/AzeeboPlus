@@ -52,7 +52,7 @@ export default function AuthenticatedHomepage({
 
   // Section 5: Supplementary sections
   const [trendingContent, setTrendingContent] = useState<ContentItem[]>([]);
-  const [continueWatching, setContinueWatching] = useState<ContentItem[]>([]);
+  const [continueWatching, _setContinueWatching] = useState<ContentItem[]>([]);
   const [newReleases, setNewReleases] = useState<ContentItem[]>([]);
   const [popularInRegion, setPopularInRegion] = useState<ContentItem[]>([]);
   const [isLoadingSupplementary, setIsLoadingSupplementary] = useState(true);
@@ -92,7 +92,7 @@ export default function AuthenticatedHomepage({
           
           allContent.forEach((item) => {
             const universeId = item.universeId || 'unknown';
-            const universeName = item.universe?.displayName || item.universe?.name || 'Unknown';
+            const universeName = item.universe?.name || 'Unknown';
             const universeIcon = item.universe?.icon;
             
             if (!universeMap.has(universeId)) {

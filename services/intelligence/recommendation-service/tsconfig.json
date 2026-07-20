@@ -14,7 +14,7 @@
       "supertest"
     ],
     "paths": {
-      "@azeebo/*": ["../../../packages/*/src"],
+      "@azeebo/*": ["../../../packages/*/dist"],
       "@prisma/client": [
         "./src/prisma/client"
       ],

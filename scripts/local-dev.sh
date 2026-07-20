@@ -49,7 +49,7 @@
 set -euo pipefail
 
 # ---- Script Metadata ----
-SCRIPT_VERSION="3.0.0"
+SCRIPT_VERSION="3.1.0"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
@@ -413,6 +413,62 @@ run_prisma_generate() {
       log_debug "    $gen_output"
     fi
   done
+}
+
+# T0: Shared packages that ALL services depend on.
+# These must be built before any service can start (nest start:dev compiles
+# on the fly, but it needs the @azeebo/* type declarations from dist/).
+T0_PACKAGES=(
+  "shared-types"
+  "http-client"
+  "utils"
+  "validation"
+  "error-handling"
+  "logger"
+  "api-client"
+  "design-tokens"
+  "analytics-sdk"
+  "shared-services"
+  "security"
+  "ui"
+)
+
+build_t0_packages() {
+  section "Building T0 Shared Packages"
+  local count=0 failed=0
+
+  for pkg in "${T0_PACKAGES[@]}"; do
+    count=$((count + 1))
+    local pkg_dir="$ROOT_DIR/packages/$pkg"
+
+    if [[ ! -f "$pkg_dir/package.json" ]]; then
+      log_warn "  [$count] $pkg: not found — skipping"
+      continue
+    fi
+
+    # shared-services needs prisma generate first
+    if [[ "$pkg" == "shared-services" ]]; then
+      if [[ -f "$pkg_dir/prisma/schema.prisma" ]]; then
+        local db_url="${DB_BASE_URL}/azeebo_content?schema=public"
+        (cd "$pkg_dir" && DATABASE_URL="$db_url" npx prisma generate 2>&1) >/dev/null 2>&1 || true
+      fi
+    fi
+
+    local build_output
+    if build_output="$(cd "$pkg_dir" && pnpm run build 2>&1)"; then
+      log_ok "  [$count] $pkg: built"
+    else
+      log_error "  [$count] $pkg: FAILED"
+      log_debug "    $build_output"
+      failed=$((failed + 1))
+    fi
+  done
+
+  if (( failed > 0 )); then
+    log_error "$failed T0 package(s) failed to build"
+    return 1
+  fi
+  log_ok "All T0 packages built ($count total)"
 }
 
 run_migrations() {
@@ -793,6 +849,7 @@ cmd_setup() {
 
   run_prisma_generate
   run_migrations
+  build_t0_packages
 
   # Seed demo data
   section "Seeding Demo Data"
@@ -876,6 +933,11 @@ cmd_start() {
 
   [[ "$do_all" == "true" ]] && { do_core=true; do_engagement=true; do_intelligence=true; do_universes=true; do_operations=true; do_gateway=true; do_frontend=true; }
   [[ "$do_quick" == "true" ]] && { do_core=true; do_gateway=true; do_frontend=true; }
+
+  # Build T0 shared packages first (services depend on these)
+  if [[ "$do_no_build" != "true" ]]; then
+    build_t0_packages
+  fi
 
   [[ "$do_core" == "true" ]]       && start_group "core" "${CORE_SERVICES[@]}"
   [[ "$do_engagement" == "true" ]] && start_group "engagement" "${ENGAGEMENT_SERVICES[@]}"
@@ -1183,9 +1245,8 @@ DATABASES (one per service):
 FIRST-TIME SETUP:
   1. Ensure PostgreSQL and Redis are running (FlyEnv or brew services)
   2. ./scripts/local-dev.sh setup
-  3. ./scripts/local-dev.sh db seed
-  4. ./scripts/local-dev.sh start --quick
-  5. Open http://localhost:4000
+  3. ./scripts/local-dev.sh start --quick
+  4. Open http://localhost:4000
 
 DOCKER (staging/production):
   The all-in-one Docker setup is in Dockerfile.all-in-one and

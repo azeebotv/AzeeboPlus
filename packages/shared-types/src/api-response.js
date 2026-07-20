@@ -68,4 +68,3 @@ function createCreatedResponse(data, meta) {
 function createNoContentResponse() {
     return ApiResponseWrapper.noContent();
 }
-//# sourceMappingURL=api-response.js.map

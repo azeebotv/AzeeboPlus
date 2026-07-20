@@ -14,7 +14,7 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p tsconfig.json",
     "test": "jest",
     "test:cov": "jest --coverage",
     "clean": "rm -rf dist",

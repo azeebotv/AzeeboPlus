@@ -40,4 +40,3 @@ class ApiVersioningConfig {
     }
 }
 exports.ApiVersioningConfig = ApiVersioningConfig;
-//# sourceMappingURL=api-versioning.js.map

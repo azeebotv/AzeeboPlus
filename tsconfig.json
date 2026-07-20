@@ -13,7 +13,11 @@
     "skipLibCheck": true,
     "target": "ES2022",
     "module": "CommonJS",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "esModuleInterop": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
@@ -21,40 +25,105 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "paths": {
-      "@/*": ["./apps/web/src/*"],
-      "@azeebo/*": ["./packages/*/src"],
-      "@azeebo/ui": ["./packages/ui/src"],
-      "@azeebo/ui/*": ["./packages/ui/src/*"],
-      "@azeebo/design-tokens": ["./packages/design-tokens/src"],
-      "@azeebo/design-tokens/*": ["./packages/design-tokens/src/*"],
-      "@azeebo/analytics-sdk": ["./packages/analytics-sdk/src"],
-      "@azeebo/analytics-sdk/*": ["./packages/analytics-sdk/src/*"],
-      "@azeebo/api-client": ["./packages/api-client/src"],
-      "@azeebo/api-client/*": ["./packages/api-client/src/*"],
-      "@azeebo/shared-types": ["./packages/shared-types/src"],
-      "@azeebo/shared-types/*": ["./packages/shared-types/src/*"],
-      "@azeebo/utils": ["./packages/utils/src"],
-      "@azeebo/utils/*": ["./packages/utils/src/*"],
-      "@azeebo/shared-services": ["./packages/shared-services/src"],
-      "@azeebo/shared-services/*": ["./packages/shared-services/src/*"],
-      "@azeebo/shared-queue": ["./packages/shared-queue/src"],
-      "@azeebo/auth": ["./packages/auth/src/index.ts"],
-      "@azeebo/contract-tests": ["./packages/contract-tests/src"],
-      "@azeebo/security": ["./packages/security/src/index.ts"],
-      "@azeebo/observability": ["./packages/observability/src/index.ts"],
-      "@azeebo/opentelemetry": ["./packages/opentelemetry/src/index.ts"],
-      "@azeebo/feature-flags": ["./packages/feature-flags/src/index.ts"],
-      "@azeebo/http-client": ["./packages/http-client/src/index.ts"],
-      "@azeebo/http-client/*": ["./packages/http-client/src/*"],
-      "@azeebo/internal-clients": ["./packages/internal-clients/src/index.ts"],
-      "@azeebo/logger": ["./packages/logger/src/index.ts"],
-      "@azeebo/error-handling": ["./packages/error-handling/src/index.ts"],
-      "@azeebo/event-bus": ["./packages/event-bus/src"],
-      "@azeebo/validation": ["./packages/validation/src/index.ts"],
-      "@azeebo/test-utils": ["./packages/test-utils/src/index.ts"]
+      "@/*": [
+        "./apps/web/src/*"
+      ],
+      "@azeebo/*": [
+        "./packages/*/dist"
+      ],
+      "@azeebo/ui": [
+        "./packages/ui/dist"
+      ],
+      "@azeebo/ui/*": [
+        "./packages/ui/dist/*"
+      ],
+      "@azeebo/design-tokens": [
+        "./packages/design-tokens/dist"
+      ],
+      "@azeebo/design-tokens/*": [
+        "./packages/design-tokens/dist/*"
+      ],
+      "@azeebo/analytics-sdk": [
+        "./packages/analytics-sdk/dist"
+      ],
+      "@azeebo/analytics-sdk/*": [
+        "./packages/analytics-sdk/dist/*"
+      ],
+      "@azeebo/api-client": [
+        "./packages/api-client/dist"
+      ],
+      "@azeebo/api-client/*": [
+        "./packages/api-client/dist/*"
+      ],
+      "@azeebo/shared-types": [
+        "./packages/shared-types/dist"
+      ],
+      "@azeebo/shared-types/*": [
+        "./packages/shared-types/dist/*"
+      ],
+      "@azeebo/utils": [
+        "./packages/utils/dist"
+      ],
+      "@azeebo/utils/*": [
+        "./packages/utils/dist/*"
+      ],
+      "@azeebo/shared-services": [
+        "./packages/shared-services/dist"
+      ],
+      "@azeebo/shared-services/*": [
+        "./packages/shared-services/dist/*"
+      ],
+      "@azeebo/shared-queue": [
+        "./packages/shared-queue/dist"
+      ],
+      "@azeebo/auth": [
+        "./packages/auth/dist"
+      ],
+      "@azeebo/contract-tests": [
+        "./packages/contract-tests/dist"
+      ],
+      "@azeebo/security": [
+        "./packages/security/dist"
+      ],
+      "@azeebo/observability": [
+        "./packages/observability/dist"
+      ],
+      "@azeebo/opentelemetry": [
+        "./packages/opentelemetry/dist"
+      ],
+      "@azeebo/feature-flags": [
+        "./packages/feature-flags/dist"
+      ],
+      "@azeebo/http-client": [
+        "./packages/http-client/dist"
+      ],
+      "@azeebo/http-client/*": [
+        "./packages/http-client/dist/*"
+      ],
+      "@azeebo/internal-clients": [
+        "./packages/internal-clients/dist"
+      ],
+      "@azeebo/logger": [
+        "./packages/logger/dist"
+      ],
+      "@azeebo/error-handling": [
+        "./packages/error-handling/dist"
+      ],
+      "@azeebo/event-bus": [
+        "./packages/event-bus/dist"
+      ],
+      "@azeebo/validation": [
+        "./packages/validation/dist"
+      ],
+      "@azeebo/test-utils": [
+        "./packages/test-utils/dist"
+      ]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx"],
+  "include": [
+    "**/*.ts",
+    "**/*.tsx"
+  ],
   "exclude": [
     "node_modules",
     "dist",

@@ -26,7 +26,7 @@
       "@/*": [
         "./src/*"
       ],
-      "@azeebo/*": ["../../packages/*/src"],
+      "@azeebo/*": ["../../packages/*/dist"],
       "@azeebo/ui": [
         "../../packages/ui/src"
       ],
