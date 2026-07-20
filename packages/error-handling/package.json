@@ -13,7 +13,7 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p tsconfig.json",
     "watch": "tsc --watch",
     "lint": "eslint src --fix",
     "test": "jest",
