@@ -131,7 +131,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/shared-services prisma:generate && \
     bash scripts/patch-prisma-client.sh && \
     pnpm --filter @azeebo/shared-services run build && \
-    echo "==> Verify shared-services dist:" && ls -la packages/shared-services/dist/ 2>&1 && \
+    echo "==> Verify shared-services dist:" && find packages/shared-services/dist/ -type f 2>&1 | head -20 && \
     echo "==> Backing up ALL T0 package dists for safety..." && \
     mkdir -p /tmp/t0-dist-backup && \
     for pkg in shared-types http-client utils validation error-handling logger api-client design-tokens shared-services security ui; do \
