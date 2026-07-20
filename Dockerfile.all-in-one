@@ -131,6 +131,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/shared-services prisma:generate && \
     bash scripts/patch-prisma-client.sh && \
     pnpm --filter @azeebo/shared-services run build && \
+    echo "==> Verify shared-services dist:" && ls -la packages/shared-services/dist/ 2>&1 && \
     pnpm --filter @azeebo/security run build && \
     pnpm --filter @azeebo/ui run build && \
     echo "==> [T1] Building critical path (web, gateway, auth, user)..." && \
