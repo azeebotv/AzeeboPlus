@@ -1,4 +1,7 @@
 "use strict";
+// Shared pricing types for Azeebo+
+// All pricing values MUST be provided via environment variables or database.
+// These types define the shape only — no hardcoded prices.
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getPricing = getPricing;
 function requireEnv(name, value, isProduction) {
@@ -8,6 +11,8 @@ function requireEnv(name, value, isProduction) {
     }
     return parsed;
 }
+// Helper function to get pricing from environment variables
+// Throws if required env vars are not set (fail-fast in production)
 function getPricing(env) {
     const e = env ?? process.env;
     const isProduction = (e?.NODE_ENV || process.env.NODE_ENV) === 'production';
@@ -85,4 +90,3 @@ function getPricing(env) {
         },
     };
 }
-//# sourceMappingURL=pricing.js.map

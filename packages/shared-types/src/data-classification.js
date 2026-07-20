@@ -18,37 +18,38 @@ var PiiCategory;
     PiiCategory["AUTHENTICATION"] = "AUTHENTICATION";
     PiiCategory["COMMUNICATIONS"] = "COMMUNICATIONS";
 })(PiiCategory || (exports.PiiCategory = PiiCategory = {}));
+// Default retention policies
 exports.DEFAULT_RETENTION_POLICIES = [
     {
         classification: DataClassification.PII,
         retentionPeriod: 'P1095D',
         autoDelete: true,
         reviewRequired: true,
-    },
+    }, // 3 years
     {
         classification: DataClassification.SENSITIVE_PII,
         retentionPeriod: 'P730D',
         autoDelete: true,
         reviewRequired: false,
-    },
+    }, // 2 years
     {
         classification: DataClassification.CONFIDENTIAL,
         retentionPeriod: 'P1825D',
         autoDelete: false,
         reviewRequired: true,
-    },
+    }, // 5 years
     {
         classification: DataClassification.INTERNAL,
         retentionPeriod: 'P365D',
         autoDelete: false,
         reviewRequired: false,
-    },
+    }, // 1 year
     {
         classification: DataClassification.PUBLIC,
         retentionPeriod: 'PINF',
         autoDelete: false,
         reviewRequired: false,
-    },
+    }, // Infinite
 ];
 var ConsentType;
 (function (ConsentType) {
@@ -58,4 +59,3 @@ var ConsentType;
     ConsentType["PERSONALIZATION"] = "PERSONALIZATION";
     ConsentType["THIRD_PARTY_SHARING"] = "THIRD_PARTY_SHARING";
 })(ConsentType || (exports.ConsentType = ConsentType = {}));
-//# sourceMappingURL=data-classification.js.map

@@ -114,4 +114,3 @@ exports.CircuitBreakerOpenError = CircuitBreakerOpenError;
 function createCircuitBreaker(options) {
     return new CircuitBreaker(options);
 }
-//# sourceMappingURL=circuit-breaker.js.map

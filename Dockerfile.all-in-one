@@ -131,12 +131,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/shared-services prisma:generate && \
     bash scripts/patch-prisma-client.sh && \
     pnpm --filter @azeebo/shared-services run build && \
-    echo "==> Verify shared-services dist:" && find packages/shared-services/dist/ -type f 2>&1 | head -20 && \
-    echo "==> Backing up ALL T0 package dists for safety..." && \
-    mkdir -p /tmp/t0-dist-backup && \
-    for pkg in shared-types http-client utils validation error-handling logger api-client design-tokens shared-services security ui; do \
-      [ -d "packages/$pkg/dist" ] && cp -r "packages/$pkg/dist" "/tmp/t0-dist-backup/$pkg" && echo "  Backed up: packages/$pkg/dist"; \
-    done && \
+    echo "==> Verify shared-services dist:" && find packages/shared-services/dist/ -maxdepth 1 -name "index.*" 2>&1 && \
     pnpm --filter @azeebo/security run build && \
     pnpm --filter @azeebo/ui run build && \
     echo "==> [T1] Building critical path (web, gateway, auth, user)..." && \
@@ -146,19 +141,6 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     (ls -la apps/web/.next/standalone/server.js 2>/dev/null && echo "  OK: standalone at direct path") || \
     (echo "  WARN: standalone server.js not found, checking directory..." && ls -la apps/web/.next/standalone/ 2>&1) && \
     pnpm --filter @azeebo/api-gateway run build && \
-    echo "==> Diag: check auth-service module resolution" && \
-    ls -la /app/services/core/auth-service/node_modules/@azeebo/shared-services 2>&1 || echo "  auth-service local node_modules: NOT FOUND" && \
-    ls -la /app/node_modules/@azeebo/shared-services 2>&1 || echo "  root node_modules: NOT FOUND" && \
-    ls /app/packages/shared-services/dist/index.d.ts 2>&1 || echo "  shared-services dist/index.d.ts: NOT FOUND" && \
-    cat /app/packages/shared-services/package.json | grep -E '"types"|"main"' && \
-    echo "==> End diag" && \
-    echo "==> Restoring ALL T0 package dists from backup..." && \
-    for pkg in shared-types http-client utils validation error-handling logger api-client design-tokens shared-services security ui; do \
-      if [ -d "/tmp/t0-dist-backup/$pkg" ] && [ ! -d "packages/$pkg/dist/index.d.ts" ]; then \
-        rm -rf "packages/$pkg/dist" && cp -r "/tmp/t0-dist-backup/$pkg" "packages/$pkg/dist" && echo "  Restored: packages/$pkg/dist"; \
-      fi; \
-    done && \
-    ls packages/shared-services/dist/index.d.ts 2>&1 && \
     pnpm --filter @azeebo/auth-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/auth-service run build && \
     pnpm --filter @azeebo/user-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/user-service run build && \
     echo "==> [T2] Building core business services..." && \

@@ -13,7 +13,8 @@
       "node",
       "jest"
     ],
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "rootDir": "src"
   },
   "include": [
     "src/**/*"
