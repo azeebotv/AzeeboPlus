@@ -336,16 +336,14 @@ if [ "${DEMO_MODE:-false}" = "true" ] && [ "${CLEAR_DB:-0}" = "1" ]; then
 fi
 
 # ============================================================
-# 7c. Load demo content if DEMO_MODE is enabled
+# 7c. Load demo content (always run to ensure users exist)
 # ============================================================
-if [ "${DEMO_MODE:-false}" = "true" ]; then
-  echo "==> DEMO_MODE enabled — loading demo content into all databases..."
-  if [ -x /app/scripts/demo-content/deploy-all-in-one.sh ]; then
-    DB_PASSWORD="$POSTGRES_PASSWORD" /app/scripts/demo-content/deploy-all-in-one.sh || \
-      echo "    WARNING: Demo content deployment had errors (non-fatal)"
-  else
-    echo "    WARNING: /app/scripts/demo-content/deploy-all-in-one.sh not found or not executable"
-  fi
+echo "==> Loading demo content into all databases..."
+if [ -x /app/scripts/demo-content/deploy-all-in-one.sh ]; then
+  DB_PASSWORD="$POSTGRES_PASSWORD" /app/scripts/demo-content/deploy-all-in-one.sh || \
+    echo "    WARNING: Demo content deployment had errors (non-fatal)"
+else
+  echo "    WARNING: /app/scripts/demo-content/deploy-all-in-one.sh not found or not executable"
 fi
 
 # ============================================================
