@@ -428,22 +428,38 @@ RUN mkdir -p /app/node_modules/@azeebo && \
 # DATABASE_URL is required by prisma generate (schema validation) even though no connection is made.
 RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder" && \
     export DATABASE_URL && \
-    echo "==> Generating unified Prisma client from combined schema..." && \
-    mkdir -p /tmp/prisma-combined && \
-    cp /app/prisma/combined-schema.prisma /tmp/prisma-combined/schema.prisma && \
-    (cd /tmp/prisma-combined && prisma generate --schema=schema.prisma 2>&1) && \
-    COMBINED_DIR=$(node -e "console.log(require('path').dirname(require.resolve('@prisma/client')))" 2>/dev/null) && \
-    echo "  Combined PrismaClient: $COMBINED_DIR" && \
-    echo "  Models: $(grep '^model ' /tmp/prisma-combined/schema.prisma | wc -l)" && \
-    for svc_dir in $(find services apps -maxdepth 3 -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*" -exec dirname {} \; | sort -u | sed 's|/app/||'); do \
-      SVC_NM="/app/$svc_dir/node_modules"; \
-      rm -rf "$SVC_NM/@prisma/client" 2>/dev/null; \
-      mkdir -p "$SVC_NM/@prisma/client" 2>/dev/null; \
-      cp -r "$COMBINED_DIR/." "$SVC_NM/@prisma/client/" 2>/dev/null; \
-      rm -rf "$SVC_NM/@prisma/client/node_modules" 2>/dev/null; \
-      echo "  Installed combined client for $svc_dir"; \
+    echo "==> Generating per-service Prisma clients..." && \
+    for schema in $(find services apps -maxdepth 3 -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*" | sort); do \
+      proj_root=$(dirname "$schema"); \
+      svc_root=$(dirname "$proj_root"); \
+      svc_name=$(basename "$svc_root"); \
+      SVC_NM="/app/$svc_root/node_modules"; \
+      CUSTOM_OUTPUT=$(grep -m1 'output\s*=' "/app/$schema" 2>/dev/null | sed 's/.*"\(.*\)".*/\1/'); \
+      if [ -n "$CUSTOM_OUTPUT" ]; then \
+        echo "  [$svc_name] custom output: $CUSTOM_OUTPUT"; \
+        (cd "/app/$proj_root" && npx prisma generate --schema=schema.prisma 2>&1) || \
+          echo "  WARNING: prisma generate failed for $svc_name"; \
+        FULL_OUTPUT="/app/$proj_root/$CUSTOM_OUTPUT"; \
+        if [ -d "$FULL_OUTPUT" ]; then \
+          mkdir -p "$SVC_NM/@prisma/client" 2>/dev/null; \
+          rm -rf "$SVC_NM/@prisma/client"; \
+          mkdir -p "$SVC_NM/@prisma/client"; \
+          cp -r "$FULL_OUTPUT/." "$SVC_NM/@prisma/client/"; \
+          echo "module.exports = { PrismaClient: require('$FULL_OUTPUT').PrismaClient }" > "$SVC_NM/@prisma/client/index.js"; \
+          cp "$SVC_NM/@prisma/client/index.js" "$SVC_NM/@prisma/client/default.js"; \
+          echo "  [$svc_name] OK: custom output installed"; \
+        fi; \
+      else \
+        (cd "/app/$proj_root" && npx prisma generate --schema=schema.prisma 2>&1) || \
+          echo "  WARNING: prisma generate failed for $svc_name"; \
+        if [ -d "$SVC_NM/.prisma/client" ]; then \
+          echo "  [$svc_name] OK: default client generated"; \
+        else \
+          echo "  [$svc_name] WARNING: no .prisma/client found"; \
+        fi; \
+      fi; \
     done && \
-    rm -rf /tmp/prisma-combined 2>/dev/null; \
+    echo "==> Prisma clients generation complete" && \
     npm cache clean --force 2>/dev/null; \
     rm -rf /root/.npm /root/.cache /root/.local 2>/dev/null; \
     find /app/node_modules -name "*.md" -o -name "*.txt" -o -name "*.map" -o -name "LICENSE*" -o -name "CHANGELOG*" | xargs rm -f 2>/dev/null; \
