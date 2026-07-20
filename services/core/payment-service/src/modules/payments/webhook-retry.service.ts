@@ -92,16 +92,20 @@ export class WebhookRetryService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async processPendingRetries(): Promise<void> {
-    const pendingRetries = await this.prisma.webhookRetry.findMany({
-      where: {
-        status: 'pending',
-        nextRetryAt: { lte: new Date() },
-      },
-      take: 10,
-    });
+    try {
+      const pendingRetries = await this.prisma.webhookRetry.findMany({
+        where: {
+          status: 'pending',
+          nextRetryAt: { lte: new Date() },
+        },
+        take: 10,
+      });
 
-    for (const retry of pendingRetries) {
-      await this.processRetry(retry);
+      for (const retry of pendingRetries) {
+        await this.processRetry(retry);
+      }
+    } catch (error) {
+      this.logger.warn(`WebhookRetryService skipped: ${error instanceof Error ? error.message : 'unknown error'}`);
     }
   }
 
