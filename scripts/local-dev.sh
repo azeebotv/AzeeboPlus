@@ -903,11 +903,6 @@ cmd_start() {
   START_TIME=$(date +%s)
   log_info "Starting services..."
 
-  # Build T0 shared packages first (services depend on these)
-  if [[ "$do_no_build" != "true" ]]; then
-    build_t0_packages
-  fi
-
   if [[ $# -eq 0 ]]; then
     cmd_start_interactive
     return $?
@@ -938,6 +933,11 @@ cmd_start() {
 
   [[ "$do_all" == "true" ]] && { do_core=true; do_engagement=true; do_intelligence=true; do_universes=true; do_operations=true; do_gateway=true; do_frontend=true; }
   [[ "$do_quick" == "true" ]] && { do_core=true; do_gateway=true; do_frontend=true; }
+
+  # Build T0 shared packages first (services depend on these)
+  if [[ "$do_no_build" != "true" ]]; then
+    build_t0_packages
+  fi
 
   [[ "$do_core" == "true" ]]       && start_group "core" "${CORE_SERVICES[@]}"
   [[ "$do_engagement" == "true" ]] && start_group "engagement" "${ENGAGEMENT_SERVICES[@]}"
