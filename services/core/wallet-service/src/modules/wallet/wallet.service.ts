@@ -33,7 +33,7 @@ export class WalletService {
     @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.pointsToNairaRate = this.configService.get<number>('POINTS_TO_NAIRA_RATE', 100);
-    this.webhookSecret = this.configService.getOrThrow<string>('WEBHOOK_SECRET');
+    this.webhookSecret = this.configService.get<string>('WEBHOOK_SECRET', 'dev-webhook-secret');
   }
 
   async getWalletIdByUserId(userId: string): Promise<string> {
