@@ -16,8 +16,7 @@
       "node",
       "jest",
       "@testing-library/jest-dom"
-    ],
-    "rootDir": "src"
+    ]
   },
   "include": [
     "src/**/*"

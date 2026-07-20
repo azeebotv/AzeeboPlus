@@ -20,7 +20,7 @@
       "@azeebo/security/*": ["../../packages/security/dist/*"],
       "@azeebo/shared-types": ["../../packages/shared-types/dist"],
       "@azeebo/shared-types/*": ["../../packages/shared-types/dist/*"],
-      "@azeebo/*": ["../../packages/*/src"],
+      "@azeebo/*": ["../../packages/*/dist"],
       "@/*": [
         "./src/*"
       ]

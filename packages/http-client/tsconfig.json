@@ -5,8 +5,7 @@
     "baseUrl": "./",
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true,
-    "rootDir": "src"
+    "sourceMap": true
   },
   "include": [
     "src/**/*"
