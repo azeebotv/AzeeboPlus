@@ -3,14 +3,7 @@
   "compilerOptions": {
     "sourceMap": true,
     "removeComments": true,
-    "paths": {
-      "@azeebo/*": [
-        "../../packages/*/dist"
-      ],
-      "@/*": [
-        "./src/*"
-      ]
-    }
+    "paths": {}
   },
   "include": [
     "src/**/*"

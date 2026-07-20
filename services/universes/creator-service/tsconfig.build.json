@@ -1,14 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "paths": {
-      "@azeebo/*": [
-        "../../../packages/*/dist"
-      ],
-      "@/*": [
-        "./src/*"
-      ]
-    },
+    "paths": {},
     "rootDir": "src",
     "incremental": false
   },
