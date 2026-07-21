@@ -4,7 +4,7 @@ import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 import { CreateSubscriptionPlanDto } from './dto/create-subscription-plan.dto.js';
 import { SubscribeToPlanDto } from './dto/subscribe-to-plan.dto.js';
-import type { SubscriptionPlan, Subscription } from '../../prisma/client/index.js';
+import type { SubscriptionPlan, Subscription } from '@prisma/client';
 import { CircuitBreaker, CircuitBreakerOpenError } from '@azeebo/shared-types';
 import axios from 'axios';
 
