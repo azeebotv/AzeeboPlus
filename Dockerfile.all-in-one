@@ -429,7 +429,7 @@ RUN mkdir -p /app/node_modules/@azeebo && \
 RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder" && \
     export DATABASE_URL && \
     echo "==> Generating per-service Prisma clients..." && \
-    for schema in $(find services apps -maxdepth 3 -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*" | sort); do \
+    for schema in $(find services apps -maxdepth 5 -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*" | sort); do \
       proj_root=$(dirname "$schema"); \
       svc_root=$(dirname "$proj_root"); \
       svc_name=$(basename "$svc_root"); \
