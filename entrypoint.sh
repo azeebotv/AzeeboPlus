@@ -284,28 +284,27 @@ for entry in "${MIGRATE_SERVICES[@]}"; do
     prisma migrate deploy --schema="$svc_dir/prisma/schema.prisma" 2>&1) || {
     if echo "$migrate_output" | grep -q "P3005"; then
       echo "    P3005: database exists with untracked tables for $svc_name"
-      echo "    Using prisma db push to sync schema (safe — creates missing tables only)..."
-      DATABASE_URL="$db_url" \
-        prisma db push --schema="$svc_dir/prisma/schema.prisma" --skip-generate 2>&1 || {
-        echo "    WARNING: prisma db push failed, trying baseline approach..."
-        if [ -d "$svc_dir/prisma/migrations" ]; then
-          for migration_dir in "$svc_dir/prisma/migrations"/*/; do
-            [ -d "$migration_dir" ] || continue
-            migration_name=$(basename "$migration_dir")
-            DATABASE_URL="$db_url" \
-              prisma migrate resolve --applied "$migration_name" --schema="$svc_dir/prisma/schema.prisma" 2>&1 || \
-              echo "      WARNING: Could not baseline $migration_name"
-          done
-          echo "    Re-running migration for $svc_name after baseline..."
+      echo "    Baseline approach: mark all migrations as applied, then re-deploy..."
+      if [ -d "$svc_dir/prisma/migrations" ]; then
+        for migration_dir in "$svc_dir/prisma/migrations"/*/; do
+          [ -d "$migration_dir" ] || continue
+          migration_name=$(basename "$migration_dir")
           DATABASE_URL="$db_url" \
-            prisma migrate deploy --schema="$svc_dir/prisma/schema.prisma" 2>&1 || {
-            echo "    FATAL: Migration still failed for $svc_name after baseline"
-            echo "    Migration output:"
-            echo "$migrate_output" | head -20
-            exit 1
-          }
-        fi
-      }
+            prisma migrate resolve --applied "$migration_name" --schema="$svc_dir/prisma/schema.prisma" 2>&1 || \
+            echo "      WARNING: Could not baseline $migration_name"
+        done
+        echo "    Re-running migration for $svc_name after baseline..."
+        DATABASE_URL="$db_url" \
+          prisma migrate deploy --schema="$svc_dir/prisma/schema.prisma" 2>&1 || {
+          echo "    FATAL: Migration still failed for $svc_name after baseline"
+          echo "    Migration output:"
+          echo "$migrate_output" | head -20
+          exit 1
+        }
+      else
+        echo "    FATAL: No migrations directory found for $svc_name"
+        exit 1
+      fi
     else
       echo "    FATAL: Migration failed for $svc_name"
       echo "    Migration output:"
