@@ -1142,4 +1142,22 @@ INSERT INTO "support_tickets" (id, "userId", subject, description, status, prior
   ('st00001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000008', 'Payment not reflecting', 'I funded my wallet 30 minutes ago but the balance has not updated. Transaction ID: PSK-TXN-003.', 'in_progress', 'medium')
 ON CONFLICT (id) DO NOTHING;
 
+-- Ensure webhook_retries table exists for payment-service
+CREATE TABLE IF NOT EXISTS "webhook_retries" (
+    "id" TEXT NOT NULL,
+    "eventId" TEXT NOT NULL,
+    "provider" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "payload" JSONB NOT NULL,
+    "retryCount" INTEGER NOT NULL DEFAULT 0,
+    "maxRetries" INTEGER NOT NULL DEFAULT 5,
+    "nextRetryAt" TIMESTAMP(3) NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'pending',
+    "lastError" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL
+);
+CREATE INDEX IF NOT EXISTS "webhook_retries_eventId_idx" ON "webhook_retries"("eventId");
+CREATE INDEX IF NOT EXISTS "webhook_retries_status_nextRetryAt_idx" ON "webhook_retries"("status", "nextRetryAt");
+
 -- COMMIT removed: no transaction wrapper
