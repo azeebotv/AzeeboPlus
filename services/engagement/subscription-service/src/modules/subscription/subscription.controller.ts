@@ -16,7 +16,7 @@ import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
 import { SubscriptionService } from './subscription.service.js';
 import { CreateSubscriptionPlanDto } from './dto/create-subscription-plan.dto.js';
 import { SubscribeToPlanDto } from './dto/subscribe-to-plan.dto.js';
-import type { SubscriptionPlan, Subscription } from '../../prisma/client/index.js';
+import type { SubscriptionPlan, Subscription } from '@prisma/client';
 
 interface AuthenticatedRequest {
   user: {

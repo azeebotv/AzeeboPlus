@@ -7,7 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
-import { Prisma } from '../../prisma/client/index.js';
+import { Prisma } from '@prisma/client';
 
 type ContentRelationshipWithContent = Prisma.ContentRelationshipGetPayload<{
   include: { content: true; relatedContent: true };
