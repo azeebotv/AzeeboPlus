@@ -33,7 +33,7 @@ done
 
 # For services with custom prisma output, copy the generated client to
 # the expected relative path (../../prisma/client/ from dist/modules/)
-for schema in $(find services apps -maxdepth 5 -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*" 2>/dev/null); do
+for schema in $(find services apps -maxdepth 5 -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/prisma/client/*" -not -path "*/src/prisma/*" -not -path "*/generated/*" 2>/dev/null); do
   proj_root=$(dirname "$schema")
   svc_root=$(dirname "$proj_root")
   custom_output=$(grep -m1 'output\s*=' "$schema" 2>/dev/null | sed 's/.*"\(.*\)".*/\1/')

@@ -427,7 +427,7 @@ RUN mkdir -p /app/node_modules/@azeebo && \
 #
 # DATABASE_URL is required by prisma generate (schema validation) even though no connection is made.
 RUN echo "==> Installing per-service Prisma clients from builder stage..." && \
-    for schema in $(find services apps -maxdepth 5 -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*" | sort); do \
+    for schema in $(find services apps -maxdepth 5 -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/prisma/client/*" -not -path "*/src/prisma/*" -not -path "*/generated/*" | sort); do \
       proj_root=$(dirname "$schema"); \
       svc_root=$(dirname "$proj_root"); \
       svc_name=$(basename "$svc_root"); \
