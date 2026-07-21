@@ -447,7 +447,12 @@ RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholde
           cp -r "$FULL_OUTPUT/." "$SVC_NM/@prisma/client/"; \
           echo "module.exports = { PrismaClient: require('$FULL_OUTPUT').PrismaClient }" > "$SVC_NM/@prisma/client/index.js"; \
           cp "$SVC_NM/@prisma/client/index.js" "$SVC_NM/@prisma/client/default.js"; \
-          echo "  [$svc_name] OK: custom output installed"; \
+          echo "  [$svc_name] OK: custom output installed at node_modules/@prisma/client"; \
+          EXPECTED_DIR="/app/$svc_root/prisma/client"; \
+          if [ ! -d "$EXPECTED_DIR" ] && [ -d "$FULL_OUTPUT" ]; then \
+            mkdir -p "$EXPECTED_DIR" && cp -r "$FULL_OUTPUT/." "$EXPECTED_DIR/"; \
+            echo "  [$svc_name] OK: also copied to prisma/client/ for relative imports"; \
+          fi; \
         fi; \
       else \
         (cd "/app/$proj_root" && npx prisma generate --schema=schema.prisma 2>&1) || \
