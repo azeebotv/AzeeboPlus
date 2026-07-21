@@ -433,29 +433,23 @@ RUN echo "==> Installing per-service Prisma clients from builder stage..." && \
       svc_name=$(basename "$svc_root"); \
       SVC_NM="/app/$svc_root/node_modules"; \
       CUSTOM_OUTPUT=$(grep -m1 'output\s*=' "/app/$schema" 2>/dev/null | sed 's/.*"\(.*\)".*/\1/'); \
-      if [ -n "$CUSTOM_OUTPUT" ]; then \
-        FULL_OUTPUT="/app/$proj_root/$CUSTOM_OUTPUT"; \
-        if [ -d "$FULL_OUTPUT" ]; then \
-          mkdir -p "$SVC_NM/@prisma/client" 2>/dev/null; \
-          rm -rf "$SVC_NM/@prisma/client"; \
-          mkdir -p "$SVC_NM/@prisma/client"; \
-          cp -r "$FULL_OUTPUT/." "$SVC_NM/@prisma/client/"; \
-          echo "module.exports = { PrismaClient: require('$FULL_OUTPUT').PrismaClient }" > "$SVC_NM/@prisma/client/index.js"; \
-          cp "$SVC_NM/@prisma/client/index.js" "$SVC_NM/@prisma/client/default.js"; \
-          EXPECTED_DIR="/app/$svc_root/prisma/client"; \
-          if [ ! -d "$EXPECTED_DIR" ] && [ -d "$FULL_OUTPUT" ]; then \
-            mkdir -p "$EXPECTED_DIR" && cp -r "$FULL_OUTPUT/." "$EXPECTED_DIR/"; \
-          fi; \
-          echo "  [$svc_name] OK: installed from builder"; \
-        else \
-          echo "  [$svc_name] WARNING: custom output $FULL_OUTPUT not found"; \
-        fi; \
+      PRISMA_CLIENT_DIR="/app/$svc_root/prisma/client"; \
+      FULL_OUTPUT="/app/$proj_root/$CUSTOM_OUTPUT"; \
+      if [ -d "$PRISMA_CLIENT_DIR" ]; then \
+        mkdir -p "$SVC_NM/@prisma/client" 2>/dev/null; \
+        rm -rf "$SVC_NM/@prisma/client"; \
+        mkdir -p "$SVC_NM/@prisma/client"; \
+        cp -r "$PRISMA_CLIENT_DIR/." "$SVC_NM/@prisma/client/"; \
+        echo "  [$svc_name] OK: installed from prisma/client/"; \
+      elif [ -d "$FULL_OUTPUT" ]; then \
+        mkdir -p "$SVC_NM/@prisma/client" 2>/dev/null; \
+        rm -rf "$SVC_NM/@prisma/client"; \
+        mkdir -p "$SVC_NM/@prisma/client"; \
+        cp -r "$FULL_OUTPUT/." "$SVC_NM/@prisma/client/"; \
+        mkdir -p "$PRISMA_CLIENT_DIR" && cp -r "$FULL_OUTPUT/." "$PRISMA_CLIENT_DIR/"; \
+        echo "  [$svc_name] OK: installed from custom output"; \
       else \
-        if [ -d "$SVC_NM/.prisma/client" ]; then \
-          echo "  [$svc_name] OK: default client already installed"; \
-        else \
-          echo "  [$svc_name] WARNING: no Prisma client found"; \
-        fi; \
+        echo "  [$svc_name] WARNING: no Prisma client source found"; \
       fi; \
     done && \
     echo "==> Prisma clients installation complete" && \
