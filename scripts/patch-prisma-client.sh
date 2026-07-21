@@ -45,5 +45,12 @@ for schema in $(find services apps -maxdepth 5 -name "schema.prisma" -not -path 
       cp -r "$full_output/." "$expected_dir/"
       echo "Copied prisma client to $expected_dir (for relative imports)"
     fi
+    # Also copy to dist/prisma/client/ if dist exists (post-build)
+    dist_dir="$svc_root/dist/prisma/client"
+    if [ -d "$full_output" ] && [ -d "$svc_root/dist" ] && [ ! -d "$dist_dir" ]; then
+      mkdir -p "$dist_dir"
+      cp -r "$full_output/." "$dist_dir/"
+      echo "Copied prisma client to $dist_dir (for compiled imports)"
+    fi
   fi
 done

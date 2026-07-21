@@ -194,6 +194,24 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
         rm -rf "$nested_src" 2>/dev/null; \
       fi; \
     done && \
+    echo "==> Copying Prisma clients to dist/prisma/client/ for compiled imports..." && \
+    for schema in $(find services apps -maxdepth 5 -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/prisma/client/*" -not -path "*/src/prisma/*" -not -path "*/generated/*" 2>/dev/null | sort); do \
+      proj_root=$(dirname "$schema"); \
+      svc_root=$(dirname "$proj_root"); \
+      svc_name=$(basename "$svc_root"); \
+      custom_output=$(grep -m1 'output\s*=' "$schema" 2>/dev/null | sed 's/.*"\(.*\)".*/\1/'); \
+      if [ -n "$custom_output" ] && [ -d "$svc_root/dist" ]; then \
+        full_output="$proj_root/$custom_output"; \
+        dist_prisma="$svc_root/dist/prisma/client"; \
+        if [ -d "$full_output" ] && [ ! -d "$dist_prisma" ]; then \
+          mkdir -p "$dist_prisma" && cp -r "$full_output/." "$dist_prisma/"; \
+          echo "  [$svc_name] Copied to dist/prisma/client/"; \
+        elif [ -d "$svc_root/prisma/client" ] && [ ! -d "$dist_prisma" ]; then \
+          mkdir -p "$dist_prisma" && cp -r "$svc_root/prisma/client/." "$dist_prisma/"; \
+          echo "  [$svc_name] Copied to dist/prisma/client/"; \
+        fi; \
+      fi; \
+    done && \
     echo "==> Flattened dist inventory:" && \
     find services -name "main.js" -path "*/dist/*" | sort && \
     echo "==> Packaging workspace package dists for runtime" && \
@@ -434,12 +452,14 @@ RUN echo "==> Installing per-service Prisma clients from builder stage..." && \
       SVC_NM="/app/$svc_root/node_modules"; \
       CUSTOM_OUTPUT=$(grep -m1 'output\s*=' "/app/$schema" 2>/dev/null | sed 's/.*"\(.*\)".*/\1/'); \
       PRISMA_CLIENT_DIR="/app/$svc_root/prisma/client"; \
+      DIST_PRISMA_DIR="/app/$svc_root/dist/prisma/client"; \
       FULL_OUTPUT="/app/$proj_root/$CUSTOM_OUTPUT"; \
       if [ -d "$PRISMA_CLIENT_DIR" ]; then \
         mkdir -p "$SVC_NM/@prisma/client" 2>/dev/null; \
         rm -rf "$SVC_NM/@prisma/client"; \
         mkdir -p "$SVC_NM/@prisma/client"; \
         cp -r "$PRISMA_CLIENT_DIR/." "$SVC_NM/@prisma/client/"; \
+        mkdir -p "$DIST_PRISMA_DIR" && cp -r "$PRISMA_CLIENT_DIR/." "$DIST_PRISMA_DIR/"; \
         echo "  [$svc_name] OK: installed from prisma/client/"; \
       elif [ -d "$FULL_OUTPUT" ]; then \
         mkdir -p "$SVC_NM/@prisma/client" 2>/dev/null; \
@@ -447,6 +467,7 @@ RUN echo "==> Installing per-service Prisma clients from builder stage..." && \
         mkdir -p "$SVC_NM/@prisma/client"; \
         cp -r "$FULL_OUTPUT/." "$SVC_NM/@prisma/client/"; \
         mkdir -p "$PRISMA_CLIENT_DIR" && cp -r "$FULL_OUTPUT/." "$PRISMA_CLIENT_DIR/"; \
+        mkdir -p "$DIST_PRISMA_DIR" && cp -r "$FULL_OUTPUT/." "$DIST_PRISMA_DIR/"; \
         echo "  [$svc_name] OK: installed from custom output"; \
       else \
         echo "  [$svc_name] WARNING: no Prisma client source found"; \
