@@ -41,25 +41,25 @@ ON CONFLICT (id) DO NOTHING;
 -- Password hash for "Demo123!" (bcrypt, generated with bcrypt.hashSync("Demo123!", 10))
 -- $2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.
 
-INSERT INTO "users" (id, email, password, "displayName", avatar, role, "isVerified", "createdAt") VALUES
+INSERT INTO "users" (id, email, password, "displayName", avatar, role, "isVerified", "createdAt", "updatedAt") VALUES
   -- Admin users
-  ('a0000001-0000-0000-0000-000000000001', 'admin@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Admin Chidi', '/images/placeholders/avatars/100x100_09.png'),
-  ('a0000001-0000-0000-0000-000000000002', 'moderator@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Mod Amina', '/images/placeholders/avatars/100x100_10.png'),
+  ('a0000001-0000-0000-0000-000000000001', 'admin@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Admin Chidi', '/images/placeholders/avatars/100x100_09.png', 'admin', true, '2025-01-01T00:00:00Z', NOW()),
+  ('a0000001-0000-0000-0000-000000000002', 'moderator@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Mod Amina', '/images/placeholders/avatars/100x100_10.png', 'moderator', true, '2025-01-15T00:00:00Z', NOW()),
   -- Creator users
-  ('a0000001-0000-0000-0000-000000000003', 'creator1@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Tunde Creates', '/images/placeholders/avatars/100x100_11.png'),
-  ('a0000001-0000-0000-0000-000000000004', 'creator2@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Ngozi Vibes', '/images/placeholders/avatars/100x100_12.png'),
-  ('a0000001-0000-0000-0000-000000000005', 'creator3@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Emeka Studios', '/images/placeholders/avatars/100x100_01.png'),
+  ('a0000001-0000-0000-0000-000000000003', 'creator1@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Tunde Creates', '/images/placeholders/avatars/100x100_11.png', 'user', true, '2025-02-01T00:00:00Z', NOW()),
+  ('a0000001-0000-0000-0000-000000000004', 'creator2@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Ngozi Vibes', '/images/placeholders/avatars/100x100_12.png', 'user', true, '2025-02-15T00:00:00Z', NOW()),
+  ('a0000001-0000-0000-0000-000000000005', 'creator3@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Emeka Studios', '/images/placeholders/avatars/100x100_01.png', 'user', true, '2025-02-15T00:00:00Z', NOW()),
   -- Regular user (viewer)
-  ('a0000001-0000-0000-0000-000000000006', 'user1@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Kemi Watch', '/images/placeholders/avatars/100x100_02.png'),
-  ('a0000001-0000-0000-0000-000000000007', 'user2@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Olumide F', '/images/placeholders/avatars/100x100_03.png'),
-  ('a0000001-0000-0000-0000-000000000008', 'user3@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Fatima A', '/images/placeholders/avatars/100x100_04.png'),
+  ('a0000001-0000-0000-0000-000000000006', 'user1@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Kemi Watch', '/images/placeholders/avatars/100x100_02.png', 'user', true, '2025-03-01T00:00:00Z', NOW()),
+  ('a0000001-0000-0000-0000-000000000007', 'user2@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Olumide F', '/images/placeholders/avatars/100x100_03.png', 'user', true, '2025-03-01T00:00:00Z', NOW()),
+  ('a0000001-0000-0000-0000-000000000008', 'user3@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Fatima A', '/images/placeholders/avatars/100x100_04.png', 'user', true, '2025-03-01T00:00:00Z', NOW()),
   -- Inactive / banned user (for edge-case testing)
-  ('a0000001-0000-0000-0000-000000000009', 'banned@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Chukwu M', NULL, 'user', true, '2025-02-20T00:00:00Z'),
-  ('a0000001-0000-0000-0000-000000000010', 'unverified@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Yemi O', NULL, 'user', false, '2025-05-01T00:00:00Z'),
+  ('a0000001-0000-0000-0000-000000000009', 'banned@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Chukwu M', NULL, 'user', true, '2025-02-20T00:00:00Z', NOW()),
+  ('a0000001-0000-0000-0000-000000000010', 'unverified@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Yemi O', NULL, 'user', false, '2025-05-01T00:00:00Z', NOW()),
   -- Sports creator
-  ('a0000001-0000-0000-0000-000000000011', 'sportscreator@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Chinedu Sports', '/images/placeholders/avatars/100x100_05.png'),
+  ('a0000001-0000-0000-0000-000000000011', 'sportscreator@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Chinedu Sports', '/images/placeholders/avatars/100x100_05.png', 'user', true, '2025-03-15T00:00:00Z', NOW()),
   -- Gaming creator
-  ('a0000001-0000-0000-0000-000000000012', 'gamer@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Tunde Gaming', '/images/placeholders/avatars/100x100_06.png'),
+  ('a0000001-0000-0000-0000-000000000012', 'gamer@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Tunde Gaming', '/images/placeholders/avatars/100x100_06.png', 'user', true, '2025-04-01T00:00:00Z', NOW())
 ON CONFLICT (id) DO UPDATE SET
   email = EXCLUDED.email,
   password = EXCLUDED.password,
