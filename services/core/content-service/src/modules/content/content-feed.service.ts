@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
-import { Prisma } from '../../prisma/client/index.js';
+import { Prisma } from '@prisma/client';
 import { RedisService } from '../../cache/redis.service.js';
 import { ConfigService } from '@nestjs/config';
 

@@ -5,7 +5,7 @@ import { UpdateUniverseAffinityDto } from './dto/update-universe-affinity.dto.js
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto.js';
 import { CompleteProfileSetupDto } from './dto/complete-profile-setup.dto.js';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto.js';
-import { Prisma } from '../../prisma/client/index.js';
+import { Prisma } from '@prisma/client';
 
 interface UniverseAffinityResponse {
   userId: string;

@@ -11,7 +11,7 @@ import type {
   AuditEvent,
   ReviewerAssignment,
   Report,
-} from '../../prisma/client/index.js';
+} from '@prisma/client';
 import { ModerationResponse } from './interfaces/moderation-response.interface.js';
 
 export interface CreateCaseRequest {
