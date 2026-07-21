@@ -1,7 +1,7 @@
 import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
-import { Prisma, WalletTransaction } from '@prisma/client';
+import { Prisma, WalletTransaction } from '../../prisma/client/index.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { FundWalletDto } from './dto/fund-wallet.dto.js';
 import { WithdrawWalletDto, TransferWalletDto } from './dto/withdraw-transfer.dto.js';

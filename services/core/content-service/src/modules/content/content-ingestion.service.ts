@@ -1,6 +1,6 @@
 import { Inject, Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../prisma/client/index.js';
 import { CreateContentDto } from './dto/create-content.dto.js';
 
 type ContentWithUniverse = Prisma.ContentItemGetPayload<{ include: { universe: true } }>;
