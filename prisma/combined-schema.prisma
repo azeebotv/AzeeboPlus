@@ -1,0 +1,3998 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SenderType {
+  USER
+  AGENT
+  SYSTEM
+}
+
+enum SupportTicketCategory {
+  REFUND
+  CHARGEBACK
+  ACCOUNT_APPEAL
+  CONTENT_TAKEDOWN
+  PAYOUT_DISPUTE
+  USER_SUSPENSION
+  GENERAL
+}
+
+enum SupportTicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum SupportTicketStatus {
+  OPEN
+  IN_PROGRESS
+  PENDING_INFO
+  RESOLVED
+  CLOSED
+  ESCALATED
+}
+
+enum UserRole {
+  user
+  creator
+  admin
+  super_admin
+}
+
+model Appeal {
+  id               String    @id @default(uuid())
+  caseId           String
+  userId           String
+  reason           String
+  status           String // pending, in_review, successful, rejected
+  resolvedBy       String?
+  resolutionReason String?
+  resolvedAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  case ModerationCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  user User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("appeals")
+}
+
+model Artifact {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  imageUrl    String?
+  universeId  String
+  type        String   @default("physical") // physical, spiritual, ancestral
+  power       String? // description of the artifact's power
+  origin      String? // where the artifact came from
+  status      String   @default("active")
+  data        Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  universe    UniverseMap @relation(fields: [universeId], references: [id], onDelete: Cascade)
+
+  @@index([universeId])
+  @@index([slug])
+  @@index([type])
+  @@map("artifacts")
+}
+
+model AudienceSegment {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  segmentType String // behavioral, demographic, firmographic
+  criteria    Json
+  size        Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("audience_segments")
+}
+
+model AuditEvent {
+  id             String    @id @default(uuid())
+  action         String // create, update, delete, review, resolve, appeal, scan
+  resourceType   String // content, user, report, case, appeal, scan
+  resourceId     String?
+  actorId        String?
+  actorType      String // user, moderator, system, api
+  details        Json?
+  previousState  Json?
+  newState       Json?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  @@map("audit_events")
+  @@index([action])
+  @@index([resourceType, resourceId])
+  @@index([actorId])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  actorId     String?
+  actorType   String   @default("user") // user, system, api
+  action      String   // create, update, delete, suspend, revoke, publish, approve, reject
+  targetType  String   // user, content, report, payout, etc.
+  targetId    String?
+  details     Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@map("audit_logs")
+  @@index([actorId])
+  @@index([targetType, targetId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model Badge {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  icon        String
+  points      Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rewardAccounts RewardAccount[]
+
+  @@map("badges")
+}
+
+model BalanceSnapshot {
+  id           String   @id @default(uuid())
+  walletId     String
+  balance      Decimal  @db.Decimal(18, 2)
+  bonusBalance Decimal  @db.Decimal(18, 2)
+  promoBalance Decimal  @db.Decimal(18, 2)
+  currency     String   @default("NGN")
+  capturedAt   DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([capturedAt])
+  @@map("balance_snapshots")
+}
+
+model Campaign {
+  id          String    @id @default(uuid())
+  name        String
+  templateKey String
+  channel     String // push, email, sms, in_app
+  audience    Json // segment criteria
+  status      String    @default("draft") // draft, scheduled, running, completed, cancelled
+  scheduledAt DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  triggers CampaignTrigger[]
+
+  @@index([templateKey])
+  @@index([channel])
+  @@map("campaigns")
+}
+
+model CampaignTrigger {
+  id         String    @id @default(uuid())
+  campaignId String
+  userId     String
+  status     String    @default("pending") // pending, sent, failed, skipped
+  sentAt     DateTime?
+  error      String?
+  createdAt  DateTime  @default(now())
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([userId])
+  @@map("campaign_triggers")
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  icon        String?
+  color       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  contentItems ContentItem[]
+
+  @@map("categories")
+}
+
+model CelebrityEntry {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  bio         String?
+  coverImage  String?
+  profession  String?
+  nationality String?
+  birthDate   DateTime?
+  socialLinks String?
+  isFeatured  Boolean  @default(false)
+  viewCount   Int      @default(0)
+  status      String   @default("draft")
+  createdById String
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  news      CelebrityNews[]
+
+  @@index([profession])
+  @@index([isFeatured])
+  @@index([createdById])
+}
+
+model CelebrityNews {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  content     String
+  excerpt     String?
+  coverImage  String?
+  celebrityId String
+  status      String   @default("draft")
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  celebrity CelebrityEntry @relation(fields: [celebrityId], references: [id], onDelete: Cascade)
+
+  @@index([celebrityId])
+}
+
+model Challenge {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  type        String // daily, weekly, tournament
+  points      Int      @default(10)
+  status      String   @default("active")
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("challenges")
+  @@index([type])
+}
+
+model ChallengeEntry {
+  id          String   @id @default(uuid())
+  userId      String
+  challengeId String
+  contentUrl  String
+  createdAt   DateTime @default(now())
+
+  challenge CreatorChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, challengeId])
+  @@map("challenge_entries")
+  @@index([userId])
+}
+
+model ChallengePrize {
+  id          String   @id @default(uuid())
+  challengeId String
+  rank        Int
+  amount      Decimal  @db.Decimal(18, 2)
+  createdAt   DateTime @default(now())
+
+  challenge ComedyChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@index([challengeId])
+  @@map("challenge_prizes")
+}
+
+model ChallengeSubmission {
+  id          String   @id @default(uuid())
+  challengeId String
+  userId      String
+  content     String
+  mediaUrl    String?
+  status      String   @default("pending") // pending, approved, rejected
+  votes       Int      @default(0)
+  submittedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  challenge     Challenge       @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  challengeVotes ChallengeVote[]
+
+  @@unique([challengeId, userId])
+  @@index([challengeId])
+  @@index([userId])
+}
+
+model ChallengeVote {
+  id           String   @id @default(uuid())
+  userId       String
+  submissionId String
+  createdAt    DateTime @default(now())
+
+  submission ChallengeSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, submissionId])
+  @@index([submissionId])
+  @@index([userId])
+}
+
+model Channel {
+  id          String   @id @default(uuid())
+  creatorId   String
+  name        String
+  description String?
+  category    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  creator CreatorProfile @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@map("channels")
+  @@index([creatorId])
+}
+
+model Chapter {
+  id          String   @id @default(uuid())
+  titleId     String
+  number      Float
+  name        String?
+  description String?
+  coverImage  String?
+  content     String?
+  wordCount   Int?
+  status      String   @default("published")
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  title       Title    @relation(fields: [titleId], references: [id], onDelete: Cascade)
+
+  @@index([titleId])
+  @@map("chapters")
+}
+
+model Character {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  avatarUrl   String?
+  role        String?
+  status      String   @default("active")
+  universeId  String
+  birthDate   DateTime?
+  data        Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  universe    UniverseMap @relation(fields: [universeId], references: [id], onDelete: Cascade)
+  locations   CharacterLocation[]
+  relationshipsFrom CharacterRelationship[] @relation("CharacterFrom")
+  relationshipsTo   CharacterRelationship[] @relation("CharacterTo")
+  timeline    TimelineEvent[]
+
+  @@index([universeId])
+  @@index([slug])
+  @@map("characters")
+}
+
+model CharacterLocation {
+  id          String   @id @default(uuid())
+  characterId String
+  locationId  String
+  role        String?
+  description String?
+  firstSeenAt DateTime?
+  lastSeenAt  DateTime?
+  createdAt   DateTime @default(now())
+
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  location    Location  @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@unique([characterId, locationId])
+  @@index([characterId])
+  @@index([locationId])
+  @@map("character_locations")
+}
+
+model CharacterRelationship {
+  id          String   @id @default(uuid())
+  fromId      String
+  toId        String
+  type        String
+  description String?
+  startDate   DateTime?
+  endDate     DateTime?
+  isOfficial  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  from   Character @relation("CharacterFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  to     Character @relation("CharacterTo", fields: [toId], references: [id], onDelete: Cascade)
+
+  @@index([fromId])
+  @@index([toId])
+  @@index([type])
+  @@map("character_relationships")
+}
+
+model Chargeback {
+  id              String   @id @default(uuid())
+  ticketId        String   @unique
+  paymentId       String
+  userId          String
+  amount          Decimal  @db.Decimal(18, 2)
+  currency        String   @default("NGN")
+  reason          String
+  status          String   @default("PENDING")
+  disputeDeadline DateTime
+  evidenceDue     DateTime
+  chargebackRef   String?
+  resolution      String?
+  resolvedAt      DateTime?
+  resolvedBy      String?
+  metadata        Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([paymentId])
+  @@map("chargebacks")
+}
+
+model ChurnRisk {
+  id               String    @id @default(uuid())
+  userId           String    @unique
+  riskLevel        String // low, medium, high, critical
+  churnProbability Float     @default(0)
+  factors          Json // Contributing factors
+  lastActivityAt   DateTime?
+  predictedChurnAt DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@map("churn_risks")
+}
+
+model CinemaPass {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  type        String // monthly, yearly, premium
+  price       Decimal  @db.Decimal(18, 2)
+  currency    String   @default("NGN")
+  features    String[]
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subscriptions CinemaPassSubscription[]
+
+  @@map("cinema_passes")
+}
+
+model CinemaPassSubscription {
+  id              String    @id @default(uuid())
+  userId          String
+  passId          String
+  status          String    @default("active") // active, cancelled, expired
+  startDate       DateTime
+  endDate         DateTime
+  autoRenew       Boolean   @default(true)
+  paymentIntentId String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  pass CinemaPass @relation(fields: [passId], references: [id])
+
+  @@unique([userId, passId])
+  @@index([userId])
+  @@index([passId])
+  @@index([paymentIntentId])
+  @@map("cinema_pass_subscriptions")
+}
+
+model CityGuideEntry {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  type        String
+  description String
+  coverImage  String?
+  address     String?
+  city        String
+  country     String
+  latitude    Float?
+  longitude   Float?
+  rating      Float?
+  priceLevel  Int?
+  hours       String?
+  phone       String?
+  website     String?
+  amenities   String[]
+  status      String   @default("draft")
+  viewCount   Int      @default(0)
+  createdById String
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tags      CityGuideTag[]
+
+  @@index([type])
+  @@index([city])
+  @@index([createdById])
+}
+
+model CityGuideTag {
+  id      String @id @default(uuid())
+  name    String @unique
+  slug    String @unique
+  entries CityGuideEntry[]
+}
+
+model ClipComment {
+  id        String   @id @default(uuid())
+  userId    String
+  clipId    String
+  text      String
+  createdAt DateTime @default(now())
+
+  clip ComedyClip @relation(fields: [clipId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([clipId])
+  @@map("clip_comments")
+}
+
+model ClipLike {
+  id        String   @id @default(uuid())
+  userId    String
+  clipId    String
+  createdAt DateTime @default(now())
+
+  clip ComedyClip @relation(fields: [clipId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, clipId])
+  @@index([userId])
+  @@index([clipId])
+  @@map("clip_likes")
+}
+
+model ClipShare {
+  id        String   @id @default(uuid())
+  userId    String
+  clipId    String
+  platform  String?
+  createdAt DateTime @default(now())
+
+  clip ComedyClip @relation(fields: [clipId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([clipId])
+  @@map("clip_shares")
+}
+
+model Cohort {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  criteria    Json // JSON criteria for cohort membership
+  size        Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("cohorts")
+}
+
+model CohortMember {
+  id       String   @id @default(uuid())
+  cohortId String
+  userId   String
+  joinedAt DateTime @default(now())
+
+  @@unique([cohortId, userId])
+  @@map("cohort_members")
+}
+
+model ComedianProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  bio         String?
+  banner      String?
+  socialLinks Json?
+  verified    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  clips    ComedyClip[]
+  specials ComedySpecial[]
+
+  @@map("comedian_profiles")
+}
+
+model ComedyChallenge {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  startsAt    DateTime
+  endsAt      DateTime?
+  status      String    @default("active")
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  prizes  ChallengePrize[]
+  entries ComedyChallengeEntry[]
+  @@map("comedy_challenges")
+}
+
+model ComedyChallengeEntry {
+  id          String   @id @default(uuid())
+  userId      String
+  challengeId String
+  clipUrl     String
+  createdAt   DateTime @default(now())
+
+  challenge ComedyChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, challengeId])
+  @@index([userId])
+  @@index([challengeId])
+  @@map("comedy_challenge_entries")
+}
+
+model ComedyClip {
+  id          String   @id @default(uuid())
+  comedianId  String?
+  creatorId   String
+  title       String
+  description String?
+  thumbnail   String
+  mediaUrl    String
+  viewCount   Int      @default(0)
+  shareCount  Int      @default(0)
+  likeCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  comedian ComedianProfile? @relation(fields: [comedianId], references: [id], onDelete: Cascade)
+  shares   ClipShare[]
+  likes    ClipLike[]
+  comments ClipComment[]
+  trends   ComedyTrend[]
+
+  @@index([comedianId])
+  @@index([creatorId])
+  @@map("comedy_clips")
+}
+
+model ComedyEpisode {
+  id          String   @id @default(uuid())
+  seriesId    String
+  title       String
+  description String?
+  thumbnail   String?
+  mediaUrl    String?
+  duration    Int?
+  viewCount   Int      @default(0)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  series ComedySeries @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+
+  @@index([seriesId])
+  @@map("comedy_episodes")
+}
+
+model ComedySeries {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  thumbnail   String
+  banner      String?
+  creatorId   String
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  episodes ComedyEpisode[]
+
+  @@index([creatorId])
+  @@map("comedy_series")
+}
+
+model ComedySpecial {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  thumbnail   String
+  mediaUrl    String
+  duration    Int?
+  comedianId  String
+  genre       String?
+  isPremium   Boolean  @default(true)
+  price       Decimal  @db.Decimal(18, 2)
+  currency    String   @default("NGN")
+  viewCount   Int      @default(0)
+  likeCount   Int      @default(0)
+  releaseDate DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  comedian ComedianProfile? @relation(fields: [comedianId], references: [id], onDelete: Cascade)
+  likes    SpecialLike[]
+
+  @@index([comedianId])
+  @@index([isPremium])
+  @@map("comedy_specials")
+}
+
+model ComedyTrend {
+  id        String   @id @default(uuid())
+  clipId    String
+  score     Float    @default(0)
+  rank      Int
+  period    String   @default("daily")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  clip ComedyClip @relation(fields: [clipId], references: [id], onDelete: Cascade)
+
+  @@unique([clipId, period])
+  @@index([clipId])
+  @@map("comedy_trends")
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  contentId String
+  userId    String
+  text      String
+  parentId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  content ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@index([contentId])
+  @@index([userId])
+  @@index([parentId])
+  @@map("comments")
+}
+
+model Content {
+  id        String   @id @default(uuid())
+  title     String?
+  type      String?
+  status    String?  @default("active")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reports Report[]
+
+  @@map("contents")
+}
+
+model ContentItem {
+  id            String   @id @default(uuid())
+  title         String
+  description   String?
+  thumbnail     String
+  mediaUrl      String?
+  universeId    String
+  creatorId     String
+  status        String
+  viewCount     Int      @default(0)
+  metadata      Json?
+  publishedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  releaseDate   DateTime?
+  theatricalReleaseDate DateTime?
+  streamingReleaseDate DateTime?
+  windowEndDate DateTime?
+  windowType    String   @default("standard")
+  isExclusive   Boolean  @default(false)
+  isPremiere    Boolean  @default(false)
+
+  universe    Universe    @relation(fields: [universeId], references: [id], onDelete: Cascade)
+  creator     User        @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  mediaAsset  MediaAsset?
+  categories  Category[]
+  tags        Tag[]
+  relationshipsAsContent ContentRelationship[] @relation("ContentRelationshipContent")
+  relationshipsAsRelatedContent ContentRelationship[] @relation("ContentRelationshipRelatedContent")
+
+  @@map("content_items")
+}
+
+model ContentRelationship {
+  id            String   @id @default(uuid())
+  contentId     String
+  relatedContentId String
+  type          String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  content       ContentItem @relation("ContentRelationshipContent", fields: [contentId], references: [id], onDelete: Cascade)
+  relatedContent ContentItem @relation("ContentRelationshipRelatedContent", fields: [relatedContentId], references: [id], onDelete: Cascade)
+
+  @@map("content_relationships")
+  @@unique([contentId, relatedContentId])
+}
+
+model ContentTakedown {
+  id          String   @id @default(uuid())
+  ticketId    String   @unique
+  contentId   String
+  reportedBy  String
+  reason      String
+  evidence    Json?
+  status      String   @default("PENDING")
+  decision    String?
+  decidedAt   DateTime?
+  decidedBy   String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([contentId])
+  @@map("content_takedowns")
+}
+
+model Contest {
+  id          String    @id @default(uuid())
+  eventId     String
+  title       String
+  description String?
+  entryFee Decimal     @default(0) @db.Decimal(18, 2)
+  prizePool Decimal  @db.Decimal(18, 2)
+  status      String    @default("active")
+  startsAt    DateTime
+  endsAt      DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  event   SportsEvent    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  prizes  ContestPrize[]
+  entries ContestEntry[]
+
+  @@map("contests")
+  @@index([eventId])
+  @@index([startsAt])
+  @@index([endsAt])
+}
+
+model ContestEntry {
+  id        String   @id @default(uuid())
+  contestId String
+  userId    String
+  entryData Json
+  score     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  contest       Contest      @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  SportsEvent   SportsEvent? @relation(fields: [sportsEventId], references: [id])
+  sportsEventId String?
+
+  @@unique([contestId, userId])
+  @@index([contestId])
+  @@index([userId])
+  @@index([score])
+  @@index([sportsEventId])
+  @@map("contest_entries")
+}
+
+model ContestPrize {
+  id        String   @id @default(uuid())
+  contestId String
+  rank      Int
+  amount Decimal  @db.Decimal(18, 2)
+  createdAt DateTime @default(now())
+
+  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+
+  @@map("contest_prizes")
+  @@index([contestId])
+}
+
+model Contestant {
+  id          String   @id @default(uuid())
+  showId      String
+  name        String
+  description String?
+  thumbnail   String?
+  socialLinks Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  show        RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
+  votes       Vote[]
+  supervotes  Supervote[]
+  predictions Prediction[]
+
+  @@map("reality_contestants")
+  @@index([showId])
+}
+
+model Conversation {
+  id        String   @id @default(uuid())
+  type      String   @default("direct")
+  name      String?
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@index([type])
+  @@index([createdAt])
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id             String       @id @default(uuid())
+  conversationId String
+  userId         String
+  role           String       @default("member")
+  joinedAt       DateTime     @default(now())
+  lastReadAt     DateTime     @default(now())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+  @@index([conversationId])
+  @@map("conversation_participants")
+}
+
+model ConversionMetric {
+  id            String   @id @default(uuid())
+  name          String   @unique
+  description   String?
+  funnelId      String? // optional link to Funnel
+  triggerEvent  String // the event that marks conversion
+  conditions    Json // additional property conditions
+  windowMinutes Int? // attribution window
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([name])
+  @@index([triggerEvent])
+  @@index([isActive])
+  @@map("conversion_metrics")
+}
+
+model CreatorChallenge {
+  id          String   @id @default(uuid())
+  creatorId   String
+  title       String
+  description String
+  prize       String
+  startDate   DateTime
+  endDate     DateTime
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+
+  creator CreatorProfile @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  entries ChallengeEntry[]
+
+  @@map("creator_challenges")
+  @@index([creatorId])
+}
+
+model CreatorEarning {
+  id               String    @id @default(uuid())
+  creatorId        String
+  creatorProfileId String?
+  amount           Decimal  @db.Decimal(18, 2)
+  type             String
+  referenceId      String?
+  status           String    @default("pending")
+  paidAt           DateTime?
+  createdAt        DateTime  @default(now())
+
+  @@map("creator_earnings")
+  @@index([creatorId])
+  @@index([creatorProfileId])
+}
+
+model CreatorProfile {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  bio             String?
+  banner          String?
+  socialLinks     Json?
+  verified        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("creator_profiles")
+}
+
+model CreatorScore {
+  id                String   @id @default(uuid())
+  creatorId         String   @unique
+  engagementScore   Float    @default(0)
+  growthScore       Float    @default(0)
+  monetizationScore Float    @default(0)
+  overallScore      Float    @default(0)
+  lastUpdated       DateTime @default(now())
+
+  @@map("creator_scores")
+}
+
+model Crossover {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  description String?
+  coverImage  String?
+  startDate   DateTime?
+  endDate     DateTime?
+  status      String   @default("announced")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  titles      CrossoverTitle[]
+  @@map("crossovers")
+}
+
+model CrossoverTitle {
+  id          String   @id @default(uuid())
+  crossoverId String
+  titleId     String
+
+  crossover   Crossover @relation(fields: [crossoverId], references: [id], onDelete: Cascade)
+  title       Title     @relation(fields: [titleId], references: [id], onDelete: Cascade)
+
+  @@unique([crossoverId, titleId])
+  @@index([crossoverId])
+  @@index([titleId])
+  @@map("crossover_titles")
+}
+
+model CultureStory {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  content     String
+  excerpt     String?
+  coverImage  String?
+  categoryId  String?
+  authorId    String
+  status      String   @default("draft")
+  viewCount   Int      @default(0)
+  readTime    Int?
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category    StoryCategory? @relation(fields: [categoryId], references: [id])
+  comments    StoryComment[]
+
+  @@index([categoryId])
+  @@index([authorId])
+}
+
+model CustomReport {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  category    String    @default("general")
+  createdBy   String
+  metrics     Json // Array of metric configurations
+  dimensions  Json // Array of dimension configurations
+  filters     Json      @default("[]") // Array of filter configurations
+  dateField   String    @default("createdAt")
+  dateRange   String    @default("30d")
+  startDate   DateTime?
+  endDate     DateTime?
+  isPublic    Boolean   @default(false)
+  chartConfig Json      @default("{}")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  executions ReportExecution[]
+
+  @@index([createdBy])
+  @@map("custom_reports")
+}
+
+model DataDeletionRequest {
+  id          String    @id @default(uuid())
+  userId      String
+  reason      String?
+  status      String    @default("scheduled") // scheduled, in_progress, completed, failed
+  scheduledAt DateTime  @default(now())
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("data_deletion_requests")
+  @@index([userId])
+  @@index([scheduledAt])
+}
+
+model DeadLetterEntry {
+  id        String   @id @default(uuid())
+  jobId     String   @unique
+  type      String
+  payload   Json
+  error     String
+  attempts  Int
+  movedAt   DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([type])
+  @@index([movedAt])
+  @@map("dead_letter_entries")
+}
+
+model DeliveryAttempt {
+  id               String    @id @default(uuid())
+  notificationId   String
+  channel          String // push, email, sms, in_app
+  provider         String? // fcm, sendgrid, twilio
+  status           String // pending, sent, delivered, failed, bounced
+  providerResponse Json?
+  error            String?
+  attemptedAt      DateTime  @default(now())
+  deliveredAt      DateTime?
+  createdAt        DateTime  @default(now())
+
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@index([notificationId])
+  @@index([channel])
+  @@index([attemptedAt])
+  @@map("delivery_attempts")
+}
+
+model DeviceInfo {
+  id             String  @id @default(uuid())
+  productEventId String  @unique
+  deviceType     String? // mobile, desktop, tablet, tv
+  os             String? // iOS, Android, Windows, macOS, Linux
+  osVersion      String?
+  browser        String?
+  browserVersion String?
+  appVersion     String?
+  screenWidth    Int?
+  screenHeight   Int?
+  language       String?
+  timezone       String?
+  userAgent      String?
+
+  event ProductEvent @relation(fields: [productEventId], references: [id], onDelete: Cascade)
+
+  @@map("device_info")
+}
+
+model Episode {
+  id          String    @id @default(uuid())
+  showId      String
+  seasonId    String?
+  title       String
+  number      Int
+  description String?
+  thumbnail   String?
+  mediaUrl    String?
+  airedAt     DateTime?
+  viewCount   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  show        RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
+  season      Season?     @relation(fields: [seasonId], references: [id])
+  votes       Vote[]
+  predictions Prediction[]
+
+  @@map("reality_episodes")
+  @@index([showId])
+  @@index([seasonId])
+  @@index([airedAt])
+}
+
+model Event {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  description String
+  coverImage  String?
+  startDate   DateTime
+  endDate     DateTime?
+  location    String?
+  venue        String?
+  isOnline    Boolean  @default(false)
+  onlineLink  String?
+  maxAttendees Int?
+  status      String   @default("draft")
+  categoryId  String?
+  creatorId   String
+  viewCount   Int      @default(0)
+  rsvpCount   Int      @default(0)
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category    EventCategory? @relation(fields: [categoryId], references: [id])
+  rsvps       EventRsvp[]
+
+  @@index([categoryId])
+  @@index([creatorId])
+  @@index([startDate])
+}
+
+model EventCategory {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?
+  events      Event[]
+
+  @@index([slug])
+}
+
+model EventRsvp {
+  id        String   @id @default(uuid())
+  userId    String
+  eventId   String
+  status    String   @default("attending")
+  guests    Int      @default(0)
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event     Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@index([eventId])
+  @@index([userId])
+}
+
+model EventSchema {
+  id          String   @id @default(uuid())
+  name        String   @unique // e.g. screen_view, content_impression
+  description String?
+  properties  Json // JSON schema for event properties
+  required    Json // array of required property names
+  version     Int      @default(1)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([name])
+  @@index([isActive])
+  @@map("event_schemas")
+}
+
+model EventTeam {
+  id      String  @id @default(uuid())
+  eventId String
+  name    String
+  logo    String?
+  score   Int     @default(0)
+  order   Int     @default(0)
+
+  event SportsEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("event_teams")
+  @@index([eventId])
+}
+
+model ExperimentEvent {
+  id            String    @id @default(uuid())
+  experimentKey String // e.g. feed_ranking_v2
+  userId        String?
+  variant       String // control, treatment_a, treatment_b
+  assignmentAt  DateTime  @default(now())
+  outcome       String? // converted, dropped, no_outcome
+  outcomeAt     DateTime?
+  metadata      Json?
+  createdAt     DateTime  @default(now())
+
+  @@index([experimentKey])
+  @@index([userId])
+  @@index([variant])
+  @@index([assignmentAt])
+  @@index([outcome])
+  @@map("experiment_events")
+}
+
+model FanBoard {
+  id        String   @id @default(uuid())
+  eventId   String
+  userId    String
+  text      String
+  likes     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event    SportsEvent       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  comments FanBoardComment[]
+
+  @@map("fan_boards")
+  @@index([eventId])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([likes])
+}
+
+model FanBoardComment {
+  id         String   @id @default(uuid())
+  fanBoardId String
+  userId     String
+  text       String
+  createdAt  DateTime @default(now())
+
+  fanBoard FanBoard @relation(fields: [fanBoardId], references: [id], onDelete: Cascade)
+
+  @@map("fan_board_comments")
+  @@index([fanBoardId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model FilmmakerBacker {
+  id          String    @id @default(uuid())
+  projectId   String
+  userId      String
+  amount      Decimal   @db.Decimal(18, 2)
+  status      String    @default("active") // active, refunded
+  createdAt   DateTime  @default(now())
+
+  project FilmmakerProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+  @@map("filmmaker_backers")
+}
+
+model FilmmakerProject {
+  id            String   @id @default(uuid())
+  filmmakerId   String
+  title         String
+  description   String?
+  thumbnail     String?
+  status        String   @default("development") // development, production, post_production, completed
+  fundingGoal   Decimal? @db.Decimal(18, 2)
+  fundingRaised Decimal    @default(0) @db.Decimal(18, 2)
+  targetDate    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  updates       FilmmakerUpdate[]
+  backers       FilmmakerBacker[]
+
+  @@index([filmmakerId])
+  @@map("filmmaker_projects")
+}
+
+model FilmmakerUpdate {
+  id          String   @id @default(uuid())
+  projectId   String
+  title       String
+  content     String
+  createdAt   DateTime @default(now())
+
+  project FilmmakerProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("filmmaker_updates")
+}
+
+model FixtureMetadata {
+  id          String   @id @default(uuid())
+  eventId     String   @unique
+  venue       String?
+  referee     String?
+  weather     String?
+  temperature Int?
+  attendance  Int?
+  broadcast   String[]
+  stats       Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  event SportsEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("fixture_metadata")
+}
+
+model Following {
+  id          String   @id @default(uuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+  @@map("following")
+}
+
+model FraudDetection {
+  id         String    @id @default(uuid())
+  userId     String?
+  eventType  String
+  severity   String // low, medium, high, critical
+  details    Json
+  status     String    @default("pending") // pending, reviewed, confirmed, cleared
+  reviewedBy String?
+  reviewedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@map("fraud_detections")
+}
+
+model Funnel {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  steps       Json // Array of event names in order
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  funnelSteps FunnelStep[]
+
+  @@map("funnels")
+}
+
+model FunnelCompletion {
+  id             String    @id @default(uuid())
+  funnelId       String
+  userId         String
+  completedSteps Int       @default(0)
+  completedAt    DateTime?
+  metadata       Json?
+  createdAt      DateTime  @default(now())
+
+  @@unique([funnelId, userId])
+  @@map("funnel_completions")
+}
+
+model FunnelStep {
+  id        String   @id @default(uuid())
+  funnelId  String
+  stepOrder Int
+  eventName String
+  createdAt DateTime @default(now())
+
+  funnel Funnel @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+
+  @@unique([funnelId, stepOrder])
+  @@map("funnel_steps")
+}
+
+model Game {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  description String?
+  thumbnail   String?
+  category    String
+  difficulty  String   @default("medium")
+  playCount   Int      @default(0)
+  isActive    Boolean  @default(true)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([isActive])
+  @@map("games")
+}
+
+model GameAnswer {
+  id          String   @id @default(uuid())
+  sessionId   String
+  questionId  String
+  answer      String
+  isCorrect   Boolean
+  timeTaken   Int
+  pointsEarned Int     @default(0)
+  createdAt   DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([questionId])
+  @@map("game_answers")
+}
+
+model GamePlaySession {
+  id          String    @id @default(uuid())
+  userId      String
+  gameId      String
+  score       Int       @default(0)
+  correctCount Int      @default(0)
+  status      String    @default("active") // active, completed, abandoned
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([gameId])
+  @@map("game_play_sessions")
+}
+
+model GameQuestion {
+  id          String   @id @default(uuid())
+  gameId      String
+  question    String
+  answer      String
+  options     Json?
+  points      Int      @default(10)
+  order       Int      @default(0)
+  timeLimit   Int      @default(30)
+  createdAt   DateTime @default(now())
+
+  @@index([gameId])
+  @@map("game_questions")
+}
+
+model GameSession {
+  id          String    @id @default(uuid())
+  userId      String
+  challengeId String
+  questionId  String?
+  status      String // active, completed, failed
+  score       Int       @default(0)
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([challengeId])
+  @@index([questionId])
+  @@map("game_sessions")
+}
+
+model Highlight {
+  id          String   @id @default(uuid())
+  eventId     String
+  creatorId   String
+  title       String
+  description String?
+  thumbnail   String
+  mediaUrl    String
+  viewCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  event SportsEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("highlights")
+  @@index([eventId])
+  @@index([creatorId])
+  @@index([createdAt])
+  @@index([viewCount])
+}
+
+model InfluencerCollaboration {
+  id            String   @id @default(uuid())
+  influencerId  String
+  brandName     String
+  campaignName  String
+  description   String?
+  coverImage    String?
+  startDate     DateTime?
+  endDate       DateTime?
+  status        String   @default("active")
+  createdAt     DateTime @default(now())
+
+  influencer InfluencerEntry @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+
+  @@index([influencerId])
+}
+
+model InfluencerEntry {
+  id            String   @id @default(uuid())
+  userId        String
+  slug          String   @unique
+  displayName   String
+  bio           String?
+  avatarUrl     String?
+  coverImage    String?
+  category      String?
+  followerCount Int      @default(0)
+  followingCount Int     @default(0)
+  postCount     Int      @default(0)
+  isVerified    Boolean  @default(false)
+  socialLinks   String?
+  collaborationCount Int @default(0)
+  status        String   @default("draft")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  collaborations InfluencerCollaboration[]
+  @@index([isVerified])
+  @@index([userId])
+}
+
+model Job {
+  id           String    @id @default(uuid())
+  type         String
+  payload      Json
+  status       String    @default("pending") // pending | processing | completed | failed | retrying
+  priority     Int       @default(0)
+  attempts     Int       @default(0)
+  maxAttempts  Int       @default(3)
+  nextRetryAt  DateTime?
+  lockedAt     DateTime?
+  lockedBy     String?
+  result       Json?
+  error        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  retries         JobRetry[]
+  deadLetterEntry DeadLetterEntry?
+
+  @@index([type])
+  @@index([priority])
+  @@index([nextRetryAt])
+  @@index([createdAt])
+  @@index([status, priority])
+  @@map("jobs")
+}
+
+model JobRetry {
+  id         String   @id @default(uuid())
+  jobId      String
+  attempt    Int
+  error      String
+  stackTrace String?
+  retriedAt  DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([retriedAt])
+  @@map("job_retries")
+}
+
+model JobSchedule {
+  id        String    @id @default(uuid())
+  type      String
+  cron      String
+  payload   Json
+  isActive  Boolean   @default(true)
+  lastRunAt DateTime?
+  nextRunAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([isActive])
+  @@index([nextRunAt])
+  @@map("job_schedules")
+}
+
+model LeaderboardEntry {
+  id          String   @id @default(uuid())
+  userId      String
+  displayName String
+  avatar      String?
+  score       Int      @default(0)
+  rank        Int      @default(0)
+  category    String   @default("all")
+  timePeriod  String   @default("weekly")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, category, timePeriod])
+  @@index([score])
+  @@index([rank])
+  @@index([timePeriod])
+  @@map("leaderboard_entries")
+}
+
+model Level {
+  id        String   @id @default(uuid())
+  name      String
+  rank      Int      @unique
+  minPoints Int
+  icon      String?
+  color     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rewardAccounts RewardAccount[]
+
+  @@map("levels")
+}
+
+model Location {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  imageUrl    String?
+  latitude    Float?
+  longitude   Float?
+  universeId  String
+  parentId    String?
+  data        Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  universe    UniverseMap @relation(fields: [universeId], references: [id], onDelete: Cascade)
+  parent      Location?   @relation("LocationHierarchy", fields: [parentId], references: [id])
+  children    Location[]  @relation("LocationHierarchy")
+  characters  CharacterLocation[]
+  timeline    TimelineEvent[]
+
+  @@index([universeId])
+  @@index([parentId])
+  @@map("locations")
+}
+
+model LockedExtra {
+  id          String   @id @default(uuid())
+  contentId   String
+  extraType   String // behind_paywall, bonus_content, director_commentary, deleted_scene, extended_version
+  title       String
+  description String?
+  thumbnail   String?
+  mediaUrl    String?
+  price       Decimal? @db.Decimal(18, 2)
+  currency    String   @default("NGN")
+  unlockType  String   @default("purchase") // purchase, rental, pass, subscription
+  isUnlocked  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  content ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@index([contentId])
+  @@index([extraType])
+  @@map("locked_extras")
+}
+
+model LoreEntry {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  category    String
+  content     String
+  excerpt     String?
+  coverImage  String?
+  importance  String   @default("normal")
+  universeId  String
+  viewCount   Int      @default(0)
+  status      String   @default("published")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  universe    UniverseMap @relation(fields: [universeId], references: [id], onDelete: Cascade)
+
+  @@index([universeId])
+  @@map("lore_entries")
+}
+
+model MediaAsset {
+  id            String   @id @default(uuid())
+  contentItemId String   @unique
+  originalUrl   String
+  thumbnailUrl  String?
+  format        String
+  size          Int
+  duration      Int?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  contentItem ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+
+  @@map("media_assets")
+}
+
+model MediaUpload {
+  id            String   @id @default(uuid())
+  userId        String
+  filename      String
+  originalName  String
+  mimetype      String
+  size          Int // Max ~2GB; use BigInt if larger files are needed
+  key           String
+  cdnUrl        String?
+  folder        String
+  status        String   @default("uploaded") // uploaded, processing, completed, failed
+  metadata      Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("media_uploads")
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Message {
+  id             String   @id @default(uuid())
+  conversationId String
+  senderId       String
+  content        String
+  type           String   @default("text")
+  isRead         Boolean  @default(false)
+  readAt         DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([createdAt])
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+model Mission {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  points      Int
+  type        String // daily, weekly, monthly, one-time
+  isActive    Boolean  @default(true)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rewards     MissionReward[]
+  completions MissionCompletion[]
+
+  @@index([type])
+  @@index([isActive])
+  @@map("missions")
+}
+
+model MissionCompletion {
+  id          String   @id @default(uuid())
+  userId      String
+  missionId   String
+  completedAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mission Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, missionId])
+  @@index([userId])
+  @@index([missionId])
+  @@index([completedAt])
+  @@map("mission_completions")
+}
+
+model MissionReward {
+  id        String   @id @default(uuid())
+  missionId String
+  rewardId  String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+
+  mission Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  reward  Reward  @relation(fields: [rewardId], references: [id])
+
+  @@map("mission_rewards")
+}
+
+model ModerationCase {
+  id               String    @id @default(uuid())
+  reportId         String    @unique
+  userId           String
+  status           String
+  resolvedBy       String?
+  resolutionAction String?
+  resolutionReason String?
+  resolvedAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@map("moderation_cases")
+}
+
+model Movie {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  thumbnail   String
+  banner      String?
+  mediaUrl    String?
+  universeId  String
+  creatorId   String
+  status      String // draft, published, archived
+  viewCount   Int      @default(0)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rentals        Rental[]
+  watchlistItems WatchlistItem[]
+  viewingWindows ViewingWindow[]
+  Premiere       Premiere?
+
+  @@map("movies")
+  @@index([universeId])
+  @@index([creatorId])
+}
+
+model MusicEntry {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  type        String
+  description String?
+  coverImage  String?
+  artistName  String?
+  albumName   String?
+  duration    Int?
+  genre       String?
+  trackUrl    String?
+  isPremium   Boolean  @default(false)
+  playCount   Int      @default(0)
+  status      String   @default("draft")
+  createdById String
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([type])
+  @@index([genre])
+  @@index([createdById])
+}
+
+model NightlifeEntry {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  type        String
+  description String
+  coverImage  String?
+  address     String?
+  city        String
+  country     String
+  latitude    Float?
+  longitude   Float?
+  hours       String?
+  dressCode   String?
+  coverCharge Float?
+  rating      Float?
+  status      String   @default("draft")
+  viewCount   Int      @default(0)
+  createdById String
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([type])
+  @@index([city])
+  @@index([createdById])
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  userId      String
+  type        String
+  title       String
+  message     String
+  metadata    Json?
+  readAt      DateTime?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  pushEnabled       Boolean  @default(true)
+  emailEnabled      Boolean  @default(true)
+  smsEnabled        Boolean  @default(false)
+  inAppEnabled      Boolean  @default(true)
+  quietHoursStart   String? // "22:00"
+  quietHoursEnd     String? // "07:00"
+  timezone          String? // "Africa/Lagos"
+  categoryOverrides Json? // { "payment": false, "social": true }
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
+
+model NotificationTemplate {
+  id        String   @id @default(uuid())
+  key       String   @unique // e.g. payment.success, reward.redeemed
+  channel   String // push, email, sms, in_app
+  subject   String?
+  body      String
+  variables Json // array of { name, required, defaultValue }
+  isActive  Boolean  @default(true)
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
+  @@index([channel])
+  @@index([isActive])
+  @@map("notification_templates")
+}
+
+model OrisaFile {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  title       String
+  description String?
+  imageUrl    String?
+  universeId  String
+  domain      String? // wind, iron, love, justice, etc.
+  symbols     String[] // thunderstone, mirror, etc.
+  status      String   @default("active")
+  data        Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  universe    UniverseMap @relation(fields: [universeId], references: [id], onDelete: Cascade)
+
+  @@index([universeId])
+  @@index([slug])
+  @@index([domain])
+  @@map("orisa_files")
+}
+
+model Otp {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  code        String   // Hashed with bcrypt at write time — never store plaintext
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@map("otps")
+}
+
+model Pass {
+  id            String   @id @default(uuid())
+  userId        String
+  passType      String // daily, weekly, monthly, yearly
+  universeId    String?
+  status        String   @default("active") // active, expired, cancelled, suspended
+  startTime     DateTime @default(now())
+  endTime       DateTime
+  price         Decimal  @db.Decimal(18, 2)
+  currency      String   @default("NGN")
+  transactionId String?
+  autoRenew     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  universe Universe? @relation(fields: [universeId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([universeId])
+  @@index([endTime])
+  @@map("passes")
+}
+
+model Payment {
+  id            String    @id @default(cuid())
+  userId        String
+  amount        Decimal   @db.Decimal(18, 2)
+  currency      String    @default("NGN")
+  status        String    @default("pending")
+  type          String    @default("payment")
+  provider      String?
+  providerRef   String?
+  failureReason String?
+  refundAmount  Decimal?  @db.Decimal(18, 2)
+  metadata      Json?
+  completedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([provider, providerRef])
+  @@index([userId])
+  @@index([providerRef])
+  @@map("payments")
+}
+
+model PaymentIntent {
+  id                String   @id @default(uuid())
+  userId            String
+  amount            Decimal
+  currency          String   @default("NGN")
+  status            String
+  description       String?
+  providerReference String?
+  metadata          Json?
+  completedAt       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refunds  Refund[]
+
+  @@map("payment_intents")
+}
+
+model PaymentMethod {
+  id            String   @id @default(cuid())
+  userId        String
+  provider      String // paystack, flutterwave
+  providerToken String // provider-side tokenization reference
+  type          String // card, bank_account, ussd
+  brand         String? // visa, mastercard, verve
+  last4         String?
+  expiryMonth   Int?
+  expiryYear    Int?
+  isDefault     Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  metadata      Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, provider, providerToken])
+  @@index([userId])
+  @@index([provider])
+  @@index([isDefault])
+  @@map("payment_methods")
+}
+
+model PayoutDispute {
+  id            String   @id @default(uuid())
+  ticketId      String   @unique
+  creatorId     String
+  payoutId      String
+  amount        Decimal  @db.Decimal(18, 2)
+  currency      String   @default("NGN")
+  reason        String
+  evidence      Json?
+  status        String   @default("PENDING")
+  resolution    String?
+  resolvedAt    DateTime?
+  resolvedBy    String?
+  compensation  Decimal? @db.Decimal(18, 2)
+  metadata      Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([creatorId])
+  @@index([payoutId])
+  @@map("payout_disputes")
+}
+
+model PayoutRequest {
+  id              String   @id @default(uuid())
+  userId          String
+  amount          Decimal
+  currency        String   @default("NGN")
+  status          String
+  method          String
+  metadata        Json?
+  completedAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("payout_requests")
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  resource    String
+  action      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rolePermissions RolePermission[]
+
+  @@index([resource])
+  @@index([action])
+  @@map("permissions")
+}
+
+model PointsLedger {
+  id        String   @id @default(uuid())
+  userId    String
+  points    Int
+  type      String // credit, debit
+  reason    String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("points_ledger")
+}
+
+model Poll {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  description String?
+  coverImage  String?
+  status      String   @default("draft") // draft, active, closed
+  totalVotes  Int      @default(0)
+  createdById String
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  options   PollOption[]
+  votes     PollVote[]
+  @@index([createdById])
+}
+
+model PollOption {
+  id          String   @id @default(uuid())
+  pollId      String
+  text        String
+  imageUrl    String?
+  voteCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  poll        Poll      @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes       PollVote[]
+
+  @@index([pollId])
+}
+
+model PollVote {
+  id          String   @id @default(uuid())
+  pollId      String
+  optionId    String
+  userId      String
+  votedAt     DateTime @default(now())
+
+  poll        Poll      @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  option      PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@unique([pollId, userId])
+  @@index([pollId])
+  @@index([optionId])
+  @@index([userId])
+}
+
+model Prediction {
+  id          String   @id @default(uuid())
+  userId      String
+  contentId   String
+  prediction  String
+  points      Int      @default(0)
+  isCorrect   Boolean?
+  result      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([contentId])
+  @@index([isCorrect])
+  @@index([createdAt])
+  @@map("predictions")
+}
+
+model PredictionEntry {
+  id         String   @id @default(uuid())
+  userId     String
+  eventId    String
+  prediction Json
+  points     Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  event              SportsEvent       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  PredictionMarket   PredictionMarket? @relation(fields: [predictionMarketId], references: [id])
+  predictionMarketId String?
+
+  @@map("prediction_entries")
+  @@index([userId])
+  @@index([eventId])
+  @@index([eventId, userId])
+  @@index([predictionMarketId])
+  @@index([createdAt])
+}
+
+model PredictionMarket {
+  id            String   @id @default(uuid())
+  eventId       String   @unique
+  question      String
+  options       Json
+  odds          Json?
+  totalPool   Decimal @default(0) @db.Decimal(18, 2)
+  status        String   @default("active")
+  settlementType String? // automatic, manual
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  event   SportsEvent       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  entries PredictionEntry[]
+
+  @@map("prediction_markets")
+}
+
+model PredictionReward {
+  id          String   @id @default(uuid())
+  eventId     String   @unique
+  correctPredictions Int @default(0)
+  rewardPoints Int     @default(0)
+  bonusPool Decimal @default(0) @db.Decimal(18, 2)
+  createdAt   DateTime @default(now())
+
+  event SportsEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("prediction_rewards")
+}
+
+model Premiere {
+  id        String    @id @default(uuid())
+  movieId   String    @unique
+  startsAt  DateTime
+  endsAt    DateTime?
+  status    String    @default("scheduled")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  movie Movie @relation(fields: [movieId], references: [id], onDelete: Cascade)
+
+  @@map("premieres")
+}
+
+model PremiumPurchase {
+  id          String   @id @default(uuid())
+  userId      String
+  extraId     String
+  extraName   String
+  extraType   String
+  price       Decimal  @db.Decimal(18, 2)
+  duration    Int?
+  purchaseId  String   @unique
+  purchasedAt DateTime @default(now())
+  expiresAt   DateTime?
+  status      String   @default("active") // active, expired, cancelled
+
+  @@map("reality_premium_purchases")
+  @@index([userId])
+  @@index([extraId])
+  @@index([purchaseId])
+}
+
+model ProductEvent {
+  id        String   @id @default(uuid())
+  eventName String // screen_view, content_impression, payment_success, etc.
+  userId    String?
+  sessionId String?
+  platform  String? // web, mobile, tablet
+  universe  String? // reality, creator, lifestyle, vertical, movie, games, comedy, sports
+  timestamp DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  deviceInfo      DeviceInfo?
+  appVersion      String?
+  experimentFlags Json?
+  metadata        Json?
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([eventName])
+  @@index([userId])
+  @@index([sessionId])
+  @@index([universe])
+  @@index([timestamp])
+  @@map("product_events")
+}
+
+model Prophecy {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  content     String
+  excerpt     String?
+  imageUrl    String?
+  universeId  String
+  source      String? // who or what delivered the prophecy
+  status      String   @default("active") // active, fulfilled, broken
+  fulfilledAt DateTime?
+  data        Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  universe    UniverseMap @relation(fields: [universeId], references: [id], onDelete: Cascade)
+
+  @@index([universeId])
+  @@index([slug])
+  @@map("prophecies")
+}
+
+model PushToken {
+  id         String   @id @default(uuid())
+  userId     String
+  token      String   @unique
+  deviceType String // ios, android, web
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("push_tokens")
+}
+
+model Question {
+  id          String   @id @default(uuid())
+  challengeId String
+  question    String
+  answer      String
+  options     Json?
+  points      Int      @default(10)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([challengeId])
+  @@map("questions")
+}
+
+model Quiz {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  description String?
+  coverImage  String?
+  category    String?
+  difficulty  String   @default("easy") // easy, medium, hard
+  timeLimit   Int?
+  status      String   @default("draft") // draft, published, archived
+  playCount   Int      @default(0)
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  questions   QuizQuestion[]
+  attempts    QuizAttempt[]
+  @@index([difficulty])
+  @@index([createdById])
+}
+
+model QuizAttempt {
+  id          String   @id @default(uuid())
+  quizId      String
+  userId      String
+  score       Int      @default(0)
+  totalQuestions Int
+  answers     Json?
+  completedAt DateTime?
+  startedAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  quiz        Quiz        @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@index([quizId])
+  @@index([userId])
+  @@index([startedAt])
+}
+
+model QuizQuestion {
+  id          String   @id @default(uuid())
+  quizId      String
+  question    String
+  options     String[]
+  correctAnswer Int
+  explanation String?
+  points      Int      @default(10)
+  order       Int
+
+  quiz        Quiz        @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@index([quizId])
+  @@index([order])
+}
+
+model Ranking {
+  id          String   @id @default(uuid())
+  userId      String
+  displayName String
+  avatar      String?
+  category    String
+  score       Int      @default(0)
+  rank        Int      @default(0)
+  period      String   @default("all")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, category, period])
+  @@index([score])
+  @@index([rank])
+  @@map("rankings")
+}
+
+model RankingRule {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  signal      String   // recency, popularity, boost_universe, demote_status
+  weight      Decimal  @default(1)
+  conditions  Json     // e.g. { universe: "movie", status: "published" }
+  isActive    Boolean  @default(true)
+  priority    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("ranking_rules")
+  @@index([signal])
+  @@index([isActive])
+  @@index([priority])
+}
+
+model RealityClip {
+  id          String   @id @default(uuid())
+  showId      String
+  creatorId   String
+  title       String
+  description String?
+  thumbnail   String
+  mediaUrl    String
+  viewCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  show RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
+
+  @@map("reality_clips")
+  @@index([showId])
+  @@index([creatorId])
+}
+
+model RealityShow {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  thumbnail   String
+  banner      String?
+  universeId  String
+  status      String // draft, published, archived
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  seasons     Season[]
+  contestants Contestant[]
+  episodes    Episode[]
+  votes       Vote[]
+  supervotes  Supervote[]
+  predictions Prediction[]
+  clips       RealityClip[]
+
+  @@map("reality_shows")
+  @@index([universeId])
+}
+
+model Realm {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  imageUrl    String?
+  universeId  String
+  type        String   @default("physical") // physical, spiritual, ancestral, divine
+  parentId    String?
+  data        Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  universe    UniverseMap @relation(fields: [universeId], references: [id], onDelete: Cascade)
+  parent      Realm?      @relation("RealmHierarchy", fields: [parentId], references: [id])
+  children    Realm[]     @relation("RealmHierarchy")
+
+  @@index([universeId])
+  @@index([slug])
+  @@index([type])
+  @@map("realms")
+}
+
+model Recap {
+  id          String   @id @default(uuid())
+  titleId     String
+  season      Int?
+  episode     Int?
+  name        String?
+  content     String
+  coverImage  String?
+  isSpoiler   Boolean  @default(false)
+  viewCount   Int      @default(0)
+  status      String   @default("published")
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  title       Title    @relation(fields: [titleId], references: [id], onDelete: Cascade)
+
+  @@index([titleId])
+  @@map("recaps")
+}
+
+model RecommendationLog {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String // content, creator, cross-universe
+  itemId    String
+  score     Decimal  @db.Decimal(18, 2)
+  timestamp DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("recommendation_logs")
+}
+
+model Referral {
+  id            String   @id @default(uuid())
+  referrerId    String
+  referredId    String
+  referralCodeId String
+  status        String   @default("pending") // pending, completed, expired
+  rewardAmount  Decimal? @default(0) @db.Decimal(18, 2)
+  rewardStatus  String   @default("pending") // pending, credited, failed
+  completedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  referralCode  ReferralCode @relation(fields: [referralCodeId], references: [id])
+
+  @@map("referrals")
+  @@index([referrerId])
+  @@index([referredId])
+  @@index([referralCodeId])
+  @@index([createdAt])
+  @@index([referrerId, createdAt])
+}
+
+model ReferralCode {
+  id            String   @id @default(uuid())
+  userId        String
+  code          String   @unique
+  isActive      Boolean  @default(true)
+  maxUses       Int?
+  currentUses   Int      @default(0)
+  expiresAt     DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  referrals     Referral[]
+
+  @@map("referral_codes")
+  @@index([userId])
+  @@index([code])
+  @@index([isActive])
+}
+
+model ReferralConfig {
+  id            String   @id @default(uuid())
+  key           String   @unique
+  value         Decimal  @db.Decimal(18, 2)
+  description   String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("referral_configs")
+}
+
+model ReferralReward {
+  id            String   @id @default(uuid())
+  referralId    String   @unique
+  userId        String
+  amount        Decimal  @db.Decimal(18, 2)
+  type          String   // signup, first_purchase, milestone
+  status        String   @default("pending") // pending, credited, failed
+  creditedAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("referral_rewards")
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Refund {
+  id                String   @id @default(uuid())
+  paymentIntentId   String
+  amount            Decimal
+  reason            String
+  status            String
+  providerReference String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  paymentIntent PaymentIntent @relation(fields: [paymentIntentId], references: [id], onDelete: Cascade)
+
+  @@map("refunds")
+}
+
+model Rental {
+  id            String   @id @default(uuid())
+  userId        String
+  contentId     String
+  startTime     DateTime @default(now())
+  endTime       DateTime
+  status        String   @default("active") // active, expired, cancelled
+  price         Decimal  @db.Decimal(18, 2)
+  currency      String   @default("NGN")
+  transactionId String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  content ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, contentId])
+  @@index([userId])
+  @@index([contentId])
+  @@index([endTime])
+  @@map("rentals")
+}
+
+model Report {
+  id               String    @id @default(uuid())
+  reportingUserId  String
+  type             String
+  contentId        String?
+  userId           String?
+  reason           String
+  status           String
+  resolvedBy       String?
+  resolutionAction String?
+  resolutionReason String?
+  resolvedAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  reportingUser    User      @relation(fields: [reportingUserId], references: [id], onDelete: Cascade)
+  reportedUser     User?     @relation(fields: [userId], references: [id], onDelete: Cascade, name: "ReportedUser")
+
+  @@map("reports")
+}
+
+model ReportExecution {
+  id            String   @id @default(uuid())
+  reportId      String
+  executedBy    String
+  executionTime Int // in milliseconds
+  rowCount      Int
+  parameters    Json // Execution parameters used
+  executedAt    DateTime @default(now())
+
+  report CustomReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+  @@index([executedBy])
+  @@index([executedAt])
+  @@map("report_executions")
+}
+
+model ReviewerAssignment {
+  id           String    @id @default(uuid())
+  caseId       String
+  reviewerId   String
+  assignedBy   String?
+  status       String // active, completed, reassigned
+  assignedAt   DateTime @default(now())
+  completedAt  DateTime?
+  createdAt    DateTime @default(now())
+
+  case ModerationCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@map("reviewer_assignments")
+  @@index([caseId])
+  @@index([reviewerId])
+  @@index([assignedBy])
+}
+
+model Reward {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  cost        Int
+  type        String // points, bonus, promo
+  metadata    Json?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  redemptions    RewardRedemption[]
+  missionRewards MissionReward[]
+
+  @@map("rewards")
+}
+
+model RewardAccount {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  points        Int       @default(0)
+  levelId       String
+  streak        Int       @default(0)
+  lastLoginAt   DateTime  @default(now())
+  lastCheckInAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  level  Level   @relation(fields: [levelId], references: [id])
+  badges Badge[]
+
+  @@map("reward_accounts")
+}
+
+model RewardRedemption {
+  id         String   @id @default(uuid())
+  userId     String
+  rewardId   String
+  pointsCost Int
+  redeemedAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reward Reward @relation(fields: [rewardId], references: [id])
+
+  @@index([userId])
+  @@index([rewardId])
+  @@index([redeemedAt])
+  @@map("reward_redemptions")
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rolePermissions RolePermission[]
+
+  @@map("roles")
+}
+
+model RolePermission {
+  id           String   @id @default(uuid())
+  roleId       String
+  permissionId String
+  createdAt    DateTime @default(now())
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+model Room {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  imageUrl    String?
+  universeId  String
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  universe    UniverseMap @relation(fields: [universeId], references: [id], onDelete: Cascade)
+  posts       RoomPost[]
+
+  @@index([universeId])
+  @@index([slug])
+  @@map("rooms")
+}
+
+model RoomPost {
+  id          String   @id @default(uuid())
+  roomId      String
+  content     String
+  authorId    String
+  authorName  String
+  authorAvatar String?
+  spoilerLevel String  @default("none")
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  room        Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId])
+  @@index([authorId])
+  @@map("room_posts")
+}
+
+model SafetyAction {
+  id           String   @id @default(uuid())
+  targetId     String
+  targetType   String
+  actionType   String
+  reason       String
+  duration     String?
+  takenBy      String
+  status       String   @default("active")
+  expiresAt    DateTime?
+  createdAt    DateTime @default(now())
+
+  @@map("safety_actions")
+}
+
+model SafetyScan {
+  id              String    @id @default(uuid())
+  contentId       String?
+  mediaUrl        String
+  scanType        String // malware, content_safety, copyright
+  status          String // pending, scanning, completed, failed
+  result          String // clean, flagged, blocked
+  details         Json?
+  threatLevel     String? // low, medium, high, critical
+  categories      Json?   // list of detected categories
+  createdAt       DateTime @default(now())
+  completedAt     DateTime?
+  scanDurationMs  Int?
+
+  @@map("safety_scans")
+  @@index([contentId])
+  @@index([scanType])
+}
+
+model SavedItem {
+  id        String   @id @default(uuid())
+  userId    String
+  contentId String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("saved_items")
+  @@unique([userId, contentId])
+}
+
+model ScoreEntry {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  score     Int      @default(0)
+  level     Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("score_entries")
+  @@index([userId])
+}
+
+model Screening {
+  id             String   @id @default(uuid())
+  contentId      String
+  screeningTime  DateTime
+  endTime        DateTime
+  location       String?
+  streamUrl      String?
+  status         String   @default("scheduled") // scheduled, live, ended, cancelled
+  maxViewers     Int?
+  currentViewers Int      @default(0)
+  price          Decimal? @db.Decimal(18, 2)
+  currency       String   @default("NGN")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  content ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@index([contentId])
+  @@index([screeningTime])
+  @@map("screenings")
+}
+
+model SearchQueryLog {
+  id          String   @id @default(uuid())
+  query       String
+  userId      String?
+  resultCount Int      @default(0)
+  clickedId   String?
+  session     String?
+  createdAt   DateTime @default(now())
+
+  @@map("search_query_logs")
+  @@index([query])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Season {
+  id          String    @id @default(uuid())
+  showId      String
+  title       String
+  number      Int
+  description String?
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  show     RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
+  episodes Episode[]
+
+  @@map("reality_seasons")
+  @@index([showId])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  refreshToken String   @unique // Hashed with bcrypt at write time — never store plaintext
+  expiresAt    DateTime
+  deviceName   String?
+  deviceType   String?
+  os           String?
+  browser      String?
+  ipAddress    String?
+  lastActiveAt DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model SessionSummary {
+  id              String    @id @default(uuid())
+  sessionId       String    @unique
+  userId          String?
+  platform        String?
+  universe        String?
+  startedAt       DateTime
+  endedAt         DateTime?
+  durationSeconds Int       @default(0)
+  screenViews     Int       @default(0)
+  eventsCount     Int       @default(0)
+  conversions     Int       @default(0)
+  metadata        Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([sessionId])
+  @@index([userId])
+  @@index([platform])
+  @@index([universe])
+  @@index([startedAt])
+  @@map("session_summaries")
+}
+
+model ShareRecord {
+  id        String   @id @default(uuid())
+  userId    String
+  itemType  String
+  itemId    String
+  platform  String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([itemType, itemId])
+}
+
+model SocialAccount {
+  id          String   @id @default(uuid())
+  userId      String
+  provider    String
+  socialId    String
+  accessToken String?  // Not stored — always empty string in application code
+  refreshToken String? // Hashed with bcrypt before storage (see social.service.ts)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([socialId, provider])
+  @@unique([userId, provider])
+  @@index([userId])
+  @@index([provider])
+  @@map("social_accounts")
+}
+
+model SpecialLike {
+  id        String   @id @default(uuid())
+  userId    String
+  specialId String
+  createdAt DateTime @default(now())
+
+  special ComedySpecial @relation(fields: [specialId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, specialId])
+  @@index([userId])
+  @@index([specialId])
+  @@map("special_likes")
+}
+
+model SportsEvent {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  sport       String // football, basketball, tennis, etc.
+  startsAt    DateTime
+  endsAt      DateTime?
+  status      String    @default("upcoming")
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  teams            EventTeam[]
+  predictions      PredictionEntry[]
+  fanBoards        FanBoard[]
+  contests         ContestEntry[]
+  PredictionMarket PredictionMarket?
+  Highlight        Highlight[]
+  Contest          Contest[]
+  fixtureMetadata  FixtureMetadata?
+  predictionReward PredictionReward?
+
+  @@map("sports_events")
+  @@index([sport])
+  @@index([startsAt])
+}
+
+model StoryCategory {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  slug      String   @unique
+  description String?
+  stories   CultureStory[]
+
+  @@index([slug])
+}
+
+model StoryComment {
+  id        String   @id @default(uuid())
+  content   String
+  authorId  String
+  storyId   String
+  parentId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  story     CultureStory  @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  parent    StoryComment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   StoryComment[] @relation("CommentReplies")
+
+  @@index([storyId])
+  @@index([authorId])
+  @@index([parentId])
+}
+
+model Subscription {
+  id              String    @id @default(uuid())
+  userId          String
+  planType        String // basic, standard, premium
+  status          String // active, canceled, expired, paused
+  startDate       DateTime  @default(now())
+  endDate         DateTime?
+  nextBillingDate DateTime?
+  paymentMethod   String?
+  providerId      String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([planType])
+  @@index([endDate])
+  @@map("subscriptions")
+}
+
+model SubscriptionPlan {
+  id                String   @id @default(uuid())
+  name              String   @unique
+  description       String
+  price             Decimal  @db.Decimal(10, 2)
+  currency          String   @default("NGN")
+  duration          Int      // in days
+  features          String[]
+  isActive          Boolean  @default(true)
+  tier              String   // free, basic, premium, enterprise
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  subscriptions     Subscription[]
+
+  @@map("subscription_plans")
+  @@index([isActive])
+}
+
+model SubscriptionTransaction {
+  id                String   @id @default(uuid())
+  subscriptionId    String
+  amount            Decimal  @db.Decimal(10, 2)
+  currency          String   @default("NGN")
+  status            String   @default("completed") // completed, failed, pending, refunded
+  paymentProvider   String?
+  providerTxId      String?
+  description       String?
+  createdAt         DateTime @default(now())
+
+  @@index([subscriptionId])
+  @@index([createdAt])
+  @@map("subscription_transactions")
+}
+
+model Suggestion {
+  id          String   @id @default(uuid())
+  term        String   @unique
+  type        String   // trending, promoted, category, manual
+  universe    String?  // reality, creator, lifestyle, vertical, movie, games, comedy, sports
+  weight      Int      @default(0)
+  isActive    Boolean  @default(true)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("suggestions")
+  @@index([type])
+  @@index([universe])
+  @@index([isActive])
+  @@index([weight])
+}
+
+model Supervote {
+  id           String   @id @default(uuid())
+  userId       String
+  contestantId String
+  showId       String
+  amount       Decimal  @default(10) @db.Decimal(18, 2)
+  createdAt    DateTime @default(now())
+
+  contestant Contestant  @relation(fields: [contestantId], references: [id], onDelete: Cascade)
+  show       RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, contestantId])
+  @@index([userId])
+  @@index([contestantId])
+  @@index([showId])
+  @@map("reality_supervotes")
+}
+
+model SupportAnalyticsEvent {
+  id        String   @id @default(uuid())
+  event     String
+  data      Json
+  createdAt DateTime @default(now())
+
+  @@index([event])
+  @@index([createdAt])
+  @@map("support_analytics_events")
+}
+
+model SupportMessage {
+  id         String     @id @default(uuid())
+  ticketId   String
+  senderId   String
+  senderType SenderType
+  message   String
+  isInternal Boolean @default(false)
+  createdAt DateTime @default(now())
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@index([senderId])
+  @@map("support_messages")
+}
+
+model SupportTicket {
+  id          String               @id @default(uuid())
+  userId      String
+  orderId     String?
+  ticketId    String               @unique @default(uuid()) // Kept for backwards compatibility; prefer using `id` for internal references
+  category    SupportTicketCategory
+  priority    SupportTicketPriority @default(MEDIUM)
+  status      SupportTicketStatus   @default(OPEN)
+  subject     String
+  description String
+  metadata    Json?
+  assignedTo  String?
+  resolvedAt  DateTime?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  messages    SupportMessage[]
+  refund      Refund?
+  chargeback  Chargeback?
+  appeal      Appeal?
+  takedown    ContentTakedown?
+  dispute     PayoutDispute?
+  suspension  UserSuspension?
+
+  @@index([userId])
+  @@index([assignedTo])
+  @@map("support_tickets")
+}
+
+model SystemSettings {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       Json
+  category    String   @default("general")
+  description String?
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
+model Tag {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  contentItems ContentItem[]
+
+  @@map("tags")
+}
+
+model Theory {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  content     String
+  authorId    String
+  authorName  String
+  spoilerLevel String  @default("none")
+  accessLevel String   @default("public") // public, followers, premium
+  status      String   @default("published")
+  viewCount   Int      @default(0)
+  likeCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([authorId])
+  @@index([slug])
+  @@index([accessLevel])
+  @@map("theories")
+}
+
+model TimelineEvent {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  date        DateTime
+  endDate     DateTime?
+  type        String
+  importance  String   @default("normal")
+  universeId  String
+  characterId String?
+  locationId  String?
+  data        Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  universe    UniverseMap @relation(fields: [universeId], references: [id], onDelete: Cascade)
+  character   Character?  @relation(fields: [characterId], references: [id])
+  location    Location?   @relation(fields: [locationId], references: [id])
+
+  @@index([universeId])
+  @@index([characterId])
+  @@index([date])
+  @@map("timeline_events")
+}
+
+model Tip {
+  id         String   @id @default(uuid())
+  fromUserId String
+  toUserId   String
+  amount     Decimal  @db.Decimal(18, 2)
+  createdAt  DateTime @default(now())
+
+  @@map("tips")
+  @@index([fromUserId])
+  @@index([toUserId])
+}
+
+model Title {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  type        String
+  description String?
+  coverImage  String?
+  releaseYear Int?
+  endYear     Int?
+  status      String   @default("ongoing")
+  rating      Float?
+  universeId  String
+  viewCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  universe    UniverseMap @relation(fields: [universeId], references: [id], onDelete: Cascade)
+  recaps      Recap[]
+  crossovers  CrossoverTitle[]
+  chapters    Chapter[]
+
+  @@index([universeId])
+  @@map("titles")
+}
+
+model Tournament {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  startsAt    DateTime
+  endsAt      DateTime?
+  entryFee Decimal     @default(0) @db.Decimal(18, 2)
+  prizePool Decimal  @db.Decimal(18, 2)
+  status      String    @default("active")
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("tournaments")
+  @@index([startsAt])
+}
+
+model TournamentEntry {
+  id           String   @id @default(uuid())
+  userId       String
+  tournamentId String
+  score        Int      @default(0)
+  enteredAt    DateTime @default(now())
+
+  @@unique([userId, tournamentId])
+  @@index([userId])
+  @@index([tournamentId])
+  @@map("tournament_entries")
+}
+
+model TournamentMatch {
+  id            String   @id @default(uuid())
+  tournamentId  String
+  player1Id    String
+  player2Id    String
+  player1Score Int      @default(0)
+  player2Score Int      @default(0)
+  round        Int
+  status       String   @default("pending") // pending, in_progress, completed
+  winnerId     String?
+  scheduledAt  DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime @default(now())
+
+  @@index([tournamentId])
+  @@index([player1Id])
+  @@index([player2Id])
+  @@index([winnerId])
+  @@map("tournament_matches")
+}
+
+model TournamentPrize {
+  id           String   @id @default(uuid())
+  tournamentId String
+  rank         Int
+  amount Decimal  @db.Decimal(18, 2)
+  createdAt    DateTime @default(now())
+
+  @@index([tournamentId])
+  @@map("tournament_prizes")
+}
+
+model TranscodingJob {
+  id            String   @id @default(uuid())
+  uploadId      String?
+  sourceKey     String
+  status        String   @default("pending") // pending, processing, completed, failed
+  progress      Int      @default(0)
+  outputKeys    Json?
+  error         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("transcoding_jobs")
+  @@index([uploadId])
+}
+
+model TrustScoreHistory {
+  id        String   @id @default(uuid())
+  userId    String
+  oldScore  Int
+  newScore  Int
+  reason    String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@map("trust_score_history")
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Universe {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  displayName String
+  description String?
+  icon        String?
+  color       String?
+  isEnabled   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  contentItems ContentItem[]
+  featureFlags UniverseFeatureFlag[]
+
+  @@map("universes")
+}
+
+model UniverseFeatureFlag {
+  id          String   @id @default(uuid())
+  universeId  String
+  featureKey  String
+  isEnabled   Boolean  @default(true)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  universe    Universe  @relation(fields: [universeId], references: [id], onDelete: Cascade)
+
+  @@map("universe_feature_flags")
+  @@unique([universeId, featureKey])
+  @@index([universeId])
+  @@index([featureKey])
+}
+
+model UniverseMap {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  imageUrl    String?
+  data        Json?
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  characters  Character[]
+  locations   Location[]
+  timeline    TimelineEvent[]
+  titles      Title[]
+  loreEntries LoreEntry[]
+  realms      Realm[]
+  orisaFiles  OrisaFile[]
+  artifacts   Artifact[]
+  prophecies  Prophecy[]
+  worldMaps   WorldMap[]
+  rooms       Room[]
+
+  @@index([slug])
+  @@map("universe_maps")
+}
+
+model UploadSession {
+  id            String   @id @default(uuid())
+  userId        String
+  fileName      String
+  fileSize      Int
+  fileType      String
+  uploadId      String   @unique // S3 multipart upload ID
+  bucket        String
+  key           String
+  parts         Json?    // [{ partNumber, etag, size }]
+  totalParts    Int      @default(1)
+  completedParts Int     @default(0)
+  status        String   @default("pending") // pending | in_progress | completed | aborted | expired
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@index([uploadId])
+  @@index([expiresAt])
+  @@map("upload_sessions")
+}
+
+model User {
+  id                    String   @id @default(uuid())
+  email                 String   @unique
+  password              String
+  displayName           String
+  avatar                String?
+  role                  String   @default("user")
+  preferences           Json?
+  notificationPreferences Json?
+  isSuspended           Boolean  @default(false)
+  suspendedAt           DateTime?
+  suspendedUntil        DateTime?
+  suspensionReason      String?
+  suspendedBy           String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  watchHistory WatchHistory[]
+  savedItems   SavedItem[]
+  wallet       Wallet?
+  notifications Notification[]
+  contentItems ContentItem[]
+  creatorProfile CreatorProfile?
+  paymentIntents PaymentIntent[]
+  payoutRequests PayoutRequest[]
+  reportedReports Report[]
+  reportsAgainstMe Report[] @relation("ReportedUser")
+  suspensions    UserSuspension[]
+
+  @@map("users")
+}
+
+model UserPreferences {
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  darkMode           Boolean  @default(false)
+  notifications      Json?    @default("{}")
+  contentPreferences Json?    @default("[]")
+  privacySettings    Json?    @default("{\"isPrivate\":false,\"showActivity\":true,\"allowMessages\":true,\"twoFactorEnabled\":false}")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([userId])
+  @@map("user_preferences")
+}
+
+model UserProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  displayName String?
+  avatar      String?
+  bio         String?
+  location    String?
+  isPublic    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("user_profiles")
+  @@index([userId])
+}
+
+model UserRoleAssignment {
+  id        String   @id @default(uuid())
+  userId    String
+  role      String
+  grantedBy String
+  createdAt DateTime @default(now())
+
+  @@map("user_roles")
+  @@unique([userId, role])
+  @@index([userId])
+}
+
+model UserSearch {
+  id            String   @id @default(uuid())
+  userId        String
+  query         String
+  filters       Json?
+  resultCount   Int      @default(0)
+  clickedId     String?
+  lastSearchAt  DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  @@map("user_searches")
+  @@index([userId])
+  @@index([query])
+  @@index([createdAt])
+  @@index([lastSearchAt])
+}
+
+model UserSegment {
+  id        String   @id @default(uuid())
+  userId    String
+  segmentId String
+  score     Float    @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("user_segments")
+  @@index([userId])
+  @@index([segmentId])
+}
+
+model UserSuspension {
+  id          String   @id @default(uuid())
+  userId      String
+  reason      String
+  suspendedBy String
+  suspendedAt DateTime @default(now())
+  expiresAt   DateTime?
+  status      String   @default("active") // active, expired, revoked
+  revokedAt   DateTime?
+  revokedBy   String?
+  revokedReason String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_suspensions")
+  @@index([userId])
+}
+
+model UserUniverseAffinity {
+  id            String   @id @default(uuid())
+  userId        String
+  universeId    String
+  affinityScore Float    @default(0)
+  lastEngaged   DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, universeId])
+  @@index([userId])
+  @@index([universeId])
+  @@map("user_universe_affinity")
+}
+
+model UserUnlock {
+  id            String    @id @default(uuid())
+  userId        String
+  unlockType    String // rental, pass, screening, locked_extra
+  resourceId    String
+  transactionId String?
+  price         Decimal?  @db.Decimal(18, 2)
+  currency      String    @default("NGN")
+  unlockedAt    DateTime  @default(now())
+  expiresAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([userId, unlockType, resourceId])
+  @@index([userId])
+  @@index([unlockType])
+  @@index([resourceId])
+  @@map("user_unlocks")
+}
+
+model VerificationDocument {
+  id          String   @id @default(uuid())
+  userId      String
+  documentType String
+  documentUrl String
+  status      String   @default("pending")
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("verification_documents")
+  @@index([userId])
+}
+
+model ViewingWindow {
+  id        String    @id @default(uuid())
+  movieId   String
+  startsAt  DateTime
+  endsAt    DateTime?
+  type      String // standard, premium, premiere, special
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  movie Movie @relation(fields: [movieId], references: [id], onDelete: Cascade)
+
+  @@index([movieId])
+  @@index([type])
+  @@index([isActive])
+  @@map("viewing_windows")
+}
+
+model Vote {
+  id           String   @id @default(uuid())
+  userId       String
+  contestantId String
+  showId       String
+  episodeId    String?
+  quantity     Int      @default(1)
+  createdAt    DateTime @default(now())
+
+  contestant Contestant  @relation(fields: [contestantId], references: [id], onDelete: Cascade)
+  show       RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
+  episode    Episode?    @relation(fields: [episodeId], references: [id])
+
+  @@unique([userId, contestantId])
+  @@index([userId])
+  @@index([contestantId])
+  @@index([showId])
+  @@index([episodeId])
+  @@map("reality_votes")
+}
+
+model Wallet {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  balance      Decimal  @db.Decimal(18, 2) @default(0)
+  bonusBalance Decimal  @db.Decimal(18, 2) @default(0)
+  promoBalance Decimal  @db.Decimal(18, 2) @default(0)
+  currency     String   @default("NGN")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions WalletTransaction[]
+
+  @@map("wallets")
+}
+
+model WalletSnapshot {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  balance   Decimal  @default(0) @db.Decimal(18, 2)
+  currency  String   @default("NGN")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("wallet_snapshots")
+  @@index([userId])
+}
+
+model WalletTransaction {
+  id           String   @id @default(uuid())
+  walletId     String
+  type         String
+  amount       Decimal  @db.Decimal(18, 2)
+  status       String
+  description  String?
+  reference    String?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@map("wallet_transactions")
+}
+
+model WalletTransactionSnapshot {
+  id          String   @id @default(uuid())
+  walletId    String
+  type        String   // credit, debit
+  amount      Decimal  @db.Decimal(18, 2)
+  description String
+  reference   String?
+  createdAt   DateTime @default(now())
+
+  @@map("wallet_transaction_snapshots")
+  @@index([walletId])
+  @@index([type])
+}
+
+model WatchHistory {
+  id          String   @id @default(uuid())
+  userId      String
+  contentId   String
+  contentType String
+  watchedAt   DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("watch_history")
+  @@unique([userId, contentId])
+}
+
+model WatchlistItem {
+  id        String   @id @default(uuid())
+  userId    String
+  movieId   String
+  createdAt DateTime @default(now())
+
+  movie Movie @relation(fields: [movieId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, movieId])
+  @@index([userId])
+  @@index([movieId])
+  @@map("watchlist_items")
+}
+
+model WebhookEvent {
+  id            String   @id @default(cuid())
+  eventId       String   @unique
+  provider      String
+  type          String
+  payload       Json
+  result        String   @default("success")
+  failureReason String?
+  processedAt   DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  @@index([eventId])
+  @@index([type])
+  @@index([provider])
+  @@index([result])
+  @@map("webhook_events")
+}
+
+model WebhookRetry {
+  id          String   @id @default(cuid())
+  eventId     String
+  provider    String
+  type        String
+  payload     Json
+  retryCount  Int      @default(0)
+  maxRetries  Int      @default(5)
+  nextRetryAt DateTime
+  status      String   @default("pending") // pending, processing, failed, completed
+  lastError   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([eventId])
+  @@index([nextRetryAt])
+  @@index([provider])
+  @@map("webhook_retries")
+}
+
+model WorldMap {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  imageUrl    String?
+  universeId  String
+  type        String   @default("geographic") // geographic, spiritual, timeline
+  data        Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  universe    UniverseMap @relation(fields: [universeId], references: [id], onDelete: Cascade)
+
+  @@index([universeId])
+  @@index([slug])
+  @@index([type])
+  @@map("world_maps")
+}
+

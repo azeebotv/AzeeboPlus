@@ -428,87 +428,40 @@ RUN mkdir -p /app/node_modules/@azeebo && \
 # DATABASE_URL is required by prisma generate (schema validation) even though no connection is made.
 RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder" && \
     export DATABASE_URL && \
-    SHARED_CLIENT_DIR=$(cd /app/services/core/auth-service && node -e "console.log(require('path').dirname(require.resolve('@prisma/client')))" 2>/dev/null) && \
-    echo "  Shared @prisma/client: $SHARED_CLIENT_DIR" && \
-    for schema in $(find services apps packages -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*"); do \
+    echo "==> Generating per-service Prisma clients..." && \
+    for schema in $(find services apps -maxdepth 3 -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*" | sort); do \
       proj_root=$(dirname "$schema"); \
       svc_root=$(dirname "$proj_root"); \
-      echo "  Generating Prisma client for $svc_root..."; \
+      svc_name=$(basename "$svc_root"); \
       SVC_NM="/app/$svc_root/node_modules"; \
-      rm -rf "$SVC_NM/@prisma/client"; \
-      mkdir -p "$SVC_NM/@prisma/client"; \
-      cp -r "$SHARED_CLIENT_DIR/." "$SVC_NM/@prisma/client/"; \
-      rm -rf "$SVC_NM/@prisma/client/node_modules"; \
-      CUSTOM_OUTPUT=$(grep -m1 'output\s*=' "/app/$schema" | sed 's/.*"\(.*\)".*/\1/'); \
+      CUSTOM_OUTPUT=$(grep -m1 'output\s*=' "/app/$schema" 2>/dev/null | sed 's/.*"\(.*\)".*/\1/'); \
       if [ -n "$CUSTOM_OUTPUT" ]; then \
+        echo "  [$svc_name] custom output: $CUSTOM_OUTPUT"; \
+        (cd "/app/$proj_root" && npx prisma generate --schema=schema.prisma 2>&1) || \
+          echo "  WARNING: prisma generate failed for $svc_name"; \
         FULL_OUTPUT="/app/$proj_root/$CUSTOM_OUTPUT"; \
-        (cd "/app/$proj_root" && prisma generate --schema=schema.prisma 2>&1) || \
-          echo "  WARNING: prisma generate failed for $proj_root"; \
         if [ -d "$FULL_OUTPUT" ]; then \
-          echo "module.exports = { ...require('$FULL_OUTPUT') }" > "$SVC_NM/@prisma/client/index.js"; \
-          echo "module.exports = { ...require('$FULL_OUTPUT') }" > "$SVC_NM/@prisma/client/default.js"; \
-          if [ -d "/app/$svc_root/dist" ]; then \
-            mkdir -p "/app/$svc_root/dist/prisma/client" && \
-            cp -r "$FULL_OUTPUT/." "/app/$svc_root/dist/prisma/client/" 2>/dev/null; \
-          fi; \
-        else \
-          echo "  WARNING: Custom output $FULL_OUTPUT not found for $svc_root"; \
+          mkdir -p "$SVC_NM/@prisma/client" 2>/dev/null; \
+          rm -rf "$SVC_NM/@prisma/client"; \
+          mkdir -p "$SVC_NM/@prisma/client"; \
+          cp -r "$FULL_OUTPUT/." "$SVC_NM/@prisma/client/"; \
+          echo "module.exports = { PrismaClient: require('$FULL_OUTPUT').PrismaClient }" > "$SVC_NM/@prisma/client/index.js"; \
+          cp "$SVC_NM/@prisma/client/index.js" "$SVC_NM/@prisma/client/default.js"; \
+          echo "  [$svc_name] OK: custom output installed"; \
         fi; \
       else \
-        (cd "/app/$proj_root" && prisma generate --schema=schema.prisma 2>&1) || \
-          echo "  WARNING: prisma generate failed for $proj_root"; \
+        (cd "/app/$proj_root" && npx prisma generate --schema=schema.prisma 2>&1) || \
+          echo "  WARNING: prisma generate failed for $svc_name"; \
         if [ -d "$SVC_NM/.prisma/client" ]; then \
-          echo "  Generated Prisma client for $svc_root at $SVC_NM/.prisma/client"; \
+          echo "  [$svc_name] OK: default client generated"; \
         else \
-          echo "  WARNING: No .prisma/client found for $svc_root after generate!"; \
+          echo "  [$svc_name] WARNING: no .prisma/client found"; \
         fi; \
       fi; \
-      cd /app; \
     done && \
-    echo "  Ensuring shared Prisma client at $SHARED_CLIENT_DIR/.prisma/client/..." && \
-    if [ ! -f "$SHARED_CLIENT_DIR/.prisma/client/default.js" ]; then \
-      echo "  .prisma/client not found at shared location, generating with explicit output..." && \
-      mkdir -p /tmp/prisma-shared && \
-      printf 'generator client {\n  provider = "prisma-client-js"\n  output   = "%s"\n}\n\ndatasource db {\n  provider = "postgresql"\n  url      = env("DATABASE_URL")\n}\n\nmodel AuditLog {\n  id            String   @id @default(uuid())\n  actorId       String\n  actorType     String\n  action        String\n  resourceType  String\n  resourceId    String\n  previousValue String?\n  newValue      String?\n  ipAddress     String?\n  userAgent     String?\n  status        String\n  errorMessage  String?\n  metadata      Json?\n  createdAt     DateTime @default(now())\n  updatedAt     DateTime @updatedAt\n}\n' "$SHARED_CLIENT_DIR/.prisma/client" > /tmp/prisma-shared/schema.prisma && \
-      (cd /tmp/prisma-shared && prisma generate --schema=schema.prisma 2>&1) || \
-        echo "  WARNING: explicit prisma generate failed"; \
-      rm -rf /tmp/prisma-shared 2>/dev/null; \
-    fi; \
-    if [ ! -f "$SHARED_CLIENT_DIR/.prisma/client/default.js" ]; then \
-      echo "  Still missing after explicit generate. Searching all locations..." && \
-      FOUND=0; \
-      for check_dir in \
-        $(find /app/node_modules -maxdepth 4 -path "*/.prisma/client" -type d 2>/dev/null) \
-        $(find /app/services -maxdepth 8 -path "*/.prisma/client" -type d 2>/dev/null) \
-        $(find /app/packages -maxdepth 8 -path "*/.prisma/client" -type d 2>/dev/null); do \
-        if [ -f "$check_dir/default.js" ] && [ "$FOUND" -eq 0 ]; then \
-          echo "  Found .prisma/client at $check_dir"; \
-          rm -rf "$SHARED_CLIENT_DIR/.prisma/client" 2>/dev/null; \
-          mkdir -p "$SHARED_CLIENT_DIR/.prisma/client" && \
-          cp -r "$check_dir/." "$SHARED_CLIENT_DIR/.prisma/client/"; \
-          echo "  Copied to $SHARED_CLIENT_DIR/.prisma/client"; \
-          FOUND=1; \
-        fi; \
-      done; \
-      if [ "$FOUND" -eq 0 ]; then \
-        echo "  FATAL: No .prisma/client found anywhere! Creating minimal stub..." && \
-        mkdir -p "$SHARED_CLIENT_DIR/.prisma/client" && \
-        echo 'const { PrismaClient } = require("@prisma/client"); module.exports = { PrismaClient };' > "$SHARED_CLIENT_DIR/.prisma/client/default.js" && \
-        cp "$SHARED_CLIENT_DIR/.prisma/client/default.js" "$SHARED_CLIENT_DIR/.prisma/client/index.js"; \
-      fi; \
-    fi; \
-    echo "  Verifying: $SHARED_CLIENT_DIR/.prisma/client/default.js exists:" && \
-    ls -la "$SHARED_CLIENT_DIR/.prisma/client/default.js" 2>&1 || echo "  MISSING!" && \
-    SHARED_ENGINE=""; \
-    for engine in $(find /app/services /app/apps -path "*/.prisma/client/libquery_engine-*.node" -type f 2>/dev/null); do \
-      if [ -z "$SHARED_ENGINE" ]; then \
-        SHARED_ENGINE="$engine"; \
-      else \
-        rm -f "$engine" && ln -sfn "$SHARED_ENGINE" "$engine"; \
-      fi; \
-    done; \
+    echo "==> Prisma clients generation complete" && \
     npm cache clean --force 2>/dev/null; \
-    rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache /root/.local 2>/dev/null; \
+    rm -rf /root/.npm /root/.cache /root/.local 2>/dev/null; \
     find /app/node_modules -name "*.md" -o -name "*.txt" -o -name "*.map" -o -name "LICENSE*" -o -name "CHANGELOG*" | xargs rm -f 2>/dev/null; \
     find /app/node_modules -name "__tests__" -type d -exec rm -rf {} + 2>/dev/null; \
     find /app/node_modules -name "test" -type d -exec rm -rf {} + 2>/dev/null; \
