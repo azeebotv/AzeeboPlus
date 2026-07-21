@@ -437,7 +437,7 @@ RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholde
       CUSTOM_OUTPUT=$(grep -m1 'output\s*=' "/app/$schema" 2>/dev/null | sed 's/.*"\(.*\)".*/\1/'); \
       if [ -n "$CUSTOM_OUTPUT" ]; then \
         echo "  [$svc_name] custom output: $CUSTOM_OUTPUT"; \
-        (cd "/app/$proj_root" && npx prisma generate --schema=schema.prisma 2>&1) || \
+        (cd "/app/$proj_root" && prisma generate --schema=schema.prisma 2>&1) || \
           echo "  WARNING: prisma generate failed for $svc_name"; \
         FULL_OUTPUT="/app/$proj_root/$CUSTOM_OUTPUT"; \
         if [ -d "$FULL_OUTPUT" ]; then \
@@ -455,7 +455,7 @@ RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholde
           fi; \
         fi; \
       else \
-        (cd "/app/$proj_root" && npx prisma generate --schema=schema.prisma 2>&1) || \
+        (cd "/app/$proj_root" && prisma generate --schema=schema.prisma 2>&1) || \
           echo "  WARNING: prisma generate failed for $svc_name"; \
         if [ -d "$SVC_NM/.prisma/client" ]; then \
           echo "  [$svc_name] OK: default client generated"; \
