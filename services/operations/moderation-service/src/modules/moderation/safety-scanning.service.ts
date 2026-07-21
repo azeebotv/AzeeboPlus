@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
-import type { SafetyScan } from '@prisma/client';
+import type { SafetyScan } from '../../prisma/client/index.js';
 import axios from 'axios';
 
 export interface ScanResult {
