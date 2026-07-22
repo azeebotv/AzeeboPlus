@@ -9,6 +9,7 @@ import { WalletResponse } from './interfaces/wallet-response.interface.js';
 import { toNumber, addDecimals } from '@azeebo/utils';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 import axios from 'axios';
+import { EventBusService, EventTypes } from '@azeebo/event-bus';
 
 type WalletRow = {
   id: string;
@@ -26,14 +27,41 @@ export class WalletService {
   private readonly pointsToNairaRate: number;
   private readonly webhookSecret: string;
   private readonly logger = new Logger(WalletService.name);
+  private readonly analyticsServiceBaseUrl: string;
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(CacheService) private readonly cacheService: CacheService,
-    @Inject(ConfigService) private readonly configService: ConfigService
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(EventBusService) private readonly eventBus: EventBusService
   ) {
     this.pointsToNairaRate = this.configService.get<number>('POINTS_TO_NAIRA_RATE', 100);
     this.webhookSecret = this.configService.get<string>('WEBHOOK_SECRET', 'dev-webhook-secret');
+    this.analyticsServiceBaseUrl = this.configService.get<string>(
+      'ANALYTICS_SERVICE_URL',
+      'http://analytics-service:3040'
+    );
+  }
+
+  private async trackAnalyticsEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown> = {}
+  ): Promise<void> {
+    try {
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/analytics/track`,
+        {
+          eventName,
+          userId,
+          metadata,
+          timestamp: new Date().toISOString(),
+        },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to track analytics event: ${eventName}`);
+    }
   }
 
   async getWalletIdByUserId(userId: string): Promise<string> {
@@ -343,6 +371,12 @@ export class WalletService {
         },
       });
 
+      this.trackAnalyticsEvent('wallet_funding_initialized', userId, {
+        transactionId: transaction.id,
+        amount: fundWalletDto.amount,
+        reference: fundWalletDto.reference,
+      });
+
       return {
         success: true,
         data: {
@@ -418,6 +452,12 @@ export class WalletService {
       });
 
       await this.invalidateWalletCache(userId);
+
+      this.trackAnalyticsEvent('wallet_withdrawal_initiated', userId, {
+        transactionId: reference,
+        amount: withdrawDto.amount,
+        bankAccountId: withdrawDto.bankAccountId,
+      });
 
       return {
         success: true,
@@ -530,6 +570,21 @@ export class WalletService {
 
       await this.invalidateWalletCache(senderId);
       await this.invalidateWalletCache(transferDto.recipientId);
+
+      this.trackAnalyticsEvent('wallet_transfer_completed', senderId, {
+        recipientId: transferDto.recipientId,
+        amount: transferDto.amount,
+        senderReference,
+        recipientReference,
+      });
+
+      await this.eventBus.publish(EventTypes.WALLET_TRANSFERRED, {
+        senderId,
+        recipientId: transferDto.recipientId,
+        amount: transferDto.amount,
+        senderReference,
+        recipientReference,
+      }, { userId: senderId });
 
       return {
         success: true,
@@ -774,6 +829,19 @@ export class WalletService {
 
       await this.invalidateWalletCacheByWalletId(walletId);
 
+      // Track credit event — look up userId from wallet
+      const walletOwner = await this.prisma.wallet.findUnique({
+        where: { id: walletId },
+        select: { userId: true },
+      });
+      if (walletOwner) {
+        this.trackAnalyticsEvent('wallet_credit_completed', walletOwner.userId, {
+          walletId,
+          amount,
+          description,
+        });
+      }
+
       return {
         success: true,
         data: {
@@ -886,6 +954,13 @@ export class WalletService {
       const wallet = updatedWallet.wallet!;
 
       await this.invalidateWalletCacheByWalletId(walletId);
+
+      this.trackAnalyticsEvent('wallet_debit_completed', wallet.userId, {
+        walletId,
+        amount,
+        description,
+        reference,
+      });
 
       return {
         success: true,

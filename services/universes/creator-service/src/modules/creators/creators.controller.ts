@@ -25,6 +25,7 @@ import {
   FundCreatorDto,
   UpdateTierDto,
   PublishContentDto,
+  UpdateCreatorSettingsDto,
 } from './dto/creator.dto.js';
 
 interface UpdateProfileBody {
@@ -226,7 +227,11 @@ export class CreatorsController {
   }
 
   @Get('settings')
-  @ApiOperation({ summary: 'Get creator settings' })
+  @UseGuards(RolesGuard)
+  @Roles('creator')
+  @ApiOperation({ summary: 'Get creator notification and privacy settings' })
+  @ApiResponse({ status: 200, description: 'Creator settings' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getSettings(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
     return this.creatorsService.getSettings(req.user.id);
   }
@@ -330,10 +335,14 @@ export class CreatorsController {
   }
 
   @Put('settings')
-  @ApiOperation({ summary: 'Update creator settings' })
+  @UseGuards(RolesGuard)
+  @Roles('creator')
+  @ApiOperation({ summary: 'Update creator notification and privacy settings' })
+  @ApiResponse({ status: 200, description: 'Settings updated' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateSettings(
     @Request() req: { user: { id: string } },
-    @Body() body: Record<string, unknown>
+    @Body() body: UpdateCreatorSettingsDto
   ): Promise<CreatorResponse> {
     return this.creatorsService.updateSettings(req.user.id, body);
   }

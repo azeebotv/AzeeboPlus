@@ -1,6 +1,8 @@
 import { Inject, Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import axios from 'axios';
 
 const ALLOWED_TIME_PERIODS = ['daily', 'weekly', 'monthly', 'allTime'] as const;
 const ALLOWED_CATEGORIES = ['all', 'gaming', 'content', 'social', 'predictions'] as const;
@@ -40,11 +42,15 @@ interface RankingData {
 @Injectable()
 export class EngagementService {
   private readonly logger = new Logger(EngagementService.name);
+  private readonly analyticsServiceBaseUrl: string;
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
-    @Inject(CacheService) private readonly cache: CacheService
-  ) {}
+    @Inject(CacheService) private readonly cache: CacheService,
+    @Inject(ConfigService) private readonly configService: ConfigService
+  ) {
+    this.analyticsServiceBaseUrl = this.configService.get<string>('ANALYTICS_SERVICE_URL', 'http://analytics-service:3040');
+  }
 
   async getLeaderboard(timePeriod = 'weekly', category = 'all', limit = 50) {
     if (!(ALLOWED_TIME_PERIODS as readonly string[]).includes(timePeriod)) {
@@ -99,6 +105,7 @@ export class EngagementService {
       };
 
       await this.cache.set(cacheK, result, 60);
+      this.trackAnalyticsEvent('leaderboard_viewed', 'anonymous', { category });
       return result;
     } catch (error) {
       this.logger.error(
@@ -216,6 +223,7 @@ export class EngagementService {
       await this.cache.invalidate(`engagement:predictions:${userId}`);
 
       this.logger.log(`Prediction submitted by user ${userId} for content ${contentId}`);
+      this.trackAnalyticsEvent('prediction_submitted', userId, { contentId });
 
       return {
         success: true,
@@ -233,6 +241,12 @@ export class EngagementService {
       );
       return { success: false, error: (error as Error).message };
     }
+  }
+
+  private async trackAnalyticsEvent(eventName: string, userId: string, metadata: Record<string, unknown> = {}): Promise<void> {
+    try {
+      await axios.post(`${this.analyticsServiceBaseUrl}/analytics/track`, { eventName, userId, metadata, timestamp: new Date().toISOString() }, { timeout: 10000 });
+    } catch (error) { this.logger.warn(`Failed to track analytics event: ${eventName}`); }
   }
 
   /**

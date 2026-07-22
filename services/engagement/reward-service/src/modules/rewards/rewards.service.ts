@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { RewardResponse } from './interfaces/reward-response.interface.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import axios from 'axios';
 
 interface MissionWithCompletion {
   id: string;
@@ -18,6 +19,7 @@ interface MissionWithCompletion {
 export class RewardsService {
   private readonly logger = new Logger(RewardsService.name);
   private readonly defaultPaginationLimit: number;
+  private readonly analyticsServiceBaseUrl: string;
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
@@ -25,6 +27,13 @@ export class RewardsService {
     @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.defaultPaginationLimit = this.configService.get<number>('DEFAULT_PAGINATION_LIMIT', 100);
+    this.analyticsServiceBaseUrl = this.configService.get<string>('ANALYTICS_SERVICE_URL', 'http://analytics-service:3040');
+  }
+
+  private async trackAnalyticsEvent(eventName: string, userId: string, metadata: Record<string, unknown> = {}): Promise<void> {
+    try {
+      await axios.post(`${this.analyticsServiceBaseUrl}/analytics/track`, { eventName, userId, metadata, timestamp: new Date().toISOString() }, { timeout: 10000 });
+    } catch (error) { this.logger.warn(`Failed to track analytics event: ${eventName}`); }
   }
 
   private async invalidateRewardCache(userId: string): Promise<void> {
@@ -285,6 +294,8 @@ export class RewardsService {
 
       await this.invalidateRewardCache(userId);
 
+      this.trackAnalyticsEvent('reward_redeemed', userId, { rewardId, points: reward.cost });
+
       return {
         success: true,
         data: {
@@ -532,6 +543,8 @@ export class RewardsService {
       ]);
 
       await this.invalidateRewardCache(userId);
+
+      this.trackAnalyticsEvent('reward_points_earned', userId, { points: activityPoints, reason: activity });
 
       return {
         success: true,

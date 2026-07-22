@@ -132,7 +132,7 @@ for (const file of serviceFiles) {
   processFile(file);
 }
 
-// Also process apps/ (admin, creator-portal are NestJS backend apps)
+// Also process apps/ (admin, creator are standalone dashboards with NestJS backends)
 const APPS_DIR = path.join(process.cwd(), 'apps');
 if (fs.existsSync(APPS_DIR)) {
   console.log('\nScanning apps for DI classes...\n');

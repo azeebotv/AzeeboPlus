@@ -6,7 +6,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
+@Roles('admin', 'superadmin')
 export class PlatformOverviewController {
   constructor(@Inject(PlatformOverviewService) private readonly overviewService: PlatformOverviewService) {}
 

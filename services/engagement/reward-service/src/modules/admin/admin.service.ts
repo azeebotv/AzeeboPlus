@@ -188,4 +188,59 @@ export class AdminService {
       return ApiResponseWrapper.error('UNKNOWN_ERROR', (error as Error).message);
     }
   }
+
+  // Badge CRUD
+  async getBadges(options?: { page?: number; limit?: number }) {
+    const page = options?.page || 1;
+    const limit = options?.limit || 20;
+    const skip = (page - 1) * limit;
+
+    const [badges, total] = await Promise.all([
+      this.prisma.badge.findMany({ skip, take: limit, orderBy: { createdAt: 'desc' } }),
+      this.prisma.badge.count(),
+    ]);
+
+    return ApiResponseWrapper.success({ badges, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } });
+  }
+
+  async createBadge(data: { name: string; description?: string; icon?: string; criteria?: string; points: number }) {
+    const badge = await this.prisma.badge.create({ data });
+    return ApiResponseWrapper.created(badge);
+  }
+
+  async assignBadge(badgeId: string, userId: string, reason?: string) {
+    const badge = await this.prisma.badge.findUnique({ where: { id: badgeId } });
+    if (!badge) throw new NotFoundException('Badge not found');
+
+    // Update the badge's points ledger for the user
+    await this.prisma.pointsLedger.create({
+      data: {
+        userId,
+        points: badge.points,
+        type: 'badge',
+        description: `Badge awarded: ${badge.name}${reason ? ` - ${reason}` : ''}`,
+      },
+    });
+
+    return ApiResponseWrapper.success({ message: `Badge ${badge.name} assigned to user ${userId}` });
+  }
+
+  // Level CRUD
+  async getLevels() {
+    const levels = await this.prisma.level.findMany({ orderBy: { minPoints: 'asc' } });
+    return ApiResponseWrapper.success(levels);
+  }
+
+  async createLevel(data: { name: string; minPoints: number; maxPoints?: number; perks?: string }) {
+    const level = await this.prisma.level.create({ data });
+    return ApiResponseWrapper.created(level);
+  }
+
+  async updateLevel(id: string, data: { name?: string; minPoints?: number; maxPoints?: number; perks?: string }) {
+    const existing = await this.prisma.level.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Level not found');
+
+    const updated = await this.prisma.level.update({ where: { id }, data });
+    return ApiResponseWrapper.success(updated);
+  }
 }

@@ -46,6 +46,16 @@ export class ContentModerationService {
         return { isSafe: true, issues: ['no_media_asset'] };
       }
 
+      // SSRF protection: validate URL before forwarding to external service
+      const url = new URL(content.mediaAsset.originalUrl);
+      if (url.protocol !== 'https:') {
+        throw new BadRequestException('Only HTTPS media URLs are allowed for scanning');
+      }
+      const privatePatterns = [/^127\./, /^10\./, /^172\.(1[6-9]|2\d|3[01])\./, /^192\.168\./, /^169\.254\./, /^localhost$/i];
+      if (privatePatterns.some((p) => p.test(url.hostname))) {
+        throw new BadRequestException('Media URLs pointing to private networks are not allowed');
+      }
+
       const response = await axios.post(
         `${this.moderationServiceUrl}/api/moderation/scan`,
         {
@@ -102,6 +112,21 @@ export class ContentModerationService {
 
     if (!content.mediaAsset?.originalUrl) {
       throw new BadRequestException('Content has no media asset to scan');
+    }
+
+    // SSRF protection: validate URL before forwarding to external service
+    try {
+      const scanUrl = new URL(content.mediaAsset.originalUrl);
+      if (scanUrl.protocol !== 'https:') {
+        throw new BadRequestException('Only HTTPS media URLs are allowed for scanning');
+      }
+      const privatePatterns = [/^127\./, /^10\./, /^172\.(1[6-9]|2\d|3[01])\./, /^192\.168\./, /^169\.254\./, /^localhost$/i];
+      if (privatePatterns.some((p) => p.test(scanUrl.hostname))) {
+        throw new BadRequestException('Media URLs pointing to private networks are not allowed');
+      }
+    } catch (e) {
+      if (e instanceof BadRequestException) throw e;
+      throw new BadRequestException('Invalid media URL format');
     }
 
     try {

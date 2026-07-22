@@ -9,6 +9,8 @@ import { ProxyModule } from './modules/proxy/proxy.module';
 import { GatewayAuthGuard } from './guards/gateway-auth.guard';
 import { AuthThrottlerGuard } from './guards/auth-throttler.guard';
 import { CsrfMiddleware } from './common/csrf.middleware';
+import { LegacyRedirectMiddleware } from './common/legacy-redirect.middleware';
+import { ContentTypeValidationMiddleware } from './common/content-type-validation.middleware';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 
 @Module({
@@ -62,6 +64,12 @@ import { ResponseWrapperInterceptor } from '@azeebo/logger';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    // Legacy unversioned path redirects (T-H21, T-H22, T-H24)
+    consumer.apply(LegacyRedirectMiddleware).forRoutes('*path');
+
+    // Content-Type validation for body requests (SEC-006)
+    consumer.apply(ContentTypeValidationMiddleware).forRoutes('api');
+
     // CSRF protection for state-changing requests (SEC-005)
     consumer
       .apply(CsrfMiddleware)

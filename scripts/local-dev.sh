@@ -30,7 +30,7 @@
 #   --universes    Start universe services
 #   --operations   Start operations services
 #   --gateway      Start API gateway
-#   --frontend     Frontend apps (web, admin, creator-portal)
+#   --frontend     Frontend apps (web, admin, creator)
 #   --all          Start everything
 #   --quick        Core + gateway + web (recommended for most dev work)
 #   --no-build     Skip prisma generate (fast start with cached builds)
@@ -358,7 +358,7 @@ DB_SERVICES=(
   "moderation-service|services/operations/moderation-service|azeebo_moderation|3022"
   "auth-service|services/core/auth-service|azeebo_auth|3000"
   "admin|apps/admin|azeebo_admin|4016"
-  "creator-portal|apps/creator-portal|azeebo_creator_portal|4014"
+  "creator|apps/creator|azeebo_creator|4014"
 )
 
 setup_multi_db() {
@@ -602,7 +602,7 @@ GATEWAY_SERVICES=(
 FRONTEND_SERVICES=(
   "@azeebo/web|apps/web|4000"
   "@azeebo/admin|apps/admin|4016"
-  "@azeebo/creator-portal|apps/creator-portal|4014"
+  "@azeebo/creator|apps/creator|4014"
 )
 
 ALL_SERVICE_GROUPS=(
@@ -968,7 +968,7 @@ cmd_start_interactive() {
   echo "  4)  Universe Services   (reality, movie, comedy, games, sports, lifestyle, vertical, creator)"
   echo "  5)  Operations          (queue, support, moderation)"
   echo "  6)  Gateway             (api-gateway)"
-  echo "  7)  Frontend Apps       (web, admin, creator-portal)"
+  echo "  7)  Frontend Apps       (web, admin, creator)"
   echo "  8)  All Services        (everything)"
   echo "  9)  Quick Start         (core + gateway + web)"
   echo "  0)  Exit"
@@ -1219,7 +1219,7 @@ START OPTIONS:
   --universes    Reality, movie, comedy, games, sports, lifestyle, vertical, creator
   --operations   Queue, support, moderation
   --gateway      API gateway
-  --frontend     Web, admin, creator-portal (runs via pnpm dev)
+  --frontend     Web, admin, creator (runs via pnpm dev)
   --all          Everything (~6GB+ RAM)
   --quick        Core + gateway + web (recommended)
   --no-build     Skip prisma generate (fast start with cached builds)
@@ -1250,7 +1250,7 @@ FIRST-TIME SETUP:
 
 DOCKER (staging/production):
   The all-in-one Docker setup is in Dockerfile.all-in-one and
-  docker-compose.all-in-one.yml. This script is for local dev only.
+  deploy/docker-compose.all-in-one.yml. This script is for local dev only.
 HELPEOF
 }
 

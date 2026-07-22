@@ -606,8 +606,8 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
   },
   {
     path: '/creator',
-    envKey: 'CREATOR_PORTAL_SERVICE_URL',
-    fallbackUrl: 'http://creator-portal:4014',
+    envKey: 'CREATOR_SERVICE_URL',
+    fallbackUrl: 'http://creator:4014',
     supportedVersions: ['1'],
     defaultVersion: '1',
     pathStrategy: 'no-prefix',

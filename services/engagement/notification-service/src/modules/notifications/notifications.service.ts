@@ -17,6 +17,7 @@ interface UserData {
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
   private readonly userServiceBaseUrl: string;
+  private readonly analyticsServiceBaseUrl: string;
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
@@ -30,6 +31,13 @@ export class NotificationsService {
       'USER_SERVICE_URL',
       'http://user-service:3001'
     );
+    this.analyticsServiceBaseUrl = this.configService.get<string>('ANALYTICS_SERVICE_URL', 'http://analytics-service:3040');
+  }
+
+  private async trackAnalyticsEvent(eventName: string, userId: string, metadata: Record<string, unknown> = {}): Promise<void> {
+    try {
+      await axios.post(`${this.analyticsServiceBaseUrl}/analytics/track`, { eventName, userId, metadata, timestamp: new Date().toISOString() }, { timeout: 10000 });
+    } catch (error) { this.logger.warn(`Failed to track analytics event: ${eventName}`); }
   }
 
   private async getUserData(userId: string): Promise<UserData | null> {
@@ -410,7 +418,9 @@ export class NotificationsService {
       const tokenValues = tokens.map((t) => t.token);
 
       // Send push notification using Firebase
-      return this.firebaseService.sendMulticastNotification(tokenValues, title, body, data);
+      const result = this.firebaseService.sendMulticastNotification(tokenValues, title, body, data);
+      this.trackAnalyticsEvent('notification_push_sent', userId, { type: 'push' });
+      return result;
     } catch (error) {
       this.logger.error(
         `sendPushNotification failed: ${(error as Error).message}`,
@@ -435,7 +445,9 @@ export class NotificationsService {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#x27;');
-      return this.emailService.sendCustomEmail(user.email, subject, `<p>${sanitizedBody}</p>`);
+      const result = this.emailService.sendCustomEmail(user.email, subject, `<p>${sanitizedBody}</p>`);
+      this.trackAnalyticsEvent('notification_email_sent', userId, { type: 'email' });
+      return result;
     } catch (error) {
       this.logger.error(
         `sendEmailNotification failed: ${(error as Error).message}`,
@@ -600,7 +612,9 @@ export class NotificationsService {
         return false;
       }
 
-      return this.smsService.sendSms(user.phone, message);
+      const result = this.smsService.sendSms(user.phone, message);
+      this.trackAnalyticsEvent('notification_sms_sent', userId, { type: 'sms' });
+      return result;
     } catch (error) {
       this.logger.error(
         `sendSmsNotification failed: ${(error as Error).message}`,

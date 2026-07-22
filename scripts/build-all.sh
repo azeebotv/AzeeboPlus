@@ -66,7 +66,7 @@ pnpm --filter @azeebo/api-gateway prisma:generate && bash scripts/patch-prisma-c
 echo "==> Building frontend apps..."
 
 pnpm --filter @azeebo/admin run build
-pnpm --filter @azeebo/creator-portal run build
+pnpm --filter @azeebo/creator run build
 pnpm --filter @azeebo/web run build
 
 echo "==> Build complete."

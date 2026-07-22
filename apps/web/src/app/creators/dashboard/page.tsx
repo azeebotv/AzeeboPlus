@@ -38,6 +38,10 @@ export default function CreatorDashboardPage(): React.JSX.Element {
     <div style={{ minHeight: '100vh', backgroundColor: '#1A0A0A' }}>
       <AppHeader />
       <main style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
+        <div className="bg-yellow-900/30 border border-yellow-600 rounded-lg p-4 mb-6">
+          <p className="text-yellow-200 font-semibold">Creator Dashboard Moved</p>
+          <p className="text-yellow-300 text-sm">The creator dashboard has moved to <a href="https://creator.azeeboplus.com" className="underline">creator.azeeboplus.com</a>. This page will be removed in a future release.</p>
+        </div>
         {/* Welcome Section */}
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Creator Dashboard</h1>
         <p style={{ color: '#9A8A7A', marginBottom: 32 }}>

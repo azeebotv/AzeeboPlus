@@ -1,46 +1,80 @@
-# Search Service
+# Azeebo+ Search Service
 
-Azeebo+ Search Service - Provides fast, full-text search across all content universes.
+> Port: 3005 | Database: `azeebo_search` | Analytics: Yes
 
-## Features
+## API Endpoints
 
-- **Full-Text Search**: Search across movies, games, comedy, sports, reality, etc.
-- **Filtered Search**: Filter results by category, genre, rating, etc.
-- **Typeahead Suggestions**: Provides real-time search suggestions
-- **Highlighting**: Highlights matching terms in search results
-- **Pagination**: Supports paginated search results
+### Search (`/search`)
 
-## Service Configuration
+| Method | Path | Auth | Rate Limit | Description |
+|--------|------|------|------------|-------------|
+| `GET` | `/search` | Public | 30/min | Universal search across all content |
+| `GET` | `/search/faceted` | Public | 30/min | Search with faceted filtering |
+| `GET` | `/search/suggestions` | Public | 60/min | Get search suggestions |
+| `GET` | `/search/trending` | Public | 30/min | Get trending searches |
+| `GET` | `/search/facets` | Public | 30/min | Get search facets |
+| `POST` | `/search/log` | Bearer | - | Log search query (requires auth) |
+
+**Query Parameters (`GET /search`, `GET /search/faceted`):**
+- `q` - Search query (required)
+- `universe` - Filter by universe (e.g., `reality`, `comedy`, `sports`)
+- `categories` - Comma-separated category filters
+- `tags` - Comma-separated tag filters
+- `contentType` - Comma-separated content type filters
+- `dateStart` / `dateEnd` - Date range filters
+- `sort` - Sort order
+- `page` - Page number (default: 1)
+- `limit` - Results per page (1-100, default: 20)
+
+### Admin (`/admin`)
+
+All admin endpoints require `AdminGuard` authentication.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/admin/stats` | Get search service statistics |
+| `GET` | `/admin/queries` | Get paginated search query log |
+
+**Query Parameters (`GET /admin/queries`):**
+- `page` - Page number
+- `limit` - Results per page
+- `startDate` - Filter start date
+- `endDate` - Filter end date
+
+### Health
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/health` | Health check (includes DB status) |
+| `GET` | `/health/live` | Liveness probe |
+| `GET` | `/health/ready` | Readiness probe |
+
+## Events Tracked
+
+| Event | Trigger |
+|-------|---------|
+| `search_performed` | User executes a search |
+| `search_suggestion_clicked` | User clicks a suggestion |
+| `search_filter_applied` | User applies a filter |
+| `search_result_clicked` | User clicks a search result |
+
+## Configuration
 
 | Environment Variable | Default | Description |
 |---------------------|---------|-------------|
-| PORT | 3005 | Service port |
-| DATABASE_URL | - | PostgreSQL connection string |
+| `PORT` | 3005 | Service port |
+| `DATABASE_URL` | - | PostgreSQL connection string |
 
-## Getting Started
+## Prisma Models
 
-```bash
-# Install dependencies
-pnpm install
-
-# Generate Prisma client
-pnpm prisma:generate
-
-# Run migrations
-pnpm prisma:migrate
-
-# Start development server
-pnpm start:dev
-```
-
-## API Routes
-
-- `GET /v1/search` - Search across all content
-- `GET /v1/search/suggestions` - Get typeahead suggestions
-- `GET /v1/search/filters` - Get available search filters
-
-## Ownership
-
-- **Team**: Platform Engineering
-- **Maintainer**: platform-engineering@azeeboplus.com
-- **Last Updated**: 2026-05-11
+| Model | Table | Description |
+|-------|-------|-------------|
+| `Suggestion` | `suggestions` | Admin-managed autocomplete entries (trending, promoted, category, manual) |
+| `RankingRule` | `ranking_rules` | Deterministic ranking rules applied at query time |
+| `UserSearch` | `user_searches` | Per-user search history |
+| `SearchQueryLog` | `search_query_logs` | Global search query log for analytics |
+| `ContentItem` | `content_items` | Searchable content indexed across universes |
+| `CreatorProfile` | `creator_profiles` | Creator profiles for search |
+| `Universe` | `universes` | Universe definitions |
+| `Category` | `categories` | Content categories |
+| `Tag` | `tags` | Content tags |

@@ -43,6 +43,7 @@ export class AuthService {
   private readonly failedLoginPrefix = 'failed_login:';
   private readonly maxFailedAttempts: number;
   private readonly lockoutDurationSeconds: number;
+  private readonly analyticsServiceBaseUrl: string;
 
   constructor(
     @Inject(AuthRepository) private readonly authRepository: AuthRepository,
@@ -60,6 +61,31 @@ export class AuthService {
       'LOCKOUT_DURATION_SECONDS',
       15 * 60
     );
+    this.analyticsServiceBaseUrl = this.configService.get<string>(
+      'ANALYTICS_SERVICE_URL',
+      'http://analytics-service:3040'
+    );
+  }
+
+  private async trackAnalyticsEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown> = {}
+  ): Promise<void> {
+    try {
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/analytics/track`,
+        {
+          eventName,
+          userId,
+          metadata,
+          timestamp: new Date().toISOString(),
+        },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to track analytics event: ${eventName}`);
+    }
   }
 
   async register(registerDto: RegisterDto): Promise<AuthResponse> {
@@ -76,6 +102,11 @@ export class AuthService {
     });
 
     const tokens = await this.generateTokens(user);
+
+    this.trackAnalyticsEvent('user_registered', user.id, {
+      email: user.email,
+      role: registerDto.role,
+    });
 
     return createSuccessResponse({
       user: this.mapToUser(user),
@@ -102,6 +133,10 @@ export class AuthService {
     const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
     if (!isPasswordValid) {
       await this.incrementFailedLoginAttempts(loginDto.email);
+      this.trackAnalyticsEvent('user_login_failed', user.id, {
+        reason: 'invalid_password',
+        email: loginDto.email,
+      });
       throw new UnauthorizedException('Invalid email or password');
     }
 
@@ -111,6 +146,10 @@ export class AuthService {
     await this.invalidateUserCache(loginDto.email, user.id);
 
     const tokens = await this.generateTokens(user);
+
+    this.trackAnalyticsEvent('user_logged_in', user.id, {
+      method: 'password',
+    });
 
     return createSuccessResponse({
       user: this.mapToUser(user),
@@ -204,6 +243,9 @@ export class AuthService {
         }
       }
     }
+
+    this.trackAnalyticsEvent('user_logged_out', userId);
+
     return createSuccessResponse({ success: true });
   }
 
@@ -327,6 +369,8 @@ export class AuthService {
     await this.authRepository.verifyEmail(userId);
     await this.redisService.del(verificationTokenKey);
 
+    this.trackAnalyticsEvent('user_email_verified', userId);
+
     return { success: true, message: 'Email verified successfully' };
   }
 
@@ -378,12 +422,16 @@ export class AuthService {
       throw new BadRequestException('User not found');
     }
 
-    const allowedRoles = ['user', 'creator', 'admin', 'super_admin'];
+    const allowedRoles = ['user', 'creator'];
     if (!allowedRoles.includes(selectRoleDto.role)) {
-      throw new BadRequestException('Invalid role selection');
+      throw new BadRequestException('Invalid role selection — only user and creator roles are allowed');
     }
 
     await this.authRepository.updateRole(userId, selectRoleDto.role);
+
+    this.trackAnalyticsEvent('user_role_selected', userId, {
+      role: selectRoleDto.role,
+    });
 
     return { success: true, message: 'Role selected successfully' };
   }
@@ -454,7 +502,7 @@ export class AuthService {
         iat: now,
       } as Record<string, unknown>,
       {
-        expiresIn: this.refreshTokenExpiryDays,
+        expiresIn: `${this.refreshTokenExpiryDays}d`,
         secret: jwtRefreshSecret,
       }
     );

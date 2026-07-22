@@ -9,8 +9,14 @@ export enum UserRole {
   SUPER_ADMIN = 'super_admin',
 }
 
+/** Only user and creator roles are allowed for self-selection. Admin/super_admin/moderator must be assigned by admins. */
+export enum SelectableRole {
+  USER = 'user',
+  CREATOR = 'creator',
+}
+
 export class SelectRoleDto {
-  @ApiProperty({ enum: UserRole, example: 'user' })
-  @IsEnum(UserRole)
-  role!: UserRole;
+  @ApiProperty({ enum: SelectableRole, example: 'user' })
+  @IsEnum(SelectableRole)
+  role!: SelectableRole;
 }

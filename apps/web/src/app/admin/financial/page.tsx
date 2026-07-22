@@ -28,14 +28,18 @@ export default function AdminFinancialPage(): React.JSX.Element {
       const result = {
         totalRevenue: 0,
         monthlyRevenue: 0,
+        // TODO: pendingPayouts needs a dedicated API endpoint (e.g. /api/v1/admin/wallets/pending-summary)
         pendingPayouts: 0,
+        // TODO: totalPayouts needs a dedicated API endpoint (e.g. /api/v1/admin/wallets/payout-history/summary)
         totalPayouts: 0,
         recentTransactions: [] as FinancialTransaction[],
       };
       if (dashRes.success && dashRes.data) {
-        const d = dashRes.data as { totalRevenue?: number };
+        const d = dashRes.data as { totalRevenue?: number; monthlyRevenue?: number; pendingPayouts?: number; totalPayouts?: number };
         result.totalRevenue = d.totalRevenue || 0;
-        result.monthlyRevenue = d.totalRevenue || 0;
+        result.monthlyRevenue = d.monthlyRevenue || d.totalRevenue || 0;
+        result.pendingPayouts = d.pendingPayouts || 0;
+        result.totalPayouts = d.totalPayouts || 0;
       }
       if (walletRes.success && walletRes.data) {
         const w = walletRes.data as FinancialTransaction[] | { items?: FinancialTransaction[] };
@@ -53,6 +57,8 @@ export default function AdminFinancialPage(): React.JSX.Element {
     totalPayouts: 0,
     recentTransactions: [] as FinancialTransaction[],
   };
+
+  // TODO: Wire up pendingPayouts and totalPayouts once a payouts summary endpoint is available.
 
   return (
     <AdminLayout>

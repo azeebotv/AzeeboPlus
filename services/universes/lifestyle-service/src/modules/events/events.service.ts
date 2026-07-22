@@ -1,6 +1,8 @@
 import { Inject, Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import axios from 'axios';
 
 interface Event {
   id: string;
@@ -98,11 +100,21 @@ interface WhereClause {
 @Injectable()
 export class EventsService {
   private readonly logger = new Logger(EventsService.name);
+  private readonly analyticsServiceBaseUrl: string;
 
   constructor(
     @Inject(PrismaService) private prisma: PrismaService,
-    @Inject(CacheService) private readonly cache: CacheService
-  ) {}
+    @Inject(CacheService) private readonly cache: CacheService,
+    private readonly configService: ConfigService
+  ) {
+    this.analyticsServiceBaseUrl = this.configService.get<string>('ANALYTICS_SERVICE_URL', 'http://analytics-service:3040');
+  }
+
+  private async trackAnalyticsEvent(eventName: string, userId: string, metadata: Record<string, unknown> = {}): Promise<void> {
+    try {
+      await axios.post(`${this.analyticsServiceBaseUrl}/analytics/track`, { eventName, userId, metadata, timestamp: new Date().toISOString() }, { timeout: 10000 });
+    } catch (error) { this.logger.warn(`Failed to track analytics event: ${eventName}`); }
+  }
 
   async getEvents(
     page = 1,
@@ -575,6 +587,8 @@ export class EventsService {
 
       await this.cache.invalidate('lifestyle:events:*');
 
+      this.trackAnalyticsEvent('event_rsvp_created', userId, { eventId, eventSlug: event.slug });
+
       return {
         success: true,
         data: { rsvp: formattedRsvp, message: 'RSVP successful' },
@@ -609,6 +623,8 @@ export class EventsService {
       });
 
       await this.cache.invalidate('lifestyle:events:*');
+
+      this.trackAnalyticsEvent('event_rsvp_cancelled', userId, { eventId });
 
       return {
         success: true,

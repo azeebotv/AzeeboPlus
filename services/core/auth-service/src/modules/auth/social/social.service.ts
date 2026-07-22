@@ -90,7 +90,7 @@ export class SocialAuthService {
       return tokenInfo;
     } catch (error) {
       if (error instanceof UnauthorizedException) throw error;
-      this.logger.error(`Google token verification failed: ${error}`);
+      this.logger.error(`Google token verification failed: ${(error as Error).message}`);
       throw new UnauthorizedException('Failed to verify Google token');
     }
   }
@@ -137,7 +137,7 @@ export class SocialAuthService {
       };
     } catch (error) {
       if (error instanceof UnauthorizedException) throw error;
-      this.logger.error(`Apple token verification failed: ${error}`);
+      this.logger.error(`Apple token verification failed: ${(error as Error).message}`);
       throw new UnauthorizedException('Failed to verify Apple token');
     }
   }
@@ -352,9 +352,14 @@ export class SocialAuthService {
       }
 
       const token = this.jwtService.sign({
+        iss: this.configService.get<string>('JWT_ISSUER', 'azeebo-auth'),
+        aud: this.configService.get<string>('JWT_AUDIENCE', 'azeebo-api'),
+        jti: randomUUID(),
         sub: user.id,
         email: user.email,
         role: user.role,
+        type: 'access',
+        iat: Math.floor(Date.now() / 1000),
       });
 
       return {

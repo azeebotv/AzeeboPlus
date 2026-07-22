@@ -2,7 +2,8 @@
   "name": "@azeebo/internal-clients",
   "version": "1.0.0",
   "private": true,
-  "description": "Typed internal service clients with retries, timeouts, and idempotency",
+  "description": "DEPRECATED: Use @azeebo/http-client instead. This package is maintained for backwards compatibility only.",
+  "deprecated": "Use @azeebo/http-client instead",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {

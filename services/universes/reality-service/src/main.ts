@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger, VersioningType } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import { AppModule } from './app.module.js';
 import helmet from 'helmet';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
@@ -63,6 +64,7 @@ async function bootstrap(): Promise<void> {
 
   const port = process.env.PORT || 3010;
   app.enableShutdownHooks();
+  app.useWebSocketAdapter(new IoAdapter(app));
   await app.listen(port);
   Logger.log(`Reality Service running on port ${port}`);
 }

@@ -8,6 +8,7 @@ interface GlassCardProps {
   variant?: 'default' | 'strong' | 'subtle';
   padding?: number;
   animated?: boolean;
+  testID?: string;
 }
 
 const AnimatedView = Animated.createAnimatedComponent(Animated.View);
@@ -17,9 +18,11 @@ export function GlassCard({
   style,
   variant = 'default',
   padding = 16,
+  testID,
 }: GlassCardProps) {
   return (
     <AnimatedView
+      testID={testID}
       style={[
         styles.card,
         variant === 'strong' && styles.cardStrong,

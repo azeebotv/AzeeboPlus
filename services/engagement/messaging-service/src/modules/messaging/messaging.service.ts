@@ -1,12 +1,26 @@
 import { Inject, Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { CreateConversationDto, SendMessageDto } from './dto/messaging.dto.js';
+import axios from 'axios';
 
 @Injectable()
 export class MessagingService {
   private readonly logger = new Logger(MessagingService.name);
+  private readonly analyticsServiceBaseUrl: string;
 
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(ConfigService) private readonly configService: ConfigService
+  ) {
+    this.analyticsServiceBaseUrl = this.configService.get<string>('ANALYTICS_SERVICE_URL', 'http://analytics-service:3040');
+  }
+
+  private async trackAnalyticsEvent(eventName: string, userId: string, metadata: Record<string, unknown> = {}): Promise<void> {
+    try {
+      await axios.post(`${this.analyticsServiceBaseUrl}/analytics/track`, { eventName, userId, metadata, timestamp: new Date().toISOString() }, { timeout: 10000 });
+    } catch (error) { this.logger.warn(`Failed to track analytics event: ${eventName}`); }
+  }
 
   async getConversations(userId: string) {
     try {
@@ -143,6 +157,8 @@ export class MessagingService {
 
       this.logger.log(`Conversation ${conversation.id} created by user ${userId}`);
 
+      this.trackAnalyticsEvent('conversation_created', userId, { participantCount: conversation.participants.length });
+
       return {
         success: true,
         data: {
@@ -191,6 +207,8 @@ export class MessagingService {
         where: { id: conversationId },
         data: { updatedAt: new Date() },
       });
+
+      this.trackAnalyticsEvent('message_sent', userId, { conversationId });
 
       return {
         success: true,

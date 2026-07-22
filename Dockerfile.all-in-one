@@ -26,7 +26,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web/package.json apps/web/
 COPY apps/admin/package.json apps/admin/
-COPY apps/creator-portal/package.json apps/creator-portal/
+COPY apps/creator/package.json apps/creator/
 COPY packages/api-client/package.json packages/api-client/
 COPY packages/error-handling/package.json packages/error-handling/
 COPY packages/logger/package.json packages/logger/
@@ -110,7 +110,7 @@ ARG CACHEBUST
 #   T0: Shared packages (dependencies for everything)
 #   T1: Web + Gateway + Auth + User (frontend, routing, login)
 #   T2: Core business (media, content, wallet, payment, search)
-#   T3: Apps (admin, creator-portal)
+#   T3: Apps (admin, creator)
 #   T4: Engagement (notification, reward, messaging, etc.)
 #   T5: Intelligence (analytics, recommendation)
 #   T6: Universe services (reality, movie, comedy, etc.)
@@ -150,11 +150,11 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/wallet-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/wallet-service run build && \
     pnpm --filter @azeebo/payment-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/payment-service run build && \
     pnpm --filter @azeebo/search-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/search-service run build && \
-    echo "==> [T3] Building admin and creator-portal apps..." && \
+    echo "==> [T3] Building admin and creator apps..." && \
     pnpm --filter @azeebo/admin prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/admin run build && \
-    pnpm --filter @azeebo/creator-portal prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/creator-portal run build && \
+    pnpm --filter @azeebo/creator prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/creator run build && \
     (test -d apps/admin/src/generated/prisma && mkdir -p apps/admin/dist/generated && cp -r apps/admin/src/generated/prisma apps/admin/dist/generated/prisma) && \
-    (test -d apps/creator-portal/src/generated/prisma && mkdir -p apps/creator-portal/dist/generated && cp -r apps/creator-portal/src/generated/prisma apps/creator-portal/dist/generated/prisma) && \
+    (test -d apps/creator/src/generated/prisma && mkdir -p apps/creator/dist/generated && cp -r apps/creator/src/generated/prisma apps/creator/dist/generated/prisma) && \
     echo "==> [T4] Building engagement services..." && \
     pnpm --filter @azeebo/notification-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/notification-service run build && \
     pnpm --filter @azeebo/reward-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/reward-service run build && \
@@ -233,7 +233,7 @@ RUN echo "==> Verifying build outputs..." && \
         fi; \
       fi; \
     done && \
-    for app in apps/admin apps/creator-portal; do \
+    for app in apps/admin apps/creator; do \
       if [ ! -f "$app/dist/main.js" ]; then echo "  FATAL: MISSING $app/dist/main.js"; MISSING=$((MISSING+1)); \
       else echo "  OK: $app/dist/main.js"; fi; \
     done && \
@@ -287,12 +287,12 @@ RUN echo "Cache bust: $CACHEBUST" && \
     else \
       echo "WARN: apps/admin/dist not found — admin app will not start"; \
     fi; \
-    if [ -d apps/creator-portal/dist ]; then \
-      mkdir -p /runtime/apps/creator-portal/dist && cp -r apps/creator-portal/dist/. /runtime/apps/creator-portal/dist/; \
-      mkdir -p /runtime/apps/creator-portal/prisma && cp -r apps/creator-portal/prisma/. /runtime/apps/creator-portal/prisma/ 2>/dev/null; \
-      echo "OK: creator-portal dist copied"; \
+    if [ -d apps/creator/dist ]; then \
+      mkdir -p /runtime/apps/creator/dist && cp -r apps/creator/dist/. /runtime/apps/creator/dist/; \
+      mkdir -p /runtime/apps/creator/prisma && cp -r apps/creator/prisma/. /runtime/apps/creator/prisma/ 2>/dev/null; \
+      echo "OK: creator dist copied"; \
     else \
-      echo "WARN: apps/creator-portal/dist not found — creator-portal will not start"; \
+      echo "WARN: apps/creator/dist not found — creator will not start"; \
     fi; \
     mkdir -p /runtime/apps/web/standalone && \
     if [ -d apps/web/.next/standalone/apps/web ]; then \
@@ -482,9 +482,9 @@ RUN echo "==> Installing per-service Prisma clients from builder stage..." && \
     true
 
 # Copy config files (single layer with final cleanup)
-COPY supervisord.conf /etc/supervisord.conf
-COPY nginx.conf /etc/nginx/nginx.conf
-COPY entrypoint.sh /entrypoint.sh
+COPY deploy/supervisord.conf /etc/supervisord.conf
+COPY deploy/nginx.conf /etc/nginx/nginx.conf
+COPY deploy/entrypoint.sh /entrypoint.sh
 COPY scripts/demo-content /app/scripts/demo-content
 RUN rm -f /etc/nginx/sites-enabled/default && chmod +x /entrypoint.sh && \
     chmod +x /app/scripts/demo-content/*.sh && \

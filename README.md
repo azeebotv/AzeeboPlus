@@ -9,7 +9,7 @@ azeebo-plus/
 ├── apps/                    # Client applications
 │   ├── web/                # Next.js web app (port 4000)
 │   ├── admin/              # NestJS admin panel (port 4016)
-│   └── creator-portal/     # NestJS creator portal (port 4014)
+│   └── creator/          # Standalone creator dashboard (port 4014)
 │
 ├── services/               # Backend microservices
 │   ├── core/              # Essential platform services
@@ -83,7 +83,7 @@ azeebo-plus/
 |-----|------|-----------|-------------|
 | web | 4000 | Next.js | Main web application |
 | admin | 4016 | NestJS + SSR | Admin dashboard |
-| creator-portal | 4014 | NestJS + SSR | Creator management portal |
+| creator | 4014 | Vite+React + NestJS | Standalone creator dashboard |
 
 ## Running Locally
 
@@ -167,7 +167,7 @@ azeebo_notification  azeebo_reward  azeebo_engagement
 azeebo_messaging     azeebo_referral azeebo_subscription
 azeebo_analytics     azeebo_recommendation
 azeebo_queue    azeebo_support  azeebo_moderation
-azeebo_admin    azeebo_creator_portal
+azeebo_admin    azeebo_creator
 ```
 
 Each service's `.env` contains its own `DATABASE_URL` pointing to its database.

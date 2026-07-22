@@ -6,7 +6,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 
 @Controller('admin/wallets')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
+@Roles('admin', 'superadmin')
 export class WalletManagementController {
   constructor(@Inject(WalletManagementService) private readonly walletService: WalletManagementService) {}
 

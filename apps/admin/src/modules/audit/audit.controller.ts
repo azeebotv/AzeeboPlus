@@ -7,7 +7,7 @@ import { UseGuards } from '@nestjs/common';
 
 @Controller('admin/audit')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
+@Roles('admin', 'superadmin')
 export class AuditController {
   constructor(@Inject(AuditLogService) private readonly auditService: AuditLogService) {}
 

@@ -1660,22 +1660,46 @@ export class CreatorsService {
     });
 
     const defaultSettings = {
-      emailNotifications: true,
-      pushNotifications: true,
-      smsNotifications: false,
-      marketingNotifications: false,
-      profileVisibility: 'public',
-      showEarnings: false,
-      allowMessages: true,
+      notifications: {
+        email: true,
+        push: true,
+        sms: false,
+        marketing: false,
+      },
+      privacy: {
+        profileVisibility: 'public',
+        showEarnings: false,
+        allowMessages: true,
+      },
+    };
+
+    if (!profile?.settings) {
+      return { success: true, data: defaultSettings };
+    }
+
+    const raw = profile.settings as Record<string, unknown>;
+    const notifications = (raw.notifications as Record<string, unknown>) || {
+      email: raw.emailNotifications ?? true,
+      push: raw.pushNotifications ?? true,
+      sms: raw.smsNotifications ?? false,
+      marketing: raw.marketingNotifications ?? false,
+    };
+    const privacy = (raw.privacy as Record<string, unknown>) || {
+      profileVisibility: (raw.profileVisibility as string) || 'public',
+      showEarnings: (raw.showEarnings as boolean) ?? false,
+      allowMessages: (raw.allowMessages as boolean) ?? true,
     };
 
     return {
       success: true,
-      data: (profile?.settings as Record<string, unknown>) || defaultSettings,
+      data: { notifications, privacy },
     };
   }
 
-  async updateSettings(userId: string, data: Record<string, unknown>): Promise<CreatorResponse> {
+  async updateSettings(
+    userId: string,
+    data: { notifications?: Record<string, boolean>; privacy?: Record<string, unknown> }
+  ): Promise<CreatorResponse> {
     const profile = await this.prisma.creatorProfile.findUnique({
       where: { userId },
       select: { id: true, settings: true },
@@ -1685,8 +1709,23 @@ export class CreatorsService {
       throw new NotFoundException('Creator profile not found');
     }
 
-    const currentSettings = (profile.settings as Record<string, unknown>) || {};
-    const updatedSettings = { ...currentSettings, ...data };
+    const current = (profile.settings as Record<string, unknown>) || {};
+    const currentNotifications = (current.notifications as Record<string, boolean>) || {
+      email: (current.emailNotifications as boolean) ?? true,
+      push: (current.pushNotifications as boolean) ?? true,
+      sms: (current.smsNotifications as boolean) ?? false,
+      marketing: (current.marketingNotifications as boolean) ?? false,
+    };
+    const currentPrivacy = (current.privacy as Record<string, unknown>) || {
+      profileVisibility: (current.profileVisibility as string) || 'public',
+      showEarnings: (current.showEarnings as boolean) ?? false,
+      allowMessages: (current.allowMessages as boolean) ?? true,
+    };
+
+    const updatedSettings = {
+      notifications: { ...currentNotifications, ...data.notifications },
+      privacy: { ...currentPrivacy, ...data.privacy },
+    };
 
     await this.prisma.creatorProfile.update({
       where: { id: profile.id },

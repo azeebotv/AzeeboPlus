@@ -12,7 +12,7 @@ interface AuthRequest extends Request {
 
 @Controller('admin/content-review')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
+@Roles('admin', 'superadmin')
 export class ContentReviewController {
   constructor(
     @Inject(ContentReviewService) private readonly contentReviewService: ContentReviewService,

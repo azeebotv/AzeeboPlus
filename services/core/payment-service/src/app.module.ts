@@ -14,6 +14,7 @@ import { MetricsModule } from './modules/metrics/metrics.module.js';
 import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { RedisModule, CacheModule } from '@azeebo/shared-services';
+import { ObservabilityModule } from '@azeebo/observability';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { RedisModule, CacheModule } from '@azeebo/shared-services';
     ScheduledTasksModule,
     PricingModule,
     MetricsModule,
+    ObservabilityModule,
   ],
   controllers: [PaymentsController],
   providers: [

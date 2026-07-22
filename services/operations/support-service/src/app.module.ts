@@ -14,7 +14,6 @@ import { TicketModule } from './modules/ticket/ticket.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { DatabaseModule } from './modules/database/database.module';
-import { SupportModule } from './modules/support/support.module';
 import { AuthGuard } from './common/guards/auth.guard';
 import { RateLimiterModule, AdminGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
@@ -33,7 +32,6 @@ import { CacheModule } from '@azeebo/shared-services';
     }),
     DatabaseModule,
     HealthModule,
-    SupportModule,
     TicketModule,
     RefundModule,
     ChargebackModule,

@@ -17,6 +17,7 @@ import { MoviesService } from './movies.service.js';
 import { MovieResponse } from './interfaces/movie-response.interface.js';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
 import { AddToWatchlistDto } from './dto/watchlist.dto.js';
+import { RateMovieDto } from './dto/rate-movie.dto.js';
 
 @ApiTags('Movies')
 @ApiBearerAuth()
@@ -157,5 +158,18 @@ export class MoviesController {
   @ApiResponse({ status: 200, description: 'Availability status' })
   async checkMovieAvailability(@Param('movieId') movieId: string): Promise<MovieResponse> {
     return this.moviesService.checkMovieAvailability(movieId);
+  }
+
+  @Post(':movieId/rate')
+  @ApiOperation({ summary: 'Rate a movie' })
+  @ApiResponse({ status: 201, description: 'Rating submitted' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Movie not found' })
+  async rateMovie(
+    @Request() req: { user: { id: string } },
+    @Param('movieId') movieId: string,
+    @Body() body: RateMovieDto
+  ): Promise<MovieResponse> {
+    return this.moviesService.rateMovie(req.user.id, movieId, body.rating);
   }
 }

@@ -10,6 +10,7 @@ import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { CacheModule } from './cache/cache.module.js';
 import { JwtStrategy } from './modules/auth/jwt.strategy.js';
+import { FeatureFlagModule } from '@azeebo/feature-flags';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { JwtStrategy } from './modules/auth/jwt.strategy.js';
     ContentModule,
     HealthModule,
     PublicModule,
+    FeatureFlagModule.register({}),
   ],
   providers: [
     JwtStrategy,

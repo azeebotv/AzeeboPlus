@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import type { SafetyScan } from '../../prisma/client/index.js';
@@ -76,6 +76,40 @@ export class SafetyScanningService {
 
     if (this.useMockScanning) {
       this.logger.warn('WARNING: Mock scanning is enabled - this must not be used in production');
+    }
+  }
+
+  /**
+   * Validates a URL to prevent SSRF attacks before forwarding to external scanning APIs.
+   * Only allows HTTPS URLs and rejects private/internal IP ranges.
+   */
+  private validateMediaUrl(url: string): void {
+    let parsed: URL;
+    try {
+      parsed = new URL(url);
+    } catch {
+      throw new BadRequestException('Invalid media URL format');
+    }
+
+    if (parsed.protocol !== 'https:') {
+      throw new BadRequestException('Only HTTPS URLs are allowed for external scanning');
+    }
+
+    const hostname = parsed.hostname;
+    const privatePatterns = [
+      /^127\./,
+      /^10\./,
+      /^172\.(1[6-9]|2\d|3[01])\./,
+      /^192\.168\./,
+      /^169\.254\./,
+      /^0\./,
+      /^localhost$/i,
+      /^\[::1\]$/,
+      /^::1$/,
+    ];
+
+    if (privatePatterns.some((pattern) => pattern.test(hostname))) {
+      throw new BadRequestException(' URLs pointing to private/internal networks are not allowed');
     }
   }
 
@@ -215,6 +249,8 @@ export class SafetyScanningService {
   private async performMalwareScan(mediaUrl: string): Promise<ScanResult> {
     this.logger.debug('Performing real malware scan');
 
+    this.validateMediaUrl(mediaUrl);
+
     if (!this.malwareApiConfig.apiKey) {
       this.logger.warn('Malware scan API key not configured, falling back to mock');
       return this.mockMalwareScan();
@@ -266,6 +302,8 @@ export class SafetyScanningService {
 
   private async performContentSafetyScan(mediaUrl: string): Promise<ScanResult> {
     this.logger.debug('Performing real content safety scan');
+
+    this.validateMediaUrl(mediaUrl);
 
     if (!this.contentSafetyApiConfig.apiKey) {
       this.logger.warn('Content safety API key not configured, falling back to mock');
@@ -357,6 +395,8 @@ export class SafetyScanningService {
 
   private async performCopyrightScan(mediaUrl: string): Promise<ScanResult> {
     this.logger.debug('Performing real copyright scan');
+
+    this.validateMediaUrl(mediaUrl);
 
     if (!this.copyrightApiConfig.apiKey) {
       this.logger.warn('Copyright API key not configured, falling back to mock');

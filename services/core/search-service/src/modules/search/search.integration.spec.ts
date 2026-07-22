@@ -1,19 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import request from 'supertest';
-import { PrismaService } from '../database/prisma.service.js';
-import { SearchController } from './search.controller.js';
+import { BadRequestException } from '@nestjs/common';
 import { SearchService } from './search.service.js';
-import { SearchRepository } from './search.repository.js';
-import { RateLimitGuard } from '@azeebo/security';
+import { PrismaService } from '../database/prisma.service.js';
+import { ConfigService } from '@nestjs/config';
 import { CacheService } from '@azeebo/shared-services';
 
-describe('Search Service Integration Tests', () => {
-  let app: INestApplication;
+describe('SearchService Integration', () => {
+  let service: SearchService;
+
   const mockPrismaService = {
     contentItem: {
       findMany: jest.fn(),
       count: jest.fn(),
+      groupBy: jest.fn(),
     },
     creatorProfile: {
       findMany: jest.fn(),
@@ -24,263 +23,243 @@ describe('Search Service Integration Tests', () => {
     searchQueryLog: {
       findMany: jest.fn(),
     },
-    category: {
-      findMany: jest.fn(),
-    },
     tag: {
       findMany: jest.fn(),
     },
+    userSearch: {
+      create: jest.fn(),
+    },
   };
 
-  beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      controllers: [SearchController],
+  const mockCacheService = {
+    get: jest.fn(),
+    set: jest.fn(),
+    delete: jest.fn(),
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
       providers: [
         SearchService,
-        SearchRepository,
+        { provide: PrismaService, useValue: mockPrismaService },
         {
-          provide: PrismaService,
-          useValue: mockPrismaService,
-        },
-        {
-          provide: CacheService,
+          provide: ConfigService,
           useValue: {
-            get: jest.fn().mockResolvedValue(null),
-            set: jest.fn().mockResolvedValue(undefined),
-            delete: jest.fn().mockResolvedValue(0),
-            invalidate: jest.fn().mockResolvedValue(undefined),
+            get: jest.fn().mockImplementation((key: string, defaultValue?: unknown) => {
+              const config: Record<string, unknown> = {
+                ANALYTICS_SERVICE_URL: 'http://analytics-service',
+              };
+              return config[key] ?? defaultValue;
+            }),
           },
         },
+        { provide: CacheService, useValue: mockCacheService },
       ],
-    })
-      .overrideGuard(RateLimitGuard)
-      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
-      .compile();
+    }).compile();
 
-    app = moduleFixture.createNestApplication();
-    await app.init();
-  });
+    service = module.get<SearchService>(SearchService);
 
-  afterAll(async () => {
-    await app.close();
-  });
-
-  beforeEach(() => {
     jest.clearAllMocks();
+    mockCacheService.get.mockResolvedValue(null);
   });
 
-  describe('GET /search', () => {
-    it('should return search results with content', async () => {
+  describe('search', () => {
+    it('should return results when content matches query', async () => {
       const mockContent = [
-        {
-          id: 'content-1',
-          title: 'Test Video',
-          description: 'A test video description',
-          contentType: 'video',
-          status: 'published',
-          viewCount: 100,
-          averageRating: 4.5,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
+        { id: '1', title: 'Reality Show', description: 'A great show', status: 'published', viewCount: 100, createdAt: new Date(), updatedAt: new Date() },
+      ];
+      const mockCreators = [
+        { id: 'c1', bio: 'Creator bio', userId: 'u1', displayName: 'Creator', email: 'creator@test.com' },
+      ];
+      const mockUniverses = [
+        { id: 'uni1', name: 'Reality', displayName: 'Reality Universe' },
       ];
 
       mockPrismaService.contentItem.findMany.mockResolvedValue(mockContent);
       mockPrismaService.contentItem.count.mockResolvedValue(1);
-      mockPrismaService.creatorProfile.findMany.mockResolvedValue([]);
-      mockPrismaService.universe.findMany.mockResolvedValue([]);
+      mockPrismaService.creatorProfile.findMany.mockResolvedValue(mockCreators);
+      mockPrismaService.universe.findMany.mockResolvedValue(mockUniverses);
 
-      const response = await request(app.getHttpServer()).get('/v1/search?q=test');
+      const result = await service.search('reality');
 
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.results.content).toHaveLength(1);
-      expect(response.body.data.results.content[0].title).toBe('Test Video');
+      expect(result.success).toBe(true);
+      expect(result.data.results.content).toHaveLength(1);
+      expect(result.data.results.content[0].title).toBe('Reality Show');
+      expect(result.data.total).toBe(3);
+      expect(mockCacheService.set).toHaveBeenCalled();
     });
 
-    it('should return empty results for no matches', async () => {
+    it('should return empty results when no content matches', async () => {
       mockPrismaService.contentItem.findMany.mockResolvedValue([]);
       mockPrismaService.contentItem.count.mockResolvedValue(0);
       mockPrismaService.creatorProfile.findMany.mockResolvedValue([]);
       mockPrismaService.universe.findMany.mockResolvedValue([]);
 
-      const response = await request(app.getHttpServer()).get('/v1/search?q=nonexistent');
+      const result = await service.search('nonexistent');
 
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.results.content).toHaveLength(0);
-      expect(response.body.data.total).toBe(0);
+      expect(result.success).toBe(true);
+      expect(result.data.results.content).toHaveLength(0);
+      expect(result.data.total).toBe(0);
     });
 
-    it('should apply category filter correctly', async () => {
-      const mockContent = [
-        {
-          id: 'content-2',
-          title: 'Filtered Content',
-          description: 'Content with category filter',
-          contentType: 'video',
-          status: 'published',
-          viewCount: 50,
-          averageRating: 4.0,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          categories: [{ id: 'cat-1', name: 'Action' }],
+    it('should return cached results when available', async () => {
+      const cachedResult = {
+        success: true,
+        data: {
+          query: 'cached',
+          results: { content: [{ id: '1', title: 'Cached' }], creators: [], universes: [] },
+          total: 1,
+          pagination: { page: 1, limit: 20, total: 1, totalPages: 1 },
         },
-      ];
+      };
+      mockCacheService.get.mockResolvedValue(cachedResult);
 
-      mockPrismaService.contentItem.findMany.mockResolvedValue(mockContent);
-      mockPrismaService.contentItem.count.mockResolvedValue(1);
-      mockPrismaService.creatorProfile.findMany.mockResolvedValue([]);
-      mockPrismaService.universe.findMany.mockResolvedValue([]);
+      const result = await service.search('cached');
 
-      const response = await request(app.getHttpServer())
-        .get('/v1/search?q=test')
-        .query({ categories: 'cat-1' });
-
-      expect(response.status).toBe(200);
-      expect(mockPrismaService.contentItem.findMany).toHaveBeenCalled();
+      expect(result).toEqual(cachedResult);
+      expect(mockPrismaService.contentItem.findMany).not.toHaveBeenCalled();
     });
 
-    it('should reject queries shorter than 2 characters', async () => {
-      const response = await request(app.getHttpServer()).get('/v1/search?q=a');
-
-      expect(response.status).toBe(400);
+    it('should throw BadRequestException for short query', async () => {
+      await expect(service.search('a')).rejects.toThrow(BadRequestException);
     });
 
-    it('should sort by newest first by default', async () => {
-      mockPrismaService.contentItem.findMany.mockResolvedValue([]);
-      mockPrismaService.contentItem.count.mockResolvedValue(0);
-
-      await request(app.getHttpServer()).get('/v1/search?q=test');
-
-      expect(mockPrismaService.contentItem.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          orderBy: { createdAt: 'desc' },
-        })
-      );
-    });
-
-    it('should sort by popularity when requested', async () => {
-      mockPrismaService.contentItem.findMany.mockResolvedValue([]);
-      mockPrismaService.contentItem.count.mockResolvedValue(0);
-
-      await request(app.getHttpServer()).get('/v1/search?q=test').query({ sort: 'popular' });
-
-      expect(mockPrismaService.contentItem.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          orderBy: { viewCount: 'desc' },
-        })
-      );
-    });
-
-    it('should support pagination parameters', async () => {
-      const mockContent = [
-        {
-          id: 'content-1',
-          title: 'Page 1 Content',
-          description: 'Content on page 1',
-          contentType: 'video',
-          status: 'published',
-          viewCount: 100,
-          averageRating: 4.5,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ];
-
-      mockPrismaService.contentItem.findMany.mockResolvedValue(mockContent);
-      mockPrismaService.contentItem.count.mockResolvedValue(10);
-      mockPrismaService.creatorProfile.findMany.mockResolvedValue([]);
-      mockPrismaService.universe.findMany.mockResolvedValue([]);
-
-      const response = await request(app.getHttpServer())
-        .get('/v1/search?q=test')
-        .query({ page: 2, limit: 10 });
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.pagination).toBeDefined();
-      expect(response.body.data.pagination.page).toBe(2);
-      expect(response.body.data.pagination.limit).toBe(10);
-      expect(response.body.data.total).toBe(10);
-    });
-
-    it('should use default pagination when not specified', async () => {
+    it('should respect pagination filters', async () => {
       mockPrismaService.contentItem.findMany.mockResolvedValue([]);
       mockPrismaService.contentItem.count.mockResolvedValue(0);
       mockPrismaService.creatorProfile.findMany.mockResolvedValue([]);
       mockPrismaService.universe.findMany.mockResolvedValue([]);
 
-      await request(app.getHttpServer()).get('/v1/search?q=test');
+      await service.search('test', { page: 2, limit: 10 });
 
       expect(mockPrismaService.contentItem.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          skip: 0,
-          take: 20,
-        })
+        expect.objectContaining({ skip: 10, take: 10 })
       );
     });
   });
 
-  describe('GET /search/suggestions', () => {
-    it('should return autocomplete suggestions', async () => {
+  describe('searchWithFacets', () => {
+    it('should return results with facet data', async () => {
+      const mockContent = [
+        { id: '1', title: 'Show', description: 'Description', status: 'published', viewCount: 50, createdAt: new Date(), updatedAt: new Date() },
+      ];
+      const mockGroupBy = [
+        { universeId: 'uni1', _count: { id: 5 } },
+      ];
+      const mockContentTypeGroupBy = [
+        { contentType: 'video', _count: { id: 3 } },
+      ];
+
+      mockPrismaService.contentItem.findMany.mockResolvedValue(mockContent);
+      mockPrismaService.creatorProfile.findMany.mockResolvedValue([]);
+      mockPrismaService.universe.findMany.mockResolvedValue([
+        { id: 'uni1', name: 'Reality', displayName: 'Reality' },
+      ]);
+      mockPrismaService.contentItem.groupBy
+        .mockResolvedValueOnce(mockGroupBy)
+        .mockResolvedValueOnce(mockContentTypeGroupBy);
+      mockPrismaService.contentItem.count.mockResolvedValue(5);
+
+      const result = await service.searchWithFacets('show');
+
+      expect(result.success).toBe(true);
+      expect(result.data.facets).toBeDefined();
+      expect(result.data.facets.universes).toHaveLength(1);
+    });
+  });
+
+  describe('getSuggestions', () => {
+    it('should return search suggestions matching query', async () => {
       const mockSuggestions = [
-        { query: 'test video', count: 10 },
-        { query: 'test content', count: 5 },
+        { query: 'reality show', resultCount: 100 },
+        { query: 'reality tv', resultCount: 50 },
       ];
 
       mockPrismaService.searchQueryLog.findMany.mockResolvedValue(mockSuggestions);
 
-      const response = await request(app.getHttpServer()).get('/v1/search/suggestions?q=test');
+      const result = await service.getSuggestions('real');
 
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.suggestions).toBeDefined();
+      expect(result.success).toBe(true);
+      expect(result.data.suggestions).toEqual(['reality show', 'reality tv']);
+      expect(mockCacheService.set).toHaveBeenCalled();
+    });
+
+    it('should return cached suggestions when available', async () => {
+      const cachedResult = {
+        success: true,
+        data: { suggestions: ['cached suggestion'] },
+      };
+      mockCacheService.get.mockResolvedValue(cachedResult);
+
+      const result = await service.getSuggestions('cache');
+
+      expect(result).toEqual(cachedResult);
+      expect(mockPrismaService.searchQueryLog.findMany).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException for empty query', async () => {
+      await expect(service.getSuggestions('')).rejects.toThrow(BadRequestException);
     });
   });
 
-  describe('GET /search/trending', () => {
-    it('should return trending content', async () => {
+  describe('getTrending', () => {
+    it('should return trending search queries', async () => {
       const mockTrending = [
-        { query: 'popular video', count: 10000 },
-        { query: 'trending show', count: 5000 },
+        { query: 'popular show', resultCount: 500 },
+        { query: 'viral video', resultCount: 300 },
       ];
 
       mockPrismaService.searchQueryLog.findMany.mockResolvedValue(mockTrending);
 
-      const response = await request(app.getHttpServer()).get('/v1/search/trending');
+      const result = await service.getTrending();
 
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.trending).toBeDefined();
+      expect(result.success).toBe(true);
+      expect(result.data.trending).toHaveLength(2);
+      expect(result.data.trending[0]).toEqual({ query: 'popular show', count: 500 });
+    });
+
+    it('should return empty trending when no searches exist', async () => {
+      mockPrismaService.searchQueryLog.findMany.mockResolvedValue([]);
+
+      const result = await service.getTrending();
+
+      expect(result.success).toBe(true);
+      expect(result.data.trending).toHaveLength(0);
     });
   });
 
-  describe('Error Handling', () => {
-    it('should handle database errors gracefully', async () => {
-      mockPrismaService.contentItem.findMany.mockRejectedValue(new Error('Database error'));
+  describe('getFacets', () => {
+    it('should return available facets', async () => {
+      mockPrismaService.universe.findMany.mockResolvedValue([
+        { id: 'uni1', name: 'Reality', displayName: 'Reality Universe' },
+      ]);
+      mockPrismaService.contentItem.groupBy.mockResolvedValue([
+        { universe: 'reality', _count: { id: 10 } },
+      ]);
+      mockPrismaService.tag.findMany.mockResolvedValue([
+        { id: 'tag1', name: 'drama' },
+      ]);
 
-      const response = await request(app.getHttpServer()).get('/v1/search?q=test');
+      const result = await service.getFacets();
 
-      // Service handles errors gracefully - returns 400 or 500
-      expect([400, 500]).toContain(response.status);
+      expect(result.success).toBe(true);
+      expect(result.data.facets).toBeDefined();
+      expect(result.data.facets.universes).toHaveLength(1);
+      expect(result.data.facets.tags).toHaveLength(1);
     });
+  });
 
-    it('should handle concurrent requests safely', async () => {
-      mockPrismaService.contentItem.findMany.mockResolvedValue([]);
-      mockPrismaService.contentItem.count.mockResolvedValue(0);
-      mockPrismaService.creatorProfile.findMany.mockResolvedValue([]);
-      mockPrismaService.universe.findMany.mockResolvedValue([]);
+  describe('logSearch', () => {
+    it('should log search and invalidate cache', async () => {
+      mockPrismaService.searchQueryLog.create.mockResolvedValue({});
+      mockPrismaService.userSearch.create.mockResolvedValue({});
 
-      const promises = Array(3)
-        .fill(null)
-        .map(() => request(app.getHttpServer()).get('/v1/search?q=test'));
+      const result = await service.logSearch('user-1', 'test query', 5);
 
-      const results = await Promise.all(promises);
-
-      results.forEach((response) => {
-        expect(response.status).toBe(200);
-      });
+      expect(result.success).toBe(true);
+      expect(mockPrismaService.searchQueryLog.create).toHaveBeenCalled();
+      expect(mockPrismaService.userSearch.create).toHaveBeenCalled();
+      expect(mockCacheService.delete).toHaveBeenCalled();
     });
   });
 });

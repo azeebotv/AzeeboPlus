@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { RealityModule } from './modules/reality/reality.module.js';
+import { AdminModule } from './modules/admin/admin.module.js';
 import { DatabaseModule } from './modules/database/database.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { RateLimiterModule } from '@azeebo/security';
@@ -19,6 +20,7 @@ import { CacheModule } from '@azeebo/shared-services';
     CacheModule,
     DatabaseModule,
     RealityModule,
+    AdminModule,
     HealthModule,
   ],
   providers: [

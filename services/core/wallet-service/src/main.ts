@@ -1,3 +1,6 @@
+import { initializeOpenTelemetry } from '@azeebo/opentelemetry';
+initializeOpenTelemetry({ serviceName: 'wallet-service', port: 3002 });
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
 import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';

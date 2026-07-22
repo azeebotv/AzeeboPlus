@@ -1,95 +1,102 @@
 # Azeebo+ Payment Service
 
-## Overview
+> Port: 3003 | Database: `azeebo_payment` | Analytics: Yes
 
-The Payment Service handles all payment processing for the Azeebo+ platform. It integrates with multiple payment providers and manages payment verification, refunds, and webhooks.
-
-## Features
-
-- **Payment Processing**: Multi-provider payment handling
-- **Payment Verification**: Transaction confirmation
-- **Refunds**: Process refund requests
-- **Webhooks**: Handle payment provider webhooks
-- **Payment History**: Track payment transactions
-
-## Technology Stack
-
-- **Framework**: NestJS 11.x
-- **Language**: TypeScript
-- **Database**: PostgreSQL with Prisma ORM
-- **Payment Providers**: Paystack, Flutterwave
-- **API Docs**: Swagger/OpenAPI
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 22+
-- PostgreSQL 15+
-
-### Installation
-
-```bash
-pnpm install
-pnpm run prisma:generate
-pnpm run prisma:migrate
-```
-
-### Running the Service
-
-```bash
-pnpm run start:dev
-```
+Handles payment processing, verification, refunds, and webhook handling for the Azeebo+ platform. Integrates with Paystack and Flutterwave as payment providers.
 
 ## API Endpoints
 
-### Payments
+### Payments (/payments)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | /payments/initialize | Initialize payment |
-| POST | /payments/verify | Verify payment |
-| GET | /payments/history | Get payment history |
-| GET | /payments/:id | Get payment details |
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | /payments/initialize | Create a payment intent and return a payment URL | JWT |
+| POST | /payments/verify | Verify payment status with the provider | JWT |
+| GET | /payments/history | Get payment transaction history for the authenticated user | JWT |
+| GET | /payments/:id | Get details of a specific payment | JWT |
+| POST | /payments/refund-request | Request a refund for a completed payment | JWT |
 
-### Webhooks
+### Webhooks (/webhooks)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | /payments/webhooks/paystack | Paystack webhook |
-| POST | /payments/webhooks/flutterwave | Flutterwave webhook |
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | /webhooks/paystack | Handle Paystack webhook events | Public (signature verified) |
+| POST | /webhooks/flutterwave | Handle Flutterwave webhook events | Public (signature verified) |
 
-### Health
+### Pricing (/pricing)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | /health | Health check |
-| GET | /ready | Readiness probe |
-| GET | /live | Liveness probe |
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | /pricing/movie | Get movie pricing | JWT |
+| GET | /pricing/vote-packages/:type | Get vote packages by type (standard, reality, superVote) | JWT |
+| GET | /pricing/subscriptions | Get subscription plans | JWT |
+| GET | /pricing/wallet | Get wallet pricing and limits | JWT |
+| GET | /pricing/passes | Get content passes pricing | JWT |
+
+### Admin (/admin)
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | /admin/stats | Get payment statistics | Admin |
+| GET | /admin/payments | List all payments (paginated, filterable by status) | Admin |
+| GET | /admin/payments/:paymentId | Get payment details by ID | Admin |
+| GET | /admin/payment-intents | List all payment intents (paginated, filterable by status) | Admin |
+| GET | /admin/refunds | List all refunds (paginated, filterable by status) | Admin |
+| GET | /admin/webhook-events | List webhook events (paginated, filterable by provider) | Admin |
+
+### Health (/health)
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | /health | Full health check (database, memory, disk, external services) | Public |
+| GET | /health/live | Liveness probe | Public |
+| GET | /health/ready | Readiness probe | Public |
+
+## Events Tracked
+
+| Event | Trigger | Properties |
+|-------|---------|------------|
+| `payment_success` | Payment completed successfully | paymentId, amount, currency, provider, paymentMethod |
+| `payment_failed` | Payment failed | paymentId, amount, currency, provider, failureReason |
+| `refund_completed` | Refund processed | refundId, paymentId, amount, reason |
 
 ## Configuration
 
 ```bash
 PORT=3003
-DATABASE_URL="postgresql://user:password@localhost:5432/payments"
-JWT_SECRET="your-secret"
+DATABASE_URL="postgresql://azeebo:azeebo_dev_2024@localhost:5432/azeebo_payment?schema=public"
+JWT_SECRET="your-jwt-secret"
 
 # Payment Providers
 PAYSTACK_SECRET="paystack-secret"
+PAYSTACK_WEBHOOK_SECRET="paystack-webhook-secret"
 FLUTTERWAVE_SECRET="flutterwave-secret"
+FLUTTERWAVE_WEBHOOK_SECRET="flutterwave-webhook-secret"
+
+# Analytics
+ANALYTICS_SERVICE_URL="http://localhost:3004"
+
+# Wallet Service
+WALLET_SERVICE_URL="http://localhost:3005"
 ```
+
+## Prisma Models
+
+| Model | Table | Description |
+|-------|-------|-------------|
+| `Payment` | payments | Completed payment records with provider references |
+| `PaymentIntent` | payment_intents | Pending payment intents with idempotency keys |
+| `Refund` | refunds | Refund requests linked to payment intents |
+| `WebhookEvent` | webhook_events | Processed webhook events for deduplication |
+| `WebhookRetry` | webhook_retries | Failed webhook events queued for retry |
+| `PaymentMethod` | payment_methods | Tokenized payment methods for user card management |
 
 ## Security
 
-- Webhooks are cryptographically signed
-- All payment amounts verified server-side
-- Idempotent webhook handling
-- Comprehensive logging
+- Global `ServiceAuthGuard` on all routes (endpoints opt-out with `@Public()`)
+- Webhook signature verification (Paystack HMAC, Flutterwave verif-hash)
+- Duplicate webhook detection and replay attack prevention
+- Rate limiting on payment initialization, verification, and refund requests
+- Admin endpoints protected by `AdminGuard`
 
-## Testing
-
-```bash
-pnpm test
-```
-
-**Last Updated:** 2026-05-19
+**Last Updated:** 2026-07-22

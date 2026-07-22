@@ -86,13 +86,27 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
 
     const clientIp = request.ip || request.socket?.remoteAddress || 'unknown';
     const window = Math.floor(Date.now() / (this.AUTH_TTL * 1000));
-    const key = `${this.KEY_PREFIX}${clientIp}:${window}`;
 
+    // Per-IP rate limit
+    const ipKey = `${this.KEY_PREFIX}${clientIp}:${window}`;
     if (this.useRedis && this.redisClient) {
-      return this.checkWithRedis(key, clientIp);
+      await this.checkWithRedis(ipKey, clientIp);
+    } else {
+      this.checkInMemory(clientIp, window);
     }
 
-    return this.checkInMemory(clientIp, window);
+    // Per-account rate limit (extract email/phone from body if available)
+    const account_id = request.body?.email || request.body?.phone || request.body?.username;
+    if (account_id) {
+      const accountKey = `${this.KEY_PREFIX}acct:${account_id}:${window}`;
+      if (this.useRedis && this.redisClient) {
+        await this.checkWithRedis(accountKey, `account:${account_id}`);
+      } else {
+        this.checkInMemory(`acct:${account_id}`, window);
+      }
+    }
+
+    return true;
   }
 
   private async checkWithRedis(key: string, clientIp: string): Promise<boolean> {

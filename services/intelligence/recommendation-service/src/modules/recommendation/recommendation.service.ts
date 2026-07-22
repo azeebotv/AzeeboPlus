@@ -69,12 +69,15 @@ interface FraudRisk {
 @Injectable()
 export class RecommendationService {
   private readonly logger = new Logger(RecommendationService.name);
+  private readonly analyticsServiceBaseUrl: string;
 
   constructor(
     @Inject(PrismaService) private prisma: PrismaService,
     @Inject(CacheService) private readonly cache: CacheService,
     @Inject(ConfigService) private readonly configService: ConfigService
-  ) {}
+  ) {
+    this.analyticsServiceBaseUrl = this.configService.get<string>('ANALYTICS_SERVICE_URL', 'http://analytics-service:3040');
+  }
 
   private async getSubscriptionCount(userId: string): Promise<number> {
     try {
@@ -301,6 +304,7 @@ export class RecommendationService {
 
       const result = { success: true, data: crossUniverseDiversity.slice(0, limit) };
       await this.cache.set(cacheK, result, 1800);
+      this.trackAnalyticsEvent('recommendations_served', userId || 'anonymous', { count: result.data.length });
       return result;
     } catch (error) {
       this.logger.error(
@@ -309,6 +313,12 @@ export class RecommendationService {
       );
       return { success: false };
     }
+  }
+
+  private async trackAnalyticsEvent(eventName: string, userId: string, metadata: Record<string, unknown> = {}): Promise<void> {
+    try {
+      await axios.post(`${this.analyticsServiceBaseUrl}/analytics/track`, { eventName, userId, metadata, timestamp: new Date().toISOString() }, { timeout: 10000 });
+    } catch (error) { this.logger.warn(`Failed to track analytics event: ${eventName}`); }
   }
 
   private async getFallbackRecommendations(

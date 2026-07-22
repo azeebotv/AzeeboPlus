@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "LS",
+      "WebSearch",
+      "WebFetch",
+      "TodoWrite"
+    ],
+    "deny": []
+  },
+  "context": {
+    "includeFiles": [
+      "CLAUDE.md",
+      "ARCHITECTURE.md",
+      "SERVICES.md",
+      "CONTRIBUTING.md"
+    ]
+  },
+  "project": {
+    "name": "azeebo-plus",
+    "description": "Modular entertainment platform by VMNL — 8 universes, shared services, mobile-first"
+  }
+}

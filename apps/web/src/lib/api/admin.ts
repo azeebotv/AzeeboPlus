@@ -279,6 +279,7 @@ export function createAdminMethods(client: RequestClient) {
       dateField: string;
       dateRange: string;
       isPublic: boolean;
+      format?: string;
     }): Promise<ApiResponse<AdminReport>> => {
       return client.request<AdminReport>('/api/v1/admin/reports', {
         method: 'POST',

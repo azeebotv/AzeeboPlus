@@ -66,18 +66,18 @@ seed_auth_db() {
   run_sql "azeebo_auth" "
     INSERT INTO users (id, email, password, \"displayName\", avatar, role, \"isVerified\", \"createdAt\", \"updatedAt\")
     VALUES
-      ('a0000001-0000-0000-0000-000000000001', 'admin@azeeboplus.com', '${demo_hash}', 'Admin Chidi', '/images/placeholders/avatars/100x100_07.png
-      ('a0000001-0000-0000-0000-000000000002', 'moderator@azeeboplus.com', '${demo_hash}', 'Mod Amina', '/images/placeholders/avatars/100x100_08.png
-      ('a0000001-0000-0000-0000-000000000003', 'creator1@azeeboplus.com', '${demo_hash}', 'Tunde Creates', '/images/placeholders/avatars/100x100_09.png
-      ('a0000001-0000-0000-0000-000000000004', 'creator2@azeeboplus.com', '${demo_hash}', 'Ngozi Vibes', '/images/placeholders/avatars/100x100_10.png
-      ('a0000001-0000-0000-0000-000000000005', 'creator3@azeeboplus.com', '${demo_hash}', 'Emeka Studios', '/images/placeholders/avatars/100x100_11.png
-      ('a0000001-0000-0000-0000-000000000006', 'user1@azeeboplus.com', '${demo_hash}', 'Kemi Watch', '/images/placeholders/avatars/100x100_12.png
-      ('a0000001-0000-0000-0000-000000000007', 'user2@azeeboplus.com', '${demo_hash}', 'Olumide F', '/images/placeholders/avatars/100x100_01.png
-      ('a0000001-0000-0000-0000-000000000008', 'user3@azeeboplus.com', '${demo_hash}', 'Fatima A', '/images/placeholders/avatars/100x100_02.png
+      ('a0000001-0000-0000-0000-000000000001', 'admin@azeeboplus.com', '${demo_hash}', 'Admin Chidi', '/images/placeholders/avatars/100x100_07.png', 'admin', true, '2025-01-01T00:00:00Z', NOW()),
+      ('a0000001-0000-0000-0000-000000000002', 'moderator@azeeboplus.com', '${demo_hash}', 'Mod Amina', '/images/placeholders/avatars/100x100_08.png', 'moderator', true, '2025-01-15T00:00:00Z', NOW()),
+      ('a0000001-0000-0000-0000-000000000003', 'creator1@azeeboplus.com', '${demo_hash}', 'Tunde Creates', '/images/placeholders/avatars/100x100_09.png', 'creator', true, '2025-02-01T00:00:00Z', NOW()),
+      ('a0000001-0000-0000-0000-000000000004', 'creator2@azeeboplus.com', '${demo_hash}', 'Ngozi Vibes', '/images/placeholders/avatars/100x100_10.png', 'creator', true, '2025-02-15T00:00:00Z', NOW()),
+      ('a0000001-0000-0000-0000-000000000005', 'creator3@azeeboplus.com', '${demo_hash}', 'Emeka Studios', '/images/placeholders/avatars/100x100_11.png', 'creator', true, '2025-03-01T00:00:00Z', NOW()),
+      ('a0000001-0000-0000-0000-000000000006', 'user1@azeeboplus.com', '${demo_hash}', 'Kemi Watch', '/images/placeholders/avatars/100x100_12.png', 'user', true, '2025-03-15T00:00:00Z', NOW()),
+      ('a0000001-0000-0000-0000-000000000007', 'user2@azeeboplus.com', '${demo_hash}', 'Olumide F', '/images/placeholders/avatars/100x100_01.png', 'user', true, '2025-04-01T00:00:00Z', NOW()),
+      ('a0000001-0000-0000-0000-000000000008', 'user3@azeeboplus.com', '${demo_hash}', 'Fatima A', '/images/placeholders/avatars/100x100_02.png', 'user', true, '2025-04-15T00:00:00Z', NOW()),
       ('a0000001-0000-0000-0000-000000000009', 'banned@azeeboplus.com', '${demo_hash}', 'Chukwu M', NULL, 'user', true, '2025-02-20T00:00:00Z', NOW()),
       ('a0000001-0000-0000-0000-000000000010', 'unverified@azeeboplus.com', '${demo_hash}', 'Yemi O', NULL, 'user', false, '2025-05-01T00:00:00Z', NOW()),
-      ('a0000001-0000-0000-0000-000000000011', 'sportscreator@azeeboplus.com', '${demo_hash}', 'Chinedu Sports', '/images/placeholders/avatars/100x100_03.png
-      ('a0000001-0000-0000-0000-000000000012', 'gamer@azeeboplus.com', '${demo_hash}', 'Tunde Gaming', '/images/placeholders/avatars/100x100_04.png
+      ('a0000001-0000-0000-0000-000000000011', 'sportscreator@azeeboplus.com', '${demo_hash}', 'Chinedu Sports', '/images/placeholders/avatars/100x100_03.png', 'creator', true, '2025-05-10T00:00:00Z', NOW()),
+      ('a0000001-0000-0000-0000-000000000012', 'gamer@azeeboplus.com', '${demo_hash}', 'Tunde Gaming', '/images/placeholders/avatars/100x100_04.png', 'creator', true, '2025-06-01T00:00:00Z', NOW()),
     ON CONFLICT (email) DO UPDATE SET
       password = EXCLUDED.password,
       role = EXCLUDED.role,

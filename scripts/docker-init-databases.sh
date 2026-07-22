@@ -95,6 +95,6 @@ create_db_and_user "azeebo_moderation" "azeebo" "${MODERATION_DB_PASSWORD:-azeeb
 # FRONTEND
 # ============================================================
 create_db_and_user "azeebo_admin" "azeebo" "${ADMIN_DB_PASSWORD:-azeebo_dev_2024}"
-create_db_and_user "azeebo_creator_portal" "azeebo" "${CREATOR_PORTAL_DB_PASSWORD:-azeebo_dev_2024}"
+create_db_and_user "azeebo_creator" "azeebo" "${CREATOR_DB_PASSWORD:-azeebo_dev_2024}"
 
 echo "All service databases initialized successfully!"

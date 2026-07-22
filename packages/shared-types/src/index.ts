@@ -613,6 +613,7 @@ export type {
   PrivacyPolicyAcceptance,
   ConsentAuditLog,
 } from './privacy-policy';
+export { PRIVACY_POLICY, checkConsentCompliance } from './privacy-policy';
 
 // Universe-specific types
 export interface UniverseKpi {

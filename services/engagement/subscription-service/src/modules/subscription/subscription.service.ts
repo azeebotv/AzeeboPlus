@@ -12,6 +12,7 @@ import axios from 'axios';
 export class SubscriptionService {
   private readonly logger = new Logger(SubscriptionService.name);
   private readonly paymentServiceBaseUrl: string;
+  private readonly analyticsServiceBaseUrl: string;
   private readonly circuitBreaker = new CircuitBreaker({
     failureThreshold: 5,
     resetTimeout: 60000,
@@ -23,6 +24,7 @@ export class SubscriptionService {
     @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.paymentServiceBaseUrl = this.configService.getOrThrow<string>('PAYMENT_SERVICE_URL');
+    this.analyticsServiceBaseUrl = this.configService.get<string>('ANALYTICS_SERVICE_URL', 'http://analytics-service:3040');
   }
 
   async getPlans(): Promise<SubscriptionPlan[]> {
@@ -160,6 +162,7 @@ export class SubscriptionService {
     await this.cache.invalidate(`subscription:user:${userId}`);
     await this.cache.invalidate('subscription:plans');
 
+    this.trackAnalyticsEvent('subscription_created', userId, { planId: dto.planId });
     return subscription;
   }
 
@@ -204,7 +207,14 @@ export class SubscriptionService {
 
     await this.cache.invalidate(`subscription:user:${userId}`);
 
+    this.trackAnalyticsEvent('subscription_cancelled', userId, { subscriptionId });
     return result;
+  }
+
+  private async trackAnalyticsEvent(eventName: string, userId: string, metadata: Record<string, unknown> = {}): Promise<void> {
+    try {
+      await axios.post(`${this.analyticsServiceBaseUrl}/analytics/track`, { eventName, userId, metadata, timestamp: new Date().toISOString() }, { timeout: 10000 });
+    } catch (error) { this.logger.warn(`Failed to track analytics event: ${eventName}`); }
   }
 
   async getSubscriptionHistory(
