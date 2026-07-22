@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { AuthCookieController } from './modules/auth/auth-cookie.controller';
 import { UserManagementModule } from './modules/user-management/user-management.module';
 import { ContentManagementModule } from './modules/content-management/content-management.module';
 import { ModerationModule } from './modules/moderation/moderation.module';
@@ -15,7 +16,9 @@ import { ContentReviewModule } from './modules/content-review/content-review.mod
 import { EngagementAdminModule } from './modules/engagement-admin/engagement-admin.module';
 import { NotificationAdminModule } from './modules/notification-admin/notification-admin.module';
 import { ReportsAdminModule } from './modules/reports-admin/reports-admin.module';
+import { PlatformOverviewModule } from './modules/platform-overview/platform-overview.module';
 import { HealthModule } from './modules/health/health.module';
+import { WebModule } from './web/web.module';
 import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { CsrfMiddleware } from './common/csrf.middleware';
@@ -41,8 +44,11 @@ import { CsrfMiddleware } from './common/csrf.middleware';
     EngagementAdminModule,
     NotificationAdminModule,
     ReportsAdminModule,
+    PlatformOverviewModule,
     HealthModule,
+    WebModule,
   ],
+  controllers: [AuthCookieController],
   providers: [
     {
       provide: APP_INTERCEPTOR,

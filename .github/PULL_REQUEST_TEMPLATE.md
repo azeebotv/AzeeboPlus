@@ -1,35 +1,59 @@
-## Description
+## What
 
-<!-- Briefly describe what this PR does and why. -->
+<!-- 1-2 sentence summary of what this PR does. -->
+
+## Why
+
+<!-- Why is this needed? Link to issue/task: REAL-001, CREATOR-012, etc. -->
+
+## Changes
+
+- 
+- 
+- 
+
+## Screenshots / Demo
+
+<!-- If UI change, add before/after screenshots or screen recordings. -->
 
 ## Type of Change
 
-<!-- Check the one that applies. -->
-
-- [ ] Bug fix (non-breaking change that fixes an issue)
-- [ ] New feature (non-breaking change that adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to change)
+- [ ] Bug fix (non-breaking)
+- [ ] New feature (non-breaking)
+- [ ] Breaking change
 - [ ] Refactor (no functional changes)
-- [ ] Documentation update
-- [ ] CI/CD or infrastructure change
-- [ ] Other: <!-- describe -->
+- [ ] Documentation
+- [ ] CI/CD / Infrastructure
+- [ ] Hotfix
 
 ## Testing
 
-<!-- Describe the tests you ran and how to reproduce them. -->
-
 - [ ] Unit tests added/updated
 - [ ] Integration tests added/updated
-- [ ] E2E tests added/updated
 - [ ] Manual testing performed
+- [ ] Edge cases considered
 
 ## Checklist
 
-- [ ] My code follows the project's coding standards
-- [ ] I have performed a self-review of my code
-- [ ] I have commented my code where necessary
-- [ ] I have updated documentation accordingly
-- [ ] My changes generate no new warnings
-- [ ] I have added tests that prove my fix/feature works
-- [ ] New and existing tests pass locally
-- [ ] Any dependent changes have been merged and published
+- [ ] TypeScript strict — no `any`
+- [ ] Lint passes (`pnpm run lint`)
+- [ ] Type check passes (`pnpm run typecheck`)
+- [ ] Tests pass (`pnpm run test`)
+- [ ] Loading / empty / error / success states present
+- [ ] Analytics events added (view, action, success, failure)
+- [ ] Shared components reused from `/packages/ui`
+- [ ] No hardcoded prices or secrets
+- [ ] Wallet/payment uses shared services
+- [ ] PR is < 400 lines
+- [ ] No `console.log` (use `@azeebo/logger`)
+- [ ] Documentation updated (if needed)
+
+## Risk Level
+
+- [ ] Low — UI changes, docs, tests
+- [ ] Medium — new feature, service changes
+- [ ] High — payment, auth, data migration
+
+## Rollback Plan
+
+<!-- How do we revert if this causes issues? -->

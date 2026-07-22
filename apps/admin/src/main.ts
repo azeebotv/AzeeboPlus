@@ -2,6 +2,7 @@
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
@@ -11,6 +12,9 @@ import { configureCors } from '@azeebo/security';
 // Ensure required env vars are present early
 if (!process.env.JWT_ACCESS_SECRET) {
   throw new Error('❌ JWT_ACCESS_SECRET environment variable is not set');
+}
+if (!process.env.JWT_REFRESH_SECRET) {
+  throw new Error('❌ JWT_REFRESH_SECRET environment variable is not set');
 }
 
 async function bootstrap() {
@@ -27,7 +31,7 @@ async function bootstrap() {
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          styleSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
           imgSrc: ["'self'", 'data:', 'https:'],
           scriptSrc: ["'self'"],
           connectSrc: ["'self'"],
@@ -58,11 +62,25 @@ async function bootstrap() {
   const allowedOrigins = process.env.ADMIN_ALLOWED_ORIGINS?.split(',') || [
     'https://admin.azeeboplus.com',
     'http://localhost:4016',
+    'http://localhost:4100',
   ];
 
   configureCors(app, {
     allowedOrigins,
   });
+
+  // Swagger/OpenAPI setup
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('Azeebo+ Admin API')
+      .setDescription('API for admin panel operations')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
+    logger.log('Swagger docs available at /api/docs');
+  }
 
   app.enableShutdownHooks();
   const port = process.env.PORT || 4016;

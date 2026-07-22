@@ -33,7 +33,7 @@ interface AdminRequest extends Request {
 
 @Controller('admin/universes')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
+@Roles('admin', 'superadmin')
 export class UniverseManagementController {
   private readonly logger = new Logger(UniverseManagementController.name);
 

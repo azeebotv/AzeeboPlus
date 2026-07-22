@@ -5,14 +5,15 @@ import { AuditLogService } from '../audit/audit.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { resolveActorId } from '../../common/resolve-actor-id';
 
 interface AuthRequest extends Request {
-  user: { id: string; email: string; role: string };
+  user: { id?: string; sub?: string; email: string; role: string };
 }
 
 @Controller('admin/moderation')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
+@Roles('admin', 'superadmin')
 export class ModerationController {
   constructor(
     @Inject(ModerationService) private readonly moderationService: ModerationService,
@@ -50,7 +51,7 @@ export class ModerationController {
     @Req() req: AuthRequest,
     @Body() body: { action: string; reason: string }
   ): Promise<unknown> {
-    const adminId = req.user.id;
+    const adminId = resolveActorId(req);
     const result = await this.moderationService.resolveReport(
       id,
       body.action,
@@ -74,7 +75,7 @@ export class ModerationController {
     @Req() req: AuthRequest,
     @Body() body: { reason: string }
   ): Promise<unknown> {
-    const adminId = req.user.id;
+    const adminId = resolveActorId(req);
     const result = await this.moderationService.dismissReport(id, body.reason, adminId);
     await this.auditLogService.log({
       actorId: adminId,
@@ -99,7 +100,7 @@ export class ModerationController {
       duration?: string;
     }
   ): Promise<unknown> {
-    const adminId = req.user.id;
+    const adminId = resolveActorId(req);
     const result = await this.moderationService.takeSafetyAction(
       body.targetId,
       body.targetType,

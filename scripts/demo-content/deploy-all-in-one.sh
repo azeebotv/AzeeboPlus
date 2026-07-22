@@ -48,7 +48,7 @@ DATABASES=(
   azeebo_referral
   azeebo_subscription
   azeebo_admin
-  azeebo_creator_portal
+  azeebo_creator
 )
 
 log() { echo "[demo-all-in-one] $(date '+%Y-%m-%d %H:%M:%S') $*"; }

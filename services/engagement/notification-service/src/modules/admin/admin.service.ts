@@ -134,4 +134,68 @@ export class AdminService {
       return { success: false, error: (error as Error).message };
     }
   }
+
+  // Template CRUD
+  async getTemplates(options?: { page?: number; limit?: number }) {
+    const page = options?.page || 1;
+    const limit = options?.limit || 20;
+    const skip = (page - 1) * limit;
+
+    const [templates, total] = await Promise.all([
+      this.prisma.notificationTemplate.findMany({ skip, take: limit, orderBy: { createdAt: 'desc' } }),
+      this.prisma.notificationTemplate.count(),
+    ]);
+
+    return { templates, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  }
+
+  async createTemplate(data: { name: string; type: string; channel: string; subject?: string; body: string; variables?: string[] }) {
+    const template = await this.prisma.notificationTemplate.create({ data });
+    return { success: true, template };
+  }
+
+  async updateTemplate(id: string, data: Record<string, unknown>) {
+    const template = await this.prisma.notificationTemplate.update({ where: { id }, data });
+    return { success: true, template };
+  }
+
+  async deleteTemplate(id: string) {
+    await this.prisma.notificationTemplate.delete({ where: { id } });
+    return { success: true };
+  }
+
+  // Campaign CRUD
+  async getCampaigns(options?: { page?: number; limit?: number }) {
+    const page = options?.page || 1;
+    const limit = options?.limit || 20;
+    const skip = (page - 1) * limit;
+
+    const [campaigns, total] = await Promise.all([
+      this.prisma.campaign.findMany({ skip, take: limit, orderBy: { createdAt: 'desc' } }),
+      this.prisma.campaign.count(),
+    ]);
+
+    return { campaigns, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  }
+
+  async createCampaign(data: { name: string; templateId: string; targetAudience?: string; scheduledAt?: string }) {
+    const campaign = await this.prisma.campaign.create({
+      data: {
+        name: data.name,
+        templateId: data.templateId,
+        targetAudience: data.targetAudience as any,
+        scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : null,
+      },
+    });
+    return { success: true, campaign };
+  }
+
+  async sendCampaign(id: string) {
+    const campaign = await this.prisma.campaign.update({
+      where: { id },
+      data: { status: 'sending' },
+    });
+    this.logger.log(`Campaign ${id} marked as sending`);
+    return { success: true, campaign };
+  }
 }

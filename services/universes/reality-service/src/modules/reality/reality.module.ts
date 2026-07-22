@@ -3,6 +3,7 @@ import { RedisModule, JwtConfigModule } from '@azeebo/shared-services';
 
 import { RealityController } from './reality.controller.js';
 import { RealityService } from './reality.service.js';
+import { RealityGateway } from './reality.gateway.js';
 import { DatabaseModule } from '../database/database.module.js';
 
 @Module({
@@ -12,7 +13,7 @@ import { DatabaseModule } from '../database/database.module.js';
     JwtConfigModule,
   ],
   controllers: [RealityController],
-  providers: [RealityService],
-  exports: [RealityService, DatabaseModule],
+  providers: [RealityService, RealityGateway],
+  exports: [RealityService, RealityGateway, DatabaseModule],
 })
 export class RealityModule {}

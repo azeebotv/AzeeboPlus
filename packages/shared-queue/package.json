@@ -13,17 +13,16 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.json",
     "clean": "rm -rf dist",
     "lint": "eslint . --fix",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
-    "dev": "ts-node-dev --respawn --transpile-only src/main.ts"
+    "test:cov": "jest --coverage"
   },
   "dependencies": {
+    "@nestjs/common": "^11.1.27",
     "@nestjs/config": "^4.0.4",
-    "@nestjs/platform-express": "^11.1.27",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
   },

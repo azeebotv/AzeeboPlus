@@ -6,7 +6,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 
 @Controller('admin/engagement')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
+@Roles('admin', 'superadmin')
 export class EngagementAdminController {
   constructor(@Inject(EngagementAdminService) private readonly engagementService: EngagementAdminService) {}
 

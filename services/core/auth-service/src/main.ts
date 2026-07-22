@@ -1,3 +1,6 @@
+import { initializeOpenTelemetry } from '@azeebo/opentelemetry';
+initializeOpenTelemetry({ serviceName: 'auth-service', port: 3000 });
+
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module.js';
@@ -20,8 +23,8 @@ async function bootstrap(): Promise<void> {
   }
 
   for (const secret of requiredJwtSecrets) {
-    if (process.env[secret]!.length < 32) {
-      Logger.error(`${secret} must be at least 32 characters long`);
+    if (process.env[secret]!.length < 64) {
+      Logger.error(`${secret} must be at least 64 characters long`);
       process.exit(1);
     }
   }

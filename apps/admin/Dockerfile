@@ -10,10 +10,12 @@ COPY apps/admin/package.json ./apps/admin/
 RUN for i in 1 2 3 4 5; do pnpm install --frozen-lockfile && break || (echo "Retry $i/5..." && sleep 10); done
 
 COPY apps/admin/src ./apps/admin/src
+COPY apps/admin/client ./apps/admin/client
 COPY apps/admin/tsconfig*.json ./apps/admin/
 COPY apps/admin/prisma ./apps/admin/prisma
 
 RUN for i in 1 2 3 4 5; do pnpm --filter @azeebo/admin prisma generate && break || (echo "Retry prisma generate $i/5..." && sleep 15); done
+RUN pnpm --filter @azeebo/admin run build:client
 RUN pnpm --filter @azeebo/admin run build
 
 FROM node:22.16.0-alpine AS runner
@@ -30,14 +32,12 @@ RUN apk add --no-cache tini && \
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/admin/package.json ./apps/admin/
-# Copy workspace packages so @azeebo/shared-types, @azeebo/security,
-# @azeebo/logger, etc. are resolvable at runtime (pnpm install creates
-# symlinks under node_modules pointing into packages/).
 COPY packages ./packages
 
 RUN for i in 1 2 3 4 5; do pnpm install --prod --frozen-lockfile && break || (echo "Retry $i/5..." && sleep 10); done
 
 COPY --from=builder /app/apps/admin/dist ./apps/admin/dist
+COPY --from=builder /app/apps/admin/client/dist ./apps/admin/client/dist
 COPY --from=builder /app/apps/admin/prisma ./apps/admin/prisma
 COPY --from=builder /app/apps/admin/src/generated ./apps/admin/src/generated
 

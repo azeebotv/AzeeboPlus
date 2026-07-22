@@ -106,7 +106,7 @@ export class RefundService {
     const refund = await this.prisma.$transaction(async (tx) => {
       const locked = await tx.$queryRaw<
         { id: string; status: string }[]
-      >`SELECT id, status FROM "Refund" WHERE id = ${id} FOR UPDATE`;
+      >`SELECT id, status FROM "refunds" WHERE id = ${id} FOR UPDATE`;
 
       if (!locked || locked.length === 0) {
         throw new NotFoundException('Refund not found');

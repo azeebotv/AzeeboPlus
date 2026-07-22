@@ -11,6 +11,7 @@ import { MetricsModule } from './modules/metrics/metrics.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
+import { ObservabilityModule } from '@azeebo/observability';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { ResponseWrapperInterceptor } from '@azeebo/logger';
     MetricsModule,
     HealthModule,
     CacheModule,
+    ObservabilityModule,
   ],
   providers: [
     {

@@ -102,7 +102,7 @@ export default function LoginScreen() {
           </ScrollReveal>
 
           <ScrollReveal direction="up" delay={100}>
-            <GlassCard style={styles.card}>
+            <GlassCard style={styles.card} testID="login-card">
               <BrandInput
                 label="Email"
                 value={email}
@@ -110,6 +110,7 @@ export default function LoginScreen() {
                 placeholder="Enter your email"
                 keyboardType="email-address"
                 autoCapitalize="none"
+                testID="login-email-input"
               />
 
               <BrandInput
@@ -118,6 +119,7 @@ export default function LoginScreen() {
                 onChangeText={setPassword}
                 placeholder="Enter your password"
                 secureTextEntry
+                testID="login-password-input"
               />
 
               {error && (
@@ -129,6 +131,7 @@ export default function LoginScreen() {
               <TouchableOpacity
                 onPress={() => router.push('/(auth)/forgot-password')}
                 style={styles.forgotPasswordContainer}
+                testID="login-forgot-password"
               >
                 <Text style={styles.forgotPasswordText}>Forgot your password?</Text>
               </TouchableOpacity>
@@ -139,6 +142,7 @@ export default function LoginScreen() {
                 loading={isLoading || isSubmitting}
                 disabled={isSubmitting}
                 variant="primary"
+                testID="login-submit-button"
               />
 
               {showBiometricOption && (
@@ -161,11 +165,13 @@ export default function LoginScreen() {
                   title="Google"
                   onPress={() => handleSocialLogin('google')}
                   variant="social"
+                  testID="login-google-button"
                 />
                 <BrandButton
                   title="Apple"
                   onPress={() => handleSocialLogin('apple')}
                   variant="social"
+                  testID="login-apple-button"
                 />
               </View>
             </GlassCard>
@@ -178,6 +184,7 @@ export default function LoginScreen() {
                 title="Sign Up"
                 onPress={() => router.push('/(auth)/register')}
                 variant="ghost"
+                testID="login-signup-button"
               />
             </View>
           </ScrollReveal>

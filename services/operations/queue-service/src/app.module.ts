@@ -7,6 +7,7 @@ import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { EmailModule, FirebaseModule, SmsModule } from '@azeebo/shared-services';
 import { DatabaseModule } from './modules/database/database.module';
 import { HealthModule } from './modules/health/health.module';
+import { QueueModule } from './modules/queue/queue.module';
 import { NotificationProcessor } from './processors/notification.processor';
 import { PaymentProcessor } from './processors/payment.processor';
 import { EmailProcessor } from './processors/email.processor';
@@ -60,6 +61,7 @@ const QUEUE_CONFIG = {
     FirebaseModule,
     SmsModule,
     HealthModule,
+    QueueModule,
     BullModule.forRoot({
       connection: {
         host: process.env.REDIS_HOST || 'localhost',

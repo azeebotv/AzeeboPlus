@@ -3,10 +3,9 @@ import { ValidationPipe, Logger, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
 import { LoggingInterceptor } from '@azeebo/logger';
-import helmet from 'helmet';
 import { AppModule } from './app.module.js';
 import { validateEnvironment } from '@azeebo/shared-types';
-import { configureCors } from '@azeebo/security';
+import { configureCors, createHelmetConfig } from '@azeebo/security';
 
 async function bootstrap() {
   validateEnvironment(process.env);
@@ -16,7 +15,7 @@ async function bootstrap() {
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalInterceptors(new LoggingInterceptor());
 
-  app.use(helmet());
+  app.use(createHelmetConfig());
 
   if (!process.env.ALLOWED_ORIGINS) {
     throw new Error('ALLOWED_ORIGINS environment variable must be set');

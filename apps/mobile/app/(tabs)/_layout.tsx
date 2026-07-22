@@ -68,6 +68,7 @@ function CreateButton({ onPress }: { onPress: () => void }) {
       onPressOut={handlePressOut}
       accessibilityLabel="Create content"
       accessibilityRole="button"
+      testID="tab-create"
     >
       <View style={styles.createButtonInner}>
         <Text style={styles.createIcon}>+</Text>
@@ -121,6 +122,7 @@ function HeaderUtilities({ router }: { router: ReturnType<typeof useRouter> }) {
           onPress={() => router.push('/(tabs)/search')}
           accessibilityLabel="Search"
           accessibilityRole="button"
+          testID="header-search-button"
         >
           <Text style={styles.headerButtonText}>⌕</Text>
         </TouchableOpacity>
@@ -130,6 +132,7 @@ function HeaderUtilities({ router }: { router: ReturnType<typeof useRouter> }) {
           onPress={() => router.push('/(tabs)/wallet')}
           accessibilityLabel={`Wallet balance: ${walletBalance} tokens`}
           accessibilityRole="button"
+          testID="header-wallet-button"
         >
           <Text style={styles.headerButtonText}>◈</Text>
           <View style={styles.walletBadge}>
@@ -142,6 +145,7 @@ function HeaderUtilities({ router }: { router: ReturnType<typeof useRouter> }) {
           onPress={() => router.push('/notifications')}
           accessibilityLabel={`${unreadCount} notifications`}
           accessibilityRole="button"
+          testID="header-notifications-button"
         >
           <Text style={styles.headerButtonText}>♡</Text>
           {unreadCount > 0 && (
@@ -156,6 +160,7 @@ function HeaderUtilities({ router }: { router: ReturnType<typeof useRouter> }) {
           onPress={() => router.push('/(tabs)/profile')}
           accessibilityLabel="Profile"
           accessibilityRole="button"
+          testID="header-profile-button"
         >
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{userInitial}</Text>

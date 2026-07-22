@@ -9,7 +9,9 @@ import { MetricsModule } from './modules/metrics/metrics.module.js';
 import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { CacheModule } from './cache/index.js';
+import { ObservabilityModule } from '@azeebo/observability';
 import { JwtConfigModule } from '@azeebo/shared-services';
+import { EventBusModule } from '@azeebo/event-bus';
 
 @Module({
   imports: [
@@ -24,6 +26,13 @@ import { JwtConfigModule } from '@azeebo/shared-services';
     WalletModule,
     HealthModule,
     MetricsModule,
+    ObservabilityModule,
+    EventBusModule.forRoot(
+      {
+        redisUrl: process.env.EVENT_BUS_REDIS_URL || 'redis://localhost:6379',
+      },
+      'wallet-service'
+    ),
   ],
   controllers: [],
   providers: [

@@ -9,6 +9,8 @@ import {
   Query,
   Request,
   UseGuards,
+  ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
@@ -84,11 +86,11 @@ export class TicketController {
   async getTicket(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
     const result = await this.ticketService.getTicketById(id);
     if (!result || typeof result !== 'object' || !('userId' in result)) {
-      return ApiResponseWrapper.error('TICKET_NOT_FOUND', 'Support ticket not found');
+      throw new NotFoundException('Support ticket not found');
     }
     const ticket = result as { userId: string; [key: string]: unknown };
     if (ticket.userId !== req.user.id && req.user.role?.toLowerCase() !== 'admin') {
-      return ApiResponseWrapper.error('FORBIDDEN', 'You do not have access to this ticket');
+      throw new ForbiddenException('You do not have access to this ticket');
     }
     return ApiResponseWrapper.success({ ticket });
   }
@@ -110,6 +112,16 @@ export class TicketController {
     @Param('id') id: string,
     @Body() dto: AddMessageDto
   ) {
+    // Ownership check: verify user owns this ticket (or is admin)
+    const ticket = await this.ticketService.getTicketById(id);
+    if (!ticket || typeof ticket !== 'object' || !('userId' in ticket)) {
+      return ApiResponseWrapper.error('NOT_FOUND', 'Ticket not found');
+    }
+    const ticketRecord = ticket as { userId: string; [key: string]: unknown };
+    if (ticketRecord.userId !== req.user.id && req.user.role?.toLowerCase() !== 'admin') {
+      return ApiResponseWrapper.error('FORBIDDEN', 'You can only add messages to your own tickets');
+    }
+
     const senderType = req.user.role === 'admin' || req.user.role === 'ADMIN' ? 'AGENT' : 'USER';
     const isInternal =
       req.user.role === 'admin' || req.user.role === 'ADMIN' ? dto.isInternal : false;

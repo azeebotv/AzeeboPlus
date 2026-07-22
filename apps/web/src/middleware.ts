@@ -33,7 +33,7 @@ const protectedRoutes = [
   '/payment',
 ];
 const adminRoutes = ['/admin'];
-const creatorRoutes = ['/creator-portal'];
+const creatorRoutes = ['/creator'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

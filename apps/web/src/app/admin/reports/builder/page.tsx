@@ -28,6 +28,7 @@ export default function ReportBuilderPage(): React.JSX.Element {
         dateField: 'createdAt',
         dateRange: config.dateRange,
         isPublic: false,
+        format: config.format,
       });
       router.push('/admin/reports');
     } catch {

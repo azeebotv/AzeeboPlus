@@ -16,7 +16,7 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=4016
-      - DATABASE_URL=postgresql://azeebo:azeebo_dev_2024@host.docker.internal:5432/azeebo_admin?schema=public
+      - DATABASE_URL=postgresql://azeebo:${DB_PASSWORD:-azeebo_dev_2024}@host.docker.internal:5432/azeebo_admin?schema=public
     command: ["pnpm", "--filter", "@azeebo/admin", "start:dev"]
     extra_hosts:
       - "host.docker.internal:host-gateway"

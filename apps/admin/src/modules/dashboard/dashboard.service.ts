@@ -176,8 +176,8 @@ export class DashboardService {
       `SELECT u.id, u."displayName", u.avatar,
               COUNT(DISTINCT ci.id) as "contentCount",
               COALESCE(SUM(ci."viewCount"), 0) as "totalViews"
-       FROM "User" u
-       LEFT JOIN "ContentItem" ci ON ci."creatorId" = u.id AND ci.status = 'published'
+       FROM "users" u
+       LEFT JOIN "content_items" ci ON ci."creatorId" = u.id AND ci.status = 'published'
        WHERE u.role = 'creator'
        GROUP BY u.id, u."displayName", u.avatar
        ORDER BY "totalViews" DESC

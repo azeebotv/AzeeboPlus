@@ -93,4 +93,42 @@ export class AdminController {
   ) {
     return this.adminService.updateMission(id, body);
   }
+
+  // Badge CRUD
+  @Get('badges')
+  @RateLimit(50, 60000)
+  async getBadges(@Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.adminService.getBadges({ page, limit });
+  }
+
+  @Post('badges')
+  @RateLimit(50, 60000)
+  async createBadge(@Body() body: { name: string; description?: string; icon?: string; criteria?: string; points: number }) {
+    return this.adminService.createBadge(body);
+  }
+
+  @Post('badges/:id/assign')
+  @RateLimit(50, 60000)
+  async assignBadge(@Param('id') id: string, @Body() body: { userId: string; reason?: string }) {
+    return this.adminService.assignBadge(id, body.userId, body.reason);
+  }
+
+  // Level CRUD
+  @Get('levels')
+  @RateLimit(50, 60000)
+  async getLevels() {
+    return this.adminService.getLevels();
+  }
+
+  @Post('levels')
+  @RateLimit(50, 60000)
+  async createLevel(@Body() body: { name: string; minPoints: number; maxPoints?: number; perks?: string }) {
+    return this.adminService.createLevel(body);
+  }
+
+  @Put('levels/:id')
+  @RateLimit(50, 60000)
+  async updateLevel(@Param('id') id: string, @Body() body: { name?: string; minPoints?: number; maxPoints?: number; perks?: string }) {
+    return this.adminService.updateLevel(id, body);
+  }
 }

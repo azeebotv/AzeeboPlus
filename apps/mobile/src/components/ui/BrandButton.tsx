@@ -13,6 +13,7 @@ interface BrandButtonProps {
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
   fullWidth?: boolean;
+  testID?: string;
   accessibilityLabel?: string;
   accessibilityHint?: string;
 }
@@ -25,6 +26,7 @@ export function BrandButton({
   disabled = false,
   style,
   fullWidth = true,
+  testID,
   accessibilityLabel,
   accessibilityHint,
 }: BrandButtonProps) {
@@ -46,6 +48,7 @@ export function BrandButton({
 
   return (
     <AnimatedTouchable
+      testID={testID}
       style={[
         styles.base,
         styles[variant],

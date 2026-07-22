@@ -47,7 +47,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 @ApiBearerAuth()
 @Controller('admin/settings')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
+@Roles('admin', 'superadmin')
 export class SystemSettingsController {
   private readonly logger = new Logger(SystemSettingsController.name);
 

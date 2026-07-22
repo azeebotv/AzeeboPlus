@@ -17,6 +17,18 @@ export class ModerationService {
     @Inject(AuditLogService) private readonly auditService: AuditLogService
   ) {}
 
+  private parseDuration(duration: string): number {
+    const match = duration.match(/^(\d+)([dhm])$/);
+    if (!match) return 30 * 24 * 60 * 60 * 1000; // default 30 days
+    const value = parseInt(match[1], 10);
+    switch (match[2]) {
+      case 'm': return value * 60 * 1000;
+      case 'h': return value * 60 * 60 * 1000;
+      case 'd': return value * 24 * 60 * 60 * 1000;
+      default: return 30 * 24 * 60 * 60 * 1000;
+    }
+  }
+
   async getReports(page = 1, limit = 20, status?: string, type?: string): Promise<unknown> {
     const where: Prisma.ReportWhereInput = {};
 
@@ -156,7 +168,7 @@ export class ModerationService {
         takenBy: adminId,
         duration,
         status: 'active',
-        expiresAt: duration ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null,
+        expiresAt: duration ? new Date(Date.now() + this.parseDuration(duration)) : null,
       },
     });
 

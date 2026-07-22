@@ -5,14 +5,15 @@ import { AuditLogService } from '../audit/audit.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { resolveActorId } from '../../common/resolve-actor-id';
 
 interface AuthRequest extends Request {
-  user: { id: string; email: string; role: string };
+  user: { id?: string; sub?: string; email: string; role: string };
 }
 
 @Controller('admin/users')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
+@Roles('admin', 'superadmin')
 export class UserManagementController {
   constructor(
     @Inject(UserManagementService) private readonly userService: UserManagementService,
@@ -47,7 +48,7 @@ export class UserManagementController {
   ): Promise<unknown> {
     const result = await this.userService.updateUserRole(id, body.role);
     await this.auditLogService.log({
-      actorId: req.user.id,
+      actorId: resolveActorId(req),
       action: 'user.role.updated',
       targetType: 'user',
       targetId: id,
@@ -63,7 +64,7 @@ export class UserManagementController {
     @Req() req: AuthRequest,
     @Body() body: { reason: string; durationDays?: number }
   ): Promise<unknown> {
-    const actorId = req.user.id;
+    const actorId = resolveActorId(req);
     const result = await this.userService.suspendUser(id, body.reason, actorId, body.durationDays);
     await this.auditLogService.log({
       actorId,
@@ -82,7 +83,7 @@ export class UserManagementController {
     @Req() req: AuthRequest,
     @Body() body: { reason: string }
   ): Promise<unknown> {
-    const actorId = req.user.id;
+    const actorId = resolveActorId(req);
     const result = await this.userService.revokeSuspension(id, actorId, body.reason);
     await this.auditLogService.log({
       actorId,
@@ -102,7 +103,7 @@ export class UserManagementController {
 
   @Delete(':id')
   async deleteUser(@Param('id') id: string, @Req() req: AuthRequest): Promise<unknown> {
-    const actorId = req.user.id;
+    const actorId = resolveActorId(req);
     const result = await this.userService.deleteUser(id, actorId);
     await this.auditLogService.log({
       actorId,

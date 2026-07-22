@@ -272,4 +272,4 @@ export const themes = {
 /**
  * Animation definitions
  */
-export { easing, duration, animation } from './animations';
+export { easing, duration, animation, generateAnimationsCSS } from './animations';

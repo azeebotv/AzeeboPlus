@@ -31,7 +31,7 @@ export default function AdminPage(): React.JSX.Element {
     revenue: 0,
     newUsers: 0,
   });
-  const [_recentActivity, setRecentActivity] = useState<AdminDashboardActivity[]>([]);
+  const [recentActivity, setRecentActivity] = useState<AdminDashboardActivity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,6 +64,10 @@ export default function AdminPage(): React.JSX.Element {
 
   return (
     <AdminLayout>
+      <div className="bg-yellow-900/30 border border-yellow-600 rounded-lg p-4 mb-6">
+        <p className="text-yellow-200 font-semibold">Admin Dashboard Moved</p>
+        <p className="text-yellow-300 text-sm">The admin dashboard has moved to <a href="https://admin.azeeboplus.com" className="underline">admin.azeeboplus.com</a>. This page will be removed in a future release.</p>
+      </div>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Admin Dashboard</h1>
       <p style={{ color: '#9A8A7A', marginBottom: 32 }}>Platform overview and quick actions</p>
 
@@ -150,6 +154,35 @@ export default function AdminPage(): React.JSX.Element {
               </div>
             ))}
           </div>
+
+          {/* Recent Activity */}
+          {recentActivity.length > 0 && (
+            <div className="az-glass" style={{ padding: 24, borderRadius: 20, marginBottom: 24 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Recent Activity</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {recentActivity.map((item) => (
+                  <div
+                    key={item.id}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '10px 0',
+                      borderBottom: '1px solid #2A1A1A',
+                    }}
+                  >
+                    <div>
+                      <p style={{ fontWeight: 600, fontSize: 14 }}>{item.action}</p>
+                      <p style={{ color: '#9A8A7A', fontSize: 12 }}>by {item.user}</p>
+                    </div>
+                    <span style={{ color: '#9A8A7A', fontSize: 12, whiteSpace: 'nowrap' }}>
+                      {new Date(item.time).toLocaleDateString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Quick links */}
           <div className="az-glass" style={{ padding: 24, borderRadius: 20 }}>

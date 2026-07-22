@@ -1,3 +1,6 @@
+import { initializeOpenTelemetry } from '@azeebo/opentelemetry';
+initializeOpenTelemetry({ serviceName: 'payment-service', port: 3003 });
+
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger, VersioningType } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';

@@ -1,8 +1,9 @@
-import { Inject, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { SafetyScanningService, ScanRequest, ScanResult } from './safety-scanning.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import axios from 'axios';
 import type {
   ModerationCase,
   Appeal,
@@ -105,12 +106,17 @@ const SAFETY_ACTION_TYPES = [
 
 @Injectable()
 export class ModerationService {
+  private readonly logger = new Logger(ModerationService.name);
+  private readonly analyticsServiceBaseUrl: string;
+
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(SafetyScanningService) private readonly safetyScanningService: SafetyScanningService,
     @Inject(CacheService) private readonly cache: CacheService,
     @Inject(ConfigService) private readonly configService: ConfigService
-  ) {}
+  ) {
+    this.analyticsServiceBaseUrl = this.configService.get<string>('ANALYTICS_SERVICE_URL', 'http://analytics-service:3040');
+  }
 
   async createCase(request: CreateCaseRequest): Promise<ModerationCase> {
     const report = await this.prisma.report.findUnique({
@@ -429,6 +435,7 @@ export class ModerationService {
 
       await this.cache.invalidate('moderation:reports:*');
 
+      this.trackAnalyticsEvent('content_reported', userId, { contentId: body.contentId, reason: body.reason });
       return { success: true, data: report };
     } catch (error) {
       const err = error as Error;
@@ -714,6 +721,12 @@ export class ModerationService {
     });
   }
 
+  private async trackAnalyticsEvent(eventName: string, userId: string, metadata: Record<string, unknown> = {}): Promise<void> {
+    try {
+      await axios.post(`${this.analyticsServiceBaseUrl}/analytics/track`, { eventName, userId, metadata, timestamp: new Date().toISOString() }, { timeout: 10000 });
+    } catch (error) { this.logger.warn(`Failed to track analytics event: ${eventName}`); }
+  }
+
   async getReport(reportId: string): Promise<Report | null> {
     return this.prisma.report.findUnique({
       where: { id: reportId },
@@ -787,6 +800,7 @@ export class ModerationService {
   ): Promise<{ success: boolean; data: { scanId: string; result: ScanResult } }> {
     const { scanId, result } = await this.safetyScanningService.scanAndPersist(request);
 
+    this.trackAnalyticsEvent('content_scanned', 'system', { contentId: request.contentId, result });
     return {
       success: true,
       data: { scanId, result },

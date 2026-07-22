@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useUniverses } from '@/hooks/useDatabase';
+import { useUniverses } from '@/hooks/useUniverses';
 import { api } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
 import BrandLogo from '@/components/auth/BrandLogo';

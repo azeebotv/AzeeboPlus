@@ -1,164 +1,109 @@
 # Azeebo+ Authentication Service
 
-## Overview
+> Port: 3000 | Database: `azeebo_auth` | Analytics: Yes
 
-The Authentication Service handles all user authentication and authorization for the Azeebo+ platform. It provides secure login, registration, and session management.
-
-## Features
-
-- **JWT Authentication**: Secure token-based authentication
-- **Password Management**: Password reset and recovery
-- **Email Verification**: Account verification flow
-- **Multi-Factor Authentication**: Optional MFA for enhanced security
-- **OAuth Integration**: Social login support (Google, Apple)
-- **Session Management**: Secure session tracking and invalidation
-
-## Technology Stack
-
-- **Framework**: NestJS 11.x
-- **Language**: TypeScript
-- **Database**: PostgreSQL with Prisma ORM
-- **JWT**: JsonWebToken
-- **API Docs**: Swagger/OpenAPI
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 22+
-- PostgreSQL 15+
-- Redis (for rate limiting)
-
-### Installation
-
-```bash
-# Install dependencies
-pnpm install
-
-# Generate Prisma client
-pnpm run prisma:generate
-
-# Run migrations
-pnpm run prisma:migrate
-```
-
-### Running the Service
-
-```bash
-# Development mode
-pnpm run start:dev
-
-# Production mode
-pnpm run build
-pnpm start
-```
+Handles user registration, login, JWT tokens, OAuth, MFA, email verification, OTP, device management, and admin user operations.
 
 ## API Endpoints
 
-### Authentication
+### Auth (`/auth`)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | /auth/signup | Register new user |
-| POST | /auth/login | Login with email/password |
-| DELETE | /auth/logout | Logout (invalidate tokens) |
-| POST | /auth/refresh | Refresh access token |
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/auth/signup` | Register new user | No |
+| POST | `/auth/login` | Login with email/password | No |
+| POST | `/auth/logout` | Logout (invalidate tokens) | Yes |
+| POST | `/auth/refresh` | Refresh access token | No |
+| GET | `/auth/me` | Get current user profile | Yes |
+| POST | `/auth/forgot-password` | Request password reset | No |
+| POST | `/auth/reset-password` | Reset password with token | No |
+| POST | `/auth/verify-email` | Verify email address | No |
+| POST | `/auth/resend-verification` | Resend verification email | No |
+| POST | `/auth/select-role` | Select user role (user/creator) | Yes |
 
-### Password Management
+### MFA (`/mfa`)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | /auth/forgot-password | Request password reset |
-| POST | /auth/reset-password | Reset password with token |
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/mfa/setup` | Setup MFA (get QR code) | Yes |
+| POST | `/mfa/verify` | Verify MFA code | Yes |
+| POST | `/mfa/enable` | Enable MFA | Yes |
+| POST | `/mfa/disable` | Disable MFA | Yes |
 
-### Email Verification
+### Social Auth (`/auth/social`)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | /auth/verify-email | Verify email address |
-| POST | /auth/resend-verification | Resend verification email |
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/auth/social/google/authorize` | Get Google OAuth URL | No |
+| GET | `/auth/social/apple/authorize` | Get Apple OAuth URL | No |
+| POST | `/auth/social/callback` | Handle OAuth callback | No |
+| POST | `/auth/social/unlink` | Unlink social account | Yes |
 
-### MFA
+### Device Management (`/auth/devices`)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | /auth/mfa/setup | Setup MFA |
-| POST | /auth/mfa/verify | Verify MFA code |
-| POST | /auth/mfa/enable | Enable MFA |
-| POST | /auth/mfa/disable | Disable MFA |
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/auth/devices` | List user devices | Yes |
+| DELETE | `/auth/devices/:deviceId` | Remove device | Yes |
+| PATCH | `/auth/devices/:deviceId` | Update device | Yes |
+| POST | `/auth/devices/revoke-all` | Revoke all devices | Yes |
 
-### OAuth
+### OTP (`/otp`)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | /auth/social/google | Google OAuth login |
-| POST | /auth/social/apple | Apple OAuth login |
-| POST | /auth/social/unlink | Unlink social account |
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/otp/send` | Send OTP to email/phone | No |
+| POST | `/otp/verify` | Verify OTP code | No |
+
+### Admin (`/admin`)
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/admin/stats` | Get auth statistics | Admin |
+| GET | `/admin/users` | List users (paginated) | Admin |
+| GET | `/admin/users/:id` | Get user details | Admin |
+| POST | `/admin/users/:id/suspend` | Suspend user | Admin |
+| POST | `/admin/users/:id/activate` | Activate user | Admin |
 
 ### Health
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | /health | Health check |
-| GET | /ready | Readiness probe |
-| GET | /live | Liveness probe |
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/health` | Health check (DB + Redis) | No |
+| GET | `/health/live` | Liveness probe | No |
+| GET | `/health/ready` | Readiness probe | No |
+
+## Events Tracked
+
+| Event | Trigger | Properties |
+|-------|---------|------------|
+| `user_registered` | Successful signup | email, role |
+| `user_logged_in` | Successful login | method |
+| `user_login_failed` | Failed login | reason, email |
+| `user_logged_out` | Logout | — |
+| `user_email_verified` | Email verified | — |
+| `user_role_selected` | Role selected | role |
 
 ## Configuration
 
-### Environment Variables
+Required env vars (see `.env.example`):
 
-```bash
-# Server
-PORT=3000
-
-# Database
-DATABASE_URL="postgresql://user:password@localhost:5432/auth"
-
-# JWT
-JWT_ACCESS_SECRET="your-jwt-secret-key"
-JWT_EXPIRES_IN="15m"
-JWT_REFRESH_EXPIRES_IN="7d"
-
-# Redis
-REDIS_URL="redis://localhost:6379"
-
-# Email
-SMTP_HOST="smtp.example.com"
-SMTP_PORT=587
-SMTP_USER="user@example.com"
-SMTP_PASS="password"
-```
-
-## Security
-
-- **JWT Tokens**: Short-lived access tokens (15 min)
-- **Refresh Tokens**: Long-lived refresh tokens (7 days)
-- **Rate Limiting**: 5 requests/minute for auth endpoints
-- **Password Hashing**: bcrypt with salt rounds
-- **Email Verification**: Required for new accounts
-- **MFA**: Optional but recommended for sensitive actions
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PORT` | Server port | 3000 |
+| `DATABASE_URL` | PostgreSQL connection | — |
+| `REDIS_URL` | Redis connection | — |
+| `JWT_ACCESS_SECRET` | JWT signing key (>=32 chars) | — |
+| `JWT_REFRESH_SECRET` | Refresh token signing key | — |
+| `ANALYTICS_SERVICE_URL` | Analytics service URL | http://analytics-service:3040 |
 
 ## Testing
 
 ```bash
-# Run all tests
-pnpm test
-
-# Run tests with coverage
-ppnpm test:cov
+pnpm test           # Unit tests
+pnpm test:cov       # With coverage
 ```
 
-## Deployment
+## Prisma Models
 
-### Docker
-
-```bash
-docker build -t azeebo/auth-service .
-docker run -p 3000:3000 azeebo/auth-service
-```
-
-## License
-
-Proprietary and confidential.
-
-**Last Updated:** 2026-05-19
+`User`, `SocialAccount`, `Session`, `Otp`, `Role`, `Permission`, `RolePermission`, `AuditLog`

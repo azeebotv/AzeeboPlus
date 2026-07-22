@@ -1,6 +1,8 @@
 import { Inject, Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import axios from 'axios';
 // Prisma client types available via PrismaService
 import { SearchResponse } from './interfaces/search-response.interface.js';
 
@@ -33,11 +35,34 @@ interface Facets {
 @Injectable()
 export class SearchService {
   private readonly logger = new Logger(SearchService.name);
+  private readonly analyticsServiceBaseUrl: string;
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
-    @Inject(CacheService) private readonly cache: CacheService
-  ) {}
+    @Inject(CacheService) private readonly cache: CacheService,
+    private readonly configService: ConfigService
+  ) {
+    this.analyticsServiceBaseUrl = this.configService.get<string>(
+      'ANALYTICS_SERVICE_URL',
+      'http://analytics-service:3040'
+    );
+  }
+
+  private async trackAnalyticsEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown> = {}
+  ): Promise<void> {
+    try {
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/analytics/track`,
+        { eventName, userId, metadata, timestamp: new Date().toISOString() },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to track analytics event: ${eventName}`);
+    }
+  }
 
   private escapeRegex(str: string): string {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -192,6 +217,12 @@ export class SearchService {
       };
 
       await this.cache.set(cacheK, result, 600);
+
+      this.trackAnalyticsEvent('search_performed', 'anonymous', {
+        query,
+        resultsCount: result.data.pagination.total,
+      });
+
       return result;
     } catch (error: unknown) {
       this.logger.error('Failed to perform search', error);

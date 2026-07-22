@@ -38,14 +38,14 @@ export class TestDatabase {
 
   async cleanDatabase(): Promise<void> {
     const tables = [
-      'Vote',
-      'WalletTransaction',
-      'Payment',
-      'Content',
-      'User',
-      'Wallet',
-      'Notification',
-      'AnalyticsEvent',
+      'votes',
+      'wallet_transactions',
+      'payment_intents',
+      'content_items',
+      'users',
+      'wallets',
+      'notifications',
+      'product_events',
     ];
 
     for (const table of tables) {
