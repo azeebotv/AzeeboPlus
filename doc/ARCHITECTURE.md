@@ -121,7 +121,7 @@ User interaction and retention.
 ## Data Layer
 
 ### PostgreSQL
-- 28 databases, each prefixed with `azeebo_`
+- 26 databases, each prefixed with `azeebo_`
 - Each service owns its database — no cross-service DB queries
 - Use Prisma ORM with per-service schema and migrations
 - PgBouncer for connection pooling
@@ -248,7 +248,7 @@ User interaction and retention.
 ### Secrets Management
 - Environment variables via `.env` (local) / Coolify secrets (production)
 - `INTERNAL_API_KEY` for all inter-service calls
-- JWT secret for token signing
+- JWT secret for token signing (minimum 64 characters enforced)
 - Rate limiting at gateway level
 
 ### Rate Limiting

@@ -115,7 +115,6 @@ Each service has its own database. Rotate passwords one service at a time to avo
 | referral-service | azeebo_referral |
 | subscription-service | azeebo_subscription |
 | media-service | azeebo_media |
-| api-gateway | azeebo_gateway |
 
 ---
 

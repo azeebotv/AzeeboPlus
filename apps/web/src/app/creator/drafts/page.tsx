@@ -167,7 +167,7 @@ export default function DraftsPage(): React.JSX.Element {
                 {draft.thumbnail && (
                   <img
                     src={draft.thumbnail}
-                    alt=""
+                    alt={draft.title}
                     style={{
                       width: 120,
                       height: 68,

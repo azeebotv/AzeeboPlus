@@ -13,7 +13,7 @@ import { MessagingService } from './messaging.service.js';
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.ALLOWED_ORIGINS?.split(',').map((o) => o.trim()) || '*',
+    origin: process.env.ALLOWED_ORIGINS?.split(',').map((o) => o.trim()) || [],
     credentials: true,
   },
   namespace: '/messaging',

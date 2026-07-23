@@ -21,7 +21,7 @@ interface AuthRequest extends Request {
 }
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('creator')
+@Roles('creator', 'admin', 'superadmin')
 @Controller('creator')
 export class CreatorController {
   constructor(@Inject(CreatorService) private readonly creatorService: CreatorService) {}
@@ -64,14 +64,8 @@ export class CreatorController {
     @Request() req: AuthRequest,
     @Param('id') id: string,
     @Body() body: Partial<ContentItem>
-  ): Promise<{ success: boolean; data?: unknown; message?: string }> {
+  ): Promise<{ success: boolean; data: unknown }> {
     const content = await this.creatorService.updateContent(id, req.user.id, body);
-    if (!content) {
-      return {
-        success: false,
-        message: 'Content not found',
-      };
-    }
     return {
       success: true,
       data: content,
@@ -82,11 +76,11 @@ export class CreatorController {
   async deleteContent(
     @Request() req: AuthRequest,
     @Param('id') id: string
-  ): Promise<{ success: boolean; message: string }> {
-    const deleted = await this.creatorService.deleteContent(id, req.user.id);
+  ): Promise<{ success: boolean; data: { deleted: true } }> {
+    await this.creatorService.deleteContent(id, req.user.id);
     return {
-      success: deleted,
-      message: deleted ? 'Content deleted' : 'Content not found',
+      success: true,
+      data: { deleted: true },
     };
   }
 
@@ -128,6 +122,14 @@ export class CreatorController {
     return {
       success: true,
       data: await this.creatorService.updatePayoutSettings(req.user.id, body),
+    };
+  }
+
+  @Get('settings')
+  async getSettings(@Request() req: AuthRequest): Promise<{ success: boolean; data: unknown }> {
+    return {
+      success: true,
+      data: await this.creatorService.getSettings(req.user.id),
     };
   }
 

@@ -7,6 +7,7 @@ import { LoadingState, EmptyState, ErrorState } from '../../src/components/State
 import { apiClient } from '../../src/api/client';
 import { moviePassPrice, rentPrice } from '../../src/config/prices';
 import type { Movie, SubscriptionPlan } from '../../src/types/api';
+import { analytics } from '../../src/utils/analytics';
 
 interface MovieItem {
   id: string;
@@ -67,6 +68,13 @@ export default function MoviesUniverseHome() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (!isLoading && featuredMovie) {
+      try { analytics.movieViewed(featuredMovie.id); } catch {}
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, featuredMovie]);
 
   if (isLoading)
     return (

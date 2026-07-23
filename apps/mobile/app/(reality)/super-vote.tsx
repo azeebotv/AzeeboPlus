@@ -13,6 +13,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentApi, walletApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
+import { analytics } from '../../src/utils/analytics';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import { votePackages as defaultVotePackages } from '../../src/config/prices';
 
@@ -121,6 +122,10 @@ export default function SuperVoteScreen() {
         episodeId,
         voteCount: package_.votes,
       });
+
+      try {
+        analytics.realitySupervoteCreated(episodeId, selectedContestant!, package_.votes, package_.price);
+      } catch {}
 
       Alert.alert(
         'Success!',

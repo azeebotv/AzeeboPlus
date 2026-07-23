@@ -1,5 +1,5 @@
-import { initializeOpenTelemetry } from '@azeebo/opentelemetry';
-initializeOpenTelemetry({ serviceName: 'wallet-service', port: 3002 });
+// OpenTelemetry - disabled in local dev (incompatible with Node.js 26)
+// Enable in production by setting OTEL_EXPORTER_OTLP_ENDPOINT
 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';

@@ -14,6 +14,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
+import { analytics } from '../../src/utils/analytics';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -32,6 +33,7 @@ export default function EpisodePlayerScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const episodeId = params.id as string;
+  const showId = params.showId as string;
 
   const [episode, setEpisode] = useState<Episode | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,6 +46,11 @@ export default function EpisodePlayerScreen() {
 
   useEffect(() => {
     loadEpisode();
+    try {
+      if (showId && episodeId) {
+        analytics.realityEpisodeViewed(showId, episodeId);
+      }
+    } catch {}
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
@@ -6,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
 import { apiClient } from '../src/api/client';
 import { ApiResponse } from '../src/types/api';
+import { analytics } from '../src/utils/analytics';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -81,6 +83,13 @@ export default function SportsUniverseHome() {
 
   const isLoading = liveQuery.isLoading || upcomingQuery.isLoading || categoriesQuery.isLoading || leaguesQuery.isLoading;
   const error = liveQuery.error?.message || upcomingQuery.error?.message || categoriesQuery.error?.message || leaguesQuery.error?.message;
+
+  useEffect(() => {
+    if (liveQuery.data && liveQuery.data.length > 0) {
+      try { analytics.sportsFixtureViewed(liveQuery.data[0].id); } catch {}
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveQuery.data]);
 
   const liveMatches = liveQuery.data ?? [];
   const upcomingMatches = upcomingQuery.data ?? [];

@@ -138,11 +138,19 @@ export class CreatorService {
 
     // Subscriber count: safely query the following table, returning 0 if it doesn't exist
     let subscriberCount = 0;
+    let previousSubscriberCount = 0;
     try {
-      const result = await this.prisma.$queryRaw<{ count: bigint }[]>`
-        SELECT COUNT(*)::int as count FROM "following" WHERE "followingId" = ${userId}
-      `;
-      subscriberCount = Number(result[0]?.count ?? 0);
+      const [currentResult, previousResult] = await Promise.all([
+        this.prisma.$queryRaw<{ count: bigint }[]>`
+          SELECT COUNT(*)::int as count FROM "following" WHERE "followingId" = ${userId}
+        `,
+        this.prisma.$queryRaw<{ count: bigint }[]>`
+          SELECT COUNT(*)::int as count FROM "following" 
+          WHERE "followingId" = ${userId} AND "createdAt" < ${currentPeriodStart}
+        `,
+      ]);
+      subscriberCount = Number(currentResult[0]?.count ?? 0);
+      previousSubscriberCount = Number(previousResult[0]?.count ?? 0);
     } catch (err: unknown) {
       // If the table doesn't exist, return 0; re-throw other errors
       const message = err instanceof Error ? err.message : String(err);
@@ -157,7 +165,7 @@ export class CreatorService {
       totalEarnings: Number(earnings._sum.amount) || 0,
       contentCount,
       viewsChange: `${Number(viewsChangePercent) >= 0 ? '+' : ''}${viewsChangePercent}%`,
-      subscribersChange: `${subscriberCount >= 0 ? '+' : ''}0`,
+      subscribersChange: `${subscriberCount - previousSubscriberCount >= 0 ? '+' : ''}${subscriberCount - previousSubscriberCount}`,
       earningsChange: `${Number(earningsChangePercent) >= 0 ? '+' : ''}${earningsChangePercent}%`,
       contentChange: `${contentChange >= 0 ? '+' : ''}${contentChange}`,
     };
@@ -450,6 +458,38 @@ export class CreatorService {
     };
   }
 
+  async getSettings(userId: string): Promise<{
+    payoutMethod: string;
+    minimumPayout: number;
+    notifications: { email: boolean; push: boolean; sms: boolean; marketing: boolean };
+    privacy: { profileVisibility: string; showEarnings: boolean; allowMessages: boolean };
+  }> {
+    const creatorProfile = await this.prisma.creatorProfile.findUnique({
+      where: { userId },
+    });
+
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+
+    const notifications = (user?.notificationPreferences as Record<string, unknown>) || {};
+    const privacy = (user?.preferences as Record<string, unknown>) || {};
+
+    return {
+      payoutMethod: creatorProfile?.payoutMethod || 'bank_transfer',
+      minimumPayout: creatorProfile?.minimumPayout ? Number(creatorProfile.minimumPayout) : 50,
+      notifications: {
+        email: notifications.email !== false,
+        push: notifications.push !== false,
+        sms: notifications.sms === true,
+        marketing: notifications.marketing === true,
+      },
+      privacy: {
+        profileVisibility: (privacy.profileVisibility as string) || 'public',
+        showEarnings: privacy.showEarnings === true,
+        allowMessages: privacy.allowMessages !== false,
+      },
+    };
+  }
+
   async updatePayoutSettings(
     userId: string,
     data: { method?: string; minimum?: number }
@@ -505,12 +545,12 @@ export class CreatorService {
       await this.prisma.user.update({
         where: { id: userId },
         data: {
-          notificationPreferences: data.notifications
+          notificationPreferences: (data.notifications
             ? { ...existingPrefs, ...data.notifications }
-            : existingPrefs,
-          preferences: data.privacy
+            : existingPrefs) as Prisma.InputJsonValue,
+          preferences: (data.privacy
             ? { ...existingPrefs2, ...data.privacy }
-            : existingPrefs2,
+            : existingPrefs2) as Prisma.InputJsonValue,
         },
       });
     }

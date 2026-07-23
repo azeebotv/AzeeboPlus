@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AuthProvider } from '../context/AuthContext';
 import { WalletProvider } from '../context/WalletContext';
@@ -15,6 +15,13 @@ const montserrat = Montserrat({
   weight: ['600', '700', '800', '900'],
   variable: '--font-display-base',
 });
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#09090F',
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://azeeboplus.com'),

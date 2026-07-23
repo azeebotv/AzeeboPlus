@@ -13,6 +13,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { realityApi } from '../../src/api/engagement';
 import { logger } from '../../src/utils/logger';
+import { analytics } from '../../src/utils/analytics';
 
 interface EpisodeData {
   id: string;
@@ -62,6 +63,9 @@ export default function EpisodesScreen() {
 
   useEffect(() => {
     loadEpisodes();
+    try {
+      analytics.realityShowViewed(showId);
+    } catch {}
   }, [showId]);
 
   const loadEpisodes = async () => {

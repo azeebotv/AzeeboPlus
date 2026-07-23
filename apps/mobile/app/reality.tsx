@@ -2,10 +2,12 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from '
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
 import { apiClient } from '../src/api/client';
 import { ApiResponse } from '../src/types/api';
+import { analytics } from '../src/utils/analytics';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -70,6 +72,14 @@ export default function RealityUniverseHome() {
   const liveShows = showsQuery.data ?? [];
   const contestants = contestantsQuery.data ?? [];
   const featuredContent = featuredQuery.data ?? [];
+
+  useEffect(() => {
+    if (liveShows.length > 0 && liveShows[0].id) {
+      try {
+        analytics.realityShowViewed(liveShows[0].id);
+      } catch {}
+    }
+  }, [liveShows]);
 
   if (isLoading) {
     return (

@@ -13,7 +13,7 @@ import { createRecommendationMethods } from './recommendation';
 import { createUniverseMethods } from './universe';
 import { createCreatorMethods } from './creator';
 import { createModerationMethods } from './moderation';
-import { createAdminMethods } from './admin';
+
 import { createEngagementMethods } from './engagement';
 
 import type { ApiResponse } from './base';
@@ -93,7 +93,6 @@ class ApiClient {
   universe: ReturnType<typeof createUniverseMethods>;
   creator: ReturnType<typeof createCreatorMethods>;
   moderation: ReturnType<typeof createModerationMethods>;
-  admin: ReturnType<typeof createAdminMethods>;
   engagement: ReturnType<typeof createEngagementMethods>;
 
   constructor(baseUrl: string) {
@@ -119,7 +118,6 @@ class ApiClient {
     this.universe = createUniverseMethods(this);
     this.creator = createCreatorMethods(this);
     this.moderation = createModerationMethods(this);
-    this.admin = createAdminMethods(this);
     this.engagement = createEngagementMethods(this);
   }
 

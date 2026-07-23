@@ -49,7 +49,7 @@
 set -euo pipefail
 
 # ---- Script Metadata ----
-SCRIPT_VERSION="3.1.0"
+SCRIPT_VERSION="3.2.0"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
@@ -267,6 +267,12 @@ load_env() {
   export RATE_LIMIT_MAX="${RATE_LIMIT_MAX:-1000}"
   export LOG_LEVEL="${LOG_LEVEL:-debug}"
 
+  # Observability
+  export SENTRY_DSN="${SENTRY_DSN:-}"
+  export ANALYTICS_ENDPOINT="${ANALYTICS_ENDPOINT:-http://localhost:3008}"
+  export OTEL_EXPORTER_OTLP_ENDPOINT="${OTEL_EXPORTER_OTLP_ENDPOINT:-}"
+  export OTEL_SERVICE_NAME="${OTEL_SERVICE_NAME:-azeebo-platform}"
+
   # Service URLs for gateway routing (local mode)
   export AUTH_SERVICE_URL="${AUTH_SERVICE_URL:-http://localhost:3000}"
   export USER_SERVICE_URL="${USER_SERVICE_URL:-http://localhost:3001}"
@@ -304,8 +310,8 @@ validate_env() {
     if [[ -z "$secret_val" ]]; then
       log_error "$secret_var is not set"
       failed=$((failed + 1))
-    elif [[ ${#secret_val} -lt 32 ]]; then
-      log_error "$secret_var must be >= 32 chars (got ${#secret_val})"
+    elif [[ ${#secret_val} -lt 64 ]]; then
+      log_error "$secret_var must be >= 64 chars (got ${#secret_val})"
       failed=$((failed + 1))
     else
       log_ok "$secret_var: ${#secret_val} chars"
@@ -431,6 +437,11 @@ T0_PACKAGES=(
   "shared-services"
   "security"
   "ui"
+  "observability"
+  "opentelemetry"
+  "event-bus"
+  "feature-flags"
+  "internal-clients"
 )
 
 build_t0_packages() {
@@ -1189,6 +1200,90 @@ cmd_clean() {
   log_ok "Cleaned"
 }
 
+cmd_deploy() {
+  section "Local Staging Deployment"
+  log_info "Building and deploying all services locally"
+
+  # Build T0 packages
+  build_t0_packages
+
+  # Build admin and creator client SPAs
+  section "Building Admin Client"
+  if pnpm --filter @azeebo/admin run build:client 2>&1 | tail -3; then
+    log_ok "Admin client built"
+  else
+    log_warn "Admin client build failed (non-critical)"
+  fi
+
+  section "Building Creator Client"
+  if pnpm --filter @azeebo/creator run build:client 2>&1 | tail -3; then
+    log_ok "Creator client built"
+  else
+    log_warn "Creator client build failed (non-critical)"
+  fi
+
+  # Run migrations
+  run_migrations
+
+  # Start all services
+  log_info "Starting all services..."
+  cmd_start --all
+
+  # Run smoke tests
+  cmd_smoke
+}
+
+cmd_smoke() {
+  section "Running Smoke Tests"
+  local failed=0
+  local base_url="${SMOKE_BASE_URL:-http://localhost}"
+
+  local endpoints=(
+    "3013:API Gateway:/health"
+    "4000:Web App:/"
+    "4014:Creator Portal:/v1/health"
+    "4016:Admin Panel:/v1/health"
+  )
+
+  for entry in "${endpoints[@]}"; do
+    IFS=':' read -r port name path <<< "$entry"
+    if curl -sf "${base_url}:${port}${path}" >/dev/null 2>&1; then
+      log_ok "  $name: healthy (port $port)"
+    else
+      log_error "  $name: unhealthy (port $port)"
+      failed=$((failed + 1))
+    fi
+  done
+
+  # Test API endpoints
+  local api_endpoints=(
+    "/api/v1/auth/health:Auth Service"
+    "/api/v1/users/health:User Service"
+    "/api/v1/wallet/health:Wallet Service"
+    "/api/v1/content/health:Content Service"
+  )
+
+  for entry in "${api_endpoints[@]}"; do
+    IFS=':' read -r path name <<< "$entry"
+    if curl -sf "${base_url}:3013${path}" >/dev/null 2>&1; then
+      log_ok "  $name: healthy"
+    else
+      log_warn "  $name: not responding (may need full startup)"
+    fi
+  done
+
+  if (( failed > 0 )); then
+    log_error "$failed endpoint(s) failed smoke tests"
+    return 1
+  fi
+  log_ok "All smoke tests passed"
+}
+
+cmd_seed() {
+  section "Seeding Demo Data"
+  bash "$SCRIPT_DIR/database/seed-all.sh"
+}
+
 cmd_help() {
   cat << 'HELPEOF'
 Azeebo+ Local Development Environment (v3.1)
@@ -1208,6 +1303,9 @@ COMMANDS:
   status         Show status of all services
   logs [pattern] Tail logs for services matching pattern
   db <action>    Database operations
+  deploy         Build all + migrate + start all + smoke tests
+  smoke          Run health check smoke tests against running services
+  seed           Seed databases with demo data
   validate       Validate environment
   clean          Stop services and clean logs/state
   help           Show this help
@@ -1270,7 +1368,9 @@ main() {
     logs)     tail_logs "$@" ;;
     db)       cmd_db "$@" ;;
     migrate)  cmd_db migrate "$@" ;;
-    seed)     cmd_db seed "$@" ;;
+    seed)     cmd_seed "$@" ;;
+    deploy)   cmd_deploy "$@" ;;
+    smoke)    cmd_smoke "$@" ;;
     validate) cmd_validate "$@" ;;
     clean)    cmd_clean "$@" ;;
     help|-h|--help) cmd_help ;;

@@ -5,6 +5,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { apiClient } from '../../src/api';
 import type { Game, GameLevel, LeaderboardEntry, Achievement } from '../../src/types/api';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { analytics } from '../../src/utils/analytics';
 
 export default function GameplayPage() {
   const colorScheme = useColorScheme();
@@ -32,6 +33,7 @@ export default function GameplayPage() {
         apiClient.get<Achievement[]>(`/games/${id}/achievements`),
       ]);
       setGame(gameRes);
+      try { analytics.gameStarted(String(id), 'session_' + Date.now()); } catch {}
       setLevels(levelsRes || []);
       setLeaderboard(leaderboardRes || []);
       setAchievements(achievementsRes || []);

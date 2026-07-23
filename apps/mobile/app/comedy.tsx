@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
@@ -6,6 +7,7 @@ import { LoadingState, EmptyState, ErrorState } from '../src/components/StateCon
 import { apiClient } from '../src/api/client';
 import { comedySubscription } from '../src/config/prices';
 import { ApiResponse } from '../src/types/api';
+import { analytics } from '../src/utils/analytics';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -78,6 +80,13 @@ export default function ComedyUniverseHome() {
 
   const isLoading = clipsQuery.isLoading || creatorsQuery.isLoading || categoriesQuery.isLoading || topRatedQuery.isLoading;
   const error = clipsQuery.error?.message || creatorsQuery.error?.message || categoriesQuery.error?.message || topRatedQuery.error?.message;
+
+  useEffect(() => {
+    if (clipsQuery.data && clipsQuery.data.length > 0) {
+      try { analytics.comedyClipViewed(clipsQuery.data[0].id); } catch {}
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clipsQuery.data]);
 
   const trendingClips = clipsQuery.data ?? [];
   const featuredCreators = creatorsQuery.data ?? [];

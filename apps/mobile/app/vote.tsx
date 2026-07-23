@@ -9,6 +9,7 @@ import { realityApi } from '../src/api/engagement';
 import { walletApi } from '../src/api/wallet';
 import { apiClient } from '../src/api/client';
 import { logger } from '../src/utils/logger';
+import { analytics } from '../src/utils/analytics';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import type { Contestant, RealityShow } from '../src/types/api';
 
@@ -102,6 +103,14 @@ export default function VoteScreen() {
       }
       setShowConfirmation(false);
       setVoteSuccess(true);
+      try {
+        analytics.realityVoteCreated(
+          showId || 'default',
+          selectedContestant?.id ?? '',
+          totalVotes,
+          totalPrice,
+        );
+      } catch {}
       setTimeout(() => setVoteSuccess(false), 3000);
     } catch (err) {
       logger.error('Failed to submit vote:', err);

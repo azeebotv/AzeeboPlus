@@ -24,7 +24,7 @@ Azeebo+ uses a single-container "all-in-one" deployment strategy for simplicity,
 ### Infrastructure Components
 | Component | Purpose |
 |-----------|---------|
-| PostgreSQL | Primary database (28 databases) |
+| PostgreSQL | Primary database (26 databases) |
 | Redis | Cache, sessions, rate limiting |
 | PgBouncer | Connection pooling |
 | Nginx | Reverse proxy, static files |
@@ -132,8 +132,8 @@ docker run -d \
 |----------|-------------|---------|
 | `POSTGRES_PASSWORD` | PostgreSQL password | (required) |
 | `REDIS_PASSWORD` | Redis password | (required) |
-| `JWT_ACCESS_SECRET` | JWT access token secret (>=32 chars) | (required) |
-| `JWT_REFRESH_SECRET` | JWT refresh token secret (>=32 chars) | (required) |
+| `JWT_ACCESS_SECRET` | JWT access token secret (>=64 chars) | (required) |
+| `JWT_REFRESH_SECRET` | JWT refresh token secret (>=64 chars) | (required) |
 
 ### Optional Variables
 | Variable | Description | Default |
@@ -260,7 +260,7 @@ docker run -e NODE_ENV=development -p 3013:3013 azeebo-all-in-one
 
 1. **Secrets:** Never commit `.env` files; use Coolify UI or secret managers
 2. **GATEWAY_SECRET:** Rotated on 2026-07-14; ensure all services use the new value
-3. **JWT Secrets:** Must be at least 32 characters
+3. **JWT Secrets:** Must be at least 64 characters
 4. **Database:** Use strong passwords; enable SSL in production
 5. **Rate Limiting:** Enabled by default in production; disabled only in development
 

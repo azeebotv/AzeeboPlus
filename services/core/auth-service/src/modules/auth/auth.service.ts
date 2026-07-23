@@ -105,7 +105,7 @@ export class AuthService {
 
     this.trackAnalyticsEvent('user_registered', user.id, {
       email: user.email,
-      role: registerDto.role,
+      role: user.role,
     });
 
     return createSuccessResponse({

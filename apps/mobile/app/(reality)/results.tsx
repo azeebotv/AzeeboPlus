@@ -12,6 +12,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
+import { analytics } from '../../src/utils/analytics';
 
 interface ContestantResult {
   id: string;
@@ -46,6 +47,9 @@ export default function ResultsScreen() {
 
   useEffect(() => {
     loadResults();
+    try {
+      analytics.realityLeaderboardViewed(contentId);
+    } catch {}
   }, [contentId]);
 
   const loadResults = async () => {

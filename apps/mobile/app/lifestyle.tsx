@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -6,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
 import { apiClient } from '../src/api/client';
 import { ApiResponse } from '../src/types/api';
+import { analytics } from '../src/utils/analytics';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -78,6 +80,13 @@ export default function LifestyleUniverseHome() {
 
   const isLoading = featuredQuery.isLoading || trendingQuery.isLoading || categoriesQuery.isLoading || creatorsQuery.isLoading;
   const error = featuredQuery.error?.message || trendingQuery.error?.message || categoriesQuery.error?.message || creatorsQuery.error?.message;
+
+  useEffect(() => {
+    if (featuredQuery.isSuccess && !featuredQuery.isFetching) {
+      try { analytics.lifestyleFeedViewed(); } catch {}
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [featuredQuery.isSuccess]);
 
   const featuredContent = featuredQuery.data ?? [];
   const trendingNow = trendingQuery.data ?? [];

@@ -12,7 +12,7 @@ import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
+    origin: process.env.ALLOWED_ORIGINS?.split(',').map((o) => o.trim()) || [],
     credentials: true,
   },
   namespace: '/reality',

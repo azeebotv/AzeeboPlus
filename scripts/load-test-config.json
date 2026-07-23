@@ -1,0 +1,84 @@
+{
+  "version": "1.0",
+  "name": "Azeebo+ Platform Load Test",
+  "description": "Load testing configuration for Azeebo+ critical endpoints",
+  "baseUrl": {
+    "env": "BASE_URL",
+    "default": "http://localhost:3013"
+  },
+  "auth": {
+    "env": "AUTH_TOKEN",
+    "required": false,
+    "endpoints": ["/api/v1/wallet"]
+  },
+  "stages": [
+    {
+      "duration": "10s",
+      "target": 50,
+      "description": "Ramp up to 50 virtual users"
+    },
+    {
+      "duration": "30s",
+      "target": 50,
+      "description": "Sustain 50 virtual users"
+    },
+    {
+      "duration": "10s",
+      "target": 0,
+      "description": "Ramp down to 0 virtual users"
+    }
+  ],
+  "thresholds": {
+    "http_req_duration": ["p(95)<500"],
+    "http_req_failed": ["rate<0.1"],
+    "errors": ["rate<0.1"]
+  },
+  "endpoints": [
+    {
+      "name": "auth_health",
+      "path": "/api/v1/auth/health",
+      "method": "GET",
+      "service": "auth",
+      "authenticated": false
+    },
+    {
+      "name": "content_universes",
+      "path": "/api/v1/content/universes",
+      "method": "GET",
+      "service": "content",
+      "authenticated": false
+    },
+    {
+      "name": "reality_shows",
+      "path": "/api/v1/reality/shows",
+      "method": "GET",
+      "service": "reality",
+      "authenticated": false
+    },
+    {
+      "name": "wallet",
+      "path": "/api/v1/wallet",
+      "method": "GET",
+      "service": "wallet",
+      "authenticated": true
+    },
+    {
+      "name": "search",
+      "path": "/api/v1/search",
+      "method": "GET",
+      "service": "search",
+      "authenticated": false,
+      "queryParams": {
+        "q": "test"
+      }
+    }
+  ],
+  "headers": {
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+  },
+  "execution": {
+    "timeout": "10s",
+    "pauseBetweenRequests": "100ms"
+  }
+}

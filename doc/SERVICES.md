@@ -159,7 +159,7 @@ services/
   - Tournaments: `GET /games/tournaments`, `GET /games/tournaments/:id`, `POST /games/tournaments/:id/enter`, `POST /games/tournaments/:id/score`, `GET /games/tournaments/:id/leaderboard`
   - Other: `GET /games/leaderboard`, `GET /games/stats/:userId`
 
-### comedy-service (`:3016`)
+### comedy-service (`:3012`)
 - **Database:** `azeebo_comedy`
 - **Responsibility:** Skits, comedians, specials, comedy challenges
 - **Endpoints:**

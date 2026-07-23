@@ -114,7 +114,6 @@ DBS=(
   "azeebo_referral:azeebo:${REFERRAL_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "azeebo_subscription:azeebo:${SUBSCRIPTION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "azeebo_admin:azeebo:${ADMIN_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "azeebo_creator:azeebo:${CREATOR_DB_PASSWORD:-$POSTGRES_PASSWORD}"
 )
 
 for entry in "${DBS[@]}"; do
@@ -194,7 +193,6 @@ azeebo_messaging = host=127.0.0.1 port=5432 dbname=azeebo_messaging
 azeebo_referral = host=127.0.0.1 port=5432 dbname=azeebo_referral
 azeebo_subscription = host=127.0.0.1 port=5432 dbname=azeebo_subscription
 azeebo_admin = host=127.0.0.1 port=5432 dbname=azeebo_admin
-azeebo_creator = host=127.0.0.1 port=5432 dbname=azeebo_creator
 
 [pgbouncer]
 listen_addr = 0.0.0.0

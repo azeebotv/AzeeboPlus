@@ -1,4 +1,5 @@
 'use client';
+import { Suspense, lazy, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
@@ -11,8 +12,13 @@ import { AmbientGlow } from '@/components/motion/AmbientGlow';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { StaggerGrid } from '@/components/motion/StaggerGrid';
 import { GlowCard } from '@/components/motion/GlowCard';
+import analytics from '@/lib/analytics';
 
-export default function GamesPage(): React.JSX.Element {
+function GamesPageContent(): React.JSX.Element {
+  useEffect(() => {
+    analytics.pageView('games');
+  }, []);
+
   const universesQuery = useQuery({
     queryKey: ['universes'],
     queryFn: async () => {
@@ -239,5 +245,15 @@ export default function GamesPage(): React.JSX.Element {
 
       <AppFooter />
     </div>
+  );
+}
+
+const LazyGamesPage = lazy(() => Promise.resolve({ default: GamesPageContent }));
+
+export default function GamesPage(): React.JSX.Element {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+      <LazyGamesPage />
+    </Suspense>
   );
 }

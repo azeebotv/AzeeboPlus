@@ -379,6 +379,7 @@ export default function AppHeader({ active: _active }: { active?: string }) {
                           <Link
                             key={u.key}
                             href={u.href}
+                            prefetch={true}
                             onClick={() => setUniversesOpen(false)}
                             className="flex items-center gap-2.5 px-4 py-2 text-sm transition-colors"
                             style={{
@@ -746,6 +747,7 @@ export default function AppHeader({ active: _active }: { active?: string }) {
                       <Link
                         key={u.key}
                         href={u.href}
+                        prefetch={true}
                         onClick={() => setMobileMenuOpen(false)}
                         className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all"
                         style={{

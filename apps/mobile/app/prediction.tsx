@@ -18,6 +18,7 @@ import { walletApi } from '../src/api/wallet';
 import { apiClient } from '../src/api/client';
 import { logger } from '../src/utils/logger';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
+import { analytics } from '../src/utils/analytics';
 
 const leaderboardData = [
   { rank: 1, avatar: '👑', name: 'PredatorKing', points: 15000 },
@@ -102,6 +103,7 @@ export default function PredictionScreen() {
       }
       setUserPoints((prev) => prev - betAmount);
       setBetSuccess(true);
+      try { analytics.realityPredictionSubmitted(showName, selectedOption || ''); } catch {}
       setTimeout(() => {
         setShowConfirmation(false);
         setBetSuccess(false);
