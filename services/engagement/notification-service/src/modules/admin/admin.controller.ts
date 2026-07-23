@@ -54,7 +54,7 @@ export class AdminController {
   }
 
   @Post('templates')
-  async createTemplate(@Body() body: { name: string; type: string; channel: string; subject?: string; body: string; variables?: string[] }) {
+  async createTemplate(@Body() body: { key: string; channel: string; subject?: string; body: string; variables?: string[] }) {
     return this.adminService.createTemplate(body);
   }
 
@@ -75,7 +75,7 @@ export class AdminController {
   }
 
   @Post('campaigns')
-  async createCampaign(@Body() body: { name: string; templateId: string; targetAudience?: string; scheduledAt?: string }) {
+  async createCampaign(@Body() body: { name: string; templateKey: string; channel: string; audience?: Record<string, unknown>; scheduledAt?: string }) {
     return this.adminService.createCampaign(body);
   }
 

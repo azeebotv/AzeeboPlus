@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
+import { Prisma } from '../../prisma/client/index.js';
 
 @Injectable()
 export class AdminService {
@@ -192,7 +193,7 @@ export class AdminService {
         name: data.name,
         templateKey: data.templateKey,
         channel: data.channel,
-        audience: data.audience || {},
+        audience: (data.audience || {}) as Prisma.InputJsonValue,
         scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : null,
       },
     });
