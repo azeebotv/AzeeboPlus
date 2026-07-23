@@ -272,7 +272,6 @@ model ContentItem {
 
   @@index([universeId])
   @@index([creatorId])
-  @@map("content_items")
   relationshipsAsRelatedContent ContentRelationship[] @relation("ContentRelationshipRelatedContent")
 
   @@map("content_items")
