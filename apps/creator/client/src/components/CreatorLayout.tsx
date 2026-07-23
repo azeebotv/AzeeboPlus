@@ -6,8 +6,13 @@ export const CREATOR_NAV = [
   { href: '/', label: 'Dashboard', icon: '📊' },
   { href: '/overview', label: 'Overview', icon: '📈' },
   { href: '/analytics', label: 'Analytics', icon: '📉' },
-  { href: '/earnings', label: 'Earnings', icon: '💰' },
   { href: '/content', label: 'Content', icon: '🎬' },
+  { href: '/upload', label: 'Upload', icon: '⬆️' },
+  { href: '/earnings', label: 'Earnings', icon: '💰' },
+  { href: '/payouts', label: 'Payouts', icon: '💳' },
+  { href: '/subscribers', label: 'Subscribers', icon: '👥' },
+  { href: '/monetization', label: 'Monetization', icon: '🏷️' },
+  { href: '/challenges', label: 'Challenges', icon: '🏆' },
   { href: '/settings', label: 'Settings', icon: '⚙️' },
 ];
 

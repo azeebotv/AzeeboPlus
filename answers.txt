@@ -1,0 +1,72 @@
+Questions By Feature
+1. Lifestyle (Biggest Gap — 12+ backend features, only 2 screens)
+The backend has: Events, City Guide, Music, Celebrity, Nightlife, Influencer, Challenges, Polls, Quizzes, Stories, Social (save/share), Feed
+Q: Which Lifestyle sub-features should we build mobile screens for?
+- [*] Events (RSVP, browse, detail)
+- [*] Music (player, browse, genres)
+- [ *] Celebrity (profiles, news)
+- [ *] Nightlife (venues, browse)
+- [ *] Influencer (profiles, collaborations)
+- [ ] Challenges (browse, submit, vote)
+- [ ] Polls (vote, results)
+- [ ] Quizzes (play, leaderboard)
+- [ ] Stories (browse, view)
+- [ *] Social (save, share)
+2. Vertical (Storyworlds)
+Q: Which Vertical sub-features should we build?
+- [ *] Crossover pages
+- [ *] Timeline pages
+- [ *] Lore explorer pages
+- [ *] Character detail pages (beyond basic)
+- [ *] Rooms/realms/artifacts pages
+- [ ] Theory submission UI
+3. Sports
+Q: Which Sports sub-features should we build?
+- [ *] Fixture detail pages
+- [ *] Prediction market pages
+- [ *] Fan contest pages
+- [ *] Leaderboard pages
+- [ *] Highlights video player
+4. Comedy
+Q: Which Comedy sub-features should we build?
+- [* ] Stand-up specials pages
+- [ *] Comedian profile pages
+- [ ] Comedy challenge pages
+- [ *] Comedy series pages
+5. Games
+Q: Which Games sub-features should we build?
+- [* ] Tournament detail pages
+- [* ] Trivia-specific gameplay UI
+- [ *] Global leaderboard page
+- [* ] Game stats/profile page
+6. Movie
+Q: Which Movie sub-features should we build?
+- [* ] Watchlist page
+- [* ] Premieres page
+- [* ] Cinema pass subscription UI
+- [ ] Filmmaker/crowdfunding pages
+- [* ] Rental flow UI
+7. Content Moderation
+Q: Should we build user-facing moderation UI?
+- [* ] Report content button/modal on all content pages
+- [ *] Appeal submission page
+- [ *] Moderation status tracker
+8. Creator Portal
+Q: What creator portal features are missing?
+- [* ] Payout request/withdrawal UI
+- [* ] Subscriber management
+- [ ] Channel management
+- [ *] Content upload flow
+- [ *] Monetization settings
+- [ *] Challenge participation
+9. Web App Universe Pages
+Q: Most web universe pages are basic skeletons. Should we flesh them out?
+- [ *] Yes, add detail pages for all universes
+- [ ] No, focus on mobile first
+- [ ] Only for specific universes (which ones?)
+10. Referral/Rewards
+Q: Should we add detail sub-pages?
+- [ *] Referral history detail page
+- [ *] Rewards missions detail page
+- [ *] Badges collection page
+- [ *] Streak detail page
