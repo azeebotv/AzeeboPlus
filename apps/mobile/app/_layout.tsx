@@ -43,6 +43,7 @@ export default function RootLayout() {
                   <Stack.Screen name="(auth)" options={{ headerShown: false }} />
                   <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                   <Stack.Screen name="watch/[contentId]" options={{ headerShown: false }} />
+                  <Stack.Screen name="subscription" options={{ headerShown: false }} />
                 </Stack>
               </NotificationProvider>
             </WalletProvider>
