@@ -3,7 +3,6 @@ import { S3Service } from './s3.service';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from '@azeebo/shared-services';
 import { FileValidationService } from '../../common/services/file-validation.service';
-import axios from 'axios';
 
 export interface UploadResponse {
   key: string;
@@ -38,7 +37,6 @@ export class UploadService {
   private readonly cdnUrl: string;
   private readonly transcodingEnabled: boolean;
   private readonly redisKeyPrefix = 'transcoding_job:';
-  private readonly analyticsServiceBaseUrl: string;
 
   constructor(
     @Inject(S3Service) private readonly s3Service: S3Service,
@@ -48,26 +46,6 @@ export class UploadService {
   ) {
     this.cdnUrl = this.configService.get<string>('CDN_URL') || '';
     this.transcodingEnabled = this.configService.get<boolean>('TRANSCODING_ENABLED', true);
-    this.analyticsServiceBaseUrl = this.configService.get<string>(
-      'ANALYTICS_SERVICE_URL',
-      'http://analytics-service:3040'
-    );
-  }
-
-  private async trackAnalyticsEvent(
-    eventName: string,
-    userId: string,
-    metadata: Record<string, unknown> = {}
-  ): Promise<void> {
-    try {
-      await axios.post(
-        `${this.analyticsServiceBaseUrl}/analytics/track`,
-        { eventName, userId, metadata, timestamp: new Date().toISOString() },
-        { timeout: 10000 }
-      );
-    } catch (error) {
-      this.logger.warn(`Failed to track analytics event: ${eventName}`);
-    }
   }
 
   async uploadImage(file: Express.Multer.File): Promise<UploadResponse> {
