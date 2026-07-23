@@ -51,8 +51,8 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
   const loadPlans = async () => {
     try {
       const [plansRes, statusRes, walletRes] = await Promise.all([
-        apiFetch<Plan[]>('/subscription/plans'),
-        apiFetch<SubscriptionStatus>('/subscription/current'),
+        apiFetch<Plan[]>('/v1/subscription/plans'),
+        apiFetch<SubscriptionStatus>('/v1/subscription/current'),
         apiFetch<WalletBalance>('/wallet'),
       ]);
       if (plansRes.success && plansRes.data) {
@@ -77,7 +77,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
     setSubscribing(planId);
     setConfirmPlan(null);
     try {
-      const result = await apiFetch<SubscribeResult>('/subscription/subscribe', {
+      const result = await apiFetch<SubscribeResult>('/v1/subscription/subscribe', {
         method: 'POST',
         body: JSON.stringify({ planId, paymentMethod }),
       });

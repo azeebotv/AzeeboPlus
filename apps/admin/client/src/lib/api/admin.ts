@@ -1,4 +1,4 @@
-import { apiFetch, type ApiResponse } from './base';
+import { apiFetch } from './base';
 import type {
   PlatformOverview,
   AdminWallet,
@@ -14,6 +14,8 @@ import type {
   AdminUniverse,
   FeatureFlag,
   SystemSetting,
+  SubscriptionPlan,
+  SubscriptionStats,
 } from '../admin-types';
 
 export interface DashboardStats {
@@ -205,6 +207,28 @@ export const adminApi = {
   exportSettings: () => apiFetch<unknown>('/api/v1/admin/settings/export'),
   importSettings: (data: unknown, strategy: string) =>
     apiFetch<unknown>('/api/v1/admin/settings/import', { method: 'POST', body: JSON.stringify({ data, strategy }) }),
+
+  // ─── Subscriptions ───────────────────────────────────────────────────────
+  getSubscriptionPlans: (params: { page?: number; limit?: number; status?: string; tier?: string } = {}) => {
+    const q = new URLSearchParams();
+    if (params.page) q.set('page', String(params.page));
+    if (params.limit) q.set('limit', String(params.limit));
+    if (params.status) q.set('status', params.status);
+    if (params.tier) q.set('tier', params.tier);
+    return apiFetch<{ items: SubscriptionPlan[]; total: number }>(`/api/v1/admin/subscriptions?${q}`);
+  },
+  getSubscriptionPlanById: (id: string) =>
+    apiFetch<SubscriptionPlan>(`/api/v1/admin/subscriptions/${id}`),
+  createSubscriptionPlan: (data: Record<string, unknown>) =>
+    apiFetch<SubscriptionPlan>('/api/v1/admin/subscriptions', { method: 'POST', body: JSON.stringify(data) }),
+  updateSubscriptionPlan: (id: string, data: Record<string, unknown>) =>
+    apiFetch<SubscriptionPlan>(`/api/v1/admin/subscriptions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteSubscriptionPlan: (id: string) =>
+    apiFetch<unknown>(`/api/v1/admin/subscriptions/${id}`, { method: 'DELETE' }),
+  getSubscriptionStats: () =>
+    apiFetch<SubscriptionStats>('/api/v1/admin/subscriptions/stats'),
+  toggleSubscriptionPlanStatus: (id: string, status: string) =>
+    apiFetch<unknown>(`/api/v1/admin/subscriptions/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
 
   // ─── Audit Logs ─────────────────────────────────────────────────────────
   getAuditLogs: (params: { page?: number; limit?: number; category?: string; startDate?: string; endDate?: string } = {}) => {

@@ -8,7 +8,7 @@ export default function OverviewPage() {
     queryKey: ['admin', 'platform-overview'],
     queryFn: async () => {
       const res = await adminApi.getPlatformOverview();
-      return res.success ? (res.data as Record<string, number | string>) : {};
+      return res.success ? (res.data as unknown as Record<string, number | string>) : {};
     },
   });
 

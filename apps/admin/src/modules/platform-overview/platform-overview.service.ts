@@ -59,13 +59,13 @@ export class PlatformOverviewService {
 
   private async getActiveSubscriptions(): Promise<number> {
     try {
-      const response = await fetch(`${this.subscriptionServiceUrl}/v1/subscriptions/stats/active`, {
+      const response = await fetch(`${this.subscriptionServiceUrl}/v1/admin/stats`, {
         headers: { 'Content-Type': 'application/json' },
         signal: AbortSignal.timeout(5000),
       });
       if (response.ok) {
-        const data = (await response.json()) as { data?: { count?: number } };
-        return data.data?.count ?? 0;
+        const data = (await response.json()) as { data?: { activeSubscriptions?: number } };
+        return data.data?.activeSubscriptions ?? 0;
       }
       return 0;
     } catch (error) {
