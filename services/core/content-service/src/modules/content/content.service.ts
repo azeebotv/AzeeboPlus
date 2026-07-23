@@ -66,8 +66,6 @@ type ContentAvailabilityResult = {
   isPremiere: boolean;
 };
 
-import axios from 'axios';
-
 @Injectable()
 export class ContentService {
   private readonly logger = new Logger(ContentService.name);
@@ -555,7 +553,6 @@ export class ContentService {
 
       this.trackAnalyticsEvent('content_created', userId, {
         contentId: content.id,
-        type: content.type,
         universeId: content.universeId,
       });
 
@@ -704,7 +701,6 @@ export class ContentService {
 
       this.trackAnalyticsEvent('content_published', userId, {
         contentId: id,
-        type: publishedContent.type,
       });
 
       return {
