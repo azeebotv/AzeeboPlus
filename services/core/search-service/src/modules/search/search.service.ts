@@ -220,7 +220,7 @@ export class SearchService {
 
       this.trackAnalyticsEvent('search_performed', 'anonymous', {
         query,
-        resultsCount: result.data.pagination.total,
+        resultsCount: result.data?.pagination?.total ?? 0,
       });
 
       return result;
