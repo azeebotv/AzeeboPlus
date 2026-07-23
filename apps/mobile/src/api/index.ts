@@ -29,7 +29,18 @@ export type {
 export { referralApi } from './referral';
 export { creatorApi } from './creator';
 export { supportApi } from './support';
+export { moderationApi } from './moderation';
 export { apiClient } from './client';
+export type {
+  ReportReason,
+  ReportData,
+  Report,
+  Challenge,
+  ChallengeSubmission,
+  Subscriber,
+  SubscriberStats,
+  CreatorSubscriberData,
+} from './moderation';
 
 // Unified API object for convenience
 import { authApi } from './auth';
@@ -46,6 +57,7 @@ import { engagementApi, realityApi, homepageEngagementApi } from './engagement';
 import { referralApi } from './referral';
 import { creatorApi } from './creator';
 import { supportApi } from './support';
+import { moderationApi } from './moderation';
 
 export const api = {
   auth: authApi,
@@ -65,6 +77,7 @@ export const api = {
   referral: referralApi,
   creator: creatorApi,
   support: supportApi,
+  moderation: moderationApi,
   recommendation: {
     getForYou: (limit: number) => homepageEngagementApi.getNewReleases(limit),
     getTrending: (limit: number) => contentApi.getTrendingContent(limit),
