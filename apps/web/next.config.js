@@ -78,6 +78,15 @@ const nextConfig = {
       },
     ]
   },
+  async redirects() {
+    return [
+      {
+        source: '/reality/episode/:path*',
+        destination: '/reality/episodes/:path*',
+        permanent: false,
+      },
+    ]
+  },
   async rewrites() {
     const apiGatewayUrl = process.env.API_GATEWAY_URL || 'http://localhost:3013';
     return [

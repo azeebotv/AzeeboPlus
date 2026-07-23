@@ -11,6 +11,8 @@ import { OptimizedImage } from '@/components/OptimizedImage';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import analytics from '@/lib/analytics';
 
+// TODO: localStorage watchlist should be synced to a server-side
+// user-specific watchlist endpoint for cross-device persistence.
 function WatchlistPageContent(): React.JSX.Element {
   const [watchlist, setWatchlist] = useState<string[]>([]);
 
