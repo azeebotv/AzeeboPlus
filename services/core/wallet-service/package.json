@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@azeebo/error-handling": "workspace:*",
+    "@azeebo/event-bus": "workspace:*",
     "@azeebo/observability": "workspace:*",
     "@azeebo/opentelemetry": "workspace:*",
     "@azeebo/logger": "workspace:*",

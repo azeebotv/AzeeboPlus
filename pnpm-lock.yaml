@@ -426,6 +426,9 @@ importers:
 
   apps/mobile:
     dependencies:
+      '@azeebo/analytics-sdk':
+        specifier: workspace:*
+        version: link:../../packages/analytics-sdk
       '@azeebo/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
@@ -504,6 +507,9 @@ importers:
       expo-video:
         specifier: ~3.0.0
         version: 3.0.16(expo@56.0.12)(react-native@0.85.3(@babel/core@8.0.1)(@react-native/metro-config@0.85.3(@babel/core@8.0.1))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3)
+      i18next:
+        specifier: ^24.0.0
+        version: 24.2.3(typescript@5.9.3)
       react:
         specifier: 19.2.3
         version: 19.2.3
@@ -512,7 +518,7 @@ importers:
         version: 19.2.3(react@19.2.3)
       react-i18next:
         specifier: ^15.4.1
-        version: 15.7.4(i18next@26.3.6(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react-native@0.85.3(@babel/core@8.0.1)(@react-native/metro-config@0.85.3(@babel/core@8.0.1))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
+        version: 15.7.4(i18next@24.2.3(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react-native@0.85.3(@babel/core@8.0.1)(@react-native/metro-config@0.85.3(@babel/core@8.0.1))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
       react-native:
         specifier: ~0.85.3
         version: 0.85.3(@babel/core@8.0.1)(@react-native/metro-config@0.85.3(@babel/core@8.0.1))(@types/react@19.2.17)(react@19.2.3)
@@ -1708,6 +1714,9 @@ importers:
       '@azeebo/error-handling':
         specifier: workspace:*
         version: link:../../../packages/error-handling
+      '@azeebo/feature-flags':
+        specifier: workspace:*
+        version: link:../../../packages/feature-flags
       '@azeebo/logger':
         specifier: workspace:*
         version: link:../../../packages/logger
@@ -2361,6 +2370,9 @@ importers:
       '@azeebo/error-handling':
         specifier: workspace:*
         version: link:../../../packages/error-handling
+      '@azeebo/event-bus':
+        specifier: workspace:*
+        version: link:../../../packages/event-bus
       '@azeebo/logger':
         specifier: workspace:*
         version: link:../../../packages/logger
@@ -12180,10 +12192,10 @@ packages:
   hyphenate-style-name@1.1.0:
     resolution: {integrity: sha512-WDC/ui2VVRrz3jOVi+XtjqkDjiVjTtFaAGiW37k6b+ohyQ5wYDOGkvCZa8+H0nx3gyvv0+BST9xuOgIyGQ00gw==}
 
-  i18next@26.3.6:
-    resolution: {integrity: sha512-Bu5Z2nAXgfVyM8xvW3jk9EKRIuX37PudsrBViThNFx7CR7aaYTpP01cxNB/E4c4UUzTDiAZRstEhsRfPOL/8xA==}
+  i18next@24.2.3:
+    resolution: {integrity: sha512-lfbf80OzkocvX7nmZtu7nSTNbrTYR52sLWxPtlXX1zAhVw8WEnFk4puUkCR4B1dNQwbSpEHHHemcZu//7EcB7A==}
     peerDependencies:
-      typescript: ^5 || ^6 || ^7
+      typescript: ^5
     peerDependenciesMeta:
       typescript:
         optional: true
@@ -24536,7 +24548,9 @@ snapshots:
 
   hyphenate-style-name@1.1.0: {}
 
-  i18next@26.3.6(typescript@5.9.3):
+  i18next@24.2.3(typescript@5.9.3):
+    dependencies:
+      '@babel/runtime': 7.29.7
     optionalDependencies:
       typescript: 5.9.3
 
@@ -26753,11 +26767,11 @@ snapshots:
     dependencies:
       react: 19.2.7
 
-  react-i18next@15.7.4(i18next@26.3.6(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react-native@0.85.3(@babel/core@8.0.1)(@react-native/metro-config@0.85.3(@babel/core@8.0.1))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3)(typescript@5.9.3):
+  react-i18next@15.7.4(i18next@24.2.3(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react-native@0.85.3(@babel/core@8.0.1)(@react-native/metro-config@0.85.3(@babel/core@8.0.1))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3)(typescript@5.9.3):
     dependencies:
       '@babel/runtime': 7.29.7
       html-parse-stringify: 3.0.1
-      i18next: 26.3.6(typescript@5.9.3)
+      i18next: 24.2.3(typescript@5.9.3)
       react: 19.2.3
     optionalDependencies:
       react-dom: 19.2.3(react@19.2.3)
