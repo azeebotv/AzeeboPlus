@@ -135,6 +135,11 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     echo "==> Verify shared-services dist:" && find packages/shared-services/dist/ -maxdepth 1 -name "index.*" 2>&1 && \
     pnpm --filter @azeebo/security run build && \
     pnpm --filter @azeebo/ui run build && \
+    pnpm --filter @azeebo/observability run build && \
+    pnpm --filter @azeebo/opentelemetry run build && \
+    pnpm --filter @azeebo/event-bus run build && \
+    pnpm --filter @azeebo/feature-flags run build && \
+    pnpm --filter @azeebo/internal-clients run build && \
     echo "==> [T1] Building critical path (web, gateway, auth, user)..." && \
     pnpm --filter @azeebo/web run build && \
     echo "==> Web build complete. Checking standalone output..." && \
