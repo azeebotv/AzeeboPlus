@@ -90,7 +90,7 @@ function SportsPageContent(): React.JSX.Element {
                     </button>
                   </Link>
                   <Link
-                    href={`/predictions`}
+                    href={`/sports/predictions`}
                     className="px-6 py-3 rounded-full text-sm font-semibold transition-all inline-block"
                     style={{ backgroundColor: '#fff', color: '#0D3B2E' }}
                   >

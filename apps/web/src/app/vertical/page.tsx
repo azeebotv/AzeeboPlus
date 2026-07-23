@@ -99,7 +99,7 @@ function VerticalPageContent(): React.JSX.Element {
                   </button>
                 </Link>
                 <Link
-                  href={`/watch/${series[0].id}`}
+                  href={`/vertical/lore`}
                   className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all inline-block"
                   style={{
                     border: '1px solid rgba(255,255,255,0.2)',
