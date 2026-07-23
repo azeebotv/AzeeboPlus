@@ -149,8 +149,16 @@ export class AdminService {
     return { templates, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
-  async createTemplate(data: { name: string; type: string; channel: string; subject?: string; body: string; variables?: string[] }) {
-    const template = await this.prisma.notificationTemplate.create({ data });
+  async createTemplate(data: { key: string; channel: string; subject?: string; body: string; variables?: string[] }) {
+    const template = await this.prisma.notificationTemplate.create({
+      data: {
+        key: data.key,
+        channel: data.channel,
+        subject: data.subject,
+        body: data.body,
+        variables: data.variables || [],
+      },
+    });
     return { success: true, template };
   }
 
@@ -178,12 +186,13 @@ export class AdminService {
     return { campaigns, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
-  async createCampaign(data: { name: string; templateId: string; targetAudience?: string; scheduledAt?: string }) {
+  async createCampaign(data: { name: string; templateKey: string; channel: string; audience?: Record<string, unknown>; scheduledAt?: string }) {
     const campaign = await this.prisma.campaign.create({
       data: {
         name: data.name,
-        templateId: data.templateId,
-        targetAudience: data.targetAudience as any,
+        templateKey: data.templateKey,
+        channel: data.channel,
+        audience: data.audience || {},
         scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : null,
       },
     });
