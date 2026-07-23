@@ -115,8 +115,6 @@ model Notification {
 
   @@index([userId])
   @@map("notifications")
-
-  @@map("notifications")
 }
 
 model PaymentIntent {
