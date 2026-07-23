@@ -105,6 +105,30 @@ function LifestylePageContent(): React.JSX.Element {
         )}
       </section>
 
+      {/* Sub-Section Navigation */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h2 className="text-xl font-bold text-white mb-4">Explore Lifestyle</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          {[
+            { label: 'Celebrities', href: '/lifestyle/celebrities', icon: '🌟' },
+            { label: 'Influencers', href: '/lifestyle/influencers', icon: '📱' },
+            { label: 'Nightlife', href: '/lifestyle/nightlife', icon: '🌃' },
+            { label: 'Social', href: '/lifestyle/social', icon: '💬' },
+            { label: 'City Guide', href: '/lifestyle/city-guide', icon: '🏙️' },
+          ].map((item) => (
+            <Link key={item.href} href={item.href}>
+              <div
+                className="az-glass p-4 text-center cursor-pointer transition-all hover:scale-[1.03]"
+                style={{ boxShadow: '0 0 15px rgba(232,66,10,0.08)' }}
+              >
+                <span className="text-2xl mb-2 block">{item.icon}</span>
+                <span className="text-sm font-semibold text-white">{item.label}</span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       {/* Events Grid */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex items-center justify-between mb-8">
