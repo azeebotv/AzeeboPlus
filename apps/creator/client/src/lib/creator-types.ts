@@ -80,3 +80,84 @@ export interface CreatorSettings {
   notifications?: NotificationPreferences;
   privacy?: PrivacySettings;
 }
+
+// Payouts
+export interface PayoutItem {
+  id: string;
+  amount: number;
+  method: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  requestedAt: string;
+  processedAt: string | null;
+}
+
+export interface PayoutsData {
+  availableBalance: number;
+  pendingPayout: number;
+  totalPaidOut: number;
+  history: PayoutItem[];
+}
+
+// Subscribers
+export interface Subscriber {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+  tier: string;
+  joinedAt: string;
+}
+
+export interface SubscribersData {
+  total: number;
+  growth: { date: string; count: number }[];
+  demographics: { region: string; percentage: number }[];
+  recentSubscribers: Subscriber[];
+}
+
+// Upload
+export interface UploadProgress {
+  id: string;
+  title: string;
+  status: 'uploading' | 'processing' | 'completed' | 'failed';
+  progress: number;
+  createdAt: string;
+}
+
+// Monetization
+export interface MonetizationTier {
+  id: string;
+  name: string;
+  price: number;
+  perks: string[];
+  subscriberCount: number;
+}
+
+export interface MonetizationData {
+  tiers: MonetizationTier[];
+  tipEnabled: boolean;
+  tipMin: number;
+  tipMax: number;
+  payoutMethod: string;
+  payoutDetails: Record<string, string>;
+}
+
+// Challenges
+export interface Challenge {
+  id: string;
+  title: string;
+  description: string;
+  universe: string;
+  prize: number;
+  deadline: string;
+  submissionsCount: number;
+  status: 'active' | 'upcoming' | 'ended';
+}
+
+export interface ChallengeSubmission {
+  id: string;
+  challengeId: string;
+  title: string;
+  status: 'submitted' | 'under_review' | 'winner' | 'rejected';
+  submittedAt: string;
+}

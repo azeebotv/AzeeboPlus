@@ -8,6 +8,11 @@ import AnalyticsPage from './routes/analytics';
 import EarningsPage from './routes/earnings';
 import ContentPage from './routes/content';
 import SettingsPage from './routes/settings';
+import PayoutsPage from './routes/payouts';
+import SubscribersPage from './routes/subscribers';
+import UploadPage from './routes/upload';
+import MonetizationPage from './routes/monetization';
+import ChallengesPage from './routes/challenges';
 import LoginPage from './routes/login';
 
 const queryClient = new QueryClient({
@@ -37,6 +42,11 @@ export default function App() {
               <Route path="analytics" element={<AnalyticsPage />} />
               <Route path="earnings" element={<EarningsPage />} />
               <Route path="content" element={<ContentPage />} />
+              <Route path="upload" element={<UploadPage />} />
+              <Route path="payouts" element={<PayoutsPage />} />
+              <Route path="subscribers" element={<SubscribersPage />} />
+              <Route path="monetization" element={<MonetizationPage />} />
+              <Route path="challenges" element={<ChallengesPage />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>
           </Routes>

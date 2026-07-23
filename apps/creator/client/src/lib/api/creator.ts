@@ -1,4 +1,4 @@
-import { apiFetch, type ApiResponse } from './base';
+import { apiFetch } from './base';
 import type {
   DashboardStats,
   ContentList,
@@ -8,6 +8,12 @@ import type {
   PayoutSettings,
   ContentItem,
   CreatorSettings,
+  PayoutsData,
+  SubscribersData,
+  UploadProgress,
+  MonetizationData,
+  Challenge,
+  ChallengeSubmission,
 } from '../creator-types';
 
 const API = '/api/v1';
@@ -60,5 +66,53 @@ export const creatorApi = {
     apiFetch<{ success: boolean }>(`${API}/creator/settings`, {
       method: 'PUT',
       body: JSON.stringify(data),
+    }),
+
+  // Payouts
+  getPayouts: () =>
+    apiFetch<PayoutsData>(`${API}/creator/payouts`),
+
+  requestPayoutAmount: (amount: number, method: string) =>
+    apiFetch<PayoutRequest>(`${API}/creator/payouts/request`, {
+      method: 'POST',
+      body: JSON.stringify({ amount, method }),
+    }),
+
+  // Subscribers
+  getSubscribers: () =>
+    apiFetch<SubscribersData>(`${API}/creator/subscribers`),
+
+  // Upload
+  getUploads: () =>
+    apiFetch<UploadProgress[]>(`${API}/creator/uploads`),
+
+  uploadContent: (data: FormData) =>
+    apiFetch<UploadProgress>(`${API}/creator/uploads`, {
+      method: 'POST',
+      body: data,
+      headers: {},
+    }),
+
+  // Monetization
+  getMonetization: () =>
+    apiFetch<MonetizationData>(`${API}/creator/monetization`),
+
+  updateMonetization: (data: Partial<MonetizationData>) =>
+    apiFetch<{ success: boolean }>(`${API}/creator/monetization`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  // Challenges
+  getChallenges: () =>
+    apiFetch<Challenge[]>(`${API}/creator/challenges`),
+
+  getChallengeSubmissions: () =>
+    apiFetch<ChallengeSubmission[]>(`${API}/creator/challenges/submissions`),
+
+  submitChallenge: (challengeId: string, title: string) =>
+    apiFetch<ChallengeSubmission>(`${API}/creator/challenges/${challengeId}/submit`, {
+      method: 'POST',
+      body: JSON.stringify({ title }),
     }),
 };
