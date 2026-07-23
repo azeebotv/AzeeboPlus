@@ -49,7 +49,7 @@
 set -euo pipefail
 
 # ---- Script Metadata ----
-SCRIPT_VERSION="3.2.0"
+SCRIPT_VERSION="3.3.0"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
