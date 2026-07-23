@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/nestjs';
-import type { Scope } from '@sentry/core';
+
+interface SentryScope {
+  setExtras(context: Record<string, unknown>): void;
+  setLevel(level: string): void;
+}
 
 @Injectable()
 export class SentryService {
@@ -24,7 +28,7 @@ export class SentryService {
 
   captureException(error: Error, context?: Record<string, unknown>): string | undefined {
     if (!this.initialized) return undefined;
-    return Sentry.withScope((scope: Scope) => {
+    return Sentry.withScope((scope: SentryScope) => {
       if (context) scope.setExtras(context);
       return Sentry.captureException(error);
     });
@@ -32,7 +36,7 @@ export class SentryService {
 
   captureMessage(message: string, level: Sentry.SeverityLevel = 'info', context?: Record<string, unknown>): string | undefined {
     if (!this.initialized) return undefined;
-    return Sentry.withScope((scope: Scope) => {
+    return Sentry.withScope((scope: SentryScope) => {
       scope.setLevel(level);
       if (context) scope.setExtras(context);
       return Sentry.captureMessage(message, level);
