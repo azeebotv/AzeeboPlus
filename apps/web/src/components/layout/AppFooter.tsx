@@ -16,6 +16,7 @@ const FOOTER_LINKS = {
       { label: 'Creators', href: '/creators' },
       { label: 'Rewards', href: '/rewards' },
       { label: 'Premium', href: '/premium' },
+      { label: 'Subscription History', href: '/wallet/subscription-history' },
     ],
   },
   entertainment: {

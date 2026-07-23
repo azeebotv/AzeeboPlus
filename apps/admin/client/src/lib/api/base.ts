@@ -45,7 +45,7 @@ const USER_KEY = 'azeebo_admin_user';
 function getCookie(name: string): string | null {
   if (typeof document === 'undefined') return null;
   const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
-  return match ? decodeURIComponent(match[1]) : null;
+  return match?.[1] ? decodeURIComponent(match[1]) : null;
 }
 
 const CSRF_HEADER = 'X-CSRF-Token';

@@ -161,6 +161,32 @@ export interface FeatureFlag {
   metadata?: Record<string, unknown>;
 }
 
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  currency: string;
+  durationDays: number;
+  tier: 'free' | 'basic' | 'standard' | 'premium' | 'enterprise';
+  status: 'active' | 'inactive' | 'archived';
+  features: string[];
+  maxContentAccess?: number;
+  maxUsers?: number;
+  subscriberCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SubscriptionStats {
+  totalActiveSubscriptions: number;
+  totalRevenue: number;
+  monthlyRecurringRevenue: number;
+  churnRate: number;
+  averageRevenuePerUser: number;
+  activePlans: number;
+}
+
 export interface SystemSetting {
   key: string;
   value: unknown;

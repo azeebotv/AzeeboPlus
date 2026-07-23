@@ -14,6 +14,7 @@ export const ADMIN_NAV = [
   { href: '/wallets', label: 'Wallets', icon: '👛' },
   { href: '/financial', label: 'Financial', icon: '💰' },
   { href: '/payment-gateways', label: 'Payments', icon: '💳' },
+  { href: '/subscriptions', label: 'Subscriptions', icon: '🔄' },
   { href: '/engagement', label: 'Engagement', icon: '🔥' },
   { href: '/notifications', label: 'Notifications', icon: '🔔' },
   { href: '/announcements', label: 'Announcements', icon: '📢' },

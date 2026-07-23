@@ -21,6 +21,7 @@ import AuditLogsPage from './routes/audit-logs';
 import ReportsPage from './routes/reports';
 import ReportBuilderPage from './routes/report-builder';
 import SettingsPage from './routes/settings';
+import SubscriptionsPage from './routes/subscriptions';
 import LoginPage from './routes/login';
 
 const queryClient = new QueryClient({
@@ -64,6 +65,7 @@ export default function App() {
               <Route path="reports" element={<ReportsPage />} />
               <Route path="reports/builder" element={<ReportBuilderPage />} />
               <Route path="settings" element={<SettingsPage />} />
+              <Route path="subscriptions" element={<SubscriptionsPage />} />
             </Route>
           </Routes>
         </BrowserRouter>
