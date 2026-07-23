@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -7,6 +8,7 @@ import { LoadingState, EmptyState, ErrorState } from '../src/components/StateCon
 import { apiClient } from '../src/api/client';
 import { verticalSubscription } from '../src/config/prices';
 import { ApiResponse } from '../src/types/api';
+import { analytics } from '../src/utils/analytics';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -63,6 +65,13 @@ export default function VerticalUniverseHome() {
 
   const isLoading = featuredQuery.isLoading || seriesQuery.isLoading || genresQuery.isLoading;
   const error = featuredQuery.error?.message || seriesQuery.error?.message || genresQuery.error?.message;
+
+  useEffect(() => {
+    if (featuredQuery.isSuccess && !featuredQuery.isFetching) {
+      try { analytics.verticalUniverseViewed('home'); } catch {}
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [featuredQuery.isSuccess]);
 
   const featuredSeries = featuredQuery.data ?? [];
   const verticalContent = seriesQuery.data ?? [];

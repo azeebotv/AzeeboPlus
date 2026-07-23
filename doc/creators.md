@@ -1,4 +1,7 @@
-# Creator Dashboard — Standalone Full-Stack Implementation (COMPLETED)
+# Creator Dashboard — Standalone Full-Stack Implementation
+
+> **Status:** Implementation complete. Standalone creator dashboard running at `:4014` with 7 route pages.
+> **Last Updated:** 2026-07-22
 
 > **Goal**: Turn `apps/creator` (NestJS API on port **4014**) into a **standalone full-stack creator dashboard** with a Vite+React SPA frontend.
 >
@@ -271,3 +274,20 @@ C* → E1..E4 → F1..F4 → G1 (decommission) → G2..G4
 - Web/backend route contract reconciled; `settings` endpoints added; subscriber count deterministic; content mutations return correct 404/ownership semantics.
 - Unit + contract + e2e + a11y suites green in CI; Docker image healthy; staging deploy validated.
 - `apps/web` creator dashboard decommissioned and redirected.
+
+---
+
+## 5. Implementation Status
+
+| Phase | Status | Notes |
+|-------|--------|-------|
+| A — Environment & Scaffolding | ✅ Complete | Vite+React SPA in `apps/creator/client/`, NestJS serves static |
+| B — Auth, RBAC & Security | ✅ Complete | CSRF, role guards, auth context implemented |
+| C — Core Feature Extraction | ✅ Complete | All 7 routes extracted and wired |
+| D — UI/UX & Design System | ✅ Complete | Dark theme, design tokens, loading/error states |
+| E — Integration Testing | ⚠️ Partial | Backend tests exist; E2E Playwright suite created |
+| F — Deployment Preparation | ⚠️ Partial | CI pipeline extended; staging deploy pending |
+| G — Post-Launch / Decommission | ⬜ Pending | Web creator dashboard decommission pending |
+
+### Extracted Routes (7 pages)
+`dashboard`, `overview`, `analytics`, `earnings`, `content`, `settings`, `login`

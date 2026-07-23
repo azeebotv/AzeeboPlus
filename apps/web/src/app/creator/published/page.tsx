@@ -145,7 +145,7 @@ export default function PublishedPage(): React.JSX.Element {
                 {item.thumbnail && (
                   <img
                     src={item.thumbnail}
-                    alt=""
+                    alt={item.title}
                     style={{ width: '100%', height: 160, objectFit: 'cover' }}
                   />
                 )}

@@ -49,6 +49,8 @@ services:
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-30m}
       JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
+      GATEWAY_SECRET: ${GATEWAY_SECRET:-${INTERNAL_API_KEY}}
 
       # Payment
       PAYSTACK_SECRET_KEY: ${PAYSTACK_SECRET_KEY:-}
@@ -82,7 +84,7 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:80,https://localhost:443,https://app.azeeboplus.com}
 
       # Analytics (NEW - required for event tracking)
-      ANALYTICS_SERVICE_URL: http://localhost:3040
+      ANALYTICS_SERVICE_URL: http://localhost:3008
 
       # WebSocket (NEW - required for messaging/realtime)
       WS_CORS_ORIGIN: ${WS_CORS_ORIGIN:-https://app.azeeboplus.com}

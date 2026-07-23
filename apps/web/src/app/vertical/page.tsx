@@ -1,4 +1,5 @@
 'use client';
+import { Suspense, lazy, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import Link from 'next/link';
@@ -6,8 +7,13 @@ import { api, ContentItem } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import analytics from '@/lib/analytics';
 
-export default function VerticalPage(): React.JSX.Element {
+function VerticalPageContent(): React.JSX.Element {
+  useEffect(() => {
+    analytics.pageView('vertical');
+  }, []);
+
   const universesQuery = useQuery({
     queryKey: ['universes'],
     queryFn: async () => {
@@ -185,5 +191,15 @@ export default function VerticalPage(): React.JSX.Element {
 
       <AppFooter />
     </div>
+  );
+}
+
+const LazyVerticalPage = lazy(() => Promise.resolve({ default: VerticalPageContent }));
+
+export default function VerticalPage(): React.JSX.Element {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+      <LazyVerticalPage />
+    </Suspense>
   );
 }

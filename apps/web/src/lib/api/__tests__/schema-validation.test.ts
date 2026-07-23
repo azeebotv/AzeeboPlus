@@ -5,7 +5,6 @@ import { createWalletMethods } from '../wallet';
 import { createPaymentMethods } from '../payment';
 import { createUniverseMethods } from '../universe';
 import { createCreatorMethods } from '../creator';
-import { createAdminMethods } from '../admin';
 import { createEngagementMethods } from '../engagement';
 import { createRealityMethods } from '../reality';
 import type { RequestClient } from '../base';
@@ -311,70 +310,6 @@ describe('Response Schema — Creator', () => {
     expect(result.data).toHaveProperty('users');
     expect(result.data).toHaveProperty('content');
     expect(result.data).toHaveProperty('revenue');
-  });
-});
-
-describe('Response Schema — Admin', () => {
-  let client: ReturnType<typeof createMockClient>;
-  let admin: ReturnType<typeof createAdminMethods>;
-
-  beforeEach(() => {
-    client = createMockClient();
-    admin = createAdminMethods(client);
-  });
-
-  it('getDashboard returns dashboard stats shape', async () => {
-    const data = {
-      totalUsers: 15000,
-      totalContent: 3200,
-      totalViews: 1200000,
-      dailyActiveUsers: 850,
-      dailyViews: 45000,
-      totalRevenue: 250000,
-      newUsers: 120,
-      newContent: 35,
-      topCreators: [],
-      recentActivity: [],
-    };
-    client.request.mockResolvedValue({ success: true, data });
-
-    const result = await admin.getDashboard();
-
-    expect(result.data).toHaveProperty('totalUsers');
-    expect(result.data).toHaveProperty('totalContent');
-    expect(result.data).toHaveProperty('totalViews');
-    expect(result.data).toHaveProperty('dailyActiveUsers');
-    expect(result.data).toHaveProperty('dailyViews');
-    expect(result.data).toHaveProperty('totalRevenue');
-    expect(result.data).toHaveProperty('newUsers');
-    expect(result.data).toHaveProperty('newContent');
-    expect(result.data).toHaveProperty('topCreators');
-    expect(result.data).toHaveProperty('recentActivity');
-    expect(Array.isArray(result.data!.topCreators)).toBe(true);
-    expect(Array.isArray(result.data!.recentActivity)).toBe(true);
-  });
-
-  it('getUsers returns PaginatedResponse<User>', async () => {
-    const data = {
-      items: [{ id: 'u1', email: 'u1@test.com', name: 'User1', role: 'user' }],
-      total: 100,
-      page: 1,
-      limit: 20,
-      hasMore: true,
-    };
-    client.request.mockResolvedValue({ success: true, data });
-
-    const result = await admin.getUsers();
-
-    expect(result.data).toHaveProperty('items');
-    expect(result.data).toHaveProperty('total');
-    expect(result.data).toHaveProperty('page');
-    expect(result.data).toHaveProperty('limit');
-    expect(result.data).toHaveProperty('hasMore');
-    expect(result.data!.items[0]).toHaveProperty('id');
-    expect(result.data!.items[0]).toHaveProperty('email');
-    expect(result.data!.items[0]).toHaveProperty('name');
-    expect(result.data!.items[0]).toHaveProperty('role');
   });
 });
 

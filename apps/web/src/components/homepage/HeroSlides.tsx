@@ -132,7 +132,7 @@ export default function HeroSlides({
                 currentSlide.thumbnail ||
                 '/placeholder-hero.png'
               }
-              alt=""
+              alt={currentSlide.title || 'Hero slide'}
               fill
               className="object-cover"
               priority={currentIndex === 0}

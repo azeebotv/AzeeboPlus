@@ -22,7 +22,6 @@ import type { NextRequest } from 'next/server';
 const protectedRoutes = [
   '/dashboard',
   '/rewards',
-  '/creator',
   '/subscriptions',
   '/notifications',
   '/messaging',
@@ -33,7 +32,11 @@ const protectedRoutes = [
   '/payment',
 ];
 const adminRoutes = ['/admin'];
-const creatorRoutes = ['/creator'];
+const creatorRoutes = ['/creator', '/creators/dashboard'];
+
+// Standalone app hosts (set via env vars in production)
+const ADMIN_HOST = process.env.ADMIN_APP_URL || 'http://localhost:4016';
+const CREATOR_HOST = process.env.CREATOR_APP_URL || 'http://localhost:4014';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -76,26 +79,20 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // --- Admin route guards ---
-  // SECURITY: Do NOT decode JWT client-side. Role checks are handled server-side.
-  // The auth cookie presence is sufficient for routing; server-side APIs verify JWT signatures.
+  // --- Admin route redirect to standalone app ---
+  // Redirect admin pages to the standalone admin portal
   if (adminRoutes.some((route) => pathname.startsWith(route))) {
-    if (!isAuthenticated) {
-      const loginUrl = new URL('/auth/login', request.url);
-      loginUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-    // Role check delegated to server-side API gateway
+    // Preserve the path when redirecting to the standalone admin app
+    const adminUrl = new URL(pathname, ADMIN_HOST);
+    return NextResponse.redirect(adminUrl);
   }
 
-  // --- Creator portal route guards ---
+  // --- Creator portal redirect to standalone app ---
+  // Redirect creator pages to the standalone creator portal
   if (creatorRoutes.some((route) => pathname.startsWith(route))) {
-    if (!isAuthenticated) {
-      const loginUrl = new URL('/auth/login', request.url);
-      loginUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-    // Role check delegated to server-side API gateway
+    // Preserve the path when redirecting to the standalone creator app
+    const creatorUrl = new URL(pathname, CREATOR_HOST);
+    return NextResponse.redirect(creatorUrl);
   }
 
   // --- Protected route guards ---

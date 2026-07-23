@@ -5,6 +5,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiClient } from '../src/api/client';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
+import { analytics } from '../src/utils/analytics';
 import { defaultImages } from '../src/theme';
 
 const PLACEHOLDER_IMAGE = defaultImages.thumbnail;
@@ -85,6 +86,7 @@ export default function VerticalTitleScreen() {
         apiClient.get<TimelineItem[]>(`/vertical/titles/${id}/timeline`),
       ]);
       setTitleData(titleRes);
+      try { analytics.verticalTitleViewed(titleRes.id); } catch {}
       setCharacters(charsRes);
       setLoreData(loreRes);
       setTimeline(timelineRes);

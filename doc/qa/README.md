@@ -4,27 +4,14 @@
 
 ---
 
-## Structure
+## Key Documents
 
-```
-docs/qa/
-├── README.md              # This file
-├── checklists/            # Per-feature QA checklists
-│   ├── reality-vote.md
-│   ├── creator-upload.md
-│   ├── wallet-deposit.md
-│   └── [feature].md
-├── regression/            # Regression test suites
-│   ├── smoke-tests.md     # Core path smoke tests
-│   ├── payment.md         # Payment regression
-│   └── auth.md            # Auth regression
-├── edge-cases/            # Edge case catalogs
-│   ├── payments.md
-│   ├── concurrency.md
-│   └── offline.md
-└── test-plans/            # Feature test plans
-    ├── [feature].md
-```
+| Document | Location | Purpose |
+|----------|----------|---------|
+| Contributing (Testing) | `doc/CONTRIBUTING.md` (§Testing) | Test standards and coverage targets |
+| Security Audit | `doc/AUDITNOTES.md` | Security findings and verification |
+| Deployment Checklist | `doc/DEPLOYMENT-CHECKLIST.md` | Post-deploy verification steps |
+| Remaining Tasks | `doc/remaining-tasks.md` | Testing tasks (Phase 6) |
 
 ## QA Checklist (Every Feature)
 
@@ -61,15 +48,6 @@ docs/qa/
 - [ ] Loading indicators for async
 - [ ] Back navigation works
 
-## Using Skills for QA
-
-Use the QA-related Claude skills:
-
-```
-/qa-pass [feature]     # Run full QA checklist
-/review-module [path]  # Audit module for issues
-```
-
 ## Severity Levels
 
 | Level | Description | SLA |
@@ -78,3 +56,12 @@ Use the QA-related Claude skills:
 | **P1** | Core feature broken, no workaround | Fix within 24h |
 | **P2** | Feature degraded, workaround exists | Fix within 1 week |
 | **P3** | Minor UX issue, cosmetic | Fix in next sprint |
+
+## Coverage Targets
+
+| Area | Target |
+|------|--------|
+| Wallet/Payment | 90%+ |
+| Auth/Security | 90%+ |
+| Core Services | 80%+ |
+| Universe Services | 70%+ |

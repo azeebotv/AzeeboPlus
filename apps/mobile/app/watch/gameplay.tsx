@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { apiClient } from '../../src/api';
 import { logger } from '../../src/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
+import { analytics } from '../../src/utils/analytics';
 
 interface GameQuestion {
   id: number;
@@ -81,6 +82,13 @@ export default function GameplayScreen() {
   };
 
   const isGameOver = timeLeft === 0 || (currentQuestion === questions.length - 1 && selectedAnswer);
+
+  useEffect(() => {
+    if (isGameOver) {
+      try { analytics.gameCompleted('trivia', score, 60 - timeLeft); } catch {}
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isGameOver]);
 
   if (isLoading) {
     return (

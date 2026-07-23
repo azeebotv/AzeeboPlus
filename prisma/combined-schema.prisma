@@ -831,6 +831,11 @@ model ContentItem {
   relationshipsAsContent ContentRelationship[] @relation("ContentRelationshipContent")
   relationshipsAsRelatedContent ContentRelationship[] @relation("ContentRelationshipRelatedContent")
 
+  @@index([creatorId])
+  @@index([status])
+  @@index([universeId])
+  @@index([creatorId, status])
+  @@index([createdAt])
   @@map("content_items")
 }
 
@@ -3893,6 +3898,11 @@ model WalletTransaction {
 
   wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
+  @@index([walletId])
+  @@index([type])
+  @@index([walletId, type])
+  @@index([status])
+  @@index([createdAt])
   @@map("wallet_transactions")
 }
 

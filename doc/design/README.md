@@ -4,28 +4,13 @@
 
 ---
 
-## Structure
+## Key Documents
 
-```
-docs/design/
-├── README.md              # This file
-├── design-system/         # Design tokens, components, patterns
-│   ├── tokens.md          # Colors, typography, spacing
-│   ├── components.md      # Shared component catalog
-│   └── patterns.md        # Common UX patterns
-├── screens/               # Screen-by-screen specs
-│   ├── home.md
-│   ├── reality/
-│   ├── creator/
-│   ├── lifestyle/
-│   ├── vertical/
-│   ├── movie/
-│   ├── games/
-│   ├── comedy/
-│   └── sports/
-└── figma/                 # Figma file links and handoff notes
-    └── handoff.md
-```
+| Document | Location | Purpose |
+|----------|----------|---------|
+| Design Blueprint | `doc/AZEEBO_MODULAR_APP.md` (§4, §11-§12, §15) | Design system, screen blueprints, component catalog |
+| Figma Handoff | `doc/AZEEBO_MODULAR_APP.md` (§2107-§3516) | Screen-by-screen Figma design specs |
+| Claude Build Playbook | `doc/AZEEBO CLAUDE BUILD (1).md` | Design prompt templates |
 
 ## Design Principles
 
@@ -58,7 +43,7 @@ Every screen must implement:
 
 ## Design Tokens
 
-Tokens are managed in `/packages/design-tokens`. Never hardcode:
+Tokens are managed in `packages/design-tokens`. Never hardcode:
 
 ```typescript
 // Bad

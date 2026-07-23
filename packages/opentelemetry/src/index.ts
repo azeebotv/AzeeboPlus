@@ -29,54 +29,60 @@ const DEFAULT_CONFIG: OpenTelemetryConfig = {
 };
 
 /** Initializes the OpenTelemetry SDK with HTTP, Express, and Prisma instrumentations. */
-export function initializeOpenTelemetry(config: Partial<OpenTelemetryConfig> = {}): NodeSDK {
+export function initializeOpenTelemetry(config: Partial<OpenTelemetryConfig> = {}): NodeSDK | null {
+  // Skip initialization if no OTLP endpoint is configured
+  if (!process.env.OTEL_EXPORTER_OTLP_ENDPOINT && !config.otlpEndpoint) {
+    return null;
+  }
+
   const finalConfig = { ...DEFAULT_CONFIG, ...config };
 
-  const traceExporter = new OTLPTraceExporter({
-    url: `${finalConfig.otlpEndpoint}/v1/traces`,
-  });
+  try {
+    const traceExporter = new OTLPTraceExporter({
+      url: `${finalConfig.otlpEndpoint}/v1/traces`,
+    });
 
-  const sdk = new NodeSDK({
-    resource: resourceFromAttributes({
-      [SemanticResourceAttributes.SERVICE_NAME]: finalConfig.serviceName,
-      [SemanticResourceAttributes.SERVICE_VERSION]: finalConfig.serviceVersion,
-      [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: finalConfig.environment,
-    }),
-    traceExporter,
-    sampler: new ParentBasedSampler({
-      root: new TraceIdRatioBasedSampler(finalConfig.samplingRatio!),
-    }),
-  });
-
-  registerInstrumentations({
-    instrumentations: [
-      new HttpInstrumentation({
-        requestHook: (span: Span, request: unknown) => {
-          const req = request as { path?: string };
-          if (req.path) {
-            const pathOnly = req.path.split('?')[0];
-            span.setAttribute('http.request.path', pathOnly);
-          }
-        },
+    const sdk = new NodeSDK({
+      resource: resourceFromAttributes({
+        [SemanticResourceAttributes.SERVICE_NAME]: finalConfig.serviceName,
+        [SemanticResourceAttributes.SERVICE_VERSION]: finalConfig.serviceVersion,
+        [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: finalConfig.environment,
       }),
-      new ExpressInstrumentation({
-        requestHook: (span: Span, request: unknown) => {
-          const req = request as { path?: string; method?: string };
-          if (req.path) span.setAttribute('http.route', req.path);
-          if (req.method) span.setAttribute('http.method', req.method);
-        },
+      traceExporter,
+      sampler: new ParentBasedSampler({
+        root: new TraceIdRatioBasedSampler(finalConfig.samplingRatio!),
       }),
-      new PrismaInstrumentation(),
-    ],
-  });
+    });
 
-  const shutdown = async () => {
-    try {
-      await sdk.shutdown();
-      process.stderr.write(`${LOG_PREFIX} SDK shut down gracefully\n`);
-    } catch (error) {
-      process.stderr.write(`${LOG_PREFIX} Error shutting down SDK: ${error}\n`);
-    } finally {
+    registerInstrumentations({
+      instrumentations: [
+        new HttpInstrumentation({
+          requestHook: (span: Span, request: unknown) => {
+            const req = request as { path?: string };
+            if (req.path) {
+              const pathOnly = req.path.split('?')[0];
+              span.setAttribute('http.request.path', pathOnly);
+            }
+          },
+        }),
+        new ExpressInstrumentation({
+          requestHook: (span: Span, request: unknown) => {
+            const req = request as { path?: string; method?: string };
+            if (req.path) span.setAttribute('http.route', req.path);
+            if (req.method) span.setAttribute('http.method', req.method);
+          },
+        }),
+        new PrismaInstrumentation(),
+      ],
+    });
+
+    const shutdown = async () => {
+      try {
+        await sdk.shutdown();
+        process.stderr.write(`${LOG_PREFIX} SDK shut down gracefully\n`);
+      } catch (error) {
+        process.stderr.write(`${LOG_PREFIX} Error shutting down SDK: ${error}\n`);
+      } finally {
       process.exit(0);
     }
   };
@@ -89,6 +95,10 @@ export function initializeOpenTelemetry(config: Partial<OpenTelemetryConfig> = {
   process.stderr.write(`${LOG_PREFIX} Tracing initialized for ${finalConfig.serviceName}\n`);
 
   return sdk;
+  } catch (error) {
+    process.stderr.write(`${LOG_PREFIX} Failed to initialize OpenTelemetry: ${error}\n`);
+    return null;
+  }
 }
 
 /** Creates an HTTP client wrapper that propagates OpenTelemetry trace context. */

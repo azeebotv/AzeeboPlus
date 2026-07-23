@@ -4,38 +4,34 @@
 
 ---
 
-## Structure
-
-```
-docs/product/
-├── README.md              # This file
-├── universe-specs/        # Per-universe product specifications
-│   ├── reality.md
-│   ├── creator.md
-│   ├── lifestyle.md
-│   ├── vertical.md
-│   ├── movie.md
-│   ├── games.md
-│   ├── comedy.md
-│   └── sports.md
-├── shared/                # Shared platform specs
-│   ├── auth.md
-│   ├── wallet.md
-│   ├── notifications.md
-│   ├── rewards.md
-│   └── search.md
-└── analytics/             # Analytics event definitions
-    └── events.md
-```
-
 ## Key Documents
 
 | Document | Location | Purpose |
 |----------|----------|---------|
-| Master Platform Pack | `doc/AZEEBO MODULAR APP (1).md` | Full platform vision, BRD, PRD |
+| Master Platform Pack | `doc/AZEEBO_MODULAR_APP.md` | Full platform vision, BRD, PRD, design blueprint |
 | Claude Build Playbook | `doc/AZEEBO CLAUDE BUILD (1).md` | Engineering playbook and prompt library |
-| Architecture | `ARCHITECTURE.md` | System architecture |
-| Services Catalog | `SERVICES.md` | All services and their contracts |
+| Architecture | `doc/ARCHITECTURE.md` | System architecture |
+| Services Catalog | `doc/SERVICES.md` | All services and their contracts |
+| Creator Dashboard Plan | `doc/creators.md` | Creator portal implementation plan |
+| Admin Dashboard Plan | `doc/admin.md` | Admin portal implementation plan |
+| Agbala API Reference | `doc/agbala-api.md` | Agbala storyworld API endpoints |
+| Remaining Tasks | `doc/remaining-tasks.md` | Outstanding deployment/monitoring tasks |
+
+## Universe Product Specs
+
+Universe product definitions are in the Master Platform Pack (`doc/AZEEBO_MODULAR_APP.md`), Sections 13 (Universe Annexes A-I).
+
+| Universe | Annex | Status |
+|----------|-------|--------|
+| Foundation | Annex A | Implemented |
+| Reality | Annex B | Complete (backend + mobile + web + analytics) |
+| Creator | Annex C | Complete (backend + standalone portal + mobile + web) |
+| Lifestyle | Annex D | Complete (backend + mobile + web + analytics) |
+| Vertical | Annex E | Complete (backend + Agbala mobile + web + analytics) |
+| Movie | Annex F | Complete (backend + mobile + web + analytics) |
+| Games | Annex G | Complete (backend + mobile + web + analytics) |
+| Comedy | Annex H | Complete (backend + mobile + web + analytics) |
+| Sports | Annex I | Complete (backend + mobile + web + analytics) |
 
 ## Writing Specs
 

@@ -1,7 +1,21 @@
-# Security Audit — Remaining Items (Require Human Decision)
+# Security Audit — Azeebo+ Codebase
 
 > Generated from deep security audit of the Azeebo+ codebase.
-> Items below were identified but not auto-fixed because they require infrastructure changes, secret rotation, or architectural decisions.
+> **Last Updated:** 2026-07-22
+
+## Status Summary
+
+| Severity | Total | Fixed | Remaining |
+|----------|-------|-------|-----------|
+| CRITICAL | 3 | 2 | 1 |
+| HIGH | 8 | 7 | 1 |
+| MEDIUM | 8 | 8 | 0 |
+| LOW | 6 | 6 | 0 |
+| **Total** | **25** | **23** | **2** |
+
+---
+
+## Remaining Items (Require Human Decision)
 
 ---
 
@@ -304,3 +318,67 @@ These services call `app.use(helmet())` with no configuration.
 - Auth endpoints have rate limiting (login: 10/min, register: 3/hour, OTP: 5/15min)
 - Internal API calls use `x-internal-api-key` headers
 - Gateway secret uses timing-safe comparison
+
+---
+
+## Resolved Items (Fixed)
+
+All items below have been fixed and are kept for historical reference.
+
+### R1. Hardcoded DB Credentials in Docker Compose — FIXED
+- Replaced with `${DB_PASSWORD:-azeebo_dev_2024}` env var with dev fallback
+
+### R2. Tokens Stored in localStorage — FIXED (Admin + Creator)
+- Admin and creator apps now use httpOnly cookies via `/api/v1/auth/cookie` endpoint
+- Web app already had cookie support; `http-client` package still uses localStorage
+
+### R3. Gateway PUBLIC_PATH_PATTERNS Too Broad — FIXED
+- Catch-all `[^/]+` patterns replaced with explicit route lists
+
+### R4. DB Connection Strings Lack SSL Enforcement — FIXED
+- `sslmode=require` added to all `.env.example` files as production template
+
+### R5. Redis Connections Lack TLS — FIXED
+- `.env.example` files updated to use `rediss://` as template
+
+### R6. Auth Service Leaks Stack Traces — FIXED
+- Stack traces logged server-side only, removed from HTTP responses
+
+### R7. Not All Services Run Environment Validation — FIXED
+- All 27 services now call `validateEnvironment(process.env)` at startup
+
+### R8. Content Service Missing Ownership Checks — FIXED
+- `getMediaAsset`, `getTranscodingStatus`, `getTranscodedMediaUrl` now verify ownership
+
+### R9. Notification markAsRead Ownership — FIXED
+- Service layer has ownership check; controller delegates to service
+
+### R10. getTrustScore Exposed Without Restriction — FIXED
+- Class-level `@Roles('moderator', 'admin')` applied to all moderation methods
+
+### R11. Brute Force Protection IP-Based Only — FIXED
+- Per-account rate limiting added alongside per-IP limits
+
+### R12. shared-queue package.json References Non-Existent Files — FIXED
+- Build script uses `tsconfig.json`; phantom deps removed
+
+### R13. Logger Logs Token Prefix — FIXED
+- Now logs only "user" instead of token characters
+
+### R14. Social Auth Service Logs Full Error Messages — FIXED
+- Now logs only `(error as Error).message`
+
+### R15. Moderation Service .gitignore Gap — FIXED
+- Changed to `.env.*` to match other services
+
+### R16. Weak JWT Secret Minimum Length — FIXED
+- Minimum length enforced at 64 characters
+
+### R17. 4 Services Use Default Helmet — FIXED
+- All 4 services now use `createHelmetConfig()` from `@azeebo/security`
+
+### R18. GATEWAY_SECRET Placeholder Rejection — FIXED
+- `validateEnvironment()` now rejects known placeholder values
+
+### R19. JWT Secret Placeholder Rejection — FIXED
+- Services crash on startup if placeholders are detected

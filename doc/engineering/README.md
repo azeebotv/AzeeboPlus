@@ -4,39 +4,17 @@
 
 ---
 
-## Structure
-
-```
-docs/engineering/
-├── README.md              # This file
-├── api/                   # API documentation
-│   ├── gateway.md         # Gateway routing
-│   ├── auth.md            # Auth endpoints
-│   ├── wallet.md          # Wallet endpoints
-│   └── [service].md       # Per-service API docs
-├── deployment/            # Deployment guides
-│   ├── local-dev.md       # Local development setup
-│   ├── staging.md         # Staging deployment
-│   └── production.md      # Production deployment
-├── database/              # Database docs
-│   ├── schema-overview.md # All 28 databases
-│   └── migrations.md      # Migration guidelines
-├── security/              # Security docs
-│   ├── auth-flow.md       # Authentication flow
-│   └── secrets.md         # Secrets management
-└── runbooks/              # Operational runbooks
-    ├── incident-response.md
-    └── service-restart.md
-```
-
 ## Key Documents
 
 | Document | Location | Purpose |
 |----------|----------|---------|
-| Architecture | `ARCHITECTURE.md` | System design and patterns |
-| Services | `SERVICES.md` | Service catalog and contracts |
-| Deployment | `DEPLOYMENT.md` | CI/CD and deployment guide |
-| Contributing | `CONTRIBUTING.md` | Development standards |
+| Architecture | `doc/ARCHITECTURE.md` | System design and patterns |
+| Services | `doc/SERVICES.md` | Service catalog and contracts |
+| Deployment | `doc/DEPLOYMENT.md` | CI/CD and deployment guide |
+| Deployment Checklist | `doc/DEPLOYMENT-CHECKLIST.md` | Pre-deployment steps |
+| Contributing | `doc/CONTRIBUTING.md` | Development standards |
+| Secret Rotation | `doc/secret-rotation.md` | Secret rotation procedures |
+| Security Audit | `doc/AUDITNOTES.md` | Security findings and fixes |
 
 ## Quick Reference
 
@@ -79,8 +57,30 @@ pnpm run lint:fix          # Auto-fix
 | Web | 4000 |
 | Creator Portal | 4014 |
 | Admin | 4016 |
-| auth-service | 3001 |
-| wallet-service | 3003 |
-| payment-service | 3004 |
+| auth-service | 3000 |
+| user-service | 3001 |
+| wallet-service | 3002 |
+| payment-service | 3003 |
+| content-service | 3004 |
+| search-service | 3005 |
+| media-service | 3019 |
 | reality-service | 3010 |
-| [Full list](/SERVICES.md) | — |
+| movie-service | 3011 |
+| comedy-service | 3012 |
+| games-service | 3014 |
+| queue-service | 3015 |
+| lifestyle-service | 3016 |
+| vertical-service | 3017 |
+| creator-service | 3018 |
+| support-service | 3020 |
+| sports-service | 3021 |
+| moderation-service | 3022 |
+| engagement-service | 3023 |
+| messaging-service | 3024 |
+| referral-service | 3025 |
+| subscription-service | 3026 |
+| notification-service | 3006 |
+| reward-service | 3007 |
+| analytics-service | 3008 |
+| recommendation-service | 3009 |
+| [Full details](SERVICES.md) | — |
