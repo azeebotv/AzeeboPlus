@@ -3218,18 +3218,23 @@ model StoryComment {
 model Subscription {
   id              String    @id @default(uuid())
   userId          String
-  planType        String // basic, standard, premium
+  planId          String
   status          String // active, canceled, expired, paused
   startDate       DateTime  @default(now())
   endDate         DateTime?
   nextBillingDate DateTime?
+  autoRenew       Boolean   @default(true)
+  lastPaymentDate DateTime?
   paymentMethod   String?
   providerId      String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
+  plan         SubscriptionPlan       @relation(fields: [planId], references: [id])
+  transactions SubscriptionTransaction[]
+
   @@index([userId])
-  @@index([planType])
+  @@index([planId])
   @@index([endDate])
   @@map("subscriptions")
 }

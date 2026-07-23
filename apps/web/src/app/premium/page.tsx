@@ -11,6 +11,11 @@ export default function PremiumAccessPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [confirmPlan, setConfirmPlan] = useState<{
+    id: string;
+    name: string;
+    price: number;
+  } | null>(null);
 
   useEffect(() => {
     if (!toast) return;
@@ -78,22 +83,40 @@ export default function PremiumAccessPage(): React.JSX.Element {
     staleTime: 60000,
   });
 
+  const walletQuery = useQuery({
+    queryKey: ['wallet', 'balance'],
+    queryFn: async () => {
+      const res = await apiFetch<{ balance: number }>('/wallet');
+      if (res.success && res.data) {
+        return res.data.balance;
+      }
+      return 0;
+    },
+    staleTime: 60000,
+  });
+
   const plans = plansQuery.data ?? [];
   const status = statusQuery.data ?? null;
+  const walletBalance = walletQuery.data ?? 0;
   const isLoading = plansQuery.isLoading || statusQuery.isLoading;
   const error = plansQuery.error?.message || statusQuery.error?.message || null;
 
-  const handleSubscribe = async (planId: string): Promise<void> => {
+  const handleSubscribe = async (
+    planId: string,
+    paymentMethod: 'wallet' | 'external' = 'wallet'
+  ): Promise<void> => {
     setIsPurchasing(true);
+    setConfirmPlan(null);
     try {
       const result = await apiFetch('/v1/subscription/subscribe', {
         method: 'POST',
-        body: JSON.stringify({ planId, autoRenew: true }),
+        body: JSON.stringify({ planId, autoRenew: true, paymentMethod }),
       });
 
       if (result.success) {
         setToast({ message: 'You are now a premium member!', type: 'success' });
         queryClient.invalidateQueries({ queryKey: ['premium'] });
+        queryClient.invalidateQueries({ queryKey: ['wallet'] });
       }
     } catch (error: unknown) {
       setToast({
@@ -261,7 +284,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
               </ul>
               <button
                 type="button"
-                onClick={() => handleSubscribe(plan.id)}
+                onClick={() => setConfirmPlan({ id: plan.id, name: plan.name, price: plan.price })}
                 disabled={isPurchasing}
                 className={`w-full py-3 rounded-full font-semibold transition-all ${
                   plan.isPopular ? 'az-btn-primary' : ''
@@ -284,6 +307,66 @@ export default function PremiumAccessPage(): React.JSX.Element {
       </div>
 
       <AppFooter />
+
+      {confirmPlan && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
+          onClick={() => setConfirmPlan(null)}
+        >
+          <div
+            className="az-glass p-8 rounded-2xl max-w-sm w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-bold text-white mb-2">Confirm Subscription</h3>
+            <p className="text-white/50 mb-1">
+              {confirmPlan.name} — ₦{confirmPlan.price.toLocaleString()}
+            </p>
+            <p className="text-white/50 mb-6 text-sm">
+              Wallet balance: ₦{walletBalance.toLocaleString()}
+            </p>
+
+            <div className="flex flex-col gap-3 mb-4">
+              <button
+                type="button"
+                onClick={() => handleSubscribe(confirmPlan.id, 'wallet')}
+                disabled={isPurchasing || walletBalance < confirmPlan.price}
+                className="w-full py-3 rounded-full font-semibold transition-all"
+                style={{
+                  background:
+                    walletBalance >= confirmPlan?.price
+                      ? 'linear-gradient(135deg, #0D3B2E 0%, #0A5C36 100%)'
+                      : '#2A1A1A',
+                  color: walletBalance >= confirmPlan?.price ? '#fff' : '#666',
+                  cursor: walletBalance >= confirmPlan?.price ? 'pointer' : 'not-allowed',
+                }}
+              >
+                {isPurchasing
+                  ? 'Processing...'
+                  : walletBalance >= confirmPlan?.price
+                    ? 'Pay from Wallet'
+                    : 'Insufficient Balance'}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSubscribe(confirmPlan.id, 'external')}
+                disabled={isPurchasing}
+                className="w-full py-3 rounded-full font-semibold transition-all az-btn-primary"
+              >
+                {isPurchasing ? 'Processing...' : 'Pay with Card / Transfer'}
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setConfirmPlan(null)}
+              className="w-full py-2 rounded-full text-white/50 border border-white/10 hover:bg-white/5 transition-colors text-sm"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {toast && (
         <div

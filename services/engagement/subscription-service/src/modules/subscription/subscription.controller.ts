@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Delete,
   Body,
   Param,
@@ -62,6 +63,34 @@ export class SubscriptionController {
     return this.subscriptionService.createPlan(dto);
   }
 
+  @Put('plans/:id')
+  @UseGuards(AdminGuard, RateLimitGuard)
+  @RateLimit(10, 3600000)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update a subscription plan (admin only)' })
+  @ApiResponse({ status: 200, description: 'Plan updated' })
+  @ApiResponse({ status: 404, description: 'Plan not found' })
+  @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
+  async updatePlan(
+    @Param('id') id: string,
+    @Body() dto: Partial<CreateSubscriptionPlanDto>
+  ): Promise<SubscriptionPlan> {
+    return this.subscriptionService.updatePlan(id, dto);
+  }
+
+  @Delete('plans/:id')
+  @UseGuards(AdminGuard, RateLimitGuard)
+  @RateLimit(5, 3600000)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete a subscription plan (admin only)' })
+  @ApiResponse({ status: 200, description: 'Plan deleted' })
+  @ApiResponse({ status: 404, description: 'Plan not found' })
+  @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
+  async deletePlan(@Param('id') id: string): Promise<{ message: string }> {
+    await this.subscriptionService.deletePlan(id);
+    return { message: 'Plan deleted successfully' };
+  }
+
   @Post('subscribe')
   @UseGuards(RateLimitGuard)
   @RateLimit(5, 3600000)
@@ -75,6 +104,21 @@ export class SubscriptionController {
     @Body() dto: SubscribeToPlanDto
   ): Promise<Subscription> {
     return this.subscriptionService.subscribe(req.user.id, dto);
+  }
+
+  @Post('renew/:id')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(5, 3600000)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Manually renew an active subscription (deducts from wallet)' })
+  @ApiResponse({ status: 200, description: 'Subscription renewed' })
+  @ApiResponse({ status: 404, description: 'Subscription not found' })
+  @ApiResponse({ status: 400, description: 'Cannot renew' })
+  async renewSubscription(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string
+  ): Promise<Subscription> {
+    return this.subscriptionService.renewSubscription(req.user.id, id);
   }
 
   @Get('current')
