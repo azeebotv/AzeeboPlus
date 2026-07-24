@@ -221,7 +221,7 @@ export class CacheService {
       const redis = await this.redisService.getClient();
       await redis.ping();
       return { status: 'healthy', stats: this.getStats() };
-    } catch (error) {
+    } catch (_error) {
       return { status: 'unhealthy', stats: this.getStats() };
     }
   }
