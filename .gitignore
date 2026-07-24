@@ -73,8 +73,7 @@ infra/config/pgbouncer_userlist.txt
 # Optional npm cache
 npm-packages/
 
-# Doc Folder
-docs/
+# Doc Folder (keep docs tracked — do not exclude)
 docx/
 .trae/
 

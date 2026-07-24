@@ -8,6 +8,7 @@ import { WithdrawWalletDto, TransferWalletDto } from './dto/withdraw-transfer.dt
 import { WalletResponse } from './interfaces/wallet-response.interface.js';
 import { toNumber, addDecimals } from '@azeebo/utils';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { createErrorResponse } from '@azeebo/shared-types';
 import axios from 'axios';
 import { EventBusService, EventTypes, EVENT_BUS_SERVICE } from '@azeebo/event-bus';
 
@@ -1233,15 +1234,7 @@ export class WalletService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get transaction audit trail for wallet ${walletId}: ${error}`);
-      // TODO: Error response shapes are inconsistent across services.
-      // Migrate to createErrorResponse() from @azeebo/shared-types for uniform structure.
-      return {
-        success: false,
-        error: {
-          code: 'GET_AUDIT_TRAIL_FAILED',
-          message: 'Failed to retrieve transaction audit trail',
-        },
-      };
+      return createErrorResponse('GET_AUDIT_TRAIL_FAILED', 'Failed to retrieve transaction audit trail');
     }
   }
 
