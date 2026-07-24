@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../lib/api';
 import AppHeader from '../../components/layout/AppHeader';
@@ -21,6 +21,11 @@ interface Message {
   content: string;
   timestamp: Date;
   read: boolean;
+  isEdited?: boolean;
+  isPinned?: boolean;
+  isDeleted?: boolean;
+  replyToId?: string;
+  reactions?: { emoji: string; count: number }[];
 }
 
 interface Conversation {
@@ -29,6 +34,9 @@ interface Conversation {
   lastMessage: string;
   timestamp: Date;
   unreadCount: number;
+  isMuted?: boolean;
+  isArchived?: boolean;
+  name?: string;
 }
 
 interface RawConversation {
@@ -37,6 +45,9 @@ interface RawConversation {
   lastMessage: string;
   timestamp: string;
   unreadCount: number;
+  isMuted?: boolean;
+  isArchived?: boolean;
+  name?: string;
 }
 
 interface RawMessage {
@@ -47,6 +58,10 @@ interface RawMessage {
   timestamp?: string;
   createdAt?: string;
   read: boolean;
+  isEdited?: boolean;
+  isPinned?: boolean;
+  isDeleted?: boolean;
+  replyToId?: string;
 }
 
 export default function MessagesPage(): React.JSX.Element {
@@ -55,6 +70,10 @@ export default function MessagesPage(): React.JSX.Element {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
+  const [_replyingTo, setReplyingTo] = useState<Message | null>(null);
+  const [_showThread, setShowThread] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
   const conversationsListRef = useRef<HTMLDivElement>(null);
@@ -219,6 +238,94 @@ export default function MessagesPage(): React.JSX.Element {
     conv.user.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // --- Mutations for new features ---
+
+  const editMessageMutation = useMutation({
+    mutationFn: async ({ messageId, content }: { messageId: string; content: string }) => {
+      return apiFetch(`/messages/messages/${messageId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ content }),
+      });
+    },
+    onSuccess: () => {
+      setEditingMessageId(null);
+      setEditContent('');
+      queryClient.invalidateQueries({
+        queryKey: ['messages', 'conversation', selectedConversation?.id],
+      });
+    },
+  });
+
+  const deleteMessageMutation = useMutation({
+    mutationFn: async (messageId: string) => {
+      return apiFetch(`/messages/messages/${messageId}`, { method: 'DELETE' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['messages', 'conversation', selectedConversation?.id],
+      });
+    },
+  });
+
+  const reactMutation = useMutation({
+    mutationFn: async ({ messageId, emoji }: { messageId: string; emoji: string }) => {
+      return apiFetch(`/messages/messages/${messageId}/react`, {
+        method: 'POST',
+        body: JSON.stringify({ emoji }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['messages', 'conversation', selectedConversation?.id],
+      });
+    },
+  });
+
+  const _pinMutation = useMutation({
+    mutationFn: async ({ messageId, pinned }: { messageId: string; pinned: boolean }) => {
+      return apiFetch(`/messages/messages/${messageId}/pin`, {
+        method: 'PUT',
+        body: JSON.stringify({ pinned }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['messages', 'conversation', selectedConversation?.id],
+      });
+    },
+  });
+
+  const muteMutation = useMutation({
+    mutationFn: async ({ conversationId, muted }: { conversationId: string; muted: boolean }) => {
+      return apiFetch(`/messages/conversations/${conversationId}/mute`, {
+        method: 'PUT',
+        body: JSON.stringify({ muted }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages', 'conversations'] });
+    },
+  });
+
+  const archiveMutation = useMutation({
+    mutationFn: async ({
+      conversationId,
+      archived,
+    }: {
+      conversationId: string;
+      archived: boolean;
+    }) => {
+      return apiFetch(`/messages/conversations/${conversationId}/archive`, {
+        method: 'PUT',
+        body: JSON.stringify({ archived }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages', 'conversations'] });
+      if (selectedConversation) setSelectedConversation(null);
+    },
+  });
+
   if (authLoading) return <></>;
   if (!isAuthenticated) {
     return (
@@ -375,13 +482,42 @@ export default function MessagesPage(): React.JSX.Element {
                     >
                       {selectedConversation.user.name.charAt(0)}
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <h2 className="font-bold text-white text-sm">
-                        {selectedConversation.user.name}
+                        {selectedConversation.name || selectedConversation.user.name}
                       </h2>
                       <p className="text-xs text-white/50">
                         {selectedConversation.user.role || 'User'}
                       </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() =>
+                          muteMutation.mutate({
+                            conversationId: selectedConversation.id,
+                            muted: !selectedConversation.isMuted,
+                          })
+                        }
+                        className="text-xs px-2 py-1 rounded border"
+                        style={{
+                          borderColor: 'rgba(255,255,255,0.2)',
+                          color: selectedConversation.isMuted ? '#F59E0B' : '#9A8A7A',
+                        }}
+                      >
+                        {selectedConversation.isMuted ? 'Unmute' : 'Mute'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          archiveMutation.mutate({
+                            conversationId: selectedConversation.id,
+                            archived: true,
+                          });
+                        }}
+                        className="text-xs px-2 py-1 rounded border"
+                        style={{ borderColor: 'rgba(255,255,255,0.2)', color: '#9A8A7A' }}
+                      >
+                        Archive
+                      </button>
                     </div>
                   </div>
 
@@ -422,20 +558,96 @@ export default function MessagesPage(): React.JSX.Element {
                           className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
                         >
                           <div
-                            className={`max-w-[70%] rounded-2xl px-4 py-2 ${message.senderId === user?.id ? 'rounded-br-sm' : 'rounded-bl-sm'}`}
+                            className={`max-w-[70%] rounded-2xl px-4 py-2 ${message.senderId === user?.id ? 'rounded-br-sm' : 'rounded-bl-sm'} ${message.isPinned ? 'ring-2 ring-yellow-400/50' : ''}`}
                             style={
                               message.senderId === user?.id
                                 ? { background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }
                                 : { background: 'rgba(255,255,255,0.08)' }
                             }
                           >
-                            <p className="text-sm text-white">{message.content}</p>
-                            <p className="text-[10px] text-white/50 mt-1">
-                              {new Date(message.timestamp).toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </p>
+                            {message.replyToId && (
+                              <p className="text-[10px] text-white/40 mb-1 italic">
+                                Replying to a message
+                              </p>
+                            )}
+                            {editingMessageId === message.id ? (
+                              <div className="flex items-center gap-2">
+                                <input
+                                  value={editContent}
+                                  onChange={(e) => setEditContent(e.target.value)}
+                                  className="flex-1 bg-white/10 text-white rounded px-2 py-1 text-sm"
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter')
+                                      editMessageMutation.mutate({
+                                        messageId: message.id,
+                                        content: editContent,
+                                      });
+                                    if (e.key === 'Escape') setEditingMessageId(null);
+                                  }}
+                                  autoFocus
+                                />
+                                <button
+                                  onClick={() =>
+                                    editMessageMutation.mutate({
+                                      messageId: message.id,
+                                      content: editContent,
+                                    })
+                                  }
+                                  className="text-xs text-green-400"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={() => setEditingMessageId(null)}
+                                  className="text-xs text-red-400"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <p className="text-sm text-white">{message.content}</p>
+                            )}
+                            <div className="flex items-center justify-between mt-1">
+                              <p className="text-[10px] text-white/50">
+                                {new Date(message.timestamp).toLocaleTimeString([], {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                                {message.isEdited && <span className="ml-1">(edited)</span>}
+                                {message.isPinned && <span className="ml-1">&#x1F4CC;</span>}
+                              </p>
+                              {message.senderId === user?.id && editingMessageId !== message.id && (
+                                <div className="flex gap-1 ml-2">
+                                  <button
+                                    onClick={() => {
+                                      setEditingMessageId(message.id);
+                                      setEditContent(message.content);
+                                    }}
+                                    className="text-[10px] text-white/40 hover:text-white"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={() => deleteMessageMutation.mutate(message.id)}
+                                    className="text-[10px] text-white/40 hover:text-red-400"
+                                  >
+                                    Del
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex gap-1 mt-1">
+                              {['&#x1F44D;', '&#x2764;', '&#x1F602;'].map((emoji) => (
+                                <button
+                                  key={emoji}
+                                  onClick={() =>
+                                    reactMutation.mutate({ messageId: message.id, emoji })
+                                  }
+                                  className="text-xs hover:scale-125 transition-transform"
+                                  dangerouslySetInnerHTML={{ __html: emoji }}
+                                />
+                              ))}
+                            </div>
                           </div>
                         </div>
                       ))
