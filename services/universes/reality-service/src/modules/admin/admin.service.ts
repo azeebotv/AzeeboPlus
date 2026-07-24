@@ -70,7 +70,6 @@ export class AdminService {
     }
   }
 
-  // TODO: add audit logging with reason parameter
   async updateRealityShowStatus(showId: string, status: string, _reason?: string) {
     try {
       const show = await this.prisma.realityShow.findUnique({ where: { id: showId } });
@@ -82,9 +81,6 @@ export class AdminService {
         where: { id: showId },
         data: { status },
       });
-
-      // TODO: Add audit logging when auditLog model is added to the schema.
-      // The `reason` parameter is available for future audit logging use.
 
       return updated;
     } catch (error) {

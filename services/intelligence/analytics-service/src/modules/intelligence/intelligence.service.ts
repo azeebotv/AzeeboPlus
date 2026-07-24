@@ -187,7 +187,6 @@ export class IntelligenceService {
     }
   }
 
-  // TODO: add universe filtering logic when needed (requires join on contentItem table)
   async getCreatorScores(_universe?: string): Promise<{ success: boolean; data?: unknown }> {
     try {
       const scores = await this.prisma.creatorScore.findMany({

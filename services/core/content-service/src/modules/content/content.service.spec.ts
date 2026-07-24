@@ -12,6 +12,8 @@ import { ContentIngestionService } from './content-ingestion.service.js';
 import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RedisService } from '../../cache/redis.service.js';
+import { CacheService } from '@azeebo/shared-services';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 
 describe('ContentService', () => {
   let service: ContentService;
@@ -126,6 +128,24 @@ describe('ContentService', () => {
         {
           provide: RedisService,
           useValue: mockRedisService,
+        },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            delete: jest.fn().mockResolvedValue(undefined),
+            deleteByPattern: jest.fn().mockResolvedValue(undefined),
+            invalidate: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: {
+            isEnabled: jest.fn().mockResolvedValue(true),
+            getFlag: jest.fn().mockResolvedValue(null),
+            setFlag: jest.fn().mockResolvedValue(undefined),
+          },
         },
         {
           provide: ContentFeedService,
