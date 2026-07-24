@@ -26,8 +26,14 @@ export class SubscriptionService {
     @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.paymentServiceBaseUrl = this.configService.getOrThrow<string>('PAYMENT_SERVICE_URL');
-    this.walletServiceBaseUrl = this.configService.get<string>('WALLET_SERVICE_URL', 'http://wallet-service:3002');
-    this.analyticsServiceBaseUrl = this.configService.get<string>('ANALYTICS_SERVICE_URL', 'http://analytics-service:3040');
+    this.walletServiceBaseUrl = this.configService.get<string>(
+      'WALLET_SERVICE_URL',
+      'http://wallet-service:3002'
+    );
+    this.analyticsServiceBaseUrl = this.configService.get<string>(
+      'ANALYTICS_SERVICE_URL',
+      'http://analytics-service:3040'
+    );
   }
 
   async getPlans(): Promise<SubscriptionPlan[]> {
@@ -165,7 +171,9 @@ export class SubscriptionService {
     }
 
     if (!subscription.autoRenew) {
-      throw new BadRequestException('Auto-renew is disabled. Please enable it first or resubscribe.');
+      throw new BadRequestException(
+        'Auto-renew is disabled. Please enable it first or resubscribe.'
+      );
     }
 
     const plan = subscription.plan;
@@ -181,7 +189,6 @@ export class SubscriptionService {
         data: {
           endDate: newEndDate,
           lastPaymentDate: new Date(),
-          nextBillingDate: newEndDate,
         },
         include: { plan: true },
       });
@@ -272,15 +279,28 @@ export class SubscriptionService {
     return result;
   }
 
-  async updatePlan(id: string, data: Partial<Pick<SubscriptionPlan, 'name' | 'description' | 'price' | 'currency' | 'duration' | 'features' | 'tier' | 'isActive'>>): Promise<SubscriptionPlan> {
+  async updatePlan(
+    id: string,
+    data: Partial<
+      Pick<
+        SubscriptionPlan,
+        'name' | 'description' | 'currency' | 'duration' | 'features' | 'tier' | 'isActive'
+      >
+    > & { price?: string | number }
+  ): Promise<SubscriptionPlan> {
     const existing = await this.prisma.subscriptionPlan.findUnique({ where: { id } });
     if (!existing) {
       throw new NotFoundException(`Subscription plan with ID ${id} not found`);
     }
 
+    const updateData: Record<string, unknown> = { ...data };
+    if (data.price !== undefined) {
+      updateData.price = String(data.price);
+    }
+
     const plan = await this.prisma.subscriptionPlan.update({
       where: { id },
-      data,
+      data: updateData,
     });
 
     await this.cache.invalidate('subscription:plans');
@@ -341,9 +361,12 @@ export class SubscriptionService {
 
   private async debitWallet(userId: string, amount: number, description: string): Promise<void> {
     try {
-      const walletResponse = await axios.get(`${this.walletServiceBaseUrl}/wallets/user/${userId}`, {
-        timeout: 10000,
-      });
+      const walletResponse = await axios.get(
+        `${this.walletServiceBaseUrl}/wallets/user/${userId}`,
+        {
+          timeout: 10000,
+        }
+      );
       const wallet = walletResponse.data?.wallet || walletResponse.data;
       if (!wallet) {
         throw new BadRequestException('Wallet not found. Please fund your wallet first.');
@@ -370,14 +393,19 @@ export class SubscriptionService {
         throw error;
       }
       if (error instanceof CircuitBreakerOpenError) {
-        throw new BadRequestException('Wallet service is temporarily unavailable. Please try again later.');
+        throw new BadRequestException(
+          'Wallet service is temporarily unavailable. Please try again later.'
+        );
       }
       this.logger.error(`Failed to debit wallet: ${(error as Error).message}`);
       throw new BadRequestException('Unable to process wallet payment. Please try again.');
     }
   }
 
-  private async verifyExternalPayment(paymentReference: string, plan: SubscriptionPlan): Promise<void> {
+  private async verifyExternalPayment(
+    paymentReference: string,
+    plan: SubscriptionPlan
+  ): Promise<void> {
     let paymentVerification;
     try {
       paymentVerification = await this.circuitBreaker.execute(() =>
@@ -408,9 +436,19 @@ export class SubscriptionService {
     }
   }
 
-  private async trackAnalyticsEvent(eventName: string, userId: string, metadata: Record<string, unknown> = {}): Promise<void> {
+  private async trackAnalyticsEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown> = {}
+  ): Promise<void> {
     try {
-      await axios.post(`${this.analyticsServiceBaseUrl}/analytics/track`, { eventName, userId, metadata, timestamp: new Date().toISOString() }, { timeout: 10000 });
-    } catch (error) { this.logger.warn(`Failed to track analytics event: ${eventName}`); }
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/analytics/track`,
+        { eventName, userId, metadata, timestamp: new Date().toISOString() },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to track analytics event: ${eventName}`);
+    }
   }
 }

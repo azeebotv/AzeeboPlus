@@ -20,6 +20,8 @@ model SubscriptionPlan {
   features          String[]
   isActive          Boolean  @default(true)
   tier              String   // free, basic, premium, enterprise
+  maxDevices        Int      @default(1)  // Max concurrent devices
+  maxStreams         Int      @default(1)  // Max concurrent streams
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   subscriptions     Subscription[]

@@ -1,7 +1,7 @@
 # Admin Portal — Standalone Full-Stack Implementation
 
-> **Status:** Implementation complete. Standalone admin dashboard running at `:4016` with 20 route pages.
-> **Last Updated:** 2026-07-22
+> **Status:** Implementation complete. Standalone admin dashboard running at `:4016` with 21 route pages (including feature flags).
+> **Last Updated:** 2026-07-24
 
 > **Goal**: Turn `apps/admin` (currently a headless NestJS API on port **4016`) into a **standalone full-stack admin dashboard application** by adding a server-rendered UI, extracting the admin screens currently embedded in `apps/web/src/app/admin/*`, and reusing the existing gateway-issued JWT + RBAC model.
 >

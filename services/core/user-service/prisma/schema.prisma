@@ -57,6 +57,7 @@ model UserPreferences {
   darkMode        Boolean  @default(false)
   notifications   Json?    @default("{}")
   contentPreferences Json?  @default("[]")
+  featurePreferences Json?  @default("{}")
   privacySettings Json?    @default("{\"isPrivate\":false,\"showActivity\":true,\"allowMessages\":true,\"twoFactorEnabled\":false}")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

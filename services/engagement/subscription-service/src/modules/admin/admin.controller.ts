@@ -1,13 +1,4 @@
-import {
-  Inject,
-  Controller,
-  Get,
-  Put,
-  Delete,
-  Body,
-  Param,
-  UseGuards,
-} from '@nestjs/common';
+import { Inject, Controller, Get, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AdminGuard, RateLimitGuard, RateLimit } from '@azeebo/security';
 
@@ -46,7 +37,17 @@ export class AdminController {
   @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
   async updatePlan(
     @Param('id') id: string,
-    @Body() data: Partial<{ name: string; description: string; price: number; currency: string; duration: number; features: string[]; tier: string; isActive: boolean }>
+    @Body()
+    data: Partial<{
+      name: string;
+      description: string;
+      price: string | number;
+      currency: string;
+      duration: number;
+      features: string[];
+      tier: string;
+      isActive: boolean;
+    }>
   ) {
     return this.adminService.updatePlan(id, data);
   }

@@ -19,7 +19,36 @@ export class AccessControlService {
     @Inject(ConfigService) private readonly configService: ConfigService
   ) {}
 
-  async checkContentAccess(userId: string, contentId: string): Promise<AccessCheckResult> {
+  async checkGeoAccess(
+    contentId: string,
+    userCountry?: string
+  ): Promise<{ allowed: boolean; reason?: string }> {
+    if (!userCountry) return { allowed: true };
+
+    const content = await this.prisma.contentItem.findUnique({
+      where: { id: contentId },
+      select: { allowedCountries: true, blockedCountries: true },
+    });
+
+    if (!content) return { allowed: true };
+
+    if (content.blockedCountries.length > 0 && content.blockedCountries.includes(userCountry)) {
+      return { allowed: false, reason: 'Content is not available in your region' };
+    }
+
+    if (content.allowedCountries.length > 0 && !content.allowedCountries.includes(userCountry)) {
+      return { allowed: false, reason: 'Content is not available in your region' };
+    }
+
+    return { allowed: true };
+  }
+
+  async checkContentAccess(
+    userId: string,
+    contentId: string,
+    userCountry?: string,
+    userAge?: number
+  ): Promise<AccessCheckResult> {
     try {
       const content = await this.prisma.contentItem.findUnique({
         where: { id: contentId },
@@ -34,6 +63,23 @@ export class AccessControlService {
         return {
           hasAccess: false,
           reason: 'Content is not published',
+        };
+      }
+
+      // Geo restriction check (service-level enforcement)
+      const geoCheck = await this.checkGeoAccess(contentId, userCountry);
+      if (!geoCheck.allowed) {
+        return {
+          hasAccess: false,
+          reason: geoCheck.reason,
+        };
+      }
+
+      // Content rating enforcement
+      if (content.minAge && userAge !== undefined && userAge < content.minAge) {
+        return {
+          hasAccess: false,
+          reason: `Content requires age ${content.minAge}+`,
         };
       }
 
