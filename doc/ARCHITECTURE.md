@@ -264,3 +264,45 @@ User interaction and retention.
 - Production: `azeeboplus.com`, `www.azeeboplus.com`, `admin.azeeboplus.com`, `creator.azeeboplus.com`
 - Staging: `app.azeeboplus.com`
 - Localhost for development
+
+---
+
+## Feature Management
+
+### Feature Flags
+- **Package:** `packages/feature-flags/` — Redis-backed FeatureFlagService
+- **Capabilities:** Enable/disable features, percentage rollouts, user targeting
+- **Admin UI:** `apps/admin/client/src/routes/feature-flags.tsx`
+- **API:** `GET/POST/PUT/DELETE /admin/feature-flags` (content-service admin controller)
+- **Guard:** `FeatureFlagGuard` — NestJS route-level flag checks via `x-feature-flag` header
+- **Usage:** Services import `FeatureFlagModule` and call `featureFlagService.isEnabled(key, userId)`
+
+### Content Geo Restriction
+- **Schema:** `ContentItem` has `allowedCountries`, `blockedCountries`, `contentRating`, `minAge` fields
+- **Table:** `GeoRestriction` for country-level content blocking
+- **Enforcement:** Service-level in `AccessControlService.checkGeoAccess()` — gateway passes `X-User-Country` header
+- **Admin:** CRUD endpoints for geo restrictions and per-content geo settings
+- **Detection:** `CF-IPCountry` header (Cloudflare), `X-Forwarded-For` + GeoLite2 fallback
+
+### Device Limits (Subscription-Based)
+- **Schema:** `SubscriptionPlan` has `maxDevices` and `maxStreams` fields
+- **Table:** `RegisteredDevice` in auth-service tracks active devices per user
+- **Service:** `DeviceLimitService` checks active devices against subscription tier
+- **Behavior:** Login always allowed; streaming blocked when limit reached
+- **Limits by tier:** Free=1, Basic=2, Premium=5, Enterprise=10
+- **Endpoints:** `GET /auth/devices`, `POST /auth/devices/register`, `DELETE /auth/devices/:id`
+
+### User Feature Preferences
+- **Schema:** `UserPreferences.featurePreferences` JSON field
+- **Structure:** `{ enabledUniverses: string[], disabledFeatures: string[], lowDataMode: boolean }`
+- **API:** `PUT /users/me/preferences` with `featurePreferences` in body
+
+### Content Rating System
+- **Fields:** `contentRating` (G/PG/PG-13/R/NC-17/18+) and `minAge` on ContentItem
+- **Enforcement:** `AccessControlService.checkContentAccess()` rejects if user age < minAge
+- **Admin:** `PUT /admin/content/:contentId/geo` to set ratings
+
+### Low-Data Mode
+- **Utility:** `apps/web/src/lib/low-data.ts`
+- **Detection:** `navigator.connection.saveData` + localStorage preference
+- **Effects:** Reduced image quality (40%), disabled auto-play, halved image dimensions

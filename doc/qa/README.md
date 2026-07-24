@@ -8,60 +8,77 @@
 
 | Document | Location | Purpose |
 |----------|----------|---------|
-| Contributing (Testing) | `doc/CONTRIBUTING.md` (§Testing) | Test standards and coverage targets |
-| Security Audit | `doc/AUDITNOTES.md` | Security findings and verification |
-| Deployment Checklist | `doc/DEPLOYMENT-CHECKLIST.md` | Post-deploy verification steps |
-| Remaining Tasks | `doc/remaining-tasks.md` | Testing tasks (Phase 6) |
+| Reality Vote Checklist | `doc/qa/checklists/reality-vote.md` | Reality voting flow QA |
+| Wallet Deposit Checklist | `doc/qa/checklists/wallet-deposit.md` | Wallet deposit flow QA |
+| Accessibility Tests | `apps/web/e2e/accessibility.spec.ts` | WCAG AA compliance |
+| Admin E2E Tests | `apps/admin/` (Playwright) | Admin portal smoke tests |
+| Creator E2E Tests | `apps/creator/` (Playwright) | Creator portal smoke tests |
 
-## QA Checklist (Every Feature)
+---
 
-### States
-- [ ] Loading state present
-- [ ] Empty state present
-- [ ] Error state with retry
-- [ ] Success state with feedback
+## Testing Strategy
 
-### Payment Safety
-- [ ] No hardcoded prices
-- [ ] Idempotency key used
-- [ ] Balance check before debit
-- [ ] Transaction recorded in ledger
-- [ ] Failure handled gracefully
-- [ ] Race condition protected
+### Unit Tests (Jest)
+- **Coverage target:** 70% branches, 80% functions/lines/statements
+- **Location:** `*.spec.ts` files alongside source code
+- **Mocking:** Prisma, Redis, external services mocked per test
+- **Run:** `pnpm -r test` or `cd services/<name> && pnpm test`
 
-### Analytics
-- [ ] View event on screen mount
-- [ ] Action event on user interaction
-- [ ] Success event on completion
-- [ ] Failure event on error
+### Integration Tests
+- **Database:** Real PostgreSQL + Redis in CI
+- **Location:** `*.integration.spec.ts` files
+- **Scope:** Service-to-service communication, database operations
 
-### Code Quality
-- [ ] No `any` types
-- [ ] No `console.log`
-- [ ] Error handling present
-- [ ] Input validation present
-- [ ] Auth guard applied
+### E2E Tests (Playwright)
+- **Admin portal:** Login, user management, content moderation, settings
+- **Creator portal:** Login, content upload, analytics, earnings
+- **Location:** `apps/admin/` and `apps/creator/` test directories
 
-### UX
-- [ ] Copy is clear
-- [ ] Touch targets >= 44px
-- [ ] Loading indicators for async
-- [ ] Back navigation works
+### Load Tests (k6)
+- **Script:** `scripts/load-test.js`
+- **Config:** `scripts/load-test-config.json`
+- **Endpoints tested:** Auth, content, search, wallet, reality voting
+- **Thresholds:** <500ms p95 response time, <1% error rate
 
-## Severity Levels
+---
 
-| Level | Description | SLA |
-|-------|------------|-----|
-| **P0** | Payment failure, data loss, security | Fix immediately |
-| **P1** | Core feature broken, no workaround | Fix within 24h |
-| **P2** | Feature degraded, workaround exists | Fix within 1 week |
-| **P3** | Minor UX issue, cosmetic | Fix in next sprint |
+## QA Checklists
 
-## Coverage Targets
+### Reality Vote Flow
+- Vote casting with sufficient balance
+- Vote casting with insufficient balance (error handling)
+- Supervote flow with payment
+- Leaderboard accuracy after voting
+- Prediction submission and resolution
 
-| Area | Target |
-|------|--------|
-| Wallet/Payment | 90%+ |
-| Auth/Security | 90%+ |
-| Core Services | 80%+ |
-| Universe Services | 70%+ |
+### Wallet Deposit Flow
+- Paystack payment initialization
+- Flutterwave payment initialization
+- Webhook verification
+- Balance update after payment
+- Transaction ledger accuracy
+- Idempotency (duplicate payment handling)
+
+---
+
+## Quality Standards
+
+### Code Review Checklist
+- [ ] TypeScript strict mode — no `any`
+- [ ] Loading / empty / error / success states present
+- [ ] Analytics events added (`view`, `action`, `success`, `failure`)
+- [ ] Shared components reused — no duplication
+- [ ] No hardcoded prices or secrets
+- [ ] Wallet/payment flows use shared services
+- [ ] Unit tests included
+- [ ] Mobile responsive (if UI change)
+- [ ] Error handling with proper HTTP status codes
+- [ ] PR size < 400 lines
+
+### Accessibility Standards
+- WCAG AA compliance
+- Keyboard navigation support
+- Screen reader compatibility
+- Color contrast ratios
+- Touch target sizes (44x44px minimum)
+- Reduced motion support
