@@ -76,11 +76,12 @@ describe('MessagingService Integration', () => {
       const result = await service.getConversations('user-1');
 
       expect(result.success).toBe(true);
-      expect(result.data).toHaveLength(2);
-      expect(result.data[0].lastMessage).toBe('Hello there!');
-      expect(result.data[0].unreadCount).toBe(3);
-      expect(result.data[1].unreadCount).toBe(0);
-      expect(result.data[1].name).toBe('Project Chat');
+      const data = (result as { success: boolean; data: Array<{ lastMessage: string; unreadCount: number; name: string }> }).data;
+      expect(data).toHaveLength(2);
+      expect(data[0].lastMessage).toBe('Hello there!');
+      expect(data[0].unreadCount).toBe(3);
+      expect(data[1].unreadCount).toBe(0);
+      expect(data[1].name).toBe('Project Chat');
     });
 
     it('should return empty array for user with no conversations', async () => {
@@ -115,8 +116,9 @@ describe('MessagingService Integration', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data.id).toBe('conv-new');
-      expect(result.data.type).toBe('direct');
+      const data = (result as { success: boolean; data: { id: string; type: string } }).data;
+      expect(data.id).toBe('conv-new');
+      expect(data.type).toBe('direct');
       expect(mockPrismaService.conversation.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           type: 'direct',
@@ -153,8 +155,9 @@ describe('MessagingService Integration', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data.name).toBe('Team Standup');
-      expect(result.data.type).toBe('group');
+      const data = (result as { success: boolean; data: { name: string; type: string } }).data;
+      expect(data.name).toBe('Team Standup');
+      expect(data.type).toBe('group');
     });
 
     it('should default to direct type when not specified', async () => {
@@ -218,10 +221,11 @@ describe('MessagingService Integration', () => {
       const result = await service.sendMessage('user-1', 'conv-1', { content: 'Hello!' });
 
       expect(result.success).toBe(true);
-      expect(result.data.id).toBe('msg-1');
-      expect(result.data.content).toBe('Hello!');
-      expect(result.data.type).toBe('text');
-      expect(result.data.senderId).toBe('user-1');
+      const data = (result as { success: boolean; data: { id: string; content: string; type: string; senderId: string } }).data;
+      expect(data.id).toBe('msg-1');
+      expect(data.content).toBe('Hello!');
+      expect(data.type).toBe('text');
+      expect(data.senderId).toBe('user-1');
     });
 
     it('should send a media message', async () => {
@@ -241,11 +245,11 @@ describe('MessagingService Integration', () => {
 
       const result = await service.sendMessage('user-1', 'conv-1', {
         content: 'https://example.com/image.jpg',
-        type: 'media',
+        type: 'image',
       });
 
       expect(result.success).toBe(true);
-      expect(result.data.type).toBe('media');
+      expect((result as { success: boolean; data: { type: string } }).data.type).toBe('image');
     });
 
     it('should default to text type when not specified', async () => {
@@ -396,9 +400,10 @@ describe('MessagingService Integration', () => {
       const result = await service.getMessages('user-1', 'conv-1');
 
       expect(result.success).toBe(true);
-      expect(result.data).toHaveLength(2);
-      expect(result.data[0].content).toBe('Hello!');
-      expect(result.data[0].isRead).toBe(true);
+      const data = (result as { success: boolean; data: Array<{ content: string; isRead: boolean }> }).data;
+      expect(data).toHaveLength(2);
+      expect(data[0].content).toBe('Hello!');
+      expect(data[0].isRead).toBe(true);
     });
 
     it('should enforce max limit of 100', async () => {

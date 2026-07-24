@@ -30,11 +30,38 @@ export default function CreatorsPage() {
       {isLoading ? (
         <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>Loading...</p>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: 16,
+          }}
+        >
           {creators.map((c) => (
-            <div key={c.id} style={{ padding: 20, borderRadius: 16, border: '1px solid #2A1A1A', backgroundColor: 'rgba(26,10,10,0.5)' }}>
+            <div
+              key={c.id}
+              style={{
+                padding: 20,
+                borderRadius: 16,
+                border: '1px solid #2A1A1A',
+                backgroundColor: 'rgba(26,10,10,0.5)',
+              }}
+            >
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                <div style={{ width: 48, height: 48, borderRadius: '50%', backgroundColor: '#2A1A1A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: '#E8420A' }}>
+                <div
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: '50%',
+                    backgroundColor: '#2A1A1A',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 18,
+                    fontWeight: 700,
+                    color: '#E8420A',
+                  }}
+                >
                   {c.name?.charAt(0).toUpperCase()}
                 </div>
                 <div>
@@ -47,19 +74,40 @@ export default function CreatorsPage() {
                 <span>{c.subscriberCount || 0} subs</span>
               </div>
               <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
-                <span style={{ padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, backgroundColor: c.isVerified ? 'rgba(13,59,46,0.2)' : 'rgba(245,158,11,0.2)', color: c.isVerified ? '#0D3B2E' : '#F59E0B' }}>
+                <span
+                  style={{
+                    padding: '3px 10px',
+                    borderRadius: 999,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    backgroundColor: c.isVerified ? 'rgba(13,59,46,0.2)' : 'rgba(245,158,11,0.2)',
+                    color: c.isVerified ? '#0D3B2E' : '#F59E0B',
+                  }}
+                >
                   {c.isVerified ? 'Verified' : 'Pending'}
                 </span>
                 <button
                   onClick={() => verifyMutation.mutate({ id: c.id, verify: !c.isVerified })}
-                  style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid #2A1A1A', background: 'transparent', color: c.isVerified ? '#F87171' : '#4ADE80', fontSize: 11, cursor: 'pointer' }}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: 6,
+                    border: '1px solid #2A1A1A',
+                    background: 'transparent',
+                    color: c.isVerified ? '#F87171' : '#4ADE80',
+                    fontSize: 11,
+                    cursor: 'pointer',
+                  }}
                 >
                   {c.isVerified ? 'Unverify' : 'Verify'}
                 </button>
               </div>
             </div>
           ))}
-          {creators.length === 0 && <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A', gridColumn: '1/-1' }}>No creators found</p>}
+          {creators.length === 0 && (
+            <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A', gridColumn: '1/-1' }}>
+              No creators found
+            </p>
+          )}
         </div>
       )}
     </div>

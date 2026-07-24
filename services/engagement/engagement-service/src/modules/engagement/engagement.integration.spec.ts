@@ -63,12 +63,13 @@ describe('EngagementService Integration', () => {
       const result = await service.getLeaderboard('weekly', 'all', 50);
 
       expect(result.success).toBe(true);
-      expect(result.data).toHaveLength(3);
-      expect(result.data[0].rank).toBe(1);
-      expect(result.data[0].userId).toBe('user-a');
-      expect(result.data[0].score).toBe(1500);
-      expect(result.data[1].rank).toBe(2);
-      expect(result.data[2].rank).toBe(3);
+      const data = (result as { success: boolean; data: Array<{ rank: number; userId: string; score: number }> }).data;
+      expect(data).toHaveLength(3);
+      expect(data[0].rank).toBe(1);
+      expect(data[0].userId).toBe('user-a');
+      expect(data[0].score).toBe(1500);
+      expect(data[1].rank).toBe(2);
+      expect(data[2].rank).toBe(3);
     });
 
     it('should return cached leaderboard when available', async () => {
@@ -92,7 +93,8 @@ describe('EngagementService Integration', () => {
       const result = await service.getLeaderboard('weekly', 'all');
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual([]);
+      const data = (result as { success: boolean; data?: unknown }).data;
+      expect(data).toEqual([]);
     });
 
     it('should throw BadRequestException for invalid timePeriod', async () => {
@@ -139,13 +141,14 @@ describe('EngagementService Integration', () => {
       const result = await service.getRankings();
 
       expect(result.success).toBe(true);
-      expect(result.data).toHaveLength(5);
-      const gaming = result.data.find((r: { category: string }) => r.category === 'gaming');
-      expect(gaming.rankings).toHaveLength(2);
-      expect(gaming.rankings[0].rank).toBe(1);
-      expect(gaming.rankings[1].rank).toBe(2);
-      const content = result.data.find((r: { category: string }) => r.category === 'content');
-      expect(content.rankings).toHaveLength(1);
+      const data = (result as { success: boolean; data: Array<{ category: string; rankings: Array<{ rank: number }> }> }).data;
+      expect(data).toHaveLength(5);
+      const gaming = data.find((r) => r.category === 'gaming');
+      expect(gaming!.rankings).toHaveLength(2);
+      expect(gaming!.rankings[0].rank).toBe(1);
+      expect(gaming!.rankings[1].rank).toBe(2);
+      const content = data.find((r) => r.category === 'content');
+      expect(content!.rankings).toHaveLength(1);
     });
 
     it('should limit each category to 10 entries', async () => {
@@ -161,9 +164,9 @@ describe('EngagementService Integration', () => {
       mockPrismaService.ranking.findMany.mockResolvedValue(mockEntries);
 
       const result = await service.getRankings();
-
-      const gaming = result.data.find((r: { category: string }) => r.category === 'gaming');
-      expect(gaming.rankings).toHaveLength(10);
+      const data = (result as { success: boolean; data: Array<{ category: string; rankings: Array<unknown> }> }).data;
+      const gaming = data?.find((r) => r.category === 'gaming');
+      expect(gaming?.rankings).toHaveLength(10);
     });
 
     it('should return empty rankings for categories with no data', async () => {
@@ -172,8 +175,9 @@ describe('EngagementService Integration', () => {
       const result = await service.getRankings();
 
       expect(result.success).toBe(true);
-      expect(result.data).toHaveLength(5);
-      for (const category of result.data) {
+      const data = (result as { success: boolean; data: Array<{ rankings: unknown[] }> }).data;
+      expect(data).toHaveLength(5);
+      for (const category of data) {
         expect(category.rankings).toEqual([]);
       }
     });
@@ -195,9 +199,10 @@ describe('EngagementService Integration', () => {
       const result = await service.submitPrediction('user-1', 'content-1', 'winner-A');
 
       expect(result.success).toBe(true);
-      expect(result.data.prediction).toBe('winner-A');
-      expect(result.data.points).toBe(10);
-      expect(result.data.id).toBe('pred-1');
+      const data = (result as { success: boolean; data: { prediction: string; points: number; id: string } }).data;
+      expect(data.prediction).toBe('winner-A');
+      expect(data.points).toBe(10);
+      expect(data.id).toBe('pred-1');
     });
 
     it('should throw BadRequestException for duplicate prediction', async () => {
@@ -226,7 +231,7 @@ describe('EngagementService Integration', () => {
 
       const result = await service.submitPrediction('user-1', 'content-2', 'draw');
 
-      expect(result.data.points).toBe(10);
+      expect((result as any).data.points).toBe(10);
       expect(mockPrismaService.prediction.create).toHaveBeenCalledWith({
         data: expect.objectContaining({ points: 10 }),
       });
@@ -246,11 +251,11 @@ describe('EngagementService Integration', () => {
       const result = await service.getPredictionResults('user-1', 'content-1');
 
       expect(result.success).toBe(true);
-      expect(result.data.predictions).toHaveLength(3);
-      expect(result.data.summary.totalPredictions).toBe(3);
-      expect(result.data.summary.correctPredictions).toBe(1);
-      expect(result.data.summary.totalPoints).toBe(30);
-      expect(result.data.summary.accuracy).toBeCloseTo(33.33, 1);
+      expect((result as any).data.predictions).toHaveLength(3);
+      expect((result as any).data.summary.totalPredictions).toBe(3);
+      expect((result as any).data.summary.correctPredictions).toBe(1);
+      expect((result as any).data.summary.totalPoints).toBe(30);
+      expect((result as any).data.summary.accuracy).toBeCloseTo(33.33, 1);
     });
 
     it('should handle zero predictions', async () => {
@@ -259,9 +264,9 @@ describe('EngagementService Integration', () => {
       const result = await service.getPredictionResults('user-1', 'content-new');
 
       expect(result.success).toBe(true);
-      expect(result.data.predictions).toEqual([]);
-      expect(result.data.summary.totalPredictions).toBe(0);
-      expect(result.data.summary.accuracy).toBe(0);
+      expect((result as any).data.predictions).toEqual([]);
+      expect((result as any).data.summary.totalPredictions).toBe(0);
+      expect((result as any).data.summary.accuracy).toBe(0);
     });
   });
 

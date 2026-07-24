@@ -6,7 +6,11 @@ import { CacheService } from '@azeebo/shared-services';
 
 describe('EngagementService', () => {
   let service: EngagementService;
-  let prisma: { leaderboardEntry: { findMany: jest.Mock; count: jest.Mock }; prediction: { findMany: jest.Mock; count: jest.Mock }; ranking: { findMany: jest.Mock; count: jest.Mock } };
+  let prisma: {
+    leaderboardEntry: { findMany: jest.Mock; count: jest.Mock };
+    prediction: { findMany: jest.Mock; count: jest.Mock };
+    ranking: { findMany: jest.Mock; count: jest.Mock };
+  };
   let cache: { get: jest.Mock; set: jest.Mock; delete: jest.Mock };
 
   beforeEach(async () => {
@@ -22,7 +26,10 @@ describe('EngagementService', () => {
         EngagementService,
         { provide: PrismaService, useValue: prisma },
         { provide: CacheService, useValue: cache },
-        { provide: ConfigService, useValue: { get: jest.fn((_key: string, defaultValue: unknown) => defaultValue) } },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn((_key: string, defaultValue: unknown) => defaultValue) },
+        },
       ],
     }).compile();
 
@@ -32,7 +39,16 @@ describe('EngagementService', () => {
   describe('getLeaderboard', () => {
     it('should return leaderboard entries', async () => {
       const mockEntries = [
-        { id: '1', userId: 'user-1', displayName: 'User 1', avatar: null, score: 100, rank: 1, category: 'all', timePeriod: 'allTime' },
+        {
+          id: '1',
+          userId: 'user-1',
+          displayName: 'User 1',
+          avatar: null,
+          score: 100,
+          rank: 1,
+          category: 'all',
+          timePeriod: 'allTime',
+        },
       ];
       prisma.leaderboardEntry.findMany.mockResolvedValue(mockEntries);
       prisma.leaderboardEntry.count.mockResolvedValue(1);
@@ -53,7 +69,15 @@ describe('EngagementService', () => {
   describe('getRankings', () => {
     it('should return rankings', async () => {
       const mockRankings = [
-        { id: '1', userId: 'user-1', displayName: 'User 1', avatar: null, score: 100, rank: 1, category: 'all' },
+        {
+          id: '1',
+          userId: 'user-1',
+          displayName: 'User 1',
+          avatar: null,
+          score: 100,
+          rank: 1,
+          category: 'all',
+        },
       ];
       prisma.ranking.findMany.mockResolvedValue(mockRankings);
       prisma.ranking.count.mockResolvedValue(1);
@@ -66,7 +90,16 @@ describe('EngagementService', () => {
   describe('getPredictionResults', () => {
     it('should return prediction results', async () => {
       const mockPredictions = [
-        { id: '1', userId: 'user-1', contentId: 'content-1', prediction: 'yes', points: 10, isCorrect: true, result: 'yes', createdAt: new Date() },
+        {
+          id: '1',
+          userId: 'user-1',
+          contentId: 'content-1',
+          prediction: 'yes',
+          points: 10,
+          isCorrect: true,
+          result: 'yes',
+          createdAt: new Date(),
+        },
       ];
       prisma.prediction.findMany.mockResolvedValue(mockPredictions);
       prisma.prediction.count.mockResolvedValue(1);

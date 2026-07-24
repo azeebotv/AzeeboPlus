@@ -22,6 +22,7 @@ describe('SearchService Integration', () => {
     },
     searchQueryLog: {
       findMany: jest.fn(),
+      create: jest.fn(),
     },
     tag: {
       findMany: jest.fn(),
@@ -83,9 +84,9 @@ describe('SearchService Integration', () => {
       const result = await service.search('reality');
 
       expect(result.success).toBe(true);
-      expect(result.data.results.content).toHaveLength(1);
-      expect(result.data.results.content[0].title).toBe('Reality Show');
-      expect(result.data.total).toBe(3);
+      expect(result.data?.results?.content).toHaveLength(1);
+      expect(result.data?.results?.content?.[0]?.title).toBe('Reality Show');
+      expect(result.data?.total).toBe(3);
       expect(mockCacheService.set).toHaveBeenCalled();
     });
 
@@ -98,8 +99,8 @@ describe('SearchService Integration', () => {
       const result = await service.search('nonexistent');
 
       expect(result.success).toBe(true);
-      expect(result.data.results.content).toHaveLength(0);
-      expect(result.data.total).toBe(0);
+      expect(result.data?.results?.content).toHaveLength(0);
+      expect(result.data?.total).toBe(0);
     });
 
     it('should return cached results when available', async () => {
@@ -163,8 +164,8 @@ describe('SearchService Integration', () => {
       const result = await service.searchWithFacets('show');
 
       expect(result.success).toBe(true);
-      expect(result.data.facets).toBeDefined();
-      expect(result.data.facets.universes).toHaveLength(1);
+      expect(result.data?.facets).toBeDefined();
+      expect(result.data?.facets?.universes).toHaveLength(1);
     });
   });
 
@@ -180,7 +181,7 @@ describe('SearchService Integration', () => {
       const result = await service.getSuggestions('real');
 
       expect(result.success).toBe(true);
-      expect(result.data.suggestions).toEqual(['reality show', 'reality tv']);
+      expect((result as any).data.suggestions).toEqual(['reality show', 'reality tv']);
       expect(mockCacheService.set).toHaveBeenCalled();
     });
 
@@ -214,8 +215,8 @@ describe('SearchService Integration', () => {
       const result = await service.getTrending();
 
       expect(result.success).toBe(true);
-      expect(result.data.trending).toHaveLength(2);
-      expect(result.data.trending[0]).toEqual({ query: 'popular show', count: 500 });
+      expect((result as any).data.trending).toHaveLength(2);
+      expect((result as any).data.trending[0]).toEqual({ query: 'popular show', count: 500 });
     });
 
     it('should return empty trending when no searches exist', async () => {
@@ -224,7 +225,7 @@ describe('SearchService Integration', () => {
       const result = await service.getTrending();
 
       expect(result.success).toBe(true);
-      expect(result.data.trending).toHaveLength(0);
+      expect((result as any).data.trending).toHaveLength(0);
     });
   });
 
@@ -243,9 +244,9 @@ describe('SearchService Integration', () => {
       const result = await service.getFacets();
 
       expect(result.success).toBe(true);
-      expect(result.data.facets).toBeDefined();
-      expect(result.data.facets.universes).toHaveLength(1);
-      expect(result.data.facets.tags).toHaveLength(1);
+      expect(result.data?.facets).toBeDefined();
+      expect(result.data?.facets?.universes).toHaveLength(1);
+      expect((result as any).data.facets.tags).toHaveLength(1);
     });
   });
 

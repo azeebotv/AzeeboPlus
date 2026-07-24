@@ -18,7 +18,11 @@ import { ConfigService } from '@nestjs/config';
 
 describe('RecommendationService', () => {
   let service: RecommendationService;
-  let prisma: { contentItem: { findMany: jest.Mock; count: jest.Mock }; userUniverseAffinity: { findMany: jest.Mock }; watchHistory: { findMany: jest.Mock } };
+  let prisma: {
+    contentItem: { findMany: jest.Mock; count: jest.Mock };
+    userUniverseAffinity: { findMany: jest.Mock };
+    watchHistory: { findMany: jest.Mock };
+  };
 
   beforeEach(async () => {
     prisma = {
@@ -32,7 +36,10 @@ describe('RecommendationService', () => {
         RecommendationService,
         { provide: PrismaService, useValue: prisma },
         { provide: MockCacheService, useValue: new MockCacheService() },
-        { provide: ConfigService, useValue: { get: jest.fn((_key: string, defaultValue: unknown) => defaultValue) } },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn((_key: string, defaultValue: unknown) => defaultValue) },
+        },
       ],
     }).compile();
 
@@ -42,7 +49,17 @@ describe('RecommendationService', () => {
   describe('getContentRecommendations', () => {
     it('should return content recommendations', async () => {
       const mockContent = [
-        { id: '1', title: 'Test', description: 'Test', thumbnail: 't.jpg', status: 'published', viewCount: 100, createdAt: new Date(), universe: { id: 'u1', name: 'Reality', slug: 'reality' }, creator: { id: 'c1', displayName: 'Creator', avatar: null } },
+        {
+          id: '1',
+          title: 'Test',
+          description: 'Test',
+          thumbnail: 't.jpg',
+          status: 'published',
+          viewCount: 100,
+          createdAt: new Date(),
+          universe: { id: 'u1', name: 'Reality', slug: 'reality' },
+          creator: { id: 'c1', displayName: 'Creator', avatar: null },
+        },
       ];
       prisma.contentItem.findMany.mockResolvedValue(mockContent);
       prisma.userUniverseAffinity.findMany.mockResolvedValue([]);

@@ -7,11 +7,27 @@ jest.mock('axios');
 
 describe('MessagingService', () => {
   let service: MessagingService;
-  let prisma: { conversation: { findMany: jest.Mock; findFirst: jest.Mock; findUnique: jest.Mock; create: jest.Mock; update: jest.Mock }; message: { findMany: jest.Mock; create: jest.Mock; updateMany: jest.Mock }; conversationParticipant: { findMany: jest.Mock; create: jest.Mock } };
+  let prisma: {
+    conversation: {
+      findMany: jest.Mock;
+      findFirst: jest.Mock;
+      findUnique: jest.Mock;
+      create: jest.Mock;
+      update: jest.Mock;
+    };
+    message: { findMany: jest.Mock; create: jest.Mock; updateMany: jest.Mock };
+    conversationParticipant: { findMany: jest.Mock; create: jest.Mock };
+  };
 
   beforeEach(async () => {
     prisma = {
-      conversation: { findMany: jest.fn(), findFirst: jest.fn(), findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
+      conversation: {
+        findMany: jest.fn(),
+        findFirst: jest.fn(),
+        findUnique: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
+      },
       message: { findMany: jest.fn(), create: jest.fn(), updateMany: jest.fn() },
       conversationParticipant: { findMany: jest.fn(), create: jest.fn() },
     };
@@ -20,7 +36,10 @@ describe('MessagingService', () => {
       providers: [
         MessagingService,
         { provide: PrismaService, useValue: prisma },
-        { provide: ConfigService, useValue: { get: jest.fn((_key: string, defaultValue: unknown) => defaultValue) } },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn((_key: string, defaultValue: unknown) => defaultValue) },
+        },
       ],
     }).compile();
 
@@ -51,7 +70,13 @@ describe('MessagingService', () => {
     it('should create a new message', async () => {
       const mockConversation = { id: 'conv-1', participants: [{ userId: 'user-1' }] };
       prisma.conversation.findFirst.mockResolvedValue(mockConversation);
-      const mockMessage = { id: 'msg-1', conversationId: 'conv-1', senderId: 'user-1', content: 'Hello', createdAt: new Date() };
+      const mockMessage = {
+        id: 'msg-1',
+        conversationId: 'conv-1',
+        senderId: 'user-1',
+        content: 'Hello',
+        createdAt: new Date(),
+      };
       prisma.message.create.mockResolvedValue(mockMessage);
       prisma.conversation.update.mockResolvedValue({});
       const result = await service.sendMessage('user-1', 'conv-1', { content: 'Hello' });

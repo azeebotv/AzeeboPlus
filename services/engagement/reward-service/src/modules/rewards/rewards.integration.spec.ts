@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { RewardsService } from './rewards.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
-import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { CacheService } from '@azeebo/shared-services';
 
 describe('RewardsService Integration', () => {
   let service: RewardsService;

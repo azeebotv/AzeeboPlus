@@ -1698,7 +1698,7 @@ export class CreatorsService {
 
   async updateSettings(
     userId: string,
-    data: { notifications?: Record<string, boolean>; privacy?: Record<string, unknown> }
+    data: { notifications?: Record<string, boolean> | { email?: boolean; push?: boolean; sms?: boolean; marketing?: boolean }; privacy?: Record<string, unknown> | { profileVisibility?: string; showEarnings?: boolean } }
   ): Promise<CreatorResponse> {
     const profile = await this.prisma.creatorProfile.findUnique({
       where: { userId },
