@@ -16,7 +16,7 @@ export default function UsersPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
-  const [page, setPage] = useState(1);
+  const [page, _setPage] = useState(1);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin', 'users', page, roleFilter, search],
