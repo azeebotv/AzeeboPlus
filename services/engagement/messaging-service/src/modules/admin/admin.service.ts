@@ -15,7 +15,7 @@ export class AdminService {
       const uniqueSenders = await this.prisma.message.groupBy({
         by: ['senderId'],
       });
-      const totalUniqueUsers = uniqueSenders.length;
+      const totalUniqueSenders = uniqueSenders.length;
 
       const totalParticipants = await this.prisma.conversationParticipant.groupBy({
         by: ['userId'],

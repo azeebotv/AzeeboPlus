@@ -66,7 +66,7 @@ export class QueueService {
 
   async getJobById(queueName: QueueName, jobId: string): Promise<Job | null> {
     const queue = this.getQueue(queueName);
-    return queue.getJob(jobId);
+    return (await queue.getJob(jobId)) ?? null;
   }
 
   async retryJob(queueName: QueueName, jobId: string): Promise<void> {
@@ -129,7 +129,7 @@ export class QueueService {
     limit?: number,
   ): Promise<string[]> {
     const queue = this.getQueue(queueName);
-    const cleaned = await queue.clean(grace, limit);
+    const cleaned = await queue.clean(grace, limit ?? 1000);
     this.logger.log(`Cleaned ${cleaned.length} jobs from queue ${queueName}`);
     return cleaned;
   }

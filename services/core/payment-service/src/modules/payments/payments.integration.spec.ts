@@ -6,7 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import { PaystackProvider } from './providers/paystack.provider.js';
 import { FlutterwaveProvider } from './providers/flutterwave.provider.js';
 import { WebhookRetryService } from './webhook-retry.service.js';
-import { RedisService, CacheService, cacheKey } from '@azeebo/shared-services';
+import { RedisService, CacheService } from '@azeebo/shared-services';
 import axios from 'axios';
 
 jest.mock('axios');
@@ -374,8 +374,9 @@ describe('PaymentsService Integration', () => {
       const result = await service.requestRefund('user-1', 'pi-1', 'Wrong purchase');
 
       expect(result.success).toBe(true);
-      expect(result.data.status).toBe('completed');
-      expect(result.data.refundId).toBe('refund-1');
+      const data = result.data as unknown as Record<string, unknown>;
+      expect(data.status).toBe('completed');
+      expect(data.refundId).toBe('refund-1');
 
       expect(mockPrismaService.refund.create).toHaveBeenCalledWith({
         data: {
@@ -455,7 +456,8 @@ describe('PaymentsService Integration', () => {
       const result = await service.requestRefund('user-1', 'pi-1', 'reason', 'idem-refund-1');
 
       expect(result.success).toBe(true);
-      expect(result.data.refundId).toBe('refund-existing');
+      const data = result.data as unknown as Record<string, unknown>;
+      expect(data.refundId).toBe('refund-existing');
       expect(mockPrismaService.refund.create).not.toHaveBeenCalled();
     });
 

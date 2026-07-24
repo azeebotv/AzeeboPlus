@@ -471,7 +471,6 @@ export class RealityService {
         where: { showId },
         include: {
           contestant: { select: { id: true, name: true } },
-          user: { select: { id: true, username: true } },
         },
         orderBy: { createdAt: 'desc' },
         skip,
@@ -504,9 +503,6 @@ export class RealityService {
     const [predictions, total] = await Promise.all([
       this.prisma.prediction.findMany({
         where: { showId },
-        include: {
-          user: { select: { id: true, username: true } },
-        },
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
@@ -1138,7 +1134,6 @@ export class RealityService {
       where: { id: episodeId },
       include: {
         show: true,
-        contestants: true,
         _count: {
           select: {
             votes: true,

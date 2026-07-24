@@ -1,10 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import { NotFoundException, ConflictException } from '@nestjs/common';
 import { ReferralService } from './referral.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
-import { CacheService, cacheKey } from '@azeebo/shared-services';
-import { Prisma } from '@prisma/client';
+import { CacheService } from '@azeebo/shared-services';
 
 describe('ReferralService Integration', () => {
   let service: ReferralService;
@@ -333,7 +332,7 @@ describe('ReferralService Integration', () => {
       const result = await service.getStats('user-1');
 
       expect(result.success).toBe(true);
-      const data = result.data as { stats: { totalReferrals: number; completedReferrals: number; totalRewards: number } };
+      const data = result.data as { stats: { totalReferrals: number; completedReferrals: number; pendingReferrals?: number; totalRewards: number } };
       expect(data.stats.totalReferrals).toBe(10);
       expect(data.stats.completedReferrals).toBe(7);
       expect(data.stats.pendingReferrals).toBe(3);

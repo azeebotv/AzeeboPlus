@@ -8,24 +8,57 @@ jest.mock('axios');
 
 describe('ReferralService', () => {
   let service: ReferralService;
-  let prisma: { referral: { findMany: jest.Mock; findFirst: jest.Mock; create: jest.Mock; count: jest.Mock }; referralConfig: { findFirst: jest.Mock }; referralReward: { aggregate: jest.Mock }; referralCode: { findFirst: jest.Mock; create: jest.Mock } };
-  let cache: { get: jest.Mock; set: jest.Mock; delete: jest.Mock; deleteByPattern: jest.Mock; invalidate: jest.Mock };
+  let prisma: {
+    referral: { findMany: jest.Mock; findFirst: jest.Mock; create: jest.Mock; count: jest.Mock };
+    referralConfig: { findFirst: jest.Mock };
+    referralReward: { aggregate: jest.Mock };
+    referralCode: { findFirst: jest.Mock; create: jest.Mock };
+  };
+  let cache: {
+    get: jest.Mock;
+    set: jest.Mock;
+    delete: jest.Mock;
+    deleteByPattern: jest.Mock;
+    invalidate: jest.Mock;
+  };
 
   beforeEach(async () => {
     prisma = {
       referral: { findMany: jest.fn(), findFirst: jest.fn(), create: jest.fn(), count: jest.fn() },
       referralConfig: { findFirst: jest.fn() },
       referralReward: { aggregate: jest.fn().mockResolvedValue({ _sum: { amount: 0 } }) },
-      referralCode: { findFirst: jest.fn().mockResolvedValue(null), create: jest.fn().mockResolvedValue({ id: '1', code: 'NEWCODE', userId: 'user-1', isActive: true, maxUses: null, currentUses: 0, expiresAt: null, createdAt: new Date(), updatedAt: new Date() }) },
+      referralCode: {
+        findFirst: jest.fn().mockResolvedValue(null),
+        create: jest.fn().mockResolvedValue({
+          id: '1',
+          code: 'NEWCODE',
+          userId: 'user-1',
+          isActive: true,
+          maxUses: null,
+          currentUses: 0,
+          expiresAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
+      },
     };
-    cache = { get: jest.fn().mockResolvedValue(null), set: jest.fn(), delete: jest.fn(), deleteByPattern: jest.fn(), invalidate: jest.fn() };
+    cache = {
+      get: jest.fn().mockResolvedValue(null),
+      set: jest.fn(),
+      delete: jest.fn(),
+      deleteByPattern: jest.fn(),
+      invalidate: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ReferralService,
         { provide: PrismaService, useValue: prisma },
         { provide: CacheService, useValue: cache },
-        { provide: ConfigService, useValue: { get: jest.fn((_key: string, defaultValue: unknown) => defaultValue) } },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn((_key: string, defaultValue: unknown) => defaultValue) },
+        },
       ],
     }).compile();
 

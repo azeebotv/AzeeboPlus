@@ -31,10 +31,11 @@ export class QueueController {
     @Query('end') end?: string,
   ) {
     this.assertValidQueue(queue);
+    const validQueue = queue as 'notifications' | 'payments' | 'emails' | 'analytics' | 'content-processing';
     const types = (type || 'waiting,active,failed,delayed').split(',') as any[];
     const s = parseInt(start || '0', 10);
     const e = parseInt(end || '50', 10);
-    return this.queueService.getJobs(queue, types, s, e);
+    return this.queueService.getJobs(validQueue, types, s, e);
   }
 
   @Get(':queue/jobs/failed')
@@ -46,7 +47,7 @@ export class QueueController {
     this.assertValidQueue(queue);
     const s = parseInt(start || '0', 10);
     const e = parseInt(end || '50', 10);
-    return this.queueService.getFailedJobs(queue, s, e);
+    return this.queueService.getFailedJobs(queue as any as any, s, e);
   }
 
   @Get(':queue/jobs/delayed')
@@ -58,13 +59,13 @@ export class QueueController {
     this.assertValidQueue(queue);
     const s = parseInt(start || '0', 10);
     const e = parseInt(end || '50', 10);
-    return this.queueService.getDelayedJobs(queue, s, e);
+    return this.queueService.getDelayedJobs(queue as any as any, s, e);
   }
 
   @Get(':queue/jobs/:jobId')
   async getJob(@Param('queue') queue: string, @Param('jobId') jobId: string) {
     this.assertValidQueue(queue);
-    const job = await this.queueService.getJobById(queue, jobId);
+    const job = await this.queueService.getJobById(queue as any as any, jobId);
     if (!job) {
       return { error: 'Job not found' };
     }
@@ -85,7 +86,7 @@ export class QueueController {
   @HttpCode(HttpStatus.OK)
   async retryJob(@Param('queue') queue: string, @Param('jobId') jobId: string) {
     this.assertValidQueue(queue);
-    await this.queueService.retryJob(queue, jobId);
+    await this.queueService.retryJob(queue as any as any, jobId);
     return { success: true, message: `Job ${jobId} retried` };
   }
 
@@ -93,7 +94,7 @@ export class QueueController {
   @HttpCode(HttpStatus.OK)
   async retryAllFailed(@Param('queue') queue: string) {
     this.assertValidQueue(queue);
-    const count = await this.queueService.retryAllFailed(queue);
+    const count = await this.queueService.retryAllFailed(queue as any as any);
     return { success: true, retried: count };
   }
 
@@ -101,7 +102,7 @@ export class QueueController {
   @HttpCode(HttpStatus.OK)
   async removeJob(@Param('queue') queue: string, @Param('jobId') jobId: string) {
     this.assertValidQueue(queue);
-    await this.queueService.removeJob(queue, jobId);
+    await this.queueService.removeJob(queue as any as any, jobId);
     return { success: true, message: `Job ${jobId} removed` };
   }
 
@@ -109,7 +110,7 @@ export class QueueController {
   @HttpCode(HttpStatus.OK)
   async pauseQueue(@Param('queue') queue: string) {
     this.assertValidQueue(queue);
-    await this.queueService.pauseQueue(queue);
+    await this.queueService.pauseQueue(queue as any as any);
     return { success: true, message: `Queue ${queue} paused` };
   }
 
@@ -117,7 +118,7 @@ export class QueueController {
   @HttpCode(HttpStatus.OK)
   async resumeQueue(@Param('queue') queue: string) {
     this.assertValidQueue(queue);
-    await this.queueService.resumeQueue(queue);
+    await this.queueService.resumeQueue(queue as any as any);
     return { success: true, message: `Queue ${queue} resumed` };
   }
 
@@ -130,7 +131,7 @@ export class QueueController {
     this.assertValidQueue(queue);
     const grace = body.grace ?? 3600000; // default 1 hour
     const limit = body.limit;
-    const cleaned = await this.queueService.cleanQueue(queue, grace, limit);
+    const cleaned = await this.queueService.cleanQueue(queue as any as any, grace, limit);
     return { success: true, cleaned: cleaned.length };
   }
 
