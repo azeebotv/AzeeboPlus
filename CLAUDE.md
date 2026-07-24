@@ -90,32 +90,32 @@ azeebo-plus/
 
 | Category | Service | Port | DB |
 |----------|---------|------|-----|
-| Core | auth-service | 3001 | azeebo_auth |
-| Core | user-service | 3002 | azeebo_users |
-| Core | wallet-service | 3003 | azeebo_wallet |
-| Core | payment-service | 3004 | azeebo_payments |
-| Core | content-service | 3005 | azeebo_content |
-| Core | search-service | 3006 | azeebo_search |
-| Core | media-service | 3007 | azeebo_media |
+| Core | auth-service | 3000 | azeebo_auth |
+| Core | user-service | 3001 | azeebo_user |
+| Core | wallet-service | 3002 | azeebo_wallet |
+| Core | payment-service | 3003 | azeebo_payment |
+| Core | content-service | 3004 | azeebo_content |
+| Core | search-service | 3005 | azeebo_search |
+| Core | media-service | 3019 | azeebo_media |
 | Universe | reality-service | 3010 | azeebo_reality |
-| Universe | creator-service | 3011 | azeebo_creators |
-| Universe | lifestyle-service | 3012 | azeebo_lifestyle |
-| Universe | vertical-service | 3013 | azeebo_vertical |
-| Universe | movie-service | 3014 | azeebo_movies |
-| Universe | games-service | 3015 | azeebo_games |
-| Universe | comedy-service | 3016 | azeebo_comedy |
-| Universe | sports-service | 3017 | azeebo_sports |
-| Engagement | notification-service | 3020 | azeebo_notifications |
-| Engagement | reward-service | 3021 | azeebo_rewards |
-| Engagement | referral-service | 3022 | azeebo_referrals |
-| Engagement | messaging-service | 3023 | azeebo_messaging |
-| Engagement | engagement-service | 3024 | azeebo_engagement |
-| Engagement | subscription-service | 3025 | azeebo_subscriptions |
-| Operations | moderation-service | 3030 | azeebo_moderation |
-| Operations | queue-service | 3031 | azeebo_queue |
-| Operations | support-service | 3032 | azeebo_support |
-| Intelligence | analytics-service | 3040 | azeebo_analytics |
-| Intelligence | recommendation-service | 3041 | azeebo_recommendations |
+| Universe | creator-service | 3018 | azeebo_creator |
+| Universe | lifestyle-service | 3016 | azeebo_lifestyle |
+| Universe | vertical-service | 3017 | azeebo_vertical |
+| Universe | movie-service | 3011 | azeebo_movie |
+| Universe | games-service | 3014 | azeebo_games |
+| Universe | comedy-service | 3012 | azeebo_comedy |
+| Universe | sports-service | 3021 | azeebo_sports |
+| Engagement | notification-service | 3006 | azeebo_notification |
+| Engagement | reward-service | 3007 | azeebo_reward |
+| Engagement | referral-service | 3025 | azeebo_referral |
+| Engagement | messaging-service | 3024 | azeebo_messaging |
+| Engagement | engagement-service | 3023 | azeebo_engagement |
+| Engagement | subscription-service | 3026 | azeebo_subscription |
+| Operations | moderation-service | 3022 | azeebo_moderation |
+| Operations | queue-service | 3015 | azeebo_queue |
+| Operations | support-service | 3020 | azeebo_support |
+| Intelligence | analytics-service | 3008 | azeebo_analytics |
+| Intelligence | recommendation-service | 3009 | azeebo_recommendation |
 | Gateway | api-gateway | 3013 | — |
 
 ---

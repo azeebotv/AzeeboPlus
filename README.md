@@ -25,7 +25,7 @@ azeebo-plus/
 └── ci/                    # CI/CD scripts
 ```
 
-## Service Inventory (27 services + 3 frontends)
+## Service Inventory (27 services + 4 frontends)
 
 ### Core Services (ports 3000-3005, 3019)
 | Service | Port | DB | Description |
@@ -81,8 +81,9 @@ azeebo-plus/
 ### Frontend Apps
 | App | Port | Framework | Description |
 |-----|------|-----------|-------------|
+| mobile | 8081 | Expo (React Native) | Mobile app (iOS/Android) |
 | web | 4000 | Next.js | Main web application |
-| admin | 4016 | NestJS + SSR | Admin dashboard |
+| admin | 4016 | Vite+React + NestJS | Standalone admin dashboard |
 | creator | 4014 | Vite+React + NestJS | Standalone creator dashboard |
 
 ## Running Locally
@@ -167,7 +168,6 @@ azeebo_notification  azeebo_reward  azeebo_engagement
 azeebo_messaging     azeebo_referral azeebo_subscription
 azeebo_analytics     azeebo_recommendation
 azeebo_queue    azeebo_support  azeebo_moderation
-azeebo_admin    azeebo_creator
 ```
 
 Each service's `.env` contains its own `DATABASE_URL` pointing to its database.
@@ -186,7 +186,7 @@ JWT_REFRESH_SECRET=<random-64-char-hex>
 These override the placeholder values in service `.env` files at runtime.
 For production, set secrets via Coolify UI or Docker environment variables.
 
-## Shared Packages
+## Shared Packages (21 total)
 
 | Package | Description |
 |---------|-------------|
@@ -204,6 +204,13 @@ For production, set secrets via Coolify UI or Docker environment variables.
 | `test-utils` | Testing utilities |
 | `internal-clients` | Internal service clients |
 | `shared-services` | Shared NestJS modules (prisma, redis, cache, rate-limit, queue, audit, analytics, validation, pagination, api-versioning, sanitize, middleware) |
+| `ui` | Shared React UI components |
+| `design-tokens` | Design tokens (colors, spacing, typography) |
+| `http-client` | HTTP client for service-to-service calls |
+| `event-bus` | Event bus for inter-service communication |
+| `shared-queue` | Shared queue processing utilities |
+| `opentelemetry` | OpenTelemetry tracing and instrumentation |
+| `contract-tests` | API contract testing utilities |
 
 ## Running Tests
 
