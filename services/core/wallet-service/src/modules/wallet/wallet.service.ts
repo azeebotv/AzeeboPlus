@@ -9,7 +9,7 @@ import { WalletResponse } from './interfaces/wallet-response.interface.js';
 import { toNumber, addDecimals } from '@azeebo/utils';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 import axios from 'axios';
-import { EventBusService, EventTypes } from '@azeebo/event-bus';
+import { EventBusService, EventTypes, EVENT_BUS_SERVICE } from '@azeebo/event-bus';
 
 type WalletRow = {
   id: string;
@@ -33,7 +33,7 @@ export class WalletService {
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(CacheService) private readonly cacheService: CacheService,
     @Inject(ConfigService) private readonly configService: ConfigService,
-    @Inject(EventBusService) private readonly eventBus: EventBusService
+    @Inject(EVENT_BUS_SERVICE) private readonly eventBus: EventBusService
   ) {
     this.pointsToNairaRate = this.configService.get<number>('POINTS_TO_NAIRA_RATE', 100);
     this.webhookSecret = this.configService.get<string>('WEBHOOK_SECRET', 'dev-webhook-secret');
