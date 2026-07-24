@@ -72,8 +72,8 @@ export default function MessagesPage(): React.JSX.Element {
   const [searchQuery, setSearchQuery] = useState('');
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
-  const [_replyingTo, setReplyingTo] = useState<Message | null>(null);
-  const [_showThread, setShowThread] = useState<string | null>(null);
+  const [_replyingTo, _setReplyingTo] = useState<Message | null>(null);
+  const [_showThread, _setShowThread] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
   const conversationsListRef = useRef<HTMLDivElement>(null);
