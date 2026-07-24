@@ -85,7 +85,7 @@ export class EngagementService {
           avatar: response.data.data.avatar || null,
         };
       }
-    } catch (error) {
+    } catch (_error) {
       this.logger.warn(`Failed to enrich user profile for ${userId}`);
     }
     return { displayName: 'Unknown', avatar: null };
@@ -100,7 +100,7 @@ export class EngagementService {
         { eventName, metadata: data, timestamp: new Date().toISOString() },
         { timeout: 10000 }
       );
-    } catch (error) {
+    } catch (_error) {
       this.logger.warn(`Failed to publish event: ${eventName}`);
     }
   }
@@ -329,7 +329,7 @@ export class EngagementService {
         { eventName, userId, metadata, timestamp: new Date().toISOString() },
         { timeout: 10000 }
       );
-    } catch (error) {
+    } catch (_error) {
       this.logger.warn(`Failed to track analytics event: ${eventName}`);
     }
   }
@@ -594,10 +594,16 @@ export class EngagementService {
 
       return {
         success: true,
-        data: entries.map((e, i) => {
-          const { rank: _, ...rest } = e as LeaderboardEntryData;
-          return { rank: i + 1, ...rest };
-        }),
+        data: entries.map((e, i) => ({
+          rank: i + 1,
+          id: e.id,
+          userId: e.userId,
+          displayName: e.displayName,
+          avatar: e.avatar,
+          score: e.score,
+          category: e.category,
+          timePeriod: e.timePeriod,
+        })),
         format: 'json',
       };
     } catch (error) {

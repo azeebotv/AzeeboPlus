@@ -26,7 +26,7 @@ interface PredictionHistoryResponse {
 }
 
 export default function PredictionsPage() {
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState('all');
 

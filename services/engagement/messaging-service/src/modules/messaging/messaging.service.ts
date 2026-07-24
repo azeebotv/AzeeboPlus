@@ -30,7 +30,7 @@ export class MessagingService {
         { eventName, userId, metadata, timestamp: new Date().toISOString() },
         { timeout: 10000 }
       );
-    } catch (error) {
+    } catch (_error) {
       this.logger.warn(`Failed to track analytics event: ${eventName}`);
     }
   }
