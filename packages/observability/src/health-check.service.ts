@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { RedisService } from '@azeebo/shared-services';
 
 export interface HealthCheckResult {
@@ -35,7 +35,7 @@ export class HealthCheckService {
   private errorCount = 0;
   private lastError?: string;
 
-  constructor(private readonly redisService?: RedisService) {
+  constructor(@Optional() private readonly redisService?: RedisService) {
     this.startTime = Date.now();
   }
 

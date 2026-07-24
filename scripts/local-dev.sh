@@ -271,6 +271,7 @@ load_env() {
   export SENTRY_DSN="${SENTRY_DSN:-}"
   export ANALYTICS_ENDPOINT="${ANALYTICS_ENDPOINT:-http://localhost:3008}"
   export OTEL_EXPORTER_OTLP_ENDPOINT="${OTEL_EXPORTER_OTLP_ENDPOINT:-}"
+  export OTEL_SDK_DISABLED=true  # Disable OpenTelemetry SDK (Node.js 26 incompatible)
   export OTEL_SERVICE_NAME="${OTEL_SERVICE_NAME:-azeebo-platform}"
 
   # Service URLs for gateway routing (local mode)
