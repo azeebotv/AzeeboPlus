@@ -17,6 +17,92 @@ interface FeedResponse {
   };
 }
 
+interface FeedStory {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  excerpt: string | null;
+  coverImage: string | null;
+  viewCount: number;
+  publishedAt: Date | null;
+  createdAt: Date;
+  category?: { name: string } | null;
+}
+
+interface FeedEvent {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  coverImage: string | null;
+  viewCount: number;
+  publishedAt: Date | null;
+  createdAt: Date;
+  category?: { name: string } | null;
+}
+
+interface FeedCityGuide {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  coverImage: string | null;
+  type: string;
+  viewCount: number;
+  publishedAt: Date | null;
+  createdAt: Date;
+}
+
+interface FeedMusic {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  coverImage: string | null;
+  artistName: string | null;
+  genre: string | null;
+  type: string;
+  playCount: number;
+  publishedAt: Date | null;
+  createdAt: Date;
+}
+
+interface FeedCelebrity {
+  id: string;
+  name: string;
+  slug: string;
+  bio: string | null;
+  coverImage: string | null;
+  profession: string | null;
+  viewCount: number;
+  publishedAt: Date | null;
+  createdAt: Date;
+}
+
+interface FeedNightlife {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  coverImage: string | null;
+  type: string;
+  viewCount: number;
+  publishedAt: Date | null;
+  createdAt: Date;
+}
+
+interface FeedInfluencer {
+  id: string;
+  displayName: string;
+  slug: string;
+  bio: string | null;
+  coverImage: string | null;
+  category: string | null;
+  followerCount: number;
+  createdAt: Date;
+}
+
 @Injectable()
 export class LifestyleFeedService {
   private readonly logger = new Logger(LifestyleFeedService.name);
@@ -31,13 +117,13 @@ export class LifestyleFeedService {
   }
 
   private mapToFeedItems(data: {
-    stories: any[];
-    events: any[];
-    cityGuides: any[];
-    music: any[];
-    celebrities: any[];
-    nightlife: any[];
-    influencers: any[];
+    stories: FeedStory[];
+    events: FeedEvent[];
+    cityGuides: FeedCityGuide[];
+    music: FeedMusic[];
+    celebrities: FeedCelebrity[];
+    nightlife: FeedNightlife[];
+    influencers: FeedInfluencer[];
   }): FeedItem[] {
     return [
       ...data.stories.map((s) => ({
