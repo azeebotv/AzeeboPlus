@@ -13,9 +13,9 @@
 | New Features (Implemented) | 5 | 5 | 0 |
 | New Features (Partial) | 3 | 0 | 3 |
 | Stale Documentation | 3 | 3 | 0 |
-| Test Coverage | 5 | 1 | 4 |
-| Platform Quality | 8 | 7 | 1 |
-| **Total** | **28** | **20** | **8** |
+| Test Coverage | 5 | 5 | 0 |
+| Platform Quality | 8 | 8 | 0 |
+| **Total** | **28** | **25** | **3** |
 
 ---
 
@@ -122,24 +122,24 @@
 - **Description:** Added 8 new tests for service validation, env keys, versions, path strategies. Pre-existing Jest zod resolution issue noted.
 
 ### T2. Engagement Service Tests
-- **Status:** `[ ]` PENDING
+- **Status:** `[x]` DONE
 - **Priority:** P2
-- **Description:** engagement-service has 2 test files (447 lines). Adequate coverage for now.
+- **Description:** Added 4 tests: getLeaderboard, getRankings, getPredictionResults. All pass.
 
 ### T3. Messaging Service Tests
-- **Status:** `[ ]` PENDING
+- **Status:** `[x]` DONE
 - **Priority:** P2
-- **Description:** messaging-service has 2 test files. Needs WebSocket/messaging tests (currently REST-based).
+- **Description:** Added 4 tests: getConversations, getMessages, sendMessage, createConversation. All pass.
 
 ### T4. Referral Service Tests
-- **Status:** `[ ]` PENDING
+- **Status:** `[x]` DONE
 - **Priority:** P2
-- **Description:** referral-service has 2 test files. Needs referral flow tests.
+- **Description:** Added 4 tests: getReferralCode, generateReferralCode, getStats, getReferrals. All pass.
 
 ### T5. Recommendation Service Tests
-- **Status:** `[ ]` PENDING
+- **Status:** `[x]` DONE
 - **Priority:** P2
-- **Description:** recommendation-service has 2 test files. Needs recommendation algorithm tests.
+- **Description:** Added 3 tests: getContentRecommendations, getCreatorRecommendations. All pass.
 
 ---
 
@@ -161,9 +161,9 @@
 - **Description:** Reality page has status actions (activate/end). Creators page has verify/unverify buttons.
 
 ### Q4. Creator Portal — Settings Contract Mismatch
-- **Status:** `[ ]` PENDING
+- **Status:** `[x]` DONE
 - **Priority:** P2
-- **Description:** Web client uses `/creators/settings` but backend has `creator/settings`. Routes need alignment.
+- **Description:** Added GET/PUT /settings and PUT /payouts/settings endpoints to gateway /creator route config.
 
 ### Q5. Real-Time Messaging Verification
 - **Status:** `[x]` DONE
