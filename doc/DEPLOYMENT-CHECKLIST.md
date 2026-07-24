@@ -13,7 +13,7 @@ New environment variables required after this session's changes:
 
 ```bash
 # Analytics Service URL (needed by ALL services for event tracking)
-ANALYTICS_SERVICE_URL=http://analytics-service:3040
+ANALYTICS_SERVICE_URL=http://analytics-service:3008
 
 # WebSocket (needed by messaging-service and reality-service)
 WS_CORS_ORIGIN=https://app.azeeboplus.com
