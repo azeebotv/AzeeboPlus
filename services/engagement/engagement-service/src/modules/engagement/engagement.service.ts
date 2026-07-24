@@ -5,6 +5,14 @@ import { CacheService, cacheKey } from '@azeebo/shared-services';
 import { Prisma } from '@prisma/client';
 import axios from 'axios';
 
+// Event types for engagement service
+const ENGAGEMENT_EVENTS = {
+  PREDICTION_SUBMITTED: 'engagement.prediction.submitted',
+  PREDICTION_RESOLVED: 'engagement.prediction.resolved',
+  LEADERBOARD_UPDATED: 'engagement.leaderboard.updated',
+  RANKING_UPDATED: 'engagement.ranking.updated',
+} as const;
+
 const ALLOWED_TIME_PERIODS = ['daily', 'weekly', 'monthly', 'allTime'] as const;
 const ALLOWED_CATEGORIES = ['all', 'gaming', 'content', 'social', 'predictions'] as const;
 
@@ -44,6 +52,7 @@ interface RankingData {
 export class EngagementService {
   private readonly logger = new Logger(EngagementService.name);
   private readonly analyticsServiceBaseUrl: string;
+  private readonly userServiceBaseUrl: string;
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
@@ -52,8 +61,48 @@ export class EngagementService {
   ) {
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
-      'http://analytics-service:3040'
+      'http://analytics-service:3008'
     );
+    this.userServiceBaseUrl = this.configService.get<string>(
+      'USER_SERVICE_URL',
+      'http://user-service:3001'
+    );
+  }
+
+  // --- User Profile Enrichment ---
+
+  private async enrichUserProfile(
+    userId: string
+  ): Promise<{ displayName: string; avatar: string | null }> {
+    try {
+      const response = await axios.get(`${this.userServiceBaseUrl}/users/${userId}`, {
+        timeout: 5000,
+        headers: { 'x-internal-api-key': this.configService.get('INTERNAL_API_KEY', '') },
+      });
+      if (response.data?.success && response.data?.data) {
+        return {
+          displayName: response.data.data.displayName || 'Unknown',
+          avatar: response.data.data.avatar || null,
+        };
+      }
+    } catch (error) {
+      this.logger.warn(`Failed to enrich user profile for ${userId}`);
+    }
+    return { displayName: 'Unknown', avatar: null };
+  }
+
+  // --- Event Bus Publishing ---
+
+  private async publishEvent(eventName: string, data: Record<string, unknown>): Promise<void> {
+    try {
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/analytics/track`,
+        { eventName, metadata: data, timestamp: new Date().toISOString() },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to publish event: ${eventName}`);
+    }
   }
 
   async getLeaderboard(timePeriod = 'weekly', category = 'all', limit = 50) {
@@ -94,18 +143,34 @@ export class EngagementService {
         take: limit,
       });
 
+      // Enrich entries with user profiles
+      const enrichedEntries = await Promise.all(
+        entries.map(async (entry: LeaderboardEntryData, index: number) => {
+          let displayName = entry.displayName;
+          let avatar = entry.avatar;
+
+          if (!displayName || displayName === 'Unknown') {
+            const profile = await this.enrichUserProfile(entry.userId);
+            displayName = profile.displayName;
+            avatar = profile.avatar;
+          }
+
+          return {
+            id: entry.id,
+            userId: entry.userId,
+            displayName,
+            avatar,
+            score: entry.score,
+            rank: index + 1,
+            category: entry.category,
+            timePeriod: entry.timePeriod,
+          };
+        })
+      );
+
       const result = {
         success: true,
-        data: entries.map((entry: LeaderboardEntryData, index: number) => ({
-          id: entry.id,
-          userId: entry.userId,
-          displayName: entry.displayName,
-          avatar: entry.avatar,
-          score: entry.score,
-          rank: index + 1,
-          category: entry.category,
-          timePeriod: entry.timePeriod,
-        })),
+        data: enrichedEntries,
       };
 
       await this.cache.set(cacheK, result, 60);
@@ -228,6 +293,12 @@ export class EngagementService {
 
       this.logger.log(`Prediction submitted by user ${userId} for content ${contentId}`);
       this.trackAnalyticsEvent('prediction_submitted', userId, { contentId });
+      await this.publishEvent(ENGAGEMENT_EVENTS.PREDICTION_SUBMITTED, {
+        userId,
+        contentId,
+        prediction,
+        points: serverPoints,
+      });
 
       return {
         success: true,
