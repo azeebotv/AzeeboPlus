@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger, BadRequestException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { Prisma } from '@prisma/client';
 import axios from 'axios';
 
 const ALLOWED_TIME_PERIODS = ['daily', 'weekly', 'monthly', 'allTime'] as const;
@@ -49,7 +50,10 @@ export class EngagementService {
     @Inject(CacheService) private readonly cache: CacheService,
     @Inject(ConfigService) private readonly configService: ConfigService
   ) {
-    this.analyticsServiceBaseUrl = this.configService.get<string>('ANALYTICS_SERVICE_URL', 'http://analytics-service:3040');
+    this.analyticsServiceBaseUrl = this.configService.get<string>(
+      'ANALYTICS_SERVICE_URL',
+      'http://analytics-service:3040'
+    );
   }
 
   async getLeaderboard(timePeriod = 'weekly', category = 'all', limit = 50) {
@@ -243,10 +247,20 @@ export class EngagementService {
     }
   }
 
-  private async trackAnalyticsEvent(eventName: string, userId: string, metadata: Record<string, unknown> = {}): Promise<void> {
+  private async trackAnalyticsEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown> = {}
+  ): Promise<void> {
     try {
-      await axios.post(`${this.analyticsServiceBaseUrl}/analytics/track`, { eventName, userId, metadata, timestamp: new Date().toISOString() }, { timeout: 10000 });
-    } catch (error) { this.logger.warn(`Failed to track analytics event: ${eventName}`); }
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/analytics/track`,
+        { eventName, userId, metadata, timestamp: new Date().toISOString() },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to track analytics event: ${eventName}`);
+    }
   }
 
   /**
@@ -302,6 +316,247 @@ export class EngagementService {
         `updateLeaderboard failed: ${(error as Error).message}`,
         (error as Error).stack
       );
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  // --- NEW: Prediction Management ---
+
+  async deletePrediction(userId: string, predictionId: string) {
+    try {
+      const prediction = await this.prisma.prediction.findUnique({ where: { id: predictionId } });
+      if (!prediction) return { success: false, error: 'Prediction not found' };
+      if (prediction.userId !== userId) return { success: false, error: 'Unauthorized' };
+      if (prediction.status !== 'active')
+        return { success: false, error: 'Only active predictions can be deleted' };
+
+      await this.prisma.prediction.update({
+        where: { id: predictionId },
+        data: { status: 'cancelled' },
+      });
+
+      this.trackAnalyticsEvent('prediction_deleted', userId, { predictionId });
+      return { success: true, message: 'Prediction deleted' };
+    } catch (error) {
+      this.logger.error(`deletePrediction failed: ${(error as Error).message}`);
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  async updatePrediction(
+    userId: string,
+    predictionId: string,
+    data: { prediction?: string; category?: string; metadata?: Record<string, unknown> }
+  ) {
+    try {
+      const prediction = await this.prisma.prediction.findUnique({ where: { id: predictionId } });
+      if (!prediction) return { success: false, error: 'Prediction not found' };
+      if (prediction.userId !== userId) return { success: false, error: 'Unauthorized' };
+      if (prediction.status !== 'active')
+        return { success: false, error: 'Only active predictions can be updated' };
+
+      const updated = await this.prisma.prediction.update({
+        where: { id: predictionId },
+        data: {
+          ...(data.prediction !== undefined && { prediction: data.prediction }),
+          ...(data.category !== undefined && { category: data.category }),
+          ...(data.metadata !== undefined && {
+            metadata: data.metadata as Prisma.InputJsonValue,
+          }),
+        },
+      });
+
+      return { success: true, data: updated };
+    } catch (error) {
+      this.logger.error(`updatePrediction failed: ${(error as Error).message}`);
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  async getPredictionHistory(userId: string, page = 1, limit = 20) {
+    try {
+      const skip = (page - 1) * limit;
+      const [predictions, total] = await Promise.all([
+        this.prisma.prediction.findMany({
+          where: { userId },
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit,
+        }),
+        this.prisma.prediction.count({ where: { userId } }),
+      ]);
+
+      return {
+        success: true,
+        data: predictions,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      };
+    } catch (error) {
+      this.logger.error(`getPredictionHistory failed: ${(error as Error).message}`);
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  async bulkSubmitPredictions(
+    userId: string,
+    predictions: Array<{ contentId: string; prediction: string; category?: string }>
+  ) {
+    try {
+      const results = await Promise.all(
+        predictions.map((p) => this.submitPrediction(userId, p.contentId, p.prediction))
+      );
+
+      const successful = results.filter((r) => r.success).length;
+      const failed = results.filter((r) => !r.success).length;
+
+      return {
+        success: true,
+        data: { successful, failed, total: predictions.length },
+      };
+    } catch (error) {
+      this.logger.error(`bulkSubmitPredictions failed: ${(error as Error).message}`);
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  // --- NEW: Ranking Management ---
+
+  async createOrUpdateRanking(
+    userId: string,
+    displayName: string,
+    avatar: string | null,
+    category: string,
+    score: number
+  ) {
+    try {
+      const existing = await this.prisma.ranking.findUnique({
+        where: { userId_category_period: { userId, category, period: 'all' } },
+      });
+
+      if (existing) {
+        const updated = await this.prisma.ranking.update({
+          where: { id: existing.id },
+          data: { score: { increment: score }, displayName, avatar },
+        });
+
+        // Record history
+        await this.prisma.rankingHistory.create({
+          data: { userId, category, score: updated.score, rank: updated.rank || 0, period: 'all' },
+        });
+
+        return { success: true, data: updated };
+      }
+
+      const created = await this.prisma.ranking.create({
+        data: { userId, displayName, avatar, category, score, period: 'all' },
+      });
+
+      // Record history
+      await this.prisma.rankingHistory.create({
+        data: { userId, category, score, rank: 0, period: 'all' },
+      });
+
+      return { success: true, data: created };
+    } catch (error) {
+      this.logger.error(`createOrUpdateRanking failed: ${(error as Error).message}`);
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  async deleteRanking(userId: string, category: string) {
+    try {
+      const ranking = await this.prisma.ranking.findUnique({
+        where: { userId_category_period: { userId, category, period: 'all' } },
+      });
+
+      if (!ranking) return { success: false, error: 'Ranking not found' };
+
+      await this.prisma.ranking.delete({ where: { id: ranking.id } });
+      return { success: true, message: 'Ranking deleted' };
+    } catch (error) {
+      this.logger.error(`deleteRanking failed: ${(error as Error).message}`);
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  async getRankingHistory(userId: string, category?: string, limit = 50) {
+    try {
+      const where: Record<string, unknown> = { userId };
+      if (category) where.category = category;
+
+      const history = await this.prisma.rankingHistory.findMany({
+        where,
+        orderBy: { recordedAt: 'desc' },
+        take: limit,
+      });
+
+      return { success: true, data: history };
+    } catch (error) {
+      this.logger.error(`getRankingHistory failed: ${(error as Error).message}`);
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  // --- NEW: Leaderboard Export ---
+
+  async exportLeaderboard(
+    timePeriod = 'weekly',
+    category = 'all',
+    format: 'csv' | 'json' = 'json'
+  ) {
+    try {
+      const entries = await this.prisma.leaderboardEntry.findMany({
+        where: { timePeriod, category },
+        orderBy: { score: 'desc' },
+      });
+
+      if (format === 'csv') {
+        const header = 'rank,userId,displayName,score,category,timePeriod\n';
+        const rows = entries
+          .map(
+            (e, i) =>
+              `${i + 1},${e.userId},${e.displayName},${e.score},${e.category},${e.timePeriod}`
+          )
+          .join('\n');
+        return { success: true, data: header + rows, format: 'csv' };
+      }
+
+      return {
+        success: true,
+        data: entries.map((e, i) => {
+          const { rank: _, ...rest } = e as LeaderboardEntryData;
+          return { rank: i + 1, ...rest };
+        }),
+        format: 'json',
+      };
+    } catch (error) {
+      this.logger.error(`exportLeaderboard failed: ${(error as Error).message}`);
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  // --- NEW: Batch Ranking Update ---
+
+  async batchUpdateRankings(
+    updates: Array<{
+      userId: string;
+      displayName: string;
+      avatar: string | null;
+      category: string;
+      score: number;
+    }>
+  ) {
+    try {
+      const results = await Promise.all(
+        updates.map((u) =>
+          this.createOrUpdateRanking(u.userId, u.displayName, u.avatar, u.category, u.score)
+        )
+      );
+
+      const successful = results.filter((r) => r.success).length;
+      return { success: true, data: { successful, total: updates.length } };
+    } catch (error) {
+      this.logger.error(`batchUpdateRankings failed: ${(error as Error).message}`);
       return { success: false, error: (error as Error).message };
     }
   }
