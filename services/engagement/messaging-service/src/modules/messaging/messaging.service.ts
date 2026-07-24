@@ -13,13 +13,26 @@ export class MessagingService {
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(ConfigService) private readonly configService: ConfigService
   ) {
-    this.analyticsServiceBaseUrl = this.configService.get<string>('ANALYTICS_SERVICE_URL', 'http://analytics-service:3040');
+    this.analyticsServiceBaseUrl = this.configService.get<string>(
+      'ANALYTICS_SERVICE_URL',
+      'http://analytics-service:3040'
+    );
   }
 
-  private async trackAnalyticsEvent(eventName: string, userId: string, metadata: Record<string, unknown> = {}): Promise<void> {
+  private async trackAnalyticsEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown> = {}
+  ): Promise<void> {
     try {
-      await axios.post(`${this.analyticsServiceBaseUrl}/analytics/track`, { eventName, userId, metadata, timestamp: new Date().toISOString() }, { timeout: 10000 });
-    } catch (error) { this.logger.warn(`Failed to track analytics event: ${eventName}`); }
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/analytics/track`,
+        { eventName, userId, metadata, timestamp: new Date().toISOString() },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to track analytics event: ${eventName}`);
+    }
   }
 
   async getConversations(userId: string) {
@@ -157,7 +170,9 @@ export class MessagingService {
 
       this.logger.log(`Conversation ${conversation.id} created by user ${userId}`);
 
-      this.trackAnalyticsEvent('conversation_created', userId, { participantCount: conversation.participants.length });
+      this.trackAnalyticsEvent('conversation_created', userId, {
+        participantCount: conversation.participants.length,
+      });
 
       return {
         success: true,
@@ -313,6 +328,277 @@ export class MessagingService {
         `deleteConversation failed: ${(error as Error).message}`,
         (error as Error).stack
       );
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  // --- NEW: Conversation Management ---
+
+  async updateConversation(
+    userId: string,
+    conversationId: string,
+    data: { name?: string; avatar?: string }
+  ) {
+    try {
+      const participant = await this.prisma.conversationParticipant.findFirst({
+        where: { conversationId, userId, role: 'admin' },
+      });
+      if (!participant) return { success: false, error: 'Only admins can update conversations' };
+
+      const updated = await this.prisma.conversation.update({
+        where: { id: conversationId },
+        data: {
+          ...(data.name !== undefined && { name: data.name }),
+          ...(data.avatar !== undefined && { avatar: data.avatar }),
+        },
+      });
+
+      return { success: true, data: updated };
+    } catch (error) {
+      this.logger.error(`updateConversation failed: ${(error as Error).message}`);
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  async addParticipant(userId: string, conversationId: string, newUserId: string) {
+    try {
+      const participant = await this.prisma.conversationParticipant.findFirst({
+        where: { conversationId, userId },
+      });
+      if (!participant) return { success: false, error: 'Not a member of this conversation' };
+
+      const existing = await this.prisma.conversationParticipant.findFirst({
+        where: { conversationId, userId: newUserId },
+      });
+      if (existing) return { success: false, error: 'User already in conversation' };
+
+      const added = await this.prisma.conversationParticipant.create({
+        data: { conversationId, userId: newUserId, role: 'member' },
+      });
+
+      return { success: true, data: added };
+    } catch (error) {
+      this.logger.error(`addParticipant failed: ${(error as Error).message}`);
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  async removeParticipant(userId: string, conversationId: string, removeUserId: string) {
+    try {
+      const participant = await this.prisma.conversationParticipant.findFirst({
+        where: { conversationId, userId },
+      });
+      if (!participant || (participant.role !== 'admin' && userId !== removeUserId)) {
+        return { success: false, error: 'Unauthorized' };
+      }
+
+      await this.prisma.conversationParticipant.deleteMany({
+        where: { conversationId, userId: removeUserId },
+      });
+
+      return { success: true, message: 'Participant removed' };
+    } catch (error) {
+      this.logger.error(`removeParticipant failed: ${(error as Error).message}`);
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  async muteConversation(_userId: string, conversationId: string, muted: boolean) {
+    try {
+      await this.prisma.conversation.update({
+        where: { id: conversationId },
+        data: { isMuted: muted },
+      });
+      return { success: true, message: muted ? 'Conversation muted' : 'Conversation unmuted' };
+    } catch (error) {
+      this.logger.error(`muteConversation failed: ${(error as Error).message}`);
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  async archiveConversation(_userId: string, conversationId: string, archived: boolean) {
+    try {
+      await this.prisma.conversation.update({
+        where: { id: conversationId },
+        data: { isArchived: archived },
+      });
+      return {
+        success: true,
+        message: archived ? 'Conversation archived' : 'Conversation unarchived',
+      };
+    } catch (error) {
+      this.logger.error(`archiveConversation failed: ${(error as Error).message}`);
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  async searchConversations(userId: string, query: string, limit = 20) {
+    try {
+      const conversations = await this.prisma.conversation.findMany({
+        where: {
+          participants: { some: { userId } },
+          OR: [
+            { name: { contains: query, mode: 'insensitive' } },
+            { messages: { some: { content: { contains: query, mode: 'insensitive' } } } },
+          ],
+        },
+        include: { participants: true },
+        take: limit,
+      });
+
+      return { success: true, data: conversations };
+    } catch (error) {
+      this.logger.error(`searchConversations failed: ${(error as Error).message}`);
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  // --- NEW: Message Management ---
+
+  async editMessage(userId: string, messageId: string, content: string) {
+    try {
+      const message = await this.prisma.message.findUnique({ where: { id: messageId } });
+      if (!message) return { success: false, error: 'Message not found' };
+      if (message.senderId !== userId) return { success: false, error: 'Only sender can edit' };
+      if (message.isDeleted) return { success: false, error: 'Cannot edit deleted message' };
+
+      const updated = await this.prisma.message.update({
+        where: { id: messageId },
+        data: { content, isEdited: true },
+      });
+
+      return { success: true, data: updated };
+    } catch (error) {
+      this.logger.error(`editMessage failed: ${(error as Error).message}`);
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  async deleteMessage(userId: string, messageId: string) {
+    try {
+      const message = await this.prisma.message.findUnique({ where: { id: messageId } });
+      if (!message) return { success: false, error: 'Message not found' };
+      if (message.senderId !== userId) return { success: false, error: 'Only sender can delete' };
+
+      await this.prisma.message.update({
+        where: { id: messageId },
+        data: { isDeleted: true, content: 'This message has been deleted' },
+      });
+
+      return { success: true, message: 'Message deleted' };
+    } catch (error) {
+      this.logger.error(`deleteMessage failed: ${(error as Error).message}`);
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  async pinMessage(userId: string, messageId: string, pinned: boolean) {
+    try {
+      const message = await this.prisma.message.findUnique({ where: { id: messageId } });
+      if (!message) return { success: false, error: 'Message not found' };
+
+      const participant = await this.prisma.conversationParticipant.findFirst({
+        where: { conversationId: message.conversationId, userId, role: 'admin' },
+      });
+      if (!participant) return { success: false, error: 'Only admins can pin messages' };
+
+      await this.prisma.message.update({
+        where: { id: messageId },
+        data: { isPinned: pinned },
+      });
+
+      return { success: true, message: pinned ? 'Message pinned' : 'Message unpinned' };
+    } catch (error) {
+      this.logger.error(`pinMessage failed: ${(error as Error).message}`);
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  async searchMessages(userId: string, query: string, limit = 20) {
+    try {
+      const messages = await this.prisma.message.findMany({
+        where: {
+          content: { contains: query, mode: 'insensitive' },
+          conversation: { participants: { some: { userId } } },
+        },
+        include: { conversation: { select: { id: true, name: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+      });
+
+      return { success: true, data: messages };
+    } catch (error) {
+      this.logger.error(`searchMessages failed: ${(error as Error).message}`);
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  async addReaction(userId: string, messageId: string, emoji: string) {
+    try {
+      const existing = await this.prisma.messageReaction.findFirst({
+        where: { messageId, userId, emoji },
+      });
+
+      if (existing) {
+        await this.prisma.messageReaction.delete({ where: { id: existing.id } });
+        return { success: true, message: 'Reaction removed' };
+      }
+
+      await this.prisma.messageReaction.create({
+        data: { messageId, userId, emoji },
+      });
+
+      return { success: true, message: 'Reaction added' };
+    } catch (error) {
+      this.logger.error(`addReaction failed: ${(error as Error).message}`);
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  async getReactions(messageId: string) {
+    try {
+      const reactions = await this.prisma.messageReaction.groupBy({
+        by: ['emoji'],
+        where: { messageId },
+        _count: { id: true },
+      });
+
+      return { success: true, data: reactions };
+    } catch (error) {
+      this.logger.error(`getReactions failed: ${(error as Error).message}`);
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  async replyToMessage(userId: string, conversationId: string, replyToId: string, content: string) {
+    try {
+      const parentMessage = await this.prisma.message.findUnique({ where: { id: replyToId } });
+      if (!parentMessage) return { success: false, error: 'Parent message not found' };
+      if (parentMessage.conversationId !== conversationId)
+        return { success: false, error: 'Message not in this conversation' };
+
+      const message = await this.prisma.message.create({
+        data: { conversationId, senderId: userId, content, replyToId },
+      });
+
+      return { success: true, data: message };
+    } catch (error) {
+      this.logger.error(`replyToMessage failed: ${(error as Error).message}`);
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  async getThread(messageId: string, limit = 50) {
+    try {
+      const replies = await this.prisma.message.findMany({
+        where: { replyToId: messageId },
+        orderBy: { createdAt: 'asc' },
+        take: limit,
+      });
+
+      return { success: true, data: replies };
+    } catch (error) {
+      this.logger.error(`getThread failed: ${(error as Error).message}`);
       return { success: false, error: (error as Error).message };
     }
   }
