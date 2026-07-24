@@ -115,6 +115,10 @@ fi
 if [ "$SKIP_SEED" = false ]; then
   log "Seeding demo data..."
   $PSQL_BASE -f "$MIGRATIONS_DIR/002_seed_demo_data.sql" || die "Seed failed"
+  if [ -f "$MIGRATIONS_DIR/003_seed_additions.sql" ]; then
+    log "Seeding additional demo data..."
+    $PSQL_BASE -f "$MIGRATIONS_DIR/003_seed_additions.sql" || log "Warning: Additional seed failed (non-critical)"
+  fi
   log "Demo data seeded."
 else
   log "Skipping seed (--skip-seed)"
