@@ -16,27 +16,23 @@ export default function UsersPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [page, setPage] = useState(1);
 
-  const { data: users = [], isLoading, error } = useQuery({
-    queryKey: ['admin', 'users'],
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['admin', 'users', page, roleFilter, search],
     queryFn: async () => {
-      const res = await adminApi.getUsers();
+      const res = await adminApi.getUsers(page, 20, roleFilter === 'all' ? undefined : roleFilter, search || undefined);
       if (res.success && res.data) {
-        const d = res.data as unknown as UserItem[] | { users: UserItem[] };
-        return Array.isArray(d) ? d : d.users || [];
+        const d = res.data as unknown as UserItem[] | { users: UserItem[]; total?: number; totalPages?: number };
+        const users = Array.isArray(d) ? d : d.users || [];
+        return { users, total: (d as { total?: number })?.total || users.length, totalPages: (d as { totalPages?: number })?.totalPages || 1 };
       }
-      return [];
+      return { users: [], total: 0, totalPages: 1 };
     },
   });
 
-  const filtered = useMemo(() =>
-    users.filter((u) => {
-      const matchSearch = !search || u.username?.toLowerCase().includes(search.toLowerCase()) || u.email?.toLowerCase().includes(search.toLowerCase());
-      const matchRole = roleFilter === 'all' || u.role === roleFilter;
-      return matchSearch && matchRole;
-    }),
-    [users, search, roleFilter]
-  );
+  const users = data?.users || [];
+  const filtered = useMemo(() => users, [users]);
 
   return (
     <div>

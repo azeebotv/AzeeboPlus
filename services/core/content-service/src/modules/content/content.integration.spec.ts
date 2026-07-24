@@ -166,6 +166,7 @@ describe('ContentService Integration', () => {
         type: 'video',
         universeId: 'universe-1',
         mediaUrl: 'https://storage.example.com/video.mp4',
+        thumbnail: 'https://storage.example.com/thumb.jpg',
       };
 
       const createdContent = {
@@ -285,7 +286,7 @@ describe('ContentService Integration', () => {
       const result = await service.deleteContent(userId, contentId);
 
       expect(result.success).toBe(true);
-      expect(result.data.message).toBe('Content soft deleted successfully');
+      expect(result.data?.message).toBe('Content soft deleted successfully');
       expect(mockContentRepository.delete).toHaveBeenCalledWith(contentId);
       expect(mockCacheService.delete).toHaveBeenCalledWith(cacheKey('content', contentId));
     });

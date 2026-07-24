@@ -111,4 +111,48 @@ describe('Proxy Controller - API Contract Verification', () => {
     expect(creatorsRoute).toBeDefined();
     expect(creatorsRoute?.envKey).toBe('CREATOR_SERVICE_URL');
   });
+
+  it('should have all services with valid env keys', () => {
+    SERVICE_CONFIGS.forEach((route) => {
+      expect(route.envKey).toBeTruthy();
+      expect(route.envKey).toContain('_URL');
+    });
+  });
+
+  it('should have all services with supported versions', () => {
+    SERVICE_CONFIGS.forEach((route) => {
+      expect(route.supportedVersions).toBeDefined();
+      expect(route.supportedVersions.length).toBeGreaterThan(0);
+      expect(route.defaultVersion).toBeDefined();
+    });
+  });
+
+  it('should have auth service with correct path strategy', () => {
+    const authRoute = SERVICE_CONFIGS.find((r) => r.path === '/auth');
+    expect(authRoute).toBeDefined();
+    expect(authRoute?.pathStrategy).toBe('auth-service-strategy');
+  });
+
+  it('should have notification service with admin endpoints', () => {
+    const notificationRoute = SERVICE_CONFIGS.find((r) => r.path === '/notifications');
+    expect(notificationRoute).toBeDefined();
+    const endpoints = notificationRoute?.endpoints?.map((e) => e.path) || [];
+    expect(endpoints).toContain('/push-tokens');
+    expect(endpoints).toContain('/preferences');
+  });
+
+  it('should have engagement service with leaderboard endpoint', () => {
+    const engagementRoute = SERVICE_CONFIGS.find((r) => r.path === '/engagement');
+    expect(engagementRoute).toBeDefined();
+    const endpoints = engagementRoute?.endpoints?.map((e) => e.path) || [];
+    expect(endpoints).toContain('/leaderboard');
+  });
+
+  it('should have subscription service with plan endpoints', () => {
+    const subscriptionRoute = SERVICE_CONFIGS.find((r) => r.path === '/subscription');
+    expect(subscriptionRoute).toBeDefined();
+    const endpoints = subscriptionRoute?.endpoints?.map((e) => e.path) || [];
+    expect(endpoints).toContain('/plans');
+    expect(endpoints).toContain('/subscribe');
+  });
 });

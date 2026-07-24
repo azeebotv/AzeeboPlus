@@ -20,6 +20,7 @@ export const ADMIN_NAV = [
   { href: '/announcements', label: 'Announcements', icon: '📢' },
   { href: '/audit-logs', label: 'Audit Logs', icon: '📋' },
   { href: '/reports', label: 'Reports', icon: '📊' },
+  { href: '/feature-flags', label: 'Feature Flags', icon: '🚩' },
   { href: '/settings', label: 'Settings', icon: '⚙️' },
 ];
 
@@ -39,8 +40,19 @@ const styles = {
     padding: '0 24px',
     zIndex: 50,
   } as React.CSSProperties,
-  logo: { fontSize: 20, fontWeight: 700, color: '#E8420A', textDecoration: 'none' } as React.CSSProperties,
-  userBadge: { fontSize: 13, color: '#9A8A7A', display: 'flex', alignItems: 'center', gap: 8 } as React.CSSProperties,
+  logo: {
+    fontSize: 20,
+    fontWeight: 700,
+    color: '#E8420A',
+    textDecoration: 'none',
+  } as React.CSSProperties,
+  userBadge: {
+    fontSize: 13,
+    color: '#9A8A7A',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+  } as React.CSSProperties,
   logoutBtn: {
     background: 'none',
     border: '1px solid #2A1A1A',
@@ -104,8 +116,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (isLoading) {
     return (
       <div style={styles.root}>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-          <div style={{ width: 40, height: 40, border: '3px solid #2A1A1A', borderTopColor: '#E8420A', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '100vh',
+          }}
+        >
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              border: '3px solid #2A1A1A',
+              borderTopColor: '#E8420A',
+              borderRadius: '50%',
+              animation: 'spin 0.8s linear infinite',
+            }}
+          />
         </div>
       </div>
     );
@@ -123,13 +151,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
       <header style={styles.topBar}>
-        <a href="/" style={styles.logo}>Azeebo+ Admin</a>
+        <a href="/" style={styles.logo}>
+          Azeebo+ Admin
+        </a>
         <div style={styles.userBadge}>
           <span>{user.email}</span>
-          <span style={{ padding: '2px 8px', borderRadius: 4, backgroundColor: '#E8420A', color: '#fff', fontSize: 11, fontWeight: 600 }}>
+          <span
+            style={{
+              padding: '2px 8px',
+              borderRadius: 4,
+              backgroundColor: '#E8420A',
+              color: '#fff',
+              fontSize: 11,
+              fontWeight: 600,
+            }}
+          >
             {user.role}
           </span>
-          <button onClick={logout} style={styles.logoutBtn}>Logout</button>
+          <button onClick={logout} style={styles.logoutBtn}>
+            Logout
+          </button>
         </div>
       </header>
 
@@ -144,14 +185,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           aria-label="Admin navigation"
           style={{
             ...styles.sidebar,
-            ...(isMobile ? {
-              position: 'fixed' as const,
-              top: 64,
-              left: sidebarOpen ? 0 : -280,
-              zIndex: 40,
-              transition: 'left 0.3s ease',
-              width: 280,
-            } : {}),
+            ...(isMobile
+              ? {
+                  position: 'fixed' as const,
+                  top: 64,
+                  left: sidebarOpen ? 0 : -280,
+                  zIndex: 40,
+                  transition: 'left 0.3s ease',
+                  width: 280,
+                }
+              : {}),
           }}
         >
           <nav>
@@ -159,7 +202,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <a
                 key={item.href}
                 href={item.href}
-                onClick={(e) => { e.preventDefault(); navigate(item.href); setSidebarOpen(false); }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate(item.href);
+                  setSidebarOpen(false);
+                }}
                 aria-current={isActive(item.href) ? 'page' : undefined}
                 style={{
                   display: 'flex',

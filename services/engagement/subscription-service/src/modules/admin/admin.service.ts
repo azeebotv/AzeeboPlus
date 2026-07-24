@@ -44,7 +44,7 @@ export class AdminService {
 
   async updatePlan(
     id: string,
-    data: Partial<Pick<SubscriptionPlan, 'name' | 'description' | 'price' | 'currency' | 'duration' | 'features' | 'tier' | 'isActive'>>
+    data: Partial<Pick<SubscriptionPlan, 'name' | 'description' | 'currency' | 'duration' | 'features' | 'tier' | 'isActive'>> & { price?: string | number }
   ): Promise<SubscriptionPlan> {
     const existing = await this.prisma.subscriptionPlan.findUnique({ where: { id } });
     if (!existing) {
@@ -53,9 +53,14 @@ export class AdminService {
 
     this.logger.log(`Updating plan ${id}`);
 
+    const updateData: Record<string, unknown> = { ...data };
+    if (data.price !== undefined) {
+      updateData.price = String(data.price);
+    }
+
     return this.prisma.subscriptionPlan.update({
       where: { id },
-      data,
+      data: updateData,
     });
   }
 

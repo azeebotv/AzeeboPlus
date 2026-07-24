@@ -4,7 +4,6 @@ import { SubscriptionService } from './subscription.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { CacheService } from '@azeebo/shared-services';
-import { CircuitBreaker } from '@azeebo/shared-types';
 
 // Mock axios to avoid real HTTP calls
 jest.mock('axios');
@@ -48,7 +47,7 @@ describe('SubscriptionService Integration', () => {
     startDate: new Date(),
     endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     autoRenew: true,
-    paymentMethod: 'card',
+    paymentMethod: 'external',
     lastPaymentDate: null,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -222,7 +221,7 @@ describe('SubscriptionService Integration', () => {
       const dto = {
         planId: 'plan-1',
         autoRenew: true,
-        paymentMethod: 'card',
+        paymentMethod: 'external' as const,
         paymentReference: 'pay-ref-1',
       };
 
@@ -463,7 +462,7 @@ describe('SubscriptionService Integration', () => {
 
       const result = await service.getSubscriptionHistory('user-1');
 
-      expect(result.subscriptions[0].plan).toEqual(mockPlan);
+      expect((result.subscriptions[0] as Record<string, unknown>).plan).toEqual(mockPlan);
       expect(mockPrismaService.subscription.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ include: { plan: true } })
       );

@@ -16,6 +16,9 @@
 | Admin Dashboard Plan | `doc/admin.md` | Admin portal implementation plan |
 | Agbala API Reference | `doc/agbala-api.md` | Agbala storyworld API endpoints |
 | Remaining Tasks | `doc/remaining-tasks.md` | Outstanding deployment/monitoring tasks |
+| Feature Flags | `packages/feature-flags/` | Redis-backed feature flag system |
+| Geo Restriction | `services/core/content-service/prisma/schema.prisma` | Content geo restriction schema |
+| Device Limits | `services/engagement/subscription-service/prisma/schema.prisma` | Subscription device limits |
 
 ## Universe Product Specs
 

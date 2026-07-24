@@ -1,8 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { AdminCreator } from '@/lib/admin-types';
 
 export default function CreatorsPage() {
+  const queryClient = useQueryClient();
   const { data: creators = [], isLoading } = useQuery({
     queryKey: ['admin', 'creators'],
     queryFn: async () => {
@@ -13,6 +14,12 @@ export default function CreatorsPage() {
       }
       return [];
     },
+  });
+
+  const verifyMutation = useMutation({
+    mutationFn: ({ id, verify }: { id: string; verify: boolean }) =>
+      verify ? adminApi.verifyCreator(id) : adminApi.unverifyCreator(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'creators'] }),
   });
 
   return (
@@ -39,10 +46,16 @@ export default function CreatorsPage() {
                 <span>{c.contentCount || 0} videos</span>
                 <span>{c.subscriberCount || 0} subs</span>
               </div>
-              <div style={{ marginTop: 12 }}>
+              <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
                 <span style={{ padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, backgroundColor: c.isVerified ? 'rgba(13,59,46,0.2)' : 'rgba(245,158,11,0.2)', color: c.isVerified ? '#0D3B2E' : '#F59E0B' }}>
                   {c.isVerified ? 'Verified' : 'Pending'}
                 </span>
+                <button
+                  onClick={() => verifyMutation.mutate({ id: c.id, verify: !c.isVerified })}
+                  style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid #2A1A1A', background: 'transparent', color: c.isVerified ? '#F87171' : '#4ADE80', fontSize: 11, cursor: 'pointer' }}
+                >
+                  {c.isVerified ? 'Unverify' : 'Verify'}
+                </button>
               </div>
             </div>
           ))}

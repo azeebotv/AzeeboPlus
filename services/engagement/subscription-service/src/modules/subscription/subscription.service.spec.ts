@@ -28,7 +28,7 @@ describe('SubscriptionService', () => {
     startDate: new Date(),
     endDate: new Date(),
     autoRenew: true,
-    paymentMethod: 'card',
+    paymentMethod: 'external' as const,
     lastPaymentDate: null,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -160,7 +160,7 @@ describe('SubscriptionService', () => {
       const dto = {
         planId: 'plan-1',
         autoRenew: true,
-        paymentMethod: 'card',
+        paymentMethod: 'external' as const,
         paymentReference: 'pay-ref-1',
       };
 

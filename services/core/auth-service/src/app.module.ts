@@ -5,6 +5,7 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { AuditModule } from './modules/audit/audit.module.js';
 import { AdminModule } from './modules/admin/admin.module.js';
+import { DeviceModule } from './modules/device/device.module.js';
 import { CacheModule, RedisModule } from '@azeebo/shared-services';
 import { CommonModule } from './common/common.module.js';
 import { MetricsModule } from './modules/metrics/metrics.module.js';
@@ -25,6 +26,7 @@ import { ObservabilityModule } from '@azeebo/observability';
     AuditModule,
     AuthModule,
     AdminModule,
+    DeviceModule,
     CommonModule,
     MetricsModule,
     HealthModule,

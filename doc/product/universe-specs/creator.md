@@ -64,4 +64,4 @@ Create the creator onboarding and monetization engine.
 - [x] Standalone creator portal implemented
 - [x] Settings GET/PUT endpoint — Implemented
 - [x] Subscriber count — Uses try/catch fallback (table may not exist)
-- [ ] Analytics events — NOT implemented (client-side SDK not wired in creator portal)
+- [~] Analytics events — Partially implemented (backend events exist, client-side SDK wired in mobile/web but not in standalone creator portal)

@@ -1,8 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { RealityShow } from '@/lib/admin-types';
 
 export default function RealityPage() {
+  const queryClient = useQueryClient();
   const { data: shows = [], isLoading } = useQuery({
     queryKey: ['admin', 'reality-shows'],
     queryFn: async () => {
@@ -13,6 +14,12 @@ export default function RealityPage() {
       }
       return [];
     },
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      adminApi.updateRealityShowStatus(id, status),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'reality-shows'] }),
   });
 
   return (
@@ -33,6 +40,24 @@ export default function RealityPage() {
               <span style={{ padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, backgroundColor: show.status === 'live' ? 'rgba(13,59,46,0.2)' : 'rgba(154,138,122,0.2)', color: show.status === 'live' ? '#0D3B2E' : '#9A8A7A' }}>
                 {show.status}
               </span>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {show.status !== 'active' && (
+                  <button
+                    onClick={() => updateStatusMutation.mutate({ id: show.id, status: 'active' })}
+                    style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid #0D3B2E', background: 'rgba(13,59,46,0.3)', color: '#4ADE80', fontSize: 11, cursor: 'pointer' }}
+                  >
+                    Activate
+                  </button>
+                )}
+                {show.status !== 'ended' && (
+                  <button
+                    onClick={() => updateStatusMutation.mutate({ id: show.id, status: 'ended' })}
+                    style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid #2A1A1A', background: 'transparent', color: '#9A8A7A', fontSize: 11, cursor: 'pointer' }}
+                  >
+                    End
+                  </button>
+                )}
+              </div>
             </div>
           ))}
           {shows.length === 0 && <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A' }}>No reality shows found</p>}

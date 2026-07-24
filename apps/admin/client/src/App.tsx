@@ -22,6 +22,7 @@ import ReportsPage from './routes/reports';
 import ReportBuilderPage from './routes/report-builder';
 import SettingsPage from './routes/settings';
 import SubscriptionsPage from './routes/subscriptions';
+import FeatureFlagsPage from './routes/feature-flags';
 import LoginPage from './routes/login';
 
 const queryClient = new QueryClient({
@@ -66,6 +67,7 @@ export default function App() {
               <Route path="reports/builder" element={<ReportBuilderPage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="subscriptions" element={<SubscriptionsPage />} />
+              <Route path="feature-flags" element={<FeatureFlagsPage />} />
             </Route>
           </Routes>
         </BrowserRouter>
