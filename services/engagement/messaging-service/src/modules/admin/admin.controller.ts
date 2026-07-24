@@ -1,4 +1,14 @@
-import { Inject, Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Delete,
+  Put,
+  Param,
+  Query,
+  UseGuards,
+  Body,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { AdminService } from './admin.service.js';
 import { AdminGuard } from '@azeebo/security';
@@ -25,10 +35,7 @@ export class AdminController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Paginated conversations' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  async getConversations(
-    @Query('page') page?: number,
-    @Query('limit') limit?: number
-  ) {
+  async getConversations(@Query('page') page?: number, @Query('limit') limit?: number) {
     return this.adminService.getConversations({ page, limit });
   }
 
@@ -45,5 +52,36 @@ export class AdminController {
     @Query('limit') limit?: number
   ) {
     return this.adminService.getMessages(conversationId, { page, limit });
+  }
+
+  @Get('messages')
+  @ApiOperation({ summary: 'Get all messages (admin)' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, description: 'All messages' })
+  async getAllMessages(@Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.adminService.getAllMessages({ page, limit });
+  }
+
+  @Delete('conversations/:id')
+  @ApiOperation({ summary: 'Delete a conversation (admin)' })
+  @ApiResponse({ status: 200, description: 'Conversation deleted' })
+  async deleteConversation(@Param('id') id: string) {
+    return this.adminService.deleteConversation(id);
+  }
+
+  @Put('conversations/:id')
+  @ApiOperation({ summary: 'Update conversation (admin)' })
+  async updateConversation(
+    @Param('id') id: string,
+    @Body() body: { name?: string; isMuted?: boolean; isArchived?: boolean }
+  ) {
+    return this.adminService.updateConversation(id, body);
+  }
+
+  @Delete('messages/:id')
+  @ApiOperation({ summary: 'Delete a message (admin)' })
+  async deleteMessage(@Param('id') id: string) {
+    return this.adminService.deleteMessage(id);
   }
 }
