@@ -579,13 +579,17 @@ export class WalletService {
         recipientReference,
       });
 
-      await this.eventBus.publish(EventTypes.WALLET_TRANSFERRED, {
-        senderId,
-        recipientId: transferDto.recipientId,
-        amount: transferDto.amount,
-        senderReference,
-        recipientReference,
-      }, { userId: senderId });
+      await this.eventBus.publish(
+        EventTypes.WALLET_TRANSFERRED,
+        {
+          senderId,
+          recipientId: transferDto.recipientId,
+          amount: transferDto.amount,
+          senderReference,
+          recipientReference,
+        },
+        { userId: senderId }
+      );
 
       return {
         success: true,
@@ -1234,7 +1238,10 @@ export class WalletService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get transaction audit trail for wallet ${walletId}: ${error}`);
-      return createErrorResponse('GET_AUDIT_TRAIL_FAILED', 'Failed to retrieve transaction audit trail');
+      return createErrorResponse(
+        'GET_AUDIT_TRAIL_FAILED',
+        'Failed to retrieve transaction audit trail'
+      );
     }
   }
 
