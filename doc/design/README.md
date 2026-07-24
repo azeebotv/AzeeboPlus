@@ -8,50 +8,68 @@
 
 | Document | Location | Purpose |
 |----------|----------|---------|
-| Design Blueprint | `doc/AZEEBO_MODULAR_APP.md` (§4, §11-§12, §15) | Design system, screen blueprints, component catalog |
-| Figma Handoff | `doc/AZEEBO_MODULAR_APP.md` (§2107-§3516) | Screen-by-screen Figma design specs |
-| Claude Build Playbook | `doc/AZEEBO CLAUDE BUILD (1).md` | Design prompt templates |
+| Design Tokens | `packages/design-tokens/` | Colors, spacing, typography, shadows |
+| UI Components | `packages/ui/` | Shared React UI components |
+| Mobile Theme | `apps/mobile/src/theme.ts` | Mobile design tokens |
+| Web Styles | `apps/web/src/app/globals.css` | Global CSS variables |
 
-## Design Principles
+---
 
-1. **Premium** — Cinematic, modern, not cheap or cluttered
-2. **Mobile-first** — Thumb-friendly, optimized for mobile networks
-3. **Modular** — Shared shell with distinct universe identity
-4. **Rewarding** — Progress, points, and incentives always visible
-5. **Culturally alive** — African-first, locally resonant
+## Design System
 
-## Core Components
+### Colors
+- Primary: `#E8420A` (Brand Orange)
+- Background: `#1A0A0A` (Dark)
+- Surface: `#140808` (Card backgrounds)
+- Border: `#2A1A1A`
+- Text Primary: `#F5F0EB`
+- Text Secondary: `#9A8A7A`
+- Success: `#0D3B2E` / `#4ADE80`
+- Error: `#CC1C1C` / `#F87171`
+- Warning: `#F59E0B`
 
-| Category | Components |
-|----------|-----------|
-| Navigation | Bottom bar, top bar, universe switcher, tabs |
-| Content | Hero cards, content cards, rails, banners |
-| Participation | Vote cards, prediction cards, challenge cards |
-| Monetization | Wallet card, payment CTA, success card |
-| Trust | Badges, leaderboards, progress bars, toasts |
+### Typography
+- Headings: 700 weight, 15-28px
+- Body: 400 weight, 13-14px
+- Captions: 400 weight, 11-12px
 
-## Screen States
+### Spacing
+- Card padding: 16-20px
+- Section gaps: 16-24px
+- Border radius: 6-16px (cards), 999px (badges/pills)
 
-Every screen must implement:
+### Components
+- **GlassCard**: Semi-transparent card with blur effect
+- **BrandButton**: Gradient button with brand colors
+- **BrandInput**: Styled input with dark theme
+- **ContentCard**: Content display card with thumbnail
+- **HeroCarousel**: Homepage hero banner carousel
+- **StateContainers**: Loading, empty, error states
 
-| State | Description |
-|-------|-------------|
-| Loading | Skeleton/shimmer with content structure |
-| Empty | Illustration + message + CTA |
-| Error | Error message + retry button |
-| Success | Confirmation + feedback + next action |
+---
 
-## Design Tokens
+## Screen Patterns
 
-Tokens are managed in `packages/design-tokens`. Never hardcode:
+### Mobile (Expo Router)
+- File-based routing in `apps/mobile/app/`
+- Bottom tabs: Home, Watch, Create, Rewards, Profile
+- Universe switcher in Watch tab
+- Auth flow: Login → Register → OTP → Profile Setup
 
-```typescript
-// Bad
-const color = '#FF6B35';
-const spacing = 16;
+### Web (Next.js)
+- App Router in `apps/web/src/app/`
+- Server components with client islands
+- Dark theme throughout
+- Responsive grid layouts
 
-// Good
-import { colors, spacing } from '@azeebo/design-tokens';
-const color = colors.primary;
-const spacing = spacing.md;
-```
+### Admin (Vite+React)
+- Sidebar navigation with icons
+- Dashboard overview with stats cards
+- CRUD tables with search/filter
+- Feature flags management page
+
+### Creator (Vite+React)
+- Creator-focused dashboard
+- Upload flow with drag-and-drop
+- Analytics charts with Recharts
+- Earnings and payout management

@@ -8,79 +8,48 @@
 
 | Document | Location | Purpose |
 |----------|----------|---------|
-| Architecture | `doc/ARCHITECTURE.md` | System design and patterns |
-| Services | `doc/SERVICES.md` | Service catalog and contracts |
-| Deployment | `doc/DEPLOYMENT.md` | CI/CD and deployment guide |
-| Deployment Checklist | `doc/DEPLOYMENT-CHECKLIST.md` | Pre-deployment steps |
-| Contributing | `doc/CONTRIBUTING.md` | Development standards |
+| Architecture | `doc/ARCHITECTURE.md` | System architecture overview |
+| Services Catalog | `doc/SERVICES.md` | All services and endpoints |
+| API Gateway | `doc/engineering/api/gateway.md` | Gateway routing and configuration |
+| Auth Service API | `doc/engineering/api/auth-service.md` | Authentication endpoints |
+| Auth Flow | `doc/engineering/security/auth-flow.md` | JWT and OAuth flow |
+| Local Development | `doc/engineering/deployment/local-dev.md` | Local setup guide |
+| Incident Response | `doc/engineering/runbooks/incident-response.md` | Incident handling |
+| Deployment | `doc/DEPLOYMENT.md` | Production deployment |
+| Deployment Checklist | `doc/DEPLOYMENT-CHECKLIST.md` | Pre-deployment verification |
 | Secret Rotation | `doc/secret-rotation.md` | Secret rotation procedures |
-| Security Audit | `doc/AUDITNOTES.md` | Security findings and fixes |
 
-## Quick Reference
+---
 
-### Running Locally
+## Engineering Standards
 
-```bash
-pnpm install
-docker compose up -d postgres redis
-pnpm run db:migrate
-pnpm run seed
-pnpm run dev
-```
+### Code Quality
+- TypeScript strict mode — no `any` in production code
+- ESLint + Prettier enforced in CI
+- PR size limit: 400 lines (split if larger)
+- All PRs require review before merge
 
-### Running Tests
+### Testing
+- Unit tests for all services (Jest)
+- Integration tests for critical flows
+- E2E tests for admin and creator portals (Playwright)
+- Load tests via k6 (`scripts/load-test.js`)
 
-```bash
-pnpm run test              # All tests
-pnpm run test:watch        # Watch mode
-pnpm run test:cov          # Coverage report
-```
+### Security
+- JWT auth with 15min access + 7d refresh tokens
+- Rate limiting on all endpoints
+- Input validation via class-validator
+- SQL injection prevention via Prisma ORM
+- CORS properly configured per environment
 
-### Type Checking
+### Deployment
+- Docker all-in-one container for staging/production
+- Coolify for deployment management
+- GitHub Actions for CI/CD
+- Automated database backups
 
-```bash
-pnpm run typecheck         # All packages
-```
-
-### Linting
-
-```bash
-pnpm run lint              # All packages
-pnpm run lint:fix          # Auto-fix
-```
-
-## Service Ports
-
-| Service | Port |
-|---------|------|
-| API Gateway | 3013 |
-| Web | 4000 |
-| Creator Portal | 4014 |
-| Admin | 4016 |
-| auth-service | 3000 |
-| user-service | 3001 |
-| wallet-service | 3002 |
-| payment-service | 3003 |
-| content-service | 3004 |
-| search-service | 3005 |
-| media-service | 3019 |
-| reality-service | 3010 |
-| movie-service | 3011 |
-| comedy-service | 3012 |
-| games-service | 3014 |
-| queue-service | 3015 |
-| lifestyle-service | 3016 |
-| vertical-service | 3017 |
-| creator-service | 3018 |
-| support-service | 3020 |
-| sports-service | 3021 |
-| moderation-service | 3022 |
-| engagement-service | 3023 |
-| messaging-service | 3024 |
-| referral-service | 3025 |
-| subscription-service | 3026 |
-| notification-service | 3006 |
-| reward-service | 3007 |
-| analytics-service | 3008 |
-| recommendation-service | 3009 |
-| [Full details](SERVICES.md) | — |
+### Monitoring
+- Structured JSON logging via `@azeebo/logger`
+- Health checks on all services
+- Sentry for error tracking
+- Prometheus metrics via `@azeebo/observability`

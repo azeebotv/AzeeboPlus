@@ -38,9 +38,9 @@
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | /auth/devices | List registered devices |
-| DELETE | /auth/devices/:deviceId | Remove device |
-| PATCH | /auth/devices/:deviceId | Update device |
-| POST | /auth/devices/revoke-all | Revoke all devices |
+| GET | /auth/devices/check | Check device limit against subscription |
+| POST | /auth/devices/register | Register a new device |
+| DELETE | /auth/devices/:deviceId | Revoke a device |
 
 ### OTP
 | Method | Endpoint | Description |
