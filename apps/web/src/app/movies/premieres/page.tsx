@@ -86,9 +86,7 @@ function PremieresPageContent(): React.JSX.Element {
                 </div>
                 <h1 className="text-4xl sm:text-5xl font-bold text-white mb-3">{featured.title}</h1>
                 <p className="text-white/60 text-lg mb-4 max-w-2xl">{featured.description}</p>
-                {featured.genre && (
-                  <p className="text-sm text-white/40 mb-4">{featured.genre}</p>
-                )}
+                {featured.genre && <p className="text-sm text-white/40 mb-4">{featured.genre}</p>}
                 <div className="flex items-center gap-4">
                   <motion.button
                     type="button"
@@ -100,7 +98,8 @@ function PremieresPageContent(): React.JSX.Element {
                     Set Reminder
                   </motion.button>
                   <span className="text-white/60 text-sm">
-                    Premieres {new Date(featured.premiereDate).toLocaleDateString('en-NG', {
+                    Premieres{' '}
+                    {new Date(featured.premiereDate).toLocaleDateString('en-NG', {
                       month: 'long',
                       day: 'numeric',
                       year: 'numeric',
@@ -188,7 +187,9 @@ function PremieresPageContent(): React.JSX.Element {
                       </div>
                     </div>
                     <div className="p-4">
-                      <p className="text-sm text-white/50 mb-3 line-clamp-2">{premiere.description}</p>
+                      <p className="text-sm text-white/50 mb-3 line-clamp-2">
+                        {premiere.description}
+                      </p>
                       <div className="flex items-center justify-between text-xs text-white/40 mb-3">
                         <span>
                           {new Date(premiere.premiereDate).toLocaleDateString('en-NG', {
@@ -231,7 +232,13 @@ const LazyPremieresPage = lazy(() => Promise.resolve({ default: PremieresPageCon
 
 export default function PremieresPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyPremieresPage />
     </Suspense>
   );

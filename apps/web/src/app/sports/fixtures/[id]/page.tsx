@@ -88,12 +88,18 @@ function FixtureDetailContent(): React.JSX.Element {
                   <span
                     className="px-3 py-1 rounded-full text-xs font-semibold"
                     style={{
-                      backgroundColor: fixture.status === 'live'
-                        ? 'rgba(34,197,94,0.9)'
-                        : fixture.status === 'completed'
-                          ? 'rgba(255,255,255,0.2)'
-                          : 'rgba(232,66,10,0.2)',
-                      color: fixture.status === 'live' ? '#fff' : fixture.status === 'completed' ? '#fff' : '#E8420A',
+                      backgroundColor:
+                        fixture.status === 'live'
+                          ? 'rgba(34,197,94,0.9)'
+                          : fixture.status === 'completed'
+                            ? 'rgba(255,255,255,0.2)'
+                            : 'rgba(232,66,10,0.2)',
+                      color:
+                        fixture.status === 'live'
+                          ? '#fff'
+                          : fixture.status === 'completed'
+                            ? '#fff'
+                            : '#E8420A',
                     }}
                   >
                     {fixture.status === 'live' ? '● LIVE' : fixture.status.toUpperCase()}
@@ -101,9 +107,7 @@ function FixtureDetailContent(): React.JSX.Element {
                   <span className="text-sm text-white/60">{fixture.sport}</span>
                 </div>
                 <h1 className="text-4xl sm:text-5xl font-bold text-white mb-3">{fixture.title}</h1>
-                {fixture.date && (
-                  <p className="text-white/60 text-lg">{fixture.date}</p>
-                )}
+                {fixture.date && <p className="text-white/60 text-lg">{fixture.date}</p>}
               </motion.div>
             </div>
           </div>
@@ -211,7 +215,13 @@ const LazyFixtureDetail = lazy(() => Promise.resolve({ default: FixtureDetailCon
 
 export default function FixtureDetailPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyFixtureDetail />
     </Suspense>
   );

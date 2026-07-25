@@ -83,7 +83,10 @@ export default function AddFundsPage(): React.JSX.Element {
       toast.showToast('Deposit initiated successfully!', 'success');
       router.push('/wallet/transactions');
     } catch (error: unknown) {
-      toast.showToast(error instanceof Error ? error.message : 'Failed to process deposit', 'error');
+      toast.showToast(
+        error instanceof Error ? error.message : 'Failed to process deposit',
+        'error'
+      );
     } finally {
       setIsProcessing(false);
     }

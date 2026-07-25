@@ -108,7 +108,10 @@ function MovieDetailPageContent(): React.JSX.Element {
           </div>
         </>
       ) : error ? (
-        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 200px)' }}>
+        <div
+          className="flex items-center justify-center"
+          style={{ minHeight: 'calc(100vh - 200px)' }}
+        >
           <ErrorState
             title="Failed to load movie"
             description={error}
@@ -154,7 +157,9 @@ function MovieDetailPageContent(): React.JSX.Element {
                   </div>
                   <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">{movie.title}</h1>
                   <div className="flex items-center gap-4 text-sm text-white/60 mb-4">
-                    <span>⭐ {movie.rating.toFixed(1)} ({movie.totalRatings})</span>
+                    <span>
+                      ⭐ {movie.rating.toFixed(1)} ({movie.totalRatings})
+                    </span>
                     <span>·</span>
                     <span>{movie.year}</span>
                     <span>·</span>
@@ -185,7 +190,9 @@ function MovieDetailPageContent(): React.JSX.Element {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                       >
-                        {rentMutation.isPending ? 'Processing...' : `Rent ₦${movie.rentalPrice.toLocaleString()}`}
+                        {rentMutation.isPending
+                          ? 'Processing...'
+                          : `Rent ₦${movie.rentalPrice.toLocaleString()}`}
                       </motion.button>
                     )}
                     <Link href="/movies/watchlist">
@@ -215,7 +222,9 @@ function MovieDetailPageContent(): React.JSX.Element {
                 <ScrollReveal>
                   <h2 className="text-2xl font-bold text-white mb-4">Synopsis</h2>
                 </ScrollReveal>
-                <p className="text-white/70 leading-relaxed mb-8">{movie.synopsis || movie.description}</p>
+                <p className="text-white/70 leading-relaxed mb-8">
+                  {movie.synopsis || movie.description}
+                </p>
 
                 <ScrollReveal>
                   <h3 className="text-xl font-bold text-white mb-4">Details</h3>
@@ -354,7 +363,9 @@ function MovieDetailPageContent(): React.JSX.Element {
                         className="w-full h-32 sm:h-40 object-cover"
                       />
                       <div className="p-3">
-                        <h4 className="text-sm font-semibold text-white truncate">{related.title}</h4>
+                        <h4 className="text-sm font-semibold text-white truncate">
+                          {related.title}
+                        </h4>
                       </div>
                     </div>
                   </Link>
@@ -371,7 +382,8 @@ function MovieDetailPageContent(): React.JSX.Element {
         <div
           className="fixed bottom-6 right-6 z-50 px-6 py-3 rounded-xl shadow-lg transition-all"
           style={{
-            backgroundColor: toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+            backgroundColor:
+              toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
             border: `1px solid ${toast.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
             color: toast.type === 'success' ? '#22C55E' : '#EF4444',
           }}
@@ -387,7 +399,13 @@ const LazyMovieDetailPage = lazy(() => Promise.resolve({ default: MovieDetailPag
 
 export default function MovieDetailPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyMovieDetailPage />
     </Suspense>
   );

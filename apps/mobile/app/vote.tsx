@@ -70,7 +70,11 @@ export default function VoteScreen() {
       }
 
       if (showRes) {
-        setShowData(Array.isArray(showRes) ? showRes[0] : ((showRes as any)?.data?.[0] ?? showRes));
+        setShowData(
+          Array.isArray(showRes)
+            ? showRes[0]
+            : ((showRes as unknown as { data?: unknown[] })?.data?.[0] ?? showRes)
+        );
       }
     } catch (err) {
       logger.error('Failed to load vote data:', err);
@@ -108,7 +112,7 @@ export default function VoteScreen() {
           showId || 'default',
           selectedContestant?.id ?? '',
           totalVotes,
-          totalPrice,
+          totalPrice
         );
       } catch {}
       setTimeout(() => setVoteSuccess(false), 3000);

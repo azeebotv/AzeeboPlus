@@ -32,7 +32,6 @@ interface PredictionResult {
 }
 
 export default function PredictionResultsScreen() {
-  
   const params = useLocalSearchParams();
   const predictionId = params.predictionId as string;
 

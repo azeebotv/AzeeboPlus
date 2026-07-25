@@ -402,7 +402,24 @@ class DocumentationSync {
     }
 
     fs.writeFileSync(catalogPath, lines.join('\n'));
-    console.log('   Generated SERVICE-CATALOG.md\n');
+
+    // Also export as YAML for machine-readable consumption
+    const yamlCatalogPath = path.join(this.config.docsDir, 'service-catalog.yaml');
+    const catalogData = {
+      generatedAt: new Date().toISOString(),
+      totalServices: this.services.length,
+      services: this.services.map((s) => ({
+        name: s.name,
+        category: s.category,
+        version: s.version,
+        description: s.description,
+        endpoints: s.endpoints,
+        dependencies: s.dependencies,
+      })),
+    };
+    fs.writeFileSync(yamlCatalogPath, yaml.dump(catalogData, { indent: 2 }));
+
+    console.log('   Generated SERVICE-CATALOG.md and service-catalog.yaml\n');
   }
 
   private async validateDocumentation(): Promise<void> {

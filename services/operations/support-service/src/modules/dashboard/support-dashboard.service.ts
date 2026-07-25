@@ -150,12 +150,21 @@ export class SupportDashboardService {
       let totalResponseMs = 0;
       let totalResolutionMs = 0;
       let withinSla = 0;
+      let responseCount = 0;
       const slaTargetMs = 24 * 60 * 60 * 1000; // 24 hours
 
       for (const ticket of resolvedTickets) {
         const resolutionMs = ticket.resolvedAt!.getTime() - ticket.createdAt.getTime();
         totalResolutionMs += resolutionMs;
-        totalResponseMs += resolutionMs; // Approximate response time as resolution time
+
+        // Use firstResponseAt if available, otherwise approximate from resolution
+        const responseMs = (ticket as Record<string, unknown>).firstResponseAt
+          ? ((ticket as Record<string, unknown>).firstResponseAt as Date).getTime() -
+            ticket.createdAt.getTime()
+          : resolutionMs;
+        totalResponseMs += responseMs;
+        responseCount++;
+
         if (resolutionMs <= slaTargetMs) {
           withinSla++;
         }
@@ -163,7 +172,7 @@ export class SupportDashboardService {
 
       const count = resolvedTickets.length;
       return {
-        avgResponseTime: Math.round(totalResponseMs / count),
+        avgResponseTime: responseCount > 0 ? Math.round(totalResponseMs / responseCount) : 0,
         avgResolutionTime: Math.round(totalResolutionMs / count),
         slaCompliance: Math.round((withinSla / count) * 100),
       };

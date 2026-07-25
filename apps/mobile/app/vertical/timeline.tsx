@@ -38,7 +38,9 @@ export default function TimelineScreen() {
 
   useEffect(() => {
     if (timelineQuery.isSuccess && !timelineQuery.isFetching) {
-      try { analytics.verticalUniverseViewed('timeline'); } catch {}
+      try {
+        analytics.verticalUniverseViewed('timeline');
+      } catch {}
     }
   }, [timelineQuery.isSuccess, timelineQuery.isFetching]);
 
@@ -53,7 +55,9 @@ export default function TimelineScreen() {
 
   if (timelineQuery.isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+      >
         <LoadingState text="Loading timeline..." />
       </SafeAreaView>
     );
@@ -61,21 +65,36 @@ export default function TimelineScreen() {
 
   if (timelineQuery.error) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
-        <ErrorState description={timelineQuery.error.message} onRetry={() => timelineQuery.refetch()} />
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+      >
+        <ErrorState
+          description={timelineQuery.error.message}
+          onRetry={() => timelineQuery.refetch()}
+        />
       </SafeAreaView>
     );
   }
 
   if (!events.length) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+      >
         <EmptyState icon="📅" title="No events" description="Timeline events will appear here" />
       </SafeAreaView>
     );
   }
 
-  const renderEvent = ({ item, index, section }: { item: TimelineEvent; index: number; section: { title: string; data: TimelineEvent[] } }) => {
+  const renderEvent = ({
+    item,
+    index,
+    section,
+  }: {
+    item: TimelineEvent;
+    index: number;
+    section: { title: string; data: TimelineEvent[] };
+  }) => {
     const isLast = index === section.data.length - 1;
     const isUpcoming = section.title === 'Upcoming';
 
@@ -92,7 +111,10 @@ export default function TimelineScreen() {
         >
           <Text style={styles.eventDate}>{item.date}</Text>
           <Text style={[styles.eventTitle, { color: colors.text.primary }]}>{item.title}</Text>
-          <Text style={[styles.eventDesc, { color: isDark ? colors.text.secondary : '#666' }]} numberOfLines={2}>
+          <Text
+            style={[styles.eventDesc, { color: isDark ? colors.text.secondary : '#666' }]}
+            numberOfLines={2}
+          >
             {item.description}
           </Text>
           <View style={styles.eventFooter}>
@@ -105,7 +127,9 @@ export default function TimelineScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+    >
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
@@ -120,7 +144,9 @@ export default function TimelineScreen() {
         renderItem={renderEvent}
         renderSectionHeader={({ section }) => (
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>{section.title}</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
+              {section.title}
+            </Text>
             {section.title === 'Upcoming' && (
               <View style={styles.sectionCount}>
                 <Text style={styles.sectionCountText}>{section.data.length}</Text>

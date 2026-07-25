@@ -75,20 +75,31 @@ export default function SportsUniverseHome() {
   const leaguesQuery = useQuery({
     queryKey: ['sports', 'prediction-leagues'],
     queryFn: async () => {
-      const res = await apiClient.get<ListResponse<PredictionLeague>>('/v1/sports/prediction-leagues');
+      const res = await apiClient.get<ListResponse<PredictionLeague>>(
+        '/v1/sports/prediction-leagues'
+      );
       return Array.isArray(res) ? res : (res?.data ?? []);
     },
     staleTime: 60_000,
   });
 
-  const isLoading = liveQuery.isLoading || upcomingQuery.isLoading || categoriesQuery.isLoading || leaguesQuery.isLoading;
-  const error = liveQuery.error?.message || upcomingQuery.error?.message || categoriesQuery.error?.message || leaguesQuery.error?.message;
+  const isLoading =
+    liveQuery.isLoading ||
+    upcomingQuery.isLoading ||
+    categoriesQuery.isLoading ||
+    leaguesQuery.isLoading;
+  const error =
+    liveQuery.error?.message ||
+    upcomingQuery.error?.message ||
+    categoriesQuery.error?.message ||
+    leaguesQuery.error?.message;
 
   useEffect(() => {
     if (liveQuery.data && liveQuery.data.length > 0) {
-      try { analytics.sportsFixtureViewed(liveQuery.data[0].id); } catch {}
+      try {
+        analytics.sportsFixtureViewed(liveQuery.data[0].id);
+      } catch {}
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liveQuery.data]);
 
   const liveMatches = liveQuery.data ?? [];
@@ -142,7 +153,12 @@ export default function SportsUniverseHome() {
 
         <View style={styles.categoryScroll}>
           {categories.map((cat) => (
-            <TouchableOpacity key={cat.id} style={styles.categoryChip} accessibilityLabel={`Filter by ${cat.name}`} accessibilityRole="button">
+            <TouchableOpacity
+              key={cat.id}
+              style={styles.categoryChip}
+              accessibilityLabel={`Filter by ${cat.name}`}
+              accessibilityRole="button"
+            >
               <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
               <Text style={styles.categoryName}>{cat.name}</Text>
             </TouchableOpacity>
@@ -190,10 +206,18 @@ export default function SportsUniverseHome() {
                   </View>
                 </View>
                 <View style={styles.matchActions}>
-                  <TouchableOpacity style={styles.watchButton} accessibilityLabel={`Watch ${match.home} vs ${match.away} live`} accessibilityRole="button">
+                  <TouchableOpacity
+                    style={styles.watchButton}
+                    accessibilityLabel={`Watch ${match.home} vs ${match.away} live`}
+                    accessibilityRole="button"
+                  >
                     <Text style={styles.watchButtonText}>Watch Live</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.predictButton} accessibilityLabel={`Predict outcome for ${match.home} vs ${match.away}`} accessibilityRole="button">
+                  <TouchableOpacity
+                    style={styles.predictButton}
+                    accessibilityLabel={`Predict outcome for ${match.home} vs ${match.away}`}
+                    accessibilityRole="button"
+                  >
                     <Text style={styles.predictButtonText}>Predict</Text>
                   </TouchableOpacity>
                 </View>
@@ -207,7 +231,10 @@ export default function SportsUniverseHome() {
             <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
               Upcoming Matches
             </Text>
-            <TouchableOpacity accessibilityLabel="See all upcoming matches" accessibilityRole="button">
+            <TouchableOpacity
+              accessibilityLabel="See all upcoming matches"
+              accessibilityRole="button"
+            >
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
@@ -228,7 +255,11 @@ export default function SportsUniverseHome() {
                   <Text style={styles.upcomingDate}>{match.date}</Text>
                   <Text style={styles.upcomingLeague}>{match.league}</Text>
                 </View>
-                <TouchableOpacity style={styles.remindButton} accessibilityLabel={`Set reminder for ${match.home} vs ${match.away}`} accessibilityRole="button">
+                <TouchableOpacity
+                  style={styles.remindButton}
+                  accessibilityLabel={`Set reminder for ${match.home} vs ${match.away}`}
+                  accessibilityRole="button"
+                >
                   <Text style={styles.remindIcon}>🔔</Text>
                 </TouchableOpacity>
               </TouchableOpacity>
@@ -260,7 +291,11 @@ export default function SportsUniverseHome() {
                     <Text style={styles.predictionPrize}>🏆 {league.prize}</Text>
                   </View>
                 </View>
-                <TouchableOpacity style={styles.joinButton} accessibilityLabel={`Join ${league.name}`} accessibilityRole="button">
+                <TouchableOpacity
+                  style={styles.joinButton}
+                  accessibilityLabel={`Join ${league.name}`}
+                  accessibilityRole="button"
+                >
                   <Text style={styles.joinButtonText}>Join</Text>
                 </TouchableOpacity>
               </TouchableOpacity>

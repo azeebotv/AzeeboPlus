@@ -182,12 +182,15 @@ export function useVideoPlayer({
 
   const play = useCallback((): void => {
     if (videoRef.current) {
-      videoRef.current.play().then(() => {
-        setState((prev) => ({ ...prev, isPlaying: true }));
-      }).catch((_error) => {
-        // Video play failed — state updated below
-        setState((prev) => ({ ...prev, isPlaying: false }));
-      });
+      videoRef.current
+        .play()
+        .then(() => {
+          setState((prev) => ({ ...prev, isPlaying: true }));
+        })
+        .catch((_error) => {
+          // Video play failed — state updated below
+          setState((prev) => ({ ...prev, isPlaying: false }));
+        });
     }
   }, []);
 

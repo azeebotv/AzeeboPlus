@@ -129,14 +129,19 @@ function CrossoversPageContent(): React.JSX.Element {
                       </div>
                     </div>
                     <div className="p-4">
-                      <p className="text-sm text-white/50 mb-3 line-clamp-2">{crossover.description}</p>
+                      <p className="text-sm text-white/50 mb-3 line-clamp-2">
+                        {crossover.description}
+                      </p>
                       {crossover.storyworlds.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mb-3">
                           {crossover.storyworlds.map((sw) => (
                             <span
                               key={sw}
                               className="px-2 py-0.5 rounded-full text-[10px] font-medium"
-                              style={{ backgroundColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)' }}
+                              style={{
+                                backgroundColor: 'rgba(255,255,255,0.1)',
+                                color: 'rgba(255,255,255,0.6)',
+                              }}
                             >
                               {sw}
                             </span>
@@ -171,7 +176,13 @@ const LazyCrossoversPage = lazy(() => Promise.resolve({ default: CrossoversPageC
 
 export default function CrossoversPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyCrossoversPage />
     </Suspense>
   );

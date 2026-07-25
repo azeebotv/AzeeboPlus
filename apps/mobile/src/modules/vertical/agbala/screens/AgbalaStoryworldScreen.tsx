@@ -6,7 +6,11 @@ import type { AgbalaStackParamList } from '../types';
 
 type StoryworldNavigationProp = NavigationProp<AgbalaStackParamList, 'AgbalaStoryworld'>;
 
-export default function AgbalaStoryworldScreen({ navigation }: { navigation: StoryworldNavigationProp }) {
+export default function AgbalaStoryworldScreen({
+  navigation,
+}: {
+  navigation: StoryworldNavigationProp;
+}) {
   const paths = [
     {
       id: 'warrior',

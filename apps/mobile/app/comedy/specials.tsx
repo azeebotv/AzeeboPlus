@@ -40,11 +40,31 @@ export default function SpecialsScreen() {
   const isLoading = specialsQuery.isLoading;
   const error = specialsQuery.error?.message;
   const allSpecials = specialsQuery.data ?? [];
-  const specials = selectedGenre === 'All' ? allSpecials : allSpecials.filter(s => s.genre === selectedGenre);
+  const specials =
+    selectedGenre === 'All' ? allSpecials : allSpecials.filter((s) => s.genre === selectedGenre);
 
-  if (isLoading) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><LoadingState text="Loading specials..." /></SafeAreaView>;
-  if (error) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><ErrorState description={error} onRetry={() => specialsQuery.refetch()} /></SafeAreaView>;
-  if (!specials.length) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><EmptyState icon="🎤" title="No specials" description="Check back for new comedy specials" /></SafeAreaView>;
+  if (isLoading)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <LoadingState text="Loading specials..." />
+      </SafeAreaView>
+    );
+  if (error)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <ErrorState description={error} onRetry={() => specialsQuery.refetch()} />
+      </SafeAreaView>
+    );
+  if (!specials.length)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <EmptyState
+          icon="🎤"
+          title="No specials"
+          description="Check back for new comedy specials"
+        />
+      </SafeAreaView>
+    );
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
@@ -52,7 +72,9 @@ export default function SpecialsScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>Specials</Text>
+        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+          Specials
+        </Text>
       </View>
 
       <FlatList
@@ -66,7 +88,9 @@ export default function SpecialsScreen() {
             style={[styles.genreChip, selectedGenre === item && styles.genreChipActive]}
             onPress={() => setSelectedGenre(item)}
           >
-            <Text style={[styles.genreText, selectedGenre === item && styles.genreTextActive]}>{item}</Text>
+            <Text style={[styles.genreText, selectedGenre === item && styles.genreTextActive]}>
+              {item}
+            </Text>
           </TouchableOpacity>
         )}
       />
@@ -91,7 +115,12 @@ export default function SpecialsScreen() {
                 <Text style={styles.durationText}>{item.duration}</Text>
               </View>
             </View>
-            <Text style={[styles.specialTitle, { color: isDark ? '#fff' : '#000' }]} numberOfLines={1}>{item.title}</Text>
+            <Text
+              style={[styles.specialTitle, { color: isDark ? '#fff' : '#000' }]}
+              numberOfLines={1}
+            >
+              {item.title}
+            </Text>
             <Text style={styles.specialComedian}>{item.comedian}</Text>
           </TouchableOpacity>
         )}
@@ -103,22 +132,57 @@ export default function SpecialsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', padding: 16, paddingTop: 50, gap: 12 },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#2a2a2a', alignItems: 'center', justifyContent: 'center' },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backIcon: { color: '#fff', fontSize: 20 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
   genreBar: { paddingHorizontal: 16, paddingBottom: 16, gap: 10 },
-  genreChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#1a1a1a', marginRight: 10 },
+  genreChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#1a1a1a',
+    marginRight: 10,
+  },
   genreChipActive: { backgroundColor: '#F39C12' },
   genreText: { color: '#888', fontSize: 13, fontWeight: '600' },
   genreTextActive: { color: '#000' },
   gridContent: { paddingHorizontal: 16, paddingBottom: 30 },
   gridRow: { gap: 12, marginBottom: 12 },
   specialCard: { flex: 1, borderRadius: 12, overflow: 'hidden', maxWidth: '48%' },
-  specialThumbnail: { height: 160, backgroundColor: '#2a2a2a', alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  specialThumbnail: {
+    height: 160,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
   specialEmoji: { fontSize: 50 },
-  ratingBadge: { position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.7)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+  ratingBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
   ratingText: { color: '#F39C12', fontSize: 11, fontWeight: '600' },
-  durationBadge: { position: 'absolute', bottom: 8, left: 8, backgroundColor: 'rgba(0,0,0,0.7)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+  durationBadge: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
   durationText: { color: '#fff', fontSize: 11 },
   specialTitle: { fontSize: 14, fontWeight: '600', padding: 10, paddingBottom: 2 },
   specialComedian: { color: '#888', fontSize: 12, paddingHorizontal: 10, paddingBottom: 10 },

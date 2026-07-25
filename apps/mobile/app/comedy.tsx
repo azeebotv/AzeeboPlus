@@ -39,7 +39,7 @@ interface TopRatedItem {
 
 export default function ComedyUniverseHome() {
   const colorScheme = useColorScheme();
-  
+
   const isDark = colorScheme === 'dark';
 
   const clipsQuery = useQuery({
@@ -78,14 +78,23 @@ export default function ComedyUniverseHome() {
     staleTime: 60_000,
   });
 
-  const isLoading = clipsQuery.isLoading || creatorsQuery.isLoading || categoriesQuery.isLoading || topRatedQuery.isLoading;
-  const error = clipsQuery.error?.message || creatorsQuery.error?.message || categoriesQuery.error?.message || topRatedQuery.error?.message;
+  const isLoading =
+    clipsQuery.isLoading ||
+    creatorsQuery.isLoading ||
+    categoriesQuery.isLoading ||
+    topRatedQuery.isLoading;
+  const error =
+    clipsQuery.error?.message ||
+    creatorsQuery.error?.message ||
+    categoriesQuery.error?.message ||
+    topRatedQuery.error?.message;
 
   useEffect(() => {
     if (clipsQuery.data && clipsQuery.data.length > 0) {
-      try { analytics.comedyClipViewed(clipsQuery.data[0].id); } catch {}
+      try {
+        analytics.comedyClipViewed(clipsQuery.data[0].id);
+      } catch {}
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clipsQuery.data]);
 
   const trendingClips = clipsQuery.data ?? [];
@@ -139,7 +148,12 @@ export default function ComedyUniverseHome() {
 
         <View style={styles.categoryScroll}>
           {categories.map((cat) => (
-            <TouchableOpacity key={cat.id} style={styles.categoryChip} accessibilityLabel={`Filter by ${cat.name}`} accessibilityRole="button">
+            <TouchableOpacity
+              key={cat.id}
+              style={styles.categoryChip}
+              accessibilityLabel={`Filter by ${cat.name}`}
+              accessibilityRole="button"
+            >
               <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
               <Text style={styles.categoryName}>{cat.name}</Text>
             </TouchableOpacity>
@@ -212,7 +226,11 @@ export default function ComedyUniverseHome() {
                   {item.name}
                 </Text>
                 <Text style={styles.creatorFollowers}>{item.followers}</Text>
-                <TouchableOpacity style={styles.subscribeButton} accessibilityLabel={`Subscribe to ${item.name}`} accessibilityRole="button">
+                <TouchableOpacity
+                  style={styles.subscribeButton}
+                  accessibilityLabel={`Subscribe to ${item.name}`}
+                  accessibilityRole="button"
+                >
                   <Text style={styles.subscribeText}>Subscribe</Text>
                 </TouchableOpacity>
               </TouchableOpacity>
@@ -256,9 +274,15 @@ export default function ComedyUniverseHome() {
             <Text style={styles.comedyPassEmoji}>🎭</Text>
             <View style={styles.comedyPassInfo}>
               <Text style={styles.comedyPassTitle}>Comedy Pass</Text>
-              <Text style={styles.comedyPassSubtitle}>All comedies from {comedySubscription.label}</Text>
+              <Text style={styles.comedyPassSubtitle}>
+                All comedies from {comedySubscription.label}
+              </Text>
             </View>
-            <TouchableOpacity style={styles.comedyPassButton} accessibilityLabel="Get Comedy Pass" accessibilityRole="button">
+            <TouchableOpacity
+              style={styles.comedyPassButton}
+              accessibilityLabel="Get Comedy Pass"
+              accessibilityRole="button"
+            >
               <Text style={styles.comedyPassButtonText}>Get</Text>
             </TouchableOpacity>
           </View>

@@ -50,12 +50,9 @@ export type {
 // Check both env var names for compatibility with different build configs.
 // - Client-side: empty string works (relative URLs resolve via nginx proxy)
 // - Server-side: fall back to localhost gateway for SSR / getServerSideProps
-const _envUrl =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  process.env.NEXT_PUBLIC_API_URL ||
-  '';
+const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || '';
 export const resolvedApiUrl =
-  _envUrl || (typeof window === 'undefined' ? 'http://localhost:3013' : '');
+  envUrl || (typeof window === 'undefined' ? 'http://localhost:3013' : '');
 
 // ---------------------------------------------------------------------------
 // Retry configuration
@@ -409,7 +406,8 @@ export async function apiFetch<T>(
       if (!response.ok) {
         // Handle 401 — try to refresh token before returning error
         if (response.status === 401 && !options.skipAuthRetry) {
-          const refreshToken = typeof window !== 'undefined' ? localStorage.getItem(REFRESH_TOKEN_KEY) : null;
+          const refreshToken =
+            typeof window !== 'undefined' ? localStorage.getItem(REFRESH_TOKEN_KEY) : null;
           if (refreshToken && attempt === 0) {
             try {
               const refreshResponse = await fetch(`${resolvedApiUrl}/api/v1/auth/refresh`, {
@@ -447,7 +445,12 @@ export async function apiFetch<T>(
         }
 
         // Don't retry on client errors (4xx except 408, 429)
-        if (response.status >= 400 && response.status < 500 && response.status !== 408 && response.status !== 429) {
+        if (
+          response.status >= 400 &&
+          response.status < 500 &&
+          response.status !== 408 &&
+          response.status !== 429
+        ) {
           return {
             success: false,
             type: data.type,

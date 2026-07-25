@@ -71,9 +71,7 @@ function ComediansPageContent(): React.JSX.Element {
       {/* Comedians Grid */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
         <ScrollReveal>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">
-            All Comedians
-          </h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">All Comedians</h2>
         </ScrollReveal>
 
         {isLoading ? (
@@ -81,7 +79,12 @@ function ComediansPageContent(): React.JSX.Element {
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="az-glass overflow-hidden text-center">
                 <div className="p-6">
-                  <Skeleton width="80px" height="80px" borderRadius="50%" className="mx-auto mb-3" />
+                  <Skeleton
+                    width="80px"
+                    height="80px"
+                    borderRadius="50%"
+                    className="mx-auto mb-3"
+                  />
                   <Skeleton height="20px" width="60%" className="mx-auto mb-2" />
                   <Skeleton height="14px" width="40%" className="mx-auto" />
                 </div>
@@ -131,9 +134,7 @@ function ComediansPageContent(): React.JSX.Element {
                       {comedian.specialCount != null && (
                         <span>{comedian.specialCount} specials</span>
                       )}
-                      {comedian.contentCount != null && (
-                        <span>{comedian.contentCount} clips</span>
-                      )}
+                      {comedian.contentCount != null && <span>{comedian.contentCount} clips</span>}
                     </div>
                   </div>
                 </motion.div>
@@ -156,7 +157,13 @@ const LazyComediansPage = lazy(() => Promise.resolve({ default: ComediansPageCon
 
 export default function ComediansPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyComediansPage />
     </Suspense>
   );

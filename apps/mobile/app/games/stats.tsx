@@ -43,9 +43,24 @@ export default function StatsScreen() {
     fetchStats();
   }, []);
 
-  if (isLoading) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><LoadingState text="Loading stats..." /></SafeAreaView>;
-  if (error) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><ErrorState description={error} onRetry={() => {}} /></SafeAreaView>;
-  if (!stats) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><EmptyState icon="📊" title="No stats" description="Play games to see your stats" /></SafeAreaView>;
+  if (isLoading)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <LoadingState text="Loading stats..." />
+      </SafeAreaView>
+    );
+  if (error)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <ErrorState description={error} onRetry={() => {}} />
+      </SafeAreaView>
+    );
+  if (!stats)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <EmptyState icon="📊" title="No stats" description="Play games to see your stats" />
+      </SafeAreaView>
+    );
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
@@ -53,7 +68,9 @@ export default function StatsScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>My Stats</Text>
+        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+          My Stats
+        </Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
@@ -70,42 +87,67 @@ export default function StatsScreen() {
 
         <View style={styles.statsGrid}>
           <View style={[styles.statCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
-            <Text style={[styles.statValue, { color: isDark ? '#fff' : '#000' }]}>{stats.totalScore.toLocaleString()}</Text>
+            <Text style={[styles.statValue, { color: isDark ? '#fff' : '#000' }]}>
+              {stats.totalScore.toLocaleString()}
+            </Text>
             <Text style={styles.statLabel}>Total Score</Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
-            <Text style={[styles.statValue, { color: isDark ? '#fff' : '#000' }]}>{stats.gamesPlayed}</Text>
+            <Text style={[styles.statValue, { color: isDark ? '#fff' : '#000' }]}>
+              {stats.gamesPlayed}
+            </Text>
             <Text style={styles.statLabel}>Games Played</Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
-            <Text style={[styles.statValue, { color: isDark ? '#fff' : '#000' }]}>{stats.winRate}%</Text>
+            <Text style={[styles.statValue, { color: isDark ? '#fff' : '#000' }]}>
+              {stats.winRate}%
+            </Text>
             <Text style={styles.statLabel}>Win Rate</Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
-            <Text style={[styles.statValue, { color: isDark ? '#fff' : '#000' }]}>🔥 {stats.longestStreak}</Text>
+            <Text style={[styles.statValue, { color: isDark ? '#fff' : '#000' }]}>
+              🔥 {stats.longestStreak}
+            </Text>
             <Text style={styles.statLabel}>Longest Streak</Text>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#fff' : '#000' }]}>Achievements</Text>
+          <Text style={[styles.sectionTitle, { color: isDark ? '#fff' : '#000' }]}>
+            Achievements
+          </Text>
           <View style={styles.achievementsGrid}>
             {stats.achievements.map((ach) => (
-              <View key={ach.id} style={[styles.achievementCard, !ach.earned && styles.achievementLocked]}>
+              <View
+                key={ach.id}
+                style={[styles.achievementCard, !ach.earned && styles.achievementLocked]}
+              >
                 <Text style={styles.achievementEmoji}>{ach.earned ? ach.emoji : '🔒'}</Text>
-                <Text style={[styles.achievementTitle, { color: isDark ? '#fff' : '#000' }]} numberOfLines={1}>{ach.title}</Text>
+                <Text
+                  style={[styles.achievementTitle, { color: isDark ? '#fff' : '#000' }]}
+                  numberOfLines={1}
+                >
+                  {ach.title}
+                </Text>
               </View>
             ))}
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#fff' : '#000' }]}>Recent Games</Text>
+          <Text style={[styles.sectionTitle, { color: isDark ? '#fff' : '#000' }]}>
+            Recent Games
+          </Text>
           {stats.recentGames.map((game) => (
-            <View key={game.id} style={[styles.recentRow, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+            <View
+              key={game.id}
+              style={[styles.recentRow, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+            >
               <Text style={styles.recentEmoji}>{game.emoji}</Text>
               <View style={styles.recentInfo}>
-                <Text style={[styles.recentTitle, { color: isDark ? '#fff' : '#000' }]}>{game.title}</Text>
+                <Text style={[styles.recentTitle, { color: isDark ? '#fff' : '#000' }]}>
+                  {game.title}
+                </Text>
                 <Text style={styles.recentDate}>{game.date}</Text>
               </View>
               <Text style={styles.recentScore}>{game.score.toLocaleString()}</Text>
@@ -120,12 +162,27 @@ export default function StatsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', padding: 16, paddingTop: 50, gap: 12 },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#2a2a2a', alignItems: 'center', justifyContent: 'center' },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backIcon: { color: '#fff', fontSize: 20 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
   content: { paddingBottom: 30 },
   profileCard: { margin: 16, padding: 24, borderRadius: 16, alignItems: 'center' },
-  avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#2a2a2a', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
   avatarEmoji: { fontSize: 40 },
   name: { fontSize: 22, fontWeight: '700', marginBottom: 8 },
   rankRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -138,11 +195,23 @@ const styles = StyleSheet.create({
   section: { paddingHorizontal: 16, marginTop: 24 },
   sectionTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
   achievementsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  achievementCard: { width: 100, padding: 12, borderRadius: 10, backgroundColor: '#1a1a1a', alignItems: 'center' },
+  achievementCard: {
+    width: 100,
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: '#1a1a1a',
+    alignItems: 'center',
+  },
   achievementLocked: { opacity: 0.5 },
   achievementEmoji: { fontSize: 30, marginBottom: 6 },
   achievementTitle: { fontSize: 11, fontWeight: '600', textAlign: 'center' },
-  recentRow: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 10, marginBottom: 8 },
+  recentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 8,
+  },
   recentEmoji: { fontSize: 28, marginRight: 12 },
   recentInfo: { flex: 1 },
   recentTitle: { fontSize: 14, fontWeight: '600', marginBottom: 2 },

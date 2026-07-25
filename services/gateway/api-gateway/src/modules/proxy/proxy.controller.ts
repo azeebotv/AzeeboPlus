@@ -825,6 +825,13 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     endpoints: [
       { method: 'GET', path: '/', description: 'List comedy content' },
       { method: 'GET', path: '/trending', description: 'Get trending comedy' },
+      { method: 'GET', path: '/comedians', description: 'List comedians' },
+      { method: 'GET', path: '/comedians/:id', description: 'Comedian details' },
+      { method: 'GET', path: '/specials', description: 'Comedy specials' },
+      { method: 'GET', path: '/specials/:id', description: 'Special details' },
+      { method: 'GET', path: '/series', description: 'Comedy series' },
+      { method: 'GET', path: '/clips', description: 'Comedy clips' },
+      { method: 'GET', path: '/challenges', description: 'Comedy challenges' },
       { method: 'GET', path: '/:id', description: 'Get comedy content details' },
       { method: 'POST', path: '/', description: 'Create comedy content' },
       { method: 'PATCH', path: '/:id', description: 'Update comedy content' },
@@ -919,6 +926,21 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     endpoints: [
       { method: 'GET', path: '/', description: 'List lifestyle content' },
       { method: 'GET', path: '/trending', description: 'Get trending lifestyle' },
+      { method: 'GET', path: '/featured', description: 'Get featured lifestyle' },
+      { method: 'GET', path: '/categories', description: 'Lifestyle categories' },
+      { method: 'GET', path: '/cities', description: 'Lifestyle cities' },
+      { method: 'GET', path: '/creators', description: 'Lifestyle creators' },
+      { method: 'GET', path: '/events', description: 'Lifestyle events' },
+      { method: 'GET', path: '/events/:id', description: 'Event details' },
+      { method: 'GET', path: '/music', description: 'Lifestyle music' },
+      { method: 'GET', path: '/music/trending', description: 'Trending music' },
+      { method: 'GET', path: '/music/genres', description: 'Music genres' },
+      { method: 'GET', path: '/influencers', description: 'Lifestyle influencers' },
+      { method: 'GET', path: '/influencers/:id', description: 'Influencer details' },
+      { method: 'GET', path: '/celebrities', description: 'Lifestyle celebrities' },
+      { method: 'GET', path: '/celebrities/:id', description: 'Celebrity details' },
+      { method: 'GET', path: '/nightlife', description: 'Lifestyle nightlife' },
+      { method: 'GET', path: '/saved', description: 'Saved lifestyle content' },
       { method: 'GET', path: '/:id', description: 'Get lifestyle content details' },
       { method: 'POST', path: '/', description: 'Create lifestyle content' },
       { method: 'PATCH', path: '/:id', description: 'Update lifestyle content' },
@@ -935,6 +957,19 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     endpoints: [
       { method: 'GET', path: '/', description: 'List vertical content' },
       { method: 'GET', path: '/trending', description: 'Get trending vertical' },
+      { method: 'GET', path: '/featured', description: 'Get featured vertical' },
+      { method: 'GET', path: '/genres', description: 'Vertical genres' },
+      { method: 'GET', path: '/characters', description: 'Vertical characters' },
+      { method: 'GET', path: '/characters/:slug', description: 'Character details' },
+      { method: 'GET', path: '/storyworlds', description: 'Vertical storyworlds' },
+      { method: 'GET', path: '/storyworlds/:slug', description: 'Storyworld details' },
+      { method: 'GET', path: '/crossovers', description: 'Vertical crossovers' },
+      { method: 'GET', path: '/crossovers/:slug', description: 'Crossover details' },
+      { method: 'GET', path: '/lore', description: 'Vertical lore' },
+      { method: 'GET', path: '/lore/:slug', description: 'Lore details' },
+      { method: 'GET', path: '/lore/categories', description: 'Lore categories' },
+      { method: 'GET', path: '/timeline', description: 'Vertical timeline' },
+      { method: 'GET', path: '/series', description: 'Vertical series' },
       { method: 'GET', path: '/:id', description: 'Get vertical content details' },
       { method: 'POST', path: '/', description: 'Create vertical content' },
       { method: 'PATCH', path: '/:id', description: 'Update vertical content' },
@@ -969,7 +1004,14 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.handleProxy('GET', version, service, (req.params['path'] as string) || '', req, res);
+    return this.handleProxy(
+      'GET',
+      version,
+      service,
+      (req.params['path'] as string) || '',
+      req,
+      res
+    );
   }
 
   @Post(':version/:service/*path')
@@ -980,7 +1022,14 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.handleProxy('POST', version, service, (req.params['path'] as string) || '', req, res);
+    return this.handleProxy(
+      'POST',
+      version,
+      service,
+      (req.params['path'] as string) || '',
+      req,
+      res
+    );
   }
 
   @Put(':version/:service/*path')
@@ -991,7 +1040,14 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.handleProxy('PUT', version, service, (req.params['path'] as string) || '', req, res);
+    return this.handleProxy(
+      'PUT',
+      version,
+      service,
+      (req.params['path'] as string) || '',
+      req,
+      res
+    );
   }
 
   @Patch(':version/:service/*path')
@@ -1002,7 +1058,14 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.handleProxy('PATCH', version, service, (req.params['path'] as string) || '', req, res);
+    return this.handleProxy(
+      'PATCH',
+      version,
+      service,
+      (req.params['path'] as string) || '',
+      req,
+      res
+    );
   }
 
   @Delete(':version/:service/*path')
@@ -1013,7 +1076,14 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.handleProxy('DELETE', version, service, (req.params['path'] as string) || '', req, res);
+    return this.handleProxy(
+      'DELETE',
+      version,
+      service,
+      (req.params['path'] as string) || '',
+      req,
+      res
+    );
   }
 
   // ─── Versioned routes without path: /api/:version/:service ─────────
@@ -1083,7 +1153,14 @@ export class ProxyController {
     @Res() res: Response
   ): Promise<void> {
     const version = this.resolveVersionFromHeader(req);
-    return this.handleProxy('GET', version, service, (req.params['path'] as string) || '', req, res);
+    return this.handleProxy(
+      'GET',
+      version,
+      service,
+      (req.params['path'] as string) || '',
+      req,
+      res
+    );
   }
 
   @Post(':service/*path')
@@ -1094,7 +1171,14 @@ export class ProxyController {
     @Res() res: Response
   ): Promise<void> {
     const version = this.resolveVersionFromHeader(req);
-    return this.handleProxy('POST', version, service, (req.params['path'] as string) || '', req, res);
+    return this.handleProxy(
+      'POST',
+      version,
+      service,
+      (req.params['path'] as string) || '',
+      req,
+      res
+    );
   }
 
   @Put(':service/*path')
@@ -1105,7 +1189,14 @@ export class ProxyController {
     @Res() res: Response
   ): Promise<void> {
     const version = this.resolveVersionFromHeader(req);
-    return this.handleProxy('PUT', version, service, (req.params['path'] as string) || '', req, res);
+    return this.handleProxy(
+      'PUT',
+      version,
+      service,
+      (req.params['path'] as string) || '',
+      req,
+      res
+    );
   }
 
   @Patch(':service/*path')
@@ -1116,7 +1207,14 @@ export class ProxyController {
     @Res() res: Response
   ): Promise<void> {
     const version = this.resolveVersionFromHeader(req);
-    return this.handleProxy('PATCH', version, service, (req.params['path'] as string) || '', req, res);
+    return this.handleProxy(
+      'PATCH',
+      version,
+      service,
+      (req.params['path'] as string) || '',
+      req,
+      res
+    );
   }
 
   @Delete(':service/*path')
@@ -1127,7 +1225,14 @@ export class ProxyController {
     @Res() res: Response
   ): Promise<void> {
     const version = this.resolveVersionFromHeader(req);
-    return this.handleProxy('DELETE', version, service, (req.params['path'] as string) || '', req, res);
+    return this.handleProxy(
+      'DELETE',
+      version,
+      service,
+      (req.params['path'] as string) || '',
+      req,
+      res
+    );
   }
 
   // ─── Unified proxy handler ─────────────────────────────────────────

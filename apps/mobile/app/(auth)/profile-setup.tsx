@@ -89,7 +89,10 @@ export default function ProfileSetupScreen() {
         },
       ]);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to complete profile setup. Please try again.';
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Failed to complete profile setup. Please try again.';
       Alert.alert('Error', message);
     } finally {
       setIsLoading(false);

@@ -171,7 +171,13 @@ export class DashboardService {
 
   async getTopCreators(limit = 10): Promise<TopCreatorItem[]> {
     const creators = await this.prisma.$queryRawUnsafe<
-      { id: string; displayName: string; avatar: string | null; contentCount: bigint; totalViews: bigint }[]
+      {
+        id: string;
+        displayName: string;
+        avatar: string | null;
+        contentCount: bigint;
+        totalViews: bigint;
+      }[]
     >(
       `SELECT u.id, u."displayName", u.avatar,
               COUNT(DISTINCT ci.id) as "contentCount",

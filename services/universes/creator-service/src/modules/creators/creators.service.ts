@@ -1286,7 +1286,7 @@ export class CreatorsService {
       where: { creatorId: userId, status: 'active' },
     });
 
-    await this.prisma.tip.aggregate({
+    const tipAggregate = await this.prisma.tip.aggregate({
       where: { toUserId: userId },
       _sum: { amount: true },
     });
@@ -1378,6 +1378,7 @@ export class CreatorsService {
         },
         earnings: {
           total: totalEarnings._sum.amount?.toNumber() || 0,
+          tips: Number(tipAggregate._sum.amount) || 0,
           pending: 0,
           paid: 0,
           currency: 'NGN',
@@ -1613,10 +1614,37 @@ export class CreatorsService {
       this.prisma.subscription.count({ where: { creatorId: profile.id, status: 'active' } }),
     ]);
 
-    // View/like/comment counts are tracked by analytics-service, not on ContentItem
-    const totalViews = 0;
-    const totalLikes = 0;
-    const totalComments = 0;
+    // Fetch analytics data from analytics-service
+    let totalViews = 0;
+    let totalLikes = 0;
+    let totalComments = 0;
+    let viewsChangePercentage: number | null = null;
+    let viewsChange: number | null = null;
+    let likesChange: number | null = null;
+    let commentsChange: number | null = null;
+    let followersChange: number | null = null;
+
+    try {
+      const analyticsResponse = await axios.get(
+        `${this.analyticsServiceBaseUrl}/analytics/creator/${profile.id}/stats`,
+        { timeout: 5000 }
+      );
+      const analyticsData = analyticsResponse.data?.data || analyticsResponse.data;
+      if (analyticsData) {
+        totalViews = analyticsData.totalViews || 0;
+        totalLikes = analyticsData.totalLikes || 0;
+        totalComments = analyticsData.totalComments || 0;
+        viewsChangePercentage = analyticsData.viewsChangePercentage ?? null;
+        viewsChange = analyticsData.viewsChange ?? null;
+        likesChange = analyticsData.likesChange ?? null;
+        commentsChange = analyticsData.commentsChange ?? null;
+        followersChange = analyticsData.followersChange ?? null;
+      }
+    } catch (analyticsError) {
+      this.logger.warn(
+        `Failed to fetch analytics for creator ${profile.id}: ${(analyticsError as Error).message}`
+      );
+    }
 
     // Calculate pending earnings (earnings not yet paid out)
     const pendingEarnings = await this.prisma.creatorEarning.aggregate({
@@ -1640,15 +1668,14 @@ export class CreatorsService {
         contentCount,
         totalEarnings: Number(earnings._sum.amount) || 0,
         pendingEarnings: Number(pendingEarnings._sum.amount) || 0,
-        // Change percentages require historical snapshots from analytics-service
-        // These will be populated when analytics integration is complete
-        viewsChangePercentage: null,
+        // Change percentages from analytics-service
+        viewsChangePercentage,
         avgEngagementRate,
         totalFollowers: subscribers,
-        viewsChange: null,
-        likesChange: null,
-        commentsChange: null,
-        followersChange: null,
+        viewsChange,
+        likesChange,
+        commentsChange,
+        followersChange,
       } as Record<string, unknown>,
     };
   }
@@ -1698,7 +1725,12 @@ export class CreatorsService {
 
   async updateSettings(
     userId: string,
-    data: { notifications?: Record<string, boolean> | { email?: boolean; push?: boolean; sms?: boolean; marketing?: boolean }; privacy?: Record<string, unknown> | { profileVisibility?: string; showEarnings?: boolean } }
+    data: {
+      notifications?:
+        | Record<string, boolean>
+        | { email?: boolean; push?: boolean; sms?: boolean; marketing?: boolean };
+      privacy?: Record<string, unknown> | { profileVisibility?: string; showEarnings?: boolean };
+    }
   ): Promise<CreatorResponse> {
     const profile = await this.prisma.creatorProfile.findUnique({
       where: { userId },

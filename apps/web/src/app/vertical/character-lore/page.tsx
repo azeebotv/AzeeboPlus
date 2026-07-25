@@ -49,7 +49,9 @@ interface LoreEntry {
 
 function CharacterLorePageContent(): React.JSX.Element {
   const [selectedCharacter, setSelectedCharacter] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'profile' | 'lore' | 'relationships' | 'timeline'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'lore' | 'relationships' | 'timeline'>(
+    'profile'
+  );
 
   useEffect(() => {
     analytics.pageView('vertical-character-lore');
@@ -156,8 +158,14 @@ function CharacterLorePageContent(): React.JSX.Element {
                     }}
                     className="w-full text-left p-3 rounded-xl flex items-center gap-3 transition-all"
                     style={{
-                      backgroundColor: selectedCharacter === char.id ? 'rgba(232,66,10,0.15)' : 'rgba(255,255,255,0.03)',
-                      border: selectedCharacter === char.id ? '1px solid rgba(232,66,10,0.3)' : '1px solid rgba(255,255,255,0.06)',
+                      backgroundColor:
+                        selectedCharacter === char.id
+                          ? 'rgba(232,66,10,0.15)'
+                          : 'rgba(255,255,255,0.03)',
+                      border:
+                        selectedCharacter === char.id
+                          ? '1px solid rgba(232,66,10,0.3)'
+                          : '1px solid rgba(255,255,255,0.06)',
                     }}
                     whileHover={{ x: 4 }}
                   >
@@ -218,9 +226,13 @@ function CharacterLorePageContent(): React.JSX.Element {
                       onClick={() => setActiveTab(tab)}
                       className="px-4 py-2 rounded-full text-sm font-semibold transition-all capitalize whitespace-nowrap"
                       style={{
-                        backgroundColor: activeTab === tab ? 'rgba(232,66,10,0.2)' : 'rgba(255,255,255,0.05)',
+                        backgroundColor:
+                          activeTab === tab ? 'rgba(232,66,10,0.2)' : 'rgba(255,255,255,0.05)',
                         color: activeTab === tab ? '#E8420A' : 'rgba(255,255,255,0.6)',
-                        border: activeTab === tab ? '1px solid rgba(232,66,10,0.3)' : '1px solid transparent',
+                        border:
+                          activeTab === tab
+                            ? '1px solid rgba(232,66,10,0.3)'
+                            : '1px solid transparent',
                       }}
                     >
                       {tab}
@@ -333,7 +345,9 @@ function CharacterLorePageContent(): React.JSX.Element {
                               />
                               <div className="pl-4">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <span className="text-xs text-[#E8420A] font-semibold">{event.date}</span>
+                                  <span className="text-xs text-[#E8420A] font-semibold">
+                                    {event.date}
+                                  </span>
                                   {event.era && (
                                     <span className="text-xs text-white/40">• {event.era}</span>
                                   )}
@@ -345,7 +359,9 @@ function CharacterLorePageContent(): React.JSX.Element {
                           ))}
                         </div>
                       ) : (
-                        <p className="text-white/50 text-center py-8">No timeline events available</p>
+                        <p className="text-white/50 text-center py-8">
+                          No timeline events available
+                        </p>
                       )}
                     </GlowCard>
                   </ScrollReveal>

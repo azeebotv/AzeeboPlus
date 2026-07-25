@@ -80,7 +80,14 @@ function ReportPageContent(): React.JSX.Element {
               className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
               style={{ backgroundColor: 'rgba(34,197,94,0.2)' }}
             >
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2">
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#22C55E"
+                strokeWidth="2"
+              >
                 <path d="M20 6L9 17l-5-5" />
               </svg>
             </div>
@@ -105,12 +112,14 @@ function ReportPageContent(): React.JSX.Element {
                     onClick={() => setSelectedReason(reason.id)}
                     className="w-full text-left p-3 rounded-lg flex items-center gap-3 transition-all"
                     style={{
-                      backgroundColor: selectedReason === reason.id
-                        ? 'rgba(232,66,10,0.15)'
-                        : 'rgba(255,255,255,0.03)',
-                      border: selectedReason === reason.id
-                        ? '1px solid rgba(232,66,10,0.3)'
-                        : '1px solid rgba(255,255,255,0.06)',
+                      backgroundColor:
+                        selectedReason === reason.id
+                          ? 'rgba(232,66,10,0.15)'
+                          : 'rgba(255,255,255,0.03)',
+                      border:
+                        selectedReason === reason.id
+                          ? '1px solid rgba(232,66,10,0.3)'
+                          : '1px solid rgba(255,255,255,0.06)',
                     }}
                   >
                     <span className="text-lg">{reason.icon}</span>
@@ -152,7 +161,10 @@ function ReportPageContent(): React.JSX.Element {
             {error && (
               <div
                 className="p-4 rounded-lg text-sm text-red-400"
-                style={{ backgroundColor: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}
+                style={{
+                  backgroundColor: 'rgba(239,68,68,0.1)',
+                  border: '1px solid rgba(239,68,68,0.2)',
+                }}
               >
                 {error}
               </div>
@@ -183,7 +195,13 @@ const LazyReportPage = lazy(() => Promise.resolve({ default: ReportPageContent }
 
 export default function ReportPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyReportPage />
     </Suspense>
   );

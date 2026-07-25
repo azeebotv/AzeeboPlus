@@ -123,13 +123,18 @@ export const moderationApi = {
     return { success: true, data: response };
   },
 
-  getActiveChallenges: async (page = 1, limit = 20): Promise<ApiResponse<{
-    items: Challenge[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  }>> => {
+  getActiveChallenges: async (
+    page = 1,
+    limit = 20
+  ): Promise<
+    ApiResponse<{
+      items: Challenge[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }>
+  > => {
     const response = await apiClient.get<{
       items: Challenge[];
       total: number;
@@ -158,13 +163,15 @@ export const moderationApi = {
     challengeId: string,
     page = 1,
     limit = 20
-  ): Promise<ApiResponse<{
-    items: ChallengeSubmission[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  }>> => {
+  ): Promise<
+    ApiResponse<{
+      items: ChallengeSubmission[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }>
+  > => {
     const response = await apiClient.get<{
       items: ChallengeSubmission[];
       total: number;
@@ -178,13 +185,15 @@ export const moderationApi = {
   getMySubmissions: async (
     page = 1,
     limit = 20
-  ): Promise<ApiResponse<{
-    items: ChallengeSubmission[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  }>> => {
+  ): Promise<
+    ApiResponse<{
+      items: ChallengeSubmission[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }>
+  > => {
     const response = await apiClient.get<{
       items: ChallengeSubmission[];
       total: number;

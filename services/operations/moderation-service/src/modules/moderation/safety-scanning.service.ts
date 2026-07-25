@@ -29,6 +29,16 @@ export class SafetyScanningService {
   private readonly scanningEnabled: boolean;
   private readonly useMockScanning: boolean;
 
+  // Circuit breaker state
+  private malwareFailures = 0;
+  private contentSafetyFailures = 0;
+  private copyrightFailures = 0;
+  private static readonly CIRCUIT_BREAKER_THRESHOLD = 5;
+  private static readonly CIRCUIT_BREAKER_RESET_MS = 60000; // 1 minute
+  private malwareCircuitOpenUntil = 0;
+  private contentSafetyCircuitOpenUntil = 0;
+  private copyrightCircuitOpenUntil = 0;
+
   private readonly malwareApiConfig: SafetyApiConfig;
   private readonly contentSafetyApiConfig: SafetyApiConfig;
   private readonly copyrightApiConfig: SafetyApiConfig;
@@ -249,6 +259,11 @@ export class SafetyScanningService {
   private async performMalwareScan(mediaUrl: string): Promise<ScanResult> {
     this.logger.debug('Performing real malware scan');
 
+    if (this.isCircuitOpen('malware')) {
+      this.logger.warn('Malware scan circuit breaker OPEN — returning pending status');
+      return { result: 'flagged', threatLevel: 'low', categories: ['scan_circuit_open'] };
+    }
+
     this.validateMediaUrl(mediaUrl);
 
     if (!this.malwareApiConfig.apiKey) {
@@ -267,6 +282,7 @@ export class SafetyScanningService {
       );
 
       const data = response.data;
+      this.recordSuccess('malware');
 
       if (data.data.attributes.last_analysis_stats.malicious > 0) {
         return {
@@ -295,6 +311,7 @@ export class SafetyScanningService {
 
       return { result: 'clean' };
     } catch (error) {
+      this.recordFailure('malware');
       this.logger.error(`Malware scan failed: ${(error as Error).message}`);
       return this.mockMalwareScan();
     }
@@ -302,6 +319,11 @@ export class SafetyScanningService {
 
   private async performContentSafetyScan(mediaUrl: string): Promise<ScanResult> {
     this.logger.debug('Performing real content safety scan');
+
+    if (this.isCircuitOpen('content_safety')) {
+      this.logger.warn('Content safety scan circuit breaker OPEN — returning pending status');
+      return { result: 'flagged', threatLevel: 'low', categories: ['scan_circuit_open'] };
+    }
 
     this.validateMediaUrl(mediaUrl);
 
@@ -328,6 +350,7 @@ export class SafetyScanningService {
       );
 
       const annotations = response.data.responses[0].safeSearchAnnotation;
+      this.recordSuccess('content_safety');
       const categories: string[] = [];
       const threatLevels: string[] = [];
 
@@ -388,6 +411,7 @@ export class SafetyScanningService {
 
       return { result: 'clean' };
     } catch (error) {
+      this.recordFailure('content_safety');
       this.logger.error(`Content safety scan failed: ${(error as Error).message}`);
       return this.mockContentSafetyScan();
     }
@@ -395,6 +419,11 @@ export class SafetyScanningService {
 
   private async performCopyrightScan(mediaUrl: string): Promise<ScanResult> {
     this.logger.debug('Performing real copyright scan');
+
+    if (this.isCircuitOpen('copyright')) {
+      this.logger.warn('Copyright scan circuit breaker OPEN — returning pending status');
+      return { result: 'flagged', threatLevel: 'low', categories: ['scan_circuit_open'] };
+    }
 
     this.validateMediaUrl(mediaUrl);
 
@@ -413,6 +442,7 @@ export class SafetyScanningService {
       });
 
       const matches = response.data.matches || [];
+      this.recordSuccess('copyright');
 
       if (matches.length > 0 && matches.some((m: { confidence: number }) => m.confidence > 0.9)) {
         return {
@@ -444,24 +474,67 @@ export class SafetyScanningService {
 
       return { result: 'clean' };
     } catch (error) {
+      this.recordFailure('copyright');
       this.logger.error(`Copyright scan failed: ${(error as Error).message}`);
       return this.mockCopyrightScan();
     }
   }
 
   private mockMalwareScan(): ScanResult {
-    this.logger.warn('Malware scan API not configured — content flagged for manual review');
-    return { result: 'flagged', threatLevel: 'low', categories: ['scan_unavailable'] };
+    this.logger.warn('Malware scan unavailable — content pending manual review');
+    return { result: 'flagged', threatLevel: 'low', categories: ['scan_pending'] };
   }
 
   private mockContentSafetyScan(): ScanResult {
-    this.logger.warn('Content safety API not configured — content flagged for manual review');
-    return { result: 'flagged', threatLevel: 'low', categories: ['scan_unavailable'] };
+    this.logger.warn('Content safety scan unavailable — content pending manual review');
+    return { result: 'flagged', threatLevel: 'low', categories: ['scan_pending'] };
   }
 
   private mockCopyrightScan(): ScanResult {
-    this.logger.warn('Copyright scan API not configured — content flagged for manual review');
-    return { result: 'flagged', threatLevel: 'low', categories: ['scan_unavailable'] };
+    this.logger.warn('Copyright scan unavailable — content pending manual review');
+    return { result: 'flagged', threatLevel: 'low', categories: ['scan_pending'] };
+  }
+
+  private isCircuitOpen(type: 'malware' | 'content_safety' | 'copyright'): boolean {
+    const now = Date.now();
+    if (type === 'malware') return now < this.malwareCircuitOpenUntil;
+    if (type === 'content_safety') return now < this.contentSafetyCircuitOpenUntil;
+    return now < this.copyrightCircuitOpenUntil;
+  }
+
+  private recordFailure(type: 'malware' | 'content_safety' | 'copyright'): void {
+    const now = Date.now();
+    if (type === 'malware') {
+      this.malwareFailures++;
+      if (this.malwareFailures >= SafetyScanningService.CIRCUIT_BREAKER_THRESHOLD) {
+        this.malwareCircuitOpenUntil = now + SafetyScanningService.CIRCUIT_BREAKER_RESET_MS;
+        this.logger.warn(
+          `Malware scan circuit breaker OPEN — ${this.malwareFailures} consecutive failures`
+        );
+      }
+    } else if (type === 'content_safety') {
+      this.contentSafetyFailures++;
+      if (this.contentSafetyFailures >= SafetyScanningService.CIRCUIT_BREAKER_THRESHOLD) {
+        this.contentSafetyCircuitOpenUntil = now + SafetyScanningService.CIRCUIT_BREAKER_RESET_MS;
+        this.logger.warn(
+          `Content safety scan circuit breaker OPEN — ${this.contentSafetyFailures} consecutive failures`
+        );
+      }
+    } else {
+      this.copyrightFailures++;
+      if (this.copyrightFailures >= SafetyScanningService.CIRCUIT_BREAKER_THRESHOLD) {
+        this.copyrightCircuitOpenUntil = now + SafetyScanningService.CIRCUIT_BREAKER_RESET_MS;
+        this.logger.warn(
+          `Copyright scan circuit breaker OPEN — ${this.copyrightFailures} consecutive failures`
+        );
+      }
+    }
+  }
+
+  private recordSuccess(type: 'malware' | 'content_safety' | 'copyright'): void {
+    if (type === 'malware') this.malwareFailures = 0;
+    else if (type === 'content_safety') this.contentSafetyFailures = 0;
+    else this.copyrightFailures = 0;
   }
 
   private aggregateResults(results: ScanResult[]): ScanResult {

@@ -22,7 +22,7 @@ const UNOPTIMIZED_HOSTS = ['placehold.co'];
 function isUnoptimizedUrl(url: string): boolean {
   try {
     const hostname = new URL(url).hostname;
-    return UNOPTIMIZED_HOSTS.some(host => hostname.includes(host));
+    return UNOPTIMIZED_HOSTS.some((host) => hostname.includes(host));
   } catch {
     return false;
   }

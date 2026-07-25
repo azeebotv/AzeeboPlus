@@ -115,7 +115,8 @@ export default function StreakPage(): React.JSX.Element {
             {/* Current streak card */}
             <div
               style={{
-                background: 'linear-gradient(135deg, rgba(232,66,10,0.2) 0%, rgba(204,28,28,0.1) 100%)',
+                background:
+                  'linear-gradient(135deg, rgba(232,66,10,0.2) 0%, rgba(204,28,28,0.1) 100%)',
                 borderRadius: 20,
                 padding: 32,
                 textAlign: 'center',
@@ -156,14 +157,31 @@ export default function StreakPage(): React.JSX.Element {
             </div>
 
             {/* Stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, marginBottom: 32 }}>
-              <div className="az-glass" style={{ padding: 20, borderRadius: 16, textAlign: 'center' }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: 16,
+                marginBottom: 32,
+              }}
+            >
+              <div
+                className="az-glass"
+                style={{ padding: 20, borderRadius: 16, textAlign: 'center' }}
+              >
                 <p style={{ fontSize: 13, color: '#9A8A7A', marginBottom: 8 }}>Current Streak</p>
-                <p style={{ fontSize: 24, fontWeight: 700, color: '#E8420A' }}>{currentStreak} days</p>
+                <p style={{ fontSize: 24, fontWeight: 700, color: '#E8420A' }}>
+                  {currentStreak} days
+                </p>
               </div>
-              <div className="az-glass" style={{ padding: 20, borderRadius: 16, textAlign: 'center' }}>
+              <div
+                className="az-glass"
+                style={{ padding: 20, borderRadius: 16, textAlign: 'center' }}
+              >
                 <p style={{ fontSize: 13, color: '#9A8A7A', marginBottom: 8 }}>Longest Streak</p>
-                <p style={{ fontSize: 24, fontWeight: 700, color: '#F59E0B' }}>{longestStreak} days</p>
+                <p style={{ fontSize: 24, fontWeight: 700, color: '#F59E0B' }}>
+                  {longestStreak} days
+                </p>
               </div>
             </div>
 
@@ -182,7 +200,9 @@ export default function StreakPage(): React.JSX.Element {
                   return (
                     <div key={i} style={{ textAlign: 'center' }}>
                       {i < 7 && (
-                        <p style={{ fontSize: 10, color: '#6B5B4B', marginBottom: 4 }}>{dayLabel}</p>
+                        <p style={{ fontSize: 10, color: '#6B5B4B', marginBottom: 4 }}>
+                          {dayLabel}
+                        </p>
                       )}
                       <div
                         style={{
@@ -200,11 +220,7 @@ export default function StreakPage(): React.JSX.Element {
                             : day.isToday
                               ? 'rgba(232,66,10,0.1)'
                               : 'rgba(255,255,255,0.04)',
-                          color: day.active
-                            ? '#E8420A'
-                            : day.isToday
-                              ? '#E8420A'
-                              : '#6B5B4B',
+                          color: day.active ? '#E8420A' : day.isToday ? '#E8420A' : '#6B5B4B',
                           border: day.isToday ? '1px solid #E8420A' : 'none',
                         }}
                       >

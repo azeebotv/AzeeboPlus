@@ -114,6 +114,9 @@ export default function MessagesPage(): React.JSX.Element {
           content: String(msg.content),
           timestamp: new Date(msg.timestamp || msg.createdAt || ''),
           read: Boolean(msg.read),
+          isEdited: Boolean(msg.isEdited),
+          isPinned: Boolean(msg.isPinned),
+          replyToId: msg.replyToId ? String(msg.replyToId) : undefined,
         }));
       }
       return [];
@@ -281,7 +284,7 @@ export default function MessagesPage(): React.JSX.Element {
     },
   });
 
-  const _pinMutation = useMutation({
+  const pinMutation = useMutation({
     mutationFn: async ({ messageId, pinned }: { messageId: string; pinned: boolean }) => {
       return apiFetch(`/messages/messages/${messageId}/pin`, {
         method: 'PUT',
@@ -616,25 +619,40 @@ export default function MessagesPage(): React.JSX.Element {
                                 {message.isEdited && <span className="ml-1">(edited)</span>}
                                 {message.isPinned && <span className="ml-1">&#x1F4CC;</span>}
                               </p>
-                              {message.senderId === user?.id && editingMessageId !== message.id && (
-                                <div className="flex gap-1 ml-2">
-                                  <button
-                                    onClick={() => {
-                                      setEditingMessageId(message.id);
-                                      setEditContent(message.content);
-                                    }}
-                                    className="text-[10px] text-white/40 hover:text-white"
-                                  >
-                                    Edit
-                                  </button>
-                                  <button
-                                    onClick={() => deleteMessageMutation.mutate(message.id)}
-                                    className="text-[10px] text-white/40 hover:text-red-400"
-                                  >
-                                    Del
-                                  </button>
-                                </div>
-                              )}
+                              <div className="flex gap-1 ml-2">
+                                <button
+                                  onClick={() =>
+                                    pinMutation.mutate({
+                                      messageId: message.id,
+                                      pinned: !message.isPinned,
+                                    })
+                                  }
+                                  className="text-[10px] text-white/40 hover:text-yellow-400"
+                                  title={message.isPinned ? 'Unpin message' : 'Pin message'}
+                                >
+                                  {message.isPinned ? 'Unpin' : 'Pin'}
+                                </button>
+                                {message.senderId === user?.id &&
+                                  editingMessageId !== message.id && (
+                                    <>
+                                      <button
+                                        onClick={() => {
+                                          setEditingMessageId(message.id);
+                                          setEditContent(message.content);
+                                        }}
+                                        className="text-[10px] text-white/40 hover:text-white"
+                                      >
+                                        Edit
+                                      </button>
+                                      <button
+                                        onClick={() => deleteMessageMutation.mutate(message.id)}
+                                        className="text-[10px] text-white/40 hover:text-red-400"
+                                      >
+                                        Del
+                                      </button>
+                                    </>
+                                  )}
+                              </div>
                             </div>
                             <div className="flex gap-1 mt-1">
                               {['&#x1F44D;', '&#x2764;', '&#x1F602;'].map((emoji) => (

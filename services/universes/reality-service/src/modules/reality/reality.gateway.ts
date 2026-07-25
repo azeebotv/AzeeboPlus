@@ -32,10 +32,7 @@ export class RealityGateway implements OnGatewayConnection, OnGatewayDisconnect 
   }
 
   @SubscribeMessage('join_show')
-  handleJoinShow(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() data: { showId: string }
-  ): void {
+  handleJoinShow(@ConnectedSocket() client: Socket, @MessageBody() data: { showId: string }): void {
     const room = `show:${data.showId}`;
     client.join(room);
     this.logger.log(`Client ${client.id} joined room ${room}`);
@@ -107,6 +104,74 @@ export class RealityGateway implements OnGatewayConnection, OnGatewayDisconnect 
       liked: data.liked,
       timestamp: new Date().toISOString(),
     });
+  }
+
+  @SubscribeMessage('join_live_chat')
+  handleJoinLiveChat(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { showId: string; userId: string; displayName: string }
+  ): void {
+    const room = `live_chat:${data.showId}`;
+    client.join(room);
+    this.logger.log(`Client ${client.id} joined live chat for show ${data.showId}`);
+    this.server.to(room).emit('live_chat_user_joined', {
+      showId: data.showId,
+      userId: data.userId,
+      displayName: data.displayName,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  @SubscribeMessage('leave_live_chat')
+  handleLeaveLiveChat(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { showId: string; userId: string }
+  ): void {
+    const room = `live_chat:${data.showId}`;
+    client.leave(room);
+    this.server.to(room).emit('live_chat_user_left', {
+      showId: data.showId,
+      userId: data.userId,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  @SubscribeMessage('live_chat_message')
+  handleLiveChatMessage(
+    @ConnectedSocket() _client: Socket,
+    @MessageBody()
+    data: { showId: string; userId: string; displayName: string; message: string; avatar?: string }
+  ): void {
+    const room = `live_chat:${data.showId}`;
+    const chatMessage = {
+      id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      showId: data.showId,
+      userId: data.userId,
+      displayName: data.displayName,
+      message: data.message,
+      avatar: data.avatar,
+      timestamp: new Date().toISOString(),
+    };
+    this.server.to(room).emit('live_chat_message', chatMessage);
+  }
+
+  @SubscribeMessage('live_chat_typing')
+  handleLiveChatTyping(
+    @ConnectedSocket() _client: Socket,
+    @MessageBody() data: { showId: string; userId: string; displayName: string; isTyping: boolean }
+  ): void {
+    const room = `live_chat:${data.showId}`;
+    this.server.to(room).emit('live_chat_typing', {
+      showId: data.showId,
+      userId: data.userId,
+      displayName: data.displayName,
+      isTyping: data.isTyping,
+    });
+  }
+
+  sendLiveChatMessage(showId: string, message: unknown): void {
+    const room = `live_chat:${showId}`;
+    this.server.to(room).emit('live_chat_message', message);
   }
 
   broadcastToRoom(room: string, event: string, data: unknown): void {

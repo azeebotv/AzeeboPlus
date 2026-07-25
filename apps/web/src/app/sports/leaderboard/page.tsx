@@ -103,13 +103,14 @@ function LeaderboardPageContent(): React.JSX.Element {
                     <div
                       className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0"
                       style={{
-                        background: index === 0
-                          ? 'linear-gradient(135deg, #FFD700, #FFA500)'
-                          : index === 1
-                            ? 'linear-gradient(135deg, #C0C0C0, #A0A0A0)'
-                            : index === 2
-                              ? 'linear-gradient(135deg, #CD7F32, #A0522D)'
-                              : 'rgba(255,255,255,0.1)',
+                        background:
+                          index === 0
+                            ? 'linear-gradient(135deg, #FFD700, #FFA500)'
+                            : index === 1
+                              ? 'linear-gradient(135deg, #C0C0C0, #A0A0A0)'
+                              : index === 2
+                                ? 'linear-gradient(135deg, #CD7F32, #A0522D)'
+                                : 'rgba(255,255,255,0.1)',
                         color: index < 3 ? '#1A0A0A' : '#fff',
                       }}
                     >
@@ -135,7 +136,9 @@ function LeaderboardPageContent(): React.JSX.Element {
                     </div>
 
                     <div className="text-right flex-shrink-0">
-                      <p className="text-lg font-bold text-white">{entry.points.toLocaleString()}</p>
+                      <p className="text-lg font-bold text-white">
+                        {entry.points.toLocaleString()}
+                      </p>
                       <p className="text-xs text-white/40">points</p>
                     </div>
                   </div>
@@ -159,7 +162,13 @@ const LazyLeaderboardPage = lazy(() => Promise.resolve({ default: LeaderboardPag
 
 export default function LeaderboardPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyLeaderboardPage />
     </Suspense>
   );

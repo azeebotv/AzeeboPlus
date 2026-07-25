@@ -251,7 +251,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
     const errorId = `${inputId}-error`;
 
     return (
-      <div>
+      <div className={className}>
         <label
           htmlFor={inputId}
           className={`inline-flex items-center gap-2 cursor-pointer ${error ? 'text-error-400' : 'text-text-primary'}`}
@@ -298,7 +298,7 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(
     return (
       <label
         htmlFor={inputId}
-        className="inline-flex items-center gap-2 cursor-pointer text-text-primary"
+        className={`inline-flex items-center gap-2 cursor-pointer text-text-primary ${className}`}
       >
         <input
           ref={ref}

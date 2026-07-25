@@ -156,7 +156,8 @@ function FanContestsPageContent(): React.JSX.Element {
                     {/* Deadline & Progress */}
                     <div className="flex items-center justify-between text-xs text-white/40 mb-4">
                       <span>
-                        Ends: {new Date(contest.deadline).toLocaleDateString('en-NG', {
+                        Ends:{' '}
+                        {new Date(contest.deadline).toLocaleDateString('en-NG', {
                           month: 'short',
                           day: 'numeric',
                         })}
@@ -212,7 +213,10 @@ function FanContestsPageContent(): React.JSX.Element {
                       <div className="flex items-center gap-2 mb-3">
                         <span
                           className="px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                          style={{ backgroundColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }}
+                          style={{
+                            backgroundColor: 'rgba(255,255,255,0.1)',
+                            color: 'rgba(255,255,255,0.5)',
+                          }}
                         >
                           Upcoming
                         </span>
@@ -220,7 +224,8 @@ function FanContestsPageContent(): React.JSX.Element {
                       <h3 className="font-bold text-white text-lg mb-2">{contest.title}</h3>
                       <p className="text-sm text-white/50 mb-4">{contest.description}</p>
                       <p className="text-xs text-white/40">
-                        Starts: {new Date(contest.deadline).toLocaleDateString('en-NG', {
+                        Starts:{' '}
+                        {new Date(contest.deadline).toLocaleDateString('en-NG', {
                           month: 'short',
                           day: 'numeric',
                         })}
@@ -243,7 +248,13 @@ const LazyFanContestsPage = lazy(() => Promise.resolve({ default: FanContestsPag
 
 export default function FanContestsPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyFanContestsPage />
     </Suspense>
   );

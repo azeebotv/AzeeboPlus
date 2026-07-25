@@ -132,12 +132,26 @@ function LeaderboardPageContent(): React.JSX.Element {
                 >
                   <GlowCard universe="games" className="p-6 text-center">
                     <div className="text-4xl mb-3">{rankStyle.icon}</div>
-                    <div className="w-16 h-16 mx-auto mb-3 rounded-full overflow-hidden" style={{ border: `2px solid ${rankStyle.text}` }}>
+                    <div
+                      className="w-16 h-16 mx-auto mb-3 rounded-full overflow-hidden"
+                      style={{ border: `2px solid ${rankStyle.text}` }}
+                    >
                       {entry.avatar ? (
-                        <OptimizedImage src={entry.avatar} alt={entry.username} width={64} height={64} className="w-full h-full object-cover" />
+                        <OptimizedImage
+                          src={entry.avatar}
+                          alt={entry.username}
+                          width={64}
+                          height={64}
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
-                          <span className="text-xl font-bold text-white/60">{entry.username.charAt(0).toUpperCase()}</span>
+                        <div
+                          className="w-full h-full flex items-center justify-center"
+                          style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+                        >
+                          <span className="text-xl font-bold text-white/60">
+                            {entry.username.charAt(0).toUpperCase()}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -161,9 +175,7 @@ function LeaderboardPageContent(): React.JSX.Element {
       {/* Full Leaderboard */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-12">
         <ScrollReveal>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">
-            Rankings
-          </h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">Rankings</h2>
         </ScrollReveal>
 
         {isLoading ? (
@@ -209,10 +221,21 @@ function LeaderboardPageContent(): React.JSX.Element {
                   </span>
                   <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
                     {entry.avatar ? (
-                      <OptimizedImage src={entry.avatar} alt={entry.username} width={40} height={40} className="w-full h-full object-cover" />
+                      <OptimizedImage
+                        src={entry.avatar}
+                        alt={entry.username}
+                        width={40}
+                        height={40}
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
-                        <span className="text-sm font-bold text-white/60">{entry.username.charAt(0).toUpperCase()}</span>
+                      <div
+                        className="w-full h-full flex items-center justify-center"
+                        style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+                      >
+                        <span className="text-sm font-bold text-white/60">
+                          {entry.username.charAt(0).toUpperCase()}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -265,7 +288,13 @@ const LazyLeaderboardPage = lazy(() => Promise.resolve({ default: LeaderboardPag
 
 export default function LeaderboardPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyLeaderboardPage />
     </Suspense>
   );

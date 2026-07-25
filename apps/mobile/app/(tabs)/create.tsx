@@ -41,7 +41,7 @@ export default function CreateScreen() {
       const res = await universeApi.getUniverses();
       if (res.success && res.data) {
         setUniverseOptions(
-          res.data.items.map((u: any) => ({
+          res.data.items.map((u: { slug?: string; id: string; name: string }) => ({
             id: (u.slug || u.id) as string,
             name: u.name as string,
             icon: '🌐',

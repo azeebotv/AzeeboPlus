@@ -80,7 +80,8 @@ function ShowDetailContent(): React.JSX.Element {
   const maxVotes = Math.max(0, ...contestants.map((c) => c.votes));
 
   const isLoading = showQuery.isLoading || episodesQuery.isLoading || contestantsQuery.isLoading;
-  const error = showQuery.error?.message || episodesQuery.error?.message || contestantsQuery.error?.message;
+  const error =
+    showQuery.error?.message || episodesQuery.error?.message || contestantsQuery.error?.message;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
@@ -121,9 +122,7 @@ function ShowDetailContent(): React.JSX.Element {
                   >
                     Reality Show
                   </span>
-                  <span className="text-white/40 text-sm">
-                    {episodes.length} episodes
-                  </span>
+                  <span className="text-white/40 text-sm">{episodes.length} episodes</span>
                 </div>
                 <h1 className="text-4xl sm:text-5xl font-bold text-white mb-3">{show.title}</h1>
                 <p className="text-white/60 text-lg mb-6 max-w-3xl">{show.description}</p>
@@ -278,7 +277,10 @@ function ShowDetailContent(): React.JSX.Element {
                       <p className="text-xs text-white/50 mb-3">
                         {contestant.votes.toLocaleString()} votes
                       </p>
-                      <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                      <div
+                        className="h-1.5 rounded-full overflow-hidden"
+                        style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+                      >
                         <motion.div
                           className="h-full rounded-full"
                           initial={{ width: 0 }}
@@ -286,27 +288,30 @@ function ShowDetailContent(): React.JSX.Element {
                           viewport={{ once: true }}
                           transition={{ duration: 0.8, delay: index * 0.1 }}
                           style={{
-                            background: contestant.status === 'safe'
-                              ? 'linear-gradient(90deg, #22C55E, #4ADE80)'
-                              : contestant.status === 'danger'
-                                ? 'linear-gradient(90deg, #EF4444, #F87171)'
-                                : 'rgba(255,255,255,0.3)',
+                            background:
+                              contestant.status === 'safe'
+                                ? 'linear-gradient(90deg, #22C55E, #4ADE80)'
+                                : contestant.status === 'danger'
+                                  ? 'linear-gradient(90deg, #EF4444, #F87171)'
+                                  : 'rgba(255,255,255,0.3)',
                           }}
                         />
                       </div>
                       <span
                         className="inline-block mt-2 px-2.5 py-0.5 rounded-full text-[10px] font-semibold capitalize"
                         style={{
-                          backgroundColor: contestant.status === 'safe'
-                            ? 'rgba(34,197,94,0.2)'
-                            : contestant.status === 'danger'
-                              ? 'rgba(239,68,68,0.2)'
-                              : 'rgba(255,255,255,0.1)',
-                          color: contestant.status === 'safe'
-                            ? '#22C55E'
-                            : contestant.status === 'danger'
-                              ? '#EF4444'
-                              : 'rgba(255,255,255,0.5)',
+                          backgroundColor:
+                            contestant.status === 'safe'
+                              ? 'rgba(34,197,94,0.2)'
+                              : contestant.status === 'danger'
+                                ? 'rgba(239,68,68,0.2)'
+                                : 'rgba(255,255,255,0.1)',
+                          color:
+                            contestant.status === 'safe'
+                              ? '#22C55E'
+                              : contestant.status === 'danger'
+                                ? '#EF4444'
+                                : 'rgba(255,255,255,0.5)',
                         }}
                       >
                         {contestant.status}
@@ -328,9 +333,12 @@ function ShowDetailContent(): React.JSX.Element {
             style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
             whileHover={{ scale: 1.01 }}
           >
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">Support Your Favorite</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
+              Support Your Favorite
+            </h2>
             <p className="text-white/80 mb-6 max-w-lg mx-auto">
-              Every vote counts! Cast your vote and help your favorite contestant stay in the competition.
+              Every vote counts! Cast your vote and help your favorite contestant stay in the
+              competition.
             </p>
             <motion.button
               type="button"
@@ -354,7 +362,13 @@ const LazyShowDetail = lazy(() => Promise.resolve({ default: ShowDetailContent }
 
 export default function ShowDetailPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyShowDetail />
     </Suspense>
   );

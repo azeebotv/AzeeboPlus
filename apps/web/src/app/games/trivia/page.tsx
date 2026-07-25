@@ -107,17 +107,14 @@ function TriviaPageContent(): React.JSX.Element {
 
   const answerMutation = useMutation({
     mutationFn: async ({ questionId, answer }: { questionId: string; answer: string }) => {
-      const res = await apiFetch<TriviaResult>(
-        `/api/v1/games/trivia/answer`,
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            sessionId: session?.sessionId,
-            questionId,
-            answer,
-          }),
-        }
-      );
+      const res = await apiFetch<TriviaResult>(`/api/v1/games/trivia/answer`, {
+        method: 'POST',
+        body: JSON.stringify({
+          sessionId: session?.sessionId,
+          questionId,
+          answer,
+        }),
+      });
       if (res.success && res.data) return res.data;
       throw new Error(res.message || 'Failed to submit answer');
     },
@@ -306,9 +303,7 @@ function TriviaPageContent(): React.JSX.Element {
                 </span>
               </div>
               {!lastResult.correct && (
-                <p className="text-white/50 mb-4">
-                  The answer was: {lastResult.correctAnswer}
-                </p>
+                <p className="text-white/50 mb-4">The answer was: {lastResult.correctAnswer}</p>
               )}
               <motion.button
                 type="button"
@@ -317,7 +312,9 @@ function TriviaPageContent(): React.JSX.Element {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                {session.currentIndex < session.questions.length - 1 ? 'Next Question' : 'View Results'}
+                {session.currentIndex < session.questions.length - 1
+                  ? 'Next Question'
+                  : 'View Results'}
               </motion.button>
             </motion.div>
           )}
@@ -456,7 +453,8 @@ function TriviaPageContent(): React.JSX.Element {
         <div
           className="fixed bottom-6 right-6 z-50 px-6 py-3 rounded-xl shadow-lg transition-all"
           style={{
-            backgroundColor: toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+            backgroundColor:
+              toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
             border: `1px solid ${toast.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
             color: toast.type === 'success' ? '#22C55E' : '#EF4444',
           }}
@@ -472,7 +470,13 @@ const LazyTriviaPage = lazy(() => Promise.resolve({ default: TriviaPageContent }
 
 export default function TriviaPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyTriviaPage />
     </Suspense>
   );

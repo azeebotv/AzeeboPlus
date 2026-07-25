@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -12,7 +13,7 @@ import { Inject,
   HttpCode,
   HttpStatus,
   Req,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { Request } from 'express';
 import { UniverseManagementService } from './universe-management.service';
 import { AuditLogService } from '../audit/audit.service';
@@ -38,7 +39,8 @@ export class UniverseManagementController {
   private readonly logger = new Logger(UniverseManagementController.name);
 
   constructor(
-    @Inject(UniverseManagementService) private readonly universeManagementService: UniverseManagementService,
+    @Inject(UniverseManagementService)
+    private readonly universeManagementService: UniverseManagementService,
     @Inject(AuditLogService) private readonly auditLogService: AuditLogService
   ) {}
 

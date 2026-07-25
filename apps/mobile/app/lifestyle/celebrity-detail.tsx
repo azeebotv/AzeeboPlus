@@ -53,12 +53,9 @@ export default function CelebrityDetailScreen() {
     } catch {}
   }, [celebrity]);
 
-  const handleOpenSocial = useCallback(
-    (url: string) => {
-      Linking.openURL(url);
-    },
-    []
-  );
+  const handleOpenSocial = useCallback((url: string) => {
+    Linking.openURL(url);
+  }, []);
 
   if (isLoading) {
     return (
@@ -139,7 +136,9 @@ export default function CelebrityDetailScreen() {
 
           {celebrity.socialLinks && (
             <>
-              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Social Links</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
+                Social Links
+              </Text>
               <View style={styles.socialLinks}>
                 {celebrity.socialLinks.instagram && (
                   <TouchableOpacity
@@ -147,7 +146,9 @@ export default function CelebrityDetailScreen() {
                     onPress={() => handleOpenSocial(celebrity.socialLinks!.instagram!)}
                   >
                     <Text style={styles.socialIcon}>📷</Text>
-                    <Text style={[styles.socialText, { color: colors.text.primary }]}>Instagram</Text>
+                    <Text style={[styles.socialText, { color: colors.text.primary }]}>
+                      Instagram
+                    </Text>
                   </TouchableOpacity>
                 )}
                 {celebrity.socialLinks.twitter && (
@@ -186,14 +187,20 @@ export default function CelebrityDetailScreen() {
               <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Latest News</Text>
               <View style={styles.newsList}>
                 {news.map((item) => (
-                  <View key={item.id} style={[styles.newsCard, { backgroundColor: colors.bg.tertiary }]}>
+                  <View
+                    key={item.id}
+                    style={[styles.newsCard, { backgroundColor: colors.bg.tertiary }]}
+                  >
                     <Image
                       source={{ uri: item.imageUrl }}
                       style={styles.newsImage}
                       resizeMode="cover"
                     />
                     <View style={styles.newsInfo}>
-                      <Text style={[styles.newsTitle, { color: colors.text.primary }]} numberOfLines={2}>
+                      <Text
+                        style={[styles.newsTitle, { color: colors.text.primary }]}
+                        numberOfLines={2}
+                      >
                         {item.title}
                       </Text>
                       <Text style={[styles.newsSource, { color: colors.text.secondary }]}>

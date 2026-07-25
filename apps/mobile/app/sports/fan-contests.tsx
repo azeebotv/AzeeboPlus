@@ -53,9 +53,24 @@ export default function FanContestsScreen() {
     setSelectedContest(null);
   };
 
-  if (isLoading) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><LoadingState text="Loading contests..." /></SafeAreaView>;
-  if (error) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><ErrorState description={error} onRetry={() => contestsQuery.refetch()} /></SafeAreaView>;
-  if (!contests.length) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><EmptyState icon="🏆" title="No contests" description="Check back later for fan contests" /></SafeAreaView>;
+  if (isLoading)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <LoadingState text="Loading contests..." />
+      </SafeAreaView>
+    );
+  if (error)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <ErrorState description={error} onRetry={() => contestsQuery.refetch()} />
+      </SafeAreaView>
+    );
+  if (!contests.length)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <EmptyState icon="🏆" title="No contests" description="Check back later for fan contests" />
+      </SafeAreaView>
+    );
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
@@ -63,18 +78,27 @@ export default function FanContestsScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>Fan Contests</Text>
+        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+          Fan Contests
+        </Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.listContent}>
         {contests.map((contest) => (
-          <View key={contest.id} style={[styles.contestCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+          <View
+            key={contest.id}
+            style={[styles.contestCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+          >
             <View style={styles.contestEmoji}>
               <Text style={styles.emojiLarge}>{contest.emoji}</Text>
             </View>
             <View style={styles.contestInfo}>
-              <Text style={[styles.contestTitle, { color: isDark ? '#fff' : '#000' }]}>{contest.title}</Text>
-              <Text style={styles.contestDesc} numberOfLines={2}>{contest.description}</Text>
+              <Text style={[styles.contestTitle, { color: isDark ? '#fff' : '#000' }]}>
+                {contest.title}
+              </Text>
+              <Text style={styles.contestDesc} numberOfLines={2}>
+                {contest.description}
+              </Text>
               <View style={styles.contestMeta}>
                 <Text style={styles.metaText}>🏆 {contest.prizePool}</Text>
                 <Text style={styles.metaText}>👥 {contest.participants}</Text>
@@ -101,12 +125,17 @@ export default function FanContestsScreen() {
       <Modal visible={showConfirmModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: isDark ? '#1a1a1a' : '#ffffff' }]}>
-            <Text style={[styles.modalTitle, { color: isDark ? '#fff' : '#000' }]}>Confirm Entry</Text>
+            <Text style={[styles.modalTitle, { color: isDark ? '#fff' : '#000' }]}>
+              Confirm Entry
+            </Text>
             <Text style={styles.modalText}>Enter "{selectedContest?.title}"?</Text>
             <Text style={styles.modalFee}>Entry Fee: {selectedContest?.entryFee}</Text>
             <Text style={styles.modalPrize}>Prize Pool: {selectedContest?.prizePool}</Text>
             <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.cancelButton} onPress={() => setShowConfirmModal(false)}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setShowConfirmModal(false)}
+              >
                 <Text style={styles.cancelText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.confirmButton} onPress={confirmEntry}>
@@ -123,12 +152,33 @@ export default function FanContestsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', padding: 16, paddingTop: 50, gap: 12 },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#2a2a2a', alignItems: 'center', justifyContent: 'center' },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backIcon: { color: '#fff', fontSize: 20 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
   listContent: { paddingHorizontal: 16, paddingBottom: 30 },
-  contestCard: { flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 12, marginBottom: 12 },
-  contestEmoji: { width: 60, height: 60, borderRadius: 12, backgroundColor: '#2a2a2a', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  contestCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  contestEmoji: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
   emojiLarge: { fontSize: 30 },
   contestInfo: { flex: 1 },
   contestTitle: { fontSize: 15, fontWeight: '700', marginBottom: 4 },
@@ -138,19 +188,52 @@ const styles = StyleSheet.create({
   contestFooter: { flexDirection: 'row', gap: 12 },
   entryFee: { color: '#E74C3C', fontSize: 12, fontWeight: '600' },
   deadline: { color: '#888', fontSize: 12 },
-  entryButton: { backgroundColor: '#E74C3C', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
+  entryButton: {
+    backgroundColor: '#E74C3C',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
   entryButtonText: { color: '#fff', fontSize: 13, fontWeight: '600' },
-  completedBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6, backgroundColor: '#2a2a2a' },
+  completedBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: '#2a2a2a',
+  },
   completedText: { color: '#888', fontSize: 12 },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   modalContent: { width: '85%', padding: 24, borderRadius: 16 },
   modalTitle: { fontSize: 20, fontWeight: '700', marginBottom: 12, textAlign: 'center' },
   modalText: { color: '#ccc', fontSize: 14, textAlign: 'center', marginBottom: 8 },
-  modalFee: { color: '#E74C3C', fontSize: 16, fontWeight: '600', textAlign: 'center', marginBottom: 4 },
+  modalFee: {
+    color: '#E74C3C',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
   modalPrize: { color: '#10B981', fontSize: 14, textAlign: 'center', marginBottom: 20 },
   modalButtons: { flexDirection: 'row', gap: 12 },
-  cancelButton: { flex: 1, paddingVertical: 12, borderRadius: 8, backgroundColor: '#2a2a2a', alignItems: 'center' },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+  },
   cancelText: { color: '#888', fontSize: 14, fontWeight: '600' },
-  confirmButton: { flex: 1, paddingVertical: 12, borderRadius: 8, backgroundColor: '#E74C3C', alignItems: 'center' },
+  confirmButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: '#E74C3C',
+    alignItems: 'center',
+  },
   confirmText: { color: '#fff', fontSize: 14, fontWeight: '600' },
 });

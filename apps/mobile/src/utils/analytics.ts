@@ -2,12 +2,11 @@ import { Analytics, ConsentCategory } from '@azeebo/analytics-sdk';
 import Constants from 'expo-constants';
 import { logger } from './logger';
 
-const constantsExtra = ((Constants as Record<string, unknown>).expoConfig as Record<string, unknown>)
-  ?.extra as Record<string, unknown> | undefined;
+const constantsExtra = (
+  (Constants as Record<string, unknown>).expoConfig as Record<string, unknown>
+)?.extra as Record<string, unknown> | undefined;
 const analyticsEndpoint =
-  (constantsExtra?.analyticsEndpoint as string) ||
-  process.env.EXPO_PUBLIC_ANALYTICS_ENDPOINT ||
-  '';
+  (constantsExtra?.analyticsEndpoint as string) || process.env.EXPO_PUBLIC_ANALYTICS_ENDPOINT || '';
 
 const sdk = new Analytics({
   enabled: !!analyticsEndpoint && process.env.NODE_ENV !== 'test',
@@ -26,7 +25,8 @@ class AnalyticsService {
     try {
       sdk.track({ name, properties, category: ConsentCategory.ANALYTICS });
     } catch (err: unknown) {
-      if (__DEV__) logger.warn('[Analytics] track failed:', err instanceof Error ? err.message : String(err));
+      if (__DEV__)
+        logger.warn('[Analytics] track failed:', err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -40,11 +40,21 @@ class AnalyticsService {
   }
 
   realityVoteCreated(showId: string, contestantId: string, quantity: number, amount: number) {
-    this.track('reality_vote_created', { show_id: showId, contestant_id: contestantId, quantity, amount });
+    this.track('reality_vote_created', {
+      show_id: showId,
+      contestant_id: contestantId,
+      quantity,
+      amount,
+    });
   }
 
   realitySupervoteCreated(showId: string, contestantId: string, quantity: number, amount: number) {
-    this.track('reality_supervote_created', { show_id: showId, contestant_id: contestantId, quantity, amount });
+    this.track('reality_supervote_created', {
+      show_id: showId,
+      contestant_id: contestantId,
+      quantity,
+      amount,
+    });
   }
 
   realityPredictionSubmitted(showId: string, prediction: string) {

@@ -123,9 +123,7 @@ export interface RealityContestant {
 
 export const realityApi = {
   async getLiveViewerCount(showId: string): Promise<ApiResponse<{ count: number }>> {
-    return apiClient.get<ApiResponse<{ count: number }>>(
-      `/api/v1/reality/shows/${showId}/viewers`
-    );
+    return apiClient.get<ApiResponse<{ count: number }>>(`/api/v1/reality/shows/${showId}/viewers`);
   },
 
   async getShowDetails(showId: string): Promise<ApiResponse<RealityShow>> {
@@ -133,9 +131,7 @@ export const realityApi = {
   },
 
   async getEpisodes(showId: string): Promise<ApiResponse<RealityEpisode[]>> {
-    return apiClient.get<ApiResponse<RealityEpisode[]>>(
-      `/api/v1/reality/shows/${showId}/episodes`
-    );
+    return apiClient.get<ApiResponse<RealityEpisode[]>>(`/api/v1/reality/shows/${showId}/episodes`);
   },
 
   async getContestants(showId: string): Promise<ApiResponse<RealityContestant[]>> {

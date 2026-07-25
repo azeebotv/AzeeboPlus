@@ -126,14 +126,24 @@ export default function SuperVotePage(): React.JSX.Element {
         try {
           const result = await apiFetch('/v1/content/super-vote', {
             method: 'POST',
-            body: JSON.stringify({ contestantId: selectedContestant, episodeId, voteCount: pkg.votes }),
+            body: JSON.stringify({
+              contestantId: selectedContestant,
+              episodeId,
+              voteCount: pkg.votes,
+            }),
           });
           if (!result.success) throw new Error(result.message || 'Failed to submit super vote');
-          toast.showToast(`Your ${pkg.votes} Super Vote(s) submitted! Each counts as 2x.`, 'success');
+          toast.showToast(
+            `Your ${pkg.votes} Super Vote(s) submitted! Each counts as 2x.`,
+            'success'
+          );
           setSelectedContestant(null);
           setSelectedPackage(null);
         } catch (error: unknown) {
-          toast.showToast(error instanceof Error ? error.message : 'Failed to submit super vote', 'error');
+          toast.showToast(
+            error instanceof Error ? error.message : 'Failed to submit super vote',
+            'error'
+          );
         } finally {
           setIsVoting(false);
         }

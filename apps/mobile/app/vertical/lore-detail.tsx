@@ -37,7 +37,9 @@ export default function LoreDetailScreen() {
     try {
       const res = await apiClient.get<LoreDetail>(`/v1/vertical/lore/${id}`);
       setData(res);
-      try { analytics.verticalLoreExplored(res.id); } catch {}
+      try {
+        analytics.verticalLoreExplored(res.id);
+      } catch {}
     } catch {
       setError('Failed to load lore');
     } finally {
@@ -45,11 +47,15 @@ export default function LoreDetailScreen() {
     }
   }, [id]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+      >
         <LoadingState text="Loading lore..." />
       </SafeAreaView>
     );
@@ -57,14 +63,18 @@ export default function LoreDetailScreen() {
 
   if (error || !data) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+      >
         <ErrorState description={error || 'Lore not found'} onRetry={fetchData} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+    >
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
@@ -100,14 +110,19 @@ export default function LoreDetailScreen() {
             {data.relatedEntries.map((entry) => (
               <TouchableOpacity
                 key={entry.id}
-                style={[styles.relatedCard, { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' }]}
+                style={[
+                  styles.relatedCard,
+                  { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' },
+                ]}
                 onPress={() => router.push(`/vertical/lore-detail?id=${entry.id}`)}
               >
                 <View style={styles.relatedIcon}>
                   <Text style={styles.relatedIconText}>{entry.icon}</Text>
                 </View>
                 <View style={styles.relatedInfo}>
-                  <Text style={[styles.relatedTitle, { color: colors.text.primary }]}>{entry.title}</Text>
+                  <Text style={[styles.relatedTitle, { color: colors.text.primary }]}>
+                    {entry.title}
+                  </Text>
                   <Text style={styles.relatedCategory}>{entry.category}</Text>
                 </View>
                 <Text style={styles.relatedArrow}>›</Text>

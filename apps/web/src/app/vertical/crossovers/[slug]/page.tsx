@@ -88,7 +88,9 @@ function CrossoverDetailContent(): React.JSX.Element {
                     Crossover Event
                   </span>
                 </div>
-                <h1 className="text-4xl sm:text-5xl font-bold text-white mb-3">{crossover.title}</h1>
+                <h1 className="text-4xl sm:text-5xl font-bold text-white mb-3">
+                  {crossover.title}
+                </h1>
                 <div className="flex flex-wrap gap-2">
                   {crossover.universes.map((universe) => (
                     <span
@@ -176,7 +178,13 @@ const LazyCrossoverDetail = lazy(() => Promise.resolve({ default: CrossoverDetai
 
 export default function CrossoverDetailPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyCrossoverDetail />
     </Suspense>
   );

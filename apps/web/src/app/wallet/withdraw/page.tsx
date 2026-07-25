@@ -103,7 +103,10 @@ export default function WithdrawPage(): React.JSX.Element {
       toast.showToast('Withdrawal request submitted successfully!', 'success');
       router.push('/wallet/transactions');
     } catch (error: unknown) {
-      toast.showToast(error instanceof Error ? error.message : 'Failed to process withdrawal', 'error');
+      toast.showToast(
+        error instanceof Error ? error.message : 'Failed to process withdrawal',
+        'error'
+      );
     } finally {
       setIsProcessing(false);
     }

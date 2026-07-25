@@ -248,7 +248,9 @@ function RentalPageContent(): React.JSX.Element {
               />
               <div>
                 <h3 className="text-lg font-bold text-white">{selectedMovie.title}</h3>
-                <p className="text-sm text-white/50">{selectedMovie.genre} · {selectedMovie.year}</p>
+                <p className="text-sm text-white/50">
+                  {selectedMovie.genre} · {selectedMovie.year}
+                </p>
               </div>
             </div>
 
@@ -261,7 +263,10 @@ function RentalPageContent(): React.JSX.Element {
                   className="w-full p-4 rounded-xl text-left transition-all"
                   style={{
                     border: `2px solid ${selectedOption?.id === option.id ? '#E8420A' : 'rgba(255,255,255,0.1)'}`,
-                    backgroundColor: selectedOption?.id === option.id ? 'rgba(232,66,10,0.1)' : 'rgba(255,255,255,0.05)',
+                    backgroundColor:
+                      selectedOption?.id === option.id
+                        ? 'rgba(232,66,10,0.1)'
+                        : 'rgba(255,255,255,0.05)',
                   }}
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
@@ -324,7 +329,8 @@ function RentalPageContent(): React.JSX.Element {
         <div
           className="fixed bottom-6 right-6 z-50 px-6 py-3 rounded-xl shadow-lg transition-all"
           style={{
-            backgroundColor: toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+            backgroundColor:
+              toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
             border: `1px solid ${toast.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
             color: toast.type === 'success' ? '#22C55E' : '#EF4444',
           }}
@@ -340,7 +346,13 @@ const LazyRentalPage = lazy(() => Promise.resolve({ default: RentalPageContent }
 
 export default function RentalPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyRentalPage />
     </Suspense>
   );

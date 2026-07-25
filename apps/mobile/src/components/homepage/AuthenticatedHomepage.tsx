@@ -6,9 +6,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '@/api';
 import type { ContentItem } from '@/api';
-import type {
-  HomepageRecommendationGroup,
-} from '@/api';
+import type { HomepageRecommendationGroup } from '@/api';
 import { colors } from '@/theme';
 import { BrandButton } from '@/components/ui/BrandButton';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
@@ -147,15 +145,18 @@ export default function AuthenticatedHomepage({
         }
 
         const items = contentResponse.data.items || [];
-        
+
         // Group by universe
-        const universeMap = new Map<string, { universeId: string; universeName: string; universeIcon?: string; items: ContentItem[] }>();
-        
+        const universeMap = new Map<
+          string,
+          { universeId: string; universeName: string; universeIcon?: string; items: ContentItem[] }
+        >();
+
         items.forEach((item: ContentItem) => {
           const universeId = item.universe?.id || 'unknown';
           const universeName = item.universe?.name || 'Unknown';
           const universeIcon = item.universe?.icon;
-          
+
           if (!universeMap.has(universeId)) {
             universeMap.set(universeId, {
               universeId,
@@ -164,7 +165,7 @@ export default function AuthenticatedHomepage({
               items: [],
             });
           }
-          
+
           const section = universeMap.get(universeId)!;
           if (section.items.length < 12) {
             section.items.push(item);
@@ -245,11 +246,7 @@ export default function AuthenticatedHomepage({
         ) {
           setTrendingContent(trendingRes.value.data);
         }
-        if (
-          newRes.status === 'fulfilled' &&
-          newRes.value.success &&
-          newRes.value.data
-        ) {
+        if (newRes.status === 'fulfilled' && newRes.value.success && newRes.value.data) {
           setNewReleases(newRes.value.data);
         }
         if (

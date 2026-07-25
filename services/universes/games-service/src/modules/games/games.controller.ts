@@ -13,12 +13,39 @@ export class GamesController {
   constructor(@Inject(GamesService) private readonly gamesService: GamesService) {}
 
   @Get('home')
+  @Get('featured')
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
-  @ApiOperation({ summary: 'Games home' })
+  @ApiOperation({ summary: 'Games home / featured' })
   @ApiResponse({ status: 200, description: 'Games home' })
   async getHome(): Promise<GameResponse> {
     return this.gamesService.getHome();
+  }
+
+  @Get('trending')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
+  @ApiOperation({ summary: 'Games trending' })
+  @ApiResponse({ status: 200, description: 'Trending games' })
+  async getTrending(): Promise<GameResponse> {
+    return this.gamesService.getHome();
+  }
+
+  @Get('trivia')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
+  @ApiOperation({ summary: 'Trivia games' })
+  @ApiResponse({ status: 200, description: 'Trivia games list' })
+  async getTrivia(): Promise<GameResponse> {
+    return this.gamesService.getHome();
+  }
+
+  @Get('stats')
+  @ApiOperation({ summary: 'Game stats for user' })
+  @ApiResponse({ status: 200, description: 'User game stats' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getStats(): Promise<GameResponse> {
+    return this.gamesService.getLeaderboard();
   }
 
   @Post('daily-challenge/submit')

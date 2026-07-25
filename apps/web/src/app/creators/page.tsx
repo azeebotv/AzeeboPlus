@@ -138,7 +138,9 @@ export default function CreatorsPage(): React.JSX.Element {
                     {creator.name?.charAt(0) || 'C'}
                   </div>
                   <h3 className="text-lg font-bold text-white">{creator.name}</h3>
-                  <p className="text-sm text-white/50 mb-1">{creator.bio || `${creator.contentCount} videos`}</p>
+                  <p className="text-sm text-white/50 mb-1">
+                    {creator.bio || `${creator.contentCount} videos`}
+                  </p>
                   <div className="flex items-center justify-center gap-4 mt-3 text-sm">
                     <span className="text-white/60">{creator.contentCount} videos</span>
                     <span className="text-white/60">{creator.subscriberCount} subscribers</span>

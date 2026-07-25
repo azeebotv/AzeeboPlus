@@ -65,9 +65,11 @@ export default function CurrentSubscriptionScreen() {
     setIsCancelling(true);
     try {
       await subscriptionApi.cancelSubscription(subscription.id);
-      Alert.alert('Subscription Cancelled', 'Your subscription has been cancelled. You retain access until the end of your billing period.', [
-        { text: 'OK', onPress: () => loadSubscription() },
-      ]);
+      Alert.alert(
+        'Subscription Cancelled',
+        'Your subscription has been cancelled. You retain access until the end of your billing period.',
+        [{ text: 'OK', onPress: () => loadSubscription() }]
+      );
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Failed to cancel subscription';
       Alert.alert('Error', message);
@@ -129,9 +131,7 @@ export default function CurrentSubscriptionScreen() {
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyIcon}>📺</Text>
           <Text style={styles.emptyText}>No Active Subscription</Text>
-          <Text style={styles.emptySubtext}>
-            Subscribe to unlock premium content and features
-          </Text>
+          <Text style={styles.emptySubtext}>Subscribe to unlock premium content and features</Text>
           <TouchableOpacity
             style={styles.browseButton}
             onPress={() => router.push('/subscription/plans')}
@@ -201,7 +201,12 @@ export default function CurrentSubscriptionScreen() {
 
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Auto-Renew</Text>
-            <Text style={[styles.detailValue, { color: subscription.autoRenew ? colors.success[500] : colors.text.tertiary }]}>
+            <Text
+              style={[
+                styles.detailValue,
+                { color: subscription.autoRenew ? colors.success[500] : colors.text.tertiary },
+              ]}
+            >
               {subscription.autoRenew ? 'Enabled' : 'Disabled'}
             </Text>
           </View>

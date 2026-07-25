@@ -103,7 +103,10 @@ export default function MissionsPage(): React.JSX.Element {
                 Active Missions ({activeMissions.length})
               </h2>
               {activeMissions.length === 0 ? (
-                <div className="az-glass" style={{ padding: 48, borderRadius: 20, textAlign: 'center' }}>
+                <div
+                  className="az-glass"
+                  style={{ padding: 48, borderRadius: 20, textAlign: 'center' }}
+                >
                   <p style={{ fontSize: 32, marginBottom: 12 }}>🎯</p>
                   <p style={{ color: '#9A8A7A' }}>No active missions right now</p>
                 </div>
@@ -136,7 +139,9 @@ export default function MissionsPage(): React.JSX.Element {
                         >
                           {mission.category}
                         </span>
-                        <h3 style={{ fontSize: 16, fontWeight: 700, marginTop: 8, marginBottom: 6 }}>
+                        <h3
+                          style={{ fontSize: 16, fontWeight: 700, marginTop: 8, marginBottom: 6 }}
+                        >
                           {mission.title}
                         </h3>
                         <p style={{ fontSize: 13, color: '#9A8A7A', marginBottom: 16 }}>
@@ -155,7 +160,9 @@ export default function MissionsPage(): React.JSX.Element {
                             }}
                           >
                             <span>Progress</span>
-                            <span>{mission.progress}/{mission.total}</span>
+                            <span>
+                              {mission.progress}/{mission.total}
+                            </span>
                           </div>
                           <div
                             style={{
@@ -177,7 +184,13 @@ export default function MissionsPage(): React.JSX.Element {
                           </div>
                         </div>
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                          }}
+                        >
                           <span style={{ fontSize: 16, fontWeight: 700, color: '#E8420A' }}>
                             {mission.points.toLocaleString()} pts
                           </span>
@@ -202,7 +215,13 @@ export default function MissionsPage(): React.JSX.Element {
                       className="az-glass"
                       style={{ padding: 16, borderRadius: 16, opacity: 0.7 }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
                         <div>
                           <h3 style={{ fontSize: 14, fontWeight: 600 }}>{mission.title}</h3>
                           <p style={{ fontSize: 12, color: '#9A8A7A', marginTop: 2 }}>
@@ -222,7 +241,14 @@ export default function MissionsPage(): React.JSX.Element {
                           >
                             ✓ Done
                           </span>
-                          <p style={{ fontSize: 14, fontWeight: 700, color: '#22C55E', marginTop: 4 }}>
+                          <p
+                            style={{
+                              fontSize: 14,
+                              fontWeight: 700,
+                              color: '#22C55E',
+                              marginTop: 4,
+                            }}
+                          >
                             +{mission.points.toLocaleString()} pts
                           </p>
                         </div>

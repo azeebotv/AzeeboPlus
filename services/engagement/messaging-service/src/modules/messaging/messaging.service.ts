@@ -8,6 +8,7 @@ import axios from 'axios';
 export class MessagingService {
   private readonly logger = new Logger(MessagingService.name);
   private readonly analyticsServiceBaseUrl: string;
+  private readonly userServiceBaseUrl: string;
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
@@ -16,6 +17,10 @@ export class MessagingService {
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
       'http://analytics-service:3040'
+    );
+    this.userServiceBaseUrl = this.configService.get<string>(
+      'USER_SERVICE_URL',
+      'http://user-service:3001'
     );
   }
 
@@ -33,6 +38,32 @@ export class MessagingService {
     } catch (_error) {
       this.logger.warn(`Failed to track analytics event: ${eventName}`);
     }
+  }
+
+  private async getUserProfiles(
+    userIds: string[]
+  ): Promise<Map<string, { displayName: string; avatar: string | null }>> {
+    const profileMap = new Map<string, { displayName: string; avatar: string | null }>();
+    if (userIds.length === 0) return profileMap;
+
+    try {
+      const response = await axios.get(`${this.userServiceBaseUrl}/users/batch`, {
+        params: { ids: userIds.join(',') },
+        timeout: 5000,
+        headers: { 'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', '') },
+      });
+      const users = response.data?.data || response.data || [];
+      for (const user of users) {
+        profileMap.set(user.id, {
+          displayName: user.displayName || user.name || 'Unknown',
+          avatar: user.avatar || null,
+        });
+      }
+    } catch (error) {
+      this.logger.warn(`Failed to fetch user profiles: ${(error as Error).message}`);
+    }
+
+    return profileMap;
   }
 
   async getConversations(userId: string) {
@@ -73,6 +104,12 @@ export class MessagingService {
 
       const unreadMap = new Map(unreadCounts.map((uc) => [uc.conversationId, uc._count.id]));
 
+      // Enrich participant profiles from user-service
+      const allParticipantIds = [
+        ...new Set(conversations.flatMap((c) => c.participants.map((p) => p.userId))),
+      ];
+      const profileMap = await this.getUserProfiles(allParticipantIds);
+
       return {
         success: true,
         data: conversations.map((conv) => ({
@@ -85,8 +122,8 @@ export class MessagingService {
           unreadCount: unreadMap.get(conv.id) || 0,
           participants: conv.participants.map((p) => ({
             id: p.userId,
-            displayName: null,
-            avatar: null,
+            displayName: profileMap.get(p.userId)?.displayName || null,
+            avatar: profileMap.get(p.userId)?.avatar || null,
           })),
           createdAt: conv.createdAt.toISOString(),
           updatedAt: conv.updatedAt.toISOString(),

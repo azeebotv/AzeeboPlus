@@ -67,7 +67,8 @@ export default function RealityUniverseHome() {
   });
 
   const isLoading = showsQuery.isLoading || contestantsQuery.isLoading || featuredQuery.isLoading;
-  const error = showsQuery.error?.message || contestantsQuery.error?.message || featuredQuery.error?.message;
+  const error =
+    showsQuery.error?.message || contestantsQuery.error?.message || featuredQuery.error?.message;
 
   const liveShows = showsQuery.data ?? [];
   const contestants = contestantsQuery.data ?? [];

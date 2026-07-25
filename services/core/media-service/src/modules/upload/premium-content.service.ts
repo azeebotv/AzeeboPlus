@@ -228,7 +228,27 @@ export class PremiumContentService {
   }
 
   private async resolveContentKey(contentId: string): Promise<string> {
-    return `premium/${contentId}`;
+    // Check Redis cache for previously resolved key
+    const cacheKey = `premium_key:${contentId}`;
+    try {
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) return cached;
+    } catch {
+      // Redis unavailable — use default
+    }
+
+    // Default key pattern: premium/{contentId}/source
+    // Callers can override via content key metadata if needed
+    const key = `premium/${contentId}/source`;
+
+    try {
+      await this.redisService.set(cacheKey, key);
+      await this.redisService.expire(cacheKey, 3600);
+    } catch {
+      // Best effort cache
+    }
+
+    return key;
   }
 
   private buildCdnUrl(s3Key: string, token: string, expiresInSeconds: number): string {

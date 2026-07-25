@@ -64,13 +64,15 @@ export default function VerticalUniverseHome() {
   });
 
   const isLoading = featuredQuery.isLoading || seriesQuery.isLoading || genresQuery.isLoading;
-  const error = featuredQuery.error?.message || seriesQuery.error?.message || genresQuery.error?.message;
+  const error =
+    featuredQuery.error?.message || seriesQuery.error?.message || genresQuery.error?.message;
 
   useEffect(() => {
     if (featuredQuery.isSuccess && !featuredQuery.isFetching) {
-      try { analytics.verticalUniverseViewed('home'); } catch {}
+      try {
+        analytics.verticalUniverseViewed('home');
+      } catch {}
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [featuredQuery.isSuccess]);
 
   const featuredSeries = featuredQuery.data ?? [];
@@ -121,7 +123,12 @@ export default function VerticalUniverseHome() {
 
         <View style={styles.genreScroll}>
           {genres.map((genre) => (
-            <TouchableOpacity key={genre.id} style={styles.genreChip} accessibilityLabel={`Filter by ${genre.name}`} accessibilityRole="button">
+            <TouchableOpacity
+              key={genre.id}
+              style={styles.genreChip}
+              accessibilityLabel={`Filter by ${genre.name}`}
+              accessibilityRole="button"
+            >
               <Text style={styles.genreEmoji}>{genre.emoji}</Text>
               <Text style={styles.genreName}>{genre.name}</Text>
             </TouchableOpacity>
@@ -155,7 +162,11 @@ export default function VerticalUniverseHome() {
                     {item.title}
                   </Text>
                   <Text style={styles.featuredSeason}>{item.season}</Text>
-                  <TouchableOpacity style={styles.watchButton} accessibilityLabel={`Watch ${item.title}`} accessibilityRole="button">
+                  <TouchableOpacity
+                    style={styles.watchButton}
+                    accessibilityLabel={`Watch ${item.title}`}
+                    accessibilityRole="button"
+                  >
                     <Text style={styles.watchButtonText}>Watch</Text>
                   </TouchableOpacity>
                 </View>
@@ -169,7 +180,10 @@ export default function VerticalUniverseHome() {
             <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
               Nigerian Series
             </Text>
-            <TouchableOpacity accessibilityLabel="See all Nigerian series" accessibilityRole="button">
+            <TouchableOpacity
+              accessibilityLabel="See all Nigerian series"
+              accessibilityRole="button"
+            >
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
@@ -205,8 +219,14 @@ export default function VerticalUniverseHome() {
           <View style={styles.passBanner}>
             <View style={styles.passContent}>
               <Text style={styles.passTitle}>🎬 Vertical Pass</Text>
-              <Text style={styles.passSubtitle}>Access all Nigerian series from {verticalSubscription.label}</Text>
-              <TouchableOpacity style={styles.passButton} accessibilityLabel="Get Vertical Pass" accessibilityRole="button">
+              <Text style={styles.passSubtitle}>
+                Access all Nigerian series from {verticalSubscription.label}
+              </Text>
+              <TouchableOpacity
+                style={styles.passButton}
+                accessibilityLabel="Get Vertical Pass"
+                accessibilityRole="button"
+              >
                 <Text style={styles.passButtonText}>Get Pass</Text>
               </TouchableOpacity>
             </View>
@@ -214,23 +234,48 @@ export default function VerticalUniverseHome() {
         </View>
 
         <View style={styles.bottomNav}>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')} accessibilityLabel="Go to Home" accessibilityRole="button">
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => router.push('/(tabs)/home')}
+            accessibilityLabel="Go to Home"
+            accessibilityRole="button"
+          >
             <Text style={styles.navIcon}>🏠</Text>
             <Text style={styles.navLabel}>Home</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')} accessibilityLabel="Go to Watch" accessibilityRole="button">
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => router.push('/(tabs)/watch')}
+            accessibilityLabel="Go to Watch"
+            accessibilityRole="button"
+          >
             <Text style={styles.navIcon}>📺</Text>
             <Text style={styles.navLabel}>Watch</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')} accessibilityLabel="Go to Create" accessibilityRole="button">
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => router.push('/(tabs)/create')}
+            accessibilityLabel="Go to Create"
+            accessibilityRole="button"
+          >
             <Text style={styles.navIcon}>✨</Text>
             <Text style={styles.navLabel}>Create</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')} accessibilityLabel="Go to Rewards" accessibilityRole="button">
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => router.push('/(tabs)/rewards')}
+            accessibilityLabel="Go to Rewards"
+            accessibilityRole="button"
+          >
             <Text style={styles.navIcon}>⭐</Text>
             <Text style={styles.navLabel}>Rewards</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')} accessibilityLabel="Go to Profile" accessibilityRole="button">
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => router.push('/(tabs)/profile')}
+            accessibilityLabel="Go to Profile"
+            accessibilityRole="button"
+          >
             <Text style={styles.navIcon}>👤</Text>
             <Text style={styles.navLabel}>Profile</Text>
           </TouchableOpacity>

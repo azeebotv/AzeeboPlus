@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -10,7 +11,7 @@ import { Inject,
   Query,
   UseGuards,
   Request,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { CreatorService, ContentItem } from './creator.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -136,7 +137,8 @@ export class CreatorController {
   @Put('settings')
   async updateSettings(
     @Request() req: AuthRequest,
-    @Body() body: {
+    @Body()
+    body: {
       payoutMethod?: string;
       minimumPayout?: number;
       notifications?: { email: boolean; push: boolean; sms: boolean; marketing: boolean };

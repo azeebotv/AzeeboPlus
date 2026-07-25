@@ -19,7 +19,7 @@ if (!process.env.JWT_REFRESH_SECRET) {
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  app.enableVersioning({ type: VersioningType.URI, prefix: "v", defaultVersion: "1" });
+  app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
   const logger = new Logger('AdminApp');
 
   app.useGlobalFilters(new GlobalExceptionFilter());

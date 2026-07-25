@@ -65,9 +65,24 @@ export default function ComedianDetailScreen() {
     fetchData();
   }, [id]);
 
-  if (isLoading) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><LoadingState text="Loading comedian..." /></SafeAreaView>;
-  if (error) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><ErrorState description={error} onRetry={() => {}} /></SafeAreaView>;
-  if (!profile) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><EmptyState icon="🎤" title="Comedian not found" /></SafeAreaView>;
+  if (isLoading)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <LoadingState text="Loading comedian..." />
+      </SafeAreaView>
+    );
+  if (error)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <ErrorState description={error} onRetry={() => {}} />
+      </SafeAreaView>
+    );
+  if (!profile)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <EmptyState icon="🎤" title="Comedian not found" />
+      </SafeAreaView>
+    );
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
@@ -86,15 +101,21 @@ export default function ComedianDetailScreen() {
           <Text style={styles.bio}>{profile.bio}</Text>
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: isDark ? '#fff' : '#000' }]}>{profile.followers}</Text>
+              <Text style={[styles.statValue, { color: isDark ? '#fff' : '#000' }]}>
+                {profile.followers}
+              </Text>
               <Text style={styles.statLabel}>Followers</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: isDark ? '#fff' : '#000' }]}>{profile.specialCount}</Text>
+              <Text style={[styles.statValue, { color: isDark ? '#fff' : '#000' }]}>
+                {profile.specialCount}
+              </Text>
               <Text style={styles.statLabel}>Specials</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: isDark ? '#fff' : '#000' }]}>⭐ {profile.rating}</Text>
+              <Text style={[styles.statValue, { color: isDark ? '#fff' : '#000' }]}>
+                ⭐ {profile.rating}
+              </Text>
               <Text style={styles.statLabel}>Rating</Text>
             </View>
           </View>
@@ -110,16 +131,28 @@ export default function ComedianDetailScreen() {
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: isDark ? '#fff' : '#000' }]}>Clips</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.clipsList}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.clipsList}
+          >
             {clips.map((clip) => (
-              <TouchableOpacity key={clip.id} style={[styles.clipCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+              <TouchableOpacity
+                key={clip.id}
+                style={[styles.clipCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+              >
                 <View style={styles.clipThumb}>
                   <Text style={styles.clipEmoji}>{clip.emoji}</Text>
                   <View style={styles.clipDuration}>
                     <Text style={styles.clipDurationText}>{clip.duration}</Text>
                   </View>
                 </View>
-                <Text style={[styles.clipTitle, { color: isDark ? '#fff' : '#000' }]} numberOfLines={1}>{clip.title}</Text>
+                <Text
+                  style={[styles.clipTitle, { color: isDark ? '#fff' : '#000' }]}
+                  numberOfLines={1}
+                >
+                  {clip.title}
+                </Text>
                 <Text style={styles.clipViews}>👁️ {clip.views}</Text>
               </TouchableOpacity>
             ))}
@@ -129,10 +162,15 @@ export default function ComedianDetailScreen() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: isDark ? '#fff' : '#000' }]}>Specials</Text>
           {specials.map((special) => (
-            <TouchableOpacity key={special.id} style={[styles.specialRow, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+            <TouchableOpacity
+              key={special.id}
+              style={[styles.specialRow, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+            >
               <Text style={styles.specialEmoji}>{special.emoji}</Text>
               <View style={styles.specialInfo}>
-                <Text style={[styles.specialTitle, { color: isDark ? '#fff' : '#000' }]}>{special.title}</Text>
+                <Text style={[styles.specialTitle, { color: isDark ? '#fff' : '#000' }]}>
+                  {special.title}
+                </Text>
                 <Text style={styles.specialYear}>{special.year}</Text>
               </View>
             </TouchableOpacity>
@@ -146,11 +184,26 @@ export default function ComedianDetailScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { padding: 16, paddingTop: 50 },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#2a2a2a', alignItems: 'center', justifyContent: 'center' },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backIcon: { color: '#fff', fontSize: 20 },
   content: { paddingBottom: 30 },
   profileSection: { alignItems: 'center', paddingHorizontal: 16, marginBottom: 24 },
-  avatarLarge: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#2a2a2a', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  avatarLarge: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
   avatarEmoji: { fontSize: 50 },
   name: { fontSize: 24, fontWeight: '700', marginBottom: 8 },
   bio: { color: '#888', fontSize: 14, textAlign: 'center', marginBottom: 16 },
@@ -158,7 +211,12 @@ const styles = StyleSheet.create({
   statItem: { alignItems: 'center' },
   statValue: { fontSize: 18, fontWeight: '700', marginBottom: 2 },
   statLabel: { color: '#888', fontSize: 12 },
-  followButton: { backgroundColor: '#F39C12', paddingHorizontal: 32, paddingVertical: 10, borderRadius: 20 },
+  followButton: {
+    backgroundColor: '#F39C12',
+    paddingHorizontal: 32,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
   followingButton: { backgroundColor: 'transparent', borderWidth: 1, borderColor: '#888' },
   followButtonText: { color: '#000', fontSize: 14, fontWeight: '600' },
   followingButtonText: { color: '#888' },
@@ -166,13 +224,34 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
   clipsList: { gap: 12 },
   clipCard: { width: 160, borderRadius: 10, overflow: 'hidden' },
-  clipThumb: { height: 100, backgroundColor: '#2a2a2a', alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  clipThumb: {
+    height: 100,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
   clipEmoji: { fontSize: 40 },
-  clipDuration: { position: 'absolute', bottom: 6, right: 6, backgroundColor: 'rgba(0,0,0,0.7)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+  clipDuration: {
+    position: 'absolute',
+    bottom: 6,
+    right: 6,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
   clipDurationText: { color: '#fff', fontSize: 11 },
   clipTitle: { fontSize: 13, fontWeight: '600', padding: 8, paddingBottom: 2 },
   clipViews: { color: '#888', fontSize: 11, paddingHorizontal: 8, paddingBottom: 8 },
-  specialRow: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 10, marginBottom: 8, gap: 12 },
+  specialRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 10,
+    marginBottom: 8,
+    gap: 12,
+  },
   specialEmoji: { fontSize: 30 },
   specialInfo: { flex: 1 },
   specialTitle: { fontSize: 15, fontWeight: '600', marginBottom: 2 },

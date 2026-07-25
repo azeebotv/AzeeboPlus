@@ -99,7 +99,9 @@ function StoryworldDetailContent(): React.JSX.Element {
                     </span>
                   )}
                 </div>
-                <h1 className="text-4xl sm:text-5xl font-bold text-white mb-3">{storyworld.title}</h1>
+                <h1 className="text-4xl sm:text-5xl font-bold text-white mb-3">
+                  {storyworld.title}
+                </h1>
                 <p className="text-white/60 text-lg max-w-3xl">{storyworld.description}</p>
               </motion.div>
             </div>
@@ -167,8 +169,12 @@ function StoryworldDetailContent(): React.JSX.Element {
                         />
                       )}
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-white text-sm truncate">{episode.title}</h3>
-                        <p className="text-xs text-white/50 mt-1 line-clamp-1">{episode.description}</p>
+                        <h3 className="font-semibold text-white text-sm truncate">
+                          {episode.title}
+                        </h3>
+                        <p className="text-xs text-white/50 mt-1 line-clamp-1">
+                          {episode.description}
+                        </p>
                       </div>
                       <div className="flex items-center">
                         <div
@@ -198,7 +204,13 @@ const LazyStoryworldDetail = lazy(() => Promise.resolve({ default: StoryworldDet
 
 export default function StoryworldDetailPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyStoryworldDetail />
     </Suspense>
   );

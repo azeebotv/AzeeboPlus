@@ -40,7 +40,7 @@ export default function PassesScreen() {
   const passes = passesQuery.data ?? [];
 
   const handleSubscribe = () => {
-    const plan = passes.find(p => p.id === selectedPlan);
+    const plan = passes.find((p) => p.id === selectedPlan);
     if (!plan) return;
     Alert.alert('Subscribe', `Subscribe to ${plan.name} for ${plan.price}/${plan.period}?`, [
       { text: 'Cancel', style: 'cancel' },
@@ -48,9 +48,28 @@ export default function PassesScreen() {
     ]);
   };
 
-  if (isLoading) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><LoadingState text="Loading passes..." /></SafeAreaView>;
-  if (error) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><ErrorState description={error} onRetry={() => passesQuery.refetch()} /></SafeAreaView>;
-  if (!passes.length) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><EmptyState icon="🎟️" title="No passes" description="Cinema passes will be available soon" /></SafeAreaView>;
+  if (isLoading)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <LoadingState text="Loading passes..." />
+      </SafeAreaView>
+    );
+  if (error)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <ErrorState description={error} onRetry={() => passesQuery.refetch()} />
+      </SafeAreaView>
+    );
+  if (!passes.length)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <EmptyState
+          icon="🎟️"
+          title="No passes"
+          description="Cinema passes will be available soon"
+        />
+      </SafeAreaView>
+    );
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
@@ -58,7 +77,9 @@ export default function PassesScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>Cinema Passes</Text>
+        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+          Cinema Passes
+        </Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
@@ -87,7 +108,9 @@ export default function PassesScreen() {
             <View style={styles.planHeader}>
               <Text style={styles.planEmoji}>{pass.emoji}</Text>
               <View style={styles.planInfo}>
-                <Text style={[styles.planName, { color: isDark ? '#fff' : '#000' }]}>{pass.name}</Text>
+                <Text style={[styles.planName, { color: isDark ? '#fff' : '#000' }]}>
+                  {pass.name}
+                </Text>
                 <View style={styles.priceRow}>
                   <Text style={styles.planPrice}>{pass.price}</Text>
                   <Text style={styles.planPeriod}>/{pass.period}</Text>
@@ -101,7 +124,9 @@ export default function PassesScreen() {
             </View>
             <View style={styles.featuresList}>
               {pass.features.map((feature, i) => (
-                <Text key={i} style={styles.featureText}>✓ {feature}</Text>
+                <Text key={i} style={styles.featureText}>
+                  ✓ {feature}
+                </Text>
               ))}
             </View>
           </TouchableOpacity>
@@ -113,7 +138,9 @@ export default function PassesScreen() {
           </TouchableOpacity>
         )}
 
-        <Text style={styles.termsText}>Cancel anytime. By subscribing you agree to our Terms of Service.</Text>
+        <Text style={styles.termsText}>
+          Cancel anytime. By subscribing you agree to our Terms of Service.
+        </Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -122,7 +149,14 @@ export default function PassesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', padding: 16, paddingTop: 50, gap: 12 },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#2a2a2a', alignItems: 'center', justifyContent: 'center' },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backIcon: { color: '#fff', fontSize: 20 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
   content: { padding: 16, paddingBottom: 30 },
@@ -130,10 +164,24 @@ const styles = StyleSheet.create({
   heroEmoji: { fontSize: 60, marginBottom: 12 },
   heroTitle: { fontSize: 28, fontWeight: '700', marginBottom: 6 },
   heroSubtitle: { color: '#888', fontSize: 14, textAlign: 'center' },
-  planCard: { padding: 20, borderRadius: 16, marginBottom: 14, borderWidth: 2, borderColor: 'transparent' },
+  planCard: {
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 14,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
   planCardSelected: { borderColor: '#FFEAA7' },
   planCardPopular: { borderColor: '#FFEAA7' },
-  popularBadge: { position: 'absolute', top: -10, alignSelf: 'center', backgroundColor: '#FFEAA7', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 10 },
+  popularBadge: {
+    position: 'absolute',
+    top: -10,
+    alignSelf: 'center',
+    backgroundColor: '#FFEAA7',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
   popularText: { color: '#000', fontSize: 10, fontWeight: '700' },
   planHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   planEmoji: { fontSize: 36, marginRight: 14 },
@@ -142,11 +190,24 @@ const styles = StyleSheet.create({
   priceRow: { flexDirection: 'row', alignItems: 'baseline' },
   planPrice: { color: '#FFEAA7', fontSize: 24, fontWeight: '700' },
   planPeriod: { color: '#888', fontSize: 14 },
-  selectedCheck: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#FFEAA7', alignItems: 'center', justifyContent: 'center' },
+  selectedCheck: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FFEAA7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   checkmark: { color: '#000', fontWeight: '700', fontSize: 16 },
   featuresList: { gap: 6 },
   featureText: { color: '#ccc', fontSize: 14 },
-  subscribeButton: { backgroundColor: '#FFEAA7', paddingVertical: 16, borderRadius: 12, alignItems: 'center', marginBottom: 12 },
+  subscribeButton: {
+    backgroundColor: '#FFEAA7',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   subscribeText: { color: '#000', fontSize: 16, fontWeight: '700' },
   termsText: { color: '#888', fontSize: 12, textAlign: 'center' },
 });

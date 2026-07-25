@@ -1,12 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  useColorScheme,
-} from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { colors } from '../../src/theme';
@@ -80,8 +73,7 @@ export default function SubscribersScreen() {
       style={[
         styles.statCard,
         {
-          backgroundColor:
-            colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
+          backgroundColor: colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
         },
       ]}
     >
@@ -94,7 +86,8 @@ export default function SubscribersScreen() {
             { color: change >= 0 ? colors.success[500] : colors.error[500] },
           ]}
         >
-          {change >= 0 ? '+' : ''}{change}%
+          {change >= 0 ? '+' : ''}
+          {change}%
         </Text>
       ) : null}
     </View>
@@ -121,8 +114,7 @@ export default function SubscribersScreen() {
               style={[
                 styles.demographicsCard,
                 {
-                  backgroundColor:
-                    colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
+                  backgroundColor: colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
                 },
               ]}
             >
@@ -138,12 +130,7 @@ export default function SubscribersScreen() {
                 <View key={index} style={styles.demographicRow}>
                   <Text style={styles.demographicLabel}>{group.range}</Text>
                   <View style={styles.demographicBar}>
-                    <View
-                      style={[
-                        styles.demographicBarFill,
-                        { width: `${group.percentage}%` },
-                      ]}
-                    />
+                    <View style={[styles.demographicBarFill, { width: `${group.percentage}%` }]} />
                   </View>
                   <Text style={styles.demographicValue}>
                     {group.count} ({group.percentage}%)
@@ -156,8 +143,7 @@ export default function SubscribersScreen() {
               style={[
                 styles.demographicsCard,
                 {
-                  backgroundColor:
-                    colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
+                  backgroundColor: colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
                 },
               ]}
             >
@@ -173,12 +159,7 @@ export default function SubscribersScreen() {
                 <View key={index} style={styles.demographicRow}>
                   <Text style={styles.demographicLabel}>{region.region}</Text>
                   <View style={styles.demographicBar}>
-                    <View
-                      style={[
-                        styles.demographicBarFill,
-                        { width: `${region.percentage}%` },
-                      ]}
-                    />
+                    <View style={[styles.demographicBarFill, { width: `${region.percentage}%` }]} />
                   </View>
                   <Text style={styles.demographicValue}>
                     {region.count} ({region.percentage}%)
@@ -197,17 +178,11 @@ export default function SubscribersScreen() {
       style={[
         styles.subscriberCard,
         {
-          backgroundColor:
-            colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
+          backgroundColor: colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
         },
       ]}
     >
-      <View
-        style={[
-          styles.avatar,
-          { backgroundColor: colors.primary[500] + '20' },
-        ]}
-      >
+      <View style={[styles.avatar, { backgroundColor: colors.primary[500] + '20' }]}>
         {item.avatar ? (
           <Text style={styles.avatarText}>{item.displayName.charAt(0)}</Text>
         ) : (

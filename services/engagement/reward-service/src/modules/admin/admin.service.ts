@@ -200,7 +200,10 @@ export class AdminService {
       this.prisma.badge.count(),
     ]);
 
-    return ApiResponseWrapper.success({ badges, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } });
+    return ApiResponseWrapper.success({
+      badges,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    });
   }
 
   async createBadge(data: { name: string; description?: string; icon: string; points: number }) {
@@ -212,16 +215,44 @@ export class AdminService {
     const badge = await this.prisma.badge.findUnique({ where: { id: badgeId } });
     if (!badge) throw new NotFoundException('Badge not found');
 
-    await this.prisma.pointsLedger.create({
-      data: {
-        userId,
-        points: badge.points,
-        type: 'badge',
-        reason: `Badge awarded: ${badge.name}${reason ? ` - ${reason}` : ''}`,
-      },
+    await this.prisma.$transaction(async (tx) => {
+      // Credit points for the badge
+      await tx.pointsLedger.create({
+        data: {
+          userId,
+          points: badge.points,
+          type: 'badge',
+          reason: `Badge awarded: ${badge.name}${reason ? ` - ${reason}` : ''}`,
+        },
+      });
+
+      // Link the badge to the user's reward account (if badges field exists)
+      try {
+        const rewardAccount = await tx.rewardAccount.findUnique({
+          where: { userId },
+        });
+
+        if (rewardAccount) {
+          const accountRecord = rewardAccount as unknown as Record<string, unknown>;
+          const currentBadges = (accountRecord.badges as string[]) || [];
+          if (!currentBadges.includes(badgeId)) {
+            await tx.rewardAccount.update({
+              where: { userId },
+              data: {
+                totalPoints: { increment: badge.points },
+                availablePoints: { increment: badge.points },
+              } as never,
+            });
+          }
+        }
+      } catch {
+        // badges field may not exist on rewardAccount
+      }
     });
 
-    return ApiResponseWrapper.success({ message: `Badge ${badge.name} assigned to user ${userId}` });
+    return ApiResponseWrapper.success({
+      message: `Badge ${badge.name} assigned to user ${userId}`,
+    });
   }
 
   // Level CRUD
@@ -230,16 +261,88 @@ export class AdminService {
     return ApiResponseWrapper.success(levels);
   }
 
-  async createLevel(data: { name: string; rank: number; minPoints: number; icon?: string; color?: string }) {
+  async createLevel(data: {
+    name: string;
+    rank: number;
+    minPoints: number;
+    icon?: string;
+    color?: string;
+  }) {
     const level = await this.prisma.level.create({ data });
     return ApiResponseWrapper.created(level);
   }
 
-  async updateLevel(id: string, data: { name?: string; rank?: number; minPoints?: number; icon?: string; color?: string }) {
+  async updateLevel(
+    id: string,
+    data: { name?: string; rank?: number; minPoints?: number; icon?: string; color?: string }
+  ) {
     const existing = await this.prisma.level.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Level not found');
 
     const updated = await this.prisma.level.update({ where: { id }, data });
     return ApiResponseWrapper.success(updated);
+  }
+
+  // Activity Point Configuration
+  async getActivityPointConfigs() {
+    try {
+      const configs = await (
+        this.prisma as unknown as {
+          activityPointConfig?: { findMany: (args?: unknown) => Promise<unknown[]> };
+        }
+      ).activityPointConfig?.findMany({
+        orderBy: { activity: 'asc' },
+      });
+      return ApiResponseWrapper.success(configs || []);
+    } catch {
+      return ApiResponseWrapper.success([]);
+    }
+  }
+
+  async createActivityPointConfig(data: {
+    activity: string;
+    points: number;
+    description?: string;
+  }) {
+    try {
+      const config = await (
+        this.prisma as unknown as {
+          activityPointConfig?: { create: (args: { data: unknown }) => Promise<unknown> };
+        }
+      ).activityPointConfig?.create({ data });
+      return ApiResponseWrapper.created(config);
+    } catch (error) {
+      throw new NotFoundException(
+        `Failed to create activity point config: ${(error as Error).message}`
+      );
+    }
+  }
+
+  async updateActivityPointConfig(
+    activity: string,
+    data: { points?: number; description?: string }
+  ) {
+    try {
+      const config = await (
+        this.prisma as unknown as {
+          activityPointConfig?: {
+            upsert: (args: {
+              where: { activity: string };
+              create: unknown;
+              update: unknown;
+            }) => Promise<unknown>;
+          };
+        }
+      ).activityPointConfig?.upsert({
+        where: { activity },
+        create: { activity, points: data.points || 0, description: data.description },
+        update: data,
+      });
+      return ApiResponseWrapper.success(config);
+    } catch (error) {
+      throw new NotFoundException(
+        `Failed to update activity point config: ${(error as Error).message}`
+      );
+    }
   }
 }

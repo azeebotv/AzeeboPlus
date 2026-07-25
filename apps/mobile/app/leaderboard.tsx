@@ -91,7 +91,10 @@ export default function LeaderboardScreen() {
   if (error) {
     return (
       <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ErrorState description={error instanceof Error ? error.message : 'Failed to load leaderboard'} onRetry={() => refetch()} />
+        <ErrorState
+          description={error instanceof Error ? error.message : 'Failed to load leaderboard'}
+          onRetry={() => refetch()}
+        />
       </SafeAreaView>
     );
   }
@@ -102,7 +105,11 @@ export default function LeaderboardScreen() {
         style={{ flex: 1 }}
         contentContainerStyle={styles.content}
         refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} colors={['#E8420A']} />
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={() => refetch()}
+            colors={['#E8420A']}
+          />
         }
       >
         <View style={styles.header}>

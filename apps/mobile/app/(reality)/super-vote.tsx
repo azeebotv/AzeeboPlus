@@ -124,7 +124,12 @@ export default function SuperVoteScreen() {
       });
 
       try {
-        analytics.realitySupervoteCreated(episodeId, selectedContestant!, package_.votes, package_.price);
+        analytics.realitySupervoteCreated(
+          episodeId,
+          selectedContestant!,
+          package_.votes,
+          package_.price
+        );
       } catch {}
 
       Alert.alert(
@@ -142,7 +147,10 @@ export default function SuperVoteScreen() {
         ]
       );
     } catch (error: unknown) {
-      Alert.alert('Error', (error instanceof Error ? error.message : null) || 'Failed to submit super vote');
+      Alert.alert(
+        'Error',
+        (error instanceof Error ? error.message : null) || 'Failed to submit super vote'
+      );
     } finally {
       setIsVoting(false);
     }

@@ -921,7 +921,10 @@ export class ContentService {
     }
   }
 
-  async getMediaAsset(contentId: string, userId?: string): Promise<{
+  async getMediaAsset(
+    contentId: string,
+    userId?: string
+  ): Promise<{
     success: boolean;
     data: MediaAssetWithContentItem & { originalUrl: string; thumbnailUrl: string | null };
   }> {
@@ -1067,7 +1070,8 @@ export class ContentService {
   async getContentComments(
     contentId: string,
     page?: number,
-    limit?: number
+    limit?: number,
+    userId?: string
   ): Promise<{
     success: boolean;
     data: {
@@ -1082,6 +1086,22 @@ export class ContentService {
   }> {
     try {
       const result = await this.contentRepository.getComments(contentId, page || 1, limit || 20);
+
+      // Check which comments the current user has liked
+      let likedCommentIds = new Set<string>();
+      if (userId && result.data.length > 0) {
+        try {
+          const commentIds = result.data.map((c: { id: string }) => c.id);
+          // Use raw query since commentLike may not be in Prisma schema
+          const userLikes = await this.prisma.$queryRawUnsafe<Array<{ commentId: string }>>(
+            `SELECT "commentId" FROM "comment_likes" WHERE "commentId" IN (${commentIds.map((id: string) => `'${id}'`).join(',')}) AND "userId" = $1`,
+            userId
+          );
+          likedCommentIds = new Set(userLikes.map((l) => l.commentId));
+        } catch {
+          // comment_likes table may not exist — default to no likes
+        }
+      }
 
       const items = result.data.map(
         (c: {
@@ -1099,7 +1119,7 @@ export class ContentService {
           content: c.text || c.content || '',
           timestamp: c.createdAt,
           likes: c.likes || 0,
-          likedByCurrentUser: false,
+          likedByCurrentUser: likedCommentIds.has(c.id),
         })
       );
 

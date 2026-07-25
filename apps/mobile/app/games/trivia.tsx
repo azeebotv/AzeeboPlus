@@ -58,7 +58,9 @@ export default function TriviaScreen() {
         return prev - 1;
       });
     }, 1000);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
   }, [currentIndex, isLoading, isGameOver, questions.length]);
 
   const handleTimeout = () => {
@@ -74,7 +76,7 @@ export default function TriviaScreen() {
     setShowResult(true);
     const correct = questions[currentIndex].correctAnswer === index;
     if (correct) {
-      setScore((prev) => prev + 100 + (streak * 10));
+      setScore((prev) => prev + 100 + streak * 10);
       setStreak((prev) => prev + 1);
     } else {
       setStreak(0);
@@ -103,16 +105,33 @@ export default function TriviaScreen() {
     setIsGameOver(false);
   };
 
-  if (isLoading) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><LoadingState text="Loading trivia..." /></SafeAreaView>;
-  if (error) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><ErrorState description={error} onRetry={() => {}} /></SafeAreaView>;
-  if (!questions.length) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><EmptyState icon="🧠" title="No trivia" description="Trivia will be available soon" /></SafeAreaView>;
+  if (isLoading)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <LoadingState text="Loading trivia..." />
+      </SafeAreaView>
+    );
+  if (error)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <ErrorState description={error} onRetry={() => {}} />
+      </SafeAreaView>
+    );
+  if (!questions.length)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <EmptyState icon="🧠" title="No trivia" description="Trivia will be available soon" />
+      </SafeAreaView>
+    );
 
   if (isGameOver) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <View style={styles.gameOverContainer}>
           <Text style={styles.gameOverEmoji}>🏆</Text>
-          <Text style={[styles.gameOverTitle, { color: isDark ? '#fff' : '#000' }]}>Game Over!</Text>
+          <Text style={[styles.gameOverTitle, { color: isDark ? '#fff' : '#000' }]}>
+            Game Over!
+          </Text>
           <Text style={styles.gameOverScore}>Score: {score}</Text>
           <Text style={styles.gameOverQuestions}>Questions: {questions.length}</Text>
           <View style={styles.gameOverButtons}>
@@ -147,12 +166,21 @@ export default function TriviaScreen() {
       </View>
 
       <View style={styles.progressBar}>
-        <View style={[styles.progressFill, { width: `${((currentIndex + 1) / questions.length) * 100}%` }]} />
+        <View
+          style={[
+            styles.progressFill,
+            { width: `${((currentIndex + 1) / questions.length) * 100}%` },
+          ]}
+        />
       </View>
-      <Text style={styles.questionCount}>{currentIndex + 1} / {questions.length}</Text>
+      <Text style={styles.questionCount}>
+        {currentIndex + 1} / {questions.length}
+      </Text>
 
       <View style={styles.questionContainer}>
-        <Text style={[styles.questionText, { color: isDark ? '#fff' : '#000' }]}>{question.question}</Text>
+        <Text style={[styles.questionText, { color: isDark ? '#fff' : '#000' }]}>
+          {question.question}
+        </Text>
       </View>
 
       <View style={styles.optionsContainer}>
@@ -194,20 +222,45 @@ export default function TriviaScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  gameHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingTop: 50 },
+  gameHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    paddingTop: 50,
+  },
   exitIcon: { color: '#888', fontSize: 24 },
   gameStats: { flexDirection: 'row', gap: 16 },
   scoreText: { color: '#DDA0DD', fontSize: 16, fontWeight: '700' },
   streakText: { color: '#F59E0B', fontSize: 16, fontWeight: '700' },
-  timerCircle: { width: 50, height: 50, borderRadius: 25, borderWidth: 3, alignItems: 'center', justifyContent: 'center' },
+  timerCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   timerText: { fontSize: 20, fontWeight: '700' },
   progressBar: { height: 4, backgroundColor: '#2a2a2a', marginHorizontal: 16, borderRadius: 2 },
   progressFill: { height: 4, backgroundColor: '#DDA0DD', borderRadius: 2 },
-  questionCount: { color: '#888', fontSize: 12, textAlign: 'center', marginTop: 8, marginBottom: 24 },
+  questionCount: {
+    color: '#888',
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 24,
+  },
   questionContainer: { paddingHorizontal: 24, marginBottom: 32 },
   questionText: { fontSize: 20, fontWeight: '700', textAlign: 'center', lineHeight: 28 },
   optionsContainer: { paddingHorizontal: 16, gap: 12 },
-  option: { padding: 16, borderRadius: 12, backgroundColor: '#1a1a1a', borderWidth: 2, borderColor: 'transparent' },
+  option: {
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: '#1a1a1a',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
   optionCorrect: { borderColor: '#22C55E', backgroundColor: 'rgba(34, 197, 94, 0.1)' },
   optionIncorrect: { borderColor: '#EF4444', backgroundColor: 'rgba(239, 68, 68, 0.1)' },
   optionText: { color: '#fff', fontSize: 16, fontWeight: '600', textAlign: 'center' },
@@ -221,8 +274,19 @@ const styles = StyleSheet.create({
   gameOverScore: { color: '#DDA0DD', fontSize: 24, fontWeight: '700', marginBottom: 8 },
   gameOverQuestions: { color: '#888', fontSize: 16, marginBottom: 32 },
   gameOverButtons: { flexDirection: 'row', gap: 16 },
-  playAgainButton: { backgroundColor: '#DDA0DD', paddingVertical: 14, paddingHorizontal: 32, borderRadius: 10 },
+  playAgainButton: {
+    backgroundColor: '#DDA0DD',
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 10,
+  },
   playAgainText: { color: '#000', fontSize: 16, fontWeight: '700' },
-  exitButton: { paddingVertical: 14, paddingHorizontal: 32, borderRadius: 10, borderWidth: 1, borderColor: '#888' },
+  exitButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#888',
+  },
   exitText: { color: '#888', fontSize: 16, fontWeight: '600' },
 });

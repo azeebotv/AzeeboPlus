@@ -123,7 +123,8 @@ export default function BadgesPage(): React.JSX.Element {
                           width: 64,
                           height: 64,
                           borderRadius: '50%',
-                          background: 'linear-gradient(135deg, rgba(232,66,10,0.2), rgba(204,28,28,0.15))',
+                          background:
+                            'linear-gradient(135deg, rgba(232,66,10,0.2), rgba(204,28,28,0.15))',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -178,7 +179,9 @@ export default function BadgesPage(): React.JSX.Element {
                       >
                         {badge.icon}
                       </div>
-                      <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 4, color: '#6B5B4B' }}>
+                      <p
+                        style={{ fontWeight: 600, fontSize: 14, marginBottom: 4, color: '#6B5B4B' }}
+                      >
                         {badge.name}
                       </p>
                       <div style={{ marginTop: 8 }}>
@@ -210,7 +213,10 @@ export default function BadgesPage(): React.JSX.Element {
             )}
 
             {badges.length === 0 && (
-              <div className="az-glass" style={{ padding: 48, borderRadius: 20, textAlign: 'center' }}>
+              <div
+                className="az-glass"
+                style={{ padding: 48, borderRadius: 20, textAlign: 'center' }}
+              >
                 <p style={{ fontSize: 32, marginBottom: 12 }}>🏅</p>
                 <p style={{ color: '#9A8A7A' }}>No badges available yet</p>
               </div>
@@ -264,11 +270,15 @@ export default function BadgesPage(): React.JSX.Element {
               {selectedBadge.icon}
             </div>
             <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>{selectedBadge.name}</h2>
-            <p style={{ color: '#9A8A7A', fontSize: 14, marginBottom: 16 }}>{selectedBadge.description}</p>
+            <p style={{ color: '#9A8A7A', fontSize: 14, marginBottom: 16 }}>
+              {selectedBadge.description}
+            </p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginBottom: 16 }}>
               <div>
                 <p style={{ fontSize: 12, color: '#9A8A7A' }}>Points</p>
-                <p style={{ fontSize: 18, fontWeight: 700, color: '#E8420A' }}>{selectedBadge.points}</p>
+                <p style={{ fontSize: 18, fontWeight: 700, color: '#E8420A' }}>
+                  {selectedBadge.points}
+                </p>
               </div>
               {selectedBadge.unlocked && selectedBadge.earnedAt && (
                 <div>

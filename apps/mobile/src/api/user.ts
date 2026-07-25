@@ -80,10 +80,7 @@ export const userApi = {
   async updatePreferences(
     preferences: Partial<UserPreferences>
   ): Promise<ApiResponse<UserPreferences>> {
-    return apiClient.patch<ApiResponse<UserPreferences>>(
-      '/v1/users/me/preferences',
-      preferences
-    );
+    return apiClient.patch<ApiResponse<UserPreferences>>('/v1/users/me/preferences', preferences);
   },
 
   async getWatchHistory(

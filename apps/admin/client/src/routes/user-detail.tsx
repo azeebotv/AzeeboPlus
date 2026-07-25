@@ -45,7 +45,20 @@ export default function UserDetailPage() {
     return (
       <div style={{ padding: 32 }}>
         <p style={{ color: '#CC1C1C' }}>{error}</p>
-        <button onClick={() => navigate(-1)} style={{ marginTop: 12, padding: '8px 16px', borderRadius: 8, border: '1px solid #2A1A1A', background: 'transparent', color: '#E8420A', cursor: 'pointer' }}>Go Back</button>
+        <button
+          onClick={() => navigate(-1)}
+          style={{
+            marginTop: 12,
+            padding: '8px 16px',
+            borderRadius: 8,
+            border: '1px solid #2A1A1A',
+            background: 'transparent',
+            color: '#E8420A',
+            cursor: 'pointer',
+          }}
+        >
+          Go Back
+        </button>
       </div>
     );
   }
@@ -55,21 +68,55 @@ export default function UserDetailPage() {
     { label: 'Email', value: user.email },
     { label: 'Username', value: user.username },
     user.phone ? { label: 'Phone', value: user.phone } : null,
-    { label: 'Status', value: user.isActive ? 'Active' : 'Inactive', color: user.isActive ? '#22C55E' : '#CC1C1C' },
-    { label: 'Email Verified', value: user.emailVerified ? 'Yes' : 'No', color: user.emailVerified ? '#22C55E' : '#F59E0B' },
+    {
+      label: 'Status',
+      value: user.isActive ? 'Active' : 'Inactive',
+      color: user.isActive ? '#22C55E' : '#CC1C1C',
+    },
+    {
+      label: 'Email Verified',
+      value: user.emailVerified ? 'Yes' : 'No',
+      color: user.emailVerified ? '#22C55E' : '#F59E0B',
+    },
     { label: 'Created', value: new Date(user.createdAt).toLocaleDateString() },
-    user.lastLoginAt ? { label: 'Last Login', value: new Date(user.lastLoginAt).toLocaleDateString() } : null,
+    user.lastLoginAt
+      ? { label: 'Last Login', value: new Date(user.lastLoginAt).toLocaleDateString() }
+      : null,
   ].filter(Boolean) as Array<{ label: string; value: string; color?: string }>;
 
   return (
     <div style={{ padding: 32, maxWidth: 800 }}>
-      <button onClick={() => navigate(-1)} style={{ marginBottom: 24, padding: '8px 16px', borderRadius: 8, border: '1px solid #2A1A1A', background: 'transparent', color: '#E8420A', cursor: 'pointer' }}>&larr; Back to Users</button>
-      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24, color: '#fff' }}>{user.displayName || user.username}</h1>
-      <div style={{ background: '#1A0A0A', border: '1px solid #2A1A1A', borderRadius: 12, padding: 24 }}>
+      <button
+        onClick={() => navigate(-1)}
+        style={{
+          marginBottom: 24,
+          padding: '8px 16px',
+          borderRadius: 8,
+          border: '1px solid #2A1A1A',
+          background: 'transparent',
+          color: '#E8420A',
+          cursor: 'pointer',
+        }}
+      >
+        &larr; Back to Users
+      </button>
+      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24, color: '#fff' }}>
+        {user.displayName || user.username}
+      </h1>
+      <div
+        style={{
+          background: '#1A0A0A',
+          border: '1px solid #2A1A1A',
+          borderRadius: 12,
+          padding: 24,
+        }}
+      >
         <div style={{ display: 'grid', gap: 16 }}>
           {fields.map((f) => (
             <div key={f.label}>
-              <label style={{ fontSize: 12, color: '#9A8A7A', textTransform: 'uppercase' }}>{f.label}</label>
+              <label style={{ fontSize: 12, color: '#9A8A7A', textTransform: 'uppercase' }}>
+                {f.label}
+              </label>
               <p style={{ color: f.color || '#fff', marginTop: 4 }}>{f.value}</p>
             </div>
           ))}

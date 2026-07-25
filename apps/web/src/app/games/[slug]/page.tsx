@@ -79,7 +79,10 @@ function GameDetailPageContent(): React.JSX.Element {
           </div>
         </>
       ) : error ? (
-        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 200px)' }}>
+        <div
+          className="flex items-center justify-center"
+          style={{ minHeight: 'calc(100vh - 200px)' }}
+        >
           <ErrorState
             title="Failed to load game"
             description={error}
@@ -116,14 +119,19 @@ function GameDetailPageContent(): React.JSX.Element {
                     </span>
                     <span
                       className="px-3 py-1 rounded-full text-xs font-medium"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)' }}
+                      style={{
+                        backgroundColor: 'rgba(255,255,255,0.1)',
+                        color: 'rgba(255,255,255,0.6)',
+                      }}
                     >
                       {game.difficulty}
                     </span>
                   </div>
                   <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">{game.title}</h1>
                   <div className="flex items-center gap-4 text-sm text-white/60 mb-4">
-                    <span>⭐ {game.rating.toFixed(1)} ({game.totalRatings} ratings)</span>
+                    <span>
+                      ⭐ {game.rating.toFixed(1)} ({game.totalRatings} ratings)
+                    </span>
                     <span>·</span>
                     <span>{game.estimatedTime}</span>
                     <span>·</span>
@@ -238,7 +246,10 @@ function GameDetailPageContent(): React.JSX.Element {
                       <span className="text-white font-medium">{game.currentPlayers}</span>
                     </div>
                   </div>
-                  <div className="mt-6 pt-6" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                  <div
+                    className="mt-6 pt-6"
+                    style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}
+                  >
                     <Link href={`/watch/${game.id}`}>
                       <motion.button
                         type="button"
@@ -273,7 +284,9 @@ function GameDetailPageContent(): React.JSX.Element {
                         className="w-full h-32 object-cover"
                       />
                       <div className="p-3">
-                        <h4 className="text-sm font-semibold text-white truncate">{related.title}</h4>
+                        <h4 className="text-sm font-semibold text-white truncate">
+                          {related.title}
+                        </h4>
                       </div>
                     </div>
                   </Link>
@@ -293,7 +306,13 @@ const LazyGameDetailPage = lazy(() => Promise.resolve({ default: GameDetailPageC
 
 export default function GameDetailPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyGameDetailPage />
     </Suspense>
   );

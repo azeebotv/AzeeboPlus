@@ -81,10 +81,7 @@ function CharacterDetailContent(): React.JSX.Element {
                 transition={{ duration: 0.5 }}
               >
                 <div className="flex items-center gap-2 mb-4">
-                  <Link
-                    href="/vertical"
-                    className="text-sm text-[#E8420A] hover:underline"
-                  >
+                  <Link href="/vertical" className="text-sm text-[#E8420A] hover:underline">
                     Vertical
                   </Link>
                   {character.storyworld && (
@@ -123,7 +120,9 @@ function CharacterDetailContent(): React.JSX.Element {
               <div>
                 <GlowCard universe="vertical">
                   <div className="p-5 space-y-4">
-                    <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider">Details</h3>
+                    <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider">
+                      Details
+                    </h3>
                     {character.storyworld && (
                       <div>
                         <p className="text-xs text-white/40">Storyworld</p>
@@ -179,7 +178,13 @@ const LazyCharacterDetail = lazy(() => Promise.resolve({ default: CharacterDetai
 
 export default function CharacterDetailPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyCharacterDetail />
     </Suspense>
   );

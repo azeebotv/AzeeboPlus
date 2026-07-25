@@ -14,7 +14,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/contexts/AuthContext';
-import { useWalletBalance, useWalletTransactions, useFundWallet, useWithdraw } from '../../src/hooks/useWalletQuery';
+import {
+  useWalletBalance,
+  useWalletTransactions,
+  useFundWallet,
+  useWithdraw,
+} from '../../src/hooks/useWalletQuery';
 import { colors } from '../../src/theme';
 
 export default function WalletScreen() {
@@ -146,7 +151,12 @@ export default function WalletScreen() {
         ]}
       >
         <Text style={styles.lockIcon}>🔒</Text>
-        <Text style={[styles.lockText, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}>
+        <Text
+          style={[
+            styles.lockText,
+            { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+          ]}
+        >
           Please log in to view your wallet
         </Text>
       </SafeAreaView>
@@ -155,7 +165,10 @@ export default function WalletScreen() {
 
   return (
     <SafeAreaView
-      style={[styles.container, { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#fff' }]}
+      style={[
+        styles.container,
+        { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#fff' },
+      ]}
     >
       <ScrollView
         style={styles.scrollView}
@@ -166,7 +179,12 @@ export default function WalletScreen() {
         }
       >
         <View style={styles.header}>
-          <Text style={[styles.greeting, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}>
+          <Text
+            style={[
+              styles.greeting,
+              { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+            ]}
+          >
             Hello, {user?.name || 'User'}
           </Text>
           <Text style={styles.title}>My Wallet</Text>
@@ -194,18 +212,31 @@ export default function WalletScreen() {
         </View>
 
         <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.actionButton} onPress={() => setShowFundModal(true)} accessibilityLabel="Fund Wallet">
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => setShowFundModal(true)}
+            accessibilityLabel="Fund Wallet"
+          >
             <Text style={styles.actionIcon}>💎</Text>
             <Text style={styles.actionLabel}>Fund Wallet</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={() => setShowWithdrawModal(true)} accessibilityLabel="Withdraw">
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => setShowWithdrawModal(true)}
+            accessibilityLabel="Withdraw"
+          >
             <Text style={styles.actionIcon}>🏦</Text>
             <Text style={styles.actionLabel}>Withdraw</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.transactionsSection}>
-          <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}>
+          <Text
+            style={[
+              styles.sectionTitle,
+              { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+            ]}
+          >
             Recent Transactions
           </Text>
 
@@ -214,11 +245,19 @@ export default function WalletScreen() {
           ) : transactions.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>📭</Text>
-              <Text style={[styles.emptyText, { color: colorScheme === 'dark' ? colors.text.tertiary : '#999' }]}>
+              <Text
+                style={[
+                  styles.emptyText,
+                  { color: colorScheme === 'dark' ? colors.text.tertiary : '#999' },
+                ]}
+              >
                 No transactions yet
               </Text>
               <Text
-                style={[styles.emptySubtext, { color: colorScheme === 'dark' ? colors.text.muted : '#ccc' }]}
+                style={[
+                  styles.emptySubtext,
+                  { color: colorScheme === 'dark' ? colors.text.muted : '#ccc' },
+                ]}
               >
                 Your transaction history will appear here
               </Text>
@@ -281,7 +320,12 @@ export default function WalletScreen() {
               { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#fff' },
             ]}
           >
-            <Text style={[styles.modalTitle, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}>
+            <Text
+              style={[
+                styles.modalTitle,
+                { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+              ]}
+            >
               Fund Wallet
             </Text>
 
@@ -366,7 +410,12 @@ export default function WalletScreen() {
               { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#fff' },
             ]}
           >
-            <Text style={[styles.modalTitle, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}>
+            <Text
+              style={[
+                styles.modalTitle,
+                { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+              ]}
+            >
               Withdraw Funds
             </Text>
 

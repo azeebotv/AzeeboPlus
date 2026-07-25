@@ -186,7 +186,14 @@ function EventDetailPageContent(): React.JSX.Element {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <circle cx="18" cy="5" r="3" />
                     <circle cx="6" cy="12" r="3" />
                     <circle cx="18" cy="19" r="3" />
@@ -203,7 +210,10 @@ function EventDetailPageContent(): React.JSX.Element {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
                     className="absolute bottom-16 right-4 p-2 rounded-lg"
-                    style={{ backgroundColor: '#1A0A0A', border: '1px solid rgba(255,255,255,0.1)' }}
+                    style={{
+                      backgroundColor: '#1A0A0A',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                    }}
                   >
                     <button
                       type="button"
@@ -227,7 +237,14 @@ function EventDetailPageContent(): React.JSX.Element {
               <ScrollReveal delay={0.1}>
                 <div className="flex flex-wrap items-center gap-4 mb-6 text-sm text-white/60">
                   <div className="flex items-center gap-2">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
                       <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                       <line x1="16" y1="2" x2="16" y2="6" />
                       <line x1="8" y1="2" x2="8" y2="6" />
@@ -236,7 +253,14 @@ function EventDetailPageContent(): React.JSX.Element {
                     <span>{formatDate(event.date).full}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
                       <circle cx="12" cy="12" r="10" />
                       <polyline points="12 6 12 12 16 14" />
                     </svg>
@@ -247,11 +271,22 @@ function EventDetailPageContent(): React.JSX.Element {
 
               <ScrollReveal delay={0.2}>
                 <div className="flex items-center gap-2 mb-6 text-sm text-white/60">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                     <circle cx="12" cy="10" r="3" />
                   </svg>
-                  <span>{event.venue}{event.city ? `, ${event.city}` : ''}{event.country ? `, ${event.country}` : ''}</span>
+                  <span>
+                    {event.venue}
+                    {event.city ? `, ${event.city}` : ''}
+                    {event.country ? `, ${event.country}` : ''}
+                  </span>
                   {event.venue && (
                     <a
                       href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.venue)}`}
@@ -268,7 +303,9 @@ function EventDetailPageContent(): React.JSX.Element {
               <ScrollReveal delay={0.3}>
                 <div className="az-glass p-6 rounded-xl mb-6">
                   <h2 className="text-lg font-bold text-white mb-4">About This Event</h2>
-                  <p className="text-white/70 leading-relaxed whitespace-pre-wrap">{event.description}</p>
+                  <p className="text-white/70 leading-relaxed whitespace-pre-wrap">
+                    {event.description}
+                  </p>
                 </div>
               </ScrollReveal>
 
@@ -279,7 +316,10 @@ function EventDetailPageContent(): React.JSX.Element {
                       <span
                         key={tag}
                         className="px-3 py-1 rounded-full text-xs font-medium"
-                        style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)' }}
+                        style={{
+                          backgroundColor: 'rgba(255,255,255,0.05)',
+                          color: 'rgba(255,255,255,0.6)',
+                        }}
                       >
                         #{tag}
                       </span>
@@ -295,7 +335,11 @@ function EventDetailPageContent(): React.JSX.Element {
                   <GlowCard className="p-6">
                     <div className="text-center mb-4">
                       <p className="text-3xl font-bold text-white mb-1">
-                        {event.price != null ? (event.price === 0 ? 'Free' : `₦${event.price.toLocaleString()}`) : 'Free'}
+                        {event.price != null
+                          ? event.price === 0
+                            ? 'Free'
+                            : `₦${event.price.toLocaleString()}`
+                          : 'Free'}
                       </p>
                       <p className="text-sm text-white/50">per person</p>
                     </div>
@@ -312,11 +356,7 @@ function EventDetailPageContent(): React.JSX.Element {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      {rsvpMutation.isPending
-                        ? 'Processing...'
-                        : rsvped
-                          ? 'Going ✓'
-                          : 'RSVP Now'}
+                      {rsvpMutation.isPending ? 'Processing...' : rsvped ? 'Going ✓' : 'RSVP Now'}
                     </motion.button>
                     {event.isVirtual && event.virtualLink && (
                       <motion.a
@@ -341,7 +381,14 @@ function EventDetailPageContent(): React.JSX.Element {
                           className="w-10 h-10 rounded-lg flex items-center justify-center"
                           style={{ backgroundColor: 'rgba(232,66,10,0.15)' }}
                         >
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E8420A" strokeWidth="2">
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#E8420A"
+                            strokeWidth="2"
+                          >
                             <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                             <line x1="16" y1="2" x2="16" y2="6" />
                             <line x1="8" y1="2" x2="8" y2="6" />
@@ -350,7 +397,9 @@ function EventDetailPageContent(): React.JSX.Element {
                         </div>
                         <div>
                           <p className="text-xs text-white/40">Date & Time</p>
-                          <p className="text-sm font-medium text-white">{formatDate(event.date).full}</p>
+                          <p className="text-sm font-medium text-white">
+                            {formatDate(event.date).full}
+                          </p>
                           <p className="text-xs text-white/50">{formatDate(event.date).time}</p>
                         </div>
                       </div>
@@ -359,7 +408,14 @@ function EventDetailPageContent(): React.JSX.Element {
                           className="w-10 h-10 rounded-lg flex items-center justify-center"
                           style={{ backgroundColor: 'rgba(232,66,10,0.15)' }}
                         >
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E8420A" strokeWidth="2">
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#E8420A"
+                            strokeWidth="2"
+                          >
                             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                             <circle cx="12" cy="10" r="3" />
                           </svg>
@@ -374,7 +430,14 @@ function EventDetailPageContent(): React.JSX.Element {
                           className="w-10 h-10 rounded-lg flex items-center justify-center"
                           style={{ backgroundColor: 'rgba(232,66,10,0.15)' }}
                         >
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E8420A" strokeWidth="2">
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#E8420A"
+                            strokeWidth="2"
+                          >
                             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                             <circle cx="9" cy="7" r="4" />
                             <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
@@ -395,7 +458,14 @@ function EventDetailPageContent(): React.JSX.Element {
                             className="w-10 h-10 rounded-lg flex items-center justify-center"
                             style={{ backgroundColor: 'rgba(232,66,10,0.15)' }}
                           >
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E8420A" strokeWidth="2">
+                            <svg
+                              width="18"
+                              height="18"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="#E8420A"
+                              strokeWidth="2"
+                            >
                               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                             </svg>
                           </div>
@@ -415,7 +485,10 @@ function EventDetailPageContent(): React.JSX.Element {
                         {attendees.slice(0, 5).map((attendee) => (
                           <OptimizedImage
                             key={attendee.id}
-                            src={attendee.avatar || `https://ui-avatars.com/api/?name=${attendee.name}&background=E8420A&color=fff`}
+                            src={
+                              attendee.avatar ||
+                              `https://ui-avatars.com/api/?name=${attendee.name}&background=E8420A&color=fff`
+                            }
                             alt={attendee.name}
                             width={32}
                             height={32}
@@ -431,9 +504,7 @@ function EventDetailPageContent(): React.JSX.Element {
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-white/50">
-                        {attendees.length} people attending
-                      </p>
+                      <p className="text-sm text-white/50">{attendees.length} people attending</p>
                     </GlowCard>
                   )}
                 </div>

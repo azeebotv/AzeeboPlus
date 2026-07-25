@@ -1,6 +1,8 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '@prisma/client';
+import axios from 'axios';
 
 interface AuditLogEntry {
   actorId: string;
@@ -15,7 +17,27 @@ interface AuditLogEntry {
 
 @Injectable()
 export class AdminService {
-  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
+  private readonly contentServiceUrl: string;
+  private readonly moderationServiceUrl: string;
+  private readonly creatorServiceUrl: string;
+
+  constructor(
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(ConfigService) private configService: ConfigService
+  ) {
+    this.contentServiceUrl = this.configService.get<string>(
+      'CONTENT_SERVICE_URL',
+      'http://content-service:3004'
+    );
+    this.moderationServiceUrl = this.configService.get<string>(
+      'MODERATION_SERVICE_URL',
+      'http://moderation-service:3020'
+    );
+    this.creatorServiceUrl = this.configService.get<string>(
+      'CREATOR_SERVICE_URL',
+      'http://creator-service:3015'
+    );
+  }
 
   private async logAudit(entry: AuditLogEntry): Promise<void> {
     await this.prisma.auditLog.create({
@@ -377,35 +399,72 @@ export class AdminService {
   }
 
   async moderateContent(
-    _contentId: string,
-    _action: string,
-    _reason: string,
-    _actorId: string,
-    _actorRole: string
+    contentId: string,
+    action: string,
+    reason: string,
+    actorId: string,
+    actorRole: string
   ) {
-    // Content moderation is handled by content-service and moderation-service
-    throw new NotFoundException(
-      'Content moderation is handled by content-service. Use the content-service admin API instead.'
-    );
+    try {
+      const response = await axios.post(
+        `${this.contentServiceUrl}/v1/content/${contentId}/moderate`,
+        { action, reason, moderatorId: actorId },
+        {
+          timeout: 10000,
+          headers: { 'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', '') },
+        }
+      );
+      await this.logAudit({
+        actorId,
+        actorRole,
+        action: `content_moderate_${action}`,
+        targetType: 'content',
+        targetId: contentId,
+        details: { reason },
+      });
+      return response.data;
+    } catch (error) {
+      throw new NotFoundException(`Content moderation failed: ${(error as Error).message}`);
+    }
   }
 
-  async getModerationReports(_page = 1, _limit = 20, _status?: string) {
-    // Moderation reports are handled by moderation-service
-    throw new NotFoundException(
-      'Moderation reports are handled by moderation-service. Use the moderation-service admin API instead.'
-    );
+  async getModerationReports(page = 1, limit = 20, status?: string) {
+    try {
+      const response = await axios.get(`${this.moderationServiceUrl}/v1/moderation/cases`, {
+        params: { page, limit, status },
+        timeout: 10000,
+        headers: { 'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', '') },
+      });
+      return response.data;
+    } catch (error) {
+      throw new NotFoundException(
+        `Failed to fetch moderation reports: ${(error as Error).message}`
+      );
+    }
   }
 
-  async resolveReport(
-    _reportId: string,
-    _resolution: string,
-    _actorId: string,
-    _actorRole: string
-  ) {
-    // Report resolution is handled by moderation-service
-    throw new NotFoundException(
-      'Report resolution is handled by moderation-service. Use the moderation-service admin API instead.'
-    );
+  async resolveReport(reportId: string, resolution: string, actorId: string, actorRole: string) {
+    try {
+      const response = await axios.put(
+        `${this.moderationServiceUrl}/v1/moderation/cases/${reportId}/resolve`,
+        { resolution, resolvedBy: actorId },
+        {
+          timeout: 10000,
+          headers: { 'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', '') },
+        }
+      );
+      await this.logAudit({
+        actorId,
+        actorRole,
+        action: 'report_resolve',
+        targetType: 'moderation',
+        targetId: reportId,
+        details: { resolution },
+      });
+      return response.data;
+    } catch (error) {
+      throw new NotFoundException(`Failed to resolve report: ${(error as Error).message}`);
+    }
   }
 
   async getAuditLogs(page = 1, limit = 20, userId?: string) {
@@ -433,23 +492,48 @@ export class AdminService {
     };
   }
 
-  async getVerificationRequests(_page = 1, _limit = 20, _status?: string) {
-    // Creator verification is handled by creator-service
-    throw new NotFoundException(
-      'Creator verification is handled by creator-service. Use the creator-service admin API instead.'
-    );
+  async getVerificationRequests(page = 1, limit = 20, status?: string) {
+    try {
+      const response = await axios.get(`${this.creatorServiceUrl}/v1/creators/verification`, {
+        params: { page, limit, status },
+        timeout: 10000,
+        headers: { 'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', '') },
+      });
+      return response.data;
+    } catch (error) {
+      throw new NotFoundException(
+        `Failed to fetch verification requests: ${(error as Error).message}`
+      );
+    }
   }
 
   async verifyCreator(
-    _creatorId: string,
-    _status: string,
-    _notes: string | undefined,
-    _actorId: string,
-    _actorRole: string
+    creatorId: string,
+    status: string,
+    notes: string | undefined,
+    actorId: string,
+    actorRole: string
   ) {
-    // Creator verification is handled by creator-service
-    throw new NotFoundException(
-      'Creator verification is handled by creator-service. Use the creator-service admin API instead.'
-    );
+    try {
+      const response = await axios.put(
+        `${this.creatorServiceUrl}/v1/creators/${creatorId}/verify`,
+        { status, notes, verifiedBy: actorId },
+        {
+          timeout: 10000,
+          headers: { 'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', '') },
+        }
+      );
+      await this.logAudit({
+        actorId,
+        actorRole,
+        action: 'creator_verify',
+        targetType: 'creator',
+        targetId: creatorId,
+        details: { status, notes },
+      });
+      return response.data;
+    } catch (error) {
+      throw new NotFoundException(`Failed to verify creator: ${(error as Error).message}`);
+    }
   }
 }

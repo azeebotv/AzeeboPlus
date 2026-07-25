@@ -67,11 +67,28 @@ export default function FixtureDetailScreen() {
     }
   };
 
-  useEffect(() => { fetchData(); }, [id]);
+  useEffect(() => {
+    fetchData();
+  }, [id]);
 
-  if (isLoading) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><LoadingState text="Loading fixture..." /></SafeAreaView>;
-  if (error) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><ErrorState description={error} onRetry={fetchData} /></SafeAreaView>;
-  if (!fixture) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><EmptyState icon="⚽" title="Fixture not found" /></SafeAreaView>;
+  if (isLoading)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <LoadingState text="Loading fixture..." />
+      </SafeAreaView>
+    );
+  if (error)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <ErrorState description={error} onRetry={fetchData} />
+      </SafeAreaView>
+    );
+  if (!fixture)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <EmptyState icon="⚽" title="Fixture not found" />
+      </SafeAreaView>
+    );
 
   const renderStatBar = (label: string, home: number, away: number) => {
     const total = home + away || 1;
@@ -81,11 +98,18 @@ export default function FixtureDetailScreen() {
         <Text style={[styles.statValue, { color: isDark ? '#fff' : '#000' }]}>{home}</Text>
         <View style={styles.statBarContainer}>
           <View style={styles.statBar}>
-            <View style={[styles.statBarFill, { width: `${homePct}%`, backgroundColor: '#E74C3C' }]} />
+            <View
+              style={[styles.statBarFill, { width: `${homePct}%`, backgroundColor: '#E74C3C' }]}
+            />
           </View>
           <Text style={styles.statLabel}>{label}</Text>
           <View style={styles.statBar}>
-            <View style={[styles.statBarFillRight, { width: `${100 - homePct}%`, backgroundColor: '#888' }]} />
+            <View
+              style={[
+                styles.statBarFillRight,
+                { width: `${100 - homePct}%`, backgroundColor: '#888' },
+              ]}
+            />
           </View>
         </View>
         <Text style={[styles.statValue, { color: isDark ? '#fff' : '#000' }]}>{away}</Text>
@@ -99,7 +123,9 @@ export default function FixtureDetailScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>Fixture Detail</Text>
+        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+          Fixture Detail
+        </Text>
       </View>
 
       <ScrollView>
@@ -108,15 +134,23 @@ export default function FixtureDetailScreen() {
           <View style={styles.matchTeams}>
             <View style={styles.teamColumn}>
               <Text style={styles.teamEmoji}>🔵</Text>
-              <Text style={[styles.teamName, { color: isDark ? '#fff' : '#000' }]}>{fixture.homeTeam}</Text>
+              <Text style={[styles.teamName, { color: isDark ? '#fff' : '#000' }]}>
+                {fixture.homeTeam}
+              </Text>
             </View>
             <View style={styles.scoreColumn}>
-              <Text style={[styles.scoreText, { color: isDark ? '#fff' : '#000' }]}>{fixture.homeScore} - {fixture.awayScore}</Text>
-              <Text style={styles.statusText}>{fixture.status === 'finished' ? 'Full Time' : fixture.time}</Text>
+              <Text style={[styles.scoreText, { color: isDark ? '#fff' : '#000' }]}>
+                {fixture.homeScore} - {fixture.awayScore}
+              </Text>
+              <Text style={styles.statusText}>
+                {fixture.status === 'finished' ? 'Full Time' : fixture.time}
+              </Text>
             </View>
             <View style={styles.teamColumn}>
               <Text style={styles.teamEmoji}>🔴</Text>
-              <Text style={[styles.teamName, { color: isDark ? '#fff' : '#000' }]}>{fixture.awayTeam}</Text>
+              <Text style={[styles.teamName, { color: isDark ? '#fff' : '#000' }]}>
+                {fixture.awayTeam}
+              </Text>
             </View>
           </View>
           <Text style={styles.venueText}>📍 {fixture.venue}</Text>
@@ -154,11 +188,15 @@ export default function FixtureDetailScreen() {
                 style={[styles.predictionCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
                 onPress={() => Alert.alert('Prediction', `Place prediction on ${pred.label}?`)}
               >
-                <Text style={[styles.predictionLabel, { color: isDark ? '#fff' : '#000' }]}>{pred.label}</Text>
+                <Text style={[styles.predictionLabel, { color: isDark ? '#fff' : '#000' }]}>
+                  {pred.label}
+                </Text>
                 <Text style={styles.predictionOdds}>{pred.odds.toFixed(2)}</Text>
               </TouchableOpacity>
             ))}
-            {predictions.length === 0 && <Text style={styles.emptyText}>No predictions available</Text>}
+            {predictions.length === 0 && (
+              <Text style={styles.emptyText}>No predictions available</Text>
+            )}
           </View>
         )}
 
@@ -175,12 +213,25 @@ export default function FixtureDetailScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', padding: 16, paddingTop: 50, gap: 12 },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#2a2a2a', alignItems: 'center', justifyContent: 'center' },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backIcon: { color: '#fff', fontSize: 20 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
   matchCard: { margin: 16, padding: 20, borderRadius: 16, alignItems: 'center' },
   leagueText: { color: '#E74C3C', fontSize: 12, fontWeight: '600', marginBottom: 16 },
-  matchTeams: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', width: '100%', marginBottom: 16 },
+  matchTeams: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginBottom: 16,
+  },
   teamColumn: { alignItems: 'center', flex: 1 },
   teamEmoji: { fontSize: 40, marginBottom: 8 },
   teamName: { fontSize: 14, fontWeight: '700', textAlign: 'center' },
@@ -189,7 +240,13 @@ const styles = StyleSheet.create({
   statusText: { color: '#888', fontSize: 12 },
   venueText: { color: '#888', fontSize: 12 },
   tabBar: { flexDirection: 'row', paddingHorizontal: 16, marginBottom: 16 },
-  tab: { flex: 1, paddingVertical: 12, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
   tabActive: { borderBottomColor: '#E74C3C' },
   tabText: { color: '#888', fontSize: 14, fontWeight: '600' },
   tabTextActive: { color: '#E74C3C' },
@@ -202,7 +259,13 @@ const styles = StyleSheet.create({
   statBarFillRight: { height: 4, borderRadius: 2, marginLeft: 'auto' },
   statLabel: { color: '#888', fontSize: 11, marginVertical: 4 },
   predictionsSection: { paddingHorizontal: 16, gap: 10 },
-  predictionCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderRadius: 10 },
+  predictionCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 10,
+  },
   predictionLabel: { fontSize: 14, fontWeight: '600' },
   predictionOdds: { color: '#E74C3C', fontSize: 16, fontWeight: '700' },
   lineupsSection: { paddingHorizontal: 16 },

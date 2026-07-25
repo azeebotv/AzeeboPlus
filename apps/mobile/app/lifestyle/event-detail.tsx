@@ -138,7 +138,9 @@ export default function EventDetailScreen() {
               <Text style={styles.infoIcon}>📍</Text>
               <View style={styles.infoContent}>
                 <Text style={[styles.infoLabel, { color: colors.text.secondary }]}>Venue</Text>
-                <Text style={[styles.infoValue, { color: colors.text.primary }]}>{event.venue}</Text>
+                <Text style={[styles.infoValue, { color: colors.text.primary }]}>
+                  {event.venue}
+                </Text>
                 <Text style={[styles.infoSubtext, { color: colors.text.secondary }]}>
                   {event.location}
                 </Text>
@@ -167,14 +169,18 @@ export default function EventDetailScreen() {
                 <Text style={styles.infoIcon}>🎟️</Text>
                 <View style={styles.infoContent}>
                   <Text style={[styles.infoLabel, { color: colors.text.secondary }]}>Price</Text>
-                  <Text style={[styles.infoValue, { color: colors.primary[500] }]}>{event.price}</Text>
+                  <Text style={[styles.infoValue, { color: colors.primary[500] }]}>
+                    {event.price}
+                  </Text>
                 </View>
               </View>
             </View>
           )}
 
           <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>About</Text>
-          <Text style={[styles.description, { color: colors.text.secondary }]}>{event.description}</Text>
+          <Text style={[styles.description, { color: colors.text.secondary }]}>
+            {event.description}
+          </Text>
 
           <TouchableOpacity
             style={[styles.rsvpButton, event.isRsvpd && styles.rsvpButtonActive]}

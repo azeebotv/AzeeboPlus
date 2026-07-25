@@ -84,12 +84,18 @@ export default function ReferralHistoryPage(): React.JSX.Element {
   const referrals = referralsQuery.data ?? [];
   const codeData = codeQuery.data ?? {};
 
-  const totalReferrals = Number(statsData.totalReferrals ?? statsData.total ?? referrals.length ?? 0);
-  const totalEarned = Number(statsData.totalEarned ?? statsData.earned ?? statsData.totalEarnings ?? 0);
+  const totalReferrals = Number(
+    statsData.totalReferrals ?? statsData.total ?? referrals.length ?? 0
+  );
+  const totalEarned = Number(
+    statsData.totalEarned ?? statsData.earned ?? statsData.totalEarnings ?? 0
+  );
   const referralLink = String(codeData.link ?? codeData.referralLink ?? '');
 
-  const isLoading = authLoading || statsQuery.isLoading || referralsQuery.isLoading || codeQuery.isLoading;
-  const error = statsQuery.error?.message || referralsQuery.error?.message || codeQuery.error?.message || null;
+  const isLoading =
+    authLoading || statsQuery.isLoading || referralsQuery.isLoading || codeQuery.isLoading;
+  const error =
+    statsQuery.error?.message || referralsQuery.error?.message || codeQuery.error?.message || null;
 
   const copyToClipboard = async () => {
     try {
@@ -115,10 +121,7 @@ export default function ReferralHistoryPage(): React.JSX.Element {
         }}
       >
         <div style={{ marginBottom: 24 }}>
-          <Link
-            href="/referral"
-            style={{ color: '#9A8A7A', fontSize: 14, textDecoration: 'none' }}
-          >
+          <Link href="/referral" style={{ color: '#9A8A7A', fontSize: 14, textDecoration: 'none' }}>
             &larr; Back to Referral
           </Link>
         </div>
@@ -155,7 +158,11 @@ export default function ReferralHistoryPage(): React.JSX.Element {
             >
               {[
                 { label: 'Total Referrals', value: String(totalReferrals), color: '#E8420A' },
-                { label: 'Total Earned', value: `₦${totalEarned.toLocaleString()}`, color: '#22C55E' },
+                {
+                  label: 'Total Earned',
+                  value: `₦${totalEarned.toLocaleString()}`,
+                  color: '#22C55E',
+                },
                 {
                   label: 'Pending',
                   value: String(statsData.pendingReferrals ?? statsData.pending ?? 0),
@@ -183,7 +190,9 @@ export default function ReferralHistoryPage(): React.JSX.Element {
                 marginBottom: 24,
               }}
             >
-              <p style={{ color: '#9A8A7A', fontSize: 14, marginBottom: 8 }}>Share your referral code</p>
+              <p style={{ color: '#9A8A7A', fontSize: 14, marginBottom: 8 }}>
+                Share your referral code
+              </p>
               <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
                 <button
                   onClick={copyToClipboard}
@@ -248,7 +257,8 @@ export default function ReferralHistoryPage(): React.JSX.Element {
                           {ref.displayName || ref.username || ref.email}
                         </p>
                         <p style={{ color: '#9A8A7A', fontSize: 12 }}>
-                          Joined {new Date(ref.joinedAt || ref.createdAt || '').toLocaleDateString()}
+                          Joined{' '}
+                          {new Date(ref.joinedAt || ref.createdAt || '').toLocaleDateString()}
                         </p>
                       </div>
                       <div style={{ textAlign: 'right' }}>
@@ -275,7 +285,14 @@ export default function ReferralHistoryPage(): React.JSX.Element {
                           {ref.status}
                         </span>
                         {(ref.earningsGenerated ?? ref.reward ?? 0) > 0 && (
-                          <p style={{ color: '#22C55E', fontSize: 12, marginTop: 4, fontWeight: 600 }}>
+                          <p
+                            style={{
+                              color: '#22C55E',
+                              fontSize: 12,
+                              marginTop: 4,
+                              fontWeight: 600,
+                            }}
+                          >
                             +₦{(ref.earningsGenerated ?? ref.reward ?? 0).toLocaleString()}
                           </p>
                         )}

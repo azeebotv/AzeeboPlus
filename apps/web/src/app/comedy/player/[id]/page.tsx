@@ -115,7 +115,10 @@ function ClipPlayerContent(): React.JSX.Element {
               <div className="flex items-center gap-4 text-sm text-white/50 mb-4">
                 {clip.views != null && <span>{clip.views.toLocaleString()} views</span>}
                 {clip.duration && (
-                  <span>{Math.floor(clip.duration / 60)}:{(clip.duration % 60).toString().padStart(2, '0')}</span>
+                  <span>
+                    {Math.floor(clip.duration / 60)}:
+                    {(clip.duration % 60).toString().padStart(2, '0')}
+                  </span>
                 )}
               </div>
               <p className="text-white/60 leading-relaxed">{clip.description}</p>
@@ -152,7 +155,9 @@ function ClipPlayerContent(): React.JSX.Element {
                           </div>
                         </div>
                         <div className="p-3">
-                          <h3 className="font-semibold text-white text-sm truncate">{item.title}</h3>
+                          <h3 className="font-semibold text-white text-sm truncate">
+                            {item.title}
+                          </h3>
                           <p className="text-xs text-white/40 mt-1">
                             {item.views != null && `${item.views.toLocaleString()} views`}
                           </p>
@@ -176,7 +181,13 @@ const LazyClipPlayer = lazy(() => Promise.resolve({ default: ClipPlayerContent }
 
 export default function ClipPlayerPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyClipPlayer />
     </Suspense>
   );

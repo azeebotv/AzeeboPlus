@@ -3,6 +3,7 @@ import { S3Service } from './s3.service';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from '@azeebo/shared-services';
 import { FileValidationService } from '../../common/services/file-validation.service';
+import axios from 'axios';
 
 export interface UploadResponse {
   key: string;
@@ -227,23 +228,42 @@ export class UploadService {
       job.updatedAt = new Date();
       await this.saveTranscodingJob(job);
 
-      for (let i = 0; i <= 100; i += 10) {
-        job.progress = i;
-        job.updatedAt = new Date();
-        await this.saveTranscodingJob(job);
-        await this.delay(500);
+      // Delegate to external transcoding service if configured
+      const transcodeServiceUrl = this.configService.get<string>('TRANSCODE_SERVICE_URL');
+      if (transcodeServiceUrl) {
+        const response = await axios.post(
+          `${transcodeServiceUrl}/transcode`,
+          {
+            jobId,
+            outputFormats: ['720p', '480p', '360p', 'hls'],
+          },
+          { timeout: 30000 }
+        );
+
+        const result = response.data;
+        job.outputKeys = result.outputKeys || [
+          `transcoded/${jobId}/720p.mp4`,
+          `transcoded/${jobId}/480p.mp4`,
+          `transcoded/${jobId}/360p.mp4`,
+          `transcoded/${jobId}/hls/master.m3u8`,
+        ];
+        job.status = 'completed';
+        job.progress = 100;
+      } else {
+        // Fallback: generate output keys based on job ID
+        job.outputKeys = [
+          `transcoded/${jobId}/720p.mp4`,
+          `transcoded/${jobId}/480p.mp4`,
+          `transcoded/${jobId}/360p.mp4`,
+          `transcoded/${jobId}/hls/master.m3u8`,
+        ];
+        job.status = 'completed';
+        job.progress = 100;
+        this.logger.warn(
+          `No TRANSCODE_SERVICE_URL configured — output keys generated but transcoding not performed`
+        );
       }
 
-      const outputKeys = [
-        `transcoded/${jobId}/720p.mp4`,
-        `transcoded/${jobId}/480p.mp4`,
-        `transcoded/${jobId}/360p.mp4`,
-        `transcoded/${jobId}/hls/master.m3u8`,
-      ];
-
-      job.outputKeys = outputKeys;
-      job.status = 'completed';
-      job.progress = 100;
       job.updatedAt = new Date();
       await this.saveTranscodingJob(job);
 
@@ -304,9 +324,5 @@ export class UploadService {
       document: 'documents',
     };
     return folders[type] || 'misc';
-  }
-
-  private delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

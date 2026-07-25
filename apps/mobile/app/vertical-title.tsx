@@ -86,7 +86,9 @@ export default function VerticalTitleScreen() {
         apiClient.get<TimelineItem[]>(`/vertical/titles/${id}/timeline`),
       ]);
       setTitleData(titleRes);
-      try { analytics.verticalTitleViewed(titleRes.id); } catch {}
+      try {
+        analytics.verticalTitleViewed(titleRes.id);
+      } catch {}
       setCharacters(charsRes);
       setLoreData(loreRes);
       setTimeline(timelineRes);

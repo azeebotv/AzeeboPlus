@@ -62,7 +62,9 @@ function HighlightsPageContent(): React.JSX.Element {
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
         <ScrollReveal>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">Featured Highlights</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">
+            Featured Highlights
+          </h2>
         </ScrollReveal>
 
         {isLoading ? (
@@ -119,12 +121,15 @@ function HighlightsPageContent(): React.JSX.Element {
                           className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-xs font-medium"
                           style={{ backgroundColor: 'rgba(0,0,0,0.7)', color: '#fff' }}
                         >
-                          {Math.floor(highlight.duration / 60)}:{(highlight.duration % 60).toString().padStart(2, '0')}
+                          {Math.floor(highlight.duration / 60)}:
+                          {(highlight.duration % 60).toString().padStart(2, '0')}
                         </span>
                       )}
                     </div>
                     <div className="p-4">
-                      <h3 className="font-bold text-white text-sm mb-2 truncate">{highlight.title}</h3>
+                      <h3 className="font-bold text-white text-sm mb-2 truncate">
+                        {highlight.title}
+                      </h3>
                       <p className="text-sm text-white/50 line-clamp-2">{highlight.description}</p>
                     </div>
                   </GlowCard>
@@ -148,7 +153,13 @@ const LazyHighlightsPage = lazy(() => Promise.resolve({ default: HighlightsPageC
 
 export default function HighlightsPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyHighlightsPage />
     </Suspense>
   );

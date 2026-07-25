@@ -63,9 +63,7 @@ export function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-colors ${
-              destructive
-                ? 'bg-[#CC1C1C] text-white hover:bg-[#A31616]'
-                : 'az-btn-primary'
+              destructive ? 'bg-[#CC1C1C] text-white hover:bg-[#A31616]' : 'az-btn-primary'
             }`}
           >
             {confirmLabel}

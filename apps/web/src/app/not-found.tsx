@@ -9,10 +9,7 @@ export default function NotFound(): React.JSX.Element {
         <p className="text-white/60 mb-8">
           The page you are looking for does not exist or has been moved.
         </p>
-        <Link
-          href="/"
-          className="az-btn-primary inline-block"
-        >
+        <Link href="/" className="az-btn-primary inline-block">
           Go Home
         </Link>
       </div>

@@ -90,9 +90,7 @@ function PredictionsPageContent(): React.JSX.Element {
       {/* Prediction Markets */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
         <ScrollReveal>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">
-            Active Markets
-          </h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">Active Markets</h2>
         </ScrollReveal>
 
         {isLoading ? (
@@ -115,126 +113,134 @@ function PredictionsPageContent(): React.JSX.Element {
           />
         ) : markets.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {markets.filter((m) => m.status === 'open').map((market, index) => {
-              const timeLeft = new Date(market.deadline).getTime() - Date.now();
-              const isUrgent = timeLeft < 3600000 && timeLeft > 0;
+            {markets
+              .filter((m) => m.status === 'open')
+              .map((market, index) => {
+                const timeLeft = new Date(market.deadline).getTime() - Date.now();
+                const isUrgent = timeLeft < 3600000 && timeLeft > 0;
 
-              return (
-                <motion.div
-                  key={market.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <GlowCard universe="sports" className="overflow-hidden">
-                    <div className="p-5">
-                      <div className="flex items-center justify-between mb-3">
-                        <span
-                          className="px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                          style={{
-                            backgroundColor: isUrgent ? 'rgba(239,68,68,0.2)' : 'rgba(13,59,46,0.3)',
-                            color: isUrgent ? '#EF4444' : '#4ADE80',
-                          }}
-                        >
-                          {isUrgent ? 'Ending Soon' : 'Open'}
-                        </span>
-                        {market.totalPredictions != null && (
-                          <span className="text-xs text-white/40">
-                            {market.totalPredictions} predictions
-                          </span>
-                        )}
-                      </div>
-
-                      <h3 className="font-bold text-white text-lg mb-1">{market.title}</h3>
-                      <p className="text-sm text-white/50 mb-4">{market.description}</p>
-
-                      {/* Matchup */}
-                      <div
-                        className="flex items-center justify-between p-3 rounded-lg mb-4"
-                        style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
-                      >
-                        <div className="text-center flex-1">
-                          <p className="font-semibold text-white text-sm">{market.homeTeam}</p>
-                          <p className="text-xs text-[#4ADE80] mt-1">
-                            {market.homeOdds.toFixed(1)}x
-                          </p>
-                        </div>
-                        <div className="px-4">
-                          <span className="text-white/30 text-xs">VS</span>
-                        </div>
-                        <div className="text-center flex-1">
-                          <p className="font-semibold text-white text-sm">{market.awayTeam}</p>
-                          <p className="text-xs text-[#4ADE80] mt-1">
-                            {market.awayOdds.toFixed(1)}x
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Prediction Buttons */}
-                      <div className="grid grid-cols-3 gap-2 mb-4">
-                        <button
-                          type="button"
-                          onClick={() => handlePredict(market.id, 'home')}
-                          className="py-2.5 rounded-lg text-xs font-semibold transition-all"
-                          style={{
-                            backgroundColor: selectedBet === `${market.id}-home`
-                              ? '#4ADE80'
-                              : 'rgba(255,255,255,0.1)',
-                            color: selectedBet === `${market.id}-home` ? '#0D3B2E' : '#fff',
-                          }}
-                        >
-                          {market.homeTeam}
-                        </button>
-                        {market.drawOdds && (
-                          <button
-                            type="button"
-                            onClick={() => handlePredict(market.id, 'draw')}
-                            className="py-2.5 rounded-lg text-xs font-semibold transition-all"
+                return (
+                  <motion.div
+                    key={market.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <GlowCard universe="sports" className="overflow-hidden">
+                      <div className="p-5">
+                        <div className="flex items-center justify-between mb-3">
+                          <span
+                            className="px-2.5 py-0.5 rounded-full text-xs font-semibold"
                             style={{
-                              backgroundColor: selectedBet === `${market.id}-draw`
-                                ? '#4ADE80'
-                                : 'rgba(255,255,255,0.1)',
-                              color: selectedBet === `${market.id}-draw` ? '#0D3B2E' : '#fff',
+                              backgroundColor: isUrgent
+                                ? 'rgba(239,68,68,0.2)'
+                                : 'rgba(13,59,46,0.3)',
+                              color: isUrgent ? '#EF4444' : '#4ADE80',
                             }}
                           >
-                            Draw
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => handlePredict(market.id, 'away')}
-                          className="py-2.5 rounded-lg text-xs font-semibold transition-all"
-                          style={{
-                            backgroundColor: selectedBet === `${market.id}-away`
-                              ? '#4ADE80'
-                              : 'rgba(255,255,255,0.1)',
-                            color: selectedBet === `${market.id}-away` ? '#0D3B2E' : '#fff',
-                          }}
-                        >
-                          {market.awayTeam}
-                        </button>
-                      </div>
+                            {isUrgent ? 'Ending Soon' : 'Open'}
+                          </span>
+                          {market.totalPredictions != null && (
+                            <span className="text-xs text-white/40">
+                              {market.totalPredictions} predictions
+                            </span>
+                          )}
+                        </div>
 
-                      {/* Deadline */}
-                      <div className="flex items-center justify-between text-xs text-white/40">
-                        <span>
-                          Deadline: {new Date(market.deadline).toLocaleDateString('en-NG', {
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                        {market.prizePool != null && (
-                          <span>Prize: {market.prizePool.toLocaleString()} pts</span>
-                        )}
+                        <h3 className="font-bold text-white text-lg mb-1">{market.title}</h3>
+                        <p className="text-sm text-white/50 mb-4">{market.description}</p>
+
+                        {/* Matchup */}
+                        <div
+                          className="flex items-center justify-between p-3 rounded-lg mb-4"
+                          style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
+                        >
+                          <div className="text-center flex-1">
+                            <p className="font-semibold text-white text-sm">{market.homeTeam}</p>
+                            <p className="text-xs text-[#4ADE80] mt-1">
+                              {market.homeOdds.toFixed(1)}x
+                            </p>
+                          </div>
+                          <div className="px-4">
+                            <span className="text-white/30 text-xs">VS</span>
+                          </div>
+                          <div className="text-center flex-1">
+                            <p className="font-semibold text-white text-sm">{market.awayTeam}</p>
+                            <p className="text-xs text-[#4ADE80] mt-1">
+                              {market.awayOdds.toFixed(1)}x
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Prediction Buttons */}
+                        <div className="grid grid-cols-3 gap-2 mb-4">
+                          <button
+                            type="button"
+                            onClick={() => handlePredict(market.id, 'home')}
+                            className="py-2.5 rounded-lg text-xs font-semibold transition-all"
+                            style={{
+                              backgroundColor:
+                                selectedBet === `${market.id}-home`
+                                  ? '#4ADE80'
+                                  : 'rgba(255,255,255,0.1)',
+                              color: selectedBet === `${market.id}-home` ? '#0D3B2E' : '#fff',
+                            }}
+                          >
+                            {market.homeTeam}
+                          </button>
+                          {market.drawOdds && (
+                            <button
+                              type="button"
+                              onClick={() => handlePredict(market.id, 'draw')}
+                              className="py-2.5 rounded-lg text-xs font-semibold transition-all"
+                              style={{
+                                backgroundColor:
+                                  selectedBet === `${market.id}-draw`
+                                    ? '#4ADE80'
+                                    : 'rgba(255,255,255,0.1)',
+                                color: selectedBet === `${market.id}-draw` ? '#0D3B2E' : '#fff',
+                              }}
+                            >
+                              Draw
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handlePredict(market.id, 'away')}
+                            className="py-2.5 rounded-lg text-xs font-semibold transition-all"
+                            style={{
+                              backgroundColor:
+                                selectedBet === `${market.id}-away`
+                                  ? '#4ADE80'
+                                  : 'rgba(255,255,255,0.1)',
+                              color: selectedBet === `${market.id}-away` ? '#0D3B2E' : '#fff',
+                            }}
+                          >
+                            {market.awayTeam}
+                          </button>
+                        </div>
+
+                        {/* Deadline */}
+                        <div className="flex items-center justify-between text-xs text-white/40">
+                          <span>
+                            Deadline:{' '}
+                            {new Date(market.deadline).toLocaleDateString('en-NG', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                          {market.prizePool != null && (
+                            <span>Prize: {market.prizePool.toLocaleString()} pts</span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </GlowCard>
-                </motion.div>
-              );
-            })}
+                    </GlowCard>
+                  </motion.div>
+                );
+              })}
           </div>
         ) : (
           <div className="text-center py-12">
@@ -252,7 +258,13 @@ const LazyPredictionsPage = lazy(() => Promise.resolve({ default: PredictionsPag
 
 export default function PredictionsPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyPredictionsPage />
     </Suspense>
   );

@@ -171,7 +171,10 @@ function TitleDetailPageContent(): React.JSX.Element {
                 {title.status && (
                   <span
                     className="px-3 py-1 rounded-full text-xs font-semibold"
-                    style={{ backgroundColor: getStatusStyle(title.status).bg, color: getStatusStyle(title.status).text }}
+                    style={{
+                      backgroundColor: getStatusStyle(title.status).bg,
+                      color: getStatusStyle(title.status).text,
+                    }}
                   >
                     {getStatusStyle(title.status).label}
                   </span>
@@ -210,9 +213,11 @@ function TitleDetailPageContent(): React.JSX.Element {
                 onClick={() => setActiveTab(tab)}
                 className="px-4 py-2 rounded-full text-sm font-semibold transition-all capitalize"
                 style={{
-                  backgroundColor: activeTab === tab ? 'rgba(232,66,10,0.2)' : 'rgba(255,255,255,0.05)',
+                  backgroundColor:
+                    activeTab === tab ? 'rgba(232,66,10,0.2)' : 'rgba(255,255,255,0.05)',
                   color: activeTab === tab ? '#E8420A' : 'rgba(255,255,255,0.6)',
-                  border: activeTab === tab ? '1px solid rgba(232,66,10,0.3)' : '1px solid transparent',
+                  border:
+                    activeTab === tab ? '1px solid rgba(232,66,10,0.3)' : '1px solid transparent',
                 }}
               >
                 {tab} ({tab === 'episodes' ? episodes.length : characters.length})
@@ -260,9 +265,13 @@ function TitleDetailPageContent(): React.JSX.Element {
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs text-[#E8420A] mb-1">Episode {episode.episodeNumber}</p>
+                          <p className="text-xs text-[#E8420A] mb-1">
+                            Episode {episode.episodeNumber}
+                          </p>
                           <h3 className="font-semibold text-white truncate">{episode.title}</h3>
-                          <p className="text-xs text-white/50 mt-1 line-clamp-2">{episode.description}</p>
+                          <p className="text-xs text-white/50 mt-1 line-clamp-2">
+                            {episode.description}
+                          </p>
                           <p className="text-xs text-white/30 mt-2">
                             {new Date(episode.releaseDate).toLocaleDateString('en-NG', {
                               month: 'short',
@@ -317,19 +326,26 @@ function TitleDetailPageContent(): React.JSX.Element {
                             {character.role && (
                               <span
                                 className="text-xs px-2 py-0.5 rounded-full capitalize"
-                                style={{ backgroundColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)' }}
+                                style={{
+                                  backgroundColor: 'rgba(255,255,255,0.1)',
+                                  color: 'rgba(255,255,255,0.6)',
+                                }}
                               >
                                 {character.role}
                               </span>
                             )}
                           </div>
                         </div>
-                        <p className="text-sm text-white/50 line-clamp-2">{character.description}</p>
+                        <p className="text-sm text-white/50 line-clamp-2">
+                          {character.description}
+                        </p>
                       </GlowCard>
                     </motion.div>
                   ))
                 ) : (
-                  <p className="col-span-full text-center text-white/50 py-8">No characters available</p>
+                  <p className="col-span-full text-center text-white/50 py-8">
+                    No characters available
+                  </p>
                 )}
               </div>
             </ScrollReveal>
@@ -357,7 +373,9 @@ function TitleDetailPageContent(): React.JSX.Element {
                           className="w-full h-28 object-cover"
                         />
                         <div className="p-3">
-                          <h3 className="font-semibold text-white text-sm truncate">{related.name}</h3>
+                          <h3 className="font-semibold text-white text-sm truncate">
+                            {related.name}
+                          </h3>
                           {related.genre && (
                             <p className="text-xs text-white/50 mt-1">{related.genre}</p>
                           )}

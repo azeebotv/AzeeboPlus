@@ -82,7 +82,9 @@ function TournamentsPageContent(): React.JSX.Element {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
           >
-            <span>{tournaments.filter((t) => t.status === 'registration').length} open for registration</span>
+            <span>
+              {tournaments.filter((t) => t.status === 'registration').length} open for registration
+            </span>
             <span>{tournaments.filter((t) => t.status === 'in_progress').length} in progress</span>
           </motion.div>
         </div>
@@ -148,7 +150,8 @@ function TournamentsPageContent(): React.JSX.Element {
                       </div>
                       <div className="absolute bottom-3 left-3">
                         <p className="text-white text-xl font-bold">
-                          {tournament.prizePool.toLocaleString()} {tournament.prizeCurrency || 'pts'}
+                          {tournament.prizePool.toLocaleString()}{' '}
+                          {tournament.prizeCurrency || 'pts'}
                         </p>
                         <p className="text-white/60 text-xs">Prize Pool</p>
                       </div>
@@ -178,7 +181,10 @@ function TournamentsPageContent(): React.JSX.Element {
                         {tournament.participants != null && (
                           <span>
                             {tournament.participants}
-                            {tournament.maxParticipants ? `/${tournament.maxParticipants}` : ''} players
+                            {tournament.maxParticipants
+                              ? `/${tournament.maxParticipants}`
+                              : ''}{' '}
+                            players
                           </span>
                         )}
                       </div>
@@ -222,7 +228,13 @@ const LazyTournamentsPage = lazy(() => Promise.resolve({ default: TournamentsPag
 
 export default function TournamentsPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyTournamentsPage />
     </Suspense>
   );

@@ -4,13 +4,34 @@ import { creatorApi } from '@/lib/api/creator';
 import type { DashboardStats } from '@/lib/creator-types';
 
 const statCard = (label: string, value: string | number, change: string, icon: string) => (
-  <div key={label} style={{ padding: 20, borderRadius: 12, border: '1px solid #2A1A1A', backgroundColor: 'rgba(26,10,10,0.5)', flex: 1, minWidth: 200 }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+  <div
+    key={label}
+    style={{
+      padding: 20,
+      borderRadius: 12,
+      border: '1px solid #2A1A1A',
+      backgroundColor: 'rgba(26,10,10,0.5)',
+      flex: 1,
+      minWidth: 200,
+    }}
+  >
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 12,
+      }}
+    >
       <span style={{ fontSize: 13, color: '#9A8A7A' }}>{label}</span>
       <span style={{ fontSize: 20 }}>{icon}</span>
     </div>
-    <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{typeof value === 'number' ? value.toLocaleString() : value}</div>
-    <span style={{ fontSize: 12, color: change.startsWith('+') ? '#0D3B2E' : '#CC1C1C' }}>{change}</span>
+    <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>
+      {typeof value === 'number' ? value.toLocaleString() : value}
+    </div>
+    <span style={{ fontSize: 12, color: change.startsWith('+') ? '#0D3B2E' : '#CC1C1C' }}>
+      {change}
+    </span>
   </div>
 );
 
@@ -26,7 +47,9 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Welcome back{user?.name ? `, ${user.name}` : ''}</h1>
+      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>
+        Welcome back{user?.name ? `, ${user.name}` : ''}
+      </h1>
       <p style={{ color: '#9A8A7A', marginBottom: 24 }}>Here's your creator dashboard</p>
 
       {isLoading ? (
@@ -36,7 +59,12 @@ export default function DashboardPage() {
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 32 }}>
             {statCard('Total Views', data.totalViews, data.viewsChange, '👁️')}
             {statCard('Subscribers', data.subscribers, data.subscribersChange, '👥')}
-            {statCard('Earnings', `$${data.totalEarnings.toLocaleString()}`, data.earningsChange, '💰')}
+            {statCard(
+              'Earnings',
+              `$${data.totalEarnings.toLocaleString()}`,
+              data.earningsChange,
+              '💰'
+            )}
             {statCard('Content', data.contentCount, data.contentChange, '🎬')}
           </div>
         </>

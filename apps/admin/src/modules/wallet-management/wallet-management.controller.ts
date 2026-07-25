@@ -1,4 +1,4 @@
-import { Inject, Controller, Get, Param, Query, UseGuards  } from '@nestjs/common';
+import { Inject, Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { WalletManagementService } from './wallet-management.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -8,7 +8,9 @@ import { Roles } from '../auth/decorators/roles.decorator';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin', 'superadmin')
 export class WalletManagementController {
-  constructor(@Inject(WalletManagementService) private readonly walletService: WalletManagementService) {}
+  constructor(
+    @Inject(WalletManagementService) private readonly walletService: WalletManagementService
+  ) {}
 
   @Get()
   async getWallets(@Query('page') page = 1, @Query('limit') limit = 20) {

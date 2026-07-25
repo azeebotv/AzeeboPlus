@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -10,7 +11,7 @@ import { Inject,
   UseGuards,
   Logger,
   Req,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { Prisma } from '../../generated/prisma';
 import { SystemSettingsService } from './system-settings.service';

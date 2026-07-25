@@ -29,6 +29,8 @@ async function enforceDataRetention(): Promise<RetentionResult> {
 
       // Delete analytics PII after retention period
       if (policy.classification === DataClassification.PII) {
+        const piiCategories = Object.values(PiiCategory);
+        console.log(`Processing PII retention for categories: ${piiCategories.join(', ')}`);
         const deleteResult = await prisma.analyticsEvent.deleteMany({
           where: {
             createdAt: { lt: cutoffDate },

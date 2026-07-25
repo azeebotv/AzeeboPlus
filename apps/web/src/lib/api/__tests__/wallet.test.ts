@@ -36,7 +36,11 @@ describe('Wallet API Methods', () => {
 
       await wallet.getTransactions();
 
-      expect(client.request).toHaveBeenCalledWith('/api/v1/wallet/transactions?page=1&limit=20', {}, { skipRetry: true });
+      expect(client.request).toHaveBeenCalledWith(
+        '/api/v1/wallet/transactions?page=1&limit=20',
+        {},
+        { skipRetry: true }
+      );
     });
 
     it('should support custom pagination', async () => {
@@ -47,7 +51,11 @@ describe('Wallet API Methods', () => {
 
       await wallet.getTransactions(2, 10);
 
-      expect(client.request).toHaveBeenCalledWith('/api/v1/wallet/transactions?page=2&limit=10', {}, { skipRetry: true });
+      expect(client.request).toHaveBeenCalledWith(
+        '/api/v1/wallet/transactions?page=2&limit=10',
+        {},
+        { skipRetry: true }
+      );
     });
   });
 
@@ -110,7 +118,11 @@ describe('Wallet API Methods', () => {
 
       const result = await wallet.getTransaction('tx-1');
 
-      expect(client.request).toHaveBeenCalledWith('/api/v1/wallet/transactions/tx-1', {}, { skipRetry: true });
+      expect(client.request).toHaveBeenCalledWith(
+        '/api/v1/wallet/transactions/tx-1',
+        {},
+        { skipRetry: true }
+      );
       expect(result.data).toEqual(mockTx);
     });
   });
@@ -126,7 +138,11 @@ describe('Wallet API Methods', () => {
 
       await wallet.getEarnings({ range: '30d' });
 
-      expect(client.request).toHaveBeenCalledWith('/api/v1/wallet/earnings?range=30d', {}, { skipRetry: true });
+      expect(client.request).toHaveBeenCalledWith(
+        '/api/v1/wallet/earnings?range=30d',
+        {},
+        { skipRetry: true }
+      );
     });
   });
 });

@@ -42,7 +42,8 @@ export default function FixturesScreen() {
   const error = fixturesQuery.error?.message;
   const allFixtures = fixturesQuery.data ?? [];
 
-  const filteredFixtures = filter === 'all' ? allFixtures : allFixtures.filter(f => f.status === filter);
+  const filteredFixtures =
+    filter === 'all' ? allFixtures : allFixtures.filter((f) => f.status === filter);
 
   const groupedFixtures = filteredFixtures.reduce<Record<string, Fixture[]>>((acc, fixture) => {
     const date = fixture.date;
@@ -75,7 +76,11 @@ export default function FixturesScreen() {
   if (!allFixtures.length) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
-        <EmptyState icon="⚽" title="No fixtures" description="Check back later for upcoming fixtures" />
+        <EmptyState
+          icon="⚽"
+          title="No fixtures"
+          description="Check back later for upcoming fixtures"
+        />
       </SafeAreaView>
     );
   }
@@ -86,7 +91,9 @@ export default function FixturesScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>Fixtures</Text>
+        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+          Fixtures
+        </Text>
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterBar}>
@@ -108,7 +115,9 @@ export default function FixturesScreen() {
         keyExtractor={(item) => item.id}
         renderSectionHeader={({ section }) => (
           <View style={[styles.sectionHeader, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
-            <Text style={[styles.sectionDate, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>{section.title}</Text>
+            <Text style={[styles.sectionDate, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+              {section.title}
+            </Text>
           </View>
         )}
         renderItem={({ item }) => (
@@ -127,11 +136,15 @@ export default function FixturesScreen() {
             <View style={styles.fixtureTeams}>
               <View style={styles.teamInfo}>
                 <Text style={styles.teamEmoji}>🔵</Text>
-                <Text style={[styles.teamName, { color: isDark ? '#fff' : '#000' }]}>{item.homeTeam}</Text>
+                <Text style={[styles.teamName, { color: isDark ? '#fff' : '#000' }]}>
+                  {item.homeTeam}
+                </Text>
               </View>
               {item.homeScore !== undefined ? (
                 <View style={styles.scoreBox}>
-                  <Text style={[styles.scoreText, { color: isDark ? '#fff' : '#000' }]}>{item.homeScore} - {item.awayScore}</Text>
+                  <Text style={[styles.scoreText, { color: isDark ? '#fff' : '#000' }]}>
+                    {item.homeScore} - {item.awayScore}
+                  </Text>
                 </View>
               ) : (
                 <View style={styles.vsBox}>
@@ -139,7 +152,9 @@ export default function FixturesScreen() {
                 </View>
               )}
               <View style={[styles.teamInfo, styles.teamInfoRight]}>
-                <Text style={[styles.teamName, { color: isDark ? '#fff' : '#000' }]}>{item.awayTeam}</Text>
+                <Text style={[styles.teamName, { color: isDark ? '#fff' : '#000' }]}>
+                  {item.awayTeam}
+                </Text>
                 <Text style={styles.teamEmoji}>🔴</Text>
               </View>
             </View>
@@ -155,11 +170,24 @@ export default function FixturesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', padding: 16, paddingTop: 50, gap: 12 },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#2a2a2a', alignItems: 'center', justifyContent: 'center' },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backIcon: { color: '#fff', fontSize: 20 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
   filterBar: { paddingHorizontal: 16, marginBottom: 12, maxHeight: 50 },
-  filterChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#1a1a1a', marginRight: 10 },
+  filterChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#1a1a1a',
+    marginRight: 10,
+  },
   filterChipActive: { backgroundColor: '#E74C3C' },
   filterText: { color: '#888', fontSize: 13, fontWeight: '600' },
   filterTextActive: { color: '#fff' },
@@ -167,18 +195,38 @@ const styles = StyleSheet.create({
   sectionDate: { fontSize: 14, fontWeight: '700', color: '#E74C3C' },
   listContent: { paddingBottom: 30 },
   fixtureCard: { marginHorizontal: 16, marginBottom: 12, padding: 16, borderRadius: 12 },
-  fixtureLeague: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  fixtureLeague: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   leagueText: { color: '#888', fontSize: 12 },
-  statusBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, backgroundColor: '#2a2a2a' },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    backgroundColor: '#2a2a2a',
+  },
   statusLive: { backgroundColor: '#E74C3C' },
   statusText: { color: '#888', fontSize: 11, fontWeight: '600' },
   statusTextLive: { color: '#fff' },
-  fixtureTeams: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  fixtureTeams: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
   teamInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
   teamInfoRight: { justifyContent: 'flex-end' },
   teamEmoji: { fontSize: 24 },
   teamName: { fontSize: 14, fontWeight: '600' },
-  scoreBox: { backgroundColor: '#2a2a2a', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
+  scoreBox: {
+    backgroundColor: '#2a2a2a',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
   scoreText: { fontSize: 20, fontWeight: '700' },
   vsBox: { paddingHorizontal: 20 },
   vsText: { color: '#888', fontSize: 16, fontWeight: '600' },

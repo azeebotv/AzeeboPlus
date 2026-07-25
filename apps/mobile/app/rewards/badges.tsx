@@ -271,7 +271,13 @@ const styles = StyleSheet.create({
   },
   badgeIconText: { fontSize: 24 },
   badgeIconTextLocked: { opacity: 0.5 },
-  badgeName: { fontSize: 11, fontWeight: '600', color: '#FFFFFF', textAlign: 'center', marginBottom: 4 },
+  badgeName: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
   badgeNameLocked: { color: '#6B7280' },
   badgeEarnedLabel: { fontSize: 10, color: '#10B981', fontWeight: '600' },
   miniProgressTrack: {

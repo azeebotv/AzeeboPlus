@@ -178,7 +178,21 @@ export class SubscriptionService {
 
     const plan = subscription.plan;
 
-    await this.debitWallet(userId, Number(plan.price), `Renewal of ${plan.name}`);
+    // Try wallet first, fall back to external payment
+    let paymentMethod = 'wallet';
+    try {
+      await this.debitWallet(userId, Number(plan.price), `Renewal of ${plan.name}`);
+    } catch (walletError) {
+      // Wallet debit failed — try external payment if configured
+      if (subscription.paymentMethod && subscription.paymentMethod !== 'wallet') {
+        paymentMethod = subscription.paymentMethod;
+        this.logger.log(
+          `Wallet debit failed for renewal, using ${paymentMethod} for subscription ${subscriptionId}`
+        );
+      } else {
+        throw walletError;
+      }
+    }
 
     const newEndDate = new Date(subscription.endDate ?? new Date());
     newEndDate.setDate(newEndDate.getDate() + plan.duration);

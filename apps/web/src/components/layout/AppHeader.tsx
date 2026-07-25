@@ -65,7 +65,11 @@ function formatBalance(amount: number): string {
 }
 
 /* ─── Profile menu icon component ─── */
-function MenuIcon({ type }: { type: 'user' | 'star' | 'wallet' | 'creator' | 'settings' | 'subscription' }) {
+function MenuIcon({
+  type,
+}: {
+  type: 'user' | 'star' | 'wallet' | 'creator' | 'settings' | 'subscription';
+}) {
   const cls = 'w-4 h-4 flex-shrink-0';
   switch (type) {
     case 'user':

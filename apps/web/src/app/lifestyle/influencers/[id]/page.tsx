@@ -38,7 +38,10 @@ function InfluencerDetailContent(): React.JSX.Element {
       <AppHeader active="Lifestyle" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
-        <Link href="/lifestyle/influencers" className="text-sm text-white/40 hover:text-white/60 transition-colors mb-6 inline-block">
+        <Link
+          href="/lifestyle/influencers"
+          className="text-sm text-white/40 hover:text-white/60 transition-colors mb-6 inline-block"
+        >
           ← Back to Influencers
         </Link>
 
@@ -76,7 +79,16 @@ function InfluencerDetailContent(): React.JSX.Element {
             </span>
             <p className="text-white/60 text-lg leading-relaxed mb-8">{influencer?.description}</p>
             <div className="flex items-center gap-4">
-              <Link href={`/watch/${influencer?.id}`} className="az-btn-primary" style={{ width: 'auto', paddingInline: '2rem', display: 'inline-block', textAlign: 'center' }}>
+              <Link
+                href={`/watch/${influencer?.id}`}
+                className="az-btn-primary"
+                style={{
+                  width: 'auto',
+                  paddingInline: '2rem',
+                  display: 'inline-block',
+                  textAlign: 'center',
+                }}
+              >
                 Watch Now
               </Link>
               <Link
@@ -107,7 +119,13 @@ const LazyInfluencerDetail = lazy(() => Promise.resolve({ default: InfluencerDet
 
 export default function InfluencerDetailPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyInfluencerDetail />
     </Suspense>
   );

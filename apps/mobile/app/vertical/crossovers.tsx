@@ -37,7 +37,9 @@ export default function CrossoversScreen() {
 
   useEffect(() => {
     if (crossoversQuery.isSuccess && !crossoversQuery.isFetching) {
-      try { analytics.verticalUniverseViewed('crossovers'); } catch {}
+      try {
+        analytics.verticalUniverseViewed('crossovers');
+      } catch {}
     }
   }, [crossoversQuery.isSuccess, crossoversQuery.isFetching]);
 
@@ -45,7 +47,9 @@ export default function CrossoversScreen() {
 
   if (crossoversQuery.isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+      >
         <LoadingState text="Loading crossovers..." />
       </SafeAreaView>
     );
@@ -53,7 +57,9 @@ export default function CrossoversScreen() {
 
   if (crossoversQuery.error) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+      >
         <ErrorState
           description={crossoversQuery.error.message}
           onRetry={() => crossoversQuery.refetch()}
@@ -64,8 +70,14 @@ export default function CrossoversScreen() {
 
   if (!crossovers.length) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
-        <EmptyState icon="🎬" title="No crossovers" description="Check back later for crossover events" />
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+      >
+        <EmptyState
+          icon="🎬"
+          title="No crossovers"
+          description="Check back later for crossover events"
+        />
       </SafeAreaView>
     );
   }
@@ -82,7 +94,10 @@ export default function CrossoversScreen() {
           <Text style={styles.statusText}>{item.status}</Text>
         </View>
       </View>
-      <Text style={[styles.cardDesc, { color: isDark ? colors.text.secondary : '#666' }]} numberOfLines={2}>
+      <Text
+        style={[styles.cardDesc, { color: isDark ? colors.text.secondary : '#666' }]}
+        numberOfLines={2}
+      >
         {item.description}
       </Text>
       <View style={styles.titlesRow}>
@@ -101,7 +116,9 @@ export default function CrossoversScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+    >
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>

@@ -63,7 +63,10 @@ export default function InfluencersScreen() {
         <Text style={[styles.influencerName, { color: colors.text.primary }]} numberOfLines={1}>
           {item.name}
         </Text>
-        <Text style={[styles.influencerProfession, { color: colors.text.secondary }]} numberOfLines={1}>
+        <Text
+          style={[styles.influencerProfession, { color: colors.text.secondary }]}
+          numberOfLines={1}
+        >
           {item.profession}
         </Text>
         <View style={styles.statsRow}>
