@@ -4,6 +4,10 @@ import { PrismaService } from '../database/prisma.service.js';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CacheService } from '@azeebo/shared-services';
+import axios from 'axios';
+
+jest.mock('axios');
+const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 jest.mock('@azeebo/shared-services', () => ({
   CacheService: jest.fn(),
@@ -136,6 +140,9 @@ describe('MoviesService', () => {
       (prismaService.rental.findUnique as jest.Mock).mockResolvedValue(null);
       (prismaService.movie.findUnique as jest.Mock).mockResolvedValue(mockMovie);
       (prismaService.rental.create as jest.Mock).mockResolvedValue(mockRental);
+
+      mockedAxios.get.mockResolvedValue({ data: { data: { id: 'wallet-1', balance: 1000 } } });
+      mockedAxios.post.mockResolvedValue({ data: { success: true } });
 
       const result = await service.rentMovie(userId, movieId);
 

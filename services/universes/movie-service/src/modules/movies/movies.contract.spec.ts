@@ -1,36 +1,68 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, UnauthorizedException } from '@nestjs/common';
+import {
+  INestApplication,
+  UnauthorizedException,
+  NotFoundException,
+  CanActivate,
+  ExecutionContext,
+} from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
 import { MoviesModule } from './movies.module.js';
 import { MoviesService } from './movies.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { RateLimitGuard } from '@azeebo/security';
-import { AuthGuard } from '@nestjs/passport';
 
-jest.mock('@azeebo/shared-services', () => ({
-  CacheService: jest.fn().mockImplementation(() => ({
-    get: jest.fn().mockResolvedValue(null),
-    set: jest.fn().mockResolvedValue('OK'),
-    delete: jest.fn().mockResolvedValue(1),
-    invalidate: jest.fn().mockResolvedValue(1),
-  })),
-  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
-  RedisModule: { module: jest.fn(), exports: [] },
-  JwtConfigModule: { module: jest.fn(), exports: [] },
+class MockAuthGuard implements CanActivate {
+  canActivate(context: ExecutionContext): boolean {
+    const req = context.switchToHttp().getRequest();
+    // Accept either x-user-id header or Authorization header
+    if (req.headers['x-user-id'] || req.headers.authorization) {
+      req.user = {
+        sub: req.headers['x-user-id'] || 'user-123',
+        role: req.headers['x-user-role'] || 'user',
+        email: req.headers['x-user-email'] || 'user@example.com',
+      };
+      return true;
+    }
+    throw new UnauthorizedException();
+  }
+}
+
+jest.mock('@azeebo/security', () => ({
+  RateLimitGuard: jest.fn().mockImplementation(() => ({ canActivate: () => true })),
+  RateLimit: () => () => undefined,
+  ServiceAuthGuard: jest.fn().mockImplementation(() => new MockAuthGuard()),
+  AdminGuard: jest.fn().mockImplementation(() => new MockAuthGuard()),
 }));
 
-const mockAuthGuard = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  canActivate: (context: any) => {
-    const req = context.switchToHttp().getRequest();
-    if (!req.headers.authorization) {
-      throw new UnauthorizedException();
-    }
-    req.user = { sub: 'user-123', role: 'user' };
-    return true;
-  },
-};
+jest.mock('@nestjs/passport', () => ({
+  AuthGuard: jest.fn().mockImplementation(() => MockAuthGuard),
+}));
+
+jest.mock('@azeebo/shared-services', () => {
+  const MockModule = {
+    module: jest.fn().mockReturnValue({
+      providers: [],
+      exports: [],
+    }),
+  };
+  return {
+    CacheService: jest.fn().mockImplementation(() => ({
+      get: jest.fn().mockResolvedValue(null),
+      set: jest.fn().mockResolvedValue('OK'),
+      delete: jest.fn().mockResolvedValue(1),
+      invalidate: jest.fn().mockResolvedValue(1),
+    })),
+    cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+    RedisModule: MockModule,
+    JwtConfigModule: MockModule,
+    RolesGuard: jest.fn().mockImplementation(() => ({ canActivate: () => true })),
+    Roles: () => (_target: unknown, _propertyKey?: string, descriptor?: PropertyDescriptor) =>
+      descriptor,
+  };
+});
 
 describe('Movies Controller Contract Tests', () => {
   let app: INestApplication;
@@ -58,6 +90,7 @@ describe('Movies Controller Contract Tests', () => {
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [MoviesModule],
+      providers: [{ provide: APP_GUARD, useClass: MockAuthGuard }],
     })
       .overrideProvider(MoviesService)
       .useValue(mockMoviesService)
@@ -71,8 +104,6 @@ describe('Movies Controller Contract Tests', () => {
         get: jest.fn().mockReturnValue('test-value'),
         getOrThrow: jest.fn().mockReturnValue('test-value'),
       })
-      .overrideGuard(AuthGuard('jwt'))
-      .useValue(mockAuthGuard)
       .overrideGuard(RateLimitGuard)
       .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .compile();
@@ -89,7 +120,7 @@ describe('Movies Controller Contract Tests', () => {
     jest.clearAllMocks();
   });
 
-  describe('/v1/movies (GET)', () => {
+  describe('/movies (GET)', () => {
     it('should return movie catalog', () => {
       mockMoviesService.listMovies.mockResolvedValue({
         success: true,
@@ -97,7 +128,9 @@ describe('Movies Controller Contract Tests', () => {
       });
 
       return request(app.getHttpServer())
-        .get('/v1/movies')
+        .get('/movies')
+        .set('x-user-id', 'user-123')
+        .set('x-user-id', 'user-123')
         .expect(200)
         .expect((res) => {
           expect(res.body.success).toBe(true);
@@ -106,7 +139,7 @@ describe('Movies Controller Contract Tests', () => {
     });
   });
 
-  describe('/v1/movies/:movieId (GET)', () => {
+  describe('/movies/:movieId (GET)', () => {
     it('should return movie detail', () => {
       mockMoviesService.getMovie.mockResolvedValue({
         success: true,
@@ -114,7 +147,8 @@ describe('Movies Controller Contract Tests', () => {
       });
 
       return request(app.getHttpServer())
-        .get('/v1/movies/movie-1')
+        .get('/movies/movie-1')
+        .set('x-user-id', 'user-123')
         .expect(200)
         .expect((res) => {
           expect(res.body.success).toBe(true);
@@ -122,14 +156,17 @@ describe('Movies Controller Contract Tests', () => {
         });
     });
 
-    it('should return 404 for non-existent movie', () => {
-      mockMoviesService.getMovie.mockRejectedValue(new Error('Movie not found'));
+    it('should return error for non-existent movie', () => {
+      mockMoviesService.getMovie.mockRejectedValue(new NotFoundException('Movie not found'));
 
-      return request(app.getHttpServer()).get('/v1/movies/nonexistent').expect(500);
+      return request(app.getHttpServer())
+        .get('/movies/nonexistent')
+        .set('x-user-id', 'user-123')
+        .expect(404);
     });
   });
 
-  describe('/v1/movies/:movieId/rent (POST)', () => {
+  describe('/movies/:movieId/rent (POST)', () => {
     it('should rent a movie', () => {
       mockMoviesService.rentMovie.mockResolvedValue({
         success: true,
@@ -137,7 +174,7 @@ describe('Movies Controller Contract Tests', () => {
       });
 
       return request(app.getHttpServer())
-        .post('/v1/movies/movie-1/rent')
+        .post('/movies/movie-1/rent')
         .set('Authorization', 'Bearer valid-token')
         .expect(201)
         .expect((res) => {
@@ -146,11 +183,11 @@ describe('Movies Controller Contract Tests', () => {
     });
 
     it('should return 401 without authorization', () => {
-      return request(app.getHttpServer()).post('/v1/movies/movie-1/rent').expect(401);
+      return request(app.getHttpServer()).post('/movies/movie-1/rent').expect(401);
     });
   });
 
-  describe('/v1/movies/premieres (GET)', () => {
+  describe('/movies/premieres (GET)', () => {
     it('should return premiere movies', () => {
       mockMoviesService.listPremieres.mockResolvedValue({
         success: true,
@@ -158,7 +195,8 @@ describe('Movies Controller Contract Tests', () => {
       });
 
       return request(app.getHttpServer())
-        .get('/v1/movies/premieres')
+        .get('/movies/premieres')
+        .set('x-user-id', 'user-123')
         .expect(200)
         .expect((res) => {
           expect(res.body.success).toBe(true);
@@ -166,7 +204,7 @@ describe('Movies Controller Contract Tests', () => {
     });
   });
 
-  describe('/v1/movies/watchlist (GET)', () => {
+  describe('/movies/watchlist (GET)', () => {
     it('should return user watchlist', () => {
       mockMoviesService.getWatchlist.mockResolvedValue({
         success: true,
@@ -174,7 +212,7 @@ describe('Movies Controller Contract Tests', () => {
       });
 
       return request(app.getHttpServer())
-        .get('/v1/movies/watchlist')
+        .get('/movies/watchlist')
         .set('Authorization', 'Bearer valid-token')
         .expect(200)
         .expect((res) => {
@@ -183,11 +221,11 @@ describe('Movies Controller Contract Tests', () => {
     });
 
     it('should return 401 without authorization', () => {
-      return request(app.getHttpServer()).get('/v1/movies/watchlist').expect(401);
+      return request(app.getHttpServer()).get('/movies/watchlist').expect(401);
     });
   });
 
-  describe('/v1/movies/watchlist (POST)', () => {
+  describe('/movies/watchlist (POST)', () => {
     it('should add movie to watchlist', () => {
       mockMoviesService.addToWatchlist.mockResolvedValue({
         success: true,
@@ -195,7 +233,7 @@ describe('Movies Controller Contract Tests', () => {
       });
 
       return request(app.getHttpServer())
-        .post('/v1/movies/watchlist')
+        .post('/movies/watchlist')
         .set('Authorization', 'Bearer valid-token')
         .send({ movieId: 'movie-1' })
         .expect(201)
@@ -213,7 +251,8 @@ describe('Movies Controller Contract Tests', () => {
       });
 
       return request(app.getHttpServer())
-        .get('/v1/movies')
+        .get('/movies')
+        .set('x-user-id', 'user-123')
         .expect((res) => {
           expect(res.body).toHaveProperty('success');
           expect(res.body).toHaveProperty('data');
@@ -229,7 +268,8 @@ describe('Movies Controller Contract Tests', () => {
       });
 
       return request(app.getHttpServer())
-        .get('/v1/movies')
+        .get('/movies')
+        .set('x-user-id', 'user-123')
         .expect((res) => {
           if (res.body.data && typeof res.body.data === 'object') {
             expect(res.body.data).toHaveProperty('page');
@@ -241,7 +281,7 @@ describe('Movies Controller Contract Tests', () => {
 
   describe('error responses', () => {
     it('should return 401 for protected endpoints without token', () => {
-      return request(app.getHttpServer()).post('/v1/movies/movie-1/rent').expect(401);
+      return request(app.getHttpServer()).post('/movies/movie-1/rent').expect(401);
     });
   });
 });
