@@ -37,10 +37,7 @@ describe('GenreService', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        GenreService,
-        { provide: PrismaService, useValue: prisma },
-      ],
+      providers: [GenreService, { provide: PrismaService, useValue: prisma }],
     }).compile();
 
     service = module.get<GenreService>(GenreService);
@@ -113,8 +110,13 @@ describe('GenreService', () => {
   describe('createGenre', () => {
     it('should create a new genre', async () => {
       const createData = { name: 'African', description: 'African cinema' };
-      const mockGenre = { id: '1', name: 'African', slug: 'african', description: 'African cinema' };
-      
+      const mockGenre = {
+        id: '1',
+        name: 'African',
+        slug: 'african',
+        description: 'African cinema',
+      };
+
       prisma.genre.findFirst.mockResolvedValue(null);
       prisma.genre.create.mockResolvedValue(mockGenre);
 
@@ -136,7 +138,7 @@ describe('GenreService', () => {
     it('should update an existing genre', async () => {
       const mockGenre = { id: '1', name: 'African', slug: 'african' };
       const updatedGenre = { id: '1', name: 'African Cinema', slug: 'african' };
-      
+
       prisma.genre.findUnique.mockResolvedValue(mockGenre);
       prisma.genre.findFirst.mockResolvedValue(null);
       prisma.genre.update.mockResolvedValue(updatedGenre);

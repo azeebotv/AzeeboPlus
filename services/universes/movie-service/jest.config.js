@@ -6,7 +6,7 @@ module.exports = {
     '^.+\.(t|j)s$': 'ts-jest',
   },
   transformIgnorePatterns: [
-    'node_modules/(?!uuid|zod|date-fns)',
+    'node_modules/(?!uuid|zod|date-fns|@azeebo|google-auth-library|gaxios|gtoken|googleapis|teeny-request)',
   ],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\.js$': '$1',

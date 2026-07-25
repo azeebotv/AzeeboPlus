@@ -9,6 +9,16 @@ import axios from 'axios';
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: jest.fn().mockImplementation(() => ({
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue('OK'),
+    delete: jest.fn().mockResolvedValue(1),
+    invalidate: jest.fn().mockResolvedValue(1),
+  })),
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+}));
+
 describe('MoviesService Integration - Cross-Service Communication', () => {
   let service: MoviesService;
 
@@ -48,6 +58,12 @@ describe('MoviesService Integration - Cross-Service Communication', () => {
   };
 
   beforeEach(async () => {
+    // Reset cache mock to return null by default
+    mockCacheService.get.mockReset();
+    mockCacheService.get.mockResolvedValue(null);
+    mockCacheService.set.mockReset();
+    mockCacheService.set.mockResolvedValue('OK');
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MoviesService,
