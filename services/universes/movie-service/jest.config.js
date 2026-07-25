@@ -6,10 +6,10 @@ module.exports = {
     '^.+\.(t|j)s$': 'ts-jest',
   },
   transformIgnorePatterns: [
-    'node_modules/(?!uuid|zod|date-fns|@azeebo|google-auth-library|gaxios|gtoken|googleapis|teeny-request)',
+    'node_modules/(?!uuid|zod|date-fns|@azeebo)',
   ],
   moduleNameMapper: {
-    '^(\\.{1,2}/.*)\.js$': '$1',
+    '^(\\.{1,2}/.*)\\.js$': '$1',
   },
   collectCoverageFrom: [
     '**/*.(t|j)s',

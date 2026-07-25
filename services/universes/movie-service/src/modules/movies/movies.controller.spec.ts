@@ -4,6 +4,21 @@ import { MoviesController } from './movies.controller.js';
 import { MoviesService } from './movies.service.js';
 import { RateLimitService } from '@azeebo/security';
 
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: jest.fn().mockImplementation(() => ({
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue('OK'),
+    delete: jest.fn().mockResolvedValue(1),
+    invalidate: jest.fn().mockResolvedValue(1),
+  })),
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+  RedisModule: { module: jest.fn(), exports: [] },
+  JwtConfigModule: { module: jest.fn(), exports: [] },
+  RolesGuard: jest.fn().mockImplementation(() => ({ canActivate: () => true })),
+  Roles: () => (_target: unknown, _propertyKey?: string, descriptor?: PropertyDescriptor) =>
+    descriptor,
+}));
+
 describe('MoviesController', () => {
   let controller: MoviesController;
 
