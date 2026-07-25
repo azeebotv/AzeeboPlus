@@ -29,9 +29,9 @@ export class MoviesController {
   @Get('featured')
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
-  @ApiOperation({ summary: 'Movie catalog / featured' })
-  @ApiResponse({ status: 200, description: 'Movie catalog' })
-  async listMovies(): Promise<MovieResponse> {
+  @ApiOperation({ summary: 'Featured movies' })
+  @ApiResponse({ status: 200, description: 'Featured movies' })
+  async listFeatured(): Promise<MovieResponse> {
     return this.moviesService.listMovies();
   }
 
@@ -46,14 +46,31 @@ export class MoviesController {
   @ApiOperation({ summary: 'African movies' })
   @ApiResponse({ status: 200, description: 'African movies' })
   async listAfrican(): Promise<MovieResponse> {
-    return this.moviesService.listMovies();
+    return this.moviesService.getMoviesByGenreSlug('african');
   }
 
   @Get('hollywood')
   @ApiOperation({ summary: 'Hollywood movies' })
   @ApiResponse({ status: 200, description: 'Hollywood movies' })
   async listHollywood(): Promise<MovieResponse> {
-    return this.moviesService.listMovies();
+    return this.moviesService.getMoviesByGenreSlug('hollywood');
+  }
+
+  @Get('genre/:slug')
+  @ApiOperation({ summary: 'Movies by genre slug' })
+  @ApiResponse({ status: 200, description: 'Movies in genre' })
+  async listByGenre(@Param('slug') slug: string): Promise<MovieResponse> {
+    return this.moviesService.getMoviesByGenreSlug(slug);
+  }
+
+  @Get('genre/:slug/:page')
+  @ApiOperation({ summary: 'Movies by genre with pagination' })
+  @ApiResponse({ status: 200, description: 'Movies in genre' })
+  async listByGenrePaginated(
+    @Param('slug') slug: string,
+    @Param('page') page: string
+  ): Promise<MovieResponse> {
+    return this.moviesService.getMoviesByGenreSlug(slug, parseInt(page, 10));
   }
 
   @Get('passes')

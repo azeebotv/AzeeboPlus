@@ -58,7 +58,7 @@ export class MoviesService {
         _count: {
           select: { rentals: true },
         },
-      },
+      } as never,
       orderBy: { createdAt: 'desc' },
       take: 50,
     });
@@ -70,6 +70,43 @@ export class MoviesService {
       success: true,
       data: result,
     };
+  }
+
+  async getMoviesByGenreSlug(slug: string, page = 1): Promise<MovieResponse> {
+    const limit = 20;
+    const skip = (page - 1) * limit;
+
+    // Find genre by slug
+    const genre = await (
+      this.prisma as unknown as {
+        genre?: { findUnique: (args: unknown) => Promise<{ id: string } | null> };
+      }
+    ).genre?.findUnique({
+      where: { slug },
+    });
+
+    if (!genre) {
+      throw new NotFoundException(`Genre '${slug}' not found`);
+    }
+
+    const [movies] = await Promise.all([
+      this.prisma.movie.findMany({
+        where: { genreId: genre.id } as never,
+        include: {
+          viewingWindows: { where: { isActive: true } },
+          _count: { select: { rentals: true } },
+        } as never,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.movie.count({ where: { genreId: genre.id } as never }),
+    ]);
+
+    return {
+      success: true,
+      data: movies as unknown as MovieResponse['data'],
+    } as MovieResponse;
   }
 
   async getMovie(movieId: string): Promise<MovieResponse> {

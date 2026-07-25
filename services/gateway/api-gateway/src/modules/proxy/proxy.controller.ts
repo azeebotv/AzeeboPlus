@@ -902,6 +902,23 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     ],
   },
   {
+    path: '/movie-genres',
+    envKey: 'MOVIE_SERVICE_URL',
+    fallbackUrl: 'http://movie-service:3011',
+    supportedVersions: ['1'],
+    defaultVersion: '1',
+    pathStrategy: 'default',
+    endpoints: [
+      { method: 'GET', path: '/', description: 'List all genres' },
+      { method: 'GET', path: '/:id', description: 'Get genre by ID' },
+      { method: 'GET', path: '/slug/:slug', description: 'Get genre by slug' },
+      { method: 'GET', path: '/:id/movies', description: 'Get movies by genre' },
+      { method: 'POST', path: '/', description: 'Create genre (admin)' },
+      { method: 'PUT', path: '/:id', description: 'Update genre (admin)' },
+      { method: 'DELETE', path: '/:id', description: 'Delete genre (admin)' },
+    ],
+  },
+  {
     path: '/sports',
     envKey: 'SPORTS_SERVICE_URL',
     fallbackUrl: 'http://sports-service:3021',

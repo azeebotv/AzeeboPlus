@@ -1935,6 +1935,23 @@ model ModerationCase {
   @@map("moderation_cases")
 }
 
+model Genre {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  movies     Movie[]
+
+  @@map("genres")
+  @@index([isActive])
+}
+
 model Movie {
   id          String   @id @default(uuid())
   title       String
@@ -1942,6 +1959,7 @@ model Movie {
   thumbnail   String
   banner      String?
   mediaUrl    String?
+  genreId     String?
   universeId  String
   creatorId   String
   status      String // draft, published, archived
@@ -1954,10 +1972,12 @@ model Movie {
   watchlistItems WatchlistItem[]
   viewingWindows ViewingWindow[]
   Premiere       Premiere?
+  genre          Genre?       @relation(fields: [genreId], references: [id])
 
   @@map("movies")
   @@index([universeId])
   @@index([creatorId])
+  @@index([genreId])
 }
 
 model MusicEntry {
