@@ -298,7 +298,9 @@ describe('MoviesService Integration - Cross-Service Communication', () => {
         movieId: 'movie-1',
       });
 
-      await expect(service.addToWatchlist('user-1', 'movie-1')).rejects.toThrow(BadRequestException);
+      await expect(service.addToWatchlist('user-1', 'movie-1')).rejects.toThrow(
+        BadRequestException
+      );
     });
   });
 
@@ -327,7 +329,9 @@ describe('MoviesService Integration - Cross-Service Communication', () => {
     it('should throw NotFoundException when item not in watchlist', async () => {
       mockPrismaService.watchlistItem.findUnique.mockResolvedValue(null);
 
-      await expect(service.removeFromWatchlist('user-1', 'nonexistent')).rejects.toThrow(NotFoundException);
+      await expect(service.removeFromWatchlist('user-1', 'nonexistent')).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 

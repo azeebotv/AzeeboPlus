@@ -5,9 +5,7 @@ import { AdminService } from './admin.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 
 @Module({
-  imports: [
-    JwtConfigModule,
-  ],
+  imports: [JwtConfigModule],
   controllers: [AdminController],
   providers: [AdminService, PrismaService],
 })

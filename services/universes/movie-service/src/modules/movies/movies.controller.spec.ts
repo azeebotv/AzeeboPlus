@@ -64,7 +64,7 @@ describe('MoviesController', () => {
       const result = { success: true, data: { movies: [] } };
       mockMoviesService.listMovies.mockResolvedValue(result);
 
-      expect(await controller.listMovies()).toEqual(result);
+      expect(await controller.listFeatured()).toEqual(result);
       expect(mockMoviesService.listMovies).toHaveBeenCalled();
     });
   });

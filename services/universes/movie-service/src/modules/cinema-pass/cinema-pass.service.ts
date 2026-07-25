@@ -152,7 +152,8 @@ export class CinemaPassService {
             throw new BadRequestException('Insufficient balance');
           }
         } catch (error) {
-          if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
+          if (error instanceof NotFoundException || error instanceof BadRequestException)
+            throw error;
           throw new NotFoundException('Wallet not found');
         }
 

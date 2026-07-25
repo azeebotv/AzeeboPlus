@@ -1,14 +1,4 @@
-import {
-  Inject,
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Body,
-  Param,
-  Query,
-  Request,
-} from '@nestjs/common';
+import { Inject, Controller, Get, Post, Patch, Body, Param, Query, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FilmmakerService } from './filmmaker.service.js';
 
