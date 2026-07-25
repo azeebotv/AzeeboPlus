@@ -8,6 +8,18 @@ import { ConfigService } from '@nestjs/config';
 import { RateLimitGuard } from '@azeebo/security';
 import { AuthGuard } from '@nestjs/passport';
 
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: jest.fn().mockImplementation(() => ({
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue('OK'),
+    delete: jest.fn().mockResolvedValue(1),
+    invalidate: jest.fn().mockResolvedValue(1),
+  })),
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+  RedisModule: { module: jest.fn(), exports: [] },
+  JwtConfigModule: { module: jest.fn(), exports: [] },
+}));
+
 const mockAuthGuard = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   canActivate: (context: any) => {
