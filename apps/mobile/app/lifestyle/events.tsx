@@ -100,10 +100,7 @@ export default function EventsScreen() {
             <Text style={styles.categoryText}>{item.category}</Text>
           </View>
           <TouchableOpacity
-            style={[
-              styles.rsvpButton,
-              item.isRsvpd && styles.rsvpButtonActive,
-            ]}
+            style={[styles.rsvpButton, item.isRsvpd && styles.rsvpButtonActive]}
             onPress={() => handleRsvp(item)}
             disabled={rsvpMutation.isPending || unRsvpMutation.isPending}
           >
@@ -135,10 +132,7 @@ export default function EventsScreen() {
           keyExtractor={(item) => item}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={[
-                styles.categoryChip,
-                selectedCategory === item && styles.categoryChipActive,
-              ]}
+              style={[styles.categoryChip, selectedCategory === item && styles.categoryChipActive]}
               onPress={() => setSelectedCategory(item)}
             >
               <Text

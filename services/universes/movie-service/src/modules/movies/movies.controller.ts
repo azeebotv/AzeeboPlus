@@ -26,11 +26,40 @@ export class MoviesController {
   constructor(@Inject(MoviesService) private readonly moviesService: MoviesService) {}
 
   @Get()
+  @Get('featured')
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
-  @ApiOperation({ summary: 'Movie catalog' })
+  @ApiOperation({ summary: 'Movie catalog / featured' })
   @ApiResponse({ status: 200, description: 'Movie catalog' })
   async listMovies(): Promise<MovieResponse> {
+    return this.moviesService.listMovies();
+  }
+
+  @Get('trending')
+  @ApiOperation({ summary: 'Trending movies' })
+  @ApiResponse({ status: 200, description: 'Trending movies' })
+  async listTrending(): Promise<MovieResponse> {
+    return this.moviesService.listMovies();
+  }
+
+  @Get('african')
+  @ApiOperation({ summary: 'African movies' })
+  @ApiResponse({ status: 200, description: 'African movies' })
+  async listAfrican(): Promise<MovieResponse> {
+    return this.moviesService.listMovies();
+  }
+
+  @Get('hollywood')
+  @ApiOperation({ summary: 'Hollywood movies' })
+  @ApiResponse({ status: 200, description: 'Hollywood movies' })
+  async listHollywood(): Promise<MovieResponse> {
+    return this.moviesService.listMovies();
+  }
+
+  @Get('passes')
+  @ApiOperation({ summary: 'Cinema passes' })
+  @ApiResponse({ status: 200, description: 'Cinema passes' })
+  async listPasses(): Promise<MovieResponse> {
     return this.moviesService.listMovies();
   }
 

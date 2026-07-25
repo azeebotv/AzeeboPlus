@@ -195,36 +195,22 @@ export default function StreakScreen() {
           {milestones.map((milestone) => (
             <View
               key={milestone.days}
-              style={[
-                styles.milestoneCard,
-                milestone.unlocked && styles.milestoneCardUnlocked,
-              ]}
+              style={[styles.milestoneCard, milestone.unlocked && styles.milestoneCardUnlocked]}
             >
               <View style={styles.milestoneLeft}>
                 <View
-                  style={[
-                    styles.milestoneIcon,
-                    milestone.unlocked && styles.milestoneIconUnlocked,
-                  ]}
+                  style={[styles.milestoneIcon, milestone.unlocked && styles.milestoneIconUnlocked]}
                 >
-                  <Text style={styles.milestoneIconText}>
-                    {milestone.unlocked ? '✓' : '🔒'}
-                  </Text>
+                  <Text style={styles.milestoneIconText}>{milestone.unlocked ? '✓' : '🔒'}</Text>
                 </View>
                 <View>
                   <Text style={styles.milestoneLabel}>{milestone.label}</Text>
-                  <Text style={styles.milestoneSubtext}>
-                    {milestone.days} consecutive days
-                  </Text>
+                  <Text style={styles.milestoneSubtext}>{milestone.days} consecutive days</Text>
                 </View>
               </View>
               <View style={styles.milestoneRight}>
-                <Text style={styles.milestoneReward}>
-                  +₦{milestone.reward.toLocaleString()}
-                </Text>
-                {milestone.unlocked && (
-                  <Text style={styles.milestoneUnlocked}>Unlocked</Text>
-                )}
+                <Text style={styles.milestoneReward}>+₦{milestone.reward.toLocaleString()}</Text>
+                {milestone.unlocked && <Text style={styles.milestoneUnlocked}>Unlocked</Text>}
               </View>
             </View>
           ))}

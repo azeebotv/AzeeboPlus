@@ -146,15 +146,12 @@ export const lifestyleApi = {
       `/v1/lifestyle/music${genre && genre !== 'All' ? `?genre=${genre}` : ''}`
     ),
 
-  getTrendingTracks: () =>
-    apiClient.get<ListResponse<MusicTrack>>('/v1/lifestyle/music/trending'),
+  getTrendingTracks: () => apiClient.get<ListResponse<MusicTrack>>('/v1/lifestyle/music/trending'),
 
-  getGenres: () =>
-    apiClient.get<ListResponse<MusicGenre>>('/v1/lifestyle/music/genres'),
+  getGenres: () => apiClient.get<ListResponse<MusicGenre>>('/v1/lifestyle/music/genres'),
 
   // Celebrities
-  getCelebrities: () =>
-    apiClient.get<ListResponse<Celebrity>>('/v1/lifestyle/celebrities'),
+  getCelebrities: () => apiClient.get<ListResponse<Celebrity>>('/v1/lifestyle/celebrities'),
 
   getFeaturedCelebrities: () =>
     apiClient.get<ListResponse<Celebrity>>('/v1/lifestyle/celebrities/featured'),
@@ -175,8 +172,7 @@ export const lifestyleApi = {
     apiClient.get<ListResponse<NightlifeVenue>>('/v1/lifestyle/nightlife/featured'),
 
   // Influencers
-  getInfluencers: () =>
-    apiClient.get<ListResponse<Influencer>>('/v1/lifestyle/influencers'),
+  getInfluencers: () => apiClient.get<ListResponse<Influencer>>('/v1/lifestyle/influencers'),
 
   getFeaturedInfluencers: () =>
     apiClient.get<ListResponse<Influencer>>('/v1/lifestyle/influencers/featured'),
@@ -185,8 +181,7 @@ export const lifestyleApi = {
     apiClient.get<ApiResponse<Influencer>>(`/v1/lifestyle/influencers/${id}`),
 
   // Social / Saved
-  getSavedItems: () =>
-    apiClient.get<ListResponse<SavedItem>>('/v1/lifestyle/saved'),
+  getSavedItems: () => apiClient.get<ListResponse<SavedItem>>('/v1/lifestyle/saved'),
 
   saveItem: (itemType: string, itemId: string) =>
     apiClient.post<ApiResponse<{ saved: boolean }>>('/v1/lifestyle/saved', {

@@ -21,16 +21,48 @@ export default function AnnouncementsPage() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {announcements.map((a) => (
-            <div key={a.id} style={{ padding: 16, borderRadius: 16, border: '1px solid #2A1A1A', backgroundColor: 'rgba(26,10,10,0.5)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+            <div
+              key={a.id}
+              style={{
+                padding: 16,
+                borderRadius: 16,
+                border: '1px solid #2A1A1A',
+                backgroundColor: 'rgba(26,10,10,0.5)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  marginBottom: 8,
+                }}
+              >
                 <h3 style={{ fontWeight: 600, fontSize: 15 }}>{a.name}</h3>
-                <span style={{ padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8420A' }}>{a.type}</span>
+                <span
+                  style={{
+                    padding: '3px 10px',
+                    borderRadius: 999,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    backgroundColor: 'rgba(232,66,10,0.2)',
+                    color: '#E8420A',
+                  }}
+                >
+                  {a.type}
+                </span>
               </div>
               <p style={{ color: '#9A8A7A', fontSize: 13, marginBottom: 8 }}>{a.subject}</p>
-              <p style={{ color: '#9A8A7A', fontSize: 12 }}>Created: {new Date(a.createdAt).toLocaleDateString()}</p>
+              <p style={{ color: '#9A8A7A', fontSize: 12 }}>
+                Created: {new Date(a.createdAt).toLocaleDateString()}
+              </p>
             </div>
           ))}
-          {announcements.length === 0 && <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A' }}>No announcements found</p>}
+          {announcements.length === 0 && (
+            <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A' }}>
+              No announcements found
+            </p>
+          )}
         </div>
       )}
     </div>

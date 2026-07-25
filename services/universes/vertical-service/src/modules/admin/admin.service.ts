@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
@@ -77,5 +77,54 @@ export class AdminService {
       );
       throw error;
     }
+  }
+
+  // Write operations
+  async createTitle(data: {
+    name: string;
+    universeId: string;
+    description?: string;
+    status?: string;
+  }) {
+    const title = await this.prisma.title.create({
+      data: { ...data, status: data.status || 'draft' } as never,
+    });
+    return title;
+  }
+
+  async updateTitle(id: string, data: { name?: string; description?: string; status?: string }) {
+    const existing = await this.prisma.title.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Title not found');
+    return this.prisma.title.update({ where: { id }, data: data as never });
+  }
+
+  async deleteTitle(id: string) {
+    const existing = await this.prisma.title.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Title not found');
+    return this.prisma.title.delete({ where: { id } });
+  }
+
+  async createCharacter(data: {
+    name: string;
+    universeId: string;
+    role?: string;
+    description?: string;
+  }) {
+    const character = await this.prisma.character.create({
+      data: { ...data, role: data.role || 'supporting' } as never,
+    });
+    return character;
+  }
+
+  async updateCharacter(id: string, data: { name?: string; role?: string; description?: string }) {
+    const existing = await this.prisma.character.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Character not found');
+    return this.prisma.character.update({ where: { id }, data: data as never });
+  }
+
+  async deleteCharacter(id: string) {
+    const existing = await this.prisma.character.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Character not found');
+    return this.prisma.character.delete({ where: { id } });
   }
 }

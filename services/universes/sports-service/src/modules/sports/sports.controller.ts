@@ -14,21 +14,23 @@ export class SportsController {
   constructor(@Inject(SportsService) private readonly sportsService: SportsService) {}
 
   @Get('home')
-  @ApiOperation({ summary: 'Sports home' })
+  @Get('live')
+  @ApiOperation({ summary: 'Sports home / live matches' })
   @ApiResponse({ status: 200, description: 'Sports home' })
   async getHome(): Promise<SportsResponse> {
     return this.sportsService.getHome();
   }
 
-  @Get('highlights')
-  @ApiOperation({ summary: 'Sports highlights' })
-  @ApiResponse({ status: 200, description: 'Highlights' })
-  async getHighlights(): Promise<SportsResponse> {
-    return this.sportsService.getHighlights();
+  @Get('categories')
+  @ApiOperation({ summary: 'Sports categories' })
+  @ApiResponse({ status: 200, description: 'Sports categories' })
+  async getCategories(): Promise<SportsResponse> {
+    return this.sportsService.getHome();
   }
 
+  @Get('upcoming')
   @Get('fixtures')
-  @ApiOperation({ summary: 'Fixtures/events' })
+  @ApiOperation({ summary: 'Upcoming fixtures / events' })
   @ApiResponse({ status: 200, description: 'Events' })
   async getFixtures(): Promise<SportsResponse> {
     return this.sportsService.getEvents();
@@ -42,7 +44,8 @@ export class SportsController {
   }
 
   @Get('predictions')
-  @ApiOperation({ summary: 'Prediction opportunities' })
+  @Get('prediction-leagues')
+  @ApiOperation({ summary: 'Prediction opportunities / leagues' })
   @ApiResponse({ status: 200, description: 'Predictions' })
   async getPredictions(): Promise<SportsResponse> {
     return this.sportsService.getPredictions();
@@ -68,14 +71,8 @@ export class SportsController {
   }
 
   @Get('fan-boards')
-  @ApiOperation({ summary: 'Fan boards' })
-  @ApiResponse({ status: 200, description: 'Fan boards' })
-  async getFanBoards(): Promise<SportsResponse> {
-    return this.sportsService.getFanBoards();
-  }
-
   @Get('fan-contests')
-  @ApiOperation({ summary: 'Fan contests' })
+  @ApiOperation({ summary: 'Fan boards / contests' })
   @ApiResponse({ status: 200, description: 'Fan contests' })
   async getFanContests(): Promise<SportsResponse> {
     return this.sportsService.getContests();
@@ -91,5 +88,40 @@ export class SportsController {
     @Body() body: EnterContestDto
   ): Promise<SportsResponse> {
     return this.sportsService.enterFanContest(req.user.id, body);
+  }
+
+  @Get('live/scores')
+  @ApiOperation({ summary: 'Live match scores' })
+  @ApiResponse({ status: 200, description: 'Live scores' })
+  async getLiveScores(): Promise<SportsResponse> {
+    return this.sportsService.getHome();
+  }
+
+  @Get('live/match/:matchId')
+  @ApiOperation({ summary: 'Live match details' })
+  @ApiResponse({ status: 200, description: 'Match details' })
+  async getLiveMatch(@Param('matchId') matchId: string): Promise<SportsResponse> {
+    return this.sportsService.getEventById(matchId);
+  }
+
+  @Get('prediction-options')
+  @ApiOperation({ summary: 'Prediction options for current match' })
+  @ApiResponse({ status: 200, description: 'Prediction options' })
+  async getPredictionOptions(): Promise<SportsResponse> {
+    return this.sportsService.getPredictions();
+  }
+
+  @Get('score-options')
+  @ApiOperation({ summary: 'Score prediction options' })
+  @ApiResponse({ status: 200, description: 'Score options' })
+  async getScoreOptions(): Promise<SportsResponse> {
+    return this.sportsService.getPredictions();
+  }
+
+  @Get('current-match')
+  @ApiOperation({ summary: 'Current featured match' })
+  @ApiResponse({ status: 200, description: 'Current match' })
+  async getCurrentMatch(): Promise<SportsResponse> {
+    return this.sportsService.getHome();
   }
 }

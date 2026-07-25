@@ -85,9 +85,10 @@ export default function GameplayScreen() {
 
   useEffect(() => {
     if (isGameOver) {
-      try { analytics.gameCompleted('trivia', score, 60 - timeLeft); } catch {}
+      try {
+        analytics.gameCompleted('trivia', score, 60 - timeLeft);
+      } catch {}
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isGameOver]);
 
   if (isLoading) {
@@ -137,7 +138,12 @@ export default function GameplayScreen() {
       ]}
     >
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()} accessibilityLabel="Go back" accessibilityRole="button">
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+        >
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerStats}>
@@ -199,7 +205,14 @@ export default function GameplayScreen() {
           </View>
 
           {selectedAnswer && (
-            <TouchableOpacity onPress={handleNext} style={styles.nextButton} accessibilityLabel={currentQuestion < questions.length - 1 ? 'Next question' : 'See results'} accessibilityRole="button">
+            <TouchableOpacity
+              onPress={handleNext}
+              style={styles.nextButton}
+              accessibilityLabel={
+                currentQuestion < questions.length - 1 ? 'Next question' : 'See results'
+              }
+              accessibilityRole="button"
+            >
               <Text style={styles.nextText}>
                 {currentQuestion < questions.length - 1 ? 'Next Question' : 'See Results'}
               </Text>
@@ -225,7 +238,12 @@ export default function GameplayScreen() {
               <Text style={styles.resultStatLabel}>Questions</Text>
             </View>
           </View>
-          <TouchableOpacity onPress={handlePlayAgain} style={styles.playAgainButton} accessibilityLabel="Play again" accessibilityRole="button">
+          <TouchableOpacity
+            onPress={handlePlayAgain}
+            style={styles.playAgainButton}
+            accessibilityLabel="Play again"
+            accessibilityRole="button"
+          >
             <Text style={styles.playAgainText}>Play Again</Text>
           </TouchableOpacity>
         </View>

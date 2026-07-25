@@ -47,14 +47,7 @@ test.describe('Creator App Smoke Tests', () => {
   });
 
   test.describe('Protected Route Redirects', () => {
-    const protectedRoutes = [
-      '/',
-      '/overview',
-      '/analytics',
-      '/earnings',
-      '/content',
-      '/settings',
-    ];
+    const protectedRoutes = ['/', '/overview', '/analytics', '/earnings', '/content', '/settings'];
 
     for (const route of protectedRoutes) {
       test(`should redirect ${route || '/'} to login when unauthenticated`, async ({ page }) => {

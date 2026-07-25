@@ -100,7 +100,8 @@ function HeaderUtilities({ router }: { router: ReturnType<typeof useRouter> }) {
     return () => clearInterval(interval);
   }, []);
 
-  const userInitial = user?.name?.charAt(0)?.toUpperCase() || user?.displayName?.charAt(0)?.toUpperCase() || 'U';
+  const userInitial =
+    user?.name?.charAt(0)?.toUpperCase() || user?.displayName?.charAt(0)?.toUpperCase() || 'U';
 
   return (
     <View style={styles.header}>

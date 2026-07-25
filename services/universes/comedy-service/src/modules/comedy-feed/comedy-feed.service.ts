@@ -52,6 +52,11 @@ export class ComedyFeedService {
         where: {
           createdAt: { gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) },
         },
+        include: {
+          comedian: {
+            select: { id: true, name: true, stageName: true, avatar: true },
+          },
+        } as never,
         orderBy: { viewCount: 'desc' },
         take: 20,
       });
@@ -68,8 +73,14 @@ export class ComedyFeedService {
           shareCount: clip.shareCount,
           creator: {
             id: clip.creatorId,
-            displayName: '',
-            avatar: undefined,
+            displayName: (clip as unknown as Record<string, unknown>).comedian
+              ? (((clip as unknown as Record<string, unknown>).comedian as Record<string, unknown>)
+                  .name as string) || ''
+              : '',
+            avatar: (clip as unknown as Record<string, unknown>).comedian
+              ? (((clip as unknown as Record<string, unknown>).comedian as Record<string, unknown>)
+                  .avatar as string) || undefined
+              : undefined,
           },
           createdAt: clip.createdAt.toISOString(),
         })),

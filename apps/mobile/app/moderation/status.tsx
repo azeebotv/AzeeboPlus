@@ -1,12 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  useColorScheme,
-} from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { colors } from '../../src/theme';
@@ -95,8 +88,7 @@ export default function ModerationStatusScreen() {
       style={[
         styles.reportCard,
         {
-          backgroundColor:
-            colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
+          backgroundColor: colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
         },
       ]}
     >
@@ -111,9 +103,7 @@ export default function ModerationStatusScreen() {
           >
             {item.contentTitle || `${item.contentType} content`}
           </Text>
-          <Text style={styles.reportDate}>
-            {new Date(item.createdAt).toLocaleDateString()}
-          </Text>
+          <Text style={styles.reportDate}>{new Date(item.createdAt).toLocaleDateString()}</Text>
         </View>
         {renderStatusBadge(item.status)}
       </View>
@@ -125,10 +115,7 @@ export default function ModerationStatusScreen() {
 
       {item.description ? (
         <Text
-          style={[
-            styles.reportDescription,
-            { color: colors.text.secondary },
-          ]}
+          style={[styles.reportDescription, { color: colors.text.secondary }]}
           numberOfLines={2}
         >
           {item.description}

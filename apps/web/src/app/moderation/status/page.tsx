@@ -144,15 +144,16 @@ function ModerationStatusPageContent(): React.JSX.Element {
                   </div>
 
                   {report.description && (
-                    <p className="text-xs text-white/40 mb-2 line-clamp-2">
-                      {report.description}
-                    </p>
+                    <p className="text-xs text-white/40 mb-2 line-clamp-2">{report.description}</p>
                   )}
 
                   {report.resolution && (
                     <div
                       className="mt-3 p-3 rounded-lg text-xs"
-                      style={{ backgroundColor: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.15)' }}
+                      style={{
+                        backgroundColor: 'rgba(34,197,94,0.1)',
+                        border: '1px solid rgba(34,197,94,0.15)',
+                      }}
                     >
                       <p className="font-medium text-[#22C55E] mb-1">Resolution:</p>
                       <p className="text-white/60">{report.resolution}</p>
@@ -162,7 +163,8 @@ function ModerationStatusPageContent(): React.JSX.Element {
                   <div className="flex items-center justify-between mt-3 text-xs text-white/30">
                     <span>ID: {report.id.slice(0, 8)}...</span>
                     <span>
-                      Updated: {new Date(report.updatedAt).toLocaleDateString('en-NG', {
+                      Updated:{' '}
+                      {new Date(report.updatedAt).toLocaleDateString('en-NG', {
                         month: 'short',
                         day: 'numeric',
                       })}
@@ -188,11 +190,19 @@ function ModerationStatusPageContent(): React.JSX.Element {
   );
 }
 
-const LazyModerationStatusPage = lazy(() => Promise.resolve({ default: ModerationStatusPageContent }));
+const LazyModerationStatusPage = lazy(() =>
+  Promise.resolve({ default: ModerationStatusPageContent })
+);
 
 export default function ModerationStatusPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyModerationStatusPage />
     </Suspense>
   );

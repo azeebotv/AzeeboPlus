@@ -53,9 +53,28 @@ export default function PremieresScreen() {
     });
   };
 
-  if (isLoading) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><LoadingState text="Loading premieres..." /></SafeAreaView>;
-  if (error) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><ErrorState description={error} onRetry={() => premieresQuery.refetch()} /></SafeAreaView>;
-  if (!premieres.length) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><EmptyState icon="🎬" title="No premieres" description="Check back for upcoming movie premieres" /></SafeAreaView>;
+  if (isLoading)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <LoadingState text="Loading premieres..." />
+      </SafeAreaView>
+    );
+  if (error)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <ErrorState description={error} onRetry={() => premieresQuery.refetch()} />
+      </SafeAreaView>
+    );
+  if (!premieres.length)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <EmptyState
+          icon="🎬"
+          title="No premieres"
+          description="Check back for upcoming movie premieres"
+        />
+      </SafeAreaView>
+    );
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
@@ -63,7 +82,9 @@ export default function PremieresScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>Premieres</Text>
+        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+          Premieres
+        </Text>
       </View>
 
       <FlatList
@@ -82,14 +103,23 @@ export default function PremieresScreen() {
               </View>
             </View>
             <View style={styles.premiereInfo}>
-              <Text style={[styles.premiereTitle, { color: isDark ? '#fff' : '#000' }]} numberOfLines={1}>{item.title}</Text>
+              <Text
+                style={[styles.premiereTitle, { color: isDark ? '#fff' : '#000' }]}
+                numberOfLines={1}
+              >
+                {item.title}
+              </Text>
               <Text style={styles.premiereGenre}>{item.genre}</Text>
-              <Text style={styles.premiereDesc} numberOfLines={2}>{item.description}</Text>
+              <Text style={styles.premiereDesc} numberOfLines={2}>
+                {item.description}
+              </Text>
               <TouchableOpacity
                 style={[styles.notifyButton, notifiedIds.has(item.id) && styles.notifyButtonActive]}
                 onPress={() => handleNotify(item)}
               >
-                <Text style={[styles.notifyText, notifiedIds.has(item.id) && styles.notifyTextActive]}>
+                <Text
+                  style={[styles.notifyText, notifiedIds.has(item.id) && styles.notifyTextActive]}
+                >
                   {notifiedIds.has(item.id) ? '🔔 Notified' : '🔔 Notify Me'}
                 </Text>
               </TouchableOpacity>
@@ -104,20 +134,49 @@ export default function PremieresScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', padding: 16, paddingTop: 50, gap: 12 },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#2a2a2a', alignItems: 'center', justifyContent: 'center' },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backIcon: { color: '#fff', fontSize: 20 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
   listContent: { paddingHorizontal: 16, paddingBottom: 30 },
   premiereCard: { flexDirection: 'row', padding: 14, borderRadius: 12, marginBottom: 12 },
-  premiereThumb: { width: 100, height: 140, borderRadius: 10, backgroundColor: '#2a2a2a', alignItems: 'center', justifyContent: 'center', marginRight: 14, position: 'relative' },
+  premiereThumb: {
+    width: 100,
+    height: 140,
+    borderRadius: 10,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+    position: 'relative',
+  },
   premiereEmoji: { fontSize: 40 },
-  dateBadge: { position: 'absolute', bottom: 6, backgroundColor: '#FFEAA7', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
+  dateBadge: {
+    position: 'absolute',
+    bottom: 6,
+    backgroundColor: '#FFEAA7',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+  },
   dateText: { color: '#000', fontSize: 10, fontWeight: '700' },
   premiereInfo: { flex: 1 },
   premiereTitle: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
   premiereGenre: { color: '#FFEAA7', fontSize: 12, marginBottom: 6 },
   premiereDesc: { color: '#888', fontSize: 12, marginBottom: 10, lineHeight: 18 },
-  notifyButton: { alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, backgroundColor: '#2a2a2a' },
+  notifyButton: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: '#2a2a2a',
+  },
   notifyButtonActive: { backgroundColor: '#FFEAA7' },
   notifyText: { color: '#888', fontSize: 12, fontWeight: '600' },
   notifyTextActive: { color: '#000' },

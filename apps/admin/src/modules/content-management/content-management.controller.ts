@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -11,7 +12,7 @@ import { Inject,
   UseGuards,
   Req,
   Logger,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { Request } from 'express';
 import { ContentManagementService } from './content-management.service';
 import { AuditLogService } from '../audit/audit.service';
@@ -110,7 +111,9 @@ export class ContentManagementController {
   @Post()
   async createContent(@Req() req: AuthRequest, @Body() body: CreateContentDto) {
     this.logger.log(`Creating content: ${body.title}`);
-    const result = await this.contentService.createContent(body as unknown as Record<string, unknown>);
+    const result = await this.contentService.createContent(
+      body as unknown as Record<string, unknown>
+    );
     await this.auditLogService.log({
       actorId: resolveActorId(req),
       action: 'content.created',
@@ -128,7 +131,10 @@ export class ContentManagementController {
     @Body() body: UpdateContentDto
   ) {
     this.logger.log(`Updating content: ${id}`);
-    const result = await this.contentService.updateContent(id, body as unknown as Record<string, unknown>);
+    const result = await this.contentService.updateContent(
+      id,
+      body as unknown as Record<string, unknown>
+    );
     await this.auditLogService.log({
       actorId: resolveActorId(req),
       action: 'content.updated',

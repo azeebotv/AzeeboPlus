@@ -245,7 +245,13 @@ export default function ContentManagerPage(): React.JSX.Element {
                 className="az-glass overflow-hidden cursor-pointer transition-all hover:scale-[1.02]"
               >
                 <div className="relative">
-                  <OptimizedImage src={item.thumbnail} alt={item.title} width={400} height={160} className="w-full h-40 object-cover" />
+                  <OptimizedImage
+                    src={item.thumbnail}
+                    alt={item.title}
+                    width={400}
+                    height={160}
+                    className="w-full h-40 object-cover"
+                  />
                   <div
                     className="absolute top-2 right-2 rounded-full w-8 h-8 flex items-center justify-center"
                     style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
@@ -271,7 +277,13 @@ export default function ContentManagerPage(): React.JSX.Element {
           <div className="space-y-4">
             {filteredContent.map((item: ContentItem) => (
               <div key={item.id} className="az-glass overflow-hidden flex">
-                <OptimizedImage src={item.thumbnail} alt={item.title} width={160} height={160} className="w-40 h-40 object-cover" />
+                <OptimizedImage
+                  src={item.thumbnail}
+                  alt={item.title}
+                  width={160}
+                  height={160}
+                  className="w-40 h-40 object-cover"
+                />
                 <div className="flex-1 p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">

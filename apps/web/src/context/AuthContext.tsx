@@ -113,9 +113,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   );
 
   const refreshAccessToken = useCallback(async (): Promise<boolean> => {
-    const currentRefreshToken = typeof window !== 'undefined'
-      ? localStorage.getItem(REFRESH_TOKEN_KEY)
-      : null;
+    const currentRefreshToken =
+      typeof window !== 'undefined' ? localStorage.getItem(REFRESH_TOKEN_KEY) : null;
     if (!currentRefreshToken) {
       return false;
     }
@@ -371,9 +370,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (typeof window !== 'undefined') {
           localStorage.setItem(USER_KEY, JSON.stringify(userObj));
         }
-        const currentToken = typeof window !== 'undefined'
-          ? localStorage.getItem(ACCESS_TOKEN_KEY)
-          : null;
+        const currentToken =
+          typeof window !== 'undefined' ? localStorage.getItem(ACCESS_TOKEN_KEY) : null;
         if (currentToken) setAuthCookie(currentToken);
       }
     } catch (error) {

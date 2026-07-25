@@ -77,7 +77,10 @@ function MusicPageContent(): React.JSX.Element {
       {playingId && (
         <div
           className="sticky top-0 z-40 py-3 px-4"
-          style={{ backgroundColor: 'rgba(26,10,10,0.95)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}
+          style={{
+            backgroundColor: 'rgba(26,10,10,0.95)',
+            borderBottom: '1px solid rgba(255,255,255,0.1)',
+          }}
         >
           <div className="max-w-7xl mx-auto flex items-center gap-3">
             <div
@@ -103,7 +106,14 @@ function MusicPageContent(): React.JSX.Element {
               onClick={() => setPlayingId(null)}
               className="text-white/40 hover:text-white"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path d="M18 6L6 18M6 6l12 12" />
               </svg>
             </button>
@@ -114,7 +124,9 @@ function MusicPageContent(): React.JSX.Element {
       {/* Tracks List */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
         <ScrollReveal>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">Trending Tracks</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">
+            Trending Tracks
+          </h2>
         </ScrollReveal>
 
         {isLoading ? (
@@ -181,7 +193,10 @@ function MusicPageContent(): React.JSX.Element {
                       {track.isExplicit && (
                         <span
                           className="px-1 py-0.5 rounded text-[8px] font-bold"
-                          style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.5)' }}
+                          style={{
+                            backgroundColor: 'rgba(255,255,255,0.15)',
+                            color: 'rgba(255,255,255,0.5)',
+                          }}
                         >
                           E
                         </span>
@@ -192,13 +207,18 @@ function MusicPageContent(): React.JSX.Element {
                   {track.genre && (
                     <span
                       className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-medium"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)' }}
+                      style={{
+                        backgroundColor: 'rgba(255,255,255,0.08)',
+                        color: 'rgba(255,255,255,0.5)',
+                      }}
                     >
                       {track.genre}
                     </span>
                   )}
                   <span className="text-xs text-white/40">
-                    {track.duration ? `${Math.floor(track.duration / 60)}:${(track.duration % 60).toString().padStart(2, '0')}` : ''}
+                    {track.duration
+                      ? `${Math.floor(track.duration / 60)}:${(track.duration % 60).toString().padStart(2, '0')}`
+                      : ''}
                   </span>
                   <button
                     type="button"
@@ -207,7 +227,14 @@ function MusicPageContent(): React.JSX.Element {
                     }}
                     className="text-white/30 hover:text-[#E8420A] transition-colors"
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
                       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                     </svg>
                   </button>
@@ -231,7 +258,13 @@ const LazyMusicPage = lazy(() => Promise.resolve({ default: MusicPageContent }))
 
 export default function MusicPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyMusicPage />
     </Suspense>
   );

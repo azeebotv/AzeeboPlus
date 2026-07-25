@@ -63,38 +63,40 @@ export default function AuthenticatedHomepage({
       try {
         // Use the combined home feed endpoint
         const homeResponse = await api.content.getHomeFeed();
-        
+
         if (homeResponse.success && homeResponse.data) {
           const { trending, recommended, latest } = homeResponse.data;
-          
+
           // Set hero slides from trending (top 5)
           setFeaturedSlides((trending || []).slice(0, 5));
-          
+
           // Set recently watched from latest
           setRecentlyWatched(latest || []);
           setIsLoadingHistory(false);
-          
+
           // Set trending content
           setTrendingContent(trending || []);
-          
+
           // Set recommendations
           if (recommended && recommended.length > 0) {
-            setRecommendationGroups([{
-              title: 'Recommended for You',
-              reason: 'Based on your viewing history',
-              items: recommended,
-            }]);
+            setRecommendationGroups([
+              {
+                title: 'Recommended for You',
+                reason: 'Based on your viewing history',
+                items: recommended,
+              },
+            ]);
           }
-          
+
           // Group by universe for universe sections
           const allContent = [...(trending || []), ...(latest || [])];
           const universeMap = new Map<string, UniverseSection>();
-          
+
           allContent.forEach((item) => {
             const universeId = item.universeId || 'unknown';
             const universeName = item.universe?.name || 'Unknown';
             const universeIcon = item.universe?.icon;
-            
+
             if (!universeMap.has(universeId)) {
               universeMap.set(universeId, {
                 universeId,
@@ -103,16 +105,16 @@ export default function AuthenticatedHomepage({
                 items: [],
               });
             }
-            
+
             const section = universeMap.get(universeId)!;
             if (section.items.length < 12) {
               section.items.push(item);
             }
           });
-          
+
           setUniverseSections(Array.from(universeMap.values()).filter((s) => s.items.length > 0));
           setIsLoadingUniverses(false);
-          
+
           // Set new releases and popular
           setNewReleases((latest || []).slice(0, 12));
           setPopularInRegion((trending || []).slice(0, 12));
@@ -126,7 +128,7 @@ export default function AuthenticatedHomepage({
             api.content.getNewReleases(12),
             api.content.getPopularInRegion(12),
           ]);
-          
+
           if (slidesRes.status === 'fulfilled' && slidesRes.value.success) {
             setFeaturedSlides(slidesRes.value.data || []);
           }
@@ -158,7 +160,10 @@ export default function AuthenticatedHomepage({
     const nextOffset = recentlyWatchedOffset + HISTORY_PAGE_SIZE;
     setRecentlyWatchedOffset(nextOffset);
     try {
-      const response = await api.content.getContentList({ page: Math.floor(nextOffset / HISTORY_PAGE_SIZE) + 1, limit: HISTORY_PAGE_SIZE });
+      const response = await api.content.getContentList({
+        page: Math.floor(nextOffset / HISTORY_PAGE_SIZE) + 1,
+        limit: HISTORY_PAGE_SIZE,
+      });
       if (response.success && response.data) {
         const newItems = Array.isArray(response.data.items) ? response.data.items : [];
         setRecentlyWatched((prev) => [...prev, ...newItems]);

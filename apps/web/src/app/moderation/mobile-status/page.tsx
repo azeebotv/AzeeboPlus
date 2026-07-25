@@ -192,7 +192,14 @@ function MobileStatusPageContent(): React.JSX.Element {
                 className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
                 style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
               >
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2">
+                <svg
+                  width="32"
+                  height="32"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.3)"
+                  strokeWidth="2"
+                >
                   <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
                   <line x1="4" y1="22" x2="4" y2="15" />
                 </svg>
@@ -212,7 +219,9 @@ function MobileStatusPageContent(): React.JSX.Element {
                   <div key={reason} className="flex items-center gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm text-white capitalize">{reason.replace(/-/g, ' ')}</span>
+                        <span className="text-sm text-white capitalize">
+                          {reason.replace(/-/g, ' ')}
+                        </span>
                         <span className="text-sm text-white/50">{count}</span>
                       </div>
                       <div
@@ -237,9 +246,13 @@ function MobileStatusPageContent(): React.JSX.Element {
         )}
 
         <ScrollReveal className="mt-6">
-          <div className="p-4 rounded-xl text-center" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+          <div
+            className="p-4 rounded-xl text-center"
+            style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}
+          >
             <p className="text-xs text-white/30">
-              Reports are reviewed within 24 hours. You&apos;ll receive a notification when your report is processed.
+              Reports are reviewed within 24 hours. You&apos;ll receive a notification when your
+              report is processed.
             </p>
           </div>
         </ScrollReveal>

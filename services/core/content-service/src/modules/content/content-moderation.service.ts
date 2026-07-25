@@ -51,7 +51,14 @@ export class ContentModerationService {
       if (url.protocol !== 'https:') {
         throw new BadRequestException('Only HTTPS media URLs are allowed for scanning');
       }
-      const privatePatterns = [/^127\./, /^10\./, /^172\.(1[6-9]|2\d|3[01])\./, /^192\.168\./, /^169\.254\./, /^localhost$/i];
+      const privatePatterns = [
+        /^127\./,
+        /^10\./,
+        /^172\.(1[6-9]|2\d|3[01])\./,
+        /^192\.168\./,
+        /^169\.254\./,
+        /^localhost$/i,
+      ];
       if (privatePatterns.some((p) => p.test(url.hostname))) {
         throw new BadRequestException('Media URLs pointing to private networks are not allowed');
       }
@@ -120,7 +127,14 @@ export class ContentModerationService {
       if (scanUrl.protocol !== 'https:') {
         throw new BadRequestException('Only HTTPS media URLs are allowed for scanning');
       }
-      const privatePatterns = [/^127\./, /^10\./, /^172\.(1[6-9]|2\d|3[01])\./, /^192\.168\./, /^169\.254\./, /^localhost$/i];
+      const privatePatterns = [
+        /^127\./,
+        /^10\./,
+        /^172\.(1[6-9]|2\d|3[01])\./,
+        /^192\.168\./,
+        /^169\.254\./,
+        /^localhost$/i,
+      ];
       if (privatePatterns.some((p) => p.test(scanUrl.hostname))) {
         throw new BadRequestException('Media URLs pointing to private networks are not allowed');
       }
@@ -216,7 +230,7 @@ export class ContentModerationService {
           reports: 0,
           openReports: 0,
           moderationCases: 0,
-          currentStatus: 'unknown',
+          currentStatus: 'unavailable',
         },
       };
     }

@@ -40,9 +40,8 @@ function FixturesPageContent(): React.JSX.Element {
   });
 
   const fixtures: Fixture[] = fixturesQuery.data ?? [];
-  const filtered = selectedSport === 'All'
-    ? fixtures
-    : fixtures.filter((f) => f.sport === selectedSport);
+  const filtered =
+    selectedSport === 'All' ? fixtures : fixtures.filter((f) => f.sport === selectedSport);
 
   const isLoading = fixturesQuery.isLoading;
   const error = fixturesQuery.error?.message;
@@ -82,9 +81,7 @@ function FixturesPageContent(): React.JSX.Element {
                 onClick={() => setSelectedSport(sport)}
                 className="px-4 py-2 rounded-full text-sm font-medium transition-all"
                 style={{
-                  backgroundColor: selectedSport === sport
-                    ? '#4ADE80'
-                    : 'rgba(255,255,255,0.1)',
+                  backgroundColor: selectedSport === sport ? '#4ADE80' : 'rgba(255,255,255,0.1)',
                   color: selectedSport === sport ? '#0D3B2E' : 'rgba(255,255,255,0.7)',
                   border: `1px solid ${selectedSport === sport ? '#4ADE80' : 'rgba(255,255,255,0.2)'}`,
                 }}
@@ -143,7 +140,10 @@ function FixturesPageContent(): React.JSX.Element {
               >
                 <div
                   className="az-glass p-4 grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-4 items-center"
-                  style={{ border: fixture.status === 'live' ? '1px solid rgba(74,222,128,0.3)' : undefined }}
+                  style={{
+                    border:
+                      fixture.status === 'live' ? '1px solid rgba(74,222,128,0.3)' : undefined,
+                  }}
                 >
                   <div className="sm:col-span-2">
                     <span className="text-xs text-white/50">
@@ -219,7 +219,13 @@ const LazyFixturesPage = lazy(() => Promise.resolve({ default: FixturesPageConte
 
 export default function FixturesPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyFixturesPage />
     </Suspense>
   );

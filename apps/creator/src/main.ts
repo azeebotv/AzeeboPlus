@@ -9,7 +9,7 @@ import { configureCors } from '@azeebo/security';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
-  app.enableVersioning({ type: VersioningType.URI, prefix: "v", defaultVersion: "1" });
+  app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
   const logger = new Logger('Creator');
 
   app.useGlobalFilters(new GlobalExceptionFilter());

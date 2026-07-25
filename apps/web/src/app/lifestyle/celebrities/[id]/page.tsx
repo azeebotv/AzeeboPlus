@@ -38,7 +38,10 @@ function CelebrityDetailContent(): React.JSX.Element {
       <AppHeader active="Lifestyle" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
-        <Link href="/lifestyle/celebrities" className="text-sm text-white/40 hover:text-white/60 transition-colors mb-6 inline-block">
+        <Link
+          href="/lifestyle/celebrities"
+          className="text-sm text-white/40 hover:text-white/60 transition-colors mb-6 inline-block"
+        >
           ← Back to Celebrities
         </Link>
 
@@ -76,7 +79,16 @@ function CelebrityDetailContent(): React.JSX.Element {
             </span>
             <p className="text-white/60 text-lg leading-relaxed mb-8">{celebrity.description}</p>
             <div className="flex items-center gap-4">
-              <Link href={`/watch/${celebrity.id}`} className="az-btn-primary" style={{ width: 'auto', paddingInline: '2rem', display: 'inline-block', textAlign: 'center' }}>
+              <Link
+                href={`/watch/${celebrity.id}`}
+                className="az-btn-primary"
+                style={{
+                  width: 'auto',
+                  paddingInline: '2rem',
+                  display: 'inline-block',
+                  textAlign: 'center',
+                }}
+              >
                 Watch Now
               </Link>
               <Link
@@ -107,7 +119,13 @@ const LazyCelebrityDetail = lazy(() => Promise.resolve({ default: CelebrityDetai
 
 export default function CelebrityDetailPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyCelebrityDetail />
     </Suspense>
   );

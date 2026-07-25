@@ -49,7 +49,9 @@ export default function StoryworldScreen() {
     try {
       const res = await apiClient.get<StoryworldDetail>(`/v1/vertical/storyworlds/${id}`);
       setData(res);
-      try { analytics.verticalTitleViewed(res.id); } catch {}
+      try {
+        analytics.verticalTitleViewed(res.id);
+      } catch {}
     } catch {
       setError('Failed to load storyworld');
     } finally {
@@ -57,7 +59,9 @@ export default function StoryworldScreen() {
     }
   }, [id]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const submitTheory = async () => {
     if (!theoryTitle.trim() || !id) return;
@@ -67,7 +71,9 @@ export default function StoryworldScreen() {
         title: theoryTitle.trim(),
         description: theoryDesc.trim(),
       });
-      try { analytics.verticalTheorySubmitted(id); } catch {}
+      try {
+        analytics.verticalTheorySubmitted(id);
+      } catch {}
       setTheoryTitle('');
       setTheoryDesc('');
       fetchData();
@@ -80,7 +86,9 @@ export default function StoryworldScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+      >
         <LoadingState text="Loading storyworld..." />
       </SafeAreaView>
     );
@@ -88,14 +96,18 @@ export default function StoryworldScreen() {
 
   if (error || !data) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+      >
         <ErrorState description={error || 'Storyworld not found'} onRetry={fetchData} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+    >
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
@@ -115,7 +127,11 @@ export default function StoryworldScreen() {
         </View>
 
         <View style={styles.tabsBar}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.tabs}
+          >
             {tabs.map((tab) => (
               <TouchableOpacity
                 key={tab.id}
@@ -136,12 +152,17 @@ export default function StoryworldScreen() {
               {data.titles.map((title) => (
                 <TouchableOpacity
                   key={title.id}
-                  style={[styles.itemCard, { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' }]}
+                  style={[
+                    styles.itemCard,
+                    { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' },
+                  ]}
                   onPress={() => router.push(`/vertical-title?id=${title.id}`)}
                 >
                   <Text style={styles.itemEmoji}>{title.emoji}</Text>
                   <View style={styles.itemInfo}>
-                    <Text style={[styles.itemTitle, { color: colors.text.primary }]}>{title.title}</Text>
+                    <Text style={[styles.itemTitle, { color: colors.text.primary }]}>
+                      {title.title}
+                    </Text>
                     <View style={styles.itemBadge}>
                       <Text style={styles.itemBadgeText}>{title.status}</Text>
                     </View>
@@ -157,12 +178,17 @@ export default function StoryworldScreen() {
               {data.characters.map((char) => (
                 <TouchableOpacity
                   key={char.id}
-                  style={[styles.itemCard, { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' }]}
+                  style={[
+                    styles.itemCard,
+                    { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' },
+                  ]}
                   onPress={() => router.push(`/vertical/character-detail?id=${char.id}`)}
                 >
                   <Text style={styles.itemEmoji}>{char.avatar}</Text>
                   <View style={styles.itemInfo}>
-                    <Text style={[styles.itemTitle, { color: colors.text.primary }]}>{char.name}</Text>
+                    <Text style={[styles.itemTitle, { color: colors.text.primary }]}>
+                      {char.name}
+                    </Text>
                     <Text style={styles.itemSubtitle}>{char.role}</Text>
                   </View>
                   <Text style={styles.itemArrow}>›</Text>
@@ -173,17 +199,31 @@ export default function StoryworldScreen() {
 
           {activeTab === 'theories' && (
             <View>
-              <View style={[styles.theoryForm, { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' }]}>
-                <Text style={[styles.theoryFormTitle, { color: colors.text.primary }]}>Submit a Theory</Text>
+              <View
+                style={[
+                  styles.theoryForm,
+                  { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' },
+                ]}
+              >
+                <Text style={[styles.theoryFormTitle, { color: colors.text.primary }]}>
+                  Submit a Theory
+                </Text>
                 <TextInput
-                  style={[styles.input, { color: colors.text.primary, borderColor: colors.border.default }]}
+                  style={[
+                    styles.input,
+                    { color: colors.text.primary, borderColor: colors.border.default },
+                  ]}
                   placeholder="Theory title..."
                   placeholderTextColor={colors.text.tertiary}
                   value={theoryTitle}
                   onChangeText={setTheoryTitle}
                 />
                 <TextInput
-                  style={[styles.input, styles.inputMultiline, { color: colors.text.primary, borderColor: colors.border.default }]}
+                  style={[
+                    styles.input,
+                    styles.inputMultiline,
+                    { color: colors.text.primary, borderColor: colors.border.default },
+                  ]}
                   placeholder="Describe your theory..."
                   placeholderTextColor={colors.text.tertiary}
                   value={theoryDesc}
@@ -205,10 +245,17 @@ export default function StoryworldScreen() {
               {data.theories.map((theory) => (
                 <View
                   key={theory.id}
-                  style={[styles.theoryCard, { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' }]}
+                  style={[
+                    styles.theoryCard,
+                    { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' },
+                  ]}
                 >
-                  <Text style={[styles.theoryTitle, { color: colors.text.primary }]}>{theory.title}</Text>
-                  <Text style={[styles.theoryDesc, { color: isDark ? colors.text.secondary : '#666' }]}>
+                  <Text style={[styles.theoryTitle, { color: colors.text.primary }]}>
+                    {theory.title}
+                  </Text>
+                  <Text
+                    style={[styles.theoryDesc, { color: isDark ? colors.text.secondary : '#666' }]}
+                  >
                     {theory.description}
                   </Text>
                   <View style={styles.theoryFooter}>
@@ -225,13 +272,20 @@ export default function StoryworldScreen() {
               {data.realms.map((realm) => (
                 <View
                   key={realm.id}
-                  style={[styles.realmCard, { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' }]}
+                  style={[
+                    styles.realmCard,
+                    { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' },
+                  ]}
                 >
                   <View style={styles.realmHeader}>
                     <Text style={styles.realmEmoji}>{realm.icon}</Text>
-                    <Text style={[styles.realmName, { color: colors.text.primary }]}>{realm.name}</Text>
+                    <Text style={[styles.realmName, { color: colors.text.primary }]}>
+                      {realm.name}
+                    </Text>
                   </View>
-                  <Text style={[styles.realmDesc, { color: isDark ? colors.text.secondary : '#666' }]}>
+                  <Text
+                    style={[styles.realmDesc, { color: isDark ? colors.text.secondary : '#666' }]}
+                  >
                     {realm.description}
                   </Text>
                 </View>

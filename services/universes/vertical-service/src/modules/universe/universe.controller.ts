@@ -21,12 +21,20 @@ export class UniverseController {
   constructor(@Inject(UniverseService) private readonly universeService: UniverseService) {}
 
   @Get()
+  @Get('featured')
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
-  @ApiOperation({ summary: 'Get all universes' })
+  @ApiOperation({ summary: 'Get all universes / featured' })
   @ApiResponse({ status: 200, description: 'List of universes' })
   async getUniverses(@Query('page') page = 1, @Query('limit') limit = 20): Promise<unknown> {
     return this.universeService.getUniverses(Number(page), Number(limit));
+  }
+
+  @Get('genres')
+  @ApiOperation({ summary: 'Get vertical genres' })
+  @ApiResponse({ status: 200, description: 'List of genres' })
+  async getGenres(): Promise<unknown> {
+    return this.universeService.getCategories();
   }
 
   @Get('map/:slug')

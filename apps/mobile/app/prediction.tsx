@@ -68,7 +68,11 @@ export default function PredictionScreen() {
       }
 
       if (showRes) {
-        setShowData(Array.isArray(showRes) ? showRes[0] : ((showRes as any)?.data?.[0] ?? showRes));
+        setShowData(
+          Array.isArray(showRes)
+            ? showRes[0]
+            : ((showRes as unknown as { data?: unknown[] })?.data?.[0] ?? showRes)
+        );
       }
     } catch (err) {
       logger.error('Failed to load prediction data:', err);
@@ -103,7 +107,9 @@ export default function PredictionScreen() {
       }
       setUserPoints((prev) => prev - betAmount);
       setBetSuccess(true);
-      try { analytics.realityPredictionSubmitted(showName, selectedOption || ''); } catch {}
+      try {
+        analytics.realityPredictionSubmitted(showName, selectedOption || '');
+      } catch {}
       setTimeout(() => {
         setShowConfirmation(false);
         setBetSuccess(false);

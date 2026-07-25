@@ -78,14 +78,23 @@ export default function LifestyleUniverseHome() {
     staleTime: 60_000,
   });
 
-  const isLoading = featuredQuery.isLoading || trendingQuery.isLoading || categoriesQuery.isLoading || creatorsQuery.isLoading;
-  const error = featuredQuery.error?.message || trendingQuery.error?.message || categoriesQuery.error?.message || creatorsQuery.error?.message;
+  const isLoading =
+    featuredQuery.isLoading ||
+    trendingQuery.isLoading ||
+    categoriesQuery.isLoading ||
+    creatorsQuery.isLoading;
+  const error =
+    featuredQuery.error?.message ||
+    trendingQuery.error?.message ||
+    categoriesQuery.error?.message ||
+    creatorsQuery.error?.message;
 
   useEffect(() => {
     if (featuredQuery.isSuccess && !featuredQuery.isFetching) {
-      try { analytics.lifestyleFeedViewed(); } catch {}
+      try {
+        analytics.lifestyleFeedViewed();
+      } catch {}
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [featuredQuery.isSuccess]);
 
   const featuredContent = featuredQuery.data ?? [];
@@ -141,7 +150,12 @@ export default function LifestyleUniverseHome() {
           contentContainerStyle={styles.categoriesScroll}
         >
           {categories.map((cat) => (
-            <TouchableOpacity key={cat.id} style={styles.categoryChip} accessibilityLabel={`Filter by ${cat.name}`} accessibilityRole="button">
+            <TouchableOpacity
+              key={cat.id}
+              style={styles.categoryChip}
+              accessibilityLabel={`Filter by ${cat.name}`}
+              accessibilityRole="button"
+            >
               <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
               <Text style={styles.categoryName}>{cat.name}</Text>
               <Text style={styles.categoryCount}>{cat.count}</Text>
@@ -249,7 +263,11 @@ export default function LifestyleUniverseHome() {
                   {item.name}
                 </Text>
                 <Text style={styles.creatorFollowers}>{item.followers}</Text>
-                <TouchableOpacity style={styles.followButton} accessibilityLabel={`Follow ${item.name}`} accessibilityRole="button">
+                <TouchableOpacity
+                  style={styles.followButton}
+                  accessibilityLabel={`Follow ${item.name}`}
+                  accessibilityRole="button"
+                >
                   <Text style={styles.followButtonText}>Follow</Text>
                 </TouchableOpacity>
               </TouchableOpacity>
@@ -258,23 +276,48 @@ export default function LifestyleUniverseHome() {
         </View>
 
         <View style={styles.bottomNav}>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')} accessibilityLabel="Go to Home" accessibilityRole="button">
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => router.push('/(tabs)/home')}
+            accessibilityLabel="Go to Home"
+            accessibilityRole="button"
+          >
             <Text style={styles.navIcon}>🏠</Text>
             <Text style={styles.navLabel}>Home</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')} accessibilityLabel="Go to Watch" accessibilityRole="button">
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => router.push('/(tabs)/watch')}
+            accessibilityLabel="Go to Watch"
+            accessibilityRole="button"
+          >
             <Text style={styles.navIcon}>📺</Text>
             <Text style={styles.navLabel}>Watch</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')} accessibilityLabel="Go to Create" accessibilityRole="button">
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => router.push('/(tabs)/create')}
+            accessibilityLabel="Go to Create"
+            accessibilityRole="button"
+          >
             <Text style={styles.navIcon}>✨</Text>
             <Text style={styles.navLabel}>Create</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')} accessibilityLabel="Go to Rewards" accessibilityRole="button">
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => router.push('/(tabs)/rewards')}
+            accessibilityLabel="Go to Rewards"
+            accessibilityRole="button"
+          >
             <Text style={styles.navIcon}>⭐</Text>
             <Text style={styles.navLabel}>Rewards</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')} accessibilityLabel="Go to Profile" accessibilityRole="button">
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => router.push('/(tabs)/profile')}
+            accessibilityLabel="Go to Profile"
+            accessibilityRole="button"
+          >
             <Text style={styles.navIcon}>👤</Text>
             <Text style={styles.navLabel}>Profile</Text>
           </TouchableOpacity>

@@ -54,7 +54,7 @@ const STATE_CHANGING_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
 export async function apiFetch<T>(
   endpoint: string,
-  options: RequestInit & { skipAuthRetry?: boolean } = {},
+  options: RequestInit & { skipAuthRetry?: boolean } = {}
 ): Promise<ApiResponse<T>> {
   // Tokens are sent automatically via httpOnly cookies (credentials: 'include')
   // No need to read from localStorage
@@ -104,9 +104,17 @@ export async function apiFetch<T>(
               });
               const retryData = await retryResponse.json();
               if (!retryResponse.ok) {
-                return { success: false, message: retryData.message || 'Request failed', statusCode: retryResponse.status } as ApiError;
+                return {
+                  success: false,
+                  message: retryData.message || 'Request failed',
+                  statusCode: retryResponse.status,
+                } as ApiError;
               }
-              return { success: true, data: retryData.data !== undefined ? retryData.data : retryData, message: retryData.message };
+              return {
+                success: true,
+                data: retryData.data !== undefined ? retryData.data : retryData,
+                message: retryData.message,
+              };
             }
           }
         } catch {
@@ -114,7 +122,11 @@ export async function apiFetch<T>(
         }
 
         clearSession();
-        return { success: false, message: 'Session expired. Please login again.', statusCode: 401 } as ApiError;
+        return {
+          success: false,
+          message: 'Session expired. Please login again.',
+          statusCode: 401,
+        } as ApiError;
       }
 
       return {
@@ -147,7 +159,10 @@ export async function apiFetch<T>(
 
 export function getToken(): string | null {
   // Check cookie first, fall back to localStorage for backward compat
-  return getCookie('access_token') || (typeof window !== 'undefined' ? localStorage.getItem(USER_KEY + '_token') : null);
+  return (
+    getCookie('access_token') ||
+    (typeof window !== 'undefined' ? localStorage.getItem(USER_KEY + '_token') : null)
+  );
 }
 
 export async function setAuthCookies(accessToken: string, refreshToken: string): Promise<void> {

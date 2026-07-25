@@ -25,7 +25,9 @@ export default function RealityShowPage() {
   const isDark = colorScheme === 'dark';
   const { wallet } = useWallet();
   const [contestants, setContestants] = useState<Contestant[]>([]);
-  const [chatMessages, _setChatMessages] = useState<{ id: string; user: string; message: string; color: string }[]>([]);
+  const [chatMessages, _setChatMessages] = useState<
+    { id: string; user: string; message: string; color: string }[]
+  >([]);
   const [selectedContestant, setSelectedContestant] = useState<Contestant | null>(null);
   const [selectedPackage, setSelectedPackage] = useState(VOTE_PACKAGES[0]);
   const [quantity, setQuantity] = useState(1);
@@ -59,7 +61,11 @@ export default function RealityShowPage() {
         setContestants(contestantsRes.data);
       }
       if (showRes) {
-        setShowData(Array.isArray(showRes) ? showRes[0] : ((showRes as any)?.data?.[0] ?? showRes));
+        setShowData(
+          Array.isArray(showRes)
+            ? showRes[0]
+            : ((showRes as unknown as { data?: unknown[] })?.data?.[0] ?? showRes)
+        );
       }
     } catch (err) {
       setError('Failed to load show data');
@@ -198,12 +204,14 @@ export default function RealityShowPage() {
             Live Chat
           </Text>
           <View style={styles.chatMessages}>
-            {chatMessages.map((msg: { id: string; user: string; message: string; color: string }) => (
-              <View key={msg.id} style={styles.chatMessage}>
-                <Text style={[styles.chatUser, { color: msg.color }]}>{msg.user}:</Text>
-                <Text style={styles.chatText}>{msg.message}</Text>
-              </View>
-            ))}
+            {chatMessages.map(
+              (msg: { id: string; user: string; message: string; color: string }) => (
+                <View key={msg.id} style={styles.chatMessage}>
+                  <Text style={[styles.chatUser, { color: msg.color }]}>{msg.user}:</Text>
+                  <Text style={styles.chatText}>{msg.message}</Text>
+                </View>
+              )
+            )}
           </View>
           <View style={styles.chatInput}>
             <TextInput
@@ -248,7 +256,9 @@ export default function RealityShowPage() {
                 >
                   <Text style={styles.packageVotes}>{pkg.votes.toLocaleString()} votes</Text>
                   <Text style={styles.packagePrice}>₦{pkg.price.toLocaleString()}</Text>
-                  {pkg.bonus != null && pkg.bonus > 0 && <Text style={styles.packageBonus}>+{pkg.bonus} bonus</Text>}
+                  {pkg.bonus != null && pkg.bonus > 0 && (
+                    <Text style={styles.packageBonus}>+{pkg.bonus} bonus</Text>
+                  )}
                 </TouchableOpacity>
               ))}
             </View>

@@ -22,10 +22,14 @@ export class ModerationService {
     if (!match) return 30 * 24 * 60 * 60 * 1000; // default 30 days
     const value = parseInt(match[1], 10);
     switch (match[2]) {
-      case 'm': return value * 60 * 1000;
-      case 'h': return value * 60 * 60 * 1000;
-      case 'd': return value * 24 * 60 * 60 * 1000;
-      default: return 30 * 24 * 60 * 60 * 1000;
+      case 'm':
+        return value * 60 * 1000;
+      case 'h':
+        return value * 60 * 60 * 1000;
+      case 'd':
+        return value * 24 * 60 * 60 * 1000;
+      default:
+        return 30 * 24 * 60 * 60 * 1000;
     }
   }
 
@@ -233,7 +237,9 @@ export class ModerationService {
       }
     } catch (error) {
       // Fall back to defaults
-      console.warn(`Failed to fetch report types from moderation-service: ${(error as Error).message}`);
+      console.warn(
+        `Failed to fetch report types from moderation-service: ${(error as Error).message}`
+      );
     }
 
     return [

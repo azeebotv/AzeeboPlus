@@ -12,7 +12,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
-import { subscriptionApi, type SubscriptionPlan, type Subscription } from '../../src/api/subscription';
+import {
+  subscriptionApi,
+  type SubscriptionPlan,
+  type Subscription,
+} from '../../src/api/subscription';
 import { colors, typography, spacing, radius } from '../../src/theme';
 
 export default function PlansScreen() {
@@ -70,7 +74,9 @@ export default function PlansScreen() {
     }
 
     setSelectedPlan(plan);
-    router.push(`/subscription/payment?planId=${plan.id}&planName=${encodeURIComponent(plan.name)}&price=${plan.price}&currency=${plan.currency}`);
+    router.push(
+      `/subscription/payment?planId=${plan.id}&planName=${encodeURIComponent(plan.name)}&price=${plan.price}&currency=${plan.currency}`
+    );
   };
 
   const formatPrice = (price: number, currency: string) => {
@@ -107,7 +113,11 @@ export default function PlansScreen() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={colors.primary[500]} />
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary[500]}
+          />
         }
       >
         <View style={styles.header}>
@@ -121,7 +131,9 @@ export default function PlansScreen() {
         {currentSubscription && currentSubscription.status === 'active' && (
           <View style={styles.currentPlanBanner}>
             <Text style={styles.currentPlanLabel}>Your current plan</Text>
-            <Text style={styles.currentPlanName}>{currentSubscription.plan?.name || 'Active Plan'}</Text>
+            <Text style={styles.currentPlanName}>
+              {currentSubscription.plan?.name || 'Active Plan'}
+            </Text>
             <TouchableOpacity onPress={() => router.push('/subscription/current')}>
               <Text style={styles.manageLink}>Manage Subscription →</Text>
             </TouchableOpacity>
@@ -155,7 +167,9 @@ export default function PlansScreen() {
                   <View style={styles.planHeader}>
                     <Text style={styles.planName}>{plan.name}</Text>
                     {plan.tier && (
-                      <View style={[styles.tierBadge, { backgroundColor: getTierColor(plan.tier) }]}>
+                      <View
+                        style={[styles.tierBadge, { backgroundColor: getTierColor(plan.tier) }]}
+                      >
                         <Text style={styles.tierText}>{plan.tier}</Text>
                       </View>
                     )}
@@ -183,7 +197,10 @@ export default function PlansScreen() {
 
                   {!active && (
                     <TouchableOpacity
-                      style={[styles.subscribeButton, selectedPlan?.id === plan.id && styles.subscribeButtonLoading]}
+                      style={[
+                        styles.subscribeButton,
+                        selectedPlan?.id === plan.id && styles.subscribeButtonLoading,
+                      ]}
                       onPress={() => handleSubscribe(plan)}
                       disabled={selectedPlan?.id === plan.id}
                     >

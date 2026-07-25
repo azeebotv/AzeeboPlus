@@ -113,7 +113,9 @@ export default function InfluencerDetailScreen() {
               <Text style={[styles.statValue, { color: colors.text.primary }]}>
                 {influencer.collaborationCount}
               </Text>
-              <Text style={[styles.statLabel, { color: colors.text.secondary }]}>Collaborations</Text>
+              <Text style={[styles.statLabel, { color: colors.text.secondary }]}>
+                Collaborations
+              </Text>
             </View>
           </View>
 
@@ -126,7 +128,9 @@ export default function InfluencerDetailScreen() {
 
           {influencer.socialLinks && (
             <>
-              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Social Links</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
+                Social Links
+              </Text>
               <View style={styles.socialLinks}>
                 {influencer.socialLinks.instagram && (
                   <TouchableOpacity
@@ -134,7 +138,9 @@ export default function InfluencerDetailScreen() {
                     onPress={() => handleOpenSocial(influencer.socialLinks!.instagram!)}
                   >
                     <Text style={styles.socialIcon}>📷</Text>
-                    <Text style={[styles.socialText, { color: colors.text.primary }]}>Instagram</Text>
+                    <Text style={[styles.socialText, { color: colors.text.primary }]}>
+                      Instagram
+                    </Text>
                   </TouchableOpacity>
                 )}
                 {influencer.socialLinks.twitter && (
@@ -168,11 +174,10 @@ export default function InfluencerDetailScreen() {
             </>
           )}
 
-          <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
-            Collaborations
-          </Text>
+          <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Collaborations</Text>
           <Text style={[styles.collabDescription, { color: colors.text.secondary }]}>
-            {influencer.name} has collaborated with {influencer.collaborationCount} brands and creators.
+            {influencer.name} has collaborated with {influencer.collaborationCount} brands and
+            creators.
           </Text>
 
           <View style={styles.bottomSpacer} />

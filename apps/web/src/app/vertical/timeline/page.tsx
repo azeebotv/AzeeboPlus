@@ -148,7 +148,13 @@ const LazyTimelinePage = lazy(() => Promise.resolve({ default: TimelinePageConte
 
 export default function TimelinePage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyTimelinePage />
     </Suspense>
   );

@@ -36,10 +36,7 @@ export default function SettingsScreen() {
   } = useBiometric();
   const [isBiometricToggling, setIsBiometricToggling] = useState(false);
 
-  const {
-    data: preferences,
-    isLoading: _isPreferencesLoading,
-  } = useQuery({
+  const { data: preferences, isLoading: _isPreferencesLoading } = useQuery({
     queryKey: ['notification', 'preferences'],
     queryFn: async () => {
       const response = await notificationApi.getPreferences();
@@ -176,7 +173,10 @@ export default function SettingsScreen() {
   if (authLoading) {
     return (
       <SafeAreaView
-        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#fff' }]}
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#fff' },
+        ]}
         edges={['top']}
       >
         <View style={styles.unauthenticatedContainer}>
@@ -189,12 +189,20 @@ export default function SettingsScreen() {
   if (!isAuthenticated) {
     return (
       <SafeAreaView
-        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#fff' }]}
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#fff' },
+        ]}
         edges={['top']}
       >
         <View style={styles.unauthenticatedContainer}>
           <Text style={styles.lockIcon}>🔒</Text>
-          <Text style={[styles.lockText, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}>
+          <Text
+            style={[
+              styles.lockText,
+              { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+            ]}
+          >
             Please log in to access settings
           </Text>
         </View>
@@ -204,12 +212,17 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView
-      style={[styles.container, { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#fff' }]}
+      style={[
+        styles.container,
+        { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#fff' },
+      ]}
       edges={['top']}
     >
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}>
+          <Text
+            style={[styles.title, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
+          >
             Settings
           </Text>
         </View>
@@ -236,7 +249,10 @@ export default function SettingsScreen() {
               <Text style={styles.settingIcon}>🔔</Text>
               <View>
                 <Text
-                  style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
+                  style={[
+                    styles.settingLabel,
+                    { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+                  ]}
                 >
                   Push Notifications
                 </Text>
@@ -261,7 +277,10 @@ export default function SettingsScreen() {
               <Text style={styles.settingIcon}>📧</Text>
               <View>
                 <Text
-                  style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
+                  style={[
+                    styles.settingLabel,
+                    { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+                  ]}
                 >
                   Email Notifications
                 </Text>
@@ -286,7 +305,10 @@ export default function SettingsScreen() {
               <Text style={styles.settingIcon}>📱</Text>
               <View>
                 <Text
-                  style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
+                  style={[
+                    styles.settingLabel,
+                    { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+                  ]}
                 >
                   SMS Notifications
                 </Text>
@@ -319,7 +341,10 @@ export default function SettingsScreen() {
               </Text>
               <View>
                 <Text
-                  style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
+                  style={[
+                    styles.settingLabel,
+                    { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+                  ]}
                 >
                   {getBiometricLabel()}
                 </Text>
@@ -358,7 +383,10 @@ export default function SettingsScreen() {
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>📺</Text>
               <Text
-                style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
+                style={[
+                  styles.settingLabel,
+                  { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+                ]}
               >
                 New Content
               </Text>
@@ -380,7 +408,10 @@ export default function SettingsScreen() {
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>💬</Text>
               <Text
-                style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
+                style={[
+                  styles.settingLabel,
+                  { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+                ]}
               >
                 Comments
               </Text>
@@ -402,7 +433,10 @@ export default function SettingsScreen() {
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>👍</Text>
               <Text
-                style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
+                style={[
+                  styles.settingLabel,
+                  { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+                ]}
               >
                 Likes
               </Text>
@@ -424,7 +458,10 @@ export default function SettingsScreen() {
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>👥</Text>
               <Text
-                style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
+                style={[
+                  styles.settingLabel,
+                  { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+                ]}
               >
                 Followers
               </Text>
@@ -446,7 +483,10 @@ export default function SettingsScreen() {
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>⚙️</Text>
               <Text
-                style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
+                style={[
+                  styles.settingLabel,
+                  { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+                ]}
               >
                 System Updates
               </Text>
@@ -468,7 +508,10 @@ export default function SettingsScreen() {
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>💰</Text>
               <Text
-                style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
+                style={[
+                  styles.settingLabel,
+                  { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+                ]}
               >
                 Payments
               </Text>
@@ -494,7 +537,10 @@ export default function SettingsScreen() {
             ]}
           >
             <Text
-              style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
+              style={[
+                styles.settingLabel,
+                { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+              ]}
             >
               Version
             </Text>
@@ -509,7 +555,10 @@ export default function SettingsScreen() {
             onPress={() => Linking.openURL('https://azeebo.plus/terms')}
           >
             <Text
-              style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
+              style={[
+                styles.settingLabel,
+                { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+              ]}
             >
               Terms of Service
             </Text>
@@ -524,7 +573,10 @@ export default function SettingsScreen() {
             onPress={() => Linking.openURL('https://azeebo.plus/privacy')}
           >
             <Text
-              style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
+              style={[
+                styles.settingLabel,
+                { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+              ]}
             >
               Privacy Policy
             </Text>
@@ -538,7 +590,10 @@ export default function SettingsScreen() {
             ]}
           >
             <Text
-              style={[styles.settingLabel, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
+              style={[
+                styles.settingLabel,
+                { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+              ]}
             >
               Licenses
             </Text>

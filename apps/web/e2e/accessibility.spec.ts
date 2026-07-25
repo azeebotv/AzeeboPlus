@@ -1,9 +1,19 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-function formatViolations(violations: any[]): string {
+function formatViolations(
+  violations: Array<{
+    impact: string;
+    id: string;
+    description: string;
+    nodes: Array<{ target: string[] }>;
+  }>
+): string {
   return violations
-    .map((v) => `[${v.impact}] ${v.id}: ${v.description}\n  Elements: ${v.nodes.map((n: any) => n.target).join(', ')}`)
+    .map(
+      (v) =>
+        `[${v.impact}] ${v.id}: ${v.description}\n  Elements: ${v.nodes.map((n) => n.target.join(', ')).join(', ')}`
+    )
     .join('\n\n');
 }
 

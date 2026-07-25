@@ -51,7 +51,9 @@ export default function CharacterDetailScreen() {
     try {
       const res = await apiClient.get<CharacterDetail>(`/v1/vertical/characters/${id}`);
       setData(res);
-      try { analytics.verticalCharacterViewed(res.id); } catch {}
+      try {
+        analytics.verticalCharacterViewed(res.id);
+      } catch {}
     } catch {
       setError('Failed to load character');
     } finally {
@@ -59,11 +61,15 @@ export default function CharacterDetailScreen() {
     }
   }, [id]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+      >
         <LoadingState text="Loading character..." />
       </SafeAreaView>
     );
@@ -71,20 +77,21 @@ export default function CharacterDetailScreen() {
 
   if (error || !data) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+      >
         <ErrorState description={error || 'Character not found'} onRetry={fetchData} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+    >
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.heroSection}>
-          <Image
-            source={{ uri: data.heroImage || PLACEHOLDER_AVATAR }}
-            style={styles.heroImage}
-          />
+          <Image source={{ uri: data.heroImage || PLACEHOLDER_AVATAR }} style={styles.heroImage} />
           <View style={styles.heroOverlay}>
             <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
               <Text style={styles.backIcon}>←</Text>
@@ -100,7 +107,11 @@ export default function CharacterDetailScreen() {
         </View>
 
         <View style={styles.tabsBar}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.tabs}
+          >
             {tabs.map((tab) => (
               <TouchableOpacity
                 key={tab.id}
@@ -123,8 +134,12 @@ export default function CharacterDetailScreen() {
               </Text>
               {data.background && (
                 <View style={styles.infoCard}>
-                  <Text style={[styles.infoLabel, { color: colors.text.secondary }]}>Background</Text>
-                  <Text style={[styles.infoValue, { color: colors.text.primary }]}>{data.background}</Text>
+                  <Text style={[styles.infoLabel, { color: colors.text.secondary }]}>
+                    Background
+                  </Text>
+                  <Text style={[styles.infoValue, { color: colors.text.primary }]}>
+                    {data.background}
+                  </Text>
                 </View>
               )}
             </View>
@@ -135,10 +150,16 @@ export default function CharacterDetailScreen() {
               {data.relationships.map((rel) => (
                 <TouchableOpacity
                   key={rel.id}
-                  style={[styles.relCard, { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' }]}
+                  style={[
+                    styles.relCard,
+                    { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' },
+                  ]}
                   onPress={() => router.push(`/vertical/character-detail?id=${rel.id}`)}
                 >
-                  <Image source={{ uri: rel.avatar || PLACEHOLDER_AVATAR }} style={styles.relAvatar} />
+                  <Image
+                    source={{ uri: rel.avatar || PLACEHOLDER_AVATAR }}
+                    style={styles.relAvatar}
+                  />
                   <View style={styles.relInfo}>
                     <Text style={[styles.relName, { color: colors.text.primary }]}>{rel.name}</Text>
                     <Text style={styles.relType}>{rel.type}</Text>
@@ -154,12 +175,17 @@ export default function CharacterDetailScreen() {
               {data.appearances.map((app) => (
                 <TouchableOpacity
                   key={app.id}
-                  style={[styles.appearCard, { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' }]}
+                  style={[
+                    styles.appearCard,
+                    { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' },
+                  ]}
                   onPress={() => router.push(`/vertical-title?id=${app.id}`)}
                 >
                   <Text style={styles.appearEmoji}>{app.emoji}</Text>
                   <View style={styles.appearInfo}>
-                    <Text style={[styles.appearTitle, { color: colors.text.primary }]}>{app.title}</Text>
+                    <Text style={[styles.appearTitle, { color: colors.text.primary }]}>
+                      {app.title}
+                    </Text>
                     <Text style={styles.appearCount}>{app.episodeCount} episodes</Text>
                   </View>
                   <Text style={styles.appearArrow}>›</Text>
@@ -178,8 +204,12 @@ export default function CharacterDetailScreen() {
                   </View>
                   <View style={styles.tlContent}>
                     <Text style={styles.tlDate}>{event.date}</Text>
-                    <Text style={[styles.tlTitle, { color: colors.text.primary }]}>{event.title}</Text>
-                    <Text style={[styles.tlDesc, { color: isDark ? colors.text.secondary : '#666' }]}>
+                    <Text style={[styles.tlTitle, { color: colors.text.primary }]}>
+                      {event.title}
+                    </Text>
+                    <Text
+                      style={[styles.tlDesc, { color: isDark ? colors.text.secondary : '#666' }]}
+                    >
                       {event.description}
                     </Text>
                   </View>
@@ -253,7 +283,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
   },
-  infoLabel: { fontSize: 12, fontWeight: '600', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 },
+  infoLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   infoValue: { fontSize: 14, lineHeight: 22 },
   relCard: {
     flexDirection: 'row',

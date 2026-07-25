@@ -40,19 +40,39 @@ export default function WatchlistScreen() {
   const error = watchlistQuery.error?.message;
   let movies = watchlistQuery.data ?? [];
 
-  if (sortBy === 'rating') movies = [...movies].sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
+  if (sortBy === 'rating')
+    movies = [...movies].sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
   if (sortBy === 'title') movies = [...movies].sort((a, b) => a.title.localeCompare(b.title));
 
   const handleRemove = (movie: WatchlistMovie) => {
     Alert.alert('Remove', `Remove "${movie.title}" from watchlist?`, [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: () => Alert.alert('Removed', `${movie.title} removed from watchlist`) },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: () => Alert.alert('Removed', `${movie.title} removed from watchlist`),
+      },
     ]);
   };
 
-  if (isLoading) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><LoadingState text="Loading watchlist..." /></SafeAreaView>;
-  if (error) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><ErrorState description={error} onRetry={() => watchlistQuery.refetch()} /></SafeAreaView>;
-  if (!movies.length) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><EmptyState icon="🎬" title="Empty watchlist" description="Save movies to watch later" /></SafeAreaView>;
+  if (isLoading)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <LoadingState text="Loading watchlist..." />
+      </SafeAreaView>
+    );
+  if (error)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <ErrorState description={error} onRetry={() => watchlistQuery.refetch()} />
+      </SafeAreaView>
+    );
+  if (!movies.length)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <EmptyState icon="🎬" title="Empty watchlist" description="Save movies to watch later" />
+      </SafeAreaView>
+    );
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
@@ -60,7 +80,9 @@ export default function WatchlistScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>Watchlist</Text>
+        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+          Watchlist
+        </Text>
       </View>
 
       <View style={styles.sortBar}>
@@ -93,8 +115,15 @@ export default function WatchlistScreen() {
               </View>
             </View>
             <View style={styles.movieInfo}>
-              <Text style={[styles.movieTitle, { color: isDark ? '#fff' : '#000' }]} numberOfLines={1}>{item.title}</Text>
-              <Text style={styles.movieGenre}>{item.genre} • {item.year}</Text>
+              <Text
+                style={[styles.movieTitle, { color: isDark ? '#fff' : '#000' }]}
+                numberOfLines={1}
+              >
+                {item.title}
+              </Text>
+              <Text style={styles.movieGenre}>
+                {item.genre} • {item.year}
+              </Text>
             </View>
             <TouchableOpacity style={styles.removeButton} onPress={() => handleRemove(item)}>
               <Text style={styles.removeIcon}>✕</Text>
@@ -109,23 +138,65 @@ export default function WatchlistScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', padding: 16, paddingTop: 50, gap: 12 },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#2a2a2a', alignItems: 'center', justifyContent: 'center' },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backIcon: { color: '#fff', fontSize: 20 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
   sortBar: { flexDirection: 'row', paddingHorizontal: 16, marginBottom: 16, gap: 10 },
-  sortChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#1a1a1a' },
+  sortChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#1a1a1a',
+  },
   sortChipActive: { backgroundColor: '#FFEAA7' },
   sortText: { color: '#888', fontSize: 12, fontWeight: '600' },
   sortTextActive: { color: '#000' },
   listContent: { paddingHorizontal: 16, paddingBottom: 30 },
-  movieCard: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 12, marginBottom: 10 },
-  movieThumb: { width: 60, height: 80, borderRadius: 8, backgroundColor: '#2a2a2a', alignItems: 'center', justifyContent: 'center', marginRight: 12, position: 'relative' },
+  movieCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 10,
+  },
+  movieThumb: {
+    width: 60,
+    height: 80,
+    borderRadius: 8,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    position: 'relative',
+  },
   movieEmoji: { fontSize: 30 },
-  ratingBadge: { position: 'absolute', top: 4, right: 4, backgroundColor: 'rgba(0,0,0,0.7)', paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4 },
+  ratingBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
   ratingText: { color: '#FFEAA7', fontSize: 10, fontWeight: '600' },
   movieInfo: { flex: 1 },
   movieTitle: { fontSize: 15, fontWeight: '700', marginBottom: 4 },
   movieGenre: { color: '#888', fontSize: 12 },
-  removeButton: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#2a2a2a', alignItems: 'center', justifyContent: 'center' },
+  removeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   removeIcon: { color: '#888', fontSize: 14 },
 });

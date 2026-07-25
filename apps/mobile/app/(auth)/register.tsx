@@ -133,8 +133,20 @@ export default function RegisterScreen() {
                   {agreed && <Text style={styles.checkmark}>✓</Text>}
                 </View>
                 <Text style={styles.termsText}>
-                  I agree to the <Text style={styles.termsLink} onPress={() => Linking.openURL('https://azeebo.plus/terms')}>Terms of Service</Text> and{' '}
-                  <Text style={styles.termsLink} onPress={() => Linking.openURL('https://azeebo.plus/privacy')}>Privacy Policy</Text>
+                  I agree to the{' '}
+                  <Text
+                    style={styles.termsLink}
+                    onPress={() => Linking.openURL('https://azeebo.plus/terms')}
+                  >
+                    Terms of Service
+                  </Text>{' '}
+                  and{' '}
+                  <Text
+                    style={styles.termsLink}
+                    onPress={() => Linking.openURL('https://azeebo.plus/privacy')}
+                  >
+                    Privacy Policy
+                  </Text>
                 </Text>
               </TouchableOpacity>
 

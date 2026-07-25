@@ -170,7 +170,9 @@ function SpecialsPageContent(): React.JSX.Element {
                   <div className="p-4">
                     <p className="text-sm text-white/50 mb-3 line-clamp-2">{special.description}</p>
                     <div className="flex items-center justify-between text-xs text-white/40">
-                      <span>{special.duration ? `${Math.floor(special.duration / 60)} min` : ''}</span>
+                      <span>
+                        {special.duration ? `${Math.floor(special.duration / 60)} min` : ''}
+                      </span>
                       <span>{special.creator?.name}</span>
                     </div>
                   </div>
@@ -194,7 +196,13 @@ const LazySpecialsPage = lazy(() => Promise.resolve({ default: SpecialsPageConte
 
 export default function SpecialsPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazySpecialsPage />
     </Suspense>
   );

@@ -154,7 +154,11 @@ export class CreatorService {
     } catch (err: unknown) {
       // If the table doesn't exist, return 0; re-throw other errors
       const message = err instanceof Error ? err.message : String(err);
-      if (!message.includes('does not exist') && !message.includes('relation') && !message.includes('table')) {
+      if (
+        !message.includes('does not exist') &&
+        !message.includes('relation') &&
+        !message.includes('table')
+      ) {
         throw err;
       }
     }

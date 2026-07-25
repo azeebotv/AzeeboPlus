@@ -39,7 +39,9 @@ export default function CrossoverDetailScreen() {
     try {
       const res = await apiClient.get<CrossoverDetail>(`/v1/vertical/crossovers/${id}`);
       setData(res);
-      try { analytics.verticalTitleViewed(res.id); } catch {}
+      try {
+        analytics.verticalTitleViewed(res.id);
+      } catch {}
     } catch {
       setError('Failed to load crossover');
     } finally {
@@ -47,11 +49,15 @@ export default function CrossoverDetailScreen() {
     }
   }, [id]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+      >
         <LoadingState text="Loading crossover..." />
       </SafeAreaView>
     );
@@ -59,14 +65,18 @@ export default function CrossoverDetailScreen() {
 
   if (error || !data) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+      >
         <ErrorState description={error || 'Crossover not found'} onRetry={fetchData} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+    >
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
@@ -100,7 +110,12 @@ export default function CrossoverDetailScreen() {
         {data.recapSummary && (
           <View style={styles.content}>
             <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Recap</Text>
-            <View style={[styles.recapCard, { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' }]}>
+            <View
+              style={[
+                styles.recapCard,
+                { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' },
+              ]}
+            >
               <Text style={[styles.recapText, { color: isDark ? colors.text.secondary : '#666' }]}>
                 {data.recapSummary}
               </Text>
@@ -113,14 +128,22 @@ export default function CrossoverDetailScreen() {
           {data.involvedTitles.map((title) => (
             <TouchableOpacity
               key={title.id}
-              style={[styles.titleCard, { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' }]}
+              style={[
+                styles.titleCard,
+                { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' },
+              ]}
               onPress={() => router.push(`/vertical-title?id=${title.id}`)}
             >
               <View style={styles.titleCardHeader}>
                 <Text style={styles.titleEmoji}>{title.emoji}</Text>
-                <Text style={[styles.titleCardTitle, { color: colors.text.primary }]}>{title.title}</Text>
+                <Text style={[styles.titleCardTitle, { color: colors.text.primary }]}>
+                  {title.title}
+                </Text>
               </View>
-              <Text style={[styles.titleSynopsis, { color: isDark ? colors.text.secondary : '#666' }]} numberOfLines={2}>
+              <Text
+                style={[styles.titleSynopsis, { color: isDark ? colors.text.secondary : '#666' }]}
+                numberOfLines={2}
+              >
                 {title.synopsis}
               </Text>
             </TouchableOpacity>
@@ -141,8 +164,15 @@ export default function CrossoverDetailScreen() {
                     <Text style={styles.timelineEpisode}>{event.episode}</Text>
                     <Text style={styles.timelineYear}>{event.year}</Text>
                   </View>
-                  <Text style={[styles.timelineTitle, { color: colors.text.primary }]}>{event.title}</Text>
-                  <Text style={[styles.timelineDesc, { color: isDark ? colors.text.secondary : '#666' }]}>
+                  <Text style={[styles.timelineTitle, { color: colors.text.primary }]}>
+                    {event.title}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.timelineDesc,
+                      { color: isDark ? colors.text.secondary : '#666' },
+                    ]}
+                  >
                     {event.description}
                   </Text>
                 </View>

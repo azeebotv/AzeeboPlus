@@ -121,7 +121,10 @@ function SubscriptionCurrentPageContent(): React.JSX.Element {
     return (
       <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
         <AppHeader />
-        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 200px)' }}>
+        <div
+          className="flex items-center justify-center"
+          style={{ minHeight: 'calc(100vh - 200px)' }}
+        >
           <Spinner size="lg" color="#E8420A" />
         </div>
       </div>
@@ -179,13 +182,19 @@ function SubscriptionCurrentPageContent(): React.JSX.Element {
 
             {/* Details */}
             <div className="space-y-4 mb-8">
-              <div className="flex justify-between items-center py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <div
+                className="flex justify-between items-center py-3"
+                style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+              >
                 <span className="text-white/50">Price</span>
                 <span className="text-white font-semibold">
                   ₦{subscription.planPrice.toLocaleString()}/{subscription.planDuration}
                 </span>
               </div>
-              <div className="flex justify-between items-center py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <div
+                className="flex justify-between items-center py-3"
+                style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+              >
                 <span className="text-white/50">Start Date</span>
                 <span className="text-white font-medium">
                   {new Date(subscription.startDate).toLocaleDateString('en-NG', {
@@ -195,7 +204,10 @@ function SubscriptionCurrentPageContent(): React.JSX.Element {
                   })}
                 </span>
               </div>
-              <div className="flex justify-between items-center py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <div
+                className="flex justify-between items-center py-3"
+                style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+              >
                 <span className="text-white/50">End Date</span>
                 <span className="text-white font-medium">
                   {new Date(subscription.endDate).toLocaleDateString('en-NG', {
@@ -206,7 +218,10 @@ function SubscriptionCurrentPageContent(): React.JSX.Element {
                 </span>
               </div>
               {subscription.nextBillingDate && (
-                <div className="flex justify-between items-center py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <div
+                  className="flex justify-between items-center py-3"
+                  style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+                >
                   <span className="text-white/50">Next Billing</span>
                   <span className="text-white font-medium">
                     {new Date(subscription.nextBillingDate).toLocaleDateString('en-NG', {
@@ -217,7 +232,10 @@ function SubscriptionCurrentPageContent(): React.JSX.Element {
                   </span>
                 </div>
               )}
-              <div className="flex justify-between items-center py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <div
+                className="flex justify-between items-center py-3"
+                style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+              >
                 <span className="text-white/50">Auto-Renew</span>
                 <button
                   type="button"
@@ -239,7 +257,9 @@ function SubscriptionCurrentPageContent(): React.JSX.Element {
               {subscription.paymentMethod && (
                 <div className="flex justify-between items-center py-3">
                   <span className="text-white/50">Payment Method</span>
-                  <span className="text-white font-medium capitalize">{subscription.paymentMethod}</span>
+                  <span className="text-white font-medium capitalize">
+                    {subscription.paymentMethod}
+                  </span>
                 </div>
               )}
             </div>
@@ -313,7 +333,8 @@ function SubscriptionCurrentPageContent(): React.JSX.Element {
         <div
           className="fixed bottom-6 right-6 z-50 px-6 py-3 rounded-xl shadow-lg transition-all"
           style={{
-            backgroundColor: toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+            backgroundColor:
+              toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
             border: `1px solid ${toast.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
             color: toast.type === 'success' ? '#22C55E' : '#EF4444',
           }}
@@ -325,11 +346,19 @@ function SubscriptionCurrentPageContent(): React.JSX.Element {
   );
 }
 
-const LazySubscriptionCurrentPage = lazy(() => Promise.resolve({ default: SubscriptionCurrentPageContent }));
+const LazySubscriptionCurrentPage = lazy(() =>
+  Promise.resolve({ default: SubscriptionCurrentPageContent })
+);
 
 export default function SubscriptionCurrentPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazySubscriptionCurrentPage />
     </Suspense>
   );

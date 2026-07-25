@@ -78,7 +78,11 @@ export default function RankingsScreen() {
         style={{ flex: 1 }}
         contentContainerStyle={styles.content}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[colors.primary[500]]} />
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary[500]]}
+          />
         }
       >
         <View style={styles.header}>

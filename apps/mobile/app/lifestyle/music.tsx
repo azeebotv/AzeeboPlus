@@ -144,10 +144,7 @@ export default function MusicScreen() {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={[
-                styles.genreChip,
-                selectedGenre === item.name && styles.genreChipActive,
-              ]}
+              style={[styles.genreChip, selectedGenre === item.name && styles.genreChipActive]}
               onPress={() => setSelectedGenre(item.name)}
             >
               <Text style={styles.genreIcon}>{item.icon}</Text>

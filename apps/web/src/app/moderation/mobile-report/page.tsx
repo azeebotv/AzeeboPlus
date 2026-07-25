@@ -10,15 +10,60 @@ import { GlowCard } from '@/components/motion/GlowCard';
 import analytics from '@/lib/analytics';
 
 const REASONS = [
-  { id: 'spam', label: 'Spam or misleading', icon: '🚫', description: 'Repetitive, unwanted, or deceptive content' },
-  { id: 'harassment', label: 'Harassment or hate speech', icon: '⚠️', description: 'Targeting individuals with harmful language' },
-  { id: 'violence', label: 'Violence or graphic content', icon: '🔒', description: 'Promoting or depicting violence' },
-  { id: 'inappropriate', label: 'Sexually explicit content', icon: '🔞', description: 'Adult content not suitable for all ages' },
-  { id: 'copyright', label: 'Copyright infringement', icon: '©️', description: 'Using content without proper authorization' },
-  { id: 'misinformation', label: 'Misinformation', icon: '📰', description: 'False or misleading information' },
-  { id: 'bullying', label: 'Bullying', icon: '😢', description: 'Repeated targeting to cause harm' },
-  { id: 'self-harm', label: 'Self-harm', icon: '💔', description: 'Content promoting self-harm or suicide' },
-  { id: 'illegal', label: 'Illegal activities', icon: '⚖️', description: 'Content depicting illegal activities' },
+  {
+    id: 'spam',
+    label: 'Spam or misleading',
+    icon: '🚫',
+    description: 'Repetitive, unwanted, or deceptive content',
+  },
+  {
+    id: 'harassment',
+    label: 'Harassment or hate speech',
+    icon: '⚠️',
+    description: 'Targeting individuals with harmful language',
+  },
+  {
+    id: 'violence',
+    label: 'Violence or graphic content',
+    icon: '🔒',
+    description: 'Promoting or depicting violence',
+  },
+  {
+    id: 'inappropriate',
+    label: 'Sexually explicit content',
+    icon: '🔞',
+    description: 'Adult content not suitable for all ages',
+  },
+  {
+    id: 'copyright',
+    label: 'Copyright infringement',
+    icon: '©️',
+    description: 'Using content without proper authorization',
+  },
+  {
+    id: 'misinformation',
+    label: 'Misinformation',
+    icon: '📰',
+    description: 'False or misleading information',
+  },
+  {
+    id: 'bullying',
+    label: 'Bullying',
+    icon: '😢',
+    description: 'Repeated targeting to cause harm',
+  },
+  {
+    id: 'self-harm',
+    label: 'Self-harm',
+    icon: '💔',
+    description: 'Content promoting self-harm or suicide',
+  },
+  {
+    id: 'illegal',
+    label: 'Illegal activities',
+    icon: '⚖️',
+    description: 'Content depicting illegal activities',
+  },
   { id: 'other', label: 'Other', icon: '📝', description: 'Reason not listed above' },
 ];
 
@@ -70,7 +115,14 @@ function MobileReportPageContent(): React.JSX.Element {
             className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
             style={{ backgroundColor: 'rgba(239,68,68,0.15)' }}
           >
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2">
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#EF4444"
+              strokeWidth="2"
+            >
               <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
               <line x1="4" y1="22" x2="4" y2="15" />
             </svg>
@@ -97,13 +149,21 @@ function MobileReportPageContent(): React.JSX.Element {
                 className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center"
                 style={{ backgroundColor: 'rgba(34,197,94,0.15)' }}
               >
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2">
+                <svg
+                  width="40"
+                  height="40"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#22C55E"
+                  strokeWidth="2"
+                >
                   <path d="M20 6L9 17l-5-5" />
                 </svg>
               </motion.div>
               <h2 className="text-xl font-bold text-white mb-2">Report Submitted</h2>
               <p className="text-white/50 mb-4">
-                Thank you for helping keep our community safe. We&apos;ll review your report within 24 hours.
+                Thank you for helping keep our community safe. We&apos;ll review your report within
+                24 hours.
               </p>
               <p className="text-xs text-white/40">
                 Reference: {Math.random().toString(36).substring(2, 10).toUpperCase()}
@@ -123,12 +183,14 @@ function MobileReportPageContent(): React.JSX.Element {
                       onClick={() => setSelectedReason(reason.id)}
                       className="w-full text-left p-3 rounded-lg flex items-start gap-3 transition-all"
                       style={{
-                        backgroundColor: selectedReason === reason.id
-                          ? 'rgba(232,66,10,0.15)'
-                          : 'rgba(255,255,255,0.03)',
-                        border: selectedReason === reason.id
-                          ? '1px solid rgba(232,66,10,0.3)'
-                          : '1px solid rgba(255,255,255,0.06)',
+                        backgroundColor:
+                          selectedReason === reason.id
+                            ? 'rgba(232,66,10,0.15)'
+                            : 'rgba(255,255,255,0.03)',
+                        border:
+                          selectedReason === reason.id
+                            ? '1px solid rgba(232,66,10,0.3)'
+                            : '1px solid rgba(255,255,255,0.06)',
                       }}
                     >
                       <span className="text-lg mt-0.5">{reason.icon}</span>
@@ -158,7 +220,9 @@ function MobileReportPageContent(): React.JSX.Element {
             <ScrollReveal delay={0.1}>
               <GlowCard className="p-5">
                 <h2 className="text-lg font-bold text-white mb-3">Additional details</h2>
-                <p className="text-xs text-white/40 mb-3">Optional - help us understand the issue better</p>
+                <p className="text-xs text-white/40 mb-3">
+                  Optional - help us understand the issue better
+                </p>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -175,7 +239,10 @@ function MobileReportPageContent(): React.JSX.Element {
             {error && (
               <div
                 className="p-4 rounded-lg text-sm text-red-400"
-                style={{ backgroundColor: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}
+                style={{
+                  backgroundColor: 'rgba(239,68,68,0.1)',
+                  border: '1px solid rgba(239,68,68,0.2)',
+                }}
               >
                 {error}
               </div>

@@ -150,9 +150,7 @@ function StatsPageContent(): React.JSX.Element {
                     <span className="text-2xl mb-2 block">{stat.icon}</span>
                     <p className="text-2xl font-bold text-white">{stat.value}</p>
                     <p className="text-xs text-white/50 mt-1">{stat.label}</p>
-                    {stat.subtext && (
-                      <p className="text-xs text-white/30 mt-0.5">{stat.subtext}</p>
-                    )}
+                    {stat.subtext && <p className="text-xs text-white/30 mt-0.5">{stat.subtext}</p>}
                   </GlowCard>
                 </motion.div>
               ))}
@@ -284,7 +282,13 @@ const LazyStatsPage = lazy(() => Promise.resolve({ default: StatsPageContent }))
 
 export default function StatsPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyStatsPage />
     </Suspense>
   );

@@ -55,7 +55,9 @@ function ErrorBoundaryContent({
   const isDark = colorScheme === 'dark';
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? colors.dark[900] : colors.light[50] }]}>
+    <View
+      style={[styles.container, { backgroundColor: isDark ? colors.dark[900] : colors.light[50] }]}
+    >
       <Text style={[styles.title, { color: isDark ? colors.dark[100] : colors.light[900] }]}>
         Something went wrong
       </Text>

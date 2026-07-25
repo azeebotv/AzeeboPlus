@@ -67,11 +67,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
         return res.data.map((plan) => ({
           ...plan,
           durationLabel:
-            plan.duration === 7
-              ? 'Weekly'
-              : plan.duration === 30
-                ? 'Monthly'
-                : 'Yearly',
+            plan.duration === 7 ? 'Weekly' : plan.duration === 30 ? 'Monthly' : 'Yearly',
         }));
       }
       return [];
@@ -141,7 +137,10 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
     return (
       <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
         <AppHeader />
-        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 200px)' }}>
+        <div
+          className="flex items-center justify-center"
+          style={{ minHeight: 'calc(100vh - 200px)' }}
+        >
           <Spinner size="lg" color="#E8420A" />
         </div>
       </div>
@@ -259,7 +258,9 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                     <h3 className="text-lg font-bold text-white mb-1">{plan.name}</h3>
                     <p className="text-2xl font-bold mb-2" style={{ color: '#E8420A' }}>
                       ₦{plan.price.toLocaleString()}
-                      <span className="text-sm font-normal text-white/50">/{plan.durationLabel.toLowerCase()}</span>
+                      <span className="text-sm font-normal text-white/50">
+                        /{plan.durationLabel.toLowerCase()}
+                      </span>
                     </p>
                     <p className="text-sm text-white/50 mb-4">{plan.description}</p>
                     <ul className="space-y-2">
@@ -296,11 +297,17 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
           <ScrollReveal>
             <GlowCard universe="movies" className="p-8 mb-8">
               <h2 className="text-xl font-bold text-white mb-6">Order Summary</h2>
-              <div className="flex justify-between items-center mb-4 pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <div
+                className="flex justify-between items-center mb-4 pb-4"
+                style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+              >
                 <span className="text-white/50">Plan</span>
                 <span className="text-white font-medium">{selectedPlan.name}</span>
               </div>
-              <div className="flex justify-between items-center mb-4 pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <div
+                className="flex justify-between items-center mb-4 pb-4"
+                style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+              >
                 <span className="text-white/50">Duration</span>
                 <span className="text-white font-medium">{selectedPlan.durationLabel}</span>
               </div>
@@ -322,7 +329,8 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                 className="w-full p-4 rounded-xl text-left mb-3 transition-all"
                 style={{
                   border: `2px solid ${paymentMethod === 'wallet' ? '#22C55E' : 'rgba(255,255,255,0.1)'}`,
-                  backgroundColor: paymentMethod === 'wallet' ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.03)',
+                  backgroundColor:
+                    paymentMethod === 'wallet' ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.03)',
                 }}
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
@@ -338,7 +346,10 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                     </div>
                   </div>
                   {!canAffordWithWallet && paymentMethod === 'wallet' && (
-                    <span className="text-xs px-2 py-1 rounded-full" style={{ backgroundColor: 'rgba(239,68,68,0.15)', color: '#EF4444' }}>
+                    <span
+                      className="text-xs px-2 py-1 rounded-full"
+                      style={{ backgroundColor: 'rgba(239,68,68,0.15)', color: '#EF4444' }}
+                    >
                       Insufficient
                     </span>
                   )}
@@ -352,7 +363,8 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                 className="w-full p-4 rounded-xl text-left transition-all"
                 style={{
                   border: `2px solid ${paymentMethod === 'external' ? '#E8420A' : 'rgba(255,255,255,0.1)'}`,
-                  backgroundColor: paymentMethod === 'external' ? 'rgba(232,66,10,0.1)' : 'rgba(255,255,255,0.03)',
+                  backgroundColor:
+                    paymentMethod === 'external' ? 'rgba(232,66,10,0.1)' : 'rgba(255,255,255,0.03)',
                 }}
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
@@ -496,7 +508,8 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
         <div
           className="fixed bottom-6 right-6 z-50 px-6 py-3 rounded-xl shadow-lg transition-all"
           style={{
-            backgroundColor: toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+            backgroundColor:
+              toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
             border: `1px solid ${toast.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
             color: toast.type === 'success' ? '#22C55E' : '#EF4444',
           }}
@@ -508,11 +521,19 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
   );
 }
 
-const LazySubscriptionPaymentPage = lazy(() => Promise.resolve({ default: SubscriptionPaymentPageContent }));
+const LazySubscriptionPaymentPage = lazy(() =>
+  Promise.resolve({ default: SubscriptionPaymentPageContent })
+);
 
 export default function SubscriptionPaymentPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazySubscriptionPaymentPage />
     </Suspense>
   );

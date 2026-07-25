@@ -5,7 +5,13 @@
  * All consumers should use the async fetch functions for real-time prices.
  */
 
-import { pricingApi, type MoviePricing, type VotePackage, type WalletPricing, type PassPricing } from '../api/pricing';
+import {
+  pricingApi,
+  type MoviePricing,
+  type VotePackage,
+  type WalletPricing,
+  type PassPricing,
+} from '../api/pricing';
 
 export const CURRENCY = '₦';
 
@@ -43,10 +49,39 @@ const FALLBACK_VOTE_PACKAGES: Record<string, VotePackage[]> = {
     { id: 'rty-4', votes: 5000, price: 4000, bonus: 1000 },
   ],
   superVote: [
-    { id: 'sv-1', votes: 1, price: 100, multiplier: 10, name: 'Single Vote', description: '1 Super Vote (2x weight)' },
-    { id: 'sv-2', votes: 5, price: 450, multiplier: 10, name: 'Power Pack', description: '5 Super Votes (2x weight each)', isPopular: true },
-    { id: 'sv-3', votes: 10, price: 800, multiplier: 10, name: 'Ultimate Pack', description: '10 Super Votes (2x weight each)' },
-    { id: 'sv-4', votes: 25, price: 1800, multiplier: 10, name: 'Mega Pack', description: '25 Super Votes (2x weight each)' },
+    {
+      id: 'sv-1',
+      votes: 1,
+      price: 100,
+      multiplier: 10,
+      name: 'Single Vote',
+      description: '1 Super Vote (2x weight)',
+    },
+    {
+      id: 'sv-2',
+      votes: 5,
+      price: 450,
+      multiplier: 10,
+      name: 'Power Pack',
+      description: '5 Super Votes (2x weight each)',
+      isPopular: true,
+    },
+    {
+      id: 'sv-3',
+      votes: 10,
+      price: 800,
+      multiplier: 10,
+      name: 'Ultimate Pack',
+      description: '10 Super Votes (2x weight each)',
+    },
+    {
+      id: 'sv-4',
+      votes: 25,
+      price: 1800,
+      multiplier: 10,
+      name: 'Mega Pack',
+      description: '25 Super Votes (2x weight each)',
+    },
   ],
 };
 
@@ -57,9 +92,27 @@ const FALLBACK_WALLET_PRICING: WalletPricing = {
 };
 
 const FALLBACK_PASSES_PRICING: PassPricing = {
-  daily: { id: 'pass-daily', name: 'Daily Pass', price: 200, currency: 'NGN', duration: '24 hours' },
-  weekly: { id: 'pass-weekly', name: 'Weekly Pass', price: 1500, currency: 'NGN', duration: '7 days' },
-  monthly: { id: 'pass-monthly', name: 'Monthly Pass', price: 5000, currency: 'NGN', duration: '30 days' },
+  daily: {
+    id: 'pass-daily',
+    name: 'Daily Pass',
+    price: 200,
+    currency: 'NGN',
+    duration: '24 hours',
+  },
+  weekly: {
+    id: 'pass-weekly',
+    name: 'Weekly Pass',
+    price: 1500,
+    currency: 'NGN',
+    duration: '7 days',
+  },
+  monthly: {
+    id: 'pass-monthly',
+    name: 'Monthly Pass',
+    price: 5000,
+    currency: 'NGN',
+    duration: '30 days',
+  },
 };
 
 // Async fetch functions with caching
@@ -131,9 +184,24 @@ export function clearPricingCache(): void {
 // WARNING: These are fallback defaults. Always fetch from API when possible.
 // Per CLAUDE.md: "Never hardcode prices in frontend or backend code"
 export const moviePricing = {
-  rent48h: { id: 'rent-48h', type: 'Rent (48h)', price: (cachedMoviePricing as MoviePricing | null)?.rent48h?.price ?? 500, label: '₦500' },
-  buy: { id: 'buy', type: 'Buy', price: (cachedMoviePricing as MoviePricing | null)?.buy?.price ?? 1500, label: '₦1,500' },
-  pass: { id: 'pass', type: 'Pass', price: (cachedMoviePricing as MoviePricing | null)?.pass?.price ?? 4500, label: '₦4,500/mo' },
+  rent48h: {
+    id: 'rent-48h',
+    type: 'Rent (48h)',
+    price: (cachedMoviePricing as MoviePricing | null)?.rent48h?.price ?? 500,
+    label: '₦500',
+  },
+  buy: {
+    id: 'buy',
+    type: 'Buy',
+    price: (cachedMoviePricing as MoviePricing | null)?.buy?.price ?? 1500,
+    label: '₦1,500',
+  },
+  pass: {
+    id: 'pass',
+    type: 'Pass',
+    price: (cachedMoviePricing as MoviePricing | null)?.pass?.price ?? 4500,
+    label: '₦4,500/mo',
+  },
 } as const;
 
 // Wallet preset amounts - these are UI hints, not prices

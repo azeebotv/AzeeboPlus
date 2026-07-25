@@ -900,7 +900,7 @@ export class UsersService {
           (item: { universeId: string; affinityScore: number; lastEngaged: Date }) => ({
             universeId: item.universeId,
             universeName: item.universeId,
-            universeIcon: undefined,
+            universeIcon: null,
             engagementCount: item.affinityScore,
             lastEngagedAt: item.lastEngaged.toISOString(),
           })

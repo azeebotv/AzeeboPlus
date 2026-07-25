@@ -46,7 +46,7 @@ export default function PaymentScreen() {
     if (!hasEnoughBalance) {
       Alert.alert(
         'Insufficient Balance',
-        'You don\'t have enough wallet balance. Please fund your wallet or choose another payment method.',
+        "You don't have enough wallet balance. Please fund your wallet or choose another payment method.",
         [
           { text: 'Cancel', style: 'cancel' },
           { text: 'Fund Wallet', onPress: () => router.push('/(tabs)/wallet') },
@@ -144,9 +144,7 @@ export default function PaymentScreen() {
               </View>
             </View>
             <View style={styles.paymentOptionRight}>
-              {!hasEnoughBalance && (
-                <Text style={styles.insufficientBadge}>Insufficient</Text>
-              )}
+              {!hasEnoughBalance && <Text style={styles.insufficientBadge}>Insufficient</Text>}
               <View
                 style={[
                   styles.radioOuter,
@@ -159,7 +157,10 @@ export default function PaymentScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.paymentOption, selectedMethod === 'external' && styles.paymentOptionSelected]}
+            style={[
+              styles.paymentOption,
+              selectedMethod === 'external' && styles.paymentOptionSelected,
+            ]}
             onPress={handlePayExternal}
             disabled={isProcessing}
           >
@@ -205,9 +206,7 @@ export default function PaymentScreen() {
           </View>
           <View style={styles.costRow}>
             <Text style={styles.costLabel}>Amount</Text>
-            <Text style={styles.costValue}>
-              {formatPrice(planPrice, params.currency || 'NGN')}
-            </Text>
+            <Text style={styles.costValue}>{formatPrice(planPrice, params.currency || 'NGN')}</Text>
           </View>
           {selectedMethod === 'wallet' && (
             <View style={styles.costRow}>

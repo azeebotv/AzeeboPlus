@@ -130,7 +130,14 @@ function WatchlistPageContent(): React.JSX.Element {
                         className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110"
                         style={{ backgroundColor: 'rgba(239,68,68,0.8)' }}
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="white"
+                          strokeWidth="2"
+                        >
                           <path d="M18 6L6 18M6 6l12 12" />
                         </svg>
                       </button>
@@ -175,7 +182,13 @@ const LazyWatchlistPage = lazy(() => Promise.resolve({ default: WatchlistPageCon
 
 export default function WatchlistPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyWatchlistPage />
     </Suspense>
   );

@@ -190,7 +190,10 @@ function VotingPageContent(): React.JSX.Element {
                               {contestant.status === 'danger' && (
                                 <span
                                   className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
-                                  style={{ backgroundColor: 'rgba(239,68,68,0.2)', color: '#EF4444' }}
+                                  style={{
+                                    backgroundColor: 'rgba(239,68,68,0.2)',
+                                    color: '#EF4444',
+                                  }}
                                 >
                                   At Risk
                                 </span>
@@ -254,16 +257,11 @@ function VotingPageContent(): React.JSX.Element {
                     </p>
                     <p className="text-sm text-white/80">{wallet.currency}</p>
                   </div>
-                  <p className="text-xs text-white/40">
-                    Vote costs: 1 point per vote
-                  </p>
+                  <p className="text-xs text-white/40">Vote costs: 1 point per vote</p>
                 </GlowCard>
 
                 {selectedContestant && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                  >
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                     <GlowCard className="p-6">
                       <h3 className="text-lg font-bold text-white mb-4">Cast Your Vote</h3>
                       <p className="text-sm text-white/50 mb-4">Select vote quantity:</p>

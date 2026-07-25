@@ -54,9 +54,28 @@ export default function LeaderboardScreen() {
     return '➡️';
   };
 
-  if (isLoading) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><LoadingState text="Loading leaderboard..." /></SafeAreaView>;
-  if (error) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><ErrorState description={error} onRetry={() => leaderboardQuery.refetch()} /></SafeAreaView>;
-  if (!entries.length) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><EmptyState icon="🏆" title="No rankings" description="Leaderboard will appear once players compete" /></SafeAreaView>;
+  if (isLoading)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <LoadingState text="Loading leaderboard..." />
+      </SafeAreaView>
+    );
+  if (error)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <ErrorState description={error} onRetry={() => leaderboardQuery.refetch()} />
+      </SafeAreaView>
+    );
+  if (!entries.length)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <EmptyState
+          icon="🏆"
+          title="No rankings"
+          description="Leaderboard will appear once players compete"
+        />
+      </SafeAreaView>
+    );
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
@@ -64,7 +83,9 @@ export default function LeaderboardScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>Leaderboard</Text>
+        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+          Leaderboard
+        </Text>
       </View>
 
       <View style={styles.periodBar}>
@@ -91,7 +112,12 @@ export default function LeaderboardScreen() {
                 <View style={styles.topAvatar}>
                   <Text style={styles.avatarEmoji}>{entry.avatar}</Text>
                 </View>
-                <Text style={[styles.topName, { color: isDark ? '#fff' : '#000' }]} numberOfLines={1}>{entry.name}</Text>
+                <Text
+                  style={[styles.topName, { color: isDark ? '#fff' : '#000' }]}
+                  numberOfLines={1}
+                >
+                  {entry.name}
+                </Text>
                 <Text style={styles.topPoints}>{entry.points.toLocaleString()} pts</Text>
               </View>
             ))}
@@ -104,7 +130,9 @@ export default function LeaderboardScreen() {
               <Text style={styles.entryAvatarEmoji}>{item.avatar}</Text>
             </View>
             <View style={styles.entryInfo}>
-              <Text style={[styles.entryName, { color: isDark ? '#fff' : '#000' }]}>{item.name}</Text>
+              <Text style={[styles.entryName, { color: isDark ? '#fff' : '#000' }]}>
+                {item.name}
+              </Text>
               <Text style={styles.entryWinRate}>Win Rate: {item.winRate}%</Text>
             </View>
             <View style={styles.entryRight}>
@@ -121,25 +149,65 @@ export default function LeaderboardScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', padding: 16, paddingTop: 50, gap: 12 },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#2a2a2a', alignItems: 'center', justifyContent: 'center' },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backIcon: { color: '#fff', fontSize: 20 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
   periodBar: { flexDirection: 'row', paddingHorizontal: 16, marginBottom: 16, gap: 10 },
-  periodChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#1a1a1a' },
+  periodChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#1a1a1a',
+  },
   periodChipActive: { backgroundColor: '#E74C3C' },
   periodText: { color: '#888', fontSize: 13, fontWeight: '600' },
   periodTextActive: { color: '#fff' },
   listContent: { paddingHorizontal: 16, paddingBottom: 30 },
-  topThree: { flexDirection: 'row', justifyContent: 'space-around', padding: 20, borderRadius: 16, marginBottom: 16 },
+  topThree: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 16,
+  },
   topItem: { alignItems: 'center', width: 90 },
   topRank: { fontSize: 28, marginBottom: 8 },
-  topAvatar: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#2a2a2a', alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
+  topAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
   avatarEmoji: { fontSize: 24 },
   topName: { fontSize: 12, fontWeight: '600', marginBottom: 2, textAlign: 'center' },
   topPoints: { color: '#E74C3C', fontSize: 12, fontWeight: '700' },
-  entryRow: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 10, marginBottom: 8 },
+  entryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 8,
+  },
   rankText: { width: 40, fontSize: 14, fontWeight: '700', color: '#888', textAlign: 'center' },
-  entryAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#2a2a2a', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  entryAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
   entryAvatarEmoji: { fontSize: 20 },
   entryInfo: { flex: 1 },
   entryName: { fontSize: 14, fontWeight: '600', marginBottom: 2 },

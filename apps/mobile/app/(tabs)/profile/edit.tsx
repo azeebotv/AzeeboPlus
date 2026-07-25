@@ -66,7 +66,8 @@ export default function EditProfileScreen() {
         { text: 'OK', onPress: () => router.back() },
       ]);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to update profile. Please try again.';
+      const message =
+        error instanceof Error ? error.message : 'Failed to update profile. Please try again.';
       Alert.alert('Error', message);
     } finally {
       setIsLoading(false);

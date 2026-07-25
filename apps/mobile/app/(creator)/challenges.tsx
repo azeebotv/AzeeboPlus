@@ -13,11 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { colors } from '../../src/theme';
-import {
-  moderationApi,
-  Challenge,
-  ChallengeSubmission,
-} from '../../src/api/moderation';
+import { moderationApi, Challenge, ChallengeSubmission } from '../../src/api/moderation';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 import { logger } from '../../src/utils/logger';
 
@@ -131,7 +127,11 @@ export default function ChallengesScreen() {
 
   const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
     submitted: { label: 'Submitted', color: colors.info[500], bg: colors.info[500] + '20' },
-    under_review: { label: 'Under Review', color: colors.warning[500], bg: colors.warning[500] + '20' },
+    under_review: {
+      label: 'Under Review',
+      color: colors.warning[500],
+      bg: colors.warning[500] + '20',
+    },
     approved: { label: 'Approved', color: colors.success[500], bg: colors.success[500] + '20' },
     rejected: { label: 'Rejected', color: colors.error[500], bg: colors.error[500] + '20' },
   };
@@ -141,24 +141,16 @@ export default function ChallengesScreen() {
       style={[
         styles.challengeCard,
         {
-          backgroundColor:
-            colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
+          backgroundColor: colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
         },
       ]}
     >
       <View style={styles.challengeHeader}>
-        <View
-          style={[
-            styles.rewardBadge,
-            { backgroundColor: colors.primary[500] + '20' },
-          ]}
-        >
+        <View style={[styles.rewardBadge, { backgroundColor: colors.primary[500] + '20' }]}>
           <Text style={styles.rewardIcon}>🏆</Text>
           <Text style={styles.rewardText}>{item.rewardPoints.toLocaleString()} pts</Text>
         </View>
-        <Text style={styles.challengeDate}>
-          Ends {new Date(item.endDate).toLocaleDateString()}
-        </Text>
+        <Text style={styles.challengeDate}>Ends {new Date(item.endDate).toLocaleDateString()}</Text>
       </View>
 
       <Text
@@ -194,9 +186,7 @@ export default function ChallengesScreen() {
       ) : null}
 
       <View style={styles.challengeMeta}>
-        <Text style={styles.metaText}>
-          {item.participantCount} participants
-        </Text>
+        <Text style={styles.metaText}>{item.participantCount} participants</Text>
         {item.maxParticipants ? (
           <Text style={styles.metaText}>
             {item.maxParticipants - item.participantCount} spots left
@@ -205,10 +195,7 @@ export default function ChallengesScreen() {
       </View>
 
       <TouchableOpacity
-        style={[
-          styles.submitButton,
-          item.status !== 'active' && styles.submitButtonDisabled,
-        ]}
+        style={[styles.submitButton, item.status !== 'active' && styles.submitButtonDisabled]}
         onPress={() => {
           setSelectedChallenge(item);
           setShowSubmitModal(true);
@@ -229,8 +216,7 @@ export default function ChallengesScreen() {
         style={[
           styles.submissionCard,
           {
-            backgroundColor:
-              colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
+            backgroundColor: colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
           },
         ]}
       >
@@ -415,8 +401,7 @@ export default function ChallengesScreen() {
             style={[
               styles.modalContent,
               {
-                backgroundColor:
-                  colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
+                backgroundColor: colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
               },
             ]}
           >
@@ -428,9 +413,7 @@ export default function ChallengesScreen() {
             >
               Submit Challenge Entry
             </Text>
-            <Text style={styles.modalSubtitle}>
-              {selectedChallenge?.title}
-            </Text>
+            <Text style={styles.modalSubtitle}>{selectedChallenge?.title}</Text>
 
             <View style={styles.formGroup}>
               <Text style={styles.formLabel}>Content URL</Text>
@@ -438,7 +421,8 @@ export default function ChallengesScreen() {
                 style={[
                   styles.formInput,
                   {
-                    backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : colors.light[100],
+                    backgroundColor:
+                      colorScheme === 'dark' ? colors.bg.tertiary : colors.light[100],
                     color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary,
                   },
                 ]}
@@ -457,7 +441,8 @@ export default function ChallengesScreen() {
                 style={[
                   styles.formTextArea,
                   {
-                    backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : colors.light[100],
+                    backgroundColor:
+                      colorScheme === 'dark' ? colors.bg.tertiary : colors.light[100],
                     color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary,
                   },
                 ]}
@@ -484,10 +469,7 @@ export default function ChallengesScreen() {
                 <Text style={styles.modalCancelText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[
-                  styles.modalConfirm,
-                  submitting && styles.modalConfirmDisabled,
-                ]}
+                style={[styles.modalConfirm, submitting && styles.modalConfirmDisabled]}
                 onPress={handleSubmitEntry}
                 disabled={submitting}
               >

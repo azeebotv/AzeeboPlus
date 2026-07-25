@@ -70,7 +70,7 @@ const legalContent: Record<
 
 export default function LegalPage() {
   const colorScheme = useColorScheme();
-  
+
   const { type } = useLocalSearchParams<{ type: 'privacy' | 'terms' }>();
 
   const content = legalContent[type || 'privacy'];

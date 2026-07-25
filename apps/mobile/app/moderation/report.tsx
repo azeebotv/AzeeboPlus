@@ -163,12 +163,7 @@ export default function ReportScreen() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {contentTitle ? (
           <View style={styles.contentPreview}>
-            <Text
-              style={[
-                styles.contentPreviewLabel,
-                { color: colors.text.secondary },
-              ]}
-            >
+            <Text style={[styles.contentPreviewLabel, { color: colors.text.secondary }]}>
               Reporting:
             </Text>
             <Text
@@ -214,12 +209,7 @@ export default function ReportScreen() {
                 ]}
                 onPress={() => setSelectedReason(reason.id)}
               >
-                <View
-                  style={[
-                    styles.radio,
-                    selectedReason === reason.id && styles.radioSelected,
-                  ]}
-                >
+                <View style={[styles.radio, selectedReason === reason.id && styles.radioSelected]}>
                   {selectedReason === reason.id && <View style={styles.radioDot} />}
                 </View>
                 <Text

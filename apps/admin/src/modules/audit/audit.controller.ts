@@ -1,4 +1,4 @@
-import { Inject, Controller, Get, Param, Query  } from '@nestjs/common';
+import { Inject, Controller, Get, Param, Query } from '@nestjs/common';
 import { AuditLogService } from './audit.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';

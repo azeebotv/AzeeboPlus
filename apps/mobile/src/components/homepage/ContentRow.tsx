@@ -89,7 +89,9 @@ export default function ContentRow({
             style={[styles.navBtn, !canScrollLeft && styles.navBtnDisabled]}
             accessibilityLabel={`${title} ${t('home.scrollLeft')}`}
             accessibilityRole="button"
-            onPress={() => scrollRef.current?.scrollTo({ x: scrollOffsetRef.current - 300, animated: true })}
+            onPress={() =>
+              scrollRef.current?.scrollTo({ x: scrollOffsetRef.current - 300, animated: true })
+            }
             disabled={!canScrollLeft}
           >
             <Ionicons
@@ -102,7 +104,9 @@ export default function ContentRow({
             style={[styles.navBtn, !canScrollRight && styles.navBtnDisabled]}
             accessibilityLabel={`${title} ${t('home.scrollRight')}`}
             accessibilityRole="button"
-            onPress={() => scrollRef.current?.scrollTo({ x: scrollOffsetRef.current + 300, animated: true })}
+            onPress={() =>
+              scrollRef.current?.scrollTo({ x: scrollOffsetRef.current + 300, animated: true })
+            }
             disabled={!canScrollRight}
           >
             <Ionicons

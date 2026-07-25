@@ -18,8 +18,18 @@ export default function LibraryScreen() {
   useAuth();
   const [activeTab, setActiveTab] = useState('watchlist');
 
-  const { data: savedData, isLoading: savedLoading, error: savedError, refetch: refetchSaved } = useSavedContent(1, 50);
-  const { data: historyData, isLoading: historyLoading, error: historyError, refetch: refetchHistory } = useRecentContent(1, 50);
+  const {
+    data: savedData,
+    isLoading: savedLoading,
+    error: savedError,
+    refetch: refetchSaved,
+  } = useSavedContent(1, 50);
+  const {
+    data: historyData,
+    isLoading: historyLoading,
+    error: historyError,
+    refetch: refetchHistory,
+  } = useRecentContent(1, 50);
 
   const isLoading = savedLoading || historyLoading;
   const error = savedError?.message || historyError?.message || null;
@@ -90,7 +100,11 @@ export default function LibraryScreen() {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.itemCard}
-            onPress={() => router.push(`/watch/${(item as { contentId?: string; id: string }).contentId || item.id}`)}
+            onPress={() =>
+              router.push(
+                `/watch/${(item as { contentId?: string; id: string }).contentId || item.id}`
+              )
+            }
           >
             <View style={styles.itemThumbnail}>
               <Text style={styles.itemEmoji}>📺</Text>

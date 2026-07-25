@@ -81,7 +81,16 @@ function LifestylePageContent(): React.JSX.Element {
               <h2 className="text-4xl font-bold text-white mb-2">{events[0].title}</h2>
               <p className="text-white/60 text-lg mb-6 max-w-2xl">{events[0].description}</p>
               <div className="flex items-center gap-4">
-                <Link href={`/watch/${events[0].id}`} className="az-btn-primary" style={{ width: 'auto', paddingInline: '2rem', display: 'inline-block', textAlign: 'center' }}>
+                <Link
+                  href={`/watch/${events[0].id}`}
+                  className="az-btn-primary"
+                  style={{
+                    width: 'auto',
+                    paddingInline: '2rem',
+                    display: 'inline-block',
+                    textAlign: 'center',
+                  }}
+                >
                   Get Tickets
                 </Link>
                 <Link
@@ -205,7 +214,13 @@ const LazyLifestylePage = lazy(() => Promise.resolve({ default: LifestylePageCon
 
 export default function LifestylePage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyLifestylePage />
     </Suspense>
   );

@@ -69,7 +69,9 @@ export const AgbalaEndCard: React.FC<AgbalaEndCardProps> = ({
             style={styles.continueButton}
             onPress={handlePress}
             accessibilityRole="button"
-            accessibilityLabel={nextEpisodeTitle ? `Continue to ${nextEpisodeTitle}` : (buttonText || 'Continue')}
+            accessibilityLabel={
+              nextEpisodeTitle ? `Continue to ${nextEpisodeTitle}` : buttonText || 'Continue'
+            }
             accessibilityHint="Double tap to proceed to the next episode"
             accessibilityState={{ disabled: false }}
             activeOpacity={0.7}

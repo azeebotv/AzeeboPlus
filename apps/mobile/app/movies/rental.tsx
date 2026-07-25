@@ -14,9 +14,27 @@ type RentalOption = {
 };
 
 const RENTAL_OPTIONS: RentalOption[] = [
-  { id: 'rent_48h', type: '48-Hour Rental', price: moviePricing.rent48h.label, duration: '48 hours', features: ['Stream in HD', 'Watch on 2 devices', 'No downloads'] },
-  { id: 'rent_7d', type: '7-Day Rental', price: '₦2,000', duration: '7 days', features: ['Stream in HD', 'Watch on 3 devices', 'Download for offline'] },
-  { id: 'buy', type: 'Buy to Own', price: moviePricing.buy.label, duration: 'Forever', features: ['Stream in HD + 4K', 'Unlimited devices', 'Download for offline', 'Bonus content'] },
+  {
+    id: 'rent_48h',
+    type: '48-Hour Rental',
+    price: moviePricing.rent48h.label,
+    duration: '48 hours',
+    features: ['Stream in HD', 'Watch on 2 devices', 'No downloads'],
+  },
+  {
+    id: 'rent_7d',
+    type: '7-Day Rental',
+    price: '₦2,000',
+    duration: '7 days',
+    features: ['Stream in HD', 'Watch on 3 devices', 'Download for offline'],
+  },
+  {
+    id: 'buy',
+    type: 'Buy to Own',
+    price: moviePricing.buy.label,
+    duration: 'Forever',
+    features: ['Stream in HD + 4K', 'Unlimited devices', 'Download for offline', 'Bonus content'],
+  },
 ];
 
 export default function RentalScreen() {
@@ -26,21 +44,17 @@ export default function RentalScreen() {
   const [selectedOption, setSelectedOption] = useState<RentalOption>(RENTAL_OPTIONS[0]);
 
   const handlePurchase = () => {
-    Alert.alert(
-      'Confirm Purchase',
-      `${selectedOption.type} for ${selectedOption.price}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Pay',
-          onPress: () => {
-            Alert.alert('Success', `${selectedOption.type} confirmed! Enjoy your movie.`, [
-              { text: 'OK', onPress: () => router.back() },
-            ]);
-          },
+    Alert.alert('Confirm Purchase', `${selectedOption.type} for ${selectedOption.price}?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Pay',
+        onPress: () => {
+          Alert.alert('Success', `${selectedOption.type} confirmed! Enjoy your movie.`, [
+            { text: 'OK', onPress: () => router.back() },
+          ]);
         },
-      ]
-    );
+      },
+    ]);
   };
 
   return (
@@ -49,11 +63,15 @@ export default function RentalScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>Rent / Buy</Text>
+        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+          Rent / Buy
+        </Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={[styles.heading, { color: isDark ? '#fff' : '#000' }]}>Choose how to watch</Text>
+        <Text style={[styles.heading, { color: isDark ? '#fff' : '#000' }]}>
+          Choose how to watch
+        </Text>
         <Text style={styles.subheading}>Select an option below to unlock this movie</Text>
 
         {RENTAL_OPTIONS.map((option) => (
@@ -68,7 +86,9 @@ export default function RentalScreen() {
           >
             <View style={styles.optionHeader}>
               <View>
-                <Text style={[styles.optionType, { color: isDark ? '#fff' : '#000' }]}>{option.type}</Text>
+                <Text style={[styles.optionType, { color: isDark ? '#fff' : '#000' }]}>
+                  {option.type}
+                </Text>
                 <Text style={styles.optionDuration}>{option.duration}</Text>
               </View>
               <View style={styles.optionPriceCol}>
@@ -82,14 +102,18 @@ export default function RentalScreen() {
             </View>
             <View style={styles.optionFeatures}>
               {option.features.map((feature, i) => (
-                <Text key={i} style={styles.featureText}>✓ {feature}</Text>
+                <Text key={i} style={styles.featureText}>
+                  ✓ {feature}
+                </Text>
               ))}
             </View>
           </TouchableOpacity>
         ))}
 
         <View style={[styles.summaryCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
-          <Text style={[styles.summaryTitle, { color: isDark ? '#fff' : '#000' }]}>Order Summary</Text>
+          <Text style={[styles.summaryTitle, { color: isDark ? '#fff' : '#000' }]}>
+            Order Summary
+          </Text>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>{selectedOption.type}</Text>
             <Text style={styles.summaryValue}>{selectedOption.price}</Text>
@@ -97,7 +121,9 @@ export default function RentalScreen() {
           <View style={styles.summaryDivider} />
           <View style={styles.summaryRow}>
             <Text style={[styles.summaryLabel, { fontWeight: '700' }]}>Total</Text>
-            <Text style={[styles.summaryValue, { color: '#FFEAA7', fontSize: 20 }]}>{selectedOption.price}</Text>
+            <Text style={[styles.summaryValue, { color: '#FFEAA7', fontSize: 20 }]}>
+              {selectedOption.price}
+            </Text>
           </View>
         </View>
 
@@ -105,7 +131,9 @@ export default function RentalScreen() {
           <Text style={styles.payText}>Pay {selectedOption.price}</Text>
         </TouchableOpacity>
 
-        <Text style={styles.termsText}>By purchasing, you agree to our Terms of Service and Privacy Policy.</Text>
+        <Text style={styles.termsText}>
+          By purchasing, you agree to our Terms of Service and Privacy Policy.
+        </Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -114,20 +142,41 @@ export default function RentalScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', padding: 16, paddingTop: 50, gap: 12 },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#2a2a2a', alignItems: 'center', justifyContent: 'center' },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backIcon: { color: '#fff', fontSize: 20 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
   content: { padding: 16, paddingBottom: 30 },
   heading: { fontSize: 24, fontWeight: '700', marginBottom: 6 },
   subheading: { color: '#888', fontSize: 14, marginBottom: 24 },
-  optionCard: { padding: 18, borderRadius: 14, marginBottom: 14, borderWidth: 2, borderColor: 'transparent' },
+  optionCard: {
+    padding: 18,
+    borderRadius: 14,
+    marginBottom: 14,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
   optionCardSelected: { borderColor: '#FFEAA7' },
   optionHeader: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 },
   optionType: { fontSize: 16, fontWeight: '700', marginBottom: 2 },
   optionDuration: { color: '#888', fontSize: 13 },
   optionPriceCol: { flex: 1, alignItems: 'flex-end' },
   optionPrice: { color: '#FFEAA7', fontSize: 22, fontWeight: '700' },
-  selectedCheck: { width: 26, height: 26, borderRadius: 13, backgroundColor: '#FFEAA7', alignItems: 'center', justifyContent: 'center', marginLeft: 10 },
+  selectedCheck: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#FFEAA7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 10,
+  },
   checkmark: { color: '#000', fontWeight: '700', fontSize: 14 },
   optionFeatures: { gap: 4 },
   featureText: { color: '#ccc', fontSize: 13 },
@@ -137,7 +186,13 @@ const styles = StyleSheet.create({
   summaryLabel: { color: '#ccc', fontSize: 14 },
   summaryValue: { color: '#ccc', fontSize: 16, fontWeight: '600' },
   summaryDivider: { height: 1, backgroundColor: '#2a2a2a', marginVertical: 8 },
-  payButton: { backgroundColor: '#FFEAA7', paddingVertical: 16, borderRadius: 12, alignItems: 'center', marginBottom: 12 },
+  payButton: {
+    backgroundColor: '#FFEAA7',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   payText: { color: '#000', fontSize: 16, fontWeight: '700' },
   termsText: { color: '#888', fontSize: 12, textAlign: 'center' },
 });

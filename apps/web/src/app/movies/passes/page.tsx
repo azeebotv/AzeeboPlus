@@ -143,24 +143,33 @@ function PassesPageContent(): React.JSX.Element {
                 <div>
                   <p className="text-xs text-white/40 mb-1">Start Date</p>
                   <p className="text-white font-medium">
-                    {new Date(userPass.startDate).toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })}
+                    {new Date(userPass.startDate).toLocaleDateString('en-NG', {
+                      month: 'short',
+                      day: 'numeric',
+                    })}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-white/40 mb-1">End Date</p>
                   <p className="text-white font-medium">
-                    {new Date(userPass.endDate).toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })}
+                    {new Date(userPass.endDate).toLocaleDateString('en-NG', {
+                      month: 'short',
+                      day: 'numeric',
+                    })}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-white/40 mb-1">Movies Used</p>
                   <p className="text-white font-medium">
-                    {userPass.moviesUsed} / {userPass.moviesLimit === -1 ? '∞' : userPass.moviesLimit}
+                    {userPass.moviesUsed} /{' '}
+                    {userPass.moviesLimit === -1 ? '∞' : userPass.moviesLimit}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-white/40 mb-1">Status</p>
-                  <p className="font-medium" style={{ color: '#22C55E' }}>Active</p>
+                  <p className="font-medium" style={{ color: '#22C55E' }}>
+                    Active
+                  </p>
                 </div>
               </div>
               <Link href="/movies">
@@ -324,7 +333,8 @@ function PassesPageContent(): React.JSX.Element {
         <div
           className="fixed bottom-6 right-6 z-50 px-6 py-3 rounded-xl shadow-lg transition-all"
           style={{
-            backgroundColor: toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+            backgroundColor:
+              toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
             border: `1px solid ${toast.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
             color: toast.type === 'success' ? '#22C55E' : '#EF4444',
           }}
@@ -340,7 +350,13 @@ const LazyPassesPage = lazy(() => Promise.resolve({ default: PassesPageContent }
 
 export default function PassesPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyPassesPage />
     </Suspense>
   );

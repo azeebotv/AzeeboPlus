@@ -1,5 +1,7 @@
 import { Inject, Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 import { Prisma } from '@prisma/client';
@@ -57,7 +59,8 @@ export class EngagementService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(CacheService) private readonly cache: CacheService,
-    @Inject(ConfigService) private readonly configService: ConfigService
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @InjectQueue('analytics') private readonly analyticsQueue?: Queue
   ) {
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
@@ -330,7 +333,17 @@ export class EngagementService {
         { timeout: 10000 }
       );
     } catch (_error) {
-      this.logger.warn(`Failed to track analytics event: ${eventName}`);
+      this.logger.warn(`Failed to track analytics event: ${eventName} — queueing for retry`);
+      // Queue failed event for retry via analytics-queue
+      try {
+        await this.analyticsQueue?.add(
+          'retry-track',
+          { eventName, userId, metadata, timestamp: new Date().toISOString() },
+          { attempts: 3, backoff: { type: 'exponential', delay: 5000 } }
+        );
+      } catch (queueError) {
+        this.logger.error(`Failed to queue analytics event: ${(queueError as Error).message}`);
+      }
     }
   }
 

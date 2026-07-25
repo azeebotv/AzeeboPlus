@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { Icon } from './Icon';
+import { Icon, type IconName } from './Icon';
 
 const meta: Meta<typeof Icon> = {
   title: 'Components/Icon',
@@ -99,7 +99,7 @@ export const CommonIcons: Story = {
     <div className="grid grid-cols-4 gap-4 p-4">
       {['Home', 'User', 'Settings', 'Search', 'Mail', 'Bell', 'Heart', 'Star'].map((icon) => (
         <div key={icon} className="flex flex-col items-center gap-2 p-2">
-          <Icon name={icon as any} size="lg" />
+          <Icon name={icon as IconName} size="lg" />
           <span className="text-xs text-text-tertiary">{icon}</span>
         </div>
       ))}

@@ -160,7 +160,10 @@ export default function BrowsePage(): React.JSX.Element {
     }
     if (minRating > 0) items = items.filter((item) => (item.likes || 0) >= minRating);
     items = items.filter((item) => (item.duration || 0) <= maxDuration * 60);
-    if (sortBy === 'Newest') items = [...items].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    if (sortBy === 'Newest')
+      items = [...items].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
     else if (sortBy === 'A-Z') items = [...items].sort((a, b) => a.title.localeCompare(b.title));
     return items;
   })();
@@ -176,11 +179,7 @@ export default function BrowsePage(): React.JSX.Element {
     setSortBy('Popular');
   };
 
-  const activeFilterCount = [
-    searchQuery,
-    minRating > 0,
-    maxDuration < 300,
-  ].filter(Boolean).length;
+  const activeFilterCount = [searchQuery, minRating > 0, maxDuration < 300].filter(Boolean).length;
 
   return (
     <div className="min-h-screen az-nollywood-bg">
@@ -550,7 +549,6 @@ export default function BrowsePage(): React.JSX.Element {
                           </span>
                         </div>
                       )}
-
                     </div>
                     <div className="p-4">
                       <p className="text-[11px] font-bold uppercase tracking-wider text-white/50 mb-1">

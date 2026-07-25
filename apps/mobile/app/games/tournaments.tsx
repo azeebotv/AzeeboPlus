@@ -43,11 +43,33 @@ export default function TournamentsScreen() {
   const isLoading = tournamentsQuery.isLoading;
   const error = tournamentsQuery.error?.message;
   const allTournaments = tournamentsQuery.data ?? [];
-  const tournaments = filter === 'All' ? allTournaments : allTournaments.filter(t => t.status === filter.toLowerCase());
+  const tournaments =
+    filter === 'All'
+      ? allTournaments
+      : allTournaments.filter((t) => t.status === filter.toLowerCase());
 
-  if (isLoading) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><LoadingState text="Loading tournaments..." /></SafeAreaView>;
-  if (error) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><ErrorState description={error} onRetry={() => tournamentsQuery.refetch()} /></SafeAreaView>;
-  if (!tournaments.length) return <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}><EmptyState icon="🏆" title="No tournaments" description="Check back for upcoming tournaments" /></SafeAreaView>;
+  if (isLoading)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <LoadingState text="Loading tournaments..." />
+      </SafeAreaView>
+    );
+  if (error)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <ErrorState description={error} onRetry={() => tournamentsQuery.refetch()} />
+      </SafeAreaView>
+    );
+  if (!tournaments.length)
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <EmptyState
+          icon="🏆"
+          title="No tournaments"
+          description="Check back for upcoming tournaments"
+        />
+      </SafeAreaView>
+    );
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
@@ -55,7 +77,9 @@ export default function TournamentsScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>Tournaments</Text>
+        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+          Tournaments
+        </Text>
       </View>
 
       <View style={styles.filterBar}>
@@ -83,16 +107,28 @@ export default function TournamentsScreen() {
               <Text style={styles.tournamentEmoji}>{item.emoji}</Text>
             </View>
             <View style={styles.tournamentInfo}>
-              <Text style={[styles.tournamentTitle, { color: isDark ? '#fff' : '#000' }]}>{item.title}</Text>
+              <Text style={[styles.tournamentTitle, { color: isDark ? '#fff' : '#000' }]}>
+                {item.title}
+              </Text>
               <Text style={styles.tournamentGame}>{item.game}</Text>
               <View style={styles.tournamentMeta}>
                 <Text style={styles.metaText}>🏆 {item.prize}</Text>
-                <Text style={styles.metaText}>👥 {item.participants}/{item.maxParticipants}</Text>
+                <Text style={styles.metaText}>
+                  👥 {item.participants}/{item.maxParticipants}
+                </Text>
               </View>
             </View>
             <View style={styles.tournamentRight}>
-              <View style={[styles.statusBadge, item.status === 'active' && styles.statusActive, item.status === 'completed' && styles.statusCompleted]}>
-                <Text style={[styles.statusText, item.status === 'active' && styles.statusTextActive]}>
+              <View
+                style={[
+                  styles.statusBadge,
+                  item.status === 'active' && styles.statusActive,
+                  item.status === 'completed' && styles.statusCompleted,
+                ]}
+              >
+                <Text
+                  style={[styles.statusText, item.status === 'active' && styles.statusTextActive]}
+                >
                   {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
                 </Text>
               </View>
@@ -108,17 +144,43 @@ export default function TournamentsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', padding: 16, paddingTop: 50, gap: 12 },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#2a2a2a', alignItems: 'center', justifyContent: 'center' },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backIcon: { color: '#fff', fontSize: 20 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
   filterBar: { flexDirection: 'row', paddingHorizontal: 16, marginBottom: 16, gap: 10 },
-  filterChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#1a1a1a' },
+  filterChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#1a1a1a',
+  },
   filterChipActive: { backgroundColor: '#DDA0DD' },
   filterText: { color: '#888', fontSize: 13, fontWeight: '600' },
   filterTextActive: { color: '#000' },
   listContent: { paddingHorizontal: 16, paddingBottom: 30 },
-  tournamentCard: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 12, marginBottom: 10 },
-  tournamentLeft: { width: 56, height: 56, borderRadius: 12, backgroundColor: '#2a2a2a', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  tournamentCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 10,
+  },
+  tournamentLeft: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
   tournamentEmoji: { fontSize: 28 },
   tournamentInfo: { flex: 1 },
   tournamentTitle: { fontSize: 15, fontWeight: '700', marginBottom: 2 },
@@ -126,7 +188,13 @@ const styles = StyleSheet.create({
   tournamentMeta: { flexDirection: 'row', gap: 12 },
   metaText: { color: '#888', fontSize: 12 },
   tournamentRight: { alignItems: 'flex-end' },
-  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, backgroundColor: '#333', marginBottom: 4 },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: '#333',
+    marginBottom: 4,
+  },
   statusActive: { backgroundColor: '#EF4444' },
   statusCompleted: { backgroundColor: '#22C55E' },
   statusText: { color: '#888', fontSize: 11, fontWeight: '600' },

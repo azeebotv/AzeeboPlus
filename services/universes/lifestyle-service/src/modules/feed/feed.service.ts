@@ -133,7 +133,10 @@ export class LifestyleFeedService {
         slug: s.slug,
         excerpt: s.excerpt || s.content.substring(0, 150),
         coverImage: s.coverImage || '',
-        authorName: '',
+        authorName: (s as unknown as Record<string, unknown>).author
+          ? (((s as unknown as Record<string, unknown>).author as Record<string, unknown>)
+              .displayName as string) || ''
+          : '',
         categoryName: s.category?.name || 'General',
         viewCount: s.viewCount,
         publishedAt: s.publishedAt?.toISOString() || s.createdAt.toISOString(),
@@ -146,7 +149,10 @@ export class LifestyleFeedService {
         slug: e.slug,
         excerpt: e.description.substring(0, 150),
         coverImage: e.coverImage || '',
-        authorName: '',
+        authorName: (e as unknown as Record<string, unknown>).organizer
+          ? (((e as unknown as Record<string, unknown>).organizer as Record<string, unknown>)
+              .displayName as string) || ''
+          : '',
         categoryName: e.category?.name || 'General',
         viewCount: e.viewCount,
         publishedAt: e.publishedAt?.toISOString() || e.createdAt.toISOString(),

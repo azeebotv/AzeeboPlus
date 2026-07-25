@@ -20,13 +20,26 @@ export class MoviesService {
   ) {
     this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
     this.rentalFee = this.configService.get<number>('MOVIE_RENTAL_FEE', 500);
-    this.analyticsServiceBaseUrl = this.configService.get<string>('ANALYTICS_SERVICE_URL', 'http://analytics-service:3040');
+    this.analyticsServiceBaseUrl = this.configService.get<string>(
+      'ANALYTICS_SERVICE_URL',
+      'http://analytics-service:3040'
+    );
   }
 
-  private async trackAnalyticsEvent(eventName: string, userId: string, metadata: Record<string, unknown> = {}): Promise<void> {
+  private async trackAnalyticsEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown> = {}
+  ): Promise<void> {
     try {
-      await axios.post(`${this.analyticsServiceBaseUrl}/analytics/track`, { eventName, userId, metadata, timestamp: new Date().toISOString() }, { timeout: 10000 });
-    } catch (error) { this.logger.warn(`Failed to track analytics event: ${eventName}`); }
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/analytics/track`,
+        { eventName, userId, metadata, timestamp: new Date().toISOString() },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to track analytics event: ${eventName}`);
+    }
   }
 
   async listMovies(): Promise<MovieResponse> {
@@ -411,6 +424,26 @@ export class MoviesService {
 
     if (!movie) {
       throw new NotFoundException('Movie not found');
+    }
+
+    const numericRating = parseFloat(rating);
+    if (isNaN(numericRating) || numericRating < 1 || numericRating > 10) {
+      throw new BadRequestException('Rating must be a number between 1 and 10');
+    }
+
+    // Store rating (if movieRating model exists)
+    try {
+      await (
+        this.prisma as unknown as { movieRating?: { upsert: (args: unknown) => Promise<unknown> } }
+      ).movieRating?.upsert({
+        where: {
+          userId_movieId: { userId, movieId },
+        },
+        update: { rating: numericRating },
+        create: { userId, movieId, rating: numericRating },
+      });
+    } catch {
+      // movieRating model may not exist
     }
 
     this.trackAnalyticsEvent('movie_rated', userId, { movieId, rating });

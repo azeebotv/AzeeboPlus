@@ -183,7 +183,10 @@ function LiveChatPageContent(): React.JSX.Element {
                       className="flex items-start gap-3"
                     >
                       <OptimizedImage
-                        src={msg.avatar || `https://ui-avatars.com/api/?name=${msg.username}&background=E8420A&color=fff`}
+                        src={
+                          msg.avatar ||
+                          `https://ui-avatars.com/api/?name=${msg.username}&background=E8420A&color=fff`
+                        }
                         alt={msg.username}
                         width={36}
                         height={36}
@@ -204,7 +207,8 @@ function LiveChatPageContent(): React.JSX.Element {
                             color: 'rgba(255,255,255,0.8)',
                           }}
                         >
-                          {msg.type === 'vote' ? '🗳️ ' : ''}{msg.content}
+                          {msg.type === 'vote' ? '🗳️ ' : ''}
+                          {msg.content}
                         </p>
                       </div>
                     </motion.div>
@@ -254,15 +258,19 @@ function LiveChatPageContent(): React.JSX.Element {
               className="ml-4 overflow-hidden"
             >
               <GlowCard className="h-full p-4">
-                <h3 className="text-lg font-bold text-white mb-4">
-                  Participants ({onlineCount})
-                </h3>
-                <div className="space-y-3 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 400px)' }}>
+                <h3 className="text-lg font-bold text-white mb-4">Participants ({onlineCount})</h3>
+                <div
+                  className="space-y-3 overflow-y-auto"
+                  style={{ maxHeight: 'calc(100vh - 400px)' }}
+                >
                   {participants.map((participant) => (
                     <div key={participant.id} className="flex items-center gap-3">
                       <div className="relative">
                         <OptimizedImage
-                          src={participant.avatar || `https://ui-avatars.com/api/?name=${participant.username}&background=E8420A&color=fff`}
+                          src={
+                            participant.avatar ||
+                            `https://ui-avatars.com/api/?name=${participant.username}&background=E8420A&color=fff`
+                          }
                           alt={participant.username}
                           width={32}
                           height={32}

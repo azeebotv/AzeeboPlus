@@ -206,7 +206,12 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
   },
-  missionTypeText: { fontSize: 11, fontWeight: '600', color: '#E8420A', textTransform: 'capitalize' },
+  missionTypeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#E8420A',
+    textTransform: 'capitalize',
+  },
   missionPoints: { fontSize: 16, fontWeight: '700', color: '#E8420A' },
   missionPointsCompleted: { fontSize: 16, fontWeight: '700', color: '#10B981' },
   missionTitle: { fontSize: 16, fontWeight: '700', color: '#FFFFFF', marginBottom: 4 },

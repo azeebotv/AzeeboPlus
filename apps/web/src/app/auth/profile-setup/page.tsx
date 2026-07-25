@@ -259,9 +259,7 @@ export default function ProfileSetupPage(): React.JSX.Element {
                 Change profile picture
               </span>
             </div>
-            <p className="az-headline text-white text-lg">
-              {fullName.trim() || 'Your Name'}
-            </p>
+            <p className="az-headline text-white text-lg">{fullName.trim() || 'Your Name'}</p>
             <p className="text-white/50 text-sm">@{username.trim() || 'username'}</p>
           </div>
 

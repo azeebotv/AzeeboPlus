@@ -19,8 +19,7 @@ import type {
 const API = '/api/v1';
 
 export const creatorApi = {
-  getDashboard: () =>
-    apiFetch<DashboardStats>(`${API}/creator/dashboard`),
+  getDashboard: () => apiFetch<DashboardStats>(`${API}/creator/dashboard`),
 
   getContent: (page = 1, limit = 20, status?: string) => {
     const params = new URLSearchParams({ page: String(page), limit: String(limit) });
@@ -69,8 +68,7 @@ export const creatorApi = {
     }),
 
   // Payouts
-  getPayouts: () =>
-    apiFetch<PayoutsData>(`${API}/creator/payouts`),
+  getPayouts: () => apiFetch<PayoutsData>(`${API}/creator/payouts`),
 
   requestPayoutAmount: (amount: number, method: string) =>
     apiFetch<PayoutRequest>(`${API}/creator/payouts/request`, {
@@ -79,12 +77,10 @@ export const creatorApi = {
     }),
 
   // Subscribers
-  getSubscribers: () =>
-    apiFetch<SubscribersData>(`${API}/creator/subscribers`),
+  getSubscribers: () => apiFetch<SubscribersData>(`${API}/creator/subscribers`),
 
   // Upload
-  getUploads: () =>
-    apiFetch<UploadProgress[]>(`${API}/creator/uploads`),
+  getUploads: () => apiFetch<UploadProgress[]>(`${API}/creator/uploads`),
 
   uploadContent: (data: FormData) =>
     apiFetch<UploadProgress>(`${API}/creator/uploads`, {
@@ -94,8 +90,7 @@ export const creatorApi = {
     }),
 
   // Monetization
-  getMonetization: () =>
-    apiFetch<MonetizationData>(`${API}/creator/monetization`),
+  getMonetization: () => apiFetch<MonetizationData>(`${API}/creator/monetization`),
 
   updateMonetization: (data: Partial<MonetizationData>) =>
     apiFetch<{ success: boolean }>(`${API}/creator/monetization`, {
@@ -104,8 +99,7 @@ export const creatorApi = {
     }),
 
   // Challenges
-  getChallenges: () =>
-    apiFetch<Challenge[]>(`${API}/creator/challenges`),
+  getChallenges: () => apiFetch<Challenge[]>(`${API}/creator/challenges`),
 
   getChallengeSubmissions: () =>
     apiFetch<ChallengeSubmission[]>(`${API}/creator/challenges/submissions`),

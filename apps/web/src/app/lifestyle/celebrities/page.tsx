@@ -51,7 +51,10 @@ function CelebritiesPageContent(): React.JSX.Element {
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
         <div className="mb-8">
-          <Link href="/lifestyle" className="text-sm text-white/40 hover:text-white/60 transition-colors mb-4 inline-block">
+          <Link
+            href="/lifestyle"
+            className="text-sm text-white/40 hover:text-white/60 transition-colors mb-4 inline-block"
+          >
             ← Back to Lifestyle
           </Link>
           <h1 className="text-3xl sm:text-4xl font-bold text-white">Celebrities</h1>
@@ -121,7 +124,13 @@ const LazyCelebritiesPage = lazy(() => Promise.resolve({ default: CelebritiesPag
 
 export default function CelebritiesPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyCelebritiesPage />
     </Suspense>
   );

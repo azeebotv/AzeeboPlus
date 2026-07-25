@@ -57,7 +57,9 @@ export default function LoreExplorerScreen() {
 
   useEffect(() => {
     if (loreQuery.isSuccess && !loreQuery.isFetching) {
-      try { analytics.verticalLoreExplored(activeCategory || 'all'); } catch {}
+      try {
+        analytics.verticalLoreExplored(activeCategory || 'all');
+      } catch {}
     }
   }, [loreQuery.isSuccess, loreQuery.isFetching, activeCategory]);
 
@@ -66,7 +68,9 @@ export default function LoreExplorerScreen() {
 
   if (loreQuery.isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+      >
         <LoadingState text="Loading lore..." />
       </SafeAreaView>
     );
@@ -74,7 +78,9 @@ export default function LoreExplorerScreen() {
 
   if (loreQuery.error) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+      >
         <ErrorState description={loreQuery.error.message} onRetry={() => loreQuery.refetch()} />
       </SafeAreaView>
     );
@@ -82,8 +88,14 @@ export default function LoreExplorerScreen() {
 
   if (!entries.length) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
-        <EmptyState icon="📖" title="No lore entries" description="Discover the rich lore of the vertical universe" />
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+      >
+        <EmptyState
+          icon="📖"
+          title="No lore entries"
+          description="Discover the rich lore of the vertical universe"
+        />
       </SafeAreaView>
     );
   }
@@ -101,7 +113,12 @@ export default function LoreExplorerScreen() {
         </View>
         <View style={styles.cardTitleWrap}>
           <Text
-            style={[styles.cardTitle, { color: item.unlockStatus === 'locked' ? colors.text.tertiary : colors.text.primary }]}
+            style={[
+              styles.cardTitle,
+              {
+                color: item.unlockStatus === 'locked' ? colors.text.tertiary : colors.text.primary,
+              },
+            ]}
             numberOfLines={1}
           >
             {item.title}
@@ -120,7 +137,9 @@ export default function LoreExplorerScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+    >
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
@@ -149,7 +168,12 @@ export default function LoreExplorerScreen() {
             onPress={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
           >
             <Text style={styles.categoryChipIcon}>{cat.icon}</Text>
-            <Text style={[styles.categoryChipText, activeCategory === cat.id && styles.categoryChipTextActive]}>
+            <Text
+              style={[
+                styles.categoryChipText,
+                activeCategory === cat.id && styles.categoryChipTextActive,
+              ]}
+            >
               {cat.name}
             </Text>
           </TouchableOpacity>

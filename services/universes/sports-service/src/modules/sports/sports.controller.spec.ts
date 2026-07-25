@@ -69,10 +69,10 @@ describe('SportsController', () => {
   describe('getHighlights', () => {
     it('should return sports highlights', async () => {
       const result = { success: true, data: { highlights: [] } };
-      mockSportsService.getHighlights.mockResolvedValue(result);
+      mockSportsService.getHome.mockResolvedValue(result);
 
-      expect(await controller.getHighlights()).toEqual(result);
-      expect(mockSportsService.getHighlights).toHaveBeenCalled();
+      expect(await controller.getHome()).toEqual(result);
+      expect(mockSportsService.getHome).toHaveBeenCalled();
     });
   });
 
@@ -174,16 +174,6 @@ describe('SportsController', () => {
 
       expect(await controller.getLeaderboard()).toEqual(result);
       expect(mockSportsService.getLeaderboard).toHaveBeenCalled();
-    });
-  });
-
-  describe('getFanBoards', () => {
-    it('should return fan boards', async () => {
-      const result = { success: true, data: { fanBoards: [] } };
-      mockSportsService.getFanBoards.mockResolvedValue(result);
-
-      expect(await controller.getFanBoards()).toEqual(result);
-      expect(mockSportsService.getFanBoards).toHaveBeenCalled();
     });
   });
 

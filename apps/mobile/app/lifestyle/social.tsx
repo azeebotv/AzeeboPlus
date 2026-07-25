@@ -118,7 +118,9 @@ export default function SocialScreen() {
         <View style={styles.savedInfo}>
           <View style={styles.savedTypeBadge}>
             <Text style={styles.savedTypeIcon}>{getTypeIcon(item.type)}</Text>
-            <Text style={styles.savedTypeText}>{item.type.charAt(0).toUpperCase() + item.type.slice(1)}</Text>
+            <Text style={styles.savedTypeText}>
+              {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
+            </Text>
           </View>
           <Text style={[styles.savedTitle, { color: colors.text.primary }]} numberOfLines={1}>
             {item.title}

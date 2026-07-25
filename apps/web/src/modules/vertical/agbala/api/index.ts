@@ -4,22 +4,16 @@ import type { AgbalaStoryworld, AgbalaQuiz } from '../types';
 import { api } from '../../../../lib/api';
 
 export async function fetchAgbalaStoryworlds(): Promise<AgbalaStoryworld[]> {
-  const response = await api.request<{ items: AgbalaStoryworld[] }>(
-    '/vertical/agbala/storyworlds',
-  );
+  const response = await api.request<{ items: AgbalaStoryworld[] }>('/vertical/agbala/storyworlds');
   return response.data?.items || [];
 }
 
 export async function fetchAgbalaStoryworld(id: string): Promise<AgbalaStoryworld> {
-  const response = await api.request<AgbalaStoryworld>(
-    `/vertical/agbala/storyworlds/${id}`,
-  );
+  const response = await api.request<AgbalaStoryworld>(`/vertical/agbala/storyworlds/${id}`);
   return response.data as AgbalaStoryworld;
 }
 
 export async function fetchAgbalaQuizzes(): Promise<AgbalaQuiz[]> {
-  const response = await api.request<{ items: AgbalaQuiz[] }>(
-    '/vertical/agbala/quizzes',
-  );
+  const response = await api.request<{ items: AgbalaQuiz[] }>('/vertical/agbala/quizzes');
   return response.data?.items || [];
 }

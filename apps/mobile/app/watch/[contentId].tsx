@@ -122,7 +122,10 @@ export default function WatchScreen() {
       <SafeAreaView
         style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
       >
-        <ErrorState description={error || playerError || 'Failed to load video'} onRetry={fetchContent} />
+        <ErrorState
+          description={error || playerError || 'Failed to load video'}
+          onRetry={fetchContent}
+        />
       </SafeAreaView>
     );
   }

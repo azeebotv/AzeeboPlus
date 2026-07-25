@@ -63,7 +63,10 @@ export default function CelebritiesScreen() {
         <Text style={[styles.celebrityName, { color: colors.text.primary }]} numberOfLines={1}>
           {item.name}
         </Text>
-        <Text style={[styles.celebrityProfession, { color: colors.text.secondary }]} numberOfLines={1}>
+        <Text
+          style={[styles.celebrityProfession, { color: colors.text.secondary }]}
+          numberOfLines={1}
+        >
           {item.profession}
         </Text>
         <View style={styles.followerBadge}>

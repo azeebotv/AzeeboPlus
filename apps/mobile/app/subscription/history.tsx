@@ -124,16 +124,12 @@ export default function SubscriptionHistoryScreen() {
             {item.paymentMethod && (
               <Text style={styles.historyMetaText}>via {item.paymentMethod}</Text>
             )}
-            {item.autoRenew && (
-              <Text style={styles.autoRenewBadge}>Auto-Renew</Text>
-            )}
+            {item.autoRenew && <Text style={styles.autoRenewBadge}>Auto-Renew</Text>}
           </View>
         </View>
 
         {item.lastPaymentDate && (
-          <Text style={styles.lastPayment}>
-            Last payment: {formatDate(item.lastPaymentDate)}
-          </Text>
+          <Text style={styles.lastPayment}>Last payment: {formatDate(item.lastPaymentDate)}</Text>
         )}
       </View>
     );
@@ -166,7 +162,11 @@ export default function SubscriptionHistoryScreen() {
         contentContainerStyle={styles.listContent}
         keyboardDismissMode="on-drag"
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={colors.primary[500]} />
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary[500]}
+          />
         }
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
@@ -174,9 +174,7 @@ export default function SubscriptionHistoryScreen() {
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>📜</Text>
             <Text style={styles.emptyText}>No Subscription History</Text>
-            <Text style={styles.emptySubtext}>
-              Your subscription history will appear here
-            </Text>
+            <Text style={styles.emptySubtext}>Your subscription history will appear here</Text>
             <TouchableOpacity
               style={styles.browseButton}
               onPress={() => router.push('/subscription/plans')}

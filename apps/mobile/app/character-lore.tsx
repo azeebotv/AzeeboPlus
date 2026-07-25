@@ -51,7 +51,9 @@ export default function CharacterLoreScreen() {
         apiClient.get<LoreChapter[]>(`/vertical/characters/${id}/lore`),
       ]);
       setCharacter(charRes);
-      try { analytics.verticalCharacterViewed(charRes.id); } catch {}
+      try {
+        analytics.verticalCharacterViewed(charRes.id);
+      } catch {}
       setLoreChapters(loreRes);
     } catch {
       setError('Failed to load character data');
@@ -149,7 +151,10 @@ export default function CharacterLoreScreen() {
                       <View
                         style={[
                           styles.statBarFill,
-                          { width: `${stat.value}%` as unknown as number, backgroundColor: character.background },
+                          {
+                            width: `${stat.value}%` as unknown as number,
+                            backgroundColor: character.background,
+                          },
                         ]}
                       />
                     </View>

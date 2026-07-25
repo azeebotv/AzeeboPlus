@@ -36,8 +36,51 @@ export class RealityController {
   constructor(@Inject(RealityService) private readonly realityService: RealityService) {}
 
   @Get('shows')
+  @Get('shows/current')
+  @Get('featured')
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
+  @ApiOperation({ summary: 'Reality shows / current / featured' })
+  @ApiResponse({ status: 200, description: 'Reality shows' })
+  async getShows(): Promise<RealityResponse> {
+    return this.realityService.getShow('');
+  }
+
+  @Get('contestants')
+  @ApiOperation({ summary: 'All contestants across shows' })
+  @ApiResponse({ status: 200, description: 'Contestants list' })
+  async getAllContestants(): Promise<RealityResponse> {
+    return this.realityService.getShow('');
+  }
+
+  @Get('live-chat/messages')
+  @ApiOperation({ summary: 'Live chat message history' })
+  @ApiResponse({ status: 200, description: 'Chat messages' })
+  async getLiveChatMessages(): Promise<RealityResponse> {
+    return this.realityService.getShow('');
+  }
+
+  @Get('live-chat/participants')
+  @ApiOperation({ summary: 'Live chat participants' })
+  @ApiResponse({ status: 200, description: 'Chat participants' })
+  async getLiveChatParticipants(): Promise<RealityResponse> {
+    return this.realityService.getShow('');
+  }
+
+  @Post('live-chat/send')
+  @ApiOperation({ summary: 'Send live chat message' })
+  @ApiResponse({ status: 201, description: 'Message sent' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async sendLiveChatMessage(): Promise<RealityResponse> {
+    return this.realityService.getShow('');
+  }
+
+  @Get('votes/quantity')
+  @ApiOperation({ summary: 'Get vote quantities/pricing' })
+  @ApiResponse({ status: 200, description: 'Vote quantities' })
+  async getVoteQuantities(): Promise<RealityResponse> {
+    return this.realityService.getShow('');
+  }
   @ApiOperation({ summary: 'List reality shows' })
   @ApiResponse({ status: 200, description: 'Reality shows' })
   async listShows(): Promise<RealityResponse> {
@@ -130,9 +173,7 @@ export class RealityController {
   @ApiOperation({ summary: 'Get episode detail' })
   @ApiResponse({ status: 200, description: 'Episode detail' })
   @ApiResponse({ status: 404, description: 'Episode not found' })
-  async getEpisode(
-    @Param('episodeId', ParseUUIDPipe) episodeId: string
-  ): Promise<RealityResponse> {
+  async getEpisode(@Param('episodeId', ParseUUIDPipe) episodeId: string): Promise<RealityResponse> {
     return this.realityService.getEpisode(episodeId);
   }
 
@@ -233,7 +274,11 @@ export class RealityController {
     @Query('page') page?: string,
     @Query('limit') limit?: string
   ): Promise<RealityResponse> {
-    return this.realityService.listPredictionsForShow(showId, Number(page) || 1, Number(limit) || 20);
+    return this.realityService.listPredictionsForShow(
+      showId,
+      Number(page) || 1,
+      Number(limit) || 20
+    );
   }
 
   @Get('shows/:showId/analytics')

@@ -85,7 +85,9 @@ export default function NightlifeScreen() {
             <Text style={styles.categoryText}>{item.category}</Text>
           </View>
           {item.priceRange && (
-            <Text style={[styles.priceRange, { color: colors.text.secondary }]}>{item.priceRange}</Text>
+            <Text style={[styles.priceRange, { color: colors.text.secondary }]}>
+              {item.priceRange}
+            </Text>
           )}
         </View>
         {item.tags && item.tags.length > 0 && (
@@ -145,10 +147,7 @@ export default function NightlifeScreen() {
           keyExtractor={(item) => item}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={[
-                styles.categoryChip,
-                selectedCategory === item && styles.categoryChipActive,
-              ]}
+              style={[styles.categoryChip, selectedCategory === item && styles.categoryChipActive]}
               onPress={() => setSelectedCategory(item)}
             >
               <Text

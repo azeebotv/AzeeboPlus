@@ -33,7 +33,9 @@ export default function GameplayPage() {
         apiClient.get<Achievement[]>(`/games/${id}/achievements`),
       ]);
       setGame(gameRes);
-      try { analytics.gameStarted(String(id), 'session_' + Date.now()); } catch {}
+      try {
+        analytics.gameStarted(String(id), 'session_' + Date.now());
+      } catch {}
       setLevels(levelsRes || []);
       setLeaderboard(leaderboardRes || []);
       setAchievements(achievementsRes || []);

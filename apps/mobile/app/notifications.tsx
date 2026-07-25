@@ -3,7 +3,11 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 're
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useNotifications, useMarkNotificationRead, useMarkAllNotificationsRead } from '../src/hooks/useNotificationQuery';
+import {
+  useNotifications,
+  useMarkNotificationRead,
+  useMarkAllNotificationsRead,
+} from '../src/hooks/useNotificationQuery';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 
 export default function NotificationsScreen() {
@@ -52,7 +56,10 @@ export default function NotificationsScreen() {
             { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
           ]}
         >
-          <ErrorState description={error instanceof Error ? error.message : 'Failed to load'} onRetry={() => refetch()} />
+          <ErrorState
+            description={error instanceof Error ? error.message : 'Failed to load'}
+            onRetry={() => refetch()}
+          />
         </ScrollView>
       </SafeAreaView>
     );

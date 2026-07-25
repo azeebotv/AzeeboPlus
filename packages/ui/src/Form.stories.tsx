@@ -51,7 +51,7 @@ export const FormFieldComponent: StoryObj<typeof FormField> = {
   render: (args) => (
     <div className="p-4 w-full max-w-md">
       <FormField {...args}>
-        <Field name="username" label="Username" control={{} as any}>
+        <Field name="username" label="Username" control={{} as Record<string, unknown>}>
           <Input type="text" placeholder="Enter your username" />
         </Field>
       </FormField>
@@ -68,7 +68,7 @@ export const FormFieldWithError: StoryObj<typeof FormField> = {
   render: (args) => (
     <div className="p-4 w-full max-w-md">
       <FormField {...args}>
-        <Field name="email" label="Email" control={{} as any}>
+        <Field name="email" label="Email" control={{} as Record<string, unknown>}>
           <Input type="email" placeholder="Enter your email" />
         </Field>
       </FormField>

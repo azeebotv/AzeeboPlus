@@ -81,10 +81,7 @@ function LoreDetailContent(): React.JSX.Element {
                 transition={{ duration: 0.5 }}
               >
                 <div className="flex items-center gap-2 mb-4">
-                  <Link
-                    href="/vertical/lore"
-                    className="text-sm text-[#E8420A] hover:underline"
-                  >
+                  <Link href="/vertical/lore" className="text-sm text-[#E8420A] hover:underline">
                     Lore Explorer
                   </Link>
                   {lore.category && (
@@ -95,9 +92,7 @@ function LoreDetailContent(): React.JSX.Element {
                   )}
                 </div>
                 <h1 className="text-4xl sm:text-5xl font-bold text-white mb-3">{lore.title}</h1>
-                {lore.universe && (
-                  <p className="text-white/60 text-lg">{lore.universe}</p>
-                )}
+                {lore.universe && <p className="text-white/60 text-lg">{lore.universe}</p>}
               </motion.div>
             </div>
           </div>
@@ -152,7 +147,13 @@ const LazyLoreDetail = lazy(() => Promise.resolve({ default: LoreDetailContent }
 
 export default function LoreDetailPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazyLoreDetail />
     </Suspense>
   );

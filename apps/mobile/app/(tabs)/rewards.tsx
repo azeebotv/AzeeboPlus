@@ -165,38 +165,59 @@ export default function RewardsScreen() {
               </Text>
               <StaggerGrid staggerDelay={60}>
                 {rewards.length === 0 ? (
-                  <View style={[styles.rewardItem, { backgroundColor: isDark ? '#1a1a1a' : '#f8f9fa', alignItems: 'center', paddingVertical: 24 }]}>
+                  <View
+                    style={[
+                      styles.rewardItem,
+                      {
+                        backgroundColor: isDark ? '#1a1a1a' : '#f8f9fa',
+                        alignItems: 'center',
+                        paddingVertical: 24,
+                      },
+                    ]}
+                  >
                     <Text style={{ fontSize: 32, marginBottom: 8 }}>🎯</Text>
-                    <Text style={[styles.rewardTitle, { color: isDark ? '#ffffff' : '#1A0A0A', textAlign: 'center' }]}>
+                    <Text
+                      style={[
+                        styles.rewardTitle,
+                        { color: isDark ? '#ffffff' : '#1A0A0A', textAlign: 'center' },
+                      ]}
+                    >
                       No rewards available yet
                     </Text>
                     <Text style={[styles.rewardDescription, { textAlign: 'center' }]}>
                       Earn points by watching content and engaging with the platform
                     </Text>
                   </View>
-                ) : rewards.map((reward) => (
-                  <View
-                    key={reward.id}
-                    style={[styles.rewardItem, { backgroundColor: isDark ? '#1a1a1a' : '#f8f9fa' }]}
-                  >
-                    <View style={[styles.rewardIcon, { backgroundColor: `${reward.color}20` }]}>
-                      <Text style={styles.rewardIconText}>{reward.icon}</Text>
+                ) : (
+                  rewards.map((reward) => (
+                    <View
+                      key={reward.id}
+                      style={[
+                        styles.rewardItem,
+                        { backgroundColor: isDark ? '#1a1a1a' : '#f8f9fa' },
+                      ]}
+                    >
+                      <View style={[styles.rewardIcon, { backgroundColor: `${reward.color}20` }]}>
+                        <Text style={styles.rewardIconText}>{reward.icon}</Text>
+                      </View>
+                      <View style={styles.rewardInfo}>
+                        <Text
+                          style={[styles.rewardTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}
+                        >
+                          {reward.title}
+                        </Text>
+                        <Text style={styles.rewardDescription}>{reward.description}</Text>
+                        <AnimatedProgress
+                          progress={(reward.progress / reward.total) * 100}
+                          color={reward.color}
+                        />
+                        <Text style={styles.rewardProgressText}>
+                          {reward.progress}/{reward.total} completed
+                        </Text>
+                      </View>
                     </View>
-                    <View style={styles.rewardInfo}>
-                      <Text style={[styles.rewardTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
-                        {reward.title}
-                      </Text>
-                      <Text style={styles.rewardDescription}>{reward.description}</Text>
-                      <AnimatedProgress
-                        progress={(reward.progress / reward.total) * 100}
-                        color={reward.color}
-                      />
-                      <Text style={styles.rewardProgressText}>
-                        {reward.progress}/{reward.total} completed
-                      </Text>
-                    </View>
-                  </View>
-                ))}
+                  ))
+                )}
               </StaggerGrid>
             </View>
           </ScrollReveal>
@@ -208,37 +229,53 @@ export default function RewardsScreen() {
               </Text>
               <View style={styles.redeemGrid}>
                 {redeemOptions.length === 0 ? (
-                  <View style={[styles.redeemCard, { alignItems: 'center', paddingVertical: 24, backgroundColor: isDark ? '#1a1a1a' : '#f8f9fa' }]}>
+                  <View
+                    style={[
+                      styles.redeemCard,
+                      {
+                        alignItems: 'center',
+                        paddingVertical: 24,
+                        backgroundColor: isDark ? '#1a1a1a' : '#f8f9fa',
+                      },
+                    ]}
+                  >
                     <Text style={{ fontSize: 32, marginBottom: 8 }}>🎁</Text>
-                    <Text style={[styles.redeemName, { color: isDark ? '#ffffff' : '#1A0A0A', textAlign: 'center' }]}>
+                    <Text
+                      style={[
+                        styles.redeemName,
+                        { color: isDark ? '#ffffff' : '#1A0A0A', textAlign: 'center' },
+                      ]}
+                    >
                       No redeem options available
                     </Text>
                     <Text style={[styles.rewardDescription, { textAlign: 'center' }]}>
                       Check back later for new rewards
                     </Text>
                   </View>
-                ) : redeemOptions.map((option) => (
-                  <GlowCard
-                    key={option.id}
-                    variant="subtle"
-                    padding={16}
-                    onPress={() => {}}
-                    style={[styles.redeemCard, currentPoints < option.points && { opacity: 0.5 }]}
-                  >
-                    <Text style={styles.redeemIcon}>{option.icon}</Text>
-                    <Text style={[styles.redeemName, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
-                      {option.name}
-                    </Text>
-                    <View
-                      style={[
-                        styles.redeemPoints,
-                        currentPoints < option.points && { backgroundColor: '#ccc' },
-                      ]}
+                ) : (
+                  redeemOptions.map((option) => (
+                    <GlowCard
+                      key={option.id}
+                      variant="subtle"
+                      padding={16}
+                      onPress={() => {}}
+                      style={[styles.redeemCard, currentPoints < option.points && { opacity: 0.5 }]}
                     >
-                      <Text style={styles.redeemPointsText}>{option.points} pts</Text>
-                    </View>
-                  </GlowCard>
-                ))}
+                      <Text style={styles.redeemIcon}>{option.icon}</Text>
+                      <Text style={[styles.redeemName, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+                        {option.name}
+                      </Text>
+                      <View
+                        style={[
+                          styles.redeemPoints,
+                          currentPoints < option.points && { backgroundColor: '#ccc' },
+                        ]}
+                      >
+                        <Text style={styles.redeemPointsText}>{option.points} pts</Text>
+                      </View>
+                    </GlowCard>
+                  ))
+                )}
               </View>
             </View>
           </ScrollReveal>

@@ -50,7 +50,10 @@ function SocialPageContent(): React.JSX.Element {
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
         <div className="mb-8">
-          <Link href="/lifestyle" className="text-sm text-white/40 hover:text-white/60 transition-colors mb-4 inline-block">
+          <Link
+            href="/lifestyle"
+            className="text-sm text-white/40 hover:text-white/60 transition-colors mb-4 inline-block"
+          >
             ← Back to Lifestyle
           </Link>
           <h1 className="text-3xl sm:text-4xl font-bold text-white">Social</h1>
@@ -102,7 +105,14 @@ function SocialPageContent(): React.JSX.Element {
                     style={{ backgroundColor: 'rgba(232,66,10,0.2)' }}
                     title="Share"
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E8400A" strokeWidth="2">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#E8400A"
+                      strokeWidth="2"
+                    >
                       <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13" />
                     </svg>
                   </button>
@@ -113,7 +123,14 @@ function SocialPageContent(): React.JSX.Element {
                     style={{ backgroundColor: 'rgba(239,68,68,0.2)' }}
                     title="Remove"
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#EF4444"
+                      strokeWidth="2"
+                    >
                       <path d="M18 6L6 18M6 6l12 12" />
                     </svg>
                   </button>
@@ -133,7 +150,13 @@ const LazySocialPage = lazy(() => Promise.resolve({ default: SocialPageContent }
 
 export default function SocialPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]"><p className="text-white/50 text-lg">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
       <LazySocialPage />
     </Suspense>
   );

@@ -1,4 +1,15 @@
-import { Inject, Controller, Get, Put, Delete, Param, Query, Body, UseGuards, Req  } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Put,
+  Delete,
+  Param,
+  Query,
+  Body,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
 import { Request } from 'express';
 import { UserManagementService } from './user-management.service';
 import { AuditLogService } from '../audit/audit.service';

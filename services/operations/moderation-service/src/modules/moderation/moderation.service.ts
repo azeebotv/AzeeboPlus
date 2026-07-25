@@ -115,7 +115,10 @@ export class ModerationService {
     @Inject(CacheService) private readonly cache: CacheService,
     @Inject(ConfigService) private readonly configService: ConfigService
   ) {
-    this.analyticsServiceBaseUrl = this.configService.get<string>('ANALYTICS_SERVICE_URL', 'http://analytics-service:3040');
+    this.analyticsServiceBaseUrl = this.configService.get<string>(
+      'ANALYTICS_SERVICE_URL',
+      'http://analytics-service:3040'
+    );
   }
 
   async createCase(request: CreateCaseRequest): Promise<ModerationCase> {
@@ -171,20 +174,36 @@ export class ModerationService {
     status?: string;
     userId?: string;
     resolvedBy?: string;
-  }): Promise<ModerationCase[]> {
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    data: ModerationCase[];
+    meta: { page: number; limit: number; total: number; totalPages: number };
+  }> {
     const where: Record<string, unknown> = {};
     if (filters?.status) where.status = filters.status;
     if (filters?.userId) where.userId = filters.userId;
     if (filters?.resolvedBy) where.resolvedBy = filters.resolvedBy;
 
-    return this.prisma.moderationCase.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        report: true,
-        user: { select: { id: true, displayName: true, avatar: true, email: true } },
-      },
-    });
+    const page = filters?.page || 1;
+    const limit = Math.min(filters?.limit || 20, 100);
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      this.prisma.moderationCase.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          report: true,
+          user: { select: { id: true, displayName: true, avatar: true, email: true } },
+        },
+      }),
+      this.prisma.moderationCase.count({ where }),
+    ]);
+
+    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
   async resolveCase(request: ResolveCaseRequest): Promise<ModerationCase> {
@@ -435,7 +454,10 @@ export class ModerationService {
 
       await this.cache.invalidate('moderation:reports:*');
 
-      this.trackAnalyticsEvent('content_reported', userId, { contentId: body.contentId, reason: body.reason });
+      this.trackAnalyticsEvent('content_reported', userId, {
+        contentId: body.contentId,
+        reason: body.reason,
+      });
       return { success: true, data: report };
     } catch (error) {
       const err = error as Error;
@@ -529,16 +551,32 @@ export class ModerationService {
     targetId?: string;
     targetType?: string;
     type?: string;
-  }): Promise<SafetyAction[]> {
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    data: SafetyAction[];
+    meta: { page: number; limit: number; total: number; totalPages: number };
+  }> {
     const where: Record<string, unknown> = {};
     if (filters?.targetId) where.targetId = filters.targetId;
     if (filters?.targetType) where.targetType = filters.targetType;
     if (filters?.type) where.type = filters.type;
 
-    return this.prisma.safetyAction.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-    });
+    const page = filters?.page || 1;
+    const limit = Math.min(filters?.limit || 20, 100);
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      this.prisma.safetyAction.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.safetyAction.count({ where }),
+    ]);
+
+    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
   async getSafetyActions(
@@ -652,17 +690,33 @@ export class ModerationService {
     resourceType?: string;
     resourceId?: string;
     actorId?: string;
-  }): Promise<AuditEvent[]> {
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    data: AuditEvent[];
+    meta: { page: number; limit: number; total: number; totalPages: number };
+  }> {
     const where: Record<string, unknown> = {};
     if (filters?.action) where.action = filters.action;
     if (filters?.resourceType) where.resourceType = filters.resourceType;
     if (filters?.resourceId) where.resourceId = filters.resourceId;
     if (filters?.actorId) where.actorId = filters.actorId;
 
-    return this.prisma.auditEvent.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-    });
+    const page = filters?.page || 1;
+    const limit = Math.min(filters?.limit || 20, 100);
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      this.prisma.auditEvent.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.auditEvent.count({ where }),
+    ]);
+
+    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
   async assignReviewer(request: AssignReviewerRequest): Promise<ReviewerAssignment> {
@@ -721,10 +775,20 @@ export class ModerationService {
     });
   }
 
-  private async trackAnalyticsEvent(eventName: string, userId: string, metadata: Record<string, unknown> = {}): Promise<void> {
+  private async trackAnalyticsEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown> = {}
+  ): Promise<void> {
     try {
-      await axios.post(`${this.analyticsServiceBaseUrl}/analytics/track`, { eventName, userId, metadata, timestamp: new Date().toISOString() }, { timeout: 10000 });
-    } catch (error) { this.logger.warn(`Failed to track analytics event: ${eventName}`); }
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/analytics/track`,
+        { eventName, userId, metadata, timestamp: new Date().toISOString() },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to track analytics event: ${eventName}`);
+    }
   }
 
   async getReport(reportId: string): Promise<Report | null> {
