@@ -2,6 +2,19 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service';
 import { PrismaService } from '../database/prisma.service';
 import { ConfigService } from '@nestjs/config';
+import { CacheService } from '@azeebo/shared-services';
+
+jest.mock('axios');
+
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: jest.fn().mockImplementation(() => ({
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue('OK'),
+    delete: jest.fn().mockResolvedValue(1),
+    invalidate: jest.fn().mockResolvedValue(1),
+  })),
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+}));
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -30,6 +43,7 @@ describe('UsersService', () => {
         UsersService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: ConfigService, useValue: mockConfigService },
+        { provide: CacheService, useValue: { get: jest.fn().mockResolvedValue(null), set: jest.fn().mockResolvedValue('OK'), delete: jest.fn().mockResolvedValue(1), invalidate: jest.fn().mockResolvedValue(1) } },
       ],
     }).compile();
 

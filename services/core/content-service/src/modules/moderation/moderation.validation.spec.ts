@@ -58,10 +58,10 @@ describe('Moderation Validation Tests', () => {
     await app.close();
   });
 
-  describe('POST /v1/moderation/cases - Validation', () => {
+  describe('POST /moderation/cases - Validation', () => {
     it('should create a case with valid data', async () => {
       const response = await request(app.getHttpServer())
-        .post('/v1/moderation/cases')
+        .post('/moderation/cases')
         .send({
           contentId: 'content-1',
           type: 'content',
@@ -77,7 +77,7 @@ describe('Moderation Validation Tests', () => {
 
     it('should create a case even without optional fields', async () => {
       const response = await request(app.getHttpServer())
-        .post('/v1/moderation/cases')
+        .post('/moderation/cases')
         .send({
           type: 'content',
           severity: 'medium',
@@ -91,10 +91,10 @@ describe('Moderation Validation Tests', () => {
     });
   });
 
-  describe('PATCH /v1/moderation/cases/:id/resolve - Validation', () => {
+  describe('PATCH /moderation/cases/:id/resolve - Validation', () => {
     it('should return 400 for missing resolution', async () => {
       const response = await request(app.getHttpServer())
-        .patch('/v1/moderation/cases/case-1/resolve')
+        .patch('/moderation/cases/case-1/resolve')
         .send({ notes: 'Content is appropriate' })
         .set('Authorization', 'Bearer valid-token');
 
@@ -103,7 +103,7 @@ describe('Moderation Validation Tests', () => {
 
     it('should accept any resolution value', async () => {
       const response = await request(app.getHttpServer())
-        .patch('/v1/moderation/cases/case-1/resolve')
+        .patch('/moderation/cases/case-1/resolve')
         .send({ resolution: 'invalid', notes: 'Content is appropriate' })
         .set('Authorization', 'Bearer valid-token');
 
@@ -112,7 +112,7 @@ describe('Moderation Validation Tests', () => {
 
     it('should resolve a case with valid data', async () => {
       const response = await request(app.getHttpServer())
-        .patch('/v1/moderation/cases/case-1/resolve')
+        .patch('/moderation/cases/case-1/resolve')
         .send({ resolution: 'resolved', notes: 'Content is appropriate' })
         .set('Authorization', 'Bearer valid-token');
 
@@ -120,10 +120,10 @@ describe('Moderation Validation Tests', () => {
     });
   });
 
-  describe('POST /v1/moderation/scan/:contentId - Validation', () => {
+  describe('POST /moderation/scan/:contentId - Validation', () => {
     it('should scan content with valid type', async () => {
       const response = await request(app.getHttpServer())
-        .post('/v1/moderation/scan/content-1')
+        .post('/moderation/scan/content-1')
         .send({ type: 'nsfw' })
         .set('Authorization', 'Bearer valid-token');
 
@@ -132,7 +132,7 @@ describe('Moderation Validation Tests', () => {
 
     it('should return 404 for empty contentId', async () => {
       const response = await request(app.getHttpServer())
-        .post('/v1/moderation/scan/')
+        .post('/moderation/scan/')
         .send({ type: 'nsfw' })
         .set('Authorization', 'Bearer valid-token');
 
