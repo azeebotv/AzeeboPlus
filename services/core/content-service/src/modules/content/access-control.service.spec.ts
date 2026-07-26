@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AccessControlService } from './access-control.service';
 import { PrismaService } from '../database/prisma.service';
+import { ConfigService } from '@nestjs/config';
 
 describe('AccessControlService', () => {
   let service: AccessControlService;
@@ -14,11 +15,17 @@ describe('AccessControlService', () => {
     },
   };
 
+  const mockConfigService = {
+    get: jest.fn((_key: string, defaultValue: unknown) => defaultValue),
+    getOrThrow: jest.fn((_key: string) => ''),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AccessControlService,
         { provide: PrismaService, useValue: mockPrismaService },
+        { provide: ConfigService, useValue: mockConfigService },
       ],
     }).compile();
 

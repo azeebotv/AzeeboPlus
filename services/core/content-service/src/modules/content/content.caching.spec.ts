@@ -133,10 +133,10 @@ describe('Content Service Caching Tests', () => {
     jest.clearAllMocks();
   });
 
-  describe('Caching - GET /v1/content', () => {
+  describe('Caching - GET /content', () => {
     it('should cache list content responses', async () => {
-      const response1 = await request(app.getHttpServer()).get('/v1/content');
-      const response2 = await request(app.getHttpServer()).get('/v1/content');
+      const response1 = await request(app.getHttpServer()).get('/content');
+      const response2 = await request(app.getHttpServer()).get('/content');
 
       expect(response1.status).toBe(200);
       expect(response2.status).toBe(200);
@@ -144,71 +144,71 @@ describe('Content Service Caching Tests', () => {
     });
 
     it('should cache with different query parameters', async () => {
-      await request(app.getHttpServer()).get('/v1/content?universe=universe-1');
-      await request(app.getHttpServer()).get('/v1/content?universe=universe-2');
+      await request(app.getHttpServer()).get('/content?universe=universe-1');
+      await request(app.getHttpServer()).get('/content?universe=universe-2');
 
       expect(mockContentService.listContent).toHaveBeenCalledTimes(2);
     });
   });
 
-  describe('Caching - GET /v1/content/home', () => {
+  describe('Caching - GET /content/home', () => {
     it('should cache home feed responses', async () => {
-      const response1 = await request(app.getHttpServer()).get('/v1/content/home');
-      const response2 = await request(app.getHttpServer()).get('/v1/content/home');
+      const response1 = await request(app.getHttpServer()).get('/content/home');
+      const response2 = await request(app.getHttpServer()).get('/content/home');
 
       expect(response1.status).toBe(200);
       expect(response2.status).toBe(200);
     });
   });
 
-  describe('Caching - GET /v1/content/watch', () => {
+  describe('Caching - GET /content/watch', () => {
     it('should cache watch feed responses', async () => {
-      const response1 = await request(app.getHttpServer()).get('/v1/content/watch');
-      const response2 = await request(app.getHttpServer()).get('/v1/content/watch');
+      const response1 = await request(app.getHttpServer()).get('/content/watch');
+      const response2 = await request(app.getHttpServer()).get('/content/watch');
 
       expect(response1.status).toBe(200);
       expect(response2.status).toBe(200);
     });
   });
 
-  describe('Caching - GET /v1/content/:id', () => {
+  describe('Caching - GET /content/:id', () => {
     it('should cache content by ID', async () => {
-      const response1 = await request(app.getHttpServer()).get('/v1/content/content-1');
-      const response2 = await request(app.getHttpServer()).get('/v1/content/content-1');
+      const response1 = await request(app.getHttpServer()).get('/content/content-1');
+      const response2 = await request(app.getHttpServer()).get('/content/content-1');
 
       expect(response1.status).toBe(200);
       expect(response2.status).toBe(200);
     });
 
     it('should cache different content IDs separately', async () => {
-      await request(app.getHttpServer()).get('/v1/content/content-1');
-      await request(app.getHttpServer()).get('/v1/content/content-2');
+      await request(app.getHttpServer()).get('/content/content-1');
+      await request(app.getHttpServer()).get('/content/content-2');
 
       expect(mockContentService.getContent).toHaveBeenCalledTimes(2);
     });
   });
 
-  describe('Caching - GET /v1/content/trending', () => {
+  describe('Caching - GET /content/trending', () => {
     it('should cache trending content', async () => {
-      const response1 = await request(app.getHttpServer()).get('/v1/content/trending');
-      const response2 = await request(app.getHttpServer()).get('/v1/content/trending');
+      const response1 = await request(app.getHttpServer()).get('/content/trending');
+      const response2 = await request(app.getHttpServer()).get('/content/trending');
 
       expect(response1.status).toBe(200);
       expect(response2.status).toBe(200);
     });
   });
 
-  describe('Caching - GET /v1/content/search', () => {
+  describe('Caching - GET /content/search', () => {
     it('should cache search results by query', async () => {
-      await request(app.getHttpServer()).get('/v1/content/search?q=test');
-      await request(app.getHttpServer()).get('/v1/content/search?q=test');
+      await request(app.getHttpServer()).get('/content/search?q=test');
+      await request(app.getHttpServer()).get('/content/search?q=test');
 
       expect(mockContentService.searchContent).toHaveBeenCalled();
     });
 
     it('should cache different search queries separately', async () => {
-      await request(app.getHttpServer()).get('/v1/content/search?q=video');
-      await request(app.getHttpServer()).get('/v1/content/search?q=show');
+      await request(app.getHttpServer()).get('/content/search?q=video');
+      await request(app.getHttpServer()).get('/content/search?q=show');
 
       expect(mockContentService.searchContent).toHaveBeenCalledTimes(2);
     });
@@ -216,7 +216,7 @@ describe('Content Service Caching Tests', () => {
 
   describe('Cache Invalidation', () => {
     it('should not cache POST requests', async () => {
-      const response = await request(app.getHttpServer()).post('/v1/content').send({
+      const response = await request(app.getHttpServer()).post('/content').send({
         title: 'New Content',
         description: 'Test',
         thumbnail: 'https://example.com/thumb.jpg',
@@ -233,7 +233,7 @@ describe('Content Service Caching Tests', () => {
         data: { id: '550e8400-e29b-41d4-a716-446655440000', title: 'Updated Content' },
       });
       const response = await request(app.getHttpServer())
-        .patch('/v1/content/550e8400-e29b-41d4-a716-446655440000')
+        .patch('/content/550e8400-e29b-41d4-a716-446655440000')
         .send({ title: 'Updated Content' });
 
       // PATCH should succeed or fail validation - not crash
@@ -245,7 +245,7 @@ describe('Content Service Caching Tests', () => {
         success: true,
         data: { message: 'Deleted' },
       });
-      const response = await request(app.getHttpServer()).delete('/v1/content/550e8400-e29b-41d4-a716-446655440000');
+      const response = await request(app.getHttpServer()).delete('/content/550e8400-e29b-41d4-a716-446655440000');
 
       // DELETE should succeed or return 404 - not crash
       expect(response.status).not.toBe(500);
