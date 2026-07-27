@@ -49,7 +49,8 @@
       "msgpackr-extract",
       "protobufjs",
       "sharp",
-      "unrs-resolver"
+      "unrs-resolver",
+      "@swc/core"
     ],
     "overrides": {
       "protobufjs": ">=8.6.0",
