@@ -1,3 +1,7 @@
+jest.mock('libphonenumber-js/max', () => ({
+  parsePhoneNumber: jest.fn(),
+}));
+
 import { validate } from 'class-validator';
 import { JoinContestDto, SubmitContestScoreDto } from './dto/contest.dto.js';
 

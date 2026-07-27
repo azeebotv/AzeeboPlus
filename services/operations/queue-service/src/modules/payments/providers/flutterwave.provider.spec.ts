@@ -1,3 +1,17 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+jest.mock('@azeebo/shared-types', () => {
+  class CircuitBreaker {
+    async execute<T>(fn: () => Promise<T>): Promise<T> {
+      return fn();
+    }
+    getStats() {
+      return { failures: 0, successes: 0, state: 'CLOSED' };
+    }
+  }
+  class CircuitBreakerOpenError extends Error {}
+  return { CircuitBreaker, CircuitBreakerOpenError };
+});
+
 import { FlutterwaveProvider } from './flutterwave.provider';
 import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@nestjs/common';
@@ -6,9 +20,14 @@ import axios from 'axios';
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
+interface MockRedis {
+  get: jest.Mock;
+  set: jest.Mock;
+}
+
 describe('FlutterwaveProvider', () => {
   let provider: FlutterwaveProvider;
-  let redis: { get: jest.Mock; set: jest.Mock };
+  let redis: MockRedis;
 
   beforeEach(() => {
     redis = { get: jest.fn().mockResolvedValue(null), set: jest.fn().mockResolvedValue('OK') };
@@ -32,25 +51,29 @@ describe('FlutterwaveProvider', () => {
   describe('initializePayment', () => {
     it('should throw BadRequestException when API key not configured', async () => {
       const noKeyProvider = new FlutterwaveProvider(
-        { get: jest.fn((key: string, def?: unknown) => (key === 'FLUTTERWAVE_SECRET_KEY' ? '' : def)) } as any,
+        {
+          get: jest.fn((key: string, def?: unknown) =>
+            key === 'FLUTTERWAVE_SECRET_KEY' ? '' : def
+          ),
+        } as any,
         redis as any
       );
 
-      await expect(
-        noKeyProvider.initializePayment(5000, 'NGN', 'user-1')
-      ).rejects.toThrow(BadRequestException);
+      await expect(noKeyProvider.initializePayment(5000, 'NGN', 'user-1')).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should throw for non-positive amount', async () => {
-      await expect(
-        provider.initializePayment(-100, 'NGN', 'user-1')
-      ).rejects.toThrow('Payment amount must be a positive number');
+      await expect(provider.initializePayment(-100, 'NGN', 'user-1')).rejects.toThrow(
+        'Payment amount must be a positive number'
+      );
     });
 
     it('should throw for amount below minimum', async () => {
-      await expect(
-        provider.initializePayment(50, 'NGN', 'user-1')
-      ).rejects.toThrow('Minimum payment amount is 100');
+      await expect(provider.initializePayment(50, 'NGN', 'user-1')).rejects.toThrow(
+        'Minimum payment amount is 100'
+      );
     });
 
     it('should return cached result for idempotency key', async () => {
@@ -87,16 +110,20 @@ describe('FlutterwaveProvider', () => {
         data: { status: 'error', message: 'Invalid amount' },
       });
 
-      await expect(
-        provider.initializePayment(5000, 'NGN', 'user-1')
-      ).rejects.toThrow(BadRequestException);
+      await expect(provider.initializePayment(5000, 'NGN', 'user-1')).rejects.toThrow(
+        BadRequestException
+      );
     });
   });
 
   describe('verifyPayment', () => {
     it('should throw when API key not configured', async () => {
       const noKeyProvider = new FlutterwaveProvider(
-        { get: jest.fn((key: string, def?: unknown) => (key === 'FLUTTERWAVE_SECRET_KEY' ? '' : def)) } as any,
+        {
+          get: jest.fn((key: string, def?: unknown) =>
+            key === 'FLUTTERWAVE_SECRET_KEY' ? '' : def
+          ),
+        } as any,
         redis as any
       );
 
@@ -129,7 +156,11 @@ describe('FlutterwaveProvider', () => {
   describe('processRefund', () => {
     it('should throw when API key not configured', async () => {
       const noKeyProvider = new FlutterwaveProvider(
-        { get: jest.fn((key: string, def?: unknown) => (key === 'FLUTTERWAVE_SECRET_KEY' ? '' : def)) } as any,
+        {
+          get: jest.fn((key: string, def?: unknown) =>
+            key === 'FLUTTERWAVE_SECRET_KEY' ? '' : def
+          ),
+        } as any,
         redis as any
       );
 
@@ -156,7 +187,11 @@ describe('FlutterwaveProvider', () => {
   describe('processPayout', () => {
     it('should throw when API key not configured', async () => {
       const noKeyProvider = new FlutterwaveProvider(
-        { get: jest.fn((key: string, def?: unknown) => (key === 'FLUTTERWAVE_SECRET_KEY' ? '' : def)) } as any,
+        {
+          get: jest.fn((key: string, def?: unknown) =>
+            key === 'FLUTTERWAVE_SECRET_KEY' ? '' : def
+          ),
+        } as any,
         redis as any
       );
 
@@ -169,7 +204,11 @@ describe('FlutterwaveProvider', () => {
   describe('verifyWebhookSignature', () => {
     it('should return false when API key is empty', async () => {
       const noKeyProvider = new FlutterwaveProvider(
-        { get: jest.fn((key: string, def?: unknown) => (key === 'FLUTTERWAVE_SECRET_KEY' ? '' : def)) } as any,
+        {
+          get: jest.fn((key: string, def?: unknown) =>
+            key === 'FLUTTERWAVE_SECRET_KEY' ? '' : def
+          ),
+        } as any,
         redis as any
       );
 
@@ -189,7 +228,12 @@ describe('FlutterwaveProvider', () => {
     });
 
     it('should reject invalid signature', async () => {
-      const result = await provider.verifyWebhookSignature({ event: 'test' }, 'invalid-sig');
+      const { createHmac } = await import('crypto');
+      const payload = { event: 'test' };
+      const invalidSig = createHmac('sha256', 'wrong-key')
+        .update(JSON.stringify(payload))
+        .digest('hex');
+      const result = await provider.verifyWebhookSignature(payload, invalidSig);
       expect(result).toBe(false);
     });
   });

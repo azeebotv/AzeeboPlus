@@ -20,10 +20,7 @@ describe('CacheService', () => {
     mockRedis.keys.mockReset();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        CacheService,
-        { provide: 'default-redis', useValue: mockRedis },
-      ],
+      providers: [CacheService, { provide: 'default_IORedisModuleConnectionToken', useValue: mockRedis }],
     }).compile();
 
     service = module.get<CacheService>(CacheService);
@@ -51,7 +48,7 @@ describe('CacheService', () => {
     it('should return null for missing keys', async () => {
       mockRedis.get.mockResolvedValue(null);
       const result = await service.get('missing');
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
   });
 

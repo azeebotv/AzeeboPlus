@@ -459,11 +459,7 @@ export class RealityService {
     };
   }
 
-  async listVotesForShow(
-    showId: string,
-    page: number,
-    limit: number
-  ): Promise<RealityResponse> {
+  async listVotesForShow(showId: string, page: number, limit: number): Promise<RealityResponse> {
     const skip = (page - 1) * limit;
 
     const [votes, total] = await Promise.all([
@@ -1476,11 +1472,7 @@ export class RealityService {
     };
   }
 
-  async getComments(
-    showId: string,
-    page: number,
-    limit: number
-  ): Promise<RealityResponse> {
+  async getComments(showId: string, page: number, limit: number): Promise<RealityResponse> {
     const show = await this.prisma.realityShow.findUnique({ where: { id: showId } });
     if (!show) {
       throw new NotFoundException('Show not found');

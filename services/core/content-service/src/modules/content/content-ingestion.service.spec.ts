@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ContentIngestionService } from './content-ingestion.service';
 import { PrismaService } from '../database/prisma.service';
 import { ConfigService } from '@nestjs/config';
+import type { CreateContentDto } from './dto/create-content.dto';
 
 describe('ContentIngestionService', () => {
   let service: ContentIngestionService;
@@ -44,7 +45,12 @@ describe('ContentIngestionService', () => {
 
       const result = await service.ingestClipContent(
         'user-1',
-        { title: 'Test Clip', type: 'video', universe: 'reality' } as any,
+        {
+          title: 'Test Clip',
+          type: 'video',
+          universeId: 'reality',
+          thumbnail: 'thumb.jpg',
+        } as CreateContentDto,
         'parent-1',
         0,
         30

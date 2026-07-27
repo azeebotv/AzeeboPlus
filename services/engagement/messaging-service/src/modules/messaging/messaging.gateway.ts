@@ -119,7 +119,11 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
       return { event: 'error', data: { message: 'Not authenticated' } };
     }
 
-    const result = await this.messagingService.markAsRead(userId, data.conversationId, data.messageId);
+    const result = await this.messagingService.markAsRead(
+      userId,
+      data.conversationId,
+      data.messageId
+    );
 
     if (result.success) {
       this.server.to(`conversation:${data.conversationId}`).emit('message_read', {

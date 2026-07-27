@@ -36,7 +36,10 @@ describe('SafetyScanningService', () => {
 
   describe('scanMedia', () => {
     it('should scan media for safety issues', async () => {
-      const result = await service.scanMedia({ contentId: '1', mediaUrl: 'https://example.com/test.mp4' });
+      const result = await service.scanMedia({
+        contentId: '1',
+        mediaUrl: 'https://example.com/test.mp4',
+      });
       expect(result).toBeDefined();
     });
   });

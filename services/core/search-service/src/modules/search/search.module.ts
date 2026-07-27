@@ -7,11 +7,7 @@ import { SearchRepository } from './search.repository.js';
 import { DatabaseModule } from '../database/database.module.js';
 
 @Module({
-  imports: [
-    DatabaseModule,
-    CacheModule,
-    JwtConfigModule,
-  ],
+  imports: [DatabaseModule, CacheModule, JwtConfigModule],
   controllers: [SearchController],
   providers: [SearchService, SearchRepository],
   exports: [SearchService, SearchRepository, DatabaseModule],

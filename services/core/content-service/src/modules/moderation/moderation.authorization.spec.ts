@@ -51,13 +51,19 @@ describe('Moderation Authorization Tests', () => {
 
     app = moduleFixture.createNestApplication();
     // Mock ServiceAuthGuard behavior: set req.user from X-User-Role header
-    app.use((req: { headers: Record<string, string | undefined>; user?: unknown }, _res: unknown, next: () => void) => {
-      if (!req.user) {
-        const role = req.headers['x-user-role'] || 'user';
-        req.user = { id: 'user-1', sub: 'user-1', role };
+    app.use(
+      (
+        req: { headers: Record<string, string | undefined>; user?: unknown },
+        _res: unknown,
+        next: () => void
+      ) => {
+        if (!req.user) {
+          const role = req.headers['x-user-role'] || 'user';
+          req.user = { id: 'user-1', sub: 'user-1', role };
+        }
+        next();
       }
-      next();
-    });
+    );
     await app.init();
   });
 

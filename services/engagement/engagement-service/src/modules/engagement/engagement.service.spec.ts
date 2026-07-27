@@ -4,6 +4,8 @@ import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { CacheService } from '@azeebo/shared-services';
 
+jest.mock('axios');
+
 describe('EngagementService', () => {
   let service: EngagementService;
   let prisma: {
@@ -11,7 +13,7 @@ describe('EngagementService', () => {
     prediction: { findMany: jest.Mock; count: jest.Mock };
     ranking: { findMany: jest.Mock; count: jest.Mock };
   };
-  let cache: { get: jest.Mock; set: jest.Mock; delete: jest.Mock };
+  let cache: { get: jest.Mock; set: jest.Mock; delete: jest.Mock; invalidate: jest.Mock };
 
   beforeEach(async () => {
     prisma = {
@@ -19,7 +21,7 @@ describe('EngagementService', () => {
       prediction: { findMany: jest.fn(), count: jest.fn() },
       ranking: { findMany: jest.fn(), count: jest.fn() },
     };
-    cache = { get: jest.fn().mockResolvedValue(null), set: jest.fn(), delete: jest.fn() };
+    cache = { get: jest.fn().mockResolvedValue(null), set: jest.fn(), delete: jest.fn(), invalidate: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -30,6 +32,7 @@ describe('EngagementService', () => {
           provide: ConfigService,
           useValue: { get: jest.fn((_key: string, defaultValue: unknown) => defaultValue) },
         },
+        { provide: 'BullQueue_analytics', useValue: { add: jest.fn() } },
       ],
     }).compile();
 

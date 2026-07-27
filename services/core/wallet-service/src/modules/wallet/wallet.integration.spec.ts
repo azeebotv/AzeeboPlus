@@ -5,6 +5,7 @@ import { BadRequestException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { ConfigModule } from '@nestjs/config';
 import { CacheService } from '@azeebo/shared-services';
+import { EVENT_BUS_SERVICE } from '@azeebo/event-bus';
 
 jest.mock('../database/prisma.service');
 
@@ -109,6 +110,13 @@ describe('WalletService Integration', () => {
             delete: jest.fn().mockResolvedValue(0),
             deleteByPattern: jest.fn().mockResolvedValue(0),
             invalidate: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: EVENT_BUS_SERVICE,
+          useValue: {
+            emit: jest.fn(),
+            publish: jest.fn(),
           },
         },
       ],

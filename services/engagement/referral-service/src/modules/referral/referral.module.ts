@@ -9,12 +9,7 @@ import { DatabaseModule } from '../database/database.module.js';
 import { AdminModule } from '../admin/admin.module.js';
 
 @Module({
-  imports: [
-    DatabaseModule,
-    PassportModule,
-    JwtConfigModule,
-    AdminModule,
-  ],
+  imports: [DatabaseModule, PassportModule, JwtConfigModule, AdminModule],
   controllers: [ReferralController],
   providers: [ReferralService, JwtStrategy],
   exports: [ReferralService, DatabaseModule],

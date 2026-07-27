@@ -1,3 +1,9 @@
+jest.mock('axios');
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: 'CacheService',
+  cacheKey: (...args: unknown[]) => args.join(':'),
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
 import { RewardsService } from './rewards.service.js';
@@ -130,12 +136,24 @@ describe('RewardsService Integration', () => {
   describe('getMissions', () => {
     it('should return missions with completion status', async () => {
       mockPrismaService.mission.findMany.mockResolvedValue([
-        { id: 'mission-1', title: 'Daily Login', points: 10, type: 'daily', isActive: true, description: null },
-        { id: 'mission-2', title: 'Share Content', points: 25, type: 'one-time', isActive: true, description: 'Share once' },
+        {
+          id: 'mission-1',
+          title: 'Daily Login',
+          points: 10,
+          type: 'daily',
+          isActive: true,
+          description: null,
+        },
+        {
+          id: 'mission-2',
+          title: 'Share Content',
+          points: 25,
+          type: 'one-time',
+          isActive: true,
+          description: 'Share once',
+        },
       ]);
-      mockPrismaService.missionCompletion.findMany.mockResolvedValue([
-        { missionId: 'mission-1' },
-      ]);
+      mockPrismaService.missionCompletion.findMany.mockResolvedValue([{ missionId: 'mission-1' }]);
 
       const result = await service.getMissions('user-1');
 
@@ -212,6 +230,7 @@ describe('RewardsService Integration', () => {
       mockPrismaService.$queryRaw.mockResolvedValue([{ points: 500 }]);
       mockPrismaService.$transaction.mockImplementation(async (callback) => {
         return callback({
+          $queryRaw: jest.fn().mockResolvedValue([{ points: 500 }]),
           rewardAccount: {
             update: jest.fn().mockResolvedValue({
               id: 'account-1',

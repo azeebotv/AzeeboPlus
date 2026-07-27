@@ -17,7 +17,10 @@ export class SubscribeToPlanDto {
   @IsOptional()
   paymentMethod?: 'external' | 'wallet';
 
-  @ApiPropertyOptional({ example: 'pay_ref_abc123', description: 'Payment gateway reference (required when paymentMethod is external)' })
+  @ApiPropertyOptional({
+    example: 'pay_ref_abc123',
+    description: 'Payment gateway reference (required when paymentMethod is external)',
+  })
   @IsString()
   @IsOptional()
   paymentReference?: string;

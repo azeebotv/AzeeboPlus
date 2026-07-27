@@ -6,10 +6,7 @@ import { QuizService } from './quiz.service';
 import { DatabaseModule } from '../database/database.module';
 
 @Module({
-  imports: [
-    DatabaseModule,
-    JwtConfigModule,
-  ],
+  imports: [DatabaseModule, JwtConfigModule],
   controllers: [QuizController],
   providers: [QuizService],
   exports: [QuizService],

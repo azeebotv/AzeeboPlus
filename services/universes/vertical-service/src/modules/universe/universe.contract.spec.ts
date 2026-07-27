@@ -6,6 +6,59 @@ import { UniverseService } from './universe.service';
 import { PrismaService } from '../database/prisma.service';
 import { RateLimitGuard } from '@azeebo/security';
 
+jest.mock('@azeebo/security', () => {
+  class MockGuard {
+    canActivate = jest.fn().mockReturnValue(true);
+  }
+  return {
+    RateLimitGuard: MockGuard,
+    AdminGuard: MockGuard,
+    RateLimit: () => () => {},
+  };
+});
+
+jest.mock('class-validator', () => ({
+  IsString: () => () => {},
+  IsNotEmpty: () => () => {},
+  IsOptional: () => () => {},
+  IsNumber: () => () => {},
+  IsEmail: () => () => {},
+  IsBoolean: () => () => {},
+  IsArray: () => () => {},
+  ArrayNotEmpty: () => () => {},
+  ValidateNested: () => () => {},
+  Min: () => () => {},
+  Max: () => () => {},
+  IsUrl: () => () => {},
+  Matches: () => () => {},
+  Length: () => () => {},
+  IsInt: () => () => {},
+  IsPositive: () => () => {},
+  IsEnum: () => () => {},
+  IsDateString: () => () => {},
+  IsObject: () => () => {},
+  Validate: () => () => {},
+  registerDecorator: jest.fn(),
+  ValidationOptions: jest.fn(),
+  ValidationMetadata: jest.fn(),
+}));
+
+jest.mock('@nestjs/swagger', () => ({
+  ApiProperty: () => () => {},
+  ApiPropertyOptional: () => () => {},
+  ApiTags: () => () => {},
+  ApiOperation: () => () => {},
+  ApiBearerAuth: () => () => {},
+  ApiQuery: () => () => {},
+  ApiParam: () => () => {},
+  ApiBody: () => () => {},
+  ApiResponse: () => () => {},
+  OmitType: (t: unknown) => t,
+  PickType: (t: unknown) => t,
+  PartialType: (t: unknown) => t,
+  IntersectionType: (...t: unknown[]) => t[0],
+}));
+
 describe('Universe Controller Contract Tests', () => {
   let app: INestApplication;
 
@@ -44,6 +97,7 @@ describe('Universe Controller Contract Tests', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('v1');
     await app.init();
   });
 

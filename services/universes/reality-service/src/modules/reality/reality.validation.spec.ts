@@ -1,3 +1,4 @@
+jest.mock('libphonenumber-js/max', () => ({}));
 import { validate } from 'class-validator';
 import {
   CreateShowDto,

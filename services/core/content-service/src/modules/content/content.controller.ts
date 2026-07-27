@@ -468,7 +468,14 @@ export class ContentController {
     @Query('resolution') resolution: string,
     @Query('expiresIn') expiresIn: number = 3600
   ): Promise<ContentResponse> {
-    return this.contentService.getTranscodedMediaUrl(id, jobId, format, resolution, expiresIn, req.user.id);
+    return this.contentService.getTranscodedMediaUrl(
+      id,
+      jobId,
+      format,
+      resolution,
+      expiresIn,
+      req.user.id
+    );
   }
 
   // ========================
@@ -631,7 +638,10 @@ export class ContentController {
   @ApiResponse({ status: 200, description: 'Scan result' })
   @ApiResponse({ status: 404, description: 'Content not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async scanContentForSafety(@Request() _req: { user: { id: string } }, @Param('id', ParseUUIDPipe) id: string) {
+  async scanContentForSafety(
+    @Request() _req: { user: { id: string } },
+    @Param('id', ParseUUIDPipe) id: string
+  ) {
     const result = await this.contentService.scanContentForSafety(id);
     return ApiResponseWrapper.success(result);
   }

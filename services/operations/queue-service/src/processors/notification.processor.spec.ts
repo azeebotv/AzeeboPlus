@@ -1,3 +1,15 @@
+jest.mock('@azeebo/shared-services', () => ({
+  EmailService: class {
+    sendCustomEmail = jest.fn();
+  },
+  FirebaseService: class {
+    sendPushNotification = jest.fn();
+  },
+  SmsService: class {
+    sendSms = jest.fn();
+  },
+}));
+
 import { NotificationProcessor, NotificationJobData } from './notification.processor';
 import { EmailService, FirebaseService, SmsService } from '@azeebo/shared-services';
 import { Job } from 'bullmq';

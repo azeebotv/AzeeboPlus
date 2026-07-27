@@ -10,8 +10,9 @@ import {
   UseGuards,
   Body,
 } from '@nestjs/common';
-import { QueueService } from './queue.service';
+import { QueueService, QueueName } from './queue.service';
 import { AdminGuard } from '@azeebo/security';
+import type { JobType } from 'bullmq';
 
 @Controller('queue')
 @UseGuards(AdminGuard)
@@ -28,11 +29,16 @@ export class QueueController {
     @Param('queue') queue: string,
     @Query('type') type?: string,
     @Query('start') start?: string,
-    @Query('end') end?: string,
+    @Query('end') end?: string
   ) {
     this.assertValidQueue(queue);
-    const validQueue = queue as 'notifications' | 'payments' | 'emails' | 'analytics' | 'content-processing';
-    const types = (type || 'waiting,active,failed,delayed').split(',') as any[];
+    const validQueue = queue as
+      | 'notifications'
+      | 'payments'
+      | 'emails'
+      | 'analytics'
+      | 'content-processing';
+    const types = (type || 'waiting,active,failed,delayed').split(',') as JobType[];
     const s = parseInt(start || '0', 10);
     const e = parseInt(end || '50', 10);
     return this.queueService.getJobs(validQueue, types, s, e);
@@ -42,30 +48,30 @@ export class QueueController {
   async getFailedJobs(
     @Param('queue') queue: string,
     @Query('start') start?: string,
-    @Query('end') end?: string,
+    @Query('end') end?: string
   ) {
     this.assertValidQueue(queue);
     const s = parseInt(start || '0', 10);
     const e = parseInt(end || '50', 10);
-    return this.queueService.getFailedJobs(queue as any as any, s, e);
+    return this.queueService.getFailedJobs(queue as QueueName, s, e);
   }
 
   @Get(':queue/jobs/delayed')
   async getDelayedJobs(
     @Param('queue') queue: string,
     @Query('start') start?: string,
-    @Query('end') end?: string,
+    @Query('end') end?: string
   ) {
     this.assertValidQueue(queue);
     const s = parseInt(start || '0', 10);
     const e = parseInt(end || '50', 10);
-    return this.queueService.getDelayedJobs(queue as any as any, s, e);
+    return this.queueService.getDelayedJobs(queue as QueueName, s, e);
   }
 
   @Get(':queue/jobs/:jobId')
   async getJob(@Param('queue') queue: string, @Param('jobId') jobId: string) {
     this.assertValidQueue(queue);
-    const job = await this.queueService.getJobById(queue as any as any, jobId);
+    const job = await this.queueService.getJobById(queue as QueueName, jobId);
     if (!job) {
       return { error: 'Job not found' };
     }
@@ -86,7 +92,7 @@ export class QueueController {
   @HttpCode(HttpStatus.OK)
   async retryJob(@Param('queue') queue: string, @Param('jobId') jobId: string) {
     this.assertValidQueue(queue);
-    await this.queueService.retryJob(queue as any as any, jobId);
+    await this.queueService.retryJob(queue as QueueName, jobId);
     return { success: true, message: `Job ${jobId} retried` };
   }
 
@@ -94,7 +100,7 @@ export class QueueController {
   @HttpCode(HttpStatus.OK)
   async retryAllFailed(@Param('queue') queue: string) {
     this.assertValidQueue(queue);
-    const count = await this.queueService.retryAllFailed(queue as any as any);
+    const count = await this.queueService.retryAllFailed(queue as QueueName);
     return { success: true, retried: count };
   }
 
@@ -102,7 +108,7 @@ export class QueueController {
   @HttpCode(HttpStatus.OK)
   async removeJob(@Param('queue') queue: string, @Param('jobId') jobId: string) {
     this.assertValidQueue(queue);
-    await this.queueService.removeJob(queue as any as any, jobId);
+    await this.queueService.removeJob(queue as QueueName, jobId);
     return { success: true, message: `Job ${jobId} removed` };
   }
 
@@ -110,7 +116,7 @@ export class QueueController {
   @HttpCode(HttpStatus.OK)
   async pauseQueue(@Param('queue') queue: string) {
     this.assertValidQueue(queue);
-    await this.queueService.pauseQueue(queue as any as any);
+    await this.queueService.pauseQueue(queue as QueueName);
     return { success: true, message: `Queue ${queue} paused` };
   }
 
@@ -118,7 +124,7 @@ export class QueueController {
   @HttpCode(HttpStatus.OK)
   async resumeQueue(@Param('queue') queue: string) {
     this.assertValidQueue(queue);
-    await this.queueService.resumeQueue(queue as any as any);
+    await this.queueService.resumeQueue(queue as QueueName);
     return { success: true, message: `Queue ${queue} resumed` };
   }
 
@@ -126,18 +132,20 @@ export class QueueController {
   @HttpCode(HttpStatus.OK)
   async cleanQueue(
     @Param('queue') queue: string,
-    @Body() body: { grace?: number; limit?: number },
+    @Body() body: { grace?: number; limit?: number }
   ) {
     this.assertValidQueue(queue);
     const grace = body.grace ?? 3600000; // default 1 hour
     const limit = body.limit;
-    const cleaned = await this.queueService.cleanQueue(queue as any as any, grace, limit);
+    const cleaned = await this.queueService.cleanQueue(queue as QueueName, grace, limit);
     return { success: true, cleaned: cleaned.length };
   }
 
   private assertValidQueue(name: string): void {
     if (!this.queueService.isQueueName(name)) {
-      throw new Error(`Invalid queue: ${name}. Valid queues: notifications, payments, emails, analytics, content-processing`);
+      throw new Error(
+        `Invalid queue: ${name}. Valid queues: notifications, payments, emails, analytics, content-processing`
+      );
     }
   }
 }

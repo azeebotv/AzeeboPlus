@@ -1,7 +1,18 @@
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: class MockCacheService {
+    get = jest.fn().mockResolvedValue(null);
+    set = jest.fn().mockResolvedValue(undefined);
+    invalidate = jest.fn().mockResolvedValue(undefined);
+  },
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { ModerationService, CreateCaseRequest, ResolveCaseRequest } from './moderation.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { SafetyScanningService } from './safety-scanning.service.js';
+import { ConfigService } from '@nestjs/config';
+import { CacheService } from '@azeebo/shared-services';
 import axios from 'axios';
 
 jest.mock('axios');
@@ -63,6 +74,20 @@ describe('ModerationService Integration - Cross-Service Communication', () => {
         {
           provide: SafetyScanningService,
           useValue: mockSafetyScanningService,
+        },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            invalidate: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((_key: string, defaultValue?: string) => defaultValue),
+          },
         },
       ],
     }).compile();

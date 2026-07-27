@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { UniverseService } from './universe.service.js';
 import { PrismaService } from '../database/prisma.service.js';
+import { ConfigService } from '@nestjs/config';
 
 describe('UniverseService Integration - Cross-Service Communication', () => {
   let service: UniverseService;
@@ -27,6 +28,13 @@ describe('UniverseService Integration - Cross-Service Communication', () => {
         {
           provide: PrismaService,
           useValue: mockPrismaService,
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockReturnValue('test-value'),
+            getOrThrow: jest.fn().mockReturnValue('test-value'),
+          },
         },
       ],
     }).compile();

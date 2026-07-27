@@ -1,14 +1,4 @@
-import {
-  Inject,
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Delete,
-  Body,
-  Param,
-  Query,
-} from '@nestjs/common';
+import { Inject, Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CityGuideService } from './city-guide.service';
 import { UpdateCityGuideDto } from './dto/update-city-guide.dto';

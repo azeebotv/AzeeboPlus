@@ -3,7 +3,6 @@ import { CircuitBreaker, CircuitState, CircuitBreakerStats } from '@azeebo/share
 // OpenTelemetry tracing - optional dependency
 let trace: unknown;
 try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- @opentelemetry/api is an optional peer dependency; require() needed for synchronous optional loading
   trace = require('@opentelemetry/api').trace;
 } catch {
   // OpenTelemetry not available

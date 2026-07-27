@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { WebhookService } from './webhook.service';
 import { PrismaService } from '../database/prisma.service';
+import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@nestjs/common';
 
 describe('WebhookService', () => {
@@ -14,9 +15,23 @@ describe('WebhookService', () => {
     },
   };
 
+  const mockConfigService = {
+    get: jest.fn((key: string, defaultValue?: string) => {
+      const config: Record<string, string> = {
+        PAYMENT_SERVICE_URL: 'http://payment-service:3003',
+        SUBSCRIPTION_SERVICE_URL: 'http://subscription-service:3010',
+      };
+      return config[key] || defaultValue;
+    }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [WebhookService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        WebhookService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: ConfigService, useValue: mockConfigService },
+      ],
     }).compile();
 
     service = module.get<WebhookService>(WebhookService);

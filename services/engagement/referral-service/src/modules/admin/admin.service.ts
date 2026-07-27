@@ -92,12 +92,20 @@ export class AdminService {
         },
       };
     } catch (error) {
-      this.logger.error(`getReferralConfig failed: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `getReferralConfig failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, data: { message: (error as Error).message } };
     }
   }
 
-  async updateReferralConfig(dto: { key: string; value?: number; description?: string; isActive?: boolean }) {
+  async updateReferralConfig(dto: {
+    key: string;
+    value?: number;
+    description?: string;
+    isActive?: boolean;
+  }) {
     try {
       const existing = await this.prisma.referralConfig.findUnique({
         where: { key: dto.key },
@@ -129,7 +137,10 @@ export class AdminService {
         },
       };
     } catch (error) {
-      this.logger.error(`updateReferralConfig failed: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `updateReferralConfig failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       if (error instanceof NotFoundException) throw error;
       return { success: false, data: { message: (error as Error).message } };
     }

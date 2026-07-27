@@ -1,14 +1,4 @@
-import {
-  Inject,
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Query,
-  Request,
-  Logger,
-} from '@nestjs/common';
+import { Inject, Controller, Get, Post, Body, Param, Query, Request, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { AgbalaTitlesService as TitlesService } from './agbala/titles.service';

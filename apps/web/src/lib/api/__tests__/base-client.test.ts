@@ -153,7 +153,7 @@ describe('apiFetch — standalone fetch helper', () => {
 
       expect(result.success).toBe(false);
       expect(result.statusCode).toBe(401);
-      expect(result.message).toBe('Token expired');
+      expect(result.message).toBe('Session expired. Please login again.');
     });
 
     it('should handle 403 Forbidden', async () => {

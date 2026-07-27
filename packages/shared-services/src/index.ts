@@ -76,6 +76,10 @@ export { JwtConfigModule } from './jwt/jwt-config.module';
 
 // Observability
 /** Health check service for database and Redis connectivity. */
-export { HealthCheckService, HealthCheckResult, ServiceHealth } from './observability/health-check.service';
+export {
+  HealthCheckService,
+  HealthCheckResult,
+  ServiceHealth,
+} from './observability/health-check.service';
 /** In-memory metrics service for request tracking and Prometheus export. */
 export { MetricsService } from './observability/metrics.service';

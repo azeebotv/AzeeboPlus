@@ -1,6 +1,12 @@
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: jest.fn(),
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { FixturesService } from './fixtures.service.js';
 import { PrismaService } from '../database/prisma.service.js';
+import { CacheService } from '@azeebo/shared-services';
 import { NotFoundException } from '@nestjs/common';
 
 describe('FixturesService', () => {
@@ -40,6 +46,14 @@ describe('FixturesService', () => {
               create: jest.fn(),
               update: jest.fn(),
             },
+          },
+        },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            invalidate: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],
