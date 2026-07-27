@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AgbalaAnalyticsService } from '../agbala/analytics.service';
+import { ConfigService } from '@nestjs/config';
 
 describe('AgbalaAnalyticsService', () => {
   let service: AgbalaAnalyticsService;
@@ -9,7 +10,16 @@ describe('AgbalaAnalyticsService', () => {
     global.fetch = jest.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [AgbalaAnalyticsService],
+      providers: [
+        AgbalaAnalyticsService,
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockReturnValue('http://analytics-service:3008'),
+            getOrThrow: jest.fn().mockReturnValue('http://analytics-service:3008'),
+          },
+        },
+      ],
     }).compile();
 
     service = module.get<AgbalaAnalyticsService>(AgbalaAnalyticsService);

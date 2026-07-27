@@ -67,14 +67,26 @@ describe('SearchService Integration', () => {
   describe('search', () => {
     it('should return results when content matches query', async () => {
       const mockContent = [
-        { id: '1', title: 'Reality Show', description: 'A great show', status: 'published', viewCount: 100, createdAt: new Date(), updatedAt: new Date() },
+        {
+          id: '1',
+          title: 'Reality Show',
+          description: 'A great show',
+          status: 'published',
+          viewCount: 100,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       ];
       const mockCreators = [
-        { id: 'c1', bio: 'Creator bio', userId: 'u1', displayName: 'Creator', email: 'creator@test.com' },
+        {
+          id: 'c1',
+          bio: 'Creator bio',
+          userId: 'u1',
+          displayName: 'Creator',
+          email: 'creator@test.com',
+        },
       ];
-      const mockUniverses = [
-        { id: 'uni1', name: 'Reality', displayName: 'Reality Universe' },
-      ];
+      const mockUniverses = [{ id: 'uni1', name: 'Reality', displayName: 'Reality Universe' }];
 
       mockPrismaService.contentItem.findMany.mockResolvedValue(mockContent);
       mockPrismaService.contentItem.count.mockResolvedValue(1);
@@ -142,14 +154,18 @@ describe('SearchService Integration', () => {
   describe('searchWithFacets', () => {
     it('should return results with facet data', async () => {
       const mockContent = [
-        { id: '1', title: 'Show', description: 'Description', status: 'published', viewCount: 50, createdAt: new Date(), updatedAt: new Date() },
+        {
+          id: '1',
+          title: 'Show',
+          description: 'Description',
+          status: 'published',
+          viewCount: 50,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       ];
-      const mockGroupBy = [
-        { universeId: 'uni1', _count: { id: 5 } },
-      ];
-      const mockContentTypeGroupBy = [
-        { contentType: 'video', _count: { id: 3 } },
-      ];
+      const mockGroupBy = [{ universeId: 'uni1', _count: { id: 5 } }];
+      const mockContentTypeGroupBy = [{ contentType: 'video', _count: { id: 3 } }];
 
       mockPrismaService.contentItem.findMany.mockResolvedValue(mockContent);
       mockPrismaService.creatorProfile.findMany.mockResolvedValue([]);
@@ -181,7 +197,10 @@ describe('SearchService Integration', () => {
       const result = await service.getSuggestions('real');
 
       expect(result.success).toBe(true);
-      expect((result as any).data.suggestions).toEqual(['reality show', 'reality tv']);
+      expect((result as { data?: { suggestions?: string[] } }).data?.suggestions).toEqual([
+        'reality show',
+        'reality tv',
+      ]);
       expect(mockCacheService.set).toHaveBeenCalled();
     });
 
@@ -215,8 +234,11 @@ describe('SearchService Integration', () => {
       const result = await service.getTrending();
 
       expect(result.success).toBe(true);
-      expect((result as any).data.trending).toHaveLength(2);
-      expect((result as any).data.trending[0]).toEqual({ query: 'popular show', count: 500 });
+      expect((result as { data?: { trending?: unknown[] } }).data?.trending).toHaveLength(2);
+      expect(
+        (result as { data?: { trending?: Array<{ query: string; count: number }> } }).data
+          ?.trending?.[0]
+      ).toEqual({ query: 'popular show', count: 500 });
     });
 
     it('should return empty trending when no searches exist', async () => {
@@ -225,7 +247,7 @@ describe('SearchService Integration', () => {
       const result = await service.getTrending();
 
       expect(result.success).toBe(true);
-      expect((result as any).data.trending).toHaveLength(0);
+      expect((result as { data?: { trending?: unknown[] } }).data?.trending).toHaveLength(0);
     });
   });
 
@@ -237,16 +259,16 @@ describe('SearchService Integration', () => {
       mockPrismaService.contentItem.groupBy.mockResolvedValue([
         { universe: 'reality', _count: { id: 10 } },
       ]);
-      mockPrismaService.tag.findMany.mockResolvedValue([
-        { id: 'tag1', name: 'drama' },
-      ]);
+      mockPrismaService.tag.findMany.mockResolvedValue([{ id: 'tag1', name: 'drama' }]);
 
       const result = await service.getFacets();
 
       expect(result.success).toBe(true);
       expect(result.data?.facets).toBeDefined();
       expect(result.data?.facets?.universes).toHaveLength(1);
-      expect((result as any).data.facets.tags).toHaveLength(1);
+      expect(
+        (result as { data?: { facets?: { tags?: unknown[] } } }).data?.facets?.tags
+      ).toHaveLength(1);
     });
   });
 

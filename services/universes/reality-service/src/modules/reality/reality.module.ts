@@ -7,11 +7,7 @@ import { RealityGateway } from './reality.gateway.js';
 import { DatabaseModule } from '../database/database.module.js';
 
 @Module({
-  imports: [
-    DatabaseModule,
-    RedisModule,
-    JwtConfigModule,
-  ],
+  imports: [DatabaseModule, RedisModule, JwtConfigModule],
   controllers: [RealityController],
   providers: [RealityService, RealityGateway],
   exports: [RealityService, RealityGateway, DatabaseModule],

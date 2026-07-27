@@ -5,22 +5,22 @@ import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { CacheService } from '@azeebo/shared-services';
 
-// Mock axios to avoid real HTTP calls
 jest.mock('axios');
 const axios = require('axios');
 axios.get = jest.fn();
 
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: 'CacheService',
+  cacheKey: (...args: unknown[]) => args.join(':'),
+}));
+
 // Mock CircuitBreaker to execute callbacks directly
-jest.mock('@azeebo/shared-types', () => {
-  const actual = jest.requireActual('@azeebo/shared-types');
-  return {
-    ...actual,
-    CircuitBreaker: jest.fn().mockImplementation(() => ({
-      execute: jest.fn().mockImplementation((fn: () => Promise<unknown>) => fn()),
-    })),
-    CircuitBreakerOpenError: actual.CircuitBreakerOpenError ?? class CircuitBreakerOpenError extends Error {},
-  };
-});
+jest.mock('@azeebo/shared-types', () => ({
+  CircuitBreaker: jest.fn().mockImplementation(() => ({
+    execute: jest.fn().mockImplementation((fn: () => Promise<unknown>) => fn()),
+  })),
+  CircuitBreakerOpenError: class CircuitBreakerOpenError extends Error {},
+}));
 
 describe('SubscriptionService Integration', () => {
   let service: SubscriptionService;
@@ -243,7 +243,12 @@ describe('SubscriptionService Integration', () => {
 
     it('should cancel existing active subscription before creating new one', async () => {
       const dto = { planId: 'plan-1', paymentReference: 'pay-ref-2' };
-      const existingSub = { id: 'existing-sub', userId: 'user-1', status: 'active', planId: 'plan-2' };
+      const existingSub = {
+        id: 'existing-sub',
+        userId: 'user-1',
+        status: 'active',
+        planId: 'plan-2',
+      };
 
       mockPrismaService.subscriptionPlan.findUnique.mockResolvedValue(mockPlan);
       axios.get.mockResolvedValue({
@@ -409,9 +414,9 @@ describe('SubscriptionService Integration', () => {
     it('should throw NotFoundException when subscription belongs to different user', async () => {
       mockPrismaService.subscription.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.cancelSubscription('user-1', 'sub-other-user')
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.cancelSubscription('user-1', 'sub-other-user')).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 

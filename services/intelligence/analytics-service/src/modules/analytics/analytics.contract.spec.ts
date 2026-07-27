@@ -1,3 +1,56 @@
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: class {},
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+  JwtConfigModule: class {},
+}));
+
+jest.mock('@azeebo/shared-types', () => ({
+  CircuitBreaker: class {
+    execute = jest.fn();
+    getStats = jest.fn();
+  },
+  CircuitBreakerOpenError: class extends Error {},
+  ApiVersioningConfig: {},
+  API_VERSION_HEADER: 'x-api-version',
+  DEFAULT_API_VERSION: '1',
+  environmentSchema: {},
+  validateEnvironment: jest.fn(),
+}));
+
+jest.mock('@azeebo/security', () => {
+  const Guard = class {
+    canActivate() {
+      return true;
+    }
+  };
+  return {
+    AdminGuard: Guard,
+    RateLimitGuard: Guard,
+    RateLimit: () => () => {},
+    Public: () => () => {},
+  };
+});
+
+jest.mock('class-validator', () => ({
+  IsArray: () => () => {},
+  IsString: () => () => {},
+  IsOptional: () => () => {},
+  ValidateNested: () => () => {},
+  IsObject: () => () => {},
+  IsPhoneNumber: () => () => {},
+  IsEnum: () => () => {},
+  IsBoolean: () => () => {},
+  MinLength: () => () => {},
+  MaxLength: () => () => {},
+  ArrayMinSize: () => () => {},
+  IsIn: () => () => {},
+  IsInt: () => () => {},
+  Min: () => () => {},
+  Max: () => () => {},
+  IsDateString: () => () => {},
+  IsUUID: () => () => {},
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
@@ -16,7 +69,9 @@ class MockAuthGuard {
 }
 
 class MockRateLimitGuard {
-  canActivate() {
+  canActivate(context: ExecutionContext) {
+    const request = context.switchToHttp().getRequest();
+    request.user = { sub: 'admin-1', id: 'admin-1', email: 'admin@example.com', role: 'admin' };
     return true;
   }
 }
@@ -79,6 +134,7 @@ describe('Analytics Controller Contract Tests', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('v1');
     await app.init();
   });
 

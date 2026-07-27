@@ -1,8 +1,28 @@
+jest.mock('libphonenumber-js/max', () => ({}));
+jest.mock('@nestjs/swagger', () => ({
+  ApiTags: () => () => {},
+  ApiOperation: () => () => {},
+  ApiResponse: () => () => {},
+  ApiBearerAuth: () => () => {},
+  ApiProperty: () => () => {},
+  ApiPropertyOptional: () => () => {},
+  PartialType: (t: unknown) => t,
+}));
 import { Test, TestingModule } from '@nestjs/testing';
 import { Reflector } from '@nestjs/core';
 import { ComedyController } from './comedy.controller.js';
 import { ComedyService } from './comedy.service.js';
 import { RateLimitService } from '@azeebo/security';
+
+jest.mock('@azeebo/shared-services', () => ({
+  RedisService: jest.fn(),
+}));
+jest.mock('@azeebo/security', () => ({
+  RateLimitGuard: jest.fn(),
+  RateLimit: () => () => {},
+  AdminGuard: jest.fn(),
+  RateLimitService: jest.fn(),
+}));
 
 describe('ComedyController', () => {
   let controller: ComedyController;

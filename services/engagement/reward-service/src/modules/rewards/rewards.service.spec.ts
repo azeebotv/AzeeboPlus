@@ -1,13 +1,22 @@
+jest.mock('axios');
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: 'CacheService',
+  cacheKey: (...args: unknown[]) => args.join(':'),
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { RewardsService } from './rewards.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { CacheService } from '@azeebo/shared-services';
+
+// Test file for RewardsService
 
 describe('RewardsService', () => {
   let service: RewardsService;
 
-  const mockPrismaService = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mockPrismaService: any = {
     rewardAccount: {
       findUnique: jest.fn(),
       create: jest.fn(),
@@ -36,7 +45,22 @@ describe('RewardsService', () => {
       findMany: jest.fn(),
       count: jest.fn(),
     },
-    $transaction: jest.fn((operations: unknown[]) => Promise.all(operations as Promise<unknown>[])),
+    $transaction: jest.fn((arg: unknown) => {
+      if (typeof arg === 'function') {
+        const txMocks = {
+          $queryRaw: jest.fn(),
+          rewardAccount: {
+            update: mockPrismaService.rewardAccount.update,
+          },
+          rewardRedemption: {
+            create: mockPrismaService.rewardRedemption.create,
+          },
+        };
+        (mockPrismaService as any).$txMocks = txMocks;
+        return arg(txMocks);
+      }
+      return Promise.all(arg as Promise<unknown>[]);
+    }),
   };
 
   beforeEach(async () => {
@@ -50,9 +74,18 @@ describe('RewardsService', () => {
             get: jest.fn().mockImplementation((key: string, defaultValue?: unknown) => {
               const config: Record<string, unknown> = {
                 DEFAULT_PAGINATION_LIMIT: 100,
+                CHECK_IN_POINTS: 10,
               };
               return config[key] ?? defaultValue;
             }),
+          },
+        },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue('OK'),
+            delete: jest.fn().mockResolvedValue(1),
           },
         },
       ],
@@ -192,22 +225,16 @@ describe('RewardsService', () => {
       expect(result.data!.streak).toBeDefined();
     });
 
-    it('should throw NotFoundException if no reward account', async () => {
+    it('should return error if no reward account', async () => {
       mockPrismaService.rewardAccount.findUnique.mockResolvedValue(null);
 
-      await expect(service.getStreak('user-1')).rejects.toThrow(NotFoundException);
+      const result = await service.getStreak('user-1');
+      expect(result.success).toBe(false);
     });
   });
 
   describe('redeemReward', () => {
     it('should redeem reward successfully', async () => {
-      mockPrismaService.rewardAccount.findUnique.mockResolvedValue({
-        id: 'ra-1',
-        userId: 'user-1',
-        points: 500,
-        levelId: 'level-1',
-        streak: 5,
-      });
       mockPrismaService.reward.findUnique.mockResolvedValue({
         id: 'reward-1',
         name: 'Premium Badge',
@@ -215,6 +242,11 @@ describe('RewardsService', () => {
       });
       mockPrismaService.rewardAccount.update.mockResolvedValue({ points: 400 });
       mockPrismaService.rewardRedemption.create.mockResolvedValue({ id: 'rr-1' });
+      (mockPrismaService as any).$txMocks = { $queryRaw: jest.fn().mockResolvedValue([{ points: 500 }]), rewardAccount: { update: mockPrismaService.rewardAccount.update }, rewardRedemption: { create: mockPrismaService.rewardRedemption.create } };
+      mockPrismaService.$transaction.mockImplementation((arg: unknown) => {
+        if (typeof arg === 'function') return arg((mockPrismaService as any).$txMocks);
+        return Promise.all(arg as Promise<unknown>[]);
+      });
 
       const result = await service.redeemReward('user-1', 'reward-1');
 
@@ -223,24 +255,35 @@ describe('RewardsService', () => {
       expect(result.data!.rewardAccount!.points).toBe(400);
     });
 
-    it('should throw NotFoundException if no reward account', async () => {
-      mockPrismaService.rewardAccount.findUnique.mockResolvedValue(null);
+    it('should return error if no reward account', async () => {
+      mockPrismaService.reward.findUnique.mockResolvedValue({ id: 'reward-1', cost: 100 });
+      (mockPrismaService as any).$txMocks = { $queryRaw: jest.fn().mockResolvedValue([]), rewardAccount: { update: mockPrismaService.rewardAccount.update }, rewardRedemption: { create: mockPrismaService.rewardRedemption.create } };
+      mockPrismaService.$transaction.mockImplementation((arg: unknown) => {
+        if (typeof arg === 'function') return arg((mockPrismaService as any).$txMocks);
+        return Promise.all(arg as Promise<unknown>[]);
+      });
 
-      await expect(service.redeemReward('user-1', 'reward-1')).rejects.toThrow(NotFoundException);
+      const result = await service.redeemReward('user-1', 'reward-1');
+      expect(result.success).toBe(false);
     });
 
-    it('should throw NotFoundException if reward not found', async () => {
-      mockPrismaService.rewardAccount.findUnique.mockResolvedValue({ points: 500 });
+    it('should return error if reward not found', async () => {
       mockPrismaService.reward.findUnique.mockResolvedValue(null);
 
-      await expect(service.redeemReward('user-1', 'reward-1')).rejects.toThrow(NotFoundException);
+      const result = await service.redeemReward('user-1', 'reward-1');
+      expect(result.success).toBe(false);
     });
 
-    it('should throw BadRequestException if insufficient points', async () => {
-      mockPrismaService.rewardAccount.findUnique.mockResolvedValue({ points: 50 });
-      mockPrismaService.reward.findUnique.mockResolvedValue({ cost: 100 });
+    it('should return error if insufficient points', async () => {
+      mockPrismaService.reward.findUnique.mockResolvedValue({ id: 'reward-1', cost: 100 });
+      (mockPrismaService as any).$txMocks = { $queryRaw: jest.fn().mockResolvedValue([{ points: 50 }]), rewardAccount: { update: mockPrismaService.rewardAccount.update }, rewardRedemption: { create: mockPrismaService.rewardRedemption.create } };
+      mockPrismaService.$transaction.mockImplementation((arg: unknown) => {
+        if (typeof arg === 'function') return arg((mockPrismaService as any).$txMocks);
+        return Promise.all(arg as Promise<unknown>[]);
+      });
 
-      await expect(service.redeemReward('user-1', 'reward-1')).rejects.toThrow(BadRequestException);
+      const result = await service.redeemReward('user-1', 'reward-1');
+      expect(result.success).toBe(false);
     });
   });
 
@@ -284,10 +327,11 @@ describe('RewardsService', () => {
       expect(result.data!.message).toBe('Max level reached');
     });
 
-    it('should throw NotFoundException if no reward account', async () => {
+    it('should return error if no reward account', async () => {
       mockPrismaService.rewardAccount.findUnique.mockResolvedValue(null);
 
-      await expect(service.getLevel('user-1')).rejects.toThrow(NotFoundException);
+      const result = await service.getLevel('user-1');
+      expect(result.success).toBe(false);
     });
   });
 
@@ -310,10 +354,11 @@ describe('RewardsService', () => {
       expect(result.data!.rewardAccount!.points).toBe(150);
     });
 
-    it('should throw NotFoundException if no reward account', async () => {
+    it('should return error if no reward account', async () => {
       mockPrismaService.rewardAccount.findUnique.mockResolvedValue(null);
 
-      await expect(service.addPoints('user-1', 50, 'Bonus')).rejects.toThrow(NotFoundException);
+      const result = await service.addPoints('user-1', 50, 'Bonus');
+      expect(result.success).toBe(false);
     });
   });
 
@@ -340,7 +385,7 @@ describe('RewardsService', () => {
       expect(result.data!.message).toBe('Check-in successful');
     });
 
-    it('should throw BadRequestException if already checked in today', async () => {
+    it('should return error if already checked in today', async () => {
       const today = new Date();
 
       mockPrismaService.rewardAccount.findUnique.mockResolvedValue({
@@ -351,13 +396,15 @@ describe('RewardsService', () => {
         lastLoginAt: today,
       });
 
-      await expect(service.checkIn('user-1')).rejects.toThrow(BadRequestException);
+      const result = await service.checkIn('user-1');
+      expect(result.success).toBe(false);
     });
 
-    it('should throw NotFoundException if no reward account', async () => {
+    it('should return error if no reward account', async () => {
       mockPrismaService.rewardAccount.findUnique.mockResolvedValue(null);
 
-      await expect(service.checkIn('user-1')).rejects.toThrow(NotFoundException);
+      const result = await service.checkIn('user-1');
+      expect(result.success).toBe(false);
     });
   });
 
@@ -379,7 +426,7 @@ describe('RewardsService', () => {
       expect(result.data!.pointsEarned).toBe(1);
     });
 
-    it('should earn custom amount of points', async () => {
+    it('should earn custom amount of points from config', async () => {
       mockPrismaService.rewardAccount.findUnique.mockResolvedValue({
         id: 'ra-1',
         userId: 'user-1',
@@ -387,8 +434,11 @@ describe('RewardsService', () => {
         levelId: 'level-1',
         streak: 5,
       });
-      mockPrismaService.rewardAccount.update.mockResolvedValue({});
+      mockPrismaService.rewardAccount.update.mockResolvedValue({ points: 125 });
       mockPrismaService.pointsLedger.create.mockResolvedValue({});
+      (mockPrismaService as any).activityPointConfig = {
+        findUnique: jest.fn().mockResolvedValue({ activity: 'custom', points: 25 }),
+      };
 
       const result = await service.earnPoints('user-1', 'custom');
 
@@ -396,10 +446,11 @@ describe('RewardsService', () => {
       expect(result.data!.pointsEarned).toBe(25);
     });
 
-    it('should throw NotFoundException if no reward account', async () => {
+    it('should return error if no reward account', async () => {
       mockPrismaService.rewardAccount.findUnique.mockResolvedValue(null);
 
-      await expect(service.earnPoints('user-1', 'content_view')).rejects.toThrow(NotFoundException);
+      const result = await service.earnPoints('user-1', 'content_view');
+      expect(result.success).toBe(false);
     });
   });
 
@@ -418,10 +469,11 @@ describe('RewardsService', () => {
       expect(result.data!.balance).toBe(500);
     });
 
-    it('should throw NotFoundException if no reward account', async () => {
+    it('should return error if no reward account', async () => {
       mockPrismaService.rewardAccount.findUnique.mockResolvedValue(null);
 
-      await expect(service.getBalance('user-1')).rejects.toThrow(NotFoundException);
+      const result = await service.getBalance('user-1');
+      expect(result.success).toBe(false);
     });
   });
 

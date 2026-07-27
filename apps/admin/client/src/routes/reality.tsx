@@ -64,9 +64,9 @@ export default function RealityPage() {
                 {show.status}
               </span>
               <div style={{ display: 'flex', gap: 6 }}>
-                {show.status !== 'active' && (
+                {show.status !== 'live' && (
                   <button
-                    onClick={() => updateStatusMutation.mutate({ id: show.id, status: 'active' })}
+                    onClick={() => updateStatusMutation.mutate({ id: show.id, status: 'live' })}
                     style={{
                       padding: '4px 10px',
                       borderRadius: 6,

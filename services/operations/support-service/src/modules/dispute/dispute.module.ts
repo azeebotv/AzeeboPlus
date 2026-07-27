@@ -4,9 +4,7 @@ import { DisputeController } from './dispute.controller';
 import { DisputeService } from './dispute.service';
 
 @Module({
-  imports: [
-    JwtConfigModule,
-  ],
+  imports: [JwtConfigModule],
   controllers: [DisputeController],
   providers: [DisputeService],
   exports: [DisputeService],

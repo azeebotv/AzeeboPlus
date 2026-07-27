@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService } from '@azeebo/shared-services';
+import { ConfigService } from '@nestjs/config';
 import { NotFoundException } from '@nestjs/common';
 
 jest.mock('../database/prisma.service');
@@ -65,6 +66,19 @@ describe('UsersService Integration', () => {
             set: jest.fn().mockResolvedValue(undefined),
             delete: jest.fn().mockResolvedValue(0),
             invalidate: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockImplementation((key: string, defaultValue?: unknown) => {
+              if (key === 'ANALYTICS_SERVICE_URL') return 'http://analytics-service:3040';
+              return defaultValue;
+            }),
+            getOrThrow: jest.fn().mockImplementation((key: string) => {
+              if (key === 'ANALYTICS_SERVICE_URL') return 'http://analytics-service:3040';
+              return '';
+            }),
           },
         },
       ],

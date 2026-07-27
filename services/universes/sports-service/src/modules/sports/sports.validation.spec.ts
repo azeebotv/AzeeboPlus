@@ -1,9 +1,25 @@
+jest.mock('libphonenumber-js/max', () => ({
+  parsePhoneNumber: jest.fn(),
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, UnauthorizedException } from '@nestjs/common';
+import { INestApplication, ExecutionContext, UnauthorizedException, VersioningType } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
 import { SportsController } from './sports.controller.js';
 import { SportsService } from './sports.service.js';
+
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: jest.fn(),
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+}));
+jest.mock('@azeebo/security', () => ({
+  RateLimitGuard: jest.fn(),
+  RateLimit: () => () => {},
+  AdminGuard: jest.fn(),
+  RateLimitService: jest.fn(),
+}));
 
 const mockAuthGuard = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -50,6 +66,16 @@ describe('Sports Service Validation Tests', () => {
           provide: 'JWT',
           useValue: mockAuthGuard,
         },
+        {
+          provide: APP_GUARD,
+          useFactory: () => ({
+            canActivate: (context: ExecutionContext) => {
+              const req = context.switchToHttp().getRequest();
+              req.user = { sub: 'user-123', role: 'ADMIN' };
+              return true;
+            },
+          }),
+        },
       ],
     })
       .overrideGuard(AuthGuard('jwt'))
@@ -57,6 +83,7 @@ describe('Sports Service Validation Tests', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
     await app.init();
   });
 

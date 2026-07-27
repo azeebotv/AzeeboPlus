@@ -6,8 +6,12 @@ import {
   VersioningType,
 } from '@nestjs/common';
 import request from 'supertest';
-import { UsersModule } from './users.module.js';
+import { UsersController } from './users.controller.js';
+import { InteractionsController } from './interactions.controller.js';
+import { UserDeletionController } from '../user/user-deletion.controller.js';
+import { UsersService } from './users.service.js';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { RateLimitGuard, ServiceAuthGuard } from '@azeebo/security';
 import { CacheService } from '@azeebo/shared-services';
@@ -61,39 +65,63 @@ describe('Users Controller Contract Tests', () => {
     process.env.JWT_ACCESS_SECRET = 'test-jwt-secret';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [UsersModule],
+      controllers: [UsersController, InteractionsController, UserDeletionController],
+      providers: [
+        UsersService,
+        { provide: PrismaService, useValue: mockPrismaService },
+        {
+          provide: JwtService,
+          useValue: {
+            verify: jest.fn(),
+            sign: jest.fn(),
+          },
+        },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            delete: jest.fn().mockResolvedValue(0),
+            deleteByPattern: jest.fn().mockResolvedValue(0),
+            invalidate: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((_k: string, d?: unknown) => d),
+            getOrThrow: jest.fn((_k: string) => undefined),
+          },
+        },
+      ],
     })
-      .overrideProvider(PrismaService)
-      .useValue(mockPrismaService)
-      .overrideProvider(JwtService)
-      .useValue({
-        verify: jest.fn(),
-        sign: jest.fn(),
-      })
       .overrideGuard(ServiceAuthGuard)
       .useValue(mockAuthGuard)
       .overrideGuard(RateLimitGuard)
       .useValue({
         canActivate: jest.fn(() => true),
       })
-      .overrideProvider(CacheService)
-      .useValue({
-        get: jest.fn().mockResolvedValue(null),
-        set: jest.fn().mockResolvedValue(undefined),
-        delete: jest.fn().mockResolvedValue(0),
-        invalidate: jest.fn().mockResolvedValue(undefined),
-      })
       .compile();
 
     app = moduleFixture.createNestApplication();
     app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
     // Mock ServiceAuthGuard behavior
-    app.use((req: { headers: { authorization?: string }; user?: unknown }, _res: unknown, next: () => void) => {
-      if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ') && !req.user) {
-        req.user = { id: 'user-123', sub: 'user-123', role: 'user' };
+    app.use(
+      (
+        req: { headers: { authorization?: string }; user?: unknown },
+        _res: unknown,
+        next: () => void
+      ) => {
+        if (
+          req.headers.authorization &&
+          req.headers.authorization.startsWith('Bearer ') &&
+          !req.user
+        ) {
+          req.user = { id: 'user-123', sub: 'user-123', role: 'user' };
+        }
+        next();
       }
-      next();
-    });
+    );
     await app.init();
   });
 

@@ -17,7 +17,8 @@ export class MetricsService {
   recordRequest(method: string, statusCode: number, durationMs: number): void {
     this.counters.requests.total++;
     this.counters.requests.byMethod[method] = (this.counters.requests.byMethod[method] || 0) + 1;
-    this.counters.requests.byStatus[statusCode] = (this.counters.requests.byStatus[statusCode] || 0) + 1;
+    this.counters.requests.byStatus[statusCode] =
+      (this.counters.requests.byStatus[statusCode] || 0) + 1;
 
     this.counters.responseTime.total += durationMs;
     this.counters.responseTime.count++;
@@ -42,9 +43,10 @@ export class MetricsService {
 
   getPrometheusMetrics(): string {
     const lines: string[] = [];
-    const avgResponseTime = this.counters.responseTime.count > 0
-      ? this.counters.responseTime.total / this.counters.responseTime.count
-      : 0;
+    const avgResponseTime =
+      this.counters.responseTime.count > 0
+        ? this.counters.responseTime.total / this.counters.responseTime.count
+        : 0;
 
     lines.push('# HELP azeebo_http_requests_total Total HTTP requests');
     lines.push('# TYPE azeebo_http_requests_total counter');
@@ -60,11 +62,15 @@ export class MetricsService {
 
     lines.push('# HELP azeebo_http_response_time_min_seconds Min response time');
     lines.push('# TYPE azeebo_http_response_time_min_seconds gauge');
-    lines.push(`azeebo_http_response_time_min_seconds ${this.counters.responseTime.min === Infinity ? 0 : (this.counters.responseTime.min / 1000).toFixed(3)}`);
+    lines.push(
+      `azeebo_http_response_time_min_seconds ${this.counters.responseTime.min === Infinity ? 0 : (this.counters.responseTime.min / 1000).toFixed(3)}`
+    );
 
     lines.push('# HELP azeebo_http_response_time_max_seconds Max response time');
     lines.push('# TYPE azeebo_http_response_time_max_seconds gauge');
-    lines.push(`azeebo_http_response_time_max_seconds ${(this.counters.responseTime.max / 1000).toFixed(3)}`);
+    lines.push(
+      `azeebo_http_response_time_max_seconds ${(this.counters.responseTime.max / 1000).toFixed(3)}`
+    );
 
     lines.push('# HELP azeebo_http_errors_total Total errors');
     lines.push('# TYPE azeebo_http_errors_total counter');

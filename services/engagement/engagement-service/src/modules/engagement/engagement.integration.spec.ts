@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { EngagementService } from './engagement.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService } from '@azeebo/shared-services';
@@ -31,12 +32,22 @@ describe('EngagementService Integration', () => {
     invalidate: jest.fn(),
   };
 
+  const mockAnalyticsQueue = {
+    add: jest.fn().mockResolvedValue({}),
+  };
+
+  const mockConfigService = {
+    get: jest.fn().mockReturnValue(undefined),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         EngagementService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: CacheService, useValue: mockCacheService },
+        { provide: 'BullQueue_analytics', useValue: mockAnalyticsQueue },
+        { provide: ConfigService, useValue: mockConfigService },
       ],
     }).compile();
 
@@ -51,9 +62,33 @@ describe('EngagementService Integration', () => {
   describe('getLeaderboard', () => {
     it('should return leaderboard entries ranked by score', async () => {
       const mockEntries = [
-        { id: '1', userId: 'user-a', displayName: 'Alice', avatar: null, score: 1500, category: 'all', timePeriod: 'weekly' },
-        { id: '2', userId: 'user-b', displayName: 'Bob', avatar: null, score: 1200, category: 'all', timePeriod: 'weekly' },
-        { id: '3', userId: 'user-c', displayName: 'Charlie', avatar: null, score: 900, category: 'all', timePeriod: 'weekly' },
+        {
+          id: '1',
+          userId: 'user-a',
+          displayName: 'Alice',
+          avatar: null,
+          score: 1500,
+          category: 'all',
+          timePeriod: 'weekly',
+        },
+        {
+          id: '2',
+          userId: 'user-b',
+          displayName: 'Bob',
+          avatar: null,
+          score: 1200,
+          category: 'all',
+          timePeriod: 'weekly',
+        },
+        {
+          id: '3',
+          userId: 'user-c',
+          displayName: 'Charlie',
+          avatar: null,
+          score: 900,
+          category: 'all',
+          timePeriod: 'weekly',
+        },
       ];
 
       mockCacheService.get.mockResolvedValue(null);
@@ -63,7 +98,9 @@ describe('EngagementService Integration', () => {
       const result = await service.getLeaderboard('weekly', 'all', 50);
 
       expect(result.success).toBe(true);
-      const data = (result as { success: boolean; data: Array<{ rank: number; userId: string; score: number }> }).data;
+      const data = (
+        result as { success: boolean; data: Array<{ rank: number; userId: string; score: number }> }
+      ).data;
       expect(data).toHaveLength(3);
       expect(data[0].rank).toBe(1);
       expect(data[0].userId).toBe('user-a');
@@ -102,7 +139,9 @@ describe('EngagementService Integration', () => {
     });
 
     it('should throw BadRequestException for invalid category', async () => {
-      await expect(service.getLeaderboard('weekly', 'invalid')).rejects.toThrow(BadRequestException);
+      await expect(service.getLeaderboard('weekly', 'invalid')).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should support all valid timePeriods', async () => {
@@ -131,9 +170,30 @@ describe('EngagementService Integration', () => {
   describe('getRankings', () => {
     it('should return rankings grouped by category', async () => {
       const mockEntries = [
-        { id: '1', userId: 'user-a', displayName: 'Alice', avatar: null, score: 1000, category: 'gaming' },
-        { id: '2', userId: 'user-b', displayName: 'Bob', avatar: null, score: 800, category: 'gaming' },
-        { id: '3', userId: 'user-c', displayName: 'Charlie', avatar: null, score: 500, category: 'content' },
+        {
+          id: '1',
+          userId: 'user-a',
+          displayName: 'Alice',
+          avatar: null,
+          score: 1000,
+          category: 'gaming',
+        },
+        {
+          id: '2',
+          userId: 'user-b',
+          displayName: 'Bob',
+          avatar: null,
+          score: 800,
+          category: 'gaming',
+        },
+        {
+          id: '3',
+          userId: 'user-c',
+          displayName: 'Charlie',
+          avatar: null,
+          score: 500,
+          category: 'content',
+        },
       ];
 
       mockPrismaService.ranking.findMany.mockResolvedValue(mockEntries);
@@ -141,7 +201,12 @@ describe('EngagementService Integration', () => {
       const result = await service.getRankings();
 
       expect(result.success).toBe(true);
-      const data = (result as { success: boolean; data: Array<{ category: string; rankings: Array<{ rank: number }> }> }).data;
+      const data = (
+        result as {
+          success: boolean;
+          data: Array<{ category: string; rankings: Array<{ rank: number }> }>;
+        }
+      ).data;
       expect(data).toHaveLength(5);
       const gaming = data.find((r) => r.category === 'gaming');
       expect(gaming!.rankings).toHaveLength(2);
@@ -164,7 +229,9 @@ describe('EngagementService Integration', () => {
       mockPrismaService.ranking.findMany.mockResolvedValue(mockEntries);
 
       const result = await service.getRankings();
-      const data = (result as { success: boolean; data: Array<{ category: string; rankings: Array<unknown> }> }).data;
+      const data = (
+        result as { success: boolean; data: Array<{ category: string; rankings: Array<unknown> }> }
+      ).data;
       const gaming = data?.find((r) => r.category === 'gaming');
       expect(gaming?.rankings).toHaveLength(10);
     });
@@ -199,7 +266,9 @@ describe('EngagementService Integration', () => {
       const result = await service.submitPrediction('user-1', 'content-1', 'winner-A');
 
       expect(result.success).toBe(true);
-      const data = (result as { success: boolean; data: { prediction: string; points: number; id: string } }).data;
+      const data = (
+        result as { success: boolean; data: { prediction: string; points: number; id: string } }
+      ).data;
       expect(data.prediction).toBe('winner-A');
       expect(data.points).toBe(10);
       expect(data.id).toBe('pred-1');
@@ -212,9 +281,9 @@ describe('EngagementService Integration', () => {
         contentId: 'content-1',
       });
 
-      await expect(
-        service.submitPrediction('user-1', 'content-1', 'winner-B')
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.submitPrediction('user-1', 'content-1', 'winner-B')).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should assign 10 points for each prediction', async () => {
@@ -231,7 +300,7 @@ describe('EngagementService Integration', () => {
 
       const result = await service.submitPrediction('user-1', 'content-2', 'draw');
 
-      expect((result as any).data.points).toBe(10);
+      expect((result as { data?: { points?: number } }).data?.points).toBe(10);
       expect(mockPrismaService.prediction.create).toHaveBeenCalledWith({
         data: expect.objectContaining({ points: 10 }),
       });
@@ -241,9 +310,30 @@ describe('EngagementService Integration', () => {
   describe('getPredictionResults', () => {
     it('should return prediction results with accuracy summary', async () => {
       const mockPredictions = [
-        { id: '1', prediction: 'winner-A', points: 10, isCorrect: true, result: 'winner-A', createdAt: new Date() },
-        { id: '2', prediction: 'winner-B', points: 10, isCorrect: false, result: 'winner-A', createdAt: new Date() },
-        { id: '3', prediction: 'draw', points: 10, isCorrect: null, result: null, createdAt: new Date() },
+        {
+          id: '1',
+          prediction: 'winner-A',
+          points: 10,
+          isCorrect: true,
+          result: 'winner-A',
+          createdAt: new Date(),
+        },
+        {
+          id: '2',
+          prediction: 'winner-B',
+          points: 10,
+          isCorrect: false,
+          result: 'winner-A',
+          createdAt: new Date(),
+        },
+        {
+          id: '3',
+          prediction: 'draw',
+          points: 10,
+          isCorrect: null,
+          result: null,
+          createdAt: new Date(),
+        },
       ];
 
       mockPrismaService.prediction.findMany.mockResolvedValue(mockPredictions);
@@ -251,11 +341,21 @@ describe('EngagementService Integration', () => {
       const result = await service.getPredictionResults('user-1', 'content-1');
 
       expect(result.success).toBe(true);
-      expect((result as any).data.predictions).toHaveLength(3);
-      expect((result as any).data.summary.totalPredictions).toBe(3);
-      expect((result as any).data.summary.correctPredictions).toBe(1);
-      expect((result as any).data.summary.totalPoints).toBe(30);
-      expect((result as any).data.summary.accuracy).toBeCloseTo(33.33, 1);
+      expect((result as { data?: { predictions?: unknown[] } }).data?.predictions).toHaveLength(3);
+      expect(
+        (result as { data?: { summary?: { totalPredictions?: number } } }).data?.summary
+          ?.totalPredictions
+      ).toBe(3);
+      expect(
+        (result as { data?: { summary?: { correctPredictions?: number } } }).data?.summary
+          ?.correctPredictions
+      ).toBe(1);
+      expect(
+        (result as { data?: { summary?: { totalPoints?: number } } }).data?.summary?.totalPoints
+      ).toBe(30);
+      expect(
+        (result as { data?: { summary?: { accuracy?: number } } }).data?.summary?.accuracy
+      ).toBeCloseTo(33.33, 1);
     });
 
     it('should handle zero predictions', async () => {
@@ -264,9 +364,14 @@ describe('EngagementService Integration', () => {
       const result = await service.getPredictionResults('user-1', 'content-new');
 
       expect(result.success).toBe(true);
-      expect((result as any).data.predictions).toEqual([]);
-      expect((result as any).data.summary.totalPredictions).toBe(0);
-      expect((result as any).data.summary.accuracy).toBe(0);
+      expect((result as { data?: { predictions?: unknown[] } }).data?.predictions).toEqual([]);
+      expect(
+        (result as { data?: { summary?: { totalPredictions?: number } } }).data?.summary
+          ?.totalPredictions
+      ).toBe(0);
+      expect(
+        (result as { data?: { summary?: { accuracy?: number } } }).data?.summary?.accuracy
+      ).toBe(0);
     });
   });
 

@@ -83,18 +83,18 @@ export function initializeOpenTelemetry(config: Partial<OpenTelemetryConfig> = {
       } catch (error) {
         process.stderr.write(`${LOG_PREFIX} Error shutting down SDK: ${error}\n`);
       } finally {
-      process.exit(0);
-    }
-  };
+        process.exit(0);
+      }
+    };
 
-  // Use once() to avoid duplicate signal handlers if other packages also listen
-  process.once('SIGTERM', shutdown);
-  process.once('SIGINT', shutdown);
+    // Use once() to avoid duplicate signal handlers if other packages also listen
+    process.once('SIGTERM', shutdown);
+    process.once('SIGINT', shutdown);
 
-  sdk.start();
-  process.stderr.write(`${LOG_PREFIX} Tracing initialized for ${finalConfig.serviceName}\n`);
+    sdk.start();
+    process.stderr.write(`${LOG_PREFIX} Tracing initialized for ${finalConfig.serviceName}\n`);
 
-  return sdk;
+    return sdk;
   } catch (error) {
     process.stderr.write(`${LOG_PREFIX} Failed to initialize OpenTelemetry: ${error}\n`);
     return null;

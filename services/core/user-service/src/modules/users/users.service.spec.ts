@@ -24,7 +24,7 @@ describe('UsersService', () => {
       findUnique: jest.fn(),
       update: jest.fn(),
     },
-    userPreference: {
+    userPreferences: {
       findUnique: jest.fn(),
       upsert: jest.fn(),
     },
@@ -43,7 +43,15 @@ describe('UsersService', () => {
         UsersService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: ConfigService, useValue: mockConfigService },
-        { provide: CacheService, useValue: { get: jest.fn().mockResolvedValue(null), set: jest.fn().mockResolvedValue('OK'), delete: jest.fn().mockResolvedValue(1), invalidate: jest.fn().mockResolvedValue(1) } },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue('OK'),
+            delete: jest.fn().mockResolvedValue(1),
+            invalidate: jest.fn().mockResolvedValue(1),
+          },
+        },
       ],
     }).compile();
 
@@ -56,7 +64,7 @@ describe('UsersService', () => {
 
   describe('getPreferences', () => {
     it('should return user preferences', async () => {
-      mockPrismaService.userPreference.findUnique.mockResolvedValue({
+      mockPrismaService.userPreferences.findUnique.mockResolvedValue({
         userId: '1',
         preferences: { notifications: true },
       });

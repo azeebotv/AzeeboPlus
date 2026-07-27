@@ -1,3 +1,47 @@
+jest.mock('class-validator', () => ({
+  IsString: () => () => {},
+  IsEnum: () => () => {},
+  IsOptional: () => () => {},
+  IsBoolean: () => () => {},
+  IsObject: () => () => {},
+  IsArray: () => () => {},
+  ValidateNested: () => () => {},
+  IsPhoneNumber: () => () => {},
+  MinLength: () => () => {},
+  MaxLength: () => () => {},
+  ArrayMinSize: () => () => {},
+  IsIn: () => () => {},
+  IsInt: () => () => {},
+  Min: () => () => {},
+  Max: () => () => {},
+  IsDateString: () => () => {},
+  IsUUID: () => () => {},
+}));
+
+jest.mock('@azeebo/security', () => {
+  const Guard = class {
+    canActivate(context: any) {
+      const request = context.switchToHttp().getRequest();
+      request.user = request.user || { sub: 'user-123', id: 'user-123' };
+      return true;
+    }
+  };
+  return {
+    RateLimitGuard: Guard,
+    AdminGuard: Guard,
+    RateLimit: () => (_target: any, _propertyKey?: string, descriptor?: any) => descriptor,
+  };
+});
+
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: class {
+    get = jest.fn().mockResolvedValue(null);
+    set = jest.fn().mockResolvedValue(undefined);
+    invalidate = jest.fn().mockResolvedValue(undefined);
+  },
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, CanActivate, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
@@ -8,7 +52,7 @@ import { ModerationService } from './moderation.service.js';
 class MockAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext) {
     const req = context.switchToHttp().getRequest();
-    req.user = { sub: 'user-123' };
+    req.user = { sub: 'user-123', id: 'user-123' };
     return true;
   }
 }
@@ -43,6 +87,7 @@ describe('Moderation Controller Contract Tests', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('v1');
     await app.init();
   });
 

@@ -80,7 +80,10 @@ export class PaystackProvider {
     return null;
   }
 
-  private async storeIdempotency(key: string | undefined, result: Record<string, unknown>): Promise<void> {
+  private async storeIdempotency(
+    key: string | undefined,
+    result: Record<string, unknown>
+  ): Promise<void> {
     if (!key) return;
     try {
       await this.redis.set(

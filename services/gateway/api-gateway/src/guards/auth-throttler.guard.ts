@@ -45,7 +45,6 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
     super(options, storageService, reflector);
     if (process.env.REDIS_URL) {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports -- ioredis is an optional peer dependency; require() needed for synchronous optional loading
         const Redis = require('ioredis');
         this.redisClient = new Redis(process.env.REDIS_URL, {
           maxRetriesPerRequest: 3,

@@ -1,4 +1,15 @@
-import { Inject, Controller, Get, Post, Put, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Body,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { AdminService } from './admin.service.js';
 import { AdminGuard } from '@azeebo/security';
@@ -54,7 +65,16 @@ export class AdminController {
   }
 
   @Post('templates')
-  async createTemplate(@Body() body: { key: string; channel: string; subject?: string; body: string; variables?: string[] }) {
+  async createTemplate(
+    @Body()
+    body: {
+      key: string;
+      channel: string;
+      subject?: string;
+      body: string;
+      variables?: string[];
+    }
+  ) {
     return this.adminService.createTemplate(body);
   }
 
@@ -75,7 +95,16 @@ export class AdminController {
   }
 
   @Post('campaigns')
-  async createCampaign(@Body() body: { name: string; templateKey: string; channel: string; audience?: Record<string, unknown>; scheduledAt?: string }) {
+  async createCampaign(
+    @Body()
+    body: {
+      name: string;
+      templateKey: string;
+      channel: string;
+      audience?: Record<string, unknown>;
+      scheduledAt?: string;
+    }
+  ) {
     return this.adminService.createCampaign(body);
   }
 

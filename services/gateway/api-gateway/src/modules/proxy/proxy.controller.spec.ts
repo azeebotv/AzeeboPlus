@@ -1,3 +1,27 @@
+jest.mock('@azeebo/shared-types', () => ({
+  CircuitBreaker: class {
+    execute = jest.fn();
+    getStats = jest.fn();
+  },
+  CircuitBreakerOpenError: class extends Error {},
+  ApiVersioningConfig: {},
+  API_VERSION_HEADER: 'x-api-version',
+  DEFAULT_API_VERSION: '1',
+}));
+
+jest.mock('@azeebo/security', () => {
+  const Guard = class {
+    canActivate() {
+      return true;
+    }
+  };
+  return {
+    AdminGuard: Guard,
+    RateLimitGuard: Guard,
+    RateLimit: () => () => {},
+  };
+});
+
 import { SERVICE_CONFIGS } from './proxy.controller';
 
 describe('Proxy Controller - API Contract Verification', () => {

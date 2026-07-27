@@ -2,8 +2,14 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue, Job, JobType } from 'bullmq';
 
-const QUEUE_NAMES = ['notifications', 'payments', 'emails', 'analytics', 'content-processing'] as const;
-type QueueName = (typeof QUEUE_NAMES)[number];
+const QUEUE_NAMES = [
+  'notifications',
+  'payments',
+  'emails',
+  'analytics',
+  'content-processing',
+] as const;
+export type QueueName = (typeof QUEUE_NAMES)[number];
 
 @Injectable()
 export class QueueService {
@@ -14,7 +20,7 @@ export class QueueService {
     @InjectQueue('payments') private readonly paymentsQueue: Queue,
     @InjectQueue('emails') private readonly emailsQueue: Queue,
     @InjectQueue('analytics') private readonly analyticsQueue: Queue,
-    @InjectQueue('content-processing') private readonly contentProcessingQueue: Queue,
+    @InjectQueue('content-processing') private readonly contentProcessingQueue: Queue
   ) {}
 
   private getQueue(name: QueueName): Queue {
@@ -28,15 +34,17 @@ export class QueueService {
     return queues[name];
   }
 
-  async getQueueStats(): Promise<Array<{
-    name: string;
-    waiting: number;
-    active: number;
-    completed: number;
-    failed: number;
-    delayed: number;
-    paused: number;
-  }>> {
+  async getQueueStats(): Promise<
+    Array<{
+      name: string;
+      waiting: number;
+      active: number;
+      completed: number;
+      failed: number;
+      delayed: number;
+      paused: number;
+    }>
+  > {
     const stats = await Promise.all(
       QUEUE_NAMES.map(async (name) => {
         const queue = this.getQueue(name);
@@ -49,17 +57,12 @@ export class QueueService {
           queue.isPaused().then((p) => (p ? 1 : 0)),
         ]);
         return { name, waiting, active, completed, failed, delayed, paused };
-      }),
+      })
     );
     return stats;
   }
 
-  async getJobs(
-    queueName: QueueName,
-    types: JobType[],
-    start = 0,
-    end = 50,
-  ): Promise<Job[]> {
+  async getJobs(queueName: QueueName, types: JobType[], start = 0, end = 50): Promise<Job[]> {
     const queue = this.getQueue(queueName);
     return queue.getJobs(types, start, end);
   }
@@ -123,11 +126,7 @@ export class QueueService {
     return queue.getDelayed(start, end);
   }
 
-  async cleanQueue(
-    queueName: QueueName,
-    grace: number,
-    limit?: number,
-  ): Promise<string[]> {
+  async cleanQueue(queueName: QueueName, grace: number, limit?: number): Promise<string[]> {
     const queue = this.getQueue(queueName);
     const cleaned = await queue.clean(grace, limit ?? 1000);
     this.logger.log(`Cleaned ${cleaned.length} jobs from queue ${queueName}`);

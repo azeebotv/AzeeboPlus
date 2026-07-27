@@ -4,6 +4,7 @@ import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { CacheService } from '@azeebo/shared-services';
+import { EVENT_BUS_SERVICE } from '@azeebo/event-bus';
 
 jest.mock('../database/prisma.service');
 
@@ -148,6 +149,13 @@ describe('WalletService E2E Tests', () => {
             delete: jest.fn().mockResolvedValue(0),
             deleteByPattern: jest.fn().mockResolvedValue(0),
             invalidate: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: EVENT_BUS_SERVICE,
+          useValue: {
+            publish: jest.fn().mockResolvedValue(undefined),
+            subscribe: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],

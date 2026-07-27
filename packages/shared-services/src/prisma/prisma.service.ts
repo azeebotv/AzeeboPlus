@@ -42,7 +42,7 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleInit() {
     try {
-      await this._client.$connect();
+      await (this._client as { $connect: () => Promise<void> }).$connect();
       this.logger.log('Prisma client connected successfully');
     } catch (error) {
       this.logger.error('Failed to connect to database:', error);
@@ -52,7 +52,7 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleDestroy() {
     try {
-      await this._client.$disconnect();
+      await (this._client as { $disconnect: () => Promise<void> }).$disconnect();
       this.logger.log('Prisma client disconnected');
     } catch (error) {
       this.logger.error('Failed to disconnect Prisma client:', error);

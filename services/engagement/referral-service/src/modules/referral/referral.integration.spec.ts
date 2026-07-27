@@ -1,9 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, ConflictException } from '@nestjs/common';
+import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { ReferralService } from './referral.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { CacheService } from '@azeebo/shared-services';
+import { Prisma } from '@prisma/client';
 
 describe('ReferralService Integration', () => {
   let service: ReferralService;
@@ -161,9 +162,10 @@ describe('ReferralService Integration', () => {
       mockPrismaService.referralCode.findFirst.mockResolvedValue(null);
       mockPrismaService.referralCode.create
         .mockRejectedValueOnce(
-          Object.assign(new Error('Unique constraint'), {
+          new Prisma.PrismaClientKnownRequestError('Unique constraint', {
             code: 'P2002',
-            name: 'PrismaClientKnownRequestError',
+            clientVersion: '0.0.0',
+            meta: {},
           })
         )
         .mockResolvedValueOnce({
@@ -223,9 +225,9 @@ describe('ReferralService Integration', () => {
     it('should throw NotFoundException for invalid code', async () => {
       mockPrismaService.referralCode.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.applyReferralCode('user-1', { code: 'INVALID' })
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.applyReferralCode('user-1', { code: 'INVALID' })).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw BadRequestException for inactive code', async () => {
@@ -239,9 +241,9 @@ describe('ReferralService Integration', () => {
         expiresAt: null,
       });
 
-      await expect(
-        service.applyReferralCode('user-1', { code: 'AZB-INACTIVE' })
-      ).rejects.toThrow('Referral code is no longer active');
+      await expect(service.applyReferralCode('user-1', { code: 'AZB-INACTIVE' })).rejects.toThrow(
+        'Referral code is no longer active'
+      );
     });
 
     it('should throw BadRequestException for expired code', async () => {
@@ -258,9 +260,9 @@ describe('ReferralService Integration', () => {
         expiresAt: pastDate,
       });
 
-      await expect(
-        service.applyReferralCode('user-1', { code: 'AZB-EXPIRED' })
-      ).rejects.toThrow('Referral code has expired');
+      await expect(service.applyReferralCode('user-1', { code: 'AZB-EXPIRED' })).rejects.toThrow(
+        'Referral code has expired'
+      );
     });
 
     it('should throw BadRequestException when max uses reached', async () => {
@@ -274,9 +276,9 @@ describe('ReferralService Integration', () => {
         expiresAt: null,
       });
 
-      await expect(
-        service.applyReferralCode('user-1', { code: 'AZB-FULL' })
-      ).rejects.toThrow('Referral code has reached maximum uses');
+      await expect(service.applyReferralCode('user-1', { code: 'AZB-FULL' })).rejects.toThrow(
+        'Referral code has reached maximum uses'
+      );
     });
 
     it('should throw BadRequestException for self-referral', async () => {
@@ -290,9 +292,9 @@ describe('ReferralService Integration', () => {
         expiresAt: null,
       });
 
-      await expect(
-        service.applyReferralCode('user-1', { code: 'AZB-SELF' })
-      ).rejects.toThrow('Cannot use your own referral code');
+      await expect(service.applyReferralCode('user-1', { code: 'AZB-SELF' })).rejects.toThrow(
+        'Cannot use your own referral code'
+      );
     });
 
     it('should throw ConflictException when user already used a referral', async () => {
@@ -310,9 +312,9 @@ describe('ReferralService Integration', () => {
         referredId: 'user-1',
       });
 
-      await expect(
-        service.applyReferralCode('user-1', { code: 'AZB-USED' })
-      ).rejects.toThrow(ConflictException);
+      await expect(service.applyReferralCode('user-1', { code: 'AZB-USED' })).rejects.toThrow(
+        ConflictException
+      );
     });
   });
 
@@ -332,7 +334,14 @@ describe('ReferralService Integration', () => {
       const result = await service.getStats('user-1');
 
       expect(result.success).toBe(true);
-      const data = result.data as { stats: { totalReferrals: number; completedReferrals: number; pendingReferrals?: number; totalRewards: number } };
+      const data = result.data as {
+        stats: {
+          totalReferrals: number;
+          completedReferrals: number;
+          pendingReferrals?: number;
+          totalRewards: number;
+        };
+      };
       expect(data.stats.totalReferrals).toBe(10);
       expect(data.stats.completedReferrals).toBe(7);
       expect(data.stats.pendingReferrals).toBe(3);
@@ -411,9 +420,9 @@ describe('ReferralService Integration', () => {
     it('should throw NotFoundException when referral does not exist', async () => {
       mockPrismaService.referral.findUnique.mockResolvedValue(null);
 
-      const result = await service.completeReferral('nonexistent', 'user-1');
-
-      expect(result.success).toBe(false);
+      await expect(service.completeReferral('nonexistent', 'user-1')).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw NotFoundException when not the referrer', async () => {
@@ -424,9 +433,9 @@ describe('ReferralService Integration', () => {
         status: 'pending',
       });
 
-      const result = await service.completeReferral('ref-1', 'user-1');
-
-      expect(result.success).toBe(false);
+      await expect(service.completeReferral('ref-1', 'user-1')).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw BadRequestException for self-referral', async () => {
@@ -437,9 +446,9 @@ describe('ReferralService Integration', () => {
         status: 'pending',
       });
 
-      const result = await service.completeReferral('ref-1', 'user-1');
-
-      expect(result.success).toBe(false);
+      await expect(service.completeReferral('ref-1', 'user-1')).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should throw BadRequestException when already completed', async () => {
@@ -450,9 +459,9 @@ describe('ReferralService Integration', () => {
         status: 'completed',
       });
 
-      const result = await service.completeReferral('ref-1', 'referrer-1');
-
-      expect(result.success).toBe(false);
+      await expect(service.completeReferral('ref-1', 'referrer-1')).rejects.toThrow(
+        BadRequestException
+      );
     });
   });
 });

@@ -5,10 +5,7 @@ import { AdminService } from './admin.service.js';
 import { CreatorsModule } from '../creators/creators.module.js';
 
 @Module({
-  imports: [
-    CreatorsModule,
-    JwtConfigModule,
-  ],
+  imports: [CreatorsModule, JwtConfigModule],
   controllers: [AdminController],
   providers: [AdminService],
   exports: [AdminService],

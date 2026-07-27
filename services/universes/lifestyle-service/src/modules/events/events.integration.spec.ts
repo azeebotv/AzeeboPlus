@@ -6,6 +6,31 @@ import { ConfigService } from '@nestjs/config';
 import { CacheService } from '@azeebo/shared-services';
 import axios from 'axios';
 
+jest.mock('zod', () => {
+  const chainable = () => {
+    const obj: Record<string, jest.Mock> = {};
+    const methods = ['optional', 'default', 'url', 'email', 'min', 'max', 'positive', 'transform', 'regex', 'nullable', 'trim', 'safeParse'];
+    methods.forEach(m => { obj[m] = jest.fn().mockReturnValue(obj); });
+    return obj;
+  };
+  const z = {
+    string: jest.fn(() => chainable()),
+    number: jest.fn(() => chainable()),
+    boolean: jest.fn(() => chainable()),
+    array: jest.fn(() => chainable()),
+    object: jest.fn(() => chainable()),
+    enum: jest.fn(() => chainable()),
+    record: jest.fn(() => chainable()),
+    literal: jest.fn(() => chainable()),
+    union: jest.fn(() => chainable()),
+    any: jest.fn(() => chainable()),
+    coerce: { string: jest.fn(() => chainable()), number: jest.fn(() => chainable()) },
+  };
+  return { z, ZodError: class ZodError extends Error {} };
+});
+
+jest.mock('firebase-admin/app', () => ({ initializeApp: jest.fn(), cert: jest.fn() }));
+jest.mock('firebase-admin/messaging', () => ({}));
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
@@ -206,9 +231,9 @@ describe('EventsService Integration - Cross-Service Communication', () => {
     it('should throw NotFoundException when event does not exist', async () => {
       mockPrismaService.event.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.rsvpEvent('nonexistent-event', 'user-1', {})
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.rsvpEvent('nonexistent-event', 'user-1', {})).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw BadRequestException when already RSVPed', async () => {
@@ -225,9 +250,7 @@ describe('EventsService Integration - Cross-Service Communication', () => {
         eventId: 'event-1',
       });
 
-      await expect(
-        service.rsvpEvent('event-1', 'user-1', {})
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.rsvpEvent('event-1', 'user-1', {})).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException when event is fully booked', async () => {
@@ -240,9 +263,7 @@ describe('EventsService Integration - Cross-Service Communication', () => {
       });
       mockPrismaService.eventRsvp.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.rsvpEvent('event-1', 'user-1', {})
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.rsvpEvent('event-1', 'user-1', {})).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -278,9 +299,7 @@ describe('EventsService Integration - Cross-Service Communication', () => {
     it('should throw NotFoundException when RSVP does not exist', async () => {
       mockPrismaService.eventRsvp.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.cancelRsvp('event-1', 'user-1')
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.cancelRsvp('event-1', 'user-1')).rejects.toThrow(NotFoundException);
     });
   });
 

@@ -112,7 +112,12 @@ export class SanitizationService {
     return `${this.rateLimitPrefix}${action}:${userId}`;
   }
 
-  async checkRateLimit(userId: string, action: string, maxRequests: number, windowMs: number): Promise<boolean> {
+  async checkRateLimit(
+    userId: string,
+    action: string,
+    maxRequests: number,
+    windowMs: number
+  ): Promise<boolean> {
     const key = this.rateLimitKey(userId, action);
     const windowSec = Math.ceil(windowMs / 1000);
 

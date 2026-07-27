@@ -23,10 +23,7 @@ export class AdminController {
   @ApiOperation({ summary: 'Get paginated referrals (admin)' })
   @ApiResponse({ status: 200, description: 'Paginated referrals' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  async getReferrals(
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
-  ) {
+  async getReferrals(@Query('page') page?: number, @Query('limit') limit?: number) {
     return this.adminService.getReferrals(Number(page) || 1, Number(limit) || 20);
   }
 
@@ -46,7 +43,7 @@ export class AdminController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Config key not found' })
   async updateReferralConfig(
-    @Body() dto: { key: string; value?: number; description?: string; isActive?: boolean },
+    @Body() dto: { key: string; value?: number; description?: string; isActive?: boolean }
   ) {
     return this.adminService.updateReferralConfig(dto);
   }

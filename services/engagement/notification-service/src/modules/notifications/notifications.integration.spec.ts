@@ -1,10 +1,18 @@
+jest.mock('axios');
+jest.mock('@azeebo/shared-services', () => ({
+  FirebaseService: 'FirebaseService',
+  EmailService: 'EmailService',
+  SmsService: 'SmsService',
+  CacheService: 'CacheService',
+  cacheKey: (...args: unknown[]) => args.join(':'),
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { NotificationsService } from './notifications.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
-import { FirebaseService, EmailService, SmsService } from '@azeebo/shared-services';
-import { CacheService } from '@azeebo/shared-services';
+import { FirebaseService, EmailService, SmsService, CacheService } from '@azeebo/shared-services';
 
 describe('NotificationsService Integration', () => {
   let service: NotificationsService;
@@ -90,14 +98,16 @@ describe('NotificationsService Integration', () => {
       ];
 
       mockPrismaService.notification.findMany.mockResolvedValue(mockNotifications);
-      mockPrismaService.notification.count
-        .mockResolvedValueOnce(2)
-        .mockResolvedValueOnce(1);
+      mockPrismaService.notification.count.mockResolvedValueOnce(2).mockResolvedValueOnce(1);
 
       const result = await service.getNotifications('user-1', 1, 20);
 
       expect(result.success).toBe(true);
-      const data = result.data as { notifications: unknown[]; unreadCount: number; pagination: { total: number } };
+      const data = result.data as {
+        notifications: unknown[];
+        unreadCount: number;
+        pagination: { total: number };
+      };
       expect(data.notifications).toHaveLength(2);
       expect(data.unreadCount).toBe(1);
       expect(data.pagination.total).toBe(2);
@@ -105,9 +115,7 @@ describe('NotificationsService Integration', () => {
 
     it('should handle empty notifications', async () => {
       mockPrismaService.notification.findMany.mockResolvedValue([]);
-      mockPrismaService.notification.count
-        .mockResolvedValueOnce(0)
-        .mockResolvedValueOnce(0);
+      mockPrismaService.notification.count.mockResolvedValueOnce(0).mockResolvedValueOnce(0);
 
       const result = await service.getNotifications('user-1');
 
@@ -119,9 +127,7 @@ describe('NotificationsService Integration', () => {
 
     it('should limit page size to 100', async () => {
       mockPrismaService.notification.findMany.mockResolvedValue([]);
-      mockPrismaService.notification.count
-        .mockResolvedValueOnce(0)
-        .mockResolvedValueOnce(0);
+      mockPrismaService.notification.count.mockResolvedValueOnce(0).mockResolvedValueOnce(0);
 
       await service.getNotifications('user-1', 1, 200);
 
@@ -152,9 +158,7 @@ describe('NotificationsService Integration', () => {
     it('should throw NotFoundException when notification does not exist', async () => {
       mockPrismaService.notification.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.markAsRead('user-1', 'nonexistent')
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.markAsRead('user-1', 'nonexistent')).rejects.toThrow(NotFoundException);
     });
 
     it('should throw ForbiddenException when notification belongs to another user', async () => {
@@ -164,9 +168,7 @@ describe('NotificationsService Integration', () => {
         readAt: null,
       });
 
-      await expect(
-        service.markAsRead('user-1', 'notif-1')
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.markAsRead('user-1', 'notif-1')).rejects.toThrow(ForbiddenException);
     });
   });
 
@@ -300,9 +302,9 @@ describe('NotificationsService Integration', () => {
         userId: 'user-2',
       });
 
-      await expect(
-        service.savePushToken('user-1', 'token-abc', 'ios')
-      ).rejects.toThrow('This push token is registered to another device');
+      await expect(service.savePushToken('user-1', 'token-abc', 'ios')).rejects.toThrow(
+        'This push token is registered to another device'
+      );
     });
   });
 
@@ -340,9 +342,9 @@ describe('NotificationsService Integration', () => {
     it('should throw NotFoundException when token does not exist', async () => {
       mockPrismaService.pushToken.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.deletePushTokenById('user-1', 'nonexistent')
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.deletePushTokenById('user-1', 'nonexistent')).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw NotFoundException when token belongs to another user', async () => {
@@ -351,9 +353,9 @@ describe('NotificationsService Integration', () => {
         userId: 'user-2',
       });
 
-      await expect(
-        service.deletePushTokenById('user-1', 'token-1')
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.deletePushTokenById('user-1', 'token-1')).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 });

@@ -16,7 +16,12 @@ export interface NotificationJobData {
 }
 
 export interface NotificationSender {
-  sendPushNotification(token: string, title: string, message: string, data?: Record<string, string>): Promise<void>;
+  sendPushNotification(
+    token: string,
+    title: string,
+    message: string,
+    data?: Record<string, string>
+  ): Promise<void>;
   sendCustomEmail(to: string, subject: string, html: string): Promise<void>;
   sendSms(to: string, message: string): Promise<void>;
 }

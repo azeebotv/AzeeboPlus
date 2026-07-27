@@ -245,7 +245,9 @@ describe('Content Service Caching Tests', () => {
         success: true,
         data: { message: 'Deleted' },
       });
-      const response = await request(app.getHttpServer()).delete('/content/550e8400-e29b-41d4-a716-446655440000');
+      const response = await request(app.getHttpServer()).delete(
+        '/content/550e8400-e29b-41d4-a716-446655440000'
+      );
 
       // DELETE should succeed or return 404 - not crash
       expect(response.status).not.toBe(500);

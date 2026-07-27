@@ -10,7 +10,7 @@ import { QueueService } from './queue.service';
       { name: 'payments' },
       { name: 'emails' },
       { name: 'analytics' },
-      { name: 'content-processing' },
+      { name: 'content-processing' }
     ),
   ],
   controllers: [QueueController],

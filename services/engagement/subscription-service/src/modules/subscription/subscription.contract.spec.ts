@@ -1,11 +1,53 @@
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: 'CacheService',
+  cacheKey: (...args: unknown[]) => args.join(':'),
+}));
+jest.mock('@azeebo/shared-types', () => ({
+  CircuitBreaker: jest.fn().mockImplementation(() => ({
+    execute: jest.fn().mockImplementation((fn: () => Promise<unknown>) => fn()),
+  })),
+  CircuitBreakerOpenError: class CircuitBreakerOpenError extends Error {},
+}));
+jest.mock('@azeebo/security', () => ({
+  RateLimitGuard: class MockRateLimitGuard {
+    canActivate = jest.fn().mockReturnValue(true);
+  },
+  AdminGuard: class MockAdminGuard {
+    canActivate = jest.fn().mockReturnValue(true);
+  },
+  RateLimit: () => () => {},
+  ServiceAuthGuard: class MockServiceAuthGuard {
+    canActivate = jest.fn().mockReturnValue(true);
+  },
+}));
+jest.mock('class-validator', () => ({
+  IsString: () => () => {},
+  IsNotEmpty: () => () => {},
+  IsNumber: () => () => {},
+  IsOptional: () => () => {},
+  IsEnum: () => () => {},
+  IsIn: () => () => {},
+  Min: () => () => {},
+  ValidateNested: () => () => {},
+  IsArray: () => () => {},
+  IsBoolean: () => () => {},
+}));
+jest.mock('class-transformer', () => ({
+  Type: () => () => {},
+  plainToInstance: (_cls: unknown, obj: unknown) => obj,
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import { INestApplication, ExecutionContext, UnauthorizedException, VersioningType } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
-import { SubscriptionModule } from './subscription.module.js';
+import { SubscriptionController } from './subscription.controller.js';
 import { SubscriptionService } from './subscription.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { AuthGuard } from '@nestjs/passport';
-import { RateLimitGuard, AdminGuard } from '@azeebo/security';
+import { RateLimitGuard, AdminGuard, ServiceAuthGuard } from '@azeebo/security';
+import { CacheService } from '@azeebo/shared-services';
+import { ConfigService } from '@nestjs/config';
 
 class MockAuthGuard {
   canActivate(context: ExecutionContext) {
@@ -16,6 +58,30 @@ class MockAuthGuard {
 }
 
 class MockAuthGuardReject {
+  canActivate() {
+    throw new UnauthorizedException();
+  }
+}
+
+class MockRateLimitGuardReject {
+  canActivate() {
+    throw new UnauthorizedException();
+  }
+}
+
+class MockAdminGuardReject {
+  canActivate() {
+    throw new UnauthorizedException();
+  }
+}
+
+class MockServiceAuthGuard {
+  canActivate() {
+    return true;
+  }
+}
+
+class MockServiceAuthGuardReject {
   canActivate() {
     throw new UnauthorizedException();
   }
@@ -72,21 +138,32 @@ describe('Subscription Controller Contract Tests', () => {
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const buildApp = async (authGuard: any = MockAuthGuard) => {
+  const buildApp = async (authGuard: any = MockAuthGuard, rejectGuards = false) => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [SubscriptionModule],
+      controllers: [SubscriptionController],
+      providers: [
+        SubscriptionService,
+        { provide: PrismaService, useValue: mockPrismaService },
+        { provide: CacheService, useValue: { get: jest.fn().mockResolvedValue(null), set: jest.fn(), delete: jest.fn(), invalidate: jest.fn() } },
+        { provide: ConfigService, useValue: { get: jest.fn(), getOrThrow: jest.fn() } },
+        {
+          provide: APP_GUARD,
+          useClass: rejectGuards ? MockServiceAuthGuardReject : MockServiceAuthGuard,
+        },
+      ],
     })
-      .overrideProvider(PrismaService)
-      .useValue(mockPrismaService)
       .overrideGuard(AuthGuard('jwt'))
       .useClass(authGuard)
       .overrideGuard(RateLimitGuard)
-      .useClass(MockRateLimitGuard)
+      .useClass(rejectGuards ? MockRateLimitGuardReject : MockRateLimitGuard)
       .overrideGuard(AdminGuard)
-      .useClass(MockAdminGuard)
+      .useClass(rejectGuards ? MockAdminGuardReject : MockAdminGuard)
+      .overrideGuard(ServiceAuthGuard)
+      .useClass(rejectGuards ? MockServiceAuthGuardReject : MockServiceAuthGuard)
       .compile();
 
     const testApp = moduleFixture.createNestApplication();
+    testApp.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
     await testApp.init();
     return testApp;
   };
@@ -152,7 +229,7 @@ describe('Subscription Controller Contract Tests', () => {
 
   describe('POST /v1/subscription/plans', () => {
     it('should return 401 without authentication', async () => {
-      const testApp = await buildApp(MockAuthGuardReject);
+      const testApp = await buildApp(MockAuthGuardReject, true);
 
       const response = await request(testApp.getHttpServer())
         .post('/v1/subscription/plans')
@@ -172,7 +249,7 @@ describe('Subscription Controller Contract Tests', () => {
 
   describe('POST /v1/subscription/subscribe', () => {
     it('should return 401 without authentication', async () => {
-      const testApp = await buildApp(MockAuthGuardReject);
+      const testApp = await buildApp(MockAuthGuardReject, true);
 
       const response = await request(testApp.getHttpServer())
         .post('/v1/subscription/subscribe')
@@ -185,7 +262,7 @@ describe('Subscription Controller Contract Tests', () => {
 
   describe('GET /v1/subscription/current', () => {
     it('should return 401 without authentication', async () => {
-      const testApp = await buildApp(MockAuthGuardReject);
+      const testApp = await buildApp(MockAuthGuardReject, true);
 
       const response = await request(testApp.getHttpServer()).get('/v1/subscription/current');
 
@@ -196,7 +273,7 @@ describe('Subscription Controller Contract Tests', () => {
 
   describe('GET /v1/subscription/history', () => {
     it('should return 401 without authentication', async () => {
-      const testApp = await buildApp(MockAuthGuardReject);
+      const testApp = await buildApp(MockAuthGuardReject, true);
 
       const response = await request(testApp.getHttpServer()).get('/v1/subscription/history');
 
@@ -207,7 +284,7 @@ describe('Subscription Controller Contract Tests', () => {
 
   describe('DELETE /v1/subscription/:id', () => {
     it('should return 401 without authentication', async () => {
-      const testApp = await buildApp(MockAuthGuardReject);
+      const testApp = await buildApp(MockAuthGuardReject, true);
 
       const response = await request(testApp.getHttpServer()).delete('/v1/subscription/sub-1');
 
@@ -229,6 +306,7 @@ describe('Subscription Controller Contract Tests', () => {
       expect(mockPrismaService.subscriptionPlan.findMany).toHaveBeenCalledWith({
         where: { isActive: true },
         orderBy: { price: 'asc' },
+        take: 50,
       });
     });
   });

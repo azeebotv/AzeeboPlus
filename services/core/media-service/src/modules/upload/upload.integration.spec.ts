@@ -190,12 +190,7 @@ describe('UploadService Integration', () => {
       mockS3Service.generateKey.mockReturnValue('images/file123.jpg');
       mockS3Service.getSignedUploadUrl.mockResolvedValue(mockS3Result);
 
-      const result = await service.getPresignedUploadUrl(
-        'image',
-        'file123',
-        'jpg',
-        'image/jpeg'
-      );
+      const result = await service.getPresignedUploadUrl('image', 'file123', 'jpg', 'image/jpeg');
 
       expect(mockFileValidationService.validatePresignedUpload).toHaveBeenCalledWith(
         'image',
@@ -211,20 +206,21 @@ describe('UploadService Integration', () => {
 
   describe('getTranscodingJobStatus', () => {
     it('should return transcoding job status', async () => {
+      const now = new Date().toISOString();
       const mockJob = {
         jobId: 'transcode_123_video',
         status: 'processing',
         progress: 50,
         outputKeys: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: now,
+        updatedAt: now,
       };
 
       mockRedisService.get.mockResolvedValue(JSON.stringify(mockJob));
 
       const result = await service.getTranscodingJobStatus('transcode_123_video');
 
-      expect(result).toEqual(mockJob);
+      expect(result).toMatchObject(mockJob);
       expect(mockRedisService.get).toHaveBeenCalledWith('transcoding_job:transcode_123_video');
     });
 

@@ -6,10 +6,7 @@ import { ChallengeService } from './challenge.service';
 import { DatabaseModule } from '../database/database.module';
 
 @Module({
-  imports: [
-    DatabaseModule,
-    JwtConfigModule,
-  ],
+  imports: [DatabaseModule, JwtConfigModule],
   controllers: [ChallengeController],
   providers: [ChallengeService],
   exports: [ChallengeService],

@@ -20,7 +20,10 @@ export class TicketService {
     @Inject(CacheService) private readonly cache: CacheService,
     @Inject(ConfigService) private readonly configService: ConfigService
   ) {
-    this.analyticsServiceBaseUrl = this.configService.get<string>('ANALYTICS_SERVICE_URL', 'http://analytics-service:3040');
+    this.analyticsServiceBaseUrl = this.configService.get<string>(
+      'ANALYTICS_SERVICE_URL',
+      'http://analytics-service:3040'
+    );
   }
 
   async createTicket(data: {
@@ -48,7 +51,10 @@ export class TicketService {
 
       await this.cache.invalidate('support:tickets:list:*');
 
-      this.trackAnalyticsEvent('support_ticket_created', data.userId, { ticketId: result.id, category: data.category });
+      this.trackAnalyticsEvent('support_ticket_created', data.userId, {
+        ticketId: result.id,
+        category: data.category,
+      });
       return result;
     } catch (error) {
       this.logger.error(`createTicket failed: ${(error as Error).message}`, (error as Error).stack);
@@ -56,10 +62,20 @@ export class TicketService {
     }
   }
 
-  private async trackAnalyticsEvent(eventName: string, userId: string, metadata: Record<string, unknown> = {}): Promise<void> {
+  private async trackAnalyticsEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown> = {}
+  ): Promise<void> {
     try {
-      await axios.post(`${this.analyticsServiceBaseUrl}/analytics/track`, { eventName, userId, metadata, timestamp: new Date().toISOString() }, { timeout: 10000 });
-    } catch (error) { this.logger.warn(`Failed to track analytics event: ${eventName}`); }
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/analytics/track`,
+        { eventName, userId, metadata, timestamp: new Date().toISOString() },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to track analytics event: ${eventName}`);
+    }
   }
 
   async getTicketById(id: string) {

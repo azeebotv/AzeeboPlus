@@ -443,9 +443,7 @@ describe('SportsService Integration - Cross-Service Communication', () => {
 
       mockedAxios.get.mockRejectedValue(new Error('Wallet service unavailable'));
 
-      await expect(service.enterContest('user-1', 'contest-1')).rejects.toThrow(
-        NotFoundException
-      );
+      await expect(service.enterContest('user-1', 'contest-1')).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException when insufficient balance', async () => {

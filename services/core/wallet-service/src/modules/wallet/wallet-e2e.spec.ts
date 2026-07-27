@@ -11,6 +11,7 @@ import { WalletController } from './wallet.controller.js';
 import { WalletService } from './wallet.service.js';
 import { RateLimitGuard, RateLimitService, AdminGuard } from '@azeebo/security';
 import { CacheInterceptor, CacheService } from '../../cache/index.js';
+import { EVENT_BUS_SERVICE } from '@azeebo/event-bus';
 import { randomUUID } from 'crypto';
 
 class MockRateLimitGuard {
@@ -104,6 +105,10 @@ describe('Wallet E2E Tests - Webhooks, Retries, and Failures', () => {
         { provide: RateLimitService, useValue: {
           checkRateLimit: jest.fn().mockResolvedValue(true),
           incrementUsage: jest.fn().mockResolvedValue(0),
+        }},
+        { provide: EVENT_BUS_SERVICE, useValue: {
+          publish: jest.fn().mockResolvedValue(undefined),
+          subscribe: jest.fn().mockResolvedValue(undefined),
         }},
       ],
     })

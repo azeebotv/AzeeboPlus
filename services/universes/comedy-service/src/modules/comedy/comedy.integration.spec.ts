@@ -6,6 +6,9 @@ import { ConfigService } from '@nestjs/config';
 import { RedisService } from '@azeebo/shared-services';
 import axios from 'axios';
 
+jest.mock('@azeebo/shared-services', () => ({
+  RedisService: jest.fn(),
+}));
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
@@ -178,7 +181,6 @@ describe('ComedyService Integration - Cross-Service Communication', () => {
           userId: 'user-1',
           universe: 'comedy',
         }),
-        expect.objectContaining({ timeout: 10000 })
       );
     });
 

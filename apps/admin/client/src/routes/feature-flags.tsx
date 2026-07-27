@@ -245,7 +245,7 @@ export default function FeatureFlagsPage() {
                     {flag.universeDisplayName || flag.universe}
                   </span>
                 </div>
-                {flag.metadata?.description && (
+                {flag.metadata?.description != null && (
                   <p style={{ color: '#9A8A7A', fontSize: 12, marginTop: 4 }}>
                     {String(flag.metadata.description)}
                   </p>

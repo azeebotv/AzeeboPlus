@@ -6,10 +6,7 @@ import { GamesService } from './games.service.js';
 import { DatabaseModule } from '../database/database.module.js';
 
 @Module({
-  imports: [
-    DatabaseModule,
-    JwtConfigModule,
-  ],
+  imports: [DatabaseModule, JwtConfigModule],
   controllers: [GamesController],
   providers: [GamesService],
   exports: [GamesService, DatabaseModule],

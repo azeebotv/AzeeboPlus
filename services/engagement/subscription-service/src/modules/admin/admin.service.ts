@@ -16,15 +16,21 @@ export class AdminService {
     cancelledSubscriptions: number;
     expiredSubscriptions: number;
   }> {
-    const [totalPlans, activePlans, totalSubscriptions, activeSubscriptions, cancelledSubscriptions, expiredSubscriptions] =
-      await Promise.all([
-        this.prisma.subscriptionPlan.count(),
-        this.prisma.subscriptionPlan.count({ where: { isActive: true } }),
-        this.prisma.subscription.count(),
-        this.prisma.subscription.count({ where: { status: 'active' } }),
-        this.prisma.subscription.count({ where: { status: 'cancelled' } }),
-        this.prisma.subscription.count({ where: { status: 'expired' } }),
-      ]);
+    const [
+      totalPlans,
+      activePlans,
+      totalSubscriptions,
+      activeSubscriptions,
+      cancelledSubscriptions,
+      expiredSubscriptions,
+    ] = await Promise.all([
+      this.prisma.subscriptionPlan.count(),
+      this.prisma.subscriptionPlan.count({ where: { isActive: true } }),
+      this.prisma.subscription.count(),
+      this.prisma.subscription.count({ where: { status: 'active' } }),
+      this.prisma.subscription.count({ where: { status: 'cancelled' } }),
+      this.prisma.subscription.count({ where: { status: 'expired' } }),
+    ]);
 
     return {
       totalPlans,
@@ -44,7 +50,12 @@ export class AdminService {
 
   async updatePlan(
     id: string,
-    data: Partial<Pick<SubscriptionPlan, 'name' | 'description' | 'currency' | 'duration' | 'features' | 'tier' | 'isActive'>> & { price?: string | number }
+    data: Partial<
+      Pick<
+        SubscriptionPlan,
+        'name' | 'description' | 'currency' | 'duration' | 'features' | 'tier' | 'isActive'
+      >
+    > & { price?: string | number }
   ): Promise<SubscriptionPlan> {
     const existing = await this.prisma.subscriptionPlan.findUnique({ where: { id } });
     if (!existing) {

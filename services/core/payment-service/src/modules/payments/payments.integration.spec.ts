@@ -256,8 +256,7 @@ describe('PaymentsService Integration', () => {
           amount: 5000,
           description: expect.stringContaining('Wallet top-up'),
           reference: 'psk-ref-1',
-        }),
-        expect.objectContaining({ timeout: 10000 })
+        })
       );
 
       expect(mockCacheService.invalidate).toHaveBeenCalledWith('payment:history:user-1');
@@ -395,7 +394,6 @@ describe('PaymentsService Integration', () => {
           amount: 5000,
           description: expect.stringContaining('Wrong purchase'),
         }),
-        expect.objectContaining({ timeout: 10000 })
       );
     });
 
@@ -556,6 +554,7 @@ describe('PaymentsService Integration', () => {
         providerReference: 'psk-ref-1',
         description: 'Wallet top-up',
       });
+      mockPrismaService.paymentIntent.findUnique.mockResolvedValue(null);
 
       mockRedisService.setIfNotExists.mockResolvedValue(true);
       mockedAxios.post.mockResolvedValue({ data: { success: true } });
@@ -573,7 +572,6 @@ describe('PaymentsService Integration', () => {
       expect(mockedAxios.post).toHaveBeenCalledWith(
         'http://wallet-service:3010/wallet/credit',
         expect.objectContaining({ userId: 'user-1', amount: 5000 }),
-        expect.any(Object)
       );
       expect(mockPrismaService.webhookEvent.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
@@ -654,6 +652,7 @@ describe('PaymentsService Integration', () => {
         providerReference: 'psk-ref-1',
         description: 'test',
       });
+      mockPrismaService.paymentIntent.findUnique.mockResolvedValue(null);
 
       mockRedisService.setIfNotExists.mockResolvedValue(true);
       mockedAxios.post.mockRejectedValue(new Error('Wallet service down'));

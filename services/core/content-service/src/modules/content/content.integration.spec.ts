@@ -265,7 +265,12 @@ describe('ContentService Integration', () => {
         universe: { id: 'universe-1', name: 'Comedy' },
       });
 
-      const result = await service.updateContent('admin-1', 'content-1', { title: 'Admin Updated' }, 'admin');
+      const result = await service.updateContent(
+        'admin-1',
+        'content-1',
+        { title: 'Admin Updated' },
+        'admin'
+      );
 
       expect(result.success).toBe(true);
     });
@@ -294,9 +299,9 @@ describe('ContentService Integration', () => {
     it('should throw NotFoundException when content does not exist', async () => {
       mockContentRepository.findById.mockResolvedValue(null);
 
-      await expect(
-        service.deleteContent('creator-1', 'content-nonexistent')
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.deleteContent('creator-1', 'content-nonexistent')).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw ForbiddenException when user is not the creator', async () => {
@@ -305,9 +310,9 @@ describe('ContentService Integration', () => {
         creatorId: 'creator-other',
       });
 
-      await expect(
-        service.deleteContent('creator-1', 'content-1')
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.deleteContent('creator-1', 'content-1')).rejects.toThrow(
+        ForbiddenException
+      );
     });
 
     it('should allow moderator to delete any content', async () => {
@@ -486,7 +491,11 @@ describe('ContentService Integration', () => {
 
       expect(result.success).toBe(true);
       expect(result.data.id).toBe('content-1');
-      expect(mockCacheService.set).toHaveBeenCalledWith(cacheKey('content', 'content-1'), content, 120);
+      expect(mockCacheService.set).toHaveBeenCalledWith(
+        cacheKey('content', 'content-1'),
+        content,
+        120
+      );
       expect(mockPrismaService.contentItem.update).toHaveBeenCalledWith({
         where: { id: 'content-1' },
         data: { viewCount: { increment: 1 } },
@@ -497,9 +506,7 @@ describe('ContentService Integration', () => {
       mockCacheService.get.mockResolvedValue(null);
       mockContentRepository.findById.mockResolvedValue(null);
 
-      await expect(service.getContent('content-nonexistent')).rejects.toThrow(
-        NotFoundException
-      );
+      await expect(service.getContent('content-nonexistent')).rejects.toThrow(NotFoundException);
     });
   });
 });

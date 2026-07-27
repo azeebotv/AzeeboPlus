@@ -3,7 +3,12 @@ import { NotFoundException, ConflictException } from '@nestjs/common';
 import { RealityService } from './reality.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
-import { RedisService } from '@azeebo/shared-services';
+import { CacheService } from '@azeebo/shared-services';
+
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: jest.fn(),
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+}));
 
 describe('RealityService', () => {
   let service: RealityService;
@@ -54,11 +59,12 @@ describe('RealityService', () => {
           },
         },
         {
-          provide: RedisService,
+          provide: CacheService,
           useValue: {
             get: jest.fn().mockResolvedValue(null),
             set: jest.fn().mockResolvedValue('OK'),
             del: jest.fn().mockResolvedValue(1),
+            invalidate: jest.fn().mockResolvedValue(1),
           },
         },
       ],

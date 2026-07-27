@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { MessagingService } from './messaging.service.js';
 import { PrismaService } from '../database/prisma.service.js';
+import { ConfigService } from '@nestjs/config';
 
 describe('MessagingService Integration', () => {
   let service: MessagingService;
@@ -32,6 +33,16 @@ describe('MessagingService Integration', () => {
       providers: [
         MessagingService,
         { provide: PrismaService, useValue: mockPrismaService },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockImplementation((key: string, defaultValue?: unknown) => {
+              if (key === 'ANALYTICS_SERVICE_URL') return 'http://analytics-service:3040';
+              if (key === 'USER_SERVICE_URL') return 'http://user-service:3001';
+              return defaultValue;
+            }),
+          },
+        },
       ],
     }).compile();
 
@@ -76,7 +87,12 @@ describe('MessagingService Integration', () => {
       const result = await service.getConversations('user-1');
 
       expect(result.success).toBe(true);
-      const data = (result as { success: boolean; data: Array<{ lastMessage: string; unreadCount: number; name: string }> }).data;
+      const data = (
+        result as {
+          success: boolean;
+          data: Array<{ lastMessage: string; unreadCount: number; name: string }>;
+        }
+      ).data;
       expect(data).toHaveLength(2);
       expect(data[0].lastMessage).toBe('Hello there!');
       expect(data[0].unreadCount).toBe(3);
@@ -221,7 +237,12 @@ describe('MessagingService Integration', () => {
       const result = await service.sendMessage('user-1', 'conv-1', { content: 'Hello!' });
 
       expect(result.success).toBe(true);
-      const data = (result as { success: boolean; data: { id: string; content: string; type: string; senderId: string } }).data;
+      const data = (
+        result as {
+          success: boolean;
+          data: { id: string; content: string; type: string; senderId: string };
+        }
+      ).data;
       expect(data.id).toBe('msg-1');
       expect(data.content).toBe('Hello!');
       expect(data.type).toBe('text');
@@ -249,7 +270,7 @@ describe('MessagingService Integration', () => {
       });
 
       expect(result.success).toBe(true);
-      expect((result as { success: boolean; data: { type: string } }).data.type).toBe('image');
+      expect((result as { success: boolean; data: { type: string } }).data.type).toBe('media');
     });
 
     it('should default to text type when not specified', async () => {
@@ -332,9 +353,9 @@ describe('MessagingService Integration', () => {
     it('should throw NotFoundException when participant not found', async () => {
       mockPrismaService.conversationParticipant.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.markAsRead('user-unknown', 'conv-1', 'msg-1')
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.markAsRead('user-unknown', 'conv-1', 'msg-1')).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw NotFoundException when message not found', async () => {
@@ -344,9 +365,9 @@ describe('MessagingService Integration', () => {
       });
       mockPrismaService.message.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.markAsRead('user-2', 'conv-1', 'nonexistent')
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.markAsRead('user-2', 'conv-1', 'nonexistent')).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should update participant lastReadAt', async () => {
@@ -400,7 +421,9 @@ describe('MessagingService Integration', () => {
       const result = await service.getMessages('user-1', 'conv-1');
 
       expect(result.success).toBe(true);
-      const data = (result as { success: boolean; data: Array<{ content: string; isRead: boolean }> }).data;
+      const data = (
+        result as { success: boolean; data: Array<{ content: string; isRead: boolean }> }
+      ).data;
       expect(data).toHaveLength(2);
       expect(data[0].content).toBe('Hello!');
       expect(data[0].isRead).toBe(true);
@@ -423,9 +446,7 @@ describe('MessagingService Integration', () => {
     it('should throw NotFoundException when conversation not found', async () => {
       mockPrismaService.conversation.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.getMessages('user-1', 'nonexistent')
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.getMessages('user-1', 'nonexistent')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -451,9 +472,9 @@ describe('MessagingService Integration', () => {
     it('should throw NotFoundException when conversation not found', async () => {
       mockPrismaService.conversation.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.deleteConversation('user-1', 'nonexistent')
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.deleteConversation('user-1', 'nonexistent')).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 });

@@ -1,13 +1,4 @@
-import {
-  Inject,
-  Controller,
-  Get,
-  Post,
-  Delete,
-  Param,
-  Body,
-  Request,
-} from '@nestjs/common';
+import { Inject, Controller, Get, Post, Delete, Param, Body, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UsersService } from './users.service.js';
 import { ContentIdDto } from './dto/content-id.dto.js';

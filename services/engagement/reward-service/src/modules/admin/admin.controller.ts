@@ -103,7 +103,16 @@ export class AdminController {
 
   @Post('badges')
   @RateLimit(50, 60000)
-  async createBadge(@Body() body: { name: string; description?: string; icon: string; criteria?: string; points: number }) {
+  async createBadge(
+    @Body()
+    body: {
+      name: string;
+      description?: string;
+      icon: string;
+      criteria?: string;
+      points: number;
+    }
+  ) {
     return this.adminService.createBadge(body);
   }
 
@@ -122,13 +131,27 @@ export class AdminController {
 
   @Post('levels')
   @RateLimit(50, 60000)
-  async createLevel(@Body() body: { name: string; rank: number; minPoints: number; maxPoints?: number; icon?: string; color?: string; perks?: string }) {
+  async createLevel(
+    @Body()
+    body: {
+      name: string;
+      rank: number;
+      minPoints: number;
+      maxPoints?: number;
+      icon?: string;
+      color?: string;
+      perks?: string;
+    }
+  ) {
     return this.adminService.createLevel(body);
   }
 
   @Put('levels/:id')
   @RateLimit(50, 60000)
-  async updateLevel(@Param('id') id: string, @Body() body: { name?: string; minPoints?: number; maxPoints?: number; perks?: string }) {
+  async updateLevel(
+    @Param('id') id: string,
+    @Body() body: { name?: string; minPoints?: number; maxPoints?: number; perks?: string }
+  ) {
     return this.adminService.updateLevel(id, body);
   }
 }

@@ -34,7 +34,11 @@ export class SentryService {
     });
   }
 
-  captureMessage(message: string, level: Sentry.SeverityLevel = 'info', context?: Record<string, unknown>): string | undefined {
+  captureMessage(
+    message: string,
+    level: Sentry.SeverityLevel = 'info',
+    context?: Record<string, unknown>
+  ): string | undefined {
     if (!this.initialized) return undefined;
     return Sentry.withScope((scope: SentryScope) => {
       scope.setLevel(level);

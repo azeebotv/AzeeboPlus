@@ -1,14 +1,4 @@
-import {
-  Inject,
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Delete,
-  Body,
-  Param,
-  Query,
-} from '@nestjs/common';
+import { Inject, Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { NightlifeService } from './nightlife.service';
 import { UpdateNightlifeDto } from './dto/update-nightlife.dto';

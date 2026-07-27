@@ -30,14 +30,11 @@ export class HealthCheckService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly redis: RedisService,
+    private readonly redis: RedisService
   ) {}
 
   async check(): Promise<HealthCheckResult> {
-    const [database, redis] = await Promise.all([
-      this.checkDatabase(),
-      this.checkRedis(),
-    ]);
+    const [database, redis] = await Promise.all([this.checkDatabase(), this.checkRedis()]);
 
     const memory = process.memoryUsage();
     const uptime = (Date.now() - this.startTime) / 1000;
@@ -61,10 +58,11 @@ export class HealthCheckService {
   private async checkDatabase(): Promise<ServiceHealth> {
     const start = Date.now();
     try {
-      await this.prisma._client.$queryRaw`SELECT 1`;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (this.prisma._client as any).$queryRaw`SELECT 1`;
       return { status: 'up', latencyMs: Date.now() - start };
     } catch (error) {
-      this.logger.error('Database health check failed', error);
+      this.logger.error('Database health check failed', error as Error);
       return {
         status: 'down',
         latencyMs: Date.now() - start,
@@ -80,7 +78,7 @@ export class HealthCheckService {
       await client.ping();
       return { status: 'up', latencyMs: Date.now() - start };
     } catch (error) {
-      this.logger.error('Redis health check failed', error);
+      this.logger.error('Redis health check failed', error as Error);
       return {
         status: 'down',
         latencyMs: Date.now() - start,

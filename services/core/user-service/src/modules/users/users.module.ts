@@ -8,11 +8,7 @@ import { DatabaseModule } from '../database/database.module.js';
 import { UserDeletionController } from '../user/user-deletion.controller.js';
 
 @Module({
-  imports: [
-    DatabaseModule,
-    CacheModule,
-    JwtConfigModule,
-  ],
+  imports: [DatabaseModule, CacheModule, JwtConfigModule],
   controllers: [UsersController, InteractionsController, UserDeletionController],
   providers: [UsersService],
   exports: [UsersService, DatabaseModule],
