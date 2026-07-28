@@ -66,7 +66,10 @@ describe('Auth Controller Contract Tests', () => {
         { provide: AuthRepository, useValue: mockAuthRepository },
         { provide: RedisService, useValue: mockRedisService },
         { provide: CacheService, useValue: { get: jest.fn(), set: jest.fn(), delete: jest.fn() } },
-        { provide: OtpService, useValue: { generateOtp: jest.fn(), verifyOtp: jest.fn(), sendOtpToUser: jest.fn() } },
+        {
+          provide: OtpService,
+          useValue: { generateOtp: jest.fn(), verifyOtp: jest.fn(), sendOtpToUser: jest.fn() },
+        },
         JwtService,
         {
           provide: ConfigService,
@@ -103,12 +106,22 @@ describe('Auth Controller Contract Tests', () => {
 
     app = moduleFixture.createNestApplication();
     // Mock ServiceAuthGuard behavior: set req.user only when Authorization header present
-    app.use((req: { headers: { authorization?: string }; user?: unknown }, _res: unknown, next: () => void) => {
-      if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ') && !req.user) {
-        req.user = { id: 'user-123', sub: 'user-123', email: 'test@example.com', role: 'user' };
+    app.use(
+      (
+        req: { headers: { authorization?: string }; user?: unknown },
+        _res: unknown,
+        next: () => void
+      ) => {
+        if (
+          req.headers.authorization &&
+          req.headers.authorization.startsWith('Bearer ') &&
+          !req.user
+        ) {
+          req.user = { id: 'user-123', sub: 'user-123', email: 'test@example.com', role: 'user' };
+        }
+        next();
       }
-      next();
-    });
+    );
     await app.init();
   });
 

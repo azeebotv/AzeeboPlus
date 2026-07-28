@@ -10,58 +10,59 @@ import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { CacheService } from '@azeebo/shared-services';
 
-// Test file for RewardsService
+interface TxMocks {
+  $queryRaw: jest.Mock;
+  rewardAccount: { update: jest.Mock };
+  rewardRedemption: { create: jest.Mock };
+}
+
+const mockPrismaService = {
+  reward: {
+    findUnique: jest.fn(),
+    findMany: jest.fn(),
+    create: jest.fn(),
+  },
+  rewardAccount: {
+    findUnique: jest.fn(),
+    upsert: jest.fn(),
+    update: jest.fn(),
+    create: jest.fn(),
+  },
+  rewardRedemption: {
+    create: jest.fn(),
+    findMany: jest.fn(),
+  },
+  mission: { findMany: jest.fn() },
+  missionCompletion: { findMany: jest.fn() },
+  badge: { findMany: jest.fn() },
+  level: { findFirst: jest.fn() },
+  pointsLedger: {
+    create: jest.fn(),
+    findMany: jest.fn(),
+    count: jest.fn(),
+  },
+  activityPointConfig: undefined as Record<string, unknown> | undefined,
+  $txMocks: undefined as TxMocks | undefined,
+  $transaction: jest.fn((arg: unknown) => {
+    if (typeof arg === 'function') {
+      const txMocks: TxMocks = {
+        $queryRaw: jest.fn(),
+        rewardAccount: {
+          update: mockPrismaService.rewardAccount.update,
+        },
+        rewardRedemption: {
+          create: mockPrismaService.rewardRedemption.create,
+        },
+      };
+      mockPrismaService.$txMocks = txMocks;
+      return arg(txMocks);
+    }
+    return Promise.all(arg as Promise<unknown>[]);
+  }),
+};
 
 describe('RewardsService', () => {
   let service: RewardsService;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mockPrismaService: any = {
-    rewardAccount: {
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-    },
-    mission: {
-      findMany: jest.fn(),
-    },
-    missionCompletion: {
-      findMany: jest.fn(),
-    },
-    badge: {
-      findMany: jest.fn(),
-    },
-    reward: {
-      findUnique: jest.fn(),
-    },
-    rewardRedemption: {
-      create: jest.fn(),
-    },
-    level: {
-      findFirst: jest.fn(),
-    },
-    pointsLedger: {
-      create: jest.fn(),
-      findMany: jest.fn(),
-      count: jest.fn(),
-    },
-    $transaction: jest.fn((arg: unknown) => {
-      if (typeof arg === 'function') {
-        const txMocks = {
-          $queryRaw: jest.fn(),
-          rewardAccount: {
-            update: mockPrismaService.rewardAccount.update,
-          },
-          rewardRedemption: {
-            create: mockPrismaService.rewardRedemption.create,
-          },
-        };
-        (mockPrismaService as any).$txMocks = txMocks;
-        return arg(txMocks);
-      }
-      return Promise.all(arg as Promise<unknown>[]);
-    }),
-  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -242,9 +243,13 @@ describe('RewardsService', () => {
       });
       mockPrismaService.rewardAccount.update.mockResolvedValue({ points: 400 });
       mockPrismaService.rewardRedemption.create.mockResolvedValue({ id: 'rr-1' });
-      (mockPrismaService as any).$txMocks = { $queryRaw: jest.fn().mockResolvedValue([{ points: 500 }]), rewardAccount: { update: mockPrismaService.rewardAccount.update }, rewardRedemption: { create: mockPrismaService.rewardRedemption.create } };
+      mockPrismaService.$txMocks = {
+        $queryRaw: jest.fn().mockResolvedValue([{ points: 500 }]),
+        rewardAccount: { update: mockPrismaService.rewardAccount.update },
+        rewardRedemption: { create: mockPrismaService.rewardRedemption.create },
+      };
       mockPrismaService.$transaction.mockImplementation((arg: unknown) => {
-        if (typeof arg === 'function') return arg((mockPrismaService as any).$txMocks);
+        if (typeof arg === 'function') return arg(mockPrismaService.$txMocks);
         return Promise.all(arg as Promise<unknown>[]);
       });
 
@@ -257,9 +262,13 @@ describe('RewardsService', () => {
 
     it('should return error if no reward account', async () => {
       mockPrismaService.reward.findUnique.mockResolvedValue({ id: 'reward-1', cost: 100 });
-      (mockPrismaService as any).$txMocks = { $queryRaw: jest.fn().mockResolvedValue([]), rewardAccount: { update: mockPrismaService.rewardAccount.update }, rewardRedemption: { create: mockPrismaService.rewardRedemption.create } };
+      mockPrismaService.$txMocks = {
+        $queryRaw: jest.fn().mockResolvedValue([]),
+        rewardAccount: { update: mockPrismaService.rewardAccount.update },
+        rewardRedemption: { create: mockPrismaService.rewardRedemption.create },
+      };
       mockPrismaService.$transaction.mockImplementation((arg: unknown) => {
-        if (typeof arg === 'function') return arg((mockPrismaService as any).$txMocks);
+        if (typeof arg === 'function') return arg(mockPrismaService.$txMocks);
         return Promise.all(arg as Promise<unknown>[]);
       });
 
@@ -276,9 +285,13 @@ describe('RewardsService', () => {
 
     it('should return error if insufficient points', async () => {
       mockPrismaService.reward.findUnique.mockResolvedValue({ id: 'reward-1', cost: 100 });
-      (mockPrismaService as any).$txMocks = { $queryRaw: jest.fn().mockResolvedValue([{ points: 50 }]), rewardAccount: { update: mockPrismaService.rewardAccount.update }, rewardRedemption: { create: mockPrismaService.rewardRedemption.create } };
+      mockPrismaService.$txMocks = {
+        $queryRaw: jest.fn().mockResolvedValue([{ points: 50 }]),
+        rewardAccount: { update: mockPrismaService.rewardAccount.update },
+        rewardRedemption: { create: mockPrismaService.rewardRedemption.create },
+      };
       mockPrismaService.$transaction.mockImplementation((arg: unknown) => {
-        if (typeof arg === 'function') return arg((mockPrismaService as any).$txMocks);
+        if (typeof arg === 'function') return arg(mockPrismaService.$txMocks);
         return Promise.all(arg as Promise<unknown>[]);
       });
 
@@ -436,7 +449,7 @@ describe('RewardsService', () => {
       });
       mockPrismaService.rewardAccount.update.mockResolvedValue({ points: 125 });
       mockPrismaService.pointsLedger.create.mockResolvedValue({});
-      (mockPrismaService as any).activityPointConfig = {
+      mockPrismaService.activityPointConfig = {
         findUnique: jest.fn().mockResolvedValue({ activity: 'custom', points: 25 }),
       };
 

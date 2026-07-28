@@ -38,7 +38,12 @@ jest.mock('class-transformer', () => ({
 }));
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ExecutionContext, UnauthorizedException, VersioningType } from '@nestjs/common';
+import {
+  INestApplication,
+  ExecutionContext,
+  UnauthorizedException,
+  VersioningType,
+} from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
 import { SubscriptionController } from './subscription.controller.js';
@@ -144,7 +149,15 @@ describe('Subscription Controller Contract Tests', () => {
       providers: [
         SubscriptionService,
         { provide: PrismaService, useValue: mockPrismaService },
-        { provide: CacheService, useValue: { get: jest.fn().mockResolvedValue(null), set: jest.fn(), delete: jest.fn(), invalidate: jest.fn() } },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn(),
+            delete: jest.fn(),
+            invalidate: jest.fn(),
+          },
+        },
         { provide: ConfigService, useValue: { get: jest.fn(), getOrThrow: jest.fn() } },
         {
           provide: APP_GUARD,

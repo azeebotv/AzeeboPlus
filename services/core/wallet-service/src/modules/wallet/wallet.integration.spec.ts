@@ -94,9 +94,7 @@ describe('WalletService Integration', () => {
                     .fn()
                     .mockResolvedValue({ ...mockWallet, bonusBalance: new Prisma.Decimal(200) }),
                 },
-                $queryRaw: jest
-                  .fn()
-                  .mockResolvedValue([{ id: 'wallet-123', balance: 500 }]),
+                $queryRaw: jest.fn().mockResolvedValue([{ id: 'wallet-123', balance: 500 }]),
               };
               return callback(mockTx);
             }),

@@ -21,7 +21,12 @@ describe('EngagementService', () => {
       prediction: { findMany: jest.fn(), count: jest.fn() },
       ranking: { findMany: jest.fn(), count: jest.fn() },
     };
-    cache = { get: jest.fn().mockResolvedValue(null), set: jest.fn(), delete: jest.fn(), invalidate: jest.fn() };
+    cache = {
+      get: jest.fn().mockResolvedValue(null),
+      set: jest.fn(),
+      delete: jest.fn(),
+      invalidate: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

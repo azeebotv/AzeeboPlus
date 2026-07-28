@@ -15,7 +15,7 @@ async function bootstrap(): Promise<void> {
   validateEnvironment(process.env);
 
   const app = await NestFactory.create(AppModule);
-  app.enableVersioning({ type: VersioningType.URI, prefix: "v", defaultVersion: "1" });
+  app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
 
   app.use(
     helmet({

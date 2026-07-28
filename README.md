@@ -7,9 +7,10 @@ A modular digital entertainment platform that functions as a shared operating sy
 ```
 azeebo-plus/
 ├── apps/                    # Client applications
-│   ├── web/                # Next.js web app (port 4000)
-│   ├── admin/              # NestJS admin panel (port 4016)
-│   └── creator/          # Standalone creator dashboard (port 4014)
+│   ├── mobile/              # Mobile app (Expo React Native, port 8081)
+│   ├── web/                 # Next.js web app (port 4000)
+│   ├── admin/              # Standalone admin dashboard (Vite+React + NestJS, port 4016)
+│   └── creator/           # Standalone creator dashboard (Vite+React + NestJS, port 4014)
 │
 ├── services/               # Backend microservices
 │   ├── core/              # Essential platform services
@@ -55,10 +56,10 @@ azeebo-plus/
 |---------|------|----|-------------|
 | notification-service | 3006 | azeebo_notification | Push, email, SMS notifications |
 | reward-service | 3007 | azeebo_reward | Rewards & gamification |
-| engagement-service | 3023 | azeebo_engagement | Engagement tracking |
-| messaging-service | 3024 | azeebo_messaging | In-app messaging |
 | referral-service | 3025 | azeebo_referral | Referral program |
 | subscription-service | 3026 | azeebo_subscription | Subscription management |
+| engagement-service | 3023 | azeebo_engagement | Engagement tracking |
+| messaging-service | 3024 | azeebo_messaging | In-app messaging |
 
 ### Intelligence Services (ports 3008, 3009)
 | Service | Port | DB | Description |

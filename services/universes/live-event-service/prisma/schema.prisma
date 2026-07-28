@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+  output   = "../src/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model LiveEvent {
+  id            String   @id @default(uuid())
+  title         String
+  description   String?
+  thumbnail     String
+  organizerId   String
+  scheduledAt   DateTime
+  duration      Int
+  status        String   @default("scheduled")
+  ticketPrice   Decimal  @db.Decimal(10, 2)
+  currency      String   @default("NGN")
+  maxViewers    Int?
+  currentViewers Int     @default(0)
+  streamUrl     String?
+  replayUrl     String?
+  chatEnabled   Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tickets LiveEventTicket[]
+
+  @@map("live_events")
+  @@index([status])
+  @@index([scheduledAt])
+  @@index([organizerId])
+}
+
+model LiveEventTicket {
+  id          String   @id @default(uuid())
+  eventId     String
+  userId      String
+  amount      Decimal  @db.Decimal(10, 2)
+  currency    String   @default("NGN")
+  status      String   @default("purchased")
+  purchasedAt DateTime @default(now())
+  usedAt      DateTime?
+  refundedAt  DateTime?
+
+  event LiveEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("live_event_tickets")
+  @@index([eventId])
+  @@index([userId])
+  @@index([status])
+}

@@ -56,23 +56,23 @@ export default function MoviesUniverseHome() {
       setFeaturedMovie(featured ?? null);
       setTrendingMovies(
         Array.isArray(trendingRes)
-          ? trendingRes
-          : ((trendingRes as unknown as { data?: unknown[] })?.data ?? [])
+          ? (trendingRes as MovieItem[])
+          : ((trendingRes as unknown as { data?: MovieItem[] })?.data ?? [])
       );
       setAfricanCinema(
         Array.isArray(africanRes)
-          ? africanRes
-          : ((africanRes as unknown as { data?: unknown[] })?.data ?? [])
+          ? (africanRes as MovieItem[])
+          : ((africanRes as unknown as { data?: MovieItem[] })?.data ?? [])
       );
       setHollywoodHits(
         Array.isArray(hollywoodRes)
-          ? hollywoodRes
-          : ((hollywoodRes as unknown as { data?: unknown[] })?.data ?? [])
+          ? (hollywoodRes as MovieItem[])
+          : ((hollywoodRes as unknown as { data?: MovieItem[] })?.data ?? [])
       );
       setPasses(
         Array.isArray(passesRes)
-          ? passesRes
-          : ((passesRes as unknown as { data?: unknown[] })?.data ?? [])
+          ? (passesRes as unknown as PassData[])
+          : ((passesRes as unknown as { data?: PassData[] })?.data ?? [])
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load');

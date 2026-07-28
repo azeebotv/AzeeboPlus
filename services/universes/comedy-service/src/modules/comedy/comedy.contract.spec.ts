@@ -246,9 +246,7 @@ describe('Comedy Controller Contract Tests', () => {
         success: true,
         data: [],
       });
-      return request(app.getHttpServer())
-        .get('/comedy/challenges')
-        .expect(200);
+      return request(app.getHttpServer()).get('/comedy/challenges').expect(200);
     });
   });
 });

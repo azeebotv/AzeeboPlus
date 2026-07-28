@@ -50,7 +50,9 @@ describe('Mobile Content API', () => {
 
     await contentApi.searchContent('nollywood', 1, 10);
 
-    expect(mockedClient.get).toHaveBeenCalledWith(expect.stringContaining('/api/v1/content/search?'));
+    expect(mockedClient.get).toHaveBeenCalledWith(
+      expect.stringContaining('/api/v1/content/search?')
+    );
     const callUrl = mockedClient.get.mock.calls[0][0] as string;
     expect(callUrl).toContain('q=nollywood');
     expect(callUrl).toContain('page=1');

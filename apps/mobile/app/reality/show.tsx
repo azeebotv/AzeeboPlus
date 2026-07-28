@@ -35,6 +35,7 @@ export default function RealityShowPage() {
   const [showVoting, setShowVoting] = useState(false);
   const [showData, setShowData] = useState<RealityShow | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const walletBalance = wallet?.balance || 0;
 
@@ -80,11 +81,38 @@ export default function RealityShowPage() {
     }
   };
 
-  const handleVote = () => {
-    if (!selectedContestant || !canAfford) return;
-    Alert.alert('Vote', `Voted ${totalVotes} times for ${selectedContestant.name}!`);
-    setSelectedContestant(null);
-    setShowVoting(false);
+  const handleVote = async () => {
+    if (!selectedContestant || !canAfford || !showData?.id) return;
+    setIsSubmitting(true);
+    try {
+      const response = await realityApi.submitVote({
+        showId: showData.id,
+        contestantId: selectedContestant.id,
+        votes: totalVotes,
+      });
+      if (response.success) {
+        Alert.alert(
+          'Vote Submitted!',
+          `You voted ${totalVotes} times for ${selectedContestant.name}!`,
+          [
+            {
+              text: 'Continue Voting',
+              onPress: () => {
+                setSelectedContestant(null);
+                setQuantity(1);
+              },
+            },
+            { text: 'Done', onPress: () => setShowVoting(false) },
+          ]
+        );
+      } else {
+        throw new Error(response.message || 'Vote submission failed');
+      }
+    } catch (err) {
+      Alert.alert('Vote Failed', err instanceof Error ? err.message : 'Failed to submit vote');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (isLoading) {
@@ -296,12 +324,12 @@ export default function RealityShowPage() {
             </View>
 
             <TouchableOpacity
-              style={[styles.voteNowButton, !canAfford && styles.disabledButton]}
+              style={[styles.voteNowButton, (!canAfford || isSubmitting) && styles.disabledButton]}
               onPress={handleVote}
-              disabled={!canAfford}
+              disabled={!canAfford || isSubmitting}
             >
               <Text style={styles.voteNowText}>
-                {canAfford ? 'Vote Now' : 'Insufficient Balance'}
+                {isSubmitting ? 'Submitting...' : canAfford ? 'Vote Now' : 'Insufficient Balance'}
               </Text>
             </TouchableOpacity>
           </View>

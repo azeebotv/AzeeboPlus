@@ -24,7 +24,7 @@ async function bootstrap(): Promise<void> {
   // rawBody: true captures the raw request buffer as req.rawBody (Buffer) for
   // webhook signature verification, while still parsing JSON into req.body.
   const app = await NestFactory.create(AppModule, { rawBody: true });
-  app.enableVersioning({ type: VersioningType.URI, prefix: "v", defaultVersion: "1" });
+  app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
 
   app.use(
     helmet({

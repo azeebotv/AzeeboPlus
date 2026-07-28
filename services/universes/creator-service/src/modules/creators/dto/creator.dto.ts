@@ -6,6 +6,7 @@ import {
   Min,
   IsOptional,
   IsBoolean,
+  MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -58,6 +59,12 @@ export class FundCreatorDto {
   @IsNumber()
   @Min(0.01)
   amount!: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  message?: string;
 }
 
 export class UpdateTierDto {

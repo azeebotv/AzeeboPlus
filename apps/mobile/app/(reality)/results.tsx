@@ -56,41 +56,33 @@ export default function ResultsScreen() {
     try {
       const response = await contentApi.getResults(contentId);
 
-      if (response.success && response.data) {
+      if (response.success && response.data && response.data.length > 0) {
         const data = response.data;
-        // Map VoteResult[] to EpisodeResult[]
-        setResults(
-          data.map((vote, index) => ({
-            id: vote.contestantId ?? `id-${index}`,
+        const contestants: ContestantResult[] = data.map((v) => ({
+          id: v.contestantId ?? `id-${v.rank ?? 0}`,
+          name: v.contestantName ?? `Contestant ${v.rank ?? 0}`,
+          avatar: '',
+          votes: v.totalVotes ?? 0,
+          percentage: v.percentage ?? 0,
+          rank: v.rank ?? 0,
+        }));
+
+        const topRanked = [...contestants].sort((a, b) => a.rank - b.rank);
+        const bottomRanked = [...contestants].sort((a, b) => b.rank - a.rank);
+
+        setResults([
+          {
+            id: contentId,
             episodeNumber: 1,
             seasonNumber: 1,
-            title: `Episode ${index + 1}`,
+            title: 'Current Episode',
             date: new Date().toISOString(),
-            contestants: data.map((v, i) => ({
-              id: v.contestantId ?? `id-${i}`,
-              name: v.contestantName ?? `Contestant ${i + 1}`,
-              avatar: '',
-              votes: v.totalVotes ?? 0,
-              percentage: v.percentage ?? 0,
-              rank: v.rank ?? i + 1,
-            })),
-            winner:
-              data.length > 0
-                ? {
-                    id: data[0].contestantId ?? 'id-0',
-                    name: data[0].contestantName ?? 'Winner',
-                    avatar: '',
-                    votes: data[0].totalVotes ?? 0,
-                    percentage: data[0].percentage ?? 0,
-                    rank: data[0].rank ?? 1,
-                    isWinner: true,
-                  }
-                : undefined,
-          }))
-        );
-        if (data.length > 0) {
-          setSelectedEpisode(data[0].contestantId ?? 'id-0');
-        }
+            contestants,
+            winner: topRanked.length > 0 ? { ...topRanked[0], isWinner: true } : undefined,
+            evicted: bottomRanked.length > 0 ? { ...bottomRanked[0], isEvicted: true } : undefined,
+          },
+        ]);
+        setSelectedEpisode(contentId);
       }
     } catch (error) {
       logger.error('Failed to load results', error);

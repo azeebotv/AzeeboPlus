@@ -187,6 +187,53 @@ export interface SubscriptionStats {
   activePlans: number;
 }
 
+export interface Storyworld {
+  id: string;
+  title: string;
+  description?: string;
+  imageUrl?: string;
+  isPublished: boolean;
+  characterCount: number;
+  pathCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AgbalaCharacter {
+  id: string;
+  name: string;
+  description?: string;
+  imageUrl?: string;
+  path: string;
+  backstory?: string;
+  storyworldId: string;
+  storyworldTitle?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AgbalaPath {
+  id: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  color?: string;
+  totalSteps: number;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AgbalaQuiz {
+  id: string;
+  title: string;
+  description?: string;
+  storyworldId?: string;
+  questionCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface SystemSetting {
   key: string;
   value: unknown;
@@ -195,4 +242,41 @@ export interface SystemSetting {
   isPublic: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface BundlePassAdmin {
+  id: string;
+  name: string;
+  description: string;
+  universeIds: string[];
+  price: number;
+  originalPrice: number;
+  discountPercent: number;
+  duration: number;
+  isActive: boolean;
+  tier: 'standard' | 'premium' | 'ultimate';
+  createdAt: string;
+  updatedAt: string;
+  _count?: { subscriptions: number };
+}
+
+export interface LiveEventAdmin {
+  id: string;
+  title: string;
+  description?: string;
+  thumbnail: string;
+  organizerId: string;
+  scheduledAt: string;
+  duration: number;
+  status: 'scheduled' | 'live' | 'ended' | 'cancelled';
+  ticketPrice: number;
+  currency: string;
+  maxViewers?: number;
+  currentViewers: number;
+  streamUrl?: string;
+  replayUrl?: string;
+  chatEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+  _count?: { tickets: number };
 }

@@ -629,7 +629,12 @@ export class CreatorsService {
     };
   }
 
-  async sendTip(userId: string, creatorId: string, amount: number): Promise<CreatorResponse> {
+  async sendTip(
+    userId: string,
+    creatorId: string,
+    amount: number,
+    message?: string
+  ): Promise<CreatorResponse> {
     if (amount <= 0) {
       throw new BadRequestException('Tip amount must be greater than 0');
     }
@@ -778,7 +783,9 @@ export class CreatorsService {
           data: {
             fromUserId: userId,
             toUserId: creatorId,
+            creatorId,
             amount,
+            message: message || null,
           },
         });
 
@@ -792,7 +799,21 @@ export class CreatorsService {
           },
         });
 
-        return { newTip: newTipRecord, earning: earningRecord };
+        const previousEntry = await tx.tipLeaderboard.findUnique({
+          where: { creatorId_userId: { creatorId, userId } },
+        });
+        const previousTotal = previousEntry ? Number(previousEntry.totalAmount) : 0;
+        const newTotal = previousTotal + Number(amount);
+        const newTier = this.calculateTipTier(newTotal);
+        const previousTier = previousEntry?.tier || '';
+
+        await tx.tipLeaderboard.upsert({
+          where: { creatorId_userId: { creatorId, userId } },
+          update: { totalAmount: { increment: amount }, tier: newTier, lastTipAt: new Date() },
+          create: { creatorId, userId, totalAmount: amount, tier: newTier, lastTipAt: new Date() },
+        });
+
+        return { newTip: newTipRecord, earning: earningRecord, newTier, previousTier, newTotal };
       });
 
       const newTip = transactionResult.newTip;
@@ -810,7 +831,19 @@ export class CreatorsService {
         tipId: newTip.id,
       });
 
+      if (
+        transactionResult.newTier &&
+        transactionResult.newTier !== transactionResult.previousTier
+      ) {
+        await this.trackAnalyticsEvent('tier_unlocked', userId, {
+          creatorId,
+          tier: transactionResult.newTier,
+          totalAmount: transactionResult.newTotal,
+        });
+      }
+
       await this.cache.invalidate(`creator:earnings:${creatorId}*`);
+      await this.cache.invalidate(`creator:leaderboard:${creatorId}*`);
 
       return {
         success: true,
@@ -818,6 +851,7 @@ export class CreatorsService {
           tipId: newTip.id,
           amount,
           balance: debitResult.data?.balance,
+          tier: transactionResult.newTier || null,
           message: 'Tip sent successfully',
         },
       };
@@ -825,6 +859,73 @@ export class CreatorsService {
       const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to send tip';
       throw new BadRequestException(errorMessage);
     }
+  }
+
+  private calculateTipTier(totalAmount: number): string {
+    if (totalAmount >= 100000) return 'platinum';
+    if (totalAmount >= 50000) return 'gold';
+    if (totalAmount >= 10000) return 'silver';
+    if (totalAmount >= 1000) return 'bronze';
+    return '';
+  }
+
+  async getTipLeaderboard(creatorId: string, period: string): Promise<CreatorResponse> {
+    const where: Record<string, unknown> = { creatorId };
+
+    if (period === 'weekly') {
+      where.lastTipAt = { gte: new Date(Date.now() - 7 * 86400000) };
+    } else if (period === 'monthly') {
+      where.lastTipAt = { gte: new Date(Date.now() - 30 * 86400000) };
+    }
+
+    const entries = await this.prisma.tipLeaderboard.findMany({
+      where,
+      orderBy: { totalAmount: 'desc' },
+      take: 50,
+    });
+
+    return { success: true, data: { entries, period } };
+  }
+
+  async getTipStats(creatorId: string): Promise<CreatorResponse> {
+    const [totalTips, totalAmount, topTier, recentTips] = await Promise.all([
+      this.prisma.tip.count({ where: { creatorId } }),
+      this.prisma.tip.aggregate({ where: { creatorId }, _sum: { amount: true } }),
+      this.prisma.tipLeaderboard.findFirst({
+        where: { creatorId },
+        orderBy: { totalAmount: 'desc' },
+      }),
+      this.prisma.tip.findMany({
+        where: { creatorId },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      }),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        totalTips,
+        totalAmount: totalAmount._sum.amount || 0,
+        topTier: topTier?.tier || null,
+        recentTips,
+      },
+    };
+  }
+
+  async getMyTips(userId: string): Promise<CreatorResponse> {
+    const tips = await this.prisma.tip.findMany({
+      where: { fromUserId: userId },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+
+    const totalAmount = tips.reduce((sum, t) => sum + Number(t.amount), 0);
+
+    return {
+      success: true,
+      data: { tips, totalAmount, count: tips.length },
+    };
   }
 
   async subscribe(

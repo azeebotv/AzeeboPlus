@@ -67,7 +67,10 @@ describe('NotificationsService', () => {
         { provide: FirebaseService, useValue: mockFirebaseService },
         { provide: EmailService, useValue: mockEmailService },
         { provide: SmsService, useValue: mockSmsService },
-        { provide: CacheService, useValue: { get: jest.fn(), set: jest.fn(), invalidate: jest.fn() } },
+        {
+          provide: CacheService,
+          useValue: { get: jest.fn(), set: jest.fn(), invalidate: jest.fn() },
+        },
         { provide: ConfigService, useValue: { get: jest.fn(), getOrThrow: jest.fn() } },
       ],
     }).compile();

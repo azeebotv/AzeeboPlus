@@ -17,6 +17,7 @@ import { EngagementAdminModule } from './modules/engagement-admin/engagement-adm
 import { NotificationAdminModule } from './modules/notification-admin/notification-admin.module';
 import { ReportsAdminModule } from './modules/reports-admin/reports-admin.module';
 import { PlatformOverviewModule } from './modules/platform-overview/platform-overview.module';
+import { AgbalaModule } from './modules/vertical/agbala/agbala.module';
 import { HealthModule } from './modules/health/health.module';
 import { WebModule } from './web/web.module';
 import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
@@ -45,6 +46,7 @@ import { CsrfMiddleware } from './common/csrf.middleware';
     NotificationAdminModule,
     ReportsAdminModule,
     PlatformOverviewModule,
+    AgbalaModule,
     HealthModule,
     WebModule,
   ],

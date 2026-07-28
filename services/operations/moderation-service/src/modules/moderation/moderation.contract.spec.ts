@@ -20,7 +20,9 @@ jest.mock('class-validator', () => ({
 
 jest.mock('@azeebo/security', () => {
   const Guard = class {
-    canActivate(context: any) {
+    canActivate(context: {
+      switchToHttp: () => { getRequest: () => { user?: Record<string, string> } };
+    }) {
       const request = context.switchToHttp().getRequest();
       request.user = request.user || { sub: 'user-123', id: 'user-123' };
       return true;
@@ -29,7 +31,8 @@ jest.mock('@azeebo/security', () => {
   return {
     RateLimitGuard: Guard,
     AdminGuard: Guard,
-    RateLimit: () => (_target: any, _propertyKey?: string, descriptor?: any) => descriptor,
+    RateLimit: () => (_target: object, _propertyKey?: string, descriptor?: PropertyDescriptor) =>
+      descriptor,
   };
 });
 

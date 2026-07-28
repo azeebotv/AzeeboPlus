@@ -8,8 +8,11 @@ import {
   Alert,
   TextInput,
   useColorScheme,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
 import { universeApi, contentApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
@@ -21,12 +24,20 @@ const uploadOptions = [
   { id: 'story', name: 'Story', icon: '📖', color: '#96CEB4' },
 ];
 
+interface SelectedFile {
+  uri: string;
+  name: string;
+  type: string;
+  size?: number;
+}
+
 export default function CreateScreen() {
   const colorScheme = useColorScheme();
   const [selectedType, setSelectedType] = useState('video');
   const [selectedUniverse, setSelectedUniverse] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [universeOptions, setUniverseOptions] = useState<
     { id: string; name: string; icon: string }[]
@@ -59,6 +70,42 @@ export default function CreateScreen() {
     fetchUniverses();
   }, []);
 
+  const pickFile = async () => {
+    try {
+      if (selectedType === 'image') {
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ['images'],
+          quality: 0.8,
+        });
+        if (!result.canceled && result.assets[0]) {
+          const asset = result.assets[0];
+          setSelectedFile({
+            uri: asset.uri,
+            name: asset.fileName || `image.${asset.uri.split('.').pop() || 'jpg'}`,
+            type: asset.mimeType || 'image/jpeg',
+          });
+        }
+      } else {
+        const result = await DocumentPicker.getDocumentAsync({
+          type: selectedType === 'video' ? 'video/*' : '*/*',
+          copyToCacheDirectory: true,
+        });
+        if (!result.canceled && result.assets[0]) {
+          const asset = result.assets[0];
+          setSelectedFile({
+            uri: asset.uri,
+            name: asset.name,
+            type: asset.mimeType || 'application/octet-stream',
+            size: asset.size,
+          });
+        }
+      }
+    } catch (err) {
+      logger.error('File picker error:', err);
+      Alert.alert('Error', 'Could not open file picker');
+    }
+  };
+
   const handleUpload = async () => {
     if (!selectedUniverse) {
       Alert.alert('Error', 'Please select a universe');
@@ -68,35 +115,44 @@ export default function CreateScreen() {
       Alert.alert('Error', 'Please enter a title');
       return;
     }
+    if (!selectedFile) {
+      Alert.alert('Error', 'Please select a file to upload');
+      return;
+    }
 
     setIsUploading(true);
     try {
-      const result = await contentApi.createContent({
+      const result = await contentApi.createContentWithFile({
         title: title.trim(),
         description: description.trim() || undefined,
         universe: selectedUniverse,
         contentType: selectedType,
+        fileUri: selectedFile.uri,
+        fileType: selectedFile.type,
+        fileName: selectedFile.name,
       });
 
       if (result.success) {
-        Alert.alert(
-          'Success',
-          'Content created! Note: File upload is not yet available in the mobile app. Please use the web app to upload media files.',
-          [{ text: 'OK' }]
-        );
+        Alert.alert('Success', 'Content published successfully!', [{ text: 'OK' }]);
         setTitle('');
         setDescription('');
         setSelectedUniverse(null);
+        setSelectedFile(null);
       } else {
-        Alert.alert('Error', (result.error as unknown as string) || 'Failed to create content');
+        Alert.alert(
+          'Upload Failed',
+          (result.error as unknown as string) || 'Failed to upload content'
+        );
       }
     } catch (err) {
       logger.error('Failed to upload content:', err);
-      Alert.alert('Error', 'Failed to upload content. Please try again.');
+      Alert.alert('Upload Error', 'Failed to upload content. Please try again.');
     } finally {
       setIsUploading(false);
     }
   };
+
+  const removeFile = () => setSelectedFile(null);
 
   if (isLoadingUniverses) {
     return (
@@ -128,35 +184,28 @@ export default function CreateScreen() {
     );
   }
 
+  const isDark = colorScheme === 'dark';
+  const bgColor = isDark ? '#1A0A0A' : '#ffffff';
+  const textColor = isDark ? '#ffffff' : '#1A0A0A';
+  const inputBg = isDark ? '#1a1a1a' : '#f5f5f5';
+
   return (
-    <SafeAreaView
-      style={[styles.safeArea, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' }]}
-    >
-      <ScrollView
-        style={[
-          styles.container,
-          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
-        ]}
-      >
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: bgColor }]}>
+      <ScrollView style={[styles.container, { backgroundColor: bgColor }]}>
         <View style={styles.header}>
-          <Text
-            style={[styles.headerTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
-          >
-            Create
-          </Text>
+          <Text style={[styles.headerTitle, { color: textColor }]}>Create</Text>
         </View>
 
         <View style={styles.uploadTypeSection}>
-          <Text
-            style={[styles.sectionLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
-          >
-            Select Type
-          </Text>
+          <Text style={[styles.sectionLabel, { color: textColor }]}>Select Type</Text>
           <View style={styles.uploadOptionsGrid}>
             {uploadOptions.map((option) => (
               <TouchableOpacity
                 key={option.id}
-                onPress={() => setSelectedType(option.id)}
+                onPress={() => {
+                  setSelectedType(option.id);
+                  setSelectedFile(null);
+                }}
                 style={[
                   styles.uploadOption,
                   selectedType === option.id && {
@@ -166,50 +215,49 @@ export default function CreateScreen() {
                 ]}
               >
                 <Text style={styles.uploadIcon}>{option.icon}</Text>
-                <Text
-                  style={[
-                    styles.uploadName,
-                    { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' },
-                  ]}
-                >
-                  {option.name}
-                </Text>
+                <Text style={[styles.uploadName, { color: textColor }]}>{option.name}</Text>
               </TouchableOpacity>
             ))}
           </View>
         </View>
 
         <View style={styles.uploadArea}>
-          <View style={styles.uploadButton}>
-            <Text style={styles.uploadIconLarge}>📤</Text>
-            <Text
-              style={[styles.uploadText, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
-            >
-              {selectedType === 'video' ? 'Video' : selectedType === 'image' ? 'Image' : 'Content'}{' '}
-              Upload
-            </Text>
-            <Text style={styles.uploadHint}>
-              File upload is currently only available on the web app.
-            </Text>
-            <Text style={styles.uploadHint}>Use the web app to upload media files.</Text>
-          </View>
+          {selectedFile ? (
+            <View style={styles.selectedFileContainer}>
+              <Text style={styles.selectedFileIcon}>
+                {selectedType === 'video' ? '🎬' : selectedType === 'image' ? '🖼️' : '📄'}
+              </Text>
+              <Text style={styles.selectedFileName} numberOfLines={1}>
+                {selectedFile.name}
+              </Text>
+              {selectedFile.size && (
+                <Text style={styles.selectedFileSize}>
+                  {(selectedFile.size / 1024 / 1024).toFixed(1)} MB
+                </Text>
+              )}
+              <TouchableOpacity onPress={removeFile} style={styles.removeFileButton}>
+                <Text style={styles.removeFileText}>Remove</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity onPress={pickFile} style={styles.uploadButton}>
+              <Text style={styles.uploadIconLarge}>📤</Text>
+              <Text style={[styles.uploadText, { color: textColor }]}>
+                Tap to Select{' '}
+                {selectedType === 'video' ? 'Video' : selectedType === 'image' ? 'Image' : 'File'}
+              </Text>
+              <Text style={styles.uploadHint}>
+                {selectedType === 'image' ? 'From gallery' : 'From device storage'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.formSection}>
           <View style={styles.formGroup}>
-            <Text
-              style={[styles.formLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
-            >
-              Title
-            </Text>
+            <Text style={[styles.formLabel, { color: textColor }]}>Title</Text>
             <TextInput
-              style={[
-                styles.formInput,
-                {
-                  backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5',
-                  color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A',
-                },
-              ]}
+              style={[styles.formInput, { backgroundColor: inputBg, color: textColor }]}
               placeholder="Enter title..."
               placeholderTextColor="#888"
               value={title}
@@ -218,19 +266,9 @@ export default function CreateScreen() {
           </View>
 
           <View style={styles.formGroup}>
-            <Text
-              style={[styles.formLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
-            >
-              Description
-            </Text>
+            <Text style={[styles.formLabel, { color: textColor }]}>Description</Text>
             <TextInput
-              style={[
-                styles.formInput,
-                {
-                  backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5',
-                  color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A',
-                },
-              ]}
+              style={[styles.formInput, { backgroundColor: inputBg, color: textColor }]}
               placeholder="Add description..."
               placeholderTextColor="#888"
               value={description}
@@ -241,11 +279,7 @@ export default function CreateScreen() {
           </View>
 
           <View style={styles.formGroup}>
-            <Text
-              style={[styles.formLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
-            >
-              Universe
-            </Text>
+            <Text style={[styles.formLabel, { color: textColor }]}>Universe</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -278,11 +312,7 @@ export default function CreateScreen() {
         </View>
 
         <View style={styles.privacySection}>
-          <Text
-            style={[styles.sectionLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
-          >
-            Privacy Settings
-          </Text>
+          <Text style={[styles.sectionLabel, { color: textColor }]}>Privacy Settings</Text>
           <View style={styles.privacyOptions}>
             {['Public', 'Private', 'Unlisted'].map((option) => (
               <TouchableOpacity
@@ -303,17 +333,20 @@ export default function CreateScreen() {
         <TouchableOpacity
           onPress={handleUpload}
           disabled={isUploading}
-          style={[styles.submitButton, isUploading && { backgroundColor: '#ccc' }]}
+          style={[styles.submitButton, isUploading && { backgroundColor: '#666' }]}
         >
-          <Text style={styles.submitButtonText}>{isUploading ? 'Uploading...' : 'Publish'}</Text>
+          {isUploading ? (
+            <View style={styles.uploadingRow}>
+              <ActivityIndicator color="#ffffff" size="small" />
+              <Text style={styles.submitButtonText}> Uploading...</Text>
+            </View>
+          ) : (
+            <Text style={styles.submitButtonText}>Publish</Text>
+          )}
         </TouchableOpacity>
 
         <View style={styles.tipsSection}>
-          <Text
-            style={[styles.tipsTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
-          >
-            💡 Tips for Creators
-          </Text>
+          <Text style={[styles.tipsTitle, { color: textColor }]}>Tips for Creators</Text>
           <View style={styles.tipsList}>
             <Text style={styles.tipItem}>• Use high-quality video for better engagement</Text>
             <Text style={styles.tipItem}>• Add relevant tags to reach more viewers</Text>
@@ -398,6 +431,41 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#888',
   },
+  selectedFileContainer: {
+    borderWidth: 2,
+    borderColor: '#4ECDC4',
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    backgroundColor: '#f0faf8',
+  },
+  selectedFileIcon: {
+    fontSize: 36,
+    marginBottom: 8,
+  },
+  selectedFileName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+    maxWidth: '80%',
+  },
+  selectedFileSize: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 12,
+  },
+  removeFileButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: '#ff4444',
+  },
+  removeFileText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
+  },
   formSection: {
     marginBottom: 20,
   },
@@ -466,6 +534,11 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  uploadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   tipsSection: {
     backgroundColor: '#f8f9fa',

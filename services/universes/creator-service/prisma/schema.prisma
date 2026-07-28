@@ -137,15 +137,49 @@ model Subscription {
 }
 
 model Tip {
-  id        String   @id @default(uuid())
+  id         String   @id @default(uuid())
   fromUserId String
   toUserId   String
+  creatorId  String
   amount    Decimal  @db.Decimal(18, 2)
+  currency  String   @default("NGN")
+  message   String?
   createdAt DateTime @default(now())
 
   @@map("tips")
   @@index([fromUserId])
   @@index([toUserId])
+  @@index([creatorId])
+  @@index([createdAt])
+}
+
+model TipLeaderboard {
+  id          String   @id @default(uuid())
+  creatorId   String
+  userId      String
+  totalAmount Decimal  @db.Decimal(18, 2) @default(0)
+  tier        String   @default("")
+  lastTipAt   DateTime @default(now())
+
+  @@unique([creatorId, userId])
+  @@map("tip_leaderboard")
+  @@index([creatorId])
+  @@index([creatorId, totalAmount])
+}
+
+model ExclusiveContent {
+  id          String   @id @default(uuid())
+  creatorId   String
+  title       String
+  description String?
+  mediaUrl    String
+  minTier     String   @default("gold")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("exclusive_content")
+  @@index([creatorId])
+  @@index([minTier])
 }
 
 model VerificationDocument {

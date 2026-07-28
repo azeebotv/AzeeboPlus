@@ -29,7 +29,12 @@ jest.mock('class-transformer', () => ({
 }));
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ExecutionContext, UnauthorizedException, VersioningType } from '@nestjs/common';
+import {
+  INestApplication,
+  ExecutionContext,
+  UnauthorizedException,
+  VersioningType,
+} from '@nestjs/common';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';

@@ -15,6 +15,7 @@ import { createCreatorMethods } from './creator';
 import { createModerationMethods } from './moderation';
 
 import { createEngagementMethods } from './engagement';
+import { createBundleMethods } from './bundle';
 
 import type { ApiResponse } from './base';
 import type { ApiError } from './base';
@@ -34,6 +35,7 @@ export async function setAuthCookie(value: string, maxAge: number = 30 * 60): Pr
     } catch {
       // SECURITY: Never use document.cookie fallback — it creates non-HttpOnly cookies
       // vulnerable to XSS. The /api/auth/cookie endpoint is the only way to set auth cookies.
+      // eslint-disable-next-line no-console
       console.error('Failed to set auth cookie via API');
     }
   }
@@ -49,6 +51,7 @@ export async function clearAuthCookie(): Promise<void> {
     } catch {
       // SECURITY: Never use document.cookie fallback — it creates non-HttpOnly cookies
       // vulnerable to XSS. The /api/auth/cookie endpoint is the only way to clear auth cookies.
+      // eslint-disable-next-line no-console
       console.error('Failed to clear auth cookie via API');
     }
   }
@@ -94,6 +97,7 @@ class ApiClient {
   creator: ReturnType<typeof createCreatorMethods>;
   moderation: ReturnType<typeof createModerationMethods>;
   engagement: ReturnType<typeof createEngagementMethods>;
+  bundle: ReturnType<typeof createBundleMethods>;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
@@ -119,6 +123,7 @@ class ApiClient {
     this.creator = createCreatorMethods(this);
     this.moderation = createModerationMethods(this);
     this.engagement = createEngagementMethods(this);
+    this.bundle = createBundleMethods(this);
   }
 
   setToken(token: string | null): void {

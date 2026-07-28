@@ -36,6 +36,7 @@ export default function CurrentSubscriptionScreen() {
         setSubscription(response.data);
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Failed to load subscription:', error);
     } finally {
       setIsLoading(false);

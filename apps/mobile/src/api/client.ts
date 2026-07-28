@@ -224,6 +224,63 @@ class ApiClientClass {
   async delete<T>(endpoint: string, options?: RequestInit): Promise<T> {
     return this.request<T>('DELETE', endpoint, undefined, options);
   }
+
+  async upload<T>(endpoint: string, formData: FormData, options?: RequestInit): Promise<T> {
+    const url = `${this.config.baseURL}${gatewayPath(endpoint)}`;
+
+    const headers: HeadersInit = {
+      ...options?.headers,
+    };
+
+    if (this.config.token) {
+      (headers as Record<string, string>)['Authorization'] = `Bearer ${this.config.token}`;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000);
+
+    try {
+      const response = await certificatePinningService.fetchWithPinning(url, {
+        method: 'POST',
+        headers,
+        body: formData,
+        signal: controller.signal,
+        ...options,
+      });
+
+      clearTimeout(timeoutId);
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const error: ApiError = new Error(
+          (data as { message?: string; detail?: string })?.message ||
+            (data as { detail?: string })?.detail ||
+            'Upload failed'
+        );
+        error.status = response.status;
+        error.data = data;
+        throw error;
+      }
+
+      return data as T;
+    } catch (error) {
+      clearTimeout(timeoutId);
+
+      if (error instanceof Error && error.name === 'AbortError') {
+        const timeoutError: ApiError = new Error('Upload timeout. Please try again.');
+        timeoutError.status = 408;
+        throw timeoutError;
+      }
+
+      if (error instanceof Error && 'status' in error) {
+        throw error;
+      }
+      const networkError: ApiError = new Error('Network error. Please check your connection.');
+      networkError.status = 0;
+      throw networkError;
+    }
+  }
 }
 
 export const apiClient = new ApiClientClass();
