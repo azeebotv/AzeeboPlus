@@ -424,7 +424,9 @@ export class AuthService {
 
     const allowedRoles = ['user', 'creator'];
     if (!allowedRoles.includes(selectRoleDto.role)) {
-      throw new BadRequestException('Invalid role selection — only user and creator roles are allowed');
+      throw new BadRequestException(
+        'Invalid role selection — only user and creator roles are allowed'
+      );
     }
 
     await this.authRepository.updateRole(userId, selectRoleDto.role);

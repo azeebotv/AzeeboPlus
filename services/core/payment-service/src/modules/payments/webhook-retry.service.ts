@@ -105,7 +105,9 @@ export class WebhookRetryService implements OnModuleInit, OnModuleDestroy {
         await this.processRetry(retry);
       }
     } catch (error) {
-      this.logger.warn(`WebhookRetryService skipped: ${error instanceof Error ? error.message : 'unknown error'}`);
+      this.logger.warn(
+        `WebhookRetryService skipped: ${error instanceof Error ? error.message : 'unknown error'}`
+      );
     }
   }
 

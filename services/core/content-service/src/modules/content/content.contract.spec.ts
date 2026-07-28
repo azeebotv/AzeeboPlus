@@ -30,15 +30,27 @@ jest.mock('ioredis', () => {
 });
 
 jest.mock('@azeebo/feature-flags', () => {
-  const svc = { getFlag: jest.fn().mockResolvedValue(false), setFlag: jest.fn().mockResolvedValue(undefined), getAllFlags: jest.fn().mockResolvedValue([]) };
+  const svc = {
+    getFlag: jest.fn().mockResolvedValue(false),
+    setFlag: jest.fn().mockResolvedValue(undefined),
+    getAllFlags: jest.fn().mockResolvedValue([]),
+  };
   class MockFeatureFlagService {}
   const mockProvider = { provide: MockFeatureFlagService, useValue: svc };
   class MockFeatureFlagModule {
     static register() {
-      return { module: MockFeatureFlagModule, providers: [mockProvider], exports: [MockFeatureFlagService] };
+      return {
+        module: MockFeatureFlagModule,
+        providers: [mockProvider],
+        exports: [MockFeatureFlagService],
+      };
     }
   }
-  return { FeatureFlagModule: MockFeatureFlagModule, FeatureFlagService: MockFeatureFlagService, FeatureFlagGuard: class {} };
+  return {
+    FeatureFlagModule: MockFeatureFlagModule,
+    FeatureFlagService: MockFeatureFlagService,
+    FeatureFlagGuard: class {},
+  };
 });
 
 class MockAuthGuard implements CanActivate {

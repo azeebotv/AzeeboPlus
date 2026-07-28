@@ -8,6 +8,6 @@ module.exports = {
   coverageDirectory: "./coverage",
   testEnvironment: "node",
   passWithNoTests: true,
-  roots: ["<rootDir>/src"],
+  roots: ["<rootDir>/src", "<rootDir>/app"],
   testPathIgnorePatterns: ["/node_modules/", "/e2e/"],
 };

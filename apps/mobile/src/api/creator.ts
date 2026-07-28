@@ -96,7 +96,11 @@ export const creatorApi = {
   },
 
   getProfile: async (): Promise<ApiResponse<CreatorProfile>> => {
-    return apiClient.get<ApiResponse<CreatorProfile>>('/creators/profile');
+    return apiClient.get<ApiResponse<CreatorProfile>>('/creators/me');
+  },
+
+  getCreatorProfile: async (creatorId: string): Promise<ApiResponse<CreatorProfile>> => {
+    return apiClient.get<ApiResponse<CreatorProfile>>(`/creators/${creatorId}`);
   },
 
   updateProfile: async (data: Partial<CreatorProfile>): Promise<ApiResponse<CreatorProfile>> => {
@@ -130,11 +134,73 @@ export const creatorApi = {
     >(`/creators/content?page=${page}&limit=${limit}`);
   },
 
-  getAnalytics: async (): Promise<ApiResponse<CreatorAnalytics>> => {
-    return apiClient.get<ApiResponse<CreatorAnalytics>>('/creators/analytics');
+  getAnalytics: async (range?: string): Promise<ApiResponse<CreatorAnalytics>> => {
+    const query = range && range !== 'all' ? `?range=${range}` : '';
+    return apiClient.get<ApiResponse<CreatorAnalytics>>(`/creators/analytics${query}`);
   },
 
-  getEarnings: async (): Promise<ApiResponse<CreatorEarnings>> => {
-    return apiClient.get<ApiResponse<CreatorEarnings>>('/creators/earnings');
+  getEarnings: async (range?: string): Promise<ApiResponse<CreatorEarnings>> => {
+    const query = range && range !== 'all' ? `?range=${range}` : '';
+    return apiClient.get<ApiResponse<CreatorEarnings>>(`/creators/earnings${query}`);
+  },
+
+  sendTip: async (
+    creatorId: string,
+    amount: number,
+    message?: string
+  ): Promise<
+    ApiResponse<{ tipId: string; amount: number; tier: string | null; balance: number }>
+  > => {
+    return apiClient.post<
+      ApiResponse<{ tipId: string; amount: number; tier: string | null; balance: number }>
+    >(`/creators/tips/${creatorId}`, { amount, message });
+  },
+
+  getTipLeaderboard: async (
+    creatorId: string,
+    period = 'all'
+  ): Promise<
+    ApiResponse<{
+      entries: Array<{ userId: string; totalAmount: number; tier: string }>;
+      period: string;
+    }>
+  > => {
+    return apiClient.get<
+      ApiResponse<{
+        entries: Array<{ userId: string; totalAmount: number; tier: string }>;
+        period: string;
+      }>
+    >(`/creators/tips/leaderboard/${creatorId}?period=${period}`);
+  },
+
+  getTipStats: async (
+    creatorId: string
+  ): Promise<ApiResponse<{ totalTips: number; totalAmount: number; topTier: string | null }>> => {
+    return apiClient.get<
+      ApiResponse<{ totalTips: number; totalAmount: number; topTier: string | null }>
+    >(`/creators/tips/stats/${creatorId}`);
+  },
+
+  getMyTips: async (
+    page = 1,
+    limit = 20
+  ): Promise<
+    ApiResponse<{
+      items: Array<{ id: string; creatorId: string; amount: number; tier: string | null; message: string | null; createdAt: string }>;
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }>
+  > => {
+    return apiClient.get<
+      ApiResponse<{
+        items: Array<{ id: string; creatorId: string; amount: number; tier: string | null; message: string | null; createdAt: string }>;
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      }>
+    >(`/creators/users/me/tips?page=${page}&limit=${limit}`);
   },
 };

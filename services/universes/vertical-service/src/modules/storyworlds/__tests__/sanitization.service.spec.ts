@@ -14,7 +14,10 @@ describe('SanitizationService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [SanitizationService, { provide: 'default_IORedisModuleConnectionToken', useValue: mockRedis }],
+      providers: [
+        SanitizationService,
+        { provide: 'default_IORedisModuleConnectionToken', useValue: mockRedis },
+      ],
     }).compile();
 
     service = module.get<SanitizationService>(SanitizationService);

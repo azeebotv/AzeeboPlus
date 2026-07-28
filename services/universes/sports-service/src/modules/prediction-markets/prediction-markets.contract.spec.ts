@@ -24,7 +24,9 @@ jest.mock('@azeebo/security', () => ({
   AdminGuard: jest.fn(),
   RateLimitService: jest.fn(),
   ServiceAuthGuard: jest.fn().mockImplementation(() => ({
-    canActivate: (context: any) => {
+    canActivate: (context: {
+      switchToHttp: () => { getRequest: () => { user?: Record<string, string> } };
+    }) => {
       const req = context.switchToHttp().getRequest();
       req.user = { sub: 'user-123', role: 'ADMIN' };
       return true;

@@ -69,3 +69,39 @@ model SubscriptionTransaction {
   @@index([createdAt])
   @@map("subscription_transactions")
 }
+
+model BundlePass {
+  id              String   @id @default(uuid())
+  name            String   @unique
+  description     String
+  universeIds     String[]
+  price           Decimal  @db.Decimal(10, 2)
+  originalPrice   Decimal  @db.Decimal(10, 2)
+  discountPercent Int
+  duration        Int      // In days
+  isActive        Boolean  @default(true)
+  tier            String   // standard, premium, ultimate
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  subscriptions   BundleSubscription[]
+
+  @@map("bundle_passes")
+}
+
+model BundleSubscription {
+  id            String   @id @default(uuid())
+  userId        String
+  bundleId      String
+  status        String   @default("active") // active, cancelled, expired
+  startDate     DateTime @default(now())
+  endDate       DateTime
+  autoRenew     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  bundle        BundlePass @relation(fields: [bundleId], references: [id])
+
+  @@index([userId])
+  @@index([bundleId])
+  @@index([status])
+  @@index([userId, status])
+  @@map("bundle_subscriptions")
+}

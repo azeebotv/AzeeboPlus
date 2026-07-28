@@ -12,10 +12,16 @@ import type {
   NotificationStats,
   AdminReport,
   AdminUniverse,
+  Storyworld,
+  AgbalaCharacter,
+  AgbalaPath,
+  AgbalaQuiz,
   FeatureFlag,
   SystemSetting,
   SubscriptionPlan,
   SubscriptionStats,
+  LiveEventAdmin,
+  BundlePassAdmin,
 } from '../admin-types';
 
 export interface DashboardStats {
@@ -236,6 +242,10 @@ export const adminApi = {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
+  deleteNotificationTemplate: (id: string) =>
+    apiFetch<unknown>(`/api/v1/admin/notification-templates/${id}`, {
+      method: 'DELETE',
+    }),
 
   // ─── Reports ────────────────────────────────────────────────────────────
   getReports: (range?: string) =>
@@ -304,6 +314,79 @@ export const adminApi = {
       body: JSON.stringify({ ids, isEnabled }),
     }),
 
+  // ─── Agbala / Storyworlds ───────────────────────────────────────────────
+  getStoryworlds: (page = 1, limit = 20) =>
+    apiFetch<{ items: Storyworld[]; total: number }>(
+      `/api/v1/admin/agbala/storyworlds?page=${page}&limit=${limit}`
+    ),
+  getStoryworldById: (id: string) => apiFetch<Storyworld>(`/api/v1/admin/agbala/storyworlds/${id}`),
+  createStoryworld: (data: Record<string, unknown>) =>
+    apiFetch<unknown>('/api/v1/admin/agbala/storyworlds', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateStoryworld: (id: string, data: Record<string, unknown>) =>
+    apiFetch<unknown>(`/api/v1/admin/agbala/storyworlds/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  deleteStoryworld: (id: string) =>
+    apiFetch<unknown>(`/api/v1/admin/agbala/storyworlds/${id}`, { method: 'DELETE' }),
+  publishStoryworld: (id: string) =>
+    apiFetch<unknown>(`/api/v1/admin/agbala/storyworlds/${id}/publish`, { method: 'POST' }),
+  unpublishStoryworld: (id: string) =>
+    apiFetch<unknown>(`/api/v1/admin/agbala/storyworlds/${id}/unpublish`, { method: 'POST' }),
+
+  // ─── Agbala / Characters ────────────────────────────────────────────────
+  getCharacters: (storyworldId?: string, page = 1, limit = 20) => {
+    const q = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (storyworldId) q.set('storyworldId', storyworldId);
+    return apiFetch<{ items: AgbalaCharacter[]; total: number }>(
+      `/api/v1/admin/agbala/characters?${q}`
+    );
+  },
+  createCharacter: (data: Record<string, unknown>) =>
+    apiFetch<unknown>('/api/v1/admin/agbala/characters', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateCharacter: (id: string, data: Record<string, unknown>) =>
+    apiFetch<unknown>(`/api/v1/admin/agbala/characters/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  deleteCharacter: (id: string) =>
+    apiFetch<unknown>(`/api/v1/admin/agbala/characters/${id}`, { method: 'DELETE' }),
+
+  // ─── Agbala / Paths ──────────────────────────────────────────────────────
+  getPaths: (page = 1, limit = 20) =>
+    apiFetch<{ items: AgbalaPath[]; total: number }>(
+      `/api/v1/admin/agbala/paths?page=${page}&limit=${limit}`
+    ),
+  createPath: (data: Record<string, unknown>) =>
+    apiFetch<unknown>('/api/v1/admin/agbala/paths', { method: 'POST', body: JSON.stringify(data) }),
+  updatePath: (id: string, data: Record<string, unknown>) =>
+    apiFetch<unknown>(`/api/v1/admin/agbala/paths/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  deletePath: (id: string) =>
+    apiFetch<unknown>(`/api/v1/admin/agbala/paths/${id}`, { method: 'DELETE' }),
+
+  // ─── Agbala / Quizzes ────────────────────────────────────────────────────
+  getQuizzes: (storyworldId?: string, page = 1, limit = 20) => {
+    const q = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (storyworldId) q.set('storyworldId', storyworldId);
+    return apiFetch<{ items: AgbalaQuiz[]; total: number }>(`/api/v1/admin/agbala/quizzes?${q}`);
+  },
+  createQuiz: (data: Record<string, unknown>) =>
+    apiFetch<unknown>('/api/v1/admin/agbala/quizzes', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  deleteQuiz: (id: string) =>
+    apiFetch<unknown>(`/api/v1/admin/agbala/quizzes/${id}`, { method: 'DELETE' }),
+
   // ─── System Settings ────────────────────────────────────────────────────
   getAllSettings: () => apiFetch<SystemSetting[]>('/api/v1/admin/settings'),
   updateSetting: (key: string, value: unknown) =>
@@ -356,6 +439,52 @@ export const adminApi = {
       method: 'PUT',
       body: JSON.stringify({ status }),
     }),
+
+  // ─── Bundle Passes ────────────────────────────────────────────────────────
+  getBundlePasses: () => apiFetch<BundlePassAdmin[]>('/api/v1/subscription/bundles'),
+  getBundlePass: (id: string) => apiFetch<BundlePassAdmin>(`/api/v1/subscription/bundles/${id}`),
+  createBundlePass: (data: Record<string, unknown>) =>
+    apiFetch<BundlePassAdmin>('/api/v1/subscription/bundles', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateBundlePass: (id: string, data: Record<string, unknown>) =>
+    apiFetch<BundlePassAdmin>(`/api/v1/subscription/bundles/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  deleteBundlePass: (id: string) =>
+    apiFetch<unknown>(`/api/v1/subscription/bundles/${id}`, { method: 'DELETE' }),
+
+  // ─── Live Events (PPV) ────────────────────────────────────────────────────
+  listLiveEvents: (status?: string) => {
+    const q = status ? `?status=${status}` : '';
+    return apiFetch<{ items: LiveEventAdmin[]; total: number }>(`/api/v1/admin/live-events${q}`);
+  },
+  getLiveEvent: (id: string) => apiFetch<LiveEventAdmin>(`/api/v1/admin/live-events/${id}`),
+  createLiveEvent: (data: Partial<LiveEventAdmin>) =>
+    apiFetch<LiveEventAdmin>('/api/v1/admin/live-events', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateLiveEvent: (id: string, data: Partial<LiveEventAdmin>) =>
+    apiFetch<LiveEventAdmin>(`/api/v1/admin/live-events/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  cancelLiveEvent: (id: string) =>
+    apiFetch<unknown>(`/api/v1/admin/live-events/${id}/cancel`, { method: 'DELETE' }),
+
+  // ─── Tipping ─────────────────────────────────────────────────────────────
+  getTipStats: (creatorId: string) =>
+    apiFetch<{ totalTips: number; totalAmount: number; topTier: string | null }>(
+      `/api/v1/creators/tips/stats/${creatorId}`
+    ),
+  getTipLeaderboard: (creatorId: string, period = 'all') =>
+    apiFetch<{
+      entries: Array<{ userId: string; totalAmount: number; tier: string }>;
+      period: string;
+    }>(`/api/v1/creators/tips/leaderboard/${creatorId}?period=${period}`),
 
   // ─── Audit Logs ─────────────────────────────────────────────────────────
   getAuditLogs: (

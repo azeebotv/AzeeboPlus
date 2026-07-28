@@ -9,8 +9,23 @@ import { RateLimitGuard } from '@azeebo/security';
 jest.mock('zod', () => {
   const chainable = () => {
     const obj: Record<string, jest.Mock> = {};
-    const methods = ['optional', 'default', 'url', 'email', 'min', 'max', 'positive', 'transform', 'regex', 'nullable', 'trim', 'safeParse'];
-    methods.forEach(m => { obj[m] = jest.fn().mockReturnValue(obj); });
+    const methods = [
+      'optional',
+      'default',
+      'url',
+      'email',
+      'min',
+      'max',
+      'positive',
+      'transform',
+      'regex',
+      'nullable',
+      'trim',
+      'safeParse',
+    ];
+    methods.forEach((m) => {
+      obj[m] = jest.fn().mockReturnValue(obj);
+    });
     return obj;
   };
   const z = {
@@ -65,12 +80,19 @@ describe('Recommendation Service Integration Tests', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
-    app.use((req: { headers: { authorization?: string }; user?: unknown }, _res: unknown, next: () => void) => {
-      if (req.headers.authorization) {
-        (req as any).user = { id: 'user-123' };
+    app.use(
+      (
+        req: { headers: { authorization?: string }; user?: unknown },
+        _res: unknown,
+        next: () => void
+      ) => {
+        if (req.headers.authorization) {
+          const r = req as { headers: { authorization?: string }; user?: Record<string, string> };
+          r.user = { id: 'user-123' };
+        }
+        next();
       }
-      next();
-    });
+    );
     await app.init();
   });
 

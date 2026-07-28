@@ -277,7 +277,31 @@ export class CreatorsController {
     @Param('creatorId') creatorId: string,
     @Body() body: FundCreatorDto
   ): Promise<CreatorResponse> {
-    return this.creatorsService.sendTip(req.user.id, creatorId, body.amount);
+    return this.creatorsService.sendTip(req.user.id, creatorId, body.amount, body.message);
+  }
+
+  @Get('tips/leaderboard/:creatorId')
+  @ApiOperation({ summary: 'Get tip leaderboard for a creator' })
+  @ApiResponse({ status: 200, description: 'Leaderboard' })
+  async getTipLeaderboard(
+    @Param('creatorId') creatorId: string,
+    @Query('period') period?: string
+  ): Promise<CreatorResponse> {
+    return this.creatorsService.getTipLeaderboard(creatorId, period || 'all');
+  }
+
+  @Get('tips/stats/:creatorId')
+  @ApiOperation({ summary: 'Get tip statistics for a creator' })
+  @ApiResponse({ status: 200, description: 'Tip stats' })
+  async getTipStats(@Param('creatorId') creatorId: string): Promise<CreatorResponse> {
+    return this.creatorsService.getTipStats(creatorId);
+  }
+
+  @Get('users/me/tips')
+  @ApiOperation({ summary: 'Get current user tipping history' })
+  @ApiResponse({ status: 200, description: 'User tips' })
+  async getMyTips(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
+    return this.creatorsService.getMyTips(req.user.id);
   }
 
   @Post('subscribe/:creatorId')

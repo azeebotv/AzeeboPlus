@@ -116,7 +116,7 @@ describe('ComedyFeedService', () => {
       const result = await service.getFeed(1, 20, 'clip');
 
       expect(result.success).toBe(true);
-      expect((prismaService.comedyClip.findMany as jest.Mock)).toHaveBeenCalledTimes(1);
+      expect(prismaService.comedyClip.findMany as jest.Mock).toHaveBeenCalledTimes(1);
     });
   });
 

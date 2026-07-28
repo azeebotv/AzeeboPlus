@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 
 import AppHeader from '@/components/layout/AppHeader';
@@ -246,6 +247,21 @@ export default function PremiumAccessPage(): React.JSX.Element {
             )}
           </div>
         )}
+
+        <div className="mb-6 p-4 rounded-xl border border-cyan-500/30 bg-cyan-500/5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-white">Bundle Passes</h3>
+              <p className="text-white/50 text-sm">Save up to 40% with multi-universe bundles</p>
+            </div>
+            <Link
+              href="/bundles"
+              className="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-black font-semibold rounded-lg text-sm transition-colors"
+            >
+              View Bundles
+            </Link>
+          </div>
+        </div>
 
         <h2 className="text-xl font-bold text-white mb-6">Choose Your Plan</h2>
 

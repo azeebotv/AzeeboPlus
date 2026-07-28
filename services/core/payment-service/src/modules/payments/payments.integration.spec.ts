@@ -207,9 +207,7 @@ describe('PaymentsService Integration', () => {
         createdAt: new Date('2025-01-01'),
       });
 
-      mockPaystackProvider.initializePayment.mockRejectedValue(
-        new Error('Provider unavailable')
-      );
+      mockPaystackProvider.initializePayment.mockRejectedValue(new Error('Provider unavailable'));
 
       await expect(
         service.initializePayment('user-1', {
@@ -277,9 +275,7 @@ describe('PaymentsService Integration', () => {
         status: 'processing',
       });
 
-      await expect(service.verifyPayment('user-1', 'pi-1')).rejects.toThrow(
-        BadRequestException
-      );
+      await expect(service.verifyPayment('user-1', 'pi-1')).rejects.toThrow(BadRequestException);
     });
 
     it('should return completed status for already-completed payment', async () => {
@@ -339,9 +335,7 @@ describe('PaymentsService Integration', () => {
       mockRedisService.setIfNotExists.mockResolvedValue(true);
       mockPaystackProvider.verifyPayment.mockRejectedValue(new Error('Provider error'));
 
-      await expect(service.verifyPayment('user-1', 'pi-1')).rejects.toThrow(
-        BadRequestException
-      );
+      await expect(service.verifyPayment('user-1', 'pi-1')).rejects.toThrow(BadRequestException);
 
       expect(mockRedisService.del).toHaveBeenCalledWith('payment_verify_lock:pi-1');
     });
@@ -393,16 +387,16 @@ describe('PaymentsService Integration', () => {
           userId: 'user-1',
           amount: 5000,
           description: expect.stringContaining('Wrong purchase'),
-        }),
+        })
       );
     });
 
     it('should throw NotFoundException when payment does not exist', async () => {
       mockPrismaService.paymentIntent.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.requestRefund('user-1', 'pi-nonexistent', 'reason')
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.requestRefund('user-1', 'pi-nonexistent', 'reason')).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw BadRequestException when payment is not completed', async () => {
@@ -415,9 +409,9 @@ describe('PaymentsService Integration', () => {
         refundAmount: null,
       });
 
-      await expect(
-        service.requestRefund('user-1', 'pi-1', 'reason')
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.requestRefund('user-1', 'pi-1', 'reason')).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should throw BadRequestException when userId does not match', async () => {
@@ -430,9 +424,9 @@ describe('PaymentsService Integration', () => {
         refundAmount: null,
       });
 
-      await expect(
-        service.requestRefund('user-1', 'pi-1', 'reason')
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.requestRefund('user-1', 'pi-1', 'reason')).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should return existing refund for duplicate idempotencyKey', async () => {
@@ -476,9 +470,9 @@ describe('PaymentsService Integration', () => {
 
       mockPaystackProvider.processRefund.mockRejectedValue(new Error('Refund provider error'));
 
-      await expect(
-        service.requestRefund('user-1', 'pi-1', 'reason')
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.requestRefund('user-1', 'pi-1', 'reason')).rejects.toThrow(
+        BadRequestException
+      );
 
       expect(mockPrismaService.refund.update).toHaveBeenCalledWith({
         where: { id: 'refund-1' },
@@ -571,7 +565,7 @@ describe('PaymentsService Integration', () => {
       expect(result.success).toBe(true);
       expect(mockedAxios.post).toHaveBeenCalledWith(
         'http://wallet-service:3010/wallet/credit',
-        expect.objectContaining({ userId: 'user-1', amount: 5000 }),
+        expect.objectContaining({ userId: 'user-1', amount: 5000 })
       );
       expect(mockPrismaService.webhookEvent.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
@@ -591,10 +585,7 @@ describe('PaymentsService Integration', () => {
       mockPaystackProvider.verifyWebhookSignature.mockReturnValue(false);
 
       await expect(
-        service.handleWebhook(
-          { eventId: 'evt-1', event: 'charge.success' },
-          'bad-signature'
-        )
+        service.handleWebhook({ eventId: 'evt-1', event: 'charge.success' }, 'bad-signature')
       ).rejects.toThrow(BadRequestException);
     });
 

@@ -48,7 +48,18 @@ describe('Wallet E2E Tests - Webhooks, Retries, and Failures', () => {
         findUnique: jest.fn(),
         findFirst: jest.fn(),
       },
-      $queryRaw: jest.fn().mockResolvedValue([{ id: testWalletId, balance: '100000', bonusBalance: '0', promoBalance: '0', currency: 'NGN', userId: testUserId, createdAt: new Date(), updatedAt: new Date() }]),
+      $queryRaw: jest.fn().mockResolvedValue([
+        {
+          id: testWalletId,
+          balance: '100000',
+          bonusBalance: '0',
+          promoBalance: '0',
+          currency: 'NGN',
+          userId: testUserId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ]),
       $transaction: jest.fn().mockImplementation(async (arg) => {
         if (Array.isArray(arg)) {
           const results = [];
@@ -84,32 +95,44 @@ describe('Wallet E2E Tests - Webhooks, Retries, and Failures', () => {
       providers: [
         WalletService,
         { provide: PrismaService, useValue: prismaMock },
-        { provide: ConfigService, useValue: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          get: jest.fn((key: string, defaultValue?: any) => {
-            if (key === 'POINTS_TO_NAIRA_RATE') return defaultValue ?? 100;
-            return defaultValue;
-          }),
-          getOrThrow: jest.fn((key: string) => {
-            if (key === 'WEBHOOK_SECRET') return 'test-webhook-secret';
-            return undefined;
-          }),
-        }},
-        { provide: CacheService, useValue: {
-          get: jest.fn().mockResolvedValue(null),
-          set: jest.fn().mockResolvedValue(undefined),
-          delete: jest.fn().mockResolvedValue(undefined),
-          deleteByPattern: jest.fn().mockResolvedValue(0),
-          invalidate: jest.fn().mockResolvedValue(undefined),
-        }},
-        { provide: RateLimitService, useValue: {
-          checkRateLimit: jest.fn().mockResolvedValue(true),
-          incrementUsage: jest.fn().mockResolvedValue(0),
-        }},
-        { provide: EVENT_BUS_SERVICE, useValue: {
-          publish: jest.fn().mockResolvedValue(undefined),
-          subscribe: jest.fn().mockResolvedValue(undefined),
-        }},
+        {
+          provide: ConfigService,
+          useValue: {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            get: jest.fn((key: string, defaultValue?: any) => {
+              if (key === 'POINTS_TO_NAIRA_RATE') return defaultValue ?? 100;
+              return defaultValue;
+            }),
+            getOrThrow: jest.fn((key: string) => {
+              if (key === 'WEBHOOK_SECRET') return 'test-webhook-secret';
+              return undefined;
+            }),
+          },
+        },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            delete: jest.fn().mockResolvedValue(undefined),
+            deleteByPattern: jest.fn().mockResolvedValue(0),
+            invalidate: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: RateLimitService,
+          useValue: {
+            checkRateLimit: jest.fn().mockResolvedValue(true),
+            incrementUsage: jest.fn().mockResolvedValue(0),
+          },
+        },
+        {
+          provide: EVENT_BUS_SERVICE,
+          useValue: {
+            publish: jest.fn().mockResolvedValue(undefined),
+            subscribe: jest.fn().mockResolvedValue(undefined),
+          },
+        },
       ],
     })
       .overrideInterceptor(CacheInterceptor)

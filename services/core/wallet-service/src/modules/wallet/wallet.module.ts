@@ -8,11 +8,7 @@ import { WalletRepository } from './wallet.repository.js';
 import { DatabaseModule } from '../database/database.module.js';
 
 @Module({
-  imports: [
-    ConfigModule,
-    DatabaseModule,
-    JwtConfigModule,
-  ],
+  imports: [ConfigModule, DatabaseModule, JwtConfigModule],
   controllers: [WalletController],
   providers: [WalletService, WalletRepository],
   exports: [WalletService, WalletRepository, DatabaseModule],

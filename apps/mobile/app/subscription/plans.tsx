@@ -1,428 +1,236 @@
+'use client';
 import { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  RefreshControl,
-  Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../src/contexts/AuthContext';
-import {
-  subscriptionApi,
-  type SubscriptionPlan,
-  type Subscription,
-} from '../../src/api/subscription';
-import { colors, typography, spacing, radius } from '../../src/theme';
+import { apiClient } from '../../src/api/client';
+import { LoadingState } from '../../src/components/StateContainers';
+import { useWallet } from '../../src/contexts/WalletContext';
+import type { SubscriptionPlan } from '../../src/types/api';
 
-export default function PlansScreen() {
+export default function SubscriptionPlansScreen() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { wallet } = useWallet();
+
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
-  const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
+  const [currentPlan, setCurrentPlan] = useState<SubscriptionPlan | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  const walletBalance = wallet?.balance || 0;
 
-  const loadData = async () => {
+  const loadSubscriptionData = async () => {
+    setIsLoading(true);
     try {
-      const [plansResponse, subResponse] = await Promise.all([
-        subscriptionApi.getPlans(),
-        subscriptionApi.getCurrentSubscription().catch(() => ({ success: false, data: null })),
+      const [plansRes, currentRes] = await Promise.all([
+        apiClient.get<SubscriptionPlan[]>('/api/v1/subscriptions/plans'),
+        apiClient.get<SubscriptionPlan>('/api/v1/subscriptions/current').catch(() => null),
       ]);
 
-      if (plansResponse.success && plansResponse.data) {
-        setPlans(plansResponse.data);
+      if (plansRes) {
+        setPlans(Array.isArray(plansRes) ? plansRes : []);
       }
 
-      if (subResponse.success && subResponse.data) {
-        setCurrentSubscription(subResponse.data);
+      if (currentRes) {
+        setCurrentPlan(Array.isArray(currentRes) ? currentRes[0] : currentRes);
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Failed to load subscription data:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const onRefresh = async () => {
-    setIsRefreshing(true);
-    await loadData();
-    setIsRefreshing(false);
-  };
+  useEffect(() => {
+    loadSubscriptionData();
+  }, []);
 
-  const handleSubscribe = (plan: SubscriptionPlan) => {
-    if (!isAuthenticated) {
-      Alert.alert('Sign In Required', 'Please sign in to subscribe', [
+  const handleSubscribe = () => {
+    if (!selectedPlan) return;
+    Alert.alert(
+      'Confirm Subscription',
+      `Subscribe to ${selectedPlan.name} for ₦${selectedPlan.price.toLocaleString()}/${selectedPlan.duration} days?`,
+      [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Sign In', onPress: () => router.push('/(auth)/login') },
-      ]);
-      return;
-    }
-
-    if (currentSubscription?.planId === plan.id && currentSubscription?.status === 'active') {
-      Alert.alert('Already Subscribed', 'You are already subscribed to this plan.');
-      return;
-    }
-
-    setSelectedPlan(plan);
-    router.push(
-      `/subscription/payment?planId=${plan.id}&planName=${encodeURIComponent(plan.name)}&price=${plan.price}&currency=${plan.currency}`
+        {
+          text: 'Subscribe',
+          onPress: () =>
+            router.push(
+              `/subscription/payment?planId=${selectedPlan.id}&planName=${encodeURIComponent(selectedPlan.name)}&price=${selectedPlan.price}&currency=NGN`
+            ),
+        },
+      ]
     );
-  };
-
-  const formatPrice = (price: number, currency: string) => {
-    return `${currency === 'NGN' ? '₦' : '$'}${price.toLocaleString()}`;
-  };
-
-  const getIntervalLabel = (interval?: string) => {
-    switch (interval) {
-      case 'monthly':
-        return '/month';
-      case 'yearly':
-        return '/year';
-      default:
-        return '';
-    }
-  };
-
-  const isCurrentPlan = (plan: SubscriptionPlan) => {
-    return currentSubscription?.planId === plan.id && currentSubscription?.status === 'active';
   };
 
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={colors.primary[500]} />
-        </View>
+        <LoadingState text="Loading subscription plans..." />
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={onRefresh}
-            tintColor={colors.primary[500]}
-          />
-        }
-      >
+      <ScrollView style={styles.content}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Text style={styles.backText}>← Back</Text>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Subscription Plans</Text>
-          <Text style={styles.subtitle}>Choose the plan that works for you</Text>
         </View>
 
-        {currentSubscription && currentSubscription.status === 'active' && (
-          <View style={styles.currentPlanBanner}>
-            <Text style={styles.currentPlanLabel}>Your current plan</Text>
-            <Text style={styles.currentPlanName}>
-              {currentSubscription.plan?.name || 'Active Plan'}
-            </Text>
-            <TouchableOpacity onPress={() => router.push('/subscription/current')}>
-              <Text style={styles.manageLink}>Manage Subscription →</Text>
+        {currentPlan && (
+          <View style={styles.currentPlan}>
+            <Text style={styles.currentPlanTitle}>Current Plan</Text>
+            <Text style={styles.currentPlanName}>{currentPlan.name}</Text>
+            <Text style={styles.currentPlanInfo}>Renews in {currentPlan.duration} days</Text>
+          </View>
+        )}
+
+        <View style={styles.plansSection}>
+          <Text style={styles.sectionTitle}>Available Plans</Text>
+          {plans.length === 0 ? (
+            <Text style={styles.emptyText}>No subscription plans available</Text>
+          ) : (
+            plans.map((plan) => (
+              <TouchableOpacity
+                key={plan.id}
+                style={[styles.planCard, selectedPlan?.id === plan.id && styles.planCardSelected]}
+                onPress={() => setSelectedPlan(plan)}
+              >
+                <View style={styles.planHeader}>
+                  <Text style={styles.planName}>{plan.name}</Text>
+                  {plan.tier && (
+                    <View style={styles.tierBadge}>
+                      <Text style={styles.tierText}>{plan.tier}</Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={styles.planPrice}>
+                  ₦{plan.price.toLocaleString()}
+                  <Text style={styles.planPeriod}>/{plan.duration} days</Text>
+                </Text>
+                {plan.features && plan.features.length > 0 && (
+                  <View style={styles.featuresList}>
+                    {plan.features.slice(0, 3).map((feature, idx) => (
+                      <Text key={idx} style={styles.featureItem}>
+                        ✓ {feature}
+                      </Text>
+                    ))}
+                    {plan.features.length > 3 && (
+                      <Text style={styles.moreFeatures}>+{plan.features.length - 3} more</Text>
+                    )}
+                  </View>
+                )}
+              </TouchableOpacity>
+            ))
+          )}
+        </View>
+
+        {selectedPlan && (
+          <View style={styles.checkoutSection}>
+            <Text style={styles.checkoutTitle}>Confirm Selection</Text>
+            <Text style={styles.checkoutName}>{selectedPlan.name}</Text>
+            <Text style={styles.checkoutPrice}>₦{selectedPlan.price.toLocaleString()}</Text>
+            <TouchableOpacity
+              style={[
+                styles.buyButton,
+                walletBalance < selectedPlan.price && styles.insufficientFunds,
+              ]}
+              onPress={handleSubscribe}
+              disabled={walletBalance < selectedPlan.price}
+            >
+              <Text style={styles.buyButtonText}>
+                {walletBalance >= selectedPlan.price ? 'Subscribe Now' : 'Insufficient Funds'}
+              </Text>
             </TouchableOpacity>
           </View>
         )}
-
-        {plans.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>📋</Text>
-            <Text style={styles.emptyText}>No plans available</Text>
-            <Text style={styles.emptySubtext}>Check back later for new subscription options</Text>
-          </View>
-        ) : (
-          <View style={styles.plansContainer}>
-            {plans.map((plan) => {
-              const active = isCurrentPlan(plan);
-              return (
-                <TouchableOpacity
-                  key={plan.id}
-                  style={[styles.planCard, active && styles.planCardActive]}
-                  onPress={() => handleSubscribe(plan)}
-                  disabled={active}
-                  activeOpacity={active ? 1 : 0.7}
-                >
-                  {active && (
-                    <View style={styles.activeBadge}>
-                      <Text style={styles.activeBadgeText}>CURRENT</Text>
-                    </View>
-                  )}
-
-                  <View style={styles.planHeader}>
-                    <Text style={styles.planName}>{plan.name}</Text>
-                    {plan.tier && (
-                      <View
-                        style={[styles.tierBadge, { backgroundColor: getTierColor(plan.tier) }]}
-                      >
-                        <Text style={styles.tierText}>{plan.tier}</Text>
-                      </View>
-                    )}
-                  </View>
-
-                  {plan.description && (
-                    <Text style={styles.planDescription}>{plan.description}</Text>
-                  )}
-
-                  <View style={styles.priceRow}>
-                    <Text style={styles.price}>{formatPrice(plan.price, plan.currency)}</Text>
-                    <Text style={styles.interval}>{getIntervalLabel(plan.interval)}</Text>
-                  </View>
-
-                  {plan.features && plan.features.length > 0 && (
-                    <View style={styles.featuresContainer}>
-                      {plan.features.map((feature, index) => (
-                        <View key={index} style={styles.featureRow}>
-                          <Text style={styles.featureCheck}>✓</Text>
-                          <Text style={styles.featureText}>{feature}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-
-                  {!active && (
-                    <TouchableOpacity
-                      style={[
-                        styles.subscribeButton,
-                        selectedPlan?.id === plan.id && styles.subscribeButtonLoading,
-                      ]}
-                      onPress={() => handleSubscribe(plan)}
-                      disabled={selectedPlan?.id === plan.id}
-                    >
-                      {selectedPlan?.id === plan.id ? (
-                        <ActivityIndicator color="#fff" size="small" />
-                      ) : (
-                        <Text style={styles.subscribeButtonText}>Subscribe Now</Text>
-                      )}
-                    </TouchableOpacity>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
-
-        <View style={styles.bottomPadding} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function getTierColor(tier: string): string {
-  switch (tier.toLowerCase()) {
-    case 'basic':
-      return colors.light[500];
-    case 'premium':
-      return colors.primary[500];
-    case 'enterprise':
-      return colors.accent.gold;
-    default:
-      return colors.primary[500];
-  }
-}
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.bg.primary,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  scrollContent: {
-    paddingBottom: 40,
-  },
+  container: { flex: 1, backgroundColor: '#1A0A0A' },
+  content: { flex: 1 },
   header: {
-    padding: spacing.lg,
-    paddingTop: spacing.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    paddingTop: 50,
+    backgroundColor: '#1a1a1a',
   },
   backButton: {
-    marginBottom: spacing.md,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#333',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  backText: {
-    color: colors.primary[500],
-    fontSize: typography.fontSize.base,
-    fontWeight: typography.fontWeight.semibold,
+  backIcon: { color: '#fff', fontSize: 20 },
+  title: { color: '#fff', fontSize: 18, fontWeight: '600', marginLeft: 'auto' },
+  currentPlan: {
+    backgroundColor: '#140808',
+    padding: 16,
+    borderRadius: 12,
+    margin: 16,
+    alignItems: 'center',
   },
-  title: {
-    fontSize: typography.fontSize.xxl,
-    fontWeight: typography.fontWeight.bold,
-    color: colors.text.primary,
-    marginBottom: spacing.xs,
-  },
-  subtitle: {
-    fontSize: typography.fontSize.base,
-    color: colors.text.secondary,
-  },
-  currentPlanBanner: {
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.lg,
-    padding: spacing.lg,
-    backgroundColor: colors.bg.tertiary,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.primary[500],
-  },
-  currentPlanLabel: {
-    fontSize: typography.fontSize.xs,
-    color: colors.text.tertiary,
-    textTransform: 'uppercase',
-    fontWeight: typography.fontWeight.semibold,
-    marginBottom: spacing.xs,
-  },
-  currentPlanName: {
-    fontSize: typography.fontSize.lg,
-    fontWeight: typography.fontWeight.bold,
-    color: colors.text.primary,
-    marginBottom: spacing.sm,
-  },
-  manageLink: {
-    color: colors.primary[500],
-    fontSize: typography.fontSize.sm,
-    fontWeight: typography.fontWeight.semibold,
-  },
-  plansContainer: {
-    paddingHorizontal: spacing.lg,
-    gap: spacing.lg,
-  },
+  currentPlanTitle: { color: '#9A8A7A', fontSize: 12, marginBottom: 4 },
+  currentPlanName: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  currentPlanInfo: { color: '#6A5A4A', fontSize: 12, marginTop: 4 },
+  plansSection: { paddingHorizontal: 16 },
+  sectionTitle: { color: '#fff', fontSize: 20, fontWeight: '600', marginBottom: 16 },
+  emptyText: { color: '#9A8A7A', textAlign: 'center', padding: 40 },
   planCard: {
-    backgroundColor: colors.bg.tertiary,
-    borderRadius: radius.xl,
-    padding: spacing.xl,
+    backgroundColor: '#140808',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
     borderWidth: 1,
-    borderColor: colors.border.subtle,
+    borderColor: '#2A1A1A',
   },
-  planCardActive: {
-    borderColor: colors.primary[500],
-  },
-  activeBadge: {
-    position: 'absolute',
-    top: spacing.md,
-    right: spacing.md,
-    backgroundColor: colors.primary[500],
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.pill,
-  },
-  activeBadgeText: {
-    color: '#fff',
-    fontSize: typography.fontSize.xs,
-    fontWeight: typography.fontWeight.bold,
-  },
+  planCardSelected: { borderColor: '#E8420A', backgroundColor: 'rgba(232,66,10,0.15)' },
   planHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
+    marginBottom: 8,
   },
-  planName: {
-    fontSize: typography.fontSize.xl,
-    fontWeight: typography.fontWeight.bold,
-    color: colors.text.primary,
-  },
+  planName: { color: '#fff', fontSize: 16, fontWeight: '600' },
   tierBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: radius.pill,
+    backgroundColor: '#E8420A',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
-  tierText: {
-    color: '#fff',
-    fontSize: typography.fontSize.xs,
-    fontWeight: typography.fontWeight.bold,
-    textTransform: 'uppercase',
-  },
-  planDescription: {
-    fontSize: typography.fontSize.sm,
-    color: colors.text.secondary,
-    marginBottom: spacing.lg,
-    lineHeight: 20,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: spacing.xs,
-    marginBottom: spacing.lg,
-  },
-  price: {
-    fontSize: typography.fontSize.hero,
-    fontWeight: typography.fontWeight.extrabold,
-    color: colors.primary[500],
-  },
-  interval: {
-    fontSize: typography.fontSize.base,
-    color: colors.text.secondary,
-  },
-  featuresContainer: {
-    gap: spacing.sm,
-    marginBottom: spacing.xl,
-  },
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  featureCheck: {
-    color: colors.success[500],
-    fontSize: typography.fontSize.base,
-    fontWeight: typography.fontWeight.bold,
-  },
-  featureText: {
-    fontSize: typography.fontSize.sm,
-    color: colors.text.secondary,
-    flex: 1,
-  },
-  subscribeButton: {
-    backgroundColor: colors.primary[500],
-    paddingVertical: spacing.md,
-    borderRadius: radius.lg,
+  tierText: { color: '#fff', fontSize: 10, fontWeight: '600' },
+  planPrice: { color: '#fff', fontSize: 18, fontWeight: '700', marginBottom: 8 },
+  planPeriod: { color: '#9A8A7A', fontSize: 14 },
+  featuresList: { marginTop: 8 },
+  featureItem: { color: '#9A8A7A', fontSize: 13, marginBottom: 4 },
+  moreFeatures: { color: '#6A5A4A', fontSize: 13 },
+  checkoutSection: {
+    margin: 16,
+    padding: 16,
+    backgroundColor: '#140808',
+    borderRadius: 12,
     alignItems: 'center',
   },
-  subscribeButtonLoading: {
-    opacity: 0.7,
+  checkoutTitle: { color: '#9A8A7A', fontSize: 12, marginBottom: 4 },
+  checkoutName: { color: '#fff', fontSize: 16, fontWeight: '600', marginBottom: 4 },
+  checkoutPrice: { color: '#E8420A', fontSize: 18, fontWeight: '700', marginBottom: 16 },
+  buyButton: {
+    backgroundColor: '#E8420A',
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 8,
   },
-  subscribeButtonText: {
-    color: '#fff',
-    fontSize: typography.fontSize.md,
-    fontWeight: typography.fontWeight.bold,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: spacing.xl,
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: spacing.md,
-  },
-  emptyText: {
-    fontSize: typography.fontSize.lg,
-    fontWeight: typography.fontWeight.semibold,
-    color: colors.text.primary,
-    marginBottom: spacing.xs,
-  },
-  emptySubtext: {
-    fontSize: typography.fontSize.sm,
-    color: colors.text.tertiary,
-    textAlign: 'center',
-  },
-  bottomPadding: {
-    height: 40,
-  },
+  insufficientFunds: { opacity: 0.5 },
+  buyButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });

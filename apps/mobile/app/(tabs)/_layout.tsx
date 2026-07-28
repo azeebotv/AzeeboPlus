@@ -17,6 +17,7 @@ const TAB_ICONS: Record<string, { active: string; inactive: string }> = {
   home: { active: '◉', inactive: '○' },
   watch: { active: '▶', inactive: '▷' },
   rewards: { active: '★', inactive: '☆' },
+  tips: { active: '♥', inactive: '♡' },
   profile: { active: '●', inactive: '○' },
 };
 
@@ -230,6 +231,15 @@ export default function TabsLayout() {
             title: 'Rewards',
             tabBarIcon: ({ focused }: { focused: boolean }) => (
               <TabIcon name="rewards" focused={focused} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="tipping"
+          options={{
+            title: 'Tips',
+            tabBarIcon: ({ focused }: { focused: boolean }) => (
+              <TabIcon name="tips" focused={focused} />
             ),
           }}
         />

@@ -370,4 +370,56 @@ export const contentApi = {
   }): Promise<ApiResponse<ContentItem>> => {
     return apiClient.post<ApiResponse<ContentItem>>('/api/v1/content', data);
   },
+
+  createContentWithFile: async (data: {
+    title: string;
+    description?: string;
+    universe: string;
+    contentType: string;
+    fileUri: string;
+    fileType: string;
+    fileName: string;
+  }): Promise<ApiResponse<{ id: string }>> => {
+    const formData = new FormData();
+    formData.append('title', data.title);
+    if (data.description) formData.append('description', data.description);
+    formData.append('universeId', data.universe);
+    formData.append('contentType', data.contentType);
+    formData.append('file', {
+      uri: data.fileUri,
+      type: data.fileType,
+      name: data.fileName,
+    } as unknown as Blob);
+    return apiClient.upload<ApiResponse<{ id: string }>>('/api/v1/content', formData);
+  },
+
+  uploadFile: async (
+    contentId: string,
+    fileUri: string,
+    fileType: string,
+    fileName: string
+  ): Promise<ApiResponse<{ id: string }>> => {
+    const formData = new FormData();
+    formData.append('file', {
+      uri: fileUri,
+      type: fileType,
+      name: fileName,
+    } as unknown as Blob);
+    return apiClient.upload<ApiResponse<{ id: string }>>(
+      `/api/v1/content/${contentId}/media`,
+      formData
+    );
+  },
+
+  updateContent: async (
+    contentId: string,
+    data: Partial<{
+      title: string;
+      description: string;
+      isPremium: boolean;
+      tags: string[];
+    }>
+  ): Promise<ApiResponse<ContentItem>> => {
+    return apiClient.patch<ApiResponse<ContentItem>>(`/api/v1/content/${contentId}`, data);
+  },
 };

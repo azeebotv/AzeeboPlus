@@ -17,6 +17,7 @@ jest.mock('@azeebo/shared-services', () => ({
 describe('ModerationService', () => {
   let service: ModerationService;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mockPrismaService: Record<string, any> = {
     moderationCase: {
       create: jest.fn(),
@@ -59,7 +60,7 @@ describe('ModerationService', () => {
       findUnique: jest.fn(),
       update: jest.fn(),
     },
-    $transaction: jest.fn(async (fn: any) => fn(mockPrismaService)),
+    $transaction: jest.fn(async (fn: (tx: unknown) => unknown) => fn(mockPrismaService)),
   };
 
   const mockSafetyScanningService = {
@@ -248,7 +249,10 @@ describe('ModerationService', () => {
         skip: 0,
         take: 20,
         orderBy: { createdAt: 'desc' },
-        include: { report: true, user: { select: { id: true, displayName: true, avatar: true, email: true } } },
+        include: {
+          report: true,
+          user: { select: { id: true, displayName: true, avatar: true, email: true } },
+        },
       });
     });
 
@@ -267,7 +271,10 @@ describe('ModerationService', () => {
         skip: 0,
         take: 20,
         orderBy: { createdAt: 'desc' },
-        include: { report: true, user: { select: { id: true, displayName: true, avatar: true, email: true } } },
+        include: {
+          report: true,
+          user: { select: { id: true, displayName: true, avatar: true, email: true } },
+        },
       });
     });
 
@@ -286,7 +293,10 @@ describe('ModerationService', () => {
         skip: 0,
         take: 20,
         orderBy: { createdAt: 'desc' },
-        include: { report: true, user: { select: { id: true, displayName: true, avatar: true, email: true } } },
+        include: {
+          report: true,
+          user: { select: { id: true, displayName: true, avatar: true, email: true } },
+        },
       });
     });
   });

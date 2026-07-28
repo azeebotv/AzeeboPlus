@@ -20,7 +20,10 @@ describe('CacheService', () => {
     mockRedis.keys.mockReset();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [CacheService, { provide: 'default_IORedisModuleConnectionToken', useValue: mockRedis }],
+      providers: [
+        CacheService,
+        { provide: 'default_IORedisModuleConnectionToken', useValue: mockRedis },
+      ],
     }).compile();
 
     service = module.get<CacheService>(CacheService);

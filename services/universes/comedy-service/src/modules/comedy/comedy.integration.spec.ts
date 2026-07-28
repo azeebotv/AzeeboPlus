@@ -180,7 +180,7 @@ describe('ComedyService Integration - Cross-Service Communication', () => {
           eventName: 'challenge_participated',
           userId: 'user-1',
           universe: 'comedy',
-        }),
+        })
       );
     });
 

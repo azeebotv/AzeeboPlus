@@ -2,6 +2,55 @@
 
 import type { ApiResponse, ContentItem, PaginatedResponse, RequestClient, User } from './base';
 
+export interface Challenge {
+  id: string;
+  title: string;
+  description: string;
+  rules: string[];
+  rewardPoints: number;
+  participantCount: number;
+  maxParticipants?: number;
+  status: 'active' | 'upcoming' | 'ended';
+  startDate: string;
+  endDate: string;
+  creator: { id: string; name: string; avatar?: string };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChallengeSubmission {
+  id: string;
+  challengeId: string;
+  challengeTitle: string;
+  contentUrl: string;
+  description: string;
+  status: 'submitted' | 'under_review' | 'approved' | 'rejected';
+  reviewerNote?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Subscriber {
+  id: string;
+  userId: string;
+  displayName: string;
+  avatar?: string;
+  subscribedAt: string;
+  plan?: string;
+  isGifted?: boolean;
+}
+
+export interface SubscriberStats {
+  totalSubscribers: number;
+  newThisWeek: number;
+  newThisMonth: number;
+  churnRate: number;
+  demographics: {
+    ageGroups: { range: string; count: number; percentage: number }[];
+    topRegions: { region: string; count: number; percentage: number }[];
+  };
+}
+
 export function createCreatorMethods(client: RequestClient) {
   return {
     getCreators: async (
@@ -105,6 +154,141 @@ export function createCreatorMethods(client: RequestClient) {
         commentsChange: number;
         followersChange: number;
       }>('/api/v1/creators/stats');
+    },
+
+    getChallenges: async (
+      page = 1,
+      limit = 20
+    ): Promise<
+      ApiResponse<{
+        items: Challenge[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      }>
+    > => {
+      return client.request<{
+        items: Challenge[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      }>(`/api/v1/challenges/active?page=${page}&limit=${limit}`);
+    },
+
+    getMyChallengeSubmissions: async (
+      page = 1,
+      limit = 20
+    ): Promise<
+      ApiResponse<{
+        items: ChallengeSubmission[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      }>
+    > => {
+      return client.request<{
+        items: ChallengeSubmission[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      }>(`/api/v1/challenges/my-submissions?page=${page}&limit=${limit}`);
+    },
+
+    submitChallengeEntry: async (data: {
+      challengeId: string;
+      contentUrl: string;
+      description: string;
+    }): Promise<ApiResponse<ChallengeSubmission>> => {
+      return client.request<ChallengeSubmission>('/api/v1/challenges/submit', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+
+    getSubscribers: async (
+      page = 1,
+      limit = 20
+    ): Promise<ApiResponse<{ stats: SubscriberStats; subscribers: Subscriber[] }>> => {
+      return client.request<{ stats: SubscriberStats; subscribers: Subscriber[] }>(
+        `/api/v1/creator/subscribers?page=${page}&limit=${limit}`
+      );
+    },
+
+    getSubscriberStats: async (): Promise<ApiResponse<SubscriberStats>> => {
+      return client.request<SubscriberStats>('/api/v1/creator/subscribers/stats');
+    },
+
+    sendTip: async (
+      creatorId: string,
+      amount: number,
+      message?: string
+    ): Promise<
+      ApiResponse<{
+        tipId: string;
+        amount: number;
+        tier: string | null;
+        balance: number;
+        message: string;
+      }>
+    > => {
+      return client.request<{
+        tipId: string;
+        amount: number;
+        tier: string | null;
+        balance: number;
+        message: string;
+      }>(`/api/v1/creators/tips/${creatorId}`, {
+        method: 'POST',
+        body: JSON.stringify({ amount, message }),
+      });
+    },
+
+    getTipLeaderboard: async (
+      creatorId: string,
+      period = 'all'
+    ): Promise<
+      ApiResponse<{
+        entries: Array<{ userId: string; totalAmount: number; tier: string }>;
+        period: string;
+      }>
+    > => {
+      return client.request<{
+        entries: Array<{ userId: string; totalAmount: number; tier: string }>;
+        period: string;
+      }>(`/api/v1/creators/tips/leaderboard/${creatorId}?period=${period}`);
+    },
+
+    getTipStats: async (
+      creatorId: string
+    ): Promise<ApiResponse<{ totalTips: number; totalAmount: number; topTier: string | null }>> => {
+      return client.request<{ totalTips: number; totalAmount: number; topTier: string | null }>(
+        `/api/v1/creators/tips/stats/${creatorId}`
+      );
+    },
+
+    getMyTips: async (
+      page = 1,
+      limit = 20
+    ): Promise<
+      ApiResponse<{
+        items: Array<{ id: string; creatorId: string; amount: number; tier: string | null; message: string | null; createdAt: string }>;
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      }>
+    > => {
+      return client.request<{
+        items: Array<{ id: string; creatorId: string; amount: number; tier: string | null; message: string | null; createdAt: string }>;
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      }>(`/api/v1/creators/users/me/tips?page=${page}&limit=${limit}`);
     },
   };
 }

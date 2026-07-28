@@ -162,6 +162,14 @@ describe('CreatorsService', () => {
             productEvent: {
               count: jest.fn(),
             },
+            tipLeaderboard: {
+              findUnique: jest.fn(),
+              upsert: jest.fn(),
+            },
+            exclusiveContent: {
+              findMany: jest.fn(),
+              create: jest.fn(),
+            },
             $transaction: jest.fn(async (callback) => callback(module.get(PrismaService))),
           },
         },

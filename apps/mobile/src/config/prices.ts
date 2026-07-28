@@ -15,10 +15,12 @@ import {
 
 export const CURRENCY = '₦';
 
-// Simple console logger for pricing module
 const log = {
   warn: (msg: string, ...args: unknown[]) => {
-    if (__DEV__) console.warn(`[Pricing] ${msg}`, ...args);
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.warn(`[Pricing] ${msg}`, ...args);
+    }
   },
 };
 

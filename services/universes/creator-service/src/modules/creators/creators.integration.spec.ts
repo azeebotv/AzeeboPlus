@@ -7,8 +7,23 @@ import { NotFoundException, BadRequestException } from '@nestjs/common';
 jest.mock('zod', () => {
   const chainable = () => {
     const obj: Record<string, jest.Mock> = {};
-    const methods = ['optional', 'default', 'url', 'email', 'min', 'max', 'positive', 'transform', 'regex', 'nullable', 'trim', 'safeParse'];
-    methods.forEach(m => { obj[m] = jest.fn().mockReturnValue(obj); });
+    const methods = [
+      'optional',
+      'default',
+      'url',
+      'email',
+      'min',
+      'max',
+      'positive',
+      'transform',
+      'regex',
+      'nullable',
+      'trim',
+      'safeParse',
+    ];
+    methods.forEach((m) => {
+      obj[m] = jest.fn().mockReturnValue(obj);
+    });
     return obj;
   };
   const z = {

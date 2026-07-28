@@ -12,9 +12,8 @@ import { AuthGuard } from '@nestjs/passport';
 import * as bcrypt from 'bcrypt';
 
 jest.mock('@azeebo/shared-services', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { JwtModule } = require('@nestjs/jwt');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
+
   const { ConfigModule, ConfigService } = require('@nestjs/config');
 
   const mockCacheServiceInstance = {
@@ -45,17 +44,13 @@ jest.mock('@azeebo/shared-services', () => {
     cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
     CacheModule: {
       module: class {},
-      providers: [
-        { provide: MockCacheService, useValue: mockCacheServiceInstance },
-      ],
+      providers: [{ provide: MockCacheService, useValue: mockCacheServiceInstance }],
       exports: [MockCacheService],
       global: true,
     },
     RedisModule: {
       module: class {},
-      providers: [
-        { provide: MockRedisService, useValue: mockRedisServiceInstance },
-      ],
+      providers: [{ provide: MockRedisService, useValue: mockRedisServiceInstance }],
       exports: [MockRedisService],
       global: true,
     },
@@ -64,7 +59,7 @@ jest.mock('@azeebo/shared-services', () => {
       imports: [
         JwtModule.registerAsync({
           imports: [ConfigModule],
-          useFactory: (configService: any) => ({
+          useFactory: (configService: { get: (key: string, defaultValue?: string) => string }) => ({
             secret: configService.get('JWT_ACCESS_SECRET') ?? '',
             signOptions: {
               expiresIn: configService.get('JWT_EXPIRES_IN', '30m'),
@@ -196,10 +191,12 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
         delete: jest.fn().mockResolvedValue(0),
       })
       .overrideProvider(JwtService)
-      .useValue(new JwtService({
-        secret: 'test-jwt-secret-for-integration',
-        signOptions: { expiresIn: '15m' },
-      }))
+      .useValue(
+        new JwtService({
+          secret: 'test-jwt-secret-for-integration',
+          signOptions: { expiresIn: '15m' },
+        })
+      )
       .overrideGuard(AuthGuard('jwt'))
       .useClass(MockAuthGuard)
       .overrideGuard(RateLimitGuard)
@@ -216,17 +213,23 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
       })
     );
     // Mock ServiceAuthGuard behavior: set req.user for authenticated routes
-    app.use((req: { headers: { authorization?: string }; user?: unknown }, _res: unknown, next: () => void) => {
-      if (req.headers.authorization && !req.user) {
-        req.user = {
-          id: testUser.id,
-          sub: testUser.id,
-          email: testUser.email,
-          role: testUser.role,
-        };
+    app.use(
+      (
+        req: { headers: { authorization?: string }; user?: unknown },
+        _res: unknown,
+        next: () => void
+      ) => {
+        if (req.headers.authorization && !req.user) {
+          req.user = {
+            id: testUser.id,
+            sub: testUser.id,
+            email: testUser.email,
+            role: testUser.role,
+          };
+        }
+        next();
       }
-      next();
-    });
+    );
     await app.init();
 
     jwtService = moduleFixture.get<JwtService>(JwtService);

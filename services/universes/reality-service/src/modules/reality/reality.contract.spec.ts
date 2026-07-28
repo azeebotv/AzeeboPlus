@@ -366,9 +366,7 @@ describe('Reality Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get(
-        '/reality/shows/show-1/leaderboard'
-      );
+      const response = await request(app.getHttpServer()).get('/reality/shows/show-1/leaderboard');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({

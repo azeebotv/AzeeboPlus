@@ -39,9 +39,7 @@ interface AuthenticatedRequest {
 @Controller('wallet')
 @UseInterceptors(CacheInterceptor)
 export class WalletController {
-  constructor(
-    @Inject(WalletService) private readonly walletService: WalletService
-  ) {}
+  constructor(@Inject(WalletService) private readonly walletService: WalletService) {}
 
   @Get()
   @Cache({ key: 'wallet:balance', ttl: 60 })

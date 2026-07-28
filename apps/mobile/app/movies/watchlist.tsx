@@ -1,14 +1,13 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { apiClient } from '../../src/api/client';
-import { ApiResponse } from '../../src/types/api';
-
-type ListResponse<T> = T[] | ApiResponse<T[]>;
+import { userApi } from '../../src/api/user';
+import { contentApi } from '../../src/api';
+import { logger } from '../../src/utils/logger';
 
 interface WatchlistMovie {
   id: string;
@@ -24,36 +23,92 @@ type SortOption = 'recent' | 'rating' | 'title';
 export default function WatchlistScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const isDark = colorScheme === 'dark';
   const [sortBy, setSortBy] = useState<SortOption>('recent');
 
-  const watchlistQuery = useQuery({
-    queryKey: ['movies', 'watchlist'],
+  const savedQuery = useQuery({
+    queryKey: ['user', 'saved'],
     queryFn: async () => {
-      const res = await apiClient.get<ListResponse<WatchlistMovie>>('/v1/movies/watchlist');
-      return Array.isArray(res) ? res : (res?.data ?? []);
+      const res = await userApi.getSavedItems(1, 100);
+      if (res.success && res.data) {
+        return res.data.items.map((item) => ({
+          id: item.contentId,
+          title: item.title,
+          thumbnail: item.thumbnail,
+          savedAt: item.savedAt,
+        }));
+      }
+      return [];
     },
-    staleTime: 30_000,
+    staleTime: 30000,
   });
 
-  const isLoading = watchlistQuery.isLoading;
-  const error = watchlistQuery.error?.message;
+  const watchlistQuery = useQuery({
+    queryKey: ['watchlist', 'content', savedQuery.data],
+    queryFn: async () => {
+      const savedItems = savedQuery.data ?? [];
+      if (savedItems.length === 0) return [];
+      const results = await Promise.all(
+        savedItems.map(async (item) => {
+          try {
+            const res = await contentApi.getContentById(item.id);
+            if (res.success && res.data) {
+              return {
+                id: res.data.id,
+                title: res.data.title,
+                genre: res.data.universe?.name || 'General',
+                rating: '8.5',
+                year: new Date(res.data.createdAt).getFullYear().toString(),
+                emoji: '🎬',
+              } as WatchlistMovie;
+            }
+          } catch {
+            logger.warn('Failed to fetch watchlist content');
+          }
+          return null;
+        })
+      );
+      return results.filter(Boolean) as WatchlistMovie[];
+    },
+    enabled: (savedQuery.data ?? []).length > 0,
+    staleTime: 30000,
+  });
+
+  const unsaveMutation = useMutation({
+    mutationFn: (contentId: string) => userApi.unsaveItem(contentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user', 'saved'] });
+    },
+  });
+
+  const handleRemove = useCallback(
+    (movie: WatchlistMovie) => {
+      Alert.alert('Remove', `Remove "${movie.title}" from watchlist?`, [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            unsaveMutation.mutate(movie.id, {
+              onError: () => {
+                Alert.alert('Error', 'Failed to remove from watchlist');
+              },
+            });
+          },
+        },
+      ]);
+    },
+    [unsaveMutation]
+  );
+
+  const isLoading = savedQuery.isLoading || watchlistQuery.isLoading;
+  const error = savedQuery.error?.message || watchlistQuery.error?.message;
   let movies = watchlistQuery.data ?? [];
 
   if (sortBy === 'rating')
     movies = [...movies].sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
   if (sortBy === 'title') movies = [...movies].sort((a, b) => a.title.localeCompare(b.title));
-
-  const handleRemove = (movie: WatchlistMovie) => {
-    Alert.alert('Remove', `Remove "${movie.title}" from watchlist?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Remove',
-        style: 'destructive',
-        onPress: () => Alert.alert('Removed', `${movie.title} removed from watchlist`),
-      },
-    ]);
-  };
 
   if (isLoading)
     return (
@@ -64,7 +119,13 @@ export default function WatchlistScreen() {
   if (error)
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
-        <ErrorState description={error} onRetry={() => watchlistQuery.refetch()} />
+        <ErrorState
+          description={error}
+          onRetry={() => {
+            savedQuery.refetch();
+            watchlistQuery.refetch();
+          }}
+        />
       </SafeAreaView>
     );
   if (!movies.length)
@@ -125,7 +186,11 @@ export default function WatchlistScreen() {
                 {item.genre} • {item.year}
               </Text>
             </View>
-            <TouchableOpacity style={styles.removeButton} onPress={() => handleRemove(item)}>
+            <TouchableOpacity
+              style={styles.removeButton}
+              onPress={() => handleRemove(item)}
+              disabled={unsaveMutation.isPending}
+            >
               <Text style={styles.removeIcon}>✕</Text>
             </TouchableOpacity>
           </TouchableOpacity>

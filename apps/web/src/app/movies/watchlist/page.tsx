@@ -1,6 +1,6 @@
 'use client';
-import { Suspense, lazy, useEffect, useState, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { Suspense, lazy, useState, useCallback, useEffect, useRef } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { api, ContentItem } from '@/lib/api';
@@ -11,44 +11,110 @@ import { OptimizedImage } from '@/components/OptimizedImage';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import analytics from '@/lib/analytics';
 
-// TODO: localStorage watchlist should be synced to a server-side
-// user-specific watchlist endpoint for cross-device persistence.
+const WATCHLIST_KEY = 'azeebo_watchlist';
+
+function getLocalWatchlist(): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const saved = localStorage.getItem(WATCHLIST_KEY);
+    return saved ? JSON.parse(saved) : [];
+  } catch {
+    return [];
+  }
+}
+
+function setLocalWatchlist(ids: string[]): void {
+  localStorage.setItem(WATCHLIST_KEY, JSON.stringify(ids));
+}
+
+function isAuthenticated(): boolean {
+  if (typeof window === 'undefined') return false;
+  return !!localStorage.getItem('azeebo_access_token');
+}
+
 function WatchlistPageContent(): React.JSX.Element {
-  const [watchlist, setWatchlist] = useState<string[]>([]);
+  const queryClient = useQueryClient();
+  const [localIds, setLocalIds] = useState<string[]>([]);
+  const [syncedIds, setSyncedIds] = useState<string[]>([]);
+  const isLoggedIn = isAuthenticated();
+  const initialised = useRef(false);
 
   useEffect(() => {
     analytics.pageView('movies-watchlist');
-    const saved = localStorage.getItem('azeebo_watchlist');
-    if (saved) setWatchlist(JSON.parse(saved));
+    setLocalIds(getLocalWatchlist());
   }, []);
 
-  const watchlistQuery = useQuery({
-    queryKey: ['watchlist', watchlist],
+  const savedQuery = useQuery({
+    queryKey: ['savedItems'],
     queryFn: async () => {
-      if (watchlist.length === 0) return [];
+      const res = await api.user.getSavedItems(1, 100);
+      if (res.success && res.data) {
+        const ids = res.data.items.map((i) => i.contentId);
+        setSyncedIds(ids);
+        return res.data.items;
+      }
+      return [];
+    },
+    enabled: isLoggedIn,
+    staleTime: 30000,
+  });
+
+  const allIds = isLoggedIn ? syncedIds : localIds;
+
+  const watchlistQuery = useQuery({
+    queryKey: ['watchlist', allIds],
+    queryFn: async () => {
+      if (allIds.length === 0) return [];
       const results = await Promise.all(
-        watchlist.map(async (id) => {
+        allIds.map(async (id) => {
           const res = await api.request<ContentItem>(`/api/v1/content/${id}`);
           return res.success ? res.data : null;
         })
       );
       return results.filter(Boolean) as ContentItem[];
     },
-    enabled: watchlist.length > 0,
+    enabled: allIds.length > 0,
     staleTime: 60000,
   });
 
-  const removeFromWatchlist = useCallback((id: string) => {
-    setWatchlist((prev) => {
-      const next = prev.filter((itemId) => itemId !== id);
-      localStorage.setItem('azeebo_watchlist', JSON.stringify(next));
-      return next;
-    });
-  }, []);
+  const removeMutation = useMutation({
+    mutationFn: async (contentId: string) => {
+      if (isLoggedIn) {
+        return api.user.unsaveItem(contentId);
+      }
+      return { success: true, data: { message: 'Removed locally' } } as const;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['savedItems'] });
+    },
+  });
+
+  useEffect(() => {
+    if (!initialised.current && savedQuery.data && syncedIds.length > 0) {
+      const localIds = getLocalWatchlist();
+      const merged = [...new Set([...syncedIds, ...localIds])];
+      setLocalWatchlist(merged);
+      setLocalIds(merged);
+      initialised.current = true;
+    }
+  }, [savedQuery.data, syncedIds]);
+
+  const removeFromWatchlist = useCallback(
+    (id: string) => {
+      if (isLoggedIn) {
+        removeMutation.mutate(id);
+      }
+      const next = localIds.filter((itemId) => itemId !== id);
+      setLocalWatchlist(next);
+      setLocalIds(next);
+      setSyncedIds((prev) => prev.filter((itemId) => itemId !== id));
+    },
+    [isLoggedIn, removeMutation, localIds]
+  );
 
   const movies = watchlistQuery.data ?? [];
-  const isLoading = watchlistQuery.isLoading;
-  const error = watchlistQuery.error?.message;
+  const isLoading = savedQuery.isLoading || watchlistQuery.isLoading;
+  const error = savedQuery.error?.message || watchlistQuery.error?.message;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
@@ -66,7 +132,7 @@ function WatchlistPageContent(): React.JSX.Element {
           </div>
         </ScrollReveal>
 
-        {watchlist.length === 0 ? (
+        {allIds.length === 0 && !savedQuery.isLoading ? (
           <div className="text-center py-20">
             <p className="text-4xl mb-4">🎬</p>
             <h2 className="text-xl font-bold text-white mb-2">Your watchlist is empty</h2>
@@ -99,7 +165,10 @@ function WatchlistPageContent(): React.JSX.Element {
           <ErrorState
             title="Failed to load watchlist"
             description={error}
-            onButtonPress={() => watchlistQuery.refetch()}
+            onButtonPress={() => {
+              savedQuery.refetch();
+              watchlistQuery.refetch();
+            }}
           />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -127,6 +196,7 @@ function WatchlistPageContent(): React.JSX.Element {
                       <button
                         type="button"
                         onClick={() => removeFromWatchlist(movie.id)}
+                        disabled={removeMutation.isPending}
                         className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110"
                         style={{ backgroundColor: 'rgba(239,68,68,0.8)' }}
                       >

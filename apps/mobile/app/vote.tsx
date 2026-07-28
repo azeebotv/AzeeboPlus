@@ -1,876 +1,317 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  RefreshControl,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { colors } from '../src/theme';
+import { apiClient } from '../src/api/client';
+import { LoadingState, ErrorState } from '../src/components/StateContainers';
+import { useWallet } from '../src/contexts/WalletContext';
 import { votePackages as defaultVotePackages } from '../src/config/prices';
 import { realityApi } from '../src/api/engagement';
-import { walletApi } from '../src/api/wallet';
-import { apiClient } from '../src/api/client';
-import { logger } from '../src/utils/logger';
-import { analytics } from '../src/utils/analytics';
-import { LoadingState, ErrorState } from '../src/components/StateContainers';
-import type { Contestant, RealityShow } from '../src/types/api';
+import type { RealityShow, RealityContestant } from '../src/api/engagement';
 
-interface VotePackage {
-  id: string;
-  votes: number;
-  price: number;
-  bonus?: number;
-  label: string;
-}
+const VOTE_PACKAGES = defaultVotePackages.reality;
 
-const votePackages: VotePackage[] = defaultVotePackages.standard.map((pkg) => ({
-  ...pkg,
-  label: pkg.label || `${pkg.votes} Votes${pkg.bonus ? ` + ${pkg.bonus} Bonus` : ''}`,
-}));
-
-export default function VoteScreen() {
-  const colorScheme = useColorScheme();
+export default function VotePage() {
   const router = useRouter();
   const { showId } = useLocalSearchParams<{ showId: string }>();
-  const isDark = colorScheme === 'dark';
+  const { wallet } = useWallet();
 
-  const [selectedContestant, setSelectedContestant] = useState<Contestant | null>(null);
-  const [selectedPackage, setSelectedPackage] = useState<VotePackage>(votePackages[0]);
+  const [selectedShow, setSelectedShow] = useState<RealityShow | null>(null);
+  const [contestants, setContestants] = useState<RealityContestant[]>([]);
+  const [selectedContestant, setSelectedContestant] = useState<RealityContestant | null>(null);
+  const [selectedPackage, setSelectedPackage] = useState(VOTE_PACKAGES[0]);
   const [quantity, setQuantity] = useState(1);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [voteSuccess, setVoteSuccess] = useState(false);
-  const [walletBalance, setWalletBalance] = useState(0);
-  const [contestants, setContestants] = useState<Contestant[]>([]);
-  const [showData, setShowData] = useState<RealityShow | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, [showId]);
-
-  const showName = showData?.name || 'Reality Show';
-  const votingEndsText = showData?.votingEnds || '';
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const [contestantsRes, walletRes, showRes] = await Promise.all([
-        realityApi.getContestants(showId || 'default'),
-        walletApi.getBalance(),
-        apiClient.get<RealityShow>('/v1/reality/shows/current').catch(() => null),
-      ]);
-
-      if (contestantsRes.success && contestantsRes.data) {
-        setContestants(contestantsRes.data);
-      }
-
-      if (walletRes.success && walletRes.data) {
-        setWalletBalance(walletRes.data.balance);
-      }
-
-      if (showRes) {
-        setShowData(
-          Array.isArray(showRes)
-            ? showRes[0]
-            : ((showRes as unknown as { data?: unknown[] })?.data?.[0] ?? showRes)
-        );
-      }
-    } catch (err) {
-      logger.error('Failed to load vote data:', err);
-      setError('Failed to load data. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const totalVotes =
-    selectedPackage.votes * quantity +
-    (selectedPackage.bonus ? selectedPackage.bonus * quantity : 0);
+  const walletBalance = wallet?.balance || 0;
+  const totalVotes = selectedPackage.votes * quantity;
   const totalPrice = selectedPackage.price * quantity;
   const canAfford = walletBalance >= totalPrice;
 
-  const handleVote = () => {
-    if (!canAfford) return;
-    setShowConfirmation(true);
-  };
+  const loadVoteData = async () => {
+    if (!showId) return;
+    setIsLoading(true);
+    setError(null);
 
-  const confirmVote = async () => {
     try {
-      const response = await realityApi.submitVote({
-        showId: showId || 'default',
-        contestantId: selectedContestant?.id ?? null,
-        votes: totalVotes,
-      });
-      if (!response.success) {
-        throw new Error(response.error || 'Vote submission failed');
-      }
-      setShowConfirmation(false);
-      setVoteSuccess(true);
-      try {
-        analytics.realityVoteCreated(
-          showId || 'default',
-          selectedContestant?.id ?? '',
-          totalVotes,
-          totalPrice
-        );
-      } catch {}
-      setTimeout(() => setVoteSuccess(false), 3000);
+      const [showRes, contestantsRes] = await Promise.all([
+        apiClient.get<RealityShow>(`/api/v1/reality/shows/${showId}`),
+        apiClient.get<RealityContestant[]>(`/api/v1/reality/shows/${showId}/contestants`),
+      ]);
+
+      setSelectedShow(Array.isArray(showRes) ? showRes[0] : (showRes as RealityShow));
+      setContestants(
+        Array.isArray(contestantsRes)
+          ? contestantsRes
+          : ((contestantsRes as { data?: RealityContestant[] })?.data ?? [])
+      );
     } catch (err) {
-      logger.error('Failed to submit vote:', err);
-      Alert.alert('Error', 'Failed to submit vote. Please try again.');
+      setError('Failed to load voting data');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <SafeAreaView
-        style={[
-          styles.container,
-          styles.centerContent,
-          { backgroundColor: isDark ? colors.dark[900] : colors.light[50] },
-        ]}
-      >
-        <LoadingState text="Loading..." />
-      </SafeAreaView>
-    );
+  useEffect(() => {
+    loadVoteData();
+  }, [showId]);
+
+  const handleVote = async () => {
+    if (!selectedContestant || !canAfford || !showId) return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await realityApi.submitVote({
+        showId,
+        contestantId: selectedContestant.id,
+        votes: totalVotes,
+      });
+
+      if (response.success) {
+        Alert.alert(
+          'Vote Submitted!',
+          `You voted ${totalVotes} times for ${selectedContestant.name}!`,
+          [
+            {
+              text: 'Continue Voting',
+              onPress: () => {
+                setSelectedContestant(null);
+                setQuantity(1);
+              },
+            },
+            { text: 'Back to Show', onPress: () => router.back() },
+          ]
+        );
+      } else {
+        throw new Error(response.message || 'Vote submission failed');
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to submit vote';
+      Alert.alert('Vote Failed', message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isLoading) {
+    return <LoadingState text="Loading voting options..." />;
   }
 
-  if (error) {
+  if (error || !selectedShow) {
     return (
-      <SafeAreaView
-        style={[
-          styles.container,
-          styles.centerContent,
-          { backgroundColor: isDark ? colors.dark[900] : colors.light[50] },
-        ]}
-      >
-        <ErrorState title="Failed to load" description={error} onRetry={loadData} />
-      </SafeAreaView>
+      <ErrorState
+        title="Failed to load"
+        description={error || 'Show not found'}
+        onRetry={loadVoteData}
+      />
     );
   }
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: isDark ? colors.dark[900] : colors.light[50] }]}
-    >
-      <ScrollView style={styles.scrollView}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Text style={styles.backIcon}>←</Text>
-          </TouchableOpacity>
-          <Text
-            style={[styles.headerTitle, { color: isDark ? colors.text.primary : colors.dark[900] }]}
-          >
-            Vote
-          </Text>
-          <View style={styles.walletBadge}>
-            <Text style={styles.walletIcon}>💰</Text>
-            <Text style={styles.walletBalance}>{walletBalance.toLocaleString()}</Text>
-          </View>
-        </View>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Text style={styles.backIcon}>←</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Vote</Text>
+      </View>
 
-        <View style={styles.showInfo}>
-          <Text
-            style={[styles.showTitle, { color: isDark ? colors.text.primary : colors.dark[900] }]}
-          >
-            {showName}
-          </Text>
-          {votingEndsText ? <Text style={styles.votingEnds}>{votingEndsText}</Text> : null}
-        </View>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={loadVoteData} />}
+      >
+        <Text style={styles.showTitle}>{selectedShow.title}</Text>
+        <Text style={styles.viewerCount}>{selectedShow.viewerCount} viewers</Text>
 
-        <View style={styles.contestantsSection}>
-          <Text
-            style={[
-              styles.sectionTitle,
-              { color: isDark ? colors.text.primary : colors.dark[900] },
-            ]}
-          >
-            Choose Your Contestant
-          </Text>
-          <View style={styles.contestantsList}>
-            {contestants.map((contestant) => (
-              <TouchableOpacity
-                key={contestant.id}
-                style={[
-                  styles.contestantCard,
-                  { backgroundColor: isDark ? colors.bg.tertiary : colors.light[100] },
-                  selectedContestant?.id === contestant.id && styles.contestantCardSelected,
-                  contestant.eliminated && styles.contestantCardEliminated,
-                ]}
-                onPress={() => setSelectedContestant(contestant)}
-                disabled={contestant.eliminated}
-              >
-                <View style={styles.rankBadge}>
-                  <Text style={styles.rankText}>#{contestant.rank}</Text>
-                </View>
-                <Text style={styles.contestantAvatar}>{contestant.avatar}</Text>
-                <View style={styles.contestantInfo}>
-                  <Text
-                    style={[
-                      styles.contestantName,
-                      { color: isDark ? colors.text.primary : colors.dark[900] },
-                    ]}
-                  >
-                    {contestant.name}
-                  </Text>
-                  <Text style={styles.contestantDescription}>{contestant.description}</Text>
-                  <Text style={styles.contestantVotes}>
-                    {contestant.votes.toLocaleString()} votes
-                  </Text>
-                </View>
-                {selectedContestant?.id === contestant.id && (
-                  <View style={styles.selectedIndicator}>
-                    <Text style={styles.selectedIcon}>✓</Text>
-                  </View>
-                )}
-                {contestant.eliminated && (
-                  <View style={styles.eliminatedOverlay}>
-                    <Text style={styles.eliminatedText}>ELIMINATED</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {selectedContestant && (
-          <View style={styles.voteSection}>
-            <Text
-              style={[
-                styles.sectionTitle,
-                { color: isDark ? colors.text.primary : colors.dark[900] },
-              ]}
-            >
-              Select Vote Package
-            </Text>
-            <View style={styles.packagesGrid}>
-              {votePackages.map((pkg) => (
-                <TouchableOpacity
-                  key={pkg.id}
-                  style={[
-                    styles.packageCard,
-                    { backgroundColor: isDark ? colors.bg.tertiary : colors.light[100] },
-                    selectedPackage.id === pkg.id && styles.packageCardSelected,
-                  ]}
-                  onPress={() => setSelectedPackage(pkg)}
-                >
-                  <Text
-                    style={[
-                      styles.packageVotes,
-                      { color: isDark ? colors.text.primary : colors.dark[900] },
-                    ]}
-                  >
-                    {pkg.votes} Votes
-                  </Text>
-                  {pkg.bonus && (
-                    <View style={styles.bonusBadge}>
-                      <Text style={styles.bonusText}>+{pkg.bonus} Bonus</Text>
-                    </View>
-                  )}
-                  <Text style={styles.packagePrice}>₦{pkg.price.toLocaleString()}</Text>
-                  <Text style={styles.packageLabel}>{pkg.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <View style={styles.quantitySection}>
-              <Text
-                style={[
-                  styles.quantityLabel,
-                  { color: isDark ? colors.text.primary : colors.dark[900] },
-                ]}
-              >
-                Quantity
-              </Text>
-              <View style={styles.quantityControls}>
-                <TouchableOpacity
-                  style={styles.quantityButton}
-                  onPress={() => setQuantity(Math.max(1, quantity - 1))}
-                >
-                  <Text style={styles.quantityButtonText}>−</Text>
-                </TouchableOpacity>
-                <Text
-                  style={[
-                    styles.quantityValue,
-                    { color: isDark ? colors.text.primary : colors.dark[900] },
-                  ]}
-                >
-                  {quantity}
-                </Text>
-                <TouchableOpacity
-                  style={styles.quantityButton}
-                  onPress={() => setQuantity(quantity + 1)}
-                >
-                  <Text style={styles.quantityButtonText}>+</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <View
-              style={[
-                styles.summaryCard,
-                { backgroundColor: isDark ? colors.bg.tertiary : colors.light[100] },
-              ]}
-            >
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Total Votes</Text>
-                <Text
-                  style={[
-                    styles.summaryValue,
-                    { color: isDark ? colors.text.primary : colors.dark[900] },
-                  ]}
-                >
-                  {totalVotes.toLocaleString()}
-                </Text>
-              </View>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Price per package</Text>
-                <Text style={styles.summaryPrice}>₦{selectedPackage.price.toLocaleString()}</Text>
-              </View>
-              <View style={styles.summaryDivider} />
-              <View style={styles.summaryRow}>
-                <Text
-                  style={[
-                    styles.summaryTotalLabel,
-                    { color: isDark ? colors.text.primary : colors.dark[900] },
-                  ]}
-                >
-                  Total
-                </Text>
-                <Text style={styles.summaryTotal}>₦{totalPrice.toLocaleString()}</Text>
-              </View>
-              <View style={styles.summaryRow}>
-                <Text style={styles.walletLabel}>Wallet Balance</Text>
-                <Text style={[styles.walletValue, !canAfford && styles.walletInsufficient]}>
-                  ₦{walletBalance.toLocaleString()}
-                </Text>
-              </View>
-            </View>
-
-            {!canAfford && (
-              <TouchableOpacity
-                style={styles.fundWalletButton}
-                onPress={() => router.push('/(tabs)/wallet')}
-              >
-                <Text style={styles.fundWalletText}>Fund Wallet</Text>
-              </TouchableOpacity>
-            )}
-
+        <Text style={styles.sectionTitle}>Select Contestant</Text>
+        <View style={styles.contestantList}>
+          {contestants.map((contestant) => (
             <TouchableOpacity
+              key={contestant.id}
               style={[
-                styles.voteButton,
-                (!selectedContestant || !canAfford) && styles.voteButtonDisabled,
+                styles.contestantItem,
+                selectedContestant?.id === contestant.id && styles.contestantSelected,
               ]}
-              onPress={handleVote}
-              disabled={!selectedContestant || !canAfford}
+              onPress={() => setSelectedContestant(contestant)}
             >
-              <Text style={styles.voteButtonText}>
-                {selectedContestant ? 'Vote Now' : 'Select a Contestant'}
-              </Text>
+              <View style={styles.contestantAvatar}>
+                <Text style={styles.contestantInitial}>{contestant.name[0]}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.contestantName}>{contestant.name}</Text>
+                <Text style={styles.contestantRank}>#{contestant.rank}</Text>
+              </View>
+              {selectedContestant?.id === contestant.id && <Text style={styles.checkmark}>✓</Text>}
             </TouchableOpacity>
-          </View>
-        )}
-      </ScrollView>
+          ))}
+        </View>
 
-      <Modal visible={showConfirmation} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View
-            style={[
-              styles.modalContent,
-              { backgroundColor: isDark ? colors.bg.tertiary : '#ffffff' },
-            ]}
-          >
-            <Text
-              style={[
-                styles.modalTitle,
-                { color: isDark ? colors.text.primary : colors.dark[900] },
-              ]}
+        <Text style={styles.sectionTitle}>Vote Package</Text>
+        <View style={styles.packageGrid}>
+          {VOTE_PACKAGES.map((pkg) => (
+            <TouchableOpacity
+              key={pkg.id}
+              style={[styles.packageCard, selectedPackage.id === pkg.id && styles.packageSelected]}
+              onPress={() => setSelectedPackage(pkg)}
             >
-              Confirm Your Vote
-            </Text>
-
-            <View style={styles.confirmDetails}>
-              <View style={styles.confirmRow}>
-                <Text style={styles.confirmLabel}>Contestant</Text>
-                <Text
-                  style={[
-                    styles.confirmValue,
-                    { color: isDark ? colors.text.primary : colors.dark[900] },
-                  ]}
-                >
-                  {selectedContestant?.name}
-                </Text>
-              </View>
-              <View style={styles.confirmRow}>
-                <Text style={styles.confirmLabel}>Votes</Text>
-                <Text
-                  style={[
-                    styles.confirmValue,
-                    { color: isDark ? colors.text.primary : colors.dark[900] },
-                  ]}
-                >
-                  {totalVotes.toLocaleString()}
-                </Text>
-              </View>
-              <View style={styles.confirmRow}>
-                <Text style={styles.confirmLabel}>Total Cost</Text>
-                <Text style={[styles.confirmValue, { color: colors.primary[500] }]}>
-                  ₦{totalPrice.toLocaleString()}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setShowConfirmation(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.confirmButton} onPress={confirmVote}>
-                <Text style={styles.confirmButtonText}>Confirm</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+              <Text style={styles.packageVotes}>{pkg.votes} votes</Text>
+              <Text style={styles.packagePrice}>₦{pkg.price.toLocaleString()}</Text>
+              {(pkg.bonus ?? 0) > 0 && <Text style={styles.packageBonus}>+{pkg.bonus} bonus</Text>}
+            </TouchableOpacity>
+          ))}
         </View>
-      </Modal>
 
-      <Modal visible={voteSuccess} transparent animationType="fade">
-        <View style={styles.successOverlay}>
-          <View style={styles.successContent}>
-            <Text style={styles.successIcon}>✓</Text>
-            <Text style={styles.successTitle}>Vote Successful!</Text>
-            <Text style={styles.successMessage}>
-              You voted for {selectedContestant?.name} with {totalVotes} votes
-            </Text>
-          </View>
+        <Text style={styles.sectionTitle}>Quantity</Text>
+        <View style={styles.quantityRow}>
+          <TouchableOpacity
+            style={styles.quantityBtn}
+            onPress={() => setQuantity(Math.max(1, quantity - 1))}
+          >
+            <Text style={styles.quantityText}>-</Text>
+          </TouchableOpacity>
+          <Text style={styles.quantityValue}>{quantity}</Text>
+          <TouchableOpacity style={styles.quantityBtn} onPress={() => setQuantity(quantity + 1)}>
+            <Text style={styles.quantityText}>+</Text>
+          </TouchableOpacity>
         </View>
-      </Modal>
+
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>Total: {totalVotes.toLocaleString()} votes</Text>
+          <Text style={styles.summaryPrice}>₦{totalPrice.toLocaleString()}</Text>
+        </View>
+
+        <Text style={styles.balanceLabel}>Wallet: ₦{walletBalance.toLocaleString()}</Text>
+
+        <TouchableOpacity
+          style={[
+            styles.voteButton,
+            (!selectedContestant || !canAfford || isSubmitting) && styles.disabledBtn,
+          ]}
+          onPress={handleVote}
+          disabled={!selectedContestant || !canAfford || isSubmitting}
+        >
+          <Text style={styles.voteText}>
+            {isSubmitting ? 'Submitting...' : canAfford ? 'Vote Now' : 'Insufficient Balance'}
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
+  container: { flex: 1, backgroundColor: '#1A0A0A' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     padding: 16,
-    paddingTop: 8,
+    paddingTop: 50,
+    backgroundColor: '#1a1a1a',
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.bg.secondary,
+    backgroundColor: '#333',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  backIcon: {
-    fontSize: 20,
-    color: colors.text.primary,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-  },
-  walletBadge: {
+  backIcon: { color: '#fff', fontSize: 20 },
+  headerTitle: { color: '#fff', fontSize: 18, fontWeight: '600', marginLeft: 'auto' },
+  content: { padding: 16 },
+  showTitle: { color: '#fff', fontSize: 24, fontWeight: '700', marginBottom: 8 },
+  viewerCount: { color: '#888', fontSize: 14, marginBottom: 24 },
+  sectionTitle: { color: '#fff', fontSize: 18, fontWeight: '600', marginBottom: 12 },
+  contestantList: { marginBottom: 24 },
+  contestantItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.primary[500] + '20',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    gap: 6,
-  },
-  walletIcon: {
-    fontSize: 16,
-  },
-  walletBalance: {
-    color: colors.primary[500],
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  showInfo: {
-    paddingHorizontal: 16,
-    marginBottom: 20,
-  },
-  showTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  votingEnds: {
-    color: colors.text.secondary,
-    fontSize: 14,
-  },
-  contestantsSection: {
-    paddingHorizontal: 16,
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 12,
-  },
-  contestantsList: {
-    gap: 12,
-  },
-  contestantCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    borderRadius: 16,
-    position: 'relative',
-  },
-  contestantCardSelected: {
-    borderWidth: 2,
-    borderColor: colors.primary[500],
-  },
-  contestantCardEliminated: {
-    opacity: 0.5,
-  },
-  rankBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.bg.tertiary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  rankText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.text.primary,
-  },
-  contestantAvatar: {
-    fontSize: 36,
-    marginRight: 12,
-  },
-  contestantInfo: {
-    flex: 1,
-  },
-  contestantName: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  contestantDescription: {
-    fontSize: 13,
-    color: colors.text.secondary,
-    marginBottom: 4,
-  },
-  contestantVotes: {
-    fontSize: 12,
-    color: colors.primary[500],
-    fontWeight: '600',
-  },
-  selectedIndicator: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.primary[500],
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  selectedIcon: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  eliminatedOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  eliminatedText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  voteSection: {
-    paddingHorizontal: 16,
-    marginBottom: 32,
-  },
-  packagesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 24,
-  },
-  packageCard: {
-    width: '47%',
     padding: 16,
+    backgroundColor: '#140808',
     borderRadius: 12,
-    alignItems: 'center',
-  },
-  packageCardSelected: {
-    borderWidth: 2,
-    borderColor: colors.primary[500],
-  },
-  packageVotes: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  bonusBadge: {
-    backgroundColor: colors.success[500],
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
     marginBottom: 8,
+    borderColor: '#2A1A1A',
+    borderWidth: 1,
   },
-  bonusText: {
-    color: '#ffffff',
-    fontSize: 11,
-    fontWeight: '600',
+  contestantSelected: { backgroundColor: 'rgba(232,66,10,0.15)' },
+  contestantAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#E8420A',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
-  packagePrice: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.primary[500],
-    marginBottom: 4,
+  contestantInitial: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  contestantName: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  contestantRank: { color: '#888', fontSize: 12, marginTop: 2 },
+  checkmark: { color: '#10B981', fontSize: 20, fontWeight: '700' },
+  packageGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 },
+  packageCard: {
+    flex: 1,
+    minWidth: '48%',
+    padding: 16,
+    backgroundColor: '#2a2a2a',
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
-  packageLabel: {
-    fontSize: 12,
-    color: colors.text.secondary,
-  },
-  quantitySection: {
+  packageSelected: { borderColor: '#E8420A' },
+  packageVotes: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  packagePrice: { color: '#E8420A', fontSize: 14, fontWeight: '600', marginTop: 4 },
+  packageBonus: { color: '#10B911', fontSize: 12, marginTop: 2 },
+  quantityRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 20,
+    justifyContent: 'center',
+    marginBottom: 24,
+    gap: 24,
   },
-  quantityLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  quantityControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  quantityButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.bg.secondary,
+  quantityBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#2a2a2a',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  quantityButtonText: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: colors.text.primary,
-  },
-  quantityValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    minWidth: 40,
-    textAlign: 'center',
-  },
-  summaryCard: {
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-  },
+  quantityText: { color: '#fff', fontSize: 24, fontWeight: '700' },
+  quantityValue: { fontSize: 24, fontWeight: '700', color: '#fff' },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  summaryLabel: {
-    fontSize: 14,
-    color: colors.text.secondary,
-  },
-  summaryValue: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  summaryPrice: {
-    fontSize: 14,
-    color: colors.text.secondary,
-  },
-  summaryDivider: {
-    height: 1,
-    backgroundColor: colors.bg.tertiary,
-    marginVertical: 8,
-  },
-  summaryTotalLabel: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  summaryTotal: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.primary[500],
-  },
-  walletLabel: {
-    fontSize: 14,
-    color: colors.text.secondary,
-  },
-  walletValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.success[500],
-  },
-  walletInsufficient: {
-    color: colors.error[500],
-  },
-  fundWalletButton: {
-    backgroundColor: colors.primary[500],
-    padding: 14,
+    padding: 16,
+    backgroundColor: '#140808',
     borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
-  fundWalletText: {
-    color: '#ffffff',
-    fontSize: 16,
+  summaryLabel: { color: '#888', fontSize: 14 },
+  summaryPrice: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  balanceLabel: {
+    color: '#10B911',
+    fontSize: 14,
     fontWeight: '600',
+    marginBottom: 16,
+    textAlign: 'center',
   },
   voteButton: {
-    backgroundColor: colors.primary[500],
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  voteButtonDisabled: {
-    backgroundColor: colors.bg.tertiary,
-  },
-  voteButtonText: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    paddingBottom: 40,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  confirmDetails: {
-    marginBottom: 24,
-  },
-  confirmRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  confirmLabel: {
-    fontSize: 15,
-    color: colors.text.secondary,
-  },
-  confirmValue: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  cancelButton: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 12,
-    backgroundColor: colors.bg.secondary,
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    color: colors.text.primary,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  confirmButton: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 12,
-    backgroundColor: colors.primary[500],
-    alignItems: 'center',
-  },
-  confirmButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  successOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  successContent: {
-    backgroundColor: colors.success[500],
-    padding: 32,
-    borderRadius: 20,
-    alignItems: 'center',
-  },
-  successIcon: {
-    fontSize: 48,
-    color: '#ffffff',
-    marginBottom: 16,
-  },
-  successTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#ffffff',
-    marginBottom: 8,
-  },
-  successMessage: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.9)',
-    textAlign: 'center',
-  },
-  centerContent: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-  },
-  errorText: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  retryButton: {
     backgroundColor: '#E8420A',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
   },
-  retryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  disabledBtn: { opacity: 0.5 },
+  voteText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });

@@ -10,7 +10,7 @@ jest.mock('@azeebo/shared-services', () => {
 });
 jest.mock('@azeebo/security', () => ({
   RateLimitGuard: class MockRateLimitGuard {
-    canActivate(context: any) {
+    canActivate(context: { switchToHttp: () => { getRequest: () => Record<string, unknown> } }) {
       const request = context.switchToHttp().getRequest();
       request.user = { sub: 'user-123', id: 'user-123', email: 'test@example.com', role: 'user' };
       return true;

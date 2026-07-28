@@ -433,9 +433,7 @@ describe('ReferralService Integration', () => {
         status: 'pending',
       });
 
-      await expect(service.completeReferral('ref-1', 'user-1')).rejects.toThrow(
-        NotFoundException
-      );
+      await expect(service.completeReferral('ref-1', 'user-1')).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException for self-referral', async () => {

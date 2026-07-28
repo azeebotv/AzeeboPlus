@@ -46,7 +46,7 @@ export default function CreatorAnalyticsScreen() {
 
   const loadAnalytics = async () => {
     try {
-      const response = await creatorApi.getAnalytics();
+      const response = await creatorApi.getAnalytics(timeRange);
       if (response.success && response.data) {
         // Cast to AnalyticsData since UI expects this format
         // Backend should return consistent type

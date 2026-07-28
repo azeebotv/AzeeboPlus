@@ -207,7 +207,9 @@ describe('WalletService E2E Tests', () => {
         ...mockWallet,
         balance: new Prisma.Decimal(800),
       });
-      (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ ...mockWallet, balance: new Prisma.Decimal(800) }]);
+      (prisma.$queryRaw as jest.Mock).mockResolvedValue([
+        { ...mockWallet, balance: new Prisma.Decimal(800) },
+      ]);
 
       const result = await service.debitBalance(
         'wallet-123',
@@ -265,7 +267,13 @@ describe('WalletService E2E Tests', () => {
         new Error('Transaction failed')
       );
 
-      const result = await service.debitBalance('wallet-123', 300, 'Test debit', 'ref-127', idempotencyKey);
+      const result = await service.debitBalance(
+        'wallet-123',
+        300,
+        'Test debit',
+        'ref-127',
+        idempotencyKey
+      );
 
       expect(result.success).toBe(false);
     });
@@ -329,7 +337,9 @@ describe('WalletService E2E Tests', () => {
         ...mockWallet,
         balance: new Prisma.Decimal(100),
       });
-      (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ ...mockWallet, balance: new Prisma.Decimal(100) }]);
+      (prisma.$queryRaw as jest.Mock).mockResolvedValue([
+        { ...mockWallet, balance: new Prisma.Decimal(100) },
+      ]);
 
       await expect(
         service.debitBalance('wallet-123', 200, 'Test debit', 'ref-130')
