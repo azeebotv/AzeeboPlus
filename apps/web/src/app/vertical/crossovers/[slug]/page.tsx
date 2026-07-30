@@ -50,7 +50,7 @@ function CrossoverDetailContent(): React.JSX.Element {
   const error = crossoverQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Vertical" />
 
       {isLoading ? (
@@ -96,7 +96,7 @@ function CrossoverDetailContent(): React.JSX.Element {
                     <span
                       key={universe}
                       className="px-2.5 py-0.5 rounded-full text-xs font-medium"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
+                      style={{ backgroundColor: 'rgba(255,255,255,0.1)', color: 'var(--brand-white)' }}
                     >
                       {universe}
                     </span>

@@ -101,7 +101,7 @@ export default function SubscriptionHistoryPage(): React.JSX.Element {
   const hasMore = page < totalPages;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader />
 
       <div className="max-w-3xl mx-auto py-12 px-4 sm:px-6 lg:px-8">

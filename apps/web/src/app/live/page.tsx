@@ -85,7 +85,7 @@ function LiveEventsPageContent(): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Live" />
 
       <section
@@ -178,7 +178,7 @@ function LiveEventsPageContent(): React.JSX.Element {
                       <div className="absolute top-3 left-3 flex gap-2">
                         <span
                           className="px-3 py-1 rounded-full text-xs font-semibold"
-                          style={{ backgroundColor: statusColor(event.status), color: '#fff' }}
+                          style={{ backgroundColor: statusColor(event.status), color: 'var(--brand-white)' }}
                         >
                           {event.status === 'live'
                             ? '🔴 LIVE'

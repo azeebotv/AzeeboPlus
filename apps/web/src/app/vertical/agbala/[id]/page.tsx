@@ -90,7 +90,7 @@ export default function AgbalaPathPage() {
   const characters = pathData?.characters || [];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A', color: '#F5F0EB' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
       <AppHeader active="Vertical" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
@@ -110,7 +110,7 @@ export default function AgbalaPathPage() {
             {pathConfig.icon}
           </div>
           <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>{pathConfig.name}</h1>
-          <p style={{ color: '#9A8A7A', maxWidth: 500, margin: '0 auto' }}>
+          <p style={{ color: 'var(--text-secondary)', maxWidth: 500, margin: '0 auto' }}>
             {pathConfig.description}
           </p>
         </div>
@@ -132,7 +132,7 @@ export default function AgbalaPathPage() {
               ))}
             </div>
           ) : characters.length === 0 ? (
-            <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>
+            <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>
               No characters on this path yet.
             </p>
           ) : (
@@ -151,9 +151,9 @@ export default function AgbalaPathPage() {
                     display: 'block',
                     padding: 20,
                     borderRadius: 16,
-                    border: '1px solid #2A1A1A',
+                    border: '1px solid var(--border-default)',
                     textDecoration: 'none',
-                    color: '#F5F0EB',
+                    color: 'var(--text-primary)',
                     transition: 'border-color 0.2s',
                   }}
                   onMouseEnter={(e) => {
@@ -181,7 +181,7 @@ export default function AgbalaPathPage() {
                   )}
                   <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>{char.name}</h3>
                   {char.description && (
-                    <p style={{ color: '#9A8A7A', fontSize: 12, lineHeight: 1.4 }}>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1.4 }}>
                       {char.description}
                     </p>
                   )}

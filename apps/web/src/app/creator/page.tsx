@@ -121,7 +121,7 @@ export default function CreatorDashboardPage(): React.JSX.Element {
   }
 
   return (
-    <div style={{ backgroundColor: colors.bg.primary, minHeight: '100vh', color: '#F5F0EB' }}>
+    <div style={{ backgroundColor: colors.bg.primary, minHeight: '100vh', color: 'var(--text-primary)' }}>
       <AppHeader />
       <main style={{ padding: '100px 24px 60px', maxWidth: 960, margin: '0 auto' }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Creator Dashboard</h1>
@@ -217,7 +217,7 @@ color: colors.text.primary,
                     border: `1px solid ${colors.bg.tertiary}`,
                   }}
                 >
-                  <p style={{ fontWeight: 600, fontSize: 14, color: '#F5F0EB' }}>
+                  <p style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)' }}>
                     {activity.title}
                   </p>
                   <p style={{ color: colors.text.secondary, fontSize: 12 }}>{activity.date}</p>

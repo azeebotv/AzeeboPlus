@@ -123,7 +123,7 @@ function TitleDetailPageContent(): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Vertical" />
 
       {isLoading ? (
@@ -163,7 +163,7 @@ function TitleDetailPageContent(): React.JSX.Element {
                 {title.genre && (
                   <span
                     className="px-3 py-1 rounded-full text-xs font-semibold"
-                    style={{ backgroundColor: 'rgba(232,66,10,0.9)', color: '#fff' }}
+                    style={{ backgroundColor: 'rgba(232,66,10,0.9)', color: 'var(--brand-white)' }}
                   >
                     {title.genre}
                   </span>
@@ -259,7 +259,7 @@ function TitleDetailPageContent(): React.JSX.Element {
                           />
                           <span
                             className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
-                            style={{ backgroundColor: 'rgba(0,0,0,0.7)', color: '#fff' }}
+                            style={{ backgroundColor: 'rgba(0,0,0,0.7)', color: 'var(--brand-white)' }}
                           >
                             {formatDuration(episode.duration)}
                           </span>
@@ -393,7 +393,7 @@ function TitleDetailPageContent(): React.JSX.Element {
               <motion.button
                 type="button"
                 className="px-6 py-3 rounded-full text-sm font-semibold transition-all"
-                style={{ border: '1px solid rgba(255,255,255,0.2)', color: '#fff' }}
+                style={{ border: '1px solid rgba(255,255,255,0.2)', color: 'var(--brand-white)' }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >

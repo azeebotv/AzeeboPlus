@@ -84,7 +84,7 @@ export default function EpisodesPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
         <AppHeader />
         <div
           className="flex items-center justify-center"
@@ -103,7 +103,7 @@ export default function EpisodesPage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader />
       <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
@@ -141,7 +141,7 @@ export default function EpisodesPage(): React.JSX.Element {
                     ? {
                         border: '1px solid rgba(255,255,255,0.2)',
                         backgroundColor: 'rgba(255,255,255,0.08)',
-                        color: '#fff',
+                        color: 'var(--brand-white)',
                       }
                     : undefined
                 }

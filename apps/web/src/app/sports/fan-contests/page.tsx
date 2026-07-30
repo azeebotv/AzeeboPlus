@@ -47,7 +47,7 @@ function FanContestsPageContent(): React.JSX.Element {
   const upcomingContests = contests.filter((c) => c.status === 'upcoming');
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Sports" />
 
       {/* Hero */}

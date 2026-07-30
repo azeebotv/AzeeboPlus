@@ -128,7 +128,7 @@ function TournamentDetailPageContent(): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Games" />
 
       {isLoading ? (
@@ -403,7 +403,7 @@ function TournamentDetailPageContent(): React.JSX.Element {
               <motion.button
                 type="button"
                 className="px-6 py-3 rounded-full text-sm font-semibold transition-all"
-                style={{ border: '1px solid rgba(255,255,255,0.2)', color: '#fff' }}
+                style={{ border: '1px solid rgba(255,255,255,0.2)', color: 'var(--brand-white)' }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >

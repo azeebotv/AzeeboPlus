@@ -493,7 +493,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
         <AppHeader />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
@@ -508,7 +508,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
 
   if (error || !content) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
         <AppHeader />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="az-glass p-8 text-center max-w-md">
@@ -530,7 +530,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader />
       <div
         ref={focusTrapRef}
@@ -969,7 +969,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                     </span>
                     <span
                       className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded"
-                      style={{ background: 'rgba(255,255,255,0.08)', color: '#fff' }}
+                      style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--brand-white)' }}
                     >
                       {content.category}
                     </span>

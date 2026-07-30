@@ -124,7 +124,7 @@ export default function ReferralPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
       <AppHeader />
       <main
         style={{
@@ -137,7 +137,7 @@ export default function ReferralPage(): React.JSX.Element {
       >
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <h1 style={{ fontSize: 28, fontWeight: 700 }}>Refer & Earn</h1>
-          <p style={{ color: '#9A8A7A', marginTop: 4 }}>Invite friends and earn rewards</p>
+          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>Invite friends and earn rewards</p>
         </div>
 
         {isLoading ? (
@@ -169,7 +169,7 @@ export default function ReferralPage(): React.JSX.Element {
                   'linear-gradient(135deg, rgba(232,66,10,0.15) 0%, rgba(204,28,28,0.1) 100%)',
               }}
             >
-              <p style={{ color: '#9A8A7A', fontSize: 14, marginBottom: 8 }}>Your Referral Code</p>
+              <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 8 }}>Your Referral Code</p>
               <p
                 style={{
                   fontSize: 32,
@@ -189,8 +189,8 @@ export default function ReferralPage(): React.JSX.Element {
                     padding: '12px 32px',
                     borderRadius: 999,
                     border: 'none',
-                    background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                    color: '#fff',
+                    background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+                    color: 'var(--brand-white)',
                     fontWeight: 700,
                     fontSize: 14,
                     cursor: 'pointer',
@@ -206,9 +206,9 @@ export default function ReferralPage(): React.JSX.Element {
                   style={{
                     padding: '12px 32px',
                     borderRadius: 999,
-                    border: '1px solid #2A1A1A',
+                    border: '1px solid var(--border-default)',
                     background: 'transparent',
-                    color: '#9A8A7A',
+                    color: 'var(--text-secondary)',
                     fontWeight: 600,
                     fontSize: 14,
                     cursor: 'pointer',
@@ -250,7 +250,7 @@ export default function ReferralPage(): React.JSX.Element {
                   className="az-glass"
                   style={{ padding: 20, borderRadius: 16, textAlign: 'center' }}
                 >
-                  <p style={{ fontSize: 13, color: '#9A8A7A', marginBottom: 8 }}>{stat.label}</p>
+                  <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>{stat.label}</p>
                   <p style={{ fontSize: 22, fontWeight: 700, color: stat.color }}>{stat.value}</p>
                 </div>
               ))}
@@ -271,7 +271,7 @@ export default function ReferralPage(): React.JSX.Element {
                         width: 32,
                         height: 32,
                         borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+                        background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -306,7 +306,7 @@ export default function ReferralPage(): React.JSX.Element {
                     >
                       <div>
                         <p style={{ fontWeight: 600, fontSize: 14 }}>{ref.username || ref.email}</p>
-                        <p style={{ color: '#9A8A7A', fontSize: 12 }}>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
                           {new Date(ref.joinedAt || ref.createdAt || '').toLocaleDateString()}
                         </p>
                       </div>

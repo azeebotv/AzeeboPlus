@@ -264,7 +264,7 @@ export default function BrowsePage(): React.JSX.Element {
                 {activeFilterCount > 0 && (
                   <span
                     className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                    style={{ background: '#CC1C1C', color: '#fff' }}
+                    style={{ background: '#CC1C1C', color: 'var(--brand-white)' }}
                   >
                     {activeFilterCount}
                   </span>

@@ -98,7 +98,7 @@ export default function OTPVerificationPage(): React.JSX.Element {
   return (
     <div
       className="relative min-h-screen w-full flex items-center justify-center p-6 overflow-hidden"
-      style={{ backgroundColor: '#1A0A0A' }}
+      style={{ backgroundColor: 'var(--brand-near-black)' }}
     >
       {/* Subtle abstract tech pattern overlay */}
       <div

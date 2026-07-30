@@ -54,7 +54,7 @@ export default function AdminLayout({
     return (
       <div
         style={{
-          backgroundColor: '#1A0A0A',
+          backgroundColor: 'var(--brand-near-black)',
           minHeight: '100vh',
           display: 'flex',
           justifyContent: 'center',
@@ -86,7 +86,7 @@ export default function AdminLayout({
   };
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
       <AppHeader />
       <div style={{ display: 'flex', paddingTop: 72, minHeight: '100vh' }}>
         {/* Mobile sidebar toggle */}
@@ -101,8 +101,8 @@ export default function AdminLayout({
             width: 48,
             height: 48,
             borderRadius: '50%',
-            background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-            color: '#fff',
+            background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+            color: 'var(--brand-white)',
             border: 'none',
             fontSize: 20,
             cursor: 'pointer',

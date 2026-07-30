@@ -64,7 +64,7 @@ function LeaderboardPageContent(): React.JSX.Element {
   const rest = entries.slice(3);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Games" />
 
       {/* Hero */}

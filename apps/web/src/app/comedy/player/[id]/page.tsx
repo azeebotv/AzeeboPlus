@@ -51,7 +51,7 @@ function ClipPlayerContent(): React.JSX.Element {
   const error = clipQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Comedy" />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">

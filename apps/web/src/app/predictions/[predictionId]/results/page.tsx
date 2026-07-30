@@ -37,7 +37,7 @@ export default function PredictionResultsPage(): React.JSX.Element {
   };
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
       <AppHeader />
       <main
         style={{
@@ -53,7 +53,7 @@ export default function PredictionResultsPage(): React.JSX.Element {
           style={{
             background: 'none',
             border: 'none',
-            color: '#9A8A7A',
+            color: 'var(--text-secondary)',
             cursor: 'pointer',
             fontSize: 14,
             marginBottom: 16,
@@ -82,14 +82,14 @@ export default function PredictionResultsPage(): React.JSX.Element {
           <div className="az-glass" style={{ padding: 40, borderRadius: 20, textAlign: 'center' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>📊</div>
             <h3 style={{ fontSize: 18 }}>Results not available yet</h3>
-            <p style={{ color: '#9A8A7A', marginTop: 8 }}>Check back after the prediction closes</p>
+            <p style={{ color: 'var(--text-secondary)', marginTop: 8 }}>Check back after the prediction closes</p>
           </div>
         ) : (
           <>
             <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>
               {results.title || 'Prediction Results'}
             </h1>
-            <p style={{ color: '#9A8A7A', marginBottom: 32 }}>{results.description || ''}</p>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>{results.description || ''}</p>
 
             {results.correctAnswer && (
               <div
@@ -102,7 +102,7 @@ export default function PredictionResultsPage(): React.JSX.Element {
                   textAlign: 'center',
                 }}
               >
-                <p style={{ color: '#9A8A7A', fontSize: 14, marginBottom: 8 }}>Correct Answer</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 8 }}>Correct Answer</p>
                 <p style={{ fontSize: 24, fontWeight: 700, color: '#0D3B2E' }}>
                   {results.correctAnswer}
                 </p>
@@ -139,7 +139,7 @@ export default function PredictionResultsPage(): React.JSX.Element {
                           >
                             {opt.text} {isCorrect && '✓'}
                           </span>
-                          <span style={{ color: '#9A8A7A', fontSize: 13 }}>
+                          <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
                             {pct}% ({opt.votes} votes)
                           </span>
                         </div>
@@ -158,7 +158,7 @@ export default function PredictionResultsPage(): React.JSX.Element {
                               borderRadius: 4,
                               background: isCorrect
                                 ? 'linear-gradient(135deg, #0D3B2E 0%, #1A5E45 100%)'
-                                : 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+                                : 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
                               transition: 'width 0.5s ease',
                             }}
                           />
@@ -167,7 +167,7 @@ export default function PredictionResultsPage(): React.JSX.Element {
                     );
                   })}
                 </div>
-                <p style={{ color: '#9A8A7A', fontSize: 13, marginTop: 16, textAlign: 'center' }}>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 16, textAlign: 'center' }}>
                   Total votes: {results.totalVotes}
                 </p>
               </div>

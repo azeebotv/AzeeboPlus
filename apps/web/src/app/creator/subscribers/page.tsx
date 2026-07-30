@@ -37,11 +37,11 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
   const subscriberStats = stats ?? subData?.stats ?? null;
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
       <AppHeader active="Creator" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Subscribers</h1>
-        <p style={{ color: '#9A8A7A', marginBottom: 24 }}>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>
           Manage your subscribers and view demographics
         </p>
 
@@ -54,7 +54,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
               style={{
                 padding: '8px 20px',
                 borderRadius: 8,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--border-default)',
                 background: tab === t ? '#E8420A' : 'transparent',
                 color: tab === t ? '#fff' : '#9A8A7A',
                 cursor: 'pointer',
@@ -82,13 +82,13 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
                 padding: 16,
                 borderRadius: 12,
                 backgroundColor: 'rgba(255,255,255,0.03)',
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--border-default)',
               }}
             >
               <p
                 style={{
                   fontSize: 11,
-                  color: '#9A8A7A',
+                  color: 'var(--text-secondary)',
                   textTransform: 'uppercase',
                   marginBottom: 4,
                 }}
@@ -104,13 +104,13 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
                 padding: 16,
                 borderRadius: 12,
                 backgroundColor: 'rgba(255,255,255,0.03)',
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--border-default)',
               }}
             >
               <p
                 style={{
                   fontSize: 11,
-                  color: '#9A8A7A',
+                  color: 'var(--text-secondary)',
                   textTransform: 'uppercase',
                   marginBottom: 4,
                 }}
@@ -126,13 +126,13 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
                 padding: 16,
                 borderRadius: 12,
                 backgroundColor: 'rgba(255,255,255,0.03)',
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--border-default)',
               }}
             >
               <p
                 style={{
                   fontSize: 11,
-                  color: '#9A8A7A',
+                  color: 'var(--text-secondary)',
                   textTransform: 'uppercase',
                   marginBottom: 4,
                 }}
@@ -148,13 +148,13 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
                 padding: 16,
                 borderRadius: 12,
                 backgroundColor: 'rgba(255,255,255,0.03)',
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--border-default)',
               }}
             >
               <p
                 style={{
                   fontSize: 11,
-                  color: '#9A8A7A',
+                  color: 'var(--text-secondary)',
                   textTransform: 'uppercase',
                   marginBottom: 4,
                 }}
@@ -194,7 +194,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
               onButtonPress={() => subscribersQuery.refetch()}
             />
           ) : subscribers.length === 0 ? (
-            <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>No subscribers yet</p>
+            <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>No subscribers yet</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {subscribers.map((sub) => (
@@ -206,7 +206,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
                     gap: 12,
                     padding: 16,
                     borderRadius: 12,
-                    border: '1px solid #2A1A1A',
+                    border: '1px solid var(--border-default)',
                     backgroundColor: 'rgba(26,10,10,0.5)',
                   }}
                 >
@@ -222,11 +222,11 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
                       flexShrink: 0,
                     }}
                   >
-                    <span style={{ color: '#9A8A7A', fontSize: 16 }}>{sub.displayName[0]}</span>
+                    <span style={{ color: 'var(--text-secondary)', fontSize: 16 }}>{sub.displayName[0]}</span>
                   </div>
                   <div style={{ flex: 1 }}>
                     <p style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>{sub.displayName}</p>
-                    <p style={{ fontSize: 12, color: '#9A8A7A', marginTop: 2 }}>
+                    <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
                       Subscribed {new Date(sub.subscribedAt).toLocaleDateString()}
                     </p>
                   </div>
@@ -263,7 +263,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
             </div>
           )
         ) : statsLoading || !subscriberStats?.demographics ? (
-          <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>
+          <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>
             Loading demographics...
           </p>
         ) : (
@@ -281,8 +281,8 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
                       marginBottom: 4,
                     }}
                   >
-                    <span style={{ color: '#9A8A7A' }}>{group.range}</span>
-                    <span style={{ color: '#F5F0EB' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>{group.range}</span>
+                    <span style={{ color: 'var(--text-primary)' }}>
                       {group.count.toLocaleString()} ({group.percentage}%)
                     </span>
                   </div>
@@ -298,7 +298,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
                       style={{
                         height: '100%',
                         borderRadius: 3,
-                        backgroundColor: '#E8420A',
+                        backgroundColor: 'var(--brand-orange)',
                         width: `${group.percentage}%`,
                       }}
                     />
@@ -320,8 +320,8 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
                       marginBottom: 4,
                     }}
                   >
-                    <span style={{ color: '#9A8A7A' }}>{region.region}</span>
-                    <span style={{ color: '#F5F0EB' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>{region.region}</span>
+                    <span style={{ color: 'var(--text-primary)' }}>
                       {region.count.toLocaleString()} ({region.percentage}%)
                     </span>
                   </div>

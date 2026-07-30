@@ -72,11 +72,11 @@ export default function CreatorChallengesPage(): React.JSX.Element {
   };
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
       <AppHeader active="Creator" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Challenges</h1>
-        <p style={{ color: '#9A8A7A', marginBottom: 24 }}>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>
           Participate in platform challenges and earn rewards
         </p>
 
@@ -89,7 +89,7 @@ export default function CreatorChallengesPage(): React.JSX.Element {
               style={{
                 padding: '8px 20px',
                 borderRadius: 8,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--border-default)',
                 background: view === v ? '#E8420A' : 'transparent',
                 color: view === v ? '#fff' : '#9A8A7A',
                 cursor: 'pointer',
@@ -112,7 +112,7 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                 style={{
                   padding: '6px 14px',
                   borderRadius: 20,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--border-default)',
                   background: filter === f ? 'rgba(232,66,10,0.2)' : 'transparent',
                   color: filter === f ? '#E8420A' : '#9A8A7A',
                   cursor: 'pointer',
@@ -155,7 +155,7 @@ export default function CreatorChallengesPage(): React.JSX.Element {
               onButtonPress={() => challengesQuery.refetch()}
             />
           ) : filtered.length === 0 ? (
-            <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>
+            <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>
               No challenges found
             </p>
           ) : (
@@ -166,7 +166,7 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                   style={{
                     padding: 20,
                     borderRadius: 16,
-                    border: '1px solid #2A1A1A',
+                    border: '1px solid var(--border-default)',
                     backgroundColor: 'rgba(26,10,10,0.5)',
                   }}
                 >
@@ -182,7 +182,7 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                       <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>
                         {challenge.title}
                       </h3>
-                      <p style={{ color: '#9A8A7A', fontSize: 13, marginTop: 4 }}>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 4 }}>
                         {challenge.description}
                       </p>
                     </div>
@@ -215,12 +215,12 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                   {challenge.rules && challenge.rules.length > 0 && (
                     <div style={{ marginBottom: 12 }}>
                       <p
-                        style={{ color: '#9A8A7A', fontSize: 12, fontWeight: 600, marginBottom: 4 }}
+                        style={{ color: 'var(--text-secondary)', fontSize: 12, fontWeight: 600, marginBottom: 4 }}
                       >
                         Rules:
                       </p>
                       {(challenge.rules ?? []).slice(0, 2).map((rule: string, i: number) => (
-                        <p key={i} style={{ color: '#9A8A7A', fontSize: 12, margin: 0 }}>
+                        <p key={i} style={{ color: 'var(--text-secondary)', fontSize: 12, margin: 0 }}>
                           • {rule}
                         </p>
                       ))}
@@ -230,7 +230,7 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                     style={{
                       display: 'flex',
                       gap: 24,
-                      color: '#9A8A7A',
+                      color: 'var(--text-secondary)',
                       fontSize: 13,
                       alignItems: 'center',
                     }}
@@ -253,8 +253,8 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                           padding: '6px 16px',
                           borderRadius: 8,
                           border: 'none',
-                          backgroundColor: '#E8420A',
-                          color: '#fff',
+                          backgroundColor: 'var(--brand-orange)',
+                          color: 'var(--brand-white)',
                           cursor: 'pointer',
                           fontSize: 12,
                           fontWeight: 600,
@@ -283,7 +283,7 @@ export default function CreatorChallengesPage(): React.JSX.Element {
             ))}
           </div>
         ) : submissions.length === 0 ? (
-          <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>No submissions yet</p>
+          <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>No submissions yet</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {submissions.map((sub) => (
@@ -292,7 +292,7 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                 style={{
                   padding: 20,
                   borderRadius: 16,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--border-default)',
                   backgroundColor: 'rgba(26,10,10,0.5)',
                 }}
               >
@@ -322,11 +322,11 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                   </span>
                 </div>
                 {sub.reviewerNote && (
-                  <p style={{ color: '#9A8A7A', fontSize: 12, marginTop: 4 }}>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginTop: 4 }}>
                     Note: {sub.reviewerNote}
                   </p>
                 )}
-                <p style={{ color: '#9A8A7A', fontSize: 12, marginTop: 4 }}>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginTop: 4 }}>
                   Submitted: {new Date(sub.createdAt).toLocaleDateString()}
                 </p>
               </div>
@@ -356,12 +356,12 @@ export default function CreatorChallengesPage(): React.JSX.Element {
             >
               <div
                 style={{
-                  backgroundColor: '#1A0A0A',
+                  backgroundColor: 'var(--brand-near-black)',
                   borderRadius: 16,
                   padding: 24,
                   maxWidth: 480,
                   width: '100%',
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--border-default)',
                 }}
               >
                 <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>
@@ -371,7 +371,7 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                   {challenge.title}
                 </p>
                 <label
-                  style={{ display: 'block', fontSize: 12, color: '#9A8A7A', marginBottom: 4 }}
+                  style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}
                 >
                   Content URL
                 </label>
@@ -383,16 +383,16 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                     width: '100%',
                     padding: '10px 14px',
                     borderRadius: 8,
-                    border: '1px solid #2A1A1A',
+                    border: '1px solid var(--border-default)',
                     backgroundColor: '#0A0A0A',
-                    color: '#F5F0EB',
+                    color: 'var(--text-primary)',
                     fontSize: 14,
                     marginBottom: 16,
                     boxSizing: 'border-box',
                   }}
                 />
                 <label
-                  style={{ display: 'block', fontSize: 12, color: '#9A8A7A', marginBottom: 4 }}
+                  style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}
                 >
                   Description (optional)
                 </label>
@@ -405,9 +405,9 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                     width: '100%',
                     padding: '10px 14px',
                     borderRadius: 8,
-                    border: '1px solid #2A1A1A',
+                    border: '1px solid var(--border-default)',
                     backgroundColor: '#0A0A0A',
-                    color: '#F5F0EB',
+                    color: 'var(--text-primary)',
                     fontSize: 14,
                     marginBottom: 20,
                     boxSizing: 'border-box',
@@ -424,9 +424,9 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                       flex: 1,
                       padding: '10px',
                       borderRadius: 8,
-                      border: '1px solid #2A1A1A',
+                      border: '1px solid var(--border-default)',
                       backgroundColor: 'transparent',
-                      color: '#9A8A7A',
+                      color: 'var(--text-secondary)',
                       cursor: 'pointer',
                       fontSize: 14,
                     }}
@@ -441,8 +441,8 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                       padding: '10px',
                       borderRadius: 8,
                       border: 'none',
-                      backgroundColor: '#E8420A',
-                      color: '#fff',
+                      backgroundColor: 'var(--brand-orange)',
+                      color: 'var(--brand-white)',
                       cursor: 'pointer',
                       fontSize: 14,
                       fontWeight: 600,

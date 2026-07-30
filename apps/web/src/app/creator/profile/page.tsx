@@ -57,7 +57,7 @@ export default function CreatorProfilePage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A', color: '#F5F0EB' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
         <AppHeader active="Creator" />
         <main style={{ padding: '100px 24px 60px', maxWidth: 600, margin: '0 auto' }}>
           <Skeleton className="h-12 w-full mb-6" />
@@ -70,11 +70,11 @@ export default function CreatorProfilePage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A', color: '#F5F0EB' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
       <AppHeader active="Creator" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 600, margin: '0 auto' }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Creator Profile</h1>
-        <p style={{ color: '#9A8A7A', marginBottom: 24 }}>Manage your creator profile</p>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>Manage your creator profile</p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ position: 'relative' }}>
@@ -101,7 +101,7 @@ export default function CreatorProfilePage(): React.JSX.Element {
           </div>
 
           <div>
-            <label style={{ color: '#9A8A7A', fontSize: 13, marginBottom: 4, display: 'block' }}>
+            <label style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 4, display: 'block' }}>
               Display Name
             </label>
             <input
@@ -112,16 +112,16 @@ export default function CreatorProfilePage(): React.JSX.Element {
                 width: '100%',
                 padding: '12px 16px',
                 borderRadius: 8,
-                border: '1px solid #2A1A1A',
-                background: '#140808',
-                color: '#F5F0EB',
+                border: '1px solid var(--border-default)',
+                background: 'var(--bg-tertiary)',
+                color: 'var(--text-primary)',
                 fontSize: 14,
               }}
             />
           </div>
 
           <div>
-            <label style={{ color: '#9A8A7A', fontSize: 13, marginBottom: 4, display: 'block' }}>
+            <label style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 4, display: 'block' }}>
               Bio
             </label>
             <textarea
@@ -133,9 +133,9 @@ export default function CreatorProfilePage(): React.JSX.Element {
                 width: '100%',
                 padding: '12px 16px',
                 borderRadius: 8,
-                border: '1px solid #2A1A1A',
-                background: '#140808',
-                color: '#F5F0EB',
+                border: '1px solid var(--border-default)',
+                background: 'var(--bg-tertiary)',
+                color: 'var(--text-primary)',
                 fontSize: 14,
                 resize: 'vertical',
               }}
@@ -143,7 +143,7 @@ export default function CreatorProfilePage(): React.JSX.Element {
           </div>
 
           <div>
-            <label style={{ color: '#9A8A7A', fontSize: 13, marginBottom: 4, display: 'block' }}>
+            <label style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 4, display: 'block' }}>
               YouTube URL
             </label>
             <input
@@ -163,16 +163,16 @@ export default function CreatorProfilePage(): React.JSX.Element {
                 width: '100%',
                 padding: '12px 16px',
                 borderRadius: 8,
-                border: '1px solid #2A1A1A',
-                background: '#140808',
-                color: '#F5F0EB',
+                border: '1px solid var(--border-default)',
+                background: 'var(--bg-tertiary)',
+                color: 'var(--text-primary)',
                 fontSize: 14,
               }}
             />
           </div>
 
           <div>
-            <label style={{ color: '#9A8A7A', fontSize: 13, marginBottom: 4, display: 'block' }}>
+            <label style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 4, display: 'block' }}>
               Twitter URL
             </label>
             <input
@@ -192,16 +192,16 @@ export default function CreatorProfilePage(): React.JSX.Element {
                 width: '100%',
                 padding: '12px 16px',
                 borderRadius: 8,
-                border: '1px solid #2A1A1A',
-                background: '#140808',
-                color: '#F5F0EB',
+                border: '1px solid var(--border-default)',
+                background: 'var(--bg-tertiary)',
+                color: 'var(--text-primary)',
                 fontSize: 14,
               }}
             />
           </div>
 
           <div>
-            <label style={{ color: '#9A8A7A', fontSize: 13, marginBottom: 4, display: 'block' }}>
+            <label style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 4, display: 'block' }}>
               Instagram URL
             </label>
             <input
@@ -221,9 +221,9 @@ export default function CreatorProfilePage(): React.JSX.Element {
                 width: '100%',
                 padding: '12px 16px',
                 borderRadius: 8,
-                border: '1px solid #2A1A1A',
-                background: '#140808',
-                color: '#F5F0EB',
+                border: '1px solid var(--border-default)',
+                background: 'var(--bg-tertiary)',
+                color: 'var(--text-primary)',
                 fontSize: 14,
               }}
             />

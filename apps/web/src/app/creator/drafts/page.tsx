@@ -72,7 +72,7 @@ export default function DraftsPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
       <AppHeader />
       <main
         style={{
@@ -89,7 +89,7 @@ export default function DraftsPage(): React.JSX.Element {
             style={{
               background: 'none',
               border: 'none',
-              color: '#9A8A7A',
+              color: 'var(--text-secondary)',
               cursor: 'pointer',
               fontSize: 14,
               marginBottom: 16,
@@ -101,7 +101,7 @@ export default function DraftsPage(): React.JSX.Element {
             <span>←</span> Back
           </button>
           <h1 style={{ fontSize: 28, fontWeight: 700 }}>Drafts</h1>
-          <p style={{ color: '#9A8A7A', marginTop: 4 }}>
+          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>
             Continue editing your unpublished content
           </p>
         </div>
@@ -133,7 +133,7 @@ export default function DraftsPage(): React.JSX.Element {
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>📝</div>
             <h3 style={{ fontSize: 18, marginBottom: 8 }}>No drafts yet</h3>
-            <p style={{ color: '#9A8A7A', marginBottom: 24 }}>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>
               Start creating content to see your drafts here
             </p>
             <a
@@ -141,9 +141,9 @@ export default function DraftsPage(): React.JSX.Element {
               style={{
                 display: 'inline-block',
                 padding: '12px 32px',
-                background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+                background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
                 borderRadius: 999,
-                color: '#fff',
+                color: 'var(--brand-white)',
                 fontWeight: 600,
                 textDecoration: 'none',
               }}
@@ -176,7 +176,7 @@ export default function DraftsPage(): React.JSX.Element {
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <h3 style={{ fontWeight: 600, fontSize: 16, marginBottom: 4 }}>{draft.title}</h3>
-                  <p style={{ color: '#9A8A7A', fontSize: 13 }}>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
                     Last edited {new Date(draft.lastEdited).toLocaleDateString()}
                     {draft.duration ? ` · ${Math.floor(draft.duration / 60)}m` : ''}
                   </p>
@@ -187,8 +187,8 @@ export default function DraftsPage(): React.JSX.Element {
                     style={{
                       padding: '8px 20px',
                       borderRadius: 999,
-                      background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                      color: '#fff',
+                      background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+                      color: 'var(--brand-white)',
                       fontWeight: 600,
                       fontSize: 14,
                       textDecoration: 'none',
@@ -212,7 +212,7 @@ export default function DraftsPage(): React.JSX.Element {
                     style={{
                       padding: '8px 16px',
                       borderRadius: 999,
-                      border: '1px solid #CC1C1C',
+                      border: '1px solid var(--brand-red)',
                       background: 'transparent',
                       color: '#CC1C1C',
                       fontWeight: 500,

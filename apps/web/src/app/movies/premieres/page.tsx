@@ -52,7 +52,7 @@ function PremieresPageContent(): React.JSX.Element {
   const featured = premieres[0] ?? null;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Movies" />
 
       {/* Featured Premiere */}
@@ -87,7 +87,7 @@ function PremieresPageContent(): React.JSX.Element {
                   {featured.isExclusive && (
                     <span
                       className="px-3 py-1 rounded-full text-xs font-semibold"
-                      style={{ backgroundColor: '#E8420A', color: '#fff' }}
+                      style={{ backgroundColor: 'var(--brand-orange)', color: 'var(--brand-white)' }}
                     >
                       Azeebo+ Exclusive
                     </span>

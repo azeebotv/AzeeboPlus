@@ -93,7 +93,7 @@ function ShowDetailContent(): React.JSX.Element {
     showQuery.error?.message || episodesQuery.error?.message || contestantsQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Reality" />
 
       {/* Hero Banner */}

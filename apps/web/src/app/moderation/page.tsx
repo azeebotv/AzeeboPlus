@@ -82,7 +82,7 @@ export default function ModerationPage(): React.JSX.Element {
                 borderRadius: 16,
                 cursor: 'pointer',
                 textAlign: 'left',
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--border-default)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
                 color: 'var(--text-primary, #F5F0EB)',
                 transition: 'border-color 0.2s',

@@ -95,12 +95,12 @@ function CharacterLorePageContent(): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Vertical" />
 
       <section
         className="relative py-16 sm:py-20"
-        style={{ background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)' }}
+        style={{ background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.h1
@@ -341,7 +341,7 @@ function CharacterLorePageContent(): React.JSX.Element {
                             >
                               <div
                                 className="absolute -left-4 top-1 w-3 h-3 rounded-full"
-                                style={{ backgroundColor: '#E8420A' }}
+                                style={{ backgroundColor: 'var(--brand-orange)' }}
                               />
                               <div className="pl-4">
                                 <div className="flex items-center gap-2 mb-1">

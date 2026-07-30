@@ -111,7 +111,7 @@ function RentalPageContent(): React.JSX.Element {
     : [];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Movies" />
 
       {/* Hero */}
@@ -188,7 +188,7 @@ function RentalPageContent(): React.JSX.Element {
                     <div className="absolute top-2 right-2">
                       <span
                         className="px-2.5 py-1 rounded-full text-xs font-semibold"
-                        style={{ backgroundColor: 'rgba(232,66,10,0.9)', color: '#fff' }}
+                        style={{ backgroundColor: 'rgba(232,66,10,0.9)', color: 'var(--brand-white)' }}
                       >
                         ₦{movie.rentalPrice.toLocaleString()}
                       </span>

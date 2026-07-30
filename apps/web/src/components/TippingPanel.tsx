@@ -58,10 +58,10 @@ export default function TippingPanel({
         backgroundColor: 'rgba(255,255,255,0.03)',
         borderRadius: 12,
         padding: 20,
-        border: '1px solid #2A1A1A',
+        border: '1px solid var(--border-default)',
       }}
     >
-      <h3 style={{ color: '#fff', fontSize: 18, fontWeight: 600, marginBottom: 4 }}>
+      <h3 style={{ color: 'var(--brand-white)', fontSize: 18, fontWeight: 600, marginBottom: 4 }}>
         Support {creatorName}
       </h3>
       <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 13, marginBottom: 16 }}>
@@ -154,8 +154,8 @@ export default function TippingPanel({
             width: '100%',
             padding: '10px 14px',
             borderRadius: 8,
-            border: '1px solid #2A1A1A',
-            background: '#140808',
+            border: '1px solid var(--border-default)',
+            background: 'var(--bg-tertiary)',
             color: 'var(--text-primary, #F5F0EB)',
             fontSize: 14,
             marginBottom: 12,
@@ -174,8 +174,8 @@ export default function TippingPanel({
           width: '100%',
           padding: '10px 14px',
           borderRadius: 8,
-          border: '1px solid #2A1A1A',
-          background: '#140808',
+          border: '1px solid var(--border-default)',
+          background: 'var(--bg-tertiary)',
           color: 'var(--text-primary, #F5F0EB)',
           fontSize: 14,
           marginBottom: 16,
@@ -193,7 +193,7 @@ export default function TippingPanel({
           borderRadius: 10,
           border: 'none',
           backgroundColor: tipMutation.isPending ? '#666' : 'var(--brand-orange, #E8420A)',
-          color: '#fff',
+          color: 'var(--brand-white)',
           fontSize: 15,
           fontWeight: 600,
           cursor: 'pointer',

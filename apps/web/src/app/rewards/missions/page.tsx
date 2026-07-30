@@ -70,7 +70,7 @@ export default function MissionsPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
       <AppHeader />
       <main
         style={{
@@ -80,14 +80,14 @@ export default function MissionsPage(): React.JSX.Element {
         }}
       >
         <div style={{ marginBottom: 24 }}>
-          <Link href="/rewards" style={{ color: '#9A8A7A', fontSize: 14, textDecoration: 'none' }}>
+          <Link href="/rewards" style={{ color: 'var(--text-secondary)', fontSize: 14, textDecoration: 'none' }}>
             &larr; Back to Rewards
           </Link>
         </div>
 
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <h1 style={{ fontSize: 28, fontWeight: 700 }}>Missions</h1>
-          <p style={{ color: '#9A8A7A', marginTop: 4 }}>Complete missions to earn points</p>
+          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>Complete missions to earn points</p>
         </div>
 
         {isLoading ? (
@@ -118,7 +118,7 @@ export default function MissionsPage(): React.JSX.Element {
                   style={{ padding: 48, borderRadius: 20, textAlign: 'center' }}
                 >
                   <p style={{ fontSize: 32, marginBottom: 12 }}>🎯</p>
-                  <p style={{ color: '#9A8A7A' }}>No active missions right now</p>
+                  <p style={{ color: 'var(--text-secondary)' }}>No active missions right now</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -154,7 +154,7 @@ export default function MissionsPage(): React.JSX.Element {
                         >
                           {mission.title}
                         </h3>
-                        <p style={{ fontSize: 13, color: '#9A8A7A', marginBottom: 16 }}>
+                        <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
                           {mission.description}
                         </p>
 
@@ -165,7 +165,7 @@ export default function MissionsPage(): React.JSX.Element {
                               display: 'flex',
                               justifyContent: 'space-between',
                               fontSize: 12,
-                              color: '#9A8A7A',
+                              color: 'var(--text-secondary)',
                               marginBottom: 6,
                             }}
                           >
@@ -234,7 +234,7 @@ export default function MissionsPage(): React.JSX.Element {
                       >
                         <div>
                           <h3 style={{ fontSize: 14, fontWeight: 600 }}>{mission.title}</h3>
-                          <p style={{ fontSize: 12, color: '#9A8A7A', marginTop: 2 }}>
+                          <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
                             {mission.description}
                           </p>
                         </div>

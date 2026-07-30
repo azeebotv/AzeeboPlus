@@ -107,7 +107,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
         <AppHeader />
         <div
           className="flex items-center justify-center"
@@ -127,7 +127,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
 
   if (!episode) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
         <AppHeader />
         <div
           className="flex items-center justify-center"
@@ -151,7 +151,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
   const progress = episode.duration > 0 ? (currentTime / episode.duration) * 100 : 0;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader />
       <div className="max-w-6xl mx-auto pt-4 px-4">
         <button
@@ -178,14 +178,14 @@ export default function EpisodePlayerPage(): React.JSX.Element {
               </p>
               {isPlaying ? (
                 <div className="flex items-end gap-1 h-10 mt-4 justify-center">
-                  <div className="w-1 animate-pulse h-5" style={{ backgroundColor: '#E8420A' }} />
+                  <div className="w-1 animate-pulse h-5" style={{ backgroundColor: 'var(--brand-orange)' }} />
                   <div
                     className="w-1 animate-pulse h-8"
-                    style={{ backgroundColor: '#E8420A', animationDelay: '0.2s' }}
+                    style={{ backgroundColor: 'var(--brand-orange)', animationDelay: '0.2s' }}
                   />
                   <div
                     className="w-1 animate-pulse h-6"
-                    style={{ backgroundColor: '#E8420A', animationDelay: '0.4s' }}
+                    style={{ backgroundColor: 'var(--brand-orange)', animationDelay: '0.4s' }}
                   />
                 </div>
               ) : (
@@ -209,7 +209,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
             >
               <div
                 className="h-full rounded-full transition-all"
-                style={{ width: `${progress}%`, backgroundColor: '#E8420A' }}
+                style={{ width: `${progress}%`, backgroundColor: 'var(--brand-orange)' }}
               />
             </div>
             <div className="flex justify-between text-sm text-white/50">
@@ -225,7 +225,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
               style={{
                 border: '1px solid rgba(255,255,255,0.2)',
                 backgroundColor: 'rgba(255,255,255,0.08)',
-                color: '#fff',
+                color: 'var(--brand-white)',
               }}
             >
               ⏪
@@ -233,7 +233,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
             <button
               onClick={handlePlayPause}
               className="w-16 h-16 rounded-full text-white text-2xl flex items-center justify-center transition-colors"
-              style={{ backgroundColor: '#E8420A' }}
+              style={{ backgroundColor: 'var(--brand-orange)' }}
             >
               {isPlaying ? '⏸' : '▶'}
             </button>
@@ -243,7 +243,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
               style={{
                 border: '1px solid rgba(255,255,255,0.2)',
                 backgroundColor: 'rgba(255,255,255,0.08)',
-                color: '#fff',
+                color: 'var(--brand-white)',
               }}
             >
               ⏩
@@ -257,7 +257,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
               style={{
                 border: '1px solid rgba(255,255,255,0.2)',
                 backgroundColor: 'rgba(255,255,255,0.08)',
-                color: '#fff',
+                color: 'var(--brand-white)',
               }}
             >
               💬 Subtitles
@@ -312,7 +312,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
                       ? {
                           border: '1px solid rgba(255,255,255,0.2)',
                           backgroundColor: 'rgba(255,255,255,0.08)',
-                          color: '#fff',
+                          color: 'var(--brand-white)',
                         }
                       : undefined
                   }
@@ -342,7 +342,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
                 style={{
                   border: '1px solid rgba(255,255,255,0.2)',
                   backgroundColor: 'rgba(255,255,255,0.08)',
-                  color: '#fff',
+                  color: 'var(--brand-white)',
                 }}
               >
                 Regular Vote (1x)

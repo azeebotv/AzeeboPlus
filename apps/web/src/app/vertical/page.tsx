@@ -46,7 +46,7 @@ function VerticalPageContent(): React.JSX.Element {
   });
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Vertical" />
 
       {/* Hero Section */}
@@ -75,7 +75,7 @@ function VerticalPageContent(): React.JSX.Element {
               <div className="flex items-center gap-2 mb-4">
                 <span
                   className="px-3 py-1 rounded-full text-xs font-semibold"
-                  style={{ backgroundColor: '#E8420A', color: '#fff' }}
+                  style={{ backgroundColor: 'var(--brand-orange)', color: 'var(--brand-white)' }}
                 >
                   Premium
                 </span>
@@ -157,7 +157,7 @@ function VerticalPageContent(): React.JSX.Element {
                     />
                     <span
                       className="absolute top-2 right-2 px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                      style={{ backgroundColor: '#E8420A', color: '#fff' }}
+                      style={{ backgroundColor: 'var(--brand-orange)', color: 'var(--brand-white)' }}
                     >
                       Premium
                     </span>

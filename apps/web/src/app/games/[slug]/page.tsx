@@ -57,7 +57,7 @@ function GameDetailPageContent(): React.JSX.Element {
   const error = gameQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Games" />
 
       {isLoading ? (
@@ -204,7 +204,7 @@ function GameDetailPageContent(): React.JSX.Element {
                         <li key={index} className="flex items-start gap-3">
                           <span
                             className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                            style={{ backgroundColor: '#E8420A', color: '#fff' }}
+                            style={{ backgroundColor: 'var(--brand-orange)', color: 'var(--brand-white)' }}
                           >
                             {index + 1}
                           </span>

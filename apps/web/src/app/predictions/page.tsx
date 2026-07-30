@@ -51,7 +51,7 @@ export default function PredictionsPage() {
   if (authLoading) return <></>;
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
         <AppHeader />
         <main className="max-w-4xl mx-auto px-4 py-12">
           <div className="az-glass p-8 text-center">
@@ -65,7 +65,7 @@ export default function PredictionsPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader />
       <main className="max-w-4xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
@@ -175,7 +175,7 @@ export default function PredictionsPage() {
                   onClick={() => setPage(Math.max(1, page - 1))}
                   disabled={page === 1}
                   className="px-3 py-1 rounded text-sm disabled:opacity-30"
-                  style={{ background: 'rgba(255,255,255,0.05)', color: '#F5F0EB' }}
+                  style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)' }}
                 >
                   Previous
                 </button>
@@ -186,7 +186,7 @@ export default function PredictionsPage() {
                   onClick={() => setPage(Math.min(pagination.totalPages, page + 1))}
                   disabled={page === pagination.totalPages}
                   className="px-3 py-1 rounded text-sm disabled:opacity-30"
-                  style={{ background: 'rgba(255,255,255,0.05)', color: '#F5F0EB' }}
+                  style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)' }}
                 >
                   Next
                 </button>

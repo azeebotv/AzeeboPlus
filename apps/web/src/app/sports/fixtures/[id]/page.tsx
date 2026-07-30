@@ -54,7 +54,7 @@ function FixtureDetailContent(): React.JSX.Element {
   const error = fixtureQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Sports" />
 
       {isLoading ? (
@@ -167,7 +167,7 @@ function FixtureDetailContent(): React.JSX.Element {
                   <motion.button
                     type="button"
                     className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
-                    style={{ backgroundColor: '#E8420A' }}
+                    style={{ backgroundColor: 'var(--brand-orange)' }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >

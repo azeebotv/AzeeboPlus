@@ -97,7 +97,7 @@ export default function RankingsPage(): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Rankings" />
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-8">
@@ -120,7 +120,7 @@ export default function RankingsPage(): React.JSX.Element {
                 ? {
                     border: '1px solid rgba(255,255,255,0.2)',
                     backgroundColor: 'rgba(255,255,255,0.08)',
-                    color: '#fff',
+                    color: 'var(--brand-white)',
                   }
                 : undefined
             }
@@ -139,7 +139,7 @@ export default function RankingsPage(): React.JSX.Element {
                   ? {
                       border: '1px solid rgba(255,255,255,0.2)',
                       backgroundColor: 'rgba(255,255,255,0.08)',
-                      color: '#fff',
+                      color: 'var(--brand-white)',
                     }
                   : undefined
               }
