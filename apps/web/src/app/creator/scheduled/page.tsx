@@ -188,7 +188,7 @@ export default function ScheduledPage(): React.JSX.Element {
                     borderRadius: 999,
                     border: '1px solid var(--brand-red)',
                     background: 'transparent',
-                    color: '#CC1C1C',
+                    color: 'var(--brand-red)',
                     fontWeight: 500,
                     fontSize: 14,
                     cursor: 'pointer',

@@ -174,7 +174,7 @@ export default function ReferralPage(): React.JSX.Element {
                 style={{
                   fontSize: 32,
                   fontWeight: 700,
-                  color: '#E8420A',
+                  color: 'var(--brand-orange)',
                   letterSpacing: 4,
                   marginBottom: 16,
                 }}
@@ -232,17 +232,17 @@ export default function ReferralPage(): React.JSX.Element {
                 {
                   label: 'Total Referrals',
                   value: String(referralData.totalReferrals ?? 0),
-                  color: '#E8420A',
+                  color: 'var(--brand-orange)',
                 },
                 {
                   label: 'Successful',
                   value: String(referralData.successfulReferrals ?? 0),
-                  color: '#0D3B2E',
+                  color: 'var(--brand-forest)',
                 },
                 {
                   label: 'Earned',
                   value: `₦${(referralData.totalEarned ?? 0).toLocaleString()}`,
-                  color: '#F59E0B',
+                  color: 'var(--color-warning-500)',
                 },
               ].map((stat, i) => (
                 <div
@@ -282,7 +282,7 @@ export default function ReferralPage(): React.JSX.Element {
                     >
                       {item.step}
                     </div>
-                    <p style={{ fontSize: 14, color: '#D4C8B8' }}>{item.text}</p>
+                    <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{item.text}</p>
                   </div>
                 ))}
               </div>
@@ -320,7 +320,7 @@ export default function ReferralPage(): React.JSX.Element {
                             ref.status === 'completed'
                               ? 'rgba(13,59,46,0.2)'
                               : 'rgba(245,158,11,0.2)',
-                          color: ref.status === 'completed' ? '#0D3B2E' : '#F59E0B',
+                          color: ref.status === 'completed' ? 'var(--brand-forest)' : 'var(--color-warning-500)',
                         }}
                       >
                         {ref.status}

@@ -239,7 +239,7 @@ export default function SettingsPage(): React.JSX.Element {
             style={{
               backgroundColor: 'rgba(34,197,94,0.15)',
               border: '1px solid rgba(34,197,94,0.3)',
-              color: '#22C55E',
+              color: 'var(--color-success-500)',
             }}
             role="status"
           >
@@ -252,7 +252,7 @@ export default function SettingsPage(): React.JSX.Element {
             style={{
               backgroundColor: 'rgba(239,68,68,0.15)',
               border: '1px solid rgba(239,68,68,0.3)',
-              color: '#EF4444',
+              color: 'var(--color-error-500)',
             }}
             role="alert"
           >

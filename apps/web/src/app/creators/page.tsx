@@ -162,7 +162,7 @@ export default function CreatorsPage(): React.JSX.Element {
               <div className="flex items-center justify-center py-12">
                 <div
                   className="animate-spin rounded-full h-8 w-8"
-                  style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }}
+                  style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--brand-orange)' }}
                 />
               </div>
             )}

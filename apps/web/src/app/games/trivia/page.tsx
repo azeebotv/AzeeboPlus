@@ -191,7 +191,7 @@ function TriviaPageContent(): React.JSX.Element {
               <span className="text-sm text-white/50">
                 Question {session.currentIndex + 1} of {session.questions.length}
               </span>
-              <span className="text-sm font-semibold" style={{ color: '#E8420A' }}>
+              <span className="text-sm font-semibold" style={{ color: 'var(--brand-orange)' }}>
                 Score: {session.score}
               </span>
             </div>
@@ -211,7 +211,7 @@ function TriviaPageContent(): React.JSX.Element {
             <motion.div
               className="w-16 h-16 rounded-full flex items-center justify-center"
               style={{
-                border: `3px solid ${timeLeft <= 10 ? '#EF4444' : '#E8420A'}`,
+                border: `3px solid ${timeLeft <= 10 ? 'var(--color-error-500)' : 'var(--brand-orange)'}`,
                 backgroundColor: timeLeft <= 10 ? 'rgba(239,68,68,0.1)' : 'rgba(232,66,10,0.1)',
               }}
               animate={timeLeft <= 10 ? { scale: [1, 1.1, 1] } : {}}
@@ -219,7 +219,7 @@ function TriviaPageContent(): React.JSX.Element {
             >
               <span
                 className="text-2xl font-bold"
-                style={{ color: timeLeft <= 10 ? '#EF4444' : '#E8420A' }}
+                style={{ color: timeLeft <= 10 ? 'var(--color-error-500)' : 'var(--brand-orange)' }}
               >
                 {timeLeft}
               </span>
@@ -249,11 +249,11 @@ function TriviaPageContent(): React.JSX.Element {
                       style={{
                         border: `2px solid ${
                           isCorrect
-                            ? '#22C55E'
+                            ? 'var(--color-success-500)'
                             : isWrong
-                              ? '#EF4444'
+                              ? 'var(--color-error-500)'
                               : isSelected
-                                ? '#E8420A'
+                                ? 'var(--brand-orange)'
                                 : 'rgba(255,255,255,0.1)'
                         }`,
                         backgroundColor: isCorrect
@@ -297,7 +297,7 @@ function TriviaPageContent(): React.JSX.Element {
               >
                 <span
                   className="text-lg font-bold"
-                  style={{ color: lastResult.correct ? '#22C55E' : '#EF4444' }}
+                  style={{ color: lastResult.correct ? 'var(--color-success-500)' : 'var(--color-error-500)' }}
                 >
                   {lastResult.correct ? `Correct! +${lastResult.points} pts` : 'Wrong!'}
                 </span>
@@ -456,7 +456,7 @@ function TriviaPageContent(): React.JSX.Element {
             backgroundColor:
               toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
             border: `1px solid ${toast.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
-            color: toast.type === 'success' ? '#22C55E' : '#EF4444',
+            color: toast.type === 'success' ? 'var(--color-success-500)' : 'var(--color-error-500)',
           }}
         >
           {toast.message}

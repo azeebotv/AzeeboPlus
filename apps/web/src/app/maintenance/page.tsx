@@ -36,7 +36,7 @@ export default function MaintenancePage(): React.JSX.Element {
           <p style={{ color: 'var(--text-secondary)', marginBottom: 16, lineHeight: 1.6 }}>
             We&apos;re currently performing scheduled maintenance. We&apos;ll be back shortly.
           </p>
-          <p style={{ color: '#6B5A4A', fontSize: 14 }}>Follow us on social media for updates.</p>
+          <p style={{ color: 'var(--text-tertiary)', fontSize: 14 }}>Follow us on social media for updates.</p>
         </div>
       </main>
       <AppFooter />

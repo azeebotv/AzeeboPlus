@@ -167,7 +167,7 @@ export default function HeroSlides({
               {currentSlide.universe?.name && (
                 <motion.span
                   className="inline-block text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-4"
-                  style={{ background: 'rgba(232,66,10,0.3)', color: '#E8420A' }}
+                  style={{ background: 'rgba(232,66,10,0.3)', color: 'var(--brand-orange)' }}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}

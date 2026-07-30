@@ -334,7 +334,7 @@ export default function LibraryPage(): React.JSX.Element {
                           className="h-full"
                           style={{
                             width: `${Math.min(item.progress, 100)}%`,
-                            background: '#E8420A',
+                            background: 'var(--brand-orange)',
                           }}
                         />
                       </div>

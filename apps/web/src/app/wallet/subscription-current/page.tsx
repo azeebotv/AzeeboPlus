@@ -105,13 +105,13 @@ function SubscriptionCurrentPageContent(): React.JSX.Element {
   const getStatusStyle = (status: string) => {
     switch (status) {
       case 'active':
-        return { bg: 'rgba(34,197,94,0.15)', text: '#22C55E', label: 'Active' };
+        return { bg: 'rgba(34,197,94,0.15)', text: 'var(--color-success-500)', label: 'Active' };
       case 'cancelled':
-        return { bg: 'rgba(239,68,68,0.15)', text: '#EF4444', label: 'Cancelled' };
+        return { bg: 'rgba(239,68,68,0.15)', text: 'var(--color-error-500)', label: 'Cancelled' };
       case 'expired':
         return { bg: 'rgba(156,163,175,0.15)', text: '#9CA3AF', label: 'Expired' };
       case 'past_due':
-        return { bg: 'rgba(245,158,11,0.15)', text: '#F59E0B', label: 'Past Due' };
+        return { bg: 'rgba(245,158,11,0.15)', text: 'var(--color-warning-500)', label: 'Past Due' };
       default:
         return { bg: 'rgba(156,163,175,0.15)', text: '#9CA3AF', label: status };
     }
@@ -243,7 +243,7 @@ function SubscriptionCurrentPageContent(): React.JSX.Element {
                   disabled={toggleAutoRenewMutation.isPending}
                   className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
                   style={{
-                    backgroundColor: subscription.autoRenew ? '#22C55E' : 'rgba(255,255,255,0.2)',
+                    backgroundColor: subscription.autoRenew ? 'var(--color-success-500)' : 'rgba(255,255,255,0.2)',
                   }}
                 >
                   <span
@@ -272,7 +272,7 @@ function SubscriptionCurrentPageContent(): React.JSX.Element {
                   onClick={() => cancelMutation.mutate()}
                   disabled={cancelMutation.isPending}
                   className="w-full py-3 rounded-full font-semibold transition-all"
-                  style={{ backgroundColor: 'rgba(239,68,68,0.15)', color: '#EF4444' }}
+                  style={{ backgroundColor: 'rgba(239,68,68,0.15)', color: 'var(--color-error-500)' }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -336,7 +336,7 @@ function SubscriptionCurrentPageContent(): React.JSX.Element {
             backgroundColor:
               toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
             border: `1px solid ${toast.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
-            color: toast.type === 'success' ? '#22C55E' : '#EF4444',
+            color: toast.type === 'success' ? 'var(--color-success-500)' : 'var(--color-error-500)',
           }}
         >
           {toast.message}

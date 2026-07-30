@@ -40,10 +40,10 @@ interface LeaderboardEntry {
 }
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
-  registration: { bg: 'rgba(59,130,246,0.2)', text: '#60A5FA', label: 'Registration Open' },
-  in_progress: { bg: 'rgba(74,222,128,0.2)', text: '#4ADE80', label: 'In Progress' },
+  registration: { bg: 'rgba(59,130,246,0.2)', text: 'var(--color-secondary-400)', label: 'Registration Open' },
+  in_progress: { bg: 'rgba(74,222,128,0.2)', text: 'var(--color-success-400)', label: 'In Progress' },
   completed: { bg: 'rgba(156,163,175,0.2)', text: '#9CA3AF', label: 'Completed' },
-  upcoming: { bg: 'rgba(245,158,11,0.2)', text: '#F59E0B', label: 'Upcoming' },
+  upcoming: { bg: 'rgba(245,158,11,0.2)', text: 'var(--color-warning-500)', label: 'Upcoming' },
 };
 
 function TournamentDetailPageContent(): React.JSX.Element {
@@ -280,7 +280,7 @@ function TournamentDetailPageContent(): React.JSX.Element {
                 style={{
                   backgroundColor:
                     activeTab === tab ? 'rgba(232,66,10,0.2)' : 'rgba(255,255,255,0.05)',
-                  color: activeTab === tab ? '#E8420A' : 'rgba(255,255,255,0.6)',
+                  color: activeTab === tab ? 'var(--brand-orange)' : 'rgba(255,255,255,0.6)',
                   border:
                     activeTab === tab ? '1px solid rgba(232,66,10,0.3)' : '1px solid transparent',
                 }}

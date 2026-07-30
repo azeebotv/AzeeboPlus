@@ -148,7 +148,7 @@ function LiveEventDetailContent(): React.JSX.Element {
             <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/30 to-transparent" />
             <div className="absolute bottom-4 left-4 right-4">
               <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">{event.title}</h1>
-              <p className="text-lg" style={{ color: '#E8420A' }}>
+              <p className="text-lg" style={{ color: 'var(--brand-orange)' }}>
                 {getTimeStatus(event.scheduledAt, event.status)}
               </p>
             </div>
@@ -214,7 +214,7 @@ function LiveEventDetailContent(): React.JSX.Element {
                 disabled={purchaseMutation.isPending}
                 className="w-full py-3 rounded-xl font-semibold text-white transition-all"
                 style={{
-                  backgroundColor: purchaseMutation.isPending ? '#666' : '#E8420A',
+                  backgroundColor: purchaseMutation.isPending ? '#666' : 'var(--brand-orange)',
                 }}
               >
                 {purchaseMutation.isPending
@@ -241,7 +241,7 @@ function LiveEventDetailContent(): React.JSX.Element {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block mt-3 text-center py-3 rounded-xl font-semibold text-white transition-all"
-                style={{ backgroundColor: '#22c55e' }}
+                style={{ backgroundColor: 'var(--color-success-500)' }}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
               >

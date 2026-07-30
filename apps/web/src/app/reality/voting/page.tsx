@@ -192,7 +192,7 @@ function VotingPageContent(): React.JSX.Element {
                                   className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
                                   style={{
                                     backgroundColor: 'rgba(239,68,68,0.2)',
-                                    color: '#EF4444',
+                                    color: 'var(--color-error-500)',
                                   }}
                                 >
                                   At Risk
@@ -281,7 +281,7 @@ function VotingPageContent(): React.JSX.Element {
                                 voteQuantity === qty
                                   ? '1px solid rgba(232,66,10,0.3)'
                                   : '1px solid rgba(255,255,255,0.1)',
-                              color: voteQuantity === qty ? '#E8420A' : 'rgba(255,255,255,0.7)',
+                              color: voteQuantity === qty ? 'var(--brand-orange)' : 'rgba(255,255,255,0.7)',
                             }}
                           >
                             {qty}
@@ -321,7 +321,7 @@ function VotingPageContent(): React.JSX.Element {
                       <div key={step.title} className="flex items-start gap-3">
                         <span
                           className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                          style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8420A' }}
+                          style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
                         >
                           {step.icon}
                         </span>
@@ -346,7 +346,7 @@ function VotingPageContent(): React.JSX.Element {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
             className="fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full shadow-lg z-50"
-            style={{ backgroundColor: '#22C55E' }}
+            style={{ backgroundColor: 'var(--color-success-500)' }}
           >
             <p className="text-white font-semibold text-sm">Vote submitted successfully!</p>
           </motion.div>

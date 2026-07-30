@@ -136,7 +136,7 @@ function PredictionsPageContent(): React.JSX.Element {
                               backgroundColor: isUrgent
                                 ? 'rgba(239,68,68,0.2)'
                                 : 'rgba(13,59,46,0.3)',
-                              color: isUrgent ? '#EF4444' : '#4ADE80',
+                              color: isUrgent ? 'var(--color-error-500)' : 'var(--color-success-400)',
                             }}
                           >
                             {isUrgent ? 'Ending Soon' : 'Open'}
@@ -182,9 +182,9 @@ function PredictionsPageContent(): React.JSX.Element {
                             style={{
                               backgroundColor:
                                 selectedBet === `${market.id}-home`
-                                  ? '#4ADE80'
+                                  ? 'var(--color-success-400)'
                                   : 'rgba(255,255,255,0.1)',
-                              color: selectedBet === `${market.id}-home` ? '#0D3B2E' : '#fff',
+                              color: selectedBet === `${market.id}-home` ? 'var(--brand-forest)' : '#fff',
                             }}
                           >
                             {market.homeTeam}
@@ -197,9 +197,9 @@ function PredictionsPageContent(): React.JSX.Element {
                               style={{
                                 backgroundColor:
                                   selectedBet === `${market.id}-draw`
-                                    ? '#4ADE80'
+                                    ? 'var(--color-success-400)'
                                     : 'rgba(255,255,255,0.1)',
-                                color: selectedBet === `${market.id}-draw` ? '#0D3B2E' : '#fff',
+                                color: selectedBet === `${market.id}-draw` ? 'var(--brand-forest)' : '#fff',
                               }}
                             >
                               Draw
@@ -212,9 +212,9 @@ function PredictionsPageContent(): React.JSX.Element {
                             style={{
                               backgroundColor:
                                 selectedBet === `${market.id}-away`
-                                  ? '#4ADE80'
+                                  ? 'var(--color-success-400)'
                                   : 'rgba(255,255,255,0.1)',
-                              color: selectedBet === `${market.id}-away` ? '#0D3B2E' : '#fff',
+                              color: selectedBet === `${market.id}-away` ? 'var(--brand-forest)' : '#fff',
                             }}
                           >
                             {market.awayTeam}

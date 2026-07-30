@@ -133,7 +133,7 @@ export default function StreakPage(): React.JSX.Element {
               }}
             >
               <div style={{ fontSize: 48, marginBottom: 8 }}>🔥</div>
-              <p style={{ fontSize: 48, fontWeight: 700, color: '#E8420A' }}>{currentStreak}</p>
+              <p style={{ fontSize: 48, fontWeight: 700, color: 'var(--brand-orange)' }}>{currentStreak}</p>
               <p style={{ fontSize: 16, color: 'var(--text-secondary)', marginBottom: 8 }}>Day Streak</p>
               {todayActive && (
                 <span
@@ -143,7 +143,7 @@ export default function StreakPage(): React.JSX.Element {
                     padding: '4px 12px',
                     borderRadius: 999,
                     backgroundColor: 'rgba(34,197,94,0.15)',
-                    color: '#22C55E',
+                    color: 'var(--color-success-500)',
                   }}
                 >
                   ✓ Today&apos;s check-in done
@@ -157,7 +157,7 @@ export default function StreakPage(): React.JSX.Element {
                     padding: '4px 12px',
                     borderRadius: 999,
                     backgroundColor: 'rgba(245,158,11,0.15)',
-                    color: '#F59E0B',
+                    color: 'var(--color-warning-500)',
                   }}
                 >
                   Check in today to keep your streak
@@ -179,7 +179,7 @@ export default function StreakPage(): React.JSX.Element {
                 style={{ padding: 20, borderRadius: 16, textAlign: 'center' }}
               >
                 <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>Current Streak</p>
-                <p style={{ fontSize: 24, fontWeight: 700, color: '#E8420A' }}>
+                <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--brand-orange)' }}>
                   {currentStreak} days
                 </p>
               </div>
@@ -188,7 +188,7 @@ export default function StreakPage(): React.JSX.Element {
                 style={{ padding: 20, borderRadius: 16, textAlign: 'center' }}
               >
                 <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>Longest Streak</p>
-                <p style={{ fontSize: 24, fontWeight: 700, color: '#F59E0B' }}>
+                <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-warning-500)' }}>
                   {longestStreak} days
                 </p>
               </div>
@@ -209,7 +209,7 @@ export default function StreakPage(): React.JSX.Element {
                   return (
                     <div key={i} style={{ textAlign: 'center' }}>
                       {i < 7 && (
-                        <p style={{ fontSize: 10, color: '#6B5B4B', marginBottom: 4 }}>
+                        <p style={{ fontSize: 10, color: 'var(--text-tertiary)', marginBottom: 4 }}>
                           {dayLabel}
                         </p>
                       )}
@@ -229,7 +229,7 @@ export default function StreakPage(): React.JSX.Element {
                             : day.isToday
                               ? 'rgba(232,66,10,0.1)'
                               : 'rgba(255,255,255,0.04)',
-                          color: day.active ? '#E8420A' : day.isToday ? '#E8420A' : '#6B5B4B',
+                          color: day.active ? 'var(--brand-orange)' : day.isToday ? 'var(--brand-orange)' : 'var(--text-tertiary)',
                           border: day.isToday ? '1px solid #E8420A' : 'none',
                         }}
                       >
@@ -285,11 +285,11 @@ export default function StreakPage(): React.JSX.Element {
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <p style={{ fontSize: 14, fontWeight: 700, color: '#E8420A' }}>
+                      <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--brand-orange)' }}>
                         +₦{milestone.reward.toLocaleString()}
                       </p>
                       {milestone.unlocked && (
-                        <p style={{ fontSize: 11, color: '#22C55E' }}>Unlocked</p>
+                        <p style={{ fontSize: 11, color: 'var(--color-success-500)' }}>Unlocked</p>
                       )}
                     </div>
                   </div>

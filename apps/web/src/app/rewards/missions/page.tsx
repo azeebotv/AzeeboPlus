@@ -143,7 +143,7 @@ export default function MissionsPage(): React.JSX.Element {
                             padding: '3px 10px',
                             borderRadius: 999,
                             backgroundColor: 'rgba(232,66,10,0.15)',
-                            color: '#E8420A',
+                            color: 'var(--brand-orange)',
                             textTransform: 'capitalize',
                           }}
                         >
@@ -201,7 +201,7 @@ export default function MissionsPage(): React.JSX.Element {
                             alignItems: 'center',
                           }}
                         >
-                          <span style={{ fontSize: 16, fontWeight: 700, color: '#E8420A' }}>
+                          <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--brand-orange)' }}>
                             {mission.points.toLocaleString()} pts
                           </span>
                         </div>
@@ -246,7 +246,7 @@ export default function MissionsPage(): React.JSX.Element {
                               padding: '2px 8px',
                               borderRadius: 999,
                               backgroundColor: 'rgba(34,197,94,0.15)',
-                              color: '#22C55E',
+                              color: 'var(--color-success-500)',
                             }}
                           >
                             ✓ Done
@@ -255,7 +255,7 @@ export default function MissionsPage(): React.JSX.Element {
                             style={{
                               fontSize: 14,
                               fontWeight: 700,
-                              color: '#22C55E',
+                              color: 'var(--color-success-500)',
                               marginTop: 4,
                             }}
                           >

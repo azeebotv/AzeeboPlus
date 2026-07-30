@@ -148,7 +148,7 @@ export default function AgbalaQuizPage(): React.JSX.Element {
               width: 120,
               height: 120,
               borderRadius: 20,
-              background: `linear-gradient(135deg, ${resultPath?.color || '#E8420A'}, #FF6B35)`,
+              background: `linear-gradient(135deg, ${resultPath?.color || 'var(--brand-orange)'}, #FF6B35)`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -169,7 +169,7 @@ export default function AgbalaQuizPage(): React.JSX.Element {
             style={{
               padding: '10px 20px',
               borderRadius: 8,
-              background: '#E8420A',
+              background: 'var(--brand-orange)',
               border: 'none',
               color: 'var(--brand-white)',
               fontSize: 14,
@@ -227,17 +227,17 @@ export default function AgbalaQuizPage(): React.JSX.Element {
                     transition: 'border-color 0.2s',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = '#E8420A';
+                    e.currentTarget.style.borderColor = 'var(--brand-orange)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = '#2A1A1A';
+                    e.currentTarget.style.borderColor = 'var(--bg-secondary)';
                   }}
                 >
                   <h3 style={{ fontWeight: 600, fontSize: 16, marginBottom: 4 }}>{quiz.title}</h3>
                   {quiz.description && (
                     <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: 0 }}>{quiz.description}</p>
                   )}
-                  <p style={{ color: '#6A5A4A', fontSize: 12, marginTop: 8 }}>
+                  <p style={{ color: 'var(--text-tertiary)', fontSize: 12, marginTop: 8 }}>
                     {quiz.questions?.length || 0} questions
                   </p>
                 </button>
@@ -302,10 +302,10 @@ export default function AgbalaQuizPage(): React.JSX.Element {
                 transition: 'border-color 0.2s',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#E8420A';
+                e.currentTarget.style.borderColor = 'var(--brand-orange)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = '#2A1A1A';
+                e.currentTarget.style.borderColor = 'var(--bg-secondary)';
               }}
             >
               {option}

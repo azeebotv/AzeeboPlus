@@ -234,11 +234,11 @@ export default function CreatorProfilePage(): React.JSX.Element {
               style={{
                 padding: '12px 16px',
                 backgroundColor: 'rgba(10,165,232,0.2)',
-                border: '1px solid #0EA5F9',
+                border: '1px solid var(--color-secondary-400)',
                 borderRadius: 8,
               }}
             >
-              <p style={{ color: '#0EA5F9', fontSize: 14, margin: 0 }}>
+              <p style={{ color: 'var(--color-secondary-400)', fontSize: 14, margin: 0 }}>
                 Profile saved successfully!
               </p>
             </div>

@@ -87,7 +87,7 @@ export default function TransactionDetailPage(): React.JSX.Element {
                 width: 40,
                 height: 40,
                 border: '3px solid #2A1A1A',
-                borderTopColor: '#E8420A',
+                borderTopColor: 'var(--brand-orange)',
                 borderRadius: '50%',
                 animation: 'spin 0.8s linear infinite',
               }}
@@ -99,7 +99,7 @@ export default function TransactionDetailPage(): React.JSX.Element {
             <h3 style={{ fontSize: 18, marginBottom: 8 }}>Transaction not found</h3>
             <a
               href="/wallet/transactions"
-              style={{ color: '#E8420A', textDecoration: 'none', fontWeight: 600 }}
+              style={{ color: 'var(--brand-orange)', textDecoration: 'none', fontWeight: 600 }}
             >
               View all transactions
             </a>
@@ -114,8 +114,8 @@ export default function TransactionDetailPage(): React.JSX.Element {
                   fontWeight: 700,
                   color:
                     transaction.type === 'deposit' || transaction.type === 'earning'
-                      ? '#0D3B2E'
-                      : '#CC1C1C',
+                      ? 'var(--brand-forest)'
+                      : 'var(--brand-red)',
                 }}
               >
                 {transaction.type === 'deposit' || transaction.type === 'earning' ? '+' : '-'}₦
@@ -137,10 +137,10 @@ export default function TransactionDetailPage(): React.JSX.Element {
                         : 'rgba(204,28,28,0.2)',
                   color:
                     transaction.status === 'completed'
-                      ? '#0D3B2E'
+                      ? 'var(--brand-forest)'
                       : transaction.status === 'pending'
-                        ? '#F59E0B'
-                        : '#CC1C1C',
+                        ? 'var(--color-warning-500)'
+                        : 'var(--brand-red)',
                 }}
               >
                 {transaction.status}

@@ -93,7 +93,7 @@ function SportsPageContent(): React.JSX.Element {
                   <Link
                     href={`/sports/predictions`}
                     className="px-6 py-3 rounded-full text-sm font-semibold transition-all inline-block"
-                    style={{ backgroundColor: '#fff', color: '#0D3B2E' }}
+                    style={{ backgroundColor: '#fff', color: 'var(--brand-forest)' }}
                   >
                     Make Prediction
                   </Link>
@@ -149,7 +149,7 @@ function SportsPageContent(): React.JSX.Element {
                     <div className="absolute bottom-4 left-4 right-4">
                       <span
                         className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                        style={{ backgroundColor: 'rgba(13,59,46,0.4)', color: '#4ADE80' }}
+                        style={{ backgroundColor: 'rgba(13,59,46,0.4)', color: 'var(--color-success-400)' }}
                       >
                         {match.contentType || 'Sport'}
                       </span>

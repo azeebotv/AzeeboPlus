@@ -72,15 +72,15 @@ function LiveEventsPageContent(): React.JSX.Element {
   const statusColor = (status: string): string => {
     switch (status) {
       case 'live':
-        return '#22c55e';
+        return 'var(--color-success-500)';
       case 'scheduled':
-        return '#E8420A';
+        return 'var(--brand-orange)';
       case 'ended':
         return '#6b7280';
       case 'cancelled':
-        return '#ef4444';
+        return 'var(--color-error-500)';
       default:
-        return '#9A8A7A';
+        return 'var(--text-secondary)';
     }
   };
 
@@ -121,8 +121,8 @@ function LiveEventsPageContent(): React.JSX.Element {
               onClick={() => setFilter(f)}
               className="px-4 py-2 rounded-full text-sm font-medium transition-all"
               style={{
-                backgroundColor: filter === f ? '#E8420A' : 'rgba(255,255,255,0.05)',
-                color: filter === f ? '#fff' : '#9A8A7A',
+                backgroundColor: filter === f ? 'var(--brand-orange)' : 'rgba(255,255,255,0.05)',
+                color: filter === f ? '#fff' : 'var(--text-secondary)',
               }}
             >
               {f === 'upcoming'
@@ -199,7 +199,7 @@ function LiveEventsPageContent(): React.JSX.Element {
                     <div className="p-4">
                       <p className="text-sm text-white/50 mb-3 line-clamp-2">{event.description}</p>
                       <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold" style={{ color: '#E8420A' }}>
+                        <span className="text-lg font-bold" style={{ color: 'var(--brand-orange)' }}>
                           {formatPrice(event.ticketPrice, event.currency)}
                         </span>
                         {event.maxViewers && (

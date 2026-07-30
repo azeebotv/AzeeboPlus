@@ -24,9 +24,9 @@ interface Report {
 }
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string; icon: string }> = {
-  pending: { bg: 'rgba(245,158,11,0.2)', text: '#F59E0B', label: 'Pending', icon: '⏳' },
-  reviewing: { bg: 'rgba(59,130,246,0.2)', text: '#60A5FA', label: 'Under Review', icon: '🔍' },
-  resolved: { bg: 'rgba(34,197,94,0.2)', text: '#22C55E', label: 'Resolved', icon: '✓' },
+  pending: { bg: 'rgba(245,158,11,0.2)', text: 'var(--color-warning-500)', label: 'Pending', icon: '⏳' },
+  reviewing: { bg: 'rgba(59,130,246,0.2)', text: 'var(--color-secondary-400)', label: 'Under Review', icon: '🔍' },
+  resolved: { bg: 'rgba(34,197,94,0.2)', text: 'var(--color-success-500)', label: 'Resolved', icon: '✓' },
   dismissed: { bg: 'rgba(156,163,175,0.2)', text: '#9CA3AF', label: 'Dismissed', icon: '✕' },
 };
 
@@ -175,7 +175,7 @@ function MobileStatusPageContent(): React.JSX.Element {
                     {report.resolution && (
                       <div
                         className="mt-3 p-2 rounded-lg text-xs"
-                        style={{ backgroundColor: 'rgba(34,197,94,0.1)', color: '#22C55E' }}
+                        style={{ backgroundColor: 'rgba(34,197,94,0.1)', color: 'var(--color-success-500)' }}
                       >
                         {report.resolution}
                       </div>

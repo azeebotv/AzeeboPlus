@@ -159,7 +159,7 @@ export default function WalletPage(): React.JSX.Element {
                     <div className="text-right">
                       <p
                         className="font-bold text-lg"
-                        style={{ color: transaction.type === 'credit' ? '#22C55E' : '#fff' }}
+                        style={{ color: transaction.type === 'credit' ? 'var(--color-success-500)' : '#fff' }}
                       >
                         {transaction.type === 'credit' ? '+' : '-'} ₦
                         {(transaction.amount ?? 0).toLocaleString()}
@@ -169,10 +169,10 @@ export default function WalletPage(): React.JSX.Element {
                         style={{
                           color:
                             transaction.status === 'completed'
-                              ? '#22C55E'
+                              ? 'var(--color-success-500)'
                               : transaction.status === 'pending'
-                                ? '#EAB308'
-                                : '#EF4444',
+                                ? 'var(--color-warning-400)'
+                                : 'var(--color-error-500)',
                         }}
                       >
                         {transaction.status}

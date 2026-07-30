@@ -133,7 +133,7 @@ export default function WithdrawPage(): React.JSX.Element {
           <div className="text-center">
             <div
               className="animate-spin rounded-full h-12 w-12 mx-auto"
-              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }}
+              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--brand-orange)' }}
             />
             <p className="mt-4 text-white/60">Loading withdrawal options...</p>
           </div>
@@ -163,7 +163,7 @@ export default function WithdrawPage(): React.JSX.Element {
           </button>
           <h1 className="text-3xl font-bold text-white mb-2">Withdraw Funds</h1>
           <p className="text-white/50">Transfer funds to your bank account</p>
-          <p className="text-lg font-semibold mt-2" style={{ color: '#E8420A' }}>
+          <p className="text-lg font-semibold mt-2" style={{ color: 'var(--brand-orange)' }}>
             Balance: ₦{walletBalance.toLocaleString()}
           </p>
         </div>
@@ -240,7 +240,7 @@ export default function WithdrawPage(): React.JSX.Element {
           <div className="az-glass p-6">
             <label className="az-label block mb-3">Withdrawal Amount</label>
             <div className="az-input flex items-center gap-3">
-              <span className="text-xl font-bold" style={{ color: '#E8420A' }}>
+              <span className="text-xl font-bold" style={{ color: 'var(--brand-orange)' }}>
                 ₦
               </span>
               <input
@@ -295,7 +295,7 @@ export default function WithdrawPage(): React.JSX.Element {
                 style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}
               >
                 <span className="font-semibold text-white">You&apos;ll Receive</span>
-                <span className="font-bold" style={{ color: '#E8420A' }}>
+                <span className="font-bold" style={{ color: 'var(--brand-orange)' }}>
                   ₦{(parseFloat(amount) - parseFloat(pricing.processingFee)).toLocaleString()}
                 </span>
               </div>

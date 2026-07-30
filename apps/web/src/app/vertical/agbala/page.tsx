@@ -132,7 +132,7 @@ export default function AgbalaPage(): React.JSX.Element {
                     e.currentTarget.style.borderColor = path.color;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = '#2A1A1A';
+                    e.currentTarget.style.borderColor = 'var(--bg-secondary)';
                   }}
                 >
                   <div style={{ fontSize: 32, marginBottom: 12 }}>{path.icon}</div>
@@ -172,10 +172,10 @@ export default function AgbalaPage(): React.JSX.Element {
                     transition: 'border-color 0.2s',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = '#E8420A';
+                    e.currentTarget.style.borderColor = 'var(--brand-orange)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = '#2A1A1A';
+                    e.currentTarget.style.borderColor = 'var(--bg-secondary)';
                   }}
                 >
                   <h3 style={{ fontWeight: 600, fontSize: 16, marginBottom: 4 }}>{sw.title}</h3>

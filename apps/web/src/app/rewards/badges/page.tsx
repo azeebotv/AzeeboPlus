@@ -144,7 +144,7 @@ export default function BadgesPage(): React.JSX.Element {
                         {badge.icon}
                       </div>
                       <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{badge.name}</p>
-                      <p style={{ fontSize: 11, color: '#22C55E', fontWeight: 600 }}>✓ Earned</p>
+                      <p style={{ fontSize: 11, color: 'var(--color-success-500)', fontWeight: 600 }}>✓ Earned</p>
                     </div>
                   ))}
                 </div>
@@ -189,7 +189,7 @@ export default function BadgesPage(): React.JSX.Element {
                         {badge.icon}
                       </div>
                       <p
-                        style={{ fontWeight: 600, fontSize: 14, marginBottom: 4, color: '#6B5B4B' }}
+                        style={{ fontWeight: 600, fontSize: 14, marginBottom: 4, color: 'var(--text-tertiary)' }}
                       >
                         {badge.name}
                       </p>
@@ -211,7 +211,7 @@ export default function BadgesPage(): React.JSX.Element {
                             }}
                           />
                         </div>
-                        <p style={{ fontSize: 11, color: '#6B5B4B', marginTop: 4 }}>
+                        <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4 }}>
                           {badge.progress ?? 0}/{badge.target ?? 1}
                         </p>
                       </div>
@@ -285,14 +285,14 @@ export default function BadgesPage(): React.JSX.Element {
             <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginBottom: 16 }}>
               <div>
                 <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Points</p>
-                <p style={{ fontSize: 18, fontWeight: 700, color: '#E8420A' }}>
+                <p style={{ fontSize: 18, fontWeight: 700, color: 'var(--brand-orange)' }}>
                   {selectedBadge.points}
                 </p>
               </div>
               {selectedBadge.unlocked && selectedBadge.earnedAt && (
                 <div>
                   <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Earned</p>
-                  <p style={{ fontSize: 14, color: '#22C55E' }}>
+                  <p style={{ fontSize: 14, color: 'var(--color-success-500)' }}>
                     {new Date(selectedBadge.earnedAt).toLocaleDateString()}
                   </p>
                 </div>

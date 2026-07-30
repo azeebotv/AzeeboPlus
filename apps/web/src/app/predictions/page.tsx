@@ -136,7 +136,7 @@ export default function PredictionsPage() {
                       {pred.category && (
                         <span
                           className="px-2 py-0.5 rounded text-[10px]"
-                          style={{ background: 'rgba(232,66,10,0.2)', color: '#E8420A' }}
+                          style={{ background: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
                         >
                           {pred.category}
                         </span>
@@ -153,9 +153,9 @@ export default function PredictionsPage() {
                         color:
                           pred.status === 'resolved'
                             ? pred.isCorrect
-                              ? '#4ADE80'
-                              : '#F87171'
-                            : '#F59E0B',
+                              ? 'var(--color-success-400)'
+                              : 'var(--color-error-400)'
+                            : 'var(--color-warning-500)',
                       }}
                     >
                       {pred.status === 'resolved'

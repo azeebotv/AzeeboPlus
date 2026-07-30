@@ -76,7 +76,7 @@ export default function CreatorEarningsPage(): React.JSX.Element {
                   borderRadius: 8,
                   border: '1px solid var(--border-default)',
                   background: period === p ? 'rgba(232,66,10,0.2)' : 'transparent',
-                  color: period === p ? '#E8420A' : '#9A8A7A',
+                  color: period === p ? 'var(--brand-orange)' : 'var(--text-secondary)',
                   cursor: 'pointer',
                   fontSize: 13,
                 }}
@@ -131,7 +131,7 @@ export default function CreatorEarningsPage(): React.JSX.Element {
                 }}
               >
                 <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginBottom: 4 }}>Available Balance</p>
-                <p style={{ fontSize: 24, fontWeight: 700, color: '#4ADE80' }}>
+                <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-success-400)' }}>
                   ₦{earnings.availableBalance.toLocaleString()}
                 </p>
               </div>
@@ -144,7 +144,7 @@ export default function CreatorEarningsPage(): React.JSX.Element {
                 }}
               >
                 <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginBottom: 4 }}>Pending</p>
-                <p style={{ fontSize: 24, fontWeight: 700, color: '#F59E0B' }}>
+                <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-warning-500)' }}>
                   ₦{earnings.pendingEarnings.toLocaleString()}
                 </p>
               </div>
@@ -219,12 +219,12 @@ export default function CreatorEarningsPage(): React.JSX.Element {
                           style={{
                             fontWeight: 600,
                             fontSize: 14,
-                            color: item.status === 'pending' ? '#F59E0B' : '#4ADE80',
+                            color: item.status === 'pending' ? 'var(--color-warning-500)' : 'var(--color-success-400)',
                           }}
                         >
                           ₦{item.amount.toLocaleString()}
                         </p>
-                        <p style={{ fontSize: 11, color: '#6A5A4A', textTransform: 'uppercase' }}>
+                        <p style={{ fontSize: 11, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
                           {item.status}
                         </p>
                       </div>

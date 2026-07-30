@@ -311,7 +311,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
                 Thumbnail
               </label>
               <div
-                style={{ position: 'relative', aspectRatio: '16/9', backgroundColor: '#140808' }}
+                style={{ position: 'relative', aspectRatio: '16/9', backgroundColor: 'var(--bg-tertiary)' }}
               >
                 <OptimizedImage src={editContent.thumbnail} alt="" fill className="object-cover" />
               </div>

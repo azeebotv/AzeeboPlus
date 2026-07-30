@@ -514,7 +514,7 @@ export default function MessagesPage(): React.JSX.Element {
                         className="text-xs px-2 py-1 rounded border"
                         style={{
                           borderColor: 'rgba(255,255,255,0.2)',
-                          color: selectedConversation.isMuted ? '#F59E0B' : 'var(--text-muted, #9A8A7A)',
+                          color: selectedConversation.isMuted ? 'var(--color-warning-500)' : 'var(--text-muted, #9A8A7A)',
                         }}
                       >
                         {selectedConversation.isMuted ? 'Unmute' : 'Mute'}

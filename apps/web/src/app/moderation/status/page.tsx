@@ -22,9 +22,9 @@ interface Report {
 }
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
-  pending: { bg: 'rgba(245,158,11,0.15)', text: '#F59E0B', label: 'Pending' },
-  reviewing: { bg: 'rgba(59,130,246,0.15)', text: '#60A5FA', label: 'Reviewing' },
-  resolved: { bg: 'rgba(34,197,94,0.15)', text: '#22C55E', label: 'Resolved' },
+  pending: { bg: 'rgba(245,158,11,0.15)', text: 'var(--color-warning-500)', label: 'Pending' },
+  reviewing: { bg: 'rgba(59,130,246,0.15)', text: 'var(--color-secondary-400)', label: 'Reviewing' },
+  resolved: { bg: 'rgba(34,197,94,0.15)', text: 'var(--color-success-500)', label: 'Resolved' },
   dismissed: { bg: 'rgba(156,163,175,0.15)', text: '#9CA3AF', label: 'Dismissed' },
 };
 

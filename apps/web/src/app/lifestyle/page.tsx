@@ -83,7 +83,7 @@ function LifestylePageContent(): React.JSX.Element {
             <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">
               <span
                 className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mb-4"
-                style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8420A' }}
+                style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
               >
                 Lifestyle
               </span>
@@ -190,7 +190,7 @@ function LifestylePageContent(): React.JSX.Element {
                     <div className="absolute bottom-4 left-4 right-4">
                       <span
                         className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                        style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8420A' }}
+                        style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
                       >
                         {event.contentType || 'Event'}
                       </span>

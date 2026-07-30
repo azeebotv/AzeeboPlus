@@ -147,8 +147,8 @@ export default function PrivacySecurityPage(): React.JSX.Element {
                     cursor: 'pointer',
                     position: 'relative',
                     backgroundColor: settings[item.key as keyof typeof settings]
-                      ? '#E8420A'
-                      : '#2A1A1A',
+                      ? 'var(--brand-orange)'
+                      : 'var(--bg-secondary)',
                     transition: 'background-color 0.2s',
                     flexShrink: 0,
                   }}
@@ -201,7 +201,7 @@ export default function PrivacySecurityPage(): React.JSX.Element {
             border: '1px solid rgba(204,28,28,0.3)',
           }}
         >
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: '#CC1C1C', marginBottom: 12 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--brand-red)', marginBottom: 12 }}>
             Danger Zone
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 16 }}>
@@ -213,7 +213,7 @@ export default function PrivacySecurityPage(): React.JSX.Element {
               borderRadius: 999,
               border: '1px solid var(--brand-red)',
               background: 'transparent',
-              color: '#CC1C1C',
+              color: 'var(--brand-red)',
               fontWeight: 600,
               fontSize: 14,
               cursor: 'pointer',

@@ -66,11 +66,11 @@ export default function TransactionsPage(): React.JSX.Element {
   const getStatusStyle = (status: string): { backgroundColor: string; color: string } => {
     switch (status) {
       case 'completed':
-        return { backgroundColor: 'rgba(34,197,94,0.2)', color: '#22C55E' };
+        return { backgroundColor: 'rgba(34,197,94,0.2)', color: 'var(--color-success-500)' };
       case 'pending':
-        return { backgroundColor: 'rgba(234,179,8,0.2)', color: '#EAB308' };
+        return { backgroundColor: 'rgba(234,179,8,0.2)', color: 'var(--color-warning-400)' };
       case 'failed':
-        return { backgroundColor: 'rgba(239,68,68,0.2)', color: '#EF4444' };
+        return { backgroundColor: 'rgba(239,68,68,0.2)', color: 'var(--color-error-500)' };
       default:
         return { backgroundColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)' };
     }
@@ -87,7 +87,7 @@ export default function TransactionsPage(): React.JSX.Element {
           <div className="text-center">
             <div
               className="animate-spin rounded-full h-12 w-12 mx-auto"
-              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }}
+              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--brand-orange)' }}
             />
             <p className="mt-4 text-white/60">Loading transactions...</p>
           </div>
@@ -184,7 +184,7 @@ export default function TransactionsPage(): React.JSX.Element {
               <div className="text-right">
                 <p
                   className="font-bold text-lg"
-                  style={{ color: tx.type === 'credit' ? '#22C55E' : '#fff' }}
+                  style={{ color: tx.type === 'credit' ? 'var(--color-success-500)' : '#fff' }}
                 >
                   {tx.type === 'credit' ? '+' : '-'}₦{(tx.amount ?? 0).toLocaleString()}
                 </p>

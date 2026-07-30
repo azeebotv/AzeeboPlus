@@ -72,7 +72,7 @@ export default function PredictionResultsPage(): React.JSX.Element {
                 width: 40,
                 height: 40,
                 border: '3px solid #2A1A1A',
-                borderTopColor: '#E8420A',
+                borderTopColor: 'var(--brand-orange)',
                 borderRadius: '50%',
                 animation: 'spin 0.8s linear infinite',
               }}
@@ -103,7 +103,7 @@ export default function PredictionResultsPage(): React.JSX.Element {
                 }}
               >
                 <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 8 }}>Correct Answer</p>
-                <p style={{ fontSize: 24, fontWeight: 700, color: '#0D3B2E' }}>
+                <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--brand-forest)' }}>
                   {results.correctAnswer}
                 </p>
               </div>
@@ -134,7 +134,7 @@ export default function PredictionResultsPage(): React.JSX.Element {
                             style={{
                               fontWeight: 600,
                               fontSize: 14,
-                              color: isCorrect ? '#0D3B2E' : '#F5F0EB',
+                              color: isCorrect ? 'var(--brand-forest)' : '#F5F0EB',
                             }}
                           >
                             {opt.text} {isCorrect && '✓'}
@@ -147,7 +147,7 @@ export default function PredictionResultsPage(): React.JSX.Element {
                           style={{
                             height: 8,
                             borderRadius: 4,
-                            backgroundColor: '#2A1A1A',
+                            backgroundColor: 'var(--bg-secondary)',
                             overflow: 'hidden',
                           }}
                         >

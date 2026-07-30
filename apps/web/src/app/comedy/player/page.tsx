@@ -134,7 +134,7 @@ export default function ComedyPlayerPage(): React.JSX.Element {
                 }}
               >
                 <div
-                  style={{ position: 'relative', aspectRatio: '16/9', backgroundColor: '#140808' }}
+                  style={{ position: 'relative', aspectRatio: '16/9', backgroundColor: 'var(--bg-tertiary)' }}
                 >
                   {clip.thumbnail && (
                     <OptimizedImage src={clip.thumbnail} alt="" fill className="object-cover" />

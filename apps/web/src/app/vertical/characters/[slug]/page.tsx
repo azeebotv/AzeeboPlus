@@ -95,7 +95,7 @@ function CharacterDetailContent(): React.JSX.Element {
                 {character.universe && (
                   <span
                     className="px-3 py-1 rounded-full text-xs font-semibold"
-                    style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8420A' }}
+                    style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
                   >
                     {character.universe}
                   </span>

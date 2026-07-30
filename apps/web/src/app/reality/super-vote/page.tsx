@@ -163,7 +163,7 @@ export default function SuperVotePage(): React.JSX.Element {
           <div className="text-center">
             <div
               className="animate-spin rounded-full h-12 w-12 mx-auto"
-              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }}
+              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--brand-orange)' }}
             />
             <p className="mt-4 text-white/60">Loading...</p>
           </div>
@@ -194,7 +194,7 @@ export default function SuperVotePage(): React.JSX.Element {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-white">Super Vote</h1>
-              <p className="mt-1" style={{ color: '#E8420A' }}>
+              <p className="mt-1" style={{ color: 'var(--brand-orange)' }}>
                 2x Voting Power
               </p>
             </div>
@@ -223,7 +223,7 @@ export default function SuperVotePage(): React.JSX.Element {
                 }`}
                 style={
                   selectedContestant === contestant.id
-                    ? { borderColor: '#E8420A', boxShadow: '0 0 20px rgba(232,66,10,0.3)' }
+                    ? { borderColor: 'var(--brand-orange)', boxShadow: '0 0 20px rgba(232,66,10,0.3)' }
                     : undefined
                 }
               >
@@ -274,7 +274,7 @@ export default function SuperVotePage(): React.JSX.Element {
                     <h3 className="text-lg font-semibold text-white">{pkg.name}</h3>
                     <p className="text-sm text-white/50">{pkg.description}</p>
                   </div>
-                  <p className="text-2xl font-bold" style={{ color: '#E8420A' }}>
+                  <p className="text-2xl font-bold" style={{ color: 'var(--brand-orange)' }}>
                     ₦{pkg.price.toLocaleString()}
                   </p>
                 </div>

@@ -174,16 +174,16 @@ export default function ReferralHistoryPage(): React.JSX.Element {
               }}
             >
               {[
-                { label: 'Total Referrals', value: String(totalReferrals), color: '#E8420A' },
+                { label: 'Total Referrals', value: String(totalReferrals), color: 'var(--brand-orange)' },
                 {
                   label: 'Total Earned',
                   value: `₦${totalEarned.toLocaleString()}`,
-                  color: '#22C55E',
+                  color: 'var(--color-success-500)',
                 },
                 {
                   label: 'Pending',
                   value: String(statsData.pendingReferrals ?? statsData.pending ?? 0),
-                  color: '#F59E0B',
+                  color: 'var(--color-warning-500)',
                 },
               ].map((stat, i) => (
                 <div
@@ -254,7 +254,7 @@ export default function ReferralHistoryPage(): React.JSX.Element {
                 <div style={{ textAlign: 'center', padding: 40 }}>
                   <p style={{ fontSize: 32, marginBottom: 12 }}>👥</p>
                   <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>No referrals yet</p>
-                  <p style={{ color: '#6B5B4B', fontSize: 13 }}>Share your code to start earning</p>
+                  <p style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>Share your code to start earning</p>
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -293,10 +293,10 @@ export default function ReferralHistoryPage(): React.JSX.Element {
                                   : 'rgba(245,158,11,0.15)',
                             color:
                               ref.status === 'completed' || ref.status === 'rewarded'
-                                ? '#22C55E'
+                                ? 'var(--color-success-500)'
                                 : ref.status === 'active'
-                                  ? '#E8420A'
-                                  : '#F59E0B',
+                                  ? 'var(--brand-orange)'
+                                  : 'var(--color-warning-500)',
                           }}
                         >
                           {ref.status}
@@ -304,7 +304,7 @@ export default function ReferralHistoryPage(): React.JSX.Element {
                         {(ref.earningsGenerated ?? ref.reward ?? 0) > 0 && (
                           <p
                             style={{
-                              color: '#22C55E',
+                              color: 'var(--color-success-500)',
                               fontSize: 12,
                               marginTop: 4,
                               fontWeight: 600,

@@ -197,7 +197,7 @@ function RealityPageContent(): React.JSX.Element {
                   <div className="absolute bottom-4 left-4 right-4">
                     <span
                       className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                      style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8420A' }}
+                      style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
                     >
                       {show.contentType || 'Reality'}
                     </span>
@@ -314,7 +314,7 @@ function RealityPageContent(): React.JSX.Element {
                         {contestant.status === 'danger' && (
                           <span
                             className="px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-[10px] sm:text-xs font-semibold flex-shrink-0"
-                            style={{ backgroundColor: 'rgba(239,68,68,0.2)', color: '#EF4444' }}
+                            style={{ backgroundColor: 'rgba(239,68,68,0.2)', color: 'var(--color-error-500)' }}
                           >
                             Danger
                           </span>

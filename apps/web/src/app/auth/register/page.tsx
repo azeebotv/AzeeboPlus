@@ -86,7 +86,7 @@ export default function RegisterPage(): React.JSX.Element {
           <h2 className="az-headline text-white text-2xl">Create Your Azeebo+ Account</h2>
           <motion.p
             className="text-xs font-bold uppercase tracking-widest mt-1"
-            style={{ color: '#E8420A' }}
+            style={{ color: 'var(--brand-orange)' }}
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.4 }}
@@ -174,7 +174,7 @@ export default function RegisterPage(): React.JSX.Element {
             checked={agree}
             onChange={(e) => setAgree(e.target.checked)}
             className="mt-0.5 h-4 w-4 rounded"
-            style={{ accentColor: '#CC1C1C' }}
+            style={{ accentColor: 'var(--brand-red)' }}
           />
           <span className="text-white/60 text-xs leading-relaxed">
             I agree to the{' '}

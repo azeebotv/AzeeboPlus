@@ -112,11 +112,11 @@ function TitleDetailPageContent(): React.JSX.Element {
   const getStatusStyle = (status?: string) => {
     switch (status) {
       case 'ongoing':
-        return { bg: 'rgba(74,222,128,0.2)', text: '#4ADE80', label: 'Ongoing' };
+        return { bg: 'rgba(74,222,128,0.2)', text: 'var(--color-success-400)', label: 'Ongoing' };
       case 'completed':
         return { bg: 'rgba(156,163,175,0.2)', text: '#9CA3AF', label: 'Completed' };
       case 'upcoming':
-        return { bg: 'rgba(245,158,11,0.2)', text: '#F59E0B', label: 'Upcoming' };
+        return { bg: 'rgba(245,158,11,0.2)', text: 'var(--color-warning-500)', label: 'Upcoming' };
       default:
         return { bg: 'rgba(255,255,255,0.1)', text: 'rgba(255,255,255,0.6)', label: 'N/A' };
     }
@@ -215,7 +215,7 @@ function TitleDetailPageContent(): React.JSX.Element {
                 style={{
                   backgroundColor:
                     activeTab === tab ? 'rgba(232,66,10,0.2)' : 'rgba(255,255,255,0.05)',
-                  color: activeTab === tab ? '#E8420A' : 'rgba(255,255,255,0.6)',
+                  color: activeTab === tab ? 'var(--brand-orange)' : 'rgba(255,255,255,0.6)',
                   border:
                     activeTab === tab ? '1px solid rgba(232,66,10,0.3)' : '1px solid transparent',
                 }}
