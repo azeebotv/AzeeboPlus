@@ -77,11 +77,11 @@ export default function ContentManagerPage(): React.JSX.Element {
       case 'draft':
         return { color: 'rgba(255,255,255,0.4)' };
       case 'processing':
-        return { color: '#EAB308' };
+        return { color: 'var(--color-warning-400)' };
       case 'published':
-        return { color: '#22C55E' };
+        return { color: 'var(--color-success-500)' };
       case 'archived':
-        return { color: '#EF4444' };
+        return { color: 'var(--color-error-500)' };
       default:
         return { color: 'rgba(255,255,255,0.4)' };
     }
@@ -307,7 +307,7 @@ export default function ContentManagerPage(): React.JSX.Element {
                         <button
                           onClick={() => publishMutation.mutate(item.id)}
                           className="px-4 py-2 rounded-full text-sm font-medium text-white transition-colors"
-                          style={{ backgroundColor: '#22C55E' }}
+                          style={{ backgroundColor: 'var(--color-success-500)' }}
                         >
                           Publish
                         </button>
@@ -337,7 +337,7 @@ export default function ContentManagerPage(): React.JSX.Element {
                           });
                         }}
                         className="px-3 py-2 rounded-full text-sm transition-colors"
-                        style={{ backgroundColor: 'rgba(239,68,68,0.2)', color: '#EF4444' }}
+                        style={{ backgroundColor: 'rgba(239,68,68,0.2)', color: 'var(--color-error-500)' }}
                       >
                         🗑
                       </button>

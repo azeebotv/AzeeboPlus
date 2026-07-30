@@ -159,7 +159,7 @@ function MovieDetailPageContent(): React.JSX.Element {
                     )}
                     <span
                       className="px-3 py-1 rounded-full text-xs font-medium"
-                      style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8420A' }}
+                      style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
                     >
                       {movie.genre}
                     </span>
@@ -293,14 +293,14 @@ function MovieDetailPageContent(): React.JSX.Element {
                     {movie.isAvailableForRent && (
                       <div className="flex justify-between items-center">
                         <span className="text-white/50">Rent (48h)</span>
-                        <span className="font-bold" style={{ color: '#E8420A' }}>
+                        <span className="font-bold" style={{ color: 'var(--brand-orange)' }}>
                           ₦{movie.rentalPrice.toLocaleString()}
                         </span>
                       </div>
                     )}
                     <div className="flex justify-between items-center">
                       <span className="text-white/50">Buy Forever</span>
-                      <span className="font-bold" style={{ color: '#E8420A' }}>
+                      <span className="font-bold" style={{ color: 'var(--brand-orange)' }}>
                         ₦{movie.purchasePrice.toLocaleString()}
                       </span>
                     </div>
@@ -394,7 +394,7 @@ function MovieDetailPageContent(): React.JSX.Element {
             backgroundColor:
               toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
             border: `1px solid ${toast.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
-            color: toast.type === 'success' ? '#22C55E' : '#EF4444',
+            color: toast.type === 'success' ? 'var(--color-success-500)' : 'var(--color-error-500)',
           }}
         >
           {toast.message}

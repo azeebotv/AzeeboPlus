@@ -55,8 +55,8 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
                 padding: '8px 20px',
                 borderRadius: 8,
                 border: '1px solid var(--border-default)',
-                background: tab === t ? '#E8420A' : 'transparent',
-                color: tab === t ? '#fff' : '#9A8A7A',
+                background: tab === t ? 'var(--brand-orange)' : 'transparent',
+                color: tab === t ? '#fff' : 'var(--text-secondary)',
                 cursor: 'pointer',
                 fontSize: 13,
                 fontWeight: tab === t ? 600 : 400,
@@ -95,7 +95,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
               >
                 Total
               </p>
-              <p style={{ fontSize: 24, fontWeight: 700, color: '#4ADE80' }}>
+              <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-success-400)' }}>
                 {subscriberStats.totalSubscribers.toLocaleString()}
               </p>
             </div>
@@ -117,7 +117,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
               >
                 New This Week
               </p>
-              <p style={{ fontSize: 24, fontWeight: 700, color: '#60A5FA' }}>
+              <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-secondary-400)' }}>
                 {subscriberStats.newThisWeek.toLocaleString()}
               </p>
             </div>
@@ -139,7 +139,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
               >
                 New This Month
               </p>
-              <p style={{ fontSize: 24, fontWeight: 700, color: '#FBBF24' }}>
+              <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-accent-gold)' }}>
                 {subscriberStats.newThisMonth.toLocaleString()}
               </p>
             </div>
@@ -161,7 +161,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
               >
                 Churn Rate
               </p>
-              <p style={{ fontSize: 24, fontWeight: 700, color: '#F87171' }}>
+              <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-error-400)' }}>
                 {subscriberStats.churnRate}%
               </p>
             </div>
@@ -215,7 +215,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
                       width: 44,
                       height: 44,
                       borderRadius: 22,
-                      backgroundColor: '#2A1A1A',
+                      backgroundColor: 'var(--bg-secondary)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -238,7 +238,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
                         fontSize: 11,
                         fontWeight: 600,
                         backgroundColor: 'rgba(232,66,10,0.15)',
-                        color: '#E8420A',
+                        color: 'var(--brand-orange)',
                       }}
                     >
                       {sub.plan}
@@ -252,7 +252,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
                         fontSize: 11,
                         fontWeight: 600,
                         backgroundColor: 'rgba(245,158,11,0.15)',
-                        color: '#FBBF24',
+                        color: 'var(--color-accent-gold)',
                       }}
                     >
                       Gift
@@ -290,7 +290,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
                     style={{
                       height: 6,
                       borderRadius: 3,
-                      backgroundColor: '#2A1A1A',
+                      backgroundColor: 'var(--bg-secondary)',
                       overflow: 'hidden',
                     }}
                   >
@@ -329,7 +329,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
                     style={{
                       height: 6,
                       borderRadius: 3,
-                      backgroundColor: '#2A1A1A',
+                      backgroundColor: 'var(--bg-secondary)',
                       overflow: 'hidden',
                     }}
                   >
@@ -337,7 +337,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
                       style={{
                         height: '100%',
                         borderRadius: 3,
-                        backgroundColor: '#60A5FA',
+                        backgroundColor: 'var(--color-secondary-400)',
                         width: `${region.percentage}%`,
                       }}
                     />

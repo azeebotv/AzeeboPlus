@@ -220,8 +220,8 @@ function EventsPageContent(): React.JSX.Element {
                         onClick={() => handleRsvp(event.id)}
                         className="px-4 py-2 rounded-full text-xs font-semibold transition-all"
                         style={{
-                          backgroundColor: rsvped.has(event.id) ? '#4ADE80' : '#E8420A',
-                          color: rsvped.has(event.id) ? '#0D3B2E' : '#fff',
+                          backgroundColor: rsvped.has(event.id) ? 'var(--color-success-400)' : 'var(--brand-orange)',
+                          color: rsvped.has(event.id) ? 'var(--brand-forest)' : '#fff',
                         }}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}

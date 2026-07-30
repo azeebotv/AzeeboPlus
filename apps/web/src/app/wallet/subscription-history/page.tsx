@@ -19,8 +19,8 @@ interface SubscriptionHistoryItem {
 const PAGE_SIZE = 10;
 
 const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
-  active: { bg: 'rgba(34,197,94,0.15)', text: '#22C55E' },
-  cancelled: { bg: 'rgba(239,68,68,0.15)', text: '#EF4444' },
+  active: { bg: 'rgba(34,197,94,0.15)', text: 'var(--color-success-500)' },
+  cancelled: { bg: 'rgba(239,68,68,0.15)', text: 'var(--color-error-500)' },
   expired: { bg: 'rgba(156,163,175,0.15)', text: '#9CA3AF' },
 };
 
@@ -184,7 +184,7 @@ export default function SubscriptionHistoryPage(): React.JSX.Element {
                             className="text-xs px-2 py-0.5 rounded-full"
                             style={{
                               background: 'rgba(34,197,94,0.1)',
-                              color: '#22C55E',
+                              color: 'var(--color-success-500)',
                               border: '1px solid rgba(34,197,94,0.2)',
                             }}
                           >

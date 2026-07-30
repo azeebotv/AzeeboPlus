@@ -226,7 +226,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
             <div className="flex items-center gap-4 mb-4">
               <span className="text-4xl">👑</span>
               <div>
-                <h2 className="text-xl font-bold" style={{ color: '#EAB308' }}>
+                <h2 className="text-xl font-bold" style={{ color: 'var(--color-warning-400)' }}>
                   Premium Active
                 </h2>
                 <p className="text-white/50">{status.planName}</p>
@@ -239,7 +239,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
               <span className="text-white/50">Auto-renew</span>
               <span
                 className="font-semibold"
-                style={{ color: status.autoRenew ? '#22C55E' : '#EF4444' }}
+                style={{ color: status.autoRenew ? 'var(--color-success-500)' : 'var(--color-error-500)' }}
               >
                 {status.autoRenew ? 'On' : 'Off'}
               </span>
@@ -250,7 +250,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
                 aria-label="Cancel subscription"
                 onClick={handleCancel}
                 className="w-full px-4 py-3 rounded-full font-semibold transition-colors"
-                style={{ backgroundColor: 'rgba(239,68,68,0.2)', color: '#EF4444' }}
+                style={{ backgroundColor: 'rgba(239,68,68,0.2)', color: 'var(--color-error-500)' }}
               >
                 Cancel Subscription
               </button>
@@ -301,7 +301,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
               <ul className="space-y-3 mb-6">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex items-center gap-2">
-                    <span className="font-bold" style={{ color: '#22C55E' }}>
+                    <span className="font-bold" style={{ color: 'var(--color-success-500)' }}>
                       ✓
                     </span>
                     <span className="text-white text-sm">{feature}</span>
@@ -405,7 +405,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
             backgroundColor:
               toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
             border: `1px solid ${toast.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
-            color: toast.type === 'success' ? '#22C55E' : '#EF4444',
+            color: toast.type === 'success' ? 'var(--color-success-500)' : 'var(--color-error-500)',
           }}
           role="alert"
         >

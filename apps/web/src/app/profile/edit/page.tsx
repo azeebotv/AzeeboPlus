@@ -131,13 +131,13 @@ export default function ProfileEditPage(): React.JSX.Element {
                 style={{
                   width: '100%',
                   height: '100%',
-                  backgroundColor: '#2A1A1A',
+                  backgroundColor: 'var(--bg-secondary)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: 36,
                   fontWeight: 700,
-                  color: '#E8420A',
+                  color: 'var(--brand-orange)',
                 }}
               >
                 {profile.username.charAt(0).toUpperCase()}

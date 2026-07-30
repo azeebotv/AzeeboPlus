@@ -81,9 +81,9 @@ function FixturesPageContent(): React.JSX.Element {
                 onClick={() => setSelectedSport(sport)}
                 className="px-4 py-2 rounded-full text-sm font-medium transition-all"
                 style={{
-                  backgroundColor: selectedSport === sport ? '#4ADE80' : 'rgba(255,255,255,0.1)',
-                  color: selectedSport === sport ? '#0D3B2E' : 'rgba(255,255,255,0.7)',
-                  border: `1px solid ${selectedSport === sport ? '#4ADE80' : 'rgba(255,255,255,0.2)'}`,
+                  backgroundColor: selectedSport === sport ? 'var(--color-success-400)' : 'rgba(255,255,255,0.1)',
+                  color: selectedSport === sport ? 'var(--brand-forest)' : 'rgba(255,255,255,0.7)',
+                  border: `1px solid ${selectedSport === sport ? 'var(--color-success-400)' : 'rgba(255,255,255,0.2)'}`,
                 }}
               >
                 {sport}
@@ -165,7 +165,7 @@ function FixturesPageContent(): React.JSX.Element {
                       className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
                       style={{
                         backgroundColor: 'rgba(13,59,46,0.3)',
-                        color: '#4ADE80',
+                        color: 'var(--color-success-400)',
                       }}
                     >
                       {fixture.sport}
@@ -192,7 +192,7 @@ function FixturesPageContent(): React.JSX.Element {
                     {fixture.status === 'live' && (
                       <span
                         className="ml-2 inline-block w-2 h-2 rounded-full animate-pulse"
-                        style={{ backgroundColor: '#4ADE80' }}
+                        style={{ backgroundColor: 'var(--color-success-400)' }}
                       />
                     )}
                   </div>

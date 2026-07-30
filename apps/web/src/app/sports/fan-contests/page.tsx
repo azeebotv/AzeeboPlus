@@ -127,7 +127,7 @@ function FanContestsPageContent(): React.JSX.Element {
                     <div className="flex items-center gap-2 mb-3">
                       <span
                         className="px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                        style={{ backgroundColor: 'rgba(74,222,128,0.2)', color: '#4ADE80' }}
+                        style={{ backgroundColor: 'rgba(74,222,128,0.2)', color: 'var(--color-success-400)' }}
                       >
                         Active
                       </span>

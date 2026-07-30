@@ -127,7 +127,7 @@ function ShowDetailContent(): React.JSX.Element {
                 <div className="flex items-center gap-2 mb-4">
                   <span
                     className="px-3 py-1 rounded-full text-xs font-semibold"
-                    style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8420A' }}
+                    style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
                   >
                     Reality Show
                   </span>
@@ -317,9 +317,9 @@ function ShowDetailContent(): React.JSX.Element {
                                 : 'rgba(255,255,255,0.1)',
                           color:
                             contestant.status === 'safe'
-                              ? '#22C55E'
+                              ? 'var(--color-success-500)'
                               : contestant.status === 'danger'
-                                ? '#EF4444'
+                                ? 'var(--color-error-500)'
                                 : 'rgba(255,255,255,0.5)',
                         }}
                       >
@@ -352,7 +352,7 @@ function ShowDetailContent(): React.JSX.Element {
             <motion.button
               type="button"
               className="px-8 py-3 rounded-full text-sm font-semibold transition-all"
-              style={{ backgroundColor: '#fff', color: '#E8420A' }}
+              style={{ backgroundColor: '#fff', color: 'var(--brand-orange)' }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >

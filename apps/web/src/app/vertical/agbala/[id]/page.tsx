@@ -160,7 +160,7 @@ export default function AgbalaPathPage() {
                     e.currentTarget.style.borderColor = pathConfig.color;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = '#2A1A1A';
+                    e.currentTarget.style.borderColor = 'var(--bg-secondary)';
                   }}
                 >
                   {char.imageUrl && (
@@ -168,7 +168,7 @@ export default function AgbalaPathPage() {
                       style={{
                         position: 'relative',
                         aspectRatio: '1',
-                        backgroundColor: '#140808',
+                        backgroundColor: 'var(--bg-tertiary)',
                         marginBottom: 12,
                       }}
                     >
@@ -199,7 +199,7 @@ export default function AgbalaPathPage() {
               padding: '10px 20px',
               background: 'rgba(232,66,10,0.15)',
               border: '1px solid #E8420A',
-              color: '#E8420A',
+              color: 'var(--brand-orange)',
               borderRadius: 8,
               textDecoration: 'none',
               fontSize: 14,

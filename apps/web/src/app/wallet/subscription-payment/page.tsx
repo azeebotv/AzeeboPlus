@@ -174,9 +174,9 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                   className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
                   style={{
                     backgroundColor: isCompleted
-                      ? '#22C55E'
+                      ? 'var(--color-success-500)'
                       : isActive
-                        ? '#E8420A'
+                        ? 'var(--brand-orange)'
                         : 'rgba(255,255,255,0.1)',
                     color: isCompleted || isActive ? '#fff' : 'rgba(255,255,255,0.4)',
                   }}
@@ -195,7 +195,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                   <div
                     className="w-8 h-0.5 mx-2"
                     style={{
-                      backgroundColor: isCompleted ? '#22C55E' : 'rgba(255,255,255,0.1)',
+                      backgroundColor: isCompleted ? 'var(--color-success-500)' : 'rgba(255,255,255,0.1)',
                     }}
                   />
                 )}
@@ -236,7 +236,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                           : 'rgba(255,255,255,0.03)',
                       border: `2px solid ${
                         selectedPlanId === plan.id
-                          ? '#E8420A'
+                          ? 'var(--brand-orange)'
                           : plan.isPopular
                             ? 'rgba(232,66,10,0.3)'
                             : 'rgba(255,255,255,0.06)'
@@ -256,7 +256,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                       </span>
                     )}
                     <h3 className="text-lg font-bold text-white mb-1">{plan.name}</h3>
-                    <p className="text-2xl font-bold mb-2" style={{ color: '#E8420A' }}>
+                    <p className="text-2xl font-bold mb-2" style={{ color: 'var(--brand-orange)' }}>
                       ₦{plan.price.toLocaleString()}
                       <span className="text-sm font-normal text-white/50">
                         /{plan.durationLabel.toLowerCase()}
@@ -266,7 +266,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                     <ul className="space-y-2">
                       {plan.features.slice(0, 3).map((feature, i) => (
                         <li key={i} className="flex items-center gap-2 text-xs text-white/60">
-                          <span style={{ color: '#22C55E' }}>✓</span>
+                          <span style={{ color: 'var(--color-success-500)' }}>✓</span>
                           {feature}
                         </li>
                       ))}
@@ -313,7 +313,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-white/50">Total</span>
-                <span className="text-2xl font-bold" style={{ color: '#E8420A' }}>
+                <span className="text-2xl font-bold" style={{ color: 'var(--brand-orange)' }}>
                   ₦{selectedPlan.price.toLocaleString()}
                 </span>
               </div>
@@ -328,7 +328,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                 onClick={() => setPaymentMethod('wallet')}
                 className="w-full p-4 rounded-xl text-left mb-3 transition-all"
                 style={{
-                  border: `2px solid ${paymentMethod === 'wallet' ? '#22C55E' : 'rgba(255,255,255,0.1)'}`,
+                  border: `2px solid ${paymentMethod === 'wallet' ? 'var(--color-success-500)' : 'rgba(255,255,255,0.1)'}`,
                   backgroundColor:
                     paymentMethod === 'wallet' ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.03)',
                 }}
@@ -348,7 +348,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                   {!canAffordWithWallet && paymentMethod === 'wallet' && (
                     <span
                       className="text-xs px-2 py-1 rounded-full"
-                      style={{ backgroundColor: 'rgba(239,68,68,0.15)', color: '#EF4444' }}
+                      style={{ backgroundColor: 'rgba(239,68,68,0.15)', color: 'var(--color-error-500)' }}
                     >
                       Insufficient
                     </span>
@@ -362,7 +362,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                 onClick={() => setPaymentMethod('external')}
                 className="w-full p-4 rounded-xl text-left transition-all"
                 style={{
-                  border: `2px solid ${paymentMethod === 'external' ? '#E8420A' : 'rgba(255,255,255,0.1)'}`,
+                  border: `2px solid ${paymentMethod === 'external' ? 'var(--brand-orange)' : 'rgba(255,255,255,0.1)'}`,
                   backgroundColor:
                     paymentMethod === 'external' ? 'rgba(232,66,10,0.1)' : 'rgba(255,255,255,0.03)',
                 }}
@@ -511,7 +511,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
             backgroundColor:
               toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
             border: `1px solid ${toast.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
-            color: toast.type === 'success' ? '#22C55E' : '#EF4444',
+            color: toast.type === 'success' ? 'var(--color-success-500)' : 'var(--color-error-500)',
           }}
         >
           {toast.message}

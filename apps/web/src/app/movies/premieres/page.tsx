@@ -80,7 +80,7 @@ function PremieresPageContent(): React.JSX.Element {
                 <div className="flex items-center gap-2 mb-4">
                   <span
                     className="px-3 py-1 rounded-full text-xs font-semibold"
-                    style={{ backgroundColor: '#F59E0B', color: '#000' }}
+                    style={{ backgroundColor: 'var(--color-warning-500)', color: '#000' }}
                   >
                     Coming Soon
                   </span>
@@ -187,7 +187,7 @@ function PremieresPageContent(): React.JSX.Element {
                         {premiere.genre && (
                           <span
                             className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                            style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8420A' }}
+                            style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
                           >
                             {premiere.genre}
                           </span>
@@ -208,7 +208,7 @@ function PremieresPageContent(): React.JSX.Element {
                           })}
                         </span>
                         {premiere.isExclusive && (
-                          <span style={{ color: '#E8420A' }}>Exclusive</span>
+                          <span style={{ color: 'var(--brand-orange)' }}>Exclusive</span>
                         )}
                       </div>
                       <motion.button

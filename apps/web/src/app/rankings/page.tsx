@@ -86,7 +86,7 @@ export default function RankingsPage(): React.JSX.Element {
   const getRankBadge = (rank: number): { emoji: string; color: string } => {
     switch (rank) {
       case 1:
-        return { emoji: '🥇', color: '#EAB308' };
+        return { emoji: '🥇', color: 'var(--color-warning-400)' };
       case 2:
         return { emoji: '🥈', color: '#D1D5DB' };
       case 3:
@@ -199,13 +199,13 @@ export default function RankingsPage(): React.JSX.Element {
                           )}
                         </div>
                         <h3 className="font-bold text-white">{entry.displayName}</h3>
-                        <p className="text-xl font-bold mt-1" style={{ color: '#E8420A' }}>
+                        <p className="text-xl font-bold mt-1" style={{ color: 'var(--brand-orange)' }}>
                           {entry.score.toLocaleString()}
                         </p>
                         {entry.change !== 0 && (
                           <p
                             className={`text-sm mt-1 font-medium`}
-                            style={{ color: entry.change > 0 ? '#22C55E' : '#EF4444' }}
+                            style={{ color: entry.change > 0 ? 'var(--color-success-500)' : 'var(--color-error-500)' }}
                           >
                             {entry.change > 0 ? '↑' : '↓'} {Math.abs(entry.change)}
                           </p>
@@ -250,13 +250,13 @@ export default function RankingsPage(): React.JSX.Element {
                           <p className="text-sm text-white/50">Level {entry.level}</p>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold text-lg" style={{ color: '#E8420A' }}>
+                          <p className="font-bold text-lg" style={{ color: 'var(--brand-orange)' }}>
                             {entry.score.toLocaleString()}
                           </p>
                           {entry.change !== 0 && (
                             <p
                               className="text-sm font-medium"
-                              style={{ color: entry.change > 0 ? '#22C55E' : '#EF4444' }}
+                              style={{ color: entry.change > 0 ? 'var(--color-success-500)' : 'var(--color-error-500)' }}
                             >
                               {entry.change > 0 ? '↑' : '↓'} {Math.abs(entry.change)}
                             </p>

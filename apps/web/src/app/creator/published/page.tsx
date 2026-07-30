@@ -169,7 +169,7 @@ export default function PublishedPage(): React.JSX.Element {
                     <span>{(item.views || 0).toLocaleString()} views</span>
                     <span>{(item.likes || 0).toLocaleString()} likes</span>
                   </div>
-                  <p style={{ fontSize: 12, color: '#6B5A4A', marginTop: 8 }}>
+                  <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 8 }}>
                     Published {new Date(item.publishedAt).toLocaleDateString()}
                   </p>
                 </div>

@@ -262,7 +262,7 @@ export default function ProfileSetupPage(): React.JSX.Element {
               <span
                 onClick={() => fileInputRef.current?.click()}
                 className="absolute bottom-1 left-1/2 -translate-x-1/2 text-xs font-bold text-white whitespace-nowrap px-3 py-1 cursor-pointer"
-                style={{ background: '#CC1C1C', borderRadius: 999 }}
+                style={{ background: 'var(--brand-red)', borderRadius: 999 }}
               >
                 Change profile picture
               </span>

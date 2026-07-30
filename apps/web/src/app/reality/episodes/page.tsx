@@ -93,7 +93,7 @@ export default function EpisodesPage(): React.JSX.Element {
           <div className="text-center">
             <div
               className="animate-spin rounded-full h-12 w-12 mx-auto"
-              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }}
+              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--brand-orange)' }}
             />
             <p className="mt-4 text-white/60">Loading episodes...</p>
           </div>
@@ -178,7 +178,7 @@ export default function EpisodesPage(): React.JSX.Element {
               </div>
               <div className="flex-1 p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold" style={{ color: '#E8420A' }}>
+                  <span className="text-xs font-semibold" style={{ color: 'var(--brand-orange)' }}>
                     E{episode.episodeNumber.toString().padStart(2, '0')}
                   </span>
                   <span className="text-xs text-white/50">{formatDuration(episode.duration)}</span>

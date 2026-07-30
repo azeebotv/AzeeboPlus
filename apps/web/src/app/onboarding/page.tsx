@@ -99,7 +99,7 @@ export default function OnboardingPage(): React.JSX.Element {
     return (
       <div
         className="relative min-h-screen w-full overflow-hidden flex items-center justify-center"
-        style={{ backgroundColor: '#0D3B2E' }}
+        style={{ backgroundColor: 'var(--brand-forest)' }}
       >
         {/* Ambient green glow */}
         <div
@@ -242,7 +242,7 @@ export default function OnboardingPage(): React.JSX.Element {
                   className="flex items-center gap-3 p-4 rounded-xl border transition-all"
                   style={{
                     background: active ? 'rgba(204,28,28,0.25)' : 'rgba(255,255,255,0.05)',
-                    borderColor: active ? '#CC1C1C' : 'rgba(255,255,255,0.12)',
+                    borderColor: active ? 'var(--brand-red)' : 'rgba(255,255,255,0.12)',
                     boxShadow: active ? '0 0 20px rgba(204,28,28,0.4)' : 'none',
                   }}
                 >

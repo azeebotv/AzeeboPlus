@@ -10,11 +10,11 @@ import { OptimizedImage } from '@/components/OptimizedImage';
 import analytics from '@/lib/analytics';
 
 const categories = [
-  { name: 'Reality', href: '/reality', icon: '🎭', color: '#E8420A' },
+  { name: 'Reality', href: '/reality', icon: '🎭', color: 'var(--brand-orange)' },
   { name: 'Comedy', href: '/comedy', icon: '😂', color: '#FF6B35' },
-  { name: 'Movies', href: '/movies', icon: '🎬', color: '#4ADE80' },
-  { name: 'Vertical', href: '/vertical', icon: '📱', color: '#60A5FA' },
-  { name: 'Sports', href: '/sports', icon: '⚽', color: '#F59E0B' },
+  { name: 'Movies', href: '/movies', icon: '🎬', color: 'var(--color-success-400)' },
+  { name: 'Vertical', href: '/vertical', icon: '📱', color: 'var(--color-secondary-400)' },
+  { name: 'Sports', href: '/sports', icon: '⚽', color: 'var(--color-warning-500)' },
   { name: 'Lifestyle', href: '/lifestyle', icon: '🌟', color: '#EC4899' },
 ];
 
@@ -81,7 +81,7 @@ export default function WatchPage(): React.JSX.Element {
                   e.currentTarget.style.borderColor = cat.color;
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#2A1A1A';
+                  e.currentTarget.style.borderColor = 'var(--bg-secondary)';
                 }}
               >
                 <span style={{ fontSize: 24 }}>{cat.icon}</span>
@@ -134,7 +134,7 @@ export default function WatchPage(): React.JSX.Element {
                     style={{
                       position: 'relative',
                       aspectRatio: '9/16',
-                      backgroundColor: '#140808',
+                      backgroundColor: 'var(--bg-tertiary)',
                     }}
                   >
                     {item.thumbnail && (

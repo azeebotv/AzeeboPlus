@@ -76,7 +76,7 @@ export default function ContestantProfilePage(): React.JSX.Element {
           <div className="text-center">
             <div
               className="animate-spin rounded-full h-12 w-12 mx-auto"
-              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }}
+              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--brand-orange)' }}
             />
             <p className="mt-4 text-white/60">Loading profile...</p>
           </div>
@@ -157,7 +157,7 @@ export default function ContestantProfilePage(): React.JSX.Element {
               { label: 'Episodes', value: contestant.stats.episodes },
             ].map((stat) => (
               <div key={stat.label} className="az-glass p-4 text-center">
-                <p className="text-2xl font-bold" style={{ color: '#E8420A' }}>
+                <p className="text-2xl font-bold" style={{ color: 'var(--brand-orange)' }}>
                   {stat.value}
                 </p>
                 <p className="text-sm text-white/50 mt-1">{stat.label}</p>

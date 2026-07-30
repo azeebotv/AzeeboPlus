@@ -963,7 +963,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                   <div className="mt-3 flex items-center gap-2">
                     <span
                       className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded"
-                      style={{ background: 'rgba(232,66,10,0.15)', color: '#E8420A' }}
+                      style={{ background: 'rgba(232,66,10,0.15)', color: 'var(--brand-orange)' }}
                     >
                       {content.universe?.name}
                     </span>

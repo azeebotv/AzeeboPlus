@@ -33,7 +33,7 @@ const TIME_FRAME_LABELS: Record<TimeFrame, string> = {
 };
 
 const RANK_STYLES: Record<number, { bg: string; text: string; icon: string }> = {
-  1: { bg: 'rgba(234,179,8,0.2)', text: '#EAB308', icon: '🥇' },
+  1: { bg: 'rgba(234,179,8,0.2)', text: 'var(--color-warning-400)', icon: '🥇' },
   2: { bg: 'rgba(156,163,175,0.2)', text: '#9CA3AF', icon: '🥈' },
   3: { bg: 'rgba(180,83,9,0.2)', text: '#B45309', icon: '🥉' },
 };
@@ -101,9 +101,9 @@ function LeaderboardPageContent(): React.JSX.Element {
               onClick={() => setTimeFrame(tf)}
               className="whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-all"
               style={{
-                backgroundColor: timeFrame === tf ? '#E8420A' : 'rgba(255,255,255,0.05)',
+                backgroundColor: timeFrame === tf ? 'var(--brand-orange)' : 'rgba(255,255,255,0.05)',
                 color: timeFrame === tf ? '#fff' : 'rgba(255,255,255,0.6)',
-                border: `1px solid ${timeFrame === tf ? '#E8420A' : 'rgba(255,255,255,0.1)'}`,
+                border: `1px solid ${timeFrame === tf ? 'var(--brand-orange)' : 'rgba(255,255,255,0.1)'}`,
               }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -246,7 +246,7 @@ function LeaderboardPageContent(): React.JSX.Element {
                     </p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="font-bold" style={{ color: '#E8420A' }}>
+                    <p className="font-bold" style={{ color: 'var(--brand-orange)' }}>
                       {entry.score.toLocaleString()}
                     </p>
                     <p className="text-xs text-white/40">pts</p>

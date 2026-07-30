@@ -86,9 +86,9 @@ function CharacterLorePageContent(): React.JSX.Element {
   const getImportanceStyle = (importance: string) => {
     switch (importance) {
       case 'critical':
-        return { bg: 'rgba(239,68,68,0.2)', text: '#EF4444' };
+        return { bg: 'rgba(239,68,68,0.2)', text: 'var(--color-error-500)' };
       case 'major':
-        return { bg: 'rgba(245,158,11,0.2)', text: '#F59E0B' };
+        return { bg: 'rgba(245,158,11,0.2)', text: 'var(--color-warning-500)' };
       default:
         return { bg: 'rgba(255,255,255,0.1)', text: 'rgba(255,255,255,0.6)' };
     }
@@ -228,7 +228,7 @@ function CharacterLorePageContent(): React.JSX.Element {
                       style={{
                         backgroundColor:
                           activeTab === tab ? 'rgba(232,66,10,0.2)' : 'rgba(255,255,255,0.05)',
-                        color: activeTab === tab ? '#E8420A' : 'rgba(255,255,255,0.6)',
+                        color: activeTab === tab ? 'var(--brand-orange)' : 'rgba(255,255,255,0.6)',
                         border:
                           activeTab === tab
                             ? '1px solid rgba(232,66,10,0.3)'

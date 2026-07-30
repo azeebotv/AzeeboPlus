@@ -90,8 +90,8 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                 padding: '8px 20px',
                 borderRadius: 8,
                 border: '1px solid var(--border-default)',
-                background: view === v ? '#E8420A' : 'transparent',
-                color: view === v ? '#fff' : '#9A8A7A',
+                background: view === v ? 'var(--brand-orange)' : 'transparent',
+                color: view === v ? '#fff' : 'var(--text-secondary)',
                 cursor: 'pointer',
                 fontSize: 13,
                 fontWeight: view === v ? 600 : 400,
@@ -114,7 +114,7 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                   borderRadius: 20,
                   border: '1px solid var(--border-default)',
                   background: filter === f ? 'rgba(232,66,10,0.2)' : 'transparent',
-                  color: filter === f ? '#E8420A' : '#9A8A7A',
+                  color: filter === f ? 'var(--brand-orange)' : 'var(--text-secondary)',
                   cursor: 'pointer',
                   fontSize: 12,
                   textTransform: 'capitalize',
@@ -203,10 +203,10 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                               : 'rgba(154,138,122,0.15)',
                         color:
                           challenge.status === 'active'
-                            ? '#4ADE80'
+                            ? 'var(--color-success-400)'
                             : challenge.status === 'upcoming'
-                              ? '#F59E0B'
-                              : '#9A8A7A',
+                              ? 'var(--color-warning-500)'
+                              : 'var(--text-secondary)',
                       }}
                     >
                       {challenge.status}
@@ -312,10 +312,10 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                             : 'rgba(245,158,11,0.15)',
                       color:
                         sub.status === 'approved'
-                          ? '#4ADE80'
+                          ? 'var(--color-success-400)'
                           : sub.status === 'rejected'
-                            ? '#EF4444'
-                            : '#F59E0B',
+                            ? 'var(--color-error-500)'
+                            : 'var(--color-warning-500)',
                     }}
                   >
                     {sub.status.replace('_', ' ')}
@@ -367,7 +367,7 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                 <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>
                   Submit to Challenge
                 </h2>
-                <p style={{ color: '#E8420A', fontSize: 14, marginBottom: 20 }}>
+                <p style={{ color: 'var(--brand-orange)', fontSize: 14, marginBottom: 20 }}>
                   {challenge.title}
                 </p>
                 <label
@@ -384,7 +384,7 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                     padding: '10px 14px',
                     borderRadius: 8,
                     border: '1px solid var(--border-default)',
-                    backgroundColor: '#0A0A0A',
+                    backgroundColor: 'var(--bg-primary)',
                     color: 'var(--text-primary)',
                     fontSize: 14,
                     marginBottom: 16,
@@ -406,7 +406,7 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                     padding: '10px 14px',
                     borderRadius: 8,
                     border: '1px solid var(--border-default)',
-                    backgroundColor: '#0A0A0A',
+                    backgroundColor: 'var(--bg-primary)',
                     color: 'var(--text-primary)',
                     fontSize: 14,
                     marginBottom: 20,

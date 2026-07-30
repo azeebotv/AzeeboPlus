@@ -142,7 +142,7 @@ function PassesPageContent(): React.JSX.Element {
               <div className="flex items-center gap-4 mb-4">
                 <span className="text-4xl">🎫</span>
                 <div>
-                  <h2 className="text-xl font-bold" style={{ color: '#EAB308' }}>
+                  <h2 className="text-xl font-bold" style={{ color: 'var(--color-warning-400)' }}>
                     {userPass.passName}
                   </h2>
                   <p className="text-white/50 text-sm">Active Cinema Pass</p>
@@ -176,7 +176,7 @@ function PassesPageContent(): React.JSX.Element {
                 </div>
                 <div>
                   <p className="text-xs text-white/40 mb-1">Status</p>
-                  <p className="font-medium" style={{ color: '#22C55E' }}>
+                  <p className="font-medium" style={{ color: 'var(--color-success-500)' }}>
                     Active
                   </p>
                 </div>
@@ -251,7 +251,7 @@ function PassesPageContent(): React.JSX.Element {
                   )}
                   <h3 className="text-xl font-bold text-white mb-2">{pass.name}</h3>
                   <div className="flex items-baseline gap-1 mb-4">
-                    <span className="text-3xl font-bold" style={{ color: '#E8420A' }}>
+                    <span className="text-3xl font-bold" style={{ color: 'var(--brand-orange)' }}>
                       ₦{pass.price.toLocaleString()}
                     </span>
                     <span className="text-white/50">/{pass.durationLabel}</span>
@@ -260,7 +260,7 @@ function PassesPageContent(): React.JSX.Element {
                   <ul className="space-y-3 mb-6 flex-1">
                     {pass.features.map((feature, i) => (
                       <li key={i} className="flex items-center gap-2">
-                        <span style={{ color: '#22C55E' }}>✓</span>
+                        <span style={{ color: 'var(--color-success-500)' }}>✓</span>
                         <span className="text-white text-sm">{feature}</span>
                       </li>
                     ))}
@@ -310,7 +310,7 @@ function PassesPageContent(): React.JSX.Element {
           >
             <h3 className="text-xl font-bold text-white mb-2">Confirm Purchase</h3>
             <p className="text-white/50 mb-1">{confirmPass.name}</p>
-            <p className="text-2xl font-bold mb-6" style={{ color: '#E8420A' }}>
+            <p className="text-2xl font-bold mb-6" style={{ color: 'var(--brand-orange)' }}>
               ₦{confirmPass.price.toLocaleString()}
             </p>
             <div className="flex flex-col gap-3 mb-4">
@@ -345,7 +345,7 @@ function PassesPageContent(): React.JSX.Element {
             backgroundColor:
               toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
             border: `1px solid ${toast.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
-            color: toast.type === 'success' ? '#22C55E' : '#EF4444',
+            color: toast.type === 'success' ? 'var(--color-success-500)' : 'var(--color-error-500)',
           }}
         >
           {toast.message}

@@ -227,7 +227,7 @@ export default function MonetizationPage(): React.JSX.Element {
                     color: 'var(--text-secondary)',
                   }}
                 >
-                  <span style={{ color: '#CC1C1C' }}>○</span> {req}
+                  <span style={{ color: 'var(--brand-red)' }}>○</span> {req}
                 </div>
               ))}
             </div>
@@ -247,17 +247,17 @@ export default function MonetizationPage(): React.JSX.Element {
             {
               label: 'Total Earned',
               value: `₦${monetization.earnings.totalEarned.toLocaleString()}`,
-              color: '#E8420A',
+              color: 'var(--brand-orange)',
             },
             {
               label: 'Pending Payout',
               value: `₦${monetization.earnings.pendingPayout.toLocaleString()}`,
-              color: '#F59E0B',
+              color: 'var(--color-warning-500)',
             },
             {
               label: 'Paid Out',
               value: `₦${monetization.earnings.paidOut.toLocaleString()}`,
-              color: '#0D3B2E',
+              color: 'var(--brand-forest)',
             },
           ].map((item, i) => (
             <div
@@ -317,8 +317,8 @@ export default function MonetizationPage(): React.JSX.Element {
                     backgroundColor: monetization.settings[
                       setting.key as keyof typeof monetization.settings
                     ]
-                      ? '#E8420A'
-                      : '#2A1A1A',
+                      ? 'var(--brand-orange)'
+                      : 'var(--bg-secondary)',
                     transition: 'background-color 0.2s',
                   }}
                 >

@@ -99,7 +99,7 @@ function FixtureDetailContent(): React.JSX.Element {
                           ? '#fff'
                           : fixture.status === 'completed'
                             ? '#fff'
-                            : '#E8420A',
+                            : 'var(--brand-orange)',
                     }}
                   >
                     {fixture.status === 'live' ? '● LIVE' : fixture.status.toUpperCase()}
@@ -154,7 +154,7 @@ function FixtureDetailContent(): React.JSX.Element {
                   <motion.button
                     type="button"
                     className="px-6 py-3 rounded-full text-sm font-semibold text-[#1A0A0A] transition-all"
-                    style={{ backgroundColor: '#4ADE80' }}
+                    style={{ backgroundColor: 'var(--color-success-400)' }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >

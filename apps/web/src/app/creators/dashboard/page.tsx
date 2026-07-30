@@ -144,14 +144,14 @@ export default function CreatorDashboardPage(): React.JSX.Element {
                 color: 'var(--text-primary)',
                 transition: 'border-color 0.2s',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#E8420A')}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#2A1A1A')}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--brand-orange)')}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--bg-secondary)')}
             >
               <div style={{ flex: 1, minWidth: 0 }}>
                 <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 2 }}>{link.label}</h3>
                 <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: 0 }}>{link.desc}</p>
               </div>
-              <span style={{ color: '#E8420A', fontSize: 18 }}>→</span>
+              <span style={{ color: 'var(--brand-orange)', fontSize: 18 }}>→</span>
             </button>
           ))}
         </div>

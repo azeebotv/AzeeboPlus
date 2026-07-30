@@ -196,7 +196,7 @@ function RentalPageContent(): React.JSX.Element {
                     <div className="absolute bottom-4 left-4 right-4">
                       <span
                         className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                        style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8420A' }}
+                        style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
                       >
                         {movie.genre}
                       </span>
@@ -271,7 +271,7 @@ function RentalPageContent(): React.JSX.Element {
                   onClick={() => setSelectedOption(option)}
                   className="w-full p-4 rounded-xl text-left transition-all"
                   style={{
-                    border: `2px solid ${selectedOption?.id === option.id ? '#E8420A' : 'rgba(255,255,255,0.1)'}`,
+                    border: `2px solid ${selectedOption?.id === option.id ? 'var(--brand-orange)' : 'rgba(255,255,255,0.1)'}`,
                     backgroundColor:
                       selectedOption?.id === option.id
                         ? 'rgba(232,66,10,0.1)'
@@ -287,7 +287,7 @@ function RentalPageContent(): React.JSX.Element {
                         <p className="text-xs text-white/40">{option.duration}</p>
                       )}
                     </div>
-                    <p className="text-lg font-bold" style={{ color: '#E8420A' }}>
+                    <p className="text-lg font-bold" style={{ color: 'var(--brand-orange)' }}>
                       ₦{option.price.toLocaleString()}
                     </p>
                   </div>
@@ -341,7 +341,7 @@ function RentalPageContent(): React.JSX.Element {
             backgroundColor:
               toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
             border: `1px solid ${toast.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
-            color: toast.type === 'success' ? '#22C55E' : '#EF4444',
+            color: toast.type === 'success' ? 'var(--color-success-500)' : 'var(--color-error-500)',
           }}
         >
           {toast.message}

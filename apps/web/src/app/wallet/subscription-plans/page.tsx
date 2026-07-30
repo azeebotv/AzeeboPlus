@@ -112,7 +112,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
             Choose the plan that works best for you
           </p>
           {walletBalance !== null && (
-            <p style={{ color: '#0D3B2E', marginTop: 8, fontSize: 14, fontWeight: 600 }}>
+            <p style={{ color: 'var(--brand-forest)', marginTop: 8, fontSize: 14, fontWeight: 600 }}>
               Wallet Balance: ₦{walletBalance.toLocaleString()}
             </p>
           )}
@@ -125,7 +125,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                 width: 40,
                 height: 40,
                 border: '3px solid #2A1A1A',
-                borderTopColor: '#E8420A',
+                borderTopColor: 'var(--brand-orange)',
                 borderRadius: '50%',
                 animation: 'spin 0.8s linear infinite',
               }}
@@ -133,7 +133,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
           </div>
         ) : error ? (
           <div style={{ textAlign: 'center', padding: 60 }}>
-            <p style={{ color: '#E8420A', marginBottom: 16 }}>{error}</p>
+            <p style={{ color: 'var(--brand-orange)', marginBottom: 16 }}>{error}</p>
             <button
               onClick={() => {
                 setError(null);
@@ -143,7 +143,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
               style={{
                 padding: '10px 24px',
                 borderRadius: 8,
-                background: '#E8420A',
+                background: 'var(--brand-orange)',
                 color: 'var(--brand-white)',
                 border: 'none',
                 cursor: 'pointer',
@@ -194,7 +194,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                     </div>
                   )}
                   <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>{plan.name}</h3>
-                  <p style={{ fontSize: 32, fontWeight: 700, color: '#E8420A', marginBottom: 20 }}>
+                  <p style={{ fontSize: 32, fontWeight: 700, color: 'var(--brand-orange)', marginBottom: 20 }}>
                     ₦{plan.price.toLocaleString()}
                     <span style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 400 }}>/month</span>
                   </p>
@@ -209,10 +209,10 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                           alignItems: 'center',
                           gap: 8,
                           fontSize: 14,
-                          color: '#D4C8B8',
+                          color: 'var(--text-secondary)',
                         }}
                       >
-                        <span style={{ color: '#0D3B2E' }}>✓</span> {feature}
+                        <span style={{ color: 'var(--brand-forest)' }}>✓</span> {feature}
                       </div>
                     ))}
                   </div>
@@ -223,7 +223,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                         textAlign: 'center',
                         borderRadius: 999,
                         border: '1px solid #0D3B2E',
-                        color: '#0D3B2E',
+                        color: 'var(--brand-forest)',
                         fontWeight: 600,
                         fontSize: 14,
                       }}
@@ -243,7 +243,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                         background: plan.isPopular
                           ? 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)'
                           : 'transparent',
-                        color: plan.isPopular ? '#fff' : '#9A8A7A',
+                        color: plan.isPopular ? '#fff' : 'var(--text-secondary)',
                         fontWeight: 600,
                         fontSize: 14,
                         cursor: 'pointer',
@@ -307,7 +307,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                         borderRadius: 999,
                         background: canAffordWallet
                           ? 'linear-gradient(135deg, #0D3B2E 0%, #0A5C36 100%)'
-                          : '#2A1A1A',
+                          : 'var(--bg-secondary)',
                         color: canAffordWallet ? '#fff' : '#666',
                         border: 'none',
                         cursor: canAffordWallet ? 'pointer' : 'not-allowed',

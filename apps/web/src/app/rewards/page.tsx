@@ -140,7 +140,7 @@ export default function RewardsPage(): React.JSX.Element {
           <p className="text-white/50 text-lg mb-6">Earn points and unlock amazing rewards</p>
           <div className="az-glass inline-block px-8 py-4">
             <p className="text-sm text-white/50 mb-1">Your Points</p>
-            <p className="text-4xl font-bold" style={{ color: '#E8420A' }}>
+            <p className="text-4xl font-bold" style={{ color: 'var(--brand-orange)' }}>
               {userPoints.toLocaleString()}
             </p>
           </div>
@@ -191,14 +191,14 @@ export default function RewardsPage(): React.JSX.Element {
                   <div className="p-6">
                     <span
                       className="text-xs font-medium px-2 py-1 rounded-full mb-2 inline-block"
-                      style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8420A' }}
+                      style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
                     >
                       {reward.category}
                     </span>
                     <h3 className="text-lg font-bold text-white mb-2">{reward.title}</h3>
                     <p className="text-white/50 text-sm mb-4">{reward.description}</p>
                     <div className="flex items-center justify-between">
-                      <span className="text-xl font-bold" style={{ color: '#E8420A' }}>
+                      <span className="text-xl font-bold" style={{ color: 'var(--brand-orange)' }}>
                         {reward.points.toLocaleString()} pts
                       </span>
                       <button
@@ -277,7 +277,7 @@ export default function RewardsPage(): React.JSX.Element {
                     </div>
                   )}
                   {achievement.unlocked && (
-                    <span className="text-xs font-medium" style={{ color: '#22C55E' }}>
+                    <span className="text-xs font-medium" style={{ color: 'var(--color-success-500)' }}>
                       ✓ Unlocked
                     </span>
                   )}

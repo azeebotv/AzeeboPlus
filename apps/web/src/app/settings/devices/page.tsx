@@ -136,7 +136,7 @@ export default function DevicesPage(): React.JSX.Element {
                 width: 40,
                 height: 40,
                 border: '3px solid #2A1A1A',
-                borderTopColor: '#E8420A',
+                borderTopColor: 'var(--brand-orange)',
                 borderRadius: '50%',
                 animation: 'spin 0.8s linear infinite',
               }}
@@ -167,7 +167,7 @@ export default function DevicesPage(): React.JSX.Element {
                     width: 48,
                     height: 48,
                     borderRadius: 12,
-                    backgroundColor: '#2A1A1A',
+                    backgroundColor: 'var(--bg-secondary)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -188,7 +188,7 @@ export default function DevicesPage(): React.JSX.Element {
                           fontSize: 11,
                           fontWeight: 600,
                           backgroundColor: 'rgba(13,59,46,0.2)',
-                          color: '#0D3B2E',
+                          color: 'var(--brand-forest)',
                         }}
                       >
                         Current
@@ -208,7 +208,7 @@ export default function DevicesPage(): React.JSX.Element {
                       borderRadius: 999,
                       border: '1px solid var(--brand-red)',
                       background: 'transparent',
-                      color: '#CC1C1C',
+                      color: 'var(--brand-red)',
                       fontWeight: 500,
                       fontSize: 13,
                       cursor: 'pointer',

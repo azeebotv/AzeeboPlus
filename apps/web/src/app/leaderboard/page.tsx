@@ -46,7 +46,7 @@ export default function LeaderboardPage(): React.JSX.Element {
       return { bg: 'linear-gradient(135deg, #C0C0C0 0%, #A0A0A0 100%)', color: '#1A0A0A' };
     if (rank === 3)
       return { bg: 'linear-gradient(135deg, #CD7F32 0%, #A0522D 100%)', color: 'var(--brand-white)' };
-    return { bg: '#2A1A1A', color: 'var(--text-secondary)' };
+    return { bg: 'var(--bg-secondary)', color: 'var(--text-secondary)' };
   };
 
   return (
@@ -86,7 +86,7 @@ export default function LeaderboardPage(): React.JSX.Element {
                   timeframe === key
                     ? 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)'
                     : 'transparent',
-                color: timeframe === key ? '#fff' : '#9A8A7A',
+                color: timeframe === key ? '#fff' : 'var(--text-secondary)',
                 fontWeight: 600,
                 fontSize: 14,
                 cursor: 'pointer',
@@ -170,7 +170,7 @@ export default function LeaderboardPage(): React.JSX.Element {
                         style={{
                           width: '100%',
                           height: '100%',
-                          backgroundColor: '#2A1A1A',
+                          backgroundColor: 'var(--bg-secondary)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -186,7 +186,7 @@ export default function LeaderboardPage(): React.JSX.Element {
                     <p style={{ color: 'var(--text-secondary)', fontSize: 12 }}>Level {entry.level}</p>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <p style={{ fontWeight: 700, fontSize: 18, color: '#E8420A' }}>
+                    <p style={{ fontWeight: 700, fontSize: 18, color: 'var(--brand-orange)' }}>
                       {(entry.score ?? 0).toLocaleString()}
                     </p>
                     <p style={{ color: 'var(--text-secondary)', fontSize: 11 }}>pts</p>

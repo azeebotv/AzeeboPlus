@@ -73,7 +73,7 @@ export default function VerticalCharactersPage(): React.JSX.Element {
         ) : !characters || characters.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 60 }}>
             <p style={{ color: 'var(--text-secondary)', fontSize: 16, marginBottom: 8 }}>No characters yet</p>
-            <p style={{ color: '#6A5A4A', fontSize: 14 }}>
+            <p style={{ color: 'var(--text-tertiary)', fontSize: 14 }}>
               Characters will appear here once created in the storyworlds.
             </p>
           </div>
@@ -96,7 +96,7 @@ export default function VerticalCharactersPage(): React.JSX.Element {
                   border: '1px solid var(--border-default)',
                 }}
               >
-                <div style={{ position: 'relative', aspectRatio: '1', backgroundColor: '#140808' }}>
+                <div style={{ position: 'relative', aspectRatio: '1', backgroundColor: 'var(--bg-tertiary)' }}>
                   {char.imageUrl && (
                     <OptimizedImage src={char.imageUrl} alt="" fill className="object-cover" />
                   )}
@@ -112,7 +112,7 @@ export default function VerticalCharactersPage(): React.JSX.Element {
                         padding: '2px 8px',
                         borderRadius: 999,
                         backgroundColor: 'rgba(232,66,10,0.15)',
-                        color: '#E8420A',
+                        color: 'var(--brand-orange)',
                         fontSize: 11,
                         fontWeight: 600,
                         marginTop: 4,
