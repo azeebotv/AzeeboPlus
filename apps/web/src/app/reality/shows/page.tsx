@@ -98,7 +98,7 @@ export default function RealityShowsPage(): React.JSX.Element {
                 }}
               >
                 <div
-                  style={{ position: 'relative', aspectRatio: '9/16', backgroundColor: '#140808' }}
+                  style={{ position: 'relative', aspectRatio: '9/16', backgroundColor: 'var(--bg-tertiary)' }}
                 >
                   {show.thumbnail && (
                     <OptimizedImage src={show.thumbnail} alt="" fill className="object-cover" />

@@ -98,7 +98,7 @@ export default function VerticalTitlesPage(): React.JSX.Element {
                 }}
               >
                 <div
-                  style={{ position: 'relative', aspectRatio: '9/16', backgroundColor: '#140808' }}
+                  style={{ position: 'relative', aspectRatio: '9/16', backgroundColor: 'var(--bg-tertiary)' }}
                 >
                   {title.thumbnail && (
                     <OptimizedImage src={title.thumbnail} alt="" fill className="object-cover" />

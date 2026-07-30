@@ -76,11 +76,11 @@ export default function CreatorsPage(): React.JSX.Element {
               <div key={item} className="az-glass p-6 flex flex-col items-center animate-pulse">
                 <div
                   className="w-24 h-24 rounded-full mb-4"
-                  style={{ backgroundColor: '#2A2A2A' }}
+                  style={{ backgroundColor: 'var(--brand-surface)' }}
                 />
-                <div className="h-4 w-3/4 rounded mb-2" style={{ backgroundColor: '#2A2A2A' }} />
-                <div className="h-3 w-1/2 rounded mb-4" style={{ backgroundColor: '#2A2A2A' }} />
-                <div className="h-10 w-full rounded-full" style={{ backgroundColor: '#2A2A2A' }} />
+                <div className="h-4 w-3/4 rounded mb-2" style={{ backgroundColor: 'var(--brand-surface)' }} />
+                <div className="h-3 w-1/2 rounded mb-4" style={{ backgroundColor: 'var(--brand-surface)' }} />
+                <div className="h-10 w-full rounded-full" style={{ backgroundColor: 'var(--brand-surface)' }} />
               </div>
             ))}
           </div>

@@ -80,7 +80,7 @@ function CityGuidePageContent(): React.JSX.Element {
               className="px-4 py-2 rounded-full text-sm font-medium cursor-pointer transition-all"
               style={{
                 backgroundColor: 'rgba(232,66,10,0.15)',
-                color: '#E8400A',
+                color: 'var(--brand-orange)',
                 border: '1px solid rgba(232,66,10,0.3)',
               }}
             >

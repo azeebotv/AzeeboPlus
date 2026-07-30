@@ -186,7 +186,7 @@ function GameDetailPageContent(): React.JSX.Element {
                     <ul className="space-y-3 mb-8">
                       {game.features.map((feature, index) => (
                         <li key={index} className="flex items-start gap-3">
-                          <span style={{ color: '#22C55E' }}>✓</span>
+                          <span style={{ color: 'var(--color-success-500)' }}>✓</span>
                           <span className="text-white/70">{feature}</span>
                         </li>
                       ))}

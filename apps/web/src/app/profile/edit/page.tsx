@@ -188,7 +188,7 @@ export default function ProfileEditPage(): React.JSX.Element {
                     padding: '12px 16px',
                     borderRadius: 12,
                     border: '1px solid var(--border-default)',
-                    backgroundColor: '#0D0505',
+                    backgroundColor: 'var(--bg-primary)',
                     color: 'var(--text-primary)',
                     fontSize: 15,
                   }}
@@ -216,7 +216,7 @@ export default function ProfileEditPage(): React.JSX.Element {
                   padding: '12px 16px',
                   borderRadius: 12,
                   border: '1px solid var(--border-default)',
-                  backgroundColor: '#0D0505',
+                  backgroundColor: 'var(--bg-primary)',
                   color: 'var(--text-primary)',
                   fontSize: 15,
                   resize: 'vertical',

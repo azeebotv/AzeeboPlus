@@ -52,7 +52,7 @@ function CinemaxisPageContent(): React.JSX.Element {
   const error = contentQuery.error?.message || null;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#0A0A1A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
       <AppHeader active="Cinemaxis" />
 
       {/* Hero */}
