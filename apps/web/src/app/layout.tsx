@@ -6,6 +6,7 @@ import { ThemeProvider } from '../context/ThemeContext';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { QueryProvider } from '../providers/QueryProvider';
 import { ToastProvider } from '@/components/ToastProvider';
+import I18nProvider from '@/components/I18nProvider';
 import { KeyboardNavigationProvider } from '../components/KeyboardNavigationProvider';
 
 import { Inter, Montserrat } from 'next/font/google';
@@ -92,13 +93,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }):
             <ThemeProvider>
               <AuthProvider>
                 <WalletProvider>
-                  <ToastProvider>
+                  <I18nProvider>
+                    <ToastProvider>
                     <KeyboardNavigationProvider>
                       <main id="main-content" role="main">
                         {children}
                       </main>
                     </KeyboardNavigationProvider>
-                  </ToastProvider>
+                    </ToastProvider>
+                  </I18nProvider>
                 </WalletProvider>
               </AuthProvider>
             </ThemeProvider>

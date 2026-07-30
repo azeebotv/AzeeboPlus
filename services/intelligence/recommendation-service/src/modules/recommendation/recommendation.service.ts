@@ -97,8 +97,7 @@ export class RecommendationService {
           params: { userId, limit: 1 },
           timeout: 5000,
           headers: {
-            'x-user-id': userId,
-            'x-gateway-secret': this.configService.get<string>('INTERNAL_API_KEY', ''),
+            'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', ''),
           },
         }
       );
@@ -117,8 +116,7 @@ export class RecommendationService {
         {
           timeout: 5000,
           headers: {
-            'x-user-id': creatorId,
-            'x-gateway-secret': this.configService.get<string>('INTERNAL_API_KEY', ''),
+            'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', ''),
           },
         }
       );
@@ -137,8 +135,7 @@ export class RecommendationService {
         {
           timeout: 5000,
           headers: {
-            'x-user-id': creatorId,
-            'x-gateway-secret': this.configService.get<string>('INTERNAL_API_KEY', ''),
+            'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', ''),
           },
         }
       );

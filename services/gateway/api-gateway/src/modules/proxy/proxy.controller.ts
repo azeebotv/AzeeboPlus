@@ -1462,7 +1462,10 @@ export class ProxyController {
     req: Request,
     res: Response
   ): Promise<void> {
-    const requestId = (req.headers[this.REQUEST_ID_HEADER.toLowerCase()] as string) || randomUUID();
+    let requestId = (req.headers[this.REQUEST_ID_HEADER.toLowerCase()] as string) || randomUUID();
+    if (requestId && !/^[a-zA-Z0-9\-]{1,128}$/.test(requestId)) {
+      requestId = randomUUID();
+    }
 
     const route = this.findRoute(service);
     if (!route) {

@@ -1,10 +1,20 @@
 'use client';
 import { Suspense, lazy, useEffect, useState, useCallback } from 'react';
+
+export const metadata = {
+  title: 'Social | Azeebo',
+  description: 'Save and share your favorite lifestyle moments with friends on Azeebo.',
+  openGraph: {
+    title: 'Social | Azeebo',
+    description: 'Save and share your favorite lifestyle moments with friends on Azeebo.',
+  },
+};
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import analytics from '@/lib/analytics';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 interface SavedItem {
   id: string;
@@ -88,7 +98,7 @@ function SocialPageContent(): React.JSX.Element {
                 className="az-glass p-4 flex items-center gap-4"
                 style={{ boxShadow: '0 0 15px rgba(255,255,255,0.03)' }}
               >
-                <img
+                <OptimizedImage
                   src={item.thumbnail}
                   alt={item.title}
                   className="w-16 h-16 rounded-lg object-cover flex-shrink-0"

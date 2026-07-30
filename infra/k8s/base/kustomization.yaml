@@ -34,6 +34,8 @@ resources:
   - queue-service.yaml
   - support-service.yaml
   - moderation-service.yaml
+  # Live event service
+  - live-event-service.yaml
   # Intelligence services
   - analytics-service.yaml
   - recommendation-service.yaml

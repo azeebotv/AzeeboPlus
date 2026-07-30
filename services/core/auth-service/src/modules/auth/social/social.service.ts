@@ -12,6 +12,7 @@ import { randomUUID, createPublicKey } from 'crypto';
 import axios from 'axios';
 
 import { AuthRepository } from '../auth.repository.js';
+import { AuthService } from '../auth.service.js';
 import { RedisService } from '@azeebo/shared-services';
 
 interface SocialUser {
@@ -34,7 +35,8 @@ interface SocialLoginResponse {
       avatar?: string | null;
       role: string;
     };
-    token: string;
+    access_token: string;
+    refresh_token: string;
   };
   error?: {
     code: string;
@@ -66,6 +68,7 @@ export class SocialAuthService {
 
   constructor(
     @Inject(AuthRepository) private readonly authRepository: AuthRepository,
+    @Inject(AuthService) private readonly authService: AuthService,
     @Inject(JwtService) private readonly jwtService: JwtService,
     @Inject(ConfigService) private readonly configService: ConfigService,
     @Inject(RedisService) private readonly redisService: RedisService
@@ -319,7 +322,7 @@ export class SocialAuthService {
           throw new UnauthorizedException('Social account already linked to another user');
         }
 
-        const password = bcrypt.hashSync(randomUUID(), 10);
+        const password = await bcrypt.hash(randomUUID(), 10);
         user = await this.authRepository.create({
           email: socialUser.email,
           password,
@@ -351,16 +354,7 @@ export class SocialAuthService {
         this.logger.log(`Social login success: existing user id=${user.id}`);
       }
 
-      const token = this.jwtService.sign({
-        iss: this.configService.get<string>('JWT_ISSUER', 'azeebo-auth'),
-        aud: this.configService.get<string>('JWT_AUDIENCE', 'azeebo-api'),
-        jti: randomUUID(),
-        sub: user.id,
-        email: user.email,
-        role: user.role,
-        type: 'access',
-        iat: Math.floor(Date.now() / 1000),
-      });
+      const tokens = await this.authService.generateTokens(user);
 
       return {
         success: true,
@@ -372,7 +366,8 @@ export class SocialAuthService {
             avatar: user.avatar,
             role: user.role,
           },
-          token,
+          access_token: tokens.accessToken,
+          refresh_token: tokens.refreshToken,
         },
       };
     } catch (error) {

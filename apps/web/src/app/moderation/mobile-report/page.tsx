@@ -1,5 +1,14 @@
 'use client';
 import { Suspense, lazy, useEffect, useState } from 'react';
+
+export const metadata = {
+  title: 'Report Content | Azeebo',
+  description: 'Submit a report for inappropriate or violating content on Azeebo.',
+  openGraph: {
+    title: 'Report Content | Azeebo',
+    description: 'Submit a report for inappropriate or violating content on Azeebo.',
+  },
+};
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
@@ -102,7 +111,7 @@ function MobileReportPageContent(): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
       <AppHeader />
 
       <div className="max-w-lg mx-auto px-4 sm:px-6 py-8 sm:py-12">

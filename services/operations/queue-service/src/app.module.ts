@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
-import { ServiceAuthGuard } from '@azeebo/security';
+import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { EmailModule, FirebaseModule, SmsModule } from '@azeebo/shared-services';
 import { DatabaseModule } from './modules/database/database.module';
@@ -56,6 +56,7 @@ const QUEUE_CONFIG = {
       isGlobal: true,
       envFilePath: ['.env', '../../.env'],
     }),
+    RateLimiterModule.forRoot(),
     DatabaseModule,
     EmailModule,
     FirebaseModule,

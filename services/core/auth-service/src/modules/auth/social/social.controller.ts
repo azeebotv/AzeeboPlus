@@ -27,7 +27,8 @@ interface SocialLoginResponse {
       avatar?: string | null;
       role: string;
     };
-    token: string;
+    access_token: string;
+    refresh_token: string;
   };
   error?: {
     code: string;

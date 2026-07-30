@@ -18,6 +18,7 @@ import { JwtStrategy } from './strategies/jwt.strategy.js';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy.js';
 import { RateLimiterModule } from '@azeebo/security';
 import { CacheModule, RedisModule, JwtConfigModule } from '@azeebo/shared-services';
+import { AuditModule } from '../audit/audit.module.js';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { CacheModule, RedisModule, JwtConfigModule } from '@azeebo/shared-servic
     RedisModule,
     RateLimiterModule.forRoot(),
     JwtConfigModule,
+    AuditModule,
   ],
   controllers: [
     AuthController,

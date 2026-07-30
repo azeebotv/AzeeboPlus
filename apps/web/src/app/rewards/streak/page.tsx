@@ -1,5 +1,14 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
+
+export const metadata = {
+  title: 'Daily Streak | Azeebo',
+  description: 'Keep your daily streak alive and earn bonus rewards on Azeebo.',
+  openGraph: {
+    title: 'Daily Streak | Azeebo',
+    description: 'Keep your daily streak alive and earn bonus rewards on Azeebo.',
+  },
+};
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';

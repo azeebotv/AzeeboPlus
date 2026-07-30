@@ -555,52 +555,53 @@ export class EventsService {
 
   async rsvpEvent(eventId: string, userId: string, data: RsvpData): Promise<EventResponse> {
     try {
-      const event = await this.prisma.event.findUnique({
-        where: { id: eventId },
-        include: { rsvps: true },
-      });
-      if (!event) throw new NotFoundException(`Event not found: ${eventId}`);
+      const result = await this.prisma.$transaction(async (tx) => {
+        const event = await tx.event.findUnique({
+          where: { id: eventId },
+        });
+        if (!event) throw new NotFoundException(`Event not found: ${eventId}`);
 
-      const existing = await this.prisma.eventRsvp.findUnique({
-        where: { userId_eventId: { userId, eventId } },
-      });
-      if (existing) {
-        throw new BadRequestException('Already RSVPed to this event!');
-      }
+        const existing = await tx.eventRsvp.findUnique({
+          where: { userId_eventId: { userId, eventId } },
+        });
+        if (existing) {
+          throw new BadRequestException('Already RSVPed to this event!');
+        }
 
-      if (event.maxAttendees && event.rsvpCount >= event.maxAttendees) {
-        throw new BadRequestException('Event is fully booked!');
-      }
+        if (event.maxAttendees && event.rsvpCount >= event.maxAttendees) {
+          throw new BadRequestException('Event is fully booked!');
+        }
 
-      const rsvp = await this.prisma.eventRsvp.create({
-        data: {
-          userId,
-          eventId,
-          status: data.status || 'attending',
-          guests: data.guests || 0,
-          note: data.note,
-        },
-        include: { event: true },
-      });
+        const rsvp = await tx.eventRsvp.create({
+          data: {
+            userId,
+            eventId,
+            status: data.status || 'attending',
+            guests: data.guests || 0,
+            note: data.note,
+          },
+        });
 
-      await this.prisma.event.update({
-        where: { id: eventId },
-        data: { rsvpCount: { increment: 1 } },
+        await tx.event.update({
+          where: { id: eventId },
+          data: { rsvpCount: { increment: 1 } },
+        });
+
+        return rsvp;
       });
 
       const formattedRsvp: Rsvp = {
-        id: rsvp.id,
-        userId: rsvp.userId,
-        eventId: rsvp.eventId,
-        status: rsvp.status,
-        guests: rsvp.guests,
-        note: rsvp.note || '',
-        createdAt: rsvp.createdAt.toISOString(),
+        id: result.id,
+        userId: result.userId,
+        eventId: result.eventId,
+        status: result.status,
+        guests: result.guests,
+        note: result.note || '',
+        createdAt: result.createdAt.toISOString(),
       };
 
       await this.cache.invalidate('lifestyle:events:*');
-
-      this.trackAnalyticsEvent('event_rsvp_created', userId, { eventId, eventSlug: event.slug });
+      this.trackAnalyticsEvent('event_rsvp_created', userId, { eventId });
 
       return {
         success: true,

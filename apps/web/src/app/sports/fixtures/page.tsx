@@ -217,6 +217,15 @@ function FixturesPageContent(): React.JSX.Element {
 
 const LazyFixturesPage = lazy(() => Promise.resolve({ default: FixturesPageContent }));
 
+export const metadata = {
+  title: 'Fixtures & Results | Azeebo',
+  description: 'Track upcoming matches and recent results across football, basketball, tennis, and more.',
+  openGraph: {
+    title: 'Fixtures & Results | Azeebo',
+    description: 'Track upcoming matches and recent results across football, basketball, tennis, and more.',
+  },
+};
+
 export default function FixturesPage(): React.JSX.Element {
   return (
     <Suspense

@@ -21,6 +21,7 @@ import { User } from '@azeebo/shared-types';
 
 interface AuthRequest extends Request {
   user: User;
+  ip?: string;
 }
 
 @ApiTags('Auth')
@@ -36,8 +37,8 @@ export class AuthController {
   @ApiResponse({ status: 201, description: 'Account created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
-  async signup(@Body() registerDto: RegisterDto): Promise<AuthResponse> {
-    return this.authService.register(registerDto);
+async signup(@Request() req: AuthRequest, @Body() registerDto: RegisterDto): Promise<AuthResponse> {
+  return this.authService.register(registerDto, req.ip, (req.headers as Record<string, string>)['user-agent']);
   }
 
   @Post('login')
@@ -48,8 +49,8 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
-  async login(@Body() loginDto: LoginDto): Promise<AuthResponse> {
-    return this.authService.login(loginDto);
+  async login(@Request() req: AuthRequest, @Body() loginDto: LoginDto): Promise<AuthResponse> {
+    return this.authService.login(loginDto, req.ip, (req.headers as Record<string, string>)['user-agent']);
   }
 
   @Post('refresh')
@@ -71,7 +72,7 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   async logout(@Request() req: AuthRequest): Promise<{ success: boolean }> {
-    return this.authService.logout(req.user.id);
+    return this.authService.logout(req.user.id, undefined, req.ip, (req.headers as Record<string, string>)['user-agent']);
   }
 
   @Get('me')
@@ -92,8 +93,8 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Password reset email sent' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
-  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
-    return this.authService.forgotPassword(forgotPasswordDto);
+  async forgotPassword(@Request() req: AuthRequest, @Body() forgotPasswordDto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(forgotPasswordDto, req.ip, (req.headers as Record<string, string>)['user-agent']);
   }
 
   @Post('reset-password')
@@ -104,8 +105,8 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Password reset successful' })
   @ApiResponse({ status: 400, description: 'Invalid token or password' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
-  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
-    return this.authService.resetPassword(resetPasswordDto);
+  async resetPassword(@Request() req: AuthRequest, @Body() resetPasswordDto: ResetPasswordDto) {
+    return this.authService.resetPassword(resetPasswordDto, req.ip, (req.headers as Record<string, string>)['user-agent']);
   }
 
   @Post('verify-email')
@@ -116,8 +117,8 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Email verified successfully' })
   @ApiResponse({ status: 400, description: 'Invalid token' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
-  async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
-    return this.authService.verifyEmail(verifyEmailDto);
+async verifyEmail(@Request() req: AuthRequest, @Body() verifyEmailDto: VerifyEmailDto) {
+    return this.authService.verifyEmail(verifyEmailDto, req.ip, (req.headers as Record<string, string>)['user-agent']);
   }
 
   @Post('resend-verification')
@@ -128,8 +129,8 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Verification email sent' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
-  async resendVerification(@Body() resendVerificationDto: ResendVerificationDto) {
-    return this.authService.resendVerification(resendVerificationDto);
+async resendVerification(@Request() req: AuthRequest, @Body() resendVerificationDto: ResendVerificationDto) {
+    return this.authService.resendVerification(resendVerificationDto, req.ip, (req.headers as Record<string, string>)['user-agent']);
   }
 
   @Post('select-role')
@@ -142,7 +143,7 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   async selectRole(@Request() req: AuthRequest, @Body() selectRoleDto: SelectRoleDto) {
-    return this.authService.selectRole(req.user.id, selectRoleDto);
+    return this.authService.selectRole(req.user.id, selectRoleDto, req.ip, (req.headers as Record<string, string>)['user-agent']);
   }
 
   @Post('request-otp')

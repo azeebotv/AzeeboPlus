@@ -170,7 +170,7 @@ export class DashboardService {
   }
 
   async getTopCreators(limit = 10): Promise<TopCreatorItem[]> {
-    const creators = await this.prisma.$queryRawUnsafe<
+    const creators = await this.prisma.$queryRaw<
       {
         id: string;
         displayName: string;
@@ -178,8 +178,8 @@ export class DashboardService {
         contentCount: bigint;
         totalViews: bigint;
       }[]
-    >(
-      `SELECT u.id, u."displayName", u.avatar,
+    >`
+      SELECT u.id, u."displayName", u.avatar,
               COUNT(DISTINCT ci.id) as "contentCount",
               COALESCE(SUM(ci."viewCount"), 0) as "totalViews"
        FROM "users" u
@@ -187,9 +187,8 @@ export class DashboardService {
        WHERE u.role = 'creator'
        GROUP BY u.id, u."displayName", u.avatar
        ORDER BY "totalViews" DESC
-       LIMIT $1`,
-      limit
-    );
+       LIMIT ${limit}
+    `;
 
     return creators.map((c) => ({
       id: c.id,

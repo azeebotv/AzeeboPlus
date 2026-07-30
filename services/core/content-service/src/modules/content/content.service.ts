@@ -1093,10 +1093,9 @@ export class ContentService {
         try {
           const commentIds = result.data.map((c: { id: string }) => c.id);
           // Use raw query since commentLike may not be in Prisma schema
-          const userLikes = await this.prisma.$queryRawUnsafe<Array<{ commentId: string }>>(
-            `SELECT "commentId" FROM "comment_likes" WHERE "commentId" IN (${commentIds.map((id: string) => `'${id}'`).join(',')}) AND "userId" = $1`,
-            userId
-          );
+          const userLikes = await this.prisma.$queryRaw<Array<{ commentId: string }>>`
+            SELECT "commentId" FROM "comment_likes" WHERE "commentId" IN (${Prisma.join(commentIds)}) AND "userId" = ${userId}
+          `;
           likedCommentIds = new Set(userLikes.map((l) => l.commentId));
         } catch {
           // comment_likes table may not exist — default to no likes

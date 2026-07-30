@@ -18,6 +18,15 @@ const categories = [
   { name: 'Lifestyle', href: '/lifestyle', icon: '🌟', color: '#EC4899' },
 ];
 
+export const metadata = {
+  title: 'Watch | Azeebo',
+  description: 'Discover and stream content across all Azeebo+ universes.',
+  openGraph: {
+    title: 'Watch | Azeebo',
+    description: 'Discover and stream content across all Azeebo+ universes.',
+  },
+};
+
 export default function WatchPage(): React.JSX.Element {
   useEffect(() => {
     analytics.pageView('watch');

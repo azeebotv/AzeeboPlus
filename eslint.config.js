@@ -2,6 +2,7 @@ const tseslint = require('typescript-eslint');
 const prettierPlugin = require('eslint-plugin-prettier');
 const prettierConfig = require('eslint-config-prettier');
 const globals = require('globals');
+const noHexColors = require('./packages/eslint-rules/no-hex-colors');
 
 module.exports = [
   // Ignore patterns
@@ -30,6 +31,11 @@ module.exports = [
     plugins: {
       '@typescript-eslint': tseslint.plugin,
       prettier: prettierPlugin,
+      'azeebo-custom': {
+        rules: {
+          'no-hex-colors': noHexColors,
+        },
+      },
     },
     rules: {
       // TypeScript ESLint recommended rules
@@ -134,6 +140,13 @@ module.exports = [
         },
       ],
       'no-console': 'warn',
+      'azeebo-custom/no-hex-colors': [
+        'error',
+        {
+          allowList: ['#000000', '#FFFFFF', '#ffffff', '#00000000'],
+          allowTransparent: true,
+        },
+      ],
     },
   },
   // Allow console in logger and scripts

@@ -1,5 +1,14 @@
 'use client';
 import { useState, useEffect } from 'react';
+
+export const metadata = {
+  title: 'Premium Access | Azeebo',
+  description: 'Unlock exclusive content, movies, and features with Azeebo Premium subscriptions.',
+  openGraph: {
+    title: 'Premium Access | Azeebo',
+    description: 'Unlock exclusive content, movies, and features with Azeebo Premium subscriptions.',
+  },
+};
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
@@ -164,7 +173,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
         <AppHeader />
         <div
           className="flex items-center justify-center"
@@ -181,7 +190,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
 
   if (error) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
         <AppHeader />
         <div
           className="flex items-center justify-center"
@@ -203,7 +212,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
       <AppHeader />
 
       <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
@@ -238,6 +247,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
             {status.autoRenew && (
               <button
                 type="button"
+                aria-label="Cancel subscription"
                 onClick={handleCancel}
                 className="w-full px-4 py-3 rounded-full font-semibold transition-colors"
                 style={{ backgroundColor: 'rgba(239,68,68,0.2)', color: '#EF4444' }}
@@ -275,22 +285,22 @@ export default function PremiumAccessPage(): React.JSX.Element {
               {plan.isPopular && (
                 <span
                   className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-4 py-1 rounded-full text-sm font-medium text-white"
-                  style={{ backgroundColor: '#E8420A' }}
+                  style={{ backgroundColor: 'var(--brand-orange, #E8420A)' }}
                 >
                   Most Popular
                 </span>
               )}
               <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
               <div className="flex items-baseline gap-1 mb-4">
-                <span className="text-3xl font-bold" style={{ color: '#E8420A' }}>
+                <span className="text-3xl font-bold" style={{ color: 'var(--brand-orange, #E8420A)' }}>
                   ₦{plan.price.toLocaleString()}
                 </span>
                 <span className="text-white/50">{getDurationLabel(plan.duration)}</span>
               </div>
               <p className="text-white/50 mb-6">{plan.description}</p>
               <ul className="space-y-3 mb-6">
-                {plan.features.map((feature, index) => (
-                  <li key={index} className="flex items-center gap-2">
+                {plan.features.map((feature) => (
+                  <li key={feature} className="flex items-center gap-2">
                     <span className="font-bold" style={{ color: '#22C55E' }}>
                       ✓
                     </span>
@@ -300,6 +310,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
               </ul>
               <button
                 type="button"
+                aria-label={`Subscribe to ${plan.name}`}
                 onClick={() => setConfirmPlan({ id: plan.id, name: plan.name, price: plan.price })}
                 disabled={isPurchasing}
                 className={`w-full py-3 rounded-full font-semibold transition-all ${
@@ -345,6 +356,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
             <div className="flex flex-col gap-3 mb-4">
               <button
                 type="button"
+                aria-label="Pay from wallet"
                 onClick={() => handleSubscribe(confirmPlan.id, 'wallet')}
                 disabled={isPurchasing || walletBalance < confirmPlan.price}
                 className="w-full py-3 rounded-full font-semibold transition-all"
@@ -352,7 +364,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
                   background:
                     walletBalance >= confirmPlan?.price
                       ? 'linear-gradient(135deg, #0D3B2E 0%, #0A5C36 100%)'
-                      : '#2A1A1A',
+                      : 'var(--bg-surface, #2A1A1A)',
                   color: walletBalance >= confirmPlan?.price ? '#fff' : '#666',
                   cursor: walletBalance >= confirmPlan?.price ? 'pointer' : 'not-allowed',
                 }}
@@ -365,6 +377,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
               </button>
               <button
                 type="button"
+                aria-label="Pay with card or transfer"
                 onClick={() => handleSubscribe(confirmPlan.id, 'external')}
                 disabled={isPurchasing}
                 className="w-full py-3 rounded-full font-semibold transition-all az-btn-primary"
@@ -375,6 +388,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
 
             <button
               type="button"
+              aria-label="Cancel subscription confirmation"
               onClick={() => setConfirmPlan(null)}
               className="w-full py-2 rounded-full text-white/50 border border-white/10 hover:bg-white/5 transition-colors text-sm"
             >

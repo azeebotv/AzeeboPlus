@@ -8,6 +8,7 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 interface ScheduledContent {
   id: string;
@@ -155,16 +156,12 @@ export default function ScheduledPage(): React.JSX.Element {
                 }}
               >
                 {item.thumbnail && (
-                  <img
+                  <OptimizedImage
                     src={item.thumbnail}
                     alt={item.title}
-                    style={{
-                      width: 120,
-                      height: 68,
-                      objectFit: 'cover',
-                      borderRadius: 8,
-                      flexShrink: 0,
-                    }}
+                    width={120}
+                    height={68}
+                    className="object-cover rounded-lg flex-shrink-0"
                   />
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { useToast } from '@/components/ToastProvider';
@@ -37,14 +38,23 @@ interface Pricing {
   processingFee: string;
 }
 
+export const metadata = {
+  title: 'Withdraw Funds | Azeebo',
+  description: 'Transfer funds from your wallet to your bank account.',
+  openGraph: {
+    title: 'Withdraw Funds | Azeebo',
+    description: 'Transfer funds from your wallet to your bank account.',
+  },
+};
+
 export default function WithdrawPage(): React.JSX.Element {
   const router = useRouter();
   const toast = useToast();
   const [amount, setAmount] = useState<string>('');
   const [selectedAccount, setSelectedAccount] = useState<string>('');
-  const [selectedMethod, _setSelectedMethod] = useState<string>('bank_transfer');
+  const [selectedMethod] = useState<string>('bank_transfer');
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
-  const [_methods, setMethods] = useState<WithdrawalMethods | null>(null);
+  const [, setMethods] = useState<WithdrawalMethods | null>(null);
   const [pricing, setPricing] = useState<Pricing | null>(null);
   const [walletPricing, setWalletPricing] = useState<WalletPricing | null>(null);
   const [walletBalance, setWalletBalance] = useState(0);
@@ -177,9 +187,11 @@ export default function WithdrawPage(): React.JSX.Element {
                         : undefined
                     }
                   >
-                    <img
+                    <OptimizedImage
                       src={account.bankLogo}
                       alt={account.bankName}
+                      width={40}
+                      height={40}
                       className="w-10 h-10 rounded-lg object-cover"
                     />
                     <div className="flex-1 text-left">

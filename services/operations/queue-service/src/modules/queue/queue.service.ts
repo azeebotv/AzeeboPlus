@@ -45,92 +45,149 @@ export class QueueService {
       paused: number;
     }>
   > {
-    const stats = await Promise.all(
-      QUEUE_NAMES.map(async (name) => {
-        const queue = this.getQueue(name);
-        const [waiting, active, completed, failed, delayed, paused] = await Promise.all([
-          queue.getWaitingCount(),
-          queue.getActiveCount(),
-          queue.getCompletedCount(),
-          queue.getFailedCount(),
-          queue.getDelayedCount(),
-          queue.isPaused().then((p) => (p ? 1 : 0)),
-        ]);
-        return { name, waiting, active, completed, failed, delayed, paused };
-      })
-    );
-    return stats;
+    try {
+      const stats = await Promise.all(
+        QUEUE_NAMES.map(async (name) => {
+          const queue = this.getQueue(name);
+          const [waiting, active, completed, failed, delayed, paused] = await Promise.all([
+            queue.getWaitingCount(),
+            queue.getActiveCount(),
+            queue.getCompletedCount(),
+            queue.getFailedCount(),
+            queue.getDelayedCount(),
+            queue.isPaused().then((p) => (p ? 1 : 0)),
+          ]);
+          return { name, waiting, active, completed, failed, delayed, paused };
+        })
+      );
+      return stats;
+    } catch (error) {
+      this.logger.error('Failed to get queue stats', (error as Error).stack);
+      throw error;
+    }
   }
 
   async getJobs(queueName: QueueName, types: JobType[], start = 0, end = 50): Promise<Job[]> {
-    const queue = this.getQueue(queueName);
-    return queue.getJobs(types, start, end);
+    try {
+      const queue = this.getQueue(queueName);
+      return await queue.getJobs(types, start, end);
+    } catch (error) {
+      this.logger.error(`Failed to get jobs from queue ${queueName}`, (error as Error).stack);
+      throw error;
+    }
   }
 
   async getJobById(queueName: QueueName, jobId: string): Promise<Job | null> {
-    const queue = this.getQueue(queueName);
-    return (await queue.getJob(jobId)) ?? null;
+    try {
+      const queue = this.getQueue(queueName);
+      return (await queue.getJob(jobId)) ?? null;
+    } catch (error) {
+      this.logger.error(`Failed to get job ${jobId} from queue ${queueName}`, (error as Error).stack);
+      throw error;
+    }
   }
 
   async retryJob(queueName: QueueName, jobId: string): Promise<void> {
-    const queue = this.getQueue(queueName);
-    const job = await queue.getJob(jobId);
-    if (!job) {
-      throw new NotFoundException(`Job ${jobId} not found in queue ${queueName}`);
+    try {
+      const queue = this.getQueue(queueName);
+      const job = await queue.getJob(jobId);
+      if (!job) {
+        throw new NotFoundException(`Job ${jobId} not found in queue ${queueName}`);
+      }
+      await job.retry();
+      this.logger.log(`Retried job ${jobId} in queue ${queueName}`);
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to retry job ${jobId} in queue ${queueName}`, (error as Error).stack);
+      throw error;
     }
-    await job.retry();
-    this.logger.log(`Retried job ${jobId} in queue ${queueName}`);
   }
 
   async retryAllFailed(queueName: QueueName): Promise<number> {
-    const queue = this.getQueue(queueName);
-    const failedJobs = await queue.getFailed();
-    let retried = 0;
-    for (const job of failedJobs) {
-      await job.retry();
-      retried++;
+    try {
+      const queue = this.getQueue(queueName);
+      const failedJobs = await queue.getFailed();
+      let retried = 0;
+      for (const job of failedJobs) {
+        await job.retry();
+        retried++;
+      }
+      this.logger.log(`Retried ${retried} failed jobs in queue ${queueName}`);
+      return retried;
+    } catch (error) {
+      this.logger.error(`Failed to retry all failed jobs in queue ${queueName}`, (error as Error).stack);
+      throw error;
     }
-    this.logger.log(`Retried ${retried} failed jobs in queue ${queueName}`);
-    return retried;
   }
 
   async removeJob(queueName: QueueName, jobId: string): Promise<void> {
-    const queue = this.getQueue(queueName);
-    const job = await queue.getJob(jobId);
-    if (!job) {
-      throw new NotFoundException(`Job ${jobId} not found in queue ${queueName}`);
+    try {
+      const queue = this.getQueue(queueName);
+      const job = await queue.getJob(jobId);
+      if (!job) {
+        throw new NotFoundException(`Job ${jobId} not found in queue ${queueName}`);
+      }
+      await job.remove();
+      this.logger.log(`Removed job ${jobId} from queue ${queueName}`);
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to remove job ${jobId} from queue ${queueName}`, (error as Error).stack);
+      throw error;
     }
-    await job.remove();
-    this.logger.log(`Removed job ${jobId} from queue ${queueName}`);
   }
 
   async pauseQueue(queueName: QueueName): Promise<void> {
-    const queue = this.getQueue(queueName);
-    await queue.pause();
-    this.logger.log(`Paused queue ${queueName}`);
+    try {
+      const queue = this.getQueue(queueName);
+      await queue.pause();
+      this.logger.log(`Paused queue ${queueName}`);
+    } catch (error) {
+      this.logger.error(`Failed to pause queue ${queueName}`, (error as Error).stack);
+      throw error;
+    }
   }
 
   async resumeQueue(queueName: QueueName): Promise<void> {
-    const queue = this.getQueue(queueName);
-    await queue.resume();
-    this.logger.log(`Resumed queue ${queueName}`);
+    try {
+      const queue = this.getQueue(queueName);
+      await queue.resume();
+      this.logger.log(`Resumed queue ${queueName}`);
+    } catch (error) {
+      this.logger.error(`Failed to resume queue ${queueName}`, (error as Error).stack);
+      throw error;
+    }
   }
 
   async getFailedJobs(queueName: QueueName, start = 0, end = 50): Promise<Job[]> {
-    const queue = this.getQueue(queueName);
-    return queue.getFailed(start, end);
+    try {
+      const queue = this.getQueue(queueName);
+      return await queue.getFailed(start, end);
+    } catch (error) {
+      this.logger.error(`Failed to get failed jobs from queue ${queueName}`, (error as Error).stack);
+      throw error;
+    }
   }
 
   async getDelayedJobs(queueName: QueueName, start = 0, end = 50): Promise<Job[]> {
-    const queue = this.getQueue(queueName);
-    return queue.getDelayed(start, end);
+    try {
+      const queue = this.getQueue(queueName);
+      return await queue.getDelayed(start, end);
+    } catch (error) {
+      this.logger.error(`Failed to get delayed jobs from queue ${queueName}`, (error as Error).stack);
+      throw error;
+    }
   }
 
   async cleanQueue(queueName: QueueName, grace: number, limit?: number): Promise<string[]> {
-    const queue = this.getQueue(queueName);
-    const cleaned = await queue.clean(grace, limit ?? 1000);
-    this.logger.log(`Cleaned ${cleaned.length} jobs from queue ${queueName}`);
-    return cleaned;
+    try {
+      const queue = this.getQueue(queueName);
+      const cleaned = await queue.clean(grace, limit ?? 1000);
+      this.logger.log(`Cleaned ${cleaned.length} jobs from queue ${queueName}`);
+      return cleaned;
+    } catch (error) {
+      this.logger.error(`Failed to clean queue ${queueName}`, (error as Error).stack);
+      throw error;
+    }
   }
 
   isQueueName(name: string): name is QueueName {

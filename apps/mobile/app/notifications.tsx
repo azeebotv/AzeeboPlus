@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
@@ -9,10 +9,12 @@ import {
   useMarkAllNotificationsRead,
 } from '../src/hooks/useNotificationQuery';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
+import { radius } from '../src/theme';
 
 export default function NotificationsScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [pushEnabled, setPushEnabled] = useState(true);
   const [emailEnabled, setEmailEnabled] = useState(true);
 
@@ -88,8 +90,8 @@ export default function NotificationsScreen() {
           { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
         ]}
       >
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <View style={[styles.header, { paddingTop: insets.top }]}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()} accessibilityLabel="Go back">
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text
@@ -98,7 +100,7 @@ export default function NotificationsScreen() {
             Notifications
           </Text>
           {unreadCount > 0 && (
-            <TouchableOpacity style={styles.markAllButton} onPress={markAllAsRead}>
+            <TouchableOpacity style={styles.markAllButton} onPress={markAllAsRead} accessibilityLabel="Mark all notifications as read">
               <Text style={styles.markAllText}>Mark All Read</Text>
             </TouchableOpacity>
           )}
@@ -116,6 +118,7 @@ export default function NotificationsScreen() {
                 key={notification.id}
                 style={[styles.notificationCard, notification.read && { opacity: 0.6 }]}
                 onPress={() => markAsRead(notification.id)}
+                accessibilityLabel={`Notification: ${notification.title}`}
               >
                 <View style={styles.notificationContent}>
                   <Text
@@ -223,7 +226,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     backgroundColor: '#E8420A',
-    borderRadius: 8,
+    borderRadius: radius.sm,
   },
   markAllText: {
     color: '#fff',
@@ -239,7 +242,7 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 12,
     backgroundColor: '#1a1a1a',
-    borderRadius: 12,
+    borderRadius: radius.lg,
   },
   iconContainer: {
     width: 40,
@@ -302,7 +305,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16,
     backgroundColor: '#1a1a1a',
-    borderRadius: 12,
+    borderRadius: radius.lg,
     marginBottom: 12,
   },
   settingInfo: {

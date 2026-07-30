@@ -26,15 +26,15 @@ export class MoviesService {
     );
   }
 
-  private async trackAnalyticsEvent(
+  private async trackEvent(
     eventName: string,
     userId: string,
     metadata: Record<string, unknown> = {}
   ): Promise<void> {
     try {
       await axios.post(
-        `${this.analyticsServiceBaseUrl}/analytics/track`,
-        { eventName, userId, metadata, timestamp: new Date().toISOString() },
+        `${this.analyticsServiceBaseUrl}/v1/analytics/events`,
+        { type: eventName, userId, metadata, timestamp: new Date().toISOString() },
         { timeout: 10000 }
       );
     } catch (error) {
@@ -200,7 +200,12 @@ export class MoviesService {
 
       await this.cache.invalidate('movie:*');
 
-      this.trackAnalyticsEvent('movie_rented', userId, { movieId, amount: this.rentalFee });
+      await this.trackEvent('payment_success', userId, {
+        movieId,
+        amount: this.rentalFee,
+        type: 'rental',
+        rentalId: rental.id,
+      });
 
       return {
         success: true,
@@ -285,7 +290,7 @@ export class MoviesService {
       },
     });
 
-    this.trackAnalyticsEvent('movie_watchlisted', userId, { movieId });
+    await this.trackEvent('movie_watchlisted', userId, { movieId });
 
     return {
       success: true,
@@ -311,7 +316,7 @@ export class MoviesService {
       where: { id: item.id },
     });
 
-    this.trackAnalyticsEvent('movie_watchlist_removed', userId, { movieId });
+    await this.trackEvent('movie_watchlist_removed', userId, { movieId });
 
     return {
       success: true,
@@ -483,7 +488,7 @@ export class MoviesService {
       // movieRating model may not exist
     }
 
-    this.trackAnalyticsEvent('movie_rated', userId, { movieId, rating });
+    await this.trackEvent('movie_rated', userId, { movieId, rating });
 
     return {
       success: true,

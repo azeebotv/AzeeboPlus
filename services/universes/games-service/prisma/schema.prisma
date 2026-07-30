@@ -48,6 +48,8 @@ model Question {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
   @@index([challengeId])
   @@map("questions")
 }
@@ -64,6 +66,10 @@ model GameSession {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  challenge Challenge? @relation(fields: [challengeId], references: [id], onDelete: Restrict)
+  question  Question?  @relation(fields: [questionId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, challengeId])
   @@index([userId])
   @@index([challengeId])
   @@index([questionId])
@@ -106,6 +112,9 @@ model TournamentPrize {
   rank         Int
   amount Decimal  @db.Decimal(18, 2)
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
 
   @@index([tournamentId])
   @@map("tournament_prizes")
@@ -117,6 +126,8 @@ model TournamentEntry {
   tournamentId String
   score        Int      @default(0)
   enteredAt    DateTime @default(now())
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
 
   @@unique([userId, tournamentId])
   @@index([userId])
@@ -153,6 +164,9 @@ model GameQuestion {
   order       Int      @default(0)
   timeLimit   Int      @default(30)
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   @@index([gameId])
   @@map("game_questions")
@@ -167,6 +181,10 @@ model GameAnswer {
   timeTaken   Int
   pointsEarned Int     @default(0)
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  session    GamePlaySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question   Question        @relation(fields: [questionId], references: [id], onDelete: Restrict)
 
   @@index([sessionId])
   @@index([questionId])
@@ -183,6 +201,9 @@ model GamePlaySession {
   startedAt   DateTime  @default(now())
   completedAt DateTime?
   createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([gameId])
@@ -202,6 +223,9 @@ model TournamentMatch {
   scheduledAt  DateTime?
   completedAt  DateTime?
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
 
   @@index([tournamentId])
   @@index([status])
@@ -217,6 +241,7 @@ model Tip {
   toUserId   String
   amount Decimal  @db.Decimal(18, 2)
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@map("tips")
   @@index([fromUserId])
@@ -253,6 +278,7 @@ model CreatorEarning {
   status      String    @default("pending")
   paidAt      DateTime?
   createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@map("creator_earnings")
   @@index([creatorId])

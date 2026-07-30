@@ -3,6 +3,7 @@
 import { useRef } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import type { ContentItem } from '@/lib/api';
 import analytics from '@/lib/analytics';
@@ -30,6 +31,7 @@ export default function ContentCard({
   showProgress = false,
   size = 'md',
 }: ContentCardProps): React.JSX.Element {
+  const { t } = useTranslation();
   const cardRef = useRef<HTMLDivElement>(null);
   const { width, height } = SIZE_MAP[size];
 
@@ -55,7 +57,7 @@ export default function ContentCard({
         href={`/watch/${item.id}`}
         onClick={handleClick}
         className="block rounded-xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-[var(--brand-orange)]"
-        aria-label={`Watch ${item.title}`}
+        aria-label={t('content.watchLabel', { title: item.title })}
       >
         <div
           className="relative overflow-hidden rounded-xl"
@@ -77,7 +79,10 @@ export default function ContentCard({
           {item.duration && (
             <span
               className="absolute bottom-2 right-2 text-xs font-semibold px-1.5 py-0.5 rounded bg-black/70 text-white"
-              aria-label={`${Math.floor(item.duration / 60)} minutes ${item.duration % 60} seconds`}
+              aria-label={t('content.durationAria', {
+                minutes: Math.floor(item.duration / 60),
+                seconds: item.duration % 60,
+              })}
             >
               {Math.floor(item.duration / 60)}:{(item.duration % 60).toString().padStart(2, '0')}
             </span>
@@ -87,7 +92,7 @@ export default function ContentCard({
           {item.universe?.icon && (
             <span
               className="absolute top-2 left-2 text-sm px-1.5 py-0.5 rounded-md bg-black/50"
-              aria-label={`Universe: ${item.universe.name}`}
+              aria-label={t('content.universeAria', { name: item.universe.name })}
             >
               {item.universe.icon}
             </span>
@@ -101,7 +106,7 @@ export default function ContentCard({
               aria-valuenow={Math.round(progress * 100)}
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-label={`${Math.round(progress * 100)}% watched`}
+              aria-label={t('content.watchedAria', { percent: Math.round(progress * 100) })}
             >
               <div
                 className="h-full rounded-r-full"

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity }
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { creatorApi } from '../../src/api/creator';
+import { universeColors, colors as dtColors } from '../../src/theme/design-tokens';
 import { colors, spacing, typography, radius } from '../../src/theme';
 
 const TIER_COLORS: Record<string, string> = {
@@ -62,13 +63,22 @@ export default function TipsHistoryScreen() {
           <View
             style={[
               styles.tierBadge,
-              { backgroundColor: `${TIER_COLORS[item.tier.toLowerCase()] ?? '#888'}20` },
+              {
+                backgroundColor: `${
+                  TIER_COLORS[item.tier.toLowerCase()] ??
+                  dtColors.text.muted
+                }20`,
+              }
             ]}
           >
             <Text
               style={[
                 styles.tierText,
-                { color: TIER_COLORS[item.tier.toLowerCase()] ?? '#888' },
+                {
+                  color:
+                    TIER_COLORS[item.tier.toLowerCase()] ??
+                    dtColors.text.muted,
+                },
               ]}
             >
               {item.tier.charAt(0).toUpperCase() + item.tier.slice(1)}

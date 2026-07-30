@@ -148,6 +148,15 @@ function LorePageContent(): React.JSX.Element {
 
 const LazyLorePage = lazy(() => Promise.resolve({ default: LorePageContent }));
 
+export const metadata = {
+  title: 'Lore Explorer | Azeebo',
+  description: 'Discover the rich backstories, lore, and mythology behind your favorite shows.',
+  openGraph: {
+    title: 'Lore Explorer | Azeebo',
+    description: 'Discover the rich backstories, lore, and mythology behind your favorite shows.',
+  },
+};
+
 export default function LorePage(): React.JSX.Element {
   return (
     <Suspense

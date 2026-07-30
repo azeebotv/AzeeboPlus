@@ -7,6 +7,15 @@ import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
+export const metadata = {
+  title: 'Wallet | Azeebo',
+  description: 'View your wallet balance, make deposits, and manage transactions.',
+  openGraph: {
+    title: 'Wallet | Azeebo',
+    description: 'View your wallet balance, make deposits, and manage transactions.',
+  },
+};
+
 export default function WalletPage(): React.JSX.Element {
   const { isAuthenticated, isLoading: authIsLoading } = useAuth();
 
@@ -41,7 +50,7 @@ export default function WalletPage(): React.JSX.Element {
   const error = balanceQuery.error?.message || transactionsQuery.error?.message || null;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
       <AppHeader active="Wallet" />
 
       {/* Balance Section */}
@@ -73,7 +82,7 @@ export default function WalletPage(): React.JSX.Element {
                   <button
                     type="button"
                     className="px-6 py-3 rounded-full text-sm font-semibold transition-colors"
-                    style={{ backgroundColor: 'white', color: '#CC1C1C' }}
+                    style={{ backgroundColor: 'white', color: 'var(--brand-red, #CC1C1C)' }}
                   >
                     Deposit
                   </button>

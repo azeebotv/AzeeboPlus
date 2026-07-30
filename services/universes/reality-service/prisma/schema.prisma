@@ -70,7 +70,7 @@ model Episode {
   updatedAt   DateTime  @updatedAt
 
   show        RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
-  season      Season?     @relation(fields: [seasonId], references: [id])
+  season      Season?     @relation(fields: [seasonId], references: [id], onDelete: SetNull)
   votes       Vote[]
   predictions Prediction[]
 
@@ -107,10 +107,11 @@ model Vote {
   episodeId    String?
   quantity     Int      @default(1)
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   contestant Contestant  @relation(fields: [contestantId], references: [id], onDelete: Cascade)
   show       RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
-  episode    Episode?    @relation(fields: [episodeId], references: [id])
+  episode    Episode?    @relation(fields: [episodeId], references: [id], onDelete: SetNull)
 
   @@unique([userId, contestantId])
   @@index([userId])
@@ -127,6 +128,7 @@ model Supervote {
   showId       String
   amount       Decimal  @default(10) @db.Decimal(18, 2)
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   contestant Contestant  @relation(fields: [contestantId], references: [id], onDelete: Cascade)
   show       RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
@@ -146,9 +148,10 @@ model Prediction {
   episodeId     String?
   contestantId  String?
   createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   show         RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
-  episode      Episode?    @relation(fields: [episodeId], references: [id])
+  episode      Episode?    @relation(fields: [episodeId], references: [id], onDelete: SetNull)
   contestant   Contestant? @relation(fields: [contestantId], references: [id])
 
   @@map("reality_predictions")
@@ -170,7 +173,8 @@ model RealityClip {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  show RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
+  show    RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
+  creator User?       @relation(fields: [creatorId], references: [id], onDelete: Restrict)
 
   @@map("reality_clips")
   @@index([showId])
@@ -202,6 +206,7 @@ model ShowLike {
   userId    String
   showId    String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   show RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
 
@@ -233,6 +238,7 @@ model ShowShare {
   showId    String
   platform  String?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   show RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
 

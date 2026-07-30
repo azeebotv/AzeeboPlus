@@ -37,8 +37,7 @@ export class RateLimitGuard implements CanActivate {
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    // Skip rate limiting only in explicitly set development environment
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.DISABLE_RATE_LIMITING === 'true') {
       return true;
     }
 

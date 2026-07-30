@@ -140,29 +140,22 @@ export class MessagingService {
 
   async getMessages(userId: string, conversationId: string, limit = 50, offset = 0) {
     const safeLimit = Math.min(Math.max(1, limit), 100);
-    const conversation = await this.prisma.conversation.findFirst({
-      where: {
-        id: conversationId,
-        participants: {
-          some: {
-            userId,
-          },
-        },
-      },
-    });
-
-    if (!conversation) {
-      throw new NotFoundException('Conversation not found');
-    }
 
     try {
-      const messages = await this.prisma.message.findMany({
+      const conversation = await this.prisma.conversation.findFirst({
         where: {
-          conversationId,
+          id: conversationId,
+          participants: { some: { userId } },
         },
-        orderBy: {
-          createdAt: 'asc',
-        },
+      });
+
+      if (!conversation) {
+        throw new NotFoundException('Conversation not found');
+      }
+
+      const messages = await this.prisma.message.findMany({
+        where: { conversationId },
+        orderBy: { createdAt: 'asc' },
         skip: offset,
         take: safeLimit,
       });
@@ -180,6 +173,7 @@ export class MessagingService {
         })),
       };
     } catch (error) {
+      if (error instanceof NotFoundException) throw error;
       this.logger.error(`getMessages failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: (error as Error).message };
     }
@@ -230,22 +224,18 @@ export class MessagingService {
   }
 
   async sendMessage(userId: string, conversationId: string, dto: SendMessageDto) {
-    const conversation = await this.prisma.conversation.findFirst({
-      where: {
-        id: conversationId,
-        participants: {
-          some: {
-            userId,
-          },
-        },
-      },
-    });
-
-    if (!conversation) {
-      throw new NotFoundException('Conversation not found');
-    }
-
     try {
+      const conversation = await this.prisma.conversation.findFirst({
+        where: {
+          id: conversationId,
+          participants: { some: { userId } },
+        },
+      });
+
+      if (!conversation) {
+        throw new NotFoundException('Conversation not found');
+      }
+
       const message = await this.prisma.message.create({
         data: {
           conversationId,
@@ -274,93 +264,70 @@ export class MessagingService {
         },
       };
     } catch (error) {
+      if (error instanceof NotFoundException) throw error;
       this.logger.error(`sendMessage failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: (error as Error).message };
     }
   }
 
   async markAsRead(userId: string, conversationId: string, messageId: string) {
-    const participant = await this.prisma.conversationParticipant.findFirst({
-      where: {
-        conversationId,
-        userId,
-      },
-    });
-
-    if (!participant) {
-      throw new NotFoundException('Conversation not found');
-    }
-
-    const message = await this.prisma.message.findFirst({
-      where: {
-        id: messageId,
-        conversationId,
-      },
-    });
-
-    if (!message) {
-      throw new NotFoundException('Message not found');
-    }
-
     try {
+      const participant = await this.prisma.conversationParticipant.findFirst({
+        where: { conversationId, userId },
+      });
+
+      if (!participant) {
+        throw new NotFoundException('Conversation not found');
+      }
+
+      const message = await this.prisma.message.findFirst({
+        where: { id: messageId, conversationId },
+      });
+
+      if (!message) {
+        throw new NotFoundException('Message not found');
+      }
+
       await this.prisma.message.update({
         where: { id: messageId },
-        data: {
-          isRead: true,
-          readAt: new Date(),
-        },
+        data: { isRead: true, readAt: new Date() },
       });
 
       await this.prisma.conversationParticipant.updateMany({
-        where: {
-          conversationId,
-          userId,
-        },
-        data: {
-          lastReadAt: new Date(),
-        },
+        where: { conversationId, userId },
+        data: { lastReadAt: new Date() },
       });
 
-      return {
-        success: true,
-        message: 'Message marked as read',
-      };
+      return { success: true, message: 'Message marked as read' };
     } catch (error) {
+      if (error instanceof NotFoundException) throw error;
       this.logger.error(`markAsRead failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: (error as Error).message };
     }
   }
 
   async deleteConversation(userId: string, conversationId: string) {
-    const conversation = await this.prisma.conversation.findFirst({
-      where: {
-        id: conversationId,
-        participants: {
-          some: {
-            userId,
-          },
-        },
-      },
-    });
-
-    if (!conversation) {
-      throw new NotFoundException('Conversation not found');
-    }
-
     try {
-      await this.prisma.conversationParticipant.delete({
+      const conversation = await this.prisma.conversation.findFirst({
         where: {
-          conversationId_userId: { conversationId, userId },
+          id: conversationId,
+          participants: { some: { userId } },
         },
+      });
+
+      if (!conversation) {
+        throw new NotFoundException('Conversation not found');
+      }
+
+      await this.prisma.conversationParticipant.delete({
+        where: { conversationId_userId: { conversationId, userId } },
       });
 
       this.logger.log(`Conversation ${conversationId} deleted by user ${userId}`);
 
-      return {
-        success: true,
-        message: 'Conversation deleted',
-      };
+      return { success: true, message: 'Conversation deleted' };
     } catch (error) {
+      if (error instanceof NotFoundException) throw error;
       this.logger.error(
         `deleteConversation failed: ${(error as Error).message}`,
         (error as Error).stack

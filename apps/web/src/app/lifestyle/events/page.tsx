@@ -1,5 +1,14 @@
 'use client';
 import { Suspense, lazy, useEffect, useState } from 'react';
+
+export const metadata = {
+  title: 'Lifestyle Events | Azeebo',
+  description: 'Find and RSVP to exciting lifestyle events, experiences, and happenings across Africa.',
+  openGraph: {
+    title: 'Lifestyle Events | Azeebo',
+    description: 'Find and RSVP to exciting lifestyle events, experiences, and happenings across Africa.',
+  },
+};
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { api } from '@/lib/api';

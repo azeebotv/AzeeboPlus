@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
@@ -8,6 +8,7 @@ import { LoadingState, EmptyState, ErrorState } from '../src/components/StateCon
 import { apiClient } from '../src/api/client';
 import { ApiResponse } from '../src/types/api';
 import { analytics } from '../src/utils/analytics';
+import { radius } from '../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -43,6 +44,7 @@ interface PredictionLeague {
 export default function SportsUniverseHome() {
   const colorScheme = useColorScheme();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const isDark = colorScheme === 'dark';
 
   const liveQuery = useQuery({
@@ -144,7 +146,7 @@ export default function SportsUniverseHome() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <ScrollView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top }]}>
           <Text style={styles.universeLabel}>⚽ Sports</Text>
           <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
             Sports Universe
@@ -337,7 +339,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 20,
+    borderRadius: radius.xl,
     gap: 8,
   },
   categoryEmoji: {
@@ -374,7 +376,7 @@ const styles = StyleSheet.create({
   },
   matchCard: {
     padding: 16,
-    borderRadius: 12,
+    borderRadius: radius.lg,
   },
   matchLeague: {
     flexDirection: 'row',
@@ -432,7 +434,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2a2a2a',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: radius.sm,
   },
   scoreText: {
     fontSize: 24,
@@ -446,7 +448,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#E74C3C',
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     alignItems: 'center',
   },
   watchButtonText: {
@@ -458,7 +460,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#2a2a2a',
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     alignItems: 'center',
   },
   predictButtonText: {
@@ -493,7 +495,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 14,
-    borderRadius: 10,
+    borderRadius: radius.md,
     gap: 12,
   },
   upcomingEmoji: {
@@ -536,7 +538,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 14,
-    borderRadius: 10,
+    borderRadius: radius.md,
     gap: 12,
   },
   predictionInfo: {

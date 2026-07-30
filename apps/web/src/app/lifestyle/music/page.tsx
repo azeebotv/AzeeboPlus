@@ -1,5 +1,14 @@
 'use client';
 import { Suspense, lazy, useEffect, useState } from 'react';
+
+export const metadata = {
+  title: 'Music | Azeebo',
+  description: 'Discover the latest hits, trending tracks, and exclusive music on Azeebo.',
+  openGraph: {
+    title: 'Music | Azeebo',
+    description: 'Discover the latest hits, trending tracks, and exclusive music on Azeebo.',
+  },
+};
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { api } from '@/lib/api';

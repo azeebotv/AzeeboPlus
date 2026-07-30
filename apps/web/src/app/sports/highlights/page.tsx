@@ -151,6 +151,15 @@ function HighlightsPageContent(): React.JSX.Element {
 
 const LazyHighlightsPage = lazy(() => Promise.resolve({ default: HighlightsPageContent }));
 
+export const metadata = {
+  title: 'Sports Highlights | Azeebo',
+  description: 'Watch the best moments and highlights from recent matches and events.',
+  openGraph: {
+    title: 'Sports Highlights | Azeebo',
+    description: 'Watch the best moments and highlights from recent matches and events.',
+  },
+};
+
 export default function HighlightsPage(): React.JSX.Element {
   return (
     <Suspense

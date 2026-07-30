@@ -9,14 +9,17 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ServiceAuthGuard } from '@azeebo/security';
 
 import { PollService } from './poll.service';
 import { CreatePollDto } from './dto/create-poll.dto';
 import { VotePollDto } from './dto/vote-poll.dto';
 
 @ApiTags('Polls')
+@UseGuards(ServiceAuthGuard)
 @Controller('polls')
 export class PollController {
   constructor(@Inject(PollService) private readonly pollService: PollService) {}

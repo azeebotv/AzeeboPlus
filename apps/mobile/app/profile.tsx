@@ -9,11 +9,12 @@ import {
   TextInput,
   Image,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../src/api';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import { useAuth } from '../src/contexts/AuthContext';
+import { radius } from '../src/theme';
 
 interface ProfileData {
   avatar?: string;
@@ -25,9 +26,10 @@ interface ProfileData {
 export default function ProfilePage() {
   const queryClient = useQueryClient();
   const { user, isAuthenticated } = useAuth();
+  const insets = useSafeAreaInsets();
   const [saved, setSaved] = useState(false);
 
-  const { data: profile, isLoading } = useQuery({
+  const { data: profile, isLoading, error } = useQuery({
     queryKey: ['profile'],
     queryFn: async () => {
       if (!isAuthenticated) return null;
@@ -55,6 +57,14 @@ export default function ProfilePage() {
     );
   }
 
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ErrorState title="Error Loading Profile" description="Failed to load profile. Please try again." />
+      </SafeAreaView>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <SafeAreaView style={styles.container}>
@@ -66,7 +76,7 @@ export default function ProfilePage() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.content}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top }]}>
           <Text style={styles.title}>Edit Profile</Text>
         </View>
 
@@ -81,7 +91,7 @@ export default function ProfilePage() {
                 </Text>
               </View>
             )}
-            <TouchableOpacity style={styles.editAvatarButton}>
+            <TouchableOpacity style={styles.editAvatarButton} accessibilityLabel="Edit profile photo">
               <Text style={styles.editAvatarText}>Edit</Text>
             </TouchableOpacity>
           </View>
@@ -95,6 +105,7 @@ export default function ProfilePage() {
                 updateMutation.mutate({ displayName: text, bio: profile?.bio || '' })
               }
               placeholder="Enter your display name"
+              accessibilityLabel="Display name"
             />
           </View>
 
@@ -109,6 +120,7 @@ export default function ProfilePage() {
               placeholder="Tell us about yourself"
               multiline
               numberOfLines={4}
+              accessibilityLabel="Bio"
             />
           </View>
 
@@ -150,7 +162,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8420A',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     borderWidth: 2,
     borderColor: '#1A0A0A',
   },
@@ -161,7 +173,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#140808',
     borderColor: '#2A1A1A',
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     padding: 12,
     color: '#fff',
     fontSize: 16,
@@ -172,7 +184,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderLeftColor: '#0EA5F9',
     padding: 12,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     marginTop: 16,
   },
   savedText: { color: '#0EA5F9', fontSize: 14 },

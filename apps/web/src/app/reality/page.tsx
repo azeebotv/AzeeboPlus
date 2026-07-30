@@ -1,5 +1,14 @@
 'use client';
-import { Suspense, lazy, useEffect } from 'react';
+import { useEffect } from 'react';
+
+export const metadata = {
+  title: 'Reality | Azeebo',
+  description: 'Watch reality shows, vote for contestants, and earn rewards on Azeebo.',
+  openGraph: {
+    title: 'Reality | Azeebo',
+    description: 'Watch reality shows, vote for contestants, and earn rewards on Azeebo.',
+  },
+};
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -416,18 +425,4 @@ function RealityPageContent(): React.JSX.Element {
   );
 }
 
-const LazyRealityPage = lazy(() => Promise.resolve({ default: RealityPageContent }));
-
-export default function RealityPage(): React.JSX.Element {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
-          <p className="text-white/50 text-lg">Loading...</p>
-        </div>
-      }
-    >
-      <LazyRealityPage />
-    </Suspense>
-  );
-}
+export default RealityPageContent;

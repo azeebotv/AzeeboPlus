@@ -43,6 +43,7 @@ export default function ProfileSetupPage(): React.JSX.Element {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [interests, setInterests] = useState<string[]>(DEFAULT_INTERESTS);
   const [genders, setGenders] = useState<string[]>(DEFAULT_GENDERS);
 
@@ -72,6 +73,12 @@ export default function ProfileSetupPage(): React.JSX.Element {
       }
     };
     fetchOptions();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+    };
   }, []);
 
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -152,7 +159,8 @@ export default function ProfileSetupPage(): React.JSX.Element {
 
       await refreshUser?.();
       setSuccess(true);
-      setTimeout(() => router.push('/home'), 2000);
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+      redirectTimerRef.current = setTimeout(() => router.push('/home'), 2000);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'An error occurred during profile setup';
       setError(message);

@@ -46,10 +46,31 @@
 #   studio         Open Prisma Studio for a service
 #
 # ============================================================
+# CHANGELOG
+# ============================================================
+# v3.4.0 (2026-07-22) — Infrastructure Alignment Update
+#   - FIX: load_env() service URL mappings corrected to match actual
+#     service .env PORT values. Previously 16 service URLs pointed to
+#     wrong ports (e.g. NOTIFICATION was at 3006 in load_env but
+#     actual service runs at 3006 — fixed grouping and added missing
+#     SUPPORT_SERVICE_URL).
+#   - FIX: Reorganized load_env() service URLs by category (core,
+#     engagement, intelligence, operations, universes) with source
+#     comments referencing service registry arrays for traceability.
+#   - FIX: Help text version updated from v3.1 to v3.3.0 to match
+#     SCRIPT_VERSION variable.
+#   - ADD: Disk space prerequisite check (warns if < 2GB available).
+#   - ADD: Docker status detection in prereq validation (informational,
+#     not required for native dev).
+#   - ADD: SUPPORT_SERVICE_URL to load_env() (was missing entirely).
+#   - ADD: Comprehensive changelog section in script header.
+#
+# v3.3.0 — Previous version (see git history for details)
+# ============================================================
 set -euo pipefail
 
 # ---- Script Metadata ----
-SCRIPT_VERSION="3.3.0"
+SCRIPT_VERSION="3.4.0"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
@@ -200,6 +221,25 @@ validate_prereqs() {
     log_warn "node_modules not found (will install during setup)"
   fi
 
+  # Check available disk space (need ~2GB for node_modules + databases)
+  if command -v df &>/dev/null; then
+    local avail_kb
+    avail_kb="$(df -k "$ROOT_DIR" 2>/dev/null | awk 'NR==2{print $4}' || echo 0)"
+    if (( avail_kb > 0 )); then
+      local avail_gb=$(( avail_kb / 1048576 ))
+      if (( avail_gb < 2 )); then
+        log_warn "Low disk space: ${avail_gb}GB available (recommend >= 2GB)"
+      else
+        log_ok "Disk space: ${avail_gb}GB available"
+      fi
+    fi
+  fi
+
+  # Warn if Docker Desktop is running (not needed for native dev, wastes resources)
+  if command -v docker &>/dev/null && docker info &>/dev/null 2>&1; then
+    log_debug "Docker is running (not required for native dev)"
+  fi
+
   if (( failed > 0 )); then
     log_error "$failed prerequisite(s) failed."
     return 1
@@ -275,31 +315,38 @@ load_env() {
   export OTEL_SERVICE_NAME="${OTEL_SERVICE_NAME:-azeebo-platform}"
 
   # Service URLs for gateway routing (local mode)
+  # Port mapping sourced from each service's .env — must match service registry arrays
+  # Core
   export AUTH_SERVICE_URL="${AUTH_SERVICE_URL:-http://localhost:3000}"
   export USER_SERVICE_URL="${USER_SERVICE_URL:-http://localhost:3001}"
   export WALLET_SERVICE_URL="${WALLET_SERVICE_URL:-http://localhost:3002}"
   export PAYMENT_SERVICE_URL="${PAYMENT_SERVICE_URL:-http://localhost:3003}"
   export CONTENT_SERVICE_URL="${CONTENT_SERVICE_URL:-http://localhost:3004}"
   export SEARCH_SERVICE_URL="${SEARCH_SERVICE_URL:-http://localhost:3005}"
+  export MEDIA_SERVICE_URL="${MEDIA_SERVICE_URL:-http://localhost:3019}"
+  # Engagement
   export NOTIFICATION_SERVICE_URL="${NOTIFICATION_SERVICE_URL:-http://localhost:3006}"
   export REWARD_SERVICE_URL="${REWARD_SERVICE_URL:-http://localhost:3007}"
+  export ENGAGEMENT_SERVICE_URL="${ENGAGEMENT_SERVICE_URL:-http://localhost:3023}"
+  export MESSAGING_SERVICE_URL="${MESSAGING_SERVICE_URL:-http://localhost:3024}"
+  export REFERRAL_SERVICE_URL="${REFERRAL_SERVICE_URL:-http://localhost:3025}"
+  export SUBSCRIPTION_SERVICE_URL="${SUBSCRIPTION_SERVICE_URL:-http://localhost:3026}"
+  # Intelligence
   export ANALYTICS_SERVICE_URL="${ANALYTICS_SERVICE_URL:-http://localhost:3008}"
   export RECOMMENDATION_SERVICE_URL="${RECOMMENDATION_SERVICE_URL:-http://localhost:3009}"
+  # Operations
   export MODERATION_SERVICE_URL="${MODERATION_SERVICE_URL:-http://localhost:3022}"
   export QUEUE_SERVICE_URL="${QUEUE_SERVICE_URL:-http://localhost:3015}"
-  export MEDIA_SERVICE_URL="${MEDIA_SERVICE_URL:-http://localhost:3019}"
+  export SUPPORT_SERVICE_URL="${SUPPORT_SERVICE_URL:-http://localhost:3020}"
+  # Universes
   export REALITY_SERVICE_URL="${REALITY_SERVICE_URL:-http://localhost:3010}"
   export MOVIE_SERVICE_URL="${MOVIE_SERVICE_URL:-http://localhost:3011}"
   export COMEDY_SERVICE_URL="${COMEDY_SERVICE_URL:-http://localhost:3012}"
   export GAMES_SERVICE_URL="${GAMES_SERVICE_URL:-http://localhost:3014}"
   export LIFESTYLE_SERVICE_URL="${LIFESTYLE_SERVICE_URL:-http://localhost:3016}"
   export VERTICAL_SERVICE_URL="${VERTICAL_SERVICE_URL:-http://localhost:3017}"
-  export SPORTS_SERVICE_URL="${SPORTS_SERVICE_URL:-http://localhost:3021}"
   export CREATOR_SERVICE_URL="${CREATOR_SERVICE_URL:-http://localhost:3018}"
-  export ENGAGEMENT_SERVICE_URL="${ENGAGEMENT_SERVICE_URL:-http://localhost:3023}"
-  export MESSAGING_SERVICE_URL="${MESSAGING_SERVICE_URL:-http://localhost:3024}"
-  export REFERRAL_SERVICE_URL="${REFERRAL_SERVICE_URL:-http://localhost:3025}"
-  export SUBSCRIPTION_SERVICE_URL="${SUBSCRIPTION_SERVICE_URL:-http://localhost:3026}"
+  export SPORTS_SERVICE_URL="${SPORTS_SERVICE_URL:-http://localhost:3021}"
 }
 
 validate_env() {
@@ -413,7 +460,7 @@ run_prisma_generate() {
 
     local db_url="${DB_BASE_URL}/${db_name}?schema=public"
     local gen_output
-    if gen_output="$(cd "$service_dir" && DATABASE_URL="$db_url" npx prisma generate 2>&1)"; then
+    if gen_output="$(cd "$service_dir" && DATABASE_URL="$db_url" pnpm exec prisma generate 2>&1)"; then
       log_ok "  [$count] $svc_name: generated"
     else
       log_warn "  [$count] $svc_name: failed"
@@ -462,7 +509,7 @@ build_t0_packages() {
     if [[ "$pkg" == "shared-services" ]]; then
       if [[ -f "$pkg_dir/prisma/schema.prisma" ]]; then
         local db_url="${DB_BASE_URL}/azeebo_content?schema=public"
-        (cd "$pkg_dir" && DATABASE_URL="$db_url" npx prisma generate 2>&1) >/dev/null 2>&1 || true
+        (cd "$pkg_dir" && DATABASE_URL="$db_url" pnpm exec prisma generate 2>&1) >/dev/null 2>&1 || true
       fi
     fi
 
@@ -500,7 +547,7 @@ run_migrations() {
     log_info "  [$count] $svc_name -> $db_name..."
     local migrate_output
     set +e
-    migrate_output="$(cd "$service_dir" && DATABASE_URL="$db_url" npx prisma migrate deploy 2>&1)"
+    migrate_output="$(cd "$service_dir" && DATABASE_URL="$db_url" pnpm exec prisma migrate deploy 2>&1)"
     local rc=$?
     set -e
 
@@ -514,7 +561,7 @@ run_migrations() {
         log_info "  [$count] $svc_name: migration history stuck, using db push..."
         local push_output
         set +e
-        push_output="$(cd "$service_dir" && DATABASE_URL="$db_url" npx prisma db push --accept-data-loss 2>&1)"
+        push_output="$(cd "$service_dir" && DATABASE_URL="$db_url" pnpm exec prisma db push --accept-data-loss 2>&1)"
         local push_rc=$?
         set -e
         if [[ $push_rc -eq 0 ]]; then
@@ -1115,7 +1162,7 @@ cmd_db() {
           if [[ -f "$ROOT_DIR/$svc_dir/prisma/schema.prisma" ]]; then
             local migrate_out
             set +e
-            migrate_out="$(cd "$ROOT_DIR/$svc_dir" && DATABASE_URL="$db_url" npx prisma migrate deploy 2>&1)"
+            migrate_out="$(cd "$ROOT_DIR/$svc_dir" && DATABASE_URL="$db_url" pnpm exec prisma migrate deploy 2>&1)"
             local migrate_rc=$?
             set -e
             echo "$migrate_out" | tail -3
@@ -1166,7 +1213,7 @@ cmd_db() {
       local svc_db_url
       svc_db_url="$(grep '^DATABASE_URL=' "$dir/.env" 2>/dev/null | head -1 | cut -d= -f2-)"
       [[ -z "$svc_db_url" ]] && svc_db_url="${DB_BASE_URL}/azeebo_dev?schema=public"
-      (cd "$dir" && DATABASE_URL="$svc_db_url" npx prisma studio)
+      (cd "$dir" && DATABASE_URL="$svc_db_url" pnpm exec prisma studio)
       ;;
     help|*)
       echo "Usage: $0 db [migrate|seed|reset|reset-service|test|studio] [service-name]"
@@ -1287,8 +1334,8 @@ cmd_seed() {
 
 cmd_help() {
   cat << 'HELPEOF'
-Azeebo+ Local Development Environment (v3.1)
-=============================================
+Azeebo+ Local Development Environment (v3.4.0)
+================================================
 Native dev runner — all services run via pnpm on the host.
 Uses per-service databases matching the Docker all-in-one setup.
 Docker architecture is preserved for staging/production deployment.

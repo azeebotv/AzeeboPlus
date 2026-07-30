@@ -9,6 +9,15 @@ import AppFooter from '@/components/layout/AppFooter';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import analytics from '@/lib/analytics';
 
+export const metadata = {
+  title: 'Vertical Titles | Azeebo',
+  description: 'Browse short-form vertical content from the Azeebo+ universe.',
+  openGraph: {
+    title: 'Vertical Titles | Azeebo',
+    description: 'Browse short-form vertical content from the Azeebo+ universe.',
+  },
+};
+
 export default function VerticalTitlesPage(): React.JSX.Element {
   useEffect(() => {
     analytics.pageView('vertical-titles');

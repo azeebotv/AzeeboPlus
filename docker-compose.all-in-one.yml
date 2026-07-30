@@ -2,7 +2,7 @@
 # Azeebo+ All-in-One — Coolify Deployment
 # ============================================================
 # Single container running everything: PostgreSQL, Redis,
-# PgBouncer, all 27+ microservices, and all 3 frontends.
+# PgBouncer, all 28 microservices, and all 4 frontends.
 #
 # Usage in Coolify:
 #   1. Create a new project → "Docker Compose" type

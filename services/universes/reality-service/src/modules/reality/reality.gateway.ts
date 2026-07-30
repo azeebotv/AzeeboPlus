@@ -8,6 +8,7 @@ import {
   ConnectedSocket,
 } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({
@@ -23,12 +24,52 @@ export class RealityGateway implements OnGatewayConnection, OnGatewayDisconnect 
 
   private readonly logger = new Logger(RealityGateway.name);
 
+  constructor(private readonly jwtService: JwtService) {}
+
+  afterInit() {
+    this.server.use(async (client: Socket, next) => {
+      try {
+        const token = this.extractToken(client);
+        if (!token) {
+          return next(new Error('Authentication required'));
+        }
+
+        const payload = await this.jwtService.verifyAsync(token);
+        if (!payload.sub) {
+          return next(new Error('Invalid token: missing sub'));
+        }
+
+        client.data.userId = payload.sub;
+        next();
+      } catch {
+        next(new Error('Invalid or expired token'));
+      }
+    });
+  }
+
   handleConnection(client: Socket): void {
-    this.logger.log(`Client connected: ${client.id}`);
+    const userId = client.data.userId;
+    if (userId) {
+      this.logger.log(`Client connected: ${client.id} (user: ${userId})`);
+    } else {
+      this.logger.warn(`Client connected without userId: ${client.id}`);
+      client.disconnect();
+    }
   }
 
   handleDisconnect(client: Socket): void {
     this.logger.log(`Client disconnected: ${client.id}`);
+  }
+
+  private extractToken(client: Socket): string | null {
+    const authHeader = client.handshake.auth?.token || client.handshake.headers?.authorization;
+    if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
+      return authHeader.substring(7);
+    }
+    if (typeof client.handshake.query?.token === 'string') {
+      return client.handshake.query.token;
+    }
+    return null;
   }
 
   @SubscribeMessage('join_show')
@@ -52,27 +93,31 @@ export class RealityGateway implements OnGatewayConnection, OnGatewayDisconnect 
 
   @SubscribeMessage('new_vote')
   handleNewVote(
-    @ConnectedSocket() _client: Socket,
-    @MessageBody() data: { showId: string; contestantId: string; userId: string }
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { showId: string; contestantId: string }
   ): void {
+    const userId = client.data.userId;
+    if (!userId) return;
     const room = `show:${data.showId}`;
     this.server.to(room).emit('vote_update', {
       showId: data.showId,
       contestantId: data.contestantId,
-      userId: data.userId,
+      userId,
       timestamp: new Date().toISOString(),
     });
   }
 
   @SubscribeMessage('new_prediction')
   handleNewPrediction(
-    @ConnectedSocket() _client: Socket,
-    @MessageBody() data: { showId: string; userId: string; prediction: unknown }
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { showId: string; prediction: unknown }
   ): void {
+    const userId = client.data.userId;
+    if (!userId) return;
     const room = `show:${data.showId}`;
     this.server.to(room).emit('prediction_update', {
       showId: data.showId,
-      userId: data.userId,
+      userId,
       prediction: data.prediction,
       timestamp: new Date().toISOString(),
     });
@@ -80,13 +125,15 @@ export class RealityGateway implements OnGatewayConnection, OnGatewayDisconnect 
 
   @SubscribeMessage('new_comment')
   handleNewComment(
-    @ConnectedSocket() _client: Socket,
-    @MessageBody() data: { showId: string; userId: string; content: string }
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { showId: string; content: string }
   ): void {
+    const userId = client.data.userId;
+    if (!userId) return;
     const room = `show:${data.showId}`;
     this.server.to(room).emit('comment_update', {
       showId: data.showId,
-      userId: data.userId,
+      userId,
       content: data.content,
       timestamp: new Date().toISOString(),
     });
@@ -94,13 +141,15 @@ export class RealityGateway implements OnGatewayConnection, OnGatewayDisconnect 
 
   @SubscribeMessage('like_update')
   handleLikeUpdate(
-    @ConnectedSocket() _client: Socket,
-    @MessageBody() data: { showId: string; userId: string; liked: boolean }
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { showId: string; liked: boolean }
   ): void {
+    const userId = client.data.userId;
+    if (!userId) return;
     const room = `show:${data.showId}`;
     this.server.to(room).emit('like_update', {
       showId: data.showId,
-      userId: data.userId,
+      userId,
       liked: data.liked,
       timestamp: new Date().toISOString(),
     });
@@ -109,14 +158,16 @@ export class RealityGateway implements OnGatewayConnection, OnGatewayDisconnect 
   @SubscribeMessage('join_live_chat')
   handleJoinLiveChat(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { showId: string; userId: string; displayName: string }
+    @MessageBody() data: { showId: string; displayName: string }
   ): void {
+    const userId = client.data.userId;
+    if (!userId) return;
     const room = `live_chat:${data.showId}`;
     client.join(room);
     this.logger.log(`Client ${client.id} joined live chat for show ${data.showId}`);
     this.server.to(room).emit('live_chat_user_joined', {
       showId: data.showId,
-      userId: data.userId,
+      userId,
       displayName: data.displayName,
       timestamp: new Date().toISOString(),
     });
@@ -125,28 +176,32 @@ export class RealityGateway implements OnGatewayConnection, OnGatewayDisconnect 
   @SubscribeMessage('leave_live_chat')
   handleLeaveLiveChat(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { showId: string; userId: string }
+    @MessageBody() data: { showId: string }
   ): void {
+    const userId = client.data.userId;
+    if (!userId) return;
     const room = `live_chat:${data.showId}`;
     client.leave(room);
     this.server.to(room).emit('live_chat_user_left', {
       showId: data.showId,
-      userId: data.userId,
+      userId,
       timestamp: new Date().toISOString(),
     });
   }
 
   @SubscribeMessage('live_chat_message')
   handleLiveChatMessage(
-    @ConnectedSocket() _client: Socket,
+    @ConnectedSocket() client: Socket,
     @MessageBody()
-    data: { showId: string; userId: string; displayName: string; message: string; avatar?: string }
+    data: { showId: string; displayName: string; message: string; avatar?: string }
   ): void {
+    const userId = client.data.userId;
+    if (!userId) return;
     const room = `live_chat:${data.showId}`;
     const chatMessage = {
       id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       showId: data.showId,
-      userId: data.userId,
+      userId,
       displayName: data.displayName,
       message: data.message,
       avatar: data.avatar,
@@ -157,13 +212,15 @@ export class RealityGateway implements OnGatewayConnection, OnGatewayDisconnect 
 
   @SubscribeMessage('live_chat_typing')
   handleLiveChatTyping(
-    @ConnectedSocket() _client: Socket,
-    @MessageBody() data: { showId: string; userId: string; displayName: string; isTyping: boolean }
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { showId: string; displayName: string; isTyping: boolean }
   ): void {
+    const userId = client.data.userId;
+    if (!userId) return;
     const room = `live_chat:${data.showId}`;
     this.server.to(room).emit('live_chat_typing', {
       showId: data.showId,
-      userId: data.userId,
+      userId,
       displayName: data.displayName,
       isTyping: data.isTyping,
     });

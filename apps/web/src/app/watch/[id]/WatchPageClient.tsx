@@ -52,7 +52,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   const [isLiked, setIsLiked] = useState<boolean>(false);
   const [isDisliked, setIsDisliked] = useState<boolean>(false);
   const [likeCount, setLikeCount] = useState<number>(0);
-  const [_dislikeCount, setDislikeCount] = useState<number>(0);
+  const [, setDislikeCount] = useState<number>(0);
   const [isSubscribed, setIsSubscribed] = useState<boolean>(false);
   const [subscriberCount, setSubscriberCount] = useState<number>(0);
   const [showDescription, setShowDescription] = useState<boolean>(false);

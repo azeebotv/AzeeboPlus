@@ -133,6 +133,11 @@ export function validateEnvironment(env: Record<string, string | undefined>): En
     'INTERNAL_API_KEY',
     'PAYSTACK_SECRET_KEY',
     'FLUTTERWAVE_SECRET_KEY',
+    'SENDGRID_API_KEY',
+    'TWILIO_ACCOUNT_SID',
+    'TWILIO_AUTH_TOKEN',
+    'AWS_ACCESS_KEY_ID',
+    'AWS_SECRET_ACCESS_KEY',
   ];
   const placeholders = sensitiveKeys.filter((key) => {
     const value = env[key];

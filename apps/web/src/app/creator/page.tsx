@@ -1,4 +1,6 @@
 'use client';
+
+import { colors } from '@azeebo/design-tokens';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
@@ -108,7 +110,7 @@ export default function CreatorDashboardPage(): React.JSX.Element {
 
   if (error) {
     return (
-      <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+<div style={{ backgroundColor: colors.bg.primary, minHeight: '100vh', color: colors.text.primary }}>
         <AppHeader />
         <main style={{ padding: '100px 24px 60px', maxWidth: 600, margin: '0 auto' }}>
           <ErrorState title="Failed to load dashboard data" />
@@ -119,11 +121,11 @@ export default function CreatorDashboardPage(): React.JSX.Element {
   }
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div style={{ backgroundColor: colors.bg.primary, minHeight: '100vh', color: '#F5F0EB' }}>
       <AppHeader />
       <main style={{ padding: '100px 24px 60px', maxWidth: 960, margin: '0 auto' }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Creator Dashboard</h1>
-        <p style={{ color: '#9A8A7A', marginBottom: 32 }}>
+        <p style={{ color: colors.text.secondary, marginBottom: 32 }}>
           {isLoading
             ? 'Loading stats...'
             : `Welcome back! ${stats?.totalContent || 0} pieces of content, ${stats?.totalFollowers || 0} followers`}
@@ -141,14 +143,14 @@ export default function CreatorDashboardPage(): React.JSX.Element {
               style={{
                 padding: 20,
                 borderRadius: 16,
-                border: '1px solid #2A1A1A',
+                border: `1px solid ${colors.bg.tertiary}`,
                 backgroundColor: 'rgba(26,10,10,0.5)',
                 minWidth: 120,
               }}
             >
               <p
                 style={{
-                  color: '#9A8A7A',
+                  color: colors.text.secondary,
                   fontSize: 12,
                   marginBottom: 4,
                   textTransform: 'uppercase',
@@ -160,7 +162,7 @@ export default function CreatorDashboardPage(): React.JSX.Element {
               {isLoading ? (
                 <Skeleton height="24px" width="80px" />
               ) : (
-                <p style={{ fontSize: 24, fontWeight: 700, color: '#F5F0EB', margin: 0 }}>
+                <p style={{ fontSize: 24, fontWeight: 700, color: colors.text.primary, margin: 0 }}>
                   {stat.value}
                 </p>
               )}
@@ -171,10 +173,11 @@ export default function CreatorDashboardPage(): React.JSX.Element {
         <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>Quick Links</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {creatorLinks.map((link) => (
-            <button
-              key={link.href}
-              onClick={() => router.push(link.href)}
-              style={{
+             <button
+               key={link.href}
+               onClick={() => router.push(link.href)}
+               aria-label={`Navigate to ${link.label}`}
+               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 16,
@@ -182,20 +185,20 @@ export default function CreatorDashboardPage(): React.JSX.Element {
                 borderRadius: 16,
                 cursor: 'pointer',
                 textAlign: 'left',
-                border: '1px solid #2A1A1A',
+                border: `1px solid ${colors.bg.tertiary}`,
                 backgroundColor: 'rgba(26,10,10,0.5)',
-                color: '#F5F0EB',
+color: colors.text.primary,
                 transition: 'border-color 0.2s',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#E8420A')}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#2A1A1A')}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = colors.primary)}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = colors.bg.tertiary)}
             >
               <span style={{ fontSize: 24 }}>{link.icon}</span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 2 }}>{link.label}</h3>
-                <p style={{ color: '#9A8A7A', fontSize: 13, margin: 0 }}>{link.desc}</p>
+                <p style={{ color: colors.text.secondary, fontSize: 13, margin: 0 }}>{link.desc}</p>
               </div>
-              <span style={{ color: '#E8420A', fontSize: 18 }}>→</span>
+              <span style={{ color: colors.primary[500], fontSize: 18 }}>→</span>
             </button>
           ))}
         </div>
@@ -211,13 +214,13 @@ export default function CreatorDashboardPage(): React.JSX.Element {
                     padding: 12,
                     borderRadius: 8,
                     backgroundColor: 'rgba(26,10,10,0.5)',
-                    border: '1px solid #2A1A1A',
+                    border: `1px solid ${colors.bg.tertiary}`,
                   }}
                 >
                   <p style={{ fontWeight: 600, fontSize: 14, color: '#F5F0EB' }}>
                     {activity.title}
                   </p>
-                  <p style={{ color: '#9A8A7A', fontSize: 12 }}>{activity.date}</p>
+                  <p style={{ color: colors.text.secondary, fontSize: 12 }}>{activity.date}</p>
                 </div>
               ))}
             </div>

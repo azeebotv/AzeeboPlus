@@ -1,18 +1,21 @@
-import { IsString, IsOptional, IsObject, IsInt, Min } from 'class-validator';
+import { IsString, IsOptional, IsObject, IsInt, Min, Length } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateTakedownDto {
   @ApiProperty()
   @IsString()
+  @Length(1, 100)
   ticketId: string = '';
 
   @ApiProperty()
   @IsString()
+  @Length(1, 100)
   contentId: string = '';
 
   @ApiProperty()
   @IsString()
+  @Length(1, 1000)
   reason: string = '';
 
   @ApiPropertyOptional()

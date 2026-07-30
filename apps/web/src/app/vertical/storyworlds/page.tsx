@@ -165,6 +165,15 @@ function StoryworldsPageContent(): React.JSX.Element {
 
 const LazyStoryworldsPage = lazy(() => Promise.resolve({ default: StoryworldsPageContent }));
 
+export const metadata = {
+  title: 'Storyworlds | Azeebo',
+  description: 'Dive into immersive story universes with interconnected characters and plotlines.',
+  openGraph: {
+    title: 'Storyworlds | Azeebo',
+    description: 'Dive into immersive story universes with interconnected characters and plotlines.',
+  },
+};
+
 export default function StoryworldsPage(): React.JSX.Element {
   return (
     <Suspense

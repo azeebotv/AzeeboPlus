@@ -1,10 +1,20 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { api, type User } from '@/lib/api';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+
+export const metadata = {
+  title: 'Edit Profile | Azeebo',
+  description: 'Update your display name, username, email, bio, and profile photo.',
+  openGraph: {
+    title: 'Edit Profile | Azeebo',
+    description: 'Update your display name, username, email, bio, and profile photo.',
+  },
+};
 
 export default function ProfileEditPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
@@ -18,6 +28,13 @@ export default function ProfileEditPage(): React.JSX.Element {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (authLoading) return;
@@ -45,7 +62,8 @@ export default function ProfileEditPage(): React.JSX.Element {
       } as { name: string; displayName: string; email: string; avatar: string; bio?: string });
       if (result.success) {
         setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
+        if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+        savedTimerRef.current = setTimeout(() => setSaved(false), 2000);
       }
     } catch {
       /* ignore */
@@ -101,10 +119,12 @@ export default function ProfileEditPage(): React.JSX.Element {
             }}
           >
             {profile.avatar ? (
-              <img
+              <OptimizedImage
                 src={profile.avatar}
                 alt="Avatar"
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                width={96}
+                height={96}
+                className="w-full h-full object-cover"
               />
             ) : (
               <div

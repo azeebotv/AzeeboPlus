@@ -1,5 +1,14 @@
 'use client';
 import { Suspense, lazy, useEffect } from 'react';
+
+export const metadata = {
+  title: 'Movie Premieres | Azeebo',
+  description: 'Discover upcoming movie premieres, set reminders, and get notified on Azeebo.',
+  openGraph: {
+    title: 'Movie Premieres | Azeebo',
+    description: 'Discover upcoming movie premieres, set reminders, and get notified on Azeebo.',
+  },
+};
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { api } from '@/lib/api';

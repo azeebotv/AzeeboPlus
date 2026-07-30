@@ -254,7 +254,7 @@ export default function UniverseDropdown({
           {isSelected && (
             <svg
               className="w-4 h-4 flex-shrink-0"
-              style={{ color: '#E8420A' }}
+              style={{ color: 'var(--brand-orange, #E8420A)' }}
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -301,7 +301,7 @@ export default function UniverseDropdown({
           <div className="flex items-center gap-2">
             <div
               className="w-4 h-4 rounded-full border-2 border-white/20 animate-spin"
-              style={{ borderTopColor: '#E8420A' }}
+              style={{ borderTopColor: 'var(--brand-orange, #E8420A)' }}
             />
             {!compact && <span className="text-white/50">Loading...</span>}
           </div>

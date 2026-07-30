@@ -53,6 +53,7 @@ model JobRetry {
   stackTrace String?
   retriedAt  DateTime @default(now())
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
 

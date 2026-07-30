@@ -1,5 +1,6 @@
-import { Inject, Controller, Get, Post, Body, Request } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Body, Request, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ServiceAuthGuard } from '@azeebo/security';
 
 import { MfaService } from './mfa.service.js';
 import { EnableMfaDto } from '../dto/enable-mfa.dto.js';
@@ -16,6 +17,7 @@ interface MfaRequest {
 }
 
 @ApiTags('MFA')
+@UseGuards(ServiceAuthGuard)
 @Controller('mfa')
 export class MfaController {
   constructor(@Inject(MfaService) private readonly mfaService: MfaService) {}
@@ -61,7 +63,8 @@ export class MfaController {
       return ApiResponseWrapper.error('MFA_INVALID_CODE', 'Invalid MFA code');
     }
 
-    await this.mfaService.enableMfa(req.user.id, pendingSecret);
+    const hashedBackupCodes = await this.mfaService.getPendingBackupCodes(req.user.id);
+    await this.mfaService.enableMfa(req.user.id, pendingSecret, hashedBackupCodes ?? undefined);
     await this.mfaService.clearPendingMfaSecret(req.user.id);
 
     return ApiResponseWrapper.success({ mfaEnabled: true });
@@ -70,7 +73,13 @@ export class MfaController {
   @Post('disable')
   @ApiOperation({ summary: 'Disable MFA for user' })
   @ApiResponse({ status: 200, description: 'MFA disabled' })
-  async disable(@Request() req: MfaRequest): Promise<unknown> {
+  async disable(@Request() req: MfaRequest, @Body() dto: EnableMfaDto): Promise<unknown> {
+    const isValid = await this.mfaService.verifyMfaCode(req.user.id, dto.code);
+
+    if (!isValid) {
+      return ApiResponseWrapper.error('MFA_INVALID_CODE', 'Invalid TOTP code required to disable MFA');
+    }
+
     await this.mfaService.disableMfa(req.user.id);
 
     return ApiResponseWrapper.success({ mfaEnabled: false });

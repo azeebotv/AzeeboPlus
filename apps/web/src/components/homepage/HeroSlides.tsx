@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { AmbientGlow } from '@/components/motion/AmbientGlow';
 import type { ContentItem } from '@/lib/api';
@@ -19,6 +20,7 @@ export default function HeroSlides({
   slides,
   autoRotateIntervalMs = 6000,
 }: HeroSlidesProps): React.JSX.Element | null {
+  const { t } = useTranslation();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const touchStartX = useRef(0);
@@ -104,7 +106,7 @@ export default function HeroSlides({
       onBlur={(): void => setIsPaused(false)}
       role="region"
       aria-roledescription="carousel"
-      aria-label="Featured content"
+      aria-label={t('home.featuredContent')}
       onKeyDown={handleKeyDown}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
@@ -122,7 +124,11 @@ export default function HeroSlides({
           transition={{ duration: 0.5 }}
           role="group"
           aria-roledescription="slide"
-          aria-label={`Slide ${currentIndex + 1} of ${slides.length}: ${currentSlide.title}`}
+          aria-label={t('home.slideOf', {
+            index: currentIndex + 1,
+            total: slides.length,
+            title: currentSlide.title,
+          })}
         >
           {/* Background image */}
           <div className="absolute inset-0">
@@ -132,7 +138,7 @@ export default function HeroSlides({
                 currentSlide.thumbnail ||
                 '/placeholder-hero.png'
               }
-              alt={currentSlide.title || 'Hero slide'}
+              alt={currentSlide.title || t('home.heroSlide')}
               fill
               className="object-cover"
               priority={currentIndex === 0}
@@ -204,9 +210,9 @@ export default function HeroSlides({
                     style={{ width: 'auto', paddingInline: '2rem' }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    aria-label={`Watch ${currentSlide.title}`}
+                    aria-label={t('home.watchLabel', { title: currentSlide.title })}
                   >
-                    ▶ Watch Now
+                    {t('home.watchNow')}
                   </motion.button>
                 </Link>
                 {currentSlide.duration && (
@@ -225,7 +231,7 @@ export default function HeroSlides({
         type="button"
         onClick={goPrev}
         className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors focus:outline-none focus:ring-2 focus:ring-white"
-        aria-label="Previous slide"
+        aria-label={t('home.previousSlide')}
       >
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
           <path
@@ -242,7 +248,7 @@ export default function HeroSlides({
         type="button"
         onClick={goNext}
         className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors focus:outline-none focus:ring-2 focus:ring-white"
-        aria-label="Next slide"
+        aria-label={t('home.nextSlide')}
       >
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
           <path
@@ -259,7 +265,7 @@ export default function HeroSlides({
       <div
         className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2"
         role="tablist"
-        aria-label="Slide navigation"
+        aria-label={t('home.slideNavigation')}
       >
         {slides.map((slide, index) => (
           <button
@@ -267,7 +273,7 @@ export default function HeroSlides({
             type="button"
             role="tab"
             aria-selected={index === currentIndex}
-            aria-label={`Go to slide ${index + 1}: ${slide.title}`}
+            aria-label={t('home.goToSlide', { index: index + 1, title: slide.title })}
             onClick={(): void => goTo(index)}
             className="w-2.5 h-2.5 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white"
             style={{

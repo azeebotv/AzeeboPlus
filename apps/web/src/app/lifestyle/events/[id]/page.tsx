@@ -1,5 +1,14 @@
 'use client';
 import { Suspense, lazy, useEffect, useState, useCallback } from 'react';
+
+export const metadata = {
+  title: 'Event Details | Azeebo',
+  description: 'View event details, RSVP, and get tickets for lifestyle events on Azeebo.',
+  openGraph: {
+    title: 'Event Details | Azeebo',
+    description: 'View event details, RSVP, and get tickets for lifestyle events on Azeebo.',
+  },
+};
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams } from 'next/navigation';

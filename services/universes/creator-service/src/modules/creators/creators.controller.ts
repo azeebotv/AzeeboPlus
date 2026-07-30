@@ -13,7 +13,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { RateLimitGuard, RateLimit, Public } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, Public, ServiceAuthGuard } from '@azeebo/security';
 
 import { CreatorsService } from './creators.service.js';
 import { CreatorResponse } from './interfaces/creator-response.interface.js';
@@ -65,11 +65,14 @@ interface PayoutBody {
 
 @ApiTags('Creators')
 @ApiBearerAuth()
+@UseGuards(ServiceAuthGuard)
 @Controller('creators')
 export class CreatorsController {
   constructor(@Inject(CreatorsService) private readonly creatorsService: CreatorsService) {}
 
   @Post('onboard')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Creator onboarding' })
   @ApiResponse({ status: 201, description: 'Creator profile created' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -78,6 +81,8 @@ export class CreatorsController {
   }
 
   @Post('verification/submit')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Submit verification documents' })
   @ApiResponse({ status: 201, description: 'Verification submitted' })
   async submitVerification(
@@ -88,6 +93,8 @@ export class CreatorsController {
   }
 
   @Get('verification/status')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get verification status' })
   @ApiResponse({ status: 200, description: 'Verification status' })
   async getVerificationStatus(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
@@ -95,6 +102,8 @@ export class CreatorsController {
   }
 
   @Post('upload/initiate')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Initiate media upload' })
   @ApiResponse({ status: 201, description: 'Upload initiated' })
   async uploadMedia(
@@ -105,6 +114,8 @@ export class CreatorsController {
   }
 
   @Post('upload/complete')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Complete media upload' })
   @ApiResponse({ status: 201, description: 'Upload completed' })
   async completeUpload(
@@ -115,6 +126,8 @@ export class CreatorsController {
   }
 
   @Get('me')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get creator profile' })
   @ApiResponse({ status: 200, description: 'Creator profile' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -123,6 +136,8 @@ export class CreatorsController {
   }
 
   @Patch('me')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Update creator profile' })
   @ApiResponse({ status: 200, description: 'Profile updated' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -134,6 +149,8 @@ export class CreatorsController {
   }
 
   @Get('channels')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'List my channels' })
   @ApiResponse({ status: 200, description: 'Channels list' })
   async listChannels(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
@@ -141,6 +158,8 @@ export class CreatorsController {
   }
 
   @Post('channels')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Create channel' })
   @ApiResponse({ status: 201, description: 'Channel created' })
   async createChannel(
@@ -152,6 +171,8 @@ export class CreatorsController {
 
   @Public()
   @Get('channels/:channelId')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get channel details' })
   @ApiResponse({ status: 200, description: 'Channel details' })
   async getChannel(@Param('channelId') channelId: string): Promise<CreatorResponse> {
@@ -169,6 +190,8 @@ export class CreatorsController {
   }
 
   @Get('uploads')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'List own uploads' })
   @ApiResponse({ status: 200, description: 'Uploads list' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -177,6 +200,8 @@ export class CreatorsController {
   }
 
   @Get('subscriptions')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get my subscriptions' })
   @ApiResponse({ status: 200, description: 'Subscriptions list' })
   async getMySubscriptions(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
@@ -184,6 +209,8 @@ export class CreatorsController {
   }
 
   @Get('subscribers')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get my subscribers' })
   @ApiResponse({ status: 200, description: 'Subscribers list' })
   async getMySubscribers(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
@@ -191,6 +218,8 @@ export class CreatorsController {
   }
 
   @Get('earnings')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get creator earnings' })
   @ApiResponse({ status: 200, description: 'Earnings data' })
   async getEarnings(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
@@ -198,6 +227,8 @@ export class CreatorsController {
   }
 
   @Get('payouts')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Get payout history' })
   @ApiResponse({ status: 200, description: 'Payout history' })
   async getPayoutHistory(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
@@ -205,6 +236,8 @@ export class CreatorsController {
   }
 
   @Get('analytics')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get creator analytics' })
   @ApiResponse({ status: 200, description: 'Analytics data' })
   async getAnalytics(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
@@ -221,13 +254,16 @@ export class CreatorsController {
   }
 
   @Get('stats')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get creator stats' })
   async getStats(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
     return this.creatorsService.getStats(req.user.id);
   }
 
   @Get('settings')
-  @UseGuards(RolesGuard)
+  @UseGuards(RolesGuard, RateLimitGuard)
+  @RateLimit(10, 60000)
   @Roles('creator')
   @ApiOperation({ summary: 'Get creator notification and privacy settings' })
   @ApiResponse({ status: 200, description: 'Creator settings' })
@@ -248,6 +284,8 @@ export class CreatorsController {
   }
 
   @Post('uploads')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Create upload' })
   @ApiResponse({ status: 201, description: 'Upload created' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -259,6 +297,8 @@ export class CreatorsController {
   }
 
   @Post('channels/:channelId/uploads')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Create upload for channel' })
   @ApiResponse({ status: 201, description: 'Upload created' })
   async createChannelUpload(
@@ -270,6 +310,8 @@ export class CreatorsController {
   }
 
   @Post('tips/:creatorId')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Send tip to creator' })
   @ApiResponse({ status: 201, description: 'Tip sent' })
   async sendTip(
@@ -281,6 +323,8 @@ export class CreatorsController {
   }
 
   @Get('tips/leaderboard/:creatorId')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get tip leaderboard for a creator' })
   @ApiResponse({ status: 200, description: 'Leaderboard' })
   async getTipLeaderboard(
@@ -291,6 +335,8 @@ export class CreatorsController {
   }
 
   @Get('tips/stats/:creatorId')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get tip statistics for a creator' })
   @ApiResponse({ status: 200, description: 'Tip stats' })
   async getTipStats(@Param('creatorId') creatorId: string): Promise<CreatorResponse> {
@@ -298,6 +344,8 @@ export class CreatorsController {
   }
 
   @Get('users/me/tips')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get current user tipping history' })
   @ApiResponse({ status: 200, description: 'User tips' })
   async getMyTips(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
@@ -305,6 +353,8 @@ export class CreatorsController {
   }
 
   @Post('subscribe/:creatorId')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Subscribe to creator' })
   @ApiResponse({ status: 201, description: 'Subscribed' })
   async subscribe(
@@ -316,6 +366,8 @@ export class CreatorsController {
   }
 
   @Delete('subscribe/:creatorId')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Cancel subscription' })
   @ApiResponse({ status: 200, description: 'Subscription cancelled' })
   async cancelSubscription(
@@ -326,6 +378,8 @@ export class CreatorsController {
   }
 
   @Post('payouts')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(5, 60000)
   @ApiOperation({ summary: 'Request payout' })
   @ApiResponse({ status: 201, description: 'Payout requested' })
   async requestPayout(
@@ -348,6 +402,8 @@ export class CreatorsController {
   }
 
   @Post('challenges/:challengeId/participate')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Participate in challenge' })
   @ApiResponse({ status: 201, description: 'Participated' })
   async participateInChallenge(
@@ -359,7 +415,8 @@ export class CreatorsController {
   }
 
   @Put('settings')
-  @UseGuards(RolesGuard)
+  @UseGuards(RolesGuard, RateLimitGuard)
+  @RateLimit(10, 60000)
   @Roles('creator')
   @ApiOperation({ summary: 'Update creator notification and privacy settings' })
   @ApiResponse({ status: 200, description: 'Settings updated' })
@@ -372,6 +429,8 @@ export class CreatorsController {
   }
 
   @Put('monetization/settings')
+  @UseGuards(RolesGuard, RateLimitGuard)
+  @RateLimit(5, 60000)
   @ApiOperation({ summary: 'Update monetization settings' })
   async updateMonetizationSettings(
     @Request() req: { user: { id: string } },

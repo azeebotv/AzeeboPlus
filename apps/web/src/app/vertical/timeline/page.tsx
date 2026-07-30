@@ -146,6 +146,15 @@ function TimelinePageContent(): React.JSX.Element {
 
 const LazyTimelinePage = lazy(() => Promise.resolve({ default: TimelinePageContent }));
 
+export const metadata = {
+  title: 'Timeline | Azeebo',
+  description: 'Trace the chronology of your favorite universes and characters.',
+  openGraph: {
+    title: 'Timeline | Azeebo',
+    description: 'Trace the chronology of your favorite universes and characters.',
+  },
+};
+
 export default function TimelinePage(): React.JSX.Element {
   return (
     <Suspense

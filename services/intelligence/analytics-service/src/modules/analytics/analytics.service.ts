@@ -141,7 +141,7 @@ export class AnalyticsService {
           params,
           timeout: 5000,
           headers: {
-            'x-gateway-secret': this.configService.get<string>('INTERNAL_API_KEY', ''),
+            'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', ''),
           },
         }
       );

@@ -1,5 +1,14 @@
 'use client';
-import { Suspense, lazy, useEffect } from 'react';
+import { useEffect } from 'react';
+
+export const metadata = {
+  title: 'Movies | Azeebo',
+  description: 'Stream premium movies, Nollywood films, and exclusive content on Azeebo.',
+  openGraph: {
+    title: 'Movies | Azeebo',
+    description: 'Stream premium movies, Nollywood films, and exclusive content on Azeebo.',
+  },
+};
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -218,7 +227,7 @@ function MoviesPageContent(): React.JSX.Element {
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="az-glass overflow-hidden">
+              <div key={`movie-skeleton-${i}`} className="az-glass overflow-hidden">
                 <Skeleton height="240px" borderRadius="0" className="sm:h-[240px]" />
                 <div className="p-4 space-y-3">
                   <Skeleton height="20px" width="75%" borderRadius="0.25rem" />
@@ -282,18 +291,4 @@ function MoviesPageContent(): React.JSX.Element {
   );
 }
 
-const LazyMoviesPage = lazy(() => Promise.resolve({ default: MoviesPageContent }));
-
-export default function MoviesPage(): React.JSX.Element {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
-          <p className="text-white/50 text-lg">Loading...</p>
-        </div>
-      }
-    >
-      <LazyMoviesPage />
-    </Suspense>
-  );
-}
+export default MoviesPageContent;

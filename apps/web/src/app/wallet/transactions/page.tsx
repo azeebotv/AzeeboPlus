@@ -12,6 +12,15 @@ interface TransactionFilters {
   dateRange: 'all' | '7d' | '30d' | '90d';
 }
 
+export const metadata = {
+  title: 'Transaction History | Azeebo',
+  description: 'View all your deposits, withdrawals, and payment transactions.',
+  openGraph: {
+    title: 'Transaction History | Azeebo',
+    description: 'View all your deposits, withdrawals, and payment transactions.',
+  },
+};
+
 export default function TransactionsPage(): React.JSX.Element {
   const router = useRouter();
   const [transactions, setTransactions] = useState<Transaction[]>([]);

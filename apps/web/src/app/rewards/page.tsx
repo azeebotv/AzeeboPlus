@@ -1,10 +1,20 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
+
+export const metadata = {
+  title: 'Rewards Center | Azeebo',
+  description: 'Earn points, complete missions, and unlock amazing rewards on Azeebo.',
+  openGraph: {
+    title: 'Rewards Center | Azeebo',
+    description: 'Earn points, complete missions, and unlock amazing rewards on Azeebo.',
+  },
+};
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '@/lib/api';
 
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { useToast } from '@/components/ToastProvider';
 
@@ -172,7 +182,7 @@ export default function RewardsPage(): React.JSX.Element {
                   }
                 >
                   {reward.image && (
-                    <img
+                    <OptimizedImage
                       src={reward.image}
                       alt={reward.title}
                       className="w-full h-40 object-cover"
@@ -192,6 +202,13 @@ export default function RewardsPage(): React.JSX.Element {
                         {reward.points.toLocaleString()} pts
                       </span>
                       <button
+                        aria-label={
+                          !reward.isAvailable
+                            ? `Reward ${reward.title} already claimed`
+                            : userPoints < reward.points
+                              ? `Not enough points to claim ${reward.title}`
+                              : `Claim ${reward.title} for ${reward.points} points`
+                        }
                         onClick={() => handleClaimReward(reward.id)}
                         disabled={!reward.isAvailable || userPoints < reward.points}
                         className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${reward.isAvailable && userPoints >= reward.points ? 'az-btn-primary' : ''}`}
@@ -225,10 +242,11 @@ export default function RewardsPage(): React.JSX.Element {
 
         <section>
           <h2 className="text-2xl font-bold text-white mb-6">Achievements</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" role="list" aria-label="Achievements">
             {achievements.map((achievement) => (
               <div
                 key={achievement.id}
+                role="listitem"
                 className={`az-glass p-4 flex items-center gap-4 transition-all ${achievement.unlocked ? '' : 'opacity-60'}`}
               >
                 <div

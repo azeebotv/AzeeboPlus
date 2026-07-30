@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
@@ -57,6 +57,14 @@ export default function CreatorUploadPage(): React.JSX.Element {
 
   const editContent = editQuery.data;
 
+  useEffect(() => {
+    if (editContent) {
+      setTitle(editContent.title);
+      setDescription(editContent.description || '');
+      setUniverseId(editContent.universeId || '');
+    }
+  }, [editContent]);
+
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     title: string;
@@ -93,12 +101,6 @@ export default function CreatorUploadPage(): React.JSX.Element {
       router.push(data?.id ? '/creator/content-manager' : '/creator');
     },
   });
-
-  if (editContent) {
-    setTitle(editContent.title);
-    setDescription(editContent.description || '');
-    setUniverseId(editContent.universeId || '');
-  }
 
   const handleSubmit = async () => {
     if (!title.trim()) {
@@ -156,8 +158,8 @@ export default function CreatorUploadPage(): React.JSX.Element {
   if (editQuery.isLoading) {
     return (
       <div
-        className="min-h-screen bg-[var:--brand-near-black)]"
-        style={{ backgroundColor: '#1A0A0A' }}
+        className="min-h-screen bg-[var(--brand-near-black)]"
+        style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}
       >
         <AppHeader active="Creator" />
         <main style={{ padding: '100px 24px 60px', maxWidth: 600, margin: '0 auto' }}>
@@ -171,22 +173,23 @@ export default function CreatorUploadPage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A', color: '#F5F0EB' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)', color: 'var(--text-primary, #F5F0EB)' }}>
       <AppHeader active="Creator" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 600, margin: '0 auto' }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>
           {editContent ? 'Edit Content' : 'Upload New Content'}
         </h1>
-        <p style={{ color: '#9A8A7A', marginBottom: 24 }}>
+        <p style={{ color: 'var(--text-muted, #9A8A7A)', marginBottom: 24 }}>
           {editContent ? 'Update your existing content' : 'Share your work with the community'}
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <label style={{ color: '#9A8A7A', fontSize: 13, marginBottom: 4, display: 'block' }}>
+            <label htmlFor="content-title" style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 13, marginBottom: 4, display: 'block' }}>
               Title
             </label>
             <input
+              id="content-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -197,17 +200,18 @@ export default function CreatorUploadPage(): React.JSX.Element {
                 borderRadius: 8,
                 border: '1px solid #2A1A1A',
                 background: '#140808',
-                color: '#F5F0EB',
+                color: 'var(--text-primary, #F5F0EB)',
                 fontSize: 14,
               }}
             />
           </div>
 
           <div>
-            <label style={{ color: '#9A8A7A', fontSize: 13, marginBottom: 4, display: 'block' }}>
+            <label htmlFor="content-description" style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 13, marginBottom: 4, display: 'block' }}>
               Description
             </label>
             <textarea
+              id="content-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe your content"
@@ -218,7 +222,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
                 borderRadius: 8,
                 border: '1px solid #2A1A1A',
                 background: '#140808',
-                color: '#F5F0EB',
+                color: 'var(--text-primary, #F5F0EB)',
                 fontSize: 14,
                 resize: 'vertical',
               }}
@@ -226,13 +230,14 @@ export default function CreatorUploadPage(): React.JSX.Element {
           </div>
 
           <div>
-            <label style={{ color: '#9A8A7A', fontSize: 13, marginBottom: 4, display: 'block' }}>
+            <label htmlFor="content-universe" style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 13, marginBottom: 4, display: 'block' }}>
               Universe
             </label>
             {universesLoading ? (
               <Skeleton className="h-40 w-full" />
             ) : (
               <select
+                id="content-universe"
                 value={universeId}
                 onChange={(e) => setUniverseId(e.target.value)}
                 style={{
@@ -241,7 +246,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
                   borderRadius: 8,
                   border: '1px solid #2A1A1A',
                   background: '#140808',
-                  color: '#F5F0EB',
+                  color: 'var(--text-primary, #F5F0EB)',
                   fontSize: 14,
                 }}
               >
@@ -256,10 +261,11 @@ export default function CreatorUploadPage(): React.JSX.Element {
           </div>
 
           <div>
-            <label style={{ color: '#9A8A7A', fontSize: 13, marginBottom: 4, display: 'block' }}>
+            <label htmlFor="content-tags" style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 13, marginBottom: 4, display: 'block' }}>
               Tags (comma separated)
             </label>
             <input
+              id="content-tags"
               type="text"
               value={tags}
               onChange={(e) => setTags(e.target.value)}
@@ -270,7 +276,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
                 borderRadius: 8,
                 border: '1px solid #2A1A1A',
                 background: '#140808',
-                color: '#F5F0EB',
+                color: 'var(--text-primary, #F5F0EB)',
                 fontSize: 14,
               }}
             />
@@ -278,10 +284,11 @@ export default function CreatorUploadPage(): React.JSX.Element {
 
           {!editContent && (
             <div>
-              <label style={{ color: '#9A8A7A', fontSize: 13, marginBottom: 4, display: 'block' }}>
+              <label htmlFor="content-file" style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 13, marginBottom: 4, display: 'block' }}>
                 File
               </label>
               <input
+                id="content-file"
                 type="file"
                 accept="video/*,image/*,audio/*"
                 onChange={(e) => setFile(e.target.files?.[0] || null)}
@@ -291,7 +298,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
                   borderRadius: 8,
                   border: '1px solid #2A1A1A',
                   background: '#140808',
-                  color: '#F5F0EB',
+                  color: 'var(--text-primary, #F5F0EB)',
                   fontSize: 14,
                 }}
               />
@@ -300,7 +307,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
 
           {editContent?.thumbnail && (
             <div>
-              <label style={{ color: '#9A8A7A', fontSize: 13, marginBottom: 4, display: 'block' }}>
+              <label style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 13, marginBottom: 4, display: 'block' }}>
                 Thumbnail
               </label>
               <div
@@ -314,13 +321,14 @@ export default function CreatorUploadPage(): React.JSX.Element {
 
         <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
           <button
+            aria-label="Cancel upload"
             onClick={() => router.push('/creator')}
             style={{
               padding: '10px 20px',
               borderRadius: 8,
               border: '1px solid #2A1A1A',
               background: 'transparent',
-              color: '#F5F0EB',
+              color: 'var(--text-primary, #F5F0EB)',
               fontSize: 14,
               cursor: 'pointer',
             }}
@@ -328,12 +336,13 @@ export default function CreatorUploadPage(): React.JSX.Element {
             Cancel
           </button>
           <button
+            aria-label={editContent ? 'Save changes' : 'Upload content'}
             onClick={handleSubmit}
             disabled={isSubmitting || (!file && !editContent)}
             style={{
               padding: '10px 24px',
               borderRadius: 8,
-              background: editContent ? '#E8420A' : '#FF6B35',
+              background: editContent ? 'var(--brand-orange, #E8420A)' : '#FF6B35',
               border: 'none',
               color: '#fff',
               fontSize: 14,

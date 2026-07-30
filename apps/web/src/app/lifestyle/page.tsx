@@ -1,5 +1,14 @@
 'use client';
-import { Suspense, lazy, useEffect } from 'react';
+import { useEffect } from 'react';
+
+export const metadata = {
+  title: 'Lifestyle | Azeebo',
+  description: 'Explore lifestyle events, celebrities, influencers, nightlife, and city guides across Africa.',
+  openGraph: {
+    title: 'Lifestyle | Azeebo',
+    description: 'Explore lifestyle events, celebrities, influencers, nightlife, and city guides across Africa.',
+  },
+};
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import Link from 'next/link';
@@ -190,7 +199,7 @@ function LifestylePageContent(): React.JSX.Element {
                   </div>
                   <div className="p-4">
                     <p className="text-sm text-white/50 mb-3 line-clamp-2">{event.description}</p>
-                    <button type="button" className="az-btn-primary w-full">
+                    <button type="button" aria-label={`Get tickets for ${event.title}`} className="az-btn-primary w-full">
                       Get Tickets
                     </button>
                   </div>
@@ -210,18 +219,4 @@ function LifestylePageContent(): React.JSX.Element {
   );
 }
 
-const LazyLifestylePage = lazy(() => Promise.resolve({ default: LifestylePageContent }));
-
-export default function LifestylePage(): React.JSX.Element {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
-          <p className="text-white/50 text-lg">Loading...</p>
-        </div>
-      }
-    >
-      <LazyLifestylePage />
-    </Suspense>
-  );
-}
+export default LifestylePageContent;

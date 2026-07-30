@@ -495,6 +495,9 @@ export class Analytics {
     });
   }
 
+  /**
+   * @deprecated Use `creatorFollow` instead.
+   */
   creatorFollowed(creatorId: string): void {
     this.track({
       name: 'creator_followed',
@@ -505,6 +508,9 @@ export class Analytics {
     });
   }
 
+  /**
+   * @deprecated Use `creatorTipSent` instead.
+   */
   creatorTipped(creatorId: string, amount: number, currency: string = 'NGN'): void {
     this.track({
       name: 'creator_tipped',
@@ -528,6 +534,9 @@ export class Analytics {
     });
   }
 
+  /**
+   * @deprecated Use `notificationClicked` instead.
+   */
   notificationOpened(notificationId: string): void {
     this.track({
       name: 'notification_opened',

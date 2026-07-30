@@ -64,7 +64,7 @@ export default function TippingPanel({
       <h3 style={{ color: '#fff', fontSize: 18, fontWeight: 600, marginBottom: 4 }}>
         Support {creatorName}
       </h3>
-      <p style={{ color: '#9A8A7A', fontSize: 13, marginBottom: 16 }}>
+      <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 13, marginBottom: 16 }}>
         Send a tip and earn tier badges
       </p>
 
@@ -100,6 +100,7 @@ export default function TippingPanel({
           <button
             key={preset}
             type="button"
+            aria-label={`Tip ${preset.toLocaleString()} naira`}
             onClick={() => {
               setAmount(preset);
               setUseCustom(false);
@@ -108,10 +109,10 @@ export default function TippingPanel({
               padding: '8px 16px',
               borderRadius: 8,
               border: '1px solid',
-              borderColor: !useCustom && amount === preset ? '#E8420A' : '#2A1A1A',
+              borderColor: !useCustom && amount === preset ? 'var(--brand-orange, #E8420A)' : 'var(--bg-surface, #2A1A1A)',
               backgroundColor:
                 !useCustom && amount === preset ? 'rgba(232,66,10,0.15)' : 'transparent',
-              color: !useCustom && amount === preset ? '#E8420A' : '#F5F0EB',
+              color: !useCustom && amount === preset ? 'var(--brand-orange, #E8420A)' : 'var(--text-primary, #F5F0EB)',
               fontSize: 13,
               fontWeight: 600,
               cursor: 'pointer',
@@ -122,14 +123,15 @@ export default function TippingPanel({
         ))}
         <button
           type="button"
+          aria-label="Enter custom tip amount"
           onClick={() => setUseCustom(true)}
           style={{
             padding: '8px 16px',
             borderRadius: 8,
             border: '1px solid',
-            borderColor: useCustom ? '#E8420A' : '#2A1A1A',
+            borderColor: useCustom ? 'var(--brand-orange, #E8420A)' : 'var(--bg-surface, #2A1A1A)',
             backgroundColor: useCustom ? 'rgba(232,66,10,0.15)' : 'transparent',
-            color: useCustom ? '#E8420A' : '#F5F0EB',
+            color: useCustom ? 'var(--brand-orange, #E8420A)' : 'var(--text-primary, #F5F0EB)',
             fontSize: 13,
             fontWeight: 600,
             cursor: 'pointer',
@@ -142,6 +144,7 @@ export default function TippingPanel({
       {useCustom && (
         <input
           type="number"
+          aria-label="Custom tip amount in naira"
           placeholder="Enter amount (min ₦50)"
           value={customAmount}
           onChange={(e) => setCustomAmount(e.target.value)}
@@ -153,7 +156,7 @@ export default function TippingPanel({
             borderRadius: 8,
             border: '1px solid #2A1A1A',
             background: '#140808',
-            color: '#F5F0EB',
+            color: 'var(--text-primary, #F5F0EB)',
             fontSize: 14,
             marginBottom: 12,
           }}
@@ -162,6 +165,7 @@ export default function TippingPanel({
 
       <input
         type="text"
+        aria-label="Tip message"
         placeholder="Add a message (optional)"
         value={message}
         onChange={(e) => setMessage(e.target.value)}
@@ -172,7 +176,7 @@ export default function TippingPanel({
           borderRadius: 8,
           border: '1px solid #2A1A1A',
           background: '#140808',
-          color: '#F5F0EB',
+          color: 'var(--text-primary, #F5F0EB)',
           fontSize: 14,
           marginBottom: 16,
         }}
@@ -180,6 +184,7 @@ export default function TippingPanel({
 
       <button
         type="button"
+        aria-label={tipMutation.isPending ? 'Sending tip...' : tipMutation.isSuccess ? 'Tip sent' : `Send tip of ${selectedAmount.toLocaleString()} naira`}
         onClick={() => tipMutation.mutate()}
         disabled={tipMutation.isPending || selectedAmount < 50}
         style={{
@@ -187,7 +192,7 @@ export default function TippingPanel({
           padding: '12px',
           borderRadius: 10,
           border: 'none',
-          backgroundColor: tipMutation.isPending ? '#666' : '#E8420A',
+          backgroundColor: tipMutation.isPending ? '#666' : 'var(--brand-orange, #E8420A)',
           color: '#fff',
           fontSize: 15,
           fontWeight: 600,
@@ -210,7 +215,7 @@ export default function TippingPanel({
       )}
 
       <div style={{ borderTop: '1px solid #2A1A1A', paddingTop: 16 }}>
-        <p style={{ color: '#9A8A7A', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>
+        <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>
           Top Supporters
         </p>
         {leaderboardQuery.isLoading ? (
@@ -241,7 +246,7 @@ export default function TippingPanel({
                       </span>
                     )}
                   </div>
-                  <span style={{ color: '#F5F0EB', fontSize: 12, fontWeight: 600 }}>
+                  <span style={{ color: 'var(--text-primary, #F5F0EB)', fontSize: 12, fontWeight: 600 }}>
                     ₦{Number(entry.totalAmount).toLocaleString()}
                   </span>
                 </div>

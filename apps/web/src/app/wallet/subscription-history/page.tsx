@@ -36,6 +36,15 @@ function formatDate(iso: string): string {
   });
 }
 
+export const metadata = {
+  title: 'Subscription History | Azeebo',
+  description: 'View your past and current subscriptions and billing history.',
+  openGraph: {
+    title: 'Subscription History | Azeebo',
+    description: 'View your past and current subscriptions and billing history.',
+  },
+};
+
 export default function SubscriptionHistoryPage(): React.JSX.Element {
   const [items, setItems] = useState<SubscriptionHistoryItem[]>([]);
   const [page, setPage] = useState(1);

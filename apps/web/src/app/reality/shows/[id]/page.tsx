@@ -1,5 +1,14 @@
 'use client';
 import { Suspense, lazy, useEffect } from 'react';
+
+export const metadata = {
+  title: 'Show Details | Azeebo',
+  description: 'View show details, episodes, contestants, and vote on Azeebo.',
+  openGraph: {
+    title: 'Show Details | Azeebo',
+    description: 'View show details, episodes, contestants, and vote on Azeebo.',
+  },
+};
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';

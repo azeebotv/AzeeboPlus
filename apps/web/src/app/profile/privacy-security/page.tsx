@@ -1,10 +1,19 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+
+export const metadata = {
+  title: 'Privacy & Security | Azeebo',
+  description: 'Manage your privacy settings, direct messages, and two-factor authentication.',
+  openGraph: {
+    title: 'Privacy & Security | Azeebo',
+    description: 'Manage your privacy settings, direct messages, and two-factor authentication.',
+  },
+};
 
 export default function PrivacySecurityPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
@@ -17,6 +26,13 @@ export default function PrivacySecurityPage(): React.JSX.Element {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (authLoading) return;
@@ -41,7 +57,8 @@ export default function PrivacySecurityPage(): React.JSX.Element {
     try {
       await api.user.updatePrivacySettings(settings);
       setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+      savedTimerRef.current = setTimeout(() => setSaved(false), 2000);
     } catch {
       /* ignore */
     }

@@ -39,16 +39,16 @@ export class SportsService {
     }
   }
 
-  private async trackAnalyticsEvent(
+  private async trackEvent(
     eventName: string,
     userId: string,
-    metadata: Record<string, unknown>
+    metadata: Record<string, unknown> = {}
   ): Promise<void> {
     try {
       await axios.post(
-        `${this.analyticsServiceBaseUrl}/analytics/track`,
+        `${this.analyticsServiceBaseUrl}/v1/analytics/events`,
         {
-          eventName,
+          type: eventName,
           userId,
           universe: 'sports',
           metadata,
@@ -234,7 +234,7 @@ export class SportsService {
         },
       });
 
-      await this.trackAnalyticsEvent('prediction_placed', userId, {
+      await this.trackEvent('prediction_submitted', userId, {
         predictionId: prediction.id,
         eventId: body.eventId,
         fee: this.predictionFee,
@@ -407,7 +407,7 @@ export class SportsService {
         },
       });
 
-      await this.trackAnalyticsEvent('contest_entered', userId, {
+      await this.trackEvent('contest_entered', userId, {
         contestId,
         entryId: entry.id,
         fee: this.contestEntryFee,
@@ -537,7 +537,7 @@ export class SportsService {
             });
         }
 
-        await this.trackAnalyticsEvent('prediction_correct', prediction.userId, {
+        await this.trackEvent('prediction_correct', prediction.userId, {
           predictionId: prediction.id,
           eventId,
           reward: rewardPerUser,

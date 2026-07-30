@@ -49,6 +49,7 @@ model LiveEventTicket {
 
   event LiveEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
+  @@unique([eventId, userId])
   @@map("live_event_tickets")
   @@index([eventId])
   @@index([userId])

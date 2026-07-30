@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '../../../lib/api';
 import { webLogger } from '../../../lib/logger';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
@@ -226,9 +227,11 @@ export default function SuperVotePage(): React.JSX.Element {
                     : undefined
                 }
               >
-                <img
+                <OptimizedImage
                   src={contestant.avatar}
                   alt={contestant.name}
+                  width={80}
+                  height={80}
                   className="w-20 h-20 rounded-full mx-auto mb-3 object-cover"
                 />
                 <h3 className="text-sm font-semibold text-white mb-1">{contestant.name}</h3>

@@ -1,5 +1,14 @@
 'use client';
 import { Suspense, lazy, useEffect, useState } from 'react';
+
+export const metadata = {
+  title: 'Rent Movies | Azeebo',
+  description: 'Rent or buy premium movies on demand. Watch anytime, anywhere on Azeebo.',
+  openGraph: {
+    title: 'Rent Movies | Azeebo',
+    description: 'Rent or buy premium movies on demand. Watch anytime, anywhere on Azeebo.',
+  },
+};
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { apiFetch } from '@/lib/api';

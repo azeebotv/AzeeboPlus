@@ -52,7 +52,7 @@ export default function AuthenticatedHomepage({
 
   // Section 5: Supplementary sections
   const [trendingContent, setTrendingContent] = useState<ContentItem[]>([]);
-  const [continueWatching, _setContinueWatching] = useState<ContentItem[]>([]);
+  const [continueWatching] = useState<ContentItem[]>([]);
   const [newReleases, setNewReleases] = useState<ContentItem[]>([]);
   const [popularInRegion, setPopularInRegion] = useState<ContentItem[]>([]);
   const [isLoadingSupplementary, setIsLoadingSupplementary] = useState(true);
@@ -244,13 +244,6 @@ export default function AuthenticatedHomepage({
           Array.isArray(newRes.value.data)
         ) {
           setNewReleases(newRes.value.data);
-        }
-        if (
-          popularRes.status === 'fulfilled' &&
-          popularRes.value.success &&
-          Array.isArray(popularRes.value.data)
-        ) {
-          setPopularInRegion(popularRes.value.data);
         }
         if (
           popularRes.status === 'fulfilled' &&

@@ -1,13 +1,17 @@
-import { Inject, Controller, Get, Post, Body, Param, Query, Request } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Body, Param, Query, Request, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ServiceAuthGuard, AdminGuard, RateLimitGuard, RateLimit } from '@azeebo/security';
 import { ComedyFeedService } from './comedy-feed.service.js';
 
 @ApiTags('Comedy Feed')
+@UseGuards(ServiceAuthGuard)
 @Controller('comedy')
 export class ComedyFeedController {
   constructor(@Inject(ComedyFeedService) private readonly comedyFeedService: ComedyFeedService) {}
 
   @Get()
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get comedy feed' })
   @ApiResponse({ status: 200, description: 'Feed items' })
   async getFeed(
@@ -19,6 +23,8 @@ export class ComedyFeedController {
   }
 
   @Get('trending')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get trending clips' })
   @ApiResponse({ status: 200, description: 'Trending list' })
   async getTrending(
@@ -29,6 +35,8 @@ export class ComedyFeedController {
   }
 
   @Get('specials')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get premium specials' })
   @ApiResponse({ status: 200, description: 'Specials list' })
   async getSpecials(
@@ -40,6 +48,8 @@ export class ComedyFeedController {
   }
 
   @Get('specials/:id')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get special by id' })
   @ApiResponse({ status: 200, description: 'Special details' })
   async getSpecial(@Param('id') id: string): Promise<unknown> {
@@ -57,6 +67,8 @@ export class ComedyFeedController {
   }
 
   @Get('clips/:id')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get clip details' })
   @ApiResponse({ status: 200, description: 'Clip details' })
   async getClip(@Param('id') id: string, @Query('userId') userId?: string): Promise<unknown> {
@@ -85,6 +97,7 @@ export class ComedyFeedController {
   }
 
   @Post('trends/record')
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Record trends (admin)' })
   @ApiResponse({ status: 200, description: 'Recorded' })
   async recordTrends(@Body() body: { period?: string }): Promise<unknown> {

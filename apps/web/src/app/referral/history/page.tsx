@@ -1,12 +1,21 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
+
+export const metadata = {
+  title: 'Referral History | Azeebo',
+  description: 'Track your referrals, earnings, and referral history on Azeebo.',
+  openGraph: {
+    title: 'Referral History | Azeebo',
+    description: 'Track your referrals, earnings, and referral history on Azeebo.',
+  },
+};
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { Spinner, ErrorState } from '@azeebo/ui/web';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface ReferralEntry {
   id?: string;
@@ -47,6 +56,13 @@ interface ReferralsList {
 export default function ReferralHistoryPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const [copied, setCopied] = useState(false);
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+    };
+  }, []);
 
   const statsQuery = useQuery({
     queryKey: ['referral', 'stats'],
@@ -101,7 +117,8 @@ export default function ReferralHistoryPage(): React.JSX.Element {
     try {
       await navigator.clipboard.writeText(referralLink);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+      copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
     } catch {
       /* ignore */
     }

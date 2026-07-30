@@ -153,56 +153,57 @@ export class QuizService {
 
   async submitQuiz(attemptId: string, answers: Record<string, string>) {
     try {
-      const attempt = await this.prisma.quizAttempt.findUnique({
-        where: { id: attemptId },
-        include: { quiz: { include: { questions: true } } },
-      });
+      const result = await this.prisma.$transaction(async (tx) => {
+        const attempt = await tx.quizAttempt.findUnique({
+          where: { id: attemptId },
+          include: { quiz: { include: { questions: true } } },
+        });
 
-      if (!attempt) {
-        throw new NotFoundException('Quiz attempt not found');
-      }
-
-      if (attempt.completedAt) {
-        throw new BadRequestException('Quiz already submitted');
-      }
-
-      let score = 0;
-      const questionResults = attempt.quiz.questions.map((q) => {
-        const userAnswer = answers[q.id];
-        const isCorrect = userAnswer === String(q.correctAnswer);
-        if (isCorrect) {
-          score += q.points;
+        if (!attempt) {
+          throw new NotFoundException('Quiz attempt not found');
         }
+
+        if (attempt.completedAt) {
+          throw new BadRequestException('Quiz already submitted');
+        }
+
+        let score = 0;
+        const questionResults = attempt.quiz.questions.map((q) => {
+          const userAnswer = answers[q.id];
+          const isCorrect = userAnswer === String(q.correctAnswer);
+          if (isCorrect) {
+            score += q.points;
+          }
+          return {
+            questionId: q.id,
+            correct: isCorrect,
+            userAnswer,
+          };
+        });
+
+        await tx.quizAttempt.update({
+          where: { id: attemptId },
+          data: {
+            score,
+            answers: questionResults,
+            completedAt: new Date(),
+          },
+        });
+
+        await tx.quiz.update({
+          where: { id: attempt.quizId },
+          data: { playCount: { increment: 1 } },
+        });
+
         return {
-          questionId: q.id,
-          correct: isCorrect,
-          userAnswer,
-        };
-      });
-
-      await this.prisma.quizAttempt.update({
-        where: { id: attemptId },
-        data: {
-          score,
-          answers: questionResults,
-          completedAt: new Date(),
-        },
-      });
-
-      await this.prisma.quiz.update({
-        where: { id: attempt.quizId },
-        data: { playCount: { increment: 1 } },
-      });
-
-      return {
-        success: true,
-        data: {
           score,
           totalQuestions: attempt.totalQuestions,
           correctAnswers: questionResults.filter((r) => r.correct).length,
           results: questionResults,
-        },
-      };
+        };
+      });
+
+      return { success: true, data: result };
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
       this.logger.error(`Failed to submit quiz attempt ${attemptId}: ${error}`);

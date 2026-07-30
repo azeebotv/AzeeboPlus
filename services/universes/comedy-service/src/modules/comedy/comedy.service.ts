@@ -20,14 +20,14 @@ export class ComedyService {
     this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
   }
 
-  private async trackAnalyticsEvent(
+  private async trackEvent(
     eventName: string,
     userId: string,
-    metadata: Record<string, unknown>
+    metadata: Record<string, unknown> = {}
   ): Promise<void> {
     try {
-      await axios.post(`${this.analyticsServiceBaseUrl}/analytics/track`, {
-        eventName,
+      await axios.post(`${this.analyticsServiceBaseUrl}/v1/analytics/events`, {
+        type: eventName,
         userId,
         universe: 'comedy',
         metadata,
@@ -130,7 +130,7 @@ export class ComedyService {
       },
     });
 
-    await this.trackAnalyticsEvent('challenge_participated', userId, {
+    await this.trackEvent('challenge_participated', userId, {
       challengeId: body.challengeId,
       entryId: entry.id,
     });
@@ -204,6 +204,32 @@ export class ComedyService {
     return {
       success: true,
       data: { clips: clips as unknown[] },
+    };
+  }
+
+  async viewClip(userId: string, clipId: string): Promise<ComedyResponse> {
+    const clip = await this.prisma.comedyClip.findUnique({
+      where: { id: clipId },
+    });
+
+    if (!clip) {
+      throw new NotFoundException('Clip not found');
+    }
+
+    await this.prisma.comedyClip.update({
+      where: { id: clipId },
+      data: { viewCount: { increment: 1 } },
+    });
+
+    await this.trackEvent('content_view', userId, {
+      clipId,
+      comedianId: clip.comedianId,
+      type: 'comedy_clip',
+    });
+
+    return {
+      success: true,
+      data: { message: 'Clip view tracked' },
     };
   }
 }

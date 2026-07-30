@@ -1,8 +1,10 @@
-import { Inject, Controller, Get, Param } from '@nestjs/common';
+import { Inject, Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
+import { ServiceAuthGuard } from '@azeebo/security';
 import { PricingService } from './pricing.service.js';
 
 @ApiTags('Pricing')
+@UseGuards(ServiceAuthGuard)
 @Controller('pricing')
 export class PricingController {
   constructor(@Inject(PricingService) private readonly pricingService: PricingService) {}

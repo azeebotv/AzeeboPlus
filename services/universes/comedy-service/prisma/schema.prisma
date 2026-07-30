@@ -24,6 +24,7 @@ model ComedyClip {
   updatedAt   DateTime @updatedAt
 
   comedian ComedianProfile? @relation(fields: [comedianId], references: [id], onDelete: Cascade)
+  creator  User?             @relation(fields: [creatorId], references: [id], onDelete: Restrict)
   shares   ClipShare[]
   likes    ClipLike[]
   comments ClipComment[]
@@ -32,6 +33,28 @@ model ComedyClip {
   @@index([comedianId])
   @@index([creatorId])
   @@map("comedy_clips")
+}
+
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  displayName String?
+  role        String   @default("user")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  clips         ComedyClip[]
+  series        ComedySeries[]
+  clipShares    ClipShare[]
+  clipLikes     ClipLike[]
+  clipComments  ClipComment[]
+  challengeEntries ComedyChallengeEntry[]
+  specialLikes  SpecialLike[]
+  tipsGiven     Tip[] @relation("TipFrom")
+  tipsReceived  Tip[] @relation("TipTo")
+  subscriptions Subscription[]
+
+  @@map("users")
 }
 
 model ComedianProfile {
@@ -56,9 +79,12 @@ model ClipShare {
   clipId    String
   platform  String?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  clip ComedyClip @relation(fields: [clipId], references: [id], onDelete: Cascade)
+  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clip ComedyClip  @relation(fields: [clipId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, clipId])
   @@index([userId])
   @@index([clipId])
   @@map("clip_shares")
@@ -69,8 +95,10 @@ model ClipLike {
   userId    String
   clipId    String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  clip ComedyClip @relation(fields: [clipId], references: [id], onDelete: Cascade)
+  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clip ComedyClip  @relation(fields: [clipId], references: [id], onDelete: Cascade)
 
   @@unique([userId, clipId])
   @@index([userId])
@@ -84,8 +112,10 @@ model ClipComment {
   clipId    String
   text      String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  clip ComedyClip @relation(fields: [clipId], references: [id], onDelete: Cascade)
+  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clip ComedyClip  @relation(fields: [clipId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([clipId])
@@ -103,6 +133,7 @@ model ComedySeries {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  creator  User?           @relation(fields: [creatorId], references: [id], onDelete: Restrict)
   episodes ComedyEpisode[]
 
   @@index([creatorId])
@@ -153,6 +184,7 @@ model ChallengePrize {
   rank        Int
   amount      Decimal  @db.Decimal(18, 2)
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   challenge ComedyChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
 
@@ -166,7 +198,9 @@ model ComedyChallengeEntry {
   challengeId String
   clipUrl     String
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
+  user      User            @relation(fields: [userId], references: [id], onDelete: Restrict)
   challenge ComedyChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
 
   @@unique([userId, challengeId])
@@ -206,8 +240,10 @@ model SpecialLike {
   userId    String
   specialId String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  special ComedySpecial @relation(fields: [specialId], references: [id], onDelete: Cascade)
+  user    User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  special ComedySpecial  @relation(fields: [specialId], references: [id], onDelete: Cascade)
 
   @@unique([userId, specialId])
   @@index([userId])
@@ -237,6 +273,10 @@ model Tip {
   toUserId   String
   amount     Decimal  @db.Decimal(18, 2)
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  fromUser User @relation("TipFrom", fields: [fromUserId], references: [id], onDelete: Restrict)
+  toUser   User @relation("TipTo", fields: [toUserId], references: [id], onDelete: Restrict)
 
   @@map("tips")
   @@index([fromUserId])
@@ -254,6 +294,8 @@ model Subscription {
   endDate          DateTime?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
 
   @@unique([userId, creatorId])
   @@index([userId])
@@ -273,6 +315,9 @@ model CreatorEarning {
   status           String    @default("pending")
   paidAt           DateTime?
   createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  creator ComedianProfile? @relation(fields: [creatorId], references: [id], onDelete: Restrict)
 
   @@map("creator_earnings")
   @@index([creatorId])

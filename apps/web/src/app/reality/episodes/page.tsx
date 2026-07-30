@@ -1,8 +1,18 @@
 'use client';
 import { useEffect, useState } from 'react';
+
+export const metadata = {
+  title: 'Episodes | Azeebo',
+  description: 'Browse and watch episodes from your favorite reality shows on Azeebo.',
+  openGraph: {
+    title: 'Episodes | Azeebo',
+    description: 'Browse and watch episodes from your favorite reality shows on Azeebo.',
+  },
+};
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '../../../lib/api';
 import { webLogger } from '../../../lib/logger';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
@@ -154,9 +164,10 @@ export default function EpisodesPage(): React.JSX.Element {
               }`}
             >
               <div className="relative w-48 h-28 flex-shrink-0">
-                <img
+                <OptimizedImage
                   src={episode.thumbnail}
                   alt={episode.title}
+                  fill
                   className="w-full h-full object-cover"
                 />
                 {episode.isLocked && (
