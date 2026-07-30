@@ -1,5 +1,14 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+
+export const metadata = {
+  title: 'Refer & Earn | Azeebo',
+  description: 'Invite friends to Azeebo and earn rewards for every successful referral.',
+  openGraph: {
+    title: 'Refer & Earn | Azeebo',
+    description: 'Invite friends to Azeebo and earn rewards for every successful referral.',
+  },
+};
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
@@ -41,6 +50,13 @@ interface ReferralsList {
 export default function ReferralPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const [copied, setCopied] = useState(false);
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+    };
+  }, []);
 
   const codeQuery = useQuery({
     queryKey: ['referral', 'code'],
@@ -97,7 +113,8 @@ export default function ReferralPage(): React.JSX.Element {
     try {
       await navigator.clipboard.writeText(referralData.link);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+      copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
     } catch {
       /* ignore */
     }

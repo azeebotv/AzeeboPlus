@@ -136,9 +136,8 @@ export class TracingService {
     for (const exporter of this.exporters) {
       try {
         exporter(span);
-      } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error('Span export failed:', err);
+      } catch {
+        // Span export failed — continue with other exporters
       }
     }
   }

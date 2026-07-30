@@ -54,6 +54,7 @@ model Rental {
   status    String    @default("active")
   expiresAt DateTime?
   createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   movie Movie @relation(fields: [movieId], references: [id], onDelete: Cascade)
 
@@ -83,6 +84,7 @@ model WatchlistItem {
   userId    String
   movieId   String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   movie Movie @relation(fields: [movieId], references: [id], onDelete: Cascade)
 
@@ -176,6 +178,7 @@ model FilmmakerUpdate {
   title       String
   content     String
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   project FilmmakerProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
@@ -190,6 +193,7 @@ model FilmmakerBacker {
   amount      Decimal   @db.Decimal(18, 2)
   status      String    @default("active") // active, refunded
   createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   project FilmmakerProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
@@ -208,6 +212,7 @@ model CreatorEarning {
   status      String    @default("pending")
   paidAt      DateTime?
   createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@map("creator_earnings")
   @@index([creatorId])

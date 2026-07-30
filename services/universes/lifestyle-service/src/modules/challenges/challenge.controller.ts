@@ -9,8 +9,10 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ServiceAuthGuard } from '@azeebo/security';
 
 import {
   ChallengeService,
@@ -19,6 +21,7 @@ import {
 } from './challenge.service';
 
 @ApiTags('Challenges')
+@UseGuards(ServiceAuthGuard)
 @Controller('challenges')
 export class ChallengeController {
   constructor(@Inject(ChallengeService) private readonly challengeService: ChallengeService) {}

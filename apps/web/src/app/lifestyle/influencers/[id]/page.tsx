@@ -1,5 +1,14 @@
 'use client';
 import { Suspense, lazy, useEffect } from 'react';
+
+export const metadata = {
+  title: 'Influencer Profile | Azeebo',
+  description: 'View influencer profile, content, and exclusive updates on Azeebo.',
+  openGraph: {
+    title: 'Influencer Profile | Azeebo',
+    description: 'View influencer profile, content, and exclusive updates on Azeebo.',
+  },
+};
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';

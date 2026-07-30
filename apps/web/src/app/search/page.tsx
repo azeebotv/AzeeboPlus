@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@azeebo/ui/web';
 import { apiFetch, api } from '../../lib/api';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
 
@@ -316,7 +317,7 @@ export default function SearchPage(): React.JSX.Element {
                     </p>
                     {suggestions.map((suggestion, index) => (
                       <button
-                        key={index}
+                        key={suggestion}
                         role="option"
                         onClick={() => {
                           setQuery(suggestion);
@@ -357,7 +358,7 @@ export default function SearchPage(): React.JSX.Element {
                     </div>
                     {searchHistory.map((item, index) => (
                       <button
-                        key={index}
+                        key={`${item.query}-${item.timestamp.getTime()}`}
                         role="option"
                         onClick={() => {
                           setQuery(item.query);
@@ -508,9 +509,10 @@ export default function SearchPage(): React.JSX.Element {
                     }}
                   >
                     {result.thumbnail ? (
-                      <img
+                      <OptimizedImage
                         src={result.thumbnail}
                         alt={result.title}
+                        fill
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (

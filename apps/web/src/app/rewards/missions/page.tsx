@@ -1,11 +1,21 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
+
+export const metadata = {
+  title: 'Missions | Azeebo',
+  description: 'Complete missions to earn points and level up your Azeebo rewards.',
+  openGraph: {
+    title: 'Missions | Azeebo',
+    description: 'Complete missions to earn points and level up your Azeebo rewards.',
+  },
+};
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { ErrorState, Skeleton } from '@azeebo/ui/web';
 import Link from 'next/link';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 interface Mission {
   id: string;
@@ -119,7 +129,7 @@ export default function MissionsPage(): React.JSX.Element {
                       style={{ transition: 'transform 0.2s', cursor: 'pointer' }}
                     >
                       {mission.image && (
-                        <img
+                        <OptimizedImage
                           src={mission.image}
                           alt={mission.title}
                           className="w-full h-36 object-cover"

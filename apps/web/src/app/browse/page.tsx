@@ -8,6 +8,7 @@ import type { ContentItem } from '../../lib/api';
 import { announceToScreenReader } from '../../lib/keyboard';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
+import { OptimizedImage } from '../../components/OptimizedImage';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 
 interface ContentResponse {
@@ -354,6 +355,7 @@ export default function BrowsePage(): React.JSX.Element {
                 {activeFilterCount > 0 && (
                   <button
                     onClick={clearFilters}
+                    aria-label="Clear all filters"
                     className="w-full px-4 py-2 text-sm font-medium rounded-full transition-colors"
                     style={{ border: '1px solid rgba(255,255,255,0.2)', color: '#E8420A' }}
                   >
@@ -531,7 +533,7 @@ export default function BrowsePage(): React.JSX.Element {
                   >
                     <div className="relative h-48 flex items-center justify-center overflow-hidden">
                       {item.thumbnail ? (
-                        <img
+                        <OptimizedImage
                           src={item.thumbnail}
                           alt={item.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"

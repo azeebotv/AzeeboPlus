@@ -15,7 +15,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 
 import { MessagingService } from './messaging.service.js';
 import { CreateConversationDto, SendMessageDto, MarkAsReadDto } from './dto/messaging.dto.js';
-import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
 import { User } from '@azeebo/shared-types';
 
 interface AuthRequest extends Request {
@@ -25,7 +25,7 @@ interface AuthRequest extends Request {
 @ApiTags('Messaging')
 @ApiBearerAuth()
 @Controller('messaging')
-@UseGuards(RateLimitGuard)
+@UseGuards(RateLimitGuard, ServiceAuthGuard)
 export class MessagingController {
   constructor(@Inject(MessagingService) private readonly messagingService: MessagingService) {}
 

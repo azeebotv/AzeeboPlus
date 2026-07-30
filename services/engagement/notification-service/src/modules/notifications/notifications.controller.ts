@@ -14,7 +14,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
-import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
 
 import { NotificationsService } from './notifications.service.js';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto.js';
@@ -22,6 +22,7 @@ import { SavePushTokenDto } from './dto/save-push-token.dto.js';
 import { NotificationResponse } from './interfaces/notification-response.interface.js';
 
 @ApiTags('Notifications')
+@UseGuards(ServiceAuthGuard)
 @Controller('notifications')
 export class NotificationsController {
   constructor(

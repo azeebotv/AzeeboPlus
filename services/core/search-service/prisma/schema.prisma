@@ -54,13 +54,14 @@ model RankingRule {
 
 model UserSearch {
   id            String   @id @default(uuid())
-  userId        String
+  userId        String   // FK → user-service User (cross-service reference)
   query         String
   filters       Json?
   resultCount   Int      @default(0)
   clickedId     String?
   lastSearchAt  DateTime @default(now())
   createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@map("user_searches")
   @@index([userId])
@@ -72,11 +73,12 @@ model UserSearch {
 model SearchQueryLog {
   id          String   @id @default(uuid())
   query       String
-  userId      String?
+  userId      String?  // FK → user-service User (cross-service reference)
   resultCount Int      @default(0)
   clickedId   String?
   session     String?
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@map("search_query_logs")
   @@index([query])

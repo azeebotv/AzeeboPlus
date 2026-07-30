@@ -1,9 +1,11 @@
-import { Inject, Controller, Get, Post, Delete, Param, Body, Request } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Delete, Param, Body, Request, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ServiceAuthGuard } from '@azeebo/security';
 import { UsersService } from './users.service.js';
 import { ContentIdDto } from './dto/content-id.dto.js';
 
 @ApiTags('Interactions')
+@UseGuards(ServiceAuthGuard)
 @Controller('interactions')
 export class InteractionsController {
   constructor(@Inject(UsersService) private readonly usersService: UsersService) {}

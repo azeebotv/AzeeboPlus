@@ -1,6 +1,6 @@
 import { Inject, Controller, Get, Post, Body, UseGuards, Request, Param } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
 
 import { GamesService } from './games.service.js';
 import { GameResponse } from './interfaces/game-response.interface.js';
@@ -8,6 +8,8 @@ import { SubmitAnswerDto } from './dto/submit-answer.dto.js';
 import { StartSessionDto } from './dto/start-session.dto.js';
 
 @ApiTags('Games')
+@ApiBearerAuth()
+@UseGuards(ServiceAuthGuard)
 @Controller('games')
 export class GamesController {
   constructor(@Inject(GamesService) private readonly gamesService: GamesService) {}
@@ -41,6 +43,8 @@ export class GamesController {
   }
 
   @Get('stats')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Game stats for user' })
   @ApiResponse({ status: 200, description: 'User game stats' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -49,6 +53,8 @@ export class GamesController {
   }
 
   @Post('daily-challenge/submit')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Submit daily challenge answer' })
   @ApiResponse({ status: 200, description: 'Answer submitted' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -60,6 +66,8 @@ export class GamesController {
   }
 
   @Get('daily-challenge')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Daily challenge' })
   @ApiResponse({ status: 200, description: 'Daily challenge' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -68,6 +76,8 @@ export class GamesController {
   }
 
   @Post('sessions')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Start game session' })
   @ApiResponse({ status: 201, description: 'Session started' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -79,6 +89,8 @@ export class GamesController {
   }
 
   @Post('sessions/:sessionId/submit')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Submit answer' })
   @ApiResponse({ status: 200, description: 'Answer submitted' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -100,6 +112,8 @@ export class GamesController {
   }
 
   @Get('tournaments')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Tournament list' })
   @ApiResponse({ status: 200, description: 'Tournaments' })
   async listTournaments(): Promise<GameResponse> {
@@ -107,6 +121,8 @@ export class GamesController {
   }
 
   @Post('tournaments/:tournamentId/enter')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(5, 60000)
   @ApiOperation({ summary: 'Enter tournament' })
   @ApiResponse({ status: 201, description: 'Entered tournament' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })

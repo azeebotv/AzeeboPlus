@@ -1,5 +1,5 @@
 'use client';
-import { Suspense, lazy, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import Link from 'next/link';
@@ -80,6 +80,7 @@ function SportsPageContent(): React.JSX.Element {
                   <Link href={`/watch/${matches[0].id}`}>
                     <button
                       type="button"
+                      aria-label="Watch live sports content"
                       className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
                       style={{
                         backgroundColor: 'rgba(255,255,255,0.2)',
@@ -157,7 +158,7 @@ function SportsPageContent(): React.JSX.Element {
                   </div>
                   <div className="p-4">
                     <p className="text-sm text-white/50 mb-3 line-clamp-2">{match.description}</p>
-                    <button type="button" className="az-btn-primary w-full">
+                    <button type="button" aria-label={`Watch ${match.title}`} className="az-btn-primary w-full">
                       Watch Now
                     </button>
                   </div>
@@ -177,18 +178,13 @@ function SportsPageContent(): React.JSX.Element {
   );
 }
 
-const LazySportsPage = lazy(() => Promise.resolve({ default: SportsPageContent }));
+export const metadata = {
+  title: 'Sports | Azeebo',
+  description: 'Watch live sports, make predictions, and follow your favorite teams and leagues.',
+  openGraph: {
+    title: 'Sports | Azeebo',
+    description: 'Watch live sports, make predictions, and follow your favorite teams and leagues.',
+  },
+};
 
-export default function SportsPage(): React.JSX.Element {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
-          <p className="text-white/50 text-lg">Loading...</p>
-        </div>
-      }
-    >
-      <LazySportsPage />
-    </Suspense>
-  );
-}
+export default SportsPageContent;

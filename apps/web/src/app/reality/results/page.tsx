@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '../../../lib/api';
 import { webLogger } from '../../../lib/logger';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
@@ -155,9 +156,11 @@ export default function ResultsPage(): React.JSX.Element {
                   🏆 Winner
                 </h3>
                 <div className="flex items-center gap-4">
-                  <img
+                  <OptimizedImage
                     src={selectedResult.winner.avatar}
                     alt={selectedResult.winner.name}
+                    width={80}
+                    height={80}
                     className="w-20 h-20 rounded-full object-cover"
                   />
                   <div>
@@ -180,9 +183,11 @@ export default function ResultsPage(): React.JSX.Element {
               >
                 <h3 className="text-lg font-bold text-red-500 mb-4">🚪 Evicted</h3>
                 <div className="flex items-center gap-4 opacity-70">
-                  <img
+                  <OptimizedImage
                     src={selectedResult.evicted.avatar}
                     alt={selectedResult.evicted.name}
+                    width={80}
+                    height={80}
                     className="w-20 h-20 rounded-full object-cover"
                   />
                   <div>
@@ -220,9 +225,11 @@ export default function ResultsPage(): React.JSX.Element {
                       >
                         <span className="text-white font-bold">#{contestant.rank}</span>
                       </div>
-                      <img
+                      <OptimizedImage
                         src={contestant.avatar}
                         alt={contestant.name}
+                        width={56}
+                        height={56}
                         className="w-14 h-14 rounded-full object-cover"
                       />
                       <div className="flex-1">

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '../../../lib/api';
 import { webLogger } from '../../../lib/logger';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
@@ -116,9 +117,10 @@ export default function ContestantProfilePage(): React.JSX.Element {
             className="h-64 relative"
             style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
           >
-            <img
+            <OptimizedImage
               src={contestant.coverImage}
               alt={contestant.name}
+              fill
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/50 to-transparent" />
@@ -133,9 +135,11 @@ export default function ContestantProfilePage(): React.JSX.Element {
         </div>
 
         <div className="px-6 -mt-20 relative">
-          <img
+          <OptimizedImage
             src={contestant.avatar}
             alt={contestant.name}
+            width={128}
+            height={128}
             className="w-32 h-32 rounded-full border-4"
             style={{ borderColor: '#1A0A0A' }}
           />

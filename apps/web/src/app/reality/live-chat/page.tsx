@@ -1,5 +1,5 @@
 'use client';
-import { Suspense, lazy, useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '@/lib/api';
@@ -299,18 +299,4 @@ function LiveChatPageContent(): React.JSX.Element {
   );
 }
 
-const LazyLiveChatPage = lazy(() => Promise.resolve({ default: LiveChatPageContent }));
-
-export default function LiveChatPage(): React.JSX.Element {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
-          <p className="text-white/50 text-lg">Loading...</p>
-        </div>
-      }
-    >
-      <LazyLiveChatPage />
-    </Suspense>
-  );
-}
+export default LiveChatPageContent;

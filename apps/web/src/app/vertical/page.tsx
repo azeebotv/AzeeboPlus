@@ -196,6 +196,15 @@ function VerticalPageContent(): React.JSX.Element {
 
 const LazyVerticalPage = lazy(() => Promise.resolve({ default: VerticalPageContent }));
 
+export const metadata = {
+  title: 'Vertical | Azeebo',
+  description: 'Premium African storytelling — short-form vertical series and content.',
+  openGraph: {
+    title: 'Vertical | Azeebo',
+    description: 'Premium African storytelling — short-form vertical series and content.',
+  },
+};
+
 export default function VerticalPage(): React.JSX.Element {
   return (
     <Suspense

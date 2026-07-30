@@ -10,18 +10,6 @@ datasource db {
 
 }
 
-// Stub model for cross-service references
-model User {
-  id          String   @id @default(uuid())
-  email       String   @unique
-  displayName String?
-  role        String   @default("user")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@map("users")
-}
-
 model CultureStory {
   id          String   @id @default(uuid())
   title       String
@@ -38,12 +26,41 @@ model CultureStory {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  category    StoryCategory? @relation(fields: [categoryId], references: [id])
-  comments    StoryComment[]
+  author   User?          @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  category StoryCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  comments StoryComment[]
 
   @@index([categoryId])
   @@index([authorId])
   @@index([status])
+}
+
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  displayName String?
+  role        String   @default("user")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  stories       CultureStory[]
+  storyComments StoryComment[]
+  events        Event[]
+  eventRsvps    EventRsvp[]
+  cityGuides    CityGuideEntry[]
+  musicEntries  MusicEntry[]
+  celebrityEntries CelebrityEntry[]
+  nightlifeEntries NightlifeEntry[]
+  influencerEntries InfluencerEntry[]
+  challenges    Challenge[]
+  challengeSubmissions ChallengeSubmission[]
+  challengeVotes ChallengeVote[]
+  polls         Poll[]
+  pollVotes     PollVote[]
+  quizzes       Quiz[]
+  quizAttempts  QuizAttempt[]
+
+  @@map("users")
 }
 
 model StoryCategory {
@@ -65,9 +82,10 @@ model StoryComment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  story     CultureStory  @relation(fields: [storyId], references: [id], onDelete: Cascade)
-  parent    StoryComment? @relation("CommentReplies", fields: [parentId], references: [id])
-  replies   StoryComment[] @relation("CommentReplies")
+  author  User?          @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  story   CultureStory   @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  parent  StoryComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  replies StoryComment[] @relation("CommentReplies")
 
   @@index([storyId])
   @@index([authorId])
@@ -96,8 +114,9 @@ model Event {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  category    EventCategory? @relation(fields: [categoryId], references: [id])
-  rsvps       EventRsvp[]
+  creator  User?          @relation(fields: [creatorId], references: [id], onDelete: Restrict)
+  category EventCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  rsvps    EventRsvp[]
 
   @@index([categoryId])
   @@index([creatorId])
@@ -126,7 +145,8 @@ model EventRsvp {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  event     Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event  Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id], onDelete: Restrict)
 
   @@unique([userId, eventId])
   @@index([eventId])
@@ -140,6 +160,7 @@ model SavedItem {
   itemId    String
   note      String?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, itemType, itemId])
   @@index([userId])
@@ -153,6 +174,7 @@ model ShareRecord {
   itemId    String
   platform  String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([itemType, itemId])
@@ -183,6 +205,7 @@ model CityGuideEntry {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  createdBy User? @relation(fields: [createdById], references: [id], onDelete: Restrict)
   tags      CityGuideTag[]
 
   @@index([type])
@@ -218,6 +241,8 @@ model MusicEntry {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  createdBy User? @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
   @@index([type])
   @@index([genre])
   @@index([status])
@@ -242,6 +267,7 @@ model CelebrityEntry {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  createdBy User?           @relation(fields: [createdById], references: [id], onDelete: Restrict)
   news      CelebrityNews[]
 
   @@index([profession])
@@ -292,6 +318,8 @@ model NightlifeEntry {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  createdBy User? @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
   @@index([type])
   @@index([city])
   @@index([status])
@@ -319,6 +347,8 @@ model InfluencerEntry {
 
   collaborations InfluencerCollaboration[]
 
+  user User? @relation(fields: [userId], references: [id], onDelete: Restrict)
+
   @@index([category])
   @@index([status])
   @@index([isVerified])
@@ -336,6 +366,7 @@ model InfluencerCollaboration {
   endDate       DateTime?
   status        String   @default("active")
   createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   influencer InfluencerEntry @relation(fields: [influencerId], references: [id], onDelete: Cascade)
 
@@ -360,7 +391,8 @@ model Challenge {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  submissions  ChallengeSubmission[]
+  createdBy   User?                 @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  submissions ChallengeSubmission[]
 
   @@index([type])
   @@index([status])
@@ -380,7 +412,8 @@ model ChallengeSubmission {
   submittedAt DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  challenge     Challenge       @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  challenge     Challenge        @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user          User?            @relation(fields: [userId], references: [id], onDelete: Restrict)
   challengeVotes ChallengeVote[]
 
   @@unique([challengeId, userId])
@@ -394,7 +427,9 @@ model ChallengeVote {
   userId       String
   submissionId String
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
+  user       User                @relation(fields: [userId], references: [id], onDelete: Restrict)
   submission ChallengeSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
 
   @@unique([userId, submissionId])
@@ -415,6 +450,8 @@ model Poll {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  createdBy User? @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
   options   PollOption[]
   votes     PollVote[]
 
@@ -429,6 +466,7 @@ model PollOption {
   imageUrl    String?
   voteCount   Int      @default(0)
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   poll        Poll      @relation(fields: [pollId], references: [id], onDelete: Cascade)
   votes       PollVote[]
@@ -443,8 +481,9 @@ model PollVote {
   userId      String
   votedAt     DateTime @default(now())
 
-  poll        Poll      @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  poll        Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
   option      PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  user        User?      @relation(fields: [userId], references: [id], onDelete: Restrict)
 
   @@unique([pollId, userId])
   @@index([pollId])
@@ -466,6 +505,8 @@ model Quiz {
   createdById String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  createdBy User? @relation(fields: [createdById], references: [id], onDelete: Restrict)
 
   questions   QuizQuestion[]
   attempts    QuizAttempt[]
@@ -503,7 +544,8 @@ model QuizAttempt {
   startedAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  quiz        Quiz        @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user  User? @relation(fields: [userId], references: [id], onDelete: Restrict)
+  quiz  Quiz  @relation(fields: [quizId], references: [id], onDelete: Cascade)
 
   @@index([quizId])
   @@index([userId])

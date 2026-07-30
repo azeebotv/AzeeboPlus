@@ -525,6 +525,15 @@ const LazySubscriptionPaymentPage = lazy(() =>
   Promise.resolve({ default: SubscriptionPaymentPageContent })
 );
 
+export const metadata = {
+  title: 'Subscribe | Azeebo',
+  description: 'Complete your subscription setup and unlock premium content.',
+  openGraph: {
+    title: 'Subscribe | Azeebo',
+    description: 'Complete your subscription setup and unlock premium content.',
+  },
+};
+
 export default function SubscriptionPaymentPage(): React.JSX.Element {
   return (
     <Suspense

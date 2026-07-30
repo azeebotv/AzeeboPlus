@@ -11,12 +11,12 @@
 azeebo-plus/
 ├── apps/                  # Standalone full-stack dashboards + mobile/web clients
 │   ├── mobile/            # Expo React Native (port 8081)
-│   ├── web/               # Next.js frontend (port 3000)
+│   ├── web/               # Next.js frontend (port 4000)
 │   ├── admin/             # Standalone admin dashboard — Vite+React frontend + NestJS backend (port 4016)
 │   └── creator/           # Standalone creator dashboard — Vite+React frontend + NestJS backend (port 4014)
 ├── services/              # Microservices (categorized)
 │   ├── core/              # auth, user, wallet, payment, content, search, media
-│   ├── universes/         # reality, creator, lifestyle, vertical, movie, games, comedy, sports
+│   ├── universes/         # reality, creator, lifestyle, vertical, movie, games, comedy, sports, live-event
 │   ├── engagement/        # notification, reward, referral, messaging, engagement, subscription
 │   ├── operations/        # moderation, queue, support
 │   ├── intelligence/      # analytics, recommendation
@@ -105,6 +105,7 @@ azeebo-plus/
 | Universe | games-service | 3014 | azeebo_games |
 | Universe | comedy-service | 3012 | azeebo_comedy |
 | Universe | sports-service | 3021 | azeebo_sports |
+| Universe | live-event-service | 3027 | azeebo_live_event |
 | Engagement | notification-service | 3006 | azeebo_notification |
 | Engagement | reward-service | 3007 | azeebo_reward |
 | Engagement | referral-service | 3025 | azeebo_referral |

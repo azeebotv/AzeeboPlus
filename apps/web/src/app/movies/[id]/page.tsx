@@ -1,5 +1,14 @@
 'use client';
 import { Suspense, lazy, useEffect, useState } from 'react';
+
+export const metadata = {
+  title: 'Movie Details | Azeebo',
+  description: 'Watch movie details, trailers, cast info, and stream on Azeebo.',
+  openGraph: {
+    title: 'Movie Details | Azeebo',
+    description: 'Watch movie details, trailers, cast info, and stream on Azeebo.',
+  },
+};
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';

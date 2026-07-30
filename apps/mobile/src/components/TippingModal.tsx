@@ -11,14 +11,15 @@ import {
 } from 'react-native';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { creatorApi } from '../api/creator';
+import { colors } from '../theme';
 
 const PRESET_AMOUNTS = [100, 500, 1000, 5000, 10000];
 
 const TIER_COLORS: Record<string, string> = {
-  bronze: '#CD7F32',
-  silver: '#C0C0C0',
-  gold: '#FFD700',
-  platinum: '#E5E4E2',
+  bronze: colors.accent.bronze,
+  silver: colors.accent.silver,
+  gold: colors.accent.gold,
+  platinum: colors.accent.platinum,
 };
 
 interface TippingModalProps {
@@ -93,12 +94,12 @@ export default function TippingModal({
                     style={[
                       styles.tierBadge,
                       {
-                        backgroundColor: unlocked ? `${color}20` : '#1a1a1a',
+                        backgroundColor: unlocked ? `${color}20` : colors.bg.secondary,
                         opacity: unlocked ? 1 : 0.4,
                       },
                     ]}
                   >
-                    <Text style={[styles.tierText, { color: unlocked ? color : '#555' }]}>
+                    <Text style={[styles.tierText, { color: unlocked ? color : colors.text.tertiary }]}>
                       {unlocked ? '✓ ' : ''}
                       {key.charAt(0).toUpperCase() + key.slice(1)}
                     </Text>
@@ -144,7 +145,7 @@ export default function TippingModal({
             <TextInput
               style={styles.input}
               placeholder="Enter amount (min ₦50)"
-              placeholderTextColor="#666"
+placeholderTextColor={colors.text.tertiary}
               keyboardType="numeric"
               value={customAmount}
               onChangeText={setCustomAmount}
@@ -169,7 +170,7 @@ export default function TippingModal({
             disabled={tipMutation.isPending || selectedAmount < 50}
           >
             {tipMutation.isPending ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={colors.text.primary} />
             ) : (
               <Text style={styles.sendButtonText}>Send ₦{selectedAmount.toLocaleString()}</Text>
             )}
@@ -178,19 +179,19 @@ export default function TippingModal({
           <View style={styles.tierLegend}>
             <Text style={styles.legendTitle}>Tier Badges</Text>
             <View style={styles.legendItem}>
-              <Text style={[styles.legendBullet, { color: '#CD7F32' }]}>●</Text>
+               <Text style={[styles.legendBullet, { color: colors.accent.bronze }]}>●</Text>
               <Text style={styles.legendText}>Bronze — ₦1,000+</Text>
             </View>
             <View style={styles.legendItem}>
-              <Text style={[styles.legendBullet, { color: '#C0C0C0' }]}>●</Text>
+              <Text style={[styles.legendBullet, { color: colors.accent.silver }]}>●</Text>
               <Text style={styles.legendText}>Silver — ₦10,000+</Text>
             </View>
             <View style={styles.legendItem}>
-              <Text style={[styles.legendBullet, { color: '#FFD700' }]}>●</Text>
+              <Text style={[styles.legendBullet, { color: colors.accent.gold }]}>●</Text>
               <Text style={styles.legendText}>Gold — ₦50,000+</Text>
             </View>
             <View style={styles.legendItem}>
-              <Text style={[styles.legendBullet, { color: '#E5E4E2' }]}>●</Text>
+              <Text style={[styles.legendBullet, { color: colors.accent.gold }]}>●</Text>
               <Text style={styles.legendText}>Platinum — ₦100,000+</Text>
             </View>
           </View>
@@ -207,7 +208,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   container: {
-    backgroundColor: '#1A0A0A',
+    backgroundColor: colors.bg.primary,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 20,
@@ -219,8 +220,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  title: { color: '#fff', fontSize: 20, fontWeight: '700' },
-  closeButton: { color: '#888', fontSize: 20, padding: 4 },
+title: { color: colors.text.primary, fontSize: 20, fontWeight: '700' },
+   closeButton: { color: colors.text.secondary, fontSize: 20, padding: 4 },
   tierRow: {
     flexDirection: 'row',
     gap: 6,
@@ -240,10 +241,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#2A1A1A',
+    backgroundColor: colors.bg.surface,
   },
   amountButtonActive: {
-    borderColor: '#E8420A',
+    borderColor: colors.primary[500],
     backgroundColor: 'rgba(232,66,10,0.15)',
   },
   amountText: { color: '#F5F0EB', fontSize: 13, fontWeight: '600' },

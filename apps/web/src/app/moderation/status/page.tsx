@@ -52,7 +52,7 @@ function ModerationStatusPageContent(): React.JSX.Element {
   const resolvedCount = reports.filter((r) => r.status === 'resolved').length;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
       <AppHeader />
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">

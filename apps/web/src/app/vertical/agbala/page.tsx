@@ -39,6 +39,15 @@ const PATHS = [
   },
 ];
 
+export const metadata = {
+  title: 'Agbala | Azeebo',
+  description: 'Choose your path and shape your destiny through interactive storytelling.',
+  openGraph: {
+    title: 'Agbala | Azeebo',
+    description: 'Choose your path and shape your destiny through interactive storytelling.',
+  },
+};
+
 export default function AgbalaPage(): React.JSX.Element {
   useEffect(() => {
     analytics.pageView('agbala');
@@ -95,7 +104,7 @@ export default function AgbalaPage(): React.JSX.Element {
               }}
             >
               {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} height="16rem" borderRadius="16px" />
+                <Skeleton key={`agbala-skeleton-${i}`} height="16rem" borderRadius="16px" />
               ))}
             </div>
           ) : (

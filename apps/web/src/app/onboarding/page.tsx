@@ -177,6 +177,7 @@ export default function OnboardingPage(): React.JSX.Element {
               <p className="az-headline text-white text-xl leading-tight mb-6">Welcome Home</p>
 
               <button
+                aria-label="Get started"
                 onClick={() => setStep(2)}
                 className="az-btn-primary"
                 style={{ width: 'auto', paddingInline: '1.75rem', fontSize: '0.8rem' }}
@@ -189,6 +190,7 @@ export default function OnboardingPage(): React.JSX.Element {
           {/* Mobile fallback CTA */}
           <div className="xl:hidden">
             <button
+              aria-label="Get started"
               onClick={() => setStep(2)}
               className="az-btn-primary"
               style={{ width: 'auto', paddingInline: '2.5rem' }}
@@ -262,6 +264,7 @@ export default function OnboardingPage(): React.JSX.Element {
           <button
             onClick={handleComplete}
             disabled={selectedInterests.length < 3}
+            aria-label="Continue to Azeebo+"
             className="az-btn-primary"
             style={{ width: 'auto', paddingInline: '3rem' }}
           >

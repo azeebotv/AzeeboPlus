@@ -1,5 +1,5 @@
 'use client';
-import { Suspense, lazy, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import Link from 'next/link';
@@ -188,6 +188,7 @@ function ComedyPageContent(): React.JSX.Element {
             <button
               key={category.id}
               type="button"
+              aria-label={category.name}
               className="az-glass text-center cursor-pointer transition-all hover:scale-[1.02]"
             >
               <div className="p-4">
@@ -204,18 +205,4 @@ function ComedyPageContent(): React.JSX.Element {
   );
 }
 
-const LazyComedyPage = lazy(() => Promise.resolve({ default: ComedyPageContent }));
-
-export default function ComedyPage(): React.JSX.Element {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
-          <p className="text-white/50 text-lg">Loading...</p>
-        </div>
-      }
-    >
-      <LazyComedyPage />
-    </Suspense>
-  );
-}
+export default ComedyPageContent;

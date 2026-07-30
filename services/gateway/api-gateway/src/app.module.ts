@@ -74,8 +74,14 @@ export class AppModule implements NestModule {
     consumer
       .apply(CsrfMiddleware)
       .exclude(
-        { path: 'api/v1/auth/*path', method: RequestMethod.ALL },
-        { path: 'api/auth/*path', method: RequestMethod.ALL },
+        { path: 'api/v1/auth/login', method: RequestMethod.ALL },
+        { path: 'api/auth/login', method: RequestMethod.ALL },
+        { path: 'api/v1/auth/register', method: RequestMethod.ALL },
+        { path: 'api/auth/register', method: RequestMethod.ALL },
+        { path: 'api/v1/auth/forgot-password', method: RequestMethod.ALL },
+        { path: 'api/auth/forgot-password', method: RequestMethod.ALL },
+        { path: 'api/v1/auth/reset-password', method: RequestMethod.ALL },
+        { path: 'api/auth/reset-password', method: RequestMethod.ALL },
         { path: 'api/v1/users/*path', method: RequestMethod.GET },
         { path: 'api/v1/users/*path', method: RequestMethod.HEAD },
         { path: 'api/v1/users/*path', method: RequestMethod.OPTIONS },

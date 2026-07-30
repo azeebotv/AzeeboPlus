@@ -1,5 +1,6 @@
-import { Inject, Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ServiceAuthGuard } from '@azeebo/security';
 import { NightlifeService } from './nightlife.service';
 import { UpdateNightlifeDto } from './dto/update-nightlife.dto';
 
@@ -21,6 +22,7 @@ interface CreateNightlifeData {
 }
 
 @ApiTags('Nightlife')
+@UseGuards(ServiceAuthGuard)
 @Controller('lifestyle/nightlife')
 export class NightlifeController {
   constructor(@Inject(NightlifeService) private readonly nightlifeService: NightlifeService) {}

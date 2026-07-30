@@ -26,7 +26,7 @@ azeebo-plus/
 └── ci/                    # CI/CD scripts
 ```
 
-## Service Inventory (27 services + 4 frontends)
+## Service Inventory (28 services + 4 frontends)
 
 ### Core Services (ports 3000-3005, 3019)
 | Service | Port | DB | Description |
@@ -50,6 +50,7 @@ azeebo-plus/
 | vertical-service | 3017 | azeebo_vertical | Vertical video & storyworlds |
 | creator-service | 3018 | azeebo_creator | Creator onboarding, verification, earnings |
 | sports-service | 3021 | azeebo_sports | Sports content & predictions |
+| live-event-service | 3027 | azeebo_live_event | Pay-per-view live events & streaming |
 
 ### Engagement Services (ports 3006, 3007, 3023-3026)
 | Service | Port | DB | Description |

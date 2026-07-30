@@ -8,6 +8,7 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import analytics from '@/lib/analytics';
 
 interface FanContest {
@@ -113,9 +114,10 @@ function FanContestsPageContent(): React.JSX.Element {
                 <GlowCard universe="sports" className="overflow-hidden">
                   {contest.image && (
                     <div className="relative h-40">
-                      <img
+                      <OptimizedImage
                         src={contest.image}
                         alt={contest.title}
+                        fill
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
@@ -245,6 +247,15 @@ function FanContestsPageContent(): React.JSX.Element {
 }
 
 const LazyFanContestsPage = lazy(() => Promise.resolve({ default: FanContestsPageContent }));
+
+export const metadata = {
+  title: 'Fan Contests | Azeebo',
+  description: 'Compete with fellow fans and win exclusive prizes in sports fan contests.',
+  openGraph: {
+    title: 'Fan Contests | Azeebo',
+    description: 'Compete with fellow fans and win exclusive prizes in sports fan contests.',
+  },
+};
 
 export default function FanContestsPage(): React.JSX.Element {
   return (

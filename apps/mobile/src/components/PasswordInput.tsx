@@ -28,7 +28,7 @@ export function PasswordInput({
         <TextInput
           style={styles.input}
           placeholder={placeholder}
-          placeholderTextColor="#666"
+          placeholderTextColor={colors.text.tertiary}
           value={value}
           onChangeText={onChangeText}
           secureTextEntry={!showPassword}

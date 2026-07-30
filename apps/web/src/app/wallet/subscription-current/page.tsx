@@ -350,6 +350,15 @@ const LazySubscriptionCurrentPage = lazy(() =>
   Promise.resolve({ default: SubscriptionCurrentPageContent })
 );
 
+export const metadata = {
+  title: 'Current Subscription | Azeebo',
+  description: 'View and manage your active subscription plan, billing, and auto-renewal settings.',
+  openGraph: {
+    title: 'Current Subscription | Azeebo',
+    description: 'View and manage your active subscription plan, billing, and auto-renewal settings.',
+  },
+};
+
 export default function SubscriptionCurrentPage(): React.JSX.Element {
   return (
     <Suspense

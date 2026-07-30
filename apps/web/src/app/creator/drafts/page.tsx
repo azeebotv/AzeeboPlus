@@ -8,6 +8,7 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { Skeleton } from '@azeebo/ui/web';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 interface DraftContent {
   id: string;
@@ -165,17 +166,13 @@ export default function DraftsPage(): React.JSX.Element {
                 }}
               >
                 {draft.thumbnail && (
-                  <img
-                    src={draft.thumbnail}
-                    alt={draft.title}
-                    style={{
-                      width: 120,
-                      height: 68,
-                      objectFit: 'cover',
-                      borderRadius: 8,
-                      flexShrink: 0,
-                    }}
-                  />
+<OptimizedImage
+                     src={draft.thumbnail}
+                     alt={draft.title}
+                     width={120}
+                     height={68}
+                     className="object-cover rounded-lg flex-shrink-0"
+                   />
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <h3 style={{ fontWeight: 600, fontSize: 16, marginBottom: 4 }}>{draft.title}</h3>

@@ -16,6 +16,7 @@ import { useWallet } from '../src/contexts/WalletContext';
 import { votePackages as defaultVotePackages } from '../src/config/prices';
 import { realityApi } from '../src/api/engagement';
 import type { RealityShow, RealityContestant } from '../src/api/engagement';
+import { colors } from '../src/theme';
 
 const VOTE_PACKAGES = defaultVotePackages.reality;
 
@@ -210,19 +211,19 @@ export default function VotePage() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1A0A0A' },
+  container: { flex: 1, backgroundColor: colors.bg.primary },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
     paddingTop: 50,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: colors.bg.secondary,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },

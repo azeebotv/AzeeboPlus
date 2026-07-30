@@ -160,6 +160,15 @@ function LeaderboardPageContent(): React.JSX.Element {
 
 const LazyLeaderboardPage = lazy(() => Promise.resolve({ default: LeaderboardPageContent }));
 
+export const metadata = {
+  title: 'Leaderboard | Azeebo',
+  description: 'See who is leading the sports predictions game this season.',
+  openGraph: {
+    title: 'Leaderboard | Azeebo',
+    description: 'See who is leading the sports predictions game this season.',
+  },
+};
+
 export default function LeaderboardPage(): React.JSX.Element {
   return (
     <Suspense

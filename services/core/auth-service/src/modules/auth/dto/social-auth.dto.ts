@@ -19,11 +19,6 @@ export class SocialAuthCallbackDto {
   @IsNotEmpty()
   code!: string;
 
-  @ApiProperty({ description: 'Verified email from OAuth provider' })
-  @IsString()
-  @IsNotEmpty()
-  email!: string;
-
   @ApiPropertyOptional({ description: 'Display name from OAuth provider' })
   @IsOptional()
   @IsString()

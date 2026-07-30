@@ -24,7 +24,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
   const searchParams = useSearchParams();
   const episodeId = searchParams.get('id') || '';
   const [episode, setEpisode] = useState<EpisodeDetail | null>(null);
-  const [_error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);

@@ -174,6 +174,15 @@ function CrossoversPageContent(): React.JSX.Element {
 
 const LazyCrossoversPage = lazy(() => Promise.resolve({ default: CrossoversPageContent }));
 
+export const metadata = {
+  title: 'Crossovers | Azeebo',
+  description: 'When storyworlds collide — characters and narratives from different universes meet.',
+  openGraph: {
+    title: 'Crossovers | Azeebo',
+    description: 'When storyworlds collide — characters and narratives from different universes meet.',
+  },
+};
+
 export default function CrossoversPage(): React.JSX.Element {
   return (
     <Suspense

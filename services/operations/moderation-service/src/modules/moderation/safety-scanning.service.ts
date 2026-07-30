@@ -180,50 +180,65 @@ export class SafetyScanningService {
   }
 
   async getScanById(scanId: string): Promise<SafetyScan | null> {
-    return this.prisma.safetyScan.findUnique({
-      where: { id: scanId },
-    });
+    try {
+      return await this.prisma.safetyScan.findUnique({
+        where: { id: scanId },
+      });
+    } catch (error) {
+      this.logger.error(`Failed to get scan by ID ${scanId}: ${(error as Error).message}`);
+      return null;
+    }
   }
 
   async getScansByContentId(contentId: string): Promise<SafetyScan[]> {
-    return this.prisma.safetyScan.findMany({
-      where: { contentId },
-      orderBy: { createdAt: 'desc' },
-    });
+    try {
+      return await this.prisma.safetyScan.findMany({
+        where: { contentId },
+        orderBy: { createdAt: 'desc' },
+      });
+    } catch (error) {
+      this.logger.error(`Failed to get scans for content ${contentId}: ${(error as Error).message}`);
+      return [];
+    }
   }
 
   async checkContentSafety(
     contentId: string
   ): Promise<{ isSafe: boolean; lastScan?: SafetyScan; issues: string[] }> {
-    const scans = await this.getScansByContentId(contentId);
+    try {
+      const scans = await this.getScansByContentId(contentId);
 
-    if (scans.length === 0) {
-      return { isSafe: false, issues: ['No safety scan found'] };
+      if (scans.length === 0) {
+        return { isSafe: false, issues: ['No safety scan found'] };
+      }
+
+      const lastScan = scans[0];
+
+      if (lastScan.status !== 'completed') {
+        return { isSafe: false, lastScan, issues: ['Scan not completed'] };
+      }
+
+      if (lastScan.result === 'blocked') {
+        return {
+          isSafe: false,
+          lastScan,
+          issues: [`Content blocked: ${lastScan.threatLevel || 'unknown threat'}`],
+        };
+      }
+
+      if (lastScan.result === 'flagged') {
+        return {
+          isSafe: false,
+          lastScan,
+          issues: [`Content flagged: ${lastScan.threatLevel || 'potential issue'}`],
+        };
+      }
+
+      return { isSafe: true, lastScan, issues: [] };
+    } catch (error) {
+      this.logger.error(`Failed to check content safety for ${contentId}: ${(error as Error).message}`);
+      return { isSafe: false, issues: ['Failed to check content safety'] };
     }
-
-    const lastScan = scans[0];
-
-    if (lastScan.status !== 'completed') {
-      return { isSafe: false, lastScan, issues: ['Scan not completed'] };
-    }
-
-    if (lastScan.result === 'blocked') {
-      return {
-        isSafe: false,
-        lastScan,
-        issues: [`Content blocked: ${lastScan.threatLevel || 'unknown threat'}`],
-      };
-    }
-
-    if (lastScan.result === 'flagged') {
-      return {
-        isSafe: false,
-        lastScan,
-        issues: [`Content flagged: ${lastScan.threatLevel || 'potential issue'}`],
-      };
-    }
-
-    return { isSafe: true, lastScan, issues: [] };
   }
 
   private async performScan(scanType: string, mediaUrl: string): Promise<ScanResult> {

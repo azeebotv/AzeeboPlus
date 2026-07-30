@@ -1,5 +1,5 @@
 'use client';
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -117,6 +117,7 @@ function LiveEventsPageContent(): React.JSX.Element {
             <button
               key={f}
               type="button"
+              aria-label={`Filter by ${f === 'upcoming' ? 'Upcoming' : f === 'live' ? 'Live Now' : f === 'ended' ? 'Ended' : 'All Events'}`}
               onClick={() => setFilter(f)}
               className="px-4 py-2 rounded-full text-sm font-medium transition-all"
               style={{
@@ -227,18 +228,4 @@ function LiveEventsPageContent(): React.JSX.Element {
   );
 }
 
-const LazyPage = lazy(() => Promise.resolve({ default: LiveEventsPageContent }));
-
-export default function LiveEventsPage(): React.JSX.Element {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
-          <p className="text-white/50">Loading...</p>
-        </div>
-      }
-    >
-      <LazyPage />
-    </Suspense>
-  );
-}
+export default LiveEventsPageContent;

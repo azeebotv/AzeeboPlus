@@ -1,5 +1,14 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
+
+export const metadata = {
+  title: 'Badges | Azeebo',
+  description: 'View your earned badges and track progress toward new achievements on Azeebo.',
+  openGraph: {
+    title: 'Badges | Azeebo',
+    description: 'View your earned badges and track progress toward new achievements on Azeebo.',
+  },
+};
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';

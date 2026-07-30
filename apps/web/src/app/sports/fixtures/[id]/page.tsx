@@ -213,6 +213,15 @@ function FixtureDetailContent(): React.JSX.Element {
 
 const LazyFixtureDetail = lazy(() => Promise.resolve({ default: FixtureDetailContent }));
 
+export const metadata = {
+  title: 'Fixture Details | Azeebo',
+  description: 'View match details, scores, and predictions for this fixture.',
+  openGraph: {
+    title: 'Fixture Details | Azeebo',
+    description: 'View match details, scores, and predictions for this fixture.',
+  },
+};
+
 export default function FixtureDetailPage(): React.JSX.Element {
   return (
     <Suspense

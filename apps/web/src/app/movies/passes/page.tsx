@@ -1,5 +1,14 @@
 'use client';
 import { Suspense, lazy, useEffect, useState } from 'react';
+
+export const metadata = {
+  title: 'Cinema Passes | Azeebo',
+  description: 'Get unlimited access to premium movies with affordable cinema passes on Azeebo.',
+  openGraph: {
+    title: 'Cinema Passes | Azeebo',
+    description: 'Get unlimited access to premium movies with affordable cinema passes on Azeebo.',
+  },
+};
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';

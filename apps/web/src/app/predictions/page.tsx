@@ -73,10 +73,12 @@ export default function PredictionsPage() {
             <h1 className="text-2xl font-bold text-white">My Predictions</h1>
             <p className="text-white/50 text-sm mt-1">{pagination.total} total predictions</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2" role="tablist" aria-label="Prediction filters">
             {['all', 'active', 'resolved'].map((f) => (
               <button
                 key={f}
+                role="tab"
+                aria-selected={filter === f}
                 onClick={() => {
                   setFilter(f);
                   setPage(1);

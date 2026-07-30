@@ -75,11 +75,20 @@ export { PrismaModule } from './prisma/prisma.module';
 export { JwtConfigModule } from './jwt/jwt-config.module';
 
 // Observability
-/** Health check service for database and Redis connectivity. */
+/** Health check service for database, Redis, and external service checks. */
 export {
   HealthCheckService,
   HealthCheckResult,
+  ComponentCheck,
+  HealthMetrics,
   ServiceHealth,
 } from './observability/health-check.service';
-/** In-memory metrics service for request tracking and Prometheus export. */
-export { MetricsService } from './observability/metrics.service';
+/** In-memory metrics service supporting counters, gauges, histograms, and periodic export. */
+export {
+  MetricsService,
+  Metric,
+  MetricValue,
+  Counter,
+  Gauge,
+  Histogram,
+} from './observability/metrics.service';

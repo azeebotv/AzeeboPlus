@@ -8,9 +8,9 @@
 
 Azeebo+ is a **modular entertainment platform** built as a monorepo with:
 - 4 client apps (mobile, web, admin, creator)
-- 27 backend microservices (categorized into 6 groups)
+- 28 backend microservices (categorized into 6 groups)
 - 21 shared packages
-- PostgreSQL databases per service (26 total, `azeebo_` prefix)
+- PostgreSQL databases per service (27 total, `azeebo_` prefix)
 - Redis for caching and queues
 - Docker all-in-one container for deployment
 - Coolify for production deployment
@@ -24,7 +24,7 @@ Azeebo+ is a **modular entertainment platform** built as a monorepo with:
 │                   Clients                        │
 │  ┌─────────┐ ┌─────┐ ┌───────┐ ┌────────────┐  │
 │  │ Mobile  │ │ Web │ │ Admin │ │  Creator    │  │
-│  │ (Expo)  │ │(Nxt)│ │(Next) │ │(Next) │  │
+│  │ (Expo)  │ │(Nxt)│ │(Vite) │ │(Vite) │  │
 │  └────┬────┘ └──┬──┘ └───┬───┘ └─────┬──────┘  │
 │       └─────────┴────────┴───────────┘          │
 │                     │                            │
@@ -40,7 +40,7 @@ Azeebo+ is a **modular entertainment platform** built as a monorepo with:
 │                                                    │
 │  ┌──────────┐  ┌───────────┐  ┌──────────────┐   │
 │  │   Core   │  │Universes  │  │  Engagement  │   │
-│  │  7 svcs  │  │  8 svcs   │  │    6 svcs    │   │
+│  │  7 svcs  │  │  9 svcs   │  │    6 svcs    │   │
 │  └──────────┘  └───────────┘  └──────────────┘   │
 │                                                    │
 │  ┌──────────┐  ┌───────────┐  ┌──────────────┐   │
@@ -53,7 +53,7 @@ Azeebo+ is a **modular entertainment platform** built as a monorepo with:
 │                Data Layer                         │
 │  ┌──────────────┐  ┌──────────────┐              │
 │  │  PostgreSQL   │  │    Redis     │              │
-│  │  (26 DBs)    │  │  Cache/Queue │              │
+│  │  (27 DBs)    │  │  Cache/Queue │              │
 │  └──────────────┘  └──────────────┘              │
 └─────────────────────────────────────────────────┘
 ```
@@ -88,6 +88,7 @@ Business logic for each entertainment universe.
 | games-service | Games, challenges, trivia, tournaments | azeebo_games |
 | comedy-service | Skits, comedians, specials, comedy challenges | azeebo_comedy |
 | sports-service | Sports, predictions, fan boards, contests | azeebo_sports |
+| live-event-service | Pay-per-view live events, streaming, tickets | azeebo_live_event |
 
 ### Engagement Services
 User interaction and retention.
@@ -121,7 +122,7 @@ User interaction and retention.
 ## Data Layer
 
 ### PostgreSQL
-- 26 databases, each prefixed with `azeebo_`
+- 27 databases, each prefixed with `azeebo_`
 - Each service owns its database — no cross-service DB queries
 - Use Prisma ORM with per-service schema and migrations
 - PgBouncer for connection pooling

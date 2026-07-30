@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../src/contexts/AuthContext';
 import { subscriptionApi } from '../src/api/subscription';
 import { colors, typography, spacing, radius } from '../src/theme';
@@ -59,6 +60,37 @@ export default function PremiumAccessScreen() {
   const { isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');
+
+  const plansQuery = useQuery({
+    queryKey: ['subscription-plans'],
+    queryFn: async () => {
+      const res = await subscriptionApi.getPlans();
+      return res.success ? res.data : null;
+    },
+  });
+
+  const plans = plansQuery.data ?? [];
+  const premiumMonthly = plans.find(
+    (p) => p.tier?.toLowerCase() === 'premium' && p.interval === 'monthly'
+  );
+  const premiumYearly = plans.find(
+    (p) => p.tier?.toLowerCase() === 'premium' && p.interval === 'yearly'
+  );
+
+  const formatPrice = (price: number, currency?: string) => {
+    const symbol = currency === 'NGN' || !currency ? '₦' : currency;
+    return `${symbol}${price.toLocaleString()}`;
+  };
+
+  const selectedPlanData = selectedPlan === 'monthly' ? premiumMonthly : premiumYearly;
+  const priceDisplay = selectedPlanData
+    ? `${formatPrice(selectedPlanData.price, selectedPlanData.currency)}/${selectedPlan === 'monthly' ? 'mo' : 'yr'}`
+    : 'Loading...';
+
+  const alternatePlanData = selectedPlan === 'monthly' ? premiumYearly : premiumMonthly;
+  const altPriceDisplay = alternatePlanData
+    ? `${formatPrice(alternatePlanData.price, alternatePlanData.currency)}/${selectedPlan === 'monthly' ? 'yr' : 'mo'}`
+    : '';
 
   const handleSubscribe = async () => {
     if (!isAuthenticated) {
@@ -141,7 +173,7 @@ export default function PremiumAccessScreen() {
                   selectedPlan === 'monthly' && styles.planOptionPriceActive,
                 ]}
               >
-                ₦2,500/mo
+                {plansQuery.isLoading ? '...' : priceDisplay}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -165,7 +197,7 @@ export default function PremiumAccessScreen() {
                   selectedPlan === 'yearly' && styles.planOptionPriceActive,
                 ]}
               >
-                ₦18,000/yr
+                {plansQuery.isLoading ? '...' : (selectedPlan === 'yearly' ? priceDisplay : altPriceDisplay)}
               </Text>
             </TouchableOpacity>
           </View>

@@ -32,6 +32,15 @@ interface WalletPricing {
   withdrawalQuickAmounts: number[];
 }
 
+export const metadata = {
+  title: 'Add Funds | Azeebo',
+  description: 'Top up your wallet to enjoy premium features and content.',
+  openGraph: {
+    title: 'Add Funds | Azeebo',
+    description: 'Top up your wallet to enjoy premium features and content.',
+  },
+};
+
 export default function AddFundsPage(): React.JSX.Element {
   const router = useRouter();
   const toast = useToast();

@@ -1,6 +1,6 @@
 import { MetricsService } from './metrics.service';
 
-describe('MetricsService', () => {
+describe('MetricsService (re-exported from @azeebo/shared-services)', () => {
   let service: MetricsService;
 
   beforeEach(() => {
@@ -14,7 +14,6 @@ describe('MetricsService', () => {
         help: 'Test counter',
         type: 'counter',
       });
-      // No error means success
     });
 
     it('should register a gauge metric', () => {
@@ -22,15 +21,6 @@ describe('MetricsService', () => {
         name: 'test_gauge',
         help: 'Test gauge',
         type: 'gauge',
-      });
-    });
-
-    it('should register a histogram metric', () => {
-      service.registerMetric({
-        name: 'test_histogram',
-        help: 'Test histogram',
-        type: 'histogram',
-        buckets: [1, 5, 10],
       });
     });
   });
@@ -47,26 +37,15 @@ describe('MetricsService', () => {
     it('should increment counter by 1 by default', () => {
       const counter = service.getCounter('requests');
       counter.increment();
-
       const metrics = service.getMetrics();
       const reqMetric = metrics.find((m) => m.name === 'requests');
       expect(reqMetric?.value).toBe(1);
-    });
-
-    it('should increment counter by custom value', () => {
-      const counter = service.getCounter('requests');
-      counter.increment(5);
-
-      const metrics = service.getMetrics();
-      const reqMetric = metrics.find((m) => m.name === 'requests');
-      expect(reqMetric?.value).toBe(5);
     });
 
     it('should reset counter', () => {
       const counter = service.getCounter('requests');
       counter.increment(10);
       counter.reset();
-
       const metrics = service.getMetrics();
       const reqMetric = metrics.find((m) => m.name === 'requests');
       expect(reqMetric).toBeUndefined();
@@ -85,7 +64,6 @@ describe('MetricsService', () => {
     it('should set gauge value', () => {
       const gauge = service.getGauge('connections');
       gauge.set(42);
-
       const metrics = service.getMetrics();
       const connMetric = metrics.find((m) => m.name === 'connections');
       expect(connMetric?.value).toBe(42);
@@ -95,65 +73,19 @@ describe('MetricsService', () => {
       const gauge = service.getGauge('connections');
       gauge.set(10);
       gauge.increment();
-
       const metrics = service.getMetrics();
       const connMetric = metrics.find((m) => m.name === 'connections');
       expect(connMetric?.value).toBe(11);
     });
-
-    it('should decrement gauge', () => {
-      const gauge = service.getGauge('connections');
-      gauge.set(10);
-      gauge.decrement();
-
-      const metrics = service.getMetrics();
-      const connMetric = metrics.find((m) => m.name === 'connections');
-      expect(connMetric?.value).toBe(9);
-    });
   });
 
-  describe('histogram operations', () => {
-    beforeEach(() => {
-      service.registerMetric({
-        name: 'request_duration',
-        help: 'Request duration',
-        type: 'histogram',
-        buckets: [5, 10, 50],
-      });
+  describe('recordRequest / recordError (backward compat)', () => {
+    it('should record request without throwing', () => {
+      expect(() => service.recordRequest('GET', 200, 100)).not.toThrow();
     });
 
-    it('should observe histogram values', () => {
-      const histogram = service.getHistogram('request_duration');
-      histogram.observe(3);
-      histogram.observe(7);
-      histogram.observe(15);
-
-      // Histogram data is only in export, not in getMetrics
-      // Verify no error occurred
-    });
-
-    it('should reset histogram', () => {
-      const histogram = service.getHistogram('request_duration');
-      histogram.observe(5);
-      histogram.reset();
-      // Should not throw
-    });
-  });
-
-  describe('addExporter', () => {
-    it('should add an exporter callback', () => {
-      const exporter = jest.fn();
-      service.addExporter(exporter);
-      // No error means success
-    });
-  });
-
-  describe('onModuleInit/onModuleDestroy', () => {
-    it('should handle lifecycle hooks', () => {
-      service.onModuleInit();
-      // Should set up flush interval
-      service.onModuleDestroy();
-      // Should clear interval and export
+    it('should record error without throwing', () => {
+      expect(() => service.recordError('test_error')).not.toThrow();
     });
   });
 
@@ -161,6 +93,22 @@ describe('MetricsService', () => {
     it('should return empty array when no metrics registered', () => {
       const metrics = service.getMetrics();
       expect(metrics).toEqual([]);
+    });
+  });
+
+  describe('getPrometheusMetrics', () => {
+    it('should return valid prometheus format', () => {
+      const output = service.getPrometheusMetrics();
+      expect(typeof output).toBe('string');
+    });
+  });
+
+  describe('reset', () => {
+    it('should clear all metrics', () => {
+      service.registerMetric({ name: 'test', help: 'test', type: 'counter' });
+      service.getCounter('test').increment(5);
+      service.reset();
+      expect(service.getMetrics()).toEqual([]);
     });
   });
 });

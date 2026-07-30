@@ -5,6 +5,7 @@ import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { Spinner, ErrorState } from '@azeebo/ui/web';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 interface LeaderboardEntry {
   rank: number;
@@ -157,10 +158,12 @@ export default function LeaderboardPage(): React.JSX.Element {
                     }}
                   >
                     {entry.avatar ? (
-                      <img
+                      <OptimizedImage
                         src={entry.avatar}
                         alt={entry.displayName}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        width={44}
+                        height={44}
+                        className="w-full h-full object-cover"
                       />
                     ) : (
                       <div

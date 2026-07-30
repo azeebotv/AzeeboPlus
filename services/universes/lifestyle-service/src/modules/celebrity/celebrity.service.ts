@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 interface CelebrityEntry {
@@ -82,6 +82,7 @@ interface CreateNewsData {
 
 @Injectable()
 export class CelebrityService {
+  private readonly logger = new Logger(CelebrityService.name);
   constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   private formatEntry(entry: Record<string, unknown>): CelebrityEntry {

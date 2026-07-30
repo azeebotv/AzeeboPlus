@@ -5,6 +5,7 @@ import { apiFetch } from '../../lib/api';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
 import { Skeleton } from '@/components/Skeleton';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 interface ContentItem {
   id: string;
@@ -20,12 +21,12 @@ interface ContentItem {
 }
 
 export default function RecommendationsPage(): React.JSX.Element {
-  const { user: _user } = useAuth();
+  useAuth();
   const [recommendations, setRecommendations] = useState<ContentItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<string>('all');
-  const [_page, setPage] = useState<number>(1);
+  const [, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const lastItemRef = useRef<HTMLDivElement | null>(null);
@@ -177,9 +178,10 @@ export default function RecommendationsPage(): React.JSX.Element {
                 <a href={`/watch/${item.id}`} className="block">
                   <div className="relative h-48">
                     {item.thumbnail ? (
-                      <img
+                      <OptimizedImage
                         src={item.thumbnail}
                         alt={item.title}
+                        fill
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (

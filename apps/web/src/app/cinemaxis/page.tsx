@@ -1,5 +1,5 @@
 'use client';
-import { Suspense, lazy, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -93,6 +93,7 @@ function CinemaxisPageContent(): React.JSX.Element {
               <Link href="/movies">
                 <motion.button
                   type="button"
+                  aria-label="Browse movies"
                   className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
                   style={{
                     backgroundColor: 'rgba(168,85,247,0.2)',
@@ -107,6 +108,7 @@ function CinemaxisPageContent(): React.JSX.Element {
               <Link href="/movies/premieres">
                 <motion.button
                   type="button"
+                  aria-label="View premieres"
                   className="px-6 py-3 rounded-full text-sm font-semibold text-[#1A0A3B] transition-all"
                   style={{ backgroundColor: '#a855f7' }}
                   whileHover={{ scale: 1.05 }}
@@ -192,21 +194,4 @@ function CinemaxisPageContent(): React.JSX.Element {
   );
 }
 
-const LazyCinemaxisPage = lazy(() => Promise.resolve({ default: CinemaxisPageContent }));
-
-export default function CinemaxisPage(): React.JSX.Element {
-  return (
-    <Suspense
-      fallback={
-        <div
-          className="min-h-screen flex items-center justify-center"
-          style={{ backgroundColor: '#0A0A1A' }}
-        >
-          <p className="text-white/50 text-lg">Loading...</p>
-        </div>
-      }
-    >
-      <LazyCinemaxisPage />
-    </Suspense>
-  );
-}
+export default CinemaxisPageContent;

@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { DatabaseModule } from './modules/database/database.module';
 import { UniverseModule } from './modules/universe/universe.module';
 import { CharactersModule } from './modules/characters/characters.module';
@@ -24,12 +23,6 @@ import { CacheModule, JwtConfigModule } from '@azeebo/shared-services';
     }),
     RateLimiterModule.forRoot(),
     JwtConfigModule,
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60000,
-        limit: 100,
-      },
-    ]),
     DatabaseModule,
     CacheModule,
     HealthModule,

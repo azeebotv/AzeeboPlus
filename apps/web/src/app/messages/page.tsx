@@ -1,11 +1,22 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
+
+
+export const metadata = {
+  title: 'Messages | Azeebo',
+  description: 'Connect with creators and other users through direct messages on Azeebo.',
+  openGraph: {
+    title: 'Messages | Azeebo',
+    description: 'Connect with creators and other users through direct messages on Azeebo.',
+  },
+};
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../lib/api';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
 import { Skeleton } from '@azeebo/ui/web';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 interface User {
   id: string;
@@ -72,8 +83,6 @@ export default function MessagesPage(): React.JSX.Element {
   const [searchQuery, setSearchQuery] = useState('');
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
-  const [_replyingTo, _setReplyingTo] = useState<Message | null>(null);
-  const [_showThread, _setShowThread] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
   const conversationsListRef = useRef<HTMLDivElement>(null);
@@ -332,7 +341,7 @@ export default function MessagesPage(): React.JSX.Element {
   if (authLoading) return <></>;
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
         <AppHeader />
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="az-glass p-8 text-center">
@@ -346,7 +355,7 @@ export default function MessagesPage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
       <AppHeader />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="az-glass overflow-hidden" style={{ height: 'calc(100vh - 200px)' }}>
@@ -362,7 +371,7 @@ export default function MessagesPage(): React.JSX.Element {
                   {unreadCount > 0 && (
                     <span
                       className="px-2 py-1 text-[10px] font-bold rounded-full"
-                      style={{ background: '#E8420A', color: '#fff' }}
+                      style={{ background: 'var(--brand-orange, #E8420A)', color: '#fff' }}
                     >
                       {unreadCount}
                     </span>
@@ -426,7 +435,7 @@ export default function MessagesPage(): React.JSX.Element {
                           style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
                         >
                           {conversation.user.avatar ? (
-                            <img
+                            <OptimizedImage
                               src={conversation.user.avatar}
                               alt={conversation.user.name}
                               className="w-full h-full rounded-full object-cover"
@@ -438,7 +447,7 @@ export default function MessagesPage(): React.JSX.Element {
                         {conversation.unreadCount > 0 && (
                           <div
                             className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
-                            style={{ background: '#E8420A', color: '#fff' }}
+                            style={{ background: 'var(--brand-orange, #E8420A)', color: '#fff' }}
                           >
                             {conversation.unreadCount}
                           </div>
@@ -495,6 +504,7 @@ export default function MessagesPage(): React.JSX.Element {
                     </div>
                     <div className="flex gap-2">
                       <button
+                        aria-label={selectedConversation.isMuted ? 'Unmute conversation' : 'Mute conversation'}
                         onClick={() =>
                           muteMutation.mutate({
                             conversationId: selectedConversation.id,
@@ -504,12 +514,13 @@ export default function MessagesPage(): React.JSX.Element {
                         className="text-xs px-2 py-1 rounded border"
                         style={{
                           borderColor: 'rgba(255,255,255,0.2)',
-                          color: selectedConversation.isMuted ? '#F59E0B' : '#9A8A7A',
+                          color: selectedConversation.isMuted ? '#F59E0B' : 'var(--text-muted, #9A8A7A)',
                         }}
                       >
                         {selectedConversation.isMuted ? 'Unmute' : 'Mute'}
                       </button>
                       <button
+                        aria-label="Archive conversation"
                         onClick={() => {
                           archiveMutation.mutate({
                             conversationId: selectedConversation.id,
@@ -517,7 +528,7 @@ export default function MessagesPage(): React.JSX.Element {
                           });
                         }}
                         className="text-xs px-2 py-1 rounded border"
-                        style={{ borderColor: 'rgba(255,255,255,0.2)', color: '#9A8A7A' }}
+                        style={{ borderColor: 'rgba(255,255,255,0.2)', color: 'var(--text-muted, #9A8A7A)' }}
                       >
                         Archive
                       </button>
@@ -590,6 +601,7 @@ export default function MessagesPage(): React.JSX.Element {
                                   autoFocus
                                 />
                                 <button
+                                  aria-label="Save edited message"
                                   onClick={() =>
                                     editMessageMutation.mutate({
                                       messageId: message.id,
@@ -601,6 +613,7 @@ export default function MessagesPage(): React.JSX.Element {
                                   Save
                                 </button>
                                 <button
+                                  aria-label="Cancel editing"
                                   onClick={() => setEditingMessageId(null)}
                                   className="text-xs text-red-400"
                                 >
@@ -621,6 +634,7 @@ export default function MessagesPage(): React.JSX.Element {
                               </p>
                               <div className="flex gap-1 ml-2">
                                 <button
+                                  aria-label={message.isPinned ? 'Unpin message' : 'Pin message'}
                                   onClick={() =>
                                     pinMutation.mutate({
                                       messageId: message.id,
@@ -628,7 +642,6 @@ export default function MessagesPage(): React.JSX.Element {
                                     })
                                   }
                                   className="text-[10px] text-white/40 hover:text-yellow-400"
-                                  title={message.isPinned ? 'Unpin message' : 'Pin message'}
                                 >
                                   {message.isPinned ? 'Unpin' : 'Pin'}
                                 </button>
@@ -636,6 +649,7 @@ export default function MessagesPage(): React.JSX.Element {
                                   editingMessageId !== message.id && (
                                     <>
                                       <button
+                                        aria-label="Edit message"
                                         onClick={() => {
                                           setEditingMessageId(message.id);
                                           setEditContent(message.content);
@@ -645,6 +659,7 @@ export default function MessagesPage(): React.JSX.Element {
                                         Edit
                                       </button>
                                       <button
+                                        aria-label="Delete message"
                                         onClick={() => deleteMessageMutation.mutate(message.id)}
                                         className="text-[10px] text-white/40 hover:text-red-400"
                                       >
@@ -655,15 +670,21 @@ export default function MessagesPage(): React.JSX.Element {
                               </div>
                             </div>
                             <div className="flex gap-1 mt-1">
-                              {['&#x1F44D;', '&#x2764;', '&#x1F602;'].map((emoji) => (
+                              {[
+                                { emoji: '👍', label: 'Thumbs up' },
+                                { emoji: '❤️', label: 'Heart' },
+                                { emoji: '😂', label: 'Laughing face' },
+                              ].map((reaction) => (
                                 <button
-                                  key={emoji}
+                                  key={reaction.emoji}
+                                  aria-label={`React with ${reaction.label}`}
                                   onClick={() =>
-                                    reactMutation.mutate({ messageId: message.id, emoji })
+                                    reactMutation.mutate({ messageId: message.id, emoji: reaction.emoji })
                                   }
                                   className="text-xs hover:scale-125 transition-transform"
-                                  dangerouslySetInnerHTML={{ __html: emoji }}
-                                />
+                                >
+                                  {reaction.emoji}
+                                </button>
                               ))}
                             </div>
                           </div>

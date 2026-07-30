@@ -84,7 +84,7 @@ function MobileStatusPageContent(): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
       <AppHeader />
 
       <div className="max-w-lg mx-auto px-4 sm:px-6 py-8 sm:py-12">

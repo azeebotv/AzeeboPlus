@@ -256,6 +256,15 @@ function PredictionsPageContent(): React.JSX.Element {
 
 const LazyPredictionsPage = lazy(() => Promise.resolve({ default: PredictionsPageContent }));
 
+export const metadata = {
+  title: 'Predictions | Azeebo',
+  description: 'Predict match outcomes and win rewards on active prediction markets.',
+  openGraph: {
+    title: 'Predictions | Azeebo',
+    description: 'Predict match outcomes and win rewards on active prediction markets.',
+  },
+};
+
 export default function PredictionsPage(): React.JSX.Element {
   return (
     <Suspense

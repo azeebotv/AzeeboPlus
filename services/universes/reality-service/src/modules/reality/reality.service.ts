@@ -48,16 +48,16 @@ export class RealityService {
     this.voteCost = this.configService.get<number>('VOTE_COST', 1);
   }
 
-  private async trackAnalyticsEvent(
+  private async trackEvent(
     eventName: string,
     userId: string,
-    metadata: Record<string, unknown>
+    metadata: Record<string, unknown> = {}
   ): Promise<void> {
     try {
       await axios.post(
-        `${this.analyticsServiceBaseUrl}/analytics/track`,
+        `${this.analyticsServiceBaseUrl}/v1/analytics/events`,
         {
-          eventName,
+          type: eventName,
           userId,
           universe: 'reality',
           metadata,
@@ -292,7 +292,7 @@ export class RealityService {
       this.cache.invalidate(`reality:contestants:${showId}`),
       this.cache.invalidate('reality:shows:list'),
     ]);
-    await this.trackAnalyticsEvent('vote_submitted', userId, {
+    await this.trackEvent('vote_submitted', userId, {
       voteId: vote.id,
       contestantId,
       showId,
@@ -371,7 +371,7 @@ export class RealityService {
         this.cache.invalidate(`reality:contestants:${showId}`),
         this.cache.invalidate('reality:shows:list'),
       ]);
-      await this.trackAnalyticsEvent('supervote_submitted', userId, {
+      await this.trackEvent('supervote_submitted', userId, {
         supervoteId: supervote.id,
         contestantId,
         showId,
@@ -424,7 +424,7 @@ export class RealityService {
       },
     });
 
-    await this.trackAnalyticsEvent('prediction_placed', userId, {
+    await this.trackEvent('prediction_placed', userId, {
       predictionId: predictionRecord.id,
       showId,
       predictionType: Object.keys(prediction)[0] || 'unknown',
@@ -609,7 +609,7 @@ export class RealityService {
         this.cache.invalidate(`reality:contestants:${showId}`),
         this.cache.invalidate('reality:shows:list'),
       ]);
-      await this.trackAnalyticsEvent('vote_submitted', userId, {
+      await this.trackEvent('vote_submitted', userId, {
         voteId: vote.id,
         contestantId,
         showId,
@@ -742,7 +742,7 @@ export class RealityService {
         },
       });
 
-      await this.trackAnalyticsEvent('premium_extra_purchased', userId, {
+      await this.trackEvent('premium_extra_purchased', userId, {
         purchaseId: idempotencyKey,
         extraId,
         extraName: extra.name,
@@ -1188,7 +1188,7 @@ export class RealityService {
     const pointsEarned = votes + supervotes * 10;
 
     if (pointsEarned > 0) {
-      await this.trackAnalyticsEvent('reward_earned', userId, {
+      await this.trackEvent('reward_earned', userId, {
         showId,
         pointsEarned,
         votes,
@@ -1414,7 +1414,7 @@ export class RealityService {
         where: { id: existingLike.id },
       });
 
-      await this.trackAnalyticsEvent('show_unliked', userId, { showId });
+      await this.trackEvent('show_unliked', userId, { showId });
 
       return {
         success: true,
@@ -1426,7 +1426,7 @@ export class RealityService {
       data: { userId, showId },
     });
 
-    await this.trackAnalyticsEvent('show_liked', userId, { showId });
+    await this.trackEvent('show_liked', userId, { showId });
 
     return {
       success: true,
@@ -1458,7 +1458,7 @@ export class RealityService {
       data: { userId, showId, content },
     });
 
-    await this.trackAnalyticsEvent('comment_added', userId, {
+    await this.trackEvent('comment_added', userId, {
       showId,
       commentId: comment.id,
     });
@@ -1514,7 +1514,7 @@ export class RealityService {
       data: { userId, showId, platform },
     });
 
-    await this.trackAnalyticsEvent('show_shared', userId, {
+    await this.trackEvent('show_shared', userId, {
       showId,
       shareId: share.id,
       platform,

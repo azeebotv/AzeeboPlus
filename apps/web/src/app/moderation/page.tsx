@@ -1,5 +1,14 @@
 'use client';
 import { useRouter } from 'next/navigation';
+
+export const metadata = {
+  title: 'Moderation Center | Azeebo',
+  description: 'Help keep the community safe by reporting and reviewing content on Azeebo.',
+  openGraph: {
+    title: 'Moderation Center | Azeebo',
+    description: 'Help keep the community safe by reporting and reviewing content on Azeebo.',
+  },
+};
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
@@ -34,7 +43,7 @@ export default function ModerationPage(): React.JSX.Element {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A', color: '#F5F0EB' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)', color: 'var(--text-primary, #F5F0EB)' }}>
       <AppHeader />
       <main style={{ padding: '100px 24px 60px', maxWidth: 960, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
@@ -54,7 +63,7 @@ export default function ModerationPage(): React.JSX.Element {
             🛡️
           </div>
           <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8 }}>Moderation Center</h1>
-          <p style={{ color: '#9A8A7A', fontSize: 16, maxWidth: 500, margin: '0 auto' }}>
+          <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 16, maxWidth: 500, margin: '0 auto' }}>
             Help keep the community safe by reporting and reviewing content
           </p>
         </div>
@@ -63,6 +72,7 @@ export default function ModerationPage(): React.JSX.Element {
           {modLinks.map((link) => (
             <button
               key={link.href}
+              aria-label={link.label}
               onClick={() => router.push(link.href)}
               style={{
                 display: 'flex',
@@ -74,18 +84,18 @@ export default function ModerationPage(): React.JSX.Element {
                 textAlign: 'left',
                 border: '1px solid #2A1A1A',
                 backgroundColor: 'rgba(26,10,10,0.5)',
-                color: '#F5F0EB',
+                color: 'var(--text-primary, #F5F0EB)',
                 transition: 'border-color 0.2s',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#E8420A')}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#2A1A1A')}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--brand-orange, #E8420A)')}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--bg-surface, #2A1A1A)')}
             >
               <span style={{ fontSize: 28 }}>{link.icon}</span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 2 }}>{link.label}</h3>
-                <p style={{ color: '#9A8A7A', fontSize: 13, margin: 0 }}>{link.desc}</p>
+                <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 13, margin: 0 }}>{link.desc}</p>
               </div>
-              <span style={{ color: '#E8420A', fontSize: 18 }}>→</span>
+              <span style={{ color: 'var(--brand-orange, #E8420A)', fontSize: 18 }}>→</span>
             </button>
           ))}
         </div>

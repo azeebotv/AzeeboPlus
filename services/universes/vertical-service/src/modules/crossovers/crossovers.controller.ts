@@ -1,6 +1,6 @@
 import { Inject, Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AdminGuard } from '@azeebo/security';
+import { AdminGuard, RateLimitGuard, RateLimit } from '@azeebo/security';
 import { CrossoversService } from './crossovers.service';
 import { CreateCrossoverData, CreateRecapData } from './crossovers.service';
 
@@ -10,6 +10,8 @@ export class CrossoversController {
   constructor(@Inject(CrossoversService) private readonly crossoversService: CrossoversService) {}
 
   @Get()
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get crossovers' })
   @ApiResponse({ status: 200, description: 'Crossovers list' })
   async getCrossovers(
@@ -21,6 +23,8 @@ export class CrossoversController {
   }
 
   @Get('recaps')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get recaps' })
   @ApiResponse({ status: 200, description: 'Recaps list' })
   async getRecaps(
@@ -32,6 +36,8 @@ export class CrossoversController {
   }
 
   @Get('recaps/:id')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get recap by id' })
   @ApiResponse({ status: 200, description: 'Recap details' })
   async getRecap(@Param('id') id: string): Promise<unknown> {
@@ -40,6 +46,8 @@ export class CrossoversController {
 
   // Wildcard GET route MUST come after all static GET routes
   @Get(':slug')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get crossover by slug' })
   @ApiResponse({ status: 200, description: 'Crossover details' })
   async getCrossover(@Param('slug') slug: string): Promise<unknown> {

@@ -82,6 +82,7 @@ model MissionReward {
   rewardId    String
   quantity    Int      @default(1)
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   mission Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
   reward  Reward  @relation(fields: [rewardId], references: [id])
@@ -96,6 +97,8 @@ model MissionCompletion {
   userId      String
   missionId   String
   completedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   mission Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
 
@@ -129,6 +132,8 @@ model RewardRedemption {
   rewardId    String
   pointsCost  Int
   redeemedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   reward Reward @relation(fields: [rewardId], references: [id])
 
@@ -146,6 +151,7 @@ model PointsLedger {
   reason      String
   metadata    Json?
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@map("points_ledger")
   @@index([userId])

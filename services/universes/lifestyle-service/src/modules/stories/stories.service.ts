@@ -335,19 +335,14 @@ export class StoriesService {
 
   async incrementViewCount(id: string): Promise<StoryResponse> {
     try {
-      const story = await this.prisma.cultureStory.findUnique({ where: { id } });
-      if (!story) {
-        throw new NotFoundException(`Story not found: ${id}`);
-      }
-
-      const updated = await this.prisma.cultureStory.update({
+      await this.prisma.cultureStory.update({
         where: { id },
-        data: { viewCount: story.viewCount + 1 },
+        data: { viewCount: { increment: 1 } },
       });
 
       return {
         success: true,
-        data: { message: `View count incremented to ${updated.viewCount}` },
+        data: { message: 'View count incremented' },
       };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;

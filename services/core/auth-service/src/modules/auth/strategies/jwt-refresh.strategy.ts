@@ -23,6 +23,7 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey: configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
+      algorithms: ['HS256'],
       audience: configService.get<string>('JWT_AUDIENCE') || 'azeebo-api',
       issuer: configService.get<string>('JWT_ISSUER') || 'azeebo-auth',
       passReqToCallback: true,

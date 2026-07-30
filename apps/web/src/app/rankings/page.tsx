@@ -6,6 +6,7 @@ import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 interface RankingEntry {
   userId: string;
@@ -188,7 +189,7 @@ export default function RankingsPage(): React.JSX.Element {
                           }}
                         >
                           {entry.avatar ? (
-                            <img
+                            <OptimizedImage
                               src={entry.avatar}
                               alt={entry.displayName}
                               className="w-full h-full rounded-full object-cover"
@@ -235,7 +236,7 @@ export default function RankingsPage(): React.JSX.Element {
                           style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
                         >
                           {entry.avatar ? (
-                            <img
+                            <OptimizedImage
                               src={entry.avatar}
                               alt={entry.displayName}
                               className="w-full h-full rounded-full object-cover"

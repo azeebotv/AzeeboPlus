@@ -6,6 +6,7 @@ import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 interface PublishedContent {
   id: string;
@@ -143,10 +144,12 @@ export default function PublishedPage(): React.JSX.Element {
                 style={{ borderRadius: 16, overflow: 'hidden' }}
               >
                 {item.thumbnail && (
-                  <img
+                  <OptimizedImage
                     src={item.thumbnail}
                     alt={item.title}
-                    style={{ width: '100%', height: 160, objectFit: 'cover' }}
+                    width={400}
+                    height={160}
+                    className="object-cover"
                   />
                 )}
                 <div style={{ padding: 16 }}>

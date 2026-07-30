@@ -13,6 +13,7 @@ import axios from 'axios';
 import { randomUUID } from 'crypto';
 
 import { AuthRepository } from './auth.repository.js';
+import { AuditLogService } from '../audit/audit.service.js';
 import { LoginDto } from './dto/login.dto.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { RefreshTokenDto } from './dto/refresh-token.dto.js';
@@ -47,6 +48,7 @@ export class AuthService {
 
   constructor(
     @Inject(AuthRepository) private readonly authRepository: AuthRepository,
+    @Inject(AuditLogService) private readonly auditLogService: AuditLogService,
     @Inject(JwtService) private readonly jwtService: JwtService,
     @Inject(OtpService) private readonly otpService: OtpService,
     @Inject(RedisService) private readonly redisService: RedisService,
@@ -88,9 +90,23 @@ export class AuthService {
     }
   }
 
-  async register(registerDto: RegisterDto): Promise<AuthResponse> {
+  async register(
+    registerDto: RegisterDto,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<AuthResponse> {
     const existingUser = await this.findUserByEmailCached(registerDto.email);
     if (existingUser) {
+      this.auditLogService.log({
+        actor: null,
+        action: 'registration_failed',
+        resourceType: 'user',
+        resourceId: registerDto.email,
+        result: 'failure',
+        ipAddress,
+        userAgent,
+        timestamp: new Date(),
+      });
       throw new ConflictException('Email already registered');
     }
 
@@ -99,6 +115,17 @@ export class AuthService {
     const user = await this.authRepository.create({
       ...registerDto,
       password: hashedPassword,
+    });
+
+    this.auditLogService.log({
+      actor: user.id,
+      action: 'registration',
+      resourceType: 'user',
+      resourceId: user.id,
+      result: 'success',
+      ipAddress,
+      userAgent,
+      timestamp: new Date(),
     });
 
     const tokens = await this.generateTokens(user);
@@ -115,7 +142,7 @@ export class AuthService {
     });
   }
 
-  async login(loginDto: LoginDto): Promise<AuthResponse> {
+  async login(loginDto: LoginDto, ipAddress?: string, userAgent?: string): Promise<AuthResponse> {
     const user = await this.findUserByEmailCached(loginDto.email);
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
@@ -133,6 +160,17 @@ export class AuthService {
     const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
     if (!isPasswordValid) {
       await this.incrementFailedLoginAttempts(loginDto.email);
+      this.auditLogService.log({
+        actor: user.id,
+        action: 'login.failure',
+        resourceType: 'user',
+        resourceId: user.id,
+        result: 'failure',
+        error: 'invalid_password',
+        ipAddress,
+        userAgent,
+        timestamp: new Date(),
+      });
       this.trackAnalyticsEvent('user_login_failed', user.id, {
         reason: 'invalid_password',
         email: loginDto.email,
@@ -141,6 +179,17 @@ export class AuthService {
     }
 
     await this.resetFailedLoginAttempts(loginDto.email);
+
+    this.auditLogService.log({
+      actor: user.id,
+      action: 'login.success',
+      resourceType: 'user',
+      resourceId: user.id,
+      result: 'success',
+      ipAddress,
+      userAgent,
+      timestamp: new Date(),
+    });
 
     // Invalidate cached user data on login
     await this.invalidateUserCache(loginDto.email, user.id);
@@ -193,6 +242,7 @@ export class AuthService {
         secret: jwtRefreshSecret,
         audience: this.configService.get<string>('JWT_AUDIENCE'),
         issuer: this.configService.get<string>('JWT_ISSUER'),
+        algorithms: ['HS256'],
       });
 
       const user = await this.authRepository.findById((decoded as { sub: string }).sub);
@@ -227,8 +277,19 @@ export class AuthService {
     }
   }
 
-  async logout(userId: string, accessToken?: string): Promise<{ success: boolean }> {
+  async logout(userId: string, accessToken?: string, ipAddress?: string, userAgent?: string): Promise<{ success: boolean }> {
     await this.authRepository.deleteSessionByUserId(userId);
+
+    this.auditLogService.log({
+      actor: userId,
+      action: 'logout',
+      resourceType: 'user',
+      resourceId: userId,
+      result: 'success',
+      ipAddress,
+      userAgent,
+      timestamp: new Date(),
+    });
 
     // Invalidate all auth caches on logout
     await this.cacheService.delete(cacheKey('auth', `permissions:${userId}`));
@@ -258,6 +319,7 @@ export class AuthService {
         secret: jwtAccessSecret,
         audience: this.configService.get<string>('JWT_AUDIENCE'),
         issuer: this.configService.get<string>('JWT_ISSUER'),
+        algorithms: ['HS256'],
       }) as {
         jti: string;
         sub: string;
@@ -289,12 +351,35 @@ export class AuthService {
   }
 
   async forgotPassword(
-    forgotPasswordDto: ForgotPasswordDto
+    forgotPasswordDto: ForgotPasswordDto,
+    ipAddress?: string,
+    userAgent?: string
   ): Promise<{ success: boolean; message: string }> {
     const user = await this.findUserByEmailCached(forgotPasswordDto.email);
     if (!user) {
+      this.auditLogService.log({
+        actor: null,
+        action: 'password_reset_requested',
+        resourceType: 'user',
+        resourceId: forgotPasswordDto.email,
+        result: 'failure',
+        ipAddress,
+        userAgent,
+        timestamp: new Date(),
+      });
       return { success: true, message: 'If the email exists, a reset link has been sent' };
     }
+
+    this.auditLogService.log({
+      actor: user.id,
+      action: 'password_reset_requested',
+      resourceType: 'user',
+      resourceId: user.id,
+      result: 'success',
+      ipAddress,
+      userAgent,
+      timestamp: new Date(),
+    });
 
     const resetToken = randomUUID();
     const resetTokenKey = `password_reset:${resetToken}`;
@@ -324,7 +409,9 @@ export class AuthService {
   }
 
   async resetPassword(
-    resetPasswordDto: ResetPasswordDto
+    resetPasswordDto: ResetPasswordDto,
+    ipAddress?: string,
+    userAgent?: string
   ): Promise<{ success: boolean; message: string }> {
     const resetTokenKey = `password_reset:${resetPasswordDto.token}`;
     const userId = await this.redisService.get(resetTokenKey);
@@ -344,6 +431,17 @@ export class AuthService {
     await this.redisService.del(resetTokenKey);
     await this.authRepository.deleteSessionByUserId(userId);
 
+    this.auditLogService.log({
+      actor: userId,
+      action: 'password.reset',
+      resourceType: 'user',
+      resourceId: userId,
+      result: 'success',
+      ipAddress,
+      userAgent,
+      timestamp: new Date(),
+    });
+
     // Invalidate all auth caches on password change
     await this.cacheService.delete(cacheKey('auth', `permissions:${userId}`));
     await this.cacheService.delete(cacheKey('auth', `session:${userId}`));
@@ -352,19 +450,52 @@ export class AuthService {
   }
 
   async verifyEmail(
-    verifyEmailDto: VerifyEmailDto
+    verifyEmailDto: VerifyEmailDto,
+    ipAddress?: string,
+    userAgent?: string
   ): Promise<{ success: boolean; message: string }> {
     const verificationTokenKey = `email_verification:${verifyEmailDto.token}`;
     const userId = await this.redisService.get(verificationTokenKey);
 
     if (!userId) {
+      this.auditLogService.log({
+        actor: null,
+        action: 'email_verification_failed',
+        resourceType: 'user',
+        resourceId: verifyEmailDto.token,
+        result: 'failure',
+        ipAddress,
+        userAgent,
+        timestamp: new Date(),
+      });
       throw new BadRequestException('Invalid or expired verification token');
     }
 
     const user = await this.authRepository.findById(userId);
     if (!user) {
+      this.auditLogService.log({
+        actor: userId,
+        action: 'email_verification_failed',
+        resourceType: 'user',
+        resourceId: userId,
+        result: 'failure',
+        ipAddress,
+        userAgent,
+        timestamp: new Date(),
+      });
       throw new BadRequestException('User not found');
     }
+
+    this.auditLogService.log({
+      actor: userId,
+      action: 'email_verified',
+      resourceType: 'user',
+      resourceId: userId,
+      result: 'success',
+      ipAddress,
+      userAgent,
+      timestamp: new Date(),
+    });
 
     await this.authRepository.verifyEmail(userId);
     await this.redisService.del(verificationTokenKey);
@@ -375,16 +506,50 @@ export class AuthService {
   }
 
   async resendVerification(
-    resendVerificationDto: ResendVerificationDto
+    resendVerificationDto: ResendVerificationDto,
+    ipAddress?: string,
+    userAgent?: string
   ): Promise<{ success: boolean; message: string }> {
     const user = await this.findUserByEmailCached(resendVerificationDto.email);
     if (!user) {
+      this.auditLogService.log({
+        actor: null,
+        action: 'verification_email_resend_failed',
+        resourceType: 'user',
+        resourceId: resendVerificationDto.email,
+        result: 'failure',
+        ipAddress,
+        userAgent,
+        timestamp: new Date(),
+      });
       return { success: true, message: 'If the email exists, a verification link has been sent' };
     }
 
     if (user.isVerified) {
+      this.auditLogService.log({
+        actor: user.id,
+        action: 'verification_email_resend_failed',
+        resourceType: 'user',
+        resourceId: user.id,
+        result: 'failure',
+        metadata: { reason: 'email_already_verified' },
+        ipAddress,
+        userAgent,
+        timestamp: new Date(),
+      });
       return { success: true, message: 'Email is already verified' };
     }
+
+    this.auditLogService.log({
+      actor: user.id,
+      action: 'verification_email_resended',
+      resourceType: 'user',
+      resourceId: user.id,
+      result: 'success',
+      ipAddress,
+      userAgent,
+      timestamp: new Date(),
+    });
 
     const verificationToken = randomUUID();
     const verificationKey = `email_verification:${verificationToken}`;
@@ -415,7 +580,9 @@ export class AuthService {
 
   async selectRole(
     userId: string,
-    selectRoleDto: SelectRoleDto
+    selectRoleDto: SelectRoleDto,
+    ipAddress?: string,
+    userAgent?: string
   ): Promise<{ success: boolean; message: string }> {
     const user = await this.authRepository.findById(userId);
     if (!user) {
@@ -430,6 +597,17 @@ export class AuthService {
     }
 
     await this.authRepository.updateRole(userId, selectRoleDto.role);
+
+    this.auditLogService.log({
+      actor: userId,
+      action: 'role.change',
+      resourceType: 'user',
+      resourceId: userId,
+      result: 'success',
+      error: JSON.stringify({ role: selectRoleDto.role }),
+      ipAddress,
+      userAgent,
+    });
 
     this.trackAnalyticsEvent('user_role_selected', userId, {
       role: selectRoleDto.role,
@@ -465,7 +643,7 @@ export class AuthService {
     });
   }
 
-  private async generateTokens(user: UserEntity): Promise<{
+  async generateTokens(user: UserEntity): Promise<{
     accessToken: string;
     refreshToken: string;
     expiresAt: string;
@@ -510,6 +688,13 @@ export class AuthService {
     );
 
     const hashedRefreshToken = await bcrypt.hash(refreshToken, this.saltRounds);
+
+    const MAX_SESSIONS = 5;
+    const activeSessions = await this.authRepository.countSessionsByUserId(user.id);
+    if (activeSessions >= MAX_SESSIONS) {
+      const sessionsToRevoke = activeSessions - MAX_SESSIONS + 1;
+      await this.authRepository.deleteOldestSessions(user.id, sessionsToRevoke);
+    }
 
     await this.authRepository.createSession({
       userId: user.id,

@@ -1,5 +1,14 @@
 'use client';
 import { Suspense, lazy, useState, useCallback, useEffect, useRef } from 'react';
+
+export const metadata = {
+  title: 'My Watchlist | Azeebo',
+  description: 'Manage your saved movies and watch them later on Azeebo.',
+  openGraph: {
+    title: 'My Watchlist | Azeebo',
+    description: 'Manage your saved movies and watch them later on Azeebo.',
+  },
+};
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';

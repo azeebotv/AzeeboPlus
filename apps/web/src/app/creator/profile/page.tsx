@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
@@ -17,6 +17,13 @@ interface CreatorProfile {
 export default function CreatorProfilePage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const [saved, setSaved] = useState(false);
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    };
+  }, []);
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['creator', 'profile'],
@@ -43,7 +50,8 @@ export default function CreatorProfilePage(): React.JSX.Element {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['creator', 'profile'] });
       setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+      savedTimerRef.current = setTimeout(() => setSaved(false), 2000);
     },
   });
 

@@ -5,7 +5,7 @@ type AlertProps = {
 
 /** Dark-glass-themed inline alert for auth forms. */
 export function Alert({ variant = 'error', children }: AlertProps): React.JSX.Element {
-  const color = variant === 'success' ? '#22c55e' : '#CC1C1C';
+  const color = variant === 'success' ? 'var(--brand-green)' : 'var(--brand-red)';
   return (
     <div
       role="alert"

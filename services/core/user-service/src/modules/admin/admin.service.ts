@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '@prisma/client';
@@ -17,6 +17,7 @@ interface AuditLogEntry {
 
 @Injectable()
 export class AdminService {
+  private readonly logger = new Logger(AdminService.name);
   private readonly contentServiceUrl: string;
   private readonly moderationServiceUrl: string;
   private readonly creatorServiceUrl: string;
@@ -40,58 +41,73 @@ export class AdminService {
   }
 
   private async logAudit(entry: AuditLogEntry): Promise<void> {
-    await this.prisma.auditLog.create({
-      data: {
-        actorId: entry.actorId,
-        actorRole: entry.actorRole,
-        action: entry.action,
-        targetType: entry.targetType,
-        targetId: entry.targetId,
-        details: (entry.details || {}) as Prisma.InputJsonValue,
-        ipAddress: entry.ipAddress,
-        userAgent: entry.userAgent,
-      },
-    });
+    try {
+      await this.prisma.auditLog.create({
+        data: {
+          actorId: entry.actorId,
+          actorRole: entry.actorRole,
+          action: entry.action,
+          targetType: entry.targetType,
+          targetId: entry.targetId,
+          details: (entry.details || {}) as Prisma.InputJsonValue,
+          ipAddress: entry.ipAddress,
+          userAgent: entry.userAgent,
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Failed to create audit log for action ${entry.action}`, (error as Error).stack);
+    }
   }
 
   async getAllSubscriptions(options?: { page?: number; limit?: number; status?: string }) {
-    const page = options?.page || 1;
-    const limit = options?.limit || 20;
-    const skip = (page - 1) * limit;
+    try {
+      const page = options?.page || 1;
+      const limit = options?.limit || 20;
+      const skip = (page - 1) * limit;
 
-    const where = options?.status ? { status: options.status } : {};
+      const where = options?.status ? { status: options.status } : {};
 
-    const [subscriptions, total] = await Promise.all([
-      this.prisma.subscription.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-      }),
-      this.prisma.subscription.count({ where }),
-    ]);
+      const [subscriptions, total] = await Promise.all([
+        this.prisma.subscription.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: { createdAt: 'desc' },
+        }),
+        this.prisma.subscription.count({ where }),
+      ]);
 
-    return {
-      subscriptions,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+      return {
+        subscriptions,
+        meta: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    } catch (error) {
+      this.logger.error('Failed to get all subscriptions', (error as Error).stack);
+      throw error;
+    }
   }
 
   async getSubscriptionById(subscriptionId: string) {
-    const subscription = await this.prisma.subscription.findUnique({
-      where: { id: subscriptionId },
-    });
+    try {
+      const subscription = await this.prisma.subscription.findUnique({
+        where: { id: subscriptionId },
+      });
 
-    if (!subscription) {
-      throw new NotFoundException('Subscription not found');
+      if (!subscription) {
+        throw new NotFoundException('Subscription not found');
+      }
+
+      return subscription;
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to get subscription ${subscriptionId}`, (error as Error).stack);
+      throw error;
     }
-
-    return subscription;
   }
 
   async updateSubscription(
@@ -100,68 +116,86 @@ export class AdminService {
     actorId: string,
     actorRole: string
   ) {
-    const existing = await this.prisma.subscription.findUnique({ where: { id: subscriptionId } });
-    if (!existing) {
-      throw new NotFoundException('Subscription not found');
+    try {
+      const existing = await this.prisma.subscription.findUnique({ where: { id: subscriptionId } });
+      if (!existing) {
+        throw new NotFoundException('Subscription not found');
+      }
+
+      const result = await this.prisma.subscription.update({
+        where: { id: subscriptionId },
+        data: updateData,
+      });
+
+      await this.logAudit({
+        actorId,
+        actorRole,
+        action: 'subscription.updated',
+        targetType: 'subscription',
+        targetId: subscriptionId,
+        details: {
+          previousStatus: existing.status,
+          newStatus: updateData.status,
+          changes: Object.keys(updateData),
+        },
+      });
+
+      return result;
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to update subscription ${subscriptionId}`, (error as Error).stack);
+      throw error;
     }
-
-    const result = await this.prisma.subscription.update({
-      where: { id: subscriptionId },
-      data: updateData,
-    });
-
-    await this.logAudit({
-      actorId,
-      actorRole,
-      action: 'subscription.updated',
-      targetType: 'subscription',
-      targetId: subscriptionId,
-      details: {
-        previousStatus: existing.status,
-        newStatus: updateData.status,
-        changes: Object.keys(updateData),
-      },
-    });
-
-    return result;
   }
 
   async deleteSubscription(subscriptionId: string, actorId: string, actorRole: string) {
-    const existing = await this.prisma.subscription.findUnique({ where: { id: subscriptionId } });
-    if (!existing) {
-      throw new NotFoundException('Subscription not found');
+    try {
+      const existing = await this.prisma.subscription.findUnique({ where: { id: subscriptionId } });
+      if (!existing) {
+        throw new NotFoundException('Subscription not found');
+      }
+
+      await this.prisma.subscription.delete({
+        where: { id: subscriptionId },
+      });
+
+      await this.logAudit({
+        actorId,
+        actorRole,
+        action: 'subscription.deleted',
+        targetType: 'subscription',
+        targetId: subscriptionId,
+        details: {
+          userId: existing.userId,
+          planType: existing.planType,
+          status: existing.status,
+        },
+      });
+
+      return { message: 'Subscription deleted successfully' };
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to delete subscription ${subscriptionId}`, (error as Error).stack);
+      throw error;
     }
-
-    await this.prisma.subscription.delete({
-      where: { id: subscriptionId },
-    });
-
-    await this.logAudit({
-      actorId,
-      actorRole,
-      action: 'subscription.deleted',
-      targetType: 'subscription',
-      targetId: subscriptionId,
-      details: {
-        userId: existing.userId,
-        planType: existing.planType,
-        status: existing.status,
-      },
-    });
-
-    return { message: 'Subscription deleted successfully' };
   }
 
   async getUserPreferences(userId: string) {
-    const preferences = await this.prisma.userPreferences.findUnique({
-      where: { userId },
-    });
+    try {
+      const preferences = await this.prisma.userPreferences.findUnique({
+        where: { userId },
+      });
 
-    if (!preferences) {
-      throw new NotFoundException('Preferences not found');
+      if (!preferences) {
+        throw new NotFoundException('Preferences not found');
+      }
+
+      return preferences;
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to get user preferences for ${userId}`, (error as Error).stack);
+      throw error;
     }
-
-    return preferences;
   }
 
   async updateUserPreferences(
@@ -170,51 +204,62 @@ export class AdminService {
     actorId: string,
     actorRole: string
   ) {
-    const existing = await this.prisma.userPreferences.findUnique({ where: { userId } });
-    if (!existing) {
-      throw new NotFoundException('Preferences not found');
+    try {
+      const existing = await this.prisma.userPreferences.findUnique({ where: { userId } });
+      if (!existing) {
+        throw new NotFoundException('Preferences not found');
+      }
+
+      const result = await this.prisma.userPreferences.update({
+        where: { userId },
+        data: preferences,
+      });
+
+      await this.logAudit({
+        actorId,
+        actorRole,
+        action: 'user.preferences.updated',
+        targetType: 'user',
+        targetId: userId,
+        details: {
+          changes: Object.keys(preferences),
+        },
+      });
+
+      return result;
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to update user preferences for ${userId}`, (error as Error).stack);
+      throw error;
     }
-
-    const result = await this.prisma.userPreferences.update({
-      where: { userId },
-      data: preferences,
-    });
-
-    await this.logAudit({
-      actorId,
-      actorRole,
-      action: 'user.preferences.updated',
-      targetType: 'user',
-      targetId: userId,
-      details: {
-        changes: Object.keys(preferences),
-      },
-    });
-
-    return result;
   }
 
   async getUserStats() {
-    const [totalSubscriptions, activeSubscriptions, totalWatchHistory, totalSavedItems] =
-      await Promise.all([
-        this.prisma.subscription.count(),
-        this.prisma.subscription.count({ where: { status: 'active' } }),
-        this.prisma.watchHistory.count(),
-        this.prisma.savedItem.count(),
-      ]);
+    try {
+      const [totalSubscriptions, activeSubscriptions, totalWatchHistory, totalSavedItems] =
+        await Promise.all([
+          this.prisma.subscription.count(),
+          this.prisma.subscription.count({ where: { status: 'active' } }),
+          this.prisma.watchHistory.count(),
+          this.prisma.savedItem.count(),
+        ]);
 
-    const recentSubscriptions = await this.prisma.subscription.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 10,
-    });
+      const recentSubscriptions = await this.prisma.subscription.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      });
 
-    return {
-      totalSubscriptions,
-      activeSubscriptions,
-      totalWatchHistory,
-      totalSavedItems,
-      recentSubscriptions,
-    };
+      return {
+        totalSubscriptions,
+        activeSubscriptions,
+        totalWatchHistory,
+        totalSavedItems,
+        recentSubscriptions,
+      };
+    } catch (error) {
+      this.logger.error('Failed to get user stats', (error as Error).stack);
+      throw error;
+    }
   }
 
   async deleteWatchHistory(
@@ -223,49 +268,55 @@ export class AdminService {
     actorId: string,
     actorRole: string
   ) {
-    if (contentId) {
-      const existing = await this.prisma.watchHistory.findUnique({
-        where: { userId_contentId: { userId, contentId } },
-      });
-      if (!existing) {
-        throw new NotFoundException('Watch history item not found');
+    try {
+      if (contentId) {
+        const existing = await this.prisma.watchHistory.findUnique({
+          where: { userId_contentId: { userId, contentId } },
+        });
+        if (!existing) {
+          throw new NotFoundException('Watch history item not found');
+        }
+
+        await this.prisma.watchHistory.delete({
+          where: { userId_contentId: { userId, contentId } },
+        });
+
+        await this.logAudit({
+          actorId,
+          actorRole,
+          action: 'user.watch_history.item_deleted',
+          targetType: 'watch_history',
+          targetId: contentId,
+          details: {
+            userId,
+            contentId,
+          },
+        });
+      } else {
+        const count = await this.prisma.watchHistory.count({ where: { userId } });
+
+        await this.prisma.watchHistory.deleteMany({
+          where: { userId },
+        });
+
+        await this.logAudit({
+          actorId,
+          actorRole,
+          action: 'user.watch_history.deleted',
+          targetType: 'user',
+          targetId: userId,
+          details: {
+            deletedCount: count,
+          },
+        });
       }
 
-      await this.prisma.watchHistory.delete({
-        where: { userId_contentId: { userId, contentId } },
-      });
-
-      await this.logAudit({
-        actorId,
-        actorRole,
-        action: 'user.watch_history.item_deleted',
-        targetType: 'watch_history',
-        targetId: contentId,
-        details: {
-          userId,
-          contentId,
-        },
-      });
-    } else {
-      const count = await this.prisma.watchHistory.count({ where: { userId } });
-
-      await this.prisma.watchHistory.deleteMany({
-        where: { userId },
-      });
-
-      await this.logAudit({
-        actorId,
-        actorRole,
-        action: 'user.watch_history.deleted',
-        targetType: 'user',
-        targetId: userId,
-        details: {
-          deletedCount: count,
-        },
-      });
+      return { message: 'Watch history deleted successfully' };
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to delete watch history for user ${userId}`, (error as Error).stack);
+      throw error;
     }
-
-    return { message: 'Watch history deleted successfully' };
   }
 
   async deleteSavedItems(
@@ -274,68 +325,80 @@ export class AdminService {
     actorId: string,
     actorRole: string
   ) {
-    if (contentId) {
-      const existing = await this.prisma.savedItem.findUnique({
-        where: { userId_contentId: { userId, contentId } },
-      });
-      if (!existing) {
-        throw new NotFoundException('Saved item not found');
+    try {
+      if (contentId) {
+        const existing = await this.prisma.savedItem.findUnique({
+          where: { userId_contentId: { userId, contentId } },
+        });
+        if (!existing) {
+          throw new NotFoundException('Saved item not found');
+        }
+
+        await this.prisma.savedItem.delete({
+          where: { userId_contentId: { userId, contentId } },
+        });
+
+        await this.logAudit({
+          actorId,
+          actorRole,
+          action: 'user.saved_items.item_deleted',
+          targetType: 'saved_item',
+          targetId: contentId,
+          details: {
+            userId,
+            contentId,
+          },
+        });
+      } else {
+        const count = await this.prisma.savedItem.count({ where: { userId } });
+
+        await this.prisma.savedItem.deleteMany({
+          where: { userId },
+        });
+
+        await this.logAudit({
+          actorId,
+          actorRole,
+          action: 'user.saved_items.deleted',
+          targetType: 'user',
+          targetId: userId,
+          details: {
+            deletedCount: count,
+          },
+        });
       }
 
-      await this.prisma.savedItem.delete({
-        where: { userId_contentId: { userId, contentId } },
-      });
-
-      await this.logAudit({
-        actorId,
-        actorRole,
-        action: 'user.saved_items.item_deleted',
-        targetType: 'saved_item',
-        targetId: contentId,
-        details: {
-          userId,
-          contentId,
-        },
-      });
-    } else {
-      const count = await this.prisma.savedItem.count({ where: { userId } });
-
-      await this.prisma.savedItem.deleteMany({
-        where: { userId },
-      });
-
-      await this.logAudit({
-        actorId,
-        actorRole,
-        action: 'user.saved_items.deleted',
-        targetType: 'user',
-        targetId: userId,
-        details: {
-          deletedCount: count,
-        },
-      });
+      return { message: 'Saved items deleted successfully' };
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to delete saved items for user ${userId}`, (error as Error).stack);
+      throw error;
     }
-
-    return { message: 'Saved items deleted successfully' };
   }
 
   async getUserById(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-    });
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
 
-    if (!user) {
-      throw new NotFoundException('User not found');
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      const followerCount = await this.prisma.following.count({ where: { followingId: userId } });
+      const followingCount = await this.prisma.following.count({ where: { followerId: userId } });
+
+      return {
+        ...user,
+        followerCount,
+        followingCount,
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to get user ${userId}`, (error as Error).stack);
+      throw error;
     }
-
-    const followerCount = await this.prisma.following.count({ where: { followingId: userId } });
-    const followingCount = await this.prisma.following.count({ where: { followerId: userId } });
-
-    return {
-      ...user,
-      followerCount,
-      followingCount,
-    };
   }
 
   async updateUser(
@@ -344,58 +407,70 @@ export class AdminService {
     actorId: string,
     actorRole: string
   ) {
-    const existing = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!existing) {
-      throw new NotFoundException('User not found');
+    try {
+      const existing = await this.prisma.user.findUnique({ where: { id: userId } });
+      if (!existing) {
+        throw new NotFoundException('User not found');
+      }
+
+      const result = await this.prisma.user.update({
+        where: { id: userId },
+        data: updateData,
+      });
+
+      await this.logAudit({
+        actorId,
+        actorRole,
+        action: 'user.updated',
+        targetType: 'user',
+        targetId: userId,
+        details: {
+          previousRole: existing.role,
+          newRole: updateData.role,
+          changes: Object.keys(updateData),
+        },
+      });
+
+      return result;
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to update user ${userId}`, (error as Error).stack);
+      throw error;
     }
-
-    const result = await this.prisma.user.update({
-      where: { id: userId },
-      data: updateData,
-    });
-
-    await this.logAudit({
-      actorId,
-      actorRole,
-      action: 'user.updated',
-      targetType: 'user',
-      targetId: userId,
-      details: {
-        previousRole: existing.role,
-        newRole: updateData.role,
-        changes: Object.keys(updateData),
-      },
-    });
-
-    return result;
   }
 
   async suspendUser(userId: string, reason: string, actorId: string, actorRole: string) {
-    const existing = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!existing) {
-      throw new NotFoundException('User not found');
+    try {
+      const existing = await this.prisma.user.findUnique({ where: { id: userId } });
+      if (!existing) {
+        throw new NotFoundException('User not found');
+      }
+
+      const result = await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          role: 'suspended',
+        },
+      });
+
+      await this.logAudit({
+        actorId,
+        actorRole,
+        action: 'user.suspended',
+        targetType: 'user',
+        targetId: userId,
+        details: {
+          previousRole: existing.role,
+          reason,
+        },
+      });
+
+      return result;
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to suspend user ${userId}`, (error as Error).stack);
+      throw error;
     }
-
-    const result = await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        role: 'suspended',
-      },
-    });
-
-    await this.logAudit({
-      actorId,
-      actorRole,
-      action: 'user.suspended',
-      targetType: 'user',
-      targetId: userId,
-      details: {
-        previousRole: existing.role,
-        reason,
-      },
-    });
-
-    return result;
   }
 
   async moderateContent(
@@ -468,28 +543,33 @@ export class AdminService {
   }
 
   async getAuditLogs(page = 1, limit = 20, userId?: string) {
-    const skip = (page - 1) * limit;
-    const where = userId ? { actorId: userId } : {};
+    try {
+      const skip = (page - 1) * limit;
+      const where = userId ? { actorId: userId } : {};
 
-    const [logs, total] = await Promise.all([
-      this.prisma.auditLog.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-      }),
-      this.prisma.auditLog.count({ where }),
-    ]);
+      const [logs, total] = await Promise.all([
+        this.prisma.auditLog.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: { createdAt: 'desc' },
+        }),
+        this.prisma.auditLog.count({ where }),
+      ]);
 
-    return {
-      logs,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+      return {
+        logs,
+        meta: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    } catch (error) {
+      this.logger.error('Failed to get audit logs', (error as Error).stack);
+      throw error;
+    }
   }
 
   async getVerificationRequests(page = 1, limit = 20, status?: string) {

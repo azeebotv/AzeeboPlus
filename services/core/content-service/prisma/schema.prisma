@@ -335,6 +335,7 @@ model GeoRestriction {
   updatedAt       DateTime @updatedAt
 
   @@map("geo_restrictions")
+  @@unique([countryCode])
   @@index([countryCode])
   @@index([isActive])
 }

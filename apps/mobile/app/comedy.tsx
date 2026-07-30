@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
@@ -8,6 +8,7 @@ import { apiClient } from '../src/api/client';
 import { comedySubscription } from '../src/config/prices';
 import { ApiResponse } from '../src/types/api';
 import { analytics } from '../src/utils/analytics';
+import { radius } from '../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -39,6 +40,7 @@ interface TopRatedItem {
 
 export default function ComedyUniverseHome() {
   const colorScheme = useColorScheme();
+  const insets = useSafeAreaInsets();
 
   const isDark = colorScheme === 'dark';
 
@@ -139,7 +141,7 @@ export default function ComedyUniverseHome() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <ScrollView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top }]}>
           <Text style={styles.universeLabel}>😂 Comedy</Text>
           <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
             Comedy Universe
@@ -322,7 +324,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 20,
+    borderRadius: radius.xl,
     gap: 8,
   },
   categoryEmoji: {
@@ -360,7 +362,7 @@ const styles = StyleSheet.create({
   },
   clipCard: {
     width: 260,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     overflow: 'hidden',
   },
   clipThumbnail: {
@@ -422,7 +424,7 @@ const styles = StyleSheet.create({
   creatorCard: {
     width: 130,
     padding: 16,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     alignItems: 'center',
     marginRight: 12,
   },
@@ -452,7 +454,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F39C12',
     paddingHorizontal: 16,
     paddingVertical: 6,
-    borderRadius: 6,
+    borderRadius: radius.sm,
   },
   subscribeText: {
     color: '#000',
@@ -467,7 +469,7 @@ const styles = StyleSheet.create({
   },
   topRatedCard: {
     width: '31%',
-    borderRadius: 10,
+    borderRadius: radius.md,
     overflow: 'hidden',
   },
   topRatedThumbnail: {
@@ -508,7 +510,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#1a1a1a',
     padding: 16,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     gap: 12,
   },
   comedyPassEmoji: {
@@ -530,7 +532,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F39C12',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: radius.sm,
   },
   comedyPassButtonText: {
     color: '#000',

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
@@ -15,6 +15,7 @@ import {
   AnimatedProgress,
   FadeIn,
 } from '../../src/components/motion';
+import { radius } from '../../src/theme';
 
 interface RewardItem {
   id: string;
@@ -44,6 +45,7 @@ interface RedeemOption {
 export default function RewardsScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [rewards, setRewards] = useState<RewardItem[]>([]);
   const [history, setHistory] = useState<RewardHistoryItem[]>([]);
@@ -118,7 +120,7 @@ export default function RewardsScreen() {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <ScrollView
-        style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}
+        style={[styles.container, { paddingTop: insets.top, backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#E8420A" />
         }
@@ -132,6 +134,7 @@ export default function RewardsScreen() {
               </Text>
               <TouchableOpacity
                 style={[styles.historyButton, { backgroundColor: isDark ? '#1a1a1a' : '#f0f0f0' }]}
+                accessibilityLabel="View rewards history"
               >
                 <Text style={styles.historyIcon}>📜</Text>
               </TouchableOpacity>
@@ -371,7 +374,7 @@ const styles = StyleSheet.create({
   },
   pointsCard: {
     backgroundColor: '#E8420A',
-    borderRadius: 20,
+    borderRadius: radius.xl,
     padding: 24,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -436,7 +439,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     padding: 16,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     marginBottom: 12,
   },
   rewardIcon: {
@@ -489,7 +492,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8420A',
     paddingHorizontal: 16,
     paddingVertical: 6,
-    borderRadius: 20,
+    borderRadius: radius.xl,
   },
   redeemPointsText: {
     color: '#ffffff',
@@ -504,7 +507,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     padding: 14,
-    borderRadius: 10,
+    borderRadius: radius.md,
   },
   historyIconView: {
     width: 40,
@@ -558,7 +561,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     backgroundColor: '#F59E0B',
-    borderRadius: 20,
+    borderRadius: radius.xl,
   },
   bonusButtonText: {
     color: '#ffffff',

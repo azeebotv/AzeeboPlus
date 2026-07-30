@@ -182,7 +182,7 @@ function GamesPageContent(): React.JSX.Element {
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="az-glass overflow-hidden">
+              <div key={`game-skeleton-${i}`} className="az-glass overflow-hidden">
                 <Skeleton height="208px" className="sm:h-[240px]" borderRadius="0px" />
                 <div className="p-4 space-y-3">
                   <Skeleton height="20px" width="75%" />

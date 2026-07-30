@@ -37,7 +37,7 @@ export class WalletService {
     @Inject(EVENT_BUS_SERVICE) private readonly eventBus: EventBusService
   ) {
     this.pointsToNairaRate = this.configService.get<number>('POINTS_TO_NAIRA_RATE', 100);
-    this.webhookSecret = this.configService.get<string>('WEBHOOK_SECRET', 'dev-webhook-secret');
+    this.webhookSecret = this.configService.getOrThrow<string>('WEBHOOK_SECRET');
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
       'http://analytics-service:3040'
@@ -1427,6 +1427,179 @@ export class WalletService {
       this.logger.error(`Failed to initiate deposit for user ${params.userId}: ${error}`);
       throw error;
     }
+  }
+
+  /**
+   * Atomic wallet charge: looks up wallet by userId, checks balance, debits,
+   * and returns the transaction ID. Designed for universe services to replace
+   * the duplicated get-wallet → check-balance → debit → create-entity → compensate pattern.
+   * @param params - Charge parameters including userId, amount, idempotencyKey, description, metadata
+   * @returns Charge result with transactionId and updated balance
+   * @throws NotFoundException if wallet does not exist for the user
+   * @throws BadRequestException if insufficient balance
+   */
+  async chargeWallet(params: {
+    userId: string;
+    amount: number;
+    idempotencyKey: string;
+    description: string;
+    metadata?: Record<string, unknown>;
+  }): Promise<{ transactionId: string; balance: number }> {
+    const { userId, amount, idempotencyKey, description, metadata } = params;
+
+    // Check for duplicate via idempotency key
+    const existingTransaction = await this.prisma.walletTransaction.findUnique({
+      where: { idempotencyKey },
+    });
+
+    if (existingTransaction) {
+      const wallet = await this.prisma.wallet.findUnique({
+        where: { userId },
+      });
+      if (!wallet) {
+        throw new NotFoundException(`Wallet not found for user ${userId}`);
+      }
+      return {
+        transactionId: existingTransaction.id,
+        balance: toNumber(wallet.balance.toString()),
+      };
+    }
+
+    const result = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const [wallet] = await tx.$queryRaw<WalletRow[]>`
+        SELECT * FROM "wallets" WHERE "userId" = ${userId} FOR UPDATE
+      `;
+
+      if (!wallet) {
+        throw new NotFoundException(`Wallet not found for user ${userId}`);
+      }
+
+      if (toNumber(wallet.balance.toString()) < amount) {
+        throw new BadRequestException('Insufficient balance');
+      }
+
+      const transaction = await tx.walletTransaction.create({
+        data: {
+          walletId: wallet.id,
+          type: 'debit',
+          amount,
+          status: 'completed',
+          description,
+          idempotencyKey,
+          ...(metadata ? { metadata: metadata as unknown as Prisma.InputJsonValue } : {}),
+        },
+      });
+
+      await tx.wallet.update({
+        where: { id: wallet.id },
+        data: { balance: { decrement: amount } },
+      });
+
+      return { transactionId: transaction.id, walletId: wallet.id };
+    });
+
+    await this.invalidateWalletCache(userId);
+
+    this.trackAnalyticsEvent('wallet_charge_completed', userId, {
+      transactionId: result.transactionId,
+      amount,
+      description,
+      idempotencyKey,
+    });
+
+    const updatedWallet = await this.prisma.wallet.findUnique({
+      where: { userId },
+      select: { balance: true },
+    });
+
+    return {
+      transactionId: result.transactionId,
+      balance: toNumber(updatedWallet?.balance.toString() || '0'),
+    };
+  }
+
+  /**
+   * Credits back a failed operation (compensation).
+   * Designed for universe services to reverse a previously debited charge
+   * when entity creation fails.
+   * @param params - Reversal parameters including userId, amount, idempotencyKey, description, metadata
+   * @returns Credit result with transactionId and updated balance
+   * @throws NotFoundException if wallet does not exist for the user
+   */
+  async creditReverse(params: {
+    userId: string;
+    amount: number;
+    idempotencyKey: string;
+    description: string;
+    metadata?: Record<string, unknown>;
+  }): Promise<{ transactionId: string; balance: number }> {
+    const { userId, amount, idempotencyKey, description, metadata } = params;
+
+    // Check for duplicate via idempotency key
+    const existingTransaction = await this.prisma.walletTransaction.findUnique({
+      where: { idempotencyKey },
+    });
+
+    if (existingTransaction) {
+      const wallet = await this.prisma.wallet.findUnique({
+        where: { userId },
+      });
+      if (!wallet) {
+        throw new NotFoundException(`Wallet not found for user ${userId}`);
+      }
+      return {
+        transactionId: existingTransaction.id,
+        balance: toNumber(wallet.balance.toString()),
+      };
+    }
+
+    const result = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const [wallet] = await tx.$queryRaw<WalletRow[]>`
+        SELECT * FROM "wallets" WHERE "userId" = ${userId} FOR UPDATE
+      `;
+
+      if (!wallet) {
+        throw new NotFoundException(`Wallet not found for user ${userId}`);
+      }
+
+      const transaction = await tx.walletTransaction.create({
+        data: {
+          walletId: wallet.id,
+          type: 'credit',
+          amount,
+          status: 'completed',
+          description,
+          idempotencyKey,
+          ...(metadata ? { metadata: metadata as unknown as Prisma.InputJsonValue } : {}),
+        },
+      });
+
+      await tx.wallet.update({
+        where: { id: wallet.id },
+        data: { balance: { increment: amount } },
+      });
+
+      return { transactionId: transaction.id, walletId: wallet.id };
+    });
+
+    await this.invalidateWalletCache(userId);
+
+    this.trackAnalyticsEvent('wallet_credit_reverse_completed', userId, {
+      transactionId: result.transactionId,
+      amount,
+      description,
+      idempotencyKey,
+    });
+
+    const updatedWallet = await this.prisma.wallet.findUnique({
+      where: { userId },
+      select: { balance: true },
+    });
+
+    return {
+      transactionId: result.transactionId,
+      balance: toNumber(updatedWallet?.balance.toString() || '0'),
+    };
   }
 
   async processWebhook(

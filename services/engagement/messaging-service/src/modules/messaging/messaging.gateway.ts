@@ -8,6 +8,7 @@ import {
   MessageBody,
 } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { Server, Socket } from 'socket.io';
 import { MessagingService } from './messaging.service.js';
 
@@ -24,12 +25,35 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
   @WebSocketServer()
   server!: Server;
 
-  constructor(private readonly messagingService: MessagingService) {}
+  constructor(
+    private readonly messagingService: MessagingService,
+    private readonly jwtService: JwtService
+  ) {}
+
+  afterInit() {
+    this.server.use(async (client: Socket, next) => {
+      try {
+        const token = this.extractToken(client);
+        if (!token) {
+          return next(new Error('Authentication required'));
+        }
+
+        const payload = await this.jwtService.verifyAsync(token);
+        if (!payload.sub) {
+          return next(new Error('Invalid token: missing sub'));
+        }
+
+        client.data.userId = payload.sub;
+        next();
+      } catch {
+        next(new Error('Invalid or expired token'));
+      }
+    });
+  }
 
   handleConnection(client: Socket) {
-    const userId = client.handshake.query.userId as string;
+    const userId = client.data.userId;
     if (userId) {
-      client.data.userId = userId;
       client.join(`user:${userId}`);
       this.logger.log(`Client connected: ${client.id} (user: ${userId})`);
     } else {
@@ -135,6 +159,17 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
     }
 
     return { event: 'error', data: { message: result.error } };
+  }
+
+  private extractToken(client: Socket): string | null {
+    const authHeader = client.handshake.auth?.token || client.handshake.headers?.authorization;
+    if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
+      return authHeader.substring(7);
+    }
+    if (typeof client.handshake.query?.token === 'string') {
+      return client.handshake.query.token;
+    }
+    return null;
   }
 
   broadcastToConversation(conversationId: string, event: string, data: unknown) {

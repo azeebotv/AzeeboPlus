@@ -26,6 +26,15 @@ const DEFAULT_SETTINGS: UserSettings = {
   downloadQuality: 'hd',
 };
 
+export const metadata = {
+  title: 'Settings | Azeebo',
+  description: 'Manage your account preferences, download quality, and notification settings.',
+  openGraph: {
+    title: 'Settings | Azeebo',
+    description: 'Manage your account preferences, download quality, and notification settings.',
+  },
+};
+
 export default function SettingsPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
@@ -71,7 +80,7 @@ export default function SettingsPage(): React.JSX.Element {
   ];
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)', minHeight: '100vh', color: 'var(--text-primary, #F5F0EB)' }}>
       <AppHeader />
       <main
         style={{
@@ -120,9 +129,12 @@ export default function SettingsPage(): React.JSX.Element {
                 >
                   <div>
                     <p style={{ fontWeight: 600, fontSize: 15 }}>{item.label}</p>
-                    <p style={{ color: '#9A8A7A', fontSize: 13 }}>{item.desc}</p>
+                    <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 13 }}>{item.desc}</p>
                   </div>
                   <button
+                    role="switch"
+                    aria-checked={!!settings[item.key as keyof typeof settings]}
+                    aria-label={`${item.label}: ${settings[item.key as keyof typeof settings] ? 'On' : 'Off'}`}
                     onClick={() => {
                       const updated = {
                         ...settings,
@@ -138,8 +150,8 @@ export default function SettingsPage(): React.JSX.Element {
                       cursor: 'pointer',
                       position: 'relative',
                       backgroundColor: settings[item.key as keyof typeof settings]
-                        ? '#E8420A'
-                        : '#2A1A1A',
+                        ? 'var(--brand-orange, #E8420A)'
+                        : 'var(--bg-surface, #2A1A1A)',
                       transition: 'background-color 0.2s',
                     }}
                   >
@@ -168,6 +180,7 @@ export default function SettingsPage(): React.JSX.Element {
             {['sd', 'hd', 'fullhd'].map((q) => (
               <button
                 key={q}
+                aria-label={`Download quality: ${q === 'fullhd' ? 'Full HD' : q.toUpperCase()}`}
                 onClick={() => setLocalSettings({ ...settings, downloadQuality: q })}
                 style={{
                   flex: 1,
@@ -176,9 +189,9 @@ export default function SettingsPage(): React.JSX.Element {
                   border: settings.downloadQuality === q ? 'none' : '1px solid #2A1A1A',
                   background:
                     settings.downloadQuality === q
-                      ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)'
+                      ? 'linear-gradient(135deg, var(--brand-orange, #E8420A) 0%, var(--brand-red, #CC1C1C) 100%)'
                       : 'transparent',
-                  color: settings.downloadQuality === q ? '#fff' : '#9A8A7A',
+                  color: settings.downloadQuality === q ? '#fff' : 'var(--text-muted, #9A8A7A)',
                   fontWeight: 600,
                   fontSize: 13,
                   cursor: 'pointer',
@@ -210,11 +223,11 @@ export default function SettingsPage(): React.JSX.Element {
                   padding: '12px 0',
                   borderBottom: '1px solid #2A1A1A',
                   textDecoration: 'none',
-                  color: '#F5F0EB',
+                  color: 'var(--text-primary, #F5F0EB)',
                 }}
               >
                 <span style={{ fontWeight: 500, fontSize: 15 }}>{link.label}</span>
-                <span style={{ color: '#9A8A7A' }}>→</span>
+                <span style={{ color: 'var(--text-muted, #9A8A7A)' }}>→</span>
               </a>
             ))}
           </div>
@@ -255,7 +268,7 @@ export default function SettingsPage(): React.JSX.Element {
             padding: '14px 0',
             borderRadius: 999,
             border: 'none',
-            background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+            background: 'linear-gradient(135deg, var(--brand-orange, #E8420A) 0%, var(--brand-red, #CC1C1C) 100%)',
             color: '#fff',
             fontWeight: 700,
             fontSize: 16,

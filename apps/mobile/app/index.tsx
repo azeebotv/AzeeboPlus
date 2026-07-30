@@ -112,7 +112,7 @@ export default function SplashScreen() {
     <View
       style={[
         styles.container,
-        { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#ffffff' },
+        { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : colors.text.primary },
       ]}
     >
       <AmbientGlow color={colors.primary[500]} size={250} intensity={0.08} />
