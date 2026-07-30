@@ -41,13 +41,13 @@ function CrossoversPageContent(): React.JSX.Element {
   const error = crossoversQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Vertical" />
 
       {/* Hero */}
       <section
         className="relative py-16 sm:py-20"
-        style={{ background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)' }}
+        style={{ background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.h1
@@ -119,7 +119,7 @@ function CrossoversPageContent(): React.JSX.Element {
                       <div className="absolute top-2 left-2">
                         <span
                           className="px-2.5 py-1 rounded-full text-[10px] font-bold"
-                          style={{ backgroundColor: '#E8420A', color: '#fff' }}
+                          style={{ backgroundColor: 'var(--brand-orange)', color: 'var(--brand-white)' }}
                         >
                           CROSSOVER
                         </span>

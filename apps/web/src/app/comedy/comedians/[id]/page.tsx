@@ -61,7 +61,7 @@ function ComedianDetailContent(): React.JSX.Element {
   const error = comedianQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Comedy" />
 
       {isLoading ? (

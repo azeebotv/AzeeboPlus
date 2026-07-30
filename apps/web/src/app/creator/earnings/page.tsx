@@ -45,7 +45,7 @@ export default function CreatorEarningsPage(): React.JSX.Element {
 
   if (error) {
     return (
-      <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+      <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
         <AppHeader active="Creator" />
         <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
           <ErrorState title="Failed to load earnings" />
@@ -56,14 +56,14 @@ export default function CreatorEarningsPage(): React.JSX.Element {
   }
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
       <AppHeader active="Creator" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Earnings</h1>
-        <p style={{ color: '#9A8A7A', marginBottom: 24 }}>Track your revenue and payouts</p>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>Track your revenue and payouts</p>
 
         <div style={{ marginBottom: 24 }}>
-          <label style={{ color: '#9A8A7A', fontSize: 13, marginBottom: 8, display: 'block' }}>
+          <label style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 8, display: 'block' }}>
             Period
           </label>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -74,7 +74,7 @@ export default function CreatorEarningsPage(): React.JSX.Element {
                 style={{
                   padding: '8px 16px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--border-default)',
                   background: period === p ? 'rgba(232,66,10,0.2)' : 'transparent',
                   color: period === p ? '#E8420A' : '#9A8A7A',
                   cursor: 'pointer',
@@ -113,12 +113,12 @@ export default function CreatorEarningsPage(): React.JSX.Element {
                 style={{
                   padding: 20,
                   borderRadius: 16,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--border-default)',
                   backgroundColor: 'rgba(26,10,10,0.5)',
                 }}
               >
-                <p style={{ color: '#9A8A7A', fontSize: 12, marginBottom: 4 }}>Total Earnings</p>
-                <p style={{ fontSize: 24, fontWeight: 700, color: '#F5F0EB' }}>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginBottom: 4 }}>Total Earnings</p>
+                <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>
                   ₦{earnings.totalEarnings.toLocaleString()}
                 </p>
               </div>
@@ -126,11 +126,11 @@ export default function CreatorEarningsPage(): React.JSX.Element {
                 style={{
                   padding: 20,
                   borderRadius: 16,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--border-default)',
                   backgroundColor: 'rgba(26,10,10,0.5)',
                 }}
               >
-                <p style={{ color: '#9A8A7A', fontSize: 12, marginBottom: 4 }}>Available Balance</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginBottom: 4 }}>Available Balance</p>
                 <p style={{ fontSize: 24, fontWeight: 700, color: '#4ADE80' }}>
                   ₦{earnings.availableBalance.toLocaleString()}
                 </p>
@@ -139,11 +139,11 @@ export default function CreatorEarningsPage(): React.JSX.Element {
                 style={{
                   padding: 20,
                   borderRadius: 16,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--border-default)',
                   backgroundColor: 'rgba(26,10,10,0.5)',
                 }}
               >
-                <p style={{ color: '#9A8A7A', fontSize: 12, marginBottom: 4 }}>Pending</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginBottom: 4 }}>Pending</p>
                 <p style={{ fontSize: 24, fontWeight: 700, color: '#F59E0B' }}>
                   ₦{earnings.pendingEarnings.toLocaleString()}
                 </p>
@@ -152,12 +152,12 @@ export default function CreatorEarningsPage(): React.JSX.Element {
                 style={{
                   padding: 20,
                   borderRadius: 16,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--border-default)',
                   backgroundColor: 'rgba(26,10,10,0.5)',
                 }}
               >
-                <p style={{ color: '#9A8A7A', fontSize: 12, marginBottom: 4 }}>Lifetime</p>
-                <p style={{ fontSize: 24, fontWeight: 700, color: '#F5F0EB' }}>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginBottom: 4 }}>Lifetime</p>
+                <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>
                   ₦{earnings.lifetimeEarnings.toLocaleString()}
                 </p>
               </div>
@@ -172,14 +172,14 @@ export default function CreatorEarningsPage(): React.JSX.Element {
                     style={{
                       padding: 16,
                       borderRadius: 12,
-                      border: '1px solid #2A1A1A',
+                      border: '1px solid var(--border-default)',
                       backgroundColor: 'rgba(26,10,10,0.5)',
                     }}
                   >
-                    <p style={{ color: '#9A8A7A', fontSize: 12, textTransform: 'capitalize' }}>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: 12, textTransform: 'capitalize' }}>
                       {key.replace(/([A-Z])/g, ' $1')}
                     </p>
-                    <p style={{ fontSize: 18, fontWeight: 600, color: '#F5F0EB' }}>
+                    <p style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>
                       ₦{value.toLocaleString()}
                     </p>
                   </div>
@@ -190,7 +190,7 @@ export default function CreatorEarningsPage(): React.JSX.Element {
             <div>
               <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>Recent Earnings</h2>
               {earnings.earningsHistory.length === 0 ? (
-                <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>
+                <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>
                   No recent earnings
                 </p>
               ) : (
@@ -204,15 +204,15 @@ export default function CreatorEarningsPage(): React.JSX.Element {
                         alignItems: 'center',
                         padding: 16,
                         borderRadius: 16,
-                        border: '1px solid #2A1A1A',
+                        border: '1px solid var(--border-default)',
                         backgroundColor: 'rgba(26,10,10,0.5)',
                       }}
                     >
                       <div>
-                        <p style={{ fontWeight: 600, fontSize: 14, color: '#F5F0EB', margin: 0 }}>
+                        <p style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', margin: 0 }}>
                           {item.source}
                         </p>
-                        <p style={{ color: '#9A8A7A', fontSize: 12 }}>{item.date}</p>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: 12 }}>{item.date}</p>
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <p
@@ -235,7 +235,7 @@ export default function CreatorEarningsPage(): React.JSX.Element {
             </div>
           </>
         ) : (
-          <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>
+          <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>
             No earnings data available yet.
           </p>
         )}

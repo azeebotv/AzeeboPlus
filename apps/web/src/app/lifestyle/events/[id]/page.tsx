@@ -140,7 +140,7 @@ function EventDetailPageContent(): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Lifestyle" />
 
       {isLoading ? (
@@ -172,7 +172,7 @@ function EventDetailPageContent(): React.JSX.Element {
                 {event.isVirtual && (
                   <span
                     className="px-3 py-1 rounded-full text-xs font-semibold"
-                    style={{ backgroundColor: 'rgba(59,130,246,0.9)', color: '#fff' }}
+                    style={{ backgroundColor: 'rgba(59,130,246,0.9)', color: 'var(--brand-white)' }}
                   >
                     Virtual Event
                   </span>
@@ -180,7 +180,7 @@ function EventDetailPageContent(): React.JSX.Element {
                 {event.category && (
                   <span
                     className="px-3 py-1 rounded-full text-xs font-semibold"
-                    style={{ backgroundColor: 'rgba(232,66,10,0.9)', color: '#fff' }}
+                    style={{ backgroundColor: 'rgba(232,66,10,0.9)', color: 'var(--brand-white)' }}
                   >
                     {event.category}
                   </span>
@@ -191,7 +191,7 @@ function EventDetailPageContent(): React.JSX.Element {
                   type="button"
                   onClick={handleShare}
                   className="px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2"
-                  style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: '#fff' }}
+                  style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'var(--brand-white)' }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -220,7 +220,7 @@ function EventDetailPageContent(): React.JSX.Element {
                     exit={{ opacity: 0, y: 10 }}
                     className="absolute bottom-16 right-4 p-2 rounded-lg"
                     style={{
-                      backgroundColor: '#1A0A0A',
+                      backgroundColor: 'var(--brand-near-black)',
                       border: '1px solid rgba(255,255,255,0.1)',
                     }}
                   >
@@ -373,7 +373,7 @@ function EventDetailPageContent(): React.JSX.Element {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="block w-full mt-3 py-3 rounded-full text-sm font-semibold text-center transition-all"
-                        style={{ border: '1px solid rgba(255,255,255,0.2)', color: '#fff' }}
+                        style={{ border: '1px solid rgba(255,255,255,0.2)', color: 'var(--brand-white)' }}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
@@ -507,7 +507,7 @@ function EventDetailPageContent(): React.JSX.Element {
                         {attendees.length > 5 && (
                           <span
                             className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold"
-                            style={{ backgroundColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
+                            style={{ backgroundColor: 'rgba(255,255,255,0.1)', color: 'var(--brand-white)' }}
                           >
                             +{attendees.length - 5}
                           </span>
@@ -526,7 +526,7 @@ function EventDetailPageContent(): React.JSX.Element {
               <motion.button
                 type="button"
                 className="px-6 py-3 rounded-full text-sm font-semibold transition-all"
-                style={{ border: '1px solid rgba(255,255,255,0.2)', color: '#fff' }}
+                style={{ border: '1px solid rgba(255,255,255,0.2)', color: 'var(--brand-white)' }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >

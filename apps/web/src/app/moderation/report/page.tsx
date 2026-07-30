@@ -50,7 +50,7 @@ function ReportPageContent(): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader />
 
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16">

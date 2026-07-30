@@ -52,7 +52,7 @@ function SpecialsPageContent(): React.JSX.Element {
   const featured = specials[0] ?? null;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Comedy" />
 
       {/* Featured Special */}
@@ -79,7 +79,7 @@ function SpecialsPageContent(): React.JSX.Element {
               >
                 <span
                   className="px-3 py-1 rounded-full text-xs font-semibold mb-4 inline-block"
-                  style={{ backgroundColor: '#E8420A', color: '#fff' }}
+                  style={{ backgroundColor: 'var(--brand-orange)', color: 'var(--brand-white)' }}
                 >
                   Featured Special
                 </span>

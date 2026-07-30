@@ -4,7 +4,7 @@ import AppFooter from '@/components/layout/AppFooter';
 
 export default function GuidelinesPage(): React.JSX.Element {
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
       <AppHeader />
       <main
         style={{
@@ -16,7 +16,7 @@ export default function GuidelinesPage(): React.JSX.Element {
         }}
       >
         <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8 }}>Community Guidelines</h1>
-        <p style={{ color: '#9A8A7A', marginBottom: 32 }}>Last updated: July 2026</p>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>Last updated: July 2026</p>
 
         <div className="az-glass" style={{ padding: 32, borderRadius: 20, lineHeight: 1.8 }}>
           <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: '#E8420A' }}>

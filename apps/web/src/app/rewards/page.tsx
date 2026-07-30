@@ -131,7 +131,7 @@ export default function RewardsPage(): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Rewards" />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -271,7 +271,7 @@ export default function RewardsPage(): React.JSX.Element {
                         className="h-full rounded-full"
                         style={{
                           width: `${(achievement.progress / achievement.target) * 100}%`,
-                          backgroundColor: '#E8420A',
+                          backgroundColor: 'var(--brand-orange)',
                         }}
                       />
                     </div>

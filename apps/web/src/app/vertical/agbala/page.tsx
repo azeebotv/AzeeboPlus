@@ -66,7 +66,7 @@ export default function AgbalaPage(): React.JSX.Element {
   });
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A', color: '#F5F0EB' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
       <AppHeader active="Vertical" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
@@ -86,7 +86,7 @@ export default function AgbalaPage(): React.JSX.Element {
             📖
           </div>
           <h1 style={{ fontSize: 36, fontWeight: 700, marginBottom: 8 }}>Agbala</h1>
-          <p style={{ color: '#9A8A7A', fontSize: 18, maxWidth: 600, margin: '0 auto' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 18, maxWidth: 600, margin: '0 auto' }}>
             Choose your path. Shape your destiny through interactive storytelling.
           </p>
         </div>
@@ -123,9 +123,9 @@ export default function AgbalaPage(): React.JSX.Element {
                     display: 'block',
                     padding: 24,
                     borderRadius: 16,
-                    border: '1px solid #2A1A1A',
+                    border: '1px solid var(--border-default)',
                     textDecoration: 'none',
-                    color: '#F5F0EB',
+                    color: 'var(--text-primary)',
                     transition: 'border-color 0.2s',
                   }}
                   onMouseEnter={(e) => {
@@ -139,7 +139,7 @@ export default function AgbalaPage(): React.JSX.Element {
                   <h3 style={{ fontWeight: 600, fontSize: 18, marginBottom: 8, color: path.color }}>
                     {path.name}
                   </h3>
-                  <p style={{ color: '#9A8A7A', fontSize: 13, lineHeight: 1.4 }}>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.4 }}>
                     {path.description}
                   </p>
                 </Link>
@@ -166,9 +166,9 @@ export default function AgbalaPage(): React.JSX.Element {
                     display: 'block',
                     padding: 20,
                     borderRadius: 16,
-                    border: '1px solid #2A1A1A',
+                    border: '1px solid var(--border-default)',
                     textDecoration: 'none',
-                    color: '#F5F0EB',
+                    color: 'var(--text-primary)',
                     transition: 'border-color 0.2s',
                   }}
                   onMouseEnter={(e) => {
@@ -180,7 +180,7 @@ export default function AgbalaPage(): React.JSX.Element {
                 >
                   <h3 style={{ fontWeight: 600, fontSize: 16, marginBottom: 4 }}>{sw.title}</h3>
                   {sw.description && (
-                    <p style={{ color: '#9A8A7A', fontSize: 12, lineHeight: 1.4 }}>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1.4 }}>
                       {sw.description}
                     </p>
                   )}
@@ -188,7 +188,7 @@ export default function AgbalaPage(): React.JSX.Element {
               ))}
             </div>
           ) : (
-            <p style={{ color: '#9A8A7A', fontSize: 14 }}>No storyworlds available yet.</p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>No storyworlds available yet.</p>
           )}
         </section>
 

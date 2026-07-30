@@ -75,7 +75,7 @@ export default function ProfileEditPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
       <AppHeader />
       <main
         style={{
@@ -92,7 +92,7 @@ export default function ProfileEditPage(): React.JSX.Element {
             style={{
               background: 'none',
               border: 'none',
-              color: '#9A8A7A',
+              color: 'var(--text-secondary)',
               cursor: 'pointer',
               fontSize: 14,
               marginBottom: 16,
@@ -148,9 +148,9 @@ export default function ProfileEditPage(): React.JSX.Element {
             style={{
               padding: '8px 20px',
               borderRadius: 999,
-              border: '1px solid #2A1A1A',
+              border: '1px solid var(--border-default)',
               background: 'transparent',
-              color: '#9A8A7A',
+              color: 'var(--text-secondary)',
               fontWeight: 500,
               fontSize: 13,
               cursor: 'pointer',
@@ -174,7 +174,7 @@ export default function ProfileEditPage(): React.JSX.Element {
                     fontSize: 13,
                     fontWeight: 600,
                     marginBottom: 6,
-                    color: '#9A8A7A',
+                    color: 'var(--text-secondary)',
                   }}
                 >
                   {field.label}
@@ -187,9 +187,9 @@ export default function ProfileEditPage(): React.JSX.Element {
                     width: '100%',
                     padding: '12px 16px',
                     borderRadius: 12,
-                    border: '1px solid #2A1A1A',
+                    border: '1px solid var(--border-default)',
                     backgroundColor: '#0D0505',
-                    color: '#F5F0EB',
+                    color: 'var(--text-primary)',
                     fontSize: 15,
                   }}
                 />
@@ -202,7 +202,7 @@ export default function ProfileEditPage(): React.JSX.Element {
                   fontSize: 13,
                   fontWeight: 600,
                   marginBottom: 6,
-                  color: '#9A8A7A',
+                  color: 'var(--text-secondary)',
                 }}
               >
                 Bio
@@ -215,9 +215,9 @@ export default function ProfileEditPage(): React.JSX.Element {
                   width: '100%',
                   padding: '12px 16px',
                   borderRadius: 12,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--border-default)',
                   backgroundColor: '#0D0505',
-                  color: '#F5F0EB',
+                  color: 'var(--text-primary)',
                   fontSize: 15,
                   resize: 'vertical',
                 }}
@@ -232,8 +232,8 @@ export default function ProfileEditPage(): React.JSX.Element {
                 padding: '14px 0',
                 borderRadius: 999,
                 border: 'none',
-                background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                color: '#fff',
+                background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+                color: 'var(--brand-white)',
                 fontWeight: 700,
                 fontSize: 16,
                 cursor: 'pointer',

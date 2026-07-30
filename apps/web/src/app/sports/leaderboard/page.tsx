@@ -41,7 +41,7 @@ function LeaderboardPageContent(): React.JSX.Element {
   const error = leaderboardQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Sports" />
 
       <section

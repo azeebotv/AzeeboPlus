@@ -40,7 +40,7 @@ export default function ForgotPasswordPage(): React.JSX.Element {
   return (
     <div
       className="relative min-h-screen w-full flex overflow-hidden"
-      style={{ backgroundColor: '#1A0A0A' }}
+      style={{ backgroundColor: 'var(--brand-near-black)' }}
     >
       {/* Logo top-left */}
       <div className="absolute top-0 left-0 p-8 z-20">

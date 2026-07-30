@@ -111,8 +111,8 @@ export default function SupportPage(): React.JSX.Element {
               style={{
                 padding: '12px 28px',
                 borderRadius: 999,
-                background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                color: '#fff',
+                background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+                color: 'var(--brand-white)',
                 fontWeight: 600,
                 fontSize: 14,
                 textDecoration: 'none',
@@ -125,7 +125,7 @@ export default function SupportPage(): React.JSX.Element {
               style={{
                 padding: '12px 28px',
                 borderRadius: 999,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--border-default)',
                 background: 'transparent',
                 color: 'var(--text-muted, #9A8A7A)',
                 fontWeight: 600,

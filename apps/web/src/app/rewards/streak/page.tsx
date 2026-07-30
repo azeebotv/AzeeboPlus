@@ -88,7 +88,7 @@ export default function StreakPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
       <AppHeader />
       <main
         style={{
@@ -98,14 +98,14 @@ export default function StreakPage(): React.JSX.Element {
         }}
       >
         <div style={{ marginBottom: 24 }}>
-          <Link href="/rewards" style={{ color: '#9A8A7A', fontSize: 14, textDecoration: 'none' }}>
+          <Link href="/rewards" style={{ color: 'var(--text-secondary)', fontSize: 14, textDecoration: 'none' }}>
             &larr; Back to Rewards
           </Link>
         </div>
 
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <h1 style={{ fontSize: 28, fontWeight: 700 }}>Streak</h1>
-          <p style={{ color: '#9A8A7A', marginTop: 4 }}>Keep your daily streak alive</p>
+          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>Keep your daily streak alive</p>
         </div>
 
         {isLoading ? (
@@ -134,7 +134,7 @@ export default function StreakPage(): React.JSX.Element {
             >
               <div style={{ fontSize: 48, marginBottom: 8 }}>🔥</div>
               <p style={{ fontSize: 48, fontWeight: 700, color: '#E8420A' }}>{currentStreak}</p>
-              <p style={{ fontSize: 16, color: '#9A8A7A', marginBottom: 8 }}>Day Streak</p>
+              <p style={{ fontSize: 16, color: 'var(--text-secondary)', marginBottom: 8 }}>Day Streak</p>
               {todayActive && (
                 <span
                   style={{
@@ -178,7 +178,7 @@ export default function StreakPage(): React.JSX.Element {
                 className="az-glass"
                 style={{ padding: 20, borderRadius: 16, textAlign: 'center' }}
               >
-                <p style={{ fontSize: 13, color: '#9A8A7A', marginBottom: 8 }}>Current Streak</p>
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>Current Streak</p>
                 <p style={{ fontSize: 24, fontWeight: 700, color: '#E8420A' }}>
                   {currentStreak} days
                 </p>
@@ -187,7 +187,7 @@ export default function StreakPage(): React.JSX.Element {
                 className="az-glass"
                 style={{ padding: 20, borderRadius: 16, textAlign: 'center' }}
               >
-                <p style={{ fontSize: 13, color: '#9A8A7A', marginBottom: 8 }}>Longest Streak</p>
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>Longest Streak</p>
                 <p style={{ fontSize: 24, fontWeight: 700, color: '#F59E0B' }}>
                   {longestStreak} days
                 </p>
@@ -279,7 +279,7 @@ export default function StreakPage(): React.JSX.Element {
                       </div>
                       <div>
                         <p style={{ fontWeight: 600, fontSize: 14 }}>{milestone.label}</p>
-                        <p style={{ fontSize: 12, color: '#9A8A7A' }}>
+                        <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                           {milestone.days} consecutive days
                         </p>
                       </div>

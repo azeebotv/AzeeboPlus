@@ -106,12 +106,12 @@ function LiveChatPageContent(): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Reality" />
 
       <section
         className="relative py-8 sm:py-12"
-        style={{ background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)' }}
+        style={{ background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
@@ -136,7 +136,7 @@ function LiveChatPageContent(): React.JSX.Element {
               type="button"
               onClick={() => setShowParticipants(!showParticipants)}
               className="px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2"
-              style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: '#fff' }}
+              style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'var(--brand-white)' }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >

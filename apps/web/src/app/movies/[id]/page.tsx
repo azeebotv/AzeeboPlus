@@ -95,7 +95,7 @@ function MovieDetailPageContent(): React.JSX.Element {
   const error = movieQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Movies" />
 
       {isLoading ? (
@@ -152,7 +152,7 @@ function MovieDetailPageContent(): React.JSX.Element {
                     {movie.isPremium && (
                       <span
                         className="px-3 py-1 rounded-full text-xs font-semibold"
-                        style={{ backgroundColor: '#E8420A', color: '#fff' }}
+                        style={{ backgroundColor: 'var(--brand-orange)', color: 'var(--brand-white)' }}
                       >
                         Premium
                       </span>
@@ -325,7 +325,7 @@ function MovieDetailPageContent(): React.JSX.Element {
                         style={{
                           border: '1px solid rgba(255,255,255,0.2)',
                           backgroundColor: 'rgba(255,255,255,0.08)',
-                          color: '#fff',
+                          color: 'var(--brand-white)',
                         }}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
@@ -341,7 +341,7 @@ function MovieDetailPageContent(): React.JSX.Element {
                       style={{
                         border: '1px solid rgba(255,255,255,0.2)',
                         backgroundColor: 'rgba(255,255,255,0.08)',
-                        color: '#fff',
+                        color: 'var(--brand-white)',
                       }}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}

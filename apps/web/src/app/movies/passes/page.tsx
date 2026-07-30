@@ -104,7 +104,7 @@ function PassesPageContent(): React.JSX.Element {
   const error = passesQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Movies" />
 
       {/* Hero */}
@@ -188,7 +188,7 @@ function PassesPageContent(): React.JSX.Element {
                   style={{
                     border: '1px solid rgba(255,255,255,0.2)',
                     backgroundColor: 'rgba(255,255,255,0.08)',
-                    color: '#fff',
+                    color: 'var(--brand-white)',
                   }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -244,7 +244,7 @@ function PassesPageContent(): React.JSX.Element {
                   {pass.isPopular && (
                     <span
                       className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-4 py-1 rounded-full text-sm font-medium text-white"
-                      style={{ backgroundColor: '#E8420A' }}
+                      style={{ backgroundColor: 'var(--brand-orange)' }}
                     >
                       Most Popular
                     </span>
@@ -278,7 +278,7 @@ function PassesPageContent(): React.JSX.Element {
                         : {
                             border: '1px solid rgba(255,255,255,0.2)',
                             backgroundColor: 'rgba(255,255,255,0.08)',
-                            color: '#fff',
+                            color: 'var(--brand-white)',
                           }
                     }
                     whileHover={{ scale: 1.02 }}

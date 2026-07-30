@@ -95,7 +95,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
       <AppHeader />
       <main
         style={{
@@ -108,7 +108,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
       >
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <h1 style={{ fontSize: 32, fontWeight: 700 }}>Subscription Plans</h1>
-          <p style={{ color: '#9A8A7A', marginTop: 8, fontSize: 16 }}>
+          <p style={{ color: 'var(--text-secondary)', marginTop: 8, fontSize: 16 }}>
             Choose the plan that works best for you
           </p>
           {walletBalance !== null && (
@@ -144,7 +144,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                 padding: '10px 24px',
                 borderRadius: 8,
                 background: '#E8420A',
-                color: '#fff',
+                color: 'var(--brand-white)',
                 border: 'none',
                 cursor: 'pointer',
                 fontSize: 14,
@@ -184,10 +184,10 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                         transform: 'translateX(-50%)',
                         padding: '4px 16px',
                         borderRadius: 999,
-                        background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+                        background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
                         fontSize: 12,
                         fontWeight: 700,
-                        color: '#fff',
+                        color: 'var(--brand-white)',
                       }}
                     >
                       Most Popular
@@ -196,7 +196,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                   <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>{plan.name}</h3>
                   <p style={{ fontSize: 32, fontWeight: 700, color: '#E8420A', marginBottom: 20 }}>
                     ₦{plan.price.toLocaleString()}
-                    <span style={{ fontSize: 14, color: '#9A8A7A', fontWeight: 400 }}>/month</span>
+                    <span style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 400 }}>/month</span>
                   </p>
                   <div
                     style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}
@@ -241,7 +241,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                         borderRadius: 999,
                         border: plan.isPopular ? 'none' : '1px solid #2A1A1A',
                         background: plan.isPopular
-                          ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)'
+                          ? 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)'
                           : 'transparent',
                         color: plan.isPopular ? '#fff' : '#9A8A7A',
                         fontWeight: 600,
@@ -284,12 +284,12 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                 <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>
                   Confirm Subscription
                 </h3>
-                <p style={{ color: '#9A8A7A', marginBottom: 4 }}>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: 4 }}>
                   {confirmPlan.name} — ₦{confirmPlan.price.toLocaleString()}/month
                 </p>
 
                 {walletBalance !== null && (
-                  <p style={{ color: '#9A8A7A', marginBottom: 20, fontSize: 14 }}>
+                  <p style={{ color: 'var(--text-secondary)', marginBottom: 20, fontSize: 14 }}>
                     Wallet: ₦{walletBalance.toLocaleString()}
                   </p>
                 )}
@@ -329,8 +329,8 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                       width: '100%',
                       padding: '12px 0',
                       borderRadius: 999,
-                      background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                      color: '#fff',
+                      background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+                      color: 'var(--brand-white)',
                       border: 'none',
                       cursor: 'pointer',
                       fontWeight: 600,
@@ -348,8 +348,8 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                     padding: '10px 0',
                     borderRadius: 999,
                     background: 'transparent',
-                    color: '#9A8A7A',
-                    border: '1px solid #2A1A1A',
+                    color: 'var(--text-secondary)',
+                    border: '1px solid var(--border-default)',
                     cursor: 'pointer',
                     fontSize: 14,
                   }}

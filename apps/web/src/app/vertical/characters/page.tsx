@@ -48,11 +48,11 @@ export default function VerticalCharactersPage(): React.JSX.Element {
   const characters = query.data as Character[] | undefined;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A', color: '#F5F0EB' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
       <AppHeader active="Vertical" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 1200, margin: '0 auto' }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Characters</h1>
-        <p style={{ color: '#9A8A7A', marginBottom: 32 }}>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>
           Explore characters from the Azeebo+ vertical universe
         </p>
 
@@ -72,7 +72,7 @@ export default function VerticalCharactersPage(): React.JSX.Element {
           <ErrorState title="Failed to load characters" />
         ) : !characters || characters.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 60 }}>
-            <p style={{ color: '#9A8A7A', fontSize: 16, marginBottom: 8 }}>No characters yet</p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 16, marginBottom: 8 }}>No characters yet</p>
             <p style={{ color: '#6A5A4A', fontSize: 14 }}>
               Characters will appear here once created in the storyworlds.
             </p>
@@ -93,7 +93,7 @@ export default function VerticalCharactersPage(): React.JSX.Element {
                   textDecoration: 'none',
                   borderRadius: 16,
                   overflow: 'hidden',
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--border-default)',
                 }}
               >
                 <div style={{ position: 'relative', aspectRatio: '1', backgroundColor: '#140808' }}>
@@ -102,7 +102,7 @@ export default function VerticalCharactersPage(): React.JSX.Element {
                   )}
                 </div>
                 <div style={{ padding: 12 }}>
-                  <h3 style={{ fontWeight: 600, fontSize: 14, color: '#F5F0EB', margin: 0 }}>
+                  <h3 style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', margin: 0 }}>
                     {char.name}
                   </h3>
                   {char.pathName && (

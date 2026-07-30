@@ -67,7 +67,7 @@ export default function PublishedPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
       <AppHeader />
       <main
         style={{
@@ -84,7 +84,7 @@ export default function PublishedPage(): React.JSX.Element {
             style={{
               background: 'none',
               border: 'none',
-              color: '#9A8A7A',
+              color: 'var(--text-secondary)',
               cursor: 'pointer',
               fontSize: 14,
               marginBottom: 16,
@@ -96,7 +96,7 @@ export default function PublishedPage(): React.JSX.Element {
             <span>←</span> Back
           </button>
           <h1 style={{ fontSize: 28, fontWeight: 700 }}>Published Content</h1>
-          <p style={{ color: '#9A8A7A', marginTop: 4 }}>Manage your live content</p>
+          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>Manage your live content</p>
         </div>
 
         {isLoading ? (
@@ -127,7 +127,7 @@ export default function PublishedPage(): React.JSX.Element {
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>🎬</div>
             <h3 style={{ fontSize: 18, marginBottom: 8 }}>No published content</h3>
-            <p style={{ color: '#9A8A7A' }}>Your published videos will appear here</p>
+            <p style={{ color: 'var(--text-secondary)' }}>Your published videos will appear here</p>
           </div>
         ) : (
           <div
@@ -165,7 +165,7 @@ export default function PublishedPage(): React.JSX.Element {
                   >
                     {item.title}
                   </h3>
-                  <div style={{ display: 'flex', gap: 16, fontSize: 13, color: '#9A8A7A' }}>
+                  <div style={{ display: 'flex', gap: 16, fontSize: 13, color: 'var(--text-secondary)' }}>
                     <span>{(item.views || 0).toLocaleString()} views</span>
                     <span>{(item.likes || 0).toLocaleString()} likes</span>
                   </div>

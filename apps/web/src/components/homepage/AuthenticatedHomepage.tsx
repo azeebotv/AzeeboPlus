@@ -408,7 +408,7 @@ export default function AuthenticatedHomepage({
                   <motion.button
                     type="button"
                     className="px-6 sm:px-8 py-3 rounded-full text-sm sm:text-base font-bold transition-all"
-                    style={{ background: '#1A0A0A', color: '#fff' }}
+                    style={{ background: '#1A0A0A', color: 'var(--brand-white)' }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >

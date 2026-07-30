@@ -179,7 +179,7 @@ function TriviaPageContent(): React.JSX.Element {
   const progress = session ? ((session.currentIndex + 1) / session.questions.length) * 100 : 0;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Games" />
 
       {session && currentQuestion ? (
@@ -198,7 +198,7 @@ function TriviaPageContent(): React.JSX.Element {
             <div className="h-2 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
               <motion.div
                 className="h-full rounded-full"
-                style={{ backgroundColor: '#E8420A' }}
+                style={{ backgroundColor: 'var(--brand-orange)' }}
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
                 transition={{ duration: 0.3 }}
@@ -263,7 +263,7 @@ function TriviaPageContent(): React.JSX.Element {
                             : isSelected
                               ? 'rgba(232,66,10,0.1)'
                               : 'rgba(255,255,255,0.05)',
-                        color: '#fff',
+                        color: 'var(--brand-white)',
                       }}
                       whileHover={!selectedAnswer ? { scale: 1.02 } : undefined}
                       whileTap={!selectedAnswer ? { scale: 0.98 } : undefined}
@@ -434,7 +434,7 @@ function TriviaPageContent(): React.JSX.Element {
                   style={{
                     border: '1px solid rgba(255,255,255,0.2)',
                     backgroundColor: 'rgba(255,255,255,0.08)',
-                    color: '#fff',
+                    color: 'var(--brand-white)',
                   }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}

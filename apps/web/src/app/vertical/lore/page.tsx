@@ -41,12 +41,12 @@ function LorePageContent(): React.JSX.Element {
   const error = loreQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Vertical" />
 
       <section
         className="relative py-16 sm:py-20"
-        style={{ background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)' }}
+        style={{ background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.h1
@@ -114,7 +114,7 @@ function LorePageContent(): React.JSX.Element {
                       {entry.category && (
                         <span
                           className="absolute top-2 right-2 px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                          style={{ backgroundColor: 'rgba(232,66,10,0.9)', color: '#fff' }}
+                          style={{ backgroundColor: 'rgba(232,66,10,0.9)', color: 'var(--brand-white)' }}
                         >
                           {entry.category}
                         </span>

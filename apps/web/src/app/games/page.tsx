@@ -100,7 +100,7 @@ function GamesPageContent(): React.JSX.Element {
               >
                 <span
                   className="px-3 py-1 rounded-full text-xs font-semibold"
-                  style={{ backgroundColor: '#E8420A', color: '#fff' }}
+                  style={{ backgroundColor: 'var(--brand-orange)', color: 'var(--brand-white)' }}
                 >
                   Premium
                 </span>
@@ -206,7 +206,7 @@ function GamesPageContent(): React.JSX.Element {
                     />
                     <span
                       className="absolute top-2 right-2 px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                      style={{ backgroundColor: '#E8420A', color: '#fff' }}
+                      style={{ backgroundColor: 'var(--brand-orange)', color: 'var(--brand-white)' }}
                     >
                       Premium
                     </span>

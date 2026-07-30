@@ -84,7 +84,7 @@ export default function PrivacySecurityPage(): React.JSX.Element {
   ];
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
       <AppHeader />
       <main
         style={{
@@ -101,7 +101,7 @@ export default function PrivacySecurityPage(): React.JSX.Element {
             style={{
               background: 'none',
               border: 'none',
-              color: '#9A8A7A',
+              color: 'var(--text-secondary)',
               cursor: 'pointer',
               fontSize: 14,
               marginBottom: 16,
@@ -130,7 +130,7 @@ export default function PrivacySecurityPage(): React.JSX.Element {
               >
                 <div>
                   <p style={{ fontWeight: 600, fontSize: 15 }}>{item.label}</p>
-                  <p style={{ color: '#9A8A7A', fontSize: 13, marginTop: 2 }}>{item.desc}</p>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 2 }}>{item.desc}</p>
                 </div>
                 <button
                   onClick={() =>
@@ -180,8 +180,8 @@ export default function PrivacySecurityPage(): React.JSX.Element {
             padding: '14px 0',
             borderRadius: 999,
             border: 'none',
-            background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-            color: '#fff',
+            background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+            color: 'var(--brand-white)',
             fontWeight: 700,
             fontSize: 16,
             cursor: 'pointer',
@@ -204,14 +204,14 @@ export default function PrivacySecurityPage(): React.JSX.Element {
           <h2 style={{ fontSize: 18, fontWeight: 700, color: '#CC1C1C', marginBottom: 12 }}>
             Danger Zone
           </h2>
-          <p style={{ color: '#9A8A7A', fontSize: 14, marginBottom: 16 }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 16 }}>
             Once you delete your account, there is no going back.
           </p>
           <button
             style={{
               padding: '10px 24px',
               borderRadius: 999,
-              border: '1px solid #CC1C1C',
+              border: '1px solid var(--brand-red)',
               background: 'transparent',
               color: '#CC1C1C',
               fontWeight: 600,

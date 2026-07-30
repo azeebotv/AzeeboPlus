@@ -154,7 +154,7 @@ export default function SuperVotePage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
         <AppHeader />
         <div
           className="flex items-center justify-center"
@@ -173,7 +173,7 @@ export default function SuperVotePage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader />
       <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
@@ -264,7 +264,7 @@ export default function SuperVotePage(): React.JSX.Element {
                 {pkg.isPopular && (
                   <span
                     className="absolute -top-3 right-4 px-3 py-1 rounded-full text-xs font-semibold text-white"
-                    style={{ backgroundColor: '#E8420A' }}
+                    style={{ backgroundColor: 'var(--brand-orange)' }}
                   >
                     Most Popular
                   </span>

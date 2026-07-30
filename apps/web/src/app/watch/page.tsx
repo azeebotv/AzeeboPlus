@@ -47,11 +47,11 @@ export default function WatchPage(): React.JSX.Element {
   const trending = trendingQuery.data || [];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A', color: '#F5F0EB' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
       <AppHeader active="Watch" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 1200, margin: '0 auto' }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Watch</h1>
-        <p style={{ color: '#9A8A7A', marginBottom: 32 }}>Discover content across all universes</p>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>Discover content across all universes</p>
 
         <section style={{ marginBottom: 40 }}>
           <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>Browse by Category</h2>
@@ -72,7 +72,7 @@ export default function WatchPage(): React.JSX.Element {
                   gap: 12,
                   padding: 20,
                   borderRadius: 16,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--border-default)',
                   textDecoration: 'none',
                   backgroundColor: 'rgba(26,10,10,0.5)',
                   transition: 'border-color 0.2s',
@@ -85,7 +85,7 @@ export default function WatchPage(): React.JSX.Element {
                 }}
               >
                 <span style={{ fontSize: 24 }}>{cat.icon}</span>
-                <span style={{ fontWeight: 600, fontSize: 15, color: '#F5F0EB' }}>{cat.name}</span>
+                <span style={{ fontWeight: 600, fontSize: 15, color: 'var(--text-primary)' }}>{cat.name}</span>
               </Link>
             ))}
           </div>
@@ -108,7 +108,7 @@ export default function WatchPage(): React.JSX.Element {
           ) : trendingQuery.error ? (
             <ErrorState title="Failed to load trending content" />
           ) : trending.length === 0 ? (
-            <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>
+            <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>
               No trending content right now.
             </p>
           ) : (
@@ -127,7 +127,7 @@ export default function WatchPage(): React.JSX.Element {
                     textDecoration: 'none',
                     borderRadius: 16,
                     overflow: 'hidden',
-                    border: '1px solid #2A1A1A',
+                    border: '1px solid var(--border-default)',
                   }}
                 >
                   <div
@@ -142,11 +142,11 @@ export default function WatchPage(): React.JSX.Element {
                     )}
                   </div>
                   <div style={{ padding: 12 }}>
-                    <h3 style={{ fontWeight: 600, fontSize: 13, color: '#F5F0EB', margin: 0 }}>
+                    <h3 style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-primary)', margin: 0 }}>
                       {item.title}
                     </h3>
                     {item.creator && (
-                      <p style={{ color: '#9A8A7A', fontSize: 11, margin: '4px 0 0' }}>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: 11, margin: '4px 0 0' }}>
                         {item.creator.name}
                       </p>
                     )}

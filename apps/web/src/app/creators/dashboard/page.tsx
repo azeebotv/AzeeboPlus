@@ -34,13 +34,13 @@ function StatCard({ label, value, loading }: { label: string; value: string; loa
       style={{
         padding: 20,
         borderRadius: 16,
-        border: '1px solid #2A1A1A',
+        border: '1px solid var(--border-default)',
         backgroundColor: 'rgba(26,10,10,0.5)',
       }}
     >
       <p
         style={{
-          color: '#9A8A7A',
+          color: 'var(--text-secondary)',
           fontSize: 12,
           marginBottom: 4,
           textTransform: 'uppercase',
@@ -52,7 +52,7 @@ function StatCard({ label, value, loading }: { label: string; value: string; loa
       {loading ? (
         <Skeleton height="32px" width="120px" />
       ) : (
-        <p style={{ fontSize: 28, fontWeight: 700, color: '#F5F0EB', margin: 0 }}>{value}</p>
+        <p style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{value}</p>
       )}
     </div>
   );
@@ -76,7 +76,7 @@ export default function CreatorDashboardPage(): React.JSX.Element {
 
   if (error) {
     return (
-      <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+      <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
         <AppHeader />
         <main style={{ padding: '100px 24px 60px', maxWidth: 960, margin: '0 auto' }}>
           <ErrorState title="Failed to load dashboard data" />
@@ -87,11 +87,11 @@ export default function CreatorDashboardPage(): React.JSX.Element {
   }
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
       <AppHeader />
       <main style={{ padding: '100px 24px 60px', maxWidth: 960, margin: '0 auto' }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Creator Dashboard</h1>
-        <p style={{ color: '#9A8A7A', marginBottom: 32 }}>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>
           Welcome back! Here&apos;s your overview.
         </p>
 
@@ -137,11 +137,11 @@ export default function CreatorDashboardPage(): React.JSX.Element {
                 gap: 16,
                 padding: '16px 20px',
                 borderRadius: 16,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--border-default)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
                 cursor: 'pointer',
                 textAlign: 'left',
-                color: '#F5F0EB',
+                color: 'var(--text-primary)',
                 transition: 'border-color 0.2s',
               }}
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#E8420A')}
@@ -149,7 +149,7 @@ export default function CreatorDashboardPage(): React.JSX.Element {
             >
               <div style={{ flex: 1, minWidth: 0 }}>
                 <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 2 }}>{link.label}</h3>
-                <p style={{ color: '#9A8A7A', fontSize: 13, margin: 0 }}>{link.desc}</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: 0 }}>{link.desc}</p>
               </div>
               <span style={{ color: '#E8420A', fontSize: 18 }}>→</span>
             </button>

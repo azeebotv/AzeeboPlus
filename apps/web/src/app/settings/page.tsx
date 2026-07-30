@@ -269,7 +269,7 @@ export default function SettingsPage(): React.JSX.Element {
             borderRadius: 999,
             border: 'none',
             background: 'linear-gradient(135deg, var(--brand-orange, #E8420A) 0%, var(--brand-red, #CC1C1C) 100%)',
-            color: '#fff',
+            color: 'var(--brand-white)',
             fontWeight: 700,
             fontSize: 16,
             cursor: saveMutation.isPending ? 'not-allowed' : 'pointer',

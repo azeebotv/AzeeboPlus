@@ -99,7 +99,7 @@ export default function ResetPasswordPage(): React.JSX.Element {
     return (
       <div
         className="min-h-screen flex items-center justify-center p-6"
-        style={{ backgroundColor: '#1A0A0A' }}
+        style={{ backgroundColor: 'var(--brand-near-black)' }}
       >
         <div className="text-center max-w-md">
           <div

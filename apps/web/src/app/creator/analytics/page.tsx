@@ -78,7 +78,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                 style={{
                   padding: '8px 16px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--border-default)',
                   background: timeRange === range ? 'rgba(232,66,10,0.2)' : 'transparent',
                   color: timeRange === range ? 'var(--brand-orange, #E8420A)' : 'var(--text-muted, #9A8A7A)',
                   cursor: 'pointer',
@@ -117,7 +117,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                 style={{
                   padding: 20,
                   borderRadius: 16,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--border-default)',
                   backgroundColor: 'rgba(26,10,10,0.5)',
                 }}
               >
@@ -130,7 +130,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                 style={{
                   padding: 20,
                   borderRadius: 16,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--border-default)',
                   backgroundColor: 'rgba(26,10,10,0.5)',
                 }}
               >
@@ -143,7 +143,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                 style={{
                   padding: 20,
                   borderRadius: 16,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--border-default)',
                   backgroundColor: 'rgba(26,10,10,0.5)',
                 }}
               >
@@ -156,7 +156,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                 style={{
                   padding: 20,
                   borderRadius: 16,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--border-default)',
                   backgroundColor: 'rgba(26,10,10,0.5)',
                 }}
               >
@@ -179,7 +179,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                       gap: 12,
                       padding: 16,
                       borderRadius: 16,
-                      border: '1px solid #2A1A1A',
+                      border: '1px solid var(--border-default)',
                       backgroundColor: 'rgba(26,10,10,0.5)',
                     }}
                   >
@@ -212,7 +212,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                   style={{
                     padding: 20,
                     borderRadius: 16,
-                    border: '1px solid #2A1A1A',
+                    border: '1px solid var(--border-default)',
                     backgroundColor: 'rgba(26,10,10,0.5)',
                   }}
                 >
@@ -225,7 +225,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                   style={{
                     padding: 20,
                     borderRadius: 16,
-                    border: '1px solid #2A1A1A',
+                    border: '1px solid var(--border-default)',
                     backgroundColor: 'rgba(26,10,10,0.5)',
                   }}
                 >
@@ -238,7 +238,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                   style={{
                     padding: 20,
                     borderRadius: 16,
-                    border: '1px solid #2A1A1A',
+                    border: '1px solid var(--border-default)',
                     backgroundColor: 'rgba(26,10,10,0.5)',
                   }}
                 >
@@ -251,7 +251,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                   style={{
                     padding: 20,
                     borderRadius: 16,
-                    border: '1px solid #2A1A1A',
+                    border: '1px solid var(--border-default)',
                     backgroundColor: 'rgba(26,10,10,0.5)',
                   }}
                 >
@@ -271,7 +271,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                 style={{
                   padding: 20,
                   borderRadius: 16,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--border-default)',
                   backgroundColor: 'rgba(26,10,10,0.5)',
                 }}
               >

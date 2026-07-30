@@ -100,7 +100,7 @@ function LiveEventDetailContent(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
         <AppHeader />
         <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
           <Skeleton height="400px" borderRadius="12" />
@@ -117,7 +117,7 @@ function LiveEventDetailContent(): React.JSX.Element {
 
   if (error || !event) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
         <AppHeader />
         <main style={{ padding: '100px 24px 60px', maxWidth: 600, margin: '0 auto' }}>
           <ErrorState
@@ -132,7 +132,7 @@ function LiveEventDetailContent(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader />
 
       <main style={{ maxWidth: 800, margin: '0 auto', padding: '80px 24px 60px' }}>
@@ -190,7 +190,7 @@ function LiveEventDetailContent(): React.JSX.Element {
 
           <div
             className="rounded-xl p-6 h-fit sticky top-24"
-            style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid #2A1A1A' }}
+            style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-default)' }}
           >
             <p className="text-3xl font-bold text-white mb-1">
               {formatPrice(event.ticketPrice, event.currency)}

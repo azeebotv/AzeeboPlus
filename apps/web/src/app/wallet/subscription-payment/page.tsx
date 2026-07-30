@@ -135,7 +135,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
 
   if (authLoading || !isAuthenticated) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
         <AppHeader />
         <div
           className="flex items-center justify-center"
@@ -148,7 +148,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Wallet" />
 
       <div className="max-w-3xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
@@ -250,7 +250,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                     {plan.isPopular && (
                       <span
                         className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold mb-3"
-                        style={{ backgroundColor: '#E8420A', color: '#fff' }}
+                        style={{ backgroundColor: 'var(--brand-orange)', color: 'var(--brand-white)' }}
                       >
                         Popular
                       </span>
@@ -387,7 +387,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                 style={{
                   border: '1px solid rgba(255,255,255,0.2)',
                   backgroundColor: 'rgba(255,255,255,0.08)',
-                  color: '#fff',
+                  color: 'var(--brand-white)',
                 }}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -451,7 +451,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                     style={{
                       border: '1px solid rgba(255,255,255,0.2)',
                       backgroundColor: 'rgba(255,255,255,0.08)',
-                      color: '#fff',
+                      color: 'var(--brand-white)',
                     }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -488,7 +488,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                     style={{
                       border: '1px solid rgba(255,255,255,0.2)',
                       backgroundColor: 'rgba(255,255,255,0.08)',
-                      color: '#fff',
+                      color: 'var(--brand-white)',
                     }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}

@@ -342,7 +342,7 @@ export default function LibraryPage(): React.JSX.Element {
                     {item.duration && (
                       <span
                         className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold"
-                        style={{ background: 'rgba(0,0,0,0.7)', color: '#fff' }}
+                        style={{ background: 'rgba(0,0,0,0.7)', color: 'var(--brand-white)' }}
                       >
                         {Math.floor(item.duration / 60)}m
                       </span>

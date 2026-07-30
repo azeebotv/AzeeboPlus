@@ -68,7 +68,7 @@ export default function BadgesPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
       <AppHeader />
       <main
         style={{
@@ -78,14 +78,14 @@ export default function BadgesPage(): React.JSX.Element {
         }}
       >
         <div style={{ marginBottom: 24 }}>
-          <Link href="/rewards" style={{ color: '#9A8A7A', fontSize: 14, textDecoration: 'none' }}>
+          <Link href="/rewards" style={{ color: 'var(--text-secondary)', fontSize: 14, textDecoration: 'none' }}>
             &larr; Back to Rewards
           </Link>
         </div>
 
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <h1 style={{ fontSize: 28, fontWeight: 700 }}>Badges</h1>
-          <p style={{ color: '#9A8A7A', marginTop: 4 }}>
+          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>
             {earnedBadges.length} of {badges.length} earned
           </p>
         </div>
@@ -206,7 +206,7 @@ export default function BadgesPage(): React.JSX.Element {
                             style={{
                               height: '100%',
                               borderRadius: 2,
-                              backgroundColor: '#E8420A',
+                              backgroundColor: 'var(--brand-orange)',
                               width: `${Math.min(((badge.progress ?? 0) / (badge.target ?? 1)) * 100, 100)}%`,
                             }}
                           />
@@ -227,7 +227,7 @@ export default function BadgesPage(): React.JSX.Element {
                 style={{ padding: 48, borderRadius: 20, textAlign: 'center' }}
               >
                 <p style={{ fontSize: 32, marginBottom: 12 }}>🏅</p>
-                <p style={{ color: '#9A8A7A' }}>No badges available yet</p>
+                <p style={{ color: 'var(--text-secondary)' }}>No badges available yet</p>
               </div>
             )}
           </>
@@ -279,19 +279,19 @@ export default function BadgesPage(): React.JSX.Element {
               {selectedBadge.icon}
             </div>
             <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>{selectedBadge.name}</h2>
-            <p style={{ color: '#9A8A7A', fontSize: 14, marginBottom: 16 }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 16 }}>
               {selectedBadge.description}
             </p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginBottom: 16 }}>
               <div>
-                <p style={{ fontSize: 12, color: '#9A8A7A' }}>Points</p>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Points</p>
                 <p style={{ fontSize: 18, fontWeight: 700, color: '#E8420A' }}>
                   {selectedBadge.points}
                 </p>
               </div>
               {selectedBadge.unlocked && selectedBadge.earnedAt && (
                 <div>
-                  <p style={{ fontSize: 12, color: '#9A8A7A' }}>Earned</p>
+                  <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Earned</p>
                   <p style={{ fontSize: 14, color: '#22C55E' }}>
                     {new Date(selectedBadge.earnedAt).toLocaleDateString()}
                   </p>
@@ -303,9 +303,9 @@ export default function BadgesPage(): React.JSX.Element {
               style={{
                 padding: '10px 32px',
                 borderRadius: 999,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--border-default)',
                 background: 'transparent',
-                color: '#9A8A7A',
+                color: 'var(--text-secondary)',
                 fontWeight: 600,
                 fontSize: 14,
                 cursor: 'pointer',

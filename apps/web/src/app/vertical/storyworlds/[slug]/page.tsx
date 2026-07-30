@@ -51,7 +51,7 @@ function StoryworldDetailContent(): React.JSX.Element {
   const error = storyworldQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Vertical" />
 
       {isLoading ? (
@@ -85,7 +85,7 @@ function StoryworldDetailContent(): React.JSX.Element {
                   {storyworld.isComplete && (
                     <span
                       className="px-3 py-1 rounded-full text-xs font-semibold"
-                      style={{ backgroundColor: 'rgba(34,197,94,0.9)', color: '#fff' }}
+                      style={{ backgroundColor: 'rgba(34,197,94,0.9)', color: 'var(--brand-white)' }}
                     >
                       Complete
                     </span>

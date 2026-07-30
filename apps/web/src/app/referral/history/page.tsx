@@ -128,7 +128,7 @@ export default function ReferralHistoryPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
       <AppHeader />
       <main
         style={{
@@ -138,14 +138,14 @@ export default function ReferralHistoryPage(): React.JSX.Element {
         }}
       >
         <div style={{ marginBottom: 24 }}>
-          <Link href="/referral" style={{ color: '#9A8A7A', fontSize: 14, textDecoration: 'none' }}>
+          <Link href="/referral" style={{ color: 'var(--text-secondary)', fontSize: 14, textDecoration: 'none' }}>
             &larr; Back to Referral
           </Link>
         </div>
 
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <h1 style={{ fontSize: 28, fontWeight: 700 }}>Referral History</h1>
-          <p style={{ color: '#9A8A7A', marginTop: 4 }}>Track your referrals and earnings</p>
+          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>Track your referrals and earnings</p>
         </div>
 
         {isLoading ? (
@@ -191,7 +191,7 @@ export default function ReferralHistoryPage(): React.JSX.Element {
                   className="az-glass"
                   style={{ padding: 20, borderRadius: 16, textAlign: 'center' }}
                 >
-                  <p style={{ fontSize: 13, color: '#9A8A7A', marginBottom: 8 }}>{stat.label}</p>
+                  <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>{stat.label}</p>
                   <p style={{ fontSize: 22, fontWeight: 700, color: stat.color }}>{stat.value}</p>
                 </div>
               ))}
@@ -207,7 +207,7 @@ export default function ReferralHistoryPage(): React.JSX.Element {
                 marginBottom: 24,
               }}
             >
-              <p style={{ color: '#9A8A7A', fontSize: 14, marginBottom: 8 }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 8 }}>
                 Share your referral code
               </p>
               <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
@@ -217,8 +217,8 @@ export default function ReferralHistoryPage(): React.JSX.Element {
                     padding: '10px 28px',
                     borderRadius: 999,
                     border: 'none',
-                    background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                    color: '#fff',
+                    background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+                    color: 'var(--brand-white)',
                     fontWeight: 700,
                     fontSize: 14,
                     cursor: 'pointer',
@@ -234,9 +234,9 @@ export default function ReferralHistoryPage(): React.JSX.Element {
                   style={{
                     padding: '10px 28px',
                     borderRadius: 999,
-                    border: '1px solid #2A1A1A',
+                    border: '1px solid var(--border-default)',
                     background: 'transparent',
-                    color: '#9A8A7A',
+                    color: 'var(--text-secondary)',
                     fontWeight: 600,
                     fontSize: 14,
                     cursor: 'pointer',
@@ -253,7 +253,7 @@ export default function ReferralHistoryPage(): React.JSX.Element {
               {referrals.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: 40 }}>
                   <p style={{ fontSize: 32, marginBottom: 12 }}>👥</p>
-                  <p style={{ color: '#9A8A7A', fontSize: 14 }}>No referrals yet</p>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>No referrals yet</p>
                   <p style={{ color: '#6B5B4B', fontSize: 13 }}>Share your code to start earning</p>
                 </div>
               ) : (
@@ -273,7 +273,7 @@ export default function ReferralHistoryPage(): React.JSX.Element {
                         <p style={{ fontWeight: 600, fontSize: 14 }}>
                           {ref.displayName || ref.username || ref.email}
                         </p>
-                        <p style={{ color: '#9A8A7A', fontSize: 12 }}>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
                           Joined{' '}
                           {new Date(ref.joinedAt || ref.createdAt || '').toLocaleDateString()}
                         </p>

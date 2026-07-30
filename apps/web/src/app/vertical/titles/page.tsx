@@ -52,11 +52,11 @@ export default function VerticalTitlesPage(): React.JSX.Element {
   const titles = titlesQuery.data || [];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A', color: '#F5F0EB' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
       <AppHeader active="Vertical" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 1200, margin: '0 auto' }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Vertical Titles</h1>
-        <p style={{ color: '#9A8A7A', marginBottom: 32 }}>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>
           Short-form vertical content from the Azeebo+ universe
         </p>
 
@@ -75,7 +75,7 @@ export default function VerticalTitlesPage(): React.JSX.Element {
         ) : titlesQuery.error ? (
           <ErrorState title="Failed to load vertical titles" />
         ) : titles.length === 0 ? (
-          <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>
+          <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>
             No vertical titles available yet.
           </p>
         ) : (
@@ -94,7 +94,7 @@ export default function VerticalTitlesPage(): React.JSX.Element {
                   textDecoration: 'none',
                   borderRadius: 16,
                   overflow: 'hidden',
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--border-default)',
                 }}
               >
                 <div
@@ -105,13 +105,13 @@ export default function VerticalTitlesPage(): React.JSX.Element {
                   )}
                 </div>
                 <div style={{ padding: 12 }}>
-                  <h3 style={{ fontWeight: 600, fontSize: 14, color: '#F5F0EB', margin: 0 }}>
+                  <h3 style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', margin: 0 }}>
                     {title.title}
                   </h3>
                   {title.description && (
                     <p
                       style={{
-                        color: '#9A8A7A',
+                        color: 'var(--text-secondary)',
                         fontSize: 12,
                         margin: '4px 0 0',
                         overflow: 'hidden',
