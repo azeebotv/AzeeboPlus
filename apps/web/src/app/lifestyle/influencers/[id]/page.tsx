@@ -82,7 +82,7 @@ function InfluencerDetailContent(): React.JSX.Element {
             <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4">{influencer?.title}</h1>
             <span
               className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-6"
-              style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8400A' }}
+              style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
             >
               {influencer?.contentType || 'Influencer'}
             </span>

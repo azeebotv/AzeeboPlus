@@ -209,7 +209,7 @@ export default function TippingPanel({
       </button>
 
       {tipMutation.isError && (
-        <p style={{ color: '#ef4444', fontSize: 13, textAlign: 'center', marginBottom: 12 }}>
+        <p style={{ color: 'var(--color-error-500)', fontSize: 13, textAlign: 'center', marginBottom: 12 }}>
           {tipMutation.error instanceof Error ? tipMutation.error.message : 'Failed to send tip'}
         </p>
       )}

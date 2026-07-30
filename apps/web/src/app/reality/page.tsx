@@ -227,7 +227,7 @@ function RealityPageContent(): React.JSX.Element {
 
       {/* Leaderboard */}
       {safeContestants.length > 0 && (
-        <section className="py-10 sm:py-12" style={{ backgroundColor: '#0d0505' }}>
+        <section className="py-10 sm:py-12" style={{ backgroundColor: 'var(--bg-primary)' }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <ScrollReveal>
               <div className="flex items-center justify-between mb-6 sm:mb-8">

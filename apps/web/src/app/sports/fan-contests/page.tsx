@@ -193,7 +193,7 @@ function FanContestsPageContent(): React.JSX.Element {
 
       {/* Upcoming Contests */}
       {upcomingContests.length > 0 && (
-        <section className="py-10 sm:py-12" style={{ backgroundColor: '#0d0505' }}>
+        <section className="py-10 sm:py-12" style={{ backgroundColor: 'var(--bg-primary)' }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <ScrollReveal>
               <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">

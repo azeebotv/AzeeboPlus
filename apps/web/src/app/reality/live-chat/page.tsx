@@ -279,7 +279,7 @@ function LiveChatPageContent(): React.JSX.Element {
                         <span
                           className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
                           style={{
-                            backgroundColor: participant.isOnline ? '#22C55E' : '#6B7280',
+                            backgroundColor: participant.isOnline ? 'var(--color-success-500)' : '#6B7280',
                             borderColor: '#1A0A0A',
                           }}
                         />
