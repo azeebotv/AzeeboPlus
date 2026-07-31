@@ -3,6 +3,9 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
+import { createWebLogger } from '@/lib/logger';
+
+const logger = createWebLogger('CreatorUpload');
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { Skeleton } from '@azeebo/ui/web';
@@ -148,8 +151,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
         });
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error(error);
+      logger.error('Failed to submit upload', error);
     } finally {
       setIsSubmitting(false);
     }

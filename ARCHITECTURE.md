@@ -9,7 +9,7 @@
 Azeebo+ is a **modular entertainment platform** built as a monorepo with:
 - 4 client apps (mobile, web, admin, creator)
 - 28 backend microservices (categorized into 6 groups)
-- 21 shared packages
+- 22 shared packages
 - PostgreSQL databases per service (27 total, `azeebo_` prefix)
 - Redis for caching and queues
 - Docker all-in-one container for deployment

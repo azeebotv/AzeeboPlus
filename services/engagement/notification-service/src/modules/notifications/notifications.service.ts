@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../prisma/client/index.js';
 import { FirebaseService, EmailService, SmsService } from '@azeebo/shared-services';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 import axios from 'axios';

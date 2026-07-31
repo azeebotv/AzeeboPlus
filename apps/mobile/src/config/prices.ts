@@ -12,17 +12,11 @@ import {
   type WalletPricing,
   type PassPricing,
 } from '../api/pricing';
+import { createLogger } from '../utils/logger';
 
 export const CURRENCY = '₦';
 
-const log = {
-  warn: (msg: string, ...args: unknown[]) => {
-    if (__DEV__) {
-      // eslint-disable-next-line no-console
-      console.warn(`[Pricing] ${msg}`, ...args);
-    }
-  },
-};
+const logger = createLogger('Pricing');
 
 // Cache for API responses
 let cachedMoviePricing: MoviePricing | null = null;
@@ -40,7 +34,7 @@ export async function getMoviePricing(): Promise<MoviePricing> {
       return res.data;
     }
   } catch (e) {
-    log.warn('Failed to fetch movie pricing', e);
+    logger.warn('Failed to fetch movie pricing', e);
   }
   throw new Error('Movie pricing unavailable. Please check your connection and try again.');
 }
@@ -54,7 +48,7 @@ export async function getVotePackages(type: string): Promise<VotePackage[]> {
       return res.data;
     }
   } catch (e) {
-    log.warn('Failed to fetch vote packages', e);
+    logger.warn('Failed to fetch vote packages', e);
   }
   throw new Error('Vote packages unavailable. Please check your connection and try again.');
 }
@@ -68,7 +62,7 @@ export async function getWalletPricing(): Promise<WalletPricing> {
       return res.data;
     }
   } catch (e) {
-    log.warn('Failed to fetch wallet pricing', e);
+    logger.warn('Failed to fetch wallet pricing', e);
   }
   throw new Error('Wallet pricing unavailable. Please check your connection and try again.');
 }
@@ -82,7 +76,7 @@ export async function getPassesPricing(): Promise<PassPricing> {
       return res.data;
     }
   } catch (e) {
-    log.warn('Failed to fetch passes pricing', e);
+    logger.warn('Failed to fetch passes pricing', e);
   }
   throw new Error('Passes pricing unavailable. Please check your connection and try again.');
 }

@@ -24,7 +24,8 @@ azeebo-plus/
 ├── packages/              # Shared libraries (ui, tokens, types, utils, etc.)
 ├── infra/                 # Kubernetes, config, scripts
 ├── prisma/                # Root-level seed data
-└── doc/                   # Documentation
+└── docs/                  # Documentation
+```
 ```
 
 ### Key Principles

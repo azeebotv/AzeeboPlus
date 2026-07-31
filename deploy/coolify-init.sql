@@ -21,8 +21,9 @@ DECLARE
     'azeebo_referral', 'azeebo_subscription', 'azeebo_analytics', 'azeebo_recommendation',
     'azeebo_reality', 'azeebo_movie', 'azeebo_comedy', 'azeebo_games', 'azeebo_sports',
     'azeebo_lifestyle', 'azeebo_vertical', 'azeebo_creator',
+    'azeebo_live_event',
     'azeebo_queue', 'azeebo_support', 'azeebo_moderation',
-    'azeebo_admin', 'azeebo_creator'
+    'azeebo_admin'
   ];
   current_user_name TEXT;
 BEGIN

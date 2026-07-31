@@ -18,8 +18,7 @@ async function bootstrap(): Promise<void> {
   app.useGlobalFilters(new GlobalExceptionFilter());
 
   // Security headers
-    app.use(createHelmetConfig())
-;
+    app.use(createHelmetConfig());
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -43,7 +42,7 @@ async function bootstrap(): Promise<void> {
       .setDescription('Azeebo+ Lifestyle Service API')
       .setVersion('1.0.0')
       .addTag('lifestyle')
-      .addServer('http://localhost:3013', 'API Gateway')
+      .addServer(process.env.API_GATEWAY_URL || 'http://localhost:3013', 'API Gateway')
       .build();
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('docs', app, document);

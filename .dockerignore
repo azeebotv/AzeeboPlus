@@ -87,3 +87,15 @@ apps/mobile/
 *.cache
 .turbo/
 .vercel/
+# Todo and audit files
+todo.md
+REPORT.md
+# Old scripts
+fix-*.sh
+*.bak
+# Todo and audit files
+todo.md
+REPORT.md
+# Old scripts
+fix-*.sh
+*.bak

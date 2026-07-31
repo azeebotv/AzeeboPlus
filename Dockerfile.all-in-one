@@ -69,6 +69,7 @@ COPY services/universes/reality-service/package.json services/universes/reality-
 COPY services/universes/movie-service/package.json services/universes/movie-service/
 COPY services/universes/comedy-service/package.json services/universes/comedy-service/
 COPY services/universes/games-service/package.json services/universes/games-service/
+COPY services/universes/live-event-service/package.json services/universes/live-event-service/
 COPY services/universes/sports-service/package.json services/universes/sports-service/
 COPY services/universes/lifestyle-service/package.json services/universes/lifestyle-service/
 COPY services/universes/vertical-service/package.json services/universes/vertical-service/
@@ -181,6 +182,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/lifestyle-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/lifestyle-service run build && \
     pnpm --filter @azeebo/vertical-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/vertical-service run build && \
     pnpm --filter @azeebo/creator-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/creator-service run build && \
+    pnpm --filter @azeebo/live-event-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/live-event-service run build && \
     echo "==> [T7] Building operations services..." && \
     pnpm --filter @azeebo/queue-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/queue-service run build && \
     pnpm --filter @azeebo/support-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/support-service run build && \

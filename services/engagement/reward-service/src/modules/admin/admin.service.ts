@@ -1,7 +1,7 @@
 import { Inject, Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../prisma/client/index.js';
 
 @Injectable()
 export class AdminService {

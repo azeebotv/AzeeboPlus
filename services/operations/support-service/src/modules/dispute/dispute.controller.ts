@@ -14,7 +14,7 @@ import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { DisputeService } from './dispute.service';
 import { CreateDisputeDto, ResolveDisputeDto, DisputeQueryDto } from './dto/dispute.dto';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../prisma/client/index.js';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { AdminGuard } from '@azeebo/security';
 
