@@ -128,7 +128,13 @@ export default function ReferralHistoryPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <main
         style={{
@@ -138,14 +144,19 @@ export default function ReferralHistoryPage(): React.JSX.Element {
         }}
       >
         <div style={{ marginBottom: 24 }}>
-          <Link href="/referral" style={{ color: 'var(--text-secondary)', fontSize: 14, textDecoration: 'none' }}>
+          <Link
+            href="/referral"
+            style={{ color: 'var(--text-secondary)', fontSize: 14, textDecoration: 'none' }}
+          >
             &larr; Back to Referral
           </Link>
         </div>
 
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <h1 style={{ fontSize: 28, fontWeight: 700 }}>Referral History</h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>Track your referrals and earnings</p>
+          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>
+            Track your referrals and earnings
+          </p>
         </div>
 
         {isLoading ? (
@@ -174,7 +185,11 @@ export default function ReferralHistoryPage(): React.JSX.Element {
               }}
             >
               {[
-                { label: 'Total Referrals', value: String(totalReferrals), color: 'var(--brand-orange)' },
+                {
+                  label: 'Total Referrals',
+                  value: String(totalReferrals),
+                  color: 'var(--brand-orange)',
+                },
                 {
                   label: 'Total Earned',
                   value: `₦${totalEarned.toLocaleString()}`,
@@ -191,7 +206,9 @@ export default function ReferralHistoryPage(): React.JSX.Element {
                   className="az-glass"
                   style={{ padding: 20, borderRadius: 16, textAlign: 'center' }}
                 >
-                  <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>{stat.label}</p>
+                  <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>
+                    {stat.label}
+                  </p>
                   <p style={{ fontSize: 22, fontWeight: 700, color: stat.color }}>{stat.value}</p>
                 </div>
               ))}
@@ -217,7 +234,8 @@ export default function ReferralHistoryPage(): React.JSX.Element {
                     padding: '10px 28px',
                     borderRadius: 999,
                     border: 'none',
-                    background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+                    background:
+                      'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
                     color: 'var(--brand-white)',
                     fontWeight: 700,
                     fontSize: 14,
@@ -254,7 +272,9 @@ export default function ReferralHistoryPage(): React.JSX.Element {
                 <div style={{ textAlign: 'center', padding: 40 }}>
                   <p style={{ fontSize: 32, marginBottom: 12 }}>👥</p>
                   <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>No referrals yet</p>
-                  <p style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>Share your code to start earning</p>
+                  <p style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>
+                    Share your code to start earning
+                  </p>
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

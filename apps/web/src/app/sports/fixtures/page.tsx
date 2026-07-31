@@ -81,7 +81,8 @@ function FixturesPageContent(): React.JSX.Element {
                 onClick={() => setSelectedSport(sport)}
                 className="px-4 py-2 rounded-full text-sm font-medium transition-all"
                 style={{
-                  backgroundColor: selectedSport === sport ? 'var(--color-success-400)' : 'rgba(255,255,255,0.1)',
+                  backgroundColor:
+                    selectedSport === sport ? 'var(--color-success-400)' : 'rgba(255,255,255,0.1)',
                   color: selectedSport === sport ? 'var(--brand-forest)' : 'rgba(255,255,255,0.7)',
                   border: `1px solid ${selectedSport === sport ? 'var(--color-success-400)' : 'rgba(255,255,255,0.2)'}`,
                 }}
@@ -219,10 +220,12 @@ const LazyFixturesPage = lazy(() => Promise.resolve({ default: FixturesPageConte
 
 export const metadata = {
   title: 'Fixtures & Results | Azeebo',
-  description: 'Track upcoming matches and recent results across football, basketball, tennis, and more.',
+  description:
+    'Track upcoming matches and recent results across football, basketball, tennis, and more.',
   openGraph: {
     title: 'Fixtures & Results | Azeebo',
-    description: 'Track upcoming matches and recent results across football, basketball, tennis, and more.',
+    description:
+      'Track upcoming matches and recent results across football, basketball, tennis, and more.',
   },
 };
 

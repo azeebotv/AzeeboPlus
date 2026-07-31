@@ -95,11 +95,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }):
                 <WalletProvider>
                   <I18nProvider>
                     <ToastProvider>
-                    <KeyboardNavigationProvider>
-                      <main id="main-content" role="main">
-                        {children}
-                      </main>
-                    </KeyboardNavigationProvider>
+                      <KeyboardNavigationProvider>
+                        <main id="main-content" role="main">
+                          {children}
+                        </main>
+                      </KeyboardNavigationProvider>
                     </ToastProvider>
                   </I18nProvider>
                 </WalletProvider>

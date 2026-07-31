@@ -68,7 +68,13 @@ export default function BadgesPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <main
         style={{
@@ -78,7 +84,10 @@ export default function BadgesPage(): React.JSX.Element {
         }}
       >
         <div style={{ marginBottom: 24 }}>
-          <Link href="/rewards" style={{ color: 'var(--text-secondary)', fontSize: 14, textDecoration: 'none' }}>
+          <Link
+            href="/rewards"
+            style={{ color: 'var(--text-secondary)', fontSize: 14, textDecoration: 'none' }}
+          >
             &larr; Back to Rewards
           </Link>
         </div>
@@ -144,7 +153,11 @@ export default function BadgesPage(): React.JSX.Element {
                         {badge.icon}
                       </div>
                       <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{badge.name}</p>
-                      <p style={{ fontSize: 11, color: 'var(--color-success-500)', fontWeight: 600 }}>✓ Earned</p>
+                      <p
+                        style={{ fontSize: 11, color: 'var(--color-success-500)', fontWeight: 600 }}
+                      >
+                        ✓ Earned
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -189,7 +202,12 @@ export default function BadgesPage(): React.JSX.Element {
                         {badge.icon}
                       </div>
                       <p
-                        style={{ fontWeight: 600, fontSize: 14, marginBottom: 4, color: 'var(--text-tertiary)' }}
+                        style={{
+                          fontWeight: 600,
+                          fontSize: 14,
+                          marginBottom: 4,
+                          color: 'var(--text-tertiary)',
+                        }}
                       >
                         {badge.name}
                       </p>

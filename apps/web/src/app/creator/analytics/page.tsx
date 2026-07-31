@@ -47,7 +47,13 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
 
   if (error) {
     return (
-      <div style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)', minHeight: '100vh', color: 'var(--text-primary, #F5F0EB)' }}>
+      <div
+        style={{
+          backgroundColor: 'var(--bg-primary, #1A0A0A)',
+          minHeight: '100vh',
+          color: 'var(--text-primary, #F5F0EB)',
+        }}
+      >
         <AppHeader active="Creator" />
         <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
           <ErrorState title="Failed to load analytics" />
@@ -58,7 +64,13 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
   }
 
   return (
-    <div style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)', minHeight: '100vh', color: 'var(--text-primary, #F5F0EB)' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--bg-primary, #1A0A0A)',
+        minHeight: '100vh',
+        color: 'var(--text-primary, #F5F0EB)',
+      }}
+    >
       <AppHeader active="Creator" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Analytics</h1>
@@ -67,7 +79,14 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
         </p>
 
         <div style={{ marginBottom: 24 }}>
-          <label style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 13, marginBottom: 8, display: 'block' }}>
+          <label
+            style={{
+              color: 'var(--text-muted, #9A8A7A)',
+              fontSize: 13,
+              marginBottom: 8,
+              display: 'block',
+            }}
+          >
             Time Range
           </label>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -80,7 +99,10 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                   borderRadius: 8,
                   border: '1px solid var(--border-default)',
                   background: timeRange === range ? 'rgba(232,66,10,0.2)' : 'transparent',
-                  color: timeRange === range ? 'var(--brand-orange, #E8420A)' : 'var(--text-muted, #9A8A7A)',
+                  color:
+                    timeRange === range
+                      ? 'var(--brand-orange, #E8420A)'
+                      : 'var(--text-muted, #9A8A7A)',
                   cursor: 'pointer',
                   fontSize: 13,
                 }}
@@ -121,7 +143,9 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                   backgroundColor: 'rgba(26,10,10,0.5)',
                 }}
               >
-                <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>Total Views</p>
+                <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>
+                  Total Views
+                </p>
                 <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary, #F5F0EB)' }}>
                   {analytics.totalViews.toLocaleString()}
                 </p>
@@ -134,7 +158,9 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                   backgroundColor: 'rgba(26,10,10,0.5)',
                 }}
               >
-                <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>Likes</p>
+                <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>
+                  Likes
+                </p>
                 <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary, #F5F0EB)' }}>
                   {analytics.totalLikes.toLocaleString()}
                 </p>
@@ -147,7 +173,9 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                   backgroundColor: 'rgba(26,10,10,0.5)',
                 }}
               >
-                <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>Followers</p>
+                <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>
+                  Followers
+                </p>
                 <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary, #F5F0EB)' }}>
                   {analytics.totalFollowers.toLocaleString()}
                 </p>
@@ -160,7 +188,9 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                   backgroundColor: 'rgba(26,10,10,0.5)',
                 }}
               >
-                <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>Earnings</p>
+                <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>
+                  Earnings
+                </p>
                 <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary, #F5F0EB)' }}>
                   ₦{analytics.totalEarnings.toLocaleString()}
                 </p>
@@ -216,8 +246,12 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                     backgroundColor: 'rgba(26,10,10,0.5)',
                   }}
                 >
-                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>Avg Watch Time</p>
-                  <p style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary, #F5F0EB)' }}>
+                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>
+                    Avg Watch Time
+                  </p>
+                  <p
+                    style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary, #F5F0EB)' }}
+                  >
                     {analytics.engagementMetrics.avgWatchTime.toFixed(1)}s
                   </p>
                 </div>
@@ -229,8 +263,12 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                     backgroundColor: 'rgba(26,10,10,0.5)',
                   }}
                 >
-                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>Completion Rate</p>
-                  <p style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary, #F5F0EB)' }}>
+                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>
+                    Completion Rate
+                  </p>
+                  <p
+                    style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary, #F5F0EB)' }}
+                  >
                     {analytics.engagementMetrics.completionRate.toFixed(1)}%
                   </p>
                 </div>
@@ -242,8 +280,12 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                     backgroundColor: 'rgba(26,10,10,0.5)',
                   }}
                 >
-                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>Share Rate</p>
-                  <p style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary, #F5F0EB)' }}>
+                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>
+                    Share Rate
+                  </p>
+                  <p
+                    style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary, #F5F0EB)' }}
+                  >
                     {analytics.engagementMetrics.shareRate.toFixed(1)}%
                   </p>
                 </div>
@@ -255,8 +297,12 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                     backgroundColor: 'rgba(26,10,10,0.5)',
                   }}
                 >
-                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>Comment Rate</p>
-                  <p style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary, #F5F0EB)' }}>
+                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>
+                    Comment Rate
+                  </p>
+                  <p
+                    style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary, #F5F0EB)' }}
+                  >
                     {analytics.engagementMetrics.commentRate.toFixed(1)}%
                   </p>
                 </div>
@@ -275,14 +321,18 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                   backgroundColor: 'rgba(26,10,10,0.5)',
                 }}
               >
-                <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 14, marginBottom: 12 }}>Age Groups</p>
+                <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 14, marginBottom: 12 }}>
+                  Age Groups
+                </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {analytics.demographics.ageGroups.map((group) => (
                     <div
                       key={group.range}
                       style={{ display: 'flex', alignItems: 'center', gap: 12 }}
                     >
-                      <span style={{ width: 80, color: 'var(--text-muted, #9A8A7A)', fontSize: 12 }}>
+                      <span
+                        style={{ width: 80, color: 'var(--text-muted, #9A8A7A)', fontSize: 12 }}
+                      >
                         {group.range}
                       </span>
                       <div
@@ -303,7 +353,12 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                         />
                       </div>
                       <span
-                        style={{ width: 50, textAlign: 'right', color: 'var(--text-muted, #9A8A7A)', fontSize: 12 }}
+                        style={{
+                          width: 50,
+                          textAlign: 'right',
+                          color: 'var(--text-muted, #9A8A7A)',
+                          fontSize: 12,
+                        }}
                       >
                         {group.percentage}%
                       </span>

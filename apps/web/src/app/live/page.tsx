@@ -178,7 +178,10 @@ function LiveEventsPageContent(): React.JSX.Element {
                       <div className="absolute top-3 left-3 flex gap-2">
                         <span
                           className="px-3 py-1 rounded-full text-xs font-semibold"
-                          style={{ backgroundColor: statusColor(event.status), color: 'var(--brand-white)' }}
+                          style={{
+                            backgroundColor: statusColor(event.status),
+                            color: 'var(--brand-white)',
+                          }}
                         >
                           {event.status === 'live'
                             ? '🔴 LIVE'
@@ -199,7 +202,10 @@ function LiveEventsPageContent(): React.JSX.Element {
                     <div className="p-4">
                       <p className="text-sm text-white/50 mb-3 line-clamp-2">{event.description}</p>
                       <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold" style={{ color: 'var(--brand-orange)' }}>
+                        <span
+                          className="text-lg font-bold"
+                          style={{ color: 'var(--brand-orange)' }}
+                        >
                           {formatPrice(event.ticketPrice, event.currency)}
                         </span>
                         {event.maxViewers && (

@@ -37,7 +37,13 @@ export default function PredictionResultsPage(): React.JSX.Element {
   };
 
   return (
-    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <main
         style={{
@@ -82,14 +88,18 @@ export default function PredictionResultsPage(): React.JSX.Element {
           <div className="az-glass" style={{ padding: 40, borderRadius: 20, textAlign: 'center' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>📊</div>
             <h3 style={{ fontSize: 18 }}>Results not available yet</h3>
-            <p style={{ color: 'var(--text-secondary)', marginTop: 8 }}>Check back after the prediction closes</p>
+            <p style={{ color: 'var(--text-secondary)', marginTop: 8 }}>
+              Check back after the prediction closes
+            </p>
           </div>
         ) : (
           <>
             <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>
               {results.title || 'Prediction Results'}
             </h1>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>{results.description || ''}</p>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>
+              {results.description || ''}
+            </p>
 
             {results.correctAnswer && (
               <div
@@ -102,7 +112,9 @@ export default function PredictionResultsPage(): React.JSX.Element {
                   textAlign: 'center',
                 }}
               >
-                <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 8 }}>Correct Answer</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 8 }}>
+                  Correct Answer
+                </p>
                 <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--brand-forest)' }}>
                   {results.correctAnswer}
                 </p>
@@ -167,7 +179,14 @@ export default function PredictionResultsPage(): React.JSX.Element {
                     );
                   })}
                 </div>
-                <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 16, textAlign: 'center' }}>
+                <p
+                  style={{
+                    color: 'var(--text-secondary)',
+                    fontSize: 13,
+                    marginTop: 16,
+                    textAlign: 'center',
+                  }}
+                >
                   Total votes: {results.totalVotes}
                 </p>
               </div>

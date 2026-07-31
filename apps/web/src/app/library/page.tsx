@@ -379,7 +379,11 @@ export default function LibraryPage(): React.JSX.Element {
                         </button>
                       )}
                       <button
-                        aria-label={favorites.some((f) => f.id === item.id) ? `Remove ${item.title} from favorites` : `Add ${item.title} to favorites`}
+                        aria-label={
+                          favorites.some((f) => f.id === item.id)
+                            ? `Remove ${item.title} from favorites`
+                            : `Add ${item.title} to favorites`
+                        }
                         onClick={() => toggleFavorite(item.id)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${favorites.some((f) => f.id === item.id) ? 'text-[#E8420A]' : 'text-white/60 hover:text-white'}`}
                         style={{ border: '1px solid rgba(255,255,255,0.15)' }}

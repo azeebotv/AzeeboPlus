@@ -136,7 +136,10 @@ export default function PredictionsPage() {
                       {pred.category && (
                         <span
                           className="px-2 py-0.5 rounded text-[10px]"
-                          style={{ background: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
+                          style={{
+                            background: 'rgba(232,66,10,0.2)',
+                            color: 'var(--brand-orange)',
+                          }}
                         >
                           {pred.category}
                         </span>

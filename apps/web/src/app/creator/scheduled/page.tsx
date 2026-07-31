@@ -74,7 +74,13 @@ export default function ScheduledPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <main
         style={{
@@ -103,7 +109,9 @@ export default function ScheduledPage(): React.JSX.Element {
             <span>←</span> Back
           </button>
           <h1 style={{ fontSize: 28, fontWeight: 700 }}>Scheduled Content</h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>Content queued for automatic publishing</p>
+          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>
+            Content queued for automatic publishing
+          </p>
         </div>
 
         {isLoading ? (
@@ -139,7 +147,9 @@ export default function ScheduledPage(): React.JSX.Element {
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>⏰</div>
             <h3 style={{ fontSize: 18, marginBottom: 8 }}>No scheduled content</h3>
-            <p style={{ color: 'var(--text-secondary)' }}>Schedule content to have it go live automatically</p>
+            <p style={{ color: 'var(--text-secondary)' }}>
+              Schedule content to have it go live automatically
+            </p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

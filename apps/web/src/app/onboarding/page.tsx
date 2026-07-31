@@ -214,7 +214,10 @@ export default function OnboardingPage(): React.JSX.Element {
 
   /* ---------- STEP 2: Interests (Dark) ---------- */
   return (
-    <div className="min-h-screen w-full p-6 sm:p-10" style={{ backgroundColor: 'var(--brand-near-black)' }}>
+    <div
+      className="min-h-screen w-full p-6 sm:p-10"
+      style={{ backgroundColor: 'var(--brand-near-black)' }}
+    >
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <BrandLogo variant="light" />

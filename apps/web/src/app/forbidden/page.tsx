@@ -5,7 +5,13 @@ import AppFooter from '@/components/layout/AppFooter';
 
 export default function ForbiddenPage(): React.JSX.Element {
   return (
-    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <main
         style={{
@@ -44,7 +50,8 @@ export default function ForbiddenPage(): React.JSX.Element {
               style={{
                 padding: '14px 32px',
                 borderRadius: 999,
-                background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+                background:
+                  'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
                 color: 'var(--brand-white)',
                 fontWeight: 700,
                 fontSize: 16,

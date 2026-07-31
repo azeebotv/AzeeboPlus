@@ -75,7 +75,13 @@ export default function ProfileEditPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <main
         style={{
@@ -232,7 +238,8 @@ export default function ProfileEditPage(): React.JSX.Element {
                 padding: '14px 0',
                 borderRadius: 999,
                 border: 'none',
-                background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+                background:
+                  'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
                 color: 'var(--brand-white)',
                 fontWeight: 700,
                 fontSize: 16,

@@ -49,7 +49,13 @@ export default function TransactionDetailPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <main
         style={{
@@ -170,7 +176,9 @@ export default function TransactionDetailPage(): React.JSX.Element {
                       borderBottom: '1px solid #2A1A1A',
                     }}
                   >
-                    <span style={{ color: 'var(--text-secondary)', fontSize: 14 }}>{item!.label}</span>
+                    <span style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
+                      {item!.label}
+                    </span>
                     <span style={{ fontWeight: 600, fontSize: 14, textTransform: 'capitalize' }}>
                       {item!.value}
                     </span>

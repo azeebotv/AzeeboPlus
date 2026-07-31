@@ -204,7 +204,10 @@ function GameDetailPageContent(): React.JSX.Element {
                         <li key={index} className="flex items-start gap-3">
                           <span
                             className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                            style={{ backgroundColor: 'var(--brand-orange)', color: 'var(--brand-white)' }}
+                            style={{
+                              backgroundColor: 'var(--brand-orange)',
+                              color: 'var(--brand-white)',
+                            }}
                           >
                             {index + 1}
                           </span>

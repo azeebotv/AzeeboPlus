@@ -191,7 +191,10 @@ export default function RewardsPage(): React.JSX.Element {
                   <div className="p-6">
                     <span
                       className="text-xs font-medium px-2 py-1 rounded-full mb-2 inline-block"
-                      style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
+                      style={{
+                        backgroundColor: 'rgba(232,66,10,0.2)',
+                        color: 'var(--brand-orange)',
+                      }}
                     >
                       {reward.category}
                     </span>
@@ -242,7 +245,11 @@ export default function RewardsPage(): React.JSX.Element {
 
         <section>
           <h2 className="text-2xl font-bold text-white mb-6">Achievements</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" role="list" aria-label="Achievements">
+          <div
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+            role="list"
+            aria-label="Achievements"
+          >
             {achievements.map((achievement) => (
               <div
                 key={achievement.id}
@@ -277,7 +284,10 @@ export default function RewardsPage(): React.JSX.Element {
                     </div>
                   )}
                   {achievement.unlocked && (
-                    <span className="text-xs font-medium" style={{ color: 'var(--color-success-500)' }}>
+                    <span
+                      className="text-xs font-medium"
+                      style={{ color: 'var(--color-success-500)' }}
+                    >
                       ✓ Unlocked
                     </span>
                   )}

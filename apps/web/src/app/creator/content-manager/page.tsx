@@ -337,7 +337,10 @@ export default function ContentManagerPage(): React.JSX.Element {
                           });
                         }}
                         className="px-3 py-2 rounded-full text-sm transition-colors"
-                        style={{ backgroundColor: 'rgba(239,68,68,0.2)', color: 'var(--color-error-500)' }}
+                        style={{
+                          backgroundColor: 'rgba(239,68,68,0.2)',
+                          color: 'var(--color-error-500)',
+                        }}
                       >
                         🗑
                       </button>

@@ -224,7 +224,10 @@ function WatchlistPageContent(): React.JSX.Element {
                       <div className="absolute bottom-4 left-4 right-4">
                         <span
                           className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                          style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
+                          style={{
+                            backgroundColor: 'rgba(232,66,10,0.2)',
+                            color: 'var(--brand-orange)',
+                          }}
                         >
                           {movie.contentType || 'Movie'}
                         </span>

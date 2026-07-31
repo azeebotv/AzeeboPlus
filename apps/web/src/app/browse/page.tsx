@@ -357,7 +357,10 @@ export default function BrowsePage(): React.JSX.Element {
                     onClick={clearFilters}
                     aria-label="Clear all filters"
                     className="w-full px-4 py-2 text-sm font-medium rounded-full transition-colors"
-                    style={{ border: '1px solid rgba(255,255,255,0.2)', color: 'var(--brand-orange)' }}
+                    style={{
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      color: 'var(--brand-orange)',
+                    }}
                   >
                     Clear All Filters
                   </button>
@@ -564,7 +567,10 @@ export default function BrowsePage(): React.JSX.Element {
                         <span className="text-xs text-white/40">{item.creator?.name}</span>
                         <span
                           className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
-                          style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--brand-orange)' }}
+                          style={{
+                            background: 'rgba(255,255,255,0.08)',
+                            color: 'var(--brand-orange)',
+                          }}
                         >
                           Watch
                         </span>

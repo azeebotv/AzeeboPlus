@@ -78,9 +78,18 @@ export default function CreatorsPage(): React.JSX.Element {
                   className="w-24 h-24 rounded-full mb-4"
                   style={{ backgroundColor: 'var(--brand-surface)' }}
                 />
-                <div className="h-4 w-3/4 rounded mb-2" style={{ backgroundColor: 'var(--brand-surface)' }} />
-                <div className="h-3 w-1/2 rounded mb-4" style={{ backgroundColor: 'var(--brand-surface)' }} />
-                <div className="h-10 w-full rounded-full" style={{ backgroundColor: 'var(--brand-surface)' }} />
+                <div
+                  className="h-4 w-3/4 rounded mb-2"
+                  style={{ backgroundColor: 'var(--brand-surface)' }}
+                />
+                <div
+                  className="h-3 w-1/2 rounded mb-4"
+                  style={{ backgroundColor: 'var(--brand-surface)' }}
+                />
+                <div
+                  className="h-10 w-full rounded-full"
+                  style={{ backgroundColor: 'var(--brand-surface)' }}
+                />
               </div>
             ))}
           </div>
@@ -162,7 +171,10 @@ export default function CreatorsPage(): React.JSX.Element {
               <div className="flex items-center justify-center py-12">
                 <div
                   className="animate-spin rounded-full h-8 w-8"
-                  style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--brand-orange)' }}
+                  style={{
+                    border: '3px solid rgba(255,255,255,0.1)',
+                    borderTopColor: 'var(--brand-orange)',
+                  }}
                 />
               </div>
             )}

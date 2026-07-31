@@ -30,7 +30,13 @@ export default function SupportPage(): React.JSX.Element {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   return (
-    <div style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)', minHeight: '100vh', color: 'var(--text-primary, #F5F0EB)' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--bg-primary, #1A0A0A)',
+        minHeight: '100vh',
+        color: 'var(--text-primary, #F5F0EB)',
+      }}
+    >
       <AppHeader />
       <main
         style={{
@@ -43,7 +49,9 @@ export default function SupportPage(): React.JSX.Element {
       >
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8 }}>Help & Support</h1>
-          <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 16 }}>Find answers to common questions</p>
+          <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 16 }}>
+            Find answers to common questions
+          </p>
         </div>
 
         {/* FAQ */}
@@ -104,14 +112,17 @@ export default function SupportPage(): React.JSX.Element {
         {/* Contact */}
         <div className="az-glass" style={{ padding: 32, borderRadius: 20, textAlign: 'center' }}>
           <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12 }}>Still need help?</h2>
-          <p style={{ color: 'var(--text-muted, #9A8A7A)', marginBottom: 20 }}>Our support team is available 24/7</p>
+          <p style={{ color: 'var(--text-muted, #9A8A7A)', marginBottom: 20 }}>
+            Our support team is available 24/7
+          </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <a
               href="mailto:support@azeeboplus.com"
               style={{
                 padding: '12px 28px',
                 borderRadius: 999,
-                background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+                background:
+                  'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
                 color: 'var(--brand-white)',
                 fontWeight: 600,
                 fontSize: 14,

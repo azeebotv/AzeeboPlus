@@ -373,7 +373,10 @@ function EventDetailPageContent(): React.JSX.Element {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="block w-full mt-3 py-3 rounded-full text-sm font-semibold text-center transition-all"
-                        style={{ border: '1px solid rgba(255,255,255,0.2)', color: 'var(--brand-white)' }}
+                        style={{
+                          border: '1px solid rgba(255,255,255,0.2)',
+                          color: 'var(--brand-white)',
+                        }}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
@@ -507,7 +510,10 @@ function EventDetailPageContent(): React.JSX.Element {
                         {attendees.length > 5 && (
                           <span
                             className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold"
-                            style={{ backgroundColor: 'rgba(255,255,255,0.1)', color: 'var(--brand-white)' }}
+                            style={{
+                              backgroundColor: 'rgba(255,255,255,0.1)',
+                              color: 'var(--brand-white)',
+                            }}
                           >
                             +{attendees.length - 5}
                           </span>

@@ -52,7 +52,9 @@ function StatCard({ label, value, loading }: { label: string; value: string; loa
       {loading ? (
         <Skeleton height="32px" width="120px" />
       ) : (
-        <p style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{value}</p>
+        <p style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+          {value}
+        </p>
       )}
     </div>
   );
@@ -76,7 +78,13 @@ export default function CreatorDashboardPage(): React.JSX.Element {
 
   if (error) {
     return (
-      <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+      <div
+        style={{
+          backgroundColor: 'var(--brand-near-black)',
+          minHeight: '100vh',
+          color: 'var(--text-primary)',
+        }}
+      >
         <AppHeader />
         <main style={{ padding: '100px 24px 60px', maxWidth: 960, margin: '0 auto' }}>
           <ErrorState title="Failed to load dashboard data" />
@@ -87,7 +95,13 @@ export default function CreatorDashboardPage(): React.JSX.Element {
   }
 
   return (
-    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <main style={{ padding: '100px 24px 60px', maxWidth: 960, margin: '0 auto' }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Creator Dashboard</h1>
@@ -149,7 +163,9 @@ export default function CreatorDashboardPage(): React.JSX.Element {
             >
               <div style={{ flex: 1, minWidth: 0 }}>
                 <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 2 }}>{link.label}</h3>
-                <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: 0 }}>{link.desc}</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: 0 }}>
+                  {link.desc}
+                </p>
               </div>
               <span style={{ color: 'var(--brand-orange)', fontSize: 18 }}>→</span>
             </button>

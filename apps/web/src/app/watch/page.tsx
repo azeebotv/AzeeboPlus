@@ -47,11 +47,16 @@ export default function WatchPage(): React.JSX.Element {
   const trending = trendingQuery.data || [];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
+    <div
+      className="min-h-screen"
+      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
+    >
       <AppHeader active="Watch" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 1200, margin: '0 auto' }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Watch</h1>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>Discover content across all universes</p>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>
+          Discover content across all universes
+        </p>
 
         <section style={{ marginBottom: 40 }}>
           <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>Browse by Category</h2>
@@ -85,7 +90,9 @@ export default function WatchPage(): React.JSX.Element {
                 }}
               >
                 <span style={{ fontSize: 24 }}>{cat.icon}</span>
-                <span style={{ fontWeight: 600, fontSize: 15, color: 'var(--text-primary)' }}>{cat.name}</span>
+                <span style={{ fontWeight: 600, fontSize: 15, color: 'var(--text-primary)' }}>
+                  {cat.name}
+                </span>
               </Link>
             ))}
           </div>
@@ -142,11 +149,20 @@ export default function WatchPage(): React.JSX.Element {
                     )}
                   </div>
                   <div style={{ padding: 12 }}>
-                    <h3 style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-primary)', margin: 0 }}>
+                    <h3
+                      style={{
+                        fontWeight: 600,
+                        fontSize: 13,
+                        color: 'var(--text-primary)',
+                        margin: 0,
+                      }}
+                    >
                       {item.title}
                     </h3>
                     {item.creator && (
-                      <p style={{ color: 'var(--text-secondary)', fontSize: 11, margin: '4px 0 0' }}>
+                      <p
+                        style={{ color: 'var(--text-secondary)', fontSize: 11, margin: '4px 0 0' }}
+                      >
                         {item.creator.name}
                       </p>
                     )}

@@ -110,7 +110,13 @@ export default function CreatorDashboardPage(): React.JSX.Element {
 
   if (error) {
     return (
-<div style={{ backgroundColor: colors.bg.primary, minHeight: '100vh', color: colors.text.primary }}>
+      <div
+        style={{
+          backgroundColor: colors.bg.primary,
+          minHeight: '100vh',
+          color: colors.text.primary,
+        }}
+      >
         <AppHeader />
         <main style={{ padding: '100px 24px 60px', maxWidth: 600, margin: '0 auto' }}>
           <ErrorState title="Failed to load dashboard data" />
@@ -121,7 +127,13 @@ export default function CreatorDashboardPage(): React.JSX.Element {
   }
 
   return (
-    <div style={{ backgroundColor: colors.bg.primary, minHeight: '100vh', color: 'var(--text-primary)' }}>
+    <div
+      style={{
+        backgroundColor: colors.bg.primary,
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <main style={{ padding: '100px 24px 60px', maxWidth: 960, margin: '0 auto' }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Creator Dashboard</h1>
@@ -173,11 +185,11 @@ export default function CreatorDashboardPage(): React.JSX.Element {
         <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>Quick Links</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {creatorLinks.map((link) => (
-             <button
-               key={link.href}
-               onClick={() => router.push(link.href)}
-               aria-label={`Navigate to ${link.label}`}
-               style={{
+            <button
+              key={link.href}
+              onClick={() => router.push(link.href)}
+              aria-label={`Navigate to ${link.label}`}
+              style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 16,
@@ -187,7 +199,7 @@ export default function CreatorDashboardPage(): React.JSX.Element {
                 textAlign: 'left',
                 border: `1px solid ${colors.bg.tertiary}`,
                 backgroundColor: 'rgba(26,10,10,0.5)',
-color: colors.text.primary,
+                color: colors.text.primary,
                 transition: 'border-color 0.2s',
               }}
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = colors.primary)}

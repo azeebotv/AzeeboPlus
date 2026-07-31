@@ -152,14 +152,20 @@ function MovieDetailPageContent(): React.JSX.Element {
                     {movie.isPremium && (
                       <span
                         className="px-3 py-1 rounded-full text-xs font-semibold"
-                        style={{ backgroundColor: 'var(--brand-orange)', color: 'var(--brand-white)' }}
+                        style={{
+                          backgroundColor: 'var(--brand-orange)',
+                          color: 'var(--brand-white)',
+                        }}
                       >
                         Premium
                       </span>
                     )}
                     <span
                       className="px-3 py-1 rounded-full text-xs font-medium"
-                      style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
+                      style={{
+                        backgroundColor: 'rgba(232,66,10,0.2)',
+                        color: 'var(--brand-orange)',
+                      }}
                     >
                       {movie.genre}
                     </span>

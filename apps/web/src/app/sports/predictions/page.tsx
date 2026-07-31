@@ -136,7 +136,9 @@ function PredictionsPageContent(): React.JSX.Element {
                               backgroundColor: isUrgent
                                 ? 'rgba(239,68,68,0.2)'
                                 : 'rgba(13,59,46,0.3)',
-                              color: isUrgent ? 'var(--color-error-500)' : 'var(--color-success-400)',
+                              color: isUrgent
+                                ? 'var(--color-error-500)'
+                                : 'var(--color-success-400)',
                             }}
                           >
                             {isUrgent ? 'Ending Soon' : 'Open'}
@@ -184,7 +186,10 @@ function PredictionsPageContent(): React.JSX.Element {
                                 selectedBet === `${market.id}-home`
                                   ? 'var(--color-success-400)'
                                   : 'rgba(255,255,255,0.1)',
-                              color: selectedBet === `${market.id}-home` ? 'var(--brand-forest)' : '#fff',
+                              color:
+                                selectedBet === `${market.id}-home`
+                                  ? 'var(--brand-forest)'
+                                  : '#fff',
                             }}
                           >
                             {market.homeTeam}
@@ -199,7 +204,10 @@ function PredictionsPageContent(): React.JSX.Element {
                                   selectedBet === `${market.id}-draw`
                                     ? 'var(--color-success-400)'
                                     : 'rgba(255,255,255,0.1)',
-                                color: selectedBet === `${market.id}-draw` ? 'var(--brand-forest)' : '#fff',
+                                color:
+                                  selectedBet === `${market.id}-draw`
+                                    ? 'var(--brand-forest)'
+                                    : '#fff',
                               }}
                             >
                               Draw
@@ -214,7 +222,10 @@ function PredictionsPageContent(): React.JSX.Element {
                                 selectedBet === `${market.id}-away`
                                   ? 'var(--color-success-400)'
                                   : 'rgba(255,255,255,0.1)',
-                              color: selectedBet === `${market.id}-away` ? 'var(--brand-forest)' : '#fff',
+                              color:
+                                selectedBet === `${market.id}-away`
+                                  ? 'var(--brand-forest)'
+                                  : '#fff',
                             }}
                           >
                             {market.awayTeam}

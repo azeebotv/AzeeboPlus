@@ -43,7 +43,13 @@ export default function ModerationPage(): React.JSX.Element {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)', color: 'var(--text-primary, #F5F0EB)' }}>
+    <div
+      className="min-h-screen"
+      style={{
+        backgroundColor: 'var(--bg-primary, #1A0A0A)',
+        color: 'var(--text-primary, #F5F0EB)',
+      }}
+    >
       <AppHeader />
       <main style={{ padding: '100px 24px 60px', maxWidth: 960, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
@@ -63,7 +69,14 @@ export default function ModerationPage(): React.JSX.Element {
             🛡️
           </div>
           <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8 }}>Moderation Center</h1>
-          <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 16, maxWidth: 500, margin: '0 auto' }}>
+          <p
+            style={{
+              color: 'var(--text-muted, #9A8A7A)',
+              fontSize: 16,
+              maxWidth: 500,
+              margin: '0 auto',
+            }}
+          >
             Help keep the community safe by reporting and reviewing content
           </p>
         </div>
@@ -87,13 +100,19 @@ export default function ModerationPage(): React.JSX.Element {
                 color: 'var(--text-primary, #F5F0EB)',
                 transition: 'border-color 0.2s',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--brand-orange, #E8420A)')}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--bg-surface, #2A1A1A)')}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.borderColor = 'var(--brand-orange, #E8420A)')
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.borderColor = 'var(--bg-surface, #2A1A1A)')
+              }
             >
               <span style={{ fontSize: 28 }}>{link.icon}</span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 2 }}>{link.label}</h3>
-                <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 13, margin: 0 }}>{link.desc}</p>
+                <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 13, margin: 0 }}>
+                  {link.desc}
+                </p>
               </div>
               <span style={{ color: 'var(--brand-orange, #E8420A)', fontSize: 18 }}>→</span>
             </button>

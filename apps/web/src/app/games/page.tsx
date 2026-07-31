@@ -106,7 +106,10 @@ function GamesPageContent(): React.JSX.Element {
                 </span>
                 <span
                   className="px-3 py-1 rounded-full text-xs font-medium"
-                  style={{ backgroundColor: 'rgba(59,130,246,0.2)', color: 'var(--color-secondary-400)' }}
+                  style={{
+                    backgroundColor: 'rgba(59,130,246,0.2)',
+                    color: 'var(--color-secondary-400)',
+                  }}
                 >
                   {games[0].contentType || 'Game'}
                 </span>
@@ -206,7 +209,10 @@ function GamesPageContent(): React.JSX.Element {
                     />
                     <span
                       className="absolute top-2 right-2 px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                      style={{ backgroundColor: 'var(--brand-orange)', color: 'var(--brand-white)' }}
+                      style={{
+                        backgroundColor: 'var(--brand-orange)',
+                        color: 'var(--brand-white)',
+                      }}
                     >
                       Premium
                     </span>
@@ -214,7 +220,10 @@ function GamesPageContent(): React.JSX.Element {
                     <div className="absolute bottom-4 left-4 right-4">
                       <span
                         className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                        style={{ backgroundColor: 'rgba(59,130,246,0.2)', color: 'var(--color-secondary-400)' }}
+                        style={{
+                          backgroundColor: 'rgba(59,130,246,0.2)',
+                          color: 'var(--color-secondary-400)',
+                        }}
                       >
                         {game.contentType || 'Game'}
                       </span>

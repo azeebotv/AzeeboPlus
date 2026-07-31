@@ -95,7 +95,13 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <main
         style={{
@@ -112,7 +118,9 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
             Choose the plan that works best for you
           </p>
           {walletBalance !== null && (
-            <p style={{ color: 'var(--brand-forest)', marginTop: 8, fontSize: 14, fontWeight: 600 }}>
+            <p
+              style={{ color: 'var(--brand-forest)', marginTop: 8, fontSize: 14, fontWeight: 600 }}
+            >
               Wallet Balance: ₦{walletBalance.toLocaleString()}
             </p>
           )}
@@ -184,7 +192,8 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                         transform: 'translateX(-50%)',
                         padding: '4px 16px',
                         borderRadius: 999,
-                        background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+                        background:
+                          'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
                         fontSize: 12,
                         fontWeight: 700,
                         color: 'var(--brand-white)',
@@ -194,9 +203,18 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                     </div>
                   )}
                   <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>{plan.name}</h3>
-                  <p style={{ fontSize: 32, fontWeight: 700, color: 'var(--brand-orange)', marginBottom: 20 }}>
+                  <p
+                    style={{
+                      fontSize: 32,
+                      fontWeight: 700,
+                      color: 'var(--brand-orange)',
+                      marginBottom: 20,
+                    }}
+                  >
                     ₦{plan.price.toLocaleString()}
-                    <span style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 400 }}>/month</span>
+                    <span style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 400 }}>
+                      /month
+                    </span>
                   </p>
                   <div
                     style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}
@@ -329,7 +347,8 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                       width: '100%',
                       padding: '12px 0',
                       borderRadius: 999,
-                      background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+                      background:
+                        'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
                       color: 'var(--brand-white)',
                       border: 'none',
                       cursor: 'pointer',

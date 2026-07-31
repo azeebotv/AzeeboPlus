@@ -259,7 +259,10 @@ function TitleDetailPageContent(): React.JSX.Element {
                           />
                           <span
                             className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
-                            style={{ backgroundColor: 'rgba(0,0,0,0.7)', color: 'var(--brand-white)' }}
+                            style={{
+                              backgroundColor: 'rgba(0,0,0,0.7)',
+                              color: 'var(--brand-white)',
+                            }}
                           >
                             {formatDuration(episode.duration)}
                           </span>

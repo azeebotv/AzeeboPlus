@@ -111,7 +111,10 @@ export default function AgbalaQuizPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
+      <div
+        className="min-h-screen"
+        style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
+      >
         <AppHeader active="Vertical" />
         <main
           style={{
@@ -132,7 +135,10 @@ export default function AgbalaQuizPage(): React.JSX.Element {
   if (showResults && answers.length > 0) {
     const resultPath = PATHS.find((p) => p.id === selectedPath);
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
+      <div
+        className="min-h-screen"
+        style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
+      >
         <AppHeader active="Vertical" />
         <main
           style={{
@@ -187,7 +193,10 @@ export default function AgbalaQuizPage(): React.JSX.Element {
 
   if (!selectedPath) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
+      <div
+        className="min-h-screen"
+        style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
+      >
         <AppHeader active="Vertical" />
         <main
           style={{
@@ -210,7 +219,9 @@ export default function AgbalaQuizPage(): React.JSX.Element {
           >
             {quizList.length === 0 ? (
               <div style={{ gridColumn: '1 / -1' }}>
-                <p style={{ color: 'var(--text-secondary)' }}>No quizzes available yet. Check back soon!</p>
+                <p style={{ color: 'var(--text-secondary)' }}>
+                  No quizzes available yet. Check back soon!
+                </p>
               </div>
             ) : (
               quizList.map((quiz) => (
@@ -235,7 +246,9 @@ export default function AgbalaQuizPage(): React.JSX.Element {
                 >
                   <h3 style={{ fontWeight: 600, fontSize: 16, marginBottom: 4 }}>{quiz.title}</h3>
                   {quiz.description && (
-                    <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: 0 }}>{quiz.description}</p>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: 0 }}>
+                      {quiz.description}
+                    </p>
                   )}
                   <p style={{ color: 'var(--text-tertiary)', fontSize: 12, marginTop: 8 }}>
                     {quiz.questions?.length || 0} questions
@@ -254,7 +267,10 @@ export default function AgbalaQuizPage(): React.JSX.Element {
   if (!quiz || currentQuestion >= quiz.questions.length) {
     if (!shouldShowError) setShouldShowError(true);
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
+      <div
+        className="min-h-screen"
+        style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
+      >
         <AppHeader active="Vertical" />
         <main
           style={{
@@ -277,7 +293,10 @@ export default function AgbalaQuizPage(): React.JSX.Element {
   const question = quiz.questions[currentQuestion];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
+    <div
+      className="min-h-screen"
+      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
+    >
       <AppHeader active="Vertical" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 600, margin: '0 auto' }}>
         <div style={{ marginBottom: 24 }}>

@@ -52,7 +52,10 @@ export default function RealityShowsPage(): React.JSX.Element {
   const shows = showsQuery.data || [];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
+    <div
+      className="min-h-screen"
+      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
+    >
       <AppHeader active="Reality" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 1200, margin: '0 auto' }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Reality Shows</h1>
@@ -98,14 +101,25 @@ export default function RealityShowsPage(): React.JSX.Element {
                 }}
               >
                 <div
-                  style={{ position: 'relative', aspectRatio: '9/16', backgroundColor: 'var(--bg-tertiary)' }}
+                  style={{
+                    position: 'relative',
+                    aspectRatio: '9/16',
+                    backgroundColor: 'var(--bg-tertiary)',
+                  }}
                 >
                   {show.thumbnail && (
                     <OptimizedImage src={show.thumbnail} alt="" fill className="object-cover" />
                   )}
                 </div>
                 <div style={{ padding: 12 }}>
-                  <h3 style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', margin: 0 }}>
+                  <h3
+                    style={{
+                      fontWeight: 600,
+                      fontSize: 14,
+                      color: 'var(--text-primary)',
+                      margin: 0,
+                    }}
+                  >
                     {show.title}
                   </h3>
                   {show.description && (

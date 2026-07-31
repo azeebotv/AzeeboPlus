@@ -3,10 +3,12 @@ import { Suspense, lazy, useEffect, useState } from 'react';
 
 export const metadata = {
   title: 'Lifestyle Events | Azeebo',
-  description: 'Find and RSVP to exciting lifestyle events, experiences, and happenings across Africa.',
+  description:
+    'Find and RSVP to exciting lifestyle events, experiences, and happenings across Africa.',
   openGraph: {
     title: 'Lifestyle Events | Azeebo',
-    description: 'Find and RSVP to exciting lifestyle events, experiences, and happenings across Africa.',
+    description:
+      'Find and RSVP to exciting lifestyle events, experiences, and happenings across Africa.',
   },
 };
 import { useQuery } from '@tanstack/react-query';
@@ -75,7 +77,9 @@ function EventsPageContent(): React.JSX.Element {
       {/* Hero */}
       <section
         className="relative py-16 sm:py-20"
-        style={{ background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)' }}
+        style={{
+          background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+        }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.h1
@@ -147,7 +151,10 @@ function EventsPageContent(): React.JSX.Element {
                       {event.isVirtual && (
                         <span
                           className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
-                          style={{ backgroundColor: 'rgba(59,130,246,0.9)', color: 'var(--brand-white)' }}
+                          style={{
+                            backgroundColor: 'rgba(59,130,246,0.9)',
+                            color: 'var(--brand-white)',
+                          }}
                         >
                           Virtual
                         </span>
@@ -155,7 +162,10 @@ function EventsPageContent(): React.JSX.Element {
                       {event.category && (
                         <span
                           className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
-                          style={{ backgroundColor: 'rgba(232,66,10,0.9)', color: 'var(--brand-white)' }}
+                          style={{
+                            backgroundColor: 'rgba(232,66,10,0.9)',
+                            color: 'var(--brand-white)',
+                          }}
                         >
                           {event.category}
                         </span>
@@ -220,7 +230,9 @@ function EventsPageContent(): React.JSX.Element {
                         onClick={() => handleRsvp(event.id)}
                         className="px-4 py-2 rounded-full text-xs font-semibold transition-all"
                         style={{
-                          backgroundColor: rsvped.has(event.id) ? 'var(--color-success-400)' : 'var(--brand-orange)',
+                          backgroundColor: rsvped.has(event.id)
+                            ? 'var(--color-success-400)'
+                            : 'var(--brand-orange)',
                           color: rsvped.has(event.id) ? 'var(--brand-forest)' : '#fff',
                         }}
                         whileHover={{ scale: 1.05 }}

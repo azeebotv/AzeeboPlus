@@ -88,7 +88,13 @@ export default function StreakPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <main
         style={{
@@ -98,14 +104,19 @@ export default function StreakPage(): React.JSX.Element {
         }}
       >
         <div style={{ marginBottom: 24 }}>
-          <Link href="/rewards" style={{ color: 'var(--text-secondary)', fontSize: 14, textDecoration: 'none' }}>
+          <Link
+            href="/rewards"
+            style={{ color: 'var(--text-secondary)', fontSize: 14, textDecoration: 'none' }}
+          >
             &larr; Back to Rewards
           </Link>
         </div>
 
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <h1 style={{ fontSize: 28, fontWeight: 700 }}>Streak</h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>Keep your daily streak alive</p>
+          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>
+            Keep your daily streak alive
+          </p>
         </div>
 
         {isLoading ? (
@@ -133,8 +144,12 @@ export default function StreakPage(): React.JSX.Element {
               }}
             >
               <div style={{ fontSize: 48, marginBottom: 8 }}>🔥</div>
-              <p style={{ fontSize: 48, fontWeight: 700, color: 'var(--brand-orange)' }}>{currentStreak}</p>
-              <p style={{ fontSize: 16, color: 'var(--text-secondary)', marginBottom: 8 }}>Day Streak</p>
+              <p style={{ fontSize: 48, fontWeight: 700, color: 'var(--brand-orange)' }}>
+                {currentStreak}
+              </p>
+              <p style={{ fontSize: 16, color: 'var(--text-secondary)', marginBottom: 8 }}>
+                Day Streak
+              </p>
               {todayActive && (
                 <span
                   style={{
@@ -178,7 +193,9 @@ export default function StreakPage(): React.JSX.Element {
                 className="az-glass"
                 style={{ padding: 20, borderRadius: 16, textAlign: 'center' }}
               >
-                <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>Current Streak</p>
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>
+                  Current Streak
+                </p>
                 <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--brand-orange)' }}>
                   {currentStreak} days
                 </p>
@@ -187,7 +204,9 @@ export default function StreakPage(): React.JSX.Element {
                 className="az-glass"
                 style={{ padding: 20, borderRadius: 16, textAlign: 'center' }}
               >
-                <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>Longest Streak</p>
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>
+                  Longest Streak
+                </p>
                 <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-warning-500)' }}>
                   {longestStreak} days
                 </p>
@@ -229,7 +248,11 @@ export default function StreakPage(): React.JSX.Element {
                             : day.isToday
                               ? 'rgba(232,66,10,0.1)'
                               : 'rgba(255,255,255,0.04)',
-                          color: day.active ? 'var(--brand-orange)' : day.isToday ? 'var(--brand-orange)' : 'var(--text-tertiary)',
+                          color: day.active
+                            ? 'var(--brand-orange)'
+                            : day.isToday
+                              ? 'var(--brand-orange)'
+                              : 'var(--text-tertiary)',
                           border: day.isToday ? '1px solid #E8420A' : 'none',
                         }}
                       >

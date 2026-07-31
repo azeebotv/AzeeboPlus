@@ -199,13 +199,21 @@ export default function RankingsPage(): React.JSX.Element {
                           )}
                         </div>
                         <h3 className="font-bold text-white">{entry.displayName}</h3>
-                        <p className="text-xl font-bold mt-1" style={{ color: 'var(--brand-orange)' }}>
+                        <p
+                          className="text-xl font-bold mt-1"
+                          style={{ color: 'var(--brand-orange)' }}
+                        >
                           {entry.score.toLocaleString()}
                         </p>
                         {entry.change !== 0 && (
                           <p
                             className={`text-sm mt-1 font-medium`}
-                            style={{ color: entry.change > 0 ? 'var(--color-success-500)' : 'var(--color-error-500)' }}
+                            style={{
+                              color:
+                                entry.change > 0
+                                  ? 'var(--color-success-500)'
+                                  : 'var(--color-error-500)',
+                            }}
                           >
                             {entry.change > 0 ? '↑' : '↓'} {Math.abs(entry.change)}
                           </p>
@@ -256,7 +264,12 @@ export default function RankingsPage(): React.JSX.Element {
                           {entry.change !== 0 && (
                             <p
                               className="text-sm font-medium"
-                              style={{ color: entry.change > 0 ? 'var(--color-success-500)' : 'var(--color-error-500)' }}
+                              style={{
+                                color:
+                                  entry.change > 0
+                                    ? 'var(--color-success-500)'
+                                    : 'var(--color-error-500)',
+                              }}
                             >
                               {entry.change > 0 ? '↑' : '↓'} {Math.abs(entry.change)}
                             </p>

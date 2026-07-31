@@ -101,7 +101,8 @@ function LeaderboardPageContent(): React.JSX.Element {
               onClick={() => setTimeFrame(tf)}
               className="whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-all"
               style={{
-                backgroundColor: timeFrame === tf ? 'var(--brand-orange)' : 'rgba(255,255,255,0.05)',
+                backgroundColor:
+                  timeFrame === tf ? 'var(--brand-orange)' : 'rgba(255,255,255,0.05)',
                 color: timeFrame === tf ? '#fff' : 'rgba(255,255,255,0.6)',
                 border: `1px solid ${timeFrame === tf ? 'var(--brand-orange)' : 'rgba(255,255,255,0.1)'}`,
               }}

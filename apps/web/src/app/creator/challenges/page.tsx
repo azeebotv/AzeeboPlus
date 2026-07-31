@@ -72,7 +72,13 @@ export default function CreatorChallengesPage(): React.JSX.Element {
   };
 
   return (
-    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader active="Creator" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Challenges</h1>
@@ -215,12 +221,20 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                   {challenge.rules && challenge.rules.length > 0 && (
                     <div style={{ marginBottom: 12 }}>
                       <p
-                        style={{ color: 'var(--text-secondary)', fontSize: 12, fontWeight: 600, marginBottom: 4 }}
+                        style={{
+                          color: 'var(--text-secondary)',
+                          fontSize: 12,
+                          fontWeight: 600,
+                          marginBottom: 4,
+                        }}
                       >
                         Rules:
                       </p>
                       {(challenge.rules ?? []).slice(0, 2).map((rule: string, i: number) => (
-                        <p key={i} style={{ color: 'var(--text-secondary)', fontSize: 12, margin: 0 }}>
+                        <p
+                          key={i}
+                          style={{ color: 'var(--text-secondary)', fontSize: 12, margin: 0 }}
+                        >
                           • {rule}
                         </p>
                       ))}
@@ -283,7 +297,9 @@ export default function CreatorChallengesPage(): React.JSX.Element {
             ))}
           </div>
         ) : submissions.length === 0 ? (
-          <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>No submissions yet</p>
+          <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>
+            No submissions yet
+          </p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {submissions.map((sub) => (
@@ -371,7 +387,12 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                   {challenge.title}
                 </p>
                 <label
-                  style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}
+                  style={{
+                    display: 'block',
+                    fontSize: 12,
+                    color: 'var(--text-secondary)',
+                    marginBottom: 4,
+                  }}
                 >
                   Content URL
                 </label>
@@ -392,7 +413,12 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                   }}
                 />
                 <label
-                  style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}
+                  style={{
+                    display: 'block',
+                    fontSize: 12,
+                    color: 'var(--text-secondary)',
+                    marginBottom: 4,
+                  }}
                 >
                   Description (optional)
                 </label>

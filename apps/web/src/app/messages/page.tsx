@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-
 export const metadata = {
   title: 'Messages | Azeebo',
   description: 'Connect with creators and other users through direct messages on Azeebo.',
@@ -371,7 +370,10 @@ export default function MessagesPage(): React.JSX.Element {
                   {unreadCount > 0 && (
                     <span
                       className="px-2 py-1 text-[10px] font-bold rounded-full"
-                      style={{ background: 'var(--brand-orange, #E8420A)', color: 'var(--brand-white)' }}
+                      style={{
+                        background: 'var(--brand-orange, #E8420A)',
+                        color: 'var(--brand-white)',
+                      }}
                     >
                       {unreadCount}
                     </span>
@@ -447,7 +449,10 @@ export default function MessagesPage(): React.JSX.Element {
                         {conversation.unreadCount > 0 && (
                           <div
                             className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
-                            style={{ background: 'var(--brand-orange, #E8420A)', color: 'var(--brand-white)' }}
+                            style={{
+                              background: 'var(--brand-orange, #E8420A)',
+                              color: 'var(--brand-white)',
+                            }}
                           >
                             {conversation.unreadCount}
                           </div>
@@ -504,7 +509,9 @@ export default function MessagesPage(): React.JSX.Element {
                     </div>
                     <div className="flex gap-2">
                       <button
-                        aria-label={selectedConversation.isMuted ? 'Unmute conversation' : 'Mute conversation'}
+                        aria-label={
+                          selectedConversation.isMuted ? 'Unmute conversation' : 'Mute conversation'
+                        }
                         onClick={() =>
                           muteMutation.mutate({
                             conversationId: selectedConversation.id,
@@ -514,7 +521,9 @@ export default function MessagesPage(): React.JSX.Element {
                         className="text-xs px-2 py-1 rounded border"
                         style={{
                           borderColor: 'rgba(255,255,255,0.2)',
-                          color: selectedConversation.isMuted ? 'var(--color-warning-500)' : 'var(--text-muted, #9A8A7A)',
+                          color: selectedConversation.isMuted
+                            ? 'var(--color-warning-500)'
+                            : 'var(--text-muted, #9A8A7A)',
                         }}
                       >
                         {selectedConversation.isMuted ? 'Unmute' : 'Mute'}
@@ -528,7 +537,10 @@ export default function MessagesPage(): React.JSX.Element {
                           });
                         }}
                         className="text-xs px-2 py-1 rounded border"
-                        style={{ borderColor: 'rgba(255,255,255,0.2)', color: 'var(--text-muted, #9A8A7A)' }}
+                        style={{
+                          borderColor: 'rgba(255,255,255,0.2)',
+                          color: 'var(--text-muted, #9A8A7A)',
+                        }}
                       >
                         Archive
                       </button>
@@ -679,7 +691,10 @@ export default function MessagesPage(): React.JSX.Element {
                                   key={reaction.emoji}
                                   aria-label={`React with ${reaction.label}`}
                                   onClick={() =>
-                                    reactMutation.mutate({ messageId: message.id, emoji: reaction.emoji })
+                                    reactMutation.mutate({
+                                      messageId: message.id,
+                                      emoji: reaction.emoji,
+                                    })
                                   }
                                   className="text-xs hover:scale-125 transition-transform"
                                 >

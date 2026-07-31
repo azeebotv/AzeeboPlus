@@ -47,7 +47,9 @@ function CrossoversPageContent(): React.JSX.Element {
       {/* Hero */}
       <section
         className="relative py-16 sm:py-20"
-        style={{ background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)' }}
+        style={{
+          background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+        }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.h1
@@ -119,7 +121,10 @@ function CrossoversPageContent(): React.JSX.Element {
                       <div className="absolute top-2 left-2">
                         <span
                           className="px-2.5 py-1 rounded-full text-[10px] font-bold"
-                          style={{ backgroundColor: 'var(--brand-orange)', color: 'var(--brand-white)' }}
+                          style={{
+                            backgroundColor: 'var(--brand-orange)',
+                            color: 'var(--brand-white)',
+                          }}
                         >
                           CROSSOVER
                         </span>
@@ -176,10 +181,12 @@ const LazyCrossoversPage = lazy(() => Promise.resolve({ default: CrossoversPageC
 
 export const metadata = {
   title: 'Crossovers | Azeebo',
-  description: 'When storyworlds collide — characters and narratives from different universes meet.',
+  description:
+    'When storyworlds collide — characters and narratives from different universes meet.',
   openGraph: {
     title: 'Crossovers | Azeebo',
-    description: 'When storyworlds collide — characters and narratives from different universes meet.',
+    description:
+      'When storyworlds collide — characters and narratives from different universes meet.',
   },
 };
 

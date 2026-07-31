@@ -45,7 +45,13 @@ export default function CreatorEarningsPage(): React.JSX.Element {
 
   if (error) {
     return (
-      <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+      <div
+        style={{
+          backgroundColor: 'var(--brand-near-black)',
+          minHeight: '100vh',
+          color: 'var(--text-primary)',
+        }}
+      >
         <AppHeader active="Creator" />
         <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
           <ErrorState title="Failed to load earnings" />
@@ -56,14 +62,29 @@ export default function CreatorEarningsPage(): React.JSX.Element {
   }
 
   return (
-    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader active="Creator" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Earnings</h1>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>Track your revenue and payouts</p>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>
+          Track your revenue and payouts
+        </p>
 
         <div style={{ marginBottom: 24 }}>
-          <label style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 8, display: 'block' }}>
+          <label
+            style={{
+              color: 'var(--text-secondary)',
+              fontSize: 13,
+              marginBottom: 8,
+              display: 'block',
+            }}
+          >
             Period
           </label>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -117,7 +138,9 @@ export default function CreatorEarningsPage(): React.JSX.Element {
                   backgroundColor: 'rgba(26,10,10,0.5)',
                 }}
               >
-                <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginBottom: 4 }}>Total Earnings</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginBottom: 4 }}>
+                  Total Earnings
+                </p>
                 <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>
                   ₦{earnings.totalEarnings.toLocaleString()}
                 </p>
@@ -130,7 +153,9 @@ export default function CreatorEarningsPage(): React.JSX.Element {
                   backgroundColor: 'rgba(26,10,10,0.5)',
                 }}
               >
-                <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginBottom: 4 }}>Available Balance</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginBottom: 4 }}>
+                  Available Balance
+                </p>
                 <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-success-400)' }}>
                   ₦{earnings.availableBalance.toLocaleString()}
                 </p>
@@ -143,7 +168,9 @@ export default function CreatorEarningsPage(): React.JSX.Element {
                   backgroundColor: 'rgba(26,10,10,0.5)',
                 }}
               >
-                <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginBottom: 4 }}>Pending</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginBottom: 4 }}>
+                  Pending
+                </p>
                 <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-warning-500)' }}>
                   ₦{earnings.pendingEarnings.toLocaleString()}
                 </p>
@@ -156,7 +183,9 @@ export default function CreatorEarningsPage(): React.JSX.Element {
                   backgroundColor: 'rgba(26,10,10,0.5)',
                 }}
               >
-                <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginBottom: 4 }}>Lifetime</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginBottom: 4 }}>
+                  Lifetime
+                </p>
                 <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>
                   ₦{earnings.lifetimeEarnings.toLocaleString()}
                 </p>
@@ -176,7 +205,13 @@ export default function CreatorEarningsPage(): React.JSX.Element {
                       backgroundColor: 'rgba(26,10,10,0.5)',
                     }}
                   >
-                    <p style={{ color: 'var(--text-secondary)', fontSize: 12, textTransform: 'capitalize' }}>
+                    <p
+                      style={{
+                        color: 'var(--text-secondary)',
+                        fontSize: 12,
+                        textTransform: 'capitalize',
+                      }}
+                    >
                       {key.replace(/([A-Z])/g, ' $1')}
                     </p>
                     <p style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>
@@ -209,7 +244,14 @@ export default function CreatorEarningsPage(): React.JSX.Element {
                       }}
                     >
                       <div>
-                        <p style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', margin: 0 }}>
+                        <p
+                          style={{
+                            fontWeight: 600,
+                            fontSize: 14,
+                            color: 'var(--text-primary)',
+                            margin: 0,
+                          }}
+                        >
                           {item.source}
                         </p>
                         <p style={{ color: 'var(--text-secondary)', fontSize: 12 }}>{item.date}</p>
@@ -219,12 +261,21 @@ export default function CreatorEarningsPage(): React.JSX.Element {
                           style={{
                             fontWeight: 600,
                             fontSize: 14,
-                            color: item.status === 'pending' ? 'var(--color-warning-500)' : 'var(--color-success-400)',
+                            color:
+                              item.status === 'pending'
+                                ? 'var(--color-warning-500)'
+                                : 'var(--color-success-400)',
                           }}
                         >
                           ₦{item.amount.toLocaleString()}
                         </p>
-                        <p style={{ fontSize: 11, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
+                        <p
+                          style={{
+                            fontSize: 11,
+                            color: 'var(--text-tertiary)',
+                            textTransform: 'uppercase',
+                          }}
+                        >
                           {item.status}
                         </p>
                       </div>

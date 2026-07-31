@@ -85,7 +85,10 @@ function StoryworldDetailContent(): React.JSX.Element {
                   {storyworld.isComplete && (
                     <span
                       className="px-3 py-1 rounded-full text-xs font-semibold"
-                      style={{ backgroundColor: 'rgba(34,197,94,0.9)', color: 'var(--brand-white)' }}
+                      style={{
+                        backgroundColor: 'rgba(34,197,94,0.9)',
+                        color: 'var(--brand-white)',
+                      }}
                     >
                       Complete
                     </span>
@@ -93,7 +96,10 @@ function StoryworldDetailContent(): React.JSX.Element {
                   {storyworld.genre && (
                     <span
                       className="px-3 py-1 rounded-full text-xs font-semibold"
-                      style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
+                      style={{
+                        backgroundColor: 'rgba(232,66,10,0.2)',
+                        color: 'var(--brand-orange)',
+                      }}
                     >
                       {storyworld.genre}
                     </span>

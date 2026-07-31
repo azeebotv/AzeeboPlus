@@ -159,7 +159,10 @@ export default function WalletPage(): React.JSX.Element {
                     <div className="text-right">
                       <p
                         className="font-bold text-lg"
-                        style={{ color: transaction.type === 'credit' ? 'var(--color-success-500)' : '#fff' }}
+                        style={{
+                          color:
+                            transaction.type === 'credit' ? 'var(--color-success-500)' : '#fff',
+                        }}
                       >
                         {transaction.type === 'credit' ? '+' : '-'} ₦
                         {(transaction.amount ?? 0).toLocaleString()}

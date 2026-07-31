@@ -57,7 +57,10 @@ export default function CreatorProfilePage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
+      <div
+        className="min-h-screen"
+        style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
+      >
         <AppHeader active="Creator" />
         <main style={{ padding: '100px 24px 60px', maxWidth: 600, margin: '0 auto' }}>
           <Skeleton className="h-12 w-full mb-6" />
@@ -70,11 +73,16 @@ export default function CreatorProfilePage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
+    <div
+      className="min-h-screen"
+      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
+    >
       <AppHeader active="Creator" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 600, margin: '0 auto' }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Creator Profile</h1>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>Manage your creator profile</p>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>
+          Manage your creator profile
+        </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ position: 'relative' }}>
@@ -101,7 +109,14 @@ export default function CreatorProfilePage(): React.JSX.Element {
           </div>
 
           <div>
-            <label style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 4, display: 'block' }}>
+            <label
+              style={{
+                color: 'var(--text-secondary)',
+                fontSize: 13,
+                marginBottom: 4,
+                display: 'block',
+              }}
+            >
               Display Name
             </label>
             <input
@@ -121,7 +136,14 @@ export default function CreatorProfilePage(): React.JSX.Element {
           </div>
 
           <div>
-            <label style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 4, display: 'block' }}>
+            <label
+              style={{
+                color: 'var(--text-secondary)',
+                fontSize: 13,
+                marginBottom: 4,
+                display: 'block',
+              }}
+            >
               Bio
             </label>
             <textarea
@@ -143,7 +165,14 @@ export default function CreatorProfilePage(): React.JSX.Element {
           </div>
 
           <div>
-            <label style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 4, display: 'block' }}>
+            <label
+              style={{
+                color: 'var(--text-secondary)',
+                fontSize: 13,
+                marginBottom: 4,
+                display: 'block',
+              }}
+            >
               YouTube URL
             </label>
             <input
@@ -172,7 +201,14 @@ export default function CreatorProfilePage(): React.JSX.Element {
           </div>
 
           <div>
-            <label style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 4, display: 'block' }}>
+            <label
+              style={{
+                color: 'var(--text-secondary)',
+                fontSize: 13,
+                marginBottom: 4,
+                display: 'block',
+              }}
+            >
               Twitter URL
             </label>
             <input
@@ -201,7 +237,14 @@ export default function CreatorProfilePage(): React.JSX.Element {
           </div>
 
           <div>
-            <label style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 4, display: 'block' }}>
+            <label
+              style={{
+                color: 'var(--text-secondary)',
+                fontSize: 13,
+                marginBottom: 4,
+                display: 'block',
+              }}
+            >
               Instagram URL
             </label>
             <input

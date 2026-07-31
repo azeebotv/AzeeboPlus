@@ -76,7 +76,10 @@ export default function ContestantProfilePage(): React.JSX.Element {
           <div className="text-center">
             <div
               className="animate-spin rounded-full h-12 w-12 mx-auto"
-              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--brand-orange)' }}
+              style={{
+                border: '3px solid rgba(255,255,255,0.1)',
+                borderTopColor: 'var(--brand-orange)',
+              }}
             />
             <p className="mt-4 text-white/60">Loading profile...</p>
           </div>

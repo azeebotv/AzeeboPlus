@@ -149,7 +149,10 @@ function SportsPageContent(): React.JSX.Element {
                     <div className="absolute bottom-4 left-4 right-4">
                       <span
                         className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                        style={{ backgroundColor: 'rgba(13,59,46,0.4)', color: 'var(--color-success-400)' }}
+                        style={{
+                          backgroundColor: 'rgba(13,59,46,0.4)',
+                          color: 'var(--color-success-400)',
+                        }}
                       >
                         {match.contentType || 'Sport'}
                       </span>
@@ -158,7 +161,11 @@ function SportsPageContent(): React.JSX.Element {
                   </div>
                   <div className="p-4">
                     <p className="text-sm text-white/50 mb-3 line-clamp-2">{match.description}</p>
-                    <button type="button" aria-label={`Watch ${match.title}`} className="az-btn-primary w-full">
+                    <button
+                      type="button"
+                      aria-label={`Watch ${match.title}`}
+                      className="az-btn-primary w-full"
+                    >
                       Watch Now
                     </button>
                   </div>

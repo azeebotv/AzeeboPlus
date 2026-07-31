@@ -109,10 +109,16 @@ export default function TippingPanel({
               padding: '8px 16px',
               borderRadius: 8,
               border: '1px solid',
-              borderColor: !useCustom && amount === preset ? 'var(--brand-orange, #E8420A)' : 'var(--bg-surface, #2A1A1A)',
+              borderColor:
+                !useCustom && amount === preset
+                  ? 'var(--brand-orange, #E8420A)'
+                  : 'var(--bg-surface, #2A1A1A)',
               backgroundColor:
                 !useCustom && amount === preset ? 'rgba(232,66,10,0.15)' : 'transparent',
-              color: !useCustom && amount === preset ? 'var(--brand-orange, #E8420A)' : 'var(--text-primary, #F5F0EB)',
+              color:
+                !useCustom && amount === preset
+                  ? 'var(--brand-orange, #E8420A)'
+                  : 'var(--text-primary, #F5F0EB)',
               fontSize: 13,
               fontWeight: 600,
               cursor: 'pointer',
@@ -184,7 +190,13 @@ export default function TippingPanel({
 
       <button
         type="button"
-        aria-label={tipMutation.isPending ? 'Sending tip...' : tipMutation.isSuccess ? 'Tip sent' : `Send tip of ${selectedAmount.toLocaleString()} naira`}
+        aria-label={
+          tipMutation.isPending
+            ? 'Sending tip...'
+            : tipMutation.isSuccess
+              ? 'Tip sent'
+              : `Send tip of ${selectedAmount.toLocaleString()} naira`
+        }
         onClick={() => tipMutation.mutate()}
         disabled={tipMutation.isPending || selectedAmount < 50}
         style={{
@@ -209,13 +221,27 @@ export default function TippingPanel({
       </button>
 
       {tipMutation.isError && (
-        <p style={{ color: 'var(--color-error-500)', fontSize: 13, textAlign: 'center', marginBottom: 12 }}>
+        <p
+          style={{
+            color: 'var(--color-error-500)',
+            fontSize: 13,
+            textAlign: 'center',
+            marginBottom: 12,
+          }}
+        >
           {tipMutation.error instanceof Error ? tipMutation.error.message : 'Failed to send tip'}
         </p>
       )}
 
       <div style={{ borderTop: '1px solid #2A1A1A', paddingTop: 16 }}>
-        <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>
+        <p
+          style={{
+            color: 'var(--text-muted, #9A8A7A)',
+            fontSize: 13,
+            fontWeight: 600,
+            marginBottom: 8,
+          }}
+        >
           Top Supporters
         </p>
         {leaderboardQuery.isLoading ? (
@@ -246,7 +272,9 @@ export default function TippingPanel({
                       </span>
                     )}
                   </div>
-                  <span style={{ color: 'var(--text-primary, #F5F0EB)', fontSize: 12, fontWeight: 600 }}>
+                  <span
+                    style={{ color: 'var(--text-primary, #F5F0EB)', fontSize: 12, fontWeight: 600 }}
+                  >
                     ₦{Number(entry.totalAmount).toLocaleString()}
                   </span>
                 </div>
