@@ -18,6 +18,7 @@ dist/
 **/generated/prisma/
 *.tsbuildinfo
 coverage/
+apps/web/coverage/
 
 # Logs
 yarn-error.log

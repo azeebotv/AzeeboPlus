@@ -1,7 +1,7 @@
 import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../prisma/client/index.js';
 import { CreatorResponse } from './interfaces/creator-response.interface.js';
 import axios from 'axios';
 import { randomUUID } from 'crypto';

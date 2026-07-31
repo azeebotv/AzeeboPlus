@@ -13,6 +13,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { apiClient } from '../../src/api/client';
+import { createLogger } from '../../src/utils/logger';
+
+const logger = createLogger('AddFunds');
 
 interface WalletBalance {
   balance: number;
@@ -32,8 +35,7 @@ export default function AddFundsScreen() {
       const res = await apiClient.get<WalletBalance>('/api/v1/wallet/balance');
       setBalance(res);
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to load balance:', error);
+      logger.error('Failed to load balance', error);
     }
   };
 

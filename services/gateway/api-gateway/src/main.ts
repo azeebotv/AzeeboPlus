@@ -34,8 +34,7 @@ async function bootstrap(): Promise<void> {
   app.useGlobalFilters(new GlobalExceptionFilter());
 
   // Security headers
-    app.use(createHelmetConfig())
-;
+  app.use(createHelmetConfig());
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -47,36 +46,46 @@ async function bootstrap(): Promise<void> {
 
   app.useGlobalInterceptors(new LoggingInterceptor());
 
-  // Allow-listed origins for all frontend apps
-  const allowedOrigins = [
+  // Allow-listed origins — prefer env var, fall back to production defaults
+  const defaultOrigins = [
     'https://app.azeeboplus.com',
     'https://creator.azeeboplus.com',
     'https://admin.azeeboplus.com',
   ];
 
+  const originsEnv = process.env.ALLOWED_ORIGINS || process.env.CORS_ORIGIN;
+  let allowedOrigins: string[];
+
+  if (originsEnv) {
+    // When env var is set, use it as the single source of truth
+    const VALID_ORIGIN = /^https?:\/\/.+/;
+    allowedOrigins = originsEnv
+      .split(',')
+      .map((o: string) => o.trim())
+      .filter((o: string) => {
+        if (!o) return false;
+        if (!VALID_ORIGIN.test(o)) {
+          Logger.warn(`Skipping invalid ALLOWED_ORIGINS entry: "${o}" (must start with http:// or https://)`);
+          return false;
+        }
+        return true;
+      });
+  } else {
+    allowedOrigins = [...defaultOrigins];
+  }
+
   if (process.env.NODE_ENV !== 'production') {
-    allowedOrigins.push(
+    const devOrigins = [
       'http://localhost:3000',
       'http://localhost:4000',
       'http://localhost:4014',
-      'http://localhost:4016'
-    );
-  }
-
-  // Accept env-var overrides for additional origins
-  const originsEnv = process.env.ALLOWED_ORIGINS || process.env.CORS_ORIGIN;
-  if (originsEnv) {
-    const VALID_ORIGIN = /^https?:\/\/.+/;
-    originsEnv.split(',').forEach((o: string) => {
-      const trimmed = o.trim();
-      if (trimmed && !allowedOrigins.includes(trimmed)) {
-        if (VALID_ORIGIN.test(trimmed)) {
-          allowedOrigins.push(trimmed);
-        } else {
-          Logger.warn(`Skipping invalid ALLOWED_ORIGINS entry: "${trimmed}" (must start with http:// or https://)`);
-        }
+      'http://localhost:4016',
+    ];
+    for (const origin of devOrigins) {
+      if (!allowedOrigins.includes(origin)) {
+        allowedOrigins.push(origin);
       }
-    });
+    }
   }
 
   configureCors(app, { allowedOrigins, credentials: true });
@@ -87,7 +96,7 @@ async function bootstrap(): Promise<void> {
       .setDescription('Azeebo+ API Gateway')
       .setVersion('1.0.0')
       .addTag('gateway')
-      .addServer('http://localhost:3013', 'API Gateway')
+      .addServer(`http://localhost:${process.env.PORT || '3013'}`, 'API Gateway')
       .build();
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('docs', app, document);

@@ -13,6 +13,9 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { subscriptionApi, type Subscription } from '../../src/api/subscription';
 import { colors, typography, spacing, radius } from '../../src/theme';
+import { createLogger } from '../../src/utils/logger';
+
+const logger = createLogger('SubscriptionHistory');
 
 export default function SubscriptionHistoryScreen() {
   const router = useRouter();
@@ -47,8 +50,7 @@ export default function SubscriptionHistoryScreen() {
         setHasMore(pageNum < (response.data.totalPages || 1));
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to load subscription history:', error);
+      logger.error('Failed to load subscription history', error);
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);

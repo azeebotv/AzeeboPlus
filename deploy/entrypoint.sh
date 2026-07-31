@@ -113,6 +113,7 @@ DBS=(
   "azeebo_messaging:azeebo:${MESSAGING_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "azeebo_referral:azeebo:${REFERRAL_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "azeebo_subscription:azeebo:${SUBSCRIPTION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_live_event:azeebo:${LIVE_EVENT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "azeebo_admin:azeebo:${ADMIN_DB_PASSWORD:-$POSTGRES_PASSWORD}"
 )
 
@@ -229,6 +230,7 @@ MIGRATE_SERVICES=(
   "services/core/payment-service:payment-service:azeebo_payment:azeebo:${PAYMENT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "services/core/content-service:content-service:azeebo_content:azeebo:${CONTENT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "services/core/search-service:search-service:azeebo_search:azeebo:${SEARCH_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/core/media-service:media-service:azeebo_media:azeebo:${MEDIA_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "services/engagement/notification-service:notification-service:azeebo_notification:azeebo:${NOTIFICATION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "services/engagement/reward-service:reward-service:azeebo_reward:azeebo:${REWARD_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "services/intelligence/analytics-service:analytics-service:azeebo_analytics:azeebo:${ANALYTICS_DB_PASSWORD:-$POSTGRES_PASSWORD}"
@@ -248,6 +250,7 @@ MIGRATE_SERVICES=(
   "services/engagement/messaging-service:messaging-service:azeebo_messaging:azeebo:${MESSAGING_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "services/engagement/referral-service:referral-service:azeebo_referral:azeebo:${REFERRAL_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "services/engagement/subscription-service:subscription-service:azeebo_subscription:azeebo:${SUBSCRIPTION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/universes/live-event-service:live-event-service:azeebo_live_event:azeebo:${LIVE_EVENT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "apps/admin:admin-app:azeebo_admin:azeebo:${ADMIN_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "apps/creator:creator-app:azeebo_creator:azeebo:${CREATOR_DB_PASSWORD:-$POSTGRES_PASSWORD}"
 )
@@ -386,6 +389,7 @@ REFERRAL_DB_PASSWORD="${REFERRAL_DB_PASSWORD:-$POSTGRES_PASSWORD}"
 SUBSCRIPTION_DB_PASSWORD="${SUBSCRIPTION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
 ADMIN_DB_PASSWORD="${ADMIN_DB_PASSWORD:-$POSTGRES_PASSWORD}"
 CREATOR_DB_PASSWORD="${CREATOR_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+LIVE_EVENT_DB_PASSWORD="${LIVE_EVENT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
 
 # Export DATABASE_URL for each service
 export DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:5432/${POSTGRES_DB}?schema=public"
@@ -417,6 +421,7 @@ export REFERRAL_DATABASE_URL="postgresql://azeebo:${REFERRAL_DB_PASSWORD}@127.0.
 export SUBSCRIPTION_DATABASE_URL="postgresql://azeebo:${SUBSCRIPTION_DB_PASSWORD}@127.0.0.1:5432/azeebo_subscription?schema=public"
 export ADMIN_DATABASE_URL="postgresql://azeebo:${ADMIN_DB_PASSWORD}@127.0.0.1:5432/azeebo_admin?schema=public"
 export CREATOR_DATABASE_URL="postgresql://azeebo:${CREATOR_DB_PASSWORD}@127.0.0.1:5432/azeebo_creator?schema=public"
+export LIVE_EVENT_DATABASE_URL="postgresql://azeebo:${LIVE_EVENT_DB_PASSWORD}@127.0.0.1:5432/azeebo_live_event?schema=public"
 
 echo "==> Environment variables configured."
 
@@ -457,6 +462,7 @@ SERVICES=(
   "messaging-service:azeebo:${MESSAGING_DB_PASSWORD}:azeebo_messaging:3024"
   "referral-service:azeebo:${REFERRAL_DB_PASSWORD}:azeebo_referral:3025"
   "subscription-service:azeebo:${SUBSCRIPTION_DB_PASSWORD}:azeebo_subscription:3026"
+  "live-event-service:azeebo:${LIVE_EVENT_DB_PASSWORD}:azeebo_live_event:3027"
 )
 
 # Map service names to their monorepo paths
@@ -484,6 +490,7 @@ SVC_PATHS[sports-service]="services/universes/sports-service"
 SVC_PATHS[lifestyle-service]="services/universes/lifestyle-service"
 SVC_PATHS[vertical-service]="services/universes/vertical-service"
 SVC_PATHS[creator-service]="services/universes/creator-service"
+SVC_PATHS[live-event-service]="services/universes/live-event-service"
 SVC_PATHS[queue-service]="services/operations/queue-service"
 SVC_PATHS[support-service]="services/operations/support-service"
 SVC_PATHS[moderation-service]="services/operations/moderation-service"

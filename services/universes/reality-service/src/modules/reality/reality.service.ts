@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../prisma/client/index.js';
 import { RealityResponse } from './interfaces/reality-response.interface.js';
 import axios from 'axios';
 import { randomUUID } from 'crypto';

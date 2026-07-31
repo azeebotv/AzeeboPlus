@@ -9,7 +9,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../prisma/client/index.js';
 import {
   ReferralResponse,
   ReferralStats,

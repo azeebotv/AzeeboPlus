@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../prisma/client/index.js';
 
 @Injectable()
 export class WebhookRetryService implements OnModuleInit, OnModuleDestroy {

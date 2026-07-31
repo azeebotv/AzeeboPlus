@@ -20,8 +20,7 @@ async function bootstrap(): Promise<void> {
 
   app.useGlobalInterceptors(new LoggingInterceptor());
 
-    app.use(createHelmetConfig())
-;
+    app.use(createHelmetConfig());
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -41,7 +40,7 @@ async function bootstrap(): Promise<void> {
     .setTitle('Reality Service')
     .setDescription('Azeebo+ Reality Service API')
     .setVersion('1.0')
-    .addServer('http://localhost:3013', 'API Gateway')
+    .addServer(process.env.API_GATEWAY_URL || 'http://localhost:3013', 'API Gateway')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   if (process.env.NODE_ENV !== 'production') {

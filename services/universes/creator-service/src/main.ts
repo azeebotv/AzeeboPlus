@@ -22,8 +22,7 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
   app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
 
-    app.use(createHelmetConfig())
-;
+    app.use(createHelmetConfig());
 
   app.useGlobalFilters(new GlobalExceptionFilter());
 
@@ -50,7 +49,7 @@ async function bootstrap(): Promise<void> {
       .setVersion('1.0')
       .addTag('creators', 'Creator operations')
       .addBearerAuth()
-      .addServer('http://localhost:3013', 'API Gateway')
+      .addServer(process.env.API_GATEWAY_URL || 'http://localhost:3013', 'API Gateway')
       .build();
 
     const document = SwaggerModule.createDocument(app, swaggerConfig);

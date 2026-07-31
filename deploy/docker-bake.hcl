@@ -9,10 +9,6 @@
 # This enables remote BuildKit cache so rebuilds are fast.
 # ============================================================
 
-# Syntax: must be first line in Dockerfile (handled via build arg)
-# DOCKER_BUILDKIT=1
-
 # Build args for Coolify
-target: production
 cache-from: type=registry,ref=ghcr.io/azeebotv/build-cache:latest
 cache-to: type=registry,ref=ghcr.io/azeebotv/build-cache:latest,mode=max

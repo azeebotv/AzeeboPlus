@@ -23,9 +23,8 @@ interface UniverseSection {
   items: ContentItem[];
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- recommendation API responses may have nested content structure
-function extractContentItem(r: any): ContentItem {
-  return r.content || r;
+function extractContentItem(r: ContentItem | { content: ContentItem }): ContentItem {
+  return 'content' in r ? r.content : r;
 }
 
 export default function AuthenticatedHomepage({

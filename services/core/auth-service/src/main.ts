@@ -49,8 +49,7 @@ async function bootstrap(): Promise<void> {
   app.useBodyParser('urlencoded', { limit: '1mb', extended: true });
 
   // Security headers
-    app.use(createHelmetConfig())
-;
+  app.use(createHelmetConfig());
 
   // Global logging interceptor
   app.useGlobalInterceptors(new LoggingInterceptor());

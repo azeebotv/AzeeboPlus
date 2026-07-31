@@ -7,7 +7,7 @@ import { FlutterwaveProvider } from './providers/flutterwave.provider.js';
 import { WebhookRetryService } from './webhook-retry.service.js';
 import { RedisService, CacheService, cacheKey } from '@azeebo/shared-services';
 import axios from 'axios';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../prisma/client/index.js';
 import {
   PaymentResponse,
   InitializePaymentResponse,

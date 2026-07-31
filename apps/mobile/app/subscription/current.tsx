@@ -13,6 +13,9 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { subscriptionApi, type Subscription } from '../../src/api/subscription';
 import { colors, typography, spacing, radius } from '../../src/theme';
+import { createLogger } from '../../src/utils/logger';
+
+const logger = createLogger('CurrentSubscription');
 
 export default function CurrentSubscriptionScreen() {
   const router = useRouter();
@@ -36,8 +39,7 @@ export default function CurrentSubscriptionScreen() {
         setSubscription(response.data);
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to load subscription:', error);
+      logger.error('Failed to load subscription', error);
     } finally {
       setIsLoading(false);
     }

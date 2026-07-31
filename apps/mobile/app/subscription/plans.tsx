@@ -6,7 +6,10 @@ import { useRouter } from 'expo-router';
 import { apiClient } from '../../src/api/client';
 import { LoadingState } from '../../src/components/StateContainers';
 import { useWallet } from '../../src/contexts/WalletContext';
+import { createLogger } from '../../src/utils/logger';
 import type { SubscriptionPlan } from '../../src/types/api';
+
+const logger = createLogger('SubscriptionPlans');
 
 export default function SubscriptionPlansScreen() {
   const router = useRouter();
@@ -35,8 +38,7 @@ export default function SubscriptionPlansScreen() {
         setCurrentPlan(Array.isArray(currentRes) ? currentRes[0] : currentRes);
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to load subscription data:', error);
+      logger.error('Failed to load subscription data', error);
     } finally {
       setIsLoading(false);
     }

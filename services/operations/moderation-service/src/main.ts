@@ -17,8 +17,7 @@ async function bootstrap(): Promise<void> {
 
   app.useGlobalFilters(new GlobalExceptionFilter());
 
-    app.use(createHelmetConfig())
-;
+    app.use(createHelmetConfig());
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -42,7 +41,7 @@ async function bootstrap(): Promise<void> {
       .setDescription('Azeebo+ Moderation Service API')
       .setVersion('1.0.0')
       .addTag('moderation')
-      .addServer('http://localhost:3022', 'Moderation Service')
+      .addServer(`http://localhost:${process.env.PORT || '3022'}`, 'Moderation Service')
       .build();
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('docs', app, document);

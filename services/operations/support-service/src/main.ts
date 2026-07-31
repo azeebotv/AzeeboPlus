@@ -20,8 +20,7 @@ async function bootstrap() {
 
   app.useGlobalInterceptors(new LoggingInterceptor());
 
-    app.use(createHelmetConfig())
-;
+    app.use(createHelmetConfig());
 
   const allowedOrigins = configService
     .get<string>('ALLOWED_ORIGINS')
