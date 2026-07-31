@@ -72,7 +72,13 @@ export default function DraftsPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <main
         style={{
@@ -141,7 +147,8 @@ export default function DraftsPage(): React.JSX.Element {
               style={{
                 display: 'inline-block',
                 padding: '12px 32px',
-                background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+                background:
+                  'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
                 borderRadius: 999,
                 color: 'var(--brand-white)',
                 fontWeight: 600,
@@ -166,13 +173,13 @@ export default function DraftsPage(): React.JSX.Element {
                 }}
               >
                 {draft.thumbnail && (
-<OptimizedImage
-                     src={draft.thumbnail}
-                     alt={draft.title}
-                     width={120}
-                     height={68}
-                     className="object-cover rounded-lg flex-shrink-0"
-                   />
+                  <OptimizedImage
+                    src={draft.thumbnail}
+                    alt={draft.title}
+                    width={120}
+                    height={68}
+                    className="object-cover rounded-lg flex-shrink-0"
+                  />
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <h3 style={{ fontWeight: 600, fontSize: 16, marginBottom: 4 }}>{draft.title}</h3>
@@ -187,7 +194,8 @@ export default function DraftsPage(): React.JSX.Element {
                     style={{
                       padding: '8px 20px',
                       borderRadius: 999,
-                      background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+                      background:
+                        'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
                       color: 'var(--brand-white)',
                       fontWeight: 600,
                       fontSize: 14,

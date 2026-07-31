@@ -37,7 +37,13 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
   const subscriberStats = stats ?? subData?.stats ?? null;
 
   return (
-    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader active="Creator" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Subscribers</h1>
@@ -194,7 +200,9 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
               onButtonPress={() => subscribersQuery.refetch()}
             />
           ) : subscribers.length === 0 ? (
-            <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>No subscribers yet</p>
+            <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>
+              No subscribers yet
+            </p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {subscribers.map((sub) => (
@@ -222,7 +230,9 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
                       flexShrink: 0,
                     }}
                   >
-                    <span style={{ color: 'var(--text-secondary)', fontSize: 16 }}>{sub.displayName[0]}</span>
+                    <span style={{ color: 'var(--text-secondary)', fontSize: 16 }}>
+                      {sub.displayName[0]}
+                    </span>
                   </div>
                   <div style={{ flex: 1 }}>
                     <p style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>{sub.displayName}</p>

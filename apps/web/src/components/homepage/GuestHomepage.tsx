@@ -458,7 +458,12 @@ export default function GuestHomepage(): React.JSX.Element {
               {[
                 { name: 'Movie', icon: '\u{1F3AC}', href: '/movies', color: 'var(--brand-orange)' },
                 { name: 'Comedy', icon: '\u{1F602}', href: '/comedy', color: '#fbbf24' },
-                { name: 'Sports', icon: '\u26BD', href: '/sports', color: 'var(--color-success-500)' },
+                {
+                  name: 'Sports',
+                  icon: '\u26BD',
+                  href: '/sports',
+                  color: 'var(--color-success-500)',
+                },
                 { name: 'Reality', icon: '\u{1F4FA}', href: '/reality', color: '#8b5cf6' },
                 { name: 'Lifestyle', icon: '\u{1F3A8}', href: '/lifestyle', color: '#ec4899' },
                 { name: 'Vertical', icon: '\u{1F4F1}', href: '/vertical', color: '#3b82f6' },

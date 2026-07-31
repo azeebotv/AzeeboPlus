@@ -297,7 +297,11 @@ function TriviaPageContent(): React.JSX.Element {
               >
                 <span
                   className="text-lg font-bold"
-                  style={{ color: lastResult.correct ? 'var(--color-success-500)' : 'var(--color-error-500)' }}
+                  style={{
+                    color: lastResult.correct
+                      ? 'var(--color-success-500)'
+                      : 'var(--color-error-500)',
+                  }}
                 >
                   {lastResult.correct ? `Correct! +${lastResult.points} pts` : 'Wrong!'}
                 </span>

@@ -90,7 +90,10 @@ export default function AgbalaPathPage() {
   const characters = pathData?.characters || [];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
+    <div
+      className="min-h-screen"
+      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
+    >
       <AppHeader active="Vertical" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>

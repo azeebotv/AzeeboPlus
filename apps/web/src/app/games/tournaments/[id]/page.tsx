@@ -40,8 +40,16 @@ interface LeaderboardEntry {
 }
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
-  registration: { bg: 'rgba(59,130,246,0.2)', text: 'var(--color-secondary-400)', label: 'Registration Open' },
-  in_progress: { bg: 'rgba(74,222,128,0.2)', text: 'var(--color-success-400)', label: 'In Progress' },
+  registration: {
+    bg: 'rgba(59,130,246,0.2)',
+    text: 'var(--color-secondary-400)',
+    label: 'Registration Open',
+  },
+  in_progress: {
+    bg: 'rgba(74,222,128,0.2)',
+    text: 'var(--color-success-400)',
+    label: 'In Progress',
+  },
   completed: { bg: 'rgba(156,163,175,0.2)', text: '#9CA3AF', label: 'Completed' },
   upcoming: { bg: 'rgba(245,158,11,0.2)', text: 'var(--color-warning-500)', label: 'Upcoming' },
 };

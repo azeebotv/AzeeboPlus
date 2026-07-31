@@ -87,7 +87,13 @@ export default function MonetizationPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+      <div
+        style={{
+          backgroundColor: 'var(--brand-near-black)',
+          minHeight: '100vh',
+          color: 'var(--text-primary)',
+        }}
+      >
         <AppHeader />
         <main
           style={{
@@ -128,7 +134,13 @@ export default function MonetizationPage(): React.JSX.Element {
 
   if (error || !monetization) {
     return (
-      <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+      <div
+        style={{
+          backgroundColor: 'var(--brand-near-black)',
+          minHeight: '100vh',
+          color: 'var(--text-primary)',
+        }}
+      >
         <AppHeader />
         <main
           style={{
@@ -150,7 +162,13 @@ export default function MonetizationPage(): React.JSX.Element {
   }
 
   return (
-    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <main
         style={{
@@ -265,7 +283,9 @@ export default function MonetizationPage(): React.JSX.Element {
               className="az-glass"
               style={{ padding: 20, borderRadius: 16, textAlign: 'center' }}
             >
-              <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>{item.label}</p>
+              <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>
+                {item.label}
+              </p>
               <p style={{ fontSize: 22, fontWeight: 700, color: item.color }}>{item.value}</p>
             </div>
           ))}
@@ -299,7 +319,9 @@ export default function MonetizationPage(): React.JSX.Element {
               >
                 <div>
                   <h4 style={{ fontWeight: 600, fontSize: 15 }}>{setting.label}</h4>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 2 }}>{setting.desc}</p>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 2 }}>
+                    {setting.desc}
+                  </p>
                 </div>
                 <button
                   onClick={() => {

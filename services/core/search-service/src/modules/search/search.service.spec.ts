@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SearchService } from './search.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
-import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { CacheService } from '@azeebo/shared-services';
 import { BadRequestException } from '@nestjs/common';
 import axios from 'axios';
 
@@ -25,14 +25,6 @@ describe('SearchService', () => {
     universeId: 'universe-1',
     contentType: 'video',
     universe: 'reality',
-  };
-
-  const mockCreatorProfile = {
-    id: 'creator-1',
-    userId: 'user-1',
-    displayName: 'Test Creator',
-    email: 'creator@test.com',
-    bio: 'Test bio',
   };
 
   const mockUniverse = {

@@ -190,7 +190,10 @@ function LiveEventDetailContent(): React.JSX.Element {
 
           <div
             className="rounded-xl p-6 h-fit sticky top-24"
-            style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-default)' }}
+            style={{
+              backgroundColor: 'rgba(255,255,255,0.03)',
+              border: '1px solid var(--border-default)',
+            }}
           >
             <p className="text-3xl font-bold text-white mb-1">
               {formatPrice(event.ticketPrice, event.currency)}

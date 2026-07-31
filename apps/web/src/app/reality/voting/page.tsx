@@ -97,7 +97,9 @@ function VotingPageContent(): React.JSX.Element {
 
       <section
         className="relative py-16 sm:py-20"
-        style={{ background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)' }}
+        style={{
+          background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+        }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.h1
@@ -281,7 +283,10 @@ function VotingPageContent(): React.JSX.Element {
                                 voteQuantity === qty
                                   ? '1px solid rgba(232,66,10,0.3)'
                                   : '1px solid rgba(255,255,255,0.1)',
-                              color: voteQuantity === qty ? 'var(--brand-orange)' : 'rgba(255,255,255,0.7)',
+                              color:
+                                voteQuantity === qty
+                                  ? 'var(--brand-orange)'
+                                  : 'rgba(255,255,255,0.7)',
                             }}
                           >
                             {qty}
@@ -321,7 +326,10 @@ function VotingPageContent(): React.JSX.Element {
                       <div key={step.title} className="flex items-start gap-3">
                         <span
                           className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                          style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
+                          style={{
+                            backgroundColor: 'rgba(232,66,10,0.2)',
+                            color: 'var(--brand-orange)',
+                          }}
                         >
                           {step.icon}
                         </span>

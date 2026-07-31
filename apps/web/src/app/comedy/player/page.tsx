@@ -43,7 +43,10 @@ export default function ComedyPlayerPage(): React.JSX.Element {
   const clips = clipsQuery.data || [];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
+    <div
+      className="min-h-screen"
+      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
+    >
       <AppHeader active="Comedy" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 1200, margin: '0 auto' }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Comedy Player</h1>
@@ -134,14 +137,25 @@ export default function ComedyPlayerPage(): React.JSX.Element {
                 }}
               >
                 <div
-                  style={{ position: 'relative', aspectRatio: '16/9', backgroundColor: 'var(--bg-tertiary)' }}
+                  style={{
+                    position: 'relative',
+                    aspectRatio: '16/9',
+                    backgroundColor: 'var(--bg-tertiary)',
+                  }}
                 >
                   {clip.thumbnail && (
                     <OptimizedImage src={clip.thumbnail} alt="" fill className="object-cover" />
                   )}
                 </div>
                 <div style={{ padding: 12 }}>
-                  <h3 style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', margin: 0 }}>
+                  <h3
+                    style={{
+                      fontWeight: 600,
+                      fontSize: 14,
+                      color: 'var(--text-primary)',
+                      margin: 0,
+                    }}
+                  >
                     {clip.title}
                   </h3>
                   {clip.description && (

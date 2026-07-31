@@ -70,7 +70,13 @@ export default function MissionsPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <main
         style={{
@@ -80,14 +86,19 @@ export default function MissionsPage(): React.JSX.Element {
         }}
       >
         <div style={{ marginBottom: 24 }}>
-          <Link href="/rewards" style={{ color: 'var(--text-secondary)', fontSize: 14, textDecoration: 'none' }}>
+          <Link
+            href="/rewards"
+            style={{ color: 'var(--text-secondary)', fontSize: 14, textDecoration: 'none' }}
+          >
             &larr; Back to Rewards
           </Link>
         </div>
 
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <h1 style={{ fontSize: 28, fontWeight: 700 }}>Missions</h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>Complete missions to earn points</p>
+          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>
+            Complete missions to earn points
+          </p>
         </div>
 
         {isLoading ? (
@@ -154,7 +165,9 @@ export default function MissionsPage(): React.JSX.Element {
                         >
                           {mission.title}
                         </h3>
-                        <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
+                        <p
+                          style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}
+                        >
                           {mission.description}
                         </p>
 
@@ -201,7 +214,9 @@ export default function MissionsPage(): React.JSX.Element {
                             alignItems: 'center',
                           }}
                         >
-                          <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--brand-orange)' }}>
+                          <span
+                            style={{ fontSize: 16, fontWeight: 700, color: 'var(--brand-orange)' }}
+                          >
                             {mission.points.toLocaleString()} pts
                           </span>
                         </div>

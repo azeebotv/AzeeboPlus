@@ -116,7 +116,10 @@ export default function EpisodePlayerPage(): React.JSX.Element {
           <div className="text-center">
             <div
               className="animate-spin rounded-full h-12 w-12 mx-auto"
-              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--brand-orange)' }}
+              style={{
+                border: '3px solid rgba(255,255,255,0.1)',
+                borderTopColor: 'var(--brand-orange)',
+              }}
             />
             <p className="mt-4 text-white/60">Loading episode...</p>
           </div>
@@ -178,7 +181,10 @@ export default function EpisodePlayerPage(): React.JSX.Element {
               </p>
               {isPlaying ? (
                 <div className="flex items-end gap-1 h-10 mt-4 justify-center">
-                  <div className="w-1 animate-pulse h-5" style={{ backgroundColor: 'var(--brand-orange)' }} />
+                  <div
+                    className="w-1 animate-pulse h-5"
+                    style={{ backgroundColor: 'var(--brand-orange)' }}
+                  />
                   <div
                     className="w-1 animate-pulse h-8"
                     style={{ backgroundColor: 'var(--brand-orange)', animationDelay: '0.2s' }}

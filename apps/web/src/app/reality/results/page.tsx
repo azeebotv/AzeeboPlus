@@ -71,7 +71,10 @@ export default function ResultsPage(): React.JSX.Element {
           <div className="text-center">
             <div
               className="animate-spin rounded-full h-12 w-12 mx-auto"
-              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--brand-orange)' }}
+              style={{
+                border: '3px solid rgba(255,255,255,0.1)',
+                borderTopColor: 'var(--brand-orange)',
+              }}
             />
             <p className="mt-4 text-white/60">Loading results...</p>
           </div>
@@ -152,7 +155,10 @@ export default function ResultsPage(): React.JSX.Element {
                 className="az-glass p-6 mb-6"
                 style={{ border: '2px solid rgba(234,179,8,0.5)' }}
               >
-                <h3 className="text-lg font-bold mb-4" style={{ color: 'var(--color-warning-400)' }}>
+                <h3
+                  className="text-lg font-bold mb-4"
+                  style={{ color: 'var(--color-warning-400)' }}
+                >
                   🏆 Winner
                 </h3>
                 <div className="flex items-center gap-4">

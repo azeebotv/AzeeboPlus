@@ -67,7 +67,13 @@ export default function PublishedPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <main
         style={{
@@ -165,7 +171,14 @@ export default function PublishedPage(): React.JSX.Element {
                   >
                     {item.title}
                   </h3>
-                  <div style={{ display: 'flex', gap: 16, fontSize: 13, color: 'var(--text-secondary)' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: 16,
+                      fontSize: 13,
+                      color: 'var(--text-secondary)',
+                    }}
+                  >
                     <span>{(item.views || 0).toLocaleString()} views</span>
                     <span>{(item.likes || 0).toLocaleString()} likes</span>
                   </div>

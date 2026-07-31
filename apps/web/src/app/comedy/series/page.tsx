@@ -53,7 +53,9 @@ function SeriesPageContent(): React.JSX.Element {
 
       <section
         className="relative py-16 sm:py-20"
-        style={{ background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)' }}
+        style={{
+          background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+        }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.h1
@@ -131,7 +133,10 @@ function SeriesPageContent(): React.JSX.Element {
                       {item.duration && (
                         <span
                           className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-xs font-medium"
-                          style={{ backgroundColor: 'rgba(0,0,0,0.7)', color: 'var(--brand-white)' }}
+                          style={{
+                            backgroundColor: 'rgba(0,0,0,0.7)',
+                            color: 'var(--brand-white)',
+                          }}
                         >
                           {Math.floor(item.duration / 60)}m
                         </span>

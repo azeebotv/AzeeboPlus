@@ -48,7 +48,9 @@ function StoryworldsPageContent(): React.JSX.Element {
       {/* Hero */}
       <section
         className="relative py-16 sm:py-20"
-        style={{ background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)' }}
+        style={{
+          background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+        }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.h1
@@ -121,7 +123,10 @@ function StoryworldsPageContent(): React.JSX.Element {
                         {world.isComplete && (
                           <span
                             className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
-                            style={{ backgroundColor: 'rgba(34,197,94,0.9)', color: 'var(--brand-white)' }}
+                            style={{
+                              backgroundColor: 'rgba(34,197,94,0.9)',
+                              color: 'var(--brand-white)',
+                            }}
                           >
                             Complete
                           </span>
@@ -129,7 +134,10 @@ function StoryworldsPageContent(): React.JSX.Element {
                         {world.genre && (
                           <span
                             className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
-                            style={{ backgroundColor: 'rgba(232,66,10,0.9)', color: 'var(--brand-white)' }}
+                            style={{
+                              backgroundColor: 'rgba(232,66,10,0.9)',
+                              color: 'var(--brand-white)',
+                            }}
                           >
                             {world.genre}
                           </span>
@@ -170,7 +178,8 @@ export const metadata = {
   description: 'Dive into immersive story universes with interconnected characters and plotlines.',
   openGraph: {
     title: 'Storyworlds | Azeebo',
-    description: 'Dive into immersive story universes with interconnected characters and plotlines.',
+    description:
+      'Dive into immersive story universes with interconnected characters and plotlines.',
   },
 };
 

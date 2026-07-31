@@ -66,7 +66,10 @@ export default function AgbalaPage(): React.JSX.Element {
   });
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
+    <div
+      className="min-h-screen"
+      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
+    >
       <AppHeader active="Vertical" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
@@ -86,7 +89,14 @@ export default function AgbalaPage(): React.JSX.Element {
             📖
           </div>
           <h1 style={{ fontSize: 36, fontWeight: 700, marginBottom: 8 }}>Agbala</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 18, maxWidth: 600, margin: '0 auto' }}>
+          <p
+            style={{
+              color: 'var(--text-secondary)',
+              fontSize: 18,
+              maxWidth: 600,
+              margin: '0 auto',
+            }}
+          >
             Choose your path. Shape your destiny through interactive storytelling.
           </p>
         </div>
@@ -188,7 +198,9 @@ export default function AgbalaPage(): React.JSX.Element {
               ))}
             </div>
           ) : (
-            <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>No storyworlds available yet.</p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
+              No storyworlds available yet.
+            </p>
           )}
         </section>
 

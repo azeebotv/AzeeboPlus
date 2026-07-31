@@ -86,7 +86,13 @@ export default function AdminLayout({
   };
 
   return (
-    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <div style={{ display: 'flex', paddingTop: 72, minHeight: '100vh' }}>
         {/* Mobile sidebar toggle */}

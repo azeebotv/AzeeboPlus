@@ -536,7 +536,10 @@ export default function SearchPage(): React.JSX.Element {
                       {result.universe && (
                         <span
                           className="px-2 py-0.5 rounded"
-                          style={{ background: 'rgba(232,66,10,0.15)', color: 'var(--brand-orange)' }}
+                          style={{
+                            background: 'rgba(232,66,10,0.15)',
+                            color: 'var(--brand-orange)',
+                          }}
                         >
                           {result.universe.name}
                         </span>

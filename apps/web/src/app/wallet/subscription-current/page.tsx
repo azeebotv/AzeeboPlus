@@ -243,7 +243,9 @@ function SubscriptionCurrentPageContent(): React.JSX.Element {
                   disabled={toggleAutoRenewMutation.isPending}
                   className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
                   style={{
-                    backgroundColor: subscription.autoRenew ? 'var(--color-success-500)' : 'rgba(255,255,255,0.2)',
+                    backgroundColor: subscription.autoRenew
+                      ? 'var(--color-success-500)'
+                      : 'rgba(255,255,255,0.2)',
                   }}
                 >
                   <span
@@ -272,7 +274,10 @@ function SubscriptionCurrentPageContent(): React.JSX.Element {
                   onClick={() => cancelMutation.mutate()}
                   disabled={cancelMutation.isPending}
                   className="w-full py-3 rounded-full font-semibold transition-all"
-                  style={{ backgroundColor: 'rgba(239,68,68,0.15)', color: 'var(--color-error-500)' }}
+                  style={{
+                    backgroundColor: 'rgba(239,68,68,0.15)',
+                    color: 'var(--color-error-500)',
+                  }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -355,7 +360,8 @@ export const metadata = {
   description: 'View and manage your active subscription plan, billing, and auto-renewal settings.',
   openGraph: {
     title: 'Current Subscription | Azeebo',
-    description: 'View and manage your active subscription plan, billing, and auto-renewal settings.',
+    description:
+      'View and manage your active subscription plan, billing, and auto-renewal settings.',
   },
 };
 

@@ -84,7 +84,13 @@ export default function PrivacySecurityPage(): React.JSX.Element {
   ];
 
   return (
-    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <main
         style={{
@@ -130,7 +136,9 @@ export default function PrivacySecurityPage(): React.JSX.Element {
               >
                 <div>
                   <p style={{ fontWeight: 600, fontSize: 15 }}>{item.label}</p>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 2 }}>{item.desc}</p>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 2 }}>
+                    {item.desc}
+                  </p>
                 </div>
                 <button
                   onClick={() =>
@@ -201,7 +209,9 @@ export default function PrivacySecurityPage(): React.JSX.Element {
             border: '1px solid rgba(204,28,28,0.3)',
           }}
         >
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--brand-red)', marginBottom: 12 }}>
+          <h2
+            style={{ fontSize: 18, fontWeight: 700, color: 'var(--brand-red)', marginBottom: 12 }}
+          >
             Danger Zone
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 16 }}>

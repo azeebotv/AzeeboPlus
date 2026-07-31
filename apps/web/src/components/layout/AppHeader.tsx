@@ -823,7 +823,9 @@ export default function AppHeader({ active: _active }: { active?: string }) {
                   href="/auth/register"
                   onClick={() => setMobileMenuOpen(false)}
                   className="block w-full text-center px-4 py-2.5 rounded-full text-sm font-semibold text-white transition-all"
-                  style={{ background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))' }}
+                  style={{
+                    background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
+                  }}
                 >
                   Sign up
                 </Link>

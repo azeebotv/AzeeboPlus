@@ -96,7 +96,10 @@ function CrossoverDetailContent(): React.JSX.Element {
                     <span
                       key={universe}
                       className="px-2.5 py-0.5 rounded-full text-xs font-medium"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.1)', color: 'var(--brand-white)' }}
+                      style={{
+                        backgroundColor: 'rgba(255,255,255,0.1)',
+                        color: 'var(--brand-white)',
+                      }}
                     >
                       {universe}
                     </span>

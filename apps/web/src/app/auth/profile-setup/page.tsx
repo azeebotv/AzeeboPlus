@@ -209,7 +209,10 @@ export default function ProfileSetupPage(): React.JSX.Element {
   const profileInitial = (fullName || 'Y').charAt(0).toUpperCase();
 
   return (
-    <div className="min-h-screen w-full p-6 sm:p-10" style={{ backgroundColor: 'var(--brand-near-black)' }}>
+    <div
+      className="min-h-screen w-full p-6 sm:p-10"
+      style={{ backgroundColor: 'var(--brand-near-black)' }}
+    >
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <BrandLogo variant="light" />

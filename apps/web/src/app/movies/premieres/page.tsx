@@ -87,7 +87,10 @@ function PremieresPageContent(): React.JSX.Element {
                   {featured.isExclusive && (
                     <span
                       className="px-3 py-1 rounded-full text-xs font-semibold"
-                      style={{ backgroundColor: 'var(--brand-orange)', color: 'var(--brand-white)' }}
+                      style={{
+                        backgroundColor: 'var(--brand-orange)',
+                        color: 'var(--brand-white)',
+                      }}
                     >
                       Azeebo+ Exclusive
                     </span>
@@ -187,7 +190,10 @@ function PremieresPageContent(): React.JSX.Element {
                         {premiere.genre && (
                           <span
                             className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                            style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
+                            style={{
+                              backgroundColor: 'rgba(232,66,10,0.2)',
+                              color: 'var(--brand-orange)',
+                            }}
                           >
                             {premiere.genre}
                           </span>

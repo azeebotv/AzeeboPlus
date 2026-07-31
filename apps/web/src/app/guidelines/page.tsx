@@ -4,7 +4,13 @@ import AppFooter from '@/components/layout/AppFooter';
 
 export default function GuidelinesPage(): React.JSX.Element {
   return (
-    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <main
         style={{
@@ -19,7 +25,14 @@ export default function GuidelinesPage(): React.JSX.Element {
         <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>Last updated: July 2026</p>
 
         <div className="az-glass" style={{ padding: 32, borderRadius: 20, lineHeight: 1.8 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: 'var(--brand-orange)' }}>
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              marginBottom: 12,
+              color: 'var(--brand-orange)',
+            }}
+          >
             1. Be Respectful
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
@@ -28,7 +41,14 @@ export default function GuidelinesPage(): React.JSX.Element {
             the diversity of our community.
           </p>
 
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: 'var(--brand-orange)' }}>
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              marginBottom: 12,
+              color: 'var(--brand-orange)',
+            }}
+          >
             2. Content Standards
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
@@ -38,7 +58,14 @@ export default function GuidelinesPage(): React.JSX.Element {
             rights.
           </p>
 
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: 'var(--brand-orange)' }}>
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              marginBottom: 12,
+              color: 'var(--brand-orange)',
+            }}
+          >
             3. Fair Voting
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
@@ -47,7 +74,14 @@ export default function GuidelinesPage(): React.JSX.Element {
             should vote based on their genuine preferences.
           </p>
 
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: 'var(--brand-orange)' }}>
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              marginBottom: 12,
+              color: 'var(--brand-orange)',
+            }}
+          >
             4. Creator Responsibilities
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
@@ -56,7 +90,14 @@ export default function GuidelinesPage(): React.JSX.Element {
             practices will result in account suspension.
           </p>
 
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: 'var(--brand-orange)' }}>
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              marginBottom: 12,
+              color: 'var(--brand-orange)',
+            }}
+          >
             5. Reporting and Moderation
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
@@ -65,7 +106,14 @@ export default function GuidelinesPage(): React.JSX.Element {
             appropriate action, which may include content removal, warnings, or account suspension.
           </p>
 
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: 'var(--brand-orange)' }}>
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              marginBottom: 12,
+              color: 'var(--brand-orange)',
+            }}
+          >
             6. Intellectual Property
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
@@ -74,7 +122,14 @@ export default function GuidelinesPage(): React.JSX.Element {
             removal and account termination.
           </p>
 
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: 'var(--brand-orange)' }}>
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              marginBottom: 12,
+              color: 'var(--brand-orange)',
+            }}
+          >
             7. Privacy and Safety
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
@@ -83,20 +138,41 @@ export default function GuidelinesPage(): React.JSX.Element {
             Protect your own privacy and the privacy of others.
           </p>
 
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: 'var(--brand-orange)' }}>
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              marginBottom: 12,
+              color: 'var(--brand-orange)',
+            }}
+          >
             8. Enforcement
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
             Violations of these guidelines may result in:
           </p>
-          <ul style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24, paddingLeft: 20 }}>
+          <ul
+            style={{
+              color: 'var(--text-secondary)',
+              fontSize: 14,
+              marginBottom: 24,
+              paddingLeft: 20,
+            }}
+          >
             <li style={{ marginBottom: 8 }}>Content removal or demotion</li>
             <li style={{ marginBottom: 8 }}>Temporary or permanent account suspension</li>
             <li style={{ marginBottom: 8 }}>Restriction from voting or creator features</li>
             <li style={{ marginBottom: 8 }}>Legal action in severe cases</li>
           </ul>
 
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: 'var(--brand-orange)' }}>
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              marginBottom: 12,
+              color: 'var(--brand-orange)',
+            }}
+          >
             9. Changes to Guidelines
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>

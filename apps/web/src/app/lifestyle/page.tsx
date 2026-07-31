@@ -3,10 +3,12 @@ import { useEffect } from 'react';
 
 export const metadata = {
   title: 'Lifestyle | Azeebo',
-  description: 'Explore lifestyle events, celebrities, influencers, nightlife, and city guides across Africa.',
+  description:
+    'Explore lifestyle events, celebrities, influencers, nightlife, and city guides across Africa.',
   openGraph: {
     title: 'Lifestyle | Azeebo',
-    description: 'Explore lifestyle events, celebrities, influencers, nightlife, and city guides across Africa.',
+    description:
+      'Explore lifestyle events, celebrities, influencers, nightlife, and city guides across Africa.',
   },
 };
 import { useQuery } from '@tanstack/react-query';
@@ -190,7 +192,10 @@ function LifestylePageContent(): React.JSX.Element {
                     <div className="absolute bottom-4 left-4 right-4">
                       <span
                         className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                        style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
+                        style={{
+                          backgroundColor: 'rgba(232,66,10,0.2)',
+                          color: 'var(--brand-orange)',
+                        }}
                       >
                         {event.contentType || 'Event'}
                       </span>
@@ -199,7 +204,11 @@ function LifestylePageContent(): React.JSX.Element {
                   </div>
                   <div className="p-4">
                     <p className="text-sm text-white/50 mb-3 line-clamp-2">{event.description}</p>
-                    <button type="button" aria-label={`Get tickets for ${event.title}`} className="az-btn-primary w-full">
+                    <button
+                      type="button"
+                      aria-label={`Get tickets for ${event.title}`}
+                      className="az-btn-primary w-full"
+                    >
                       Get Tickets
                     </button>
                   </div>

@@ -175,7 +175,13 @@ export default function CreatorUploadPage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)', color: 'var(--text-primary, #F5F0EB)' }}>
+    <div
+      className="min-h-screen"
+      style={{
+        backgroundColor: 'var(--bg-primary, #1A0A0A)',
+        color: 'var(--text-primary, #F5F0EB)',
+      }}
+    >
       <AppHeader active="Creator" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 600, margin: '0 auto' }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>
@@ -187,7 +193,15 @@ export default function CreatorUploadPage(): React.JSX.Element {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <label htmlFor="content-title" style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 13, marginBottom: 4, display: 'block' }}>
+            <label
+              htmlFor="content-title"
+              style={{
+                color: 'var(--text-muted, #9A8A7A)',
+                fontSize: 13,
+                marginBottom: 4,
+                display: 'block',
+              }}
+            >
               Title
             </label>
             <input
@@ -209,7 +223,15 @@ export default function CreatorUploadPage(): React.JSX.Element {
           </div>
 
           <div>
-            <label htmlFor="content-description" style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 13, marginBottom: 4, display: 'block' }}>
+            <label
+              htmlFor="content-description"
+              style={{
+                color: 'var(--text-muted, #9A8A7A)',
+                fontSize: 13,
+                marginBottom: 4,
+                display: 'block',
+              }}
+            >
               Description
             </label>
             <textarea
@@ -232,7 +254,15 @@ export default function CreatorUploadPage(): React.JSX.Element {
           </div>
 
           <div>
-            <label htmlFor="content-universe" style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 13, marginBottom: 4, display: 'block' }}>
+            <label
+              htmlFor="content-universe"
+              style={{
+                color: 'var(--text-muted, #9A8A7A)',
+                fontSize: 13,
+                marginBottom: 4,
+                display: 'block',
+              }}
+            >
               Universe
             </label>
             {universesLoading ? (
@@ -263,7 +293,15 @@ export default function CreatorUploadPage(): React.JSX.Element {
           </div>
 
           <div>
-            <label htmlFor="content-tags" style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 13, marginBottom: 4, display: 'block' }}>
+            <label
+              htmlFor="content-tags"
+              style={{
+                color: 'var(--text-muted, #9A8A7A)',
+                fontSize: 13,
+                marginBottom: 4,
+                display: 'block',
+              }}
+            >
               Tags (comma separated)
             </label>
             <input
@@ -286,7 +324,15 @@ export default function CreatorUploadPage(): React.JSX.Element {
 
           {!editContent && (
             <div>
-              <label htmlFor="content-file" style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 13, marginBottom: 4, display: 'block' }}>
+              <label
+                htmlFor="content-file"
+                style={{
+                  color: 'var(--text-muted, #9A8A7A)',
+                  fontSize: 13,
+                  marginBottom: 4,
+                  display: 'block',
+                }}
+              >
                 File
               </label>
               <input
@@ -309,11 +355,22 @@ export default function CreatorUploadPage(): React.JSX.Element {
 
           {editContent?.thumbnail && (
             <div>
-              <label style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 13, marginBottom: 4, display: 'block' }}>
+              <label
+                style={{
+                  color: 'var(--text-muted, #9A8A7A)',
+                  fontSize: 13,
+                  marginBottom: 4,
+                  display: 'block',
+                }}
+              >
                 Thumbnail
               </label>
               <div
-                style={{ position: 'relative', aspectRatio: '16/9', backgroundColor: 'var(--bg-tertiary)' }}
+                style={{
+                  position: 'relative',
+                  aspectRatio: '16/9',
+                  backgroundColor: 'var(--bg-tertiary)',
+                }}
               >
                 <OptimizedImage src={editContent.thumbnail} alt="" fill className="object-cover" />
               </div>

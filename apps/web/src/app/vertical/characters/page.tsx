@@ -48,7 +48,10 @@ export default function VerticalCharactersPage(): React.JSX.Element {
   const characters = query.data as Character[] | undefined;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
+    <div
+      className="min-h-screen"
+      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
+    >
       <AppHeader active="Vertical" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 1200, margin: '0 auto' }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Characters</h1>
@@ -72,7 +75,9 @@ export default function VerticalCharactersPage(): React.JSX.Element {
           <ErrorState title="Failed to load characters" />
         ) : !characters || characters.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 60 }}>
-            <p style={{ color: 'var(--text-secondary)', fontSize: 16, marginBottom: 8 }}>No characters yet</p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 16, marginBottom: 8 }}>
+              No characters yet
+            </p>
             <p style={{ color: 'var(--text-tertiary)', fontSize: 14 }}>
               Characters will appear here once created in the storyworlds.
             </p>
@@ -96,13 +101,26 @@ export default function VerticalCharactersPage(): React.JSX.Element {
                   border: '1px solid var(--border-default)',
                 }}
               >
-                <div style={{ position: 'relative', aspectRatio: '1', backgroundColor: 'var(--bg-tertiary)' }}>
+                <div
+                  style={{
+                    position: 'relative',
+                    aspectRatio: '1',
+                    backgroundColor: 'var(--bg-tertiary)',
+                  }}
+                >
                   {char.imageUrl && (
                     <OptimizedImage src={char.imageUrl} alt="" fill className="object-cover" />
                   )}
                 </div>
                 <div style={{ padding: 12 }}>
-                  <h3 style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', margin: 0 }}>
+                  <h3
+                    style={{
+                      fontWeight: 600,
+                      fontSize: 14,
+                      color: 'var(--text-primary)',
+                      margin: 0,
+                    }}
+                  >
                     {char.name}
                   </h3>
                   {char.pathName && (

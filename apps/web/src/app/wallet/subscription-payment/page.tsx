@@ -195,7 +195,9 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                   <div
                     className="w-8 h-0.5 mx-2"
                     style={{
-                      backgroundColor: isCompleted ? 'var(--color-success-500)' : 'rgba(255,255,255,0.1)',
+                      backgroundColor: isCompleted
+                        ? 'var(--color-success-500)'
+                        : 'rgba(255,255,255,0.1)',
                     }}
                   />
                 )}
@@ -250,7 +252,10 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                     {plan.isPopular && (
                       <span
                         className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold mb-3"
-                        style={{ backgroundColor: 'var(--brand-orange)', color: 'var(--brand-white)' }}
+                        style={{
+                          backgroundColor: 'var(--brand-orange)',
+                          color: 'var(--brand-white)',
+                        }}
                       >
                         Popular
                       </span>
@@ -348,7 +353,10 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                   {!canAffordWithWallet && paymentMethod === 'wallet' && (
                     <span
                       className="text-xs px-2 py-1 rounded-full"
-                      style={{ backgroundColor: 'rgba(239,68,68,0.15)', color: 'var(--color-error-500)' }}
+                      style={{
+                        backgroundColor: 'rgba(239,68,68,0.15)',
+                        color: 'var(--color-error-500)',
+                      }}
                     >
                       Insufficient
                     </span>

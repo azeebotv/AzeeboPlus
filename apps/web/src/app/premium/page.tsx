@@ -6,7 +6,8 @@ export const metadata = {
   description: 'Unlock exclusive content, movies, and features with Azeebo Premium subscriptions.',
   openGraph: {
     title: 'Premium Access | Azeebo',
-    description: 'Unlock exclusive content, movies, and features with Azeebo Premium subscriptions.',
+    description:
+      'Unlock exclusive content, movies, and features with Azeebo Premium subscriptions.',
   },
 };
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -239,7 +240,9 @@ export default function PremiumAccessPage(): React.JSX.Element {
               <span className="text-white/50">Auto-renew</span>
               <span
                 className="font-semibold"
-                style={{ color: status.autoRenew ? 'var(--color-success-500)' : 'var(--color-error-500)' }}
+                style={{
+                  color: status.autoRenew ? 'var(--color-success-500)' : 'var(--color-error-500)',
+                }}
               >
                 {status.autoRenew ? 'On' : 'Off'}
               </span>
@@ -292,7 +295,10 @@ export default function PremiumAccessPage(): React.JSX.Element {
               )}
               <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
               <div className="flex items-baseline gap-1 mb-4">
-                <span className="text-3xl font-bold" style={{ color: 'var(--brand-orange, #E8420A)' }}>
+                <span
+                  className="text-3xl font-bold"
+                  style={{ color: 'var(--brand-orange, #E8420A)' }}
+                >
                   ₦{plan.price.toLocaleString()}
                 </span>
                 <span className="text-white/50">{getDurationLabel(plan.duration)}</span>

@@ -4,7 +4,13 @@ import AppFooter from '@/components/layout/AppFooter';
 
 export default function PrivacyPage(): React.JSX.Element {
   return (
-    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <main
         style={{
@@ -16,10 +22,19 @@ export default function PrivacyPage(): React.JSX.Element {
         }}
       >
         <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8 }}>Privacy Policy</h1>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>Last updated: January 2026</p>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>
+          Last updated: January 2026
+        </p>
 
         <div className="az-glass" style={{ padding: 32, borderRadius: 20, lineHeight: 1.8 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: 'var(--brand-orange)' }}>
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              marginBottom: 12,
+              color: 'var(--brand-orange)',
+            }}
+          >
             1. Information We Collect
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
@@ -29,7 +44,14 @@ export default function PrivacyPage(): React.JSX.Element {
             the Platform.
           </p>
 
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: 'var(--brand-orange)' }}>
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              marginBottom: 12,
+              color: 'var(--brand-orange)',
+            }}
+          >
             2. How We Use Your Information
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
@@ -38,7 +60,14 @@ export default function PrivacyPage(): React.JSX.Element {
             obligations.
           </p>
 
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: 'var(--brand-orange)' }}>
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              marginBottom: 12,
+              color: 'var(--brand-orange)',
+            }}
+          >
             3. Information Sharing
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
@@ -47,7 +76,14 @@ export default function PrivacyPage(): React.JSX.Element {
             earnings information may be visible to other users if the creator enables this setting.
           </p>
 
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: 'var(--brand-orange)' }}>
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              marginBottom: 12,
+              color: 'var(--brand-orange)',
+            }}
+          >
             4. Data Security
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
@@ -56,7 +92,14 @@ export default function PrivacyPage(): React.JSX.Element {
             Internet is 100% secure.
           </p>
 
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: 'var(--brand-orange)' }}>
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              marginBottom: 12,
+              color: 'var(--brand-orange)',
+            }}
+          >
             5. Your Rights
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
@@ -64,7 +107,14 @@ export default function PrivacyPage(): React.JSX.Element {
             settings through your account. For data deletion requests, contact our support team.
           </p>
 
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: 'var(--brand-orange)' }}>
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              marginBottom: 12,
+              color: 'var(--brand-orange)',
+            }}
+          >
             6. Cookies
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
@@ -72,7 +122,14 @@ export default function PrivacyPage(): React.JSX.Element {
             and analyze usage patterns. You can control cookie settings in your browser.
           </p>
 
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: 'var(--brand-orange)' }}>
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              marginBottom: 12,
+              color: 'var(--brand-orange)',
+            }}
+          >
             7. Contact Us
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>

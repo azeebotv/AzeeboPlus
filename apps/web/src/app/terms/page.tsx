@@ -4,7 +4,13 @@ import AppFooter from '@/components/layout/AppFooter';
 
 export default function TermsPage(): React.JSX.Element {
   return (
-    <div style={{ backgroundColor: 'var(--brand-near-black)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <main
         style={{
@@ -16,10 +22,19 @@ export default function TermsPage(): React.JSX.Element {
         }}
       >
         <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8 }}>Terms of Service</h1>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>Last updated: January 2026</p>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>
+          Last updated: January 2026
+        </p>
 
         <div className="az-glass" style={{ padding: 32, borderRadius: 20, lineHeight: 1.8 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: 'var(--brand-orange)' }}>
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              marginBottom: 12,
+              color: 'var(--brand-orange)',
+            }}
+          >
             1. Acceptance of Terms
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
@@ -28,7 +43,14 @@ export default function TermsPage(): React.JSX.Element {
             Platform.
           </p>
 
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: 'var(--brand-orange)' }}>
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              marginBottom: 12,
+              color: 'var(--brand-orange)',
+            }}
+          >
             2. User Accounts
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
@@ -37,7 +59,14 @@ export default function TermsPage(): React.JSX.Element {
             occur under your account.
           </p>
 
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: 'var(--brand-orange)' }}>
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              marginBottom: 12,
+              color: 'var(--brand-orange)',
+            }}
+          >
             3. Content
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
@@ -47,7 +76,14 @@ export default function TermsPage(): React.JSX.Element {
             does not infringe on third-party rights.
           </p>
 
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: 'var(--brand-orange)' }}>
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              marginBottom: 12,
+              color: 'var(--brand-orange)',
+            }}
+          >
             4. Subscriptions & Payments
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
@@ -56,7 +92,14 @@ export default function TermsPage(): React.JSX.Element {
             requests are handled on a case-by-case basis within 14 days of purchase.
           </p>
 
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: 'var(--brand-orange)' }}>
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              marginBottom: 12,
+              color: 'var(--brand-orange)',
+            }}
+          >
             5. Creator Earnings
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
@@ -65,7 +108,14 @@ export default function TermsPage(): React.JSX.Element {
             terms with 30 days&apos; notice to creators.
           </p>
 
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: 'var(--brand-orange)' }}>
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              marginBottom: 12,
+              color: 'var(--brand-orange)',
+            }}
+          >
             6. Prohibited Conduct
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
@@ -74,7 +124,14 @@ export default function TermsPage(): React.JSX.Element {
             Violations may result in account suspension or termination.
           </p>
 
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: 'var(--brand-orange)' }}>
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              marginBottom: 12,
+              color: 'var(--brand-orange)',
+            }}
+          >
             7. Limitation of Liability
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
@@ -83,7 +140,14 @@ export default function TermsPage(): React.JSX.Element {
             Platform.
           </p>
 
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: 'var(--brand-orange)' }}>
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              marginBottom: 12,
+              color: 'var(--brand-orange)',
+            }}
+          >
             8. Changes to Terms
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>

@@ -80,7 +80,13 @@ export default function SettingsPage(): React.JSX.Element {
   ];
 
   return (
-    <div style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)', minHeight: '100vh', color: 'var(--text-primary, #F5F0EB)' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--bg-primary, #1A0A0A)',
+        minHeight: '100vh',
+        color: 'var(--text-primary, #F5F0EB)',
+      }}
+    >
       <AppHeader />
       <main
         style={{
@@ -268,7 +274,8 @@ export default function SettingsPage(): React.JSX.Element {
             padding: '14px 0',
             borderRadius: 999,
             border: 'none',
-            background: 'linear-gradient(135deg, var(--brand-orange, #E8420A) 0%, var(--brand-red, #CC1C1C) 100%)',
+            background:
+              'linear-gradient(135deg, var(--brand-orange, #E8420A) 0%, var(--brand-red, #CC1C1C) 100%)',
             color: 'var(--brand-white)',
             fontWeight: 700,
             fontSize: 16,
