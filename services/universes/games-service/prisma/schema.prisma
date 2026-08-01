@@ -32,6 +32,9 @@ model Challenge {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  questions Question[]
+  sessions  GameSession[]
+
   @@map("challenges")
   @@index([type])
   @@index([status])
@@ -49,6 +52,8 @@ model Question {
   updatedAt   DateTime @updatedAt
 
   challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  sessions  GameSession[]
+  answers   GameAnswer[]
 
   @@index([challengeId])
   @@map("questions")
@@ -101,6 +106,10 @@ model Tournament {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  prizes  TournamentPrize[]
+  entries TournamentEntry[]
+  matches TournamentMatch[]
+
   @@map("tournaments")
   @@index([status])
   @@index([startsAt])
@@ -148,6 +157,9 @@ model Game {
   metadata    Json?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  questions GameQuestion[]
+  sessions  GamePlaySession[]
 
   @@index([category])
   @@index([isActive])
@@ -204,6 +216,7 @@ model GamePlaySession {
   updatedAt   DateTime  @updatedAt
 
   game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  answers GameAnswer[]
 
   @@index([userId])
   @@index([gameId])

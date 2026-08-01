@@ -246,3 +246,16 @@ model ShowShare {
   @@index([userId])
   @@index([showId])
 }
+
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  displayName String?
+  role        String   @default("user")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  realityClips RealityClip[]
+
+  @@map("users")
+}

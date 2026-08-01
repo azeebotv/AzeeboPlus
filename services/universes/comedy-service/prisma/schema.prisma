@@ -69,6 +69,7 @@ model ComedianProfile {
 
   clips    ComedyClip[]
   specials ComedySpecial[]
+  earnings CreatorEarning[]
 
   @@map("comedian_profiles")
 }

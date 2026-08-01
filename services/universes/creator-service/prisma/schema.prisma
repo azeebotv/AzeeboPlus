@@ -28,6 +28,8 @@ model CreatorProfile {
   channels     Channel[]
   challenges   CreatorChallenge[]
   payoutRequests PayoutRequest[]
+  exclusiveContent ExclusiveContent[]
+  contentItems ContentItem[]
 
   @@map("creator_profiles")
 }
@@ -129,6 +131,7 @@ model Subscription {
   updatedAt DateTime @updatedAt
 
   creator CreatorProfile @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  user    User           @relation(fields: [userId], references: [id], onDelete: Restrict)
 
   @@unique([userId, creatorId])
   @@map("subscriptions")
