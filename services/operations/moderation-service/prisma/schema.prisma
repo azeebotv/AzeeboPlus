@@ -24,7 +24,7 @@ model User {
   reportedReports Report[]         @relation("ReportReporter")
   reportsAgainst  Report[]         @relation("ReportedUser")
   appeals         Appeal[]
-  trustHistory    TrustScoreHistory[]
+  trustHistory    TrustScoreHistory[] @relation("TrustHistory")
   safetyActions   SafetyAction[]   @relation("ModeratorActions")
   reviewAssignments ReviewerAssignment[] @relation("Reviewer")
   assignedByActions ReviewerAssignment[] @relation("AssignedBy")

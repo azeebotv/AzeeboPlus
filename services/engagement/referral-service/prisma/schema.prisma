@@ -42,6 +42,7 @@ model Referral {
   updatedAt     DateTime @updatedAt
 
   referralCode  ReferralCode @relation(fields: [referralCodeId], references: [id])
+  reward        ReferralReward?
 
   @@map("referrals")
   @@index([referrerId])
