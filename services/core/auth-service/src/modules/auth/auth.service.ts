@@ -11,6 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import axios from 'axios';
 import { randomUUID } from 'crypto';
+import type { StringValue } from 'ms';
 
 import { AuthRepository } from './auth.repository.js';
 import { AuditLogService } from '../audit/audit.service.js';
@@ -532,7 +533,7 @@ export class AuthService {
         resourceType: 'user',
         resourceId: user.id,
         result: 'failure',
-        metadata: { reason: 'email_already_verified' },
+        error: 'email_already_verified',
         ipAddress,
         userAgent,
         timestamp: new Date(),
@@ -607,6 +608,7 @@ export class AuthService {
       error: JSON.stringify({ role: selectRoleDto.role }),
       ipAddress,
       userAgent,
+      timestamp: new Date(),
     });
 
     this.trackAnalyticsEvent('user_role_selected', userId, {
@@ -664,7 +666,7 @@ export class AuthService {
         iat: now,
       } as Record<string, unknown>,
       {
-        expiresIn: this.accessTokenExpiry,
+        expiresIn: this.accessTokenExpiry as StringValue,
         secret: jwtAccessSecret,
       }
     );
@@ -682,7 +684,7 @@ export class AuthService {
         iat: now,
       } as Record<string, unknown>,
       {
-        expiresIn: `${this.refreshTokenExpiryDays}d`,
+        expiresIn: `${this.refreshTokenExpiryDays}d` as StringValue,
         secret: jwtRefreshSecret,
       }
     );
