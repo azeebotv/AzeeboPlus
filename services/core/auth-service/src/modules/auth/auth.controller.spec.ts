@@ -54,6 +54,12 @@ describe('AuthController', () => {
     },
   };
 
+  const mockReq = (overrides: { user?: User; ip?: string } = {}): any => ({
+    user: overrides.user ?? mockUser,
+    ip: overrides.ip ?? '127.0.0.1',
+    headers: { 'user-agent': 'test-agent' },
+  });
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
@@ -131,9 +137,9 @@ describe('AuthController', () => {
     };
 
     it('should create a new user account', async () => {
-      const result = await controller.signup(registerDto);
+      const result = await controller.signup(mockReq(), registerDto);
 
-      expect(authService.register).toHaveBeenCalledWith(registerDto);
+      expect(authService.register).toHaveBeenCalledWith(registerDto, '127.0.0.1', 'test-agent');
       expect(result.success).toBe(true);
       expect(result.data).toHaveProperty('user');
       expect(result.data).toHaveProperty('access_token');
@@ -145,8 +151,8 @@ describe('AuthController', () => {
         new ConflictException('Email already registered')
       );
 
-      await expect(controller.signup(registerDto)).rejects.toThrow(ConflictException);
-      expect(authService.register).toHaveBeenCalledWith(registerDto);
+      await expect(controller.signup(mockReq(), registerDto)).rejects.toThrow(ConflictException);
+      expect(authService.register).toHaveBeenCalledWith(registerDto, '127.0.0.1', 'test-agent');
     });
 
     it('should propagate errors for invalid input', async () => {
@@ -154,7 +160,7 @@ describe('AuthController', () => {
         new BadRequestException('Validation failed')
       );
 
-      await expect(controller.signup({ ...registerDto, email: 'invalid' })).rejects.toThrow(
+      await expect(controller.signup(mockReq(), { ...registerDto, email: 'invalid' })).rejects.toThrow(
         BadRequestException
       );
     });
@@ -167,9 +173,9 @@ describe('AuthController', () => {
     };
 
     it('should authenticate and return tokens', async () => {
-      const result = await controller.login(loginDto);
+      const result = await controller.login(mockReq(), loginDto);
 
-      expect(authService.login).toHaveBeenCalledWith(loginDto);
+      expect(authService.login).toHaveBeenCalledWith(loginDto, '127.0.0.1', 'test-agent');
       expect(result.success).toBe(true);
       expect(result.data).toHaveProperty('access_token');
       expect(result.data).toHaveProperty('refresh_token');
@@ -181,7 +187,7 @@ describe('AuthController', () => {
         new UnauthorizedException('Invalid email or password')
       );
 
-      await expect(controller.login(loginDto)).rejects.toThrow(UnauthorizedException);
+      await expect(controller.login(mockReq(), loginDto)).rejects.toThrow(UnauthorizedException);
     });
 
     it('should propagate UnauthorizedException for locked account', async () => {
@@ -189,7 +195,7 @@ describe('AuthController', () => {
         new UnauthorizedException('Account locked. Please try again later.')
       );
 
-      await expect(controller.login(loginDto)).rejects.toThrow(UnauthorizedException);
+      await expect(controller.login(mockReq(), loginDto)).rejects.toThrow(UnauthorizedException);
     });
   });
 
@@ -229,20 +235,21 @@ describe('AuthController', () => {
 
   describe('POST /auth/logout', () => {
     it('should logout the user', async () => {
-      const mockReq = { user: { id: 'user-123' } } as any;
+      const result = await controller.logout(mockReq({ user: { id: 'user-123' } as User }));
 
-      const result = await controller.logout(mockReq);
-
-      expect(authService.logout).toHaveBeenCalledWith('user-123');
+      expect(authService.logout).toHaveBeenCalledWith(
+        'user-123',
+        undefined,
+        '127.0.0.1',
+        'test-agent'
+      );
       expect(result).toEqual({ success: true });
     });
   });
 
   describe('GET /auth/me', () => {
     it('should return the authenticated user profile', async () => {
-      const mockReq = { user: mockUser } as any;
-
-      const result = await controller.getProfile(mockReq);
+      const result = await controller.getProfile(mockReq());
 
       expect(authService.getProfile).toHaveBeenCalledWith(mockUser);
       expect(result).toHaveProperty('success', true);
@@ -254,15 +261,15 @@ describe('AuthController', () => {
     const forgotPasswordDto = { email: 'test@example.com' };
 
     it('should send a reset email', async () => {
-      const result = await controller.forgotPassword(forgotPasswordDto);
+      const result = await controller.forgotPassword(mockReq(), forgotPasswordDto);
 
-      expect(authService.forgotPassword).toHaveBeenCalledWith(forgotPasswordDto);
+      expect(authService.forgotPassword).toHaveBeenCalledWith(forgotPasswordDto, '127.0.0.1', 'test-agent');
       expect(result.success).toBe(true);
       expect(result.message).toContain('reset link');
     });
 
     it('should return success even for non-existent email (no user enumeration)', async () => {
-      const result = await controller.forgotPassword({
+      const result = await controller.forgotPassword(mockReq(), {
         email: 'nonexistent@example.com',
       });
 
@@ -270,7 +277,7 @@ describe('AuthController', () => {
     });
 
     it('should return success even if notification service fails', async () => {
-      const result = await controller.forgotPassword(forgotPasswordDto);
+      const result = await controller.forgotPassword(mockReq(), forgotPasswordDto);
 
       expect(result.success).toBe(true);
     });
@@ -283,9 +290,9 @@ describe('AuthController', () => {
     };
 
     it('should reset the password with a valid token', async () => {
-      const result = await controller.resetPassword(resetPasswordDto);
+      const result = await controller.resetPassword(mockReq(), resetPasswordDto);
 
-      expect(authService.resetPassword).toHaveBeenCalledWith(resetPasswordDto);
+      expect(authService.resetPassword).toHaveBeenCalledWith(resetPasswordDto, '127.0.0.1', 'test-agent');
       expect(result.success).toBe(true);
       expect(result.message).toContain('Password reset successfully');
     });
@@ -295,7 +302,7 @@ describe('AuthController', () => {
         new BadRequestException('Invalid or expired reset token')
       );
 
-      await expect(controller.resetPassword(resetPasswordDto)).rejects.toThrow(
+      await expect(controller.resetPassword(mockReq(), resetPasswordDto)).rejects.toThrow(
         BadRequestException
       );
     });
@@ -306,16 +313,20 @@ describe('AuthController', () => {
       );
 
       await expect(
-        controller.resetPassword({ token: 'invalid-token', newPassword: 'NewSecureP@ss1' })
+        controller.resetPassword(mockReq(), { token: 'invalid-token', newPassword: 'NewSecureP@ss1' })
       ).rejects.toThrow(BadRequestException);
     });
   });
 
   describe('POST /auth/verify-email', () => {
     it('should verify email with valid token', async () => {
-      const result = await controller.verifyEmail({ token: 'valid-token' });
+      const result = await controller.verifyEmail(mockReq(), { token: 'valid-token' });
 
-      expect(authService.verifyEmail).toHaveBeenCalledWith({ token: 'valid-token' });
+      expect(authService.verifyEmail).toHaveBeenCalledWith(
+        { token: 'valid-token' },
+        '127.0.0.1',
+        'test-agent'
+      );
       expect(result.success).toBe(true);
       expect(result.message).toContain('verified');
     });
@@ -325,7 +336,7 @@ describe('AuthController', () => {
         new BadRequestException('Invalid or expired verification token')
       );
 
-      await expect(controller.verifyEmail({ token: 'expired-token' })).rejects.toThrow(
+      await expect(controller.verifyEmail(mockReq(), { token: 'expired-token' })).rejects.toThrow(
         BadRequestException
       );
     });
@@ -333,23 +344,25 @@ describe('AuthController', () => {
 
   describe('POST /auth/select-role', () => {
     it('should select a valid role', async () => {
-      const mockReq = { user: { id: 'user-123' } } as any;
+      const result = await controller.selectRole(mockReq(), { role: SelectableRole.CREATOR });
 
-      const result = await controller.selectRole(mockReq, { role: SelectableRole.CREATOR });
-
-      expect(authService.selectRole).toHaveBeenCalledWith('user-123', { role: SelectableRole.CREATOR });
+      expect(authService.selectRole).toHaveBeenCalledWith(
+        'user-123',
+        { role: SelectableRole.CREATOR },
+        '127.0.0.1',
+        'test-agent'
+      );
       expect(result.success).toBe(true);
       expect(result.message).toContain('Role selected');
     });
 
     it('should propagate BadRequestException for invalid role', async () => {
-      const mockReq = { user: { id: 'user-123' } } as any;
       (authService.selectRole as jest.Mock).mockRejectedValue(
         new BadRequestException('Invalid role selection — only user and creator roles are allowed')
       );
 
       await expect(
-        controller.selectRole(mockReq, { role: 'admin' as SelectableRole })
+        controller.selectRole(mockReq(), { role: 'admin' as SelectableRole })
       ).rejects.toThrow(BadRequestException);
     });
   });

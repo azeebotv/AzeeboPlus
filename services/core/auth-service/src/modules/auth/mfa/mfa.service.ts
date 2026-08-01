@@ -152,6 +152,7 @@ export class MfaService {
         resourceType: 'user',
         resourceId: userId,
         result: 'success',
+        timestamp: new Date(),
       });
 
       return {
@@ -178,6 +179,7 @@ export class MfaService {
         resourceType: 'user',
         resourceId: userId,
         result: 'success',
+        timestamp: new Date(),
       });
 
       return {
