@@ -202,7 +202,7 @@ export default function CreatorDashboardPage(): React.JSX.Element {
                 color: colors.text.primary,
                 transition: 'border-color 0.2s',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = colors.primary)}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = colors.primary[500])}
               onMouseLeave={(e) => (e.currentTarget.style.borderColor = colors.bg.tertiary)}
             >
               <span style={{ fontSize: 24 }}>{link.icon}</span>

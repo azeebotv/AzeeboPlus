@@ -3,6 +3,10 @@ const path = require('path')
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  // Pin the tracing root to the monorepo root so standalone output is
+  // deterministic (avoids Next.js picking up stray parent-directory
+  // lockfiles and emitting a wrong standalone layout).
+  outputFileTracingRoot: path.resolve(__dirname, '../../'),
   reactStrictMode: true,
   transpilePackages: ['@azeebo/ui', '@azeebo/design-tokens', '@azeebo/utils', '@azeebo/api-client', '@azeebo/http-client', '@azeebo/shared-types', '@azeebo/validation', '@azeebo/error-handling', '@azeebo/logger'],
   eslint: {
