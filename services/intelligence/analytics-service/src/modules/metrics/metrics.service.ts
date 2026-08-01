@@ -1,10 +1,9 @@
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import * as client from 'prom-client';
 
 @Injectable()
 export class MetricsService implements OnModuleInit, OnModuleDestroy {
-  private readonly logger = new Logger(MetricsService.name);
-  private register: client.Registry;
+    private register: client.Registry;
 
   // Counter metrics
   private eventCounter: client.Counter<string>;
