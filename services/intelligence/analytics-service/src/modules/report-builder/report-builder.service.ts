@@ -49,7 +49,6 @@ interface QueryOptions {
 
 @Injectable()
 export class ReportBuilderService {
-  private readonly logger = new Logger(ReportBuilderService.name);
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async createReport(userId: string, dto: CreateReportDto): Promise<ReportResult> {
