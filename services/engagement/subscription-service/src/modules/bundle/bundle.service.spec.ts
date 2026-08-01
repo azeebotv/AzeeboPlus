@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BundleService } from './bundle.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
-import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { CacheService } from '@azeebo/shared-services';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { CreateBundleDto } from './dto/create-bundle.dto.js';
 import { SubscribeBundleDto } from './dto/subscribe-bundle.dto.js';
