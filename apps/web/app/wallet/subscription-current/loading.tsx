@@ -1,5 +1,6 @@
+import { colors } from '@azeebo/design-tokens';
+
 export default function Loading() {
-  import { colors } from '@azeebo/design-tokens';
   return (
     <div style={{ minHeight: '100vh', background: colors.bg.primary, padding: '24px' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
