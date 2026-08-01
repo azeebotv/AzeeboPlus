@@ -16,13 +16,52 @@ import { render, screen, fireEvent, waitFor, within } from '@testing-library/rea
 
 /* ─── Hoisted mock variables (accessible inside vi.mock factories) ─── */
 
-const { mockUseAuth, mockPush, mockUseWallet } = vi.hoisted(() => ({
+const { mockUseAuth, mockPush, mockUseWallet, translations } = vi.hoisted(() => ({
   mockUseAuth: vi.fn(),
   mockPush: vi.fn(),
   mockUseWallet: vi.fn(),
+  translations: {
+    'nav.home': 'Home',
+    'nav.browse': 'Browse',
+    'nav.library': 'Library',
+    'nav.profile': 'Profile',
+    'nav.rewards': 'Rewards',
+    'nav.wallet': 'Wallet',
+    'nav.settings': 'Settings',
+    'nav.subscription': 'Subscriptions',
+    'nav.creatorDashboard': 'Creator Dashboard',
+    'nav.creators': 'Creators',
+    'universes.reality': 'Reality',
+    'universes.lifestyle': 'Lifestyle',
+    'universes.vertical': 'Vertical',
+    'universes.movies': 'Movies',
+    'universes.games': 'Games',
+    'universes.comedy': 'Comedy',
+    'universes.sports': 'Sports',
+    'appHeader.universes': 'Universes',
+    'appHeader.searchPlaceholder': 'Search shows, creators, movies…',
+    'appHeader.searchPlaceholderMobile': 'Search…',
+    'appHeader.searchAria': 'Search Azeebo+',
+    'appHeader.clearSearch': 'Clear search',
+    'appHeader.openMenu': 'Open menu',
+    'appHeader.closeMenu': 'Close menu',
+    'appHeader.confirmLogout': 'Are you sure?',
+    'appHeader.yesSignOut': 'Yes, sign out',
+    'auth.login': 'Login',
+    'auth.register': 'Register',
+    'auth.logout': 'Sign out',
+    'common.search': 'Search',
+    'common.cancel': 'Cancel',
+  },
 }));
 
 /* ─── Mocks ─── */
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => translations[key] ?? key,
+  }),
+}));
 
 vi.mock('next/navigation', () => ({
   usePathname: () => '/',
