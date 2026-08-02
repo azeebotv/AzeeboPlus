@@ -306,6 +306,34 @@ for entry in "${MIGRATE_SERVICES[@]}"; do
         echo "    FATAL: No migrations directory found for $svc_name"
         exit 1
       fi
+    elif echo "$migrate_output" | grep -q "P3018"; then
+      echo "    P3018: previous migration in error state for $svc_name — resolving..."
+      # Extract the stuck migration name from error output
+      failed_migration=$(echo "$migrate_output" | grep -oP 'Migration name: \K.*' | head -1 || true)
+      if [ -n "$failed_migration" ]; then
+        echo "    Resolving: $failed_migration"
+        DATABASE_URL="$db_url" \
+          prisma migrate resolve --rolled-back "$failed_migration" --schema="$svc_dir/prisma/schema.prisma" 2>&1 || true
+      fi
+      # Also resolve any stuck migrations in the table
+      stuck_migrations=$(PGPASSWORD="$db_pass" psql -h [IP_REDACTED] -U "$db_user" -d "$db_name" -t -A -c \
+        "SELECT migration_name FROM prisma_migrations WHERE finished_at IS NULL AND started_at IS NOT NULL LIMIT 50" 2>/dev/null || echo "")
+      if [ -n "$stuck_migrations" ]; then
+        while IFS= read -r stuck_name; do
+          [ -z "$stuck_name" ] && continue
+          echo "    Resolving stuck: $stuck_name"
+          DATABASE_URL="$db_url" \
+            prisma migrate resolve --rolled-back "$stuck_name" --schema="$svc_dir/prisma/schema.prisma" 2>&1 || true
+        done <<< "$stuck_migrations"
+      fi
+      echo "    Re-running migration for $svc_name..."
+      DATABASE_URL="$db_url" \
+        prisma migrate deploy --schema="$svc_dir/prisma/schema.prisma" 2>&1 || {
+        echo "    FATAL: Migration still failed for $svc_name after P3018 resolve"
+        echo "    Migration output:"
+        echo "$migrate_output" | head -20
+        exit 1
+      }
     else
       echo "    FATAL: Migration failed for $svc_name"
       echo "    Migration output:"
