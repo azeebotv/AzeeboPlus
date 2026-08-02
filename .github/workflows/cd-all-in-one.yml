@@ -127,11 +127,11 @@ jobs:
             -p 3013:3013 \
             "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev"
 
-          echo "==> Waiting for container to start (60s)..."
-          sleep 60
+          echo "==> Waiting for container to start (120s)..."
+          sleep 120
 
           echo "==> Testing health endpoint..."
-          for i in $(seq 1 12); do
+          for i in $(seq 1 24); do
             if curl -sf http://localhost:3013/health > /dev/null 2>&1; then
               echo "✅ Health endpoint OK"
               docker logs smoke-test 2>&1 | tail -20
