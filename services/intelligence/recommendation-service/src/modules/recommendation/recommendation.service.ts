@@ -107,7 +107,7 @@ export class RecommendationService {
     }
   }
 
-  private async getFollowerCount(creatorId: string): Promise<number> {
+  private async getFollowerCount(_creatorId: string): Promise<number> {
     try {
       const baseUrl = this.configService.get<string>('CREATOR_SERVICE_URL');
       if (!baseUrl) return 0;
@@ -126,7 +126,7 @@ export class RecommendationService {
     }
   }
 
-  private async getCreatorContentCount(creatorId: string): Promise<number> {
+  private async getCreatorContentCount(_creatorId: string): Promise<number> {
     try {
       const baseUrl = this.configService.get<string>('CREATOR_SERVICE_URL');
       if (!baseUrl) return 0;
