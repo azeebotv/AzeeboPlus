@@ -81,7 +81,6 @@ interface CreateCollaborationData {
 
 @Injectable()
 export class InfluencerService {
-  private readonly logger = new Logger(InfluencerService.name);
   constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   private formatEntry(entry: Record<string, unknown>): InfluencerEntry {

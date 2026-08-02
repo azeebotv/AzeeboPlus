@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 interface MusicEntry {
@@ -60,7 +60,6 @@ interface UpdateMusicData {
 
 @Injectable()
 export class MusicService {
-  private readonly logger = new Logger(MusicService.name);
   constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   private formatEntry(entry: Record<string, unknown>): MusicEntry {
