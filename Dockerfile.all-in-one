@@ -148,7 +148,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     echo "==> Web build complete. Checking standalone output..." && \
     (ls -la apps/web/.next/standalone/apps/web/server.js 2>/dev/null && echo "  OK: standalone at nested path") || \
     (ls -la apps/web/.next/standalone/server.js 2>/dev/null && echo "  OK: standalone at direct path") || \
-    (echo "  WARN: standalone server.js not found, checking directory..." && ls -la apps/web/.next/standalone/ 2>&1) && \
+    (echo "  WARN: standalone server.js not found, checking directory..." && ls -la apps/web/.next/standalone/ 2>&1) ; true && \
     pnpm --filter @azeebo/api-gateway run build && \
     pnpm --filter @azeebo/auth-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/auth-service run build && \
     pnpm --filter @azeebo/user-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/user-service run build && \
