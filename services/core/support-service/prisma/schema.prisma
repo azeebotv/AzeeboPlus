@@ -1,0 +1,11 @@
+model SupportTicket {
+  id            String @id @default(uuid())
+  categoryId    String
+  category      SupportTicketCategory @relation(fields: [categoryId], references: [id])
+  result        String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("support_tickets")
+  @@index([categoryId])
+}
