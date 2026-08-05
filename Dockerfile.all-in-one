@@ -236,7 +236,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
       proj_root=$(dirname "$schema"); \
       svc_root=$(dirname "$proj_root"); \
       svc_name=$(basename "$svc_root"); \
-      custom_output=$(grep -m1 'output\s*=' "$schema" 2>/dev/null | sed 's/.*"\(.*\)".*/\1/'); \
+      custom_output=$(grep -m1 'output\s*=' "$schema" 2>/dev/null | sed 's/.*"\(.*\)".*/\1/' || true); \
       if [ -n "$custom_output" ] && [ -d "$svc_root/dist" ]; then \
         full_output="$proj_root/$custom_output"; \
         dist_prisma="$svc_root/dist/prisma/client"; \

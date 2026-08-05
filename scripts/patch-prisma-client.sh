@@ -36,7 +36,7 @@ done
 for schema in $(find services apps -maxdepth 5 -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/prisma/client/*" -not -path "*/src/prisma/*" -not -path "*/generated/*" 2>/dev/null); do
   proj_root=$(dirname "$schema")
   svc_root=$(dirname "$proj_root")
-  custom_output=$(grep -m1 'output\s*=' "$schema" 2>/dev/null | sed 's/.*"\(.*\)".*/\1/')
+  custom_output=$(grep -m1 'output\s*=' "$schema" 2>/dev/null | sed 's/.*"\(.*\)".*/\1/' || true)
   if [ -n "$custom_output" ]; then
     full_output="$proj_root/$custom_output"
     expected_dir="$svc_root/prisma/client"
