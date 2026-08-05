@@ -1,6 +1,16 @@
+-- Create users table (referenced by FK constraints in this schema)
+CREATE TABLE IF NOT EXISTS "users" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "email" TEXT NOT NULL UNIQUE,
+    "displayName" TEXT,
+    "role" TEXT NOT NULL DEFAULT 'user',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create challenges table
 CREATE TABLE "challenges" (
-    "id" TEXT NOT NULL PRIMARY KEY DEFAULT uuid(),
+    "id" TEXT NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
     "title" TEXT NOT NULL,
     "slug" TEXT NOT NULL UNIQUE,
     "description" TEXT,
@@ -19,7 +29,7 @@ CREATE TABLE "challenges" (
 
 -- Create challenge_submissions table
 CREATE TABLE "challenge_submissions" (
-    "id" TEXT NOT NULL PRIMARY KEY DEFAULT uuid(),
+    "id" TEXT NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
     "challengeId" TEXT NOT NULL,
     "userId" TEXT,
     "content" TEXT NOT NULL,
@@ -32,7 +42,7 @@ CREATE TABLE "challenge_submissions" (
 
 -- Create challenge_votes table
 CREATE TABLE "challenge_votes" (
-    "id" TEXT NOT NULL PRIMARY KEY DEFAULT uuid(),
+    "id" TEXT NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
     "userId" TEXT NOT NULL,
     "submissionId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
