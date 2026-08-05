@@ -20,7 +20,7 @@ CREATE TABLE "challenges" (
     "endDate" TIMESTAMP(3) NOT NULL,
     "prize" TEXT,
     "rules" TEXT,
-    "status" TEXT NOT NULL DEFAULT "draft",
+    "status" TEXT NOT NULL DEFAULT 'draft',
     "participantCount" INT NOT NULL DEFAULT 0,
     "createdById" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -34,7 +34,7 @@ CREATE TABLE "challenge_submissions" (
     "userId" TEXT,
     "content" TEXT NOT NULL,
     "mediaUrl" TEXT,
-    "status" TEXT NOT NULL DEFAULT "pending",
+    "status" TEXT NOT NULL DEFAULT 'pending',
     "votes" INT NOT NULL DEFAULT 0,
     "submittedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
