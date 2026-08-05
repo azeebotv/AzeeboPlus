@@ -316,7 +316,7 @@ for entry in "${MIGRATE_SERVICES[@]}"; do
           prisma migrate resolve --rolled-back "$failed_migration" --schema="$svc_dir/prisma/schema.prisma" 2>&1 || true
       fi
       # Also resolve any stuck migrations in the table
-      stuck_migrations=$(PGPASSWORD="$db_pass" psql -h [IP_REDACTED] -U "$db_user" -d "$db_name" -t -A -c \
+      stuck_migrations=$(PGPASSWORD="$db_pass" psql -h 127.0.0.1 -U "$db_user" -d "$db_name" -t -A -c \
         "SELECT migration_name FROM prisma_migrations WHERE finished_at IS NULL AND started_at IS NOT NULL LIMIT 50" 2>/dev/null || echo "")
       if [ -n "$stuck_migrations" ]; then
         while IFS= read -r stuck_name; do
@@ -326,6 +326,9 @@ for entry in "${MIGRATE_SERVICES[@]}"; do
             prisma migrate resolve --rolled-back "$stuck_name" --schema="$svc_dir/prisma/schema.prisma" 2>&1 || true
         done <<< "$stuck_migrations"
       fi
+      echo "    Dropping partially-applied migration objects for $svc_name (P3018 recovery)..."
+      PGPASSWORD="$db_pass" psql -h 127.0.0.1 -U "$db_user" -d "$db_name" -c \
+        "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" >/dev/null 2>&1 || true
       echo "    Re-running migration for $svc_name..."
       DATABASE_URL="$db_url" \
         prisma migrate deploy --schema="$svc_dir/prisma/schema.prisma" 2>&1 || {
