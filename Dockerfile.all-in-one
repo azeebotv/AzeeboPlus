@@ -109,7 +109,7 @@ ARG CACHEBUST
 # Build order by CRITICALITY — most important first to minimise downtime.
 # If the build fails partway, at least the critical services are already in the image.
 #
-# Priority tiers:
+# Priority tiers (each is a separate RUN for cache + diagnostics):
 #   T0: Shared packages (dependencies for everything)
 #   T1: Web + Gateway + Auth + User (frontend, routing, login)
 #   T2: Core business (media, content, wallet, payment, search)
@@ -117,11 +117,11 @@ ARG CACHEBUST
 #   T4: Engagement (notification, reward, messaging, etc.)
 #   T5: Intelligence (analytics, recommendation)
 #   T6: Universe services (reality, movie, comedy, etc.)
-#   T7: Operations (queue, support, moderation)
+#   T7: Operations (queue, support, moderation) + post-processing
 SHELL ["/bin/bash", "-eo", "pipefail", "-c"]
+
+# ---- T0: Shared packages (deps for everything) ----
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
-    echo "Cache bust: $CACHEBUST" && \
-    set -e && \
     echo "==> [T0] Building shared packages..." && \
     pnpm --filter @azeebo/shared-types run build && \
     pnpm --filter @azeebo/http-client run build && \
@@ -135,7 +135,6 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/shared-services prisma:generate && \
     bash scripts/patch-prisma-client.sh && \
     pnpm --filter @azeebo/shared-services run build && \
-    echo "==> Verify shared-services dist:" && find packages/shared-services/dist/ -maxdepth 1 -name "index.*" 2>&1 && \
     pnpm --filter @azeebo/security run build && \
     pnpm --filter @azeebo/ui run build && \
     pnpm --filter @azeebo/observability run build && \
@@ -143,6 +142,10 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/event-bus run build && \
     pnpm --filter @azeebo/feature-flags run build && \
     pnpm --filter @azeebo/internal-clients run build && \
+    echo "==> [T0] Complete"
+
+# ---- T1: Critical path (web, gateway, auth, user) ----
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     echo "==> [T1] Building critical path (web, gateway, auth, user)..." && \
     pnpm --filter @azeebo/web run build && \
     echo "==> Web build complete. Checking standalone output..." && \
@@ -152,17 +155,29 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/api-gateway run build && \
     pnpm --filter @azeebo/auth-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/auth-service run build && \
     pnpm --filter @azeebo/user-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/user-service run build && \
+    echo "==> [T1] Complete"
+
+# ---- T2: Core business services ----
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     echo "==> [T2] Building core business services..." && \
     pnpm --filter @azeebo/media-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/media-service run build && \
     pnpm --filter @azeebo/content-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/content-service run build && \
     pnpm --filter @azeebo/wallet-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/wallet-service run build && \
     pnpm --filter @azeebo/payment-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/payment-service run build && \
     pnpm --filter @azeebo/search-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/search-service run build && \
+    echo "==> [T2] Complete"
+
+# ---- T3: Apps (admin, creator) ----
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     echo "==> [T3] Building admin and creator apps..." && \
     pnpm --filter @azeebo/admin prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/admin run build && \
     pnpm --filter @azeebo/creator prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/creator run build && \
-    (test -d apps/admin/src/generated/prisma && mkdir -p apps/admin/dist/generated && cp -r apps/admin/src/generated/prisma apps/admin/dist/generated/prisma) && \
-    (test -d apps/creator/src/generated/prisma && mkdir -p apps/creator/dist/generated && cp -r apps/creator/src/generated/prisma apps/creator/dist/generated/prisma) && \
+    (test -d apps/admin/src/generated/prisma && mkdir -p apps/admin/dist/generated && cp -r apps/admin/src/generated/prisma apps/admin/dist/generated/prisma) || true && \
+    (test -d apps/creator/src/generated/prisma && mkdir -p apps/creator/dist/generated && cp -r apps/creator/src/generated/prisma apps/creator/dist/generated/prisma) || true && \
+    echo "==> [T3] Complete"
+
+# ---- T4: Engagement services ----
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     echo "==> [T4] Building engagement services..." && \
     pnpm --filter @azeebo/notification-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/notification-service run build && \
     pnpm --filter @azeebo/reward-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/reward-service run build && \
@@ -170,9 +185,17 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/messaging-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/messaging-service run build && \
     pnpm --filter @azeebo/referral-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/referral-service run build && \
     pnpm --filter @azeebo/subscription-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/subscription-service run build && \
+    echo "==> [T4] Complete"
+
+# ---- T5: Intelligence services ----
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     echo "==> [T5] Building intelligence services..." && \
     pnpm --filter @azeebo/analytics-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/analytics-service run build && \
     pnpm --filter @azeebo/recommendation-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/recommendation-service run build && \
+    echo "==> [T5] Complete"
+
+# ---- T6: Universe services ----
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     echo "==> [T6] Building universe services..." && \
     pnpm --filter @azeebo/reality-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/reality-service run build && \
     pnpm --filter @azeebo/movie-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/movie-service run build && \
@@ -183,10 +206,15 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/vertical-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/vertical-service run build && \
     pnpm --filter @azeebo/creator-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/creator-service run build && \
     pnpm --filter @azeebo/live-event-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/live-event-service run build && \
+    echo "==> [T6] Complete"
+
+# ---- T7: Operations + post-processing ----
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     echo "==> [T7] Building operations services..." && \
     pnpm --filter @azeebo/queue-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/queue-service run build && \
     pnpm --filter @azeebo/support-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/support-service run build && \
     pnpm --filter @azeebo/moderation-service prisma:generate && bash scripts/patch-prisma-client.sh && pnpm --filter @azeebo/moderation-service run build && \
+    echo "==> [T7] Complete" && \
     echo "==> Flattening nested dist directories..." && \
     for svc_dir in $(find services -maxdepth 2 -mindepth 2 -type d -not -path "*/node_modules/*" | sort); do \
       dist="$svc_dir/dist"; \
