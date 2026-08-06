@@ -4,7 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
 import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
-import { EmailModule, FirebaseModule, SmsModule } from '@azeebo/shared-services';
+import { EmailModule, FirebaseModule, JwtConfigModule, SmsModule } from '@azeebo/shared-services';
 import { DatabaseModule } from './modules/database/database.module';
 import { HealthModule } from './modules/health/health.module';
 import { QueueModule } from './modules/queue/queue.module';
@@ -61,6 +61,7 @@ const QUEUE_CONFIG = {
     EmailModule,
     FirebaseModule,
     SmsModule,
+    JwtConfigModule,
     HealthModule,
     QueueModule,
     BullModule.forRoot({
