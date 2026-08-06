@@ -91,7 +91,7 @@ services:
       WS_CORS_ORIGIN: ${WS_CORS_ORIGIN:-https://app.azeeboplus.com}
 
       # Feature Flags (NEW - required for content-service)
-      FEATURE_FLAG_REDIS_URL: redis://localhost:6379
+      FEATURE_FLAG_REDIS_URL: redis://:${REDIS_PASSWORD}@localhost:6379
 
       # Event Bus (NEW - required for wallet-service)
       EVENT_BUS_REDIS_URL: redis://:${REDIS_PASSWORD}@localhost:6379
