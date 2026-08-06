@@ -165,14 +165,14 @@ jobs:
           }
 
           echo "==> Testing public signup (POST /v1/auth/signup)..."
-          CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" -X POST "$BASE/v1/auth/signup" \
+          CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" -X POST "$BASE/api/v1/auth/signup" \
             -H 'Content-Type: application/json' \
             -d "{\"email\":\"$EMAIL\",\"password\":\"$PASS\",\"displayName\":\"Smoke Test\"}")
           [ "$CODE" = "201" ] || fail "signup returned $CODE (expected 201)"
           echo "✅ signup 201"
 
           echo "==> Testing login (POST /v1/auth/login)..."
-          CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" -X POST "$BASE/v1/auth/login" \
+          CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" -X POST "$BASE/api/v1/auth/login" \
             -H 'Content-Type: application/json' \
             -d "{\"email\":\"$EMAIL\",\"password\":\"$PASS\"}")
           [ "$CODE" = "200" ] || fail "login returned $CODE (expected 200)"
@@ -181,19 +181,19 @@ jobs:
           echo "✅ login 200 + token"
 
           echo "==> Testing authenticated profile (GET /v1/auth/me)..."
-          CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" "$BASE/v1/auth/me" \
+          CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" "$BASE/api/v1/auth/me" \
             -H "Authorization: Bearer $TOKEN")
           [ "$CODE" = "200" ] || fail "auth/me returned $CODE (expected 200)"
           echo "✅ auth/me 200"
 
           echo "==> Testing cross-service user profile (GET /v1/users/me)..."
-          CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" "$BASE/v1/users/me" \
+          CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" "$BASE/api/v1/users/me" \
             -H "Authorization: Bearer $TOKEN")
           [ "$CODE" = "200" ] || fail "users/me returned $CODE (expected 200)"
           echo "✅ users/me 200"
 
           echo "==> Testing public content feed (GET /v1/content/home)..."
-          CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" "$BASE/v1/content/home")
+          CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" "$BASE/api/v1/content/home")
           [ "$CODE" = "200" ] || fail "content/home returned $CODE (expected 200)"
           echo "✅ content/home 200"
 
