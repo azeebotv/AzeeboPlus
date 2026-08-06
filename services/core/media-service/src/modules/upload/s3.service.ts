@@ -63,12 +63,14 @@ export class S3Service {
     this.bucketName = this.configService.get<string>('AWS_S3_BUCKET') || 'azeebo-media';
     this.cdnUrl = this.configService.get<string>('CDN_URL') || '';
 
+    const accessKeyId = this.configService.get<string>('AWS_ACCESS_KEY_ID');
+    const secretAccessKey = this.configService.get<string>('AWS_SECRET_ACCESS_KEY');
+
     this.s3Client = new S3Client({
       region: this.region,
-      credentials: {
-        accessKeyId: this.configService.getOrThrow<string>('AWS_ACCESS_KEY_ID'),
-        secretAccessKey: this.configService.getOrThrow<string>('AWS_SECRET_ACCESS_KEY'),
-      },
+      ...(accessKeyId && secretAccessKey
+        ? { credentials: { accessKeyId, secretAccessKey } }
+        : {}),
     });
 
     this.circuitBreaker = new CircuitBreaker({
