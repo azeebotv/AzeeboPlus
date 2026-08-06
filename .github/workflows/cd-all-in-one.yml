@@ -164,38 +164,45 @@ jobs:
             exit 1
           }
 
-          echo "==> Testing public signup (POST /v1/auth/signup)..."
+          echo "==> Bootstrapping CSRF cookie (GET /api/v1/content/home)..."
+          CODE=$(curl -s -c /tmp/cookies.txt -o /tmp/smoke.out -w "%{http_code}" "$BASE/api/v1/content/home")
+          [ "$CODE" = "200" ] || fail "content/home returned $CODE (expected 200)"
+          echo "✅ content/home 200"
+          CSRF=$(awk '$6=="_csrf" {print $7}' /tmp/cookies.txt)
+          [ -n "$CSRF" ] || fail "CSRF cookie not set by gateway"
+          echo "✅ CSRF cookie acquired"
+
+          echo "==> Testing public signup (POST /api/v1/auth/signup)..."
           CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" -X POST "$BASE/api/v1/auth/signup" \
             -H 'Content-Type: application/json' \
+            -H "X-CSRF-Token: $CSRF" \
+            -b /tmp/cookies.txt -c /tmp/cookies.txt \
             -d "{\"email\":\"$EMAIL\",\"password\":\"$PASS\",\"displayName\":\"Smoke Test\"}")
           [ "$CODE" = "201" ] || fail "signup returned $CODE (expected 201)"
           echo "✅ signup 201"
 
-          echo "==> Testing login (POST /v1/auth/login)..."
+          echo "==> Testing login (POST /api/v1/auth/login)..."
           CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" -X POST "$BASE/api/v1/auth/login" \
             -H 'Content-Type: application/json' \
+            -H "X-CSRF-Token: $CSRF" \
+            -b /tmp/cookies.txt -c /tmp/cookies.txt \
             -d "{\"email\":\"$EMAIL\",\"password\":\"$PASS\"}")
           [ "$CODE" = "200" ] || fail "login returned $CODE (expected 200)"
           TOKEN=$(jq -r '.data.access_token' /tmp/smoke.out)
           [ -n "$TOKEN" ] && [ "$TOKEN" != "null" ] || fail "login response missing access_token"
           echo "✅ login 200 + token"
 
-          echo "==> Testing authenticated profile (GET /v1/auth/me)..."
+          echo "==> Testing authenticated profile (GET /api/v1/auth/me)..."
           CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" "$BASE/api/v1/auth/me" \
             -H "Authorization: Bearer $TOKEN")
           [ "$CODE" = "200" ] || fail "auth/me returned $CODE (expected 200)"
           echo "✅ auth/me 200"
 
-          echo "==> Testing cross-service user profile (GET /v1/users/me)..."
+          echo "==> Testing cross-service user profile (GET /api/v1/users/me)..."
           CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" "$BASE/api/v1/users/me" \
             -H "Authorization: Bearer $TOKEN")
           [ "$CODE" = "200" ] || fail "users/me returned $CODE (expected 200)"
           echo "✅ users/me 200"
-
-          echo "==> Testing public content feed (GET /v1/content/home)..."
-          CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" "$BASE/api/v1/content/home")
-          [ "$CODE" = "200" ] || fail "content/home returned $CODE (expected 200)"
-          echo "✅ content/home 200"
 
           echo "✅ All API traffic checks passed"
           docker logs smoke-test 2>&1 | tail -20

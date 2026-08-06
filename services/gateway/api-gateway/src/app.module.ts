@@ -89,8 +89,7 @@ export class AppModule implements NestModule {
         { path: 'api/users/*path', method: RequestMethod.HEAD },
         { path: 'api/users/*path', method: RequestMethod.OPTIONS },
         { path: 'api/health', method: RequestMethod.ALL },
-        { path: 'api/routes', method: RequestMethod.ALL },
-        { path: '*path', method: RequestMethod.GET }
+        { path: 'api/routes', method: RequestMethod.ALL }
       )
       .forRoutes('api');
   }
