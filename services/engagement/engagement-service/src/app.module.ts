@@ -23,7 +23,6 @@ import { CacheModule } from '@azeebo/shared-services';
         password: process.env.REDIS_PASSWORD,
       },
     }),
-    BullModule.registerQueue({ name: 'analytics' }),
     EngagementModule,
     AdminModule,
     HealthModule,
