@@ -1,11 +1,38 @@
+jest.mock('libphonenumber-js/max', () => ({
+  parsePhoneNumber: jest.fn(),
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ExecutionContext } from '@nestjs/common';
+import { INestApplication, ExecutionContext, VersioningType } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
 import { PredictionMarketsModule } from './prediction-markets.module.js';
 import { PredictionMarketsService } from './prediction-markets.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';
+
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: jest.fn(),
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+  RolesGuard: jest.fn(),
+  Roles: () => () => {},
+}));
+jest.mock('@azeebo/security', () => ({
+  RateLimitGuard: jest.fn(),
+  RateLimit: () => () => {},
+  AdminGuard: jest.fn(),
+  RateLimitService: jest.fn(),
+  ServiceAuthGuard: jest.fn().mockImplementation(() => ({
+    canActivate: (context: {
+      switchToHttp: () => { getRequest: () => { user?: Record<string, string> } };
+    }) => {
+      const req = context.switchToHttp().getRequest();
+      req.user = { sub: 'user-123', role: 'ADMIN' };
+      return true;
+    },
+  })),
+}));
 
 const mockAuthGuard = {
   canActivate: (context: ExecutionContext) => {
@@ -28,6 +55,18 @@ describe('Prediction Markets Controller Contract Tests', () => {
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [PredictionMarketsModule],
+      providers: [
+        {
+          provide: APP_GUARD,
+          useFactory: () => ({
+            canActivate: (context: ExecutionContext) => {
+              const req = context.switchToHttp().getRequest();
+              req.user = { sub: 'user-123', role: 'ADMIN' };
+              return true;
+            },
+          }),
+        },
+      ],
     })
       .overrideProvider(PredictionMarketsService)
       .useValue({
@@ -51,6 +90,7 @@ describe('Prediction Markets Controller Contract Tests', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
     predictionMarketsService = moduleFixture.get(PredictionMarketsService);
     await app.init();
   });

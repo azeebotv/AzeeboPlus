@@ -126,7 +126,7 @@ export default function DeviceManagementScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#E8420A" />
+        <ActivityIndicator size="large" color={colors.primary[500]} />
         <Text style={styles.loadingText}>Loading devices...</Text>
       </SafeAreaView>
     );
@@ -184,18 +184,18 @@ export default function DeviceManagementScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1A0A0A',
+    backgroundColor: colors.bg.primary,
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#1A0A0A',
+    backgroundColor: colors.bg.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {
-    color: '#9CA3AF',
-    marginTop: 12,
-  },
+loadingText: {
+     color: colors.accent.silver,
+     marginTop: 12,
+   },
   header: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -207,46 +207,46 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingRight: 8,
   },
-  backButtonText: {
-    fontSize: 24,
-    color: '#9CA3AF',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#9CA3AF',
-  },
-  warningBanner: {
-    backgroundColor: 'rgba(245,158,11,0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(245,158,11,0.2)',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 12,
-    borderRadius: 8,
-  },
-  warningText: {
-    fontSize: 12,
-    color: '#F59E0B',
-  },
+backButtonText: {
+     fontSize: 24,
+     color: colors.accent.silver,
+   },
+   title: {
+     fontSize: 24,
+     fontWeight: 'bold',
+     color: colors.text.primary,
+     marginBottom: 4,
+   },
+   subtitle: {
+     fontSize: 14,
+     color: colors.accent.silver,
+   },
+warningBanner: {
+     backgroundColor: colors.warning[500] + '15',
+     borderWidth: 1,
+     borderColor: colors.warning[500] + '33',
+     marginHorizontal: 16,
+     marginBottom: 16,
+     padding: 12,
+     borderRadius: 8,
+   },
+   warningText: {
+     fontSize: 12,
+     color: colors.warning[500],
+   },
   listContent: {
     padding: 16,
   },
   deviceCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.glass.toString('rgba(255,255,255,0.08)'),
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: colors.bg.glassBorder.toString('rgba(255,255,255,0.2)'),
   },
   deviceCardCurrent: {
-    borderColor: '#E8420A',
+    borderColor: colors.primary[500],
   },
   deviceHeader: {
     flexDirection: 'row',
@@ -269,30 +269,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 4,
   },
-  deviceName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginRight: 8,
-  },
-  currentBadge: {
-    backgroundColor: 'rgba(232,66,10,0.12)',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
-  },
-  currentBadgeText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#E8420A',
-  },
+deviceName: {
+     fontSize: 16,
+     fontWeight: 'bold',
+     color: colors.text.primary,
+     marginRight: 8,
+   },
+   currentBadge: {
+     backgroundColor: colors.primary[500] + '12',
+     paddingHorizontal: 8,
+     paddingVertical: 2,
+     borderRadius: 12,
+   },
+   currentBadgeText: {
+     fontSize: 10,
+     fontWeight: '600',
+     color: colors.primary[500],
+   },
   deviceMeta: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.accent.silver,
     marginBottom: 2,
   },
   revokeButton: {
-    backgroundColor: 'rgba(239,68,68,0.12)',
+    backgroundColor: colors.error[500] + '12',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
   revokeButtonText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#EF4444',
+    color: colors.error[500],
   },
   emptyContainer: {
     alignItems: 'center',
@@ -312,11 +312,11 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#9CA3AF',
+    color: colors.accent.silver,
     marginBottom: 4,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#6B7280',
+    color: colors.text.tertiary,
   },
 });

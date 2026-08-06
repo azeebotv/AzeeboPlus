@@ -9,14 +9,17 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ServiceAuthGuard } from '@azeebo/security';
 
 import { QuizService } from './quiz.service';
 import { CreateQuizDto } from './dto/create-quiz.dto';
 import { SubmitQuizDto } from './dto/submit-quiz.dto';
 
 @ApiTags('Quizzes')
+@UseGuards(ServiceAuthGuard)
 @Controller('quizzes')
 export class QuizController {
   constructor(@Inject(QuizService) private readonly quizService: QuizService) {}

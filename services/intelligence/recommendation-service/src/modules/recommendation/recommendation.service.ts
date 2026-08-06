@@ -69,12 +69,23 @@ interface FraudRisk {
 @Injectable()
 export class RecommendationService {
   private readonly logger = new Logger(RecommendationService.name);
+  private readonly analyticsServiceBaseUrl: string;
+  private readonly realityServiceBaseUrl: string;
 
   constructor(
     @Inject(PrismaService) private prisma: PrismaService,
     @Inject(CacheService) private readonly cache: CacheService,
     @Inject(ConfigService) private readonly configService: ConfigService
-  ) {}
+  ) {
+    this.analyticsServiceBaseUrl = this.configService.get<string>(
+      'ANALYTICS_SERVICE_URL',
+      'http://analytics-service:3040'
+    );
+    this.realityServiceBaseUrl = this.configService.get<string>(
+      'REALITY_SERVICE_URL',
+      'http://reality-service:3012'
+    );
+  }
 
   private async getSubscriptionCount(userId: string): Promise<number> {
     try {
@@ -86,8 +97,7 @@ export class RecommendationService {
           params: { userId, limit: 1 },
           timeout: 5000,
           headers: {
-            'x-user-id': userId,
-            'x-gateway-secret': this.configService.get<string>('INTERNAL_API_KEY', ''),
+            'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', ''),
           },
         }
       );
@@ -97,7 +107,7 @@ export class RecommendationService {
     }
   }
 
-  private async getFollowerCount(creatorId: string): Promise<number> {
+  private async getFollowerCount(_creatorId: string): Promise<number> {
     try {
       const baseUrl = this.configService.get<string>('CREATOR_SERVICE_URL');
       if (!baseUrl) return 0;
@@ -106,8 +116,7 @@ export class RecommendationService {
         {
           timeout: 5000,
           headers: {
-            'x-user-id': creatorId,
-            'x-gateway-secret': this.configService.get<string>('INTERNAL_API_KEY', ''),
+            'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', ''),
           },
         }
       );
@@ -117,7 +126,7 @@ export class RecommendationService {
     }
   }
 
-  private async getCreatorContentCount(creatorId: string): Promise<number> {
+  private async getCreatorContentCount(_creatorId: string): Promise<number> {
     try {
       const baseUrl = this.configService.get<string>('CREATOR_SERVICE_URL');
       if (!baseUrl) return 0;
@@ -126,8 +135,7 @@ export class RecommendationService {
         {
           timeout: 5000,
           headers: {
-            'x-user-id': creatorId,
-            'x-gateway-secret': this.configService.get<string>('INTERNAL_API_KEY', ''),
+            'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', ''),
           },
         }
       );
@@ -301,6 +309,9 @@ export class RecommendationService {
 
       const result = { success: true, data: crossUniverseDiversity.slice(0, limit) };
       await this.cache.set(cacheK, result, 1800);
+      this.trackAnalyticsEvent('recommendations_served', userId || 'anonymous', {
+        count: result.data.length,
+      });
       return result;
     } catch (error) {
       this.logger.error(
@@ -308,6 +319,22 @@ export class RecommendationService {
         error instanceof Error ? (error as Error).message : String(error)
       );
       return { success: false };
+    }
+  }
+
+  private async trackAnalyticsEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown> = {}
+  ): Promise<void> {
+    try {
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/analytics/track`,
+        { eventName, userId, metadata, timestamp: new Date().toISOString() },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to track analytics event: ${eventName}`);
     }
   }
 
@@ -909,7 +936,31 @@ export class RecommendationService {
           });
         }
 
-        // Vote model not available in this service - skipping vote-based risk
+        // Vote-based fraud detection via reality-service
+        try {
+          const voteResponse = await axios.get(
+            `${this.realityServiceBaseUrl}/v1/reality/votes/user/${userId}`,
+            { params: { limit: 100 }, timeout: 5000 }
+          );
+          const votes = voteResponse.data?.data || [];
+          // Check for rapid voting patterns (many votes in short time)
+          if (votes.length > 20) {
+            const recentVotes = votes.filter(
+              (v: { createdAt: string }) =>
+                Date.now() - new Date(v.createdAt).getTime() < 60 * 60 * 1000
+            );
+            if (recentVotes.length > 10) {
+              riskScore += 20;
+              indicators.push({
+                name: 'rapid_voting',
+                score: 20,
+                description: `${recentVotes.length} votes in the last hour`,
+              });
+            }
+          }
+        } catch {
+          // Reality-service unavailable — skip vote-based risk
+        }
 
         const paymentCount = await this.prisma.paymentIntent.count({
           where: { userId, createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } },

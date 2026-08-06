@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@azeebo/ui/web';
 import { apiFetch, api } from '../../lib/api';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
 
@@ -239,7 +240,7 @@ export default function SearchPage(): React.JSX.Element {
   });
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Search" />
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search Header */}
@@ -316,7 +317,7 @@ export default function SearchPage(): React.JSX.Element {
                     </p>
                     {suggestions.map((suggestion, index) => (
                       <button
-                        key={index}
+                        key={suggestion}
                         role="option"
                         onClick={() => {
                           setQuery(suggestion);
@@ -357,7 +358,7 @@ export default function SearchPage(): React.JSX.Element {
                     </div>
                     {searchHistory.map((item, index) => (
                       <button
-                        key={index}
+                        key={`${item.query}-${item.timestamp.getTime()}`}
                         role="option"
                         onClick={() => {
                           setQuery(item.query);
@@ -508,9 +509,10 @@ export default function SearchPage(): React.JSX.Element {
                     }}
                   >
                     {result.thumbnail ? (
-                      <img
+                      <OptimizedImage
                         src={result.thumbnail}
                         alt={result.title}
+                        fill
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
@@ -534,7 +536,10 @@ export default function SearchPage(): React.JSX.Element {
                       {result.universe && (
                         <span
                           className="px-2 py-0.5 rounded"
-                          style={{ background: 'rgba(232,66,10,0.15)', color: '#E8420A' }}
+                          style={{
+                            background: 'rgba(232,66,10,0.15)',
+                            color: 'var(--brand-orange)',
+                          }}
                         >
                           {result.universe.name}
                         </span>

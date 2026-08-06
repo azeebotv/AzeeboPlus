@@ -1,9 +1,30 @@
+jest.mock('libphonenumber-js/max', () => ({}));
+jest.mock('@nestjs/swagger', () => ({
+  ApiTags: () => () => {},
+  ApiOperation: () => () => {},
+  ApiResponse: () => () => {},
+  ApiBearerAuth: () => () => {},
+  ApiProperty: () => () => {},
+  ApiPropertyOptional: () => () => {},
+  PartialType: (t: unknown) => t,
+}));
 import { Test, TestingModule } from '@nestjs/testing';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { RealityController } from './reality.controller.js';
 import { RealityService } from './reality.service.js';
 import { RateLimitService } from '@azeebo/security';
+
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: jest.fn(),
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+}));
+jest.mock('@azeebo/security', () => ({
+  RateLimitGuard: jest.fn(),
+  RateLimit: () => () => {},
+  AdminGuard: jest.fn(),
+  RateLimitService: jest.fn(),
+}));
 
 describe('RealityController', () => {
   let controller: RealityController;

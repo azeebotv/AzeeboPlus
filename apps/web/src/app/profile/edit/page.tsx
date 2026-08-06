@@ -1,10 +1,20 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { api, type User } from '@/lib/api';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+
+export const metadata = {
+  title: 'Edit Profile | Azeebo',
+  description: 'Update your display name, username, email, bio, and profile photo.',
+  openGraph: {
+    title: 'Edit Profile | Azeebo',
+    description: 'Update your display name, username, email, bio, and profile photo.',
+  },
+};
 
 export default function ProfileEditPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
@@ -18,6 +28,13 @@ export default function ProfileEditPage(): React.JSX.Element {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (authLoading) return;
@@ -45,7 +62,8 @@ export default function ProfileEditPage(): React.JSX.Element {
       } as { name: string; displayName: string; email: string; avatar: string; bio?: string });
       if (result.success) {
         setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
+        if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+        savedTimerRef.current = setTimeout(() => setSaved(false), 2000);
       }
     } catch {
       /* ignore */
@@ -57,7 +75,13 @@ export default function ProfileEditPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <main
         style={{
@@ -74,7 +98,7 @@ export default function ProfileEditPage(): React.JSX.Element {
             style={{
               background: 'none',
               border: 'none',
-              color: '#9A8A7A',
+              color: 'var(--text-secondary)',
               cursor: 'pointer',
               fontSize: 14,
               marginBottom: 16,
@@ -101,23 +125,25 @@ export default function ProfileEditPage(): React.JSX.Element {
             }}
           >
             {profile.avatar ? (
-              <img
+              <OptimizedImage
                 src={profile.avatar}
                 alt="Avatar"
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                width={96}
+                height={96}
+                className="w-full h-full object-cover"
               />
             ) : (
               <div
                 style={{
                   width: '100%',
                   height: '100%',
-                  backgroundColor: '#2A1A1A',
+                  backgroundColor: 'var(--bg-secondary)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: 36,
                   fontWeight: 700,
-                  color: '#E8420A',
+                  color: 'var(--brand-orange)',
                 }}
               >
                 {profile.username.charAt(0).toUpperCase()}
@@ -128,9 +154,9 @@ export default function ProfileEditPage(): React.JSX.Element {
             style={{
               padding: '8px 20px',
               borderRadius: 999,
-              border: '1px solid #2A1A1A',
+              border: '1px solid var(--border-default)',
               background: 'transparent',
-              color: '#9A8A7A',
+              color: 'var(--text-secondary)',
               fontWeight: 500,
               fontSize: 13,
               cursor: 'pointer',
@@ -154,7 +180,7 @@ export default function ProfileEditPage(): React.JSX.Element {
                     fontSize: 13,
                     fontWeight: 600,
                     marginBottom: 6,
-                    color: '#9A8A7A',
+                    color: 'var(--text-secondary)',
                   }}
                 >
                   {field.label}
@@ -167,9 +193,9 @@ export default function ProfileEditPage(): React.JSX.Element {
                     width: '100%',
                     padding: '12px 16px',
                     borderRadius: 12,
-                    border: '1px solid #2A1A1A',
-                    backgroundColor: '#0D0505',
-                    color: '#F5F0EB',
+                    border: '1px solid var(--border-default)',
+                    backgroundColor: 'var(--bg-primary)',
+                    color: 'var(--text-primary)',
                     fontSize: 15,
                   }}
                 />
@@ -182,7 +208,7 @@ export default function ProfileEditPage(): React.JSX.Element {
                   fontSize: 13,
                   fontWeight: 600,
                   marginBottom: 6,
-                  color: '#9A8A7A',
+                  color: 'var(--text-secondary)',
                 }}
               >
                 Bio
@@ -195,9 +221,9 @@ export default function ProfileEditPage(): React.JSX.Element {
                   width: '100%',
                   padding: '12px 16px',
                   borderRadius: 12,
-                  border: '1px solid #2A1A1A',
-                  backgroundColor: '#0D0505',
-                  color: '#F5F0EB',
+                  border: '1px solid var(--border-default)',
+                  backgroundColor: 'var(--bg-primary)',
+                  color: 'var(--text-primary)',
                   fontSize: 15,
                   resize: 'vertical',
                 }}
@@ -212,8 +238,9 @@ export default function ProfileEditPage(): React.JSX.Element {
                 padding: '14px 0',
                 borderRadius: 999,
                 border: 'none',
-                background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                color: '#fff',
+                background:
+                  'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+                color: 'var(--brand-white)',
                 fontWeight: 700,
                 fontSize: 16,
                 cursor: 'pointer',

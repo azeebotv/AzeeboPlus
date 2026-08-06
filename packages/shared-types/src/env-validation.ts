@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isPlaceholderSecret } from './secret-validation.js';
 
 // Preprocess: normalize CORS_ORIGIN into ALLOWED_ORIGINS (used in .env.production)
 function normalizeCorsOrigin(
@@ -29,8 +30,8 @@ export const environmentSchema = z.object({
   REDIS_PORT: z.coerce.number().default(6379),
 
   // JWT
-  JWT_ACCESS_SECRET: z.string().min(32, 'JWT_ACCESS_SECRET must be at least 32 characters'),
-  JWT_REFRESH_SECRET: z.string().min(32, 'JWT_REFRESH_SECRET must be at least 32 characters'),
+  JWT_ACCESS_SECRET: z.string().min(64, 'JWT_ACCESS_SECRET must be at least 64 characters'),
+  JWT_REFRESH_SECRET: z.string().min(64, 'JWT_REFRESH_SECRET must be at least 64 characters'),
   JWT_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
   JWT_ISSUER: z.string().default('azeebo-auth'),
@@ -122,6 +123,31 @@ export function validateEnvironment(env: Record<string, string | undefined>): En
   // Production-specific validations
   if (result.data.NODE_ENV === 'production') {
     validateProductionEnvironment(result.data);
+  }
+
+  // Reject known placeholder secrets in ALL environments
+  const sensitiveKeys = [
+    'JWT_ACCESS_SECRET',
+    'JWT_REFRESH_SECRET',
+    'GATEWAY_SECRET',
+    'INTERNAL_API_KEY',
+    'PAYSTACK_SECRET_KEY',
+    'FLUTTERWAVE_SECRET_KEY',
+    'SENDGRID_API_KEY',
+    'TWILIO_ACCOUNT_SID',
+    'TWILIO_AUTH_TOKEN',
+    'AWS_ACCESS_KEY_ID',
+    'AWS_SECRET_ACCESS_KEY',
+  ];
+  const placeholders = sensitiveKeys.filter((key) => {
+    const value = env[key];
+    return value && isPlaceholderSecret(value);
+  });
+  if (placeholders.length > 0) {
+    throw new Error(
+      `Rejected placeholder secrets (will NOT work in any environment): ${placeholders.join(', ')}. ` +
+        'Generate real secrets with: openssl rand -base64 48'
+    );
   }
 
   return result.data;

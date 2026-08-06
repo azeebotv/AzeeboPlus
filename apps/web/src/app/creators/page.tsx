@@ -61,7 +61,7 @@ export default function CreatorsPage(): React.JSX.Element {
   }, [selectedCreator]);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Creators" />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -76,11 +76,20 @@ export default function CreatorsPage(): React.JSX.Element {
               <div key={item} className="az-glass p-6 flex flex-col items-center animate-pulse">
                 <div
                   className="w-24 h-24 rounded-full mb-4"
-                  style={{ backgroundColor: '#2A2A2A' }}
+                  style={{ backgroundColor: 'var(--brand-surface)' }}
                 />
-                <div className="h-4 w-3/4 rounded mb-2" style={{ backgroundColor: '#2A2A2A' }} />
-                <div className="h-3 w-1/2 rounded mb-4" style={{ backgroundColor: '#2A2A2A' }} />
-                <div className="h-10 w-full rounded-full" style={{ backgroundColor: '#2A2A2A' }} />
+                <div
+                  className="h-4 w-3/4 rounded mb-2"
+                  style={{ backgroundColor: 'var(--brand-surface)' }}
+                />
+                <div
+                  className="h-3 w-1/2 rounded mb-4"
+                  style={{ backgroundColor: 'var(--brand-surface)' }}
+                />
+                <div
+                  className="h-10 w-full rounded-full"
+                  style={{ backgroundColor: 'var(--brand-surface)' }}
+                />
               </div>
             ))}
           </div>
@@ -138,7 +147,9 @@ export default function CreatorsPage(): React.JSX.Element {
                     {creator.name?.charAt(0) || 'C'}
                   </div>
                   <h3 className="text-lg font-bold text-white">{creator.name}</h3>
-                  <p className="text-sm text-white/50 mb-1">{creator.bio || `${creator.contentCount} videos`}</p>
+                  <p className="text-sm text-white/50 mb-1">
+                    {creator.bio || `${creator.contentCount} videos`}
+                  </p>
                   <div className="flex items-center justify-center gap-4 mt-3 text-sm">
                     <span className="text-white/60">{creator.contentCount} videos</span>
                     <span className="text-white/60">{creator.subscriberCount} subscribers</span>
@@ -160,7 +171,10 @@ export default function CreatorsPage(): React.JSX.Element {
               <div className="flex items-center justify-center py-12">
                 <div
                   className="animate-spin rounded-full h-8 w-8"
-                  style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }}
+                  style={{
+                    border: '3px solid rgba(255,255,255,0.1)',
+                    borderTopColor: 'var(--brand-orange)',
+                  }}
                 />
               </div>
             )}

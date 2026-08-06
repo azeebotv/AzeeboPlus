@@ -58,9 +58,7 @@ export const agbalaApi = {
   },
 
   async joinRoom(roomId: string) {
-    const response = await apiClient.post(
-      gatewayPath(`/v1/vertical/agbala/rooms/${roomId}/join`)
-    );
+    const response = await apiClient.post(gatewayPath(`/v1/vertical/agbala/rooms/${roomId}/join`));
     return response;
   },
 };

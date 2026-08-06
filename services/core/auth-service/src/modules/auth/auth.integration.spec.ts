@@ -5,11 +5,74 @@ import { AuthModule } from './auth.module.js';
 import { RedisService } from '@azeebo/shared-services';
 import { CacheService } from '@azeebo/shared-services';
 import { PrismaService } from '../database/prisma.service.js';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
 import { RateLimitGuard } from '@azeebo/security';
 import { AuthGuard } from '@nestjs/passport';
 import * as bcrypt from 'bcrypt';
+
+jest.mock('@azeebo/shared-services', () => {
+  const { JwtModule } = require('@nestjs/jwt');
+
+  const { ConfigModule, ConfigService } = require('@nestjs/config');
+
+  const mockCacheServiceInstance = {
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue('OK'),
+    delete: jest.fn().mockResolvedValue(1),
+    invalidate: jest.fn().mockResolvedValue(1),
+  };
+
+  const mockRedisServiceInstance = {
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue('OK'),
+    del: jest.fn().mockResolvedValue(1),
+    incr: jest.fn().mockResolvedValue(0),
+    expire: jest.fn().mockResolvedValue(1),
+    ttl: jest.fn().mockResolvedValue(-1),
+    quit: jest.fn().mockResolvedValue('OK'),
+    disconnect: jest.fn().mockResolvedValue(undefined),
+    on: jest.fn(),
+  };
+
+  const MockCacheService = jest.fn().mockImplementation(() => mockCacheServiceInstance);
+  const MockRedisService = jest.fn().mockImplementation(() => mockRedisServiceInstance);
+
+  return {
+    CacheService: MockCacheService,
+    RedisService: MockRedisService,
+    cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+    CacheModule: {
+      module: class {},
+      providers: [{ provide: MockCacheService, useValue: mockCacheServiceInstance }],
+      exports: [MockCacheService],
+      global: true,
+    },
+    RedisModule: {
+      module: class {},
+      providers: [{ provide: MockRedisService, useValue: mockRedisServiceInstance }],
+      exports: [MockRedisService],
+      global: true,
+    },
+    JwtConfigModule: {
+      module: class {},
+      imports: [
+        JwtModule.registerAsync({
+          imports: [ConfigModule],
+          useFactory: (configService: { get: (key: string, defaultValue?: string) => string }) => ({
+            secret: configService.get('JWT_ACCESS_SECRET') ?? '',
+            signOptions: {
+              expiresIn: configService.get('JWT_EXPIRES_IN', '30m'),
+            },
+          }),
+          inject: [ConfigService],
+        }),
+      ],
+      exports: [JwtModule],
+      global: true,
+    },
+  };
+});
 
 jest.mock('ioredis', () => {
   const mockRedisInstance = {
@@ -110,6 +173,10 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
         ConfigModule.forRoot({
           isGlobal: true,
         }),
+        JwtModule.register({
+          secret: 'test-jwt-secret-for-integration',
+          signOptions: { expiresIn: '15m' },
+        }),
         AuthModule,
       ],
     })
@@ -123,6 +190,13 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
         set: jest.fn().mockResolvedValue(undefined),
         delete: jest.fn().mockResolvedValue(0),
       })
+      .overrideProvider(JwtService)
+      .useValue(
+        new JwtService({
+          secret: 'test-jwt-secret-for-integration',
+          signOptions: { expiresIn: '15m' },
+        })
+      )
       .overrideGuard(AuthGuard('jwt'))
       .useClass(MockAuthGuard)
       .overrideGuard(RateLimitGuard)
@@ -139,17 +213,23 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
       })
     );
     // Mock ServiceAuthGuard behavior: set req.user for authenticated routes
-    app.use((req: { headers: { authorization?: string }; user?: unknown }, _res: unknown, next: () => void) => {
-      if (req.headers.authorization && !req.user) {
-        req.user = {
-          id: testUser.id,
-          sub: testUser.id,
-          email: testUser.email,
-          role: testUser.role,
-        };
+    app.use(
+      (
+        req: { headers: { authorization?: string }; user?: unknown },
+        _res: unknown,
+        next: () => void
+      ) => {
+        if (req.headers.authorization && !req.user) {
+          req.user = {
+            id: testUser.id,
+            sub: testUser.id,
+            email: testUser.email,
+            role: testUser.role,
+          };
+        }
+        next();
       }
-      next();
-    });
+    );
     await app.init();
 
     jwtService = moduleFixture.get<JwtService>(JwtService);

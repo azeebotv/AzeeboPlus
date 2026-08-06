@@ -7,6 +7,15 @@ import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
+export const metadata = {
+  title: 'Wallet | Azeebo',
+  description: 'View your wallet balance, make deposits, and manage transactions.',
+  openGraph: {
+    title: 'Wallet | Azeebo',
+    description: 'View your wallet balance, make deposits, and manage transactions.',
+  },
+};
+
 export default function WalletPage(): React.JSX.Element {
   const { isAuthenticated, isLoading: authIsLoading } = useAuth();
 
@@ -41,7 +50,7 @@ export default function WalletPage(): React.JSX.Element {
   const error = balanceQuery.error?.message || transactionsQuery.error?.message || null;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
       <AppHeader active="Wallet" />
 
       {/* Balance Section */}
@@ -73,7 +82,7 @@ export default function WalletPage(): React.JSX.Element {
                   <button
                     type="button"
                     className="px-6 py-3 rounded-full text-sm font-semibold transition-colors"
-                    style={{ backgroundColor: 'white', color: '#CC1C1C' }}
+                    style={{ backgroundColor: 'white', color: 'var(--brand-red, #CC1C1C)' }}
                   >
                     Deposit
                   </button>
@@ -94,7 +103,7 @@ export default function WalletPage(): React.JSX.Element {
       </section>
 
       {/* Transaction History */}
-      <section className="py-12" style={{ backgroundColor: '#0d0505' }}>
+      <section className="py-12" style={{ backgroundColor: 'var(--bg-primary)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -150,7 +159,10 @@ export default function WalletPage(): React.JSX.Element {
                     <div className="text-right">
                       <p
                         className="font-bold text-lg"
-                        style={{ color: transaction.type === 'credit' ? '#22C55E' : '#fff' }}
+                        style={{
+                          color:
+                            transaction.type === 'credit' ? 'var(--color-success-500)' : '#fff',
+                        }}
                       >
                         {transaction.type === 'credit' ? '+' : '-'} ₦
                         {(transaction.amount ?? 0).toLocaleString()}
@@ -160,10 +172,10 @@ export default function WalletPage(): React.JSX.Element {
                         style={{
                           color:
                             transaction.status === 'completed'
-                              ? '#22C55E'
+                              ? 'var(--color-success-500)'
                               : transaction.status === 'pending'
-                                ? '#EAB308'
-                                : '#EF4444',
+                                ? 'var(--color-warning-400)'
+                                : 'var(--color-error-500)',
                         }}
                       >
                         {transaction.status}

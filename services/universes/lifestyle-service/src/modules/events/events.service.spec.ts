@@ -1,7 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { EventsService } from './events.service';
 import { PrismaService } from '../database/prisma.service';
+import { ConfigService } from '@nestjs/config';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { CacheService } from '@azeebo/shared-services';
+
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: jest.fn(),
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+}));
 
 describe('EventsService', () => {
   let service: EventsService;
@@ -82,6 +89,22 @@ describe('EventsService', () => {
               delete: jest.fn(),
               count: jest.fn(),
             },
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockReturnValue('test-value'),
+            getOrThrow: jest.fn().mockReturnValue('test-value'),
+          },
+        },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue('OK'),
+            delete: jest.fn().mockResolvedValue(1),
+            invalidate: jest.fn().mockResolvedValue(1),
           },
         },
       ],

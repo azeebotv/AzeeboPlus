@@ -71,12 +71,19 @@ export default function RealityShowScreen() {
       const [contestantsRes, walletRes, showRes] = await Promise.all([
         realityApi.getContestants(showId || 'default'),
         walletApi.getBalance(),
-        apiClient.get<ShowData[] | ApiResponse<ShowData[]>>('/v1/reality/shows/current').catch(() => null),
+        apiClient
+          .get<ShowData[] | ApiResponse<ShowData[]>>('/v1/reality/shows/current')
+          .catch(() => null),
       ]);
 
       if (contestantsRes.success && contestantsRes.data) {
         setContestants(contestantsRes.data as unknown as ShowContestant[]);
-        setTotalVotes(contestantsRes.data.reduce((sum: number, c: { votes?: number }) => sum + (c.votes || 0), 0));
+        setTotalVotes(
+          contestantsRes.data.reduce(
+            (sum: number, c: { votes?: number }) => sum + (c.votes || 0),
+            0
+          )
+        );
       }
 
       if (walletRes.success && walletRes.data) {
@@ -84,7 +91,11 @@ export default function RealityShowScreen() {
       }
 
       if (showRes) {
-        setShowData((Array.isArray(showRes) ? showRes[0] : (showRes?.data?.[0] ?? showRes)) as unknown as ShowData);
+        setShowData(
+          (Array.isArray(showRes)
+            ? showRes[0]
+            : (showRes?.data?.[0] ?? showRes)) as unknown as ShowData
+        );
       }
     } catch (err) {
       logger.error('Failed to load reality show data:', err);

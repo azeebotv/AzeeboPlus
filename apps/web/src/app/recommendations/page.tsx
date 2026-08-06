@@ -5,6 +5,7 @@ import { apiFetch } from '../../lib/api';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
 import { Skeleton } from '@/components/Skeleton';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 interface ContentItem {
   id: string;
@@ -20,12 +21,12 @@ interface ContentItem {
 }
 
 export default function RecommendationsPage(): React.JSX.Element {
-  const { user: _user } = useAuth();
+  useAuth();
   const [recommendations, setRecommendations] = useState<ContentItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<string>('all');
-  const [_page, setPage] = useState<number>(1);
+  const [, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const lastItemRef = useRef<HTMLDivElement | null>(null);
@@ -92,7 +93,7 @@ export default function RecommendationsPage(): React.JSX.Element {
   }, []);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
@@ -177,9 +178,10 @@ export default function RecommendationsPage(): React.JSX.Element {
                 <a href={`/watch/${item.id}`} className="block">
                   <div className="relative h-48">
                     {item.thumbnail ? (
-                      <img
+                      <OptimizedImage
                         src={item.thumbnail}
                         alt={item.title}
+                        fill
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
@@ -196,7 +198,7 @@ export default function RecommendationsPage(): React.JSX.Element {
                     {item.score != null && item.score > 80 && (
                       <span
                         className="absolute top-3 right-3 px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded"
-                        style={{ background: 'rgba(232,66,10,0.9)', color: '#fff' }}
+                        style={{ background: 'rgba(232,66,10,0.9)', color: 'var(--brand-white)' }}
                       >
                         Top Pick
                       </span>
@@ -204,7 +206,7 @@ export default function RecommendationsPage(): React.JSX.Element {
                     {item.duration && (
                       <span
                         className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-xs font-medium"
-                        style={{ background: 'rgba(0,0,0,0.7)', color: '#fff' }}
+                        style={{ background: 'rgba(0,0,0,0.7)', color: 'var(--brand-white)' }}
                       >
                         {Math.floor(item.duration / 60)}m
                       </span>

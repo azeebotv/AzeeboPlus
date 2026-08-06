@@ -2,8 +2,22 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FilmmakerService } from './filmmaker.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
 
+jest.mock('axios');
 jest.mock('../database/prisma.service');
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: jest.fn().mockImplementation(() => ({
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue('OK'),
+    delete: jest.fn().mockResolvedValue(1),
+    invalidate: jest.fn().mockResolvedValue(1),
+  })),
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+}));
+
+const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe('FilmmakerService', () => {
   let service: FilmmakerService;
@@ -47,6 +61,13 @@ describe('FilmmakerService', () => {
               create: jest.fn(),
               update: jest.fn(),
             },
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((_key: string, defaultValue: unknown) => defaultValue),
+            getOrThrow: jest.fn((_key: string) => ''),
           },
         },
       ],
@@ -157,6 +178,8 @@ describe('FilmmakerService', () => {
       });
       (prismaService.filmmakerBacker.count as jest.Mock).mockResolvedValue(1);
 
+      mockedAxios.get.mockResolvedValue({ data: { data: { balance: 500 } } });
+
       const result = await service.backProject('user-1', 'project-1', 100);
 
       expect(result.success).toBe(true);
@@ -179,11 +202,13 @@ describe('FilmmakerService', () => {
         fundingRaised: 200,
       });
 
+      mockedAxios.get.mockResolvedValue({ data: { data: { balance: 500 } } });
+
       const result = await service.backProject('user-1', 'project-1', 100);
 
       expect(result.success).toBe(true);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((result.data as any).message).toBe('Backing updated');
+      expect((result.data as any).message).toBe('Backed successfully');
     });
   });
 });

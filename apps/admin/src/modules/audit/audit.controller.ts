@@ -1,4 +1,4 @@
-import { Inject, Controller, Get, Param, Query  } from '@nestjs/common';
+import { Inject, Controller, Get, Param, Query } from '@nestjs/common';
 import { AuditLogService } from './audit.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -7,7 +7,7 @@ import { UseGuards } from '@nestjs/common';
 
 @Controller('admin/audit')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
+@Roles('admin', 'superadmin')
 export class AuditController {
   constructor(@Inject(AuditLogService) private readonly auditService: AuditLogService) {}
 

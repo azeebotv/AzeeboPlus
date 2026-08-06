@@ -8,6 +8,7 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 interface ScheduledContent {
   id: string;
@@ -73,7 +74,13 @@ export default function ScheduledPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <main
         style={{
@@ -90,7 +97,7 @@ export default function ScheduledPage(): React.JSX.Element {
             style={{
               background: 'none',
               border: 'none',
-              color: '#9A8A7A',
+              color: 'var(--text-secondary)',
               cursor: 'pointer',
               fontSize: 14,
               marginBottom: 16,
@@ -102,7 +109,9 @@ export default function ScheduledPage(): React.JSX.Element {
             <span>←</span> Back
           </button>
           <h1 style={{ fontSize: 28, fontWeight: 700 }}>Scheduled Content</h1>
-          <p style={{ color: '#9A8A7A', marginTop: 4 }}>Content queued for automatic publishing</p>
+          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>
+            Content queued for automatic publishing
+          </p>
         </div>
 
         {isLoading ? (
@@ -138,7 +147,9 @@ export default function ScheduledPage(): React.JSX.Element {
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>⏰</div>
             <h3 style={{ fontSize: 18, marginBottom: 8 }}>No scheduled content</h3>
-            <p style={{ color: '#9A8A7A' }}>Schedule content to have it go live automatically</p>
+            <p style={{ color: 'var(--text-secondary)' }}>
+              Schedule content to have it go live automatically
+            </p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -155,21 +166,17 @@ export default function ScheduledPage(): React.JSX.Element {
                 }}
               >
                 {item.thumbnail && (
-                  <img
+                  <OptimizedImage
                     src={item.thumbnail}
                     alt={item.title}
-                    style={{
-                      width: 120,
-                      height: 68,
-                      objectFit: 'cover',
-                      borderRadius: 8,
-                      flexShrink: 0,
-                    }}
+                    width={120}
+                    height={68}
+                    className="object-cover rounded-lg flex-shrink-0"
                   />
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <h3 style={{ fontWeight: 600, fontSize: 16, marginBottom: 4 }}>{item.title}</h3>
-                  <p style={{ color: '#9A8A7A', fontSize: 13 }}>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
                     Scheduled for {new Date(item.scheduledAt).toLocaleString()}
                   </p>
                 </div>
@@ -189,9 +196,9 @@ export default function ScheduledPage(): React.JSX.Element {
                   style={{
                     padding: '8px 20px',
                     borderRadius: 999,
-                    border: '1px solid #CC1C1C',
+                    border: '1px solid var(--brand-red)',
                     background: 'transparent',
-                    color: '#CC1C1C',
+                    color: 'var(--brand-red)',
                     fontWeight: 500,
                     fontSize: 14,
                     cursor: 'pointer',

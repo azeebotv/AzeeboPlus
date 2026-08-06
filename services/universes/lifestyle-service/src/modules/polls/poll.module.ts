@@ -6,10 +6,7 @@ import { PollService } from './poll.service';
 import { DatabaseModule } from '../database/database.module';
 
 @Module({
-  imports: [
-    DatabaseModule,
-    JwtConfigModule,
-  ],
+  imports: [DatabaseModule, JwtConfigModule],
   controllers: [PollController],
   providers: [PollService],
   exports: [PollService],

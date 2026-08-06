@@ -5,10 +5,7 @@ import { JwtConfigModule } from '@azeebo/shared-services';
 import { AuthGuard } from './guards/auth.guard';
 
 @Module({
-  imports: [
-    PassportModule.register({ defaultStrategy: 'jwt' }),
-    JwtConfigModule,
-  ],
+  imports: [PassportModule.register({ defaultStrategy: 'jwt' }), JwtConfigModule],
   providers: [AuthGuard],
   exports: [AuthGuard, JwtModule],
 })

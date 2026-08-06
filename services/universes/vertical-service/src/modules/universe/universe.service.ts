@@ -1,5 +1,7 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
+import axios from 'axios';
 
 interface LocationData {
   id: string;
@@ -57,8 +59,33 @@ interface ListResponse<T> {
 @Injectable()
 export class UniverseService {
   private readonly logger = new Logger(UniverseService.name);
+  private readonly analyticsServiceBaseUrl: string;
 
-  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(ConfigService) private readonly configService: ConfigService
+  ) {
+    this.analyticsServiceBaseUrl = this.configService.get<string>(
+      'ANALYTICS_SERVICE_URL',
+      'http://analytics-service:3040'
+    );
+  }
+
+  private async trackAnalyticsEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown> = {}
+  ): Promise<void> {
+    try {
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/analytics/track`,
+        { eventName, userId, metadata, timestamp: new Date().toISOString() },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to track analytics event: ${eventName}`);
+    }
+  }
 
   async getUniverses(page = 1, limit = 20): Promise<PaginatedResponse<UniverseData>> {
     try {
@@ -140,6 +167,8 @@ export class UniverseService {
         characterCount: 0,
         createdAt: loc.createdAt.toISOString(),
       }));
+
+      this.trackAnalyticsEvent('universe_viewed', 'anonymous', { universeId: universe.id, slug });
 
       return {
         success: true,
@@ -380,7 +409,37 @@ export class UniverseService {
   async getCategories(): Promise<
     ListResponse<{ id: string; name: string; slug: string; description: string; icon?: string }>
   > {
-    // Categories are not stored in this service's database; return default categories
+    // Try to fetch categories from database, fall back to defaults
+    try {
+      const prismaClient = this.prisma as unknown as {
+        category?: {
+          findMany: (
+            args: unknown
+          ) => Promise<
+            Array<{ id: string; name: string; slug?: string; description?: string; icon?: string }>
+          >;
+        };
+      };
+      const dbCategories = await prismaClient.category?.findMany({
+        orderBy: { name: 'asc' },
+      });
+      if (dbCategories && dbCategories.length > 0) {
+        return {
+          success: true,
+          data: dbCategories.map((c) => ({
+            id: c.id,
+            name: c.name,
+            slug: c.slug || c.name.toLowerCase().replace(/\s+/g, '-'),
+            description: c.description || '',
+            icon: c.icon,
+          })),
+        };
+      }
+    } catch {
+      // Category table may not exist — use defaults
+    }
+
+    // Default categories
     const categories = [
       {
         id: 'sports',
@@ -426,9 +485,6 @@ export class UniverseService {
       },
     ];
 
-    return {
-      success: true,
-      data: categories,
-    };
+    return { success: true, data: categories };
   }
 }

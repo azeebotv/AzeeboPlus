@@ -37,11 +37,16 @@ export class PaystackWebhookGuard implements CanActivate {
   }
 
   private constantTimeCompare(a: string, b: string): boolean {
-    if (a.length !== b.length) {
-      return false;
-    }
     const bufferA = Buffer.from(a, 'utf8');
     const bufferB = Buffer.from(b, 'utf8');
+    if (bufferA.length !== bufferB.length) {
+      const maxLen = Math.max(bufferA.length, bufferB.length);
+      const paddedA = Buffer.alloc(maxLen, 0);
+      const paddedB = Buffer.alloc(maxLen, 0);
+      bufferA.copy(paddedA);
+      bufferB.copy(paddedB);
+      return crypto.timingSafeEqual(paddedA, paddedB);
+    }
     return crypto.timingSafeEqual(bufferA, bufferB);
   }
 

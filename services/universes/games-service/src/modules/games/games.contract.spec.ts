@@ -1,5 +1,15 @@
+jest.mock('libphonenumber-js/max', () => ({
+  parsePhoneNumber: jest.fn(),
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, UnauthorizedException } from '@nestjs/common';
+import {
+  INestApplication,
+  ExecutionContext,
+  UnauthorizedException,
+  VersioningType,
+} from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
 import { GamesModule } from './games.module.js';
 import { GamesService } from './games.service.js';
@@ -7,6 +17,18 @@ import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { RateLimitGuard } from '@azeebo/security';
 import { AuthGuard } from '@nestjs/passport';
+
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: jest.fn(),
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+  JwtConfigModule: jest.fn(),
+}));
+jest.mock('@azeebo/security', () => ({
+  RateLimitGuard: jest.fn(),
+  RateLimit: () => () => {},
+  AdminGuard: jest.fn(),
+  RateLimitService: jest.fn(),
+}));
 
 const mockAuthGuard = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -37,6 +59,21 @@ describe('Games Controller Contract Tests', () => {
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [GamesModule],
+      providers: [
+        {
+          provide: APP_GUARD,
+          useFactory: () => ({
+            canActivate: (context: ExecutionContext) => {
+              const req = context.switchToHttp().getRequest();
+              if (!req.headers.authorization) {
+                throw new UnauthorizedException();
+              }
+              req.user = { sub: 'user-123', role: 'user' };
+              return true;
+            },
+          }),
+        },
+      ],
     })
       .overrideProvider(GamesService)
       .useValue(mockGamesService)
@@ -57,6 +94,7 @@ describe('Games Controller Contract Tests', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
     await app.init();
   });
 
@@ -77,6 +115,7 @@ describe('Games Controller Contract Tests', () => {
 
       return request(app.getHttpServer())
         .get('/v1/games/home')
+        .set('Authorization', 'Bearer valid-token')
         .expect(200)
         .expect((res) => {
           expect(res.body.success).toBe(true);
@@ -170,6 +209,7 @@ describe('Games Controller Contract Tests', () => {
 
       return request(app.getHttpServer())
         .get('/v1/games/leaderboard')
+        .set('Authorization', 'Bearer valid-token')
         .expect(200)
         .expect((res) => {
           expect(res.body.success).toBe(true);
@@ -186,6 +226,7 @@ describe('Games Controller Contract Tests', () => {
 
       return request(app.getHttpServer())
         .get('/v1/games/home')
+        .set('Authorization', 'Bearer valid-token')
         .expect((res) => {
           expect(res.body).toHaveProperty('success');
           expect(res.body).toHaveProperty('data');

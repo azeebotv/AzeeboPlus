@@ -2,6 +2,7 @@ import {
   Inject,
   Controller,
   Get,
+  Post,
   Put,
   Delete,
   Param,
@@ -89,5 +90,135 @@ export class AdminController {
     @Query('limit') limit?: number
   ) {
     return this.adminService.getCommentsByContentId(contentId, { page, limit });
+  }
+
+  // --- Feature Flags ---
+
+  @Get('feature-flags')
+  @ApiOperation({ summary: 'List all feature flags (admin)' })
+  @ApiResponse({ status: 200, description: 'List of feature flags' })
+  async listFeatureFlags() {
+    return this.adminService.listFeatureFlags();
+  }
+
+  @Post('feature-flags')
+  @ApiOperation({ summary: 'Create a feature flag (admin)' })
+  @ApiResponse({ status: 201, description: 'Feature flag created' })
+  async createFeatureFlag(
+    @Body()
+    body: {
+      key: string;
+      enabled?: boolean;
+      description?: string;
+      rolloutPercentage?: number;
+      userIds?: string[];
+    }
+  ) {
+    return this.adminService.createFeatureFlag(body);
+  }
+
+  @Put('feature-flags/:key')
+  @ApiOperation({ summary: 'Update a feature flag (admin)' })
+  @ApiResponse({ status: 200, description: 'Feature flag updated' })
+  @ApiResponse({ status: 404, description: 'Flag not found' })
+  async updateFeatureFlag(
+    @Param('key') key: string,
+    @Body()
+    body: {
+      enabled?: boolean;
+      description?: string;
+      rolloutPercentage?: number;
+      userIds?: string[];
+    }
+  ) {
+    return this.adminService.updateFeatureFlag(key, body);
+  }
+
+  @Delete('feature-flags/:key')
+  @ApiOperation({ summary: 'Delete a feature flag (admin)' })
+  @ApiResponse({ status: 200, description: 'Feature flag deleted' })
+  @ApiResponse({ status: 404, description: 'Flag not found' })
+  async deleteFeatureFlag(@Param('key') key: string) {
+    return this.adminService.deleteFeatureFlag(key);
+  }
+
+  @Post('feature-flags/:key/toggle')
+  @ApiOperation({ summary: 'Toggle a feature flag (admin)' })
+  @ApiResponse({ status: 200, description: 'Feature flag toggled' })
+  @ApiResponse({ status: 404, description: 'Flag not found' })
+  async toggleFeatureFlag(@Param('key') key: string) {
+    return this.adminService.toggleFeatureFlag(key);
+  }
+
+  // --- Universe Feature Flags ---
+
+  @Get('universes/:universeId/flags')
+  @ApiOperation({ summary: 'Get feature flags for a universe (admin)' })
+  @ApiResponse({ status: 200, description: 'Universe feature flags' })
+  async getUniverseFlags(@Param('universeId') universeId: string) {
+    return this.adminService.getUniverseFlags(universeId);
+  }
+
+  @Put('universes/:universeId/flags/:featureKey')
+  @ApiOperation({ summary: 'Update a universe feature flag (admin)' })
+  @ApiResponse({ status: 200, description: 'Flag updated' })
+  async updateUniverseFlag(
+    @Param('universeId') universeId: string,
+    @Param('featureKey') featureKey: string,
+    @Body() body: { isEnabled?: boolean; metadata?: Record<string, unknown> }
+  ) {
+    return this.adminService.updateUniverseFlag(universeId, featureKey, body);
+  }
+
+  // --- Geo Restrictions ---
+
+  @Get('geo-restrictions')
+  @ApiOperation({ summary: 'List geo restrictions (admin)' })
+  async listGeoRestrictions() {
+    return this.adminService.listGeoRestrictions();
+  }
+
+  @Post('geo-restrictions')
+  @ApiOperation({ summary: 'Create geo restriction (admin)' })
+  async createGeoRestriction(
+    @Body()
+    body: {
+      countryCode: string;
+      countryName: string;
+      blockedContent?: string[];
+      notes?: string;
+    }
+  ) {
+    return this.adminService.createGeoRestriction(body);
+  }
+
+  @Put('geo-restrictions/:id')
+  @ApiOperation({ summary: 'Update geo restriction (admin)' })
+  async updateGeoRestriction(
+    @Param('id') id: string,
+    @Body() body: { isActive?: boolean; blockedContent?: string[]; notes?: string }
+  ) {
+    return this.adminService.updateGeoRestriction(id, body);
+  }
+
+  @Delete('geo-restrictions/:id')
+  @ApiOperation({ summary: 'Delete geo restriction (admin)' })
+  async deleteGeoRestriction(@Param('id') id: string) {
+    return this.adminService.deleteGeoRestriction(id);
+  }
+
+  @Put('content/:contentId/geo')
+  @ApiOperation({ summary: 'Update content geo restrictions (admin)' })
+  async updateContentGeo(
+    @Param('contentId') contentId: string,
+    @Body()
+    body: {
+      allowedCountries?: string[];
+      blockedCountries?: string[];
+      contentRating?: string;
+      minAge?: number;
+    }
+  ) {
+    return this.adminService.updateContentGeo(contentId, body);
   }
 }

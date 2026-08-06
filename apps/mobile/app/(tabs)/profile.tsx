@@ -90,7 +90,7 @@ export default function ProfileScreen() {
 
   const handleMenuPress = (item: (typeof MENU_ITEMS)[0]) => {
     if (item.id === 'subscriptions') {
-      Alert.alert('Coming Soon', 'Subscription management will be available soon');
+      router.push('/subscription/current');
     } else if (item.id === 'notifications') {
       Alert.alert('Coming Soon', 'Notification settings will be available soon');
     } else if (item.id === 'privacy') {

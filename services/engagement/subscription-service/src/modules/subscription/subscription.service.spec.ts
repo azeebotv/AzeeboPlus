@@ -1,7 +1,24 @@
+jest.mock('axios');
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: 'CacheService',
+  cacheKey: (...args: unknown[]) => args.join(':'),
+}));
+jest.mock('@azeebo/shared-types', () => ({
+  CircuitBreaker: jest.fn().mockImplementation(() => ({
+    execute: jest.fn().mockImplementation((fn: () => Promise<unknown>) => fn()),
+  })),
+  CircuitBreakerOpenError: class CircuitBreakerOpenError extends Error {},
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { SubscriptionService } from './subscription.service.js';
 import { PrismaService } from '../database/prisma.service.js';
+import { ConfigService } from '@nestjs/config';
+import { CacheService } from '@azeebo/shared-services';
 import { NotFoundException } from '@nestjs/common';
+import axios from 'axios';
+
+const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe('SubscriptionService', () => {
   let service: SubscriptionService;
@@ -28,7 +45,7 @@ describe('SubscriptionService', () => {
     startDate: new Date(),
     endDate: new Date(),
     autoRenew: true,
-    paymentMethod: 'card',
+    paymentMethod: 'external' as const,
     lastPaymentDate: null,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -71,7 +88,36 @@ describe('SubscriptionService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [SubscriptionService, { provide: PrismaService, useValue: mockPrismaService }],
+      providers: [
+        SubscriptionService,
+        { provide: PrismaService, useValue: mockPrismaService },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue('OK'),
+            delete: jest.fn().mockResolvedValue(1),
+            invalidate: jest.fn().mockResolvedValue(1),
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockImplementation((key: string, defaultValue?: unknown) => {
+              const config: Record<string, unknown> = {
+                PAYMENT_SERVICE_URL: 'http://payment-service:3003',
+              };
+              return config[key] ?? defaultValue;
+            }),
+            getOrThrow: jest.fn().mockImplementation((key: string) => {
+              const config: Record<string, unknown> = {
+                PAYMENT_SERVICE_URL: 'http://payment-service:3003',
+              };
+              return config[key];
+            }),
+          },
+        },
+      ],
     }).compile();
 
     service = module.get<SubscriptionService>(SubscriptionService);
@@ -99,6 +145,7 @@ describe('SubscriptionService', () => {
       expect(mockPrismaService.subscriptionPlan.findMany).toHaveBeenCalledWith({
         where: { isActive: true },
         orderBy: { price: 'asc' },
+        take: 50,
       });
     });
 
@@ -156,11 +203,18 @@ describe('SubscriptionService', () => {
   });
 
   describe('subscribe', () => {
+    beforeEach(() => {
+      (mockedAxios.get as jest.Mock).mockResolvedValue({
+        data: { status: 'completed', amount: mockPlan.price },
+      });
+      (mockedAxios.post as jest.Mock).mockResolvedValue({ data: {} });
+    });
+
     it('should create a new subscription when no active subscription exists', async () => {
       const dto = {
         planId: 'plan-1',
         autoRenew: true,
-        paymentMethod: 'card',
+        paymentMethod: 'external' as const,
         paymentReference: 'pay-ref-1',
       };
 

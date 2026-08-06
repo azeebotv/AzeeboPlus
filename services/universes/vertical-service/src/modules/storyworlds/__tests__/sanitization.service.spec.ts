@@ -1,12 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SanitizationService, SpoilerLevel, AccessLevel } from '../agbala/sanitization.service';
 
+const mockRedis = {
+  get: jest.fn(),
+  set: jest.fn(),
+  del: jest.fn(),
+  incr: jest.fn(),
+  expire: jest.fn(),
+};
+
 describe('SanitizationService', () => {
   let service: SanitizationService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [SanitizationService],
+      providers: [
+        SanitizationService,
+        { provide: 'default_IORedisModuleConnectionToken', useValue: mockRedis },
+      ],
     }).compile();
 
     service = module.get<SanitizationService>(SanitizationService);
@@ -121,30 +132,39 @@ describe('SanitizationService', () => {
   });
 
   describe('checkRateLimit', () => {
-    it('should allow requests within limit', () => {
-      expect(service.checkRateLimit('user1', 'theory', 5, 60000)).toBe(true);
-      expect(service.checkRateLimit('user1', 'theory', 5, 60000)).toBe(true);
+    it('should allow requests within limit', async () => {
+      let callCount = 0;
+      mockRedis.incr.mockImplementation(() => Promise.resolve(++callCount));
+      expect(await service.checkRateLimit('user1', 'theory', 5, 60000)).toBe(true);
+      expect(await service.checkRateLimit('user1', 'theory', 5, 60000)).toBe(true);
     });
 
-    it('should block requests exceeding limit', () => {
+    it('should block requests exceeding limit', async () => {
+      let callCount = 0;
+      mockRedis.incr.mockImplementation(() => Promise.resolve(++callCount));
       for (let i = 0; i < 5; i++) {
-        service.checkRateLimit('user2', 'post', 5, 60000);
+        await service.checkRateLimit('user2', 'post', 5, 60000);
       }
-      expect(service.checkRateLimit('user2', 'post', 5, 60000)).toBe(false);
+      expect(await service.checkRateLimit('user2', 'post', 5, 60000)).toBe(false);
     });
 
-    it('should track different users separately', () => {
+    it('should track different users separately', async () => {
+      const counters: Record<string, number> = {};
+      mockRedis.incr.mockImplementation((key: string) => {
+        counters[key] = (counters[key] || 0) + 1;
+        return Promise.resolve(counters[key]);
+      });
       for (let i = 0; i < 5; i++) {
-        service.checkRateLimit('userA', 'theory', 5, 60000);
+        await service.checkRateLimit('userA', 'theory', 5, 60000);
       }
-      expect(service.checkRateLimit('userA', 'theory', 5, 60000)).toBe(false);
-      expect(service.checkRateLimit('userB', 'theory', 5, 60000)).toBe(true);
+      expect(await service.checkRateLimit('userA', 'theory', 5, 60000)).toBe(false);
+      expect(await service.checkRateLimit('userB', 'theory', 5, 60000)).toBe(true);
     });
   });
 
   describe('rateLimitKey', () => {
     it('should generate correct key format', () => {
-      expect(service.rateLimitKey('user1', 'theory')).toBe('rate_limit:theory:user1');
+      expect(service.rateLimitKey('user1', 'theory')).toBe('agbala:rate_limit:theory:user1');
     });
   });
 });

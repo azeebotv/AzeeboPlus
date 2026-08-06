@@ -12,6 +12,7 @@ import {
   Request,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ServiceAuthGuard } from '@azeebo/security';
 import { EventsService } from './events.service';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
 import { CreateEventDto } from './dto/create-event.dto';
@@ -19,6 +20,7 @@ import { UpdateEventDto } from './dto/update-event.dto';
 import { RsvpDto } from './dto/rsvp.dto';
 
 @ApiTags('Events')
+@UseGuards(ServiceAuthGuard)
 @Controller('lifestyle/events')
 export class EventsController {
   constructor(@Inject(EventsService) private readonly eventsService: EventsService) {}

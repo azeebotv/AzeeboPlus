@@ -32,6 +32,15 @@ interface WalletPricing {
   withdrawalQuickAmounts: number[];
 }
 
+export const metadata = {
+  title: 'Add Funds | Azeebo',
+  description: 'Top up your wallet to enjoy premium features and content.',
+  openGraph: {
+    title: 'Add Funds | Azeebo',
+    description: 'Top up your wallet to enjoy premium features and content.',
+  },
+};
+
 export default function AddFundsPage(): React.JSX.Element {
   const router = useRouter();
   const toast = useToast();
@@ -83,7 +92,10 @@ export default function AddFundsPage(): React.JSX.Element {
       toast.showToast('Deposit initiated successfully!', 'success');
       router.push('/wallet/transactions');
     } catch (error: unknown) {
-      toast.showToast(error instanceof Error ? error.message : 'Failed to process deposit', 'error');
+      toast.showToast(
+        error instanceof Error ? error.message : 'Failed to process deposit',
+        'error'
+      );
     } finally {
       setIsProcessing(false);
     }
@@ -91,7 +103,7 @@ export default function AddFundsPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
         <AppHeader />
         <div
           className="flex items-center justify-center"
@@ -100,7 +112,10 @@ export default function AddFundsPage(): React.JSX.Element {
           <div className="text-center">
             <div
               className="animate-spin rounded-full h-12 w-12 mx-auto"
-              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }}
+              style={{
+                border: '3px solid rgba(255,255,255,0.1)',
+                borderTopColor: 'var(--brand-orange)',
+              }}
             />
             <p className="mt-4 text-white/60">Loading payment methods...</p>
           </div>
@@ -110,7 +125,7 @@ export default function AddFundsPage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader />
       <div className="max-w-2xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
@@ -136,7 +151,7 @@ export default function AddFundsPage(): React.JSX.Element {
           <div className="az-glass p-6">
             <label className="az-label block mb-3">Enter Amount</label>
             <div className="az-input flex items-center gap-3">
-              <span className="text-xl font-bold" style={{ color: '#E8420A' }}>
+              <span className="text-xl font-bold" style={{ color: 'var(--brand-orange)' }}>
                 ₦
               </span>
               <input
@@ -165,7 +180,7 @@ export default function AddFundsPage(): React.JSX.Element {
                       ? {
                           border: '1px solid rgba(255,255,255,0.2)',
                           backgroundColor: 'rgba(255,255,255,0.08)',
-                          color: '#fff',
+                          color: 'var(--brand-white)',
                         }
                       : undefined
                   }
@@ -207,7 +222,8 @@ export default function AddFundsPage(): React.JSX.Element {
                           selectedMethod === method.id
                             ? '2px solid #E8420A'
                             : '2px solid rgba(255,255,255,0.2)',
-                        backgroundColor: selectedMethod === method.id ? '#E8420A' : 'transparent',
+                        backgroundColor:
+                          selectedMethod === method.id ? 'var(--brand-orange)' : 'transparent',
                       }}
                     >
                       {selectedMethod === method.id && (
@@ -234,7 +250,7 @@ export default function AddFundsPage(): React.JSX.Element {
                 style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}
               >
                 <span className="font-semibold text-white">Total</span>
-                <span className="font-bold" style={{ color: '#E8420A' }}>
+                <span className="font-bold" style={{ color: 'var(--brand-orange)' }}>
                   ₦{(parseFloat(amount) + parseFloat(pricing.processingFee)).toLocaleString()}
                 </span>
               </div>

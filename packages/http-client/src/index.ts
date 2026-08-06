@@ -200,7 +200,7 @@ export class ApiClient {
           'ApiClient: tokenStorage is required in production. Please provide a secure storage implementation.'
         );
       }
-      console.warn('ApiClient: Using localStorage for token storage is not secure for production.');
+      // In development, fall back to localStorage with a warning
       this.tokenStorage = new LocalStorageTokenStorage(this.config.authStorageKey);
     }
 

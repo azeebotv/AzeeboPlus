@@ -43,6 +43,38 @@ export default function RootLayout() {
                   <Stack.Screen name="(auth)" options={{ headerShown: false }} />
                   <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                   <Stack.Screen name="watch/[contentId]" options={{ headerShown: false }} />
+                  <Stack.Screen name="subscription" options={{ headerShown: false }} />
+
+                  {/* Reality */}
+                  <Stack.Screen name="reality" options={{ headerShown: false }} />
+                  <Stack.Screen name="reality/[showId]" options={{ headerShown: false }} />
+
+                  {/* Lifestyle */}
+                  <Stack.Screen name="lifestyle" options={{ headerShown: false }} />
+
+                  {/* Vertical / Vertical Title */}
+                  <Stack.Screen name="vertical" options={{ headerShown: false }} />
+                  <Stack.Screen name="vertical-title" options={{ headerShown: false }} />
+
+                  {/* Sports */}
+                  <Stack.Screen name="sports" options={{ headerShown: false }} />
+
+                  {/* Comedy */}
+                  <Stack.Screen name="comedy" options={{ headerShown: false }} />
+
+                  {/* Games */}
+                  <Stack.Screen name="games" options={{ headerShown: false }} />
+
+                  {/* Movies */}
+                  <Stack.Screen name="movies" options={{ headerShown: false }} />
+
+                  {/* Standalone screens */}
+                  <Stack.Screen name="vote" options={{ headerShown: false }} />
+                  <Stack.Screen name="leaderboard" options={{ headerShown: false }} />
+                  <Stack.Screen name="prediction" options={{ headerShown: false }} />
+                  <Stack.Screen name="messages" options={{ headerShown: false }} />
+                  <Stack.Screen name="notifications" options={{ headerShown: false }} />
+                  <Stack.Screen name="premium" options={{ headerShown: false }} />
                 </Stack>
               </NotificationProvider>
             </WalletProvider>

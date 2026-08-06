@@ -5,12 +5,14 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { AuditModule } from './modules/audit/audit.module.js';
 import { AdminModule } from './modules/admin/admin.module.js';
+import { DeviceModule } from './modules/device/device.module.js';
 import { CacheModule, RedisModule } from '@azeebo/shared-services';
 import { CommonModule } from './common/common.module.js';
 import { MetricsModule } from './modules/metrics/metrics.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
+import { ObservabilityModule } from '@azeebo/observability';
 
 @Module({
   imports: [
@@ -24,10 +26,12 @@ import { ResponseWrapperInterceptor } from '@azeebo/logger';
     AuditModule,
     AuthModule,
     AdminModule,
+    DeviceModule,
     CommonModule,
     MetricsModule,
     HealthModule,
     CacheModule,
+    ObservabilityModule,
   ],
   providers: [
     {

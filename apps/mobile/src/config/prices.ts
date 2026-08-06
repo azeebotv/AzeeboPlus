@@ -1,20 +1,22 @@
 /**
  * Centralized price configuration for the Azeebo+ mobile app.
  *
- * Fetches prices from the payment-service API with cached fallback values.
- * All consumers should use the async fetch functions for real-time prices.
+ * All prices are fetched from the payment-service API.
+ * NEVER hardcode prices — per CLAUDE.md rules.
  */
 
-import { pricingApi, type MoviePricing, type VotePackage, type WalletPricing, type PassPricing } from '../api/pricing';
+import {
+  pricingApi,
+  type MoviePricing,
+  type VotePackage,
+  type WalletPricing,
+  type PassPricing,
+} from '../api/pricing';
+import { createLogger } from '../utils/logger';
 
 export const CURRENCY = '₦';
 
-// Simple console logger for pricing module
-const log = {
-  warn: (msg: string, ...args: unknown[]) => {
-    if (__DEV__) console.warn(`[Pricing] ${msg}`, ...args);
-  },
-};
+const logger = createLogger('Pricing');
 
 // Cache for API responses
 let cachedMoviePricing: MoviePricing | null = null;
@@ -22,47 +24,7 @@ let cachedVotePackages: Record<string, VotePackage[]> = {};
 let cachedWalletPricing: WalletPricing | null = null;
 let cachedPassesPricing: PassPricing | null = null;
 
-// Fallback values used when API is unavailable
-const FALLBACK_MOVIE_PRICING = {
-  rent48h: { id: 'rent-48h', type: 'Rent (48h)', price: 500, currency: 'NGN' },
-  buy: { id: 'buy', type: 'Buy', price: 1500, currency: 'NGN' },
-  pass: { id: 'pass', type: 'Pass', price: 4500, currency: 'NGN', period: 'monthly' },
-};
-
-const FALLBACK_VOTE_PACKAGES: Record<string, VotePackage[]> = {
-  standard: [
-    { id: 'std-1', votes: 10, price: 100, bonus: 0 },
-    { id: 'std-2', votes: 50, price: 450, bonus: 5 },
-    { id: 'std-3', votes: 100, price: 850, bonus: 15 },
-    { id: 'std-4', votes: 500, price: 4000, bonus: 100 },
-  ],
-  reality: [
-    { id: 'rty-1', votes: 100, price: 100, bonus: 0 },
-    { id: 'rty-2', votes: 500, price: 450, bonus: 50 },
-    { id: 'rty-3', votes: 1000, price: 850, bonus: 150 },
-    { id: 'rty-4', votes: 5000, price: 4000, bonus: 1000 },
-  ],
-  superVote: [
-    { id: 'sv-1', votes: 1, price: 100, multiplier: 10, name: 'Single Vote', description: '1 Super Vote (2x weight)' },
-    { id: 'sv-2', votes: 5, price: 450, multiplier: 10, name: 'Power Pack', description: '5 Super Votes (2x weight each)', isPopular: true },
-    { id: 'sv-3', votes: 10, price: 800, multiplier: 10, name: 'Ultimate Pack', description: '10 Super Votes (2x weight each)' },
-    { id: 'sv-4', votes: 25, price: 1800, multiplier: 10, name: 'Mega Pack', description: '25 Super Votes (2x weight each)' },
-  ],
-};
-
-const FALLBACK_WALLET_PRICING: WalletPricing = {
-  presetAmounts: [500, 1000, 2500, 5000, 10000],
-  limits: { minDeposit: 100, maxDeposit: 1000000, minWithdrawal: 500 },
-  withdrawalQuickAmounts: [1000, 5000, 10000, 20000],
-};
-
-const FALLBACK_PASSES_PRICING: PassPricing = {
-  daily: { id: 'pass-daily', name: 'Daily Pass', price: 200, currency: 'NGN', duration: '24 hours' },
-  weekly: { id: 'pass-weekly', name: 'Weekly Pass', price: 1500, currency: 'NGN', duration: '7 days' },
-  monthly: { id: 'pass-monthly', name: 'Monthly Pass', price: 5000, currency: 'NGN', duration: '30 days' },
-};
-
-// Async fetch functions with caching
+// Async fetch functions with caching — all consumers should use these
 export async function getMoviePricing(): Promise<MoviePricing> {
   if (cachedMoviePricing) return cachedMoviePricing;
   try {
@@ -72,9 +34,9 @@ export async function getMoviePricing(): Promise<MoviePricing> {
       return res.data;
     }
   } catch (e) {
-    log.warn('Failed to fetch movie pricing, using fallback', e);
+    logger.warn('Failed to fetch movie pricing', e);
   }
-  return FALLBACK_MOVIE_PRICING;
+  throw new Error('Movie pricing unavailable. Please check your connection and try again.');
 }
 
 export async function getVotePackages(type: string): Promise<VotePackage[]> {
@@ -86,9 +48,9 @@ export async function getVotePackages(type: string): Promise<VotePackage[]> {
       return res.data;
     }
   } catch (e) {
-    log.warn('Failed to fetch vote packages, using fallback', e);
+    logger.warn('Failed to fetch vote packages', e);
   }
-  return FALLBACK_VOTE_PACKAGES[type] || FALLBACK_VOTE_PACKAGES.standard;
+  throw new Error('Vote packages unavailable. Please check your connection and try again.');
 }
 
 export async function getWalletPricing(): Promise<WalletPricing> {
@@ -100,9 +62,9 @@ export async function getWalletPricing(): Promise<WalletPricing> {
       return res.data;
     }
   } catch (e) {
-    log.warn('Failed to fetch wallet pricing, using fallback', e);
+    logger.warn('Failed to fetch wallet pricing', e);
   }
-  return FALLBACK_WALLET_PRICING;
+  throw new Error('Wallet pricing unavailable. Please check your connection and try again.');
 }
 
 export async function getPassesPricing(): Promise<PassPricing> {
@@ -114,9 +76,9 @@ export async function getPassesPricing(): Promise<PassPricing> {
       return res.data;
     }
   } catch (e) {
-    log.warn('Failed to fetch passes pricing, using fallback', e);
+    logger.warn('Failed to fetch passes pricing', e);
   }
-  return FALLBACK_PASSES_PRICING;
+  throw new Error('Passes pricing unavailable. Please check your connection and try again.');
 }
 
 export function clearPricingCache(): void {
@@ -125,31 +87,3 @@ export function clearPricingCache(): void {
   cachedWalletPricing = null;
   cachedPassesPricing = null;
 }
-
-// Synchronous fallback accessors (for components that can't use async)
-// These return cached values or defaults - prefer async functions above
-// WARNING: These are fallback defaults. Always fetch from API when possible.
-// Per CLAUDE.md: "Never hardcode prices in frontend or backend code"
-export const moviePricing = {
-  rent48h: { id: 'rent-48h', type: 'Rent (48h)', price: (cachedMoviePricing as MoviePricing | null)?.rent48h?.price ?? 500, label: '₦500' },
-  buy: { id: 'buy', type: 'Buy', price: (cachedMoviePricing as MoviePricing | null)?.buy?.price ?? 1500, label: '₦1,500' },
-  pass: { id: 'pass', type: 'Pass', price: (cachedMoviePricing as MoviePricing | null)?.pass?.price ?? 4500, label: '₦4,500/mo' },
-} as const;
-
-// Wallet preset amounts - these are UI hints, not prices
-export const walletPresetAmounts = [500, 1000, 2500, 5000, 10000] as const;
-
-// Legacy exports for backward compatibility
-export const votePackages = FALLBACK_VOTE_PACKAGES;
-export const paymentPresetAmounts = [500, 1000, 2500, 5000, 10000] as const;
-export const addFundsPresetAmounts = [500, 1000, 2000, 5000, 10000, 20000] as const;
-export const walletLimits = {
-  minimumWithdrawal: 500,
-  minimumDeposit: 100,
-  maximumDeposit: 1000000,
-} as const;
-export const moviePassPrice = { monthly: 4500, label: '₦4,500/month' } as const;
-export const rentPrice = 500;
-export const verticalSubscription = { monthly: 2000, label: '₦2,000/month' } as const;
-export const comedySubscription = { monthly: 1500, label: '₦1,500/month' } as const;
-export const cityGuidePricing = { premium: 5000, standard: 3000 } as const;

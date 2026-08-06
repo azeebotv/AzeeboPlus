@@ -1,7 +1,14 @@
 /**
  * Azeebo+ Brand Theme for React Native
- * Matches the web design system in design prompt.md
+ * Extends @azeebo/design-tokens with mobile-specific overrides.
+ * Mobile uses warmer brand colors; web uses Tailwind + design-tokens CSS vars.
  */
+
+// Re-export base tokens from design-tokens package for consistency
+export {
+  zIndex,
+  themes,
+} from '@azeebo/design-tokens';
 
 // ── Brand Colors ──────────────────────────────────────────────
 export const colors = {

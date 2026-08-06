@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import { usePWA } from '../../hooks/usePWA';
 import { useSettings } from '@/hooks/useDatabase';
 import AppHeader from '../layout/AppHeader';
@@ -88,6 +89,7 @@ const CATEGORY_CARDS: CategoryCard[] = [
 ];
 
 export default function GuestHomepage(): React.JSX.Element {
+  const { t } = useTranslation();
   const { isOnline, isInstalled, install } = usePWA();
   const { getSetting } = useSettings();
   const siteName = getSetting('site_name', 'Azeebo+');
@@ -236,7 +238,7 @@ export default function GuestHomepage(): React.JSX.Element {
       <section
         ref={heroRef}
         className="relative w-full overflow-hidden flex items-center justify-center py-16 sm:py-20 lg:py-28"
-        style={{ backgroundColor: '#0D3B2E' }}
+        style={{ backgroundColor: 'var(--brand-forest)' }}
       >
         <AmbientGlow color="rgba(13,90,60,0.5)" size={600} className="-top-48 -left-48" />
 
@@ -304,7 +306,7 @@ export default function GuestHomepage(): React.JSX.Element {
               <p className="az-headline text-white text-lg sm:text-xl leading-tight mb-1">Ekaabo</p>
               <p className="text-white/80 text-xs sm:text-sm font-semibold mb-1">Sannu Da Zuwa</p>
               <p className="az-headline text-white text-base sm:text-lg leading-tight mb-4 sm:mb-5">
-                Welcome
+                {t('home.greeting')}
               </p>
               <Link href="/auth/register">
                 <motion.button
@@ -314,7 +316,7 @@ export default function GuestHomepage(): React.JSX.Element {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  GET STARTED
+                  {t('auth.getStarted').toUpperCase()}
                 </motion.button>
               </Link>
             </div>
@@ -327,7 +329,7 @@ export default function GuestHomepage(): React.JSX.Element {
                 <motion.span
                   key={greetingIndex}
                   className="block"
-                  style={{ color: '#E8420A' }}
+                  style={{ color: 'var(--brand-orange)' }}
                   initial={{ opacity: 0, y: 24 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -24 }}
@@ -343,8 +345,7 @@ export default function GuestHomepage(): React.JSX.Element {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.55, duration: 0.5 }}
             >
-              The home of Nigerian entertainment — Afrobeats, Nollywood, Super Eagles, comedy,
-              creators and more. Stream, vote, earn, and celebrate culture.
+              {t('home.heroDescription')}
             </motion.p>
             <motion.div
               className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 justify-center lg:justify-start"
@@ -360,7 +361,7 @@ export default function GuestHomepage(): React.JSX.Element {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  Get Started Free
+                  {t('auth.getStarted')}
                 </motion.button>
               </Link>
               <Link href="/auth/login">
@@ -371,7 +372,7 @@ export default function GuestHomepage(): React.JSX.Element {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  I already have an account
+                  {t('auth.alreadyHaveAccount')}
                 </motion.button>
               </Link>
             </motion.div>
@@ -384,8 +385,8 @@ export default function GuestHomepage(): React.JSX.Element {
         {/* Trending Now — visible to guests as preview */}
         {trendingContent.length > 0 && (
           <ContentRow
-            title="Trending Now"
-            subtitle="What everyone is watching"
+            title={t('home.trending')}
+            subtitle={t('home.trendingSubtitle')}
             sectionId="guest-trending"
             items={trendingContent}
             cardSize="lg"
@@ -405,31 +406,30 @@ export default function GuestHomepage(): React.JSX.Element {
             <div className="relative z-10 max-w-3xl mx-auto text-center px-4 sm:px-6">
               <motion.span
                 className="inline-block text-[11px] font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-5"
-                style={{ background: 'rgba(255,255,255,0.18)', color: '#fff' }}
+                style={{ background: 'rgba(255,255,255,0.18)', color: 'var(--brand-white)' }}
                 initial={{ opacity: 0, scale: 0.8 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4 }}
               >
-                Earn While Watching
+                {t('home.earnWhileWatching')}
               </motion.span>
               <h3 className="az-headline text-white text-3xl sm:text-4xl lg:text-5xl mb-4">
-                Unlock Exclusive Rewards
+                {t('home.unlockRewards')}
               </h3>
               <p className="text-sm sm:text-base lg:text-lg text-white/90 mb-6 sm:mb-8 max-w-xl mx-auto">
-                Join {siteName} today and get rewarded for every show you watch, every vote you
-                cast, and every share you make.
+                {t('home.rewardsDescription', { siteName })}
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
                 <Link href="/auth/register">
                   <motion.button
                     type="button"
                     className="px-6 sm:px-8 py-3 sm:py-3.5 rounded-full text-sm sm:text-base font-bold transition-all"
-                    style={{ background: '#1A0A0A', color: '#fff' }}
+                    style={{ background: 'var(--brand-near-black)', color: 'var(--brand-white)' }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    Start Earning Now
+                    {t('home.startEarning')}
                   </motion.button>
                 </Link>
                 <Link href="/auth/login">
@@ -440,7 +440,7 @@ export default function GuestHomepage(): React.JSX.Element {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    Sign In
+                    {t('auth.login')}
                   </motion.button>
                 </Link>
               </div>
@@ -452,13 +452,18 @@ export default function GuestHomepage(): React.JSX.Element {
         <ScrollReveal>
           <section className="mt-12 sm:mt-16">
             <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 text-center">
-              Explore by Universe
+              {t('home.exploreByUniverse')}
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {[
-                { name: 'Movie', icon: '\u{1F3AC}', href: '/movies', color: '#E8420A' },
+                { name: 'Movie', icon: '\u{1F3AC}', href: '/movies', color: 'var(--brand-orange)' },
                 { name: 'Comedy', icon: '\u{1F602}', href: '/comedy', color: '#fbbf24' },
-                { name: 'Sports', icon: '\u26BD', href: '/sports', color: '#22c55e' },
+                {
+                  name: 'Sports',
+                  icon: '\u26BD',
+                  href: '/sports',
+                  color: 'var(--color-success-500)',
+                },
                 { name: 'Reality', icon: '\u{1F4FA}', href: '/reality', color: '#8b5cf6' },
                 { name: 'Lifestyle', icon: '\u{1F3A8}', href: '/lifestyle', color: '#ec4899' },
                 { name: 'Vertical', icon: '\u{1F4F1}', href: '/vertical', color: '#3b82f6' },

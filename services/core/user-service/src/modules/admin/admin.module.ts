@@ -7,11 +7,7 @@ import { DatabaseModule } from '../database/database.module.js';
 import { AdminGuard } from '@azeebo/security';
 
 @Module({
-  imports: [
-    DatabaseModule,
-    ConfigModule.forRoot(),
-    JwtConfigModule,
-  ],
+  imports: [DatabaseModule, ConfigModule.forRoot(), JwtConfigModule],
   controllers: [AdminController],
   providers: [AdminService, AdminGuard],
 })

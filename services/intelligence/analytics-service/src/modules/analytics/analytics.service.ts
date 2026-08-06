@@ -1,6 +1,6 @@
 import { Inject, Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../prisma/client/index.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { AnalyticsResponse } from './interfaces/analytics-response.interface.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
@@ -77,24 +77,71 @@ const REQUIRED_METADATA_FIELDS = ['session_id', 'platform', 'timestamp'];
 @Injectable()
 export class AnalyticsService {
   private readonly logger = new Logger(AnalyticsService.name);
+  private readonly userServiceUrl: string;
+  private readonly contentServiceUrl: string;
+
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(CacheService) private readonly cache: CacheService,
     @Inject(ConfigService) private readonly configService: ConfigService
-  ) {}
+  ) {
+    this.userServiceUrl = this.configService.get<string>(
+      'USER_SERVICE_URL',
+      'http://user-service:3001'
+    );
+    this.contentServiceUrl = this.configService.get<string>(
+      'CONTENT_SERVICE_URL',
+      'http://content-service:3004'
+    );
+  }
+
+  private async getUserCount(): Promise<number> {
+    try {
+      const res = await axios.get<{ data?: { total?: number }; total?: number }>(
+        `${this.userServiceUrl}/users`,
+        {
+          params: { limit: 1 },
+          timeout: 5000,
+          headers: { 'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', '') },
+        }
+      );
+      return res.data?.total ?? res.data?.data?.total ?? 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  private async getContentCount(): Promise<number> {
+    try {
+      const res = await axios.get<{ data?: { total?: number }; total?: number }>(
+        `${this.contentServiceUrl}/content`,
+        {
+          params: { limit: 1 },
+          timeout: 5000,
+          headers: { 'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', '') },
+        }
+      );
+      return res.data?.total ?? res.data?.data?.total ?? 0;
+    } catch {
+      return 0;
+    }
+  }
 
   private async getSubscriptionCount(userId: string): Promise<number> {
     try {
       const baseUrl = this.configService.get<string>('SUBSCRIPTION_SERVICE_URL');
       if (!baseUrl) return 0;
+      const params: Record<string, string | number> = { limit: 1 };
+      if (userId) {
+        params.userId = userId;
+      }
       const res = await axios.get<{ pagination?: { total?: number } }>(
         `${baseUrl}/v1/subscription/history`,
         {
-          params: { userId, limit: 1 },
+          params,
           timeout: 5000,
           headers: {
-            'x-user-id': userId,
-            'x-gateway-secret': this.configService.get<string>('INTERNAL_API_KEY', ''),
+            'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', ''),
           },
         }
       );
@@ -103,12 +150,6 @@ export class AnalyticsService {
       return 0;
     }
   }
-
-  // ARCHITECTURAL DEBT (Issue 10.2): This service directly queries User and ContentItem
-  // tables which are owned by auth-service and content-service respectively. These models
-  // should be accessed via internal APIs or event-driven sync projections. Direct cross-
-  // service DB access creates tight coupling and violates bounded context boundaries.
-  // See also: intelligence.service.ts which has the same pattern.
 
   private validateEventEnvelope(event: Event): { valid: boolean; error?: string } {
     if (!event.type || typeof event.type !== 'string') {
@@ -243,8 +284,8 @@ export class AnalyticsService {
       const cached = await this.cache.get<AnalyticsResponse>(cacheK);
       if (cached) return cached;
 
-      const totalUsers = await this.prisma.user.count();
-      const totalContent = await this.prisma.contentItem.count();
+      const totalUsers = await this.getUserCount();
+      const totalContent = await this.getContentCount();
       const totalViews = await this.prisma.productEvent.count({
         where: { eventName: 'content_view' },
       });
@@ -502,7 +543,7 @@ export class AnalyticsService {
     endOfDay.setDate(endOfDay.getDate() + 1);
 
     try {
-      const totalUsers = await this.prisma.user.count();
+      const totalUsers = await this.getUserCount();
 
       const dailyViews = await this.prisma.productEvent.count({
         where: {
@@ -693,9 +734,7 @@ export class AnalyticsService {
     periodAgo.setDate(periodAgo.getDate() - days);
 
     try {
-      const newUsers = await this.prisma.user.count({
-        where: { createdAt: { gte: periodAgo } },
-      });
+      const newUsers = await this.getUserCount();
 
       const returningUsers = await this.prisma.$queryRaw`
         SELECT COUNT(DISTINCT pe."userId") as count

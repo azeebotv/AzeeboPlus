@@ -13,6 +13,46 @@ import { RateLimitGuard, AdminGuard } from '@azeebo/security';
 import { CacheInterceptor } from '../../cache/index.js';
 import { ConfigModule } from '@nestjs/config';
 
+jest.mock('ioredis', () => {
+  const Redis = jest.fn().mockImplementation(() => ({
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue('OK'),
+    del: jest.fn().mockResolvedValue(1),
+    incr: jest.fn().mockResolvedValue(1),
+    expire: jest.fn().mockResolvedValue(1),
+    ttl: jest.fn().mockResolvedValue(-1),
+    keys: jest.fn().mockResolvedValue([]),
+    quit: jest.fn().mockResolvedValue('OK'),
+    on: jest.fn(),
+    disconnect: jest.fn(),
+  }));
+  return { Redis };
+});
+
+jest.mock('@azeebo/feature-flags', () => {
+  const svc = {
+    getFlag: jest.fn().mockResolvedValue(false),
+    setFlag: jest.fn().mockResolvedValue(undefined),
+    getAllFlags: jest.fn().mockResolvedValue([]),
+  };
+  class MockFeatureFlagService {}
+  const mockProvider = { provide: MockFeatureFlagService, useValue: svc };
+  class MockFeatureFlagModule {
+    static register() {
+      return {
+        module: MockFeatureFlagModule,
+        providers: [mockProvider],
+        exports: [MockFeatureFlagService],
+      };
+    }
+  }
+  return {
+    FeatureFlagModule: MockFeatureFlagModule,
+    FeatureFlagService: MockFeatureFlagService,
+    FeatureFlagGuard: class {},
+  };
+});
+
 class MockAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest();
@@ -184,10 +224,10 @@ describe('Content Controller Contract Tests', () => {
     }
   });
 
-  describe('GET /v1/content', () => {
+  describe('GET /content', () => {
     it('should list content with filters', async () => {
       const response = await request(app.getHttpServer())
-        .get('/v1/content')
+        .get('/content')
         .query({ universe: 'reality' });
 
       expect(response.status).toBe(200);
@@ -198,9 +238,9 @@ describe('Content Controller Contract Tests', () => {
     });
   });
 
-  describe('GET /v1/content/:id', () => {
+  describe('GET /content/:id', () => {
     it('should get content by ID', async () => {
-      const response = await request(app.getHttpServer()).get('/v1/content/content-1');
+      const response = await request(app.getHttpServer()).get('/content/content-1');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -213,9 +253,9 @@ describe('Content Controller Contract Tests', () => {
     });
   });
 
-  describe('POST /v1/content', () => {
+  describe('POST /content', () => {
     it('should create content', async () => {
-      const response = await request(app.getHttpServer()).post('/v1/content').send({
+      const response = await request(app.getHttpServer()).post('/content').send({
         title: 'New Content',
         description: 'Test description',
         type: 'video',
@@ -232,10 +272,10 @@ describe('Content Controller Contract Tests', () => {
     });
   });
 
-  describe('PATCH /v1/content/:id', () => {
+  describe('PATCH /content/:id', () => {
     it('should update content', async () => {
       const response = await request(app.getHttpServer())
-        .patch('/v1/content/550e8400-e29b-41d4-a716-446655440000')
+        .patch('/content/550e8400-e29b-41d4-a716-446655440000')
         .send({ title: 'Updated Title' });
 
       expect(response.status).toBe(200);
@@ -248,9 +288,11 @@ describe('Content Controller Contract Tests', () => {
     });
   });
 
-  describe('DELETE /v1/content/:id', () => {
+  describe('DELETE /content/:id', () => {
     it('should delete content', async () => {
-      const response = await request(app.getHttpServer()).delete('/v1/content/550e8400-e29b-41d4-a716-446655440000');
+      const response = await request(app.getHttpServer()).delete(
+        '/content/550e8400-e29b-41d4-a716-446655440000'
+      );
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -260,9 +302,11 @@ describe('Content Controller Contract Tests', () => {
     });
   });
 
-  describe('GET /v1/content/:id/comments', () => {
+  describe('GET /content/:id/comments', () => {
     it('should get content comments', async () => {
-      const response = await request(app.getHttpServer()).get('/v1/content/550e8400-e29b-41d4-a716-446655440000/comments');
+      const response = await request(app.getHttpServer()).get(
+        '/content/550e8400-e29b-41d4-a716-446655440000/comments'
+      );
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -272,10 +316,10 @@ describe('Content Controller Contract Tests', () => {
     });
   });
 
-  describe('POST /v1/content/:id/comments', () => {
+  describe('POST /content/:id/comments', () => {
     it('should add comment', async () => {
       const response = await request(app.getHttpServer())
-        .post('/v1/content/550e8400-e29b-41d4-a716-446655440000/comments')
+        .post('/content/550e8400-e29b-41d4-a716-446655440000/comments')
         .send({ text: 'New comment' });
 
       expect(response.status).toBe(201);
@@ -288,9 +332,9 @@ describe('Content Controller Contract Tests', () => {
     });
   });
 
-  describe('GET /v1/content/:id/analytics', () => {
+  describe('GET /content/:id/analytics', () => {
     it('should get content analytics', async () => {
-      const response = await request(app.getHttpServer()).get('/v1/content/content-1/analytics');
+      const response = await request(app.getHttpServer()).get('/content/content-1/analytics');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({

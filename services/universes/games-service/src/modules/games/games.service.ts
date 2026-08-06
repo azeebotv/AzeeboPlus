@@ -16,14 +16,14 @@ export class GamesService {
     this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
   }
 
-  private async trackAnalyticsEvent(
+  private async trackEvent(
     eventName: string,
     userId: string,
-    metadata: Record<string, unknown>
+    metadata: Record<string, unknown> = {}
   ): Promise<void> {
     try {
-      await axios.post(`${this.analyticsServiceBaseUrl}/analytics/track`, {
-        eventName,
+      await axios.post(`${this.analyticsServiceBaseUrl}/v1/analytics/events`, {
+        type: eventName,
         userId,
         universe: 'games',
         metadata,
@@ -123,7 +123,7 @@ export class GamesService {
       },
     });
 
-    await this.trackAnalyticsEvent('daily_challenge_submitted', userId, {
+    await this.trackEvent('daily_challenge_submitted', userId, {
       challengeId: challenge.id,
       isCorrect,
     });
@@ -155,7 +155,7 @@ export class GamesService {
       },
     });
 
-    await this.trackAnalyticsEvent('game_started', userId, {
+    await this.trackEvent('game_started', userId, {
       sessionId: session.id,
       challengeId,
     });
@@ -222,7 +222,7 @@ export class GamesService {
         },
       });
 
-      await this.trackAnalyticsEvent('game_completed', userId, {
+      await this.trackEvent('game_completed', userId, {
         sessionId,
         challengeId: session.challengeId,
         score: question.points,
@@ -295,7 +295,7 @@ export class GamesService {
       },
     });
 
-    await this.trackAnalyticsEvent('tournament_entered', userId, {
+    await this.trackEvent('tournament_entered', userId, {
       tournamentId,
       tournamentName: tournament.title,
     });

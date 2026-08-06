@@ -61,7 +61,7 @@ export const AllBadges: BadgeStory = {
 };
 
 // Avatar Stories
-const avatarMeta: Meta<typeof Avatar> = {
+export const avatarMeta = {
   title: 'Components/Avatar',
   component: Avatar,
   parameters: { layout: 'centered' },
@@ -72,7 +72,7 @@ const avatarMeta: Meta<typeof Avatar> = {
       options: ['sm', 'medium', 'lg'],
     },
   },
-};
+} satisfies Meta<typeof Avatar>;
 
 export const AvatarDefault: StoryObj<typeof avatarMeta> = {
   name: 'Default',
@@ -109,12 +109,12 @@ export const AllSizes: StoryObj<typeof avatarMeta> = {
 };
 
 // Skeleton Stories
-const skeletonMeta: Meta<typeof Skeleton> = {
+export const skeletonMeta = {
   title: 'Components/Skeleton',
   component: Skeleton,
   parameters: { layout: 'centered' },
   tags: ['autodocs'],
-};
+} satisfies Meta<typeof Skeleton>;
 
 export const SkeletonDefault: StoryObj<typeof skeletonMeta> = {
   name: 'Default',
@@ -139,12 +139,12 @@ export const SkeletonCard: StoryObj<typeof skeletonMeta> = {
 };
 
 // Divider Stories
-const dividerMeta: Meta<typeof Divider> = {
+export const dividerMeta = {
   title: 'Components/Divider',
   component: Divider,
   parameters: { layout: 'centered' },
   tags: ['autodocs'],
-};
+} satisfies Meta<typeof Divider>;
 
 export const DividerDefault: StoryObj<typeof dividerMeta> = {
   name: 'Default',

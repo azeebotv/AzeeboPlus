@@ -5,6 +5,7 @@ jest.mock('../client', () => ({
   apiClient: {
     get: jest.fn(),
     post: jest.fn(),
+    patch: jest.fn(),
     put: jest.fn(),
     delete: jest.fn(),
   },
@@ -18,7 +19,7 @@ describe('Mobile Auth API', () => {
   });
 
   describe('login', () => {
-    it('should POST to /v1/auth/login', async () => {
+    it('should POST to /auth/login', async () => {
       const mockResponse = {
         success: true,
         data: {
@@ -30,9 +31,9 @@ describe('Mobile Auth API', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockedClient.post.mockResolvedValue(mockResponse as any);
 
-      const result = await authApi.login({ email: 'a@b.com', password: 'pass' });
+      const result = await authApi.login('a@b.com', 'pass');
 
-      expect(mockedClient.post).toHaveBeenCalledWith('/v1/auth/login', {
+      expect(mockedClient.post).toHaveBeenCalledWith('/auth/login', {
         email: 'a@b.com',
         password: 'pass',
       });
@@ -43,20 +44,20 @@ describe('Mobile Auth API', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockedClient.post.mockResolvedValue({ success: false, message: 'Invalid' } as any);
 
-      const result = await authApi.login({ email: 'a@b.com', password: 'wrong' });
+      const result = await authApi.login('a@b.com', 'wrong');
 
       expect(result.success).toBe(false);
     });
   });
 
   describe('register', () => {
-    it('should POST to /v1/auth/register', async () => {
+    it('should POST to /auth/signup', async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockedClient.post.mockResolvedValue({ success: true, data: { accessToken: 'tok' } } as any);
 
       await authApi.register({ name: 'Test', email: 'a@b.com', password: 'pass' });
 
-      expect(mockedClient.post).toHaveBeenCalledWith('/v1/auth/register', {
+      expect(mockedClient.post).toHaveBeenCalledWith('/auth/signup', {
         name: 'Test',
         email: 'a@b.com',
         password: 'pass',
@@ -65,37 +66,37 @@ describe('Mobile Auth API', () => {
   });
 
   describe('logout', () => {
-    it('should POST to /v1/auth/logout', async () => {
+    it('should POST to /auth/logout', async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockedClient.post.mockResolvedValue({ success: true } as any);
 
       await authApi.logout();
 
-      expect(mockedClient.post).toHaveBeenCalledWith('/v1/auth/logout');
+      expect(mockedClient.post).toHaveBeenCalledWith('/auth/logout');
     });
   });
 
   describe('forgotPassword', () => {
-    it('should POST to /v1/auth/forgot-password', async () => {
+    it('should POST to /auth/forgot-password', async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockedClient.post.mockResolvedValue({ success: true } as any);
 
       await authApi.forgotPassword('a@b.com');
 
-      expect(mockedClient.post).toHaveBeenCalledWith('/v1/auth/forgot-password', {
+      expect(mockedClient.post).toHaveBeenCalledWith('/auth/forgot-password', {
         email: 'a@b.com',
       });
     });
   });
 
   describe('resetPassword', () => {
-    it('should POST to /v1/auth/reset-password', async () => {
+    it('should POST to /auth/reset-password', async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockedClient.post.mockResolvedValue({ success: true } as any);
 
       await authApi.resetPassword('token123', 'newPass');
 
-      expect(mockedClient.post).toHaveBeenCalledWith('/v1/auth/reset-password', {
+      expect(mockedClient.post).toHaveBeenCalledWith('/auth/reset-password', {
         token: 'token123',
         newPassword: 'newPass',
       });
@@ -103,32 +104,32 @@ describe('Mobile Auth API', () => {
   });
 
   describe('verifyEmail', () => {
-    it('should POST to /v1/auth/verify-email', async () => {
+    it('should POST to /auth/verify-email', async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockedClient.post.mockResolvedValue({ success: true } as any);
 
       await authApi.verifyEmail('verify-token');
 
-      expect(mockedClient.post).toHaveBeenCalledWith('/v1/auth/verify-email', {
+      expect(mockedClient.post).toHaveBeenCalledWith('/auth/verify-email', {
         token: 'verify-token',
       });
     });
   });
 
   describe('getProfile', () => {
-    it('should GET /v1/users/me', async () => {
+    it('should GET /auth/me', async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockedClient.get.mockResolvedValue({ success: true, data: { id: '1' } } as any);
 
       await authApi.getProfile();
 
-      expect(mockedClient.get).toHaveBeenCalledWith('/v1/users/me');
+      expect(mockedClient.get).toHaveBeenCalledWith('/auth/me');
     });
   });
 
   describe('updateProfile', () => {
-    it('should PUT to /v1/users/me', async () => {
-      mockedClient.put.mockResolvedValue({
+    it('should PATCH to /users/me', async () => {
+      mockedClient.patch.mockResolvedValue({
         success: true,
         data: { id: '1', name: 'Updated' },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -136,37 +137,45 @@ describe('Mobile Auth API', () => {
 
       await authApi.updateProfile({ name: 'Updated' });
 
-      expect(mockedClient.put).toHaveBeenCalledWith('/v1/users/me', { name: 'Updated' });
-    });
-  });
-
-  describe('changePassword', () => {
-    it('should PUT to /v1/users/me/password', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      mockedClient.put.mockResolvedValue({ success: true } as any);
-
-      await authApi.changePassword('oldPass', 'newPass');
-
-      expect(mockedClient.put).toHaveBeenCalledWith('/v1/users/me/password', {
-        currentPassword: 'oldPass',
-        newPassword: 'newPass',
-      });
+      expect(mockedClient.patch).toHaveBeenCalledWith('/users/me', { name: 'Updated' });
     });
   });
 
   describe('refreshToken', () => {
-    it('should POST to /v1/auth/refresh', async () => {
+    it('should POST to /auth/refresh', async () => {
       mockedClient.post.mockResolvedValue({
         success: true,
-        data: { accessToken: 'new-tok' },
+        data: { access_token: 'new-tok' },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
       await authApi.refreshToken('old-ref');
 
-      expect(mockedClient.post).toHaveBeenCalledWith('/v1/auth/refresh', {
+      expect(mockedClient.post).toHaveBeenCalledWith('/auth/refresh', {
         refreshToken: 'old-ref',
       });
+    });
+  });
+
+  describe('verifyOTP', () => {
+    it('should POST to /auth/otp/verify', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      mockedClient.post.mockResolvedValue({ success: true, data: {} } as any);
+
+      await authApi.verifyOTP('123456');
+
+      expect(mockedClient.post).toHaveBeenCalledWith('/auth/otp/verify', { code: '123456' });
+    });
+  });
+
+  describe('resendOTP', () => {
+    it('should POST to /auth/otp/send', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      mockedClient.post.mockResolvedValue({ success: true } as any);
+
+      await authApi.resendOTP();
+
+      expect(mockedClient.post).toHaveBeenCalledWith('/auth/otp/send');
     });
   });
 });

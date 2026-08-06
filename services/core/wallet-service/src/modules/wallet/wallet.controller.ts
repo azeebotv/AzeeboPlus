@@ -21,6 +21,8 @@ import { FundWalletDto } from './dto/fund-wallet.dto.js';
 import { RedeemRewardDto } from './dto/redeem-reward.dto.js';
 import { AddBonusCreditDto } from './dto/add-bonus-credit.dto.js';
 import { AddPromoCreditDto } from './dto/add-promo-credit.dto.js';
+import { ChargeWalletDto } from './dto/charge-wallet.dto.js';
+import { CreditReverseDto } from './dto/credit-reverse.dto.js';
 import { DebitWalletDto, CreditWalletDto } from './dto/wallet-operation.dto.js';
 import { WithdrawWalletDto, TransferWalletDto } from './dto/withdraw-transfer.dto.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
@@ -39,9 +41,7 @@ interface AuthenticatedRequest {
 @Controller('wallet')
 @UseInterceptors(CacheInterceptor)
 export class WalletController {
-  constructor(
-    @Inject(WalletService) private readonly walletService: WalletService
-  ) {}
+  constructor(@Inject(WalletService) private readonly walletService: WalletService) {}
 
   @Get()
   @Cache({ key: 'wallet:balance', ttl: 60 })
@@ -208,6 +208,40 @@ export class WalletController {
       body.idempotencyKey
     );
     return ApiResponseWrapper.success((result as { data: unknown }).data);
+  }
+
+  @Post('charge')
+  @UseGuards(AdminGuard, RateLimitGuard)
+  @RateLimit(50, 60000)
+  @ApiOperation({ summary: 'Atomic wallet charge (debit by userId)' })
+  @ApiResponse({ status: 200, description: 'Wallet charged successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid input or insufficient balance' })
+  async chargeWallet(@Body() body: ChargeWalletDto) {
+    const result = await this.walletService.chargeWallet({
+      userId: body.userId,
+      amount: body.amount,
+      idempotencyKey: body.idempotencyKey,
+      description: body.description,
+      metadata: body.metadata,
+    });
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Post('credit-reverse')
+  @UseGuards(AdminGuard, RateLimitGuard)
+  @RateLimit(50, 60000)
+  @ApiOperation({ summary: 'Credit back a failed operation (compensation)' })
+  @ApiResponse({ status: 200, description: 'Wallet credited successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid input' })
+  async creditReverse(@Body() body: CreditReverseDto) {
+    const result = await this.walletService.creditReverse({
+      userId: body.userId,
+      amount: body.amount,
+      idempotencyKey: body.idempotencyKey,
+      description: body.description,
+      metadata: body.metadata,
+    });
+    return ApiResponseWrapper.success(result);
   }
 
   @Post('withdraw')

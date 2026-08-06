@@ -236,7 +236,11 @@ export default function TransactionsScreen() {
         contentContainerStyle={styles.listContent}
         keyboardDismissMode="on-drag"
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[colors.primary[500]]} />
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary[500]]}
+          />
         }
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}

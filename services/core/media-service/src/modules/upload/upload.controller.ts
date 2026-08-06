@@ -213,6 +213,9 @@ export class UploadController {
     if (!key) {
       throw new BadRequestException('Missing required parameter: key');
     }
+    if (key.includes('..') || key.startsWith('/')) {
+      throw new BadRequestException('Invalid key format');
+    }
     return this.uploadService.getFileMetadata(key);
   }
 
@@ -226,6 +229,9 @@ export class UploadController {
     @Param('key') key: string
   ): Promise<unknown> {
     const decodedKey = decodeURIComponent(key);
+    if (decodedKey.includes('..') || decodedKey.startsWith('/')) {
+      throw new BadRequestException('Invalid key format');
+    }
     const metadata = await this.uploadService.getFileMetadata(decodedKey);
     const ownerId = metadata?.metadata?.userId;
     if (ownerId && ownerId !== req.user.id && req.user.role !== 'admin') {

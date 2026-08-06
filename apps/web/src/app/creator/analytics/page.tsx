@@ -1,11 +1,10 @@
 'use client';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 
 interface AnalyticsData {
@@ -31,10 +30,7 @@ interface AnalyticsData {
 }
 
 export default function CreatorAnalyticsPage(): React.JSX.Element {
-  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
-  const router = useRouter();
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
-  const isEnabled = !authLoading && !!isAuthenticated && !!user;
 
   const {
     data: analytics,
@@ -43,269 +39,341 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
   } = useQuery({
     queryKey: ['creator', 'analytics', timeRange],
     queryFn: async () => {
-      const result = await apiFetch<Record<string, unknown>>(
-        `/v1/creators/analytics?range=${timeRange}`
-      );
-      if (result.success && result.data) {
-        const d = result.data;
-        return {
-          totalViews: Number(d.views ?? d.totalViews ?? 0),
-          totalLikes: Number(d.likes ?? d.totalLikes ?? 0),
-          totalFollowers: Number(d.followers ?? d.totalFollowers ?? 0),
-          totalEarnings: Number(d.earnings ?? d.totalEarnings ?? 0),
-          viewsGrowth: Number(d.viewsGrowth ?? 0),
-          followersGrowth: Number(d.followersGrowth ?? 0),
-          earningsGrowth: Number(d.earningsGrowth ?? 0),
-          topContent: Array.isArray(d.topContent)
-            ? (d.topContent as Array<Record<string, unknown>>).map((c) => ({
-                id: String(c.id),
-                title: String(c.title || ''),
-                views: Number(c.views ?? c.viewCount ?? 0),
-                thumbnail: String(c.thumbnail || ''),
-              }))
-            : [],
-          demographics: (d.demographics as AnalyticsData['demographics']) || {
-            ageGroups: [],
-            topCountries: [],
-            genderSplit: { male: 0, female: 0, other: 0 },
-          },
-          engagementMetrics: ((d.engagementMetrics ||
-            d.analytics) as AnalyticsData['engagementMetrics']) || {
-            avgWatchTime: 0,
-            completionRate: 0,
-            shareRate: 0,
-            commentRate: 0,
-          },
-        } as AnalyticsData;
-      }
+      const res = await apiFetch<AnalyticsData>(`/v1/creators/analytics?range=${timeRange}`);
+      if (res.success && res.data) return res.data;
       return null;
     },
-    enabled: isEnabled,
   });
 
-  const formatNumber = (num: number): string => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-    return num.toString();
-  };
-
-  if (isLoading) {
+  if (error) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
-        <AppHeader />
-        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-          <div className="mb-8">
-            <Skeleton width="120px" height="20px" className="mb-4" />
-            <Skeleton width="200px" height="32px" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="az-glass p-6">
-                <Skeleton width="60%" height="32px" className="mb-2" />
-                <Skeleton width="40%" height="16px" />
-              </div>
+      <div
+        style={{
+          backgroundColor: 'var(--bg-primary, #1A0A0A)',
+          minHeight: '100vh',
+          color: 'var(--text-primary, #F5F0EB)',
+        }}
+      >
+        <AppHeader active="Creator" />
+        <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
+          <ErrorState title="Failed to load analytics" />
+        </main>
+        <AppFooter />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        backgroundColor: 'var(--bg-primary, #1A0A0A)',
+        minHeight: '100vh',
+        color: 'var(--text-primary, #F5F0EB)',
+      }}
+    >
+      <AppHeader active="Creator" />
+      <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Analytics</h1>
+        <p style={{ color: 'var(--text-muted, #9A8A7A)', marginBottom: 24 }}>
+          Track your content performance and growth
+        </p>
+
+        <div style={{ marginBottom: 24 }}>
+          <label
+            style={{
+              color: 'var(--text-muted, #9A8A7A)',
+              fontSize: 13,
+              marginBottom: 8,
+              display: 'block',
+            }}
+          >
+            Time Range
+          </label>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {(['7d', '30d', '90d', 'all'] as const).map((range) => (
+              <button
+                key={range}
+                onClick={() => setTimeRange(range)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border-default)',
+                  background: timeRange === range ? 'rgba(232,66,10,0.2)' : 'transparent',
+                  color:
+                    timeRange === range
+                      ? 'var(--brand-orange, #E8420A)'
+                      : 'var(--text-muted, #9A8A7A)',
+                  cursor: 'pointer',
+                  fontSize: 13,
+                }}
+              >
+                {range.toUpperCase()}
+              </button>
             ))}
           </div>
         </div>
-      </div>
-    );
-  }
 
-  if (error || !analytics) {
-    return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
-        <AppHeader />
-        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-          <ErrorState
-            title="Failed to load analytics"
-            description="Please try again later"
-            onButtonPress={() => router.refresh()}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  const statCards = [
-    {
-      label: 'Total Views',
-      value: formatNumber(analytics.totalViews),
-      growth: analytics.viewsGrowth,
-    },
-    {
-      label: 'Followers',
-      value: formatNumber(analytics.totalFollowers),
-      growth: analytics.followersGrowth,
-    },
-    {
-      label: 'Earnings',
-      value: `₦${formatNumber(analytics.totalEarnings)}`,
-      growth: analytics.earningsGrowth,
-    },
-    { label: 'Likes', value: formatNumber(analytics.totalLikes), growth: null },
-  ];
-
-  return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
-      <AppHeader />
-      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <button
-            onClick={() => router.back()}
-            className="text-white/50 hover:text-white mb-2 flex items-center gap-2 transition-colors"
+        {isLoading ? (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+              gap: 16,
+            }}
           >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>{' '}
-            Back
-          </button>
-          <h1 className="text-3xl font-bold text-white">Creator Analytics</h1>
-        </div>
-
-        <div className="flex gap-2 mb-8" role="listbox" aria-label="Time range">
-          {(['7d', '30d', '90d', 'all'] as const).map((range) => (
-            <button
-              key={range}
-              onClick={() => setTimeRange(range)}
-              role="option"
-              aria-selected={timeRange === range}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${timeRange === range ? 'az-btn-primary' : ''}`}
-              style={
-                timeRange !== range
-                  ? {
-                      border: '1px solid rgba(255,255,255,0.2)',
-                      backgroundColor: 'rgba(255,255,255,0.08)',
-                      color: '#fff',
-                    }
-                  : undefined
-              }
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full" />
+            ))}
+          </div>
+        ) : analytics ? (
+          <>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+                gap: 16,
+                marginBottom: 32,
+              }}
             >
-              {range === '7d'
-                ? '7 Days'
-                : range === '30d'
-                  ? '30 Days'
-                  : range === '90d'
-                    ? '90 Days'
-                    : 'All Time'}
-            </button>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {statCards.map((stat) => (
-            <div key={stat.label} className="az-glass p-6">
-              <p className="text-3xl font-bold text-white">{stat.value}</p>
-              <p className="text-sm text-white/50 mt-1">{stat.label}</p>
-              {stat.growth !== null && (
-                <p
-                  className={`text-sm font-medium mt-2`}
-                  style={{ color: stat.growth >= 0 ? '#22C55E' : '#EF4444' }}
-                >
-                  {stat.growth >= 0 ? '↑' : '↓'} {Math.abs(stat.growth)}%
+              <div
+                style={{
+                  padding: 20,
+                  borderRadius: 16,
+                  border: '1px solid var(--border-default)',
+                  backgroundColor: 'rgba(26,10,10,0.5)',
+                }}
+              >
+                <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>
+                  Total Views
                 </p>
-              )}
+                <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary, #F5F0EB)' }}>
+                  {analytics.totalViews.toLocaleString()}
+                </p>
+              </div>
+              <div
+                style={{
+                  padding: 20,
+                  borderRadius: 16,
+                  border: '1px solid var(--border-default)',
+                  backgroundColor: 'rgba(26,10,10,0.5)',
+                }}
+              >
+                <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>
+                  Likes
+                </p>
+                <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary, #F5F0EB)' }}>
+                  {analytics.totalLikes.toLocaleString()}
+                </p>
+              </div>
+              <div
+                style={{
+                  padding: 20,
+                  borderRadius: 16,
+                  border: '1px solid var(--border-default)',
+                  backgroundColor: 'rgba(26,10,10,0.5)',
+                }}
+              >
+                <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>
+                  Followers
+                </p>
+                <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary, #F5F0EB)' }}>
+                  {analytics.totalFollowers.toLocaleString()}
+                </p>
+              </div>
+              <div
+                style={{
+                  padding: 20,
+                  borderRadius: 16,
+                  border: '1px solid var(--border-default)',
+                  backgroundColor: 'rgba(26,10,10,0.5)',
+                }}
+              >
+                <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>
+                  Earnings
+                </p>
+                <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary, #F5F0EB)' }}>
+                  ₦{analytics.totalEarnings.toLocaleString()}
+                </p>
+              </div>
             </div>
-          ))}
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <div className="az-glass p-6">
-            <h2 className="text-xl font-bold text-white mb-4">Engagement Metrics</h2>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { label: 'Avg Watch Time', value: `${analytics.engagementMetrics.avgWatchTime}m` },
-                {
-                  label: 'Completion Rate',
-                  value: `${analytics.engagementMetrics.completionRate}%`,
-                },
-                { label: 'Share Rate', value: `${analytics.engagementMetrics.shareRate}%` },
-                { label: 'Comment Rate', value: `${analytics.engagementMetrics.commentRate}%` },
-              ].map((metric) => (
+            <div style={{ marginBottom: 32 }}>
+              <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>Top Content</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {analytics.topContent.map((item) => (
+                  <div
+                    key={item.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      padding: 16,
+                      borderRadius: 16,
+                      border: '1px solid var(--border-default)',
+                      backgroundColor: 'rgba(26,10,10,0.5)',
+                    }}
+                  >
+                    {item.thumbnail && (
+                      <OptimizedImage
+                        src={item.thumbnail}
+                        alt={item.title}
+                        width={48}
+                        height={48}
+                        className="rounded-lg object-cover"
+                      />
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <h3 style={{ fontWeight: 600, fontSize: 14, margin: 0 }}>{item.title}</h3>
+                      <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12 }}>
+                        {item.views.toLocaleString()} views
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 32 }}>
+              <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>
+                Engagement Metrics
+              </h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
                 <div
-                  key={metric.label}
-                  className="text-center p-4"
-                  style={{ backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '0.75rem' }}
+                  style={{
+                    padding: 20,
+                    borderRadius: 16,
+                    border: '1px solid var(--border-default)',
+                    backgroundColor: 'rgba(26,10,10,0.5)',
+                  }}
                 >
-                  <p className="text-2xl font-bold" style={{ color: '#E8420A' }}>
-                    {metric.value}
+                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>
+                    Avg Watch Time
                   </p>
-                  <p className="text-sm text-white/50 mt-1">{metric.label}</p>
+                  <p
+                    style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary, #F5F0EB)' }}
+                  >
+                    {analytics.engagementMetrics.avgWatchTime.toFixed(1)}s
+                  </p>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="az-glass p-6">
-            <h2 className="text-xl font-bold text-white mb-4">Top Performing Content</h2>
-            <div className="space-y-3">
-              {analytics.topContent.slice(0, 5).map((content, index) => (
-                <div key={content.id} className="flex items-center gap-3">
-                  <span className="text-lg font-bold w-8" style={{ color: '#E8420A' }}>
-                    #{index + 1}
-                  </span>
-                  <div className="flex-1">
-                    <p className="font-medium text-white truncate">{content.title}</p>
-                    <p className="text-sm text-white/50">{formatNumber(content.views)} views</p>
-                  </div>
+                <div
+                  style={{
+                    padding: 20,
+                    borderRadius: 16,
+                    border: '1px solid var(--border-default)',
+                    backgroundColor: 'rgba(26,10,10,0.5)',
+                  }}
+                >
+                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>
+                    Completion Rate
+                  </p>
+                  <p
+                    style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary, #F5F0EB)' }}
+                  >
+                    {analytics.engagementMetrics.completionRate.toFixed(1)}%
+                  </p>
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="az-glass p-6">
-          <h2 className="text-xl font-bold text-white mb-4">Audience Demographics</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-4">Age Groups</h3>
-              <div className="space-y-3">
-                {analytics.demographics.ageGroups.map((age) => (
-                  <div key={age.range} className="flex items-center gap-3">
-                    <span className="text-sm text-white w-16">{age.range}</span>
-                    <div
-                      className="flex-1 h-2 rounded-full"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
-                    >
-                      <div
-                        className="h-full rounded-full"
-                        style={{ width: `${age.percentage}%`, backgroundColor: '#E8420A' }}
-                      />
-                    </div>
-                    <span className="text-sm text-white w-12 text-right">{age.percentage}%</span>
-                  </div>
-                ))}
+                <div
+                  style={{
+                    padding: 20,
+                    borderRadius: 16,
+                    border: '1px solid var(--border-default)',
+                    backgroundColor: 'rgba(26,10,10,0.5)',
+                  }}
+                >
+                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>
+                    Share Rate
+                  </p>
+                  <p
+                    style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary, #F5F0EB)' }}
+                  >
+                    {analytics.engagementMetrics.shareRate.toFixed(1)}%
+                  </p>
+                </div>
+                <div
+                  style={{
+                    padding: 20,
+                    borderRadius: 16,
+                    border: '1px solid var(--border-default)',
+                    backgroundColor: 'rgba(26,10,10,0.5)',
+                  }}
+                >
+                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>
+                    Comment Rate
+                  </p>
+                  <p
+                    style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary, #F5F0EB)' }}
+                  >
+                    {analytics.engagementMetrics.commentRate.toFixed(1)}%
+                  </p>
+                </div>
               </div>
             </div>
+
             <div>
-              <h3 className="text-lg font-semibold text-white mb-4">Top Countries</h3>
-              <div className="space-y-3">
-                {analytics.demographics.topCountries.map((country) => (
-                  <div key={country.country} className="flex items-center gap-3">
-                    <span className="text-sm text-white w-24">{country.country}</span>
+              <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>
+                Audience Demographics
+              </h2>
+              <div
+                style={{
+                  padding: 20,
+                  borderRadius: 16,
+                  border: '1px solid var(--border-default)',
+                  backgroundColor: 'rgba(26,10,10,0.5)',
+                }}
+              >
+                <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 14, marginBottom: 12 }}>
+                  Age Groups
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {analytics.demographics.ageGroups.map((group) => (
                     <div
-                      className="flex-1 h-2 rounded-full"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+                      key={group.range}
+                      style={{ display: 'flex', alignItems: 'center', gap: 12 }}
                     >
+                      <span
+                        style={{ width: 80, color: 'var(--text-muted, #9A8A7A)', fontSize: 12 }}
+                      >
+                        {group.range}
+                      </span>
                       <div
-                        className="h-full rounded-full"
-                        style={{ width: `${country.percentage}%`, backgroundColor: '#0D3B2E' }}
-                      />
+                        style={{
+                          flex: 1,
+                          height: 8,
+                          backgroundColor: 'var(--bg-surface, #2A1A1A)',
+                          borderRadius: 4,
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: `${group.percentage}%`,
+                            height: '100%',
+                            backgroundColor: 'var(--brand-orange, #E8420A)',
+                          }}
+                        />
+                      </div>
+                      <span
+                        style={{
+                          width: 50,
+                          textAlign: 'right',
+                          color: 'var(--text-muted, #9A8A7A)',
+                          fontSize: 12,
+                        }}
+                      >
+                        {group.percentage}%
+                      </span>
                     </div>
-                    <span className="text-sm text-white w-12 text-right">
-                      {country.percentage}%
-                    </span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
+          </>
+        ) : (
+          <p style={{ color: 'var(--text-muted, #9A8A7A)', textAlign: 'center', padding: 40 }}>
+            No analytics data available yet.
+          </p>
+        )}
+      </main>
       <AppFooter />
     </div>
   );

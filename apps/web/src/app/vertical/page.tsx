@@ -1,4 +1,5 @@
 'use client';
+import { Suspense, lazy, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import Link from 'next/link';
@@ -6,8 +7,13 @@ import { api, ContentItem } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import analytics from '@/lib/analytics';
 
-export default function VerticalPage(): React.JSX.Element {
+function VerticalPageContent(): React.JSX.Element {
+  useEffect(() => {
+    analytics.pageView('vertical');
+  }, []);
+
   const universesQuery = useQuery({
     queryKey: ['universes'],
     queryFn: async () => {
@@ -40,7 +46,7 @@ export default function VerticalPage(): React.JSX.Element {
   });
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Vertical" />
 
       {/* Hero Section */}
@@ -69,13 +75,13 @@ export default function VerticalPage(): React.JSX.Element {
               <div className="flex items-center gap-2 mb-4">
                 <span
                   className="px-3 py-1 rounded-full text-xs font-semibold"
-                  style={{ backgroundColor: '#E8420A', color: '#fff' }}
+                  style={{ backgroundColor: 'var(--brand-orange)', color: 'var(--brand-white)' }}
                 >
                   Premium
                 </span>
                 <span
                   className="px-3 py-1 rounded-full text-xs font-medium"
-                  style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8420A' }}
+                  style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
                 >
                   {series[0].contentType || 'Vertical'}
                 </span>
@@ -93,7 +99,7 @@ export default function VerticalPage(): React.JSX.Element {
                   </button>
                 </Link>
                 <Link
-                  href={`/watch/${series[0].id}`}
+                  href={`/vertical/lore`}
                   className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all inline-block"
                   style={{
                     border: '1px solid rgba(255,255,255,0.2)',
@@ -151,7 +157,10 @@ export default function VerticalPage(): React.JSX.Element {
                     />
                     <span
                       className="absolute top-2 right-2 px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                      style={{ backgroundColor: '#E8420A', color: '#fff' }}
+                      style={{
+                        backgroundColor: 'var(--brand-orange)',
+                        color: 'var(--brand-white)',
+                      }}
                     >
                       Premium
                     </span>
@@ -159,7 +168,10 @@ export default function VerticalPage(): React.JSX.Element {
                     <div className="absolute bottom-4 left-4 right-4">
                       <span
                         className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                        style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8420A' }}
+                        style={{
+                          backgroundColor: 'rgba(232,66,10,0.2)',
+                          color: 'var(--brand-orange)',
+                        }}
                       >
                         {show.contentType || 'Vertical'}
                       </span>
@@ -185,5 +197,30 @@ export default function VerticalPage(): React.JSX.Element {
 
       <AppFooter />
     </div>
+  );
+}
+
+const LazyVerticalPage = lazy(() => Promise.resolve({ default: VerticalPageContent }));
+
+export const metadata = {
+  title: 'Vertical | Azeebo',
+  description: 'Premium African storytelling — short-form vertical series and content.',
+  openGraph: {
+    title: 'Vertical | Azeebo',
+    description: 'Premium African storytelling — short-form vertical series and content.',
+  },
+};
+
+export default function VerticalPage(): React.JSX.Element {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
+      <LazyVerticalPage />
+    </Suspense>
   );
 }

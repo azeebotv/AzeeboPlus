@@ -28,6 +28,8 @@ model CreatorProfile {
   channels     Channel[]
   challenges   CreatorChallenge[]
   payoutRequests PayoutRequest[]
+  exclusiveContent ExclusiveContent[]
+  contentItems ContentItem[]
 
   @@map("creator_profiles")
 }
@@ -90,6 +92,7 @@ model ChallengeEntry {
   challengeId String
   contentUrl  String
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   challenge CreatorChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
 
@@ -128,6 +131,7 @@ model Subscription {
   updatedAt DateTime @updatedAt
 
   creator CreatorProfile @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  user    User           @relation(fields: [userId], references: [id], onDelete: Restrict)
 
   @@unique([userId, creatorId])
   @@map("subscriptions")
@@ -137,15 +141,55 @@ model Subscription {
 }
 
 model Tip {
-  id        String   @id @default(uuid())
+  id         String   @id @default(uuid())
   fromUserId String
   toUserId   String
+  creatorId  String
   amount    Decimal  @db.Decimal(18, 2)
+  currency  String   @default("NGN")
+  message   String?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  fromUser User @relation("TipFrom", fields: [fromUserId], references: [id], onDelete: Restrict)
+  toUser   User @relation("TipTo", fields: [toUserId], references: [id], onDelete: Restrict)
 
   @@map("tips")
   @@index([fromUserId])
   @@index([toUserId])
+  @@index([creatorId])
+  @@index([createdAt])
+}
+
+model TipLeaderboard {
+  id          String   @id @default(uuid())
+  creatorId   String
+  userId      String
+  totalAmount Decimal  @db.Decimal(18, 2) @default(0)
+  tier        String   @default("")
+  lastTipAt   DateTime @default(now())
+
+  @@unique([creatorId, userId])
+  @@map("tip_leaderboard")
+  @@index([creatorId])
+  @@index([creatorId, totalAmount])
+}
+
+model ExclusiveContent {
+  id          String   @id @default(uuid())
+  creatorId   String
+  title       String
+  description String?
+  mediaUrl    String
+  minTier     String   @default("gold")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  creator CreatorProfile @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@map("exclusive_content")
+  @@index([creatorId])
+  @@index([minTier])
 }
 
 model VerificationDocument {
@@ -159,6 +203,8 @@ model VerificationDocument {
   metadata    Json?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Restrict)
 
   @@map("verification_documents")
   @@index([userId])
@@ -176,6 +222,8 @@ model MediaUpload {
   assetId   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Restrict)
 
   @@map("media_uploads")
   @@index([userId])
@@ -196,10 +244,49 @@ model ContentItem {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  creator  CreatorProfile @relation(fields: [creatorId], references: [id], onDelete: Restrict)
+  universe Universe?      @relation(fields: [universeId], references: [id], onDelete: Restrict)
+
   @@map("content_items")
   @@index([creatorId])
   @@index([universeId])
   @@index([status])
+}
+
+model Universe {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  displayName String
+  description String?
+  icon        String?
+  isEnabled   Boolean  @default(true)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  contentItems ContentItem[]
+
+  @@map("universes")
+  @@index([name])
+  @@index([isEnabled])
+}
+
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  displayName String?
+  role        String   @default("user")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  verificationDocuments VerificationDocument[]
+  mediaUploads          MediaUpload[]
+  notifications         Notification[]
+  tipsGiven             Tip[] @relation("TipFrom")
+  tipsReceived          Tip[] @relation("TipTo")
+  subscriptions         Subscription[]
+
+  @@map("users")
 }
 
 model Notification {
@@ -211,6 +298,9 @@ model Notification {
   metadata  Json?
   readAt    DateTime?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
   @@index([userId])
@@ -227,6 +317,8 @@ model WalletSnapshot {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  transactions WalletTransactionSnapshot[]
+
   @@map("wallet_snapshots")
   @@index([userId])
 }
@@ -239,6 +331,9 @@ model WalletTransactionSnapshot {
   description String
   reference   String?
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  wallet WalletSnapshot? @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
   @@map("wallet_transaction_snapshots")
   @@index([walletId])

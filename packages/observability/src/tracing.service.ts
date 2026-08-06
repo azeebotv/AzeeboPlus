@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { AsyncLocalStorage } from 'async_hooks';
 
@@ -38,7 +38,7 @@ export class TracingService {
   private readonly asyncLocalStorage = new AsyncLocalStorage<TraceContext>();
   private exporters: Array<(span: Span) => void> = [];
 
-  constructor(config?: Partial<TracingConfig>) {
+  constructor(@Optional() config?: Partial<TracingConfig>) {
     this.config = {
       serviceName: config?.serviceName || 'unknown-service',
       exporterUrl: config?.exporterUrl || 'http://localhost:9411/api/traces',
@@ -136,9 +136,8 @@ export class TracingService {
     for (const exporter of this.exporters) {
       try {
         exporter(span);
-      } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error('Span export failed:', err);
+      } catch {
+        // Span export failed — continue with other exporters
       }
     }
   }

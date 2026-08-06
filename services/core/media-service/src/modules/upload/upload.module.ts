@@ -8,11 +8,7 @@ import { PremiumContentService } from './premium-content.service';
 import { CommonModule } from '../../common/common.module';
 
 @Module({
-  imports: [
-    ConfigModule,
-    CommonModule,
-    JwtConfigModule,
-  ],
+  imports: [ConfigModule, CommonModule, JwtConfigModule],
   controllers: [UploadController],
   providers: [UploadService, S3Service, PremiumContentService],
   exports: [UploadService, S3Service, PremiumContentService],

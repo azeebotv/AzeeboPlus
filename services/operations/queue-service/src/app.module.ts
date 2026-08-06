@@ -2,11 +2,12 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
-import { ServiceAuthGuard } from '@azeebo/security';
+import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
-import { EmailModule, FirebaseModule, SmsModule } from '@azeebo/shared-services';
+import { EmailModule, FirebaseModule, JwtConfigModule, SmsModule } from '@azeebo/shared-services';
 import { DatabaseModule } from './modules/database/database.module';
 import { HealthModule } from './modules/health/health.module';
+import { QueueModule } from './modules/queue/queue.module';
 import { NotificationProcessor } from './processors/notification.processor';
 import { PaymentProcessor } from './processors/payment.processor';
 import { EmailProcessor } from './processors/email.processor';
@@ -55,11 +56,14 @@ const QUEUE_CONFIG = {
       isGlobal: true,
       envFilePath: ['.env', '../../.env'],
     }),
+    RateLimiterModule.forRoot(),
     DatabaseModule,
     EmailModule,
     FirebaseModule,
     SmsModule,
+    JwtConfigModule,
     HealthModule,
+    QueueModule,
     BullModule.forRoot({
       connection: {
         host: process.env.REDIS_HOST || 'localhost',

@@ -59,7 +59,7 @@ export class ServiceAuthGuard implements CanActivate {
     const authHeader = request.headers['authorization'];
 
     // 4. Validate identity is present
-    if (!userId && !authHeader) {
+    if (!userId && !authHeader && !request.cookies?.access_token) {
       throw new UnauthorizedException(
         'Authentication required. No user identity found in request.'
       );
@@ -112,6 +112,32 @@ export class ServiceAuthGuard implements CanActivate {
       try {
         const payload = this.jwtService.verify<{ sub: string; role?: string; email?: string }>(
           token,
+          {
+            audience: 'azeebo-api',
+            issuer: 'azeebo-auth',
+          }
+        );
+
+        request.user = {
+          id: payload.sub,
+          sub: payload.sub,
+          role: payload.role || 'user',
+          email: payload.email || '',
+        };
+      } catch {
+        throw new UnauthorizedException('Invalid or expired token.');
+      }
+    } else if (request.cookies?.access_token) {
+      // Fallback: read JWT from httpOnly cookie (standalone admin/creator apps)
+      if (!this.jwtService) {
+        throw new UnauthorizedException(
+          'JWT verification unavailable. This service does not have JwtModule configured for direct token authentication.'
+        );
+      }
+
+      try {
+        const payload = this.jwtService.verify<{ sub: string; role?: string; email?: string }>(
+          request.cookies.access_token,
           {
             audience: 'azeebo-api',
             issuer: 'azeebo-auth',

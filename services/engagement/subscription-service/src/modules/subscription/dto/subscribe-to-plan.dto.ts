@@ -1,22 +1,27 @@
-import { IsString, IsOptional, IsBoolean } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsOptional, IsBoolean, IsIn } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class SubscribeToPlanDto {
   @ApiProperty({ example: 'plan-uuid-here' })
   @IsString()
   planId!: string;
 
-  @ApiProperty({ example: true, required: false })
+  @ApiPropertyOptional({ example: true })
   @IsBoolean()
   @IsOptional()
   autoRenew?: boolean;
 
-  @ApiProperty({ example: 'card', required: false })
+  @ApiPropertyOptional({ example: 'wallet', enum: ['external', 'wallet'] })
+  @IsString()
+  @IsIn(['external', 'wallet'])
+  @IsOptional()
+  paymentMethod?: 'external' | 'wallet';
+
+  @ApiPropertyOptional({
+    example: 'pay_ref_abc123',
+    description: 'Payment gateway reference (required when paymentMethod is external)',
+  })
   @IsString()
   @IsOptional()
-  paymentMethod?: string;
-
-  @ApiProperty({ example: 'pay_ref_abc123', description: 'Payment gateway reference' })
-  @IsString()
-  paymentReference!: string;
+  paymentReference?: string;
 }

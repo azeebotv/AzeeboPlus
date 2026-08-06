@@ -87,7 +87,13 @@ export default function MonetizationPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+      <div
+        style={{
+          backgroundColor: 'var(--brand-near-black)',
+          minHeight: '100vh',
+          color: 'var(--text-primary)',
+        }}
+      >
         <AppHeader />
         <main
           style={{
@@ -128,7 +134,13 @@ export default function MonetizationPage(): React.JSX.Element {
 
   if (error || !monetization) {
     return (
-      <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+      <div
+        style={{
+          backgroundColor: 'var(--brand-near-black)',
+          minHeight: '100vh',
+          color: 'var(--text-primary)',
+        }}
+      >
         <AppHeader />
         <main
           style={{
@@ -150,7 +162,13 @@ export default function MonetizationPage(): React.JSX.Element {
   }
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <main
         style={{
@@ -167,7 +185,7 @@ export default function MonetizationPage(): React.JSX.Element {
             style={{
               background: 'none',
               border: 'none',
-              color: '#9A8A7A',
+              color: 'var(--text-secondary)',
               cursor: 'pointer',
               fontSize: 14,
               marginBottom: 16,
@@ -179,7 +197,7 @@ export default function MonetizationPage(): React.JSX.Element {
             <span>←</span> Back
           </button>
           <h1 style={{ fontSize: 28, fontWeight: 700 }}>Monetization</h1>
-          <p style={{ color: '#9A8A7A', marginTop: 4 }}>
+          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>
             Manage your earnings and monetization settings
           </p>
         </div>
@@ -209,7 +227,7 @@ export default function MonetizationPage(): React.JSX.Element {
                   ? 'Eligible for Monetization'
                   : 'Not Yet Eligible'}
               </h3>
-              <p style={{ color: '#9A8A7A', fontSize: 13 }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
                 Meet all requirements to unlock earning features
               </p>
             </div>
@@ -224,10 +242,10 @@ export default function MonetizationPage(): React.JSX.Element {
                     alignItems: 'center',
                     gap: 8,
                     fontSize: 14,
-                    color: '#9A8A7A',
+                    color: 'var(--text-secondary)',
                   }}
                 >
-                  <span style={{ color: '#CC1C1C' }}>○</span> {req}
+                  <span style={{ color: 'var(--brand-red)' }}>○</span> {req}
                 </div>
               ))}
             </div>
@@ -247,17 +265,17 @@ export default function MonetizationPage(): React.JSX.Element {
             {
               label: 'Total Earned',
               value: `₦${monetization.earnings.totalEarned.toLocaleString()}`,
-              color: '#E8420A',
+              color: 'var(--brand-orange)',
             },
             {
               label: 'Pending Payout',
               value: `₦${monetization.earnings.pendingPayout.toLocaleString()}`,
-              color: '#F59E0B',
+              color: 'var(--color-warning-500)',
             },
             {
               label: 'Paid Out',
               value: `₦${monetization.earnings.paidOut.toLocaleString()}`,
-              color: '#0D3B2E',
+              color: 'var(--brand-forest)',
             },
           ].map((item, i) => (
             <div
@@ -265,7 +283,9 @@ export default function MonetizationPage(): React.JSX.Element {
               className="az-glass"
               style={{ padding: 20, borderRadius: 16, textAlign: 'center' }}
             >
-              <p style={{ fontSize: 13, color: '#9A8A7A', marginBottom: 8 }}>{item.label}</p>
+              <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>
+                {item.label}
+              </p>
               <p style={{ fontSize: 22, fontWeight: 700, color: item.color }}>{item.value}</p>
             </div>
           ))}
@@ -299,7 +319,9 @@ export default function MonetizationPage(): React.JSX.Element {
               >
                 <div>
                   <h4 style={{ fontWeight: 600, fontSize: 15 }}>{setting.label}</h4>
-                  <p style={{ color: '#9A8A7A', fontSize: 13, marginTop: 2 }}>{setting.desc}</p>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 2 }}>
+                    {setting.desc}
+                  </p>
                 </div>
                 <button
                   onClick={() => {
@@ -317,8 +339,8 @@ export default function MonetizationPage(): React.JSX.Element {
                     backgroundColor: monetization.settings[
                       setting.key as keyof typeof monetization.settings
                     ]
-                      ? '#E8420A'
-                      : '#2A1A1A',
+                      ? 'var(--brand-orange)'
+                      : 'var(--bg-secondary)',
                     transition: 'background-color 0.2s',
                   }}
                 >

@@ -1,8 +1,19 @@
+jest.mock('axios');
+jest.mock('@azeebo/shared-services', () => ({
+  FirebaseService: 'FirebaseService',
+  EmailService: 'EmailService',
+  SmsService: 'SmsService',
+  CacheService: 'CacheService',
+  cacheKey: (...args: unknown[]) => args.join(':'),
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationsService } from './notifications.service.js';
 import { PrismaService } from '../database/prisma.service.js';
-import { FirebaseService, EmailService, SmsService } from '@azeebo/shared-services';
-import { NotFoundException } from '@nestjs/common';
+import { FirebaseService, EmailService, SmsService, CacheService } from '@azeebo/shared-services';
+import { NotFoundException, ForbiddenException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
 
 describe('NotificationsService', () => {
   let service: NotificationsService;
@@ -16,11 +27,16 @@ describe('NotificationsService', () => {
       updateMany: jest.fn(),
       count: jest.fn(),
     },
+    notificationPreference: {
+      findUnique: jest.fn(),
+      upsert: jest.fn(),
+    },
     pushToken: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      upsert: jest.fn(),
       delete: jest.fn(),
     },
     user: {
@@ -51,6 +67,11 @@ describe('NotificationsService', () => {
         { provide: FirebaseService, useValue: mockFirebaseService },
         { provide: EmailService, useValue: mockEmailService },
         { provide: SmsService, useValue: mockSmsService },
+        {
+          provide: CacheService,
+          useValue: { get: jest.fn(), set: jest.fn(), invalidate: jest.fn() },
+        },
+        { provide: ConfigService, useValue: { get: jest.fn(), getOrThrow: jest.fn() } },
       ],
     }).compile();
 
@@ -137,13 +158,13 @@ describe('NotificationsService', () => {
       await expect(service.markAsRead('user-1', 'notif-1')).rejects.toThrow(NotFoundException);
     });
 
-    it('should throw NotFoundException if notification belongs to different user', async () => {
+    it('should throw ForbiddenException if notification belongs to different user', async () => {
       mockPrismaService.notification.findUnique.mockResolvedValue({
         id: 'notif-1',
         userId: 'other-user',
       });
 
-      await expect(service.markAsRead('user-1', 'notif-1')).rejects.toThrow(NotFoundException);
+      await expect(service.markAsRead('user-1', 'notif-1')).rejects.toThrow(ForbiddenException);
     });
   });
 
@@ -163,22 +184,20 @@ describe('NotificationsService', () => {
 
   describe('updatePreferences', () => {
     it('should update notification preferences', async () => {
-      mockPrismaService.user.update.mockResolvedValue({ id: 'user-1' });
+      mockPrismaService.notificationPreference.findUnique.mockResolvedValue(null);
+      mockPrismaService.notificationPreference.upsert.mockResolvedValue({ id: 'pref-1' });
 
       const result = await service.updatePreferences('user-1', { email: true, sms: false });
 
       expect(result.success).toBe(true);
-      expect(mockPrismaService.user.update).toHaveBeenCalledWith({
-        where: { id: 'user-1' },
-        data: { notificationPreferences: { email: true, sms: false } },
-      });
+      expect(mockPrismaService.notificationPreference.upsert).toHaveBeenCalled();
     });
   });
 
   describe('getPreferences', () => {
     it('should return user preferences', async () => {
-      mockPrismaService.user.findUnique.mockResolvedValue({
-        notificationPreferences: { email: true, push: false },
+      mockPrismaService.notificationPreference.findUnique.mockResolvedValue({
+        categoryOverrides: { email: true, push: false },
       });
 
       const result = await service.getPreferences('user-1');
@@ -189,9 +208,7 @@ describe('NotificationsService', () => {
     });
 
     it('should return empty object if no preferences set', async () => {
-      mockPrismaService.user.findUnique.mockResolvedValue({
-        notificationPreferences: null,
-      });
+      mockPrismaService.notificationPreference.findUnique.mockResolvedValue(null);
 
       const result = await service.getPreferences('user-1');
 
@@ -246,27 +263,38 @@ describe('NotificationsService', () => {
     describe('savePushToken', () => {
       it('should save new push token', async () => {
         mockPrismaService.pushToken.findUnique.mockResolvedValue(null);
-        mockPrismaService.pushToken.create.mockResolvedValue(mockTokens[0]);
+        mockPrismaService.pushToken.upsert.mockResolvedValue(mockTokens[0]);
 
         const result = await service.savePushToken('user-1', 'token-abc', 'ios');
 
         expect(result.success).toBe(true);
-        expect(mockPrismaService.pushToken.create).toHaveBeenCalled();
+        expect(mockPrismaService.pushToken.upsert).toHaveBeenCalled();
       });
 
-      it('should update existing token if user changed', async () => {
+      it('should update existing token for same user', async () => {
+        mockPrismaService.pushToken.findUnique.mockResolvedValue({
+          id: '1',
+          userId: 'user-1',
+          token: 'token-abc',
+          deviceType: 'android',
+        });
+        mockPrismaService.pushToken.upsert.mockResolvedValue(mockTokens[0]);
+
+        const result = await service.savePushToken('user-1', 'token-abc', 'ios');
+
+        expect(result.success).toBe(true);
+        expect(mockPrismaService.pushToken.upsert).toHaveBeenCalled();
+      });
+
+      it('should throw ConflictException if token belongs to another user', async () => {
         mockPrismaService.pushToken.findUnique.mockResolvedValue({
           id: '1',
           userId: 'old-user',
           token: 'token-abc',
           deviceType: 'android',
         });
-        mockPrismaService.pushToken.update.mockResolvedValue(mockTokens[0]);
 
-        const result = await service.savePushToken('user-1', 'token-abc', 'ios');
-
-        expect(result.success).toBe(true);
-        expect(mockPrismaService.pushToken.update).toHaveBeenCalled();
+        await expect(service.savePushToken('user-1', 'token-abc', 'ios')).rejects.toThrow();
       });
     });
 
@@ -291,7 +319,7 @@ describe('NotificationsService', () => {
 
         expect(result.success).toBe(true);
         expect(mockPrismaService.pushToken.delete).toHaveBeenCalledWith({
-          where: { token: 'token-abc' },
+          where: { id: 'token-abc' },
         });
       });
 
@@ -355,7 +383,7 @@ describe('NotificationsService', () => {
 
     describe('sendEmailNotification', () => {
       it('should send custom email notification', async () => {
-        mockPrismaService.user.findUnique.mockResolvedValue(mockUser);
+        (axios.get as jest.Mock).mockResolvedValue({ data: mockUser });
         mockEmailService.sendCustomEmail.mockResolvedValue(true);
 
         const result = await service.sendEmailNotification('user-1', 'Subject', 'Body');
@@ -364,12 +392,12 @@ describe('NotificationsService', () => {
         expect(mockEmailService.sendCustomEmail).toHaveBeenCalledWith(
           'test@example.com',
           'Subject',
-          'Body'
+          '<p>Body</p>'
         );
       });
 
       it('should return false if user not found', async () => {
-        mockPrismaService.user.findUnique.mockResolvedValue(null);
+        (axios.get as jest.Mock).mockRejectedValue(new Error('Not found'));
 
         const result = await service.sendEmailNotification('user-1', 'Subject', 'Body');
 
@@ -379,7 +407,7 @@ describe('NotificationsService', () => {
 
     describe('sendWelcomeEmail', () => {
       it('should send welcome email', async () => {
-        mockPrismaService.user.findUnique.mockResolvedValue(mockUser);
+        (axios.get as jest.Mock).mockResolvedValue({ data: mockUser });
         mockEmailService.sendEmail.mockResolvedValue(true);
 
         const result = await service.sendWelcomeEmail('user-1');
@@ -396,7 +424,7 @@ describe('NotificationsService', () => {
 
     describe('sendPasswordResetEmail', () => {
       it('should send password reset email', async () => {
-        mockPrismaService.user.findUnique.mockResolvedValue(mockUser);
+        (axios.get as jest.Mock).mockResolvedValue({ data: mockUser });
         mockEmailService.sendEmail.mockResolvedValue(true);
 
         const result = await service.sendPasswordResetEmail('user-1', 'https://reset.link');
@@ -413,7 +441,7 @@ describe('NotificationsService', () => {
 
     describe('sendPaymentConfirmationEmail', () => {
       it('should send payment confirmation email', async () => {
-        mockPrismaService.user.findUnique.mockResolvedValue(mockUser);
+        (axios.get as jest.Mock).mockResolvedValue({ data: mockUser });
         mockEmailService.sendEmail.mockResolvedValue(true);
 
         const result = await service.sendPaymentConfirmationEmail(
@@ -449,7 +477,7 @@ describe('NotificationsService', () => {
 
     describe('sendSmsNotification', () => {
       it('should send SMS notification', async () => {
-        mockPrismaService.user.findUnique.mockResolvedValue(mockUserWithPhone);
+        (axios.get as jest.Mock).mockResolvedValue({ data: mockUserWithPhone });
         mockSmsService.sendSms.mockResolvedValue(true);
 
         const result = await service.sendSmsNotification('user-1', 'Hello via SMS');
@@ -459,9 +487,8 @@ describe('NotificationsService', () => {
       });
 
       it('should return false if user has no phone', async () => {
-        mockPrismaService.user.findUnique.mockResolvedValue({
-          ...mockUserWithPhone,
-          phone: null,
+        (axios.get as jest.Mock).mockResolvedValue({
+          data: { ...mockUserWithPhone, phone: null },
         });
 
         const result = await service.sendSmsNotification('user-1', 'Hello');
@@ -470,7 +497,7 @@ describe('NotificationsService', () => {
       });
 
       it('should return false if user not found', async () => {
-        mockPrismaService.user.findUnique.mockResolvedValue(null);
+        (axios.get as jest.Mock).mockRejectedValue(new Error('Not found'));
 
         const result = await service.sendSmsNotification('user-1', 'Hello');
 
@@ -480,7 +507,7 @@ describe('NotificationsService', () => {
 
     describe('sendWelcomeSms', () => {
       it('should send welcome SMS', async () => {
-        mockPrismaService.user.findUnique.mockResolvedValue(mockUserWithPhone);
+        (axios.get as jest.Mock).mockResolvedValue({ data: mockUserWithPhone });
         mockSmsService.sendSmsWithTemplate.mockResolvedValue(true);
 
         const result = await service.sendWelcomeSms('user-1');
@@ -494,7 +521,7 @@ describe('NotificationsService', () => {
 
     describe('sendPasswordResetSms', () => {
       it('should send password reset SMS', async () => {
-        mockPrismaService.user.findUnique.mockResolvedValue(mockUserWithPhone);
+        (axios.get as jest.Mock).mockResolvedValue({ data: mockUserWithPhone });
         mockSmsService.sendSmsWithTemplate.mockResolvedValue(true);
 
         const result = await service.sendPasswordResetSms('user-1', '123456');
@@ -510,7 +537,7 @@ describe('NotificationsService', () => {
 
     describe('sendAccountVerificationSms', () => {
       it('should send verification code SMS', async () => {
-        mockPrismaService.user.findUnique.mockResolvedValue(mockUserWithPhone);
+        (axios.get as jest.Mock).mockResolvedValue({ data: mockUserWithPhone });
         mockSmsService.sendSmsWithTemplate.mockResolvedValue(true);
 
         const result = await service.sendAccountVerificationSms('user-1', '789012');

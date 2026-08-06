@@ -2,6 +2,24 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MoviesService } from './movies.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { CacheService } from '@azeebo/shared-services';
+import axios from 'axios';
+
+jest.mock('axios');
+const mockedAxios = axios as jest.Mocked<typeof axios>;
+
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: jest.fn(),
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+}));
+
+const mockCacheService = {
+  get: jest.fn().mockResolvedValue(null),
+  set: jest.fn().mockResolvedValue('OK'),
+  delete: jest.fn().mockResolvedValue(1),
+  invalidate: jest.fn().mockResolvedValue(1),
+};
 
 describe('MoviesService', () => {
   let service: MoviesService;
@@ -30,6 +48,29 @@ describe('MoviesService', () => {
               findFirst: jest.fn(),
             },
             premiere: { findMany: jest.fn() },
+          },
+        },
+        {
+          provide: CacheService,
+          useValue: mockCacheService,
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((key: string, defaultValue: unknown) => {
+              const config: Record<string, unknown> = {
+                WALLET_SERVICE_URL: 'http://wallet-service:3001',
+                MOVIE_RENTAL_FEE: 500,
+                ANALYTICS_SERVICE_URL: 'http://analytics-service:3040',
+              };
+              return config[key] ?? defaultValue;
+            }),
+            getOrThrow: jest.fn((key: string) => {
+              const config: Record<string, string> = {
+                WALLET_SERVICE_URL: 'http://wallet-service:3001',
+              };
+              return config[key] || '';
+            }),
           },
         },
       ],
@@ -95,8 +136,13 @@ describe('MoviesService', () => {
 
     it('should rent movie successfully (happy path)', async () => {
       const mockRental = { id: 'rental-1', userId, movieId, status: 'active' };
+      const mockMovie = { id: movieId, title: 'Test Movie', status: 'published', rentalFee: 500 };
       (prismaService.rental.findUnique as jest.Mock).mockResolvedValue(null);
+      (prismaService.movie.findUnique as jest.Mock).mockResolvedValue(mockMovie);
       (prismaService.rental.create as jest.Mock).mockResolvedValue(mockRental);
+
+      mockedAxios.get.mockResolvedValue({ data: { data: { id: 'wallet-1', balance: 1000 } } });
+      mockedAxios.post.mockResolvedValue({ data: { success: true } });
 
       const result = await service.rentMovie(userId, movieId);
 

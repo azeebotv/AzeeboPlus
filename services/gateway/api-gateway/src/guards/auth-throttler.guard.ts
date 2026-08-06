@@ -45,7 +45,6 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
     super(options, storageService, reflector);
     if (process.env.REDIS_URL) {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports -- ioredis is an optional peer dependency; require() needed for synchronous optional loading
         const Redis = require('ioredis');
         this.redisClient = new Redis(process.env.REDIS_URL, {
           maxRetriesPerRequest: 3,
@@ -86,13 +85,28 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
 
     const clientIp = request.ip || request.socket?.remoteAddress || 'unknown';
     const window = Math.floor(Date.now() / (this.AUTH_TTL * 1000));
-    const key = `${this.KEY_PREFIX}${clientIp}:${window}`;
 
+    // Per-IP + endpoint rate limit
+    const endpoint = path.replace(/^\/+|\/+$/g, '').replace(/\//g, ':');
+    const ipKey = `${this.KEY_PREFIX}${clientIp}:${endpoint}:${window}`;
     if (this.useRedis && this.redisClient) {
-      return this.checkWithRedis(key, clientIp);
+      await this.checkWithRedis(ipKey, clientIp);
+    } else {
+      this.checkInMemory(`${clientIp}:${endpoint}`, window);
     }
 
-    return this.checkInMemory(clientIp, window);
+    // Per-account + endpoint rate limit (extract email/phone from body if available)
+    const account_id = request.body?.email || request.body?.phone || request.body?.username;
+    if (account_id) {
+      const accountKey = `${this.KEY_PREFIX}acct:${account_id}:${endpoint}:${window}`;
+      if (this.useRedis && this.redisClient) {
+        await this.checkWithRedis(accountKey, `account:${account_id}`);
+      } else {
+        this.checkInMemory(`acct:${account_id}:${endpoint}`, window);
+      }
+    }
+
+    return true;
   }
 
   private async checkWithRedis(key: string, clientIp: string): Promise<boolean> {

@@ -1,3 +1,6 @@
+// OpenTelemetry - disabled in local dev (incompatible with Node.js 26)
+// Enable in production by setting OTEL_EXPORTER_OTLP_ENDPOINT
+
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module.js';
@@ -5,9 +8,10 @@ import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { LoggingInterceptor } from '@azeebo/logger';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
-import helmet from 'helmet';
+import { createHelmetConfig, configureCors } from '@azeebo/security';
+
 import { validateEnvironment } from '@azeebo/shared-types';
-import { configureCors } from '@azeebo/security';
+
 
 async function bootstrap(): Promise<void> {
   // Validate JWT secrets before starting
@@ -20,8 +24,8 @@ async function bootstrap(): Promise<void> {
   }
 
   for (const secret of requiredJwtSecrets) {
-    if (process.env[secret]!.length < 32) {
-      Logger.error(`${secret} must be at least 32 characters long`);
+    if (process.env[secret]!.length < 64) {
+      Logger.error(`${secret} must be at least 64 characters long`);
       process.exit(1);
     }
   }
@@ -41,25 +45,11 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // Payload size limits (10MB max) — use Nest's built-in body parser (no body-parser dep)
-  app.useBodyParser('json', { limit: '10mb' });
-  app.useBodyParser('urlencoded', { limit: '10mb', extended: true });
+  app.useBodyParser('json', { limit: '1mb' });
+  app.useBodyParser('urlencoded', { limit: '1mb', extended: true });
 
   // Security headers
-  app.use(
-    helmet({
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'self'"],
-          styleSrc: ["'self'"],
-          imgSrc: ["'self'", 'data:', 'https:'],
-        },
-      },
-      hsts: {
-        maxAge: 31536000,
-        includeSubDomains: true,
-      },
-    })
-  );
+  app.use(createHelmetConfig());
 
   // Global logging interceptor
   app.useGlobalInterceptors(new LoggingInterceptor());

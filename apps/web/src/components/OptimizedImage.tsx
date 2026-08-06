@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import { useState, useCallback } from 'react';
+import type { CSSProperties } from 'react';
 
 interface OptimizedImageProps {
   src: string;
@@ -8,6 +9,7 @@ interface OptimizedImageProps {
   height?: number;
   fill?: boolean;
   className?: string;
+  style?: CSSProperties;
   priority?: boolean;
   sizes?: string;
   placeholder?: 'blur' | 'empty';
@@ -22,7 +24,7 @@ const UNOPTIMIZED_HOSTS = ['placehold.co'];
 function isUnoptimizedUrl(url: string): boolean {
   try {
     const hostname = new URL(url).hostname;
-    return UNOPTIMIZED_HOSTS.some(host => hostname.includes(host));
+    return UNOPTIMIZED_HOSTS.some((host) => hostname.includes(host));
   } catch {
     return false;
   }
@@ -44,6 +46,7 @@ export function OptimizedImage({
   height,
   fill = false,
   className,
+  style,
   priority = false,
   sizes = '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw',
   placeholder = 'empty',
@@ -69,6 +72,7 @@ export function OptimizedImage({
       height={fill ? undefined : height || 600}
       fill={fill}
       className={className}
+      style={style}
       priority={priority}
       sizes={sizes}
       placeholder={placeholder}

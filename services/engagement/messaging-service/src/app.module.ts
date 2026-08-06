@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { MessagingModule } from './modules/messaging/messaging.module.js';
 import { DatabaseModule } from './modules/database/database.module.js';
 import { HealthModule } from './modules/health/health.module.js';
+import { AdminModule } from './modules/admin/admin.module.js';
 import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 
@@ -17,6 +18,7 @@ import { ResponseWrapperInterceptor } from '@azeebo/logger';
     DatabaseModule,
     MessagingModule,
     HealthModule,
+    AdminModule,
   ],
   providers: [
     {

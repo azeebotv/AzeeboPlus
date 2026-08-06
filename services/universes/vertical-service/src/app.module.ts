@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { DatabaseModule } from './modules/database/database.module';
 import { UniverseModule } from './modules/universe/universe.module';
 import { CharactersModule } from './modules/characters/characters.module';
@@ -10,6 +9,7 @@ import { TitlesModule } from './modules/titles/titles.module';
 import { LoreModule } from './modules/lore/lore.module';
 import { CrossoversModule } from './modules/crossovers/crossovers.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { StoryworldsModule } from './modules/storyworlds/storyworlds.module';
 import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
 import { ConfigModule } from '@nestjs/config';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
@@ -23,12 +23,6 @@ import { CacheModule, JwtConfigModule } from '@azeebo/shared-services';
     }),
     RateLimiterModule.forRoot(),
     JwtConfigModule,
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60000,
-        limit: 100,
-      },
-    ]),
     DatabaseModule,
     CacheModule,
     HealthModule,
@@ -38,6 +32,7 @@ import { CacheModule, JwtConfigModule } from '@azeebo/shared-services';
     TitlesModule,
     LoreModule,
     CrossoversModule,
+    StoryworldsModule,
     AdminModule,
   ],
   providers: [

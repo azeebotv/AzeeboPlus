@@ -69,7 +69,8 @@ export default function ResetPasswordScreen() {
         },
       ]);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to reset password. Please try again.';
+      const message =
+        error instanceof Error ? error.message : 'Failed to reset password. Please try again.';
       Alert.alert('Error', message);
     } finally {
       setIsLoading(false);

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
+import { isPlaceholderSecret } from '@azeebo/shared-types';
 
 interface JwtPayload {
   sub: string;
@@ -23,10 +24,18 @@ interface ValidatedUser {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
+
   constructor(configService: ConfigService) {
     const secret = configService.get<string>('JWT_ACCESS_SECRET');
     if (!secret) {
       throw new Error('JWT_ACCESS_SECRET environment variable is required');
+    }
+
+    if (isPlaceholderSecret(secret)) {
+      throw new Error(
+        'JWT_ACCESS_SECRET contains a placeholder value and will NOT work. ' +
+        'Generate a real secret with: openssl rand -base64 48'
+      );
     }
 
     super({

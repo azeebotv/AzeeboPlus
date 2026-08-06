@@ -13,16 +13,23 @@ export class IntelligenceService {
     @Inject(PrismaService) private prisma: PrismaService,
     @Inject(ConfigService) private configService: ConfigService
   ) {
-    this.userServiceUrl = this.configService.get<string>('USER_SERVICE_URL', 'http://user-service:3001');
-    this.contentServiceUrl = this.configService.get<string>('CONTENT_SERVICE_URL', 'http://content-service:3004');
+    this.userServiceUrl = this.configService.get<string>(
+      'USER_SERVICE_URL',
+      'http://user-service:3001'
+    );
+    this.contentServiceUrl = this.configService.get<string>(
+      'CONTENT_SERVICE_URL',
+      'http://content-service:3004'
+    );
   }
 
-  private async getUserById(userId: string): Promise<{ id: string; displayName?: string; email?: string } | null> {
+  private async getUserById(
+    userId: string
+  ): Promise<{ id: string; displayName?: string; email?: string } | null> {
     try {
-      const response = await axios.get<{ data?: { id: string; displayName?: string; email?: string } }>(
-        `${this.userServiceUrl}/users/${userId}`,
-        { timeout: 5000 }
-      );
+      const response = await axios.get<{
+        data?: { id: string; displayName?: string; email?: string };
+      }>(`${this.userServiceUrl}/users/${userId}`, { timeout: 5000 });
       return response.data?.data || null;
     } catch {
       return null;
@@ -41,7 +48,9 @@ export class IntelligenceService {
     }
   }
 
-  private async getContentByCreator(creatorId: string): Promise<{ id: string; viewCount: number }[]> {
+  private async getContentByCreator(
+    creatorId: string
+  ): Promise<{ id: string; viewCount: number }[]> {
     try {
       const response = await axios.get<{ data?: { items?: { id: string; viewCount: number }[] } }>(
         `${this.contentServiceUrl}/content/creator/${creatorId}`,
@@ -84,14 +93,34 @@ export class IntelligenceService {
         .slice(0, 3)
         .map(([name]) => name);
 
+      // Extract recent categories from watched content
+      const recentCategories = [
+        ...new Set(watchedContent.map((c) => c.universe).filter(Boolean)),
+      ].slice(0, 5);
+
+      // Build preferences from watch history patterns
+      const preferences: Record<string, unknown> = {
+        topUniverses,
+        avgWatchDuration:
+          watchHistory.length > 0
+            ? watchHistory.reduce(
+                (sum, h) =>
+                  sum + (((h as unknown as Record<string, unknown>).duration as number) || 0),
+                0
+              ) / watchHistory.length
+            : 0,
+        totalWatched: watchHistory.length,
+        engagementLevel: rewardAccount ? 'active' : 'new',
+      };
+
       return {
         success: true,
         data: {
           userId,
           topUniverses,
-          recentCategories: [],
+          recentCategories,
           engagementLevel: rewardAccount ? 'active' : 'new',
-          preferences: {},
+          preferences,
         },
       };
     } catch (error) {
@@ -187,7 +216,6 @@ export class IntelligenceService {
     }
   }
 
-  // TODO: add universe filtering logic when needed (requires join on contentItem table)
   async getCreatorScores(_universe?: string): Promise<{ success: boolean; data?: unknown }> {
     try {
       const scores = await this.prisma.creatorScore.findMany({

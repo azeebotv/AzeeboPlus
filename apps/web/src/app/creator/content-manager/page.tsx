@@ -77,11 +77,11 @@ export default function ContentManagerPage(): React.JSX.Element {
       case 'draft':
         return { color: 'rgba(255,255,255,0.4)' };
       case 'processing':
-        return { color: '#EAB308' };
+        return { color: 'var(--color-warning-400)' };
       case 'published':
-        return { color: '#22C55E' };
+        return { color: 'var(--color-success-500)' };
       case 'archived':
-        return { color: '#EF4444' };
+        return { color: 'var(--color-error-500)' };
       default:
         return { color: 'rgba(255,255,255,0.4)' };
     }
@@ -111,7 +111,7 @@ export default function ContentManagerPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
         <AppHeader />
         <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
@@ -139,7 +139,7 @@ export default function ContentManagerPage(): React.JSX.Element {
 
   if (error) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
         <AppHeader />
         <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
           <ErrorState
@@ -153,7 +153,7 @@ export default function ContentManagerPage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader />
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-8">
@@ -196,7 +196,7 @@ export default function ContentManagerPage(): React.JSX.Element {
                     ? {
                         border: '1px solid rgba(255,255,255,0.2)',
                         backgroundColor: 'rgba(255,255,255,0.08)',
-                        color: '#fff',
+                        color: 'var(--brand-white)',
                       }
                     : undefined
                 }
@@ -245,7 +245,13 @@ export default function ContentManagerPage(): React.JSX.Element {
                 className="az-glass overflow-hidden cursor-pointer transition-all hover:scale-[1.02]"
               >
                 <div className="relative">
-                  <OptimizedImage src={item.thumbnail} alt={item.title} width={400} height={160} className="w-full h-40 object-cover" />
+                  <OptimizedImage
+                    src={item.thumbnail}
+                    alt={item.title}
+                    width={400}
+                    height={160}
+                    className="w-full h-40 object-cover"
+                  />
                   <div
                     className="absolute top-2 right-2 rounded-full w-8 h-8 flex items-center justify-center"
                     style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
@@ -271,7 +277,13 @@ export default function ContentManagerPage(): React.JSX.Element {
           <div className="space-y-4">
             {filteredContent.map((item: ContentItem) => (
               <div key={item.id} className="az-glass overflow-hidden flex">
-                <OptimizedImage src={item.thumbnail} alt={item.title} width={160} height={160} className="w-40 h-40 object-cover" />
+                <OptimizedImage
+                  src={item.thumbnail}
+                  alt={item.title}
+                  width={160}
+                  height={160}
+                  className="w-40 h-40 object-cover"
+                />
                 <div className="flex-1 p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
@@ -295,7 +307,7 @@ export default function ContentManagerPage(): React.JSX.Element {
                         <button
                           onClick={() => publishMutation.mutate(item.id)}
                           className="px-4 py-2 rounded-full text-sm font-medium text-white transition-colors"
-                          style={{ backgroundColor: '#22C55E' }}
+                          style={{ backgroundColor: 'var(--color-success-500)' }}
                         >
                           Publish
                         </button>
@@ -306,7 +318,7 @@ export default function ContentManagerPage(): React.JSX.Element {
                         style={{
                           border: '1px solid rgba(255,255,255,0.2)',
                           backgroundColor: 'rgba(255,255,255,0.08)',
-                          color: '#fff',
+                          color: 'var(--brand-white)',
                         }}
                       >
                         Edit
@@ -325,7 +337,10 @@ export default function ContentManagerPage(): React.JSX.Element {
                           });
                         }}
                         className="px-3 py-2 rounded-full text-sm transition-colors"
-                        style={{ backgroundColor: 'rgba(239,68,68,0.2)', color: '#EF4444' }}
+                        style={{
+                          backgroundColor: 'rgba(239,68,68,0.2)',
+                          color: 'var(--color-error-500)',
+                        }}
                       >
                         🗑
                       </button>

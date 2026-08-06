@@ -1,11 +1,14 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
 import { apiClient } from '../src/api/client';
 import { ApiResponse } from '../src/types/api';
+import { analytics } from '../src/utils/analytics';
+import { radius } from '../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -35,6 +38,7 @@ interface FeaturedItem {
 export default function RealityUniverseHome() {
   const colorScheme = useColorScheme();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const isDark = colorScheme === 'dark';
 
   const showsQuery = useQuery({
@@ -65,11 +69,20 @@ export default function RealityUniverseHome() {
   });
 
   const isLoading = showsQuery.isLoading || contestantsQuery.isLoading || featuredQuery.isLoading;
-  const error = showsQuery.error?.message || contestantsQuery.error?.message || featuredQuery.error?.message;
+  const error =
+    showsQuery.error?.message || contestantsQuery.error?.message || featuredQuery.error?.message;
 
   const liveShows = showsQuery.data ?? [];
   const contestants = contestantsQuery.data ?? [];
   const featuredContent = featuredQuery.data ?? [];
+
+  useEffect(() => {
+    if (liveShows.length > 0 && liveShows[0].id) {
+      try {
+        analytics.realityShowViewed(liveShows[0].id);
+      } catch {}
+    }
+  }, [liveShows]);
 
   if (isLoading) {
     return (
@@ -108,6 +121,7 @@ export default function RealityUniverseHome() {
     <TouchableOpacity
       style={[styles.contestantCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
       onPress={() => router.push('/vote')}
+      accessibilityLabel={`Vote for ${item.name}`}
     >
       <View style={[styles.contestantRank, { backgroundColor: index < 3 ? '#E8420A' : '#4a4a4a' }]}>
         <Text style={styles.contestantRankText}>#{index + 1}</Text>
@@ -128,10 +142,10 @@ export default function RealityUniverseHome() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <ScrollView style={[{ flex: 1 }, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top, backgroundColor: isDark ? '#1a1a1a' : '#ffffff' }]}>
           <View style={styles.headerTop}>
             <Text style={styles.universeLabel}>🎭 Reality</Text>
-            <TouchableOpacity style={styles.notificationBadge}>
+            <TouchableOpacity style={styles.notificationBadge} accessibilityLabel="Notifications">
               <Text style={styles.bellIcon}>🔔</Text>
               <View style={styles.badge} />
             </TouchableOpacity>
@@ -141,7 +155,7 @@ export default function RealityUniverseHome() {
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.liveShowCard} onPress={() => router.push('/reality/show')}>
+        <TouchableOpacity style={styles.liveShowCard} onPress={() => router.push('/reality/show')} accessibilityLabel={`Watch ${showName} live`}>
           <View style={styles.liveShowImagePlaceholder}>
             <Text style={styles.playIcon}>▶️</Text>
             <View style={styles.liveBadge}>
@@ -265,7 +279,6 @@ const styles = StyleSheet.create({
   header: {
     padding: 16,
     paddingTop: 50,
-    backgroundColor: '#1a1a1a',
   },
   headerTop: {
     flexDirection: 'row',
@@ -299,7 +312,7 @@ const styles = StyleSheet.create({
   },
   liveShowCard: {
     margin: 16,
-    borderRadius: 16,
+    borderRadius: radius.xl,
     overflow: 'hidden',
     backgroundColor: '#1a1a1a',
   },
@@ -372,7 +385,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF6B6B',
     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     alignSelf: 'flex-start',
   },
   watchNowText: {
@@ -388,7 +401,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     padding: 16,
     backgroundColor: '#1a1a1a',
-    borderRadius: 12,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: '#E8420A',
   },
@@ -412,7 +425,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8420A',
     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: 8,
+    borderRadius: radius.sm,
   },
   voteButtonText: {
     color: '#fff',
@@ -445,7 +458,7 @@ const styles = StyleSheet.create({
   contestantCard: {
     width: 120,
     padding: 12,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     alignItems: 'center',
   },
   contestantRank: {
@@ -490,7 +503,7 @@ const styles = StyleSheet.create({
   },
   highlightCard: {
     width: 180,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     overflow: 'hidden',
   },
   highlightThumbnail: {
@@ -531,7 +544,7 @@ const styles = StyleSheet.create({
   seasonCard: {
     width: '47%',
     padding: 12,
-    borderRadius: 12,
+    borderRadius: radius.lg,
   },
   seasonImagePlaceholder: {
     height: 80,

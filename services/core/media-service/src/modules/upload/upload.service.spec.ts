@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UploadService } from './upload.service';
 import { ConfigService } from '@nestjs/config';
 import { S3Service } from './s3.service';
+import { RedisService } from '@azeebo/shared-services';
+import { FileValidationService } from '../../common/services/file-validation.service';
 
 describe('UploadService', () => {
   let service: UploadService;
@@ -15,12 +17,25 @@ describe('UploadService', () => {
     getSignedUrl: jest.fn(),
   };
 
+  const mockRedisService = {
+    get: jest.fn(),
+    set: jest.fn(),
+    scanKeys: jest.fn().mockResolvedValue([]),
+  };
+
+  const mockFileValidationService = {
+    validateFile: jest.fn(),
+    validatePresignedUpload: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UploadService,
         { provide: ConfigService, useValue: mockConfigService },
         { provide: S3Service, useValue: mockS3Service },
+        { provide: RedisService, useValue: mockRedisService },
+        { provide: FileValidationService, useValue: mockFileValidationService },
       ],
     }).compile();
 

@@ -1,11 +1,21 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+
+export const metadata = {
+  title: 'Messages | Azeebo',
+  description: 'Connect with creators and other users through direct messages on Azeebo.',
+  openGraph: {
+    title: 'Messages | Azeebo',
+    description: 'Connect with creators and other users through direct messages on Azeebo.',
+  },
+};
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../lib/api';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
 import { Skeleton } from '@azeebo/ui/web';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 interface User {
   id: string;
@@ -21,6 +31,11 @@ interface Message {
   content: string;
   timestamp: Date;
   read: boolean;
+  isEdited?: boolean;
+  isPinned?: boolean;
+  isDeleted?: boolean;
+  replyToId?: string;
+  reactions?: { emoji: string; count: number }[];
 }
 
 interface Conversation {
@@ -29,6 +44,9 @@ interface Conversation {
   lastMessage: string;
   timestamp: Date;
   unreadCount: number;
+  isMuted?: boolean;
+  isArchived?: boolean;
+  name?: string;
 }
 
 interface RawConversation {
@@ -37,6 +55,9 @@ interface RawConversation {
   lastMessage: string;
   timestamp: string;
   unreadCount: number;
+  isMuted?: boolean;
+  isArchived?: boolean;
+  name?: string;
 }
 
 interface RawMessage {
@@ -47,6 +68,10 @@ interface RawMessage {
   timestamp?: string;
   createdAt?: string;
   read: boolean;
+  isEdited?: boolean;
+  isPinned?: boolean;
+  isDeleted?: boolean;
+  replyToId?: string;
 }
 
 export default function MessagesPage(): React.JSX.Element {
@@ -55,6 +80,8 @@ export default function MessagesPage(): React.JSX.Element {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
   const conversationsListRef = useRef<HTMLDivElement>(null);
@@ -95,6 +122,9 @@ export default function MessagesPage(): React.JSX.Element {
           content: String(msg.content),
           timestamp: new Date(msg.timestamp || msg.createdAt || ''),
           read: Boolean(msg.read),
+          isEdited: Boolean(msg.isEdited),
+          isPinned: Boolean(msg.isPinned),
+          replyToId: msg.replyToId ? String(msg.replyToId) : undefined,
         }));
       }
       return [];
@@ -219,10 +249,98 @@ export default function MessagesPage(): React.JSX.Element {
     conv.user.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // --- Mutations for new features ---
+
+  const editMessageMutation = useMutation({
+    mutationFn: async ({ messageId, content }: { messageId: string; content: string }) => {
+      return apiFetch(`/messages/messages/${messageId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ content }),
+      });
+    },
+    onSuccess: () => {
+      setEditingMessageId(null);
+      setEditContent('');
+      queryClient.invalidateQueries({
+        queryKey: ['messages', 'conversation', selectedConversation?.id],
+      });
+    },
+  });
+
+  const deleteMessageMutation = useMutation({
+    mutationFn: async (messageId: string) => {
+      return apiFetch(`/messages/messages/${messageId}`, { method: 'DELETE' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['messages', 'conversation', selectedConversation?.id],
+      });
+    },
+  });
+
+  const reactMutation = useMutation({
+    mutationFn: async ({ messageId, emoji }: { messageId: string; emoji: string }) => {
+      return apiFetch(`/messages/messages/${messageId}/react`, {
+        method: 'POST',
+        body: JSON.stringify({ emoji }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['messages', 'conversation', selectedConversation?.id],
+      });
+    },
+  });
+
+  const pinMutation = useMutation({
+    mutationFn: async ({ messageId, pinned }: { messageId: string; pinned: boolean }) => {
+      return apiFetch(`/messages/messages/${messageId}/pin`, {
+        method: 'PUT',
+        body: JSON.stringify({ pinned }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['messages', 'conversation', selectedConversation?.id],
+      });
+    },
+  });
+
+  const muteMutation = useMutation({
+    mutationFn: async ({ conversationId, muted }: { conversationId: string; muted: boolean }) => {
+      return apiFetch(`/messages/conversations/${conversationId}/mute`, {
+        method: 'PUT',
+        body: JSON.stringify({ muted }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages', 'conversations'] });
+    },
+  });
+
+  const archiveMutation = useMutation({
+    mutationFn: async ({
+      conversationId,
+      archived,
+    }: {
+      conversationId: string;
+      archived: boolean;
+    }) => {
+      return apiFetch(`/messages/conversations/${conversationId}/archive`, {
+        method: 'PUT',
+        body: JSON.stringify({ archived }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages', 'conversations'] });
+      if (selectedConversation) setSelectedConversation(null);
+    },
+  });
+
   if (authLoading) return <></>;
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
         <AppHeader />
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="az-glass p-8 text-center">
@@ -236,7 +354,7 @@ export default function MessagesPage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
       <AppHeader />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="az-glass overflow-hidden" style={{ height: 'calc(100vh - 200px)' }}>
@@ -252,7 +370,10 @@ export default function MessagesPage(): React.JSX.Element {
                   {unreadCount > 0 && (
                     <span
                       className="px-2 py-1 text-[10px] font-bold rounded-full"
-                      style={{ background: '#E8420A', color: '#fff' }}
+                      style={{
+                        background: 'var(--brand-orange, #E8420A)',
+                        color: 'var(--brand-white)',
+                      }}
                     >
                       {unreadCount}
                     </span>
@@ -316,7 +437,7 @@ export default function MessagesPage(): React.JSX.Element {
                           style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
                         >
                           {conversation.user.avatar ? (
-                            <img
+                            <OptimizedImage
                               src={conversation.user.avatar}
                               alt={conversation.user.name}
                               className="w-full h-full rounded-full object-cover"
@@ -328,7 +449,10 @@ export default function MessagesPage(): React.JSX.Element {
                         {conversation.unreadCount > 0 && (
                           <div
                             className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
-                            style={{ background: '#E8420A', color: '#fff' }}
+                            style={{
+                              background: 'var(--brand-orange, #E8420A)',
+                              color: 'var(--brand-white)',
+                            }}
                           >
                             {conversation.unreadCount}
                           </div>
@@ -375,13 +499,51 @@ export default function MessagesPage(): React.JSX.Element {
                     >
                       {selectedConversation.user.name.charAt(0)}
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <h2 className="font-bold text-white text-sm">
-                        {selectedConversation.user.name}
+                        {selectedConversation.name || selectedConversation.user.name}
                       </h2>
                       <p className="text-xs text-white/50">
                         {selectedConversation.user.role || 'User'}
                       </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        aria-label={
+                          selectedConversation.isMuted ? 'Unmute conversation' : 'Mute conversation'
+                        }
+                        onClick={() =>
+                          muteMutation.mutate({
+                            conversationId: selectedConversation.id,
+                            muted: !selectedConversation.isMuted,
+                          })
+                        }
+                        className="text-xs px-2 py-1 rounded border"
+                        style={{
+                          borderColor: 'rgba(255,255,255,0.2)',
+                          color: selectedConversation.isMuted
+                            ? 'var(--color-warning-500)'
+                            : 'var(--text-muted, #9A8A7A)',
+                        }}
+                      >
+                        {selectedConversation.isMuted ? 'Unmute' : 'Mute'}
+                      </button>
+                      <button
+                        aria-label="Archive conversation"
+                        onClick={() => {
+                          archiveMutation.mutate({
+                            conversationId: selectedConversation.id,
+                            archived: true,
+                          });
+                        }}
+                        className="text-xs px-2 py-1 rounded border"
+                        style={{
+                          borderColor: 'rgba(255,255,255,0.2)',
+                          color: 'var(--text-muted, #9A8A7A)',
+                        }}
+                      >
+                        Archive
+                      </button>
                     </div>
                   </div>
 
@@ -422,20 +584,124 @@ export default function MessagesPage(): React.JSX.Element {
                           className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
                         >
                           <div
-                            className={`max-w-[70%] rounded-2xl px-4 py-2 ${message.senderId === user?.id ? 'rounded-br-sm' : 'rounded-bl-sm'}`}
+                            className={`max-w-[70%] rounded-2xl px-4 py-2 ${message.senderId === user?.id ? 'rounded-br-sm' : 'rounded-bl-sm'} ${message.isPinned ? 'ring-2 ring-yellow-400/50' : ''}`}
                             style={
                               message.senderId === user?.id
                                 ? { background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }
                                 : { background: 'rgba(255,255,255,0.08)' }
                             }
                           >
-                            <p className="text-sm text-white">{message.content}</p>
-                            <p className="text-[10px] text-white/50 mt-1">
-                              {new Date(message.timestamp).toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </p>
+                            {message.replyToId && (
+                              <p className="text-[10px] text-white/40 mb-1 italic">
+                                Replying to a message
+                              </p>
+                            )}
+                            {editingMessageId === message.id ? (
+                              <div className="flex items-center gap-2">
+                                <input
+                                  value={editContent}
+                                  onChange={(e) => setEditContent(e.target.value)}
+                                  className="flex-1 bg-white/10 text-white rounded px-2 py-1 text-sm"
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter')
+                                      editMessageMutation.mutate({
+                                        messageId: message.id,
+                                        content: editContent,
+                                      });
+                                    if (e.key === 'Escape') setEditingMessageId(null);
+                                  }}
+                                  autoFocus
+                                />
+                                <button
+                                  aria-label="Save edited message"
+                                  onClick={() =>
+                                    editMessageMutation.mutate({
+                                      messageId: message.id,
+                                      content: editContent,
+                                    })
+                                  }
+                                  className="text-xs text-green-400"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  aria-label="Cancel editing"
+                                  onClick={() => setEditingMessageId(null)}
+                                  className="text-xs text-red-400"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <p className="text-sm text-white">{message.content}</p>
+                            )}
+                            <div className="flex items-center justify-between mt-1">
+                              <p className="text-[10px] text-white/50">
+                                {new Date(message.timestamp).toLocaleTimeString([], {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                                {message.isEdited && <span className="ml-1">(edited)</span>}
+                                {message.isPinned && <span className="ml-1">&#x1F4CC;</span>}
+                              </p>
+                              <div className="flex gap-1 ml-2">
+                                <button
+                                  aria-label={message.isPinned ? 'Unpin message' : 'Pin message'}
+                                  onClick={() =>
+                                    pinMutation.mutate({
+                                      messageId: message.id,
+                                      pinned: !message.isPinned,
+                                    })
+                                  }
+                                  className="text-[10px] text-white/40 hover:text-yellow-400"
+                                >
+                                  {message.isPinned ? 'Unpin' : 'Pin'}
+                                </button>
+                                {message.senderId === user?.id &&
+                                  editingMessageId !== message.id && (
+                                    <>
+                                      <button
+                                        aria-label="Edit message"
+                                        onClick={() => {
+                                          setEditingMessageId(message.id);
+                                          setEditContent(message.content);
+                                        }}
+                                        className="text-[10px] text-white/40 hover:text-white"
+                                      >
+                                        Edit
+                                      </button>
+                                      <button
+                                        aria-label="Delete message"
+                                        onClick={() => deleteMessageMutation.mutate(message.id)}
+                                        className="text-[10px] text-white/40 hover:text-red-400"
+                                      >
+                                        Del
+                                      </button>
+                                    </>
+                                  )}
+                              </div>
+                            </div>
+                            <div className="flex gap-1 mt-1">
+                              {[
+                                { emoji: '👍', label: 'Thumbs up' },
+                                { emoji: '❤️', label: 'Heart' },
+                                { emoji: '😂', label: 'Laughing face' },
+                              ].map((reaction) => (
+                                <button
+                                  key={reaction.emoji}
+                                  aria-label={`React with ${reaction.label}`}
+                                  onClick={() =>
+                                    reactMutation.mutate({
+                                      messageId: message.id,
+                                      emoji: reaction.emoji,
+                                    })
+                                  }
+                                  className="text-xs hover:scale-125 transition-transform"
+                                >
+                                  {reaction.emoji}
+                                </button>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       ))

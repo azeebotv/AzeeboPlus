@@ -77,6 +77,11 @@ model ContentItem {
   windowType    String   @default("standard") // premium, standard, basic
   isExclusive   Boolean  @default(false)
   isPremiere    Boolean  @default(false)
+  // Geo restriction fields
+  allowedCountries String[] // ISO country codes; empty = worldwide
+  blockedCountries String[] // Countries where content is blocked
+  contentRating    String?  // "G", "PG", "PG-13", "R", "NC-17", "18+"
+  minAge           Int?     // Minimum age requirement
 
   universe    Universe    @relation(fields: [universeId], references: [id], onDelete: Cascade)
   mediaAsset  MediaAsset?
@@ -317,4 +322,20 @@ model SystemSettings {
   @@map("system_settings")
   @@index([category])
   @@index([isPublic])
+}
+
+model GeoRestriction {
+  id              String   @id @default(uuid())
+  countryCode     String   // ISO 3166-1 alpha-2
+  countryName     String
+  isActive        Boolean  @default(true)
+  blockedContent  String[] // Content IDs or categories blocked in this country
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("geo_restrictions")
+  @@unique([countryCode])
+  @@index([countryCode])
+  @@index([isActive])
 }

@@ -15,7 +15,7 @@ type AuthShellProps = {
 export default function AuthShell({
   headlineLines,
   backgroundImage,
-  backgroundFallback = '#1A0A0A',
+  backgroundFallback = 'var(--brand-near-black)',
   children,
   showLogo = true,
   logoVariant = 'light',
@@ -85,7 +85,7 @@ export default function AuthShell({
       {/* Right glass-card panel */}
       <div
         className="relative flex-1 flex items-center justify-center p-5 sm:p-8 lg:p-10"
-        style={{ backgroundColor: '#1A0A0A' }}
+        style={{ backgroundColor: 'var(--brand-near-black)' }}
       >
         {/* Logo on mobile */}
         {showLogo && (

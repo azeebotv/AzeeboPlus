@@ -103,7 +103,11 @@ export class UsersController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'User followers' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getFollowers(@Param('id') id: string, @Query('page') page: number = 1, @Query('limit') limit: number = 20) {
+  async getFollowers(
+    @Param('id') id: string,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 20
+  ) {
     const safeLimit = Math.min(Math.max(1, Number(limit) || 20), 100);
     return this.usersService.getFollowers(id, Number(page), safeLimit);
   }
@@ -115,7 +119,11 @@ export class UsersController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Users being followed' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getFollowing(@Param('id') id: string, @Query('page') page: number = 1, @Query('limit') limit: number = 20) {
+  async getFollowing(
+    @Param('id') id: string,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 20
+  ) {
     const safeLimit = Math.min(Math.max(1, Number(limit) || 20), 100);
     return this.usersService.getFollowing(id, Number(page), safeLimit);
   }
@@ -247,7 +255,10 @@ export class UsersController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Continue watching items' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getContinueWatching(@Request() req: AuthenticatedRequest, @Query('limit') limit: number = 10) {
+  async getContinueWatching(
+    @Request() req: AuthenticatedRequest,
+    @Query('limit') limit: number = 10
+  ) {
     const safeLimit = Math.min(Math.max(1, Number(limit) || 10), 50);
     const result = await this.usersService.getContinueWatching(this.getUserId(req), safeLimit);
     return ApiResponseWrapper.success((result as { data: unknown }).data ?? result);

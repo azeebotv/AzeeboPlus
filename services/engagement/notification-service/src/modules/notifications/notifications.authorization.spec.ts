@@ -1,5 +1,40 @@
+jest.mock('@azeebo/shared-services', () => ({
+  FirebaseService: 'FirebaseService',
+  EmailService: 'EmailService',
+  SmsService: 'SmsService',
+  CacheService: 'CacheService',
+  cacheKey: (...args: unknown[]) => args.join(':'),
+}));
+jest.mock('@azeebo/security', () => ({
+  RateLimitGuard: class MockRateLimitGuard {
+    canActivate = jest.fn().mockReturnValue(true);
+  },
+  RateLimit: () => () => {},
+}));
+jest.mock('class-validator', () => ({
+  IsBoolean: () => () => {},
+  IsOptional: () => () => {},
+  IsString: () => () => {},
+  IsEmail: () => () => {},
+  IsEnum: () => () => {},
+  IsNotEmpty: () => () => {},
+  IsIn: () => () => {},
+  ValidateNested: () => () => {},
+  Type: () => () => {},
+  IsPhoneNumber: () => () => {},
+}));
+jest.mock('class-transformer', () => ({
+  Type: () => () => {},
+  plainToInstance: (_cls: unknown, obj: unknown) => obj,
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  INestApplication,
+  ExecutionContext,
+  UnauthorizedException,
+  VersioningType,
+} from '@nestjs/common';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';
@@ -30,7 +65,7 @@ describe('NotificationsController (Authorization)', () => {
         throw new UnauthorizedException();
       }
       const request = context.switchToHttp().getRequest();
-      request.user = { sub: 'user-123' };
+      request.user = { sub: 'user-123', id: 'user-123' };
       return true;
     }),
   });
@@ -46,7 +81,17 @@ describe('NotificationsController (Authorization)', () => {
       .overrideGuard(AuthGuard('jwt'))
       .useValue(createMockAuthGuard(authGuardReturnValue))
       .overrideGuard(RateLimitGuard)
-      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .useValue({
+        canActivate: jest.fn().mockImplementation((context: ExecutionContext) => {
+          const request = context.switchToHttp().getRequest();
+          const auth = request.headers?.authorization;
+          if (!auth || auth !== 'Bearer valid-token') {
+            throw new UnauthorizedException();
+          }
+          request.user = { sub: 'user-123', id: 'user-123' };
+          return true;
+        }),
+      })
       .compile();
 
     return module;
@@ -56,6 +101,7 @@ describe('NotificationsController (Authorization)', () => {
     const module = await buildModule(true);
 
     app = module.createNestApplication();
+    app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
     await app.init();
   });
 
@@ -89,7 +135,7 @@ describe('NotificationsController (Authorization)', () => {
     });
 
     const response = await request(app.getHttpServer())
-      .patch('/v1/notifications/123/read')
+      .patch('/v1/notifications/550e8400-e29b-41d4-a716-446655440000/read')
       .set('Authorization', 'Bearer valid-token');
 
     expect(response.status).toBe(200);
@@ -159,6 +205,7 @@ describe('NotificationsController (Authorization)', () => {
     const module = await buildModule(false);
 
     const testApp = module.createNestApplication();
+    testApp.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
     await testApp.init();
 
     const response = await request(testApp.getHttpServer())

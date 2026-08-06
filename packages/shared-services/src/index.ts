@@ -60,6 +60,11 @@ export { EmailModule } from './email/email.module';
 export { SmsService } from './sms/sms.service';
 export { SmsModule } from './sms/sms.module';
 
+// Sentry
+/** Sentry error tracking service and module. */
+export { SentryService } from './sentry/sentry.service';
+export { SentryModule } from './sentry/sentry.module';
+
 // Prisma
 /** Prisma ORM service and module for database access. */
 export { PrismaService } from './prisma/prisma.service';
@@ -68,3 +73,22 @@ export { PrismaModule } from './prisma/prisma.module';
 // JWT
 /** Shared JWT configuration module - replaces per-service JwtModule.registerAsync boilerplate. */
 export { JwtConfigModule } from './jwt/jwt-config.module';
+
+// Observability
+/** Health check service for database, Redis, and external service checks. */
+export {
+  HealthCheckService,
+  HealthCheckResult,
+  ComponentCheck,
+  HealthMetrics,
+  ServiceHealth,
+} from './observability/health-check.service';
+/** In-memory metrics service supporting counters, gauges, histograms, and periodic export. */
+export {
+  MetricsService,
+  Metric,
+  MetricValue,
+  Counter,
+  Gauge,
+  Histogram,
+} from './observability/metrics.service';

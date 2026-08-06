@@ -220,7 +220,13 @@ class Analytics {
     paymentMethod: string,
     properties?: EventProperties
   ): void {
-    this.track('payment_completed', { transactionId, amount, currency, paymentMethod, ...properties });
+    this.track('payment_completed', {
+      transactionId,
+      amount,
+      currency,
+      paymentMethod,
+      ...properties,
+    });
   }
 
   paymentFailed(
@@ -248,7 +254,12 @@ class Analytics {
     withdrawalMethod: string,
     properties?: EventProperties
   ): void {
-    this.track('wallet_withdrawal_initiated', { amount, currency, withdrawalMethod, ...properties });
+    this.track('wallet_withdrawal_initiated', {
+      amount,
+      currency,
+      withdrawalMethod,
+      ...properties,
+    });
   }
 
   walletWithdrawalCompleted(

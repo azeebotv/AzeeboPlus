@@ -47,6 +47,38 @@ export class TranscodingService {
 
       const jobId = `transcode_${Date.now()}_${mediaAssetId}`;
 
+      // Delegate to media-service for actual transcoding
+      const mediaServiceUrl = this.configService.get<string>('MEDIA_SERVICE_URL');
+      if (mediaServiceUrl) {
+        try {
+          await axios.post(
+            `${mediaServiceUrl}/v1/upload/transcode`,
+            {
+              jobId,
+              inputKey: key,
+              mediaAssetId,
+              formats: options.formats || ['mp4'],
+              resolutions: options.resolutions || ['720p', '480p', '360p'],
+            },
+            {
+              timeout: 10000,
+              headers: {
+                'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', ''),
+              },
+            }
+          );
+          this.logger.log(`Transcoding job ${jobId} delegated to media-service`);
+        } catch (delegateError) {
+          this.logger.warn(
+            `Failed to delegate to media-service: ${(delegateError as Error).message} — job created but may not process`
+          );
+        }
+      } else {
+        this.logger.warn(
+          `No MEDIA_SERVICE_URL configured — transcoding job ${jobId} created but won't be processed`
+        );
+      }
+
       this.logger.log('Transcoding job started:', {
         jobId,
         mediaAssetId,

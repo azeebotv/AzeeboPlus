@@ -6,11 +6,7 @@ import { UploadModule } from '../upload/upload.module';
 import { CommonModule } from '../../common/common.module';
 
 @Module({
-  imports: [
-    UploadModule,
-    CommonModule,
-    JwtConfigModule,
-  ],
+  imports: [UploadModule, CommonModule, JwtConfigModule],
   controllers: [AdminController],
   providers: [AdminService],
 })

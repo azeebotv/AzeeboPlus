@@ -6,6 +6,7 @@ import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 interface RankingEntry {
   userId: string;
@@ -85,7 +86,7 @@ export default function RankingsPage(): React.JSX.Element {
   const getRankBadge = (rank: number): { emoji: string; color: string } => {
     switch (rank) {
       case 1:
-        return { emoji: '🥇', color: '#EAB308' };
+        return { emoji: '🥇', color: 'var(--color-warning-400)' };
       case 2:
         return { emoji: '🥈', color: '#D1D5DB' };
       case 3:
@@ -96,7 +97,7 @@ export default function RankingsPage(): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Rankings" />
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-8">
@@ -119,7 +120,7 @@ export default function RankingsPage(): React.JSX.Element {
                 ? {
                     border: '1px solid rgba(255,255,255,0.2)',
                     backgroundColor: 'rgba(255,255,255,0.08)',
-                    color: '#fff',
+                    color: 'var(--brand-white)',
                   }
                 : undefined
             }
@@ -138,7 +139,7 @@ export default function RankingsPage(): React.JSX.Element {
                   ? {
                       border: '1px solid rgba(255,255,255,0.2)',
                       backgroundColor: 'rgba(255,255,255,0.08)',
-                      color: '#fff',
+                      color: 'var(--brand-white)',
                     }
                   : undefined
               }
@@ -188,7 +189,7 @@ export default function RankingsPage(): React.JSX.Element {
                           }}
                         >
                           {entry.avatar ? (
-                            <img
+                            <OptimizedImage
                               src={entry.avatar}
                               alt={entry.displayName}
                               className="w-full h-full rounded-full object-cover"
@@ -198,13 +199,21 @@ export default function RankingsPage(): React.JSX.Element {
                           )}
                         </div>
                         <h3 className="font-bold text-white">{entry.displayName}</h3>
-                        <p className="text-xl font-bold mt-1" style={{ color: '#E8420A' }}>
+                        <p
+                          className="text-xl font-bold mt-1"
+                          style={{ color: 'var(--brand-orange)' }}
+                        >
                           {entry.score.toLocaleString()}
                         </p>
                         {entry.change !== 0 && (
                           <p
                             className={`text-sm mt-1 font-medium`}
-                            style={{ color: entry.change > 0 ? '#22C55E' : '#EF4444' }}
+                            style={{
+                              color:
+                                entry.change > 0
+                                  ? 'var(--color-success-500)'
+                                  : 'var(--color-error-500)',
+                            }}
                           >
                             {entry.change > 0 ? '↑' : '↓'} {Math.abs(entry.change)}
                           </p>
@@ -235,7 +244,7 @@ export default function RankingsPage(): React.JSX.Element {
                           style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
                         >
                           {entry.avatar ? (
-                            <img
+                            <OptimizedImage
                               src={entry.avatar}
                               alt={entry.displayName}
                               className="w-full h-full rounded-full object-cover"
@@ -249,13 +258,18 @@ export default function RankingsPage(): React.JSX.Element {
                           <p className="text-sm text-white/50">Level {entry.level}</p>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold text-lg" style={{ color: '#E8420A' }}>
+                          <p className="font-bold text-lg" style={{ color: 'var(--brand-orange)' }}>
                             {entry.score.toLocaleString()}
                           </p>
                           {entry.change !== 0 && (
                             <p
                               className="text-sm font-medium"
-                              style={{ color: entry.change > 0 ? '#22C55E' : '#EF4444' }}
+                              style={{
+                                color:
+                                  entry.change > 0
+                                    ? 'var(--color-success-500)'
+                                    : 'var(--color-error-500)',
+                              }}
                             >
                               {entry.change > 0 ? '↑' : '↓'} {Math.abs(entry.change)}
                             </p>

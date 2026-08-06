@@ -8,13 +8,7 @@ import { CreatorsService } from './creators.service.js';
 import { DatabaseModule } from '../database/database.module.js';
 
 @Module({
-  imports: [
-    DatabaseModule,
-    PassportModule,
-    RateLimiterModule,
-    CacheModule,
-    JwtConfigModule,
-  ],
+  imports: [DatabaseModule, PassportModule, RateLimiterModule, CacheModule, JwtConfigModule],
   controllers: [CreatorsController],
   providers: [CreatorsService, JwtStrategy],
   exports: [CreatorsService, DatabaseModule],

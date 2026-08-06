@@ -1,4 +1,4 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, Logger } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma';
 import { PrismaService } from '../../database/prisma.service';
 import { AuditLogService } from '../audit/audit.service';
@@ -12,10 +12,28 @@ export interface ModerationStats {
 
 @Injectable()
 export class ModerationService {
+  private readonly logger = new Logger(ModerationService.name);
+
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(AuditLogService) private readonly auditService: AuditLogService
   ) {}
+
+  private parseDuration(duration: string): number {
+    const match = duration.match(/^(\d+)([dhm])$/);
+    if (!match) return 30 * 24 * 60 * 60 * 1000; // default 30 days
+    const value = parseInt(match[1], 10);
+    switch (match[2]) {
+      case 'm':
+        return value * 60 * 1000;
+      case 'h':
+        return value * 60 * 60 * 1000;
+      case 'd':
+        return value * 24 * 60 * 60 * 1000;
+      default:
+        return 30 * 24 * 60 * 60 * 1000;
+    }
+  }
 
   async getReports(page = 1, limit = 20, status?: string, type?: string): Promise<unknown> {
     const where: Prisma.ReportWhereInput = {};
@@ -156,7 +174,7 @@ export class ModerationService {
         takenBy: adminId,
         duration,
         status: 'active',
-        expiresAt: duration ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null,
+        expiresAt: duration ? new Date(Date.now() + this.parseDuration(duration)) : null,
       },
     });
 
@@ -221,7 +239,9 @@ export class ModerationService {
       }
     } catch (error) {
       // Fall back to defaults
-      console.warn(`Failed to fetch report types from moderation-service: ${(error as Error).message}`);
+      this.logger.warn(
+        `Failed to fetch report types from moderation-service: ${(error as Error).message}`
+      );
     }
 
     return [

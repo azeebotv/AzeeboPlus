@@ -30,54 +30,54 @@ $$ LANGUAGE plpgsql;
 -- ============================================================
 -- CORE DOMAIN DATABASES
 -- ============================================================
-SELECT create_service_db('auth_db', 'auth_user', current_setting('app.settings.auth_password', true));
-SELECT create_service_db('user_db', 'user_user', current_setting('app.settings.user_password', true));
-SELECT create_service_db('wallet_db', 'wallet_user', current_setting('app.settings.wallet_password', true));
-SELECT create_service_db('payment_db', 'payment_user', current_setting('app.settings.payment_password', true));
-SELECT create_service_db('content_db', 'content_user', current_setting('app.settings.content_password', true));
-SELECT create_service_db('search_db', 'search_user', current_setting('app.settings.search_password', true));
-SELECT create_service_db('media_db', 'media_user', current_setting('app.settings.media_password', true));
+SELECT create_service_db('azeebo_auth', 'auth_user', current_setting('app.settings.auth_password', true));
+SELECT create_service_db('azeebo_user', 'user_user', current_setting('app.settings.user_password', true));
+SELECT create_service_db('azeebo_wallet', 'wallet_user', current_setting('app.settings.wallet_password', true));
+SELECT create_service_db('azeebo_payment', 'payment_user', current_setting('app.settings.payment_password', true));
+SELECT create_service_db('azeebo_content', 'content_user', current_setting('app.settings.content_password', true));
+SELECT create_service_db('azeebo_search', 'search_user', current_setting('app.settings.search_password', true));
+SELECT create_service_db('azeebo_media', 'media_user', current_setting('app.settings.media_password', true));
 
 -- ============================================================
 -- ENGAGEMENT DOMAIN DATABASES
 -- ============================================================
-SELECT create_service_db('notification_db', 'notification_user', current_setting('app.settings.notification_password', true));
-SELECT create_service_db('reward_db', 'reward_user', current_setting('app.settings.reward_password', true));
-SELECT create_service_db('engagement_db', 'engagement_user', current_setting('app.settings.engagement_password', true));
-SELECT create_service_db('messaging_db', 'messaging_user', current_setting('app.settings.messaging_password', true));
-SELECT create_service_db('referral_db', 'referral_user', current_setting('app.settings.referral_password', true));
-SELECT create_service_db('subscription_db', 'subscription_user', current_setting('app.settings.subscription_password', true));
+SELECT create_service_db('azeebo_notification', 'notification_user', current_setting('app.settings.notification_password', true));
+SELECT create_service_db('azeebo_reward', 'reward_user', current_setting('app.settings.reward_password', true));
+SELECT create_service_db('azeebo_engagement', 'engagement_user', current_setting('app.settings.engagement_password', true));
+SELECT create_service_db('azeebo_messaging', 'messaging_user', current_setting('app.settings.messaging_password', true));
+SELECT create_service_db('azeebo_referral', 'referral_user', current_setting('app.settings.referral_password', true));
+SELECT create_service_db('azeebo_subscription', 'subscription_user', current_setting('app.settings.subscription_password', true));
 
 -- ============================================================
 -- INTELLIGENCE DOMAIN DATABASES
 -- ============================================================
-SELECT create_service_db('analytics_db', 'analytics_user', current_setting('app.settings.analytics_password', true));
-SELECT create_service_db('recommendation_db', 'recommendation_user', current_setting('app.settings.recommendation_password', true));
+SELECT create_service_db('azeebo_analytics', 'analytics_user', current_setting('app.settings.analytics_password', true));
+SELECT create_service_db('azeebo_recommendation', 'recommendation_user', current_setting('app.settings.recommendation_password', true));
 
 -- ============================================================
 -- UNIVERSES DOMAIN DATABASES
 -- ============================================================
-SELECT create_service_db('reality_db', 'reality_user', current_setting('app.settings.reality_password', true));
-SELECT create_service_db('movie_db', 'movie_user', current_setting('app.settings.movie_password', true));
-SELECT create_service_db('comedy_db', 'comedy_user', current_setting('app.settings.comedy_password', true));
-SELECT create_service_db('games_db', 'games_user', current_setting('app.settings.games_password', true));
-SELECT create_service_db('sports_db', 'sports_user', current_setting('app.settings.sports_password', true));
-SELECT create_service_db('lifestyle_db', 'lifestyle_user', current_setting('app.settings.lifestyle_password', true));
-SELECT create_service_db('vertical_db', 'vertical_user', current_setting('app.settings.vertical_password', true));
-SELECT create_service_db('creator_db', 'creator_user', current_setting('app.settings.creator_password', true));
+SELECT create_service_db('azeebo_reality', 'reality_user', current_setting('app.settings.reality_password', true));
+SELECT create_service_db('azeebo_movie', 'movie_user', current_setting('app.settings.movie_password', true));
+SELECT create_service_db('azeebo_comedy', 'comedy_user', current_setting('app.settings.comedy_password', true));
+SELECT create_service_db('azeebo_games', 'games_user', current_setting('app.settings.games_password', true));
+SELECT create_service_db('azeebo_sports', 'sports_user', current_setting('app.settings.sports_password', true));
+SELECT create_service_db('azeebo_lifestyle', 'lifestyle_user', current_setting('app.settings.lifestyle_password', true));
+SELECT create_service_db('azeebo_vertical', 'vertical_user', current_setting('app.settings.vertical_password', true));
+SELECT create_service_db('azeebo_creator', 'creator_user', current_setting('app.settings.creator_password', true));
 
 -- ============================================================
 -- OPERATIONS DOMAIN DATABASES
 -- ============================================================
-SELECT create_service_db('queue_db', 'queue_user', current_setting('app.settings.queue_password', true));
-SELECT create_service_db('support_db', 'support_user', current_setting('app.settings.support_password', true));
-SELECT create_service_db('moderation_db', 'moderation_user', current_setting('app.settings.moderation_password', true));
+SELECT create_service_db('azeebo_queue', 'queue_user', current_setting('app.settings.queue_password', true));
+SELECT create_service_db('azeebo_support', 'support_user', current_setting('app.settings.support_password', true));
+SELECT create_service_db('azeebo_moderation', 'moderation_user', current_setting('app.settings.moderation_password', true));
 
 -- ============================================================
 -- FRONTEND DATABASES
 -- ============================================================
-SELECT create_service_db('admin_db', 'admin_user', current_setting('app.settings.admin_password', true));
-SELECT create_service_db('creator_portal_db', 'creator_portal_user', current_setting('app.settings.creator_portal_password', true));
+SELECT create_service_db('azeebo_admin', 'admin_user', current_setting('app.settings.admin_password', true));
+SELECT create_service_db('azeebo_creator', 'creator_user', current_setting('app.settings.creator_password', true));
 
 -- ============================================================
 -- Cleanup helper function

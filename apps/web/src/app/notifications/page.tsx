@@ -1,5 +1,14 @@
 'use client';
 import { useState, useCallback } from 'react';
+
+export const metadata = {
+  title: 'Notifications | Azeebo',
+  description: 'Stay updated with likes, comments, follows, and system notifications on Azeebo.',
+  openGraph: {
+    title: 'Notifications | Azeebo',
+    description: 'Stay updated with likes, comments, follows, and system notifications on Azeebo.',
+  },
+};
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { useAuth } from '../../context/AuthContext';
@@ -37,7 +46,7 @@ interface MarkReadResult {
 }
 
 export default function NotificationsPage(): React.JSX.Element {
-  const { user: _user } = useAuth();
+  useAuth();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'mentions'>('all');
 
@@ -124,7 +133,7 @@ export default function NotificationsPage(): React.JSX.Element {
   const unreadCount = notifications.filter((n) => !n.readAt).length;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
       <AppHeader />
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
@@ -139,6 +148,7 @@ export default function NotificationsPage(): React.JSX.Element {
           </div>
           {unreadCount > 0 && (
             <button
+              aria-label="Mark all notifications as read"
               onClick={markAllAsRead}
               className="az-btn-primary"
               style={{ width: 'auto', paddingInline: '1.25rem', fontSize: '0.8rem' }}
@@ -238,7 +248,7 @@ export default function NotificationsPage(): React.JSX.Element {
                   {!notification.readAt && (
                     <div
                       className="w-2 h-2 rounded-full mt-2 flex-shrink-0"
-                      style={{ background: '#E8420A' }}
+                      style={{ background: 'var(--brand-orange, #E8420A)' }}
                     />
                   )}
                 </div>

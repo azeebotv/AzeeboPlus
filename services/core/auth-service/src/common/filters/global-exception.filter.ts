@@ -60,8 +60,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       },
     };
 
-    if (!this.isProduction && exception instanceof Error) {
-      (errorResponse.error as Record<string, unknown>).stack = exception.stack;
+    // Never include stack traces in HTTP responses — log server-side only
+    if (exception instanceof Error) {
+      this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack);
+    } else {
+      this.logger.error(`Unknown exception: ${String(exception)}`);
     }
 
     response.status(status).json(errorResponse);

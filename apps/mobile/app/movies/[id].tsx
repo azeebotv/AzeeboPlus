@@ -14,9 +14,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiClient } from '../../src/api';
 import { moviePricing } from '../../src/config/prices';
 import type { Movie, CastMember } from '../../src/types/api';
+import { analytics } from '../../src/utils/analytics';
 
 const PRICING_OPTIONS = [
-  { id: moviePricing.rent48h.id, type: moviePricing.rent48h.type, price: moviePricing.rent48h.label, features: ['48 hour access', 'HD quality'] },
+  {
+    id: moviePricing.rent48h.id,
+    type: moviePricing.rent48h.type,
+    price: moviePricing.rent48h.label,
+    features: ['48 hour access', 'HD quality'],
+  },
   {
     id: moviePricing.buy.id,
     type: moviePricing.buy.type,
@@ -56,6 +62,9 @@ export default function MovieDetailPage() {
         apiClient.get<Movie[]>(`/movies/${id}/similar`),
       ]);
       setMovie(movieRes);
+      try {
+        analytics.movieViewed(String(id));
+      } catch {}
       setCast(castRes || []);
       setSimilarMovies(similarRes || []);
     } catch (err: unknown) {
@@ -165,7 +174,9 @@ export default function MovieDetailPage() {
               renderItem={({ item }) => (
                 <View style={styles.castCard}>
                   <View style={styles.castAvatar}>
-                    <Text style={styles.castEmoji}>{(item as { emoji?: string }).emoji || '🎭'}</Text>
+                    <Text style={styles.castEmoji}>
+                      {(item as { emoji?: string }).emoji || '🎭'}
+                    </Text>
                   </View>
                   <Text style={[styles.castName, { color: isDark ? '#fff' : '#000' }]}>
                     {item.name}

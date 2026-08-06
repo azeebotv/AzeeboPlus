@@ -1,0 +1,28 @@
+services:
+  creator:
+    build:
+      context: ../..
+      dockerfile: apps/creator/Dockerfile
+      target: builder
+    container_name: azeebo-creator
+    ports:
+      - "4014:4014"
+    volumes:
+      - ../../apps/creator:/app/apps/creator
+      - /app/apps/creator/node_modules
+      - /app/apps/creator/dist
+      - /app/node_modules
+      - ../../packages:/app/packages
+    environment:
+      - NODE_ENV=development
+      - PORT=4014
+      - DATABASE_URL=postgresql://azeebo:${DB_PASSWORD:-azeebo_dev_2024}@host.docker.internal:5432/azeebo_creator?schema=public
+    command: ["pnpm", "--filter", "@azeebo/creator", "start:dev"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - azeebo-dev
+
+networks:
+  azeebo-dev:
+    external: true

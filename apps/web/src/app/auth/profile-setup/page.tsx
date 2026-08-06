@@ -43,6 +43,7 @@ export default function ProfileSetupPage(): React.JSX.Element {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [interests, setInterests] = useState<string[]>(DEFAULT_INTERESTS);
   const [genders, setGenders] = useState<string[]>(DEFAULT_GENDERS);
 
@@ -72,6 +73,12 @@ export default function ProfileSetupPage(): React.JSX.Element {
       }
     };
     fetchOptions();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+    };
   }, []);
 
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -152,7 +159,8 @@ export default function ProfileSetupPage(): React.JSX.Element {
 
       await refreshUser?.();
       setSuccess(true);
-      setTimeout(() => router.push('/home'), 2000);
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+      redirectTimerRef.current = setTimeout(() => router.push('/home'), 2000);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'An error occurred during profile setup';
       setError(message);
@@ -165,7 +173,7 @@ export default function ProfileSetupPage(): React.JSX.Element {
     return (
       <div
         className="min-h-screen flex items-center justify-center p-6"
-        style={{ backgroundColor: '#1A0A0A' }}
+        style={{ backgroundColor: 'var(--brand-near-black)' }}
       >
         <div className="text-center max-w-md">
           <div
@@ -201,7 +209,10 @@ export default function ProfileSetupPage(): React.JSX.Element {
   const profileInitial = (fullName || 'Y').charAt(0).toUpperCase();
 
   return (
-    <div className="min-h-screen w-full p-6 sm:p-10" style={{ backgroundColor: '#1A0A0A' }}>
+    <div
+      className="min-h-screen w-full p-6 sm:p-10"
+      style={{ backgroundColor: 'var(--brand-near-black)' }}
+    >
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <BrandLogo variant="light" />
@@ -254,14 +265,12 @@ export default function ProfileSetupPage(): React.JSX.Element {
               <span
                 onClick={() => fileInputRef.current?.click()}
                 className="absolute bottom-1 left-1/2 -translate-x-1/2 text-xs font-bold text-white whitespace-nowrap px-3 py-1 cursor-pointer"
-                style={{ background: '#CC1C1C', borderRadius: 999 }}
+                style={{ background: 'var(--brand-red)', borderRadius: 999 }}
               >
                 Change profile picture
               </span>
             </div>
-            <p className="az-headline text-white text-lg">
-              {fullName.trim() || 'Your Name'}
-            </p>
+            <p className="az-headline text-white text-lg">{fullName.trim() || 'Your Name'}</p>
             <p className="text-white/50 text-sm">@{username.trim() || 'username'}</p>
           </div>
 

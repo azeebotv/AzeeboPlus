@@ -35,10 +35,31 @@ model User {
   sessions Session[]
   otps     Otp[]
   socialAccounts SocialAccount[]
+  devices  RegisteredDevice[]
 
   @@index([role])
   @@index([createdAt])
   @@map("users")
+}
+
+model RegisteredDevice {
+  id            String   @id @default(uuid())
+  userId        String
+  deviceName    String
+  deviceType    String   // "mobile", "web", "desktop", "tablet"
+  os            String?
+  browser       String?
+  fingerprint   String?  // Device fingerprint hash
+  isTrusted     Boolean  @default(false)
+  lastActiveAt  DateTime @default(now())
+  registeredAt  DateTime @default(now())
+  revokedAt     DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, isTrusted])
+  @@map("registered_devices")
 }
 
 model SocialAccount {

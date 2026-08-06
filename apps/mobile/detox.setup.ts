@@ -1,13 +1,5 @@
-import { device, detox } from 'detox';
-
-beforeAll(async () => {
-  await detox.exportGlobals();
-});
+import { device } from 'detox';
 
 beforeEach(async () => {
   await device.reloadReactNative();
-});
-
-afterAll(async () => {
-  await detox.cleanup();
 });

@@ -1,5 +1,9 @@
 import { PaymentProcessor, PaymentJobData } from './payment.processor';
 import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
+
+jest.mock('axios');
+const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe('PaymentProcessor', () => {
   let processor: PaymentProcessor;
@@ -10,6 +14,7 @@ describe('PaymentProcessor', () => {
 
   beforeEach(() => {
     processor = new PaymentProcessor(mockConfigService as unknown as ConfigService);
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
@@ -18,6 +23,7 @@ describe('PaymentProcessor', () => {
 
   describe('process', () => {
     it('should process charge job', async () => {
+      mockedAxios.post.mockResolvedValue({ data: { status: 'success' } });
       const job = {
         id: '1',
         data: {
@@ -35,6 +41,7 @@ describe('PaymentProcessor', () => {
     });
 
     it('should process refund job', async () => {
+      mockedAxios.post.mockResolvedValue({ data: { status: 'success' } });
       const job = {
         id: '2',
         data: {

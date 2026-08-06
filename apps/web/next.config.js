@@ -3,6 +3,10 @@ const path = require('path')
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  // Pin the tracing root to the monorepo root so standalone output is
+  // deterministic (avoids Next.js picking up stray parent-directory
+  // lockfiles and emitting a wrong standalone layout).
+  outputFileTracingRoot: path.resolve(__dirname, '../../'),
   reactStrictMode: true,
   transpilePackages: ['@azeebo/ui', '@azeebo/design-tokens', '@azeebo/utils', '@azeebo/api-client', '@azeebo/http-client', '@azeebo/shared-types', '@azeebo/validation', '@azeebo/error-handling', '@azeebo/logger'],
   eslint: {
@@ -12,6 +16,7 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
   images: {
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -34,7 +39,7 @@ const nextConfig = {
         hostname: 'localhost',
       },
     ],
-    qualities: [85],
+    qualities: [80, 85],
     minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
@@ -71,9 +76,18 @@ const nextConfig = {
           {
             key: 'Content-Security-Policy',
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.youtube.com https://www.youtube-nocookie.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' http://localhost:* https:; frame-src https://www.youtube.com https://www.youtube-nocookie.com; media-src 'self' https: blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';",
+              "default-src 'self'; script-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' http://localhost:* https:; frame-src https://www.youtube.com https://www.youtube-nocookie.com; media-src 'self' https: blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';",
           },
         ],
+      },
+    ]
+  },
+  async redirects() {
+    return [
+      {
+        source: '/reality/episode/:path*',
+        destination: '/reality/episodes/:path*',
+        permanent: false,
       },
     ]
   },

@@ -11,8 +11,8 @@ export interface Subscription {
   startDate: string;
   endDate: string;
   autoRenew: boolean;
-  paymentMethod?: string;
   lastPaymentDate?: string;
+  paymentMethod?: string;
   createdAt: string;
   updatedAt: string;
   plan?: SubscriptionPlan;
@@ -21,7 +21,8 @@ export interface Subscription {
 export interface SubscribeToPlanDto {
   planId: string;
   autoRenew?: boolean;
-  paymentMethod?: string;
+  paymentMethod?: 'external' | 'wallet';
+  paymentReference?: string;
 }
 
 export const subscriptionApi = {
@@ -42,6 +43,14 @@ export const subscriptionApi = {
 
   async subscribe(dto: SubscribeToPlanDto): Promise<ApiResponse<Subscription>> {
     const response = await apiClient.post<Subscription>('/v1/subscription/subscribe', dto);
+    return { success: true, data: response };
+  },
+
+  async renewSubscription(subscriptionId: string): Promise<ApiResponse<Subscription>> {
+    const response = await apiClient.post<Subscription>(
+      `/v1/subscription/renew/${subscriptionId}`,
+      {}
+    );
     return { success: true, data: response };
   },
 

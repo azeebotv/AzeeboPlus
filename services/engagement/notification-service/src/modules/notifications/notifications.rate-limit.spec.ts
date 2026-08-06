@@ -1,3 +1,37 @@
+jest.mock('@azeebo/shared-services', () => ({
+  FirebaseService: 'FirebaseService',
+  EmailService: 'EmailService',
+  SmsService: 'SmsService',
+  CacheService: 'CacheService',
+  cacheKey: (...args: unknown[]) => args.join(':'),
+}));
+jest.mock('class-validator', () => ({
+  IsBoolean: () => () => {},
+  IsOptional: () => () => {},
+  IsString: () => () => {},
+  IsEmail: () => () => {},
+  IsEnum: () => () => {},
+  IsNotEmpty: () => () => {},
+  IsIn: () => () => {},
+  ValidateNested: () => () => {},
+  Type: () => () => {},
+  IsPhoneNumber: () => () => {},
+}));
+jest.mock('class-transformer', () => ({
+  Type: () => () => {},
+  plainToInstance: (_cls: unknown, obj: unknown) => obj,
+}));
+jest.mock('@azeebo/security', () => {
+  const canActivate = jest.fn().mockReturnValue(true);
+  return {
+    RateLimitGuard: class MockRateLimitGuard {
+      canActivate = canActivate;
+    },
+    RateLimit: () => () => {},
+    __mockCanActivate: canActivate,
+  };
+});
+
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   INestApplication,
@@ -5,6 +39,7 @@ import {
   HttpException,
   HttpStatus,
   ExecutionContext,
+  VersioningType,
 } from '@nestjs/common';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
@@ -21,7 +56,11 @@ const mockAuthGuard = {
 };
 
 const mockRateLimitGuard = {
-  canActivate: jest.fn().mockReturnValue(true),
+  canActivate: jest.fn().mockImplementation((context: ExecutionContext) => {
+    const request = context.switchToHttp().getRequest();
+    request.user = { sub: 'user-123', id: 'user-123', email: 'test@example.com', role: 'user' };
+    return true;
+  }),
 };
 
 describe('Notification Service Rate Limiting & Pagination Tests', () => {
@@ -86,6 +125,7 @@ describe('Notification Service Rate Limiting & Pagination Tests', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
     await app.init();
   });
 
@@ -97,10 +137,14 @@ describe('Notification Service Rate Limiting & Pagination Tests', () => {
     jest.clearAllMocks();
     mockAuthGuard.canActivate.mockImplementation((context: ExecutionContext) => {
       const request = context.switchToHttp().getRequest();
-      request.user = { sub: 'user-123', email: 'test@example.com', role: 'user' };
+      request.user = { sub: 'user-123', id: 'user-123', email: 'test@example.com', role: 'user' };
       return true;
     });
-    mockRateLimitGuard.canActivate.mockReturnValue(true);
+    mockRateLimitGuard.canActivate.mockImplementation((context: ExecutionContext) => {
+      const request = context.switchToHttp().getRequest();
+      request.user = { sub: 'user-123', id: 'user-123', email: 'test@example.com', role: 'user' };
+      return true;
+    });
   });
 
   describe('Rate Limiting - GET /v1/notifications', () => {
@@ -129,7 +173,7 @@ describe('Notification Service Rate Limiting & Pagination Tests', () => {
     });
 
     it('should require authentication', async () => {
-      mockAuthGuard.canActivate.mockImplementation(() => {
+      mockRateLimitGuard.canActivate.mockImplementation(() => {
         throw new UnauthorizedException();
       });
 

@@ -17,6 +17,7 @@ const TAB_ICONS: Record<string, { active: string; inactive: string }> = {
   home: { active: '◉', inactive: '○' },
   watch: { active: '▶', inactive: '▷' },
   rewards: { active: '★', inactive: '☆' },
+  tips: { active: '♥', inactive: '♡' },
   profile: { active: '●', inactive: '○' },
 };
 
@@ -68,6 +69,7 @@ function CreateButton({ onPress }: { onPress: () => void }) {
       onPressOut={handlePressOut}
       accessibilityLabel="Create content"
       accessibilityRole="button"
+      testID="tab-create"
     >
       <View style={styles.createButtonInner}>
         <Text style={styles.createIcon}>+</Text>
@@ -99,7 +101,8 @@ function HeaderUtilities({ router }: { router: ReturnType<typeof useRouter> }) {
     return () => clearInterval(interval);
   }, []);
 
-  const userInitial = user?.name?.charAt(0)?.toUpperCase() || user?.displayName?.charAt(0)?.toUpperCase() || 'U';
+  const userInitial =
+    user?.name?.charAt(0)?.toUpperCase() || user?.displayName?.charAt(0)?.toUpperCase() || 'U';
 
   return (
     <View style={styles.header}>
@@ -121,6 +124,7 @@ function HeaderUtilities({ router }: { router: ReturnType<typeof useRouter> }) {
           onPress={() => router.push('/(tabs)/search')}
           accessibilityLabel="Search"
           accessibilityRole="button"
+          testID="header-search-button"
         >
           <Text style={styles.headerButtonText}>⌕</Text>
         </TouchableOpacity>
@@ -130,6 +134,7 @@ function HeaderUtilities({ router }: { router: ReturnType<typeof useRouter> }) {
           onPress={() => router.push('/(tabs)/wallet')}
           accessibilityLabel={`Wallet balance: ${walletBalance} tokens`}
           accessibilityRole="button"
+          testID="header-wallet-button"
         >
           <Text style={styles.headerButtonText}>◈</Text>
           <View style={styles.walletBadge}>
@@ -142,6 +147,7 @@ function HeaderUtilities({ router }: { router: ReturnType<typeof useRouter> }) {
           onPress={() => router.push('/notifications')}
           accessibilityLabel={`${unreadCount} notifications`}
           accessibilityRole="button"
+          testID="header-notifications-button"
         >
           <Text style={styles.headerButtonText}>♡</Text>
           {unreadCount > 0 && (
@@ -156,6 +162,7 @@ function HeaderUtilities({ router }: { router: ReturnType<typeof useRouter> }) {
           onPress={() => router.push('/(tabs)/profile')}
           accessibilityLabel="Profile"
           accessibilityRole="button"
+          testID="header-profile-button"
         >
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{userInitial}</Text>
@@ -224,6 +231,15 @@ export default function TabsLayout() {
             title: 'Rewards',
             tabBarIcon: ({ focused }: { focused: boolean }) => (
               <TabIcon name="rewards" focused={focused} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="tipping"
+          options={{
+            title: 'Tips',
+            tabBarIcon: ({ focused }: { focused: boolean }) => (
+              <TabIcon name="tips" focused={focused} />
             ),
           }}
         />

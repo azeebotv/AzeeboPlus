@@ -5,7 +5,7 @@
   "description": "Azeebo+ Queue Service (BullMQ)",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json",
     "start": "node dist/index.js",
     "start:dev": "bash start-dev.sh",
     "prisma:generate": "prisma generate",
@@ -34,7 +34,6 @@
     "bullmq": "^5.78.1",
     "firebase-admin": "^14.0.0",
     "handlebars": "^4.7.9",
-    "helmet": "^8.2.0",
     "ioredis": "^5.11.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",

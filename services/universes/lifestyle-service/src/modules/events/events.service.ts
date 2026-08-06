@@ -1,6 +1,8 @@
 import { Inject, Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import axios from 'axios';
 
 interface Event {
   id: string;
@@ -98,11 +100,34 @@ interface WhereClause {
 @Injectable()
 export class EventsService {
   private readonly logger = new Logger(EventsService.name);
+  private readonly analyticsServiceBaseUrl: string;
 
   constructor(
     @Inject(PrismaService) private prisma: PrismaService,
-    @Inject(CacheService) private readonly cache: CacheService
-  ) {}
+    @Inject(CacheService) private readonly cache: CacheService,
+    private readonly configService: ConfigService
+  ) {
+    this.analyticsServiceBaseUrl = this.configService.get<string>(
+      'ANALYTICS_SERVICE_URL',
+      'http://analytics-service:3040'
+    );
+  }
+
+  private async trackAnalyticsEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown> = {}
+  ): Promise<void> {
+    try {
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/analytics/track`,
+        { eventName, userId, metadata, timestamp: new Date().toISOString() },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to track analytics event: ${eventName}`);
+    }
+  }
 
   async getEvents(
     page = 1,
@@ -530,50 +555,53 @@ export class EventsService {
 
   async rsvpEvent(eventId: string, userId: string, data: RsvpData): Promise<EventResponse> {
     try {
-      const event = await this.prisma.event.findUnique({
-        where: { id: eventId },
-        include: { rsvps: true },
-      });
-      if (!event) throw new NotFoundException(`Event not found: ${eventId}`);
+      const result = await this.prisma.$transaction(async (tx) => {
+        const event = await tx.event.findUnique({
+          where: { id: eventId },
+        });
+        if (!event) throw new NotFoundException(`Event not found: ${eventId}`);
 
-      const existing = await this.prisma.eventRsvp.findUnique({
-        where: { userId_eventId: { userId, eventId } },
-      });
-      if (existing) {
-        throw new BadRequestException('Already RSVPed to this event!');
-      }
+        const existing = await tx.eventRsvp.findUnique({
+          where: { userId_eventId: { userId, eventId } },
+        });
+        if (existing) {
+          throw new BadRequestException('Already RSVPed to this event!');
+        }
 
-      if (event.maxAttendees && event.rsvpCount >= event.maxAttendees) {
-        throw new BadRequestException('Event is fully booked!');
-      }
+        if (event.maxAttendees && event.rsvpCount >= event.maxAttendees) {
+          throw new BadRequestException('Event is fully booked!');
+        }
 
-      const rsvp = await this.prisma.eventRsvp.create({
-        data: {
-          userId,
-          eventId,
-          status: data.status || 'attending',
-          guests: data.guests || 0,
-          note: data.note,
-        },
-        include: { event: true },
-      });
+        const rsvp = await tx.eventRsvp.create({
+          data: {
+            userId,
+            eventId,
+            status: data.status || 'attending',
+            guests: data.guests || 0,
+            note: data.note,
+          },
+        });
 
-      await this.prisma.event.update({
-        where: { id: eventId },
-        data: { rsvpCount: { increment: 1 } },
+        await tx.event.update({
+          where: { id: eventId },
+          data: { rsvpCount: { increment: 1 } },
+        });
+
+        return rsvp;
       });
 
       const formattedRsvp: Rsvp = {
-        id: rsvp.id,
-        userId: rsvp.userId,
-        eventId: rsvp.eventId,
-        status: rsvp.status,
-        guests: rsvp.guests,
-        note: rsvp.note || '',
-        createdAt: rsvp.createdAt.toISOString(),
+        id: result.id,
+        userId: result.userId,
+        eventId: result.eventId,
+        status: result.status,
+        guests: result.guests,
+        note: result.note || '',
+        createdAt: result.createdAt.toISOString(),
       };
 
       await this.cache.invalidate('lifestyle:events:*');
+      this.trackAnalyticsEvent('event_rsvp_created', userId, { eventId });
 
       return {
         success: true,
@@ -609,6 +637,8 @@ export class EventsService {
       });
 
       await this.cache.invalidate('lifestyle:events:*');
+
+      this.trackAnalyticsEvent('event_rsvp_cancelled', userId, { eventId });
 
       return {
         success: true,

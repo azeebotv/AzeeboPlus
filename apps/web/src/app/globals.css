@@ -1,17 +1,18 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* ============================================================
    Azeebo+ Brand Design System (v2 — Nigerian Entertainment)
    ============================================================ */
 :root {
   /* Brand Core */
-  --brand-orange: #E8420A;      /* Azeebo Orange — primary CTA, logo accent, highlights */
-  --brand-red: #CC1C1C;         /* Deep Red — buttons, active states, glow */
-  --brand-near-black: #1A0A0A;  /* Near-Black — auth/utility backgrounds */
-  --brand-forest: #0D3B2E;      /* Forest Dark Green — marketing/hero background */
-  --brand-white: #FFFFFF;       /* White — primary text */
-  --brand-surface: #2A2A2A;     /* Surface Dark — card backgrounds, inputs */
-  --brand-surface-input: #1E1E1E; /* Input field fill */
+  --brand-orange: #e8420a; /* Azeebo Orange — primary CTA, logo accent, highlights */
+  --brand-red: #cc1c1c; /* Deep Red — buttons, active states, glow */
+  --brand-near-black: #1a0a0a; /* Near-Black — auth/utility backgrounds */
+  --brand-forest: #0d3b2e; /* Forest Dark Green — marketing/hero background */
+  --brand-green: #22c55e; /* Green — success states */
+  --brand-white: #ffffff; /* White — primary text */
+  --brand-surface: #2a2a2a; /* Surface Dark — card backgrounds, inputs */
+  --brand-surface-input: #1e1e1e; /* Input field fill */
 
   /* Glass panel */
   --glass-bg: rgba(15, 5, 5, 0.85);
@@ -33,7 +34,7 @@
   --color-primary-200: #fed7aa;
   --color-primary-300: #fdba74;
   --color-primary-400: #fb923c;
-  --color-primary-500: #E8420A;
+  --color-primary-500: #e8420a;
   --color-primary-600: #c2410c;
   --color-primary-700: #9a3412;
   --color-primary-800: #7c2d12;
@@ -90,7 +91,7 @@
   --color-error-800: #991b1b;
   --color-error-900: #7f1d1d;
 
-  --color-info: #3B82F6;
+  --color-info: #3b82f6;
 
   /* Dark Scale */
   --color-dark-900: #0a0a0a;
@@ -116,21 +117,21 @@
   --color-light-900: #262626;
 
   /* Text Colors */
-  --text-primary: #F3F4F6;
-  --text-secondary: #9CA3AF;
-  --text-tertiary: #6B7280;
-  --text-inverse: #1A0A0A;
+  --text-primary: #f3f4f6;
+  --text-secondary: #9ca3af;
+  --text-tertiary: #6b7280;
+  --text-inverse: #1a0a0a;
 
   /* Backgrounds */
-  --bg-primary: #1A0A0A;
-  --bg-secondary: #2A1A1A;
-  --bg-tertiary: #3A2A2A;
-  --bg-hover: #4B5563;
+  --bg-primary: #1a0a0a;
+  --bg-secondary: #2a1a1a;
+  --bg-tertiary: #3a2a2a;
+  --bg-hover: #4b5563;
 
   /* Borders & Dividers */
-  --border-default: #4B5563;
+  --border-default: #4b5563;
   --border-light: #374151;
-  --border-focus: #E8420A;
+  --border-focus: #e8420a;
 
   /* Spacing Scale */
   --spacing-xs: 4px;
@@ -205,17 +206,22 @@
   --z-tooltip: 800;
 
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%);
-  --gradient-brand: linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%);
-  --gradient-gold: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-  --gradient-success: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
+  --gradient-primary: linear-gradient(135deg, #e8420a 0%, #cc1c1c 100%);
+  --gradient-brand: linear-gradient(135deg, #e8420a 0%, #cc1c1c 100%);
+  --gradient-gold: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
+  --gradient-success: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
   --gradient-dark: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
 }
 
 /* Base Reset & Dark Theme */
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
@@ -224,7 +230,7 @@ body {
 
 /* Custom Utilities */
 .text-gradient-brand {
-  background: linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%);
+  background: linear-gradient(135deg, #e8420a 0%, #cc1c1c 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -232,59 +238,124 @@ body {
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes fadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 @keyframes slideInRight {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideInLeft {
-  from { transform: translateX(-100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideInUp {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideInDown {
-  from { transform: translateY(-100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes scaleIn {
-  from { transform: scale(0.95); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
-.animate-fade-in { animation: fadeIn var(--transition-normal); }
-.animate-fade-out { animation: fadeOut var(--transition-normal); }
-.animate-slide-in-right { animation: slideInRight var(--transition-normal); }
-.animate-slide-in-left { animation: slideInLeft var(--transition-normal); }
-.animate-slide-in-up { animation: slideInUp var(--transition-normal); }
-.animate-slide-in-down { animation: slideInDown var(--transition-normal); }
-.animate-scale-in { animation: scaleIn var(--transition-normal); }
-.animate-spin { animation: spin 1s linear infinite; }
-.animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+.animate-fade-in {
+  animation: fadeIn var(--transition-normal);
+}
+.animate-fade-out {
+  animation: fadeOut var(--transition-normal);
+}
+.animate-slide-in-right {
+  animation: slideInRight var(--transition-normal);
+}
+.animate-slide-in-left {
+  animation: slideInLeft var(--transition-normal);
+}
+.animate-slide-in-up {
+  animation: slideInUp var(--transition-normal);
+}
+.animate-slide-in-down {
+  animation: slideInDown var(--transition-normal);
+}
+.animate-scale-in {
+  animation: scaleIn var(--transition-normal);
+}
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
 
 /* ============================================================
    Azeebo Pulse — Signature Motion System
@@ -292,11 +363,16 @@ body {
 
 /* Glass breathing effect — subtle ambient pulse on glass panels */
 @keyframes glassBreath {
-  0%, 100% {
-    box-shadow: 0 0 30px rgba(255, 255, 255, 0.15), 0 0 60px rgba(200, 20, 20, 0.1);
+  0%,
+  100% {
+    box-shadow:
+      0 0 30px rgba(255, 255, 255, 0.15),
+      0 0 60px rgba(200, 20, 20, 0.1);
   }
   50% {
-    box-shadow: 0 0 40px rgba(255, 255, 255, 0.2), 0 0 80px rgba(200, 20, 20, 0.18);
+    box-shadow:
+      0 0 40px rgba(255, 255, 255, 0.2),
+      0 0 80px rgba(200, 20, 20, 0.18);
   }
 }
 
@@ -306,9 +382,19 @@ body {
 
 /* Ambient glow drift — slow background orb movement */
 @keyframes glowDrift {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.35; }
-  33% { transform: translate(12px, -18px) scale(1.1); opacity: 0.5; }
-  66% { transform: translate(-10px, 12px) scale(0.92); opacity: 0.3; }
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.35;
+  }
+  33% {
+    transform: translate(12px, -18px) scale(1.1);
+    opacity: 0.5;
+  }
+  66% {
+    transform: translate(-10px, 12px) scale(0.92);
+    opacity: 0.3;
+  }
 }
 
 .az-glow-drift {
@@ -317,18 +403,23 @@ body {
 
 /* Nollywood gradient — living, shifting dark background */
 @keyframes nollywoodShift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
 .az-nollywood-bg {
   background: linear-gradient(
     135deg,
-    #0A0A0A 0%,
-    #1A0A0A 25%,
-    #2A1A1A 50%,
-    #1A0A0A 75%,
-    #0A0A0A 100%
+    #0a0a0a 0%,
+    #1a0a0a 25%,
+    #2a1a1a 50%,
+    #1a0a0a 75%,
+    #0a0a0a 100%
   );
   background-size: 400% 400%;
   animation: nollywoodShift 20s ease infinite;
@@ -336,8 +427,12 @@ body {
 
 /* Shimmer sweep — loading skeleton enhancement */
 @keyframes shimmerSweep {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .az-shimmer {
@@ -359,8 +454,14 @@ body {
 
 /* Ripple effect for buttons */
 @keyframes ripple {
-  0% { transform: scale(0); opacity: 0.6; }
-  100% { transform: scale(4); opacity: 0; }
+  0% {
+    transform: scale(0);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
 }
 
 .az-ripple {
@@ -383,8 +484,14 @@ body {
 
 /* Pulse ring — for live indicators and notifications */
 @keyframes pulseRing {
-  0% { transform: scale(0.8); opacity: 1; }
-  100% { transform: scale(2.2); opacity: 0; }
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
 }
 
 .az-pulse-ring {
@@ -420,20 +527,42 @@ body {
   opacity: 0;
   animation: pageEnter 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
 }
-.az-stagger > *:nth-child(1) { animation-delay: 0ms; }
-.az-stagger > *:nth-child(2) { animation-delay: 60ms; }
-.az-stagger > *:nth-child(3) { animation-delay: 120ms; }
-.az-stagger > *:nth-child(4) { animation-delay: 180ms; }
-.az-stagger > *:nth-child(5) { animation-delay: 240ms; }
-.az-stagger > *:nth-child(6) { animation-delay: 300ms; }
-.az-stagger > *:nth-child(7) { animation-delay: 360ms; }
-.az-stagger > *:nth-child(8) { animation-delay: 420ms; }
-.az-stagger > *:nth-child(9) { animation-delay: 480ms; }
+.az-stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.az-stagger > *:nth-child(2) {
+  animation-delay: 60ms;
+}
+.az-stagger > *:nth-child(3) {
+  animation-delay: 120ms;
+}
+.az-stagger > *:nth-child(4) {
+  animation-delay: 180ms;
+}
+.az-stagger > *:nth-child(5) {
+  animation-delay: 240ms;
+}
+.az-stagger > *:nth-child(6) {
+  animation-delay: 300ms;
+}
+.az-stagger > *:nth-child(7) {
+  animation-delay: 360ms;
+}
+.az-stagger > *:nth-child(8) {
+  animation-delay: 420ms;
+}
+.az-stagger > *:nth-child(9) {
+  animation-delay: 480ms;
+}
 
 /* Tab underline sliding indicator */
 @keyframes tabSlide {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }
 
 .az-tab-indicator {
@@ -446,7 +575,7 @@ body {
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, #E8420A, #CC1C1C);
+  background: linear-gradient(90deg, #e8420a, #cc1c1c);
   border-radius: 1px;
   transform-origin: left;
   animation: tabSlide 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
@@ -470,7 +599,7 @@ body::after {
   content: '';
   position: fixed;
   inset: 0;
-  background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.35) 100%);
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.35) 100%);
   pointer-events: none;
   z-index: 9998;
 }
@@ -524,10 +653,13 @@ body::after {
   border-radius: 999px;
   border: none;
   width: 100%;
-  padding: 0.85rem 1.25rem;
+  padding: 1rem 1.25rem;
   font-size: 0.95rem;
   cursor: pointer;
-  transition: box-shadow var(--transition-fast), transform var(--transition-fast), background var(--transition-fast);
+  transition:
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast),
+    background var(--transition-fast);
 }
 .az-btn-primary:hover:not(:disabled) {
   box-shadow: var(--glow-red);
@@ -552,33 +684,43 @@ body::after {
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background var(--transition-fast), border-color var(--transition-fast);
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
 }
 .az-btn-social--light {
   background: var(--brand-white);
   color: #1a1a1a;
-  border: 1px solid rgba(0,0,0,0.08);
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
-.az-btn-social--light:hover { background: #f3f3f3; }
+.az-btn-social--light:hover {
+  background: #f3f3f3;
+}
 .az-btn-social--dark {
   background: var(--brand-surface);
   color: var(--brand-white);
   border: 1px solid var(--glass-border);
 }
-.az-btn-social--dark:hover { background: #383838; }
+.az-btn-social--dark:hover {
+  background: #383838;
+}
 
 /* Brand input field */
 .az-input {
   width: 100%;
   background: var(--brand-surface-input);
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   padding: 0.8rem 1rem;
   color: var(--brand-white);
   font-size: 0.95rem;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
-.az-input::placeholder { color: rgba(255,255,255,0.4); }
+.az-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
 .az-input:focus {
   outline: none;
   border-color: var(--brand-red);
@@ -592,7 +734,7 @@ body::after {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(255,255,255,0.55);
+  color: rgba(255, 255, 255, 0.55);
   margin-bottom: 0.4rem;
 }
 
@@ -601,7 +743,7 @@ body::after {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: rgba(255,255,255,0.4);
+  color: rgba(255, 255, 255, 0.4);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.12em;
@@ -612,14 +754,14 @@ body::after {
   content: '';
   flex: 1;
   height: 1px;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 /* Ambient red glow layer (atmospheric depth) */
 .az-ambient-red {
   position: absolute;
   pointer-events: none;
-  background: radial-gradient(circle, rgba(204,28,28,0.4) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(204, 28, 28, 0.4) 0%, transparent 70%);
   filter: blur(40px);
   z-index: 0;
 }
@@ -696,7 +838,7 @@ html:not(.dark) {
 
   --border-default: #d1d5db;
   --border-light: #e5e7eb;
-  --border-focus: #E8420A;
+  --border-focus: #e8420a;
 
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
@@ -729,9 +871,9 @@ html:not(.dark) {
     text-decoration: underline !important;
   }
 
-  a[href^="http"]::after,
-  a[href^="ftp"]::after {
-    content: " (" attr(href) ")";
+  a[href^='http']::after,
+  a[href^='ftp']::after {
+    content: ' (' attr(href) ')';
     font-size: 90%;
     opacity: 0.8;
   }

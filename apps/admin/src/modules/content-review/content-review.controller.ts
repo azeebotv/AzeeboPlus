@@ -1,4 +1,4 @@
-import { Inject, Controller, Get, Post, Param, Query, UseGuards, Req  } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Param, Query, UseGuards, Req } from '@nestjs/common';
 import { ContentReviewService } from './content-review.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -12,7 +12,7 @@ interface AuthRequest extends Request {
 
 @Controller('admin/content-review')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
+@Roles('admin', 'superadmin')
 export class ContentReviewController {
   constructor(
     @Inject(ContentReviewService) private readonly contentReviewService: ContentReviewService,

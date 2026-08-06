@@ -51,6 +51,28 @@ export class AuthRepository {
     }) as Promise<SessionEntity | null>;
   }
 
+  async countSessionsByUserId(userId: string): Promise<number> {
+    return this.prisma.session.count({
+      where: { userId },
+    });
+  }
+
+  async deleteOldestSessions(userId: string, count: number): Promise<number> {
+    const sessions = await this.prisma.session.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'asc' },
+      take: count,
+      select: { id: true },
+    });
+
+    if (sessions.length === 0) return 0;
+
+    const result = await this.prisma.session.deleteMany({
+      where: { id: { in: sessions.map((s) => s.id) } },
+    });
+    return result.count;
+  }
+
   async deleteSessionByUserId(userId: string): Promise<number> {
     const result = await this.prisma.session.deleteMany({
       where: { userId },

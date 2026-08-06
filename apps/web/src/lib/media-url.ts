@@ -60,7 +60,7 @@ export function detectMediaType(url: string): MediaUrlInfo {
 export function isVideoUrl(url: string): boolean {
   const videoExtensions = /\.(mp4|webm|ogg|mov|avi|mkv|flv|wmv)(\?|$)/i;
   const videoHosts = /youtube\.com|youtu\.be|vimeo\.com|dailymotion\.com/i;
-  
+
   return videoExtensions.test(url) || videoHosts.test(url);
 }
 

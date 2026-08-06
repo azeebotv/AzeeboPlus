@@ -14,6 +14,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
+import { analytics } from '../../src/utils/analytics';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -32,6 +33,7 @@ export default function EpisodePlayerScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const episodeId = params.id as string;
+  const showId = params.showId as string;
 
   const [episode, setEpisode] = useState<Episode | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,6 +46,11 @@ export default function EpisodePlayerScreen() {
 
   useEffect(() => {
     loadEpisode();
+    try {
+      if (showId && episodeId) {
+        analytics.realityEpisodeViewed(showId, episodeId);
+      }
+    } catch {}
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
@@ -142,7 +149,12 @@ export default function EpisodePlayerScreen() {
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Episode not found</Text>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()} accessibilityLabel="Go back" accessibilityRole="button">
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
+          >
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -155,7 +167,12 @@ export default function EpisodePlayerScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.playerContainer}>
-        <TouchableOpacity style={styles.backButtonAbsolute} onPress={() => router.back()} accessibilityLabel="Go back" accessibilityRole="button">
+        <TouchableOpacity
+          style={styles.backButtonAbsolute}
+          onPress={() => router.back()}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+        >
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
 
@@ -172,7 +189,12 @@ export default function EpisodePlayerScreen() {
               <View style={styles.playingBar3} />
             </View>
           ) : (
-            <TouchableOpacity style={styles.playButton} onPress={handlePlayPause} accessibilityLabel="Play" accessibilityRole="button">
+            <TouchableOpacity
+              style={styles.playButton}
+              onPress={handlePlayPause}
+              accessibilityLabel="Play"
+              accessibilityRole="button"
+            >
               <Text style={styles.playButtonText}>▶</Text>
             </TouchableOpacity>
           )}
@@ -190,25 +212,50 @@ export default function EpisodePlayerScreen() {
           </View>
 
           <View style={styles.controls}>
-            <TouchableOpacity style={styles.controlButton} onPress={() => handleSeek(-10)} accessibilityLabel="Seek backward 10 seconds" accessibilityRole="button">
+            <TouchableOpacity
+              style={styles.controlButton}
+              onPress={() => handleSeek(-10)}
+              accessibilityLabel="Seek backward 10 seconds"
+              accessibilityRole="button"
+            >
               <Text style={styles.controlButtonText}>⏪</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.controlButtonLarge} onPress={handlePlayPause} accessibilityLabel={isPlaying ? 'Pause' : 'Play'} accessibilityRole="button">
+            <TouchableOpacity
+              style={styles.controlButtonLarge}
+              onPress={handlePlayPause}
+              accessibilityLabel={isPlaying ? 'Pause' : 'Play'}
+              accessibilityRole="button"
+            >
               <Text style={styles.controlButtonTextLarge}>{isPlaying ? '⏸' : '▶'}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.controlButton} onPress={() => handleSeek(10)} accessibilityLabel="Seek forward 10 seconds" accessibilityRole="button">
+            <TouchableOpacity
+              style={styles.controlButton}
+              onPress={() => handleSeek(10)}
+              accessibilityLabel="Seek forward 10 seconds"
+              accessibilityRole="button"
+            >
               <Text style={styles.controlButtonText}>⏩</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.actionButton} onPress={() => setShowSubtitles(true)} accessibilityLabel="Open subtitles" accessibilityRole="button">
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => setShowSubtitles(true)}
+              accessibilityLabel="Open subtitles"
+              accessibilityRole="button"
+            >
               <Text style={styles.actionButtonText}>💬 Subtitles</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.actionButton} onPress={handleVote} accessibilityLabel="Vote for contestant" accessibilityRole="button">
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={handleVote}
+              accessibilityLabel="Vote for contestant"
+              accessibilityRole="button"
+            >
               <Text style={styles.actionButtonText}>🗳 Vote</Text>
             </TouchableOpacity>
           </View>
@@ -230,7 +277,11 @@ export default function EpisodePlayerScreen() {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Subtitles</Text>
-              <TouchableOpacity onPress={() => setShowSubtitles(false)} accessibilityLabel="Close subtitles menu" accessibilityRole="button">
+              <TouchableOpacity
+                onPress={() => setShowSubtitles(false)}
+                accessibilityLabel="Close subtitles menu"
+                accessibilityRole="button"
+              >
                 <Text style={styles.modalClose}>✕</Text>
               </TouchableOpacity>
             </View>

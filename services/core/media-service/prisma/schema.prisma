@@ -20,10 +20,10 @@ datasource db {
 model MediaUpload {
   id            String   @id @default(uuid())
   userId        String
-  filename      String
+  fileName      String
   originalName  String
-  mimetype      String
-  size          Int // Max ~2GB; use BigInt if larger files are needed
+  mimeType      String
+  size          BigInt
   key           String
   cdnUrl        String?
   folder        String

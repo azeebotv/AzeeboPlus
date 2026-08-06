@@ -13,6 +13,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentApi, walletApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
+import { analytics } from '../../src/utils/analytics';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import { votePackages as defaultVotePackages } from '../../src/config/prices';
 
@@ -122,6 +123,15 @@ export default function SuperVoteScreen() {
         voteCount: package_.votes,
       });
 
+      try {
+        analytics.realitySupervoteCreated(
+          episodeId,
+          selectedContestant!,
+          package_.votes,
+          package_.price
+        );
+      } catch {}
+
       Alert.alert(
         'Success!',
         `Your ${package_.votes} Super Vote(s) have been submitted! Each vote counts as 2x.`,
@@ -137,7 +147,10 @@ export default function SuperVoteScreen() {
         ]
       );
     } catch (error: unknown) {
-      Alert.alert('Error', (error instanceof Error ? error.message : null) || 'Failed to submit super vote');
+      Alert.alert(
+        'Error',
+        (error instanceof Error ? error.message : null) || 'Failed to submit super vote'
+      );
     } finally {
       setIsVoting(false);
     }

@@ -1,4 +1,5 @@
 'use client';
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import Link from 'next/link';
@@ -6,8 +7,13 @@ import { api, ContentItem, Category } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import analytics from '@/lib/analytics';
 
-export default function ComedyPage(): React.JSX.Element {
+function ComedyPageContent(): React.JSX.Element {
+  useEffect(() => {
+    analytics.pageView('comedy');
+  }, []);
+
   const universesQuery = useQuery({
     queryKey: ['universes'],
     queryFn: async () => {
@@ -50,13 +56,15 @@ export default function ComedyPage(): React.JSX.Element {
   });
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader />
 
       {/* Hero Section */}
       <section
         className="relative py-16"
-        style={{ background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)' }}
+        style={{
+          background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+        }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
@@ -182,6 +190,7 @@ export default function ComedyPage(): React.JSX.Element {
             <button
               key={category.id}
               type="button"
+              aria-label={category.name}
               className="az-glass text-center cursor-pointer transition-all hover:scale-[1.02]"
             >
               <div className="p-4">
@@ -197,3 +206,5 @@ export default function ComedyPage(): React.JSX.Element {
     </div>
   );
 }
+
+export default ComedyPageContent;

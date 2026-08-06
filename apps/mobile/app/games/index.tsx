@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { apiClient } from '../../src/api/client';
 import { ApiResponse } from '../../src/types/api';
+import { analytics } from '../../src/utils/analytics';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -68,6 +69,9 @@ export default function GamesUniverseHome() {
       setTournaments(Array.isArray(tournamentsRes) ? tournamentsRes : (tournamentsRes?.data ?? []));
       setCategories(Array.isArray(catsRes) ? catsRes : (catsRes?.data ?? []));
       setTopPlayers(Array.isArray(playersRes) ? playersRes : (playersRes?.data ?? []));
+      try {
+        analytics.gameStarted(featured?.id ?? '', Date.now().toString());
+      } catch {}
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load');
     } finally {

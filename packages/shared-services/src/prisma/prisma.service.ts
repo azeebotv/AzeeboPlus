@@ -16,7 +16,7 @@ import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/commo
 export class PrismaService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
   /** @internal – the underlying PrismaClient instance */
-  readonly _client: any;
+  readonly _client: Record<string, unknown>;
 
   constructor() {
     try {
@@ -42,7 +42,7 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleInit() {
     try {
-      await this._client.$connect();
+      await (this._client as { $connect: () => Promise<void> }).$connect();
       this.logger.log('Prisma client connected successfully');
     } catch (error) {
       this.logger.error('Failed to connect to database:', error);
@@ -52,7 +52,7 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleDestroy() {
     try {
-      await this._client.$disconnect();
+      await (this._client as { $disconnect: () => Promise<void> }).$disconnect();
       this.logger.log('Prisma client disconnected');
     } catch (error) {
       this.logger.error('Failed to disconnect Prisma client:', error);
@@ -64,12 +64,12 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
   // (e.g. `this.prisma.auditLog.create(...)`) keep working.
   // ---------------------------------------------------------------------------
 
-  get auditLog(): any {
-    return this._client.auditLog;
+  get auditLog(): Record<string, unknown> {
+    return this._client.auditLog as Record<string, unknown>;
   }
 
   /** Generic proxy – forwards any property access to the underlying client. */
-  get [Symbol.iterator](): any {
+  get [Symbol.iterator](): undefined {
     return undefined;
   }
 }
@@ -78,4 +78,4 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
 // expect the full client interface (e.g. `extends PrismaClient` in service-
 // specific PrismaService classes).  At runtime the actual client is the
 // service-specific generated one, not this shared wrapper.
-export type PrismaServiceLike = InstanceType<typeof PrismaService> & Record<string, any>;
+export type PrismaServiceLike = InstanceType<typeof PrismaService> & Record<string, unknown>;

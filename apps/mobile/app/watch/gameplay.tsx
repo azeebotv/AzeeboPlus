@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { apiClient } from '../../src/api';
 import { logger } from '../../src/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
+import { analytics } from '../../src/utils/analytics';
 
 interface GameQuestion {
   id: number;
@@ -82,6 +83,14 @@ export default function GameplayScreen() {
 
   const isGameOver = timeLeft === 0 || (currentQuestion === questions.length - 1 && selectedAnswer);
 
+  useEffect(() => {
+    if (isGameOver) {
+      try {
+        analytics.gameCompleted('trivia', score, 60 - timeLeft);
+      } catch {}
+    }
+  }, [isGameOver]);
+
   if (isLoading) {
     return (
       <View
@@ -129,7 +138,12 @@ export default function GameplayScreen() {
       ]}
     >
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()} accessibilityLabel="Go back" accessibilityRole="button">
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+        >
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerStats}>
@@ -191,7 +205,14 @@ export default function GameplayScreen() {
           </View>
 
           {selectedAnswer && (
-            <TouchableOpacity onPress={handleNext} style={styles.nextButton} accessibilityLabel={currentQuestion < questions.length - 1 ? 'Next question' : 'See results'} accessibilityRole="button">
+            <TouchableOpacity
+              onPress={handleNext}
+              style={styles.nextButton}
+              accessibilityLabel={
+                currentQuestion < questions.length - 1 ? 'Next question' : 'See results'
+              }
+              accessibilityRole="button"
+            >
               <Text style={styles.nextText}>
                 {currentQuestion < questions.length - 1 ? 'Next Question' : 'See Results'}
               </Text>
@@ -217,7 +238,12 @@ export default function GameplayScreen() {
               <Text style={styles.resultStatLabel}>Questions</Text>
             </View>
           </View>
-          <TouchableOpacity onPress={handlePlayAgain} style={styles.playAgainButton} accessibilityLabel="Play again" accessibilityRole="button">
+          <TouchableOpacity
+            onPress={handlePlayAgain}
+            style={styles.playAgainButton}
+            accessibilityLabel="Play again"
+            accessibilityRole="button"
+          >
             <Text style={styles.playAgainText}>Play Again</Text>
           </TouchableOpacity>
         </View>

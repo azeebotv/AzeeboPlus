@@ -37,22 +37,24 @@ export class GatewayAuthGuard implements CanActivate {
     /^\/docs(\/.*)?$/,
     // Public settings/universes (content-service)
     /^\/api\/v\d+\/public\//,
-    // Public content browsing (home feed, featured, trending, new-releases, search, categories, tags)
-    // Universe and category content (read-only)
-    /^\/api\/v\d+\/content\/universe\/[^/]+$/,
-    /^\/api\/v\d+\/content\/category\/[^/]+$/,
-    /^\/api\/v\d+\/content\/[^/]+$/,  // Content detail
+    // Public content browsing — explicit routes only, no catch-all
     /^\/api\/v\d+\/content\/(home|watch|featured|trending|new-releases|featured-slides|popular-region|search|categories|tags)$/,
     // Content detail (read-only, @Public on controller)
     /^\/api\/v\d+\/content\/[^/]+$/,
     // Content comments and related
     /^\/api\/v\d+\/content\/[^/]+\/(comments|related)$/,
+    // Universe-specific content by slug (read-only)
+    /^\/api\/v\d+\/content\/universe\/[^/]+$/,
+    /^\/api\/v\d+\/content\/category\/[^/]+$/,
     // Universe detail
     /^\/api\/v\d+\/universe\/[^/]+$/,
-    // Creator discovery and public profiles
-    /^\/api\/v\d+\/creators\/(discover|[^/]+|[^/]+\/content)$/,
-    // Universe-specific trending and listing (read-only)
-    /^\/api\/v\d+\/(comedy|games|reality|movie|sports|lifestyle|vertical)\/(trending|[^/]+)$/,
+    // Creator discovery and public profiles — explicit sub-routes
+    /^\/api\/v\d+\/creators\/discover$/,
+    /^\/api\/v\d+\/creators\/[^/]+\/content$/,
+    /^\/api\/v\d+\/creators\/[^/]+$/,
+    // Universe-specific trending and listing (read-only) — explicit sub-routes
+    /^\/api\/v\d+\/(comedy|games|reality|movie|sports|lifestyle|vertical)\/(trending|featured|popular|new|list)$/,
+    /^\/api\/v\d+\/(comedy|games|reality|movie|sports|lifestyle|vertical)\/[^/]+$/,
     /^\/api\/v\d+\/(comedy|games|reality|movie|sports|lifestyle|vertical)$/,
     // Search suggestions and trending searches
     /^\/api\/v\d+\/search\/(trending|suggestions)$/,
@@ -92,11 +94,17 @@ export class GatewayAuthGuard implements CanActivate {
     }
     const authHeader = request.headers['authorization'];
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Missing or invalid Authorization header');
+    // Extract token from Authorization header or httpOnly cookie
+    let token: string | null = null;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7);
+    } else if (request.cookies?.access_token) {
+      token = request.cookies.access_token;
     }
 
-    const token = authHeader.substring(7);
+    if (!token) {
+      throw new UnauthorizedException('Missing or invalid Authorization header');
+    }
 
     try {
       const payload = this.verifyToken(token);
@@ -135,6 +143,7 @@ export class GatewayAuthGuard implements CanActivate {
       const payload = jwt.verify(token, jwtSecret, {
         issuer: this.configService.get<string>('JWT_ISSUER'),
         audience: this.configService.get<string>('JWT_AUDIENCE'),
+        algorithms: ['HS256'],
       }) as {
         sub: string;
         email: string;

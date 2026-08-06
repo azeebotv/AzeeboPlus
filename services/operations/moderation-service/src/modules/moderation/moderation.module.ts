@@ -7,10 +7,7 @@ import { SafetyScanningService } from './safety-scanning.service.js';
 import { DatabaseModule } from '../database/database.module.js';
 
 @Module({
-  imports: [
-    DatabaseModule,
-    JwtConfigModule,
-  ],
+  imports: [DatabaseModule, JwtConfigModule],
   controllers: [ModerationController],
   providers: [ModerationService, SafetyScanningService],
   exports: [ModerationService, SafetyScanningService, DatabaseModule],

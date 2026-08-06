@@ -1,7 +1,9 @@
 import { Inject, Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../prisma/client/index.js';
 import * as crypto from 'crypto';
+import axios from 'axios';
 
 export interface WebhookEvent {
   id: string;
@@ -29,8 +31,22 @@ export interface WebhookEventRecord {
 @Injectable()
 export class WebhookService {
   private readonly logger = new Logger(WebhookService.name);
+  private readonly paymentServiceUrl: string;
+  private readonly subscriptionServiceUrl: string;
 
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(ConfigService) private readonly configService: ConfigService
+  ) {
+    this.paymentServiceUrl = this.configService.get<string>(
+      'PAYMENT_SERVICE_URL',
+      'http://payment-service:3003'
+    );
+    this.subscriptionServiceUrl = this.configService.get<string>(
+      'SUBSCRIPTION_SERVICE_URL',
+      'http://subscription-service:3010'
+    );
+  }
 
   async processWebhook(event: WebhookEvent): Promise<WebhookResult> {
     try {
@@ -57,6 +73,9 @@ export class WebhookService {
         },
       });
 
+      // Dispatch event to appropriate service based on type
+      await this.dispatchEvent(event);
+
       this.logger.log(`Webhook event processed: ${event.id}`);
 
       return {
@@ -68,7 +87,30 @@ export class WebhookService {
         `processWebhook failed: ${(error as Error).message}`,
         (error as Error).stack
       );
-      return { success: false, error: (error as Error).message } as unknown as WebhookResult;
+      return { processed: false, eventId: event.id };
+    }
+  }
+
+  private async dispatchEvent(event: WebhookEvent): Promise<void> {
+    const eventType = event.type.toLowerCase();
+    const payload = event.payload;
+
+    try {
+      if (eventType.includes('payment') || eventType.includes('charge')) {
+        await axios.post(`${this.paymentServiceUrl}/webhooks/paystack`, payload, {
+          timeout: 10000,
+        });
+        this.logger.log(`Dispatched payment event ${event.type} to payment-service`);
+      } else if (eventType.includes('subscription') || eventType.includes('plan')) {
+        await axios.post(`${this.subscriptionServiceUrl}/webhooks`, payload, { timeout: 10000 });
+        this.logger.log(`Dispatched subscription event ${event.type} to subscription-service`);
+      } else {
+        this.logger.warn(`No handler registered for webhook event type: ${event.type}`);
+      }
+    } catch (dispatchError) {
+      this.logger.error(
+        `Failed to dispatch webhook event ${event.type}: ${(dispatchError as Error).message}`
+      );
     }
   }
 

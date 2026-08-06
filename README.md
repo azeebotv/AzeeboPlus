@@ -7,9 +7,10 @@ A modular digital entertainment platform that functions as a shared operating sy
 ```
 azeebo-plus/
 ├── apps/                    # Client applications
-│   ├── web/                # Next.js web app (port 4000)
-│   ├── admin/              # NestJS admin panel (port 4016)
-│   └── creator-portal/     # NestJS creator portal (port 4014)
+│   ├── mobile/              # Mobile app (Expo React Native, port 8081)
+│   ├── web/                 # Next.js web app (port 4000)
+│   ├── admin/              # Standalone admin dashboard (Vite+React + NestJS, port 4016)
+│   └── creator/           # Standalone creator dashboard (Vite+React + NestJS, port 4014)
 │
 ├── services/               # Backend microservices
 │   ├── core/              # Essential platform services
@@ -25,7 +26,7 @@ azeebo-plus/
 └── ci/                    # CI/CD scripts
 ```
 
-## Service Inventory (27 services + 3 frontends)
+## Service Inventory (28 services + 4 frontends)
 
 ### Core Services (ports 3000-3005, 3019)
 | Service | Port | DB | Description |
@@ -49,16 +50,17 @@ azeebo-plus/
 | vertical-service | 3017 | azeebo_vertical | Vertical video & storyworlds |
 | creator-service | 3018 | azeebo_creator | Creator onboarding, verification, earnings |
 | sports-service | 3021 | azeebo_sports | Sports content & predictions |
+| live-event-service | 3027 | azeebo_live_event | Pay-per-view live events & streaming |
 
 ### Engagement Services (ports 3006, 3007, 3023-3026)
 | Service | Port | DB | Description |
 |---------|------|----|-------------|
 | notification-service | 3006 | azeebo_notification | Push, email, SMS notifications |
 | reward-service | 3007 | azeebo_reward | Rewards & gamification |
-| engagement-service | 3023 | azeebo_engagement | Engagement tracking |
-| messaging-service | 3024 | azeebo_messaging | In-app messaging |
 | referral-service | 3025 | azeebo_referral | Referral program |
 | subscription-service | 3026 | azeebo_subscription | Subscription management |
+| engagement-service | 3023 | azeebo_engagement | Engagement tracking |
+| messaging-service | 3024 | azeebo_messaging | In-app messaging |
 
 ### Intelligence Services (ports 3008, 3009)
 | Service | Port | DB | Description |
@@ -81,9 +83,10 @@ azeebo-plus/
 ### Frontend Apps
 | App | Port | Framework | Description |
 |-----|------|-----------|-------------|
+| mobile | 8081 | Expo (React Native) | Mobile app (iOS/Android) |
 | web | 4000 | Next.js | Main web application |
-| admin | 4016 | NestJS + SSR | Admin dashboard |
-| creator-portal | 4014 | NestJS + SSR | Creator management portal |
+| admin | 4016 | Vite+React + NestJS | Standalone admin dashboard |
+| creator | 4014 | Vite+React + NestJS | Standalone creator dashboard |
 
 ## Running Locally
 
@@ -167,7 +170,6 @@ azeebo_notification  azeebo_reward  azeebo_engagement
 azeebo_messaging     azeebo_referral azeebo_subscription
 azeebo_analytics     azeebo_recommendation
 azeebo_queue    azeebo_support  azeebo_moderation
-azeebo_admin    azeebo_creator_portal
 ```
 
 Each service's `.env` contains its own `DATABASE_URL` pointing to its database.
@@ -186,7 +188,7 @@ JWT_REFRESH_SECRET=<random-64-char-hex>
 These override the placeholder values in service `.env` files at runtime.
 For production, set secrets via Coolify UI or Docker environment variables.
 
-## Shared Packages
+## Shared Packages (21 total)
 
 | Package | Description |
 |---------|-------------|
@@ -204,6 +206,13 @@ For production, set secrets via Coolify UI or Docker environment variables.
 | `test-utils` | Testing utilities |
 | `internal-clients` | Internal service clients |
 | `shared-services` | Shared NestJS modules (prisma, redis, cache, rate-limit, queue, audit, analytics, validation, pagination, api-versioning, sanitize, middleware) |
+| `ui` | Shared React UI components |
+| `design-tokens` | Design tokens (colors, spacing, typography) |
+| `http-client` | HTTP client for service-to-service calls |
+| `event-bus` | Event bus for inter-service communication |
+| `shared-queue` | Shared queue processing utilities |
+| `opentelemetry` | OpenTelemetry tracing and instrumentation |
+| `contract-tests` | API contract testing utilities |
 
 ## Running Tests
 

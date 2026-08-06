@@ -3,7 +3,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { apiFetch } from '../../../lib/api';
 import { useVideoPlayer } from '../../../hooks/useVideoPlayer';
-import { detectMediaType } from "../../../lib/media-url";
+import { detectMediaType } from '../../../lib/media-url';
 import { announceToScreenReader } from '../../../lib/keyboard';
 import AppHeader from '../../../components/layout/AppHeader';
 import AppFooter from '../../../components/layout/AppFooter';
@@ -52,7 +52,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   const [isLiked, setIsLiked] = useState<boolean>(false);
   const [isDisliked, setIsDisliked] = useState<boolean>(false);
   const [likeCount, setLikeCount] = useState<number>(0);
-  const [_dislikeCount, setDislikeCount] = useState<number>(0);
+  const [, setDislikeCount] = useState<number>(0);
   const [isSubscribed, setIsSubscribed] = useState<boolean>(false);
   const [subscriberCount, setSubscriberCount] = useState<number>(0);
   const [showDescription, setShowDescription] = useState<boolean>(false);
@@ -201,7 +201,11 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   useEffect(() => {
     const loadComments = async (): Promise<void> => {
       try {
-        const response = await apiFetch<RawComment[]>(`/content/${id}/comments`, {}, { maxRetries: 1, timeoutMs: 8000 });
+        const response = await apiFetch<RawComment[]>(
+          `/content/${id}/comments`,
+          {},
+          { maxRetries: 1, timeoutMs: 8000 }
+        );
         if (response.success && response.data) {
           const commentsData = Array.isArray(response.data) ? response.data : [];
           setComments(
@@ -489,7 +493,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
         <AppHeader />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
@@ -504,7 +508,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
 
   if (error || !content) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
         <AppHeader />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="az-glass p-8 text-center max-w-md">
@@ -526,7 +530,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader />
       <div
         ref={focusTrapRef}
@@ -625,29 +629,36 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
               })()}
               {(() => {
                 const mediaInfo = detectMediaType(content?.mediaUrl || '');
-                const isEmbedded = mediaInfo.type === 'youtube' || mediaInfo.type === 'iframe' || mediaInfo.type === 'ftp';
-                return !isEmbedded && !playerState.isPlaying && !playerState.isLoading && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      togglePlay();
-                    }}
-                    className="absolute inset-0 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#E8420A] focus:ring-offset-2 focus:ring-offset-black"
-                    aria-label="Play video"
-                  >
-                    <div
-                      className="w-20 h-20 rounded-full flex items-center justify-center transition-transform hover:scale-110"
-                      style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
+                const isEmbedded =
+                  mediaInfo.type === 'youtube' ||
+                  mediaInfo.type === 'iframe' ||
+                  mediaInfo.type === 'ftp';
+                return (
+                  !isEmbedded &&
+                  !playerState.isPlaying &&
+                  !playerState.isLoading && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        togglePlay();
+                      }}
+                      className="absolute inset-0 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#E8420A] focus:ring-offset-2 focus:ring-offset-black"
+                      aria-label="Play video"
                     >
-                      <svg
-                        className="w-10 h-10 text-white ml-1"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
+                      <div
+                        className="w-20 h-20 rounded-full flex items-center justify-center transition-transform hover:scale-110"
+                        style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
                       >
-                        <path d="M8 5v14l11-7z" />
-                      </svg>
-                    </div>
-                  </button>
+                        <svg
+                          className="w-10 h-10 text-white ml-1"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                      </div>
+                    </button>
+                  )
                 );
               })()}
 
@@ -660,158 +671,158 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
 
               {/* Video Controls - hidden for embedded media (YouTube/iframe has own controls) */}
               {!detectMediaType(content?.mediaUrl || '').type.match(/^(youtube|iframe)$/) && (
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent transition-opacity duration-300">
-                <div className="p-4">
-                  {/* Progress Bar */}
-                  <div className="mb-3">
-                    <input
-                      type="range"
-                      min="0"
-                      max={playerState.duration || 100}
-                      value={playerState.currentTime}
-                      onChange={handleProgressChange}
-                      className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#E8420A]"
-                      aria-label="Video progress"
-                    />
-                    <div className="flex justify-between text-xs text-white/60 mt-1">
-                      <span>{formatTime(playerState.currentTime)}</span>
-                      <span>{formatTime(playerState.duration || 100)}</span>
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent transition-opacity duration-300">
+                  <div className="p-4">
+                    {/* Progress Bar */}
+                    <div className="mb-3">
+                      <input
+                        type="range"
+                        min="0"
+                        max={playerState.duration || 100}
+                        value={playerState.currentTime}
+                        onChange={handleProgressChange}
+                        className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#E8420A]"
+                        aria-label="Video progress"
+                      />
+                      <div className="flex justify-between text-xs text-white/60 mt-1">
+                        <span>{formatTime(playerState.currentTime)}</span>
+                        <span>{formatTime(playerState.duration || 100)}</span>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Control Buttons */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          togglePlay();
-                        }}
-                        className="text-white hover:text-[#E8420A] transition-colors"
-                        aria-label={playerState.isPlaying ? 'Pause' : 'Play'}
-                      >
-                        {playerState.isPlaying ? (
-                          <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-                          </svg>
-                        ) : (
-                          <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M8 5v14l11-7z" />
-                          </svg>
-                        )}
-                      </button>
-                      <div className="flex items-center gap-2">
+                    {/* Control Buttons */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            toggleMute();
+                            togglePlay();
                           }}
                           className="text-white hover:text-[#E8420A] transition-colors"
-                          aria-label={playerState.isMuted ? 'Unmute' : 'Mute'}
+                          aria-label={playerState.isPlaying ? 'Pause' : 'Play'}
                         >
-                          {playerState.isMuted || playerState.volume === 0 ? (
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z" />
+                          {playerState.isPlaying ? (
+                            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
                             </svg>
                           ) : (
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
+                            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M8 5v14l11-7z" />
                             </svg>
                           )}
                         </button>
-                        <input
-                          type="range"
-                          min="0"
-                          max="1"
-                          step="0.01"
-                          value={playerState.isMuted ? 0 : playerState.volume}
-                          onChange={handleVolumeChange}
-                          className="w-20 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#E8420A]"
-                          aria-label="Volume"
-                        />
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleMute();
+                            }}
+                            className="text-white hover:text-[#E8420A] transition-colors"
+                            aria-label={playerState.isMuted ? 'Unmute' : 'Mute'}
+                          >
+                            {playerState.isMuted || playerState.volume === 0 ? (
+                              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z" />
+                              </svg>
+                            ) : (
+                              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
+                              </svg>
+                            )}
+                          </button>
+                          <input
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.01"
+                            value={playerState.isMuted ? 0 : playerState.volume}
+                            onChange={handleVolumeChange}
+                            className="w-20 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#E8420A]"
+                            aria-label="Volume"
+                          />
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          changePlaybackRate(
-                            playbackRate === 1 ? 1.5 : playbackRate === 1.5 ? 2 : 1
-                          );
-                        }}
-                        className="text-white text-sm font-medium hover:text-[#E8420A] transition-colors px-2 py-1 rounded"
-                        aria-label={`Playback speed: ${playbackRate}x`}
-                      >
-                        {playbackRate}x
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          togglePiP();
-                        }}
-                        className="text-white hover:text-[#E8420A] transition-colors"
-                        aria-label="Picture in Picture"
-                      >
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14z" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleFullscreen();
-                        }}
-                        className="text-white hover:text-[#E8420A] transition-colors"
-                        aria-label="Toggle fullscreen"
-                      >
-                        {isFullscreen ? (
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z" />
-                          </svg>
-                        ) : (
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" />
-                          </svg>
-                        )}
-                      </button>
-                      <div className="relative">
+                      <div className="flex items-center gap-3">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setShowSettings(!showSettings);
+                            changePlaybackRate(
+                              playbackRate === 1 ? 1.5 : playbackRate === 1.5 ? 2 : 1
+                            );
+                          }}
+                          className="text-white text-sm font-medium hover:text-[#E8420A] transition-colors px-2 py-1 rounded"
+                          aria-label={`Playback speed: ${playbackRate}x`}
+                        >
+                          {playbackRate}x
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            togglePiP();
                           }}
                           className="text-white hover:text-[#E8420A] transition-colors"
-                          aria-label="Settings"
+                          aria-label="Picture in Picture"
                         >
                           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94L14.4 2.81c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41L9.25 5.35c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
+                            <path d="M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14z" />
                           </svg>
                         </button>
-                        {showSettings && (
-                          <div
-                            className="absolute bottom-10 right-0 az-glass p-3 min-w-[160px]"
-                            onClick={(e) => e.stopPropagation()}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFullscreen();
+                          }}
+                          className="text-white hover:text-[#E8420A] transition-colors"
+                          aria-label="Toggle fullscreen"
+                        >
+                          {isFullscreen ? (
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z" />
+                            </svg>
+                          ) : (
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" />
+                            </svg>
+                          )}
+                        </button>
+                        <div className="relative">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowSettings(!showSettings);
+                            }}
+                            className="text-white hover:text-[#E8420A] transition-colors"
+                            aria-label="Settings"
                           >
-                            <p className="text-xs font-bold text-white/50 mb-2">Playback Speed</p>
-                            {[0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => (
-                              <button
-                                key={rate}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  changePlaybackRate(rate);
-                                }}
-                                className={`block w-full text-left px-3 py-1.5 text-sm rounded transition-colors ${playbackRate === rate ? 'text-[#E8420A]' : 'text-white/70 hover:text-white hover:bg-white/5'}`}
-                              >
-                                {rate}x
-                              </button>
-                            ))}
-                          </div>
-                        )}
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94L14.4 2.81c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41L9.25 5.35c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
+                            </svg>
+                          </button>
+                          {showSettings && (
+                            <div
+                              className="absolute bottom-10 right-0 az-glass p-3 min-w-[160px]"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <p className="text-xs font-bold text-white/50 mb-2">Playback Speed</p>
+                              {[0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => (
+                                <button
+                                  key={rate}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    changePlaybackRate(rate);
+                                  }}
+                                  className={`block w-full text-left px-3 py-1.5 text-sm rounded transition-colors ${playbackRate === rate ? 'text-[#E8420A]' : 'text-white/70 hover:text-white hover:bg-white/5'}`}
+                                >
+                                  {rate}x
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
               )}
 
               {/* Title Overlay */}
@@ -952,13 +963,13 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                   <div className="mt-3 flex items-center gap-2">
                     <span
                       className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded"
-                      style={{ background: 'rgba(232,66,10,0.15)', color: '#E8420A' }}
+                      style={{ background: 'rgba(232,66,10,0.15)', color: 'var(--brand-orange)' }}
                     >
                       {content.universe?.name}
                     </span>
                     <span
                       className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded"
-                      style={{ background: 'rgba(255,255,255,0.08)', color: '#fff' }}
+                      style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--brand-white)' }}
                     >
                       {content.category}
                     </span>

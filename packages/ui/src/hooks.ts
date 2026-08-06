@@ -107,8 +107,7 @@ export function useLocalStorage<T>(
     try {
       const item = window.localStorage.getItem(key);
       return item ? JSON.parse(item) : initialValue;
-    } catch (error) {
-      console.error(error);
+    } catch {
       return initialValue;
     }
   });
@@ -120,8 +119,8 @@ export function useLocalStorage<T>(
       if (typeof window !== 'undefined') {
         window.localStorage.setItem(key, JSON.stringify(valueToStore));
       }
-    } catch (error) {
-      console.error(error);
+    } catch {
+      // localStorage write failed silently
     }
   };
 
@@ -276,8 +275,7 @@ export function useCopyToClipboard(): [string | null, (text: string) => Promise<
         document.body.removeChild(textArea);
       }
       setCopiedText(text);
-    } catch (error) {
-      console.error('Copy failed', error);
+    } catch {
       setCopiedText(null);
     }
   };

@@ -15,6 +15,8 @@ model Conversation {
   type      String   @default("direct")
   name      String?
   avatar    String?
+  isArchived Boolean  @default(false)
+  isMuted   Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -23,6 +25,7 @@ model Conversation {
 
   @@index([type])
   @@index([createdAt])
+  @@index([isArchived])
   @@map("conversations")
 }
 
@@ -31,6 +34,7 @@ model ConversationParticipant {
   conversationId String
   userId         String
   role           String       @default("member")
+  isBanned       Boolean      @default(false)
   joinedAt       DateTime     @default(now())
   lastReadAt     DateTime     @default(now())
   createdAt      DateTime     @default(now())
@@ -50,16 +54,42 @@ model Message {
   senderId       String
   content        String
   type           String   @default("text")
+  mediaUrl       String?
+  replyToId      String?
+  isEdited       Boolean  @default(false)
+  isPinned       Boolean  @default(false)
+  isDeleted      Boolean  @default(false)
   isRead         Boolean  @default(false)
   readAt         DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  replies      Message[] @relation("MessageReplies")
+  replyTo      Message?  @relation("MessageReplies", fields: [replyToId], references: [id])
+  reactions    MessageReaction[] @relation("MessageReactions")
 
   @@index([conversationId])
   @@index([senderId])
   @@index([createdAt])
   @@index([conversationId, createdAt])
+  @@index([replyToId])
+  @@index([isPinned])
   @@map("messages")
+}
+
+model MessageReaction {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  message Message @relation("MessageReactions", fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+  @@index([userId])
+  @@map("message_reactions")
 }

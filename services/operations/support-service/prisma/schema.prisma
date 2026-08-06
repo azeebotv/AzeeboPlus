@@ -81,6 +81,7 @@ model SupportMessage {
   message   String
   isInternal Boolean @default(false)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
@@ -255,6 +256,7 @@ model SupportAnalyticsEvent {
   event     String
   data      Json
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([event])
   @@index([createdAt])

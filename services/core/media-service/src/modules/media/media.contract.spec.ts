@@ -85,12 +85,22 @@ describe('Media Controller Contract Tests', () => {
     app = moduleFixture.createNestApplication();
     app.useGlobalInterceptors(new ResponseWrapperInterceptor());
     // Mock ServiceAuthGuard behavior: set req.user when Authorization header present
-    app.use((req: { headers: { authorization?: string }; user?: unknown }, _res: unknown, next: () => void) => {
-      if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ') && !req.user) {
-        req.user = { id: 'user-123', sub: 'user-123', role: 'user' };
+    app.use(
+      (
+        req: { headers: { authorization?: string }; user?: unknown },
+        _res: unknown,
+        next: () => void
+      ) => {
+        if (
+          req.headers.authorization &&
+          req.headers.authorization.startsWith('Bearer ') &&
+          !req.user
+        ) {
+          req.user = { id: 'user-123', sub: 'user-123', role: 'user' };
+        }
+        next();
       }
-      next();
-    });
+    );
     await app.init();
   });
 

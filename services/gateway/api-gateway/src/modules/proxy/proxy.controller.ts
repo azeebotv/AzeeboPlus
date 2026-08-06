@@ -606,8 +606,8 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
   },
   {
     path: '/creator',
-    envKey: 'CREATOR_PORTAL_SERVICE_URL',
-    fallbackUrl: 'http://creator-portal:4014',
+    envKey: 'CREATOR_SERVICE_URL',
+    fallbackUrl: 'http://creator:4014',
     supportedVersions: ['1'],
     defaultVersion: '1',
     pathStrategy: 'no-prefix',
@@ -627,6 +627,9 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'PATCH', path: '/monetization', description: 'Update monetization settings' },
       { method: 'GET', path: '/payouts', description: 'Get payout history' },
       { method: 'POST', path: '/payouts/request', description: 'Request payout' },
+      { method: 'PUT', path: '/payouts/settings', description: 'Update payout settings' },
+      { method: 'GET', path: '/settings', description: 'Get creator settings' },
+      { method: 'PUT', path: '/settings', description: 'Update creator settings' },
       { method: 'GET', path: '/subscribers', description: 'Get subscribers' },
     ],
   },
@@ -657,6 +660,9 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
         description: 'Update monetization settings',
       },
       { method: 'POST', path: '/tips/:creatorId', description: 'Send tip to creator' },
+      { method: 'GET', path: '/tips/leaderboard/:creatorId', description: 'Get tip leaderboard' },
+      { method: 'GET', path: '/tips/stats/:creatorId', description: 'Get tip statistics' },
+      { method: 'GET', path: '/users/me/tips', description: 'Get my tipping history' },
       { method: 'POST', path: '/subscribe/:creatorId', description: 'Subscribe to creator' },
       { method: 'DELETE', path: '/subscribe/:creatorId', description: 'Cancel subscription' },
       { method: 'GET', path: '/subscriptions', description: 'Get my subscriptions' },
@@ -776,10 +782,22 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'GET', path: '/plans', description: 'Get subscription plans' },
       { method: 'GET', path: '/plans/:id', description: 'Get plan by ID' },
       { method: 'POST', path: '/plans', description: 'Create plan (admin)' },
+      { method: 'PUT', path: '/plans/:id', description: 'Update subscription plan' },
+      { method: 'DELETE', path: '/plans/:id', description: 'Delete subscription plan' },
       { method: 'POST', path: '/subscribe', description: 'Subscribe to a plan' },
+      { method: 'POST', path: '/renew/:id', description: 'Renew subscription' },
       { method: 'GET', path: '/current', description: 'Get current subscription' },
       { method: 'DELETE', path: '/:id', description: 'Cancel subscription' },
       { method: 'GET', path: '/history', description: 'Get subscription history' },
+      { method: 'GET', path: '/bundles', description: 'Get available bundles' },
+      { method: 'GET', path: '/bundles/compare', description: 'Compare bundle pricing' },
+      { method: 'GET', path: '/bundles/:id', description: 'Get bundle details' },
+      { method: 'POST', path: '/bundles', description: 'Create bundle (admin)' },
+      { method: 'PUT', path: '/bundles/:id', description: 'Update bundle (admin)' },
+      { method: 'DELETE', path: '/bundles/:id', description: 'Delete bundle (admin)' },
+      { method: 'POST', path: '/bundles/:id/subscribe', description: 'Subscribe to a bundle' },
+      { method: 'DELETE', path: '/bundles/:id/cancel', description: 'Cancel bundle subscription' },
+      { method: 'GET', path: '/bundles/current', description: 'Get current bundle subscription' },
     ],
   },
   {
@@ -819,6 +837,16 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     endpoints: [
       { method: 'GET', path: '/', description: 'List comedy content' },
       { method: 'GET', path: '/trending', description: 'Get trending comedy' },
+      { method: 'GET', path: '/categories', description: 'Comedy categories' },
+      { method: 'GET', path: '/comedians', description: 'List comedians' },
+      { method: 'GET', path: '/comedians/:id', description: 'Comedian details' },
+      { method: 'GET', path: '/creators', description: 'Comedy creators' },
+      { method: 'GET', path: '/specials', description: 'Comedy specials' },
+      { method: 'GET', path: '/specials/:id', description: 'Special details' },
+      { method: 'GET', path: '/series', description: 'Comedy series' },
+      { method: 'GET', path: '/clips', description: 'Comedy clips' },
+      { method: 'GET', path: '/top-rated', description: 'Top rated comedy' },
+      { method: 'GET', path: '/challenges', description: 'Comedy challenges' },
       { method: 'GET', path: '/:id', description: 'Get comedy content details' },
       { method: 'POST', path: '/', description: 'Create comedy content' },
       { method: 'PATCH', path: '/:id', description: 'Update comedy content' },
@@ -866,11 +894,40 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     pathStrategy: 'default',
     endpoints: [
       { method: 'GET', path: '/', description: 'List movies' },
+      { method: 'GET', path: '/featured', description: 'Featured movies' },
       { method: 'GET', path: '/trending', description: 'Get trending movies' },
+      { method: 'GET', path: '/african', description: 'African movies' },
+      { method: 'GET', path: '/hollywood', description: 'Hollywood movies' },
+      { method: 'GET', path: '/premieres', description: 'Movie premieres' },
+      { method: 'GET', path: '/passes', description: 'Cinema passes' },
+      { method: 'GET', path: '/watchlist', description: 'User watchlist' },
+      { method: 'POST', path: '/watchlist', description: 'Add to watchlist' },
+      { method: 'DELETE', path: '/watchlist/:movieId', description: 'Remove from watchlist' },
+      { method: 'GET', path: '/me/library', description: 'User library' },
       { method: 'GET', path: '/:id', description: 'Get movie details' },
+      { method: 'POST', path: '/:id/rent', description: 'Rent movie' },
+      { method: 'POST', path: '/:id/rate', description: 'Rate movie' },
+      { method: 'GET', path: '/:id/availability', description: 'Check availability' },
       { method: 'POST', path: '/', description: 'Create movie content' },
       { method: 'PATCH', path: '/:id', description: 'Update movie content' },
       { method: 'DELETE', path: '/:id', description: 'Delete movie content' },
+    ],
+  },
+  {
+    path: '/movie-genres',
+    envKey: 'MOVIE_SERVICE_URL',
+    fallbackUrl: 'http://movie-service:3011',
+    supportedVersions: ['1'],
+    defaultVersion: '1',
+    pathStrategy: 'default',
+    endpoints: [
+      { method: 'GET', path: '/', description: 'List all genres' },
+      { method: 'GET', path: '/:id', description: 'Get genre by ID' },
+      { method: 'GET', path: '/slug/:slug', description: 'Get genre by slug' },
+      { method: 'GET', path: '/:id/movies', description: 'Get movies by genre' },
+      { method: 'POST', path: '/', description: 'Create genre (admin)' },
+      { method: 'PUT', path: '/:id', description: 'Update genre (admin)' },
+      { method: 'DELETE', path: '/:id', description: 'Delete genre (admin)' },
     ],
   },
   {
@@ -882,7 +939,26 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     pathStrategy: 'default',
     endpoints: [
       { method: 'GET', path: '/', description: 'List sports content' },
+      { method: 'GET', path: '/home', description: 'Sports home' },
       { method: 'GET', path: '/trending', description: 'Get trending sports' },
+      { method: 'GET', path: '/categories', description: 'Sports categories' },
+      { method: 'GET', path: '/live', description: 'Live sports' },
+      { method: 'GET', path: '/live/scores', description: 'Live match scores' },
+      { method: 'GET', path: '/live/match/:matchId', description: 'Live match details' },
+      { method: 'GET', path: '/fixtures', description: 'Sports fixtures' },
+      { method: 'GET', path: '/fixtures/:id', description: 'Fixture details' },
+      { method: 'GET', path: '/upcoming', description: 'Upcoming fixtures' },
+      { method: 'GET', path: '/highlights', description: 'Sports highlights' },
+      { method: 'GET', path: '/predictions', description: 'Predictions' },
+      { method: 'POST', path: '/predictions', description: 'Submit prediction' },
+      { method: 'GET', path: '/prediction-leagues', description: 'Prediction leagues' },
+      { method: 'GET', path: '/prediction-options', description: 'Prediction options' },
+      { method: 'GET', path: '/score-options', description: 'Score options' },
+      { method: 'GET', path: '/current-match', description: 'Current match' },
+      { method: 'GET', path: '/leaderboard', description: 'Sports leaderboard' },
+      { method: 'GET', path: '/fan-boards', description: 'Fan boards' },
+      { method: 'GET', path: '/fan-contests', description: 'Fan contests' },
+      { method: 'POST', path: '/fan-contests/:id/enter', description: 'Enter fan contest' },
       { method: 'GET', path: '/:id', description: 'Get sports content details' },
       { method: 'POST', path: '/', description: 'Create sports content' },
       { method: 'PATCH', path: '/:id', description: 'Update sports content' },
@@ -913,6 +989,21 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     endpoints: [
       { method: 'GET', path: '/', description: 'List lifestyle content' },
       { method: 'GET', path: '/trending', description: 'Get trending lifestyle' },
+      { method: 'GET', path: '/featured', description: 'Get featured lifestyle' },
+      { method: 'GET', path: '/categories', description: 'Lifestyle categories' },
+      { method: 'GET', path: '/cities', description: 'Lifestyle cities' },
+      { method: 'GET', path: '/creators', description: 'Lifestyle creators' },
+      { method: 'GET', path: '/events', description: 'Lifestyle events' },
+      { method: 'GET', path: '/events/:id', description: 'Event details' },
+      { method: 'GET', path: '/music', description: 'Lifestyle music' },
+      { method: 'GET', path: '/music/trending', description: 'Trending music' },
+      { method: 'GET', path: '/music/genres', description: 'Music genres' },
+      { method: 'GET', path: '/influencers', description: 'Lifestyle influencers' },
+      { method: 'GET', path: '/influencers/:id', description: 'Influencer details' },
+      { method: 'GET', path: '/celebrities', description: 'Lifestyle celebrities' },
+      { method: 'GET', path: '/celebrities/:id', description: 'Celebrity details' },
+      { method: 'GET', path: '/nightlife', description: 'Lifestyle nightlife' },
+      { method: 'GET', path: '/saved', description: 'Saved lifestyle content' },
       { method: 'GET', path: '/:id', description: 'Get lifestyle content details' },
       { method: 'POST', path: '/', description: 'Create lifestyle content' },
       { method: 'PATCH', path: '/:id', description: 'Update lifestyle content' },
@@ -929,10 +1020,41 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     endpoints: [
       { method: 'GET', path: '/', description: 'List vertical content' },
       { method: 'GET', path: '/trending', description: 'Get trending vertical' },
+      { method: 'GET', path: '/featured', description: 'Get featured vertical' },
+      { method: 'GET', path: '/genres', description: 'Vertical genres' },
+      { method: 'GET', path: '/characters', description: 'Vertical characters' },
+      { method: 'GET', path: '/characters/:slug', description: 'Character details' },
+      { method: 'GET', path: '/storyworlds', description: 'Vertical storyworlds' },
+      { method: 'GET', path: '/storyworlds/:slug', description: 'Storyworld details' },
+      { method: 'GET', path: '/crossovers', description: 'Vertical crossovers' },
+      { method: 'GET', path: '/crossovers/:slug', description: 'Crossover details' },
+      { method: 'GET', path: '/lore', description: 'Vertical lore' },
+      { method: 'GET', path: '/lore/:slug', description: 'Lore details' },
+      { method: 'GET', path: '/lore/categories', description: 'Lore categories' },
+      { method: 'GET', path: '/timeline', description: 'Vertical timeline' },
+      { method: 'GET', path: '/series', description: 'Vertical series' },
       { method: 'GET', path: '/:id', description: 'Get vertical content details' },
       { method: 'POST', path: '/', description: 'Create vertical content' },
       { method: 'PATCH', path: '/:id', description: 'Update vertical content' },
       { method: 'DELETE', path: '/:id', description: 'Delete vertical content' },
+    ],
+  },
+  {
+    path: '/live-events',
+    envKey: 'LIVE_EVENT_SERVICE_URL',
+    fallbackUrl: 'http://live-event-service:3027',
+    supportedVersions: ['1'],
+    defaultVersion: '1',
+    pathStrategy: 'default',
+    endpoints: [
+      { method: 'GET', path: '/', description: 'List upcoming/live events' },
+      { method: 'GET', path: '/my-tickets', description: 'User ticket purchases' },
+      { method: 'GET', path: '/:id', description: 'Get event details' },
+      { method: 'GET', path: '/:id/stream', description: 'Get stream URL' },
+      { method: 'POST', path: '/', description: 'Create event' },
+      { method: 'POST', path: '/:id/purchase', description: 'Purchase ticket' },
+      { method: 'PUT', path: '/:id', description: 'Update event' },
+      { method: 'DELETE', path: '/:id/cancel', description: 'Cancel event' },
     ],
   },
 ];
@@ -963,7 +1085,14 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.handleProxy('GET', version, service, (req.params['path'] as string) || '', req, res);
+    return this.handleProxy(
+      'GET',
+      version,
+      service,
+      (req.params['path'] as string) || '',
+      req,
+      res
+    );
   }
 
   @Post(':version/:service/*path')
@@ -974,7 +1103,14 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.handleProxy('POST', version, service, (req.params['path'] as string) || '', req, res);
+    return this.handleProxy(
+      'POST',
+      version,
+      service,
+      (req.params['path'] as string) || '',
+      req,
+      res
+    );
   }
 
   @Put(':version/:service/*path')
@@ -985,7 +1121,14 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.handleProxy('PUT', version, service, (req.params['path'] as string) || '', req, res);
+    return this.handleProxy(
+      'PUT',
+      version,
+      service,
+      (req.params['path'] as string) || '',
+      req,
+      res
+    );
   }
 
   @Patch(':version/:service/*path')
@@ -996,7 +1139,14 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.handleProxy('PATCH', version, service, (req.params['path'] as string) || '', req, res);
+    return this.handleProxy(
+      'PATCH',
+      version,
+      service,
+      (req.params['path'] as string) || '',
+      req,
+      res
+    );
   }
 
   @Delete(':version/:service/*path')
@@ -1007,7 +1157,14 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.handleProxy('DELETE', version, service, (req.params['path'] as string) || '', req, res);
+    return this.handleProxy(
+      'DELETE',
+      version,
+      service,
+      (req.params['path'] as string) || '',
+      req,
+      res
+    );
   }
 
   // ─── Versioned routes without path: /api/:version/:service ─────────
@@ -1077,7 +1234,14 @@ export class ProxyController {
     @Res() res: Response
   ): Promise<void> {
     const version = this.resolveVersionFromHeader(req);
-    return this.handleProxy('GET', version, service, (req.params['path'] as string) || '', req, res);
+    return this.handleProxy(
+      'GET',
+      version,
+      service,
+      (req.params['path'] as string) || '',
+      req,
+      res
+    );
   }
 
   @Post(':service/*path')
@@ -1088,7 +1252,14 @@ export class ProxyController {
     @Res() res: Response
   ): Promise<void> {
     const version = this.resolveVersionFromHeader(req);
-    return this.handleProxy('POST', version, service, (req.params['path'] as string) || '', req, res);
+    return this.handleProxy(
+      'POST',
+      version,
+      service,
+      (req.params['path'] as string) || '',
+      req,
+      res
+    );
   }
 
   @Put(':service/*path')
@@ -1099,7 +1270,14 @@ export class ProxyController {
     @Res() res: Response
   ): Promise<void> {
     const version = this.resolveVersionFromHeader(req);
-    return this.handleProxy('PUT', version, service, (req.params['path'] as string) || '', req, res);
+    return this.handleProxy(
+      'PUT',
+      version,
+      service,
+      (req.params['path'] as string) || '',
+      req,
+      res
+    );
   }
 
   @Patch(':service/*path')
@@ -1110,7 +1288,14 @@ export class ProxyController {
     @Res() res: Response
   ): Promise<void> {
     const version = this.resolveVersionFromHeader(req);
-    return this.handleProxy('PATCH', version, service, (req.params['path'] as string) || '', req, res);
+    return this.handleProxy(
+      'PATCH',
+      version,
+      service,
+      (req.params['path'] as string) || '',
+      req,
+      res
+    );
   }
 
   @Delete(':service/*path')
@@ -1121,7 +1306,14 @@ export class ProxyController {
     @Res() res: Response
   ): Promise<void> {
     const version = this.resolveVersionFromHeader(req);
-    return this.handleProxy('DELETE', version, service, (req.params['path'] as string) || '', req, res);
+    return this.handleProxy(
+      'DELETE',
+      version,
+      service,
+      (req.params['path'] as string) || '',
+      req,
+      res
+    );
   }
 
   // ─── Unified proxy handler ─────────────────────────────────────────
@@ -1270,7 +1462,10 @@ export class ProxyController {
     req: Request,
     res: Response
   ): Promise<void> {
-    const requestId = (req.headers[this.REQUEST_ID_HEADER.toLowerCase()] as string) || randomUUID();
+    let requestId = (req.headers[this.REQUEST_ID_HEADER.toLowerCase()] as string) || randomUUID();
+    if (requestId && !/^[a-zA-Z0-9\-]{1,128}$/.test(requestId)) {
+      requestId = randomUUID();
+    }
 
     const route = this.findRoute(service);
     if (!route) {

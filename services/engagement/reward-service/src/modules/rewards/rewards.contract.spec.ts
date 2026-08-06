@@ -1,5 +1,44 @@
+jest.mock('@azeebo/shared-services', () => {
+  const NestCommon = require('@nestjs/common');
+  class MockJwtConfigModule {}
+  NestCommon.Module({})(MockJwtConfigModule);
+  return {
+    CacheService: 'CacheService',
+    cacheKey: (...args: unknown[]) => args.join(':'),
+    JwtConfigModule: MockJwtConfigModule,
+  };
+});
+jest.mock('@azeebo/security', () => ({
+  RateLimitGuard: class MockRateLimitGuard {
+    canActivate(context: { switchToHttp: () => { getRequest: () => Record<string, unknown> } }) {
+      const request = context.switchToHttp().getRequest();
+      request.user = { sub: 'user-123', id: 'user-123', email: 'test@example.com', role: 'user' };
+      return true;
+    }
+  },
+  ServiceAuthGuard: class MockServiceAuthGuard {
+    canActivate = jest.fn().mockReturnValue(true);
+  },
+  RateLimit: () => () => {},
+}));
+jest.mock('class-validator', () => ({
+  IsString: () => () => {},
+  IsNotEmpty: () => () => {},
+  IsNumber: () => () => {},
+  IsOptional: () => () => {},
+  IsEnum: () => () => {},
+  Min: () => () => {},
+  ValidateNested: () => () => {},
+  IsArray: () => () => {},
+  IsBoolean: () => () => {},
+}));
+jest.mock('class-transformer', () => ({
+  Type: () => () => {},
+  plainToInstance: (_cls: unknown, obj: unknown) => obj,
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ExecutionContext } from '@nestjs/common';
+import { INestApplication, ExecutionContext, VersioningType } from '@nestjs/common';
 import request from 'supertest';
 import { RewardsModule } from './rewards.module.js';
 import { RewardsService } from './rewards.service.js';
@@ -56,6 +95,7 @@ describe('Rewards Controller Contract Tests', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
     await app.init();
   });
 

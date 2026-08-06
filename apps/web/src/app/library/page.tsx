@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../lib/api';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
+import { OptimizedImage } from '../../components/OptimizedImage';
 
 interface ContentItem {
   id: string;
@@ -28,7 +29,7 @@ interface LibraryData {
 }
 
 export default function LibraryPage(): React.JSX.Element {
-  const { user: _user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const [activeSection, setActiveSection] = useState<'watchlist' | 'history' | 'favorites'>(
     'watchlist'
@@ -308,7 +309,7 @@ export default function LibraryPage(): React.JSX.Element {
                 >
                   <a href={`/watch/${item.id}`} className="block relative h-44">
                     {item.thumbnail ? (
-                      <img
+                      <OptimizedImage
                         src={item.thumbnail}
                         alt={item.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -333,7 +334,7 @@ export default function LibraryPage(): React.JSX.Element {
                           className="h-full"
                           style={{
                             width: `${Math.min(item.progress, 100)}%`,
-                            background: '#E8420A',
+                            background: 'var(--brand-orange)',
                           }}
                         />
                       </div>
@@ -341,7 +342,7 @@ export default function LibraryPage(): React.JSX.Element {
                     {item.duration && (
                       <span
                         className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold"
-                        style={{ background: 'rgba(0,0,0,0.7)', color: '#fff' }}
+                        style={{ background: 'rgba(0,0,0,0.7)', color: 'var(--brand-white)' }}
                       >
                         {Math.floor(item.duration / 60)}m
                       </span>
@@ -359,6 +360,7 @@ export default function LibraryPage(): React.JSX.Element {
                     <div className="flex items-center gap-2">
                       {activeSection === 'watchlist' && (
                         <button
+                          aria-label={`Remove ${item.title} from watchlist`}
                           onClick={() => removeFromWatchlist(item.id)}
                           className="flex-1 px-3 py-1.5 rounded-lg text-xs font-medium text-white/60 hover:text-white transition-colors"
                           style={{ border: '1px solid rgba(255,255,255,0.15)' }}
@@ -368,6 +370,7 @@ export default function LibraryPage(): React.JSX.Element {
                       )}
                       {activeSection === 'history' && (
                         <button
+                          aria-label={`Clear ${item.title} from history`}
                           onClick={() => removeFromHistory(item.id)}
                           className="flex-1 px-3 py-1.5 rounded-lg text-xs font-medium text-white/60 hover:text-white transition-colors"
                           style={{ border: '1px solid rgba(255,255,255,0.15)' }}
@@ -376,6 +379,11 @@ export default function LibraryPage(): React.JSX.Element {
                         </button>
                       )}
                       <button
+                        aria-label={
+                          favorites.some((f) => f.id === item.id)
+                            ? `Remove ${item.title} from favorites`
+                            : `Add ${item.title} to favorites`
+                        }
                         onClick={() => toggleFavorite(item.id)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${favorites.some((f) => f.id === item.id) ? 'text-[#E8420A]' : 'text-white/60 hover:text-white'}`}
                         style={{ border: '1px solid rgba(255,255,255,0.15)' }}

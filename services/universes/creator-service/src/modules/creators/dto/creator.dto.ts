@@ -1,4 +1,13 @@
-import { IsString, IsArray, ValidateNested, IsNumber, Min } from 'class-validator';
+import {
+  IsString,
+  IsArray,
+  ValidateNested,
+  IsNumber,
+  Min,
+  IsOptional,
+  IsBoolean,
+  MaxLength,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -50,6 +59,12 @@ export class FundCreatorDto {
   @IsNumber()
   @Min(0.01)
   amount!: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  message?: string;
 }
 
 export class UpdateTierDto {
@@ -62,4 +77,57 @@ export class PublishContentDto {
   @ApiProperty()
   @IsString()
   contentUrl!: string;
+}
+
+export class NotificationSettingsDto {
+  @ApiPropertyOptional({ default: true })
+  @IsOptional()
+  @IsBoolean()
+  email?: boolean;
+
+  @ApiPropertyOptional({ default: true })
+  @IsOptional()
+  @IsBoolean()
+  push?: boolean;
+
+  @ApiPropertyOptional({ default: false })
+  @IsOptional()
+  @IsBoolean()
+  sms?: boolean;
+
+  @ApiPropertyOptional({ default: false })
+  @IsOptional()
+  @IsBoolean()
+  marketing?: boolean;
+}
+
+export class PrivacySettingsDto {
+  @ApiPropertyOptional({ default: 'public' })
+  @IsOptional()
+  @IsString()
+  profileVisibility?: string;
+
+  @ApiPropertyOptional({ default: false })
+  @IsOptional()
+  @IsBoolean()
+  showEarnings?: boolean;
+
+  @ApiPropertyOptional({ default: true })
+  @IsOptional()
+  @IsBoolean()
+  allowMessages?: boolean;
+}
+
+export class UpdateCreatorSettingsDto {
+  @ApiPropertyOptional({ type: NotificationSettingsDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => NotificationSettingsDto)
+  notifications?: NotificationSettingsDto;
+
+  @ApiPropertyOptional({ type: PrivacySettingsDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PrivacySettingsDto)
+  privacy?: PrivacySettingsDto;
 }

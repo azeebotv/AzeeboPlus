@@ -1,5 +1,35 @@
+jest.mock('@azeebo/shared-services', () => ({
+  FirebaseService: 'FirebaseService',
+  EmailService: 'EmailService',
+  SmsService: 'SmsService',
+  CacheService: 'CacheService',
+  cacheKey: (...args: unknown[]) => args.join(':'),
+}));
+jest.mock('@azeebo/security', () => ({
+  RateLimitGuard: class MockRateLimitGuard {
+    canActivate = jest.fn().mockReturnValue(true);
+  },
+  RateLimit: () => () => {},
+}));
+jest.mock('class-validator', () => ({
+  IsBoolean: () => () => {},
+  IsOptional: () => () => {},
+  IsString: () => () => {},
+  IsEmail: () => () => {},
+  IsEnum: () => () => {},
+  IsNotEmpty: () => () => {},
+  IsIn: () => () => {},
+  ValidateNested: () => () => {},
+  Type: () => () => {},
+  IsPhoneNumber: () => () => {},
+}));
+jest.mock('class-transformer', () => ({
+  Type: () => () => {},
+  plainToInstance: (_cls: unknown, obj: unknown) => obj,
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ExecutionContext } from '@nestjs/common';
+import { INestApplication, ExecutionContext, VersioningType } from '@nestjs/common';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';
@@ -26,7 +56,7 @@ describe('Notifications Controller Contract Tests', () => {
     canActivate: jest.fn().mockImplementation((context: ExecutionContext) => {
       if (canActivate) {
         const request = context.switchToHttp().getRequest();
-        request.user = { sub: 'user-123' };
+        request.user = { sub: 'user-123', id: 'user-123' };
       }
       return canActivate;
     }),
@@ -43,10 +73,17 @@ describe('Notifications Controller Contract Tests', () => {
       .overrideGuard(AuthGuard('jwt'))
       .useValue(createMockAuthGuard(true))
       .overrideGuard(RateLimitGuard)
-      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .useValue({
+        canActivate: jest.fn().mockImplementation((context: ExecutionContext) => {
+          const request = context.switchToHttp().getRequest();
+          request.user = { sub: 'user-123', id: 'user-123' };
+          return true;
+        }),
+      })
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
     await app.init();
   });
 
@@ -99,7 +136,7 @@ describe('Notifications Controller Contract Tests', () => {
       });
 
       const response = await request(app.getHttpServer())
-        .patch('/v1/notifications/notif-1/read')
+        .patch('/v1/notifications/550e8400-e29b-41d4-a716-446655440000/read')
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(200);

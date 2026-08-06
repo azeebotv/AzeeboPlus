@@ -51,13 +51,19 @@ describe('Moderation Authorization Tests', () => {
 
     app = moduleFixture.createNestApplication();
     // Mock ServiceAuthGuard behavior: set req.user from X-User-Role header
-    app.use((req: { headers: Record<string, string | undefined>; user?: unknown }, _res: unknown, next: () => void) => {
-      if (!req.user) {
-        const role = req.headers['x-user-role'] || 'user';
-        req.user = { id: 'user-1', sub: 'user-1', role };
+    app.use(
+      (
+        req: { headers: Record<string, string | undefined>; user?: unknown },
+        _res: unknown,
+        next: () => void
+      ) => {
+        if (!req.user) {
+          const role = req.headers['x-user-role'] || 'user';
+          req.user = { id: 'user-1', sub: 'user-1', role };
+        }
+        next();
       }
-      next();
-    });
+    );
     await app.init();
   });
 
@@ -65,10 +71,10 @@ describe('Moderation Authorization Tests', () => {
     await app.close();
   });
 
-  describe('POST /v1/moderation/cases - Moderator/Admin Only', () => {
+  describe('POST /moderation/cases - Moderator/Admin Only', () => {
     it('should allow admin to create moderation case', async () => {
       const response = await request(app.getHttpServer())
-        .post('/v1/moderation/cases')
+        .post('/moderation/cases')
         .send({
           contentId: 'content-1',
           type: 'content',
@@ -85,7 +91,7 @@ describe('Moderation Authorization Tests', () => {
 
     it('should allow moderator to create moderation case', async () => {
       const response = await request(app.getHttpServer())
-        .post('/v1/moderation/cases')
+        .post('/moderation/cases')
         .send({
           contentId: 'content-1',
           type: 'content',
@@ -102,7 +108,7 @@ describe('Moderation Authorization Tests', () => {
 
     it('should deny user access to create moderation case', async () => {
       const response = await request(app.getHttpServer())
-        .post('/v1/moderation/cases')
+        .post('/moderation/cases')
         .send({
           contentId: 'content-1',
           type: 'content',
@@ -117,10 +123,10 @@ describe('Moderation Authorization Tests', () => {
     });
   });
 
-  describe('GET /v1/moderation/cases - Moderator/Admin Only', () => {
+  describe('GET /moderation/cases - Moderator/Admin Only', () => {
     it('should allow admin to list moderation cases', async () => {
       const response = await request(app.getHttpServer())
-        .get('/v1/moderation/cases')
+        .get('/moderation/cases')
         .set('Authorization', 'Bearer valid-token')
         .set('X-User-Role', 'admin');
 
@@ -129,17 +135,17 @@ describe('Moderation Authorization Tests', () => {
 
     it('should deny user access to list moderation cases', async () => {
       const response = await request(app.getHttpServer())
-        .get('/v1/moderation/cases')
+        .get('/moderation/cases')
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(403);
     });
   });
 
-  describe('PATCH /v1/moderation/cases/:id/resolve - Moderator/Admin Only', () => {
+  describe('PATCH /moderation/cases/:id/resolve - Moderator/Admin Only', () => {
     it('should allow admin to resolve moderation case', async () => {
       const response = await request(app.getHttpServer())
-        .patch('/v1/moderation/cases/case-1/resolve')
+        .patch('/moderation/cases/case-1/resolve')
         .send({ resolution: 'resolved', notes: 'Content is appropriate' })
         .set('Authorization', 'Bearer valid-token')
         .set('X-User-Role', 'admin');
@@ -149,7 +155,7 @@ describe('Moderation Authorization Tests', () => {
 
     it('should deny creator access to resolve moderation case', async () => {
       const response = await request(app.getHttpServer())
-        .patch('/v1/moderation/cases/case-1/resolve')
+        .patch('/moderation/cases/case-1/resolve')
         .send({ resolution: 'resolved', notes: 'Content is appropriate' })
         .set('Authorization', 'Bearer valid-token');
 

@@ -8,6 +8,7 @@ import type { ContentItem } from '../../lib/api';
 import { announceToScreenReader } from '../../lib/keyboard';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
+import { OptimizedImage } from '../../components/OptimizedImage';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 
 interface ContentResponse {
@@ -160,7 +161,10 @@ export default function BrowsePage(): React.JSX.Element {
     }
     if (minRating > 0) items = items.filter((item) => (item.likes || 0) >= minRating);
     items = items.filter((item) => (item.duration || 0) <= maxDuration * 60);
-    if (sortBy === 'Newest') items = [...items].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    if (sortBy === 'Newest')
+      items = [...items].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
     else if (sortBy === 'A-Z') items = [...items].sort((a, b) => a.title.localeCompare(b.title));
     return items;
   })();
@@ -176,11 +180,7 @@ export default function BrowsePage(): React.JSX.Element {
     setSortBy('Popular');
   };
 
-  const activeFilterCount = [
-    searchQuery,
-    minRating > 0,
-    maxDuration < 300,
-  ].filter(Boolean).length;
+  const activeFilterCount = [searchQuery, minRating > 0, maxDuration < 300].filter(Boolean).length;
 
   return (
     <div className="min-h-screen az-nollywood-bg">
@@ -196,7 +196,7 @@ export default function BrowsePage(): React.JSX.Element {
         >
           <p
             className="text-xs font-bold uppercase tracking-widest mb-2"
-            style={{ color: '#E8420A' }}
+            style={{ color: 'var(--brand-orange)' }}
           >
             Discover
           </p>
@@ -264,7 +264,7 @@ export default function BrowsePage(): React.JSX.Element {
                 {activeFilterCount > 0 && (
                   <span
                     className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                    style={{ background: '#CC1C1C', color: '#fff' }}
+                    style={{ background: 'var(--brand-red)', color: 'var(--brand-white)' }}
                   >
                     {activeFilterCount}
                   </span>
@@ -355,8 +355,12 @@ export default function BrowsePage(): React.JSX.Element {
                 {activeFilterCount > 0 && (
                   <button
                     onClick={clearFilters}
+                    aria-label="Clear all filters"
                     className="w-full px-4 py-2 text-sm font-medium rounded-full transition-colors"
-                    style={{ border: '1px solid rgba(255,255,255,0.2)', color: '#E8420A' }}
+                    style={{
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      color: 'var(--brand-orange)',
+                    }}
                   >
                     Clear All Filters
                   </button>
@@ -532,7 +536,7 @@ export default function BrowsePage(): React.JSX.Element {
                   >
                     <div className="relative h-48 flex items-center justify-center overflow-hidden">
                       {item.thumbnail ? (
-                        <img
+                        <OptimizedImage
                           src={item.thumbnail}
                           alt={item.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -550,7 +554,6 @@ export default function BrowsePage(): React.JSX.Element {
                           </span>
                         </div>
                       )}
-
                     </div>
                     <div className="p-4">
                       <p className="text-[11px] font-bold uppercase tracking-wider text-white/50 mb-1">
@@ -564,7 +567,10 @@ export default function BrowsePage(): React.JSX.Element {
                         <span className="text-xs text-white/40">{item.creator?.name}</span>
                         <span
                           className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
-                          style={{ background: 'rgba(255,255,255,0.08)', color: '#E8420A' }}
+                          style={{
+                            background: 'rgba(255,255,255,0.08)',
+                            color: 'var(--brand-orange)',
+                          }}
                         >
                           Watch
                         </span>

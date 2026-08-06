@@ -101,6 +101,7 @@ describe('DisputeService', () => {
         payoutId: 'payout123',
         status: 'PENDING',
       };
+      mockPrisma.payoutDispute.findUnique.mockResolvedValue(dispute);
       mockPrisma.payoutDispute.update.mockResolvedValue({
         ...dispute,
         status: 'RESOLVED',

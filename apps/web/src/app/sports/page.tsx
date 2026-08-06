@@ -1,4 +1,5 @@
 'use client';
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import Link from 'next/link';
@@ -6,8 +7,13 @@ import { api, ContentItem } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import analytics from '@/lib/analytics';
 
-export default function SportsPage(): React.JSX.Element {
+function SportsPageContent(): React.JSX.Element {
+  useEffect(() => {
+    analytics.pageView('sports');
+  }, []);
+
   const universesQuery = useQuery({
     queryKey: ['universes'],
     queryFn: async () => {
@@ -40,7 +46,7 @@ export default function SportsPage(): React.JSX.Element {
   });
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Sports" />
 
       {/* Hero Section */}
@@ -74,6 +80,7 @@ export default function SportsPage(): React.JSX.Element {
                   <Link href={`/watch/${matches[0].id}`}>
                     <button
                       type="button"
+                      aria-label="Watch live sports content"
                       className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
                       style={{
                         backgroundColor: 'rgba(255,255,255,0.2)',
@@ -84,9 +91,9 @@ export default function SportsPage(): React.JSX.Element {
                     </button>
                   </Link>
                   <Link
-                    href={`/predictions`}
+                    href={`/sports/predictions`}
                     className="px-6 py-3 rounded-full text-sm font-semibold transition-all inline-block"
-                    style={{ backgroundColor: '#fff', color: '#0D3B2E' }}
+                    style={{ backgroundColor: '#fff', color: 'var(--brand-forest)' }}
                   >
                     Make Prediction
                   </Link>
@@ -142,7 +149,10 @@ export default function SportsPage(): React.JSX.Element {
                     <div className="absolute bottom-4 left-4 right-4">
                       <span
                         className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                        style={{ backgroundColor: 'rgba(13,59,46,0.4)', color: '#4ADE80' }}
+                        style={{
+                          backgroundColor: 'rgba(13,59,46,0.4)',
+                          color: 'var(--color-success-400)',
+                        }}
                       >
                         {match.contentType || 'Sport'}
                       </span>
@@ -151,7 +161,11 @@ export default function SportsPage(): React.JSX.Element {
                   </div>
                   <div className="p-4">
                     <p className="text-sm text-white/50 mb-3 line-clamp-2">{match.description}</p>
-                    <button type="button" className="az-btn-primary w-full">
+                    <button
+                      type="button"
+                      aria-label={`Watch ${match.title}`}
+                      className="az-btn-primary w-full"
+                    >
                       Watch Now
                     </button>
                   </div>
@@ -170,3 +184,14 @@ export default function SportsPage(): React.JSX.Element {
     </div>
   );
 }
+
+export const metadata = {
+  title: 'Sports | Azeebo',
+  description: 'Watch live sports, make predictions, and follow your favorite teams and leagues.',
+  openGraph: {
+    title: 'Sports | Azeebo',
+    description: 'Watch live sports, make predictions, and follow your favorite teams and leagues.',
+  },
+};
+
+export default SportsPageContent;

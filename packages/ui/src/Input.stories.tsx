@@ -79,12 +79,12 @@ export const InputFullWidth: InputStory = {
 };
 
 // Textarea Stories
-const textareaMeta: Meta<typeof Textarea> = {
+export const textareaMeta = {
   title: 'Forms/Textarea',
   component: Textarea,
   parameters: { layout: 'centered' },
   tags: ['autodocs'],
-};
+} satisfies Meta<typeof Textarea>;
 
 export const TextareaDefault: StoryObj<typeof textareaMeta> = {
   name: 'Default',
@@ -102,12 +102,12 @@ export const TextareaWithError: StoryObj<typeof textareaMeta> = {
 };
 
 // Select Stories
-const selectMeta: Meta<typeof Select> = {
+export const selectMeta = {
   title: 'Forms/Select',
   component: Select,
   parameters: { layout: 'centered' },
   tags: ['autodocs'],
-};
+} satisfies Meta<typeof Select>;
 
 export const SelectDefault: StoryObj<typeof selectMeta> = {
   name: 'Default',
@@ -136,12 +136,12 @@ export const SelectWithError: StoryObj<typeof selectMeta> = {
 };
 
 // Checkbox Stories
-const checkboxMeta: Meta<typeof Checkbox> = {
+export const checkboxMeta = {
   title: 'Forms/Checkbox',
   component: Checkbox,
   parameters: { layout: 'centered' },
   tags: ['autodocs'],
-};
+} satisfies Meta<typeof Checkbox>;
 
 export const CheckboxDefault: StoryObj<typeof checkboxMeta> = {
   name: 'Default',
@@ -158,7 +158,7 @@ export const CheckboxWithError: StoryObj<typeof checkboxMeta> = {
   args: { label: 'I agree to the terms', error: 'You must accept the terms' },
 };
 
-export const CheckboxGroup: StoryObj<typeof checkboxMeta> = {
+export const CheckboxGroup = {
   name: 'Checkbox Group',
   render: () => (
     <div className="space-y-3">
@@ -171,14 +171,14 @@ export const CheckboxGroup: StoryObj<typeof checkboxMeta> = {
 };
 
 // Radio Stories
-const radioMeta: Meta<typeof Radio> = {
+export const radioMeta = {
   title: 'Forms/Radio',
   component: Radio,
   parameters: { layout: 'centered' },
   tags: ['autodocs'],
-};
+} satisfies Meta<typeof Radio>;
 
-export const RadioGroup: StoryObj<typeof radioMeta> = {
+export const RadioGroup = {
   name: 'Radio Group',
   render: () => (
     <div className="space-y-3">

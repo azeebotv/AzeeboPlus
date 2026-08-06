@@ -5,6 +5,7 @@ import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { Spinner, ErrorState } from '@azeebo/ui/web';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 interface LeaderboardEntry {
   rank: number;
@@ -44,12 +45,21 @@ export default function LeaderboardPage(): React.JSX.Element {
     if (rank === 2)
       return { bg: 'linear-gradient(135deg, #C0C0C0 0%, #A0A0A0 100%)', color: '#1A0A0A' };
     if (rank === 3)
-      return { bg: 'linear-gradient(135deg, #CD7F32 0%, #A0522D 100%)', color: '#fff' };
-    return { bg: '#2A1A1A', color: '#9A8A7A' };
+      return {
+        bg: 'linear-gradient(135deg, #CD7F32 0%, #A0522D 100%)',
+        color: 'var(--brand-white)',
+      };
+    return { bg: 'var(--bg-secondary)', color: 'var(--text-secondary)' };
   };
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <main
         style={{
@@ -62,7 +72,9 @@ export default function LeaderboardPage(): React.JSX.Element {
       >
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <h1 style={{ fontSize: 28, fontWeight: 700 }}>Leaderboard</h1>
-          <p style={{ color: '#9A8A7A', marginTop: 4 }}>Top contributors on Azeebo+</p>
+          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>
+            Top contributors on Azeebo+
+          </p>
         </div>
 
         {/* Timeframe selector */}
@@ -83,9 +95,9 @@ export default function LeaderboardPage(): React.JSX.Element {
                 border: timeframe === key ? 'none' : '1px solid #2A1A1A',
                 background:
                   timeframe === key
-                    ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)'
+                    ? 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)'
                     : 'transparent',
-                color: timeframe === key ? '#fff' : '#9A8A7A',
+                color: timeframe === key ? '#fff' : 'var(--text-secondary)',
                 fontWeight: 600,
                 fontSize: 14,
                 cursor: 'pointer',
@@ -111,7 +123,9 @@ export default function LeaderboardPage(): React.JSX.Element {
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>🏆</div>
             <h3 style={{ fontSize: 18 }}>No leaderboard data yet</h3>
-            <p style={{ color: '#9A8A7A', marginTop: 8 }}>Start engaging to climb the ranks!</p>
+            <p style={{ color: 'var(--text-secondary)', marginTop: 8 }}>
+              Start engaging to climb the ranks!
+            </p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -157,17 +171,19 @@ export default function LeaderboardPage(): React.JSX.Element {
                     }}
                   >
                     {entry.avatar ? (
-                      <img
+                      <OptimizedImage
                         src={entry.avatar}
                         alt={entry.displayName}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        width={44}
+                        height={44}
+                        className="w-full h-full object-cover"
                       />
                     ) : (
                       <div
                         style={{
                           width: '100%',
                           height: '100%',
-                          backgroundColor: '#2A1A1A',
+                          backgroundColor: 'var(--bg-secondary)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -180,13 +196,15 @@ export default function LeaderboardPage(): React.JSX.Element {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <h3 style={{ fontWeight: 600, fontSize: 15 }}>{entry.displayName}</h3>
-                    <p style={{ color: '#9A8A7A', fontSize: 12 }}>Level {entry.level}</p>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
+                      Level {entry.level}
+                    </p>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <p style={{ fontWeight: 700, fontSize: 18, color: '#E8420A' }}>
+                    <p style={{ fontWeight: 700, fontSize: 18, color: 'var(--brand-orange)' }}>
                       {(entry.score ?? 0).toLocaleString()}
                     </p>
-                    <p style={{ color: '#9A8A7A', fontSize: 11 }}>pts</p>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: 11 }}>pts</p>
                   </div>
                 </div>
               );

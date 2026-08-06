@@ -4,9 +4,15 @@ import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import axios from 'axios';
+import { CacheService } from '@azeebo/shared-services';
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
+
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: class MockCacheService {},
+  cacheKey: (...args: string[]) => args.join(':'),
+}));
 
 describe('CreatorsService', () => {
   let service: CreatorsService;
@@ -82,6 +88,14 @@ describe('CreatorsService', () => {
           },
         },
         {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            invalidate: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
           provide: PrismaService,
           useValue: {
             creatorProfile: {
@@ -147,6 +161,14 @@ describe('CreatorsService', () => {
             },
             productEvent: {
               count: jest.fn(),
+            },
+            tipLeaderboard: {
+              findUnique: jest.fn(),
+              upsert: jest.fn(),
+            },
+            exclusiveContent: {
+              findMany: jest.fn(),
+              create: jest.fn(),
             },
             $transaction: jest.fn(async (callback) => callback(module.get(PrismaService))),
           },
@@ -578,6 +600,7 @@ describe('CreatorsService', () => {
 
       (prismaService.subscription.findUnique as jest.Mock).mockResolvedValue(null);
       (prismaService.creatorProfile.findUnique as jest.Mock).mockResolvedValue(mockCreatorProfile);
+      mockedAxios.get.mockResolvedValue({ data: { data: { id: 'wallet-1', balance: 10000 } } });
       mockedAxios.post.mockResolvedValue({ data: { success: true } });
       (prismaService.subscription.create as jest.Mock).mockResolvedValue(mockSubscription);
       (prismaService.creatorEarning.create as jest.Mock).mockResolvedValue({});
@@ -905,6 +928,7 @@ describe('CreatorsService', () => {
 
       (prismaService.creatorProfile.findUnique as jest.Mock).mockResolvedValue(mockCreatorProfile);
       (prismaService.tip.findFirst as jest.Mock).mockResolvedValue(null);
+      mockedAxios.get.mockResolvedValue({ data: { data: { id: 'wallet-1', balance: 10000 } } });
       mockedAxios.post.mockResolvedValue({ data: { success: true } });
       (prismaService.tip.create as jest.Mock).mockResolvedValue(mockTip);
       (prismaService.creatorEarning.create as jest.Mock).mockResolvedValue({});

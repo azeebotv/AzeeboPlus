@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TournamentService } from './tournament.service.js';
 import { PrismaService } from '../database/prisma.service.js';
+import { ConfigService } from '@nestjs/config';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('TournamentService', () => {
@@ -38,7 +39,23 @@ describe('TournamentService', () => {
               update: jest.fn(),
               findMany: jest.fn(),
               count: jest.fn(),
+              groupBy: jest.fn(),
             },
+            tournamentPrize: {
+              findMany: jest.fn(),
+              groupBy: jest.fn(),
+              count: jest.fn(),
+            },
+            user: {
+              findMany: jest.fn(),
+            },
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockReturnValue('test-value'),
+            getOrThrow: jest.fn().mockReturnValue('http://localhost:3000'),
           },
         },
       ],
@@ -57,6 +74,12 @@ describe('TournamentService', () => {
     it('should return paginated tournaments', async () => {
       (prismaService.tournament.findMany as jest.Mock).mockResolvedValue([mockTournament]);
       (prismaService.tournament.count as jest.Mock).mockResolvedValue(1);
+      (prismaService.tournamentEntry.groupBy as jest.Mock).mockResolvedValue([
+        { tournamentId: 'tournament-1', _count: { id: 10 } },
+      ]);
+      (prismaService.tournamentPrize.groupBy as jest.Mock).mockResolvedValue([
+        { tournamentId: 'tournament-1', _count: { id: 3 } },
+      ]);
 
       const result = await service.getTournaments();
 
@@ -69,6 +92,12 @@ describe('TournamentService', () => {
     it('should filter by status', async () => {
       (prismaService.tournament.findMany as jest.Mock).mockResolvedValue([mockTournament]);
       (prismaService.tournament.count as jest.Mock).mockResolvedValue(1);
+      (prismaService.tournamentEntry.groupBy as jest.Mock).mockResolvedValue([
+        { tournamentId: 'tournament-1', _count: { id: 10 } },
+      ]);
+      (prismaService.tournamentPrize.groupBy as jest.Mock).mockResolvedValue([
+        { tournamentId: 'tournament-1', _count: { id: 3 } },
+      ]);
 
       await service.getTournaments(1, 20, 'active');
 
@@ -81,6 +110,8 @@ describe('TournamentService', () => {
   describe('getTournamentById', () => {
     it('should return tournament', async () => {
       (prismaService.tournament.findUnique as jest.Mock).mockResolvedValue(mockTournament);
+      (prismaService.tournamentEntry.count as jest.Mock).mockResolvedValue(10);
+      (prismaService.tournamentPrize.count as jest.Mock).mockResolvedValue(3);
 
       const result = await service.getTournamentById('tournament-1');
 
@@ -183,11 +214,15 @@ describe('TournamentService', () => {
           id: 'entry-1',
           score: 100,
           enteredAt: new Date(),
+          userId: 'user-1',
           user: { id: 'user-1', displayName: 'User 1', avatar: 'avatar1.jpg' },
         },
       ]);
       (prismaService.tournamentEntry.findUnique as jest.Mock).mockResolvedValue(null);
       (prismaService.tournamentEntry.count as jest.Mock).mockResolvedValue(1);
+      (prismaService.user.findMany as jest.Mock).mockResolvedValue([
+        { id: 'user-1', displayName: 'User 1' },
+      ]);
 
       const result = await service.getLeaderboard('tournament-1');
 

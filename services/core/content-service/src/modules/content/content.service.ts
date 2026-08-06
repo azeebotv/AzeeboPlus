@@ -18,10 +18,12 @@ import { TranscodingService } from '../media/transcoding.service.js';
 import { ContentRepository } from './content.repository.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 import { ContentFeedService } from './content-feed.service.js';
+import axios from 'axios';
 import { ContentModerationService } from './content-moderation.service.js';
 import { ContentRelationshipService } from './content-relationship.service.js';
 import { ContentCategoryService } from './content-category.service.js';
 import { ContentIngestionService } from './content-ingestion.service.js';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 
 type ContentWithUniverse = Prisma.ContentItemGetPayload<{ include: { universe: true } }>;
 type ContentWithUniverseCategories = Prisma.ContentItemGetPayload<{
@@ -67,13 +69,14 @@ type ContentAvailabilityResult = {
 @Injectable()
 export class ContentService {
   private readonly logger = new Logger(ContentService.name);
+  private readonly analyticsServiceBaseUrl: string;
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(ContentRepository) private readonly contentRepository: ContentRepository,
     @Inject(MediaService) private readonly mediaService: MediaService,
     @Inject(TranscodingService) private readonly transcodingService: TranscodingService,
-    @Inject(ConfigService) _configService: ConfigService,
+    @Inject(ConfigService) private readonly configService: ConfigService,
     @Inject(CacheService) private readonly cache: CacheService,
     @Inject(ContentFeedService) private readonly contentFeedService: ContentFeedService,
     @Inject(ContentModerationService)
@@ -82,8 +85,31 @@ export class ContentService {
     private readonly contentRelationshipService: ContentRelationshipService,
     @Inject(ContentCategoryService) private readonly contentCategoryService: ContentCategoryService,
     @Inject(ContentIngestionService)
-    private readonly contentIngestionService: ContentIngestionService
-  ) {}
+    private readonly contentIngestionService: ContentIngestionService,
+    @Inject(FeatureFlagService)
+    private readonly featureFlagService: FeatureFlagService
+  ) {
+    this.analyticsServiceBaseUrl = this.configService.get<string>(
+      'ANALYTICS_SERVICE_URL',
+      'http://analytics-service:3040'
+    );
+  }
+
+  private async trackAnalyticsEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown> = {}
+  ): Promise<void> {
+    try {
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/analytics/track`,
+        { eventName, userId, metadata, timestamp: new Date().toISOString() },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to track analytics event: ${eventName}`);
+    }
+  }
 
   private canModifyContent(
     userId: string,
@@ -161,6 +187,11 @@ export class ContentService {
       reason: string;
     }
   ): Promise<{ success: boolean; data: { reportId: string; message: string } }> {
+    this.trackAnalyticsEvent('content_reported', userId, {
+      contentId,
+      reportType: reportData.type,
+      reason: reportData.reason,
+    });
     return this.contentModerationService.reportContent(userId, contentId, reportData);
   }
 
@@ -520,6 +551,11 @@ export class ContentService {
         creatorId: userId,
       })) as ContentWithUniverse;
 
+      this.trackAnalyticsEvent('content_created', userId, {
+        contentId: content.id,
+        universeId: content.universeId,
+      });
+
       return {
         success: true,
         data: content,
@@ -633,14 +669,21 @@ export class ContentService {
         throw new BadRequestException('Content is already published or pending');
       }
 
-      const safetyResult = await this.checkContentSafety(id);
+      const moderationEnabled = await this.featureFlagService.isEnabled(
+        'content_moderation_enabled',
+        userId
+      );
 
-      if (!safetyResult.isSafe) {
-        throw new ForbiddenException({
-          message: 'Content failed safety scan',
-          issues: safetyResult.issues,
-          scanId: safetyResult.scanId,
-        });
+      if (moderationEnabled) {
+        const safetyResult = await this.checkContentSafety(id);
+
+        if (!safetyResult.isSafe) {
+          throw new ForbiddenException({
+            message: 'Content failed safety scan',
+            issues: safetyResult.issues,
+            scanId: safetyResult.scanId,
+          });
+        }
       }
 
       const publishedContent = await this.prisma.contentItem.update({
@@ -655,6 +698,10 @@ export class ContentService {
 
       // Invalidate content cache
       await this.cache.delete(cacheKey('content', id));
+
+      this.trackAnalyticsEvent('content_published', userId, {
+        contentId: id,
+      });
 
       return {
         success: true,
@@ -874,7 +921,10 @@ export class ContentService {
     }
   }
 
-  async getMediaAsset(contentId: string): Promise<{
+  async getMediaAsset(
+    contentId: string,
+    userId?: string
+  ): Promise<{
     success: boolean;
     data: MediaAssetWithContentItem & { originalUrl: string; thumbnailUrl: string | null };
   }> {
@@ -886,6 +936,10 @@ export class ContentService {
 
       if (!mediaAsset) {
         throw new NotFoundException(`Media asset not found`);
+      }
+
+      if (userId && mediaAsset.contentItem.creatorId !== userId) {
+        throw new ForbiddenException('You do not have access to this media asset');
       }
 
       const signedOriginalUrl = await this.mediaService.getMediaUrl(mediaAsset.originalUrl);
@@ -1016,7 +1070,8 @@ export class ContentService {
   async getContentComments(
     contentId: string,
     page?: number,
-    limit?: number
+    limit?: number,
+    userId?: string
   ): Promise<{
     success: boolean;
     data: {
@@ -1031,6 +1086,21 @@ export class ContentService {
   }> {
     try {
       const result = await this.contentRepository.getComments(contentId, page || 1, limit || 20);
+
+      // Check which comments the current user has liked
+      let likedCommentIds = new Set<string>();
+      if (userId && result.data.length > 0) {
+        try {
+          const commentIds = result.data.map((c: { id: string }) => c.id);
+          // Use raw query since commentLike may not be in Prisma schema
+          const userLikes = await this.prisma.$queryRaw<Array<{ commentId: string }>>`
+            SELECT "commentId" FROM "comment_likes" WHERE "commentId" IN (${Prisma.join(commentIds)}) AND "userId" = ${userId}
+          `;
+          likedCommentIds = new Set(userLikes.map((l) => l.commentId));
+        } catch {
+          // comment_likes table may not exist — default to no likes
+        }
+      }
 
       const items = result.data.map(
         (c: {
@@ -1048,7 +1118,7 @@ export class ContentService {
           content: c.text || c.content || '',
           timestamp: c.createdAt,
           likes: c.likes || 0,
-          likedByCurrentUser: false,
+          likedByCurrentUser: likedCommentIds.has(c.id),
         })
       );
 
@@ -1156,15 +1226,21 @@ export class ContentService {
 
   async getTranscodingStatus(
     contentId: string,
-    jobId: string
+    jobId: string,
+    userId?: string
   ): Promise<{ success: boolean; data: TranscodingStatusResult }> {
     try {
       const mediaAsset = await this.prisma.mediaAsset.findUnique({
         where: { contentItemId: contentId },
+        include: { contentItem: true },
       });
 
       if (!mediaAsset) {
         throw new NotFoundException(`Media asset not found`);
+      }
+
+      if (userId && mediaAsset.contentItem.creatorId !== userId) {
+        throw new ForbiddenException('You do not have access to this transcoding job');
       }
 
       const status = (await this.transcodingService.getTranscodingJobStatus(
@@ -1193,7 +1269,8 @@ export class ContentService {
     jobId: string,
     format: string,
     resolution: string,
-    expiresIn: number = 3600
+    expiresIn: number = 3600,
+    userId?: string
   ): Promise<{
     success: boolean;
     data: { url: string; expiresIn: number; format: string; resolution: string };
@@ -1201,10 +1278,15 @@ export class ContentService {
     try {
       const mediaAsset = await this.prisma.mediaAsset.findUnique({
         where: { contentItemId: contentId },
+        include: { contentItem: true },
       });
 
       if (!mediaAsset) {
         throw new NotFoundException(`Media asset not found`);
+      }
+
+      if (userId && mediaAsset.contentItem.creatorId !== userId) {
+        throw new ForbiddenException('You do not have access to this transcoded media');
       }
 
       const url = await this.transcodingService.getTranscodedMediaUrl(

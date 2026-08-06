@@ -2,9 +2,6 @@ import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
 
-// Re-export useUniverses from the canonical hook to avoid duplication
-export { useUniverses } from './useUniverses';
-
 interface UseSettingsReturn {
   settings: Record<string, unknown>;
   isLoading: boolean;

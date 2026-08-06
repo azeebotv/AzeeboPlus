@@ -1,5 +1,8 @@
+import { expect } from 'vitest';
+import * as matchers from '@testing-library/jest-dom/matchers';
 import { vi } from 'vitest';
-import '@testing-library/jest-dom/vitest';
+
+expect.extend(matchers);
 
 // Ensure localStorage is available (Node.js 22+ disabled it by default)
 if (typeof window !== 'undefined') {

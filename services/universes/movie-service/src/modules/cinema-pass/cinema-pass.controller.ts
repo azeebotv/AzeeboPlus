@@ -1,18 +1,10 @@
-import {
-  Inject,
-  Controller,
-  Get,
-  Post,
-  Delete,
-  Body,
-  Param,
-  Query,
-  Request,
-} from '@nestjs/common';
+import { Inject, Controller, Get, Post, Delete, Body, Param, Query, Request, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ServiceAuthGuard } from '@azeebo/security';
 import { CinemaPassService } from './cinema-pass.service.js';
 
 @ApiTags('Cinema Pass')
+@UseGuards(ServiceAuthGuard)
 @Controller('movies/passes')
 export class CinemaPassController {
   constructor(@Inject(CinemaPassService) private readonly cinemaPassService: CinemaPassService) {}

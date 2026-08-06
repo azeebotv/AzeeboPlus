@@ -12,13 +12,14 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
 
 import { SearchService } from './search.service.js';
 import { SearchResponse } from './interfaces/search-response.interface.js';
 import { LogSearchDto } from './dto/log-search.dto.js';
 
 @ApiTags('Search')
+@UseGuards(ServiceAuthGuard)
 @Controller('search')
 export class SearchController {
   constructor(@Inject(SearchService) private readonly searchService: SearchService) {}

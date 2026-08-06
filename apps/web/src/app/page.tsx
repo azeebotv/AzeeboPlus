@@ -49,7 +49,10 @@ export default function Home(): React.JSX.Element {
   if (isLoading) {
     return (
       <div className="min-h-screen az-nollywood-bg">
-        <div className="w-full" style={{ minHeight: 'min(70vh, 600px)', background: '#0D3B2E' }}>
+        <div
+          className="w-full"
+          style={{ minHeight: 'min(70vh, 600px)', background: 'var(--brand-forest)' }}
+        >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-center">
             <div
               className="w-12 h-12 border-2 border-white/30 border-t-[var(--brand-orange)] rounded-full animate-spin"

@@ -1,12 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -37,7 +30,6 @@ interface Event {
   category: string;
   interested: number;
 }
-
 
 export default function CityGuideScreen() {
   const colorScheme = useColorScheme();
@@ -108,152 +100,158 @@ export default function CityGuideScreen() {
         {error && <ErrorState title="Failed to load" description={error} onRetry={loadEvents} />}
 
         {!isLoading && !error && (
-        <>
-        <View style={styles.citySelector}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.cityScroll}
-          >
-            {cities.map((city) => (
-              <TouchableOpacity
-                key={city.id}
-                onPress={() => setSelectedCity(city.id)}
-                style={[
-                  styles.cityButton,
-                  selectedCity === city.id && { backgroundColor: city.color },
-                ]}
+          <>
+            <View style={styles.citySelector}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.cityScroll}
               >
-                <Text style={styles.cityIcon}>{city.icon}</Text>
-                <Text style={[styles.cityName, selectedCity === city.id && { color: '#ffffff' }]}>
-                  {city.name}
-                </Text>
-                <Text style={[styles.cityEvents, selectedCity === city.id && { color: '#ffffff' }]}>
-                  {city.events} events
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        <View style={styles.categorySelector}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoryScroll}
-          >
-            {categories.map((category) => (
-              <TouchableOpacity
-                key={category}
-                onPress={() => setSelectedCategory(category)}
-                style={[
-                  styles.categoryButton,
-                  selectedCategory === category && styles.categoryButtonActive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.categoryText,
-                    selectedCategory === category && styles.categoryTextActive,
-                  ]}
-                >
-                  {category}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        <View style={styles.featuredSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
-              Featured Events
-            </Text>
-            <TouchableOpacity>
-              <Text style={styles.seeAllText}>See All</Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.featuredScroll}
-          >
-            {events.map((event) => (
-              <TouchableOpacity key={event.id} style={styles.featuredCard}>
-                <Image source={{ uri: PLACEHOLDER_IMAGE }} style={styles.featuredImage} />
-                <View style={styles.featuredOverlay}>
-                  <View style={styles.categoryBadge}>
-                    <Text style={styles.categoryBadgeText}>{event.category}</Text>
-                  </View>
-                </View>
-                <View style={styles.featuredInfo}>
-                  <Text style={[styles.featuredTitle, { color: colors.text.primary }]}>
-                    {event.title}
-                  </Text>
-                  <Text style={styles.featuredSubtitle}>{event.subtitle}</Text>
-                  <View style={styles.featuredMeta}>
-                    <View style={styles.metaItem}>
-                      <Text style={styles.metaIcon}>📅</Text>
-                      <Text style={styles.metaText}>{event.date}</Text>
-                    </View>
-                    <View style={styles.metaItem}>
-                      <Text style={styles.metaIcon}>📍</Text>
-                      <Text style={styles.metaText}>{event.location}</Text>
-                    </View>
-                  </View>
-                  <View style={styles.featuredFooter}>
-                    <Text style={styles.featuredPrice}>{event.price}</Text>
-                    <View style={styles.interestedBadge}>
-                      <Text style={styles.interestedIcon}>👥</Text>
-                      <Text style={styles.interestedText}>{event.interested}</Text>
-                    </View>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        <View style={styles.upcomingSection}>
-          <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Upcoming Events</Text>
-          <View style={styles.eventsList}>
-            {events.map((event) => (
-              <TouchableOpacity key={event.id} style={styles.eventCard}>
-                <Image source={{ uri: PLACEHOLDER_IMAGE }} style={styles.eventImage} />
-                <View style={styles.eventInfo}>
-                  <View style={styles.eventHeader}>
-                    <Text style={[styles.eventTitle, { color: colors.text.primary }]}>
-                      {event.title}
+                {cities.map((city) => (
+                  <TouchableOpacity
+                    key={city.id}
+                    onPress={() => setSelectedCity(city.id)}
+                    style={[
+                      styles.cityButton,
+                      selectedCity === city.id && { backgroundColor: city.color },
+                    ]}
+                  >
+                    <Text style={styles.cityIcon}>{city.icon}</Text>
+                    <Text
+                      style={[styles.cityName, selectedCity === city.id && { color: '#ffffff' }]}
+                    >
+                      {city.name}
                     </Text>
-                    <View style={styles.eventCategory}>
-                      <Text style={styles.eventCategoryText}>{event.category}</Text>
+                    <Text
+                      style={[styles.cityEvents, selectedCity === city.id && { color: '#ffffff' }]}
+                    >
+                      {city.events} events
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            <View style={styles.categorySelector}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.categoryScroll}
+              >
+                {categories.map((category) => (
+                  <TouchableOpacity
+                    key={category}
+                    onPress={() => setSelectedCategory(category)}
+                    style={[
+                      styles.categoryButton,
+                      selectedCategory === category && styles.categoryButtonActive,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.categoryText,
+                        selectedCategory === category && styles.categoryTextActive,
+                      ]}
+                    >
+                      {category}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            <View style={styles.featuredSection}>
+              <View style={styles.sectionHeader}>
+                <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
+                  Featured Events
+                </Text>
+                <TouchableOpacity>
+                  <Text style={styles.seeAllText}>See All</Text>
+                </TouchableOpacity>
+              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.featuredScroll}
+              >
+                {events.map((event) => (
+                  <TouchableOpacity key={event.id} style={styles.featuredCard}>
+                    <Image source={{ uri: PLACEHOLDER_IMAGE }} style={styles.featuredImage} />
+                    <View style={styles.featuredOverlay}>
+                      <View style={styles.categoryBadge}>
+                        <Text style={styles.categoryBadgeText}>{event.category}</Text>
+                      </View>
                     </View>
-                  </View>
-                  <Text style={styles.eventSubtitle}>{event.subtitle}</Text>
-                  <View style={styles.eventMeta}>
-                    <View style={styles.metaItem}>
-                      <Text style={styles.metaIcon}>📅</Text>
-                      <Text style={styles.metaText}>
-                        {event.date} • {event.time}
+                    <View style={styles.featuredInfo}>
+                      <Text style={[styles.featuredTitle, { color: colors.text.primary }]}>
+                        {event.title}
                       </Text>
+                      <Text style={styles.featuredSubtitle}>{event.subtitle}</Text>
+                      <View style={styles.featuredMeta}>
+                        <View style={styles.metaItem}>
+                          <Text style={styles.metaIcon}>📅</Text>
+                          <Text style={styles.metaText}>{event.date}</Text>
+                        </View>
+                        <View style={styles.metaItem}>
+                          <Text style={styles.metaIcon}>📍</Text>
+                          <Text style={styles.metaText}>{event.location}</Text>
+                        </View>
+                      </View>
+                      <View style={styles.featuredFooter}>
+                        <Text style={styles.featuredPrice}>{event.price}</Text>
+                        <View style={styles.interestedBadge}>
+                          <Text style={styles.interestedIcon}>👥</Text>
+                          <Text style={styles.interestedText}>{event.interested}</Text>
+                        </View>
+                      </View>
                     </View>
-                    <View style={styles.metaItem}>
-                      <Text style={styles.metaIcon}>📍</Text>
-                      <Text style={styles.metaText}>{event.location}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            <View style={styles.upcomingSection}>
+              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
+                Upcoming Events
+              </Text>
+              <View style={styles.eventsList}>
+                {events.map((event) => (
+                  <TouchableOpacity key={event.id} style={styles.eventCard}>
+                    <Image source={{ uri: PLACEHOLDER_IMAGE }} style={styles.eventImage} />
+                    <View style={styles.eventInfo}>
+                      <View style={styles.eventHeader}>
+                        <Text style={[styles.eventTitle, { color: colors.text.primary }]}>
+                          {event.title}
+                        </Text>
+                        <View style={styles.eventCategory}>
+                          <Text style={styles.eventCategoryText}>{event.category}</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.eventSubtitle}>{event.subtitle}</Text>
+                      <View style={styles.eventMeta}>
+                        <View style={styles.metaItem}>
+                          <Text style={styles.metaIcon}>📅</Text>
+                          <Text style={styles.metaText}>
+                            {event.date} • {event.time}
+                          </Text>
+                        </View>
+                        <View style={styles.metaItem}>
+                          <Text style={styles.metaIcon}>📍</Text>
+                          <Text style={styles.metaText}>{event.location}</Text>
+                        </View>
+                      </View>
+                      <View style={styles.eventFooter}>
+                        <Text style={styles.eventPrice}>{event.price}</Text>
+                        <TouchableOpacity style={styles.interestButton}>
+                          <Text style={styles.interestButtonText}>I'm Interested</Text>
+                        </TouchableOpacity>
+                      </View>
                     </View>
-                  </View>
-                  <View style={styles.eventFooter}>
-                    <Text style={styles.eventPrice}>{event.price}</Text>
-                    <TouchableOpacity style={styles.interestButton}>
-                      <Text style={styles.interestButtonText}>I'm Interested</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-        </>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </>
         )}
       </ScrollView>
     </SafeAreaView>

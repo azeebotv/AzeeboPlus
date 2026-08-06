@@ -130,7 +130,9 @@ export class AgbalaCharactersService {
     try {
       const cacheKey = `characters:detail:${slug}`;
       const cached =
-        await this.cache.get<SingleResponse<Character & { relationships: Relationship[] }>>(cacheKey);
+        await this.cache.get<SingleResponse<Character & { relationships: Relationship[] }>>(
+          cacheKey
+        );
       if (cached) return cached;
 
       const character = await this.prisma.character.findUnique({

@@ -1,10 +1,20 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
+
+export const metadata = {
+  title: 'Rewards Center | Azeebo',
+  description: 'Earn points, complete missions, and unlock amazing rewards on Azeebo.',
+  openGraph: {
+    title: 'Rewards Center | Azeebo',
+    description: 'Earn points, complete missions, and unlock amazing rewards on Azeebo.',
+  },
+};
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '@/lib/api';
 
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { useToast } from '@/components/ToastProvider';
 
@@ -121,7 +131,7 @@ export default function RewardsPage(): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Rewards" />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -130,7 +140,7 @@ export default function RewardsPage(): React.JSX.Element {
           <p className="text-white/50 text-lg mb-6">Earn points and unlock amazing rewards</p>
           <div className="az-glass inline-block px-8 py-4">
             <p className="text-sm text-white/50 mb-1">Your Points</p>
-            <p className="text-4xl font-bold" style={{ color: '#E8420A' }}>
+            <p className="text-4xl font-bold" style={{ color: 'var(--brand-orange)' }}>
               {userPoints.toLocaleString()}
             </p>
           </div>
@@ -172,7 +182,7 @@ export default function RewardsPage(): React.JSX.Element {
                   }
                 >
                   {reward.image && (
-                    <img
+                    <OptimizedImage
                       src={reward.image}
                       alt={reward.title}
                       className="w-full h-40 object-cover"
@@ -181,17 +191,27 @@ export default function RewardsPage(): React.JSX.Element {
                   <div className="p-6">
                     <span
                       className="text-xs font-medium px-2 py-1 rounded-full mb-2 inline-block"
-                      style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8420A' }}
+                      style={{
+                        backgroundColor: 'rgba(232,66,10,0.2)',
+                        color: 'var(--brand-orange)',
+                      }}
                     >
                       {reward.category}
                     </span>
                     <h3 className="text-lg font-bold text-white mb-2">{reward.title}</h3>
                     <p className="text-white/50 text-sm mb-4">{reward.description}</p>
                     <div className="flex items-center justify-between">
-                      <span className="text-xl font-bold" style={{ color: '#E8420A' }}>
+                      <span className="text-xl font-bold" style={{ color: 'var(--brand-orange)' }}>
                         {reward.points.toLocaleString()} pts
                       </span>
                       <button
+                        aria-label={
+                          !reward.isAvailable
+                            ? `Reward ${reward.title} already claimed`
+                            : userPoints < reward.points
+                              ? `Not enough points to claim ${reward.title}`
+                              : `Claim ${reward.title} for ${reward.points} points`
+                        }
                         onClick={() => handleClaimReward(reward.id)}
                         disabled={!reward.isAvailable || userPoints < reward.points}
                         className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${reward.isAvailable && userPoints >= reward.points ? 'az-btn-primary' : ''}`}
@@ -225,10 +245,15 @@ export default function RewardsPage(): React.JSX.Element {
 
         <section>
           <h2 className="text-2xl font-bold text-white mb-6">Achievements</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+            role="list"
+            aria-label="Achievements"
+          >
             {achievements.map((achievement) => (
               <div
                 key={achievement.id}
+                role="listitem"
                 className={`az-glass p-4 flex items-center gap-4 transition-all ${achievement.unlocked ? '' : 'opacity-60'}`}
               >
                 <div
@@ -253,13 +278,16 @@ export default function RewardsPage(): React.JSX.Element {
                         className="h-full rounded-full"
                         style={{
                           width: `${(achievement.progress / achievement.target) * 100}%`,
-                          backgroundColor: '#E8420A',
+                          backgroundColor: 'var(--brand-orange)',
                         }}
                       />
                     </div>
                   )}
                   {achievement.unlocked && (
-                    <span className="text-xs font-medium" style={{ color: '#22C55E' }}>
+                    <span
+                      className="text-xs font-medium"
+                      style={{ color: 'var(--color-success-500)' }}
+                    >
                       ✓ Unlocked
                     </span>
                   )}

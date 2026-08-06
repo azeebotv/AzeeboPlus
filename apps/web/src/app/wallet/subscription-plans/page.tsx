@@ -24,14 +24,20 @@ interface SubscribeResult {
   planId: string;
 }
 
+interface WalletBalance {
+  balance: number;
+}
+
 export default function SubscriptionPlansPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirmPlan, setConfirmPlan] = useState<Plan | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -44,9 +50,10 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
 
   const loadPlans = async () => {
     try {
-      const [plansRes, statusRes] = await Promise.all([
-        apiFetch<Plan[]>('/subscription/plans'),
-        apiFetch<SubscriptionStatus>('/subscription/current'),
+      const [plansRes, statusRes, walletRes] = await Promise.all([
+        apiFetch<Plan[]>('/v1/subscription/plans'),
+        apiFetch<SubscriptionStatus>('/v1/subscription/current'),
+        apiFetch<WalletBalance>('/wallet'),
       ]);
       if (plansRes.success && plansRes.data) {
         const data = plansRes.data;
@@ -56,6 +63,9 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
         const status = statusRes.data;
         setCurrentPlan(status.planId || null);
       }
+      if (walletRes.success && walletRes.data) {
+        setWalletBalance(walletRes.data.balance);
+      }
     } catch {
       setError('Failed to load subscription plans. Please try again.');
     } finally {
@@ -63,15 +73,17 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
     }
   };
 
-  const handleSubscribe = async (planId: string) => {
+  const handleSubscribe = async (planId: string, paymentMethod: 'wallet' | 'external') => {
     setSubscribing(planId);
+    setConfirmPlan(null);
     try {
-      const result = await apiFetch<SubscribeResult>('/subscription/subscribe', {
+      const result = await apiFetch<SubscribeResult>('/v1/subscription/subscribe', {
         method: 'POST',
-        body: JSON.stringify({ planId }),
+        body: JSON.stringify({ planId, paymentMethod }),
       });
       if (result.success) {
         setCurrentPlan(planId);
+        loadPlans();
       }
     } catch {
       /* ignore */
@@ -83,7 +95,13 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <main
         style={{
@@ -96,9 +114,16 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
       >
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <h1 style={{ fontSize: 32, fontWeight: 700 }}>Subscription Plans</h1>
-          <p style={{ color: '#9A8A7A', marginTop: 8, fontSize: 16 }}>
+          <p style={{ color: 'var(--text-secondary)', marginTop: 8, fontSize: 16 }}>
             Choose the plan that works best for you
           </p>
+          {walletBalance !== null && (
+            <p
+              style={{ color: 'var(--brand-forest)', marginTop: 8, fontSize: 14, fontWeight: 600 }}
+            >
+              Wallet Balance: ₦{walletBalance.toLocaleString()}
+            </p>
+          )}
         </div>
 
         {isLoading ? (
@@ -108,7 +133,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                 width: 40,
                 height: 40,
                 border: '3px solid #2A1A1A',
-                borderTopColor: '#E8420A',
+                borderTopColor: 'var(--brand-orange)',
                 borderRadius: '50%',
                 animation: 'spin 0.8s linear infinite',
               }}
@@ -116,7 +141,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
           </div>
         ) : error ? (
           <div style={{ textAlign: 'center', padding: 60 }}>
-            <p style={{ color: '#E8420A', marginBottom: 16 }}>{error}</p>
+            <p style={{ color: 'var(--brand-orange)', marginBottom: 16 }}>{error}</p>
             <button
               onClick={() => {
                 setError(null);
@@ -126,8 +151,8 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
               style={{
                 padding: '10px 24px',
                 borderRadius: 8,
-                background: '#E8420A',
-                color: '#fff',
+                background: 'var(--brand-orange)',
+                color: 'var(--brand-white)',
                 border: 'none',
                 cursor: 'pointer',
                 fontSize: 14,
@@ -167,19 +192,29 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                         transform: 'translateX(-50%)',
                         padding: '4px 16px',
                         borderRadius: 999,
-                        background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+                        background:
+                          'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
                         fontSize: 12,
                         fontWeight: 700,
-                        color: '#fff',
+                        color: 'var(--brand-white)',
                       }}
                     >
                       Most Popular
                     </div>
                   )}
                   <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>{plan.name}</h3>
-                  <p style={{ fontSize: 32, fontWeight: 700, color: '#E8420A', marginBottom: 20 }}>
+                  <p
+                    style={{
+                      fontSize: 32,
+                      fontWeight: 700,
+                      color: 'var(--brand-orange)',
+                      marginBottom: 20,
+                    }}
+                  >
                     ₦{plan.price.toLocaleString()}
-                    <span style={{ fontSize: 14, color: '#9A8A7A', fontWeight: 400 }}>/month</span>
+                    <span style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 400 }}>
+                      /month
+                    </span>
                   </p>
                   <div
                     style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}
@@ -192,10 +227,10 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                           alignItems: 'center',
                           gap: 8,
                           fontSize: 14,
-                          color: '#D4C8B8',
+                          color: 'var(--text-secondary)',
                         }}
                       >
-                        <span style={{ color: '#0D3B2E' }}>✓</span> {feature}
+                        <span style={{ color: 'var(--brand-forest)' }}>✓</span> {feature}
                       </div>
                     ))}
                   </div>
@@ -206,7 +241,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                         textAlign: 'center',
                         borderRadius: 999,
                         border: '1px solid #0D3B2E',
-                        color: '#0D3B2E',
+                        color: 'var(--brand-forest)',
                         fontWeight: 600,
                         fontSize: 14,
                       }}
@@ -215,7 +250,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                     </div>
                   ) : (
                     <button
-                      onClick={() => handleSubscribe(plan.id)}
+                      onClick={() => setConfirmPlan(plan)}
                       disabled={subscribing === plan.id}
                       className="az-btn-primary"
                       style={{
@@ -224,9 +259,9 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                         borderRadius: 999,
                         border: plan.isPopular ? 'none' : '1px solid #2A1A1A',
                         background: plan.isPopular
-                          ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)'
+                          ? 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)'
                           : 'transparent',
-                        color: plan.isPopular ? '#fff' : '#9A8A7A',
+                        color: plan.isPopular ? '#fff' : 'var(--text-secondary)',
                         fontWeight: 600,
                         fontSize: 14,
                         cursor: 'pointer',
@@ -241,6 +276,110 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
           </div>
         )}
       </main>
+
+      {confirmPlan &&
+        (() => {
+          const canAffordWallet = walletBalance !== null && walletBalance >= confirmPlan.price;
+          return (
+            <div
+              style={{
+                position: 'fixed',
+                inset: 0,
+                backgroundColor: 'rgba(0,0,0,0.7)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 1000,
+                padding: 24,
+              }}
+              onClick={() => setConfirmPlan(null)}
+            >
+              <div
+                className="az-glass"
+                style={{ padding: 32, borderRadius: 20, maxWidth: 400, width: '100%' }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>
+                  Confirm Subscription
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: 4 }}>
+                  {confirmPlan.name} — ₦{confirmPlan.price.toLocaleString()}/month
+                </p>
+
+                {walletBalance !== null && (
+                  <p style={{ color: 'var(--text-secondary)', marginBottom: 20, fontSize: 14 }}>
+                    Wallet: ₦{walletBalance.toLocaleString()}
+                  </p>
+                )}
+
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}
+                >
+                  {walletBalance !== null && (
+                    <button
+                      onClick={() => handleSubscribe(confirmPlan.id, 'wallet')}
+                      disabled={subscribing === confirmPlan.id || !canAffordWallet}
+                      style={{
+                        width: '100%',
+                        padding: '12px 0',
+                        borderRadius: 999,
+                        background: canAffordWallet
+                          ? 'linear-gradient(135deg, #0D3B2E 0%, #0A5C36 100%)'
+                          : 'var(--bg-secondary)',
+                        color: canAffordWallet ? '#fff' : '#666',
+                        border: 'none',
+                        cursor: canAffordWallet ? 'pointer' : 'not-allowed',
+                        fontWeight: 600,
+                        fontSize: 14,
+                      }}
+                    >
+                      {subscribing === confirmPlan.id
+                        ? 'Processing...'
+                        : canAffordWallet
+                          ? 'Pay from Wallet'
+                          : 'Insufficient Balance'}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleSubscribe(confirmPlan.id, 'external')}
+                    disabled={subscribing === confirmPlan.id}
+                    style={{
+                      width: '100%',
+                      padding: '12px 0',
+                      borderRadius: 999,
+                      background:
+                        'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+                      color: 'var(--brand-white)',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                      fontSize: 14,
+                    }}
+                  >
+                    {subscribing === confirmPlan.id ? 'Processing...' : 'Pay with Card / Transfer'}
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => setConfirmPlan(null)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 0',
+                    borderRadius: 999,
+                    background: 'transparent',
+                    color: 'var(--text-secondary)',
+                    border: '1px solid var(--border-default)',
+                    cursor: 'pointer',
+                    fontSize: 14,
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+
       <AppFooter />
     </div>
   );

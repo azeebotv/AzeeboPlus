@@ -6,12 +6,15 @@ import { CreateSubscriptionPlanDto } from './dto/create-subscription-plan.dto.js
 import { SubscribeToPlanDto } from './dto/subscribe-to-plan.dto.js';
 import type { SubscriptionPlan, Subscription } from '../../prisma/client/index.js';
 import { CircuitBreaker, CircuitBreakerOpenError } from '@azeebo/shared-types';
+import { randomUUID } from 'crypto';
 import axios from 'axios';
 
 @Injectable()
 export class SubscriptionService {
   private readonly logger = new Logger(SubscriptionService.name);
   private readonly paymentServiceBaseUrl: string;
+  private readonly walletServiceBaseUrl: string;
+  private readonly analyticsServiceBaseUrl: string;
   private readonly circuitBreaker = new CircuitBreaker({
     failureThreshold: 5,
     resetTimeout: 60000,
@@ -23,6 +26,14 @@ export class SubscriptionService {
     @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.paymentServiceBaseUrl = this.configService.getOrThrow<string>('PAYMENT_SERVICE_URL');
+    this.walletServiceBaseUrl = this.configService.get<string>(
+      'WALLET_SERVICE_URL',
+      'http://wallet-service:3002'
+    );
+    this.analyticsServiceBaseUrl = this.configService.get<string>(
+      'ANALYTICS_SERVICE_URL',
+      'http://analytics-service:3040'
+    );
   }
 
   async getPlans(): Promise<SubscriptionPlan[]> {
@@ -74,39 +85,18 @@ export class SubscriptionService {
       throw new NotFoundException(`Plan ${dto.planId} not found`);
     }
 
-    if (!dto.paymentReference) {
+    const paymentMethod = dto.paymentMethod ?? 'external';
+
+    if (paymentMethod === 'external' && !dto.paymentReference) {
       throw new BadRequestException(
-        'Payment reference is required. Please complete payment first.'
+        'Payment reference is required for external payments. Please complete payment first.'
       );
     }
 
-    let paymentVerification;
-    try {
-      paymentVerification = await this.circuitBreaker.execute(() =>
-        axios.get(`${this.paymentServiceBaseUrl}/v1/payments/${dto.paymentReference}`, {
-          timeout: 10000,
-        })
-      );
-    } catch (error) {
-      if (error instanceof CircuitBreakerOpenError) {
-        throw new BadRequestException(
-          'Payment service is temporarily unavailable. Please try again later.'
-        );
-      }
-      this.logger.error(`Failed to verify payment reference: ${(error as Error).message}`);
-      throw new BadRequestException('Unable to verify payment. Please try again.');
-    }
-
-    if (paymentVerification.data?.status !== 'completed') {
-      throw new BadRequestException(
-        'Payment has not been completed. Please complete payment first.'
-      );
-    }
-
-    if (Number(paymentVerification.data?.amount).toFixed(2) !== Number(plan.price).toFixed(2)) {
-      throw new BadRequestException(
-        `Payment amount (${paymentVerification.data?.amount}) does not match plan price (${plan.price})`
-      );
+    if (paymentMethod === 'wallet') {
+      await this.debitWallet(userId, Number(plan.price), `Subscription to ${plan.name}`);
+    } else {
+      await this.verifyExternalPayment(dto.paymentReference!, plan);
     }
 
     const subscription = await this.prisma.$transaction(async (tx) => {
@@ -137,7 +127,8 @@ export class SubscriptionService {
           planId: dto.planId,
           endDate,
           autoRenew: dto.autoRenew ?? true,
-          paymentMethod: dto.paymentMethod,
+          lastPaymentDate: new Date(),
+          paymentMethod: paymentMethod,
         },
         include: {
           plan: true,
@@ -150,7 +141,8 @@ export class SubscriptionService {
           amount: plan.price,
           currency: plan.currency,
           status: 'completed',
-          description: `Subscription to ${plan.name} - Payment ref: ${dto.paymentReference}`,
+          paymentProvider: paymentMethod === 'wallet' ? 'wallet' : 'external',
+          description: `Subscription to ${plan.name}${dto.paymentReference ? ` - ref: ${dto.paymentReference}` : ''}`,
         },
       });
 
@@ -160,7 +152,100 @@ export class SubscriptionService {
     await this.cache.invalidate(`subscription:user:${userId}`);
     await this.cache.invalidate('subscription:plans');
 
+    this.trackAnalyticsEvent('subscription_created', userId, { planId: dto.planId, paymentMethod });
     return subscription;
+  }
+
+  async renewSubscription(userId: string, subscriptionId: string): Promise<Subscription> {
+    const subscription = await this.prisma.subscription.findFirst({
+      where: {
+        id: subscriptionId,
+        userId,
+        status: 'active',
+      },
+      include: { plan: true },
+    });
+
+    if (!subscription) {
+      throw new NotFoundException('Active subscription not found');
+    }
+
+    if (!subscription.autoRenew) {
+      throw new BadRequestException(
+        'Auto-renew is disabled. Please enable it first or resubscribe.'
+      );
+    }
+
+    const plan = subscription.plan;
+
+    // Try wallet first, fall back to external payment
+    let paymentMethod = 'wallet';
+    try {
+      await this.debitWallet(userId, Number(plan.price), `Renewal of ${plan.name}`);
+    } catch (walletError) {
+      // Wallet debit failed — try external payment if configured
+      if (subscription.paymentMethod && subscription.paymentMethod !== 'wallet') {
+        paymentMethod = subscription.paymentMethod;
+        this.logger.log(
+          `Wallet debit failed for renewal, using ${paymentMethod} for subscription ${subscriptionId}`
+        );
+      } else {
+        throw walletError;
+      }
+    }
+
+    const newEndDate = new Date(subscription.endDate ?? new Date());
+    newEndDate.setDate(newEndDate.getDate() + plan.duration);
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const result = await tx.subscription.update({
+        where: { id: subscriptionId },
+        data: {
+          endDate: newEndDate,
+          lastPaymentDate: new Date(),
+        },
+        include: { plan: true },
+      });
+
+      await tx.subscriptionTransaction.create({
+        data: {
+          subscriptionId,
+          amount: plan.price,
+          currency: plan.currency,
+          status: 'completed',
+          paymentProvider: 'wallet',
+          description: `Renewal of ${plan.name}`,
+        },
+      });
+
+      return result;
+    });
+
+    await this.cache.invalidate(`subscription:user:${userId}`);
+
+    this.trackAnalyticsEvent('subscription_renewed', userId, { subscriptionId, planId: plan.id });
+    return updated;
+  }
+
+  async checkExpiredSubscriptions(): Promise<number> {
+    const now = new Date();
+
+    const result = await this.prisma.subscription.updateMany({
+      where: {
+        status: 'active',
+        endDate: { lt: now },
+      },
+      data: {
+        status: 'expired',
+      },
+    });
+
+    if (result.count > 0) {
+      this.logger.log(`Marked ${result.count} subscriptions as expired`);
+      await this.cache.invalidate('subscription:');
+    }
+
+    return result.count;
   }
 
   async getCurrentSubscription(userId: string): Promise<Subscription | null> {
@@ -204,7 +289,56 @@ export class SubscriptionService {
 
     await this.cache.invalidate(`subscription:user:${userId}`);
 
+    this.trackAnalyticsEvent('subscription_cancelled', userId, { subscriptionId });
     return result;
+  }
+
+  async updatePlan(
+    id: string,
+    data: Partial<
+      Pick<
+        SubscriptionPlan,
+        'name' | 'description' | 'currency' | 'duration' | 'features' | 'tier' | 'isActive'
+      >
+    > & { price?: string | number }
+  ): Promise<SubscriptionPlan> {
+    const existing = await this.prisma.subscriptionPlan.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException(`Subscription plan with ID ${id} not found`);
+    }
+
+    const updateData: Record<string, unknown> = { ...data };
+    if (data.price !== undefined) {
+      updateData.price = String(data.price);
+    }
+
+    const plan = await this.prisma.subscriptionPlan.update({
+      where: { id },
+      data: updateData,
+    });
+
+    await this.cache.invalidate('subscription:plans');
+    return plan;
+  }
+
+  async deletePlan(id: string): Promise<void> {
+    const existing = await this.prisma.subscriptionPlan.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException(`Subscription plan with ID ${id} not found`);
+    }
+
+    const activeSubscriptions = await this.prisma.subscription.count({
+      where: { planId: id, status: 'active' },
+    });
+
+    if (activeSubscriptions > 0) {
+      throw new BadRequestException(
+        `Cannot delete plan with ${activeSubscriptions} active subscription(s). Deactivate instead.`
+      );
+    }
+
+    await this.prisma.subscriptionPlan.delete({ where: { id } });
+    await this.cache.invalidate('subscription:plans');
   }
 
   async getSubscriptionHistory(
@@ -237,5 +371,98 @@ export class SubscriptionService {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  private async debitWallet(userId: string, amount: number, description: string): Promise<void> {
+    try {
+      const walletResponse = await axios.get(
+        `${this.walletServiceBaseUrl}/wallets/user/${userId}`,
+        {
+          timeout: 10000,
+        }
+      );
+      const wallet = walletResponse.data?.wallet || walletResponse.data;
+      if (!wallet) {
+        throw new BadRequestException('Wallet not found. Please fund your wallet first.');
+      }
+
+      if (Number(wallet.balance) < amount) {
+        throw new BadRequestException('Insufficient wallet balance. Please fund your wallet.');
+      }
+
+      const idempotencyKey = randomUUID();
+
+      await axios.post(
+        `${this.walletServiceBaseUrl}/wallet/debit`,
+        {
+          walletId: wallet.id,
+          amount,
+          description,
+          idempotencyKey,
+        },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      if (error instanceof CircuitBreakerOpenError) {
+        throw new BadRequestException(
+          'Wallet service is temporarily unavailable. Please try again later.'
+        );
+      }
+      this.logger.error(`Failed to debit wallet: ${(error as Error).message}`);
+      throw new BadRequestException('Unable to process wallet payment. Please try again.');
+    }
+  }
+
+  private async verifyExternalPayment(
+    paymentReference: string,
+    plan: SubscriptionPlan
+  ): Promise<void> {
+    let paymentVerification;
+    try {
+      paymentVerification = await this.circuitBreaker.execute(() =>
+        axios.get(`${this.paymentServiceBaseUrl}/v1/payments/${paymentReference}`, {
+          timeout: 10000,
+        })
+      );
+    } catch (error) {
+      if (error instanceof CircuitBreakerOpenError) {
+        throw new BadRequestException(
+          'Payment service is temporarily unavailable. Please try again later.'
+        );
+      }
+      this.logger.error(`Failed to verify payment reference: ${(error as Error).message}`);
+      throw new BadRequestException('Unable to verify payment. Please try again.');
+    }
+
+    if (paymentVerification.data?.status !== 'completed') {
+      throw new BadRequestException(
+        'Payment has not been completed. Please complete payment first.'
+      );
+    }
+
+    if (Number(paymentVerification.data?.amount).toFixed(2) !== Number(plan.price).toFixed(2)) {
+      throw new BadRequestException(
+        `Payment amount (${paymentVerification.data?.amount}) does not match plan price (${plan.price})`
+      );
+    }
+  }
+
+  private async trackAnalyticsEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown> = {}
+  ): Promise<void> {
+    try {
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/analytics/track`,
+        { eventName, userId, metadata, timestamp: new Date().toISOString() },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to track analytics event: ${eventName}`);
+    }
   }
 }

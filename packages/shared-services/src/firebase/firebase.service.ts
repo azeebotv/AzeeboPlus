@@ -88,7 +88,7 @@ export class FirebaseService implements OnModuleInit, OnModuleDestroy {
         await this.messaging.send(message);
       });
 
-      this.logger.log(`Push notification sent successfully to ${token.slice(0, 8)}...`);
+      this.logger.log(`Push notification sent successfully to user`);
       return true;
     } catch (error) {
       if (error instanceof CircuitBreakerOpenError) {

@@ -27,7 +27,8 @@ scripts/demo-content/
 ├── backups/                   # Auto-created backup directory
 └── migrations/
     ├── 001_create_all_tables.sql   # Schema migration (all services)
-    └── 002_seed_demo_data.sql      # Comprehensive seed data
+    ├── 002_seed_demo_data.sql      # Comprehensive seed data (core platform)
+    └── 003_seed_additions.sql      # Additional seed data (lifestyle, comedy, movies, vertical, sports, payments)
 ```
 
 ## Demo Data Overview (v2.0.0)

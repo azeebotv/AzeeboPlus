@@ -7,7 +7,7 @@ import { FlutterwaveProvider } from './providers/flutterwave.provider.js';
 import { WebhookRetryService } from './webhook-retry.service.js';
 import { RedisService, CacheService, cacheKey } from '@azeebo/shared-services';
 import axios from 'axios';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../prisma/client/index.js';
 import {
   PaymentResponse,
   InitializePaymentResponse,
@@ -132,26 +132,31 @@ export class PaymentsService {
     }
 
     if (idempotencyKey) {
-      const existingPayment = await this.prisma.paymentIntent.findUnique({
-        where: { idempotencyKey },
-      });
-      if (existingPayment) {
+      // First check cache for speed, then DB for consistency
+      const cached = await this.cache.get(idempotencyKey);
+      if (cached) {
+        const existingPayment = await this.prisma.paymentIntent.findUnique({
+          where: { idempotencyKey },
+        });
         const existingStatus =
-          existingPayment.status === 'processing' ? 'pending' : existingPayment.status;
+          existingPayment?.status === 'processing' ? 'pending' : existingPayment?.status;
         return {
           success: true,
           data: {
-            paymentId: existingPayment.id,
+            paymentId: existingPayment?.id ?? '',
             provider: 'paystack',
             checkoutUrl: '',
-            reference: existingPayment.providerReference || '',
-            amount: toNumber(existingPayment.amount.toString()),
-            currency: existingPayment.currency,
+            reference: existingPayment?.providerReference ?? '',
+            amount: Number(existingPayment?.amount ?? 0),
+            currency: existingPayment?.currency ?? 'NGN',
             status: existingStatus as 'pending' | 'completed' | 'failed',
-            createdAt: existingPayment.createdAt.toISOString(),
+            createdAt: existingPayment?.createdAt.toISOString() ?? '',
           },
         };
       }
+
+      // Store short-lived cache to prevent race conditions
+      await this.cache.set(idempotencyKey, 'true', 1800); // 30 min TTL
     }
 
     const paymentIntent = await this.prisma.paymentIntent.create({

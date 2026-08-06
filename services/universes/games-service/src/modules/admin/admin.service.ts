@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 
 @Injectable()
@@ -73,5 +73,30 @@ export class AdminService {
       );
       return { success: false, error: (error as Error).message };
     }
+  }
+
+  // Write operations
+  async updateGame(id: string, data: { name?: string; category?: string; description?: string }) {
+    const existing = await this.prisma.game.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Game not found');
+    return this.prisma.game.update({ where: { id }, data: data as never });
+  }
+
+  async deleteGame(id: string) {
+    const existing = await this.prisma.game.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Game not found');
+    return this.prisma.game.delete({ where: { id } });
+  }
+
+  async updateTournament(id: string, data: { name?: string; status?: string; prizePool?: number }) {
+    const existing = await this.prisma.tournament.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Tournament not found');
+    return this.prisma.tournament.update({ where: { id }, data: data as never });
+  }
+
+  async deleteTournament(id: string) {
+    const existing = await this.prisma.tournament.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Tournament not found');
+    return this.prisma.tournament.delete({ where: { id } });
   }
 }

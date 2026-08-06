@@ -75,7 +75,7 @@ export default function ProfilePage(): React.JSX.Element {
         >
           <p
             className="text-xs font-bold uppercase tracking-widest mb-2"
-            style={{ color: '#E8420A' }}
+            style={{ color: 'var(--brand-orange)' }}
           >
             Account
           </p>
@@ -129,7 +129,7 @@ export default function ProfilePage(): React.JSX.Element {
                     className="text-xs px-3 py-1 rounded-full font-medium"
                     style={{
                       background: 'rgba(232,66,10,0.15)',
-                      color: '#E8420A',
+                      color: 'var(--brand-orange)',
                     }}
                   >
                     {profile.profile?.role || 'user'}

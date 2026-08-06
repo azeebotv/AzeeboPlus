@@ -23,9 +23,8 @@ interface UniverseSection {
   items: ContentItem[];
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- recommendation API responses may have nested content structure
-function extractContentItem(r: any): ContentItem {
-  return r.content || r;
+function extractContentItem(r: ContentItem | { content: ContentItem }): ContentItem {
+  return 'content' in r ? r.content : r;
 }
 
 export default function AuthenticatedHomepage({
@@ -52,7 +51,7 @@ export default function AuthenticatedHomepage({
 
   // Section 5: Supplementary sections
   const [trendingContent, setTrendingContent] = useState<ContentItem[]>([]);
-  const [continueWatching, _setContinueWatching] = useState<ContentItem[]>([]);
+  const [continueWatching] = useState<ContentItem[]>([]);
   const [newReleases, setNewReleases] = useState<ContentItem[]>([]);
   const [popularInRegion, setPopularInRegion] = useState<ContentItem[]>([]);
   const [isLoadingSupplementary, setIsLoadingSupplementary] = useState(true);
@@ -63,38 +62,40 @@ export default function AuthenticatedHomepage({
       try {
         // Use the combined home feed endpoint
         const homeResponse = await api.content.getHomeFeed();
-        
+
         if (homeResponse.success && homeResponse.data) {
           const { trending, recommended, latest } = homeResponse.data;
-          
+
           // Set hero slides from trending (top 5)
           setFeaturedSlides((trending || []).slice(0, 5));
-          
+
           // Set recently watched from latest
           setRecentlyWatched(latest || []);
           setIsLoadingHistory(false);
-          
+
           // Set trending content
           setTrendingContent(trending || []);
-          
+
           // Set recommendations
           if (recommended && recommended.length > 0) {
-            setRecommendationGroups([{
-              title: 'Recommended for You',
-              reason: 'Based on your viewing history',
-              items: recommended,
-            }]);
+            setRecommendationGroups([
+              {
+                title: 'Recommended for You',
+                reason: 'Based on your viewing history',
+                items: recommended,
+              },
+            ]);
           }
-          
+
           // Group by universe for universe sections
           const allContent = [...(trending || []), ...(latest || [])];
           const universeMap = new Map<string, UniverseSection>();
-          
+
           allContent.forEach((item) => {
             const universeId = item.universeId || 'unknown';
             const universeName = item.universe?.name || 'Unknown';
             const universeIcon = item.universe?.icon;
-            
+
             if (!universeMap.has(universeId)) {
               universeMap.set(universeId, {
                 universeId,
@@ -103,16 +104,16 @@ export default function AuthenticatedHomepage({
                 items: [],
               });
             }
-            
+
             const section = universeMap.get(universeId)!;
             if (section.items.length < 12) {
               section.items.push(item);
             }
           });
-          
+
           setUniverseSections(Array.from(universeMap.values()).filter((s) => s.items.length > 0));
           setIsLoadingUniverses(false);
-          
+
           // Set new releases and popular
           setNewReleases((latest || []).slice(0, 12));
           setPopularInRegion((trending || []).slice(0, 12));
@@ -126,7 +127,7 @@ export default function AuthenticatedHomepage({
             api.content.getNewReleases(12),
             api.content.getPopularInRegion(12),
           ]);
-          
+
           if (slidesRes.status === 'fulfilled' && slidesRes.value.success) {
             setFeaturedSlides(slidesRes.value.data || []);
           }
@@ -158,7 +159,10 @@ export default function AuthenticatedHomepage({
     const nextOffset = recentlyWatchedOffset + HISTORY_PAGE_SIZE;
     setRecentlyWatchedOffset(nextOffset);
     try {
-      const response = await api.content.getContentList({ page: Math.floor(nextOffset / HISTORY_PAGE_SIZE) + 1, limit: HISTORY_PAGE_SIZE });
+      const response = await api.content.getContentList({
+        page: Math.floor(nextOffset / HISTORY_PAGE_SIZE) + 1,
+        limit: HISTORY_PAGE_SIZE,
+      });
       if (response.success && response.data) {
         const newItems = Array.isArray(response.data.items) ? response.data.items : [];
         setRecentlyWatched((prev) => [...prev, ...newItems]);
@@ -239,13 +243,6 @@ export default function AuthenticatedHomepage({
           Array.isArray(newRes.value.data)
         ) {
           setNewReleases(newRes.value.data);
-        }
-        if (
-          popularRes.status === 'fulfilled' &&
-          popularRes.value.success &&
-          Array.isArray(popularRes.value.data)
-        ) {
-          setPopularInRegion(popularRes.value.data);
         }
         if (
           popularRes.status === 'fulfilled' &&
@@ -410,7 +407,7 @@ export default function AuthenticatedHomepage({
                   <motion.button
                     type="button"
                     className="px-6 sm:px-8 py-3 rounded-full text-sm sm:text-base font-bold transition-all"
-                    style={{ background: '#1A0A0A', color: '#fff' }}
+                    style={{ background: '#1A0A0A', color: 'var(--brand-white)' }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >

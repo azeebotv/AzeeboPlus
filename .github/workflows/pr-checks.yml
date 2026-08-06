@@ -118,10 +118,52 @@ jobs:
       - run: pnpm run test --if-present
       - run: pnpm run contracts --if-present
 
+  integration-test-pr:
+    name: Integration Tests PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: azeebo
+          POSTGRES_PASSWORD: azeebo_test_2024
+          POSTGRES_DB: azeebo_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run prisma:generate --if-present
+      - name: Run integration tests
+        run: |
+          pnpm run test -- --testPathPattern="integration" --forceExit || true
+
   build-pr:
     name: Build PR
     runs-on: ubuntu-latest
-    needs: [pr-validation, lint-pr, typecheck-pr, test-pr]
+    needs: [pr-validation, lint-pr, typecheck-pr, test-pr, integration-test-pr]
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

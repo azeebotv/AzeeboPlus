@@ -1,4 +1,5 @@
 'use client';
+import { Suspense, lazy, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
@@ -11,8 +12,13 @@ import { AmbientGlow } from '@/components/motion/AmbientGlow';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { StaggerGrid } from '@/components/motion/StaggerGrid';
 import { GlowCard } from '@/components/motion/GlowCard';
+import analytics from '@/lib/analytics';
 
-export default function GamesPage(): React.JSX.Element {
+function GamesPageContent(): React.JSX.Element {
+  useEffect(() => {
+    analytics.pageView('games');
+  }, []);
+
   const universesQuery = useQuery({
     queryKey: ['universes'],
     queryFn: async () => {
@@ -94,13 +100,16 @@ export default function GamesPage(): React.JSX.Element {
               >
                 <span
                   className="px-3 py-1 rounded-full text-xs font-semibold"
-                  style={{ backgroundColor: '#E8420A', color: '#fff' }}
+                  style={{ backgroundColor: 'var(--brand-orange)', color: 'var(--brand-white)' }}
                 >
                   Premium
                 </span>
                 <span
                   className="px-3 py-1 rounded-full text-xs font-medium"
-                  style={{ backgroundColor: 'rgba(59,130,246,0.2)', color: '#60A5FA' }}
+                  style={{
+                    backgroundColor: 'rgba(59,130,246,0.2)',
+                    color: 'var(--color-secondary-400)',
+                  }}
                 >
                   {games[0].contentType || 'Game'}
                 </span>
@@ -176,7 +185,7 @@ export default function GamesPage(): React.JSX.Element {
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="az-glass overflow-hidden">
+              <div key={`game-skeleton-${i}`} className="az-glass overflow-hidden">
                 <Skeleton height="208px" className="sm:h-[240px]" borderRadius="0px" />
                 <div className="p-4 space-y-3">
                   <Skeleton height="20px" width="75%" />
@@ -200,7 +209,10 @@ export default function GamesPage(): React.JSX.Element {
                     />
                     <span
                       className="absolute top-2 right-2 px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                      style={{ backgroundColor: '#E8420A', color: '#fff' }}
+                      style={{
+                        backgroundColor: 'var(--brand-orange)',
+                        color: 'var(--brand-white)',
+                      }}
                     >
                       Premium
                     </span>
@@ -208,7 +220,10 @@ export default function GamesPage(): React.JSX.Element {
                     <div className="absolute bottom-4 left-4 right-4">
                       <span
                         className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                        style={{ backgroundColor: 'rgba(59,130,246,0.2)', color: '#60A5FA' }}
+                        style={{
+                          backgroundColor: 'rgba(59,130,246,0.2)',
+                          color: 'var(--color-secondary-400)',
+                        }}
                       >
                         {game.contentType || 'Game'}
                       </span>
@@ -239,5 +254,21 @@ export default function GamesPage(): React.JSX.Element {
 
       <AppFooter />
     </div>
+  );
+}
+
+const LazyGamesPage = lazy(() => Promise.resolve({ default: GamesPageContent }));
+
+export default function GamesPage(): React.JSX.Element {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
+      <LazyGamesPage />
+    </Suspense>
   );
 }

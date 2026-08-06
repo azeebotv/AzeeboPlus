@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ExecutionContext } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { AuthGuard } from './auth.guard';
 import { AdminGuard } from '@azeebo/security';
 
@@ -16,6 +17,12 @@ describe('Auth Guard Tests', () => {
           provide: JwtService,
           useValue: {
             verify: jest.fn(),
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((_key: string, defaultValue?: string) => defaultValue),
           },
         },
       ],
@@ -111,6 +118,12 @@ describe('Admin Guard Tests', () => {
           provide: JwtService,
           useValue: {
             verify: jest.fn(),
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((_key: string, defaultValue?: string) => defaultValue),
           },
         },
       ],

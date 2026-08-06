@@ -164,4 +164,25 @@ export class ModerationController {
   async checkContentSafety(@Param('contentId') contentId: string): Promise<ModerationResponse> {
     return this.moderationService.checkContentSafety(contentId);
   }
+
+  @Get('reports')
+  @ApiOperation({ summary: 'Get moderation reports (public status check)' })
+  @ApiResponse({ status: 200, description: 'Reports list' })
+  async getReports(): Promise<ModerationResponse> {
+    const result = await this.moderationService.listCases();
+    return { success: true, data: result.data };
+  }
+
+  @Get('reports/:reportId')
+  @ApiOperation({ summary: 'Get report status by ID' })
+  @ApiResponse({ status: 200, description: 'Report status' })
+  @ApiResponse({ status: 404, description: 'Report not found' })
+  async getReportStatus(@Param('reportId') reportId: string): Promise<ModerationResponse> {
+    const cases = await this.moderationService.listCases();
+    const found = cases.data.find((c: { id: string }) => c.id === reportId);
+    if (!found) {
+      return { success: false, error: { code: 'NOT_FOUND', message: 'Report not found' } };
+    }
+    return { success: true, data: found };
+  }
 }

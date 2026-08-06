@@ -1,4 +1,14 @@
 'use client';
+import { useEffect } from 'react';
+
+export const metadata = {
+  title: 'Reality | Azeebo',
+  description: 'Watch reality shows, vote for contestants, and earn rewards on Azeebo.',
+  openGraph: {
+    title: 'Reality | Azeebo',
+    description: 'Watch reality shows, vote for contestants, and earn rewards on Azeebo.',
+  },
+};
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -11,6 +21,7 @@ import { AmbientGlow } from '@/components/motion/AmbientGlow';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { StaggerGrid } from '@/components/motion/StaggerGrid';
 import { GlowCard } from '@/components/motion/GlowCard';
+import analytics from '@/lib/analytics';
 
 interface Contestant {
   id: string;
@@ -34,7 +45,11 @@ const staggerItem = {
   },
 };
 
-export default function RealityPage(): React.JSX.Element {
+function RealityPageContent(): React.JSX.Element {
+  useEffect(() => {
+    analytics.pageView('reality');
+  }, []);
+
   const universesQuery = useQuery({
     queryKey: ['universes'],
     queryFn: async () => {
@@ -182,7 +197,10 @@ export default function RealityPage(): React.JSX.Element {
                   <div className="absolute bottom-4 left-4 right-4">
                     <span
                       className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                      style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8420A' }}
+                      style={{
+                        backgroundColor: 'rgba(232,66,10,0.2)',
+                        color: 'var(--brand-orange)',
+                      }}
                     >
                       {show.contentType || 'Reality'}
                     </span>
@@ -212,7 +230,7 @@ export default function RealityPage(): React.JSX.Element {
 
       {/* Leaderboard */}
       {safeContestants.length > 0 && (
-        <section className="py-10 sm:py-12" style={{ backgroundColor: '#0d0505' }}>
+        <section className="py-10 sm:py-12" style={{ backgroundColor: 'var(--bg-primary)' }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <ScrollReveal>
               <div className="flex items-center justify-between mb-6 sm:mb-8">
@@ -299,7 +317,10 @@ export default function RealityPage(): React.JSX.Element {
                         {contestant.status === 'danger' && (
                           <span
                             className="px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-[10px] sm:text-xs font-semibold flex-shrink-0"
-                            style={{ backgroundColor: 'rgba(239,68,68,0.2)', color: '#EF4444' }}
+                            style={{
+                              backgroundColor: 'rgba(239,68,68,0.2)',
+                              color: 'var(--color-error-500)',
+                            }}
                           >
                             Danger
                           </span>
@@ -409,3 +430,5 @@ export default function RealityPage(): React.JSX.Element {
     </div>
   );
 }
+
+export default RealityPageContent;

@@ -17,6 +17,7 @@ import { useAzeeboVideoPlayer } from '../../src/hooks/useVideoPlayer';
 import { contentApi, type ContentItem } from '../../src/api';
 import { logger } from '../../src/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
+import { analytics } from '../../src/utils/analytics';
 
 const { width: _width } = Dimensions.get('window');
 
@@ -32,17 +33,10 @@ export default function ComedyClipPlayer() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [showComments, setShowComments] = useState(false);
 
-  const {
-    isPlaying,
-    isBuffering,
-    currentTime,
-    duration,
-    player,
-    togglePlay,
-    formatTime,
-  } = useAzeeboVideoPlayer({
-    contentId: clip?.id || '',
-  });
+  const { isPlaying, isBuffering, currentTime, duration, player, togglePlay, formatTime } =
+    useAzeeboVideoPlayer({
+      contentId: clip?.id || '',
+    });
 
   const fetchClip = useCallback(async () => {
     setIsLoading(true);
@@ -52,6 +46,9 @@ export default function ComedyClipPlayer() {
       if (featured.success && featured.data?.[0]) {
         const clipData = featured.data[0];
         setClip(clipData);
+        try {
+          analytics.comedyClipViewed(clipData.id);
+        } catch {}
         const relatedRes = await contentApi.getTrendingContent(5);
         if (relatedRes.success && relatedRes.data) {
           setRelated(relatedRes.data.filter((item) => item.id !== clipData.id));

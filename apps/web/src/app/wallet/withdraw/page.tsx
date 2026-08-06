@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { useToast } from '@/components/ToastProvider';
@@ -37,14 +38,23 @@ interface Pricing {
   processingFee: string;
 }
 
+export const metadata = {
+  title: 'Withdraw Funds | Azeebo',
+  description: 'Transfer funds from your wallet to your bank account.',
+  openGraph: {
+    title: 'Withdraw Funds | Azeebo',
+    description: 'Transfer funds from your wallet to your bank account.',
+  },
+};
+
 export default function WithdrawPage(): React.JSX.Element {
   const router = useRouter();
   const toast = useToast();
   const [amount, setAmount] = useState<string>('');
   const [selectedAccount, setSelectedAccount] = useState<string>('');
-  const [selectedMethod, _setSelectedMethod] = useState<string>('bank_transfer');
+  const [selectedMethod] = useState<string>('bank_transfer');
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
-  const [_methods, setMethods] = useState<WithdrawalMethods | null>(null);
+  const [, setMethods] = useState<WithdrawalMethods | null>(null);
   const [pricing, setPricing] = useState<Pricing | null>(null);
   const [walletPricing, setWalletPricing] = useState<WalletPricing | null>(null);
   const [walletBalance, setWalletBalance] = useState(0);
@@ -103,7 +113,10 @@ export default function WithdrawPage(): React.JSX.Element {
       toast.showToast('Withdrawal request submitted successfully!', 'success');
       router.push('/wallet/transactions');
     } catch (error: unknown) {
-      toast.showToast(error instanceof Error ? error.message : 'Failed to process withdrawal', 'error');
+      toast.showToast(
+        error instanceof Error ? error.message : 'Failed to process withdrawal',
+        'error'
+      );
     } finally {
       setIsProcessing(false);
     }
@@ -111,7 +124,7 @@ export default function WithdrawPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
         <AppHeader />
         <div
           className="flex items-center justify-center"
@@ -120,7 +133,10 @@ export default function WithdrawPage(): React.JSX.Element {
           <div className="text-center">
             <div
               className="animate-spin rounded-full h-12 w-12 mx-auto"
-              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }}
+              style={{
+                border: '3px solid rgba(255,255,255,0.1)',
+                borderTopColor: 'var(--brand-orange)',
+              }}
             />
             <p className="mt-4 text-white/60">Loading withdrawal options...</p>
           </div>
@@ -130,7 +146,7 @@ export default function WithdrawPage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader />
       <div className="max-w-2xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
@@ -150,7 +166,7 @@ export default function WithdrawPage(): React.JSX.Element {
           </button>
           <h1 className="text-3xl font-bold text-white mb-2">Withdraw Funds</h1>
           <p className="text-white/50">Transfer funds to your bank account</p>
-          <p className="text-lg font-semibold mt-2" style={{ color: '#E8420A' }}>
+          <p className="text-lg font-semibold mt-2" style={{ color: 'var(--brand-orange)' }}>
             Balance: ₦{walletBalance.toLocaleString()}
           </p>
         </div>
@@ -174,9 +190,11 @@ export default function WithdrawPage(): React.JSX.Element {
                         : undefined
                     }
                   >
-                    <img
+                    <OptimizedImage
                       src={account.bankLogo}
                       alt={account.bankName}
+                      width={40}
+                      height={40}
                       className="w-10 h-10 rounded-lg object-cover"
                     />
                     <div className="flex-1 text-left">
@@ -197,7 +215,7 @@ export default function WithdrawPage(): React.JSX.Element {
                       {selectedAccount === account.id && (
                         <div
                           className="w-2.5 h-2.5 rounded-full"
-                          style={{ backgroundColor: '#E8420A' }}
+                          style={{ backgroundColor: 'var(--brand-orange)' }}
                         />
                       )}
                     </div>
@@ -213,7 +231,7 @@ export default function WithdrawPage(): React.JSX.Element {
                 style={{
                   border: '1px dashed rgba(255,255,255,0.3)',
                   backgroundColor: 'rgba(255,255,255,0.05)',
-                  color: '#fff',
+                  color: 'var(--brand-white)',
                   cursor: 'pointer',
                 }}
               >
@@ -225,7 +243,7 @@ export default function WithdrawPage(): React.JSX.Element {
           <div className="az-glass p-6">
             <label className="az-label block mb-3">Withdrawal Amount</label>
             <div className="az-input flex items-center gap-3">
-              <span className="text-xl font-bold" style={{ color: '#E8420A' }}>
+              <span className="text-xl font-bold" style={{ color: 'var(--brand-orange)' }}>
                 ₦
               </span>
               <input
@@ -254,7 +272,7 @@ export default function WithdrawPage(): React.JSX.Element {
                       ? {
                           border: '1px solid rgba(255,255,255,0.2)',
                           backgroundColor: 'rgba(255,255,255,0.08)',
-                          color: '#fff',
+                          color: 'var(--brand-white)',
                         }
                       : undefined
                   }
@@ -280,7 +298,7 @@ export default function WithdrawPage(): React.JSX.Element {
                 style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}
               >
                 <span className="font-semibold text-white">You&apos;ll Receive</span>
-                <span className="font-bold" style={{ color: '#E8420A' }}>
+                <span className="font-bold" style={{ color: 'var(--brand-orange)' }}>
                   ₦{(parseFloat(amount) - parseFloat(pricing.processingFee)).toLocaleString()}
                 </span>
               </div>

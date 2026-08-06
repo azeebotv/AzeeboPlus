@@ -101,7 +101,9 @@ export function useAzeeboVideoPlayer({
     };
 
     fetchSignedUrl();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [contentId]);
 
   useEffect(() => {

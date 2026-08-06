@@ -1,10 +1,31 @@
+jest.mock('libphonenumber-js/max', () => ({
+  parsePhoneNumber: jest.fn(),
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, UnauthorizedException } from '@nestjs/common';
+import {
+  INestApplication,
+  ExecutionContext,
+  UnauthorizedException,
+  VersioningType,
+} from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
 import { GamesController } from './games.controller.js';
 import { GamesService } from './games.service.js';
 import { RateLimitGuard } from '@azeebo/security';
+
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: jest.fn(),
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+}));
+jest.mock('@azeebo/security', () => ({
+  RateLimitGuard: jest.fn(),
+  RateLimit: () => () => {},
+  AdminGuard: jest.fn(),
+  RateLimitService: jest.fn(),
+}));
 
 describe('Games Service Authorization Tests', () => {
   let app: INestApplication;
@@ -41,6 +62,20 @@ describe('Games Service Authorization Tests', () => {
     }),
   });
 
+  const createAppGuardProvider = (canActivate: boolean) => ({
+    provide: APP_GUARD,
+    useFactory: () => ({
+      canActivate: (context: ExecutionContext) => {
+        if (!canActivate) {
+          throw new UnauthorizedException();
+        }
+        const req = context.switchToHttp().getRequest();
+        req.user = { sub: 'user-123', role: 'user' };
+        return true;
+      },
+    }),
+  });
+
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [GamesController],
@@ -49,6 +84,7 @@ describe('Games Service Authorization Tests', () => {
           provide: GamesService,
           useValue: mockGamesService,
         },
+        createAppGuardProvider(true),
       ],
     })
       .overrideGuard(AuthGuard('jwt'))
@@ -58,6 +94,7 @@ describe('Games Service Authorization Tests', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
     await app.init();
   });
 
@@ -78,6 +115,7 @@ describe('Games Service Authorization Tests', () => {
         providers: [
           { provide: GamesService, useValue: mockGamesService },
           { provide: 'JWT', useValue: mockAuthGuard },
+          createAppGuardProvider(true),
         ],
       })
         .overrideGuard(AuthGuard('jwt'))
@@ -87,6 +125,7 @@ describe('Games Service Authorization Tests', () => {
         .compile();
 
       const testApp = moduleFixture.createNestApplication();
+      testApp.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
       await testApp.init();
 
       const response = await request(testApp.getHttpServer())
@@ -107,6 +146,7 @@ describe('Games Service Authorization Tests', () => {
         providers: [
           { provide: GamesService, useValue: mockGamesService },
           { provide: 'JWT', useValue: mockAuthGuard },
+          createAppGuardProvider(false),
         ],
       })
         .overrideGuard(AuthGuard('jwt'))
@@ -116,6 +156,7 @@ describe('Games Service Authorization Tests', () => {
         .compile();
 
       const testApp = moduleFixture.createNestApplication();
+      testApp.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
       await testApp.init();
 
       const response = await request(testApp.getHttpServer()).get('/v1/games/daily-challenge');
@@ -133,6 +174,7 @@ describe('Games Service Authorization Tests', () => {
         providers: [
           { provide: GamesService, useValue: mockGamesService },
           { provide: 'JWT', useValue: mockAuthGuard },
+          createAppGuardProvider(false),
         ],
       })
         .overrideGuard(AuthGuard('jwt'))
@@ -142,6 +184,7 @@ describe('Games Service Authorization Tests', () => {
         .compile();
 
       const testApp = moduleFixture.createNestApplication();
+      testApp.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
       await testApp.init();
 
       const response = await request(testApp.getHttpServer())
@@ -163,6 +206,7 @@ describe('Games Service Authorization Tests', () => {
         providers: [
           { provide: GamesService, useValue: mockGamesService },
           { provide: 'JWT', useValue: mockAuthGuard },
+          createAppGuardProvider(true),
         ],
       })
         .overrideGuard(AuthGuard('jwt'))
@@ -172,6 +216,7 @@ describe('Games Service Authorization Tests', () => {
         .compile();
 
       const testApp = moduleFixture.createNestApplication();
+      testApp.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
       await testApp.init();
 
       const response = await request(testApp.getHttpServer())
@@ -193,6 +238,7 @@ describe('Games Service Authorization Tests', () => {
         providers: [
           { provide: GamesService, useValue: mockGamesService },
           { provide: 'JWT', useValue: mockAuthGuard },
+          createAppGuardProvider(false),
         ],
       })
         .overrideGuard(AuthGuard('jwt'))
@@ -202,6 +248,7 @@ describe('Games Service Authorization Tests', () => {
         .compile();
 
       const testApp = moduleFixture.createNestApplication();
+      testApp.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
       await testApp.init();
 
       const response = await request(testApp.getHttpServer())
@@ -221,6 +268,7 @@ describe('Games Service Authorization Tests', () => {
         providers: [
           { provide: GamesService, useValue: mockGamesService },
           { provide: 'JWT', useValue: mockAuthGuard },
+          createAppGuardProvider(true),
         ],
       })
         .overrideGuard(AuthGuard('jwt'))
@@ -230,6 +278,7 @@ describe('Games Service Authorization Tests', () => {
         .compile();
 
       const testApp = moduleFixture.createNestApplication();
+      testApp.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
       await testApp.init();
 
       const response = await request(testApp.getHttpServer())

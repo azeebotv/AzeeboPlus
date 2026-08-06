@@ -4,6 +4,7 @@ import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { CacheService } from '@azeebo/shared-services';
+import { EVENT_BUS_SERVICE } from '@azeebo/event-bus';
 
 jest.mock('../database/prisma.service');
 
@@ -150,6 +151,13 @@ describe('WalletService E2E Tests', () => {
             invalidate: jest.fn().mockResolvedValue(undefined),
           },
         },
+        {
+          provide: EVENT_BUS_SERVICE,
+          useValue: {
+            publish: jest.fn().mockResolvedValue(undefined),
+            subscribe: jest.fn().mockResolvedValue(undefined),
+          },
+        },
       ],
     }).compile();
 
@@ -199,7 +207,9 @@ describe('WalletService E2E Tests', () => {
         ...mockWallet,
         balance: new Prisma.Decimal(800),
       });
-      (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ ...mockWallet, balance: new Prisma.Decimal(800) }]);
+      (prisma.$queryRaw as jest.Mock).mockResolvedValue([
+        { ...mockWallet, balance: new Prisma.Decimal(800) },
+      ]);
 
       const result = await service.debitBalance(
         'wallet-123',
@@ -257,7 +267,13 @@ describe('WalletService E2E Tests', () => {
         new Error('Transaction failed')
       );
 
-      const result = await service.debitBalance('wallet-123', 300, 'Test debit', 'ref-127', idempotencyKey);
+      const result = await service.debitBalance(
+        'wallet-123',
+        300,
+        'Test debit',
+        'ref-127',
+        idempotencyKey
+      );
 
       expect(result.success).toBe(false);
     });
@@ -321,7 +337,9 @@ describe('WalletService E2E Tests', () => {
         ...mockWallet,
         balance: new Prisma.Decimal(100),
       });
-      (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ ...mockWallet, balance: new Prisma.Decimal(100) }]);
+      (prisma.$queryRaw as jest.Mock).mockResolvedValue([
+        { ...mockWallet, balance: new Prisma.Decimal(100) },
+      ]);
 
       await expect(
         service.debitBalance('wallet-123', 200, 'Test debit', 'ref-130')

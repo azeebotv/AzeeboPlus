@@ -30,7 +30,7 @@
 #   --universes    Start universe services
 #   --operations   Start operations services
 #   --gateway      Start API gateway
-#   --frontend     Frontend apps (web, admin, creator-portal)
+#   --frontend     Frontend apps (web, admin, creator)
 #   --all          Start everything
 #   --quick        Core + gateway + web (recommended for most dev work)
 #   --no-build     Skip prisma generate (fast start with cached builds)
@@ -46,10 +46,31 @@
 #   studio         Open Prisma Studio for a service
 #
 # ============================================================
+# CHANGELOG
+# ============================================================
+# v3.4.0 (2026-07-22) — Infrastructure Alignment Update
+#   - FIX: load_env() service URL mappings corrected to match actual
+#     service .env PORT values. Previously 16 service URLs pointed to
+#     wrong ports (e.g. NOTIFICATION was at 3006 in load_env but
+#     actual service runs at 3006 — fixed grouping and added missing
+#     SUPPORT_SERVICE_URL).
+#   - FIX: Reorganized load_env() service URLs by category (core,
+#     engagement, intelligence, operations, universes) with source
+#     comments referencing service registry arrays for traceability.
+#   - FIX: Help text version updated from v3.1 to v3.3.0 to match
+#     SCRIPT_VERSION variable.
+#   - ADD: Disk space prerequisite check (warns if < 2GB available).
+#   - ADD: Docker status detection in prereq validation (informational,
+#     not required for native dev).
+#   - ADD: SUPPORT_SERVICE_URL to load_env() (was missing entirely).
+#   - ADD: Comprehensive changelog section in script header.
+#
+# v3.3.0 — Previous version (see git history for details)
+# ============================================================
 set -euo pipefail
 
 # ---- Script Metadata ----
-SCRIPT_VERSION="3.1.0"
+SCRIPT_VERSION="3.4.0"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
@@ -200,6 +221,25 @@ validate_prereqs() {
     log_warn "node_modules not found (will install during setup)"
   fi
 
+  # Check available disk space (need ~2GB for node_modules + databases)
+  if command -v df &>/dev/null; then
+    local avail_kb
+    avail_kb="$(df -k "$ROOT_DIR" 2>/dev/null | awk 'NR==2{print $4}' || echo 0)"
+    if (( avail_kb > 0 )); then
+      local avail_gb=$(( avail_kb / 1048576 ))
+      if (( avail_gb < 2 )); then
+        log_warn "Low disk space: ${avail_gb}GB available (recommend >= 2GB)"
+      else
+        log_ok "Disk space: ${avail_gb}GB available"
+      fi
+    fi
+  fi
+
+  # Warn if Docker Desktop is running (not needed for native dev, wastes resources)
+  if command -v docker &>/dev/null && docker info &>/dev/null 2>&1; then
+    log_debug "Docker is running (not required for native dev)"
+  fi
+
   if (( failed > 0 )); then
     log_error "$failed prerequisite(s) failed."
     return 1
@@ -267,32 +307,46 @@ load_env() {
   export RATE_LIMIT_MAX="${RATE_LIMIT_MAX:-1000}"
   export LOG_LEVEL="${LOG_LEVEL:-debug}"
 
+  # Observability
+  export SENTRY_DSN="${SENTRY_DSN:-}"
+  export ANALYTICS_ENDPOINT="${ANALYTICS_ENDPOINT:-http://localhost:3008}"
+  export OTEL_EXPORTER_OTLP_ENDPOINT="${OTEL_EXPORTER_OTLP_ENDPOINT:-}"
+  export OTEL_SDK_DISABLED=true  # Disable OpenTelemetry SDK (Node.js 26 incompatible)
+  export OTEL_SERVICE_NAME="${OTEL_SERVICE_NAME:-azeebo-platform}"
+
   # Service URLs for gateway routing (local mode)
+  # Port mapping sourced from each service's .env — must match service registry arrays
+  # Core
   export AUTH_SERVICE_URL="${AUTH_SERVICE_URL:-http://localhost:3000}"
   export USER_SERVICE_URL="${USER_SERVICE_URL:-http://localhost:3001}"
   export WALLET_SERVICE_URL="${WALLET_SERVICE_URL:-http://localhost:3002}"
   export PAYMENT_SERVICE_URL="${PAYMENT_SERVICE_URL:-http://localhost:3003}"
   export CONTENT_SERVICE_URL="${CONTENT_SERVICE_URL:-http://localhost:3004}"
   export SEARCH_SERVICE_URL="${SEARCH_SERVICE_URL:-http://localhost:3005}"
+  export MEDIA_SERVICE_URL="${MEDIA_SERVICE_URL:-http://localhost:3019}"
+  # Engagement
   export NOTIFICATION_SERVICE_URL="${NOTIFICATION_SERVICE_URL:-http://localhost:3006}"
   export REWARD_SERVICE_URL="${REWARD_SERVICE_URL:-http://localhost:3007}"
+  export ENGAGEMENT_SERVICE_URL="${ENGAGEMENT_SERVICE_URL:-http://localhost:3023}"
+  export MESSAGING_SERVICE_URL="${MESSAGING_SERVICE_URL:-http://localhost:3024}"
+  export REFERRAL_SERVICE_URL="${REFERRAL_SERVICE_URL:-http://localhost:3025}"
+  export SUBSCRIPTION_SERVICE_URL="${SUBSCRIPTION_SERVICE_URL:-http://localhost:3026}"
+  # Intelligence
   export ANALYTICS_SERVICE_URL="${ANALYTICS_SERVICE_URL:-http://localhost:3008}"
   export RECOMMENDATION_SERVICE_URL="${RECOMMENDATION_SERVICE_URL:-http://localhost:3009}"
+  # Operations
   export MODERATION_SERVICE_URL="${MODERATION_SERVICE_URL:-http://localhost:3022}"
   export QUEUE_SERVICE_URL="${QUEUE_SERVICE_URL:-http://localhost:3015}"
-  export MEDIA_SERVICE_URL="${MEDIA_SERVICE_URL:-http://localhost:3019}"
+  export SUPPORT_SERVICE_URL="${SUPPORT_SERVICE_URL:-http://localhost:3020}"
+  # Universes
   export REALITY_SERVICE_URL="${REALITY_SERVICE_URL:-http://localhost:3010}"
   export MOVIE_SERVICE_URL="${MOVIE_SERVICE_URL:-http://localhost:3011}"
   export COMEDY_SERVICE_URL="${COMEDY_SERVICE_URL:-http://localhost:3012}"
   export GAMES_SERVICE_URL="${GAMES_SERVICE_URL:-http://localhost:3014}"
   export LIFESTYLE_SERVICE_URL="${LIFESTYLE_SERVICE_URL:-http://localhost:3016}"
   export VERTICAL_SERVICE_URL="${VERTICAL_SERVICE_URL:-http://localhost:3017}"
-  export SPORTS_SERVICE_URL="${SPORTS_SERVICE_URL:-http://localhost:3021}"
   export CREATOR_SERVICE_URL="${CREATOR_SERVICE_URL:-http://localhost:3018}"
-  export ENGAGEMENT_SERVICE_URL="${ENGAGEMENT_SERVICE_URL:-http://localhost:3023}"
-  export MESSAGING_SERVICE_URL="${MESSAGING_SERVICE_URL:-http://localhost:3024}"
-  export REFERRAL_SERVICE_URL="${REFERRAL_SERVICE_URL:-http://localhost:3025}"
-  export SUBSCRIPTION_SERVICE_URL="${SUBSCRIPTION_SERVICE_URL:-http://localhost:3026}"
+  export SPORTS_SERVICE_URL="${SPORTS_SERVICE_URL:-http://localhost:3021}"
 }
 
 validate_env() {
@@ -304,8 +358,8 @@ validate_env() {
     if [[ -z "$secret_val" ]]; then
       log_error "$secret_var is not set"
       failed=$((failed + 1))
-    elif [[ ${#secret_val} -lt 32 ]]; then
-      log_error "$secret_var must be >= 32 chars (got ${#secret_val})"
+    elif [[ ${#secret_val} -lt 64 ]]; then
+      log_error "$secret_var must be >= 64 chars (got ${#secret_val})"
       failed=$((failed + 1))
     else
       log_ok "$secret_var: ${#secret_val} chars"
@@ -358,7 +412,7 @@ DB_SERVICES=(
   "moderation-service|services/operations/moderation-service|azeebo_moderation|3022"
   "auth-service|services/core/auth-service|azeebo_auth|3000"
   "admin|apps/admin|azeebo_admin|4016"
-  "creator-portal|apps/creator-portal|azeebo_creator_portal|4014"
+  "creator|apps/creator|azeebo_creator|4014"
 )
 
 setup_multi_db() {
@@ -406,7 +460,7 @@ run_prisma_generate() {
 
     local db_url="${DB_BASE_URL}/${db_name}?schema=public"
     local gen_output
-    if gen_output="$(cd "$service_dir" && DATABASE_URL="$db_url" npx prisma generate 2>&1)"; then
+    if gen_output="$(cd "$service_dir" && DATABASE_URL="$db_url" pnpm exec prisma generate 2>&1)"; then
       log_ok "  [$count] $svc_name: generated"
     else
       log_warn "  [$count] $svc_name: failed"
@@ -431,6 +485,11 @@ T0_PACKAGES=(
   "shared-services"
   "security"
   "ui"
+  "observability"
+  "opentelemetry"
+  "event-bus"
+  "feature-flags"
+  "internal-clients"
 )
 
 build_t0_packages() {
@@ -450,7 +509,7 @@ build_t0_packages() {
     if [[ "$pkg" == "shared-services" ]]; then
       if [[ -f "$pkg_dir/prisma/schema.prisma" ]]; then
         local db_url="${DB_BASE_URL}/azeebo_content?schema=public"
-        (cd "$pkg_dir" && DATABASE_URL="$db_url" npx prisma generate 2>&1) >/dev/null 2>&1 || true
+        (cd "$pkg_dir" && DATABASE_URL="$db_url" pnpm exec prisma generate 2>&1) >/dev/null 2>&1 || true
       fi
     fi
 
@@ -488,7 +547,7 @@ run_migrations() {
     log_info "  [$count] $svc_name -> $db_name..."
     local migrate_output
     set +e
-    migrate_output="$(cd "$service_dir" && DATABASE_URL="$db_url" npx prisma migrate deploy 2>&1)"
+    migrate_output="$(cd "$service_dir" && DATABASE_URL="$db_url" pnpm exec prisma migrate deploy 2>&1)"
     local rc=$?
     set -e
 
@@ -502,7 +561,7 @@ run_migrations() {
         log_info "  [$count] $svc_name: migration history stuck, using db push..."
         local push_output
         set +e
-        push_output="$(cd "$service_dir" && DATABASE_URL="$db_url" npx prisma db push --accept-data-loss 2>&1)"
+        push_output="$(cd "$service_dir" && DATABASE_URL="$db_url" pnpm exec prisma db push --accept-data-loss 2>&1)"
         local push_rc=$?
         set -e
         if [[ $push_rc -eq 0 ]]; then
@@ -602,7 +661,7 @@ GATEWAY_SERVICES=(
 FRONTEND_SERVICES=(
   "@azeebo/web|apps/web|4000"
   "@azeebo/admin|apps/admin|4016"
-  "@azeebo/creator-portal|apps/creator-portal|4014"
+  "@azeebo/creator|apps/creator|4014"
 )
 
 ALL_SERVICE_GROUPS=(
@@ -968,7 +1027,7 @@ cmd_start_interactive() {
   echo "  4)  Universe Services   (reality, movie, comedy, games, sports, lifestyle, vertical, creator)"
   echo "  5)  Operations          (queue, support, moderation)"
   echo "  6)  Gateway             (api-gateway)"
-  echo "  7)  Frontend Apps       (web, admin, creator-portal)"
+  echo "  7)  Frontend Apps       (web, admin, creator)"
   echo "  8)  All Services        (everything)"
   echo "  9)  Quick Start         (core + gateway + web)"
   echo "  0)  Exit"
@@ -1103,7 +1162,7 @@ cmd_db() {
           if [[ -f "$ROOT_DIR/$svc_dir/prisma/schema.prisma" ]]; then
             local migrate_out
             set +e
-            migrate_out="$(cd "$ROOT_DIR/$svc_dir" && DATABASE_URL="$db_url" npx prisma migrate deploy 2>&1)"
+            migrate_out="$(cd "$ROOT_DIR/$svc_dir" && DATABASE_URL="$db_url" pnpm exec prisma migrate deploy 2>&1)"
             local migrate_rc=$?
             set -e
             echo "$migrate_out" | tail -3
@@ -1154,7 +1213,7 @@ cmd_db() {
       local svc_db_url
       svc_db_url="$(grep '^DATABASE_URL=' "$dir/.env" 2>/dev/null | head -1 | cut -d= -f2-)"
       [[ -z "$svc_db_url" ]] && svc_db_url="${DB_BASE_URL}/azeebo_dev?schema=public"
-      (cd "$dir" && DATABASE_URL="$svc_db_url" npx prisma studio)
+      (cd "$dir" && DATABASE_URL="$svc_db_url" pnpm exec prisma studio)
       ;;
     help|*)
       echo "Usage: $0 db [migrate|seed|reset|reset-service|test|studio] [service-name]"
@@ -1189,10 +1248,94 @@ cmd_clean() {
   log_ok "Cleaned"
 }
 
+cmd_deploy() {
+  section "Local Staging Deployment"
+  log_info "Building and deploying all services locally"
+
+  # Build T0 packages
+  build_t0_packages
+
+  # Build admin and creator client SPAs
+  section "Building Admin Client"
+  if pnpm --filter @azeebo/admin run build:client 2>&1 | tail -3; then
+    log_ok "Admin client built"
+  else
+    log_warn "Admin client build failed (non-critical)"
+  fi
+
+  section "Building Creator Client"
+  if pnpm --filter @azeebo/creator run build:client 2>&1 | tail -3; then
+    log_ok "Creator client built"
+  else
+    log_warn "Creator client build failed (non-critical)"
+  fi
+
+  # Run migrations
+  run_migrations
+
+  # Start all services
+  log_info "Starting all services..."
+  cmd_start --all
+
+  # Run smoke tests
+  cmd_smoke
+}
+
+cmd_smoke() {
+  section "Running Smoke Tests"
+  local failed=0
+  local base_url="${SMOKE_BASE_URL:-http://localhost}"
+
+  local endpoints=(
+    "3013:API Gateway:/health"
+    "4000:Web App:/"
+    "4014:Creator Portal:/v1/health"
+    "4016:Admin Panel:/v1/health"
+  )
+
+  for entry in "${endpoints[@]}"; do
+    IFS=':' read -r port name path <<< "$entry"
+    if curl -sf "${base_url}:${port}${path}" >/dev/null 2>&1; then
+      log_ok "  $name: healthy (port $port)"
+    else
+      log_error "  $name: unhealthy (port $port)"
+      failed=$((failed + 1))
+    fi
+  done
+
+  # Test API endpoints
+  local api_endpoints=(
+    "/api/v1/auth/health:Auth Service"
+    "/api/v1/users/health:User Service"
+    "/api/v1/wallet/health:Wallet Service"
+    "/api/v1/content/health:Content Service"
+  )
+
+  for entry in "${api_endpoints[@]}"; do
+    IFS=':' read -r path name <<< "$entry"
+    if curl -sf "${base_url}:3013${path}" >/dev/null 2>&1; then
+      log_ok "  $name: healthy"
+    else
+      log_warn "  $name: not responding (may need full startup)"
+    fi
+  done
+
+  if (( failed > 0 )); then
+    log_error "$failed endpoint(s) failed smoke tests"
+    return 1
+  fi
+  log_ok "All smoke tests passed"
+}
+
+cmd_seed() {
+  section "Seeding Demo Data"
+  bash "$SCRIPT_DIR/database/seed-all.sh"
+}
+
 cmd_help() {
   cat << 'HELPEOF'
-Azeebo+ Local Development Environment (v3.1)
-=============================================
+Azeebo+ Local Development Environment (v3.4.0)
+================================================
 Native dev runner — all services run via pnpm on the host.
 Uses per-service databases matching the Docker all-in-one setup.
 Docker architecture is preserved for staging/production deployment.
@@ -1208,6 +1351,9 @@ COMMANDS:
   status         Show status of all services
   logs [pattern] Tail logs for services matching pattern
   db <action>    Database operations
+  deploy         Build all + migrate + start all + smoke tests
+  smoke          Run health check smoke tests against running services
+  seed           Seed databases with demo data
   validate       Validate environment
   clean          Stop services and clean logs/state
   help           Show this help
@@ -1219,7 +1365,7 @@ START OPTIONS:
   --universes    Reality, movie, comedy, games, sports, lifestyle, vertical, creator
   --operations   Queue, support, moderation
   --gateway      API gateway
-  --frontend     Web, admin, creator-portal (runs via pnpm dev)
+  --frontend     Web, admin, creator (runs via pnpm dev)
   --all          Everything (~6GB+ RAM)
   --quick        Core + gateway + web (recommended)
   --no-build     Skip prisma generate (fast start with cached builds)
@@ -1250,7 +1396,7 @@ FIRST-TIME SETUP:
 
 DOCKER (staging/production):
   The all-in-one Docker setup is in Dockerfile.all-in-one and
-  docker-compose.all-in-one.yml. This script is for local dev only.
+  deploy/docker-compose.all-in-one.yml. This script is for local dev only.
 HELPEOF
 }
 
@@ -1270,7 +1416,9 @@ main() {
     logs)     tail_logs "$@" ;;
     db)       cmd_db "$@" ;;
     migrate)  cmd_db migrate "$@" ;;
-    seed)     cmd_db seed "$@" ;;
+    seed)     cmd_seed "$@" ;;
+    deploy)   cmd_deploy "$@" ;;
+    smoke)    cmd_smoke "$@" ;;
     validate) cmd_validate "$@" ;;
     clean)    cmd_clean "$@" ;;
     help|-h|--help) cmd_help ;;

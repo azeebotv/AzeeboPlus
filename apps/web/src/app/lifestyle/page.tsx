@@ -1,4 +1,16 @@
 'use client';
+import { useEffect } from 'react';
+
+export const metadata = {
+  title: 'Lifestyle | Azeebo',
+  description:
+    'Explore lifestyle events, celebrities, influencers, nightlife, and city guides across Africa.',
+  openGraph: {
+    title: 'Lifestyle | Azeebo',
+    description:
+      'Explore lifestyle events, celebrities, influencers, nightlife, and city guides across Africa.',
+  },
+};
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import Link from 'next/link';
@@ -6,8 +18,13 @@ import { api, ContentItem } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import analytics from '@/lib/analytics';
 
-export default function LifestylePage(): React.JSX.Element {
+function LifestylePageContent(): React.JSX.Element {
+  useEffect(() => {
+    analytics.pageView('lifestyle');
+  }, []);
+
   const universesQuery = useQuery({
     queryKey: ['universes'],
     queryFn: async () => {
@@ -40,7 +57,7 @@ export default function LifestylePage(): React.JSX.Element {
   });
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Lifestyle" />
 
       {/* Hero Section */}
@@ -68,14 +85,23 @@ export default function LifestylePage(): React.JSX.Element {
             <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">
               <span
                 className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mb-4"
-                style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8420A' }}
+                style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
               >
                 Lifestyle
               </span>
               <h2 className="text-4xl font-bold text-white mb-2">{events[0].title}</h2>
               <p className="text-white/60 text-lg mb-6 max-w-2xl">{events[0].description}</p>
               <div className="flex items-center gap-4">
-                <Link href={`/watch/${events[0].id}`} className="az-btn-primary" style={{ width: 'auto', paddingInline: '2rem', display: 'inline-block', textAlign: 'center' }}>
+                <Link
+                  href={`/watch/${events[0].id}`}
+                  className="az-btn-primary"
+                  style={{
+                    width: 'auto',
+                    paddingInline: '2rem',
+                    display: 'inline-block',
+                    textAlign: 'center',
+                  }}
+                >
                   Get Tickets
                 </Link>
                 <Link
@@ -97,6 +123,30 @@ export default function LifestylePage(): React.JSX.Element {
             <p className="text-lg text-white/60">No events available</p>
           </div>
         )}
+      </section>
+
+      {/* Sub-Section Navigation */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h2 className="text-xl font-bold text-white mb-4">Explore Lifestyle</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          {[
+            { label: 'Celebrities', href: '/lifestyle/celebrities', icon: '🌟' },
+            { label: 'Influencers', href: '/lifestyle/influencers', icon: '📱' },
+            { label: 'Nightlife', href: '/lifestyle/nightlife', icon: '🌃' },
+            { label: 'Social', href: '/lifestyle/social', icon: '💬' },
+            { label: 'City Guide', href: '/lifestyle/city-guide', icon: '🏙️' },
+          ].map((item) => (
+            <Link key={item.href} href={item.href}>
+              <div
+                className="az-glass p-4 text-center cursor-pointer transition-all hover:scale-[1.03]"
+                style={{ boxShadow: '0 0 15px rgba(232,66,10,0.08)' }}
+              >
+                <span className="text-2xl mb-2 block">{item.icon}</span>
+                <span className="text-sm font-semibold text-white">{item.label}</span>
+              </div>
+            </Link>
+          ))}
+        </div>
       </section>
 
       {/* Events Grid */}
@@ -142,7 +192,10 @@ export default function LifestylePage(): React.JSX.Element {
                     <div className="absolute bottom-4 left-4 right-4">
                       <span
                         className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                        style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8420A' }}
+                        style={{
+                          backgroundColor: 'rgba(232,66,10,0.2)',
+                          color: 'var(--brand-orange)',
+                        }}
                       >
                         {event.contentType || 'Event'}
                       </span>
@@ -151,7 +204,11 @@ export default function LifestylePage(): React.JSX.Element {
                   </div>
                   <div className="p-4">
                     <p className="text-sm text-white/50 mb-3 line-clamp-2">{event.description}</p>
-                    <button type="button" className="az-btn-primary w-full">
+                    <button
+                      type="button"
+                      aria-label={`Get tickets for ${event.title}`}
+                      className="az-btn-primary w-full"
+                    >
                       Get Tickets
                     </button>
                   </div>
@@ -170,3 +227,5 @@ export default function LifestylePage(): React.JSX.Element {
     </div>
   );
 }
+
+export default LifestylePageContent;

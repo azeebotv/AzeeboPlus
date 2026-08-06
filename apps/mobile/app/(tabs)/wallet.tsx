@@ -12,13 +12,20 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/contexts/AuthContext';
-import { useWalletBalance, useWalletTransactions, useFundWallet, useWithdraw } from '../../src/hooks/useWalletQuery';
-import { colors } from '../../src/theme';
+import {
+  useWalletBalance,
+  useWalletTransactions,
+  useFundWallet,
+  useWithdraw,
+} from '../../src/hooks/useWalletQuery';
+import { colors, radius, spacing, typography } from '../../src/theme';
+import { colors as dtColors } from '../../src/theme/design-tokens';
 
 export default function WalletScreen() {
   const colorScheme = useColorScheme();
+  const insets = useSafeAreaInsets();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 
   const {
@@ -128,10 +135,15 @@ export default function WalletScreen() {
         style={[
           styles.container,
           styles.centered,
-          { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#fff' },
+          {
+            backgroundColor:
+              colorScheme === 'dark'
+                ? colors.bg.primary
+                : dtColors.gray[50],
+          },
         ]}
       >
-        <ActivityIndicator size="large" color="#E8420A" />
+        <ActivityIndicator size="large" color={dtColors.primary[500]} />
       </SafeAreaView>
     );
   }
@@ -142,11 +154,26 @@ export default function WalletScreen() {
         style={[
           styles.container,
           styles.centered,
-          { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#fff' },
+          {
+            backgroundColor:
+              colorScheme === 'dark'
+                ? colors.bg.primary
+                : dtColors.gray[50],
+          },
         ]}
       >
         <Text style={styles.lockIcon}>🔒</Text>
-        <Text style={[styles.lockText, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}>
+        <Text
+          style={[
+            styles.lockText,
+            {
+              color:
+                colorScheme === 'dark'
+                  ? colors.text.primary
+                  : dtColors.gray[900],
+            },
+          ]}
+        >
           Please log in to view your wallet
         </Text>
       </SafeAreaView>
@@ -155,18 +182,40 @@ export default function WalletScreen() {
 
   return (
     <SafeAreaView
-      style={[styles.container, { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#fff' }]}
+      style={[
+        styles.container,
+        {
+          backgroundColor:
+            colorScheme === 'dark'
+              ? colors.bg.primary
+              : dtColors.gray[50],
+        },
+      ]}
     >
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         keyboardDismissMode="on-drag"
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#E8420A" />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={dtColors.primary[500]}
+          />
         }
       >
-        <View style={styles.header}>
-          <Text style={[styles.greeting, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}>
+        <View style={[styles.header, { paddingTop: insets.top }]}>
+          <Text
+            style={[
+              styles.greeting,
+              {
+                color:
+                  colorScheme === 'dark'
+                    ? colors.text.primary
+                    : dtColors.gray[900],
+              },
+            ]}
+          >
             Hello, {user?.name || 'User'}
           </Text>
           <Text style={styles.title}>My Wallet</Text>
@@ -194,18 +243,31 @@ export default function WalletScreen() {
         </View>
 
         <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.actionButton} onPress={() => setShowFundModal(true)} accessibilityLabel="Fund Wallet">
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => setShowFundModal(true)}
+            accessibilityLabel="Fund Wallet"
+          >
             <Text style={styles.actionIcon}>💎</Text>
             <Text style={styles.actionLabel}>Fund Wallet</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={() => setShowWithdrawModal(true)} accessibilityLabel="Withdraw">
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => setShowWithdrawModal(true)}
+            accessibilityLabel="Withdraw"
+          >
             <Text style={styles.actionIcon}>🏦</Text>
             <Text style={styles.actionLabel}>Withdraw</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.transactionsSection}>
-          <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}>
+          <Text
+            style={[
+              styles.sectionTitle,
+              { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+            ]}
+          >
             Recent Transactions
           </Text>
 
@@ -214,11 +276,19 @@ export default function WalletScreen() {
           ) : transactions.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>📭</Text>
-              <Text style={[styles.emptyText, { color: colorScheme === 'dark' ? colors.text.tertiary : '#999' }]}>
+              <Text
+                style={[
+                  styles.emptyText,
+                  { color: colorScheme === 'dark' ? colors.text.tertiary : '#999' },
+                ]}
+              >
                 No transactions yet
               </Text>
               <Text
-                style={[styles.emptySubtext, { color: colorScheme === 'dark' ? colors.text.muted : '#ccc' }]}
+                style={[
+                  styles.emptySubtext,
+                  { color: colorScheme === 'dark' ? colors.text.muted : '#ccc' },
+                ]}
               >
                 Your transaction history will appear here
               </Text>
@@ -281,7 +351,12 @@ export default function WalletScreen() {
               { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#fff' },
             ]}
           >
-            <Text style={[styles.modalTitle, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}>
+            <Text
+              style={[
+                styles.modalTitle,
+                { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+              ]}
+            >
               Fund Wallet
             </Text>
 
@@ -366,7 +441,12 @@ export default function WalletScreen() {
               { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#fff' },
             ]}
           >
-            <Text style={[styles.modalTitle, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}>
+            <Text
+              style={[
+                styles.modalTitle,
+                { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+              ]}
+            >
               Withdraw Funds
             </Text>
 
@@ -418,7 +498,7 @@ export default function WalletScreen() {
                   },
                 ]}
                 placeholder="Enter account number"
-                placeholderTextColor="#666"
+                placeholderTextColor={dtColors.gray[500]}
                 keyboardType="number-pad"
                 value={accountNumber}
                 onChangeText={setAccountNumber}
@@ -430,7 +510,12 @@ export default function WalletScreen() {
               <TouchableOpacity
                 style={[
                   styles.cancelButton,
-                  { borderColor: colorScheme === 'dark' ? colors.bg.tertiary : '#eee' },
+                  {
+                    borderColor:
+                      colorScheme === 'dark'
+                        ? colors.bg.tertiary
+                        : dtColors.gray[200],
+                  },
                 ]}
                 onPress={() => setShowWithdrawModal(false)}
                 disabled={withdrawMutation.isPending}
@@ -439,7 +524,12 @@ export default function WalletScreen() {
                 <Text
                   style={[
                     styles.cancelButtonText,
-                    { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+                    {
+                      color:
+                        colorScheme === 'dark'
+                          ? colors.text.primary
+                          : dtColors.gray[900],
+                    },
                   ]}
                 >
                   Cancel
@@ -452,7 +542,7 @@ export default function WalletScreen() {
                 accessibilityLabel="Confirm withdrawal"
               >
                 {withdrawMutation.isPending ? (
-                  <ActivityIndicator color="#fff" size="small" />
+                  <ActivityIndicator color={dtColors.white} size="small" />
                 ) : (
                   <Text style={styles.confirmButtonText}>Withdraw</Text>
                 )}
@@ -498,19 +588,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   errorContainer: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: dtColors.error.light,
     margin: 20,
     marginTop: 0,
     padding: 16,
-    borderRadius: 12,
+    borderRadius: radius.lg,
   },
   errorText: {
-    color: '#DC2626',
+    color: dtColors.error.main,
     fontSize: 14,
     textAlign: 'center',
   },
   retryText: {
-    color: '#E8420A',
+    color: dtColors.primary[500],
     fontSize: 14,
     textAlign: 'center',
     marginTop: 8,
@@ -520,7 +610,7 @@ const styles = StyleSheet.create({
     margin: 20,
     marginTop: 0,
     padding: 24,
-    borderRadius: 16,
+    borderRadius: radius.xl,
   },
   balanceLabel: {
     color: 'rgba(255,255,255,0.8)',
@@ -546,7 +636,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
     padding: 16,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     alignItems: 'center',
   },
   actionIcon: {
@@ -587,7 +677,7 @@ const styles = StyleSheet.create({
   },
   transactionsList: {
     backgroundColor: '#f5f5f5',
-    borderRadius: 12,
+    borderRadius: radius.lg,
     overflow: 'hidden',
   },
   transactionItem: {
@@ -626,8 +716,8 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: radius.xxl,
+    borderTopRightRadius: radius.xxl,
     padding: 24,
     minHeight: 400,
   },
@@ -647,7 +737,7 @@ const styles = StyleSheet.create({
   },
   input: {
     padding: 16,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     fontSize: 16,
   },
   quickAmounts: {
@@ -657,15 +747,15 @@ const styles = StyleSheet.create({
   },
   quickAmountButton: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: dtColors.gray[100],
     padding: 12,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     alignItems: 'center',
   },
   quickAmountText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#E8420A',
+    color: dtColors.primary[500],
   },
   modalButtons: {
     flexDirection: 'row',
@@ -675,23 +765,25 @@ const styles = StyleSheet.create({
   cancelButton: {
     flex: 1,
     padding: 16,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     borderWidth: 1,
+    borderColor: dtColors.gray[300],
     alignItems: 'center',
   },
   cancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
+    color: dtColors.text.primary,
   },
   confirmButton: {
     flex: 1,
-    backgroundColor: '#E8420A',
+    backgroundColor: dtColors.primary[500],
     padding: 16,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     alignItems: 'center',
   },
   confirmButtonText: {
-    color: '#fff',
+    color: dtColors.white,
     fontSize: 16,
     fontWeight: '600',
   },

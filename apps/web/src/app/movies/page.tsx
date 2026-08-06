@@ -1,4 +1,14 @@
 'use client';
+import { useEffect } from 'react';
+
+export const metadata = {
+  title: 'Movies | Azeebo',
+  description: 'Stream premium movies, Nollywood films, and exclusive content on Azeebo.',
+  openGraph: {
+    title: 'Movies | Azeebo',
+    description: 'Stream premium movies, Nollywood films, and exclusive content on Azeebo.',
+  },
+};
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -11,8 +21,13 @@ import { AmbientGlow } from '@/components/motion/AmbientGlow';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { StaggerGrid } from '@/components/motion/StaggerGrid';
 import { GlowCard } from '@/components/motion/GlowCard';
+import analytics from '@/lib/analytics';
 
-export default function MoviesPage(): React.JSX.Element {
+function MoviesPageContent(): React.JSX.Element {
+  useEffect(() => {
+    analytics.pageView('movies');
+  }, []);
+
   const universesQuery = useQuery({
     queryKey: ['universes'],
     queryFn: async () => {
@@ -92,13 +107,13 @@ export default function MoviesPage(): React.JSX.Element {
               >
                 <span
                   className="px-3 py-1 rounded-full text-xs font-semibold"
-                  style={{ backgroundColor: '#E8420A', color: '#fff' }}
+                  style={{ backgroundColor: 'var(--brand-orange)', color: 'var(--brand-white)' }}
                 >
                   Premium
                 </span>
                 <span
                   className="px-3 py-1 rounded-full text-xs font-medium"
-                  style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8420A' }}
+                  style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
                 >
                   {movies[0].contentType || 'Movie'}
                 </span>
@@ -212,7 +227,7 @@ export default function MoviesPage(): React.JSX.Element {
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="az-glass overflow-hidden">
+              <div key={`movie-skeleton-${i}`} className="az-glass overflow-hidden">
                 <Skeleton height="240px" borderRadius="0" className="sm:h-[240px]" />
                 <div className="p-4 space-y-3">
                   <Skeleton height="20px" width="75%" borderRadius="0.25rem" />
@@ -234,7 +249,10 @@ export default function MoviesPage(): React.JSX.Element {
                     />
                     <span
                       className="absolute top-2 right-2 px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                      style={{ backgroundColor: '#E8420A', color: '#fff' }}
+                      style={{
+                        backgroundColor: 'var(--brand-orange)',
+                        color: 'var(--brand-white)',
+                      }}
                     >
                       Premium
                     </span>
@@ -242,7 +260,10 @@ export default function MoviesPage(): React.JSX.Element {
                     <div className="absolute bottom-4 left-4 right-4">
                       <span
                         className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                        style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8420A' }}
+                        style={{
+                          backgroundColor: 'rgba(232,66,10,0.2)',
+                          color: 'var(--brand-orange)',
+                        }}
                       >
                         {movie.contentType || 'Movie'}
                       </span>
@@ -275,3 +296,5 @@ export default function MoviesPage(): React.JSX.Element {
     </div>
   );
 }
+
+export default MoviesPageContent;

@@ -20,7 +20,7 @@ ci/
 .github/
 .qoder/
 .trae/
-docker-bake.hcl
+deploy/docker-bake.hcl
 
 # Scripts - exclude non-production scripts, keep build essentials
 scripts/
@@ -78,10 +78,6 @@ logs/
 .prettierrc
 eslint.config.js
 tsconfig.scripts.json
-.nvmrc
-Procfile
-nixpacks.toml
-nixpacks-start.sh
 
 # Mobile app (not part of all-in-one build)
 apps/mobile/
@@ -91,3 +87,15 @@ apps/mobile/
 *.cache
 .turbo/
 .vercel/
+# Todo and audit files
+todo.md
+REPORT.md
+# Old scripts
+fix-*.sh
+*.bak
+# Todo and audit files
+todo.md
+REPORT.md
+# Old scripts
+fix-*.sh
+*.bak

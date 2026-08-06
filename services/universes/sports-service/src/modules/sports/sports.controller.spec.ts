@@ -1,8 +1,23 @@
+jest.mock('libphonenumber-js/max', () => ({
+  parsePhoneNumber: jest.fn(),
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { Reflector } from '@nestjs/core';
 import { SportsController } from './sports.controller.js';
 import { SportsService } from './sports.service.js';
 import { RateLimitService } from '@azeebo/security';
+
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: jest.fn(),
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+}));
+jest.mock('@azeebo/security', () => ({
+  RateLimitGuard: jest.fn(),
+  RateLimit: () => () => {},
+  AdminGuard: jest.fn(),
+  RateLimitService: jest.fn(),
+}));
 
 describe('SportsController', () => {
   let controller: SportsController;
@@ -69,10 +84,10 @@ describe('SportsController', () => {
   describe('getHighlights', () => {
     it('should return sports highlights', async () => {
       const result = { success: true, data: { highlights: [] } };
-      mockSportsService.getHighlights.mockResolvedValue(result);
+      mockSportsService.getHome.mockResolvedValue(result);
 
-      expect(await controller.getHighlights()).toEqual(result);
-      expect(mockSportsService.getHighlights).toHaveBeenCalled();
+      expect(await controller.getHome()).toEqual(result);
+      expect(mockSportsService.getHome).toHaveBeenCalled();
     });
   });
 
@@ -174,16 +189,6 @@ describe('SportsController', () => {
 
       expect(await controller.getLeaderboard()).toEqual(result);
       expect(mockSportsService.getLeaderboard).toHaveBeenCalled();
-    });
-  });
-
-  describe('getFanBoards', () => {
-    it('should return fan boards', async () => {
-      const result = { success: true, data: { fanBoards: [] } };
-      mockSportsService.getFanBoards.mockResolvedValue(result);
-
-      expect(await controller.getFanBoards()).toEqual(result);
-      expect(mockSportsService.getFanBoards).toHaveBeenCalled();
     });
   });
 

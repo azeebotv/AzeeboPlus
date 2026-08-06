@@ -1,6 +1,8 @@
 import { Inject, Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import axios from 'axios';
 // Prisma client types available via PrismaService
 import { SearchResponse } from './interfaces/search-response.interface.js';
 
@@ -33,11 +35,34 @@ interface Facets {
 @Injectable()
 export class SearchService {
   private readonly logger = new Logger(SearchService.name);
+  private readonly analyticsServiceBaseUrl: string;
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
-    @Inject(CacheService) private readonly cache: CacheService
-  ) {}
+    @Inject(CacheService) private readonly cache: CacheService,
+    private readonly configService: ConfigService
+  ) {
+    this.analyticsServiceBaseUrl = this.configService.get<string>(
+      'ANALYTICS_SERVICE_URL',
+      'http://analytics-service:3040'
+    );
+  }
+
+  private async trackAnalyticsEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown> = {}
+  ): Promise<void> {
+    try {
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/analytics/track`,
+        { eventName, userId, metadata, timestamp: new Date().toISOString() },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to track analytics event: ${eventName}`);
+    }
+  }
 
   private escapeRegex(str: string): string {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -192,6 +217,12 @@ export class SearchService {
       };
 
       await this.cache.set(cacheK, result, 600);
+
+      this.trackAnalyticsEvent('search_performed', 'anonymous', {
+        query,
+        resultsCount: result.data?.pagination?.total ?? 0,
+      });
+
       return result;
     } catch (error: unknown) {
       this.logger.error('Failed to perform search', error);
@@ -435,6 +466,15 @@ export class SearchService {
         where: { isEnabled: true },
       });
 
+      // Get real content counts per universe
+      const universeContentCounts = await this.prisma.contentItem.groupBy({
+        by: ['universeId'],
+        _count: { id: true },
+      });
+      const universeCountMap = new Map(
+        universeContentCounts.map((u) => [u.universeId, u._count.id])
+      );
+
       const categories = await this.prisma.contentItem.groupBy({
         by: ['universe'],
         _count: { id: true },
@@ -447,26 +487,73 @@ export class SearchService {
         take: 50,
       });
 
+      // Get real tag usage counts (fallback to empty if contentTag model doesn't exist)
+      let tagCountMap = new Map<string, number>();
+      try {
+        const tagContentCounts = await (
+          this.prisma as unknown as {
+            contentTag?: {
+              groupBy: (
+                args: unknown
+              ) => Promise<Array<{ tagId: string; _count: { tagId: number } }>>;
+            };
+          }
+        ).contentTag?.groupBy({
+          by: ['tagId'],
+          _count: { tagId: true },
+        });
+        if (tagContentCounts) {
+          tagCountMap = new Map(tagContentCounts.map((t) => [t.tagId, t._count.tagId]));
+        }
+      } catch {
+        // contentTag model may not exist
+      }
+
       const contentTypes = await this.prisma.contentItem.groupBy({
         by: ['universe'],
         _count: { id: true },
       });
 
+      // Get real date range counts
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const weekStart = new Date(todayStart);
+      weekStart.setDate(weekStart.getDate() - 7);
+      const monthStart = new Date(todayStart);
+      monthStart.setMonth(monthStart.getMonth() - 1);
+      const yearStart = new Date(todayStart);
+      yearStart.setFullYear(yearStart.getFullYear() - 1);
+
+      const [todayCount, weekCount, monthCount, yearCount] = await Promise.all([
+        this.prisma.contentItem.count({ where: { createdAt: { gte: todayStart } } }),
+        this.prisma.contentItem.count({ where: { createdAt: { gte: weekStart } } }),
+        this.prisma.contentItem.count({ where: { createdAt: { gte: monthStart } } }),
+        this.prisma.contentItem.count({ where: { createdAt: { gte: yearStart } } }),
+      ]);
+
       return {
         success: true,
         data: {
           facets: {
-            universes: universes.map((u) => ({ id: u.id, name: u.name, count: 0 })),
+            universes: universes.map((u) => ({
+              id: u.id,
+              name: u.displayName || u.name,
+              count: universeCountMap.get(u.id) || 0,
+            })),
             categories: categories
               .filter((c) => c.universe)
               .map((c) => ({ id: c.universe!, name: c.universe!, count: c._count.id })),
-            tags: tags.map((t) => ({ id: t.id, name: t.name, count: 0 })),
-            contentTypes: contentTypes.map((ct) => ({ id: ct.universe || 'unknown', name: ct.universe || 'unknown', count: ct._count.id })),
+            tags: tags.map((t) => ({ id: t.id, name: t.name, count: tagCountMap.get(t.id) || 0 })),
+            contentTypes: contentTypes.map((ct) => ({
+              id: ct.universe || 'unknown',
+              name: ct.universe || 'unknown',
+              count: ct._count.id,
+            })),
             dateRanges: [
-              { id: 'today', name: 'Today', count: 0 },
-              { id: 'week', name: 'This Week', count: 0 },
-              { id: 'month', name: 'This Month', count: 0 },
-              { id: 'year', name: 'This Year', count: 0 },
+              { id: 'today', name: 'Today', count: todayCount },
+              { id: 'week', name: 'This Week', count: weekCount },
+              { id: 'month', name: 'This Month', count: monthCount },
+              { id: 'year', name: 'This Year', count: yearCount },
             ],
           },
         },

@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import AppHeader from '../layout/AppHeader';
 import AppFooter from '../layout/AppFooter';
 
@@ -20,6 +21,7 @@ export default function LoginPrompt({
   onLogin,
   onGoHome,
 }: LoginPromptProps): React.JSX.Element {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen az-nollywood-bg">
       <AppHeader active="Home" />
@@ -60,11 +62,10 @@ export default function LoginPrompt({
 
           {/* Heading */}
           <h1 className="az-headline text-white text-2xl sm:text-3xl mb-3">
-            Welcome to {siteName}
+            {t('home.loginWelcome', { siteName })}
           </h1>
           <p className="text-white/60 text-sm sm:text-base mb-8 leading-relaxed">
-            Sign in to access your personalized homepage with recommendations, continue watching,
-            and universe-specific content.
+            {t('home.loginDescription')}
           </p>
 
           {/* Actions */}
@@ -77,7 +78,7 @@ export default function LoginPrompt({
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
             >
-              Sign In
+              {t('auth.login')}
             </motion.button>
 
             <Link href="/auth/register">
@@ -87,7 +88,7 @@ export default function LoginPrompt({
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
               >
-                Create Account
+                {t('auth.register')}
               </motion.span>
             </Link>
           </div>
@@ -101,7 +102,7 @@ export default function LoginPrompt({
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
           >
-            Continue to legacy homepage →
+            {t('home.continueLegacy')}
           </motion.button>
 
           {/* Auto-redirect notice */}
@@ -111,7 +112,7 @@ export default function LoginPrompt({
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8 }}
           >
-            Redirecting to the homepage in a few seconds…
+            {t('home.redirecting')}
           </motion.p>
         </motion.div>
       </main>

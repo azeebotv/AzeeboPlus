@@ -6,11 +6,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '@/api';
 import type { ContentItem } from '@/api';
-import type {
-  EngagementHistoryItem,
-  UserUniverseEngagement,
-  HomepageRecommendationGroup,
-} from '@/api';
+import type { HomepageRecommendationGroup } from '@/api';
 import { colors } from '@/theme';
 import { BrandButton } from '@/components/ui/BrandButton';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
@@ -39,7 +35,7 @@ export default function AuthenticatedHomepage({
   const [featuredSlides, setFeaturedSlides] = useState<ContentItem[]>([]);
 
   // Section 2: Recently Watched
-  const [recentlyWatched, setRecentlyWatched] = useState<EngagementHistoryItem[]>([]);
+  const [recentlyWatched, setRecentlyWatched] = useState<ContentItem[]>([]);
   const [recentlyWatchedOffset, setRecentlyWatchedOffset] = useState(0);
   const [hasMoreHistory, setHasMoreHistory] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
@@ -56,7 +52,7 @@ export default function AuthenticatedHomepage({
 
   // Section 5: Supplementary
   const [trendingContent, setTrendingContent] = useState<ContentItem[]>([]);
-  const [continueWatching, setContinueWatching] = useState<ContentItem[]>([]);
+  const [continueWatching] = useState<ContentItem[]>([]);
   const [newReleases, setNewReleases] = useState<ContentItem[]>([]);
   const [popularInRegion, setPopularInRegion] = useState<ContentItem[]>([]);
   const [isLoadingSupplementary, setIsLoadingSupplementary] = useState(true);
@@ -133,7 +129,7 @@ export default function AuthenticatedHomepage({
 
   const recentlyWatchedProgressMap: Record<string, number> = {};
   recentlyWatched.forEach((item) => {
-    recentlyWatchedProgressMap[item.contentId] = item.progress;
+    recentlyWatchedProgressMap[item.id] = 0;
   });
 
   // --- Section 3: Universe-Specific Content ---
@@ -149,15 +145,18 @@ export default function AuthenticatedHomepage({
         }
 
         const items = contentResponse.data.items || [];
-        
+
         // Group by universe
-        const universeMap = new Map<string, { universeId: string; universeName: string; universeIcon?: string; items: ContentItem[] }>();
-        
+        const universeMap = new Map<
+          string,
+          { universeId: string; universeName: string; universeIcon?: string; items: ContentItem[] }
+        >();
+
         items.forEach((item: ContentItem) => {
-          const universeId = item.universeId || 'unknown';
-          const universeName = item.universe?.displayName || item.universe?.name || 'Unknown';
+          const universeId = item.universe?.id || 'unknown';
+          const universeName = item.universe?.name || 'Unknown';
           const universeIcon = item.universe?.icon;
-          
+
           if (!universeMap.has(universeId)) {
             universeMap.set(universeId, {
               universeId,
@@ -166,7 +165,7 @@ export default function AuthenticatedHomepage({
               items: [],
             });
           }
-          
+
           const section = universeMap.get(universeId)!;
           if (section.items.length < 12) {
             section.items.push(item);
@@ -174,36 +173,6 @@ export default function AuthenticatedHomepage({
         });
 
         setUniverseSections(Array.from(universeMap.values()).filter((s) => s.items.length > 0));
-      } catch (error) {
-        if (!cancelled) logger.error('Failed to load universe content:', error);
-      } finally {
-        if (!cancelled) setIsLoadingUniverses(false);
-      }
-    };
-    loadUniverseContent();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-              universeIcon: ue.universeIcon,
-              items: contentResponse.success ? contentResponse.data || [] : [],
-            };
-          } catch (error) {
-            if (!cancelled)
-              logger.error(`Failed to load content for universe ${ue.universeName}:`, error);
-            return {
-              universeId: ue.universeId,
-              universeName: ue.universeName,
-              universeIcon: ue.universeIcon,
-              items: [],
-            };
-          }
-        });
-
-        const sections = await Promise.all(contentPromises);
-        if (!cancelled) {
-          setUniverseSections(sections.filter((s: UniverseSection) => s.items.length > 0));
-        }
       } catch (error) {
         if (!cancelled) logger.error('Failed to load universe content:', error);
       } finally {
@@ -263,7 +232,7 @@ export default function AuthenticatedHomepage({
     let cancelled = false;
     const loadSupplementary = async () => {
       try {
-        const [trendingRes, continueRes, newRes, popularRes] = await Promise.allSettled([
+        const [trendingRes, newRes, popularRes] = await Promise.allSettled([
           api.content.getTrendingContent(12),
           api.content.getNewReleases(12),
           api.content.getPopularInRegion(12),
@@ -277,11 +246,7 @@ export default function AuthenticatedHomepage({
         ) {
           setTrendingContent(trendingRes.value.data);
         }
-        if (
-          newRes.status === 'fulfilled' &&
-          newRes.value.success &&
-          newRes.value.data
-        ) {
+        if (newRes.status === 'fulfilled' && newRes.value.success && newRes.value.data) {
           setNewReleases(newRes.value.data);
         }
         if (
@@ -318,7 +283,7 @@ export default function AuthenticatedHomepage({
         title={t('home.recentlyWatched')}
         subtitle={t('home.recentlyWatchedSubtitle')}
         sectionId="recently-watched"
-        items={recentlyWatched.map((e) => e.content)}
+        items={recentlyWatched}
         isLoading={isLoadingHistory}
         progressMap={recentlyWatchedProgressMap}
         showProgress

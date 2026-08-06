@@ -7,6 +7,7 @@ import { LoadingState, EmptyState, ErrorState } from '../../src/components/State
 import { apiClient } from '../../src/api/client';
 import { moviePassPrice, rentPrice } from '../../src/config/prices';
 import type { Movie, SubscriptionPlan } from '../../src/types/api';
+import { analytics } from '../../src/utils/analytics';
 
 interface MovieItem {
   id: string;
@@ -51,12 +52,28 @@ export default function MoviesUniverseHome() {
       ]);
       const featured = Array.isArray(featuredRes)
         ? featuredRes[0]
-        : ((featuredRes as any)?.data?.[0] ?? null);
+        : ((featuredRes as unknown as { data?: unknown[] })?.data?.[0] ?? null);
       setFeaturedMovie(featured ?? null);
-      setTrendingMovies(Array.isArray(trendingRes) ? trendingRes : ((trendingRes as any)?.data ?? []));
-      setAfricanCinema(Array.isArray(africanRes) ? africanRes : ((africanRes as any)?.data ?? []));
-      setHollywoodHits(Array.isArray(hollywoodRes) ? hollywoodRes : ((hollywoodRes as any)?.data ?? []));
-      setPasses(Array.isArray(passesRes) ? passesRes : ((passesRes as any)?.data ?? []));
+      setTrendingMovies(
+        Array.isArray(trendingRes)
+          ? (trendingRes as MovieItem[])
+          : ((trendingRes as unknown as { data?: MovieItem[] })?.data ?? [])
+      );
+      setAfricanCinema(
+        Array.isArray(africanRes)
+          ? (africanRes as MovieItem[])
+          : ((africanRes as unknown as { data?: MovieItem[] })?.data ?? [])
+      );
+      setHollywoodHits(
+        Array.isArray(hollywoodRes)
+          ? (hollywoodRes as MovieItem[])
+          : ((hollywoodRes as unknown as { data?: MovieItem[] })?.data ?? [])
+      );
+      setPasses(
+        Array.isArray(passesRes)
+          ? (passesRes as unknown as PassData[])
+          : ((passesRes as unknown as { data?: PassData[] })?.data ?? [])
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load');
     } finally {
@@ -67,6 +84,14 @@ export default function MoviesUniverseHome() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (!isLoading && featuredMovie) {
+      try {
+        analytics.movieViewed(featuredMovie.id);
+      } catch {}
+    }
+  }, [isLoading, featuredMovie]);
 
   if (isLoading)
     return (
@@ -131,7 +156,9 @@ export default function MoviesUniverseHome() {
         <View style={styles.passBanner}>
           <View style={styles.passBannerContent}>
             <Text style={styles.passBannerTitle}>🎥 Cinema Plus</Text>
-            <Text style={styles.passBannerSubtitle}>Unlimited movies from {moviePassPrice.label}</Text>
+            <Text style={styles.passBannerSubtitle}>
+              Unlimited movies from {moviePassPrice.label}
+            </Text>
             <TouchableOpacity style={styles.passButton}>
               <Text style={styles.passButtonText}>Get Pass</Text>
             </TouchableOpacity>

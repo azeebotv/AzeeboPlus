@@ -1,7 +1,9 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../prisma/client/index.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import axios from 'axios';
 import {
   SupportTicketCategory,
   SupportTicketPriority,
@@ -11,11 +13,18 @@ import {
 @Injectable()
 export class TicketService {
   private readonly logger = new Logger(TicketService.name);
+  private readonly analyticsServiceBaseUrl: string;
 
   constructor(
     @Inject(PrismaService) private prisma: PrismaService,
-    @Inject(CacheService) private readonly cache: CacheService
-  ) {}
+    @Inject(CacheService) private readonly cache: CacheService,
+    @Inject(ConfigService) private readonly configService: ConfigService
+  ) {
+    this.analyticsServiceBaseUrl = this.configService.get<string>(
+      'ANALYTICS_SERVICE_URL',
+      'http://analytics-service:3040'
+    );
+  }
 
   async createTicket(data: {
     userId: string;
@@ -42,10 +51,30 @@ export class TicketService {
 
       await this.cache.invalidate('support:tickets:list:*');
 
+      this.trackAnalyticsEvent('support_ticket_created', data.userId, {
+        ticketId: result.id,
+        category: data.category,
+      });
       return result;
     } catch (error) {
       this.logger.error(`createTicket failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: (error as Error).message };
+    }
+  }
+
+  private async trackAnalyticsEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown> = {}
+  ): Promise<void> {
+    try {
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/analytics/track`,
+        { eventName, userId, metadata, timestamp: new Date().toISOString() },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to track analytics event: ${eventName}`);
     }
   }
 

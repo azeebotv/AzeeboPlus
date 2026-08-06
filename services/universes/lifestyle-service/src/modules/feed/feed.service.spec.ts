@@ -1,8 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LifestyleFeedService } from './feed.service';
 import { PrismaService } from '../database/prisma.service';
-import { RedisService } from '@azeebo/shared-services';
 import { ConfigService } from '@nestjs/config';
+
+// Mock @azeebo/shared-services to avoid firebase-admin resolution issues
+jest.mock('@azeebo/shared-services', () => {
+  class MockRedisService {
+    get = jest.fn().mockResolvedValue(null);
+    set = jest.fn().mockResolvedValue('OK');
+    del = jest.fn().mockResolvedValue(1);
+  }
+  return { RedisService: MockRedisService };
+});
+
+const { RedisService: MockRedisService } = require('@azeebo/shared-services');
 
 describe('LifestyleFeedService', () => {
   let service: LifestyleFeedService;
@@ -25,7 +36,7 @@ describe('LifestyleFeedService', () => {
           },
         },
         {
-          provide: RedisService,
+          provide: MockRedisService,
           useValue: {
             get: jest.fn().mockResolvedValue(null),
             set: jest.fn().mockResolvedValue('OK'),

@@ -1,18 +1,10 @@
-import {
-  Inject,
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Body,
-  Param,
-  Query,
-  Request,
-} from '@nestjs/common';
+import { Inject, Controller, Get, Post, Patch, Body, Param, Query, Request, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ServiceAuthGuard } from '@azeebo/security';
 import { FilmmakerService } from './filmmaker.service.js';
 
 @ApiTags('Filmmaker')
+@UseGuards(ServiceAuthGuard)
 @Controller('movies/filmmakers')
 export class FilmmakerController {
   constructor(@Inject(FilmmakerService) private readonly filmmakerService: FilmmakerService) {}

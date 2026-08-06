@@ -4,6 +4,45 @@ import request from 'supertest';
 import { PrismaService } from '../database/prisma.service.js';
 import { RecommendationController } from './recommendation.controller.js';
 import { RecommendationService } from './recommendation.service.js';
+import { RateLimitGuard } from '@azeebo/security';
+
+jest.mock('zod', () => {
+  const chainable = () => {
+    const obj: Record<string, jest.Mock> = {};
+    const methods = [
+      'optional',
+      'default',
+      'url',
+      'email',
+      'min',
+      'max',
+      'positive',
+      'transform',
+      'regex',
+      'nullable',
+      'trim',
+      'safeParse',
+    ];
+    methods.forEach((m) => {
+      obj[m] = jest.fn().mockReturnValue(obj);
+    });
+    return obj;
+  };
+  const z = {
+    string: jest.fn(() => chainable()),
+    number: jest.fn(() => chainable()),
+    boolean: jest.fn(() => chainable()),
+    array: jest.fn(() => chainable()),
+    object: jest.fn(() => chainable()),
+    enum: jest.fn(() => chainable()),
+    record: jest.fn(() => chainable()),
+    literal: jest.fn(() => chainable()),
+    union: jest.fn(() => chainable()),
+    any: jest.fn(() => chainable()),
+    coerce: { string: jest.fn(() => chainable()), number: jest.fn(() => chainable()) },
+  };
+  return { z, ZodError: class ZodError extends Error {} };
+});
 
 describe('Recommendation Service Integration Tests', () => {
   let app: INestApplication;
@@ -35,9 +74,25 @@ describe('Recommendation Service Integration Tests', () => {
           useValue: mockPrismaService,
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(RateLimitGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     app = moduleFixture.createNestApplication();
+    app.use(
+      (
+        req: { headers: { authorization?: string }; user?: unknown },
+        _res: unknown,
+        next: () => void
+      ) => {
+        if (req.headers.authorization) {
+          const r = req as { headers: { authorization?: string }; user?: Record<string, string> };
+          r.user = { id: 'user-123' };
+        }
+        next();
+      }
+    );
     await app.init();
   });
 
@@ -132,6 +187,7 @@ describe('Recommendation Service Integration Tests', () => {
 
       const response = await request(app.getHttpServer())
         .get('/recommendation/creators')
+        .set('Authorization', 'Bearer test-token')
         .query({ userId: 'user-123' });
 
       expect(response.status).toBe(200);
@@ -167,6 +223,7 @@ describe('Recommendation Service Integration Tests', () => {
 
       const response = await request(app.getHttpServer())
         .get('/recommendation/cross-universe')
+        .set('Authorization', 'Bearer test-token')
         .query({ userId: 'user-123' });
 
       expect(response.status).toBe(200);
@@ -202,6 +259,7 @@ describe('Recommendation Service Integration Tests', () => {
 
       const response = await request(app.getHttpServer())
         .get('/recommendation/personalized-feed')
+        .set('Authorization', 'Bearer test-token')
         .query({ userId: 'user-123' });
 
       expect(response.status).toBe(200);

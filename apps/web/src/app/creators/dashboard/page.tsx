@@ -1,183 +1,175 @@
 'use client';
-import { useAuth } from '../../../context/AuthContext';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 
-interface DashboardStats {
+interface DashboardData {
   totalViews: number;
-  followerCount: number;
-  contentCount: number;
+  totalContent: number;
   totalEarnings: number;
+  totalFollowers: number;
+  recentViews: number;
+  viewsGrowth: number;
+}
+
+const dashLinks = [
+  {
+    href: '/creator/content-manager',
+    label: 'Content Manager',
+    desc: 'Manage your uploaded content',
+  },
+  { href: '/creator/analytics', label: 'Analytics', desc: 'View engagement and growth metrics' },
+  { href: '/creator/earnings', label: 'Earnings', desc: 'Track revenue and payouts' },
+  { href: '/creator/profile', label: 'Profile', desc: 'Edit your creator profile' },
+  { href: '/creator/drafts', label: 'Drafts', desc: 'Continue working on drafts' },
+  { href: '/creator/scheduled', label: 'Scheduled', desc: 'Manage scheduled content' },
+];
+
+function StatCard({ label, value, loading }: { label: string; value: string; loading: boolean }) {
+  return (
+    <div
+      style={{
+        padding: 20,
+        borderRadius: 16,
+        border: '1px solid var(--border-default)',
+        backgroundColor: 'rgba(26,10,10,0.5)',
+      }}
+    >
+      <p
+        style={{
+          color: 'var(--text-secondary)',
+          fontSize: 12,
+          marginBottom: 4,
+          textTransform: 'uppercase',
+          letterSpacing: 1,
+        }}
+      >
+        {label}
+      </p>
+      {loading ? (
+        <Skeleton height="32px" width="120px" />
+      ) : (
+        <p style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+          {value}
+        </p>
+      )}
+    </div>
+  );
 }
 
 export default function CreatorDashboardPage(): React.JSX.Element {
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  const isEnabled = !authLoading && !!isAuthenticated && !!user;
 
   const {
-    data: stats,
+    data: dashboard,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ['creator', 'dashboard-stats'],
+    queryKey: ['creator', 'dashboard'],
     queryFn: async () => {
-      const result = await apiFetch<DashboardStats>('/v1/creators/stats');
+      const result = await apiFetch<DashboardData>('/v1/creators/dashboard');
       if (result.success && result.data) return result.data;
       return null;
     },
-    enabled: isEnabled,
   });
 
+  if (error) {
+    return (
+      <div
+        style={{
+          backgroundColor: 'var(--brand-near-black)',
+          minHeight: '100vh',
+          color: 'var(--text-primary)',
+        }}
+      >
+        <AppHeader />
+        <main style={{ padding: '100px 24px 60px', maxWidth: 960, margin: '0 auto' }}>
+          <ErrorState title="Failed to load dashboard data" />
+        </main>
+        <AppFooter />
+      </div>
+    );
+  }
+
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#1A0A0A' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
-      <main style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
-        {/* Welcome Section */}
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Creator Dashboard</h1>
-        <p style={{ color: '#9A8A7A', marginBottom: 32 }}>
-          Welcome back, {user?.name || 'Creator'}! Here&apos;s what&apos;s happening with your
-          content.
+      <main style={{ padding: '100px 24px 60px', maxWidth: 960, margin: '0 auto' }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Creator Dashboard</h1>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>
+          Welcome back! Here&apos;s your overview.
         </p>
 
-        {/* Stats Grid */}
-        {isLoading ? (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-              gap: 16,
-              marginBottom: 32,
-            }}
-          >
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="az-glass" style={{ padding: 20, borderRadius: 16 }}>
-                <Skeleton width="60%" height="16px" className="mb-3" />
-                <Skeleton width="40%" height="28px" />
-              </div>
-            ))}
-          </div>
-        ) : error ? (
-          <div
-            className="az-glass"
-            style={{ padding: 40, borderRadius: 16, textAlign: 'center', marginBottom: 32 }}
-          >
-            <ErrorState
-              title="Failed to load dashboard"
-              description="Please try again later"
-              onButtonPress={() => router.refresh()}
-            />
-          </div>
-        ) : stats ? (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-              gap: 16,
-              marginBottom: 32,
-            }}
-          >
-            {[
-              {
-                label: 'Total Views',
-                value: (stats.totalViews || 0).toLocaleString(),
-                icon: '👁️',
-                color: '#E8420A',
-              },
-              {
-                label: 'Followers',
-                value: (stats.followerCount || 0).toLocaleString(),
-                icon: '👥',
-                color: '#0D3B2E',
-              },
-              {
-                label: 'Content',
-                value: (stats.contentCount || 0).toString(),
-                icon: '🎬',
-                color: '#CC1C1C',
-              },
-              {
-                label: 'Earnings',
-                value: `₦${(stats.totalEarnings || 0).toLocaleString()}`,
-                icon: '💰',
-                color: '#F59E0B',
-              },
-            ].map((stat, i) => (
-              <div key={i} className="az-glass" style={{ padding: 20, borderRadius: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <span style={{ fontSize: 20 }}>{stat.icon}</span>
-                  <span style={{ fontSize: 12, color: '#9A8A7A' }}>{stat.label}</span>
-                </div>
-                <p style={{ fontSize: 22, fontWeight: 700, color: stat.color }}>{stat.value}</p>
-              </div>
-            ))}
-          </div>
-        ) : null}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+            gap: 16,
+            marginBottom: 40,
+          }}
+        >
+          <StatCard
+            label="Total Views"
+            value={(dashboard?.totalViews ?? 0).toLocaleString()}
+            loading={isLoading}
+          />
+          <StatCard
+            label="Content"
+            value={String(dashboard?.totalContent ?? 0)}
+            loading={isLoading}
+          />
+          <StatCard
+            label="Earnings"
+            value={`$${(dashboard?.totalEarnings ?? 0).toLocaleString()}`}
+            loading={isLoading}
+          />
+          <StatCard
+            label="Followers"
+            value={(dashboard?.totalFollowers ?? 0).toLocaleString()}
+            loading={isLoading}
+          />
+        </div>
 
-        {/* Quick Actions */}
-        <div className="az-glass" style={{ padding: 24, borderRadius: 20 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Quick Actions</h2>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-              gap: 12,
-            }}
-          >
-            {[
-              {
-                href: '/creators/dashboard/content',
-                icon: '📝',
-                label: 'Manage Content',
-                desc: 'Upload and manage your videos',
-              },
-              {
-                href: '/creators/dashboard/analytics',
-                icon: '📊',
-                label: 'View Analytics',
-                desc: 'Track your performance',
-              },
-              {
-                href: '/creators/dashboard/earnings',
-                icon: '💰',
-                label: 'View Earnings',
-                desc: 'Check your earnings',
-              },
-              {
-                href: '/creators/dashboard/settings',
-                icon: '⚙️',
-                label: 'Settings',
-                desc: 'Update your creator profile',
-              },
-            ].map((action) => (
-              <Link
-                key={action.href}
-                href={action.href}
-                style={{
-                  display: 'block',
-                  padding: '16px',
-                  borderRadius: 12,
-                  border: '1px solid #2A1A1A',
-                  textDecoration: 'none',
-                  color: '#F5F0EB',
-                  transition: 'border-color 0.2s',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#E8420A')}
-                onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#2A1A1A')}
-              >
-                <span style={{ fontSize: 24, display: 'block', marginBottom: 8 }}>
-                  {action.icon}
-                </span>
-                <p style={{ fontWeight: 600, marginBottom: 4, fontSize: 14 }}>{action.label}</p>
-                <p style={{ fontSize: 12, color: '#9A8A7A' }}>{action.desc}</p>
-              </Link>
-            ))}
-          </div>
+        <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>Quick Links</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {dashLinks.map((link) => (
+            <button
+              key={link.href}
+              onClick={() => router.push(link.href)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 16,
+                padding: '16px 20px',
+                borderRadius: 16,
+                border: '1px solid var(--border-default)',
+                backgroundColor: 'rgba(26,10,10,0.5)',
+                cursor: 'pointer',
+                textAlign: 'left',
+                color: 'var(--text-primary)',
+                transition: 'border-color 0.2s',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--brand-orange)')}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--bg-secondary)')}
+            >
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 2 }}>{link.label}</h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: 0 }}>
+                  {link.desc}
+                </p>
+              </div>
+              <span style={{ color: 'var(--brand-orange)', fontSize: 18 }}>→</span>
+            </button>
+          ))}
         </div>
       </main>
       <AppFooter />

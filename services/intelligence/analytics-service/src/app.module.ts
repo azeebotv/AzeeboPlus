@@ -6,6 +6,7 @@ import { AdminModule } from './modules/admin/admin.module.js';
 import { IntelligenceModule } from './modules/intelligence/intelligence.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { MetricsModule } from './modules/metrics/metrics.module.js';
+import { ReportBuilderModule } from './modules/report-builder/report-builder.module.js';
 import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { CacheModule, JwtConfigModule } from '@azeebo/shared-services';
@@ -26,6 +27,7 @@ import { ConfigModule } from '@nestjs/config';
     IntelligenceModule,
     HealthModule,
     MetricsModule,
+    ReportBuilderModule,
   ],
   providers: [
     {

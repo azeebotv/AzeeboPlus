@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useUniverses } from '@/hooks/useDatabase';
+import { useUniverses } from '@/hooks/useUniverses';
 import { api } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
 import BrandLogo from '@/components/auth/BrandLogo';
@@ -99,7 +99,7 @@ export default function OnboardingPage(): React.JSX.Element {
     return (
       <div
         className="relative min-h-screen w-full overflow-hidden flex items-center justify-center"
-        style={{ backgroundColor: '#0D3B2E' }}
+        style={{ backgroundColor: 'var(--brand-forest)' }}
       >
         {/* Ambient green glow */}
         <div
@@ -177,6 +177,7 @@ export default function OnboardingPage(): React.JSX.Element {
               <p className="az-headline text-white text-xl leading-tight mb-6">Welcome Home</p>
 
               <button
+                aria-label="Get started"
                 onClick={() => setStep(2)}
                 className="az-btn-primary"
                 style={{ width: 'auto', paddingInline: '1.75rem', fontSize: '0.8rem' }}
@@ -189,6 +190,7 @@ export default function OnboardingPage(): React.JSX.Element {
           {/* Mobile fallback CTA */}
           <div className="xl:hidden">
             <button
+              aria-label="Get started"
               onClick={() => setStep(2)}
               className="az-btn-primary"
               style={{ width: 'auto', paddingInline: '2.5rem' }}
@@ -212,7 +214,10 @@ export default function OnboardingPage(): React.JSX.Element {
 
   /* ---------- STEP 2: Interests (Dark) ---------- */
   return (
-    <div className="min-h-screen w-full p-6 sm:p-10" style={{ backgroundColor: '#1A0A0A' }}>
+    <div
+      className="min-h-screen w-full p-6 sm:p-10"
+      style={{ backgroundColor: 'var(--brand-near-black)' }}
+    >
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <BrandLogo variant="light" />
@@ -240,7 +245,7 @@ export default function OnboardingPage(): React.JSX.Element {
                   className="flex items-center gap-3 p-4 rounded-xl border transition-all"
                   style={{
                     background: active ? 'rgba(204,28,28,0.25)' : 'rgba(255,255,255,0.05)',
-                    borderColor: active ? '#CC1C1C' : 'rgba(255,255,255,0.12)',
+                    borderColor: active ? 'var(--brand-red)' : 'rgba(255,255,255,0.12)',
                     boxShadow: active ? '0 0 20px rgba(204,28,28,0.4)' : 'none',
                   }}
                 >
@@ -262,6 +267,7 @@ export default function OnboardingPage(): React.JSX.Element {
           <button
             onClick={handleComplete}
             disabled={selectedInterests.length < 3}
+            aria-label="Continue to Azeebo+"
             className="az-btn-primary"
             style={{ width: 'auto', paddingInline: '3rem' }}
           >

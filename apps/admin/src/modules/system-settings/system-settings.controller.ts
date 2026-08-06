@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -10,7 +11,7 @@ import { Inject,
   UseGuards,
   Logger,
   Req,
- } from '@nestjs/common';
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { Prisma } from '../../generated/prisma';
 import { SystemSettingsService } from './system-settings.service';
@@ -47,7 +48,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 @ApiBearerAuth()
 @Controller('admin/settings')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
+@Roles('admin', 'superadmin')
 export class SystemSettingsController {
   private readonly logger = new Logger(SystemSettingsController.name);
 

@@ -54,7 +54,7 @@ export default function AdminLayout({
     return (
       <div
         style={{
-          backgroundColor: '#1A0A0A',
+          backgroundColor: 'var(--brand-near-black)',
           minHeight: '100vh',
           display: 'flex',
           justifyContent: 'center',
@@ -66,7 +66,7 @@ export default function AdminLayout({
             width: 40,
             height: 40,
             border: '3px solid #2A1A1A',
-            borderTopColor: '#E8420A',
+            borderTopColor: 'var(--brand-orange)',
             borderRadius: '50%',
             animation: 'spin 0.8s linear infinite',
           }}
@@ -86,7 +86,13 @@ export default function AdminLayout({
   };
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <div style={{ display: 'flex', paddingTop: 72, minHeight: '100vh' }}>
         {/* Mobile sidebar toggle */}
@@ -101,8 +107,8 @@ export default function AdminLayout({
             width: 48,
             height: 48,
             borderRadius: '50%',
-            background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-            color: '#fff',
+            background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+            color: 'var(--brand-white)',
             border: 'none',
             fontSize: 20,
             cursor: 'pointer',
@@ -118,7 +124,7 @@ export default function AdminLayout({
           style={{
             width: 260,
             flexShrink: 0,
-            backgroundColor: '#140808',
+            backgroundColor: 'var(--bg-tertiary)',
             borderRight: '1px solid #2A1A1A',
             position: 'sticky',
             top: 72,
@@ -154,7 +160,7 @@ export default function AdminLayout({
                   textDecoration: 'none',
                   fontSize: 14,
                   fontWeight: 500,
-                  color: isActive(item.href) ? '#E8420A' : '#9A8A7A',
+                  color: isActive(item.href) ? 'var(--brand-orange)' : 'var(--text-secondary)',
                   backgroundColor: isActive(item.href) ? 'rgba(232,66,10,0.1)' : 'transparent',
                   transition: 'all 0.2s ease',
                 }}

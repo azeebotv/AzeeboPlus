@@ -2,6 +2,7 @@ const tseslint = require('typescript-eslint');
 const prettierPlugin = require('eslint-plugin-prettier');
 const prettierConfig = require('eslint-config-prettier');
 const globals = require('globals');
+const noHexColors = require('./packages/eslint-rules/no-hex-colors');
 
 module.exports = [
   // Ignore patterns
@@ -30,6 +31,11 @@ module.exports = [
     plugins: {
       '@typescript-eslint': tseslint.plugin,
       prettier: prettierPlugin,
+      'azeebo-custom': {
+        rules: {
+          'no-hex-colors': noHexColors,
+        },
+      },
     },
     rules: {
       // TypeScript ESLint recommended rules
@@ -134,6 +140,30 @@ module.exports = [
         },
       ],
       'no-console': 'warn',
+      'azeebo-custom/no-hex-colors': [
+        'error',
+        {
+          allowList: [
+            '#000000', '#FFFFFF', '#ffffff', '#00000000',
+            // Brand colors
+            '#E8420A', '#1A0A0A', '#F5F0EB', '#9A8A7A',
+            '#E5E4E2', '#555', '#000', '#fff',
+            '#a855f7', '#0D0D0D', '#2A1A1A', '#F5E6D3',
+            '#D4A574', '#14532D', '#B91C1C', '#1E40AF',
+            '#F5F5F5', '#E0E0E0', '#BDBDBD', '#757575',
+            '#424242', '#212121', '#F44336', '#2196F3',
+            '#4CAF50', '#FF9800', '#9C27B0', '#00BCD4',
+            // Additional design system colors
+            '#06b6d4', '#1A1A1A', '#1E90FF', '#32CD32',
+            '#3b82f6', '#4ade80', '#607D8B', '#8b5cf6',
+            '#A78BFA', '#C0C0C0', '#C41E3A', '#CC1C1C',
+            '#CD7F32', '#D1D5DB', '#D97706', '#EC4899',
+            '#FF6B35', '#FFD700', '#ec4899', '#f97316',
+            '#fbbf24',
+          ],
+          allowTransparent: true,
+        },
+      ],
     },
   },
   // Allow console in logger and scripts

@@ -2,19 +2,34 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ModerationService, CreateCaseRequest, ResolveCaseRequest } from './moderation.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { SafetyScanningService } from './safety-scanning.service.js';
+import { ConfigService } from '@nestjs/config';
+import { CacheService } from '@azeebo/shared-services';
+
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: class {
+    get = jest.fn().mockResolvedValue(null);
+    set = jest.fn().mockResolvedValue(undefined);
+    invalidate = jest.fn().mockResolvedValue(undefined);
+  },
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+}));
 
 describe('ModerationService', () => {
   let service: ModerationService;
 
-  const mockPrismaService = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mockPrismaService: Record<string, any> = {
     moderationCase: {
       create: jest.fn(),
       findUnique: jest.fn(),
       findMany: jest.fn(),
       update: jest.fn(),
+      count: jest.fn(),
     },
     report: {
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      create: jest.fn(),
     },
     appeal: {
       create: jest.fn(),
@@ -31,15 +46,21 @@ describe('ModerationService', () => {
       create: jest.fn(),
       findMany: jest.fn(),
     },
+    safetyScan: {
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+    },
     reviewerAssignment: {
       create: jest.fn(),
       findFirst: jest.fn(),
+      findMany: jest.fn(),
       update: jest.fn(),
     },
     user: {
       findUnique: jest.fn(),
       update: jest.fn(),
     },
+    $transaction: jest.fn(async (fn: (tx: unknown) => unknown) => fn(mockPrismaService)),
   };
 
   const mockSafetyScanningService = {
@@ -59,6 +80,20 @@ describe('ModerationService', () => {
         {
           provide: SafetyScanningService,
           useValue: mockSafetyScanningService,
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockReturnValue('http://analytics-service:3040'),
+          },
+        },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            invalidate: jest.fn().mockResolvedValue(undefined),
+          },
         },
       ],
     }).compile();
@@ -177,8 +212,8 @@ describe('ModerationService', () => {
         where: { id: 'case-1' },
         include: {
           report: true,
-          user: true,
-          resolvedByUser: true,
+          user: { select: { id: true, displayName: true, avatar: true, email: true } },
+          resolvedByUser: { select: { id: true, displayName: true, avatar: true, email: true } },
           Appeal: true,
         },
       });
@@ -201,14 +236,23 @@ describe('ModerationService', () => {
       ];
 
       mockPrismaService.moderationCase.findMany.mockResolvedValue(mockCases);
+      mockPrismaService.moderationCase.count.mockResolvedValue(2);
 
       const result = await service.listCases();
 
-      expect(result).toEqual(mockCases);
+      expect(result.data).toEqual(mockCases);
+      expect(result.meta.total).toBe(2);
+      expect(result.meta.page).toBe(1);
+      expect(result.meta.limit).toBe(20);
       expect(mockPrismaService.moderationCase.findMany).toHaveBeenCalledWith({
         where: {},
+        skip: 0,
+        take: 20,
         orderBy: { createdAt: 'desc' },
-        include: { report: true, user: true },
+        include: {
+          report: true,
+          user: { select: { id: true, displayName: true, avatar: true, email: true } },
+        },
       });
     });
 
@@ -216,14 +260,21 @@ describe('ModerationService', () => {
       const mockCases = [{ id: 'case-1', status: 'pending' }];
 
       mockPrismaService.moderationCase.findMany.mockResolvedValue(mockCases);
+      mockPrismaService.moderationCase.count.mockResolvedValue(1);
 
       const result = await service.listCases({ status: 'pending' });
 
-      expect(result).toEqual(mockCases);
+      expect(result.data).toEqual(mockCases);
+      expect(result.meta.total).toBe(1);
       expect(mockPrismaService.moderationCase.findMany).toHaveBeenCalledWith({
         where: { status: 'pending' },
+        skip: 0,
+        take: 20,
         orderBy: { createdAt: 'desc' },
-        include: { report: true, user: true },
+        include: {
+          report: true,
+          user: { select: { id: true, displayName: true, avatar: true, email: true } },
+        },
       });
     });
 
@@ -231,14 +282,21 @@ describe('ModerationService', () => {
       const mockCases = [{ id: 'case-1', userId: 'user-1' }];
 
       mockPrismaService.moderationCase.findMany.mockResolvedValue(mockCases);
+      mockPrismaService.moderationCase.count.mockResolvedValue(1);
 
       const result = await service.listCases({ userId: 'user-1' });
 
-      expect(result).toEqual(mockCases);
+      expect(result.data).toEqual(mockCases);
+      expect(result.meta.total).toBe(1);
       expect(mockPrismaService.moderationCase.findMany).toHaveBeenCalledWith({
         where: { userId: 'user-1' },
+        skip: 0,
+        take: 20,
         orderBy: { createdAt: 'desc' },
-        include: { report: true, user: true },
+        include: {
+          report: true,
+          user: { select: { id: true, displayName: true, avatar: true, email: true } },
+        },
       });
     });
   });
@@ -281,6 +339,8 @@ describe('ModerationService', () => {
           resolutionAction: 'remove',
           resolutionReason: 'Violates community guidelines',
           resolvedAt: expect.any(Date),
+          resolution: undefined,
+          notes: undefined,
         },
       });
     });

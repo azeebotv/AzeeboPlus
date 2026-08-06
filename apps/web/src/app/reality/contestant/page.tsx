@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '../../../lib/api';
 import { webLogger } from '../../../lib/logger';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
@@ -66,7 +67,7 @@ export default function ContestantProfilePage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
         <AppHeader />
         <div
           className="flex items-center justify-center"
@@ -75,7 +76,10 @@ export default function ContestantProfilePage(): React.JSX.Element {
           <div className="text-center">
             <div
               className="animate-spin rounded-full h-12 w-12 mx-auto"
-              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }}
+              style={{
+                border: '3px solid rgba(255,255,255,0.1)',
+                borderTopColor: 'var(--brand-orange)',
+              }}
             />
             <p className="mt-4 text-white/60">Loading profile...</p>
           </div>
@@ -86,7 +90,7 @@ export default function ContestantProfilePage(): React.JSX.Element {
 
   if (!contestant) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
         <AppHeader />
         <div
           className="flex items-center justify-center"
@@ -108,7 +112,7 @@ export default function ContestantProfilePage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader />
       <div className="max-w-4xl mx-auto">
         <div className="relative">
@@ -116,9 +120,10 @@ export default function ContestantProfilePage(): React.JSX.Element {
             className="h-64 relative"
             style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
           >
-            <img
+            <OptimizedImage
               src={contestant.coverImage}
               alt={contestant.name}
+              fill
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/50 to-transparent" />
@@ -133,9 +138,11 @@ export default function ContestantProfilePage(): React.JSX.Element {
         </div>
 
         <div className="px-6 -mt-20 relative">
-          <img
+          <OptimizedImage
             src={contestant.avatar}
             alt={contestant.name}
+            width={128}
+            height={128}
             className="w-32 h-32 rounded-full border-4"
             style={{ borderColor: '#1A0A0A' }}
           />
@@ -153,7 +160,7 @@ export default function ContestantProfilePage(): React.JSX.Element {
               { label: 'Episodes', value: contestant.stats.episodes },
             ].map((stat) => (
               <div key={stat.label} className="az-glass p-4 text-center">
-                <p className="text-2xl font-bold" style={{ color: '#E8420A' }}>
+                <p className="text-2xl font-bold" style={{ color: 'var(--brand-orange)' }}>
                   {stat.value}
                 </p>
                 <p className="text-sm text-white/50 mt-1">{stat.label}</p>
@@ -229,7 +236,7 @@ export default function ContestantProfilePage(): React.JSX.Element {
                 style={{
                   border: '1px solid rgba(255,255,255,0.2)',
                   backgroundColor: 'rgba(255,255,255,0.08)',
-                  color: '#fff',
+                  color: 'var(--brand-white)',
                 }}
               >
                 Regular Vote (1x)

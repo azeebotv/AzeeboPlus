@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '../../../lib/api';
 import { webLogger } from '../../../lib/logger';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
@@ -126,14 +127,24 @@ export default function SuperVotePage(): React.JSX.Element {
         try {
           const result = await apiFetch('/v1/content/super-vote', {
             method: 'POST',
-            body: JSON.stringify({ contestantId: selectedContestant, episodeId, voteCount: pkg.votes }),
+            body: JSON.stringify({
+              contestantId: selectedContestant,
+              episodeId,
+              voteCount: pkg.votes,
+            }),
           });
           if (!result.success) throw new Error(result.message || 'Failed to submit super vote');
-          toast.showToast(`Your ${pkg.votes} Super Vote(s) submitted! Each counts as 2x.`, 'success');
+          toast.showToast(
+            `Your ${pkg.votes} Super Vote(s) submitted! Each counts as 2x.`,
+            'success'
+          );
           setSelectedContestant(null);
           setSelectedPackage(null);
         } catch (error: unknown) {
-          toast.showToast(error instanceof Error ? error.message : 'Failed to submit super vote', 'error');
+          toast.showToast(
+            error instanceof Error ? error.message : 'Failed to submit super vote',
+            'error'
+          );
         } finally {
           setIsVoting(false);
         }
@@ -143,7 +154,7 @@ export default function SuperVotePage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
         <AppHeader />
         <div
           className="flex items-center justify-center"
@@ -152,7 +163,10 @@ export default function SuperVotePage(): React.JSX.Element {
           <div className="text-center">
             <div
               className="animate-spin rounded-full h-12 w-12 mx-auto"
-              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }}
+              style={{
+                border: '3px solid rgba(255,255,255,0.1)',
+                borderTopColor: 'var(--brand-orange)',
+              }}
             />
             <p className="mt-4 text-white/60">Loading...</p>
           </div>
@@ -162,7 +176,7 @@ export default function SuperVotePage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader />
       <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
@@ -183,7 +197,7 @@ export default function SuperVotePage(): React.JSX.Element {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-white">Super Vote</h1>
-              <p className="mt-1" style={{ color: '#E8420A' }}>
+              <p className="mt-1" style={{ color: 'var(--brand-orange)' }}>
                 2x Voting Power
               </p>
             </div>
@@ -212,13 +226,18 @@ export default function SuperVotePage(): React.JSX.Element {
                 }`}
                 style={
                   selectedContestant === contestant.id
-                    ? { borderColor: '#E8420A', boxShadow: '0 0 20px rgba(232,66,10,0.3)' }
+                    ? {
+                        borderColor: 'var(--brand-orange)',
+                        boxShadow: '0 0 20px rgba(232,66,10,0.3)',
+                      }
                     : undefined
                 }
               >
-                <img
+                <OptimizedImage
                   src={contestant.avatar}
                   alt={contestant.name}
+                  width={80}
+                  height={80}
                   className="w-20 h-20 rounded-full mx-auto mb-3 object-cover"
                 />
                 <h3 className="text-sm font-semibold text-white mb-1">{contestant.name}</h3>
@@ -251,7 +270,7 @@ export default function SuperVotePage(): React.JSX.Element {
                 {pkg.isPopular && (
                   <span
                     className="absolute -top-3 right-4 px-3 py-1 rounded-full text-xs font-semibold text-white"
-                    style={{ backgroundColor: '#E8420A' }}
+                    style={{ backgroundColor: 'var(--brand-orange)' }}
                   >
                     Most Popular
                   </span>
@@ -261,7 +280,7 @@ export default function SuperVotePage(): React.JSX.Element {
                     <h3 className="text-lg font-semibold text-white">{pkg.name}</h3>
                     <p className="text-sm text-white/50">{pkg.description}</p>
                   </div>
-                  <p className="text-2xl font-bold" style={{ color: '#E8420A' }}>
+                  <p className="text-2xl font-bold" style={{ color: 'var(--brand-orange)' }}>
                     ₦{pkg.price.toLocaleString()}
                   </p>
                 </div>

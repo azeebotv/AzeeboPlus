@@ -1,9 +1,10 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger, VersioningType } from '@nestjs/common';
 import { AppModule } from './app.module.js';
-import helmet from 'helmet';
+import { createHelmetConfig, configureCors } from '@azeebo/security';
+
 import { validateEnvironment } from '@azeebo/shared-types';
-import { configureCors } from '@azeebo/security';
+
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
 import { LoggingInterceptor } from '@azeebo/logger';
 
@@ -11,28 +12,14 @@ async function bootstrap(): Promise<void> {
   validateEnvironment(process.env);
 
   const app = await NestFactory.create(AppModule);
-  app.enableVersioning({ type: VersioningType.URI, prefix: "v", defaultVersion: "1" });
+  app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
 
   app.useGlobalFilters(new GlobalExceptionFilter());
 
   app.useGlobalInterceptors(new LoggingInterceptor());
 
   // Security headers
-  app.use(
-    helmet({
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'self'"],
-          styleSrc: ["'self'"],
-          imgSrc: ["'self'", 'data:', 'https:'],
-        },
-      },
-      hsts: {
-        maxAge: 31536000,
-        includeSubDomains: true,
-      },
-    })
-  );
+    app.use(createHelmetConfig());
 
   app.useGlobalPipes(
     new ValidationPipe({

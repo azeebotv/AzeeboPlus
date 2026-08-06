@@ -7,6 +7,7 @@ import { CinemaPassModule } from './modules/cinema-pass/cinema-pass.module.js';
 import { FilmmakerModule } from './modules/filmmaker/filmmaker.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { AdminModule } from './modules/admin/admin.module.js';
+import { GenreModule } from './modules/genre/genre.module.js';
 import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
@@ -26,6 +27,7 @@ import { CacheModule } from '@azeebo/shared-services';
     FilmmakerModule,
     HealthModule,
     AdminModule,
+    GenreModule,
   ],
   providers: [
     {

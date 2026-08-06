@@ -13,11 +13,15 @@ import { createRecommendationMethods } from './recommendation';
 import { createUniverseMethods } from './universe';
 import { createCreatorMethods } from './creator';
 import { createModerationMethods } from './moderation';
-import { createAdminMethods } from './admin';
+
 import { createEngagementMethods } from './engagement';
+import { createBundleMethods } from './bundle';
 
 import type { ApiResponse } from './base';
 import type { ApiError } from './base';
+import { createWebLogger } from '../logger';
+
+const logger = createWebLogger('ApiClient');
 
 const ACCESS_TOKEN_KEY = 'azeebo_access_token';
 const REFRESH_TOKEN_KEY = 'azeebo_refresh_token';
@@ -34,7 +38,7 @@ export async function setAuthCookie(value: string, maxAge: number = 30 * 60): Pr
     } catch {
       // SECURITY: Never use document.cookie fallback — it creates non-HttpOnly cookies
       // vulnerable to XSS. The /api/auth/cookie endpoint is the only way to set auth cookies.
-      console.error('Failed to set auth cookie via API');
+      logger.error('Failed to set auth cookie via API');
     }
   }
 }
@@ -49,7 +53,7 @@ export async function clearAuthCookie(): Promise<void> {
     } catch {
       // SECURITY: Never use document.cookie fallback — it creates non-HttpOnly cookies
       // vulnerable to XSS. The /api/auth/cookie endpoint is the only way to clear auth cookies.
-      console.error('Failed to clear auth cookie via API');
+      logger.error('Failed to clear auth cookie via API');
     }
   }
 }
@@ -93,8 +97,8 @@ class ApiClient {
   universe: ReturnType<typeof createUniverseMethods>;
   creator: ReturnType<typeof createCreatorMethods>;
   moderation: ReturnType<typeof createModerationMethods>;
-  admin: ReturnType<typeof createAdminMethods>;
   engagement: ReturnType<typeof createEngagementMethods>;
+  bundle: ReturnType<typeof createBundleMethods>;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
@@ -119,8 +123,8 @@ class ApiClient {
     this.universe = createUniverseMethods(this);
     this.creator = createCreatorMethods(this);
     this.moderation = createModerationMethods(this);
-    this.admin = createAdminMethods(this);
     this.engagement = createEngagementMethods(this);
+    this.bundle = createBundleMethods(this);
   }
 
   setToken(token: string | null): void {

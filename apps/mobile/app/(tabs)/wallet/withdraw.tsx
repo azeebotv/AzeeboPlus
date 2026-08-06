@@ -138,7 +138,11 @@ export default function WithdrawFundsScreen() {
                 { text: 'OK', onPress: () => router.back() },
               ]);
             } catch (error: unknown) {
-              Alert.alert('Error', (error instanceof Error ? error.message : null) || 'Failed to withdraw funds. Please try again.');
+              Alert.alert(
+                'Error',
+                (error instanceof Error ? error.message : null) ||
+                  'Failed to withdraw funds. Please try again.'
+              );
             } finally {
               setIsLoading(false);
             }
@@ -311,8 +315,9 @@ export default function WithdrawFundsScreen() {
           <View style={styles.infoCard}>
             <Text style={styles.infoTitle}>ℹ️ Information</Text>
             <Text style={styles.infoText}>
-              • Minimum withdrawal: ₦{walletLimits.minimumWithdrawal.toLocaleString()}{'\n'}• Processing time: 1-3 business days{'\n'}• Withdrawal
-              fees may apply{'\n'}• Ensure account details are correct
+              • Minimum withdrawal: ₦{walletLimits.minimumWithdrawal.toLocaleString()}
+              {'\n'}• Processing time: 1-3 business days{'\n'}• Withdrawal fees may apply{'\n'}•
+              Ensure account details are correct
             </Text>
           </View>
         </View>

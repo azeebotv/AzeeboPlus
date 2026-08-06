@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { SubscriptionModule } from './modules/subscription/subscription.module.js';
+import { BundleModule } from './modules/bundle/bundle.module.js';
+import { AdminModule } from './modules/admin/admin.module.js';
 import { DatabaseModule } from './modules/database/database.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
@@ -15,6 +17,8 @@ import { CacheModule, JwtConfigModule } from '@azeebo/shared-services';
     RateLimiterModule.forRoot(),
     CacheModule,
     SubscriptionModule,
+    BundleModule,
+    AdminModule,
     DatabaseModule,
     HealthModule,
   ],

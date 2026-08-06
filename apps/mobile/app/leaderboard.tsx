@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { engagementApi } from '../src/api';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
+import { colors } from '../src/theme';
 
 interface LeaderboardEntry {
   rank: number;
@@ -91,7 +92,10 @@ export default function LeaderboardScreen() {
   if (error) {
     return (
       <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ErrorState description={error instanceof Error ? error.message : 'Failed to load leaderboard'} onRetry={() => refetch()} />
+        <ErrorState
+          description={error instanceof Error ? error.message : 'Failed to load leaderboard'}
+          onRetry={() => refetch()}
+        />
       </SafeAreaView>
     );
   }
@@ -102,7 +106,11 @@ export default function LeaderboardScreen() {
         style={{ flex: 1 }}
         contentContainerStyle={styles.content}
         refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} colors={['#E8420A']} />
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={() => refetch()}
+            colors={['#E8420A']}
+          />
         }
       >
         <View style={styles.header}>

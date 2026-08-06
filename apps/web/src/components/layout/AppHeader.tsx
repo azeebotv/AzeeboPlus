@@ -3,41 +3,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useWallet } from '../../context/WalletContext';
 import BrandLogo from '../auth/BrandLogo';
 
 /* ─── Constants ─── */
-
-const NAV_LINKS = [
-  { label: 'Home', href: '/home' },
-  { label: 'Browse', href: '/browse' },
-  { label: 'Library', href: '/library' },
-];
-
-const UNIVERSE_OPTIONS = [
-  { key: 'reality', label: 'Reality', href: '/reality' },
-  { key: 'creators', label: 'Creators', href: '/creators' },
-  { key: 'lifestyle', label: 'Lifestyle', href: '/lifestyle' },
-  { key: 'vertical', label: 'Vertical', href: '/vertical' },
-  { key: 'movies', label: 'Movies', href: '/movies' },
-  { key: 'games', label: 'Games', href: '/games' },
-  { key: 'comedy', label: 'Comedy', href: '/comedy' },
-  { key: 'sports', label: 'Sports', href: '/sports' },
-] as const;
-
-const PROFILE_MENU_ITEMS: {
-  label: string;
-  href: string;
-  icon: 'user' | 'star' | 'wallet' | 'creator' | 'settings';
-  creatorOnly?: boolean;
-}[] = [
-  { label: 'Profile', href: '/profile', icon: 'user' },
-  { label: 'Rewards', href: '/rewards', icon: 'star' },
-  { label: 'Wallet', href: '/wallet', icon: 'wallet' },
-  { label: 'Creator Dashboard', href: '/creators/dashboard', icon: 'creator', creatorOnly: true },
-  { label: 'Settings', href: '/settings', icon: 'settings' },
-];
 
 /* ─── Helpers ─── */
 
@@ -64,7 +35,11 @@ function formatBalance(amount: number): string {
 }
 
 /* ─── Profile menu icon component ─── */
-function MenuIcon({ type }: { type: 'user' | 'star' | 'wallet' | 'creator' | 'settings' }) {
+function MenuIcon({
+  type,
+}: {
+  type: 'user' | 'star' | 'wallet' | 'creator' | 'settings' | 'subscription';
+}) {
   const cls = 'w-4 h-4 flex-shrink-0';
   switch (type) {
     case 'user':
@@ -148,12 +123,66 @@ function MenuIcon({ type }: { type: 'user' | 'star' | 'wallet' | 'creator' | 'se
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
       );
+    case 'subscription':
+      return (
+        <svg
+          className={cls}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={1.8}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z"
+          />
+        </svg>
+      );
   }
 }
 
 /* ─── AppHeader ─── */
 
 export default function AppHeader({ active: _active }: { active?: string }) {
+  const { t } = useTranslation();
+
+  const NAV_LINKS = [
+    { label: t('nav.home'), href: '/home' },
+    { label: t('nav.browse'), href: '/browse' },
+    { label: t('nav.library'), href: '/library' },
+  ];
+
+  const UNIVERSE_OPTIONS = [
+    { key: 'reality', label: t('universes.reality'), href: '/reality' },
+    { key: 'creators', label: t('nav.creators'), href: '/creators' },
+    { key: 'lifestyle', label: t('universes.lifestyle'), href: '/lifestyle' },
+    { key: 'vertical', label: t('universes.vertical'), href: '/vertical' },
+    { key: 'movies', label: t('universes.movies'), href: '/movies' },
+    { key: 'games', label: t('universes.games'), href: '/games' },
+    { key: 'comedy', label: t('universes.comedy'), href: '/comedy' },
+    { key: 'sports', label: t('universes.sports'), href: '/sports' },
+  ] as const;
+
+  const PROFILE_MENU_ITEMS: {
+    label: string;
+    href: string;
+    icon: 'user' | 'star' | 'wallet' | 'creator' | 'settings' | 'subscription';
+    creatorOnly?: boolean;
+  }[] = [
+    { label: t('nav.profile'), href: '/profile', icon: 'user' },
+    { label: t('nav.rewards'), href: '/rewards', icon: 'star' },
+    { label: t('nav.wallet'), href: '/wallet', icon: 'wallet' },
+    { label: t('nav.subscription'), href: '/wallet/subscription-history', icon: 'subscription' },
+    {
+      label: t('nav.creatorDashboard'),
+      href: '/creators/dashboard',
+      icon: 'creator',
+      creatorOnly: true,
+    },
+    { label: t('nav.settings'), href: '/settings', icon: 'settings' },
+  ];
+
   const { user, isAuthenticated, logout } = useAuth();
   const { balance } = useWallet();
   const pathname = usePathname();
@@ -288,7 +317,7 @@ export default function AppHeader({ active: _active }: { active?: string }) {
           <div className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 z-10">
             <Link
               href="/"
-              className="flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E8420A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090F] rounded-lg transition-transform hover:scale-105"
+              className="flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--brand-near-black)] rounded-lg transition-transform hover:scale-105"
               aria-label="Azeebo+ home"
             >
               <BrandLogo variant="orange" />
@@ -309,7 +338,7 @@ export default function AppHeader({ active: _active }: { active?: string }) {
                         href={link.href}
                         className="relative px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
                         style={{
-                          color: active ? '#fff' : 'rgba(255,255,255,0.55)',
+                          color: active ? 'var(--brand-white)' : 'rgba(255,255,255,0.55)',
                           background: active ? 'rgba(232,74,95,0.14)' : 'transparent',
                         }}
                         onMouseEnter={(e) => {
@@ -323,7 +352,7 @@ export default function AppHeader({ active: _active }: { active?: string }) {
                         {active && (
                           <span
                             className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full"
-                            style={{ background: '#E8420A' }}
+                            style={{ background: 'var(--brand-orange)' }}
                           />
                         )}
                       </Link>
@@ -340,7 +369,7 @@ export default function AppHeader({ active: _active }: { active?: string }) {
                     onClick={() => setUniversesOpen((v) => !v)}
                     className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
                     style={{
-                      color: universesOpen ? '#fff' : 'rgba(255,255,255,0.55)',
+                      color: universesOpen ? 'var(--brand-white)' : 'rgba(255,255,255,0.55)',
                       background: universesOpen ? 'rgba(232,74,95,0.14)' : 'transparent',
                     }}
                     onMouseEnter={(e) => {
@@ -353,7 +382,7 @@ export default function AppHeader({ active: _active }: { active?: string }) {
                     aria-expanded={universesOpen}
                     aria-haspopup="true"
                   >
-                    Universes
+                    {t('appHeader.universes')}
                     <svg
                       className={`w-4 h-4 transition-transform duration-200 ${universesOpen ? 'rotate-180' : ''}`}
                       fill="none"
@@ -371,7 +400,7 @@ export default function AppHeader({ active: _active }: { active?: string }) {
                       className="absolute left-1/2 -translate-x-1/2 mt-2 w-48 rounded-2xl border border-white/[0.08] shadow-2xl py-1.5 z-50"
                       style={{ background: 'rgba(9,9,15,0.97)', backdropFilter: 'blur(24px)' }}
                       role="menu"
-                      aria-label="Universes"
+                      aria-label={t('appHeader.universes')}
                     >
                       {UNIVERSE_OPTIONS.map((u) => {
                         const active = isActive(u.href);
@@ -379,15 +408,16 @@ export default function AppHeader({ active: _active }: { active?: string }) {
                           <Link
                             key={u.key}
                             href={u.href}
+                            prefetch={true}
                             onClick={() => setUniversesOpen(false)}
                             className="flex items-center gap-2.5 px-4 py-2 text-sm transition-colors"
                             style={{
-                              color: active ? '#E8420A' : 'rgba(255,255,255,0.6)',
+                              color: active ? 'var(--brand-orange)' : 'rgba(255,255,255,0.6)',
                               background: active ? 'rgba(232,74,95,0.1)' : 'transparent',
                             }}
                             onMouseEnter={(e) => {
                               if (!active) {
-                                e.currentTarget.style.color = '#fff';
+                                e.currentTarget.style.color = 'var(--brand-white)';
                                 e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
                               }
                             }}
@@ -401,7 +431,7 @@ export default function AppHeader({ active: _active }: { active?: string }) {
                           >
                             <span
                               className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                              style={{ background: active ? '#E8420A' : 'transparent' }}
+                              style={{ background: active ? 'var(--brand-orange)' : 'transparent' }}
                             />
                             {u.label}
                           </Link>
@@ -421,8 +451,8 @@ export default function AppHeader({ active: _active }: { active?: string }) {
                 {/* Search icon */}
                 <button
                   onClick={() => setSearchOpen((v) => !v)}
-                  className="p-2.5 rounded-xl text-white/50 hover:text-white hover:bg-white/[0.06] transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E8420A]"
-                  aria-label="Search"
+                  className="p-2.5 rounded-xl text-white/50 hover:text-white hover:bg-white/[0.06] transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)]"
+                  aria-label={t('common.search')}
                   aria-expanded={searchOpen}
                 >
                   <svg
@@ -445,7 +475,7 @@ export default function AppHeader({ active: _active }: { active?: string }) {
                   className="hidden sm:flex items-center gap-0 px-3 py-1.5 rounded-full text-xs font-medium border border-white/[0.06]"
                   style={{ background: 'rgba(255,255,255,0.04)' }}
                 >
-                  <span className="text-[#E8420A] font-semibold whitespace-nowrap">
+                  <span className="text-[var(--brand-orange)] font-semibold whitespace-nowrap">
                     {formatBalance(balance?.balance ?? 0)}
                   </span>
                 </div>
@@ -454,7 +484,7 @@ export default function AppHeader({ active: _active }: { active?: string }) {
                 <div className="relative" ref={profileMenuRef}>
                   <button
                     onClick={() => setProfileOpen((v) => !v)}
-                    className="flex items-center justify-center w-9 h-9 rounded-full text-white text-xs font-bold transition-all hover:ring-2 hover:ring-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E8420A]"
+                    className="flex items-center justify-center w-9 h-9 rounded-full text-white text-xs font-bold transition-all hover:ring-2 hover:ring-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)]"
                     style={{ background: seededGradient(user?.id || 'default') }}
                     aria-label="Profile menu"
                     aria-expanded={profileOpen}
@@ -518,23 +548,25 @@ export default function AppHeader({ active: _active }: { active?: string }) {
                                 d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"
                               />
                             </svg>
-                            Sign out
+                            {t('auth.logout')}
                           </button>
                         ) : (
                           <div className="px-4 py-2">
-                            <p className="text-xs text-white/50 mb-2">Are you sure?</p>
+                            <p className="text-xs text-white/50 mb-2">
+                              {t('appHeader.confirmLogout')}
+                            </p>
                             <div className="flex gap-2">
                               <button
                                 onClick={handleLogout}
                                 className="flex-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors"
                               >
-                                Yes, sign out
+                                {t('appHeader.yesSignOut')}
                               </button>
                               <button
                                 onClick={() => setConfirmLogout(false)}
                                 className="flex-1 px-3 py-1.5 rounded-lg text-xs font-medium text-white/60 border border-white/[0.1] hover:text-white transition-colors"
                               >
-                                Cancel
+                                {t('common.cancel')}
                               </button>
                             </div>
                           </div>
@@ -551,17 +583,17 @@ export default function AppHeader({ active: _active }: { active?: string }) {
                   href="/auth/login"
                   className="hidden sm:inline-flex px-4 py-1.5 rounded-full text-sm font-medium text-white/60 hover:text-white transition-colors border border-white/[0.1]"
                 >
-                  Log in
+                  {t('auth.login')}
                 </Link>
                 <Link
                   href="/auth/register"
                   className="px-4 py-1.5 rounded-full text-sm font-semibold text-white transition-all hover:shadow-lg hover:scale-105"
                   style={{
-                    background: 'linear-gradient(135deg, #E8420A, #CC1C1C)',
+                    background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
                     boxShadow: '0 4px 14px rgba(232,66,10,0.25)',
                   }}
                 >
-                  Sign up
+                  {t('auth.register')}
                 </Link>
               </div>
             )}
@@ -570,8 +602,8 @@ export default function AppHeader({ active: _active }: { active?: string }) {
             <button
               ref={hamburgerRef}
               onClick={() => setMobileMenuOpen((v) => !v)}
-              className="lg:hidden p-2 rounded-xl text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E8420A]"
-              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+              className="lg:hidden p-2 rounded-xl text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)]"
+              aria-label={mobileMenuOpen ? t('appHeader.closeMenu') : t('appHeader.openMenu')}
               aria-expanded={mobileMenuOpen}
               aria-controls="mobile-drawer"
             >
@@ -621,18 +653,18 @@ export default function AppHeader({ active: _active }: { active?: string }) {
                 <input
                   ref={searchInputRef}
                   type="search"
-                  placeholder="Search shows, creators, movies…"
+                  placeholder={t('appHeader.searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-12 py-3 rounded-full text-sm text-white placeholder-white/30 bg-white/[0.04] border border-white/[0.08] focus:border-[#E8420A]/50 focus:bg-white/[0.07] outline-none transition-all"
-                  aria-label="Search Azeebo+"
+                  className="w-full pl-12 pr-12 py-3 rounded-full text-sm text-white placeholder-white/30 bg-white/[0.04] border border-white/[0.08] focus:border-[var(--brand-orange)]/50 focus:bg-white/[0.07] outline-none transition-all"
+                  aria-label={t('appHeader.searchAria')}
                 />
                 {searchQuery && (
                   <button
                     type="button"
                     onClick={() => setSearchQuery('')}
                     className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full text-white/30 hover:text-white hover:bg-white/10 transition-colors"
-                    aria-label="Clear search"
+                    aria-label={t('appHeader.clearSearch')}
                   >
                     <svg
                       className="w-4 h-4"
@@ -699,9 +731,9 @@ export default function AppHeader({ active: _active }: { active?: string }) {
                 </svg>
                 <input
                   type="search"
-                  placeholder="Search…"
+                  placeholder={t('appHeader.searchPlaceholderMobile')}
                   className="w-full pl-10 pr-4 py-2.5 rounded-full text-sm text-white placeholder-white/30 bg-white/[0.04] border border-white/[0.08] outline-none"
-                  aria-label="Search Azeebo+"
+                  aria-label={t('appHeader.searchAria')}
                 />
               </div>
             </form>
@@ -718,13 +750,13 @@ export default function AppHeader({ active: _active }: { active?: string }) {
                       onClick={() => setMobileMenuOpen(false)}
                       className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
                       style={{
-                        color: active ? '#fff' : 'rgba(255,255,255,0.6)',
+                        color: active ? 'var(--brand-white)' : 'rgba(255,255,255,0.6)',
                         background: active ? 'rgba(232,74,95,0.14)' : 'transparent',
                       }}
                     >
                       <span
                         className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                        style={{ background: active ? '#E8420A' : 'transparent' }}
+                        style={{ background: active ? 'var(--brand-orange)' : 'transparent' }}
                       />
                       {link.label}
                     </Link>
@@ -746,16 +778,17 @@ export default function AppHeader({ active: _active }: { active?: string }) {
                       <Link
                         key={u.key}
                         href={u.href}
+                        prefetch={true}
                         onClick={() => setMobileMenuOpen(false)}
                         className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all"
                         style={{
-                          color: active ? '#fff' : 'rgba(255,255,255,0.6)',
+                          color: active ? 'var(--brand-white)' : 'rgba(255,255,255,0.6)',
                           background: active ? 'rgba(232,74,95,0.14)' : 'transparent',
                         }}
                       >
                         <span
                           className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                          style={{ background: active ? '#E8420A' : 'transparent' }}
+                          style={{ background: active ? 'var(--brand-orange)' : 'transparent' }}
                         />
                         {u.label}
                       </Link>
@@ -770,7 +803,7 @@ export default function AppHeader({ active: _active }: { active?: string }) {
             {/* Wallet (mobile, authenticated only) */}
             {isAuthenticated && (
               <div className="flex items-center gap-3 px-3 py-2.5 mb-2">
-                <span className="text-sm text-[#E8420A] font-semibold">
+                <span className="text-sm text-[var(--brand-orange)] font-semibold">
                   {formatBalance(balance?.balance ?? 0)}
                 </span>
               </div>
@@ -790,7 +823,9 @@ export default function AppHeader({ active: _active }: { active?: string }) {
                   href="/auth/register"
                   onClick={() => setMobileMenuOpen(false)}
                   className="block w-full text-center px-4 py-2.5 rounded-full text-sm font-semibold text-white transition-all"
-                  style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
+                  style={{
+                    background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
+                  }}
                 >
                   Sign up
                 </Link>
@@ -804,7 +839,7 @@ export default function AppHeader({ active: _active }: { active?: string }) {
                 }}
                 className="w-full px-4 py-2.5 rounded-full text-sm font-medium text-red-400 border border-red-500/20 hover:bg-red-500/10 transition-colors text-center"
               >
-                Sign out
+                {t('auth.logout')}
               </button>
             )}
           </div>

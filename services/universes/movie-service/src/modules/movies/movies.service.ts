@@ -11,6 +11,7 @@ export class MoviesService {
   private readonly logger = new Logger(MoviesService.name);
   private readonly walletServiceBaseUrl: string;
   private readonly rentalFee: number;
+  private readonly analyticsServiceBaseUrl: string;
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
@@ -19,6 +20,26 @@ export class MoviesService {
   ) {
     this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
     this.rentalFee = this.configService.get<number>('MOVIE_RENTAL_FEE', 500);
+    this.analyticsServiceBaseUrl = this.configService.get<string>(
+      'ANALYTICS_SERVICE_URL',
+      'http://analytics-service:3040'
+    );
+  }
+
+  private async trackEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown> = {}
+  ): Promise<void> {
+    try {
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/v1/analytics/events`,
+        { type: eventName, userId, metadata, timestamp: new Date().toISOString() },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to track analytics event: ${eventName}`);
+    }
   }
 
   async listMovies(): Promise<MovieResponse> {
@@ -37,7 +58,7 @@ export class MoviesService {
         _count: {
           select: { rentals: true },
         },
-      },
+      } as never,
       orderBy: { createdAt: 'desc' },
       take: 50,
     });
@@ -49,6 +70,43 @@ export class MoviesService {
       success: true,
       data: result,
     };
+  }
+
+  async getMoviesByGenreSlug(slug: string, page = 1): Promise<MovieResponse> {
+    const limit = 20;
+    const skip = (page - 1) * limit;
+
+    // Find genre by slug
+    const genre = await (
+      this.prisma as unknown as {
+        genre?: { findUnique: (args: unknown) => Promise<{ id: string } | null> };
+      }
+    ).genre?.findUnique({
+      where: { slug },
+    });
+
+    if (!genre) {
+      throw new NotFoundException(`Genre '${slug}' not found`);
+    }
+
+    const [movies] = await Promise.all([
+      this.prisma.movie.findMany({
+        where: { genreId: genre.id } as never,
+        include: {
+          viewingWindows: { where: { isActive: true } },
+          _count: { select: { rentals: true } },
+        } as never,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.movie.count({ where: { genreId: genre.id } as never }),
+    ]);
+
+    return {
+      success: true,
+      data: movies as unknown as MovieResponse['data'],
+    } as MovieResponse;
   }
 
   async getMovie(movieId: string): Promise<MovieResponse> {
@@ -142,6 +200,13 @@ export class MoviesService {
 
       await this.cache.invalidate('movie:*');
 
+      await this.trackEvent('payment_success', userId, {
+        movieId,
+        amount: this.rentalFee,
+        type: 'rental',
+        rentalId: rental.id,
+      });
+
       return {
         success: true,
         data: {
@@ -225,6 +290,8 @@ export class MoviesService {
       },
     });
 
+    await this.trackEvent('movie_watchlisted', userId, { movieId });
+
     return {
       success: true,
       data: {
@@ -248,6 +315,8 @@ export class MoviesService {
     await this.prisma.watchlistItem.delete({
       where: { id: item.id },
     });
+
+    await this.trackEvent('movie_watchlist_removed', userId, { movieId });
 
     return {
       success: true,
@@ -386,6 +455,47 @@ export class MoviesService {
       data: {
         available: !!activeWindow,
         viewingWindow: activeWindow,
+      },
+    };
+  }
+
+  async rateMovie(userId: string, movieId: string, rating: string): Promise<MovieResponse> {
+    const movie = await this.prisma.movie.findUnique({
+      where: { id: movieId },
+    });
+
+    if (!movie) {
+      throw new NotFoundException('Movie not found');
+    }
+
+    const numericRating = parseFloat(rating);
+    if (isNaN(numericRating) || numericRating < 1 || numericRating > 10) {
+      throw new BadRequestException('Rating must be a number between 1 and 10');
+    }
+
+    // Store rating (if movieRating model exists)
+    try {
+      await (
+        this.prisma as unknown as { movieRating?: { upsert: (args: unknown) => Promise<unknown> } }
+      ).movieRating?.upsert({
+        where: {
+          userId_movieId: { userId, movieId },
+        },
+        update: { rating: numericRating },
+        create: { userId, movieId, rating: numericRating },
+      });
+    } catch {
+      // movieRating model may not exist
+    }
+
+    await this.trackEvent('movie_rated', userId, { movieId, rating });
+
+    return {
+      success: true,
+      data: {
+        movieId,
+        rating,
+        message: 'Rating submitted successfully',
       },
     };
   }

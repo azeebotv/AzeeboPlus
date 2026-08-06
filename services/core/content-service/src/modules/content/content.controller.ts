@@ -396,6 +396,7 @@ export class ContentController {
   }
 
   @Get(':id/relationships')
+  @Public()
   @ApiOperation({ summary: 'Get content relationships' })
   @ApiResponse({ status: 200, description: 'Relationships list' })
   async getContentRelationships(@Param('id') id: string): Promise<ContentResponse> {
@@ -417,8 +418,12 @@ export class ContentController {
   @ApiOperation({ summary: 'Get media asset for content' })
   @ApiResponse({ status: 200, description: 'Media asset details' })
   @ApiResponse({ status: 404, description: 'Content or media asset not found' })
-  async getMediaAsset(@Param('id') id: string): Promise<ContentResponse> {
-    return this.contentService.getMediaAsset(id);
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  async getMediaAsset(
+    @Request() req: { user: { id: string } },
+    @Param('id') id: string
+  ): Promise<ContentResponse> {
+    return this.contentService.getMediaAsset(id, req.user.id);
   }
 
   @Get(':id/media/signed-url')
@@ -440,12 +445,13 @@ export class ContentController {
   @ApiResponse({ status: 200, description: 'Transcoding job status' })
   @ApiResponse({ status: 404, description: 'Content or media asset not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
   async getTranscodingStatus(
-    @Request() _req: { user: { id: string } },
+    @Request() req: { user: { id: string } },
     @Param('id') id: string,
     @Param('jobId') jobId: string
   ): Promise<ContentResponse> {
-    return this.contentService.getTranscodingStatus(id, jobId);
+    return this.contentService.getTranscodingStatus(id, jobId, req.user.id);
   }
 
   @Get(':id/transcode/:jobId/url')
@@ -453,15 +459,23 @@ export class ContentController {
   @ApiResponse({ status: 200, description: 'Transcoded media URL' })
   @ApiResponse({ status: 404, description: 'Content or media asset not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
   async getTranscodedMediaUrl(
-    @Request() _req: { user: { id: string } },
+    @Request() req: { user: { id: string } },
     @Param('id') id: string,
     @Param('jobId') jobId: string,
     @Query('format') format: string,
     @Query('resolution') resolution: string,
     @Query('expiresIn') expiresIn: number = 3600
   ): Promise<ContentResponse> {
-    return this.contentService.getTranscodedMediaUrl(id, jobId, format, resolution, expiresIn);
+    return this.contentService.getTranscodedMediaUrl(
+      id,
+      jobId,
+      format,
+      resolution,
+      expiresIn,
+      req.user.id
+    );
   }
 
   // ========================
@@ -624,7 +638,10 @@ export class ContentController {
   @ApiResponse({ status: 200, description: 'Scan result' })
   @ApiResponse({ status: 404, description: 'Content not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async scanContentForSafety(@Request() _req: { user: { id: string } }, @Param('id', ParseUUIDPipe) id: string) {
+  async scanContentForSafety(
+    @Request() _req: { user: { id: string } },
+    @Param('id', ParseUUIDPipe) id: string
+  ) {
     const result = await this.contentService.scanContentForSafety(id);
     return ApiResponseWrapper.success(result);
   }
@@ -709,6 +726,7 @@ export class ContentController {
   }
 
   @Patch('categories/:id')
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Update category' })
   @ApiResponse({ status: 200, description: 'Category updated' })
   @ApiResponse({ status: 404, description: 'Category not found' })
@@ -730,6 +748,7 @@ export class ContentController {
   }
 
   @Patch('tags/:id')
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Update tag' })
   @ApiResponse({ status: 200, description: 'Tag updated' })
   @ApiResponse({ status: 404, description: 'Tag not found' })

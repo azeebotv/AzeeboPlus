@@ -1,0 +1,520 @@
+{
+  "version": "1.0.0",
+  "description": "CDN configuration for Azeebo+ platform",
+  "environment": "staging",
+  "cloudfront": {
+    "distribution": {
+      "enabled": true,
+      "comment": "Azeebo+ CDN Distribution",
+      "priceClass": "PriceClass_100",
+      "webAclId": null,
+      "httpVersion": "http2and3",
+      "isIpv6Enabled": true
+    },
+    "origins": [
+      {
+        "id": "s3-media-origin",
+        "domainName": "azeebo-media-staging.s3.amazonaws.com",
+        "s3OriginConfig": {
+          "originAccessIdentity": "origin-access-identity/cloudfront/E1234567890"
+        },
+        "customHeaders": {
+          "items": []
+        }
+      },
+      {
+        "id": "api-origin",
+        "domainName": "api.staging.azeebo.ng",
+        "customOriginConfig": {
+          "httpPort": 80,
+          "httpsPort": 443,
+          "originProtocolPolicy": "https-only",
+          "originSslProtocols": {
+            "items": ["TLSv1.2"]
+          }
+        }
+      }
+    ],
+    "defaultCacheBehavior": {
+      "targetOriginId": "s3-media-origin",
+      "viewerProtocolPolicy": "redirect-to-https",
+      "allowedMethods": {
+        "quantity": 7,
+        "items": ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"],
+        "cachedMethods": {
+          "quantity": 2,
+          "items": ["GET", "HEAD"]
+        }
+      },
+      "smoothStreaming": false,
+      "compress": true,
+      "defaultTtl": 86400,
+      "maxTtl": 31536000,
+      "minTtl": 0,
+      "forwardedValues": {
+        "queryString": false,
+        "cookies": {
+          "forward": "none"
+        },
+        "headers": {
+          "quantity": 0,
+          "items": []
+        }
+      },
+      "lambdaFunctionAssociations": {
+        "quantity": 0,
+        "items": []
+      },
+      "functionAssociations": {
+        "quantity": 0,
+        "items": []
+      },
+      "trustedSigners": {
+        "enabled": false,
+        "quantity": 0,
+        "items": []
+      },
+      "trustedKeyGroups": {
+        "enabled": false,
+        "quantity": 0,
+        "items": []
+      }
+    },
+    "cacheBehaviors": [
+      {
+        "pathPattern": "/static/*",
+        "targetOriginId": "s3-media-origin",
+        "viewerProtocolPolicy": "redirect-to-https",
+        "allowedMethods": {
+          "quantity": 2,
+          "items": ["GET", "HEAD"],
+          "cachedMethods": {
+            "quantity": 2,
+            "items": ["GET", "HEAD"]
+          }
+        },
+        "defaultTtl": 31536000,
+        "maxTtl": 31536000,
+        "minTtl": 31536000,
+        "compress": true,
+        "forwardedValues": {
+          "queryString": false,
+          "cookies": {
+            "forward": "none"
+          }
+        }
+      },
+      {
+        "pathPattern": "/assets/*",
+        "targetOriginId": "s3-media-origin",
+        "viewerProtocolPolicy": "redirect-to-https",
+        "allowedMethods": {
+          "quantity": 2,
+          "items": ["GET", "HEAD"],
+          "cachedMethods": {
+            "quantity": 2,
+            "items": ["GET", "HEAD"]
+          }
+        },
+        "defaultTtl": 31536000,
+        "maxTtl": 31536000,
+        "minTtl": 31536000,
+        "compress": true,
+        "forwardedValues": {
+          "queryString": false,
+          "cookies": {
+            "forward": "none"
+          }
+        }
+      },
+      {
+        "pathPattern": "/images/*",
+        "targetOriginId": "s3-media-origin",
+        "viewerProtocolPolicy": "redirect-to-https",
+        "allowedMethods": {
+          "quantity": 2,
+          "items": ["GET", "HEAD"],
+          "cachedMethods": {
+            "quantity": 2,
+            "items": ["GET", "HEAD"]
+          }
+        },
+        "defaultTtl": 2592000,
+        "maxTtl": 31536000,
+        "minTtl": 86400,
+        "compress": true,
+        "forwardedValues": {
+          "queryString": true,
+          "queryStringKeys": {
+            "quantity": 1,
+            "items": ["w", "h", "fit", "q"]
+          },
+          "cookies": {
+            "forward": "none"
+          }
+        }
+      },
+      {
+        "pathPattern": "/videos/*",
+        "targetOriginId": "s3-media-origin",
+        "viewerProtocolPolicy": "redirect-to-https",
+        "allowedMethods": {
+          "quantity": 2,
+          "items": ["GET", "HEAD"],
+          "cachedMethods": {
+            "quantity": 2,
+            "items": ["GET", "HEAD"]
+          }
+        },
+        "defaultTtl": 604800,
+        "maxTtl": 2592000,
+        "minTtl": 86400,
+        "compress": false,
+        "forwardedValues": {
+          "queryString": true,
+          "queryStringKeys": {
+            "quantity": 1,
+            "items": ["range"]
+          },
+          "cookies": {
+            "forward": "none"
+          }
+        }
+      },
+      {
+        "pathPattern": "/api/*",
+        "targetOriginId": "api-origin",
+        "viewerProtocolPolicy": "https-only",
+        "allowedMethods": {
+          "quantity": 7,
+          "items": ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"],
+          "cachedMethods": {
+            "quantity": 2,
+            "items": ["GET", "HEAD"]
+          }
+        },
+        "defaultTtl": 0,
+        "maxTtl": 300,
+        "minTtl": 0,
+        "compress": true,
+        "forwardedValues": {
+          "queryString": true,
+          "headers": {
+            "quantity": 7,
+            "items": [
+              "Authorization",
+              "Content-Type",
+              "Accept",
+              "Origin",
+              "Referer",
+              "X-Forwarded-For",
+              "X-Request-ID"
+            ]
+          },
+          "cookies": {
+            "forward": "all"
+          }
+        }
+      },
+      {
+        "pathPattern": "/graphql",
+        "targetOriginId": "api-origin",
+        "viewerProtocolPolicy": "https-only",
+        "allowedMethods": {
+          "quantity": 2,
+          "items": ["GET", "HEAD"],
+          "cachedMethods": {
+            "quantity": 0,
+            "items": []
+          }
+        },
+        "defaultTtl": 0,
+        "maxTtl": 0,
+        "minTtl": 0,
+        "compress": true,
+        "forwardedValues": {
+          "queryString": true,
+          "headers": {
+            "quantity": 6,
+            "items": [
+              "Authorization",
+              "Content-Type",
+              "Accept",
+              "Origin",
+              "X-Forwarded-For",
+              "X-Request-ID"
+            ]
+          },
+          "cookies": {
+            "forward": "all"
+          }
+        }
+      }
+    ],
+    "customErrorResponses": [
+      {
+        "errorCode": 404,
+        "responsePagePath": "/404.html",
+        "responseCode": 404,
+        "errorCachingMinTtl": 300
+      },
+      {
+        "errorCode": 500,
+        "responsePagePath": "/500.html",
+        "responseCode": 500,
+        "errorCachingMinTtl": 60
+      },
+      {
+        "errorCode": 502,
+        "responsePagePath": "/502.html",
+        "responseCode": 502,
+        "errorCachingMinTtl": 60
+      },
+      {
+        "errorCode": 503,
+        "responsePagePath": "/503.html",
+        "responseCode": 503,
+        "errorCachingMinTtl": 60
+      },
+      {
+        "errorCode": 504,
+        "responsePagePath": "/504.html",
+        "responseCode": 504,
+        "errorCachingMinTtl": 60
+      }
+    ],
+    "restrictions": {
+      "geoRestriction": {
+        "restrictionType": "none",
+        "quantity": 0,
+        "items": []
+      }
+    },
+    "viewerCertificate": {
+      "cloudFrontDefaultCertificate": false,
+      "acmCertificateArn": "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/CERTIFICATE_ID",
+      "sslSupportMethod": "sni-only",
+      "minimumProtocolVersion": "TLSv1.2_2021"
+    },
+    "aliases": {
+      "quantity": 2,
+      "items": [
+        "cdn.staging.azeebo.ng",
+        "media.staging.azeebo.ng"
+      ]
+    }
+  },
+  "cacheHeaders": {
+    "staticAssets": {
+      "pattern": "\\.(js|css|woff|woff2|ttf|eot|otf)$",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "expires": "1 year",
+      "etag": true,
+      "lastModified": true
+    },
+    "images": {
+      "pattern": "\\.(jpg|jpeg|png|gif|webp|avif|svg|ico)$",
+      "cacheControl": "public, max-age=2592000",
+      "expires": "30 days",
+      "etag": true,
+      "lastModified": true
+    },
+    "videos": {
+      "pattern": "\\.(mp4|webm|mov|avi)$",
+      "cacheControl": "public, max-age=604800",
+      "expires": "7 days",
+      "etag": true,
+      "lastModified": true
+    },
+    "apiResponses": {
+      "public": {
+        "pattern": "/api/v1/public/",
+        "cacheControl": "public, max-age=300, s-maxage=300",
+        "expires": "5 minutes"
+      },
+      "authenticated": {
+        "pattern": "/api/v1/",
+        "cacheControl": "private, no-cache, no-store, must-revalidate",
+        "expires": "0"
+      },
+      "graphql": {
+        "pattern": "/graphql",
+        "cacheControl": "no-store, no-cache, must-revalidate",
+        "expires": "0"
+      }
+    },
+    "htmlPages": {
+      "pattern": "\\.html$",
+      "cacheControl": "public, max-age=0, must-revalidate",
+      "expires": "0"
+    },
+    "fonts": {
+      "pattern": "\\.(woff|woff2|ttf|eot|otf)$",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "expires": "1 year",
+      "etag": true,
+      "lastModified": true,
+      "accessControlAllowOrigin": "*"
+    }
+  },
+  "imageOptimization": {
+    "enabled": true,
+    "formats": {
+      "webp": {
+        "enabled": true,
+        "quality": 85,
+        "lossless": false
+      },
+      "avif": {
+        "enabled": true,
+        "quality": 80,
+        "lossless": false
+      },
+      "jpeg": {
+        "enabled": true,
+        "quality": 85,
+        "progressive": true
+      },
+      "png": {
+        "enabled": true,
+        "compressionLevel": 9
+      }
+    },
+    "resizing": {
+      "enabled": true,
+      "allowedSizes": [
+        { "width": 100, "height": 100 },
+        { "width": 200, "height": 200 },
+        { "width": 400, "height": 300 },
+        { "width": 640, "height": 480 },
+        { "width": 800, "height": 600 },
+        { "width": 1024, "height": 768 },
+        { "width": 1280, "height": 720 },
+        { "width": 1920, "height": 1080 }
+      ],
+      "allowedFits": ["cover", "contain", "fill", "inside", "outside"],
+      "defaultFit": "cover",
+      "defaultQuality": 85
+    },
+    "lazyLoading": {
+      "enabled": true,
+      "placeholder": "blur",
+      "placeholderSize": 20
+    },
+    "watermark": {
+      "enabled": false,
+      "position": "bottom-right",
+      "opacity": 0.3
+    }
+  },
+  "cors": {
+    "enabled": true,
+    "allowOrigins": [
+      "https://staging.azeebo.ng",
+      "https://www.staging.azeebo.ng",
+      "https://admin.staging.azeebo.ng",
+      "https://api.staging.azeebo.ng"
+    ],
+    "allowMethods": [
+      "GET",
+      "HEAD",
+      "OPTIONS",
+      "PUT",
+      "POST",
+      "PATCH",
+      "DELETE"
+    ],
+    "allowHeaders": [
+      "Authorization",
+      "Content-Type",
+      "Accept",
+      "Origin",
+      "Referer",
+      "X-Request-ID",
+      "X-Forwarded-For",
+      "If-None-Match",
+      "If-Modified-Since",
+      "Range"
+    ],
+    "exposeHeaders": [
+      "Content-Length",
+      "Content-Type",
+      "Content-Range",
+      "ETag",
+      "Last-Modified",
+      "X-Request-ID",
+      "X-RateLimit-Limit",
+      "X-RateLimit-Remaining",
+      "X-RateLimit-Reset"
+    ],
+    "maxAge": 86400,
+    "allowCredentials": true
+  },
+  "security": {
+    "headers": {
+      "strictTransportSecurity": {
+        "enabled": true,
+        "maxAge": 31536000,
+        "includeSubdomains": true,
+        "preload": true
+      },
+      "contentSecurityPolicy": {
+        "enabled": true,
+        "policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; media-src 'self' https: blob:; connect-src 'self' https://api.staging.azeebo.ng wss://api.staging.azeebo.ng; frame-src 'self' https://www.youtube.com https://player.vimeo.com;"
+      },
+      "xContentTypeOptions": {
+        "enabled": true,
+        "value": "nosniff"
+      },
+      "xFrameOptions": {
+        "enabled": true,
+        "value": "DENY"
+      },
+      "xXssProtection": {
+        "enabled": true,
+        "value": "1; mode=block"
+      },
+      "referrerPolicy": {
+        "enabled": true,
+        "value": "strict-origin-when-cross-origin"
+      },
+      "permissionsPolicy": {
+        "enabled": true,
+        "policy": "camera=(), microphone=(), geolocation=(), payment=()"
+      }
+    }
+  },
+  "monitoring": {
+    "accessLogs": {
+      "enabled": true,
+      "bucket": "azeebo-cdn-logs-staging",
+      "prefix": "cloudfront/"
+    },
+    "metrics": {
+      "enabled": true,
+      "namespace": "Azeebo/CDN",
+      "dimensions": {
+        "DistributionId": "DIST_ID",
+        "Environment": "staging"
+      }
+    },
+    "alarms": {
+      "highErrorRate": {
+        "enabled": true,
+        "threshold": 100,
+        "period": 300,
+        "evaluationPeriods": 2,
+        "statistic": "Sum",
+        "comparisonOperator": "GreaterThanThreshold"
+      },
+      "highLatency": {
+        "enabled": true,
+        "threshold": 5000,
+        "period": 300,
+        "evaluationPeriods": 2,
+        "statistic": "Average",
+        "comparisonOperator": "GreaterThanThreshold"
+      }
+    }
+  }
+}

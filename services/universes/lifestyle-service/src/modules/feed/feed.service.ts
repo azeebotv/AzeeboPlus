@@ -17,6 +17,92 @@ interface FeedResponse {
   };
 }
 
+interface FeedStory {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  excerpt: string | null;
+  coverImage: string | null;
+  viewCount: number;
+  publishedAt: Date | null;
+  createdAt: Date;
+  category?: { name: string } | null;
+}
+
+interface FeedEvent {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  coverImage: string | null;
+  viewCount: number;
+  publishedAt: Date | null;
+  createdAt: Date;
+  category?: { name: string } | null;
+}
+
+interface FeedCityGuide {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  coverImage: string | null;
+  type: string;
+  viewCount: number;
+  publishedAt: Date | null;
+  createdAt: Date;
+}
+
+interface FeedMusic {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  coverImage: string | null;
+  artistName: string | null;
+  genre: string | null;
+  type: string;
+  playCount: number;
+  publishedAt: Date | null;
+  createdAt: Date;
+}
+
+interface FeedCelebrity {
+  id: string;
+  name: string;
+  slug: string;
+  bio: string | null;
+  coverImage: string | null;
+  profession: string | null;
+  viewCount: number;
+  publishedAt: Date | null;
+  createdAt: Date;
+}
+
+interface FeedNightlife {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  coverImage: string | null;
+  type: string;
+  viewCount: number;
+  publishedAt: Date | null;
+  createdAt: Date;
+}
+
+interface FeedInfluencer {
+  id: string;
+  displayName: string;
+  slug: string;
+  bio: string | null;
+  coverImage: string | null;
+  category: string | null;
+  followerCount: number;
+  createdAt: Date;
+}
+
 @Injectable()
 export class LifestyleFeedService {
   private readonly logger = new Logger(LifestyleFeedService.name);
@@ -31,13 +117,13 @@ export class LifestyleFeedService {
   }
 
   private mapToFeedItems(data: {
-    stories: any[];
-    events: any[];
-    cityGuides: any[];
-    music: any[];
-    celebrities: any[];
-    nightlife: any[];
-    influencers: any[];
+    stories: FeedStory[];
+    events: FeedEvent[];
+    cityGuides: FeedCityGuide[];
+    music: FeedMusic[];
+    celebrities: FeedCelebrity[];
+    nightlife: FeedNightlife[];
+    influencers: FeedInfluencer[];
   }): FeedItem[] {
     return [
       ...data.stories.map((s) => ({
@@ -47,7 +133,10 @@ export class LifestyleFeedService {
         slug: s.slug,
         excerpt: s.excerpt || s.content.substring(0, 150),
         coverImage: s.coverImage || '',
-        authorName: '',
+        authorName: (s as unknown as Record<string, unknown>).author
+          ? (((s as unknown as Record<string, unknown>).author as Record<string, unknown>)
+              .displayName as string) || ''
+          : '',
         categoryName: s.category?.name || 'General',
         viewCount: s.viewCount,
         publishedAt: s.publishedAt?.toISOString() || s.createdAt.toISOString(),
@@ -60,7 +149,10 @@ export class LifestyleFeedService {
         slug: e.slug,
         excerpt: e.description.substring(0, 150),
         coverImage: e.coverImage || '',
-        authorName: '',
+        authorName: (e as unknown as Record<string, unknown>).organizer
+          ? (((e as unknown as Record<string, unknown>).organizer as Record<string, unknown>)
+              .displayName as string) || ''
+          : '',
         categoryName: e.category?.name || 'General',
         viewCount: e.viewCount,
         publishedAt: e.publishedAt?.toISOString() || e.createdAt.toISOString(),
@@ -138,7 +230,6 @@ export class LifestyleFeedService {
     const offset = (page - 1) * limit;
     const cacheKey = `lifestyle:feed:${page}:${limit}:${category || 'all'}`;
 
-    // Try to get from cache first
     try {
       const cached = await this.redisService.get(cacheKey);
       if (cached) {
@@ -149,105 +240,104 @@ export class LifestyleFeedService {
       this.logger.warn('Cache read failed', error);
     }
 
-    // Fetch only the records we need with database-level pagination
-    // Cap per-table fetch to limit to reduce DB load
     const fetchLimit = Math.min(limit, 50);
 
-    const [stories, events, cityGuides, music, celebrities, nightlife, influencers] =
-      await Promise.all([
-        this.prisma.cultureStory.findMany({
-          where: { status: 'published' },
-          include: { category: true },
-          take: fetchLimit,
-          orderBy: { publishedAt: 'desc' },
-        }),
-        this.prisma.event.findMany({
-          where: { status: 'published' },
-          include: { category: true },
-          take: fetchLimit,
-          orderBy: { publishedAt: 'desc' },
-        }),
-        this.prisma.cityGuideEntry.findMany({
-          where: { status: 'published' },
-          include: { tags: true },
-          take: fetchLimit,
-          orderBy: { publishedAt: 'desc' },
-        }),
-        this.prisma.musicEntry.findMany({
-          where: { status: 'published' },
-          take: fetchLimit,
-          orderBy: { publishedAt: 'desc' },
-        }),
-        this.prisma.celebrityEntry.findMany({
-          where: { status: 'published' },
-          take: fetchLimit,
-          orderBy: { publishedAt: 'desc' },
-        }),
-        this.prisma.nightlifeEntry.findMany({
-          where: { status: 'published' },
-          take: fetchLimit,
-          orderBy: { publishedAt: 'desc' },
-        }),
-        this.prisma.influencerEntry.findMany({
-          where: { status: 'published' },
-          take: fetchLimit,
-          orderBy: { createdAt: 'desc' },
-        }),
-      ]);
-
-    const allItems = this.mapToFeedItems({
-      stories,
-      events,
-      cityGuides,
-      music,
-      celebrities,
-      nightlife,
-      influencers,
-    });
-
-    // Sort by published date
-    const sortedItems = allItems.sort(
-      (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-    );
-
-    // Filter by category if provided
-    let filteredItems = sortedItems;
-    if (category) {
-      filteredItems = sortedItems.filter(
-        (item) =>
-          item.categoryName.toLowerCase() === category.toLowerCase() ||
-          item.type.toLowerCase() === category.toLowerCase()
-      );
-    }
-
-    const total = filteredItems.length;
-    const paginatedItems = filteredItems.slice(offset, offset + limit);
-
-    const response: FeedResponse = {
-      success: true,
-      data: {
-        items: paginatedItems,
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
-
-    // Cache the response
     try {
-      await this.redisService.set(cacheKey, JSON.stringify(response), this.cacheTTL);
-    } catch (error) {
-      this.logger.warn('Cache write failed', error);
-    }
+      const [stories, events, cityGuides, music, celebrities, nightlife, influencers] =
+        await Promise.all([
+          this.prisma.cultureStory.findMany({
+            where: { status: 'published' },
+            include: { category: true },
+            take: fetchLimit,
+            orderBy: { publishedAt: 'desc' },
+          }),
+          this.prisma.event.findMany({
+            where: { status: 'published' },
+            include: { category: true },
+            take: fetchLimit,
+            orderBy: { publishedAt: 'desc' },
+          }),
+          this.prisma.cityGuideEntry.findMany({
+            where: { status: 'published' },
+            include: { tags: true },
+            take: fetchLimit,
+            orderBy: { publishedAt: 'desc' },
+          }),
+          this.prisma.musicEntry.findMany({
+            where: { status: 'published' },
+            take: fetchLimit,
+            orderBy: { publishedAt: 'desc' },
+          }),
+          this.prisma.celebrityEntry.findMany({
+            where: { status: 'published' },
+            take: fetchLimit,
+            orderBy: { publishedAt: 'desc' },
+          }),
+          this.prisma.nightlifeEntry.findMany({
+            where: { status: 'published' },
+            take: fetchLimit,
+            orderBy: { publishedAt: 'desc' },
+          }),
+          this.prisma.influencerEntry.findMany({
+            where: { status: 'published' },
+            take: fetchLimit,
+            orderBy: { createdAt: 'desc' },
+          }),
+        ]);
 
-    return response;
+      const allItems = this.mapToFeedItems({
+        stories,
+        events,
+        cityGuides,
+        music,
+        celebrities,
+        nightlife,
+        influencers,
+      });
+
+      const sortedItems = allItems.sort(
+        (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+      );
+
+      let filteredItems = sortedItems;
+      if (category) {
+        filteredItems = sortedItems.filter(
+          (item) =>
+            item.categoryName.toLowerCase() === category.toLowerCase() ||
+            item.type.toLowerCase() === category.toLowerCase()
+        );
+      }
+
+      const total = filteredItems.length;
+      const paginatedItems = filteredItems.slice(offset, offset + limit);
+
+      const response: FeedResponse = {
+        success: true,
+        data: {
+          items: paginatedItems,
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+
+      try {
+        await this.redisService.set(cacheKey, JSON.stringify(response), this.cacheTTL);
+      } catch (error) {
+        this.logger.warn('Cache write failed', error);
+      }
+
+      return response;
+    } catch (error) {
+      this.logger.error(`Failed to fetch feed: ${error}`);
+      return { success: false, data: { items: [], total: 0, page, limit, totalPages: 0 } };
+    }
   }
 
   async getTrending(limit = 10): Promise<FeedResponse> {
     const cacheKey = `lifestyle:trending:${limit}`;
 
-    // Try to get from cache first
     try {
       const cached = await this.redisService.get(cacheKey);
       if (cached) {
@@ -258,80 +348,82 @@ export class LifestyleFeedService {
       this.logger.warn('Cache read failed', error);
     }
 
-    // Fetch only the most viewed items from each category
-    const [stories, events, cityGuides, music, celebrities, nightlife, influencers] =
-      await Promise.all([
-        this.prisma.cultureStory.findMany({
-          where: { status: 'published' },
-          include: { category: true },
-          take: limit * 2,
-          orderBy: { viewCount: 'desc' },
-        }),
-        this.prisma.event.findMany({
-          where: { status: 'published' },
-          include: { category: true },
-          take: limit * 2,
-          orderBy: { viewCount: 'desc' },
-        }),
-        this.prisma.cityGuideEntry.findMany({
-          where: { status: 'published' },
-          include: { tags: true },
-          take: limit * 2,
-          orderBy: { viewCount: 'desc' },
-        }),
-        this.prisma.musicEntry.findMany({
-          where: { status: 'published' },
-          take: limit * 2,
-          orderBy: { playCount: 'desc' },
-        }),
-        this.prisma.celebrityEntry.findMany({
-          where: { status: 'published' },
-          take: limit * 2,
-          orderBy: { viewCount: 'desc' },
-        }),
-        this.prisma.nightlifeEntry.findMany({
-          where: { status: 'published' },
-          take: limit * 2,
-          orderBy: { viewCount: 'desc' },
-        }),
-        this.prisma.influencerEntry.findMany({
-          where: { status: 'published' },
-          take: limit * 2,
-          orderBy: { followerCount: 'desc' },
-        }),
-      ]);
-
-    const allItems = this.mapToFeedItems({
-      stories,
-      events,
-      cityGuides,
-      music,
-      celebrities,
-      nightlife,
-      influencers,
-    });
-
-    // Sort by view count and take top items
-    const trending = allItems.sort((a, b) => b.viewCount - a.viewCount).slice(0, limit);
-
-    const response: FeedResponse = {
-      success: true,
-      data: {
-        items: trending,
-        total: trending.length,
-        page: 1,
-        limit,
-        totalPages: 1,
-      },
-    };
-
-    // Cache the response
     try {
-      await this.redisService.set(cacheKey, JSON.stringify(response), this.cacheTTL);
-    } catch (error) {
-      this.logger.warn('Cache write failed', error);
-    }
+      const [stories, events, cityGuides, music, celebrities, nightlife, influencers] =
+        await Promise.all([
+          this.prisma.cultureStory.findMany({
+            where: { status: 'published' },
+            include: { category: true },
+            take: limit * 2,
+            orderBy: { viewCount: 'desc' },
+          }),
+          this.prisma.event.findMany({
+            where: { status: 'published' },
+            include: { category: true },
+            take: limit * 2,
+            orderBy: { viewCount: 'desc' },
+          }),
+          this.prisma.cityGuideEntry.findMany({
+            where: { status: 'published' },
+            include: { tags: true },
+            take: limit * 2,
+            orderBy: { viewCount: 'desc' },
+          }),
+          this.prisma.musicEntry.findMany({
+            where: { status: 'published' },
+            take: limit * 2,
+            orderBy: { playCount: 'desc' },
+          }),
+          this.prisma.celebrityEntry.findMany({
+            where: { status: 'published' },
+            take: limit * 2,
+            orderBy: { viewCount: 'desc' },
+          }),
+          this.prisma.nightlifeEntry.findMany({
+            where: { status: 'published' },
+            take: limit * 2,
+            orderBy: { viewCount: 'desc' },
+          }),
+          this.prisma.influencerEntry.findMany({
+            where: { status: 'published' },
+            take: limit * 2,
+            orderBy: { followerCount: 'desc' },
+          }),
+        ]);
 
-    return response;
+      const allItems = this.mapToFeedItems({
+        stories,
+        events,
+        cityGuides,
+        music,
+        celebrities,
+        nightlife,
+        influencers,
+      });
+
+      const trending = allItems.sort((a, b) => b.viewCount - a.viewCount).slice(0, limit);
+
+      const response: FeedResponse = {
+        success: true,
+        data: {
+          items: trending,
+          total: trending.length,
+          page: 1,
+          limit,
+          totalPages: 1,
+        },
+      };
+
+      try {
+        await this.redisService.set(cacheKey, JSON.stringify(response), this.cacheTTL);
+      } catch (error) {
+        this.logger.warn('Cache write failed', error);
+      }
+
+      return response;
+    } catch (error) {
+      this.logger.error(`Failed to fetch trending: ${error}`);
+      return { success: false, data: { items: [], total: 0, page: 1, limit, totalPages: 0 } };
+    }
   }
 }

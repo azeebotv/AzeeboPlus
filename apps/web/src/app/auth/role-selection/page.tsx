@@ -69,7 +69,7 @@ export default function RoleSelectionPage(): React.JSX.Element {
   return (
     <div
       className="relative min-h-screen w-full overflow-hidden p-6 sm:p-10"
-      style={{ backgroundColor: '#1A0A0A' }}
+      style={{ backgroundColor: 'var(--brand-near-black)' }}
     >
       {/* Lagos-at-night blurred ambient background */}
       <div

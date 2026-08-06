@@ -1,0 +1,141 @@
+'use client';
+import { Suspense, lazy, useEffect } from 'react';
+
+export const metadata = {
+  title: 'Influencer Profile | Azeebo',
+  description: 'View influencer profile, content, and exclusive updates on Azeebo.',
+  openGraph: {
+    title: 'Influencer Profile | Azeebo',
+    description: 'View influencer profile, content, and exclusive updates on Azeebo.',
+  },
+};
+import { useQuery } from '@tanstack/react-query';
+import { useParams } from 'next/navigation';
+import { Skeleton, ErrorState } from '@azeebo/ui/web';
+import Link from 'next/link';
+import { api, ContentItem } from '@/lib/api';
+import AppHeader from '@/components/layout/AppHeader';
+import AppFooter from '@/components/layout/AppFooter';
+import { OptimizedImage } from '@/components/OptimizedImage';
+import analytics from '@/lib/analytics';
+
+function InfluencerDetailContent(): React.JSX.Element {
+  const params = useParams();
+  const id = params.id as string;
+
+  useEffect(() => {
+    analytics.pageView('lifestyle-influencer-detail');
+  }, []);
+
+  const {
+    data: influencer,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['influencer', id],
+    queryFn: async (): Promise<ContentItem | null> => {
+      const res = await api.request<ContentItem>(`/api/v1/content/${id}`);
+      return (res.success ? res.data : null) as ContentItem | null;
+    },
+    staleTime: 60000,
+    enabled: !!id,
+  });
+
+  return (
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
+      <AppHeader active="Lifestyle" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+        <Link
+          href="/lifestyle/influencers"
+          className="text-sm text-white/40 hover:text-white/60 transition-colors mb-6 inline-block"
+        >
+          ← Back to Influencers
+        </Link>
+
+        {isLoading ? (
+          <div className="space-y-6">
+            <Skeleton height="400px" borderRadius="0px" />
+            <Skeleton height="40px" width="50%" />
+            <Skeleton height="20px" width="80%" />
+            <Skeleton height="20px" width="60%" />
+          </div>
+        ) : error ? (
+          <ErrorState
+            title="Failed to load influencer"
+            description={error.message}
+            onButtonPress={() => refetch()}
+          />
+        ) : influencer ? (
+          <div>
+            <div className="relative h-[400px] mb-8">
+              <OptimizedImage
+                src={influencer.thumbnail}
+                alt={influencer.title}
+                fill
+                className="object-cover rounded-lg"
+                priority
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-transparent to-transparent rounded-lg" />
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4">{influencer?.title}</h1>
+            <span
+              className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-6"
+              style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
+            >
+              {influencer?.contentType || 'Influencer'}
+            </span>
+            <p className="text-white/60 text-lg leading-relaxed mb-8">{influencer?.description}</p>
+            <div className="flex items-center gap-4">
+              <Link
+                href={`/watch/${influencer?.id}`}
+                className="az-btn-primary"
+                style={{
+                  width: 'auto',
+                  paddingInline: '2rem',
+                  display: 'inline-block',
+                  textAlign: 'center',
+                }}
+              >
+                Watch Now
+              </Link>
+              <Link
+                href="/lifestyle/influencers"
+                className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all inline-block"
+                style={{
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  backgroundColor: 'rgba(255,255,255,0.08)',
+                }}
+              >
+                View More Influencers
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-lg text-white/50">Influencer not found</p>
+          </div>
+        )}
+      </div>
+
+      <AppFooter />
+    </div>
+  );
+}
+
+const LazyInfluencerDetail = lazy(() => Promise.resolve({ default: InfluencerDetailContent }));
+
+export default function InfluencerDetailPage(): React.JSX.Element {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
+      <LazyInfluencerDetail />
+    </Suspense>
+  );
+}

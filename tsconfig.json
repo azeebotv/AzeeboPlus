@@ -137,6 +137,9 @@
     "apps/mobile/e2e/**",
     "apps/mobile/app/**",
     "apps/mobile/src/**",
-    "services/gateway/api-gateway/src/app.e2e-spec.ts"
+    "services/gateway/api-gateway/src/app.e2e-spec.ts",
+    "apps/admin/client/**",
+    "apps/creator/client/**",
+    "prisma/seed/**"
   ]
 }

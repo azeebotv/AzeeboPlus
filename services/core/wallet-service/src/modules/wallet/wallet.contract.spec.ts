@@ -30,6 +30,7 @@ class MockAdminGuard {
 }
 
 const mockWalletService = {
+  getWalletIdByUserId: jest.fn().mockResolvedValue('wallet-123'),
   getBalance: jest.fn().mockResolvedValue({
     success: true,
     data: {

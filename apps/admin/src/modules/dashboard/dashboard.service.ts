@@ -170,20 +170,25 @@ export class DashboardService {
   }
 
   async getTopCreators(limit = 10): Promise<TopCreatorItem[]> {
-    const creators = await this.prisma.$queryRawUnsafe<
-      { id: string; displayName: string; avatar: string | null; contentCount: bigint; totalViews: bigint }[]
-    >(
-      `SELECT u.id, u."displayName", u.avatar,
+    const creators = await this.prisma.$queryRaw<
+      {
+        id: string;
+        displayName: string;
+        avatar: string | null;
+        contentCount: bigint;
+        totalViews: bigint;
+      }[]
+    >`
+      SELECT u.id, u."displayName", u.avatar,
               COUNT(DISTINCT ci.id) as "contentCount",
               COALESCE(SUM(ci."viewCount"), 0) as "totalViews"
-       FROM "User" u
-       LEFT JOIN "ContentItem" ci ON ci."creatorId" = u.id AND ci.status = 'published'
+       FROM "users" u
+       LEFT JOIN "content_items" ci ON ci."creatorId" = u.id AND ci.status = 'published'
        WHERE u.role = 'creator'
        GROUP BY u.id, u."displayName", u.avatar
        ORDER BY "totalViews" DESC
-       LIMIT $1`,
-      limit
-    );
+       LIMIT ${limit}
+    `;
 
     return creators.map((c) => ({
       id: c.id,

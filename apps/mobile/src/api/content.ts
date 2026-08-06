@@ -203,7 +203,9 @@ export const contentApi = {
     });
   },
 
-  getContentList: async (params: { page?: number; limit?: number } = {}): Promise<ApiResponse<PaginatedResponse<ContentItem>>> => {
+  getContentList: async (
+    params: { page?: number; limit?: number } = {}
+  ): Promise<ApiResponse<PaginatedResponse<ContentItem>>> => {
     const searchParams = new URLSearchParams();
     if (params.page) searchParams.append('page', params.page.toString());
     if (params.limit) searchParams.append('limit', params.limit.toString());
@@ -214,7 +216,9 @@ export const contentApi = {
   },
 
   getFeaturedSlides: async (limit = 5): Promise<ApiResponse<ContentItem[]>> => {
-    return apiClient.get<ApiResponse<ContentItem[]>>(`/api/v1/content/featured-slides?limit=${limit}`);
+    return apiClient.get<ApiResponse<ContentItem[]>>(
+      `/api/v1/content/featured-slides?limit=${limit}`
+    );
   },
 
   getNewReleases: async (limit = 12): Promise<ApiResponse<ContentItem[]>> => {
@@ -222,7 +226,9 @@ export const contentApi = {
   },
 
   getPopularInRegion: async (limit = 12): Promise<ApiResponse<ContentItem[]>> => {
-    return apiClient.get<ApiResponse<ContentItem[]>>(`/api/v1/content/popular-region?limit=${limit}`);
+    return apiClient.get<ApiResponse<ContentItem[]>>(
+      `/api/v1/content/popular-region?limit=${limit}`
+    );
   },
 
   getSavedContent: async (
@@ -338,10 +344,12 @@ export const contentApi = {
     return apiClient.get<ApiResponse<CreatorProfile>>(`/api/v1/creator/profile/${creatorId}`);
   },
 
-  getSignedUrl: async (contentId: string): Promise<ApiResponse<{ signedUrl: string; expiresIn: number; mediaAssetId: string }>> => {
-    return apiClient.get<ApiResponse<{ signedUrl: string; expiresIn: number; mediaAssetId: string }>>(
-      `/api/v1/content/${contentId}/media/signed-url`
-    );
+  getSignedUrl: async (
+    contentId: string
+  ): Promise<ApiResponse<{ signedUrl: string; expiresIn: number; mediaAssetId: string }>> => {
+    return apiClient.get<
+      ApiResponse<{ signedUrl: string; expiresIn: number; mediaAssetId: string }>
+    >(`/api/v1/content/${contentId}/media/signed-url`);
   },
 
   getRecommendations: async (type?: string): Promise<ApiResponse<Recommendation[]>> => {
@@ -361,5 +369,57 @@ export const contentApi = {
     isPremium?: boolean;
   }): Promise<ApiResponse<ContentItem>> => {
     return apiClient.post<ApiResponse<ContentItem>>('/api/v1/content', data);
+  },
+
+  createContentWithFile: async (data: {
+    title: string;
+    description?: string;
+    universe: string;
+    contentType: string;
+    fileUri: string;
+    fileType: string;
+    fileName: string;
+  }): Promise<ApiResponse<{ id: string }>> => {
+    const formData = new FormData();
+    formData.append('title', data.title);
+    if (data.description) formData.append('description', data.description);
+    formData.append('universeId', data.universe);
+    formData.append('contentType', data.contentType);
+    formData.append('file', {
+      uri: data.fileUri,
+      type: data.fileType,
+      name: data.fileName,
+    } as unknown as Blob);
+    return apiClient.upload<ApiResponse<{ id: string }>>('/api/v1/content', formData);
+  },
+
+  uploadFile: async (
+    contentId: string,
+    fileUri: string,
+    fileType: string,
+    fileName: string
+  ): Promise<ApiResponse<{ id: string }>> => {
+    const formData = new FormData();
+    formData.append('file', {
+      uri: fileUri,
+      type: fileType,
+      name: fileName,
+    } as unknown as Blob);
+    return apiClient.upload<ApiResponse<{ id: string }>>(
+      `/api/v1/content/${contentId}/media`,
+      formData
+    );
+  },
+
+  updateContent: async (
+    contentId: string,
+    data: Partial<{
+      title: string;
+      description: string;
+      isPremium: boolean;
+      tags: string[];
+    }>
+  ): Promise<ApiResponse<ContentItem>> => {
+    return apiClient.patch<ApiResponse<ContentItem>>(`/api/v1/content/${contentId}`, data);
   },
 };

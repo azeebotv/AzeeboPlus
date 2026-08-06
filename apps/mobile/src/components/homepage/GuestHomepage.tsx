@@ -104,7 +104,7 @@ export default function GuestHomepage() {
           accessibilityLabel={t('home.installNow')}
           accessibilityRole="button"
         >
-          <Ionicons name="arrow-up-circle" size={18} color="#1A0A0A" />
+          <Ionicons name="arrow-up-circle" size={18} color={colors.bg.primary} />
           <Text style={styles.updateBannerText}>{t('home.newUpdate')}</Text>
           <Text style={styles.updateBannerLink}>{t('home.installNow')}</Text>
         </Pressable>

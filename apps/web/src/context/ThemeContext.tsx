@@ -21,14 +21,24 @@ function resolveTheme(t: Theme): 'light' | 'dark' {
   return t;
 }
 
+function getInitialTheme(): Theme {
+  if (typeof window === 'undefined') return 'system';
+  try {
+    const stored = localStorage.getItem('theme') as Theme | null;
+    return stored || 'system';
+  } catch {
+    return 'system';
+  }
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('system');
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');
-  const themeRef = useRef<Theme>('system');
+  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() =>
+    resolveTheme(getInitialTheme())
+  );
+  const themeRef = useRef<Theme>(getInitialTheme());
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
     const stored = localStorage.getItem('theme') as Theme | null;
     const initialTheme = stored || 'system';
     setThemeState(initialTheme);

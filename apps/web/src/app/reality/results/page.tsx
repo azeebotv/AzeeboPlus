@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '../../../lib/api';
 import { webLogger } from '../../../lib/logger';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
@@ -61,7 +62,7 @@ export default function ResultsPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
         <AppHeader />
         <div
           className="flex items-center justify-center"
@@ -70,7 +71,10 @@ export default function ResultsPage(): React.JSX.Element {
           <div className="text-center">
             <div
               className="animate-spin rounded-full h-12 w-12 mx-auto"
-              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }}
+              style={{
+                border: '3px solid rgba(255,255,255,0.1)',
+                borderTopColor: 'var(--brand-orange)',
+              }}
             />
             <p className="mt-4 text-white/60">Loading results...</p>
           </div>
@@ -80,7 +84,7 @@ export default function ResultsPage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader />
       <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
@@ -122,7 +126,7 @@ export default function ResultsPage(): React.JSX.Element {
                     ? {
                         border: '1px solid rgba(255,255,255,0.2)',
                         backgroundColor: 'rgba(255,255,255,0.08)',
-                        color: '#fff',
+                        color: 'var(--brand-white)',
                       }
                     : undefined
                 }
@@ -151,13 +155,18 @@ export default function ResultsPage(): React.JSX.Element {
                 className="az-glass p-6 mb-6"
                 style={{ border: '2px solid rgba(234,179,8,0.5)' }}
               >
-                <h3 className="text-lg font-bold mb-4" style={{ color: '#EAB308' }}>
+                <h3
+                  className="text-lg font-bold mb-4"
+                  style={{ color: 'var(--color-warning-400)' }}
+                >
                   🏆 Winner
                 </h3>
                 <div className="flex items-center gap-4">
-                  <img
+                  <OptimizedImage
                     src={selectedResult.winner.avatar}
                     alt={selectedResult.winner.name}
+                    width={80}
+                    height={80}
                     className="w-20 h-20 rounded-full object-cover"
                   />
                   <div>
@@ -180,9 +189,11 @@ export default function ResultsPage(): React.JSX.Element {
               >
                 <h3 className="text-lg font-bold text-red-500 mb-4">🚪 Evicted</h3>
                 <div className="flex items-center gap-4 opacity-70">
-                  <img
+                  <OptimizedImage
                     src={selectedResult.evicted.avatar}
                     alt={selectedResult.evicted.name}
+                    width={80}
+                    height={80}
                     className="w-20 h-20 rounded-full object-cover"
                   />
                   <div>
@@ -220,9 +231,11 @@ export default function ResultsPage(): React.JSX.Element {
                       >
                         <span className="text-white font-bold">#{contestant.rank}</span>
                       </div>
-                      <img
+                      <OptimizedImage
                         src={contestant.avatar}
                         alt={contestant.name}
+                        width={56}
+                        height={56}
                         className="w-14 h-14 rounded-full object-cover"
                       />
                       <div className="flex-1">

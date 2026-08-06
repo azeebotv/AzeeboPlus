@@ -5,7 +5,13 @@ import AppFooter from '@/components/layout/AppFooter';
 
 export default function UnauthorizedPage(): React.JSX.Element {
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <main
         style={{
@@ -34,7 +40,7 @@ export default function UnauthorizedPage(): React.JSX.Element {
             🔒
           </div>
           <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 12 }}>Unauthorized</h1>
-          <p style={{ color: '#9A8A7A', marginBottom: 32, lineHeight: 1.6 }}>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: 32, lineHeight: 1.6 }}>
             You need to be logged in to access this page. Please sign in to continue.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
@@ -43,8 +49,9 @@ export default function UnauthorizedPage(): React.JSX.Element {
               style={{
                 padding: '14px 32px',
                 borderRadius: 999,
-                background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                color: '#fff',
+                background:
+                  'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+                color: 'var(--brand-white)',
                 fontWeight: 700,
                 fontSize: 16,
                 textDecoration: 'none',
@@ -57,9 +64,9 @@ export default function UnauthorizedPage(): React.JSX.Element {
               style={{
                 padding: '14px 32px',
                 borderRadius: 999,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--border-default)',
                 background: 'transparent',
-                color: '#9A8A7A',
+                color: 'var(--text-secondary)',
                 fontWeight: 600,
                 fontSize: 16,
                 textDecoration: 'none',

@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../prisma/client/index.js';
 import { RealityResponse } from './interfaces/reality-response.interface.js';
 import axios from 'axios';
 import { randomUUID } from 'crypto';
@@ -48,16 +48,16 @@ export class RealityService {
     this.voteCost = this.configService.get<number>('VOTE_COST', 1);
   }
 
-  private async trackAnalyticsEvent(
+  private async trackEvent(
     eventName: string,
     userId: string,
-    metadata: Record<string, unknown>
+    metadata: Record<string, unknown> = {}
   ): Promise<void> {
     try {
       await axios.post(
-        `${this.analyticsServiceBaseUrl}/analytics/track`,
+        `${this.analyticsServiceBaseUrl}/v1/analytics/events`,
         {
-          eventName,
+          type: eventName,
           userId,
           universe: 'reality',
           metadata,
@@ -292,7 +292,7 @@ export class RealityService {
       this.cache.invalidate(`reality:contestants:${showId}`),
       this.cache.invalidate('reality:shows:list'),
     ]);
-    await this.trackAnalyticsEvent('vote_submitted', userId, {
+    await this.trackEvent('vote_submitted', userId, {
       voteId: vote.id,
       contestantId,
       showId,
@@ -371,7 +371,7 @@ export class RealityService {
         this.cache.invalidate(`reality:contestants:${showId}`),
         this.cache.invalidate('reality:shows:list'),
       ]);
-      await this.trackAnalyticsEvent('supervote_submitted', userId, {
+      await this.trackEvent('supervote_submitted', userId, {
         supervoteId: supervote.id,
         contestantId,
         showId,
@@ -424,7 +424,7 @@ export class RealityService {
       },
     });
 
-    await this.trackAnalyticsEvent('prediction_placed', userId, {
+    await this.trackEvent('prediction_placed', userId, {
       predictionId: predictionRecord.id,
       showId,
       predictionType: Object.keys(prediction)[0] || 'unknown',
@@ -455,6 +455,67 @@ export class RealityService {
       data: {
         predictions,
         userPrediction,
+      },
+    };
+  }
+
+  async listVotesForShow(showId: string, page: number, limit: number): Promise<RealityResponse> {
+    const skip = (page - 1) * limit;
+
+    const [votes, total] = await Promise.all([
+      this.prisma.vote.findMany({
+        where: { showId },
+        include: {
+          contestant: { select: { id: true, name: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.vote.count({ where: { showId } }),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        votes: votes as unknown,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
+    };
+  }
+
+  async listPredictionsForShow(
+    showId: string,
+    page: number,
+    limit: number
+  ): Promise<RealityResponse> {
+    const skip = (page - 1) * limit;
+
+    const [predictions, total] = await Promise.all([
+      this.prisma.prediction.findMany({
+        where: { showId },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.prediction.count({ where: { showId } }),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        predictions: predictions as unknown,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
       },
     };
   }
@@ -548,7 +609,7 @@ export class RealityService {
         this.cache.invalidate(`reality:contestants:${showId}`),
         this.cache.invalidate('reality:shows:list'),
       ]);
-      await this.trackAnalyticsEvent('vote_submitted', userId, {
+      await this.trackEvent('vote_submitted', userId, {
         voteId: vote.id,
         contestantId,
         showId,
@@ -681,7 +742,7 @@ export class RealityService {
         },
       });
 
-      await this.trackAnalyticsEvent('premium_extra_purchased', userId, {
+      await this.trackEvent('premium_extra_purchased', userId, {
         purchaseId: idempotencyKey,
         extraId,
         extraName: extra.name,
@@ -1064,6 +1125,30 @@ export class RealityService {
     };
   }
 
+  async getEpisode(episodeId: string): Promise<RealityResponse> {
+    const episode = await this.prisma.episode.findUnique({
+      where: { id: episodeId },
+      include: {
+        show: true,
+        _count: {
+          select: {
+            votes: true,
+            predictions: true,
+          },
+        },
+      },
+    });
+
+    if (!episode) {
+      throw new NotFoundException('Episode not found');
+    }
+
+    return {
+      success: true,
+      data: { episode: episode as unknown },
+    };
+  }
+
   async createSeason(
     showId: string,
     data: { title: string; number: number; description?: string; startDate?: Date; endDate?: Date }
@@ -1103,7 +1188,7 @@ export class RealityService {
     const pointsEarned = votes + supervotes * 10;
 
     if (pointsEarned > 0) {
-      await this.trackAnalyticsEvent('reward_earned', userId, {
+      await this.trackEvent('reward_earned', userId, {
         showId,
         pointsEarned,
         votes,
@@ -1308,6 +1393,138 @@ export class RealityService {
         supervoteFraudRisk: supervoteRisk,
         predictionFraudRisk: predictionRisk,
         recommendations,
+      },
+    };
+  }
+
+  // Social Features
+
+  async likeShow(userId: string, showId: string): Promise<RealityResponse> {
+    const show = await this.prisma.realityShow.findUnique({ where: { id: showId } });
+    if (!show) {
+      throw new NotFoundException('Show not found');
+    }
+
+    const existingLike = await this.prisma.showLike.findUnique({
+      where: { userId_showId: { userId, showId } },
+    });
+
+    if (existingLike) {
+      await this.prisma.showLike.delete({
+        where: { id: existingLike.id },
+      });
+
+      await this.trackEvent('show_unliked', userId, { showId });
+
+      return {
+        success: true,
+        data: { liked: false, message: 'Show unliked successfully' },
+      };
+    }
+
+    await this.prisma.showLike.create({
+      data: { userId, showId },
+    });
+
+    await this.trackEvent('show_liked', userId, { showId });
+
+    return {
+      success: true,
+      data: { liked: true, message: 'Show liked successfully' },
+    };
+  }
+
+  async getLikeCount(showId: string): Promise<RealityResponse> {
+    const show = await this.prisma.realityShow.findUnique({ where: { id: showId } });
+    if (!show) {
+      throw new NotFoundException('Show not found');
+    }
+
+    const count = await this.prisma.showLike.count({ where: { showId } });
+
+    return {
+      success: true,
+      data: { showId, likeCount: count },
+    };
+  }
+
+  async addComment(userId: string, showId: string, content: string): Promise<RealityResponse> {
+    const show = await this.prisma.realityShow.findUnique({ where: { id: showId } });
+    if (!show) {
+      throw new NotFoundException('Show not found');
+    }
+
+    const comment = await this.prisma.showComment.create({
+      data: { userId, showId, content },
+    });
+
+    await this.trackEvent('comment_added', userId, {
+      showId,
+      commentId: comment.id,
+    });
+
+    return {
+      success: true,
+      data: {
+        comment,
+        message: 'Comment added successfully',
+      },
+    };
+  }
+
+  async getComments(showId: string, page: number, limit: number): Promise<RealityResponse> {
+    const show = await this.prisma.realityShow.findUnique({ where: { id: showId } });
+    if (!show) {
+      throw new NotFoundException('Show not found');
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [comments, total] = await Promise.all([
+      this.prisma.showComment.findMany({
+        where: { showId },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.showComment.count({ where: { showId } }),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        comments,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
+    };
+  }
+
+  async shareShow(userId: string, showId: string, platform?: string): Promise<RealityResponse> {
+    const show = await this.prisma.realityShow.findUnique({ where: { id: showId } });
+    if (!show) {
+      throw new NotFoundException('Show not found');
+    }
+
+    const share = await this.prisma.showShare.create({
+      data: { userId, showId, platform },
+    });
+
+    await this.trackEvent('show_shared', userId, {
+      showId,
+      shareId: share.id,
+      platform,
+    });
+
+    return {
+      success: true,
+      data: {
+        shareId: share.id,
+        message: 'Show shared successfully',
       },
     };
   }

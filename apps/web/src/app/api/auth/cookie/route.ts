@@ -28,10 +28,7 @@ export async function POST(request: NextRequest) {
 
   // Validate token is a properly formatted, non-expired JWT
   if (!isValidJwt(token)) {
-    return NextResponse.json(
-      { success: false, error: 'Invalid token format' },
-      { status: 400 }
-    );
+    return NextResponse.json({ success: false, error: 'Invalid token format' }, { status: 400 });
   }
 
   const response = NextResponse.json({ success: true });

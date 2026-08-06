@@ -63,7 +63,7 @@ export class FilmmakerService {
     return {
       id: project.id as string,
       filmmakerId: project.filmmakerId as string,
-      filmmakerName: (project.filmmakerName as string) || '', // TODO: fetch filmmaker profile name from creator-service
+      filmmakerName: (project.filmmakerName as string) || '',
       title: project.title as string,
       description: (project.description as string) || '',
       thumbnail: (project.thumbnail as string) || '',
