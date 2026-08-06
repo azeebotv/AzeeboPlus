@@ -131,20 +131,73 @@ jobs:
           sleep 300
 
           echo "==> Testing health endpoint..."
+          HEALTH_OK=""
           for i in $(seq 1 30); do
             if curl -sf http://localhost:3013/health > /dev/null 2>&1; then
               echo "✅ Health endpoint OK"
-              docker logs smoke-test 2>&1 | tail -20
-              docker stop smoke-test
-              docker rm smoke-test
-              exit 0
+              HEALTH_OK=1
+              break
             fi
             echo "⏳ Attempt $i/30 — retrying in 10s..."
             sleep 10
           done
+          if [ -z "$HEALTH_OK" ]; then
+            echo "❌ Health check failed after 30 attempts"
+            docker logs smoke-test 2>&1 | tail -50
+            docker stop smoke-test
+            docker rm smoke-test
+            exit 1
+          fi
 
-          echo "❌ Health check failed after 30 attempts"
-          docker logs smoke-test 2>&1 | tail -50
+      - name: Test API traffic through gateway
+        run: |
+          BASE="http://localhost:3013"
+          EMAIL="smoke.$(date +%s)@azeebotv.dev"
+          PASS="SmokeTest!2026"
+          fail() {
+            echo "❌ $1"
+            cat /tmp/smoke.out 2>/dev/null || true
+            echo "--- container logs (tail) ---"
+            docker logs smoke-test 2>&1 | tail -30
+            docker stop smoke-test > /dev/null
+            docker rm smoke-test > /dev/null
+            exit 1
+          }
+
+          echo "==> Testing public signup (POST /v1/auth/signup)..."
+          CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" -X POST "$BASE/v1/auth/signup" \
+            -H 'Content-Type: application/json' \
+            -d "{\"email\":\"$EMAIL\",\"password\":\"$PASS\",\"displayName\":\"Smoke Test\"}")
+          [ "$CODE" = "201" ] || fail "signup returned $CODE (expected 201)"
+          echo "✅ signup 201"
+
+          echo "==> Testing login (POST /v1/auth/login)..."
+          CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" -X POST "$BASE/v1/auth/login" \
+            -H 'Content-Type: application/json' \
+            -d "{\"email\":\"$EMAIL\",\"password\":\"$PASS\"}")
+          [ "$CODE" = "200" ] || fail "login returned $CODE (expected 200)"
+          TOKEN=$(jq -r '.data.access_token' /tmp/smoke.out)
+          [ -n "$TOKEN" ] && [ "$TOKEN" != "null" ] || fail "login response missing access_token"
+          echo "✅ login 200 + token"
+
+          echo "==> Testing authenticated profile (GET /v1/auth/me)..."
+          CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" "$BASE/v1/auth/me" \
+            -H "Authorization: Bearer $TOKEN")
+          [ "$CODE" = "200" ] || fail "auth/me returned $CODE (expected 200)"
+          echo "✅ auth/me 200"
+
+          echo "==> Testing cross-service user profile (GET /v1/users/me)..."
+          CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" "$BASE/v1/users/me" \
+            -H "Authorization: Bearer $TOKEN")
+          [ "$CODE" = "200" ] || fail "users/me returned $CODE (expected 200)"
+          echo "✅ users/me 200"
+
+          echo "==> Testing public content feed (GET /v1/content/home)..."
+          CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" "$BASE/v1/content/home")
+          [ "$CODE" = "200" ] || fail "content/home returned $CODE (expected 200)"
+          echo "✅ content/home 200"
+
+          echo "✅ All API traffic checks passed"
+          docker logs smoke-test 2>&1 | tail -20
           docker stop smoke-test
           docker rm smoke-test
-          exit 1
