@@ -531,6 +531,13 @@ JWT_ACCESS_SECRET="${JWT_ACCESS_SECRET:-$(openssl rand -hex 64)}"
 JWT_REFRESH_SECRET="${JWT_REFRESH_SECRET:-$(openssl rand -hex 64)}"
 GATEWAY_SECRET="${GATEWAY_SECRET:-$(openssl rand -hex 32)}"
 WEBHOOK_SECRET="${WEBHOOK_SECRET:-$(openssl rand -hex 32)}"
+# Sanitize injected secrets: http header values cannot contain CR/LF.
+# `openssl rand -base64` wraps at 64 columns, which would embed newlines
+# into header-based secrets (x-gateway-secret) and break every proxied request.
+JWT_ACCESS_SECRET="$(printf '%s' "$JWT_ACCESS_SECRET" | tr -d '\r\n')"
+JWT_REFRESH_SECRET="$(printf '%s' "$JWT_REFRESH_SECRET" | tr -d '\r\n')"
+GATEWAY_SECRET="$(printf '%s' "$GATEWAY_SECRET" | tr -d '\r\n')"
+WEBHOOK_SECRET="$(printf '%s' "$WEBHOOK_SECRET" | tr -d '\r\n')"
 # In all-in-one mode, localhost origins are expected for inter-service communication
 ALLOWED_ORIGINS="${ALLOWED_ORIGINS:-https://app.azeeboplus.com,https://admin.azeeboplus.com,https://creator.azeeboplus.com}"
 REDIS_URL_VAL="redis://:${REDIS_PASSWORD}@127.0.0.1:6379"
