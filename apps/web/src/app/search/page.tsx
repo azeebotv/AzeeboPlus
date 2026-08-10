@@ -6,6 +6,7 @@ import { apiFetch, api } from '../../lib/api';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
+import analytics from '@/lib/analytics';
 
 interface SearchResult {
   id: string;
@@ -17,6 +18,9 @@ interface SearchResult {
   creator?: { name: string };
   universe?: { name: string; icon?: string };
   type?: string;
+  /** Fuzzy relevance (0–1) from the search-service — present only on
+   * typo-tolerant (search_typo_tolerance) results; drives the rank badge. */
+  score?: number;
 }
 
 interface Category {
@@ -38,8 +42,33 @@ interface HistoryItem {
   timestamp: Date;
 }
 
-interface SearchResponse {
-  results?: SearchResult[];
+/** Shape of the search-service universal search response (via /v1/search). */
+interface UniversalSearchContent {
+  id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  viewCount: number;
+  createdAt: string;
+  updatedAt: string;
+  contentType?: string;
+  universe?: string;
+  thumbnail?: string;
+  duration?: number;
+  score?: number;
+}
+
+interface UniversalSearchResponse {
+  query?: string;
+  /** 'Did you mean' hint: best-scoring content title when the top match is a
+   * typo-correction (score < 0.85). Present only on fuzzy (typo-tolerant)
+   * searches. */
+  suggestedQuery?: string;
+  results?: {
+    content: UniversalSearchContent[];
+    creators: unknown[];
+    universes: unknown[];
+  };
 }
 
 interface SuggestionsResponse {
@@ -59,8 +88,12 @@ export default function SearchPage(): React.JSX.Element {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [searchHistory, setSearchHistory] = useState<HistoryItem[]>([]);
+  const [suggestedQuery, setSuggestedQuery] = useState<string | undefined>(undefined);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+  // Guards the correction-impression event so it fires once per suggestion
+  // (not on every re-render); pairs with the accepted event for the rate.
+  const trackedSuggestionRef = useRef<string | null>(null);
 
   const categoriesQuery = useQuery<Category[]>({
     queryKey: ['categories'],
@@ -89,6 +122,13 @@ export default function SearchPage(): React.JSX.Element {
   }, []);
 
   useEffect(() => {
+    if (suggestedQuery && trackedSuggestionRef.current !== suggestedQuery) {
+      trackedSuggestionRef.current = suggestedQuery;
+      analytics.contentSearchCorrectionShown(activeQuery, suggestedQuery);
+    }
+  }, [suggestedQuery, activeQuery]);
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent): void => {
       if (suggestionsRef.current && !suggestionsRef.current.contains(event.target as Node)) {
         setShowSuggestions(false);
@@ -102,19 +142,31 @@ export default function SearchPage(): React.JSX.Element {
     queryKey: ['search', activeQuery, filters],
     queryFn: async () => {
       if (!activeQuery.trim()) return [];
-      const params = new URLSearchParams({
-        q: activeQuery,
-        type: filters.type,
-        category: filters.category,
-        duration: filters.duration,
-        sortBy: filters.sortBy,
+      // Universal search (search-service): fuzzy typo-tolerant matching with
+      // per-result relevance scores and a 'did you mean' hint. The whole page
+      // runs on this endpoint — thumbnails, duration, type, and universe come
+      // from the indexed content_items. Type/category/duration are filtered
+      // client-side; only sort is pushed to the API.
+      const params = new URLSearchParams({ q: activeQuery });
+      if (filters.sortBy === 'date') params.set('sort', 'newest');
+      else if (filters.sortBy === 'rating') params.set('sort', 'rating');
+      else if (filters.sortBy === 'views') params.set('sort', 'popular');
+      const response = await apiFetch<UniversalSearchResponse>(`/v1/search?${params.toString()}`);
+      setSuggestedQuery((prev) => {
+        const next = response.data?.suggestedQuery;
+        return prev === next ? prev : next;
       });
-      const response = await apiFetch<SearchResponse | SearchResult[]>(
-        `/v1/content/search?${params.toString()}`
-      );
-      if (response.success && response.data) {
-        const data = response.data;
-        return Array.isArray(data) ? data : (data as SearchResponse).results || [];
+      if (response.success && response.data?.results?.content) {
+        return response.data.results.content.map((item) => ({
+          id: item.id,
+          title: item.title,
+          description: item.description ?? undefined,
+          thumbnail: item.thumbnail ?? undefined,
+          duration: item.duration ?? undefined,
+          type: item.contentType,
+          universe: item.universe ? { name: item.universe } : undefined,
+          score: item.score,
+        }));
       }
       return [];
     },
@@ -156,6 +208,7 @@ export default function SearchPage(): React.JSX.Element {
     setActiveQuery(searchQuery);
     setHasSearched(true);
     setShowSuggestions(false);
+    setSuggestedQuery(undefined); // cleared until the new response reports one
     const newHistoryItem = { query: searchQuery, timestamp: new Date() };
     setSearchHistory((prev) => {
       const updated = [newHistoryItem, ...prev.filter((item) => item.query !== searchQuery)].slice(
@@ -475,6 +528,26 @@ export default function SearchPage(): React.JSX.Element {
           </div>
         )}
 
+        {/* Did-you-mean banner: the search-service flags a typo-correction
+            when the best fuzzy match scores below the decisive anchor. */}
+        {suggestedQuery && suggestedQuery !== activeQuery && (
+          <div className="mb-4 az-glass px-4 py-3 flex items-center gap-2 text-sm">
+            <span className="text-white/60">Did you mean</span>
+            <button
+              type="button"
+              onClick={() => {
+                analytics.contentSearchCorrectionAccepted(activeQuery, suggestedQuery);
+                setQuery(suggestedQuery);
+                handleSearch(suggestedQuery);
+              }}
+              className="font-bold text-[#E8420A] hover:underline cursor-pointer"
+            >
+              {suggestedQuery}
+            </button>
+            <span className="text-white/30 text-xs ml-auto hidden sm:inline">Click to search</span>
+          </div>
+        )}
+
         {/* Results */}
         <div role="region" aria-label="Search results" aria-live="polite">
           {isLoading ? (
@@ -524,9 +597,23 @@ export default function SearchPage(): React.JSX.Element {
                     )}
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-bold text-white text-sm group-hover:text-[#E8420A] transition-colors">
-                      {result.title}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-white text-sm group-hover:text-[#E8420A] transition-colors">
+                        {result.title}
+                      </h3>
+                      {typeof result.score === 'number' && (
+                        <span
+                          title={`Fuzzy relevance match — ${Math.round(result.score * 100)}%`}
+                          className="px-1.5 py-0.5 rounded text-[10px] font-semibold leading-none whitespace-nowrap"
+                          style={{
+                            background: 'rgba(34,197,94,0.15)',
+                            color: 'var(--brand-green)',
+                          }}
+                        >
+                          {Math.round(result.score * 100)}% match
+                        </span>
+                      )}
+                    </div>
                     {result.description && (
                       <p className="text-xs text-white/45 mt-1 line-clamp-2">
                         {result.description}

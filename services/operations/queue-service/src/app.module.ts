@@ -5,8 +5,10 @@ import { BullModule } from '@nestjs/bullmq';
 import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { EmailModule, FirebaseModule, JwtConfigModule, SmsModule } from '@azeebo/shared-services';
+import { FeatureFlagModule, queueFlags } from '@azeebo/feature-flags';
 import { DatabaseModule } from './modules/database/database.module';
 import { HealthModule } from './modules/health/health.module';
+import { MetricsModule } from './modules/metrics/metrics.module';
 import { QueueModule } from './modules/queue/queue.module';
 import { NotificationProcessor } from './processors/notification.processor';
 import { PaymentProcessor } from './processors/payment.processor';
@@ -63,7 +65,29 @@ const QUEUE_CONFIG = {
     SmsModule,
     JwtConfigModule,
     HealthModule,
+    MetricsModule,
     QueueModule,
+    // Queue processor kill-switches: pausing a processor flag stops that
+    // worker from draining its queue; jobs stay queued until re-enabled.
+    FeatureFlagModule.register({
+      global: true,
+      defaultFlags: {
+        [queueFlags.processNotifications]: true,
+        [queueFlags.processPayments]: true,
+        [queueFlags.processEmails]: true,
+        [queueFlags.processAnalytics]: true,
+        [queueFlags.processContent]: true,
+        [queueFlags.dlqRetry]: true,
+      },
+      // Numeric tuning knobs: worker concurrency for the payments queue, and
+      // the dead-letter retry policy (max passes + exponential base delay in
+      // ms) so ops can tune retry behavior at runtime without a deploy.
+      defaultValues: {
+        [queueFlags.concurrencyPayments]: 5,
+        [queueFlags.dlqRetryMaxPasses]: 3,
+        [queueFlags.dlqRetryBaseDelayMs]: 30000,
+      },
+    }),
     BullModule.forRoot({
       connection: {
         host: process.env.REDIS_HOST || 'localhost',

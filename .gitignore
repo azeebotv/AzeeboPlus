@@ -81,3 +81,7 @@ docx/
 # Pact contract test artifacts
 pacts/
 buildpush.txt
+
+
+.freebuff
+.claude

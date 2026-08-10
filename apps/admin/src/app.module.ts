@@ -20,7 +20,9 @@ import { PlatformOverviewModule } from './modules/platform-overview/platform-ove
 import { AgbalaModule } from './modules/vertical/agbala/agbala.module';
 import { HealthModule } from './modules/health/health.module';
 import { WebModule } from './web/web.module';
+import { FeatureFlagsModule } from './modules/feature-flags/feature-flags.module';
 import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
+import { FeatureFlagModule, queueFlags } from '@azeebo/feature-flags';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { CsrfMiddleware } from './common/csrf.middleware';
 
@@ -31,6 +33,17 @@ import { CsrfMiddleware } from './common/csrf.middleware';
       envFilePath: ['.env', '../../.env'],
     }),
     RateLimiterModule.forRoot(),
+    // Global flag registry for the admin UI: the DLQ tuning knobs are numeric
+    // flags owned by the queue-service — registering their defaults here makes
+    // them visible/tunable in the admin feature-flags page.
+    FeatureFlagModule.register({
+      global: true,
+      defaultValues: {
+        [queueFlags.dlqRetryMaxPasses]: 3,
+        [queueFlags.dlqRetryBaseDelayMs]: 30000,
+      },
+    }),
+    FeatureFlagsModule,
     AuthModule,
     DatabaseModule,
     UserManagementModule,

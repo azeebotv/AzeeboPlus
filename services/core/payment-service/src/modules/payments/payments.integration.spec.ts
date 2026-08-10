@@ -7,6 +7,7 @@ import { PaystackProvider } from './providers/paystack.provider.js';
 import { FlutterwaveProvider } from './providers/flutterwave.provider.js';
 import { WebhookRetryService } from './webhook-retry.service.js';
 import { RedisService, CacheService } from '@azeebo/shared-services';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 import axios from 'axios';
 
 jest.mock('axios');
@@ -70,6 +71,7 @@ describe('PaymentsService Integration', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PaymentsService,
+        { provide: FeatureFlagService, useValue: { isEnabled: jest.fn().mockResolvedValue(true) } },
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: PaystackProvider, useValue: mockPaystackProvider },
         { provide: FlutterwaveProvider, useValue: mockFlutterwaveProvider },
@@ -171,6 +173,9 @@ describe('PaymentsService Integration', () => {
     });
 
     it('should return existing payment when idempotencyKey matches', async () => {
+      // Prime the short-lived idempotency cache so the service takes the
+      // existing-payment fast path instead of creating a new intent.
+      mockCacheService.get.mockResolvedValue('true');
       mockPrismaService.paymentIntent.findUnique.mockResolvedValue({
         id: 'pi-existing',
         userId: 'user-1',

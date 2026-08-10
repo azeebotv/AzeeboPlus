@@ -94,6 +94,17 @@ vi.mock('../../../context/WalletContext', () => ({
   useWallet: () => mockUseWallet(),
 }));
 
+vi.mock('../../../context/FlagsContext', () => ({
+  useFlags: () => ({
+    flags: {},
+    ready: true,
+    isEnabled: () => false,
+    getValue: () => null,
+    universeEnabled: () => true,
+    refresh: vi.fn(),
+  }),
+}));
+
 /* ─── Import component AFTER mocks ─── */
 
 import AppHeader from '../AppHeader';

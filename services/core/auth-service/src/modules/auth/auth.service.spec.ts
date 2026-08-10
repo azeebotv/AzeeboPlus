@@ -5,8 +5,16 @@ import { RedisService } from '@azeebo/shared-services';
 import { OtpService } from './otp/otp.service.js';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { ConflictException, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import {
+  ConflictException,
+  UnauthorizedException,
+  ForbiddenException,
+  BadRequestException,
+  HttpException,
+} from '@nestjs/common';
 import { CacheService } from '@azeebo/shared-services';
+import { AuditLogService } from '../audit/audit.service.js';
+import { FeatureFlagService, authFlags } from '@azeebo/feature-flags';
 import * as bcrypt from 'bcrypt';
 
 jest.mock('bcrypt');
@@ -38,6 +46,10 @@ describe('AuthService', () => {
   let redisService: jest.Mocked<RedisService>;
   let jwtService: jest.Mocked<JwtService>;
 
+  const mockFeatureFlagService = {
+    isEnabled: jest.fn().mockResolvedValue(false),
+  };
+
   const mockUser = {
     id: 'user-123',
     email: 'test@example.com',
@@ -47,6 +59,7 @@ describe('AuthService', () => {
     avatar: null,
     mfaEnabled: false,
     mfaSecret: null,
+    isVerified: true,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -68,6 +81,16 @@ describe('AuthService', () => {
       providers: [
         AuthService,
         {
+          provide: AuditLogService,
+          useValue: {
+            log: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: mockFeatureFlagService,
+        },
+        {
           provide: AuthRepository,
           useValue: {
             findByEmail: jest.fn().mockResolvedValue(null),
@@ -78,6 +101,8 @@ describe('AuthService', () => {
             createSession: jest.fn().mockResolvedValue(mockSession),
             findSessionByUserId: jest.fn().mockResolvedValue(null),
             deleteSessionByUserId: jest.fn().mockResolvedValue(0),
+            countSessionsByUserId: jest.fn().mockResolvedValue(0),
+            deleteOldestSessions: jest.fn().mockResolvedValue(0),
             setOtp: jest.fn().mockResolvedValue(undefined),
             getOtp: jest.fn().mockResolvedValue(null),
             deleteOtp: jest.fn().mockResolvedValue({
@@ -179,6 +204,9 @@ describe('AuthService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+    // clearAllMocks keeps implementations — reset the default (flag OFF) so
+    // verification-flag tests don't leak into later tests.
+    mockFeatureFlagService.isEnabled.mockResolvedValue(false);
     delete process.env.JWT_ACCESS_SECRET;
     delete process.env.JWT_REFRESH_SECRET;
   });
@@ -211,6 +239,29 @@ describe('AuthService', () => {
 
       await expect(service.register(registerDto)).rejects.toThrow(ConflictException);
     });
+
+    it('should require email verification and issue no tokens when the flag is on', async () => {
+      mockFeatureFlagService.isEnabled.mockResolvedValue(true);
+      (authRepository.findByEmail as jest.Mock).mockResolvedValue(null);
+      (authRepository.create as jest.Mock).mockResolvedValue(mockUser);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashedPassword123');
+
+      const result = await service.register(registerDto);
+
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveProperty('requiresEmailVerification', true);
+      expect(result.data).not.toHaveProperty('access_token');
+      expect(result.data).not.toHaveProperty('refresh_token');
+      // A verification token was stored (1h expiry) and emailed.
+      expect(redisService.set).toHaveBeenCalledWith(
+        expect.stringMatching(/^email_verification:/),
+        mockUser.id,
+        3600
+      );
+      expect(mockFeatureFlagService.isEnabled).toHaveBeenCalledWith(
+        authFlags.emailVerificationRequired
+      );
+    });
   });
 
   describe('login', () => {
@@ -242,6 +293,46 @@ describe('AuthService', () => {
       (authRepository.findByEmail as jest.Mock).mockResolvedValue(null);
 
       await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should block login for an unverified user when the flag is on', async () => {
+      mockFeatureFlagService.isEnabled.mockResolvedValue(true);
+      (authRepository.findByEmail as jest.Mock).mockResolvedValue({
+        ...mockUser,
+        isVerified: false,
+      });
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+
+      await expect(service.login(loginDto)).rejects.toThrow(ForbiddenException);
+      expect(jwtService.sign).not.toHaveBeenCalled();
+    });
+
+    it('should allow login for a verified user when the flag is on', async () => {
+      mockFeatureFlagService.isEnabled.mockResolvedValue(true);
+      (authRepository.findByEmail as jest.Mock).mockResolvedValue(mockUser);
+      (authRepository.createSession as jest.Mock).mockResolvedValue(mockSession);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (jwtService.sign as jest.Mock).mockReturnValue('access-token');
+
+      const result = await service.login(loginDto);
+
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveProperty('access_token');
+    });
+
+    it('should allow login for an unverified user when the flag is off (default)', async () => {
+      (authRepository.findByEmail as jest.Mock).mockResolvedValue({
+        ...mockUser,
+        isVerified: false,
+      });
+      (authRepository.createSession as jest.Mock).mockResolvedValue(mockSession);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (jwtService.sign as jest.Mock).mockReturnValue('access-token');
+
+      const result = await service.login(loginDto);
+
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveProperty('access_token');
     });
   });
 
@@ -431,19 +522,31 @@ describe('AuthService', () => {
   });
 
   describe('verifyEmail', () => {
-    it('should verify email with valid token', async () => {
+    it('should verify email with valid token and auto-login with fresh tokens', async () => {
       const userId = 'user-123';
       (redisService.get as jest.Mock).mockResolvedValue(userId);
       (redisService.del as jest.Mock).mockResolvedValue(1);
       (authRepository.findById as jest.Mock).mockResolvedValue(mockUser);
       (authRepository.verifyEmail as jest.Mock).mockResolvedValue(mockUser);
+      (jwtService.sign as jest.Mock).mockReturnValue('access-token');
 
       const result = await service.verifyEmail({ token: 'valid-verification-token' });
 
       expect(result.success).toBe(true);
-      expect(result.message).toContain('verified');
+      expect(result.data?.message).toContain('verified');
       expect(redisService.get).toHaveBeenCalledWith('email_verification:valid-verification-token');
       expect(authRepository.verifyEmail).toHaveBeenCalledWith(userId);
+      // The per-token attempt counter is cleared on success.
+      expect(redisService.del).toHaveBeenCalledWith(
+        'email_verification_attempts:valid-verification-token'
+      );
+      // Post-verification auto-login: fresh tokens are issued (a session is
+      // created via generateTokens) so the user doesn't sign in again.
+      expect(jwtService.sign).toHaveBeenCalled();
+      expect(result.data).toHaveProperty('access_token', 'access-token');
+      expect(result.data).toHaveProperty('refresh_token', 'access-token');
+      expect(result.data).toHaveProperty('user');
+      expect(authRepository.createSession).toHaveBeenCalled();
     });
 
     it('should fail with invalid verification token', async () => {
@@ -453,11 +556,43 @@ describe('AuthService', () => {
         BadRequestException
       );
     });
+
+    it('should count failed attempts against the token', async () => {
+      // First attempt on this token: the counter gets the token's 1h TTL.
+      (redisService.incr as jest.Mock).mockResolvedValue(1);
+      (redisService.get as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.verifyEmail({ token: 'attempted-token' })).rejects.toThrow(
+        BadRequestException
+      );
+
+      expect(redisService.expire).toHaveBeenCalledWith(
+        'email_verification_attempts:attempted-token',
+        3600
+      );
+    });
+
+    it('should burn the token after too many attempts (429)', async () => {
+      (redisService.incr as jest.Mock).mockResolvedValue(6);
+
+      const error = await service
+        .verifyEmail({ token: 'burned-token' })
+        .catch((e: unknown) => e);
+      expect(error).toBeInstanceOf(HttpException);
+      expect((error as HttpException).getStatus()).toBe(429);
+
+      // The token is revoked so no further attempts can succeed.
+      expect(redisService.del).toHaveBeenCalledWith('email_verification:burned-token');
+      expect(redisService.get).not.toHaveBeenCalled();
+    });
   });
 
   describe('resendVerification', () => {
     it('should return success for existing user (email sent via notification-service)', async () => {
-      (authRepository.findByEmail as jest.Mock).mockResolvedValue(mockUser);
+      (authRepository.findByEmail as jest.Mock).mockResolvedValue({
+        ...mockUser,
+        isVerified: false,
+      });
 
       const result = await service.resendVerification({ email: 'test@example.com' });
 
@@ -471,6 +606,21 @@ describe('AuthService', () => {
       const result = await service.resendVerification({ email: 'nonexistent@example.com' });
 
       expect(result.success).toBe(true);
+    });
+
+    it('should rate-limit resends per user (429)', async () => {
+      (authRepository.findByEmail as jest.Mock).mockResolvedValue({
+        ...mockUser,
+        isVerified: false,
+      });
+      (redisService.incr as jest.Mock).mockResolvedValue(4);
+
+      const error = await service
+        .resendVerification({ email: 'test@example.com' })
+        .catch((e: unknown) => e);
+      expect(error).toBeInstanceOf(HttpException);
+      expect((error as HttpException).getStatus()).toBe(429);
+      expect(redisService.set).not.toHaveBeenCalled();
     });
   });
 });

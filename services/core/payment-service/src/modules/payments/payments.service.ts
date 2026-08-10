@@ -15,6 +15,7 @@ import {
   TransactionHistoryResponse,
 } from './interfaces/payment-response.interface.js';
 import { toNumber } from '@azeebo/utils';
+import { FeatureFlagService, paymentFlags } from '@azeebo/feature-flags';
 
 interface ProviderResponse {
   reference: string;
@@ -42,7 +43,8 @@ export class PaymentsService {
     @Inject(WebhookRetryService) private readonly webhookRetryService: WebhookRetryService,
     @Inject(RedisService) private readonly redisService: RedisService,
     @Inject(CacheService) private readonly cache: CacheService,
-    @Inject(ConfigService) private readonly configService: ConfigService
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
   ) {
     this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
     this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
@@ -51,6 +53,25 @@ export class PaymentsService {
 
   private getProvider(provider: PaymentProvider) {
     return provider === 'paystack' ? this.paystackProvider : this.flutterwaveProvider;
+  }
+
+  /**
+   * Resolves the active payment gateway from feature flags. Both providers
+   * default ON so ops can fail over between gateways (or freeze both) without
+   * a deploy. Returns the fallback chain: paystack → flutterwave.
+   */
+  private async getActiveProvider(): Promise<PaymentProvider> {
+    const [paystackEnabled, flutterwaveEnabled] = await Promise.all([
+      this.featureFlagService.isEnabled(paymentFlags.providerPaystack),
+      this.featureFlagService.isEnabled(paymentFlags.providerFlutterwave),
+    ]);
+    if (paystackEnabled) {
+      return 'paystack';
+    }
+    if (flutterwaveEnabled) {
+      return 'flutterwave';
+    }
+    throw new BadRequestException('Payment processing is temporarily unavailable');
   }
 
   private async trackAnalyticsEvent(
@@ -173,11 +194,10 @@ export class PaymentsService {
     });
 
     try {
-      const providerResponse: ProviderResponse = await this.paystackProvider.initializePayment(
-        amount,
-        currency || 'NGN',
-        userId
-      );
+      const activeProvider = await this.getActiveProvider();
+      const providerResponse: ProviderResponse = await this.getProvider(
+        activeProvider
+      ).initializePayment(amount, currency || 'NGN', userId);
 
       await this.prisma.paymentIntent.update({
         where: { id: paymentIntent.id },
@@ -191,7 +211,7 @@ export class PaymentsService {
         success: true,
         data: {
           paymentId: paymentIntent.id,
-          provider: 'paystack',
+          provider: activeProvider,
           checkoutUrl: providerResponse.authorizationUrl,
           reference: providerResponse.reference,
           amount,
@@ -277,7 +297,10 @@ export class PaymentsService {
         throw new BadRequestException('Payment provider reference not found');
       }
 
-      const providerResponse = await this.paystackProvider.verifyPayment(providerReference);
+      const activeProvider = await this.getActiveProvider();
+      const providerResponse = await this.getProvider(activeProvider).verifyPayment(
+        providerReference
+      );
 
       if (providerResponse.status === 'success') {
         await this.creditWallet(
@@ -552,7 +575,8 @@ export class PaymentsService {
     });
 
     try {
-      const providerResponse = await this.paystackProvider.processRefund(
+      const activeProvider = await this.getActiveProvider();
+      const providerResponse = await this.getProvider(activeProvider).processRefund(
         paymentIntent.providerReference!,
         reason
       );

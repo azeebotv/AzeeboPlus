@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@azeebo/error-handling": "workspace:*",
+    "@azeebo/feature-flags": "workspace:*",
     "@azeebo/logger": "workspace:*",
     "@azeebo/security": "workspace:*",
     "@azeebo/shared-types": "workspace:*",

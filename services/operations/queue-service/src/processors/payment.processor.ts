@@ -1,8 +1,10 @@
-import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
-import { Job } from 'bullmq';
+import { Processor, WorkerHost, OnWorkerEvent, InjectQueue } from '@nestjs/bullmq';
+import { Job, Queue, Worker } from 'bullmq';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
+import { FeatureFlagService, queueFlags } from '@azeebo/feature-flags';
+import { MetricsService } from '../modules/metrics/metrics.service';
 
 export interface PaymentJobData {
   transactionId: string;
@@ -14,6 +16,8 @@ export interface PaymentJobData {
   metadata?: Record<string, string>;
   maxRetries?: number;
   retryDelay?: number;
+  /** Number of times this job has been re-queued after dead-lettering (tracked by the processor). */
+  dlqRetryCount?: number;
 }
 
 /**
@@ -25,9 +29,25 @@ export interface PaymentJobData {
 export class PaymentProcessor extends WorkerHost {
   private readonly logger = new Logger(PaymentProcessor.name);
   private static readonly DEFAULT_MAX_RETRIES = 5;
+  // queue_concurrency_payments: worker concurrency when the flag has no value
+  // (or is disabled); ops can raise/lower it at runtime via the flag's value.
+  private static readonly DEFAULT_CONCURRENCY = 5;
+  // Fallbacks for the DLQ retry policy when the numeric flags carry no value
+  // (or an invalid one). Ops can tune both at runtime via
+  // queue_dlq_retry_max_passes and queue_dlq_retry_base_delay_ms.
+  private static readonly DEFAULT_DLQ_MAX_RETRIES = 3;
+  private static readonly DEFAULT_DLQ_RETRY_BASE_DELAY_MS = 30_000;
+  // Safety cap for a single DLQ delay — prevents pathological requeue loops
+  // regardless of how high ops tunes the base delay.
+  private static readonly DLQ_RETRY_MAX_DELAY_MS = 3_600_000;
   private readonly paymentServiceUrl: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly featureFlagService: FeatureFlagService,
+    private readonly metricsService: MetricsService,
+    @InjectQueue('payments') private readonly paymentsQueue: Queue
+  ) {
     super();
     this.paymentServiceUrl = this.configService.get<string>(
       'PAYMENT_SERVICE_URL',
@@ -35,7 +55,51 @@ export class PaymentProcessor extends WorkerHost {
     );
   }
 
+  /**
+   * Applies the queue_concurrency_payments flag to the live BullMQ worker.
+   * Called on startup and re-applied on every job so ops can tune concurrency
+   * at runtime without a restart (changes propagate within the flag cache TTL).
+   */
+  async onModuleInit(): Promise<void> {
+    await this.applyRuntimeConcurrency();
+  }
+
+  private async applyRuntimeConcurrency(): Promise<void> {
+    // The BullMQ worker only exists after Nest wires the processor; direct
+    // instantiations in unit tests have none, so skip silently.
+    const worker = this.workerOrNull();
+    if (!worker) return;
+
+    const value = await this.featureFlagService.getValue(queueFlags.concurrencyPayments);
+    const concurrency =
+      typeof value === 'number' && Number.isFinite(value)
+        ? Math.max(1, Math.floor(value))
+        : PaymentProcessor.DEFAULT_CONCURRENCY;
+
+    if (worker.concurrency !== concurrency) {
+      worker.concurrency = concurrency;
+      this.logger.log(`Payment worker concurrency set to ${concurrency}`);
+    }
+  }
+
+  private workerOrNull(): Worker | null {
+    try {
+      return this.worker;
+    } catch {
+      return null;
+    }
+  }
+
   async process(job: Job<PaymentJobData>): Promise<void> {
+    // Kill-switch: pause the payment worker by dropping jobs (no money moves).
+    if (!(await this.featureFlagService.isEnabled(queueFlags.processPayments))) {
+      this.logger.warn(`Payment processing disabled by flag; dropping job ${job.id}`);
+      return;
+    }
+
+    // Re-tune concurrency from the flag on each job so runtime changes stick.
+    await this.applyRuntimeConcurrency();
+
     this.logger.log(`Processing payment job ${job.id} (attempt ${job.attemptsMade + 1})`);
 
     const { transactionId, userId, amount, currency, provider, type, metadata } = job.data;
@@ -129,7 +193,7 @@ export class PaymentProcessor extends WorkerHost {
   }
 
   @OnWorkerEvent('failed')
-  onFailed(job: Job, error: Error) {
+  async onFailed(job: Job<PaymentJobData>, error: Error) {
     this.logger.error(
       `Payment job ${job.id} failed after ${job.attemptsMade + 1} attempts: ${(error as Error).message}`,
       {
@@ -139,6 +203,121 @@ export class PaymentProcessor extends WorkerHost {
         attemptsMade: job.attemptsMade,
       }
     );
+
+    // Dead-letter retry: the 'failed' event fires on every attempt, but only
+    // when the attempts budget is exhausted is the job truly dead-lettered.
+    const maxAttempts = job.opts.attempts ?? PaymentProcessor.DEFAULT_MAX_RETRIES;
+    if (job.attemptsMade >= maxAttempts) {
+      await this.maybeDeadLetterRetry(job);
+    }
+  }
+
+  /**
+   * Re-queues a dead-lettered payment job when queue_dlq_retry is enabled,
+   * up to MAX_DLQ_RETRIES passes, each with a real delay. BullMQ cannot
+   * delay-retry an existing failed job (moveToDelayed requires the active
+   * set; re-adding the same jobId is a silent no-op), so we remove the job
+   * and re-add it with the same jobId and a delay: a fresh attempts budget
+   * (equivalent to resetAttemptsMade) with exponential delay across passes
+   * (30s → 60s → 120s). When the flag is disabled (or the budget is
+   * exhausted) the job stays in the failed set for manual retry via the
+   * queue admin endpoints.
+   */
+  private async maybeDeadLetterRetry(job: Job<PaymentJobData>): Promise<void> {
+    try {
+      if (!(await this.featureFlagService.isEnabled(queueFlags.dlqRetry))) {
+        this.logger.warn(
+          `Payment job ${job.id} dead-lettered (dlq retry disabled); leaving in failed set`
+        );
+        return;
+      }
+
+      // Runtime-tunable policy (queue_dlq_retry_max_passes + base delay): read
+      // fresh on every final failure so ops changes apply within the flag
+      // cache TTL. Flag value wins over the enqueuer's per-job retryDelay;
+      // both fall back to the constants.
+      const [maxRetries, baseDelayMs] = await Promise.all([
+        this.dlqMaxRetries(),
+        this.dlqBaseDelayMs(job.data.retryDelay),
+      ]);
+
+      const dlqCount = job.data.dlqRetryCount ?? 0;
+      if (dlqCount >= maxRetries) {
+        this.logger.error(
+          `Payment job ${job.id} permanently dead-lettered after ${dlqCount} DLQ retries (max ${maxRetries})`
+        );
+        return;
+      }
+
+      const nextPass = dlqCount + 1;
+      const updatedData: PaymentJobData = { ...job.data, dlqRetryCount: nextPass };
+      const delay = this.dlqRetryDelay(nextPass, baseDelayMs);
+
+      // Persist the pass count before mutating the job so an interruption
+      // mid-retry never resets the budget.
+      await job.updateData(updatedData);
+      await job.remove();
+      await this.paymentsQueue.add('payments', updatedData, {
+        jobId: job.id,
+        delay,
+        attempts: job.opts.attempts,
+        backoff: job.opts.backoff,
+      });
+
+      // Job-level metric: one counter increment per DLQ pass actually
+      // scheduled, labeled with the queue, pass number, and the effective
+      // base delay — feeds retry-latency dashboards (rate * delay ≈ retry
+      // backpressure) and shows runtime tuning changes in the flag.
+      this.metricsService.incrementDlqRetryScheduled('payments', nextPass, baseDelayMs);
+
+      this.logger.warn(
+        `Payment job ${job.id} dead-letter retry #${nextPass}/${maxRetries} scheduled in ${delay}ms`
+      );
+    } catch (retryError) {
+      // Never let DLQ bookkeeping crash the worker. If the delayed re-add
+      // fails, fall back to an immediate in-place retry so the job is not
+      // lost; ops can still tune the flag or retry manually.
+      this.logger.error(
+        `Failed to schedule delayed DLQ retry for payment job ${job.id}: ${(retryError as Error).message}`
+      );
+      try {
+        await job.retry('failed', { resetAttemptsMade: true });
+      } catch (fallbackError) {
+        this.logger.error(
+          `Fallback retry for payment job ${job.id} also failed: ${(fallbackError as Error).message}`
+        );
+      }
+    }
+  }
+
+  /** Max DLQ passes from queue_dlq_retry_max_passes (positive integer), or
+   * the fallback constant when the flag has no usable value. */
+  private async dlqMaxRetries(): Promise<number> {
+    const value = await this.featureFlagService.getValue(queueFlags.dlqRetryMaxPasses);
+    if (typeof value === 'number' && Number.isFinite(value) && value >= 1) {
+      return Math.floor(value);
+    }
+    return PaymentProcessor.DEFAULT_DLQ_MAX_RETRIES;
+  }
+
+  /** Base DLQ delay in ms from queue_dlq_retry_base_delay_ms (positive
+   * number); falls back to the enqueuer's per-job retryDelay, then to the
+   * constant, when the flag has no usable value. */
+  private async dlqBaseDelayMs(jobBaseMs?: number): Promise<number> {
+    const value = await this.featureFlagService.getValue(queueFlags.dlqRetryBaseDelayMs);
+    if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+      return value;
+    }
+    if (typeof jobBaseMs === 'number' && Number.isFinite(jobBaseMs) && jobBaseMs > 0) {
+      return jobBaseMs;
+    }
+    return PaymentProcessor.DEFAULT_DLQ_RETRY_BASE_DELAY_MS;
+  }
+
+  /** Exponential DLQ delay: base doubles per pass, capped to avoid
+   * pathological requeue loops. */
+  private dlqRetryDelay(pass: number, baseMs: number): number {
+    return Math.min(baseMs * 2 ** (pass - 1), PaymentProcessor.DLQ_RETRY_MAX_DELAY_MS);
   }
 
   @OnWorkerEvent('stalled')

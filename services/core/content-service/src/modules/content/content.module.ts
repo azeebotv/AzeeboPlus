@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtConfigModule } from '@azeebo/shared-services';
-import { FeatureFlagModule } from '@azeebo/feature-flags';
 
 import { ContentController } from './content.controller.js';
 import { ContentService } from './content.service.js';
@@ -23,7 +22,6 @@ import { CacheModule } from '../../cache/cache.module.js';
     MediaModule,
     CacheModule,
     JwtConfigModule,
-    FeatureFlagModule.register({}),
   ],
   controllers: [ContentController],
   providers: [

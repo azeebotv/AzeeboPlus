@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
+import { FeatureFlagGuard, FeatureFlag, subscriptionFlags } from '@azeebo/feature-flags';
 
 import { SubscriptionService } from './subscription.service.js';
 import { CreateSubscriptionPlanDto } from './dto/create-subscription-plan.dto.js';
@@ -107,7 +108,8 @@ export class SubscriptionController {
   }
 
   @Post('renew/:id')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(subscriptionFlags.dunning)
   @RateLimit(5, 3600000)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Manually renew an active subscription (deducts from wallet)' })

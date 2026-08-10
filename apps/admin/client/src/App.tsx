@@ -23,6 +23,7 @@ import ReportBuilderPage from './routes/report-builder';
 import SettingsPage from './routes/settings';
 import SubscriptionsPage from './routes/subscriptions';
 import FeatureFlagsPage from './routes/feature-flags';
+import GlobalFeatureFlagsPage from './routes/global-feature-flags';
 import AgbalaPage from './routes/agbala';
 import LiveEventsPage from './routes/live-events';
 import BundlePassesPage from './routes/bundle-passes';
@@ -72,6 +73,7 @@ export default function App() {
               <Route path="settings" element={<SettingsPage />} />
               <Route path="subscriptions" element={<SubscriptionsPage />} />
               <Route path="feature-flags" element={<FeatureFlagsPage />} />
+              <Route path="feature-flags/global" element={<GlobalFeatureFlagsPage />} />
               <Route path="agbala" element={<AgbalaPage />} />
               <Route path="live-events" element={<LiveEventsPage />} />
               <Route path="bundle-passes" element={<BundlePassesPage />} />

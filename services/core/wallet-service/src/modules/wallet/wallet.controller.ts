@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
+import { FeatureFlagGuard, FeatureFlag, walletFlags } from '@azeebo/feature-flags';
 import { CacheInterceptor, Cache } from '../../cache/index.js';
 
 import { WalletService } from './wallet.service.js';
@@ -102,7 +103,8 @@ export class WalletController {
   }
 
   @Post('redeem-reward')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(walletFlags.redeemRewards)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Convert reward points to wallet balance' })
   @ApiResponse({ status: 200, description: 'Reward redeemed' })
@@ -117,7 +119,8 @@ export class WalletController {
   }
 
   @Post('bonus-credit')
-  @UseGuards(AdminGuard, RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, AdminGuard, RateLimitGuard)
+  @FeatureFlag(walletFlags.bonusCredit)
   @RateLimit(10, 3600000)
   @ApiOperation({ summary: 'Add bonus credit to wallet' })
   @ApiResponse({ status: 200, description: 'Bonus credit added' })
@@ -138,7 +141,8 @@ export class WalletController {
   }
 
   @Post('promo-credit')
-  @UseGuards(AdminGuard, RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, AdminGuard, RateLimitGuard)
+  @FeatureFlag(walletFlags.promoCredit)
   @RateLimit(10, 3600000)
   @ApiOperation({ summary: 'Add promo credit to wallet' })
   @ApiResponse({ status: 200, description: 'Promo credit added' })
@@ -245,7 +249,8 @@ export class WalletController {
   }
 
   @Post('withdraw')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(walletFlags.withdrawalsEnabled)
   @RateLimit(5, 3600000)
   @ApiOperation({ summary: 'Withdraw funds from wallet' })
   @ApiResponse({ status: 200, description: 'Withdrawal initiated' })
@@ -257,7 +262,8 @@ export class WalletController {
   }
 
   @Post('transfer')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(walletFlags.transfersEnabled)
   @RateLimit(10, 3600000)
   @ApiOperation({ summary: 'Transfer funds to another user' })
   @ApiResponse({ status: 200, description: 'Transfer completed' })

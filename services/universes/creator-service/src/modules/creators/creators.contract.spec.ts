@@ -12,7 +12,16 @@ import { RateLimitGuard } from '@azeebo/security';
 import { JwtStrategy } from '@azeebo/shared-services';
 
 jest.mock('@azeebo/security', () => ({
-  RateLimitGuard: class MockRateLimitGuard {},
+  RateLimitGuard: class MockRateLimitGuard {
+    canActivate() {
+      return true;
+    }
+  },
+  ServiceAuthGuard: class MockServiceAuthGuard {
+    canActivate() {
+      return true;
+    }
+  },
   RateLimit: () => () => {},
   Public: () => () => {},
 }));
@@ -21,6 +30,19 @@ jest.mock('@azeebo/shared-services', () => ({
   JwtStrategy: class MockJwtStrategy {},
   RolesGuard: class MockRolesGuard {},
   Roles: () => () => {},
+}));
+
+jest.mock('@azeebo/feature-flags', () => ({
+  FeatureFlagGuard: jest.fn().mockImplementation(() => ({
+    canActivate: jest.fn().mockReturnValue(true),
+  })),
+  FeatureFlag: () => () => {},
+  creatorFlags: {
+    payoutsEnabled: 'creator_payouts_enabled',
+    tipsEnabled: 'creator_tips_enabled',
+    subscriptionsEnabled: 'creator_subscriptions_enabled',
+    monetizationInsights: 'creator_monetization_insights',
+  },
 }));
 
 jest.mock('libphonenumber-js', () => ({}));

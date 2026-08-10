@@ -14,6 +14,7 @@ import {
 import { UsersService } from '../users/users.service.js';
 import { Request } from 'express';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, userFlags } from '@azeebo/feature-flags';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiTags('Privacy & Data Deletion')
@@ -25,7 +26,8 @@ export class UserDeletionController {
 
   @Post('deletion-request')
   @ApiBearerAuth()
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(userFlags.deletionSoft)
   @RateLimit(5, 60000)
   @ApiOperation({ summary: 'Request data deletion' })
   @ApiResponse({ status: 201, description: 'Deletion request scheduled' })
@@ -51,7 +53,8 @@ export class UserDeletionController {
 
   @Delete('data/:userId')
   @ApiBearerAuth()
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(userFlags.deletionSoft)
   @RateLimit(5, 60000)
   @ApiOperation({ summary: 'Delete user data' })
   @ApiResponse({ status: 200, description: 'Data deletion initiated' })

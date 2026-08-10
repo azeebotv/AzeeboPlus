@@ -17,6 +17,7 @@ import { SelectRoleDto } from './dto/select-role.dto.js';
 import { AuthResponse } from './interfaces/auth-response.interface.js';
 import { RefreshTokenResponse } from './interfaces/refresh-token-response.interface.js';
 import { RateLimitGuard, RateLimit, Public } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, authFlags } from '@azeebo/feature-flags';
 import { User } from '@azeebo/shared-types';
 
 interface AuthRequest extends Request {
@@ -57,6 +58,7 @@ async signup(@Request() req: AuthRequest, @Body() registerDto: RegisterDto): Pro
   @ApiOperation({ summary: 'User login' })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
+  @ApiResponse({ status: 403, description: 'Email not verified (when auth_email_verification_required is on)' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   async login(@Request() req: AuthRequest, @Body() loginDto: LoginDto): Promise<AuthResponse> {
     return this.authService.login(loginDto, req.ip, this.getUserAgent(req));
@@ -64,7 +66,8 @@ async signup(@Request() req: AuthRequest, @Body() registerDto: RegisterDto): Pro
 
   @Post('refresh')
   @Public()
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(authFlags.refreshRotation)
   @RateLimit(10, 60000) // 10 requests per minute
   @ApiOperation({ summary: 'Refresh access token' })
   @ApiResponse({ status: 200, description: 'Token refreshed successfully' })
@@ -122,8 +125,8 @@ async signup(@Request() req: AuthRequest, @Body() registerDto: RegisterDto): Pro
   @Public()
   @UseGuards(RateLimitGuard)
   @RateLimit(3, 3600000)
-  @ApiOperation({ summary: 'Verify email address' })
-  @ApiResponse({ status: 200, description: 'Email verified successfully' })
+  @ApiOperation({ summary: 'Verify email address (auto-logs in with fresh tokens)' })
+  @ApiResponse({ status: 200, description: 'Email verified; access + refresh tokens issued' })
   @ApiResponse({ status: 400, description: 'Invalid token' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
 async verifyEmail(@Request() req: AuthRequest, @Body() verifyEmailDto: VerifyEmailDto) {
@@ -143,7 +146,8 @@ async resendVerification(@Request() req: AuthRequest, @Body() resendVerification
   }
 
   @Post('select-role')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(authFlags.roleSelect)
   @RateLimit(3, 3600000)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Select user role after registration' })

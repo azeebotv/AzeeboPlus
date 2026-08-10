@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { PaymentsController } from './payments.controller.js';
 import { PaymentsService } from './payments.service.js';
+import { FeatureFlagService, FeatureFlagGuard } from '@azeebo/feature-flags';
+import { RateLimitGuard } from '@azeebo/security';
 
 describe('PaymentsController', () => {
   let controller: PaymentsController;
@@ -22,8 +24,17 @@ describe('PaymentsController', () => {
           provide: PaymentsService,
           useValue: mockPaymentsService,
         },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(true) },
+        },
       ],
-    }).compile();
+    })
+      .overrideGuard(RateLimitGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .overrideGuard(FeatureFlagGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .compile();
 
     controller = module.get<PaymentsController>(PaymentsController);
   });
@@ -373,12 +384,13 @@ describe('PaymentsController', () => {
 
   describe('route ordering', () => {
     it('should have history route before wildcard :id route', () => {
-      const routes = Reflect.getMetadata('path', PaymentsController.prototype) || [];
+      // Nest stores route-path metadata on the method function itself, not on
+      // the prototype keyed by method name.
       const methodRoutes = Object.getOwnPropertyNames(
         PaymentsController.prototype
       ).filter((name) => {
-        const meta = Reflect.getMetadata('path', PaymentsController.prototype, name);
-        return meta !== undefined;
+        const fn = (PaymentsController.prototype as unknown as Record<string, unknown>)[name];
+        return typeof fn === 'function' && Reflect.getMetadata('path', fn as object) !== undefined;
       });
 
       expect(methodRoutes).toContain('getPaymentHistory');

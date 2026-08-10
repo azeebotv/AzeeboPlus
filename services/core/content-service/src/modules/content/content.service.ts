@@ -23,7 +23,7 @@ import { ContentModerationService } from './content-moderation.service.js';
 import { ContentRelationshipService } from './content-relationship.service.js';
 import { ContentCategoryService } from './content-category.service.js';
 import { ContentIngestionService } from './content-ingestion.service.js';
-import { FeatureFlagService } from '@azeebo/feature-flags';
+import { FeatureFlagService, contentFlags } from '@azeebo/feature-flags';
 
 type ContentWithUniverse = Prisma.ContentItemGetPayload<{ include: { universe: true } }>;
 type ContentWithUniverseCategories = Prisma.ContentItemGetPayload<{
@@ -385,6 +385,10 @@ export class ContentService {
     clipStartTime: number,
     clipEndTime: number
   ): Promise<{ success: boolean; data: ContentWithUniverse }> {
+    // Kill-switch: clip ingestion stays OFF until the clip pipeline is stable.
+    if (!(await this.featureFlagService.isEnabled(contentFlags.clipIngestion))) {
+      throw new ForbiddenException('Clip ingestion is disabled');
+    }
     return this.contentIngestionService.ingestClipContent(
       userId,
       createContentDto,
@@ -1195,6 +1199,10 @@ export class ContentService {
       bitrates?: number[];
     }
   ): Promise<{ success: boolean; data: TranscodingJobResult }> {
+    // Kill-switch: new transcoding pipeline is opt-in.
+    if (!(await this.featureFlagService.isEnabled(contentFlags.transcodingNew))) {
+      throw new ForbiddenException('Transcoding is disabled');
+    }
     try {
       const mediaAsset = await this.prisma.mediaAsset.findUnique({
         where: { contentItemId: contentId },
@@ -1321,6 +1329,13 @@ export class ContentService {
     contentId: string,
     _userId?: string
   ): Promise<{ success: boolean; data: ContentAvailabilityResult }> {
+    // Kill-switch: if windowing is disabled, treat all content as available.
+    if (!(await this.featureFlagService.isEnabled(contentFlags.windowingEnabled))) {
+      return {
+        success: true,
+        data: { isAvailable: true, reason: 'windowing disabled' } as unknown as ContentAvailabilityResult,
+      };
+    }
     try {
       const content = await this.prisma.contentItem.findUnique({
         where: { id: contentId },

@@ -9,6 +9,7 @@ import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@az
 import { AdminModule } from './modules/admin/admin.module.js';
 import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
 import { CacheModule, RedisModule } from '@azeebo/shared-services';
+import { FeatureFlagModule, comedyFlags } from '@azeebo/feature-flags';
 
 @Global()
 @Module({
@@ -25,6 +26,14 @@ import { CacheModule, RedisModule } from '@azeebo/shared-services';
     ComedyFeedModule,
     HealthModule,
     AdminModule,
+    // Comedy toggles: challenges + premium specials gate OFF until launched.
+    FeatureFlagModule.register({
+      global: true,
+      defaultFlags: {
+        [comedyFlags.challengesEnabled]: false,
+        [comedyFlags.specialsGate]: false,
+      },
+    }),
   ],
   providers: [
     {

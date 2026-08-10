@@ -6,6 +6,7 @@ import { AdminModule } from './modules/admin/admin.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
 import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
+import { FeatureFlagModule, mediaFlags } from '@azeebo/feature-flags';
 
 @Module({
   imports: [
@@ -17,6 +18,18 @@ import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
     UploadModule,
     AdminModule,
     HealthModule,
+    // Media toggles: presigned URLs default ON; AV1 transcoding and virus
+    // scanning default OFF until the pipelines are ready.
+    FeatureFlagModule.register({
+      global: true,
+      defaultFlags: {
+        [mediaFlags.uploadChunked]: false,
+        [mediaFlags.presignedUrls]: true,
+        [mediaFlags.transcodeAv1]: false,
+        [mediaFlags.virusScan]: false,
+        [mediaFlags.cdnEdgeCache]: true,
+      },
+    }),
   ],
   providers: [
     {

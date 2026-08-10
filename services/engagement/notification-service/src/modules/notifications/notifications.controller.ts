@@ -19,6 +19,7 @@ import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
 import { NotificationsService } from './notifications.service.js';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto.js';
 import { SavePushTokenDto } from './dto/save-push-token.dto.js';
+import { SendEmailDto } from './dto/send-email.dto.js';
 import { NotificationResponse } from './interfaces/notification-response.interface.js';
 
 @ApiTags('Notifications')
@@ -114,6 +115,21 @@ export class NotificationsController {
     @Request() req: { user: { sub: string; id: string } }
   ): Promise<NotificationResponse> {
     return this.notificationsService.getUnreadCount(req.user.id);
+  }
+
+  // Internal transactional email endpoint: other services (e.g. auth-service
+  // verification links) send first-class templates through here. Guarded by
+  // the class-level ServiceAuthGuard; RateLimitGuard is belt-and-braces.
+  @Post('email')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
+  @ApiOperation({ summary: 'Send a templated transactional email (internal)' })
+  @ApiResponse({ status: 200, description: 'Email queued for delivery' })
+  @ApiResponse({ status: 400, description: 'Unknown template or invalid payload' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async sendEmail(@Body() sendEmailDto: SendEmailDto): Promise<{ success: boolean }> {
+    const sent = await this.notificationsService.sendTemplatedEmail(sendEmailDto);
+    return { success: sent };
   }
 
   // Push token endpoints

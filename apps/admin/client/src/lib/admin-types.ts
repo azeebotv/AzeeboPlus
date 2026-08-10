@@ -161,6 +161,21 @@ export interface FeatureFlag {
   metadata?: Record<string, unknown>;
 }
 
+export interface GlobalFeatureFlag {
+  key: string;
+  enabled: boolean;
+  rolloutPercentage?: number;
+  userIds?: string[];
+  description?: string;
+  metadata?: Record<string, unknown>;
+  /** Non-boolean payload (e.g. queue_dlq_retry_base_delay_ms in ms). */
+  value?: string | number | boolean | null;
+  owner?: string;
+  staleAfter?: string;
+  isPublic?: boolean;
+  lastToggledBy?: string;
+}
+
 export interface SubscriptionPlan {
   id: string;
   name: string;

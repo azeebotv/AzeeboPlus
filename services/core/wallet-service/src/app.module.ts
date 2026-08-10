@@ -12,6 +12,8 @@ import { CacheModule } from './cache/index.js';
 import { ObservabilityModule } from '@azeebo/observability';
 import { JwtConfigModule } from '@azeebo/shared-services';
 import { EventBusModule } from '@azeebo/event-bus';
+import { FeatureFlagModule } from '@azeebo/feature-flags';
+import { walletFlags } from '@azeebo/feature-flags';
 
 @Module({
   imports: [
@@ -33,6 +35,19 @@ import { EventBusModule } from '@azeebo/event-bus';
       },
       'wallet-service'
     ),
+    // Kill-switch defaults: money-movement flags default ON so a toggle in the
+    // admin UI can freeze withdrawals/redemptions instantly; marketing credit
+    // features default OFF until enabled during a campaign.
+    FeatureFlagModule.register({
+      global: true,
+      defaultFlags: {
+        [walletFlags.withdrawalsEnabled]: true,
+        [walletFlags.redeemRewards]: true,
+        [walletFlags.transfersEnabled]: false,
+        [walletFlags.bonusCredit]: false,
+        [walletFlags.promoCredit]: false,
+      },
+    }),
   ],
   controllers: [],
   providers: [

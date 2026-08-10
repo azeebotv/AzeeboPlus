@@ -19,6 +19,7 @@ import { WebhookSecurityService } from './webhook-security.service.js';
 import { PaystackWebhookGuard } from './guards/paystack-webhook.guard.js';
 import { FlutterwaveWebhookGuard } from './guards/flutterwave-webhook.guard.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
+import { FeatureFlagGuard, FeatureFlag, paymentFlags } from '@azeebo/feature-flags';
 
 @ApiTags('Webhooks')
 @Public()
@@ -38,7 +39,8 @@ export class WebhookController {
 
   @Post('paystack')
   @RateLimit(100, 60000)
-  @UseGuards(PaystackWebhookGuard)
+  @UseGuards(FeatureFlagGuard, PaystackWebhookGuard)
+  @FeatureFlag(paymentFlags.webhooksEnabled)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Handle Paystack webhook' })
   @ApiResponse({ status: 200, description: 'Webhook processed successfully' })
@@ -113,7 +115,8 @@ export class WebhookController {
 
   @Post('flutterwave')
   @RateLimit(100, 60000)
-  @UseGuards(FlutterwaveWebhookGuard)
+  @UseGuards(FeatureFlagGuard, FlutterwaveWebhookGuard)
+  @FeatureFlag(paymentFlags.webhooksEnabled)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Handle Flutterwave webhook' })
   @ApiResponse({ status: 200, description: 'Webhook processed successfully' })

@@ -6,6 +6,7 @@ import { PaymentsService } from './payments.service.js';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';
 import { ExecutionContext } from '@nestjs/common';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 
 describe('Payments Controller Contract Tests', () => {
   let app: INestApplication;
@@ -36,7 +37,10 @@ describe('Payments Controller Contract Tests', () => {
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [PaymentsController],
-      providers: [{ provide: PaymentsService, useValue: mockPaymentsService }],
+      providers: [
+        { provide: PaymentsService, useValue: mockPaymentsService },
+        { provide: FeatureFlagService, useValue: { isEnabled: jest.fn().mockResolvedValue(true) } },
+      ],
     })
       .overrideGuard(AuthGuard('jwt'))
       .useValue(createMockAuthGuard(true))

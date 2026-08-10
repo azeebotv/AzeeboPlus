@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, movieFlags } from '@azeebo/feature-flags';
 
 import { MoviesService } from './movies.service.js';
 import { MovieResponse } from './interfaces/movie-response.interface.js';
@@ -149,7 +150,8 @@ export class MoviesController {
   }
 
   @Post(':movieId/rent')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(movieFlags.rentalsEnabled)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Rent/unlock movie' })
   @ApiResponse({ status: 201, description: 'Rental created' })

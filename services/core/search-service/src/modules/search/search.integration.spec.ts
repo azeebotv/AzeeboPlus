@@ -4,11 +4,14 @@ import { SearchService } from './search.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { CacheService } from '@azeebo/shared-services';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 
 describe('SearchService Integration', () => {
   let service: SearchService;
 
   const mockPrismaService = {
+    // Fuzzy (search_typo_tolerance) retrieval runs through raw SQL.
+    $queryRaw: jest.fn().mockResolvedValue([]),
     contentItem: {
       findMany: jest.fn(),
       count: jest.fn(),
@@ -55,6 +58,16 @@ describe('SearchService Integration', () => {
           },
         },
         { provide: CacheService, useValue: mockCacheService },
+        {
+          provide: FeatureFlagService,
+          useValue: {
+            // Everything ON except search_typo_tolerance so the integration
+            // search() tests exercise the exact path.
+            isEnabled: jest.fn().mockImplementation((key: string) =>
+              Promise.resolve(key !== 'search_typo_tolerance')
+            ),
+          },
+        },
       ],
     }).compile();
 

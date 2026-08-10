@@ -8,6 +8,7 @@ import { HealthModule } from './modules/health/health.module.js';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
 import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
+import { FeatureFlagModule, notificationFlags } from '@azeebo/feature-flags';
 
 @Module({
   imports: [
@@ -20,6 +21,19 @@ import { ServiceAuthGuard } from '@azeebo/security';
     NotificationsModule,
     AdminModule,
     HealthModule,
+    // Notification channel kill-switches: disable a channel globally without
+    // code changes; digest + preferences v2 default OFF until rolled out.
+    FeatureFlagModule.register({
+      global: true,
+      defaultFlags: {
+        [notificationFlags.pushIos]: true,
+        [notificationFlags.pushAndroid]: true,
+        [notificationFlags.emailEnabled]: true,
+        [notificationFlags.smsEnabled]: true,
+        [notificationFlags.digest]: false,
+        [notificationFlags.preferencesV2]: false,
+      },
+    }),
   ],
   providers: [
     {

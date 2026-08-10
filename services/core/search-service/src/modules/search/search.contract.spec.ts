@@ -3,7 +3,7 @@ import { INestApplication, BadRequestException } from '@nestjs/common';
 import request from 'supertest';
 import { SearchController } from './search.controller.js';
 import { SearchService } from './search.service.js';
-import { RateLimitGuard } from '@azeebo/security';
+import { RateLimitGuard, ServiceAuthGuard } from '@azeebo/security';
 
 describe('Search Controller Contract Tests', () => {
   let app: INestApplication;
@@ -29,6 +29,8 @@ describe('Search Controller Contract Tests', () => {
       ],
     })
       .overrideGuard(RateLimitGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .overrideGuard(ServiceAuthGuard)
       .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .compile();
 

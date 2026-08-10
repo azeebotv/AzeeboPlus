@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AuthProvider } from '../context/AuthContext';
+import { FlagsProvider } from '../context/FlagsContext';
 import { WalletProvider } from '../context/WalletContext';
+import { MaintenanceGate } from '../components/layout/MaintenanceGate';
 import { ThemeProvider } from '../context/ThemeContext';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { QueryProvider } from '../providers/QueryProvider';
@@ -92,17 +94,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }):
           <QueryProvider>
             <ThemeProvider>
               <AuthProvider>
-                <WalletProvider>
-                  <I18nProvider>
-                    <ToastProvider>
-                      <KeyboardNavigationProvider>
-                        <main id="main-content" role="main">
-                          {children}
-                        </main>
-                      </KeyboardNavigationProvider>
-                    </ToastProvider>
-                  </I18nProvider>
-                </WalletProvider>
+                <FlagsProvider>
+                  <WalletProvider>
+                    <I18nProvider>
+                      <ToastProvider>
+                        <KeyboardNavigationProvider>
+                          <MaintenanceGate>
+                            <main id="main-content" role="main">
+                              {children}
+                            </main>
+                          </MaintenanceGate>
+                        </KeyboardNavigationProvider>
+                      </ToastProvider>
+                    </I18nProvider>
+                  </WalletProvider>
+                </FlagsProvider>
               </AuthProvider>
             </ThemeProvider>
           </QueryProvider>

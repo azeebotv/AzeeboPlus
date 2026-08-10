@@ -11,6 +11,7 @@ import { AdminModule } from './modules/admin/admin.module.js';
 import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { CacheModule } from '@azeebo/shared-services';
+import { FeatureFlagModule, gamesFlags } from '@azeebo/feature-flags';
 
 @Module({
   imports: [
@@ -25,6 +26,16 @@ import { CacheModule } from '@azeebo/shared-services';
     GameCatalogModule,
     TournamentModule,
     HealthModule,
+    // Games toggles: tournament engine, AI trivia, and seasonal leaderboards
+    // all default OFF until the features launch.
+    FeatureFlagModule.register({
+      global: true,
+      defaultFlags: {
+        [gamesFlags.tournamentsEnabled]: false,
+        [gamesFlags.triviaAi]: false,
+        [gamesFlags.leaderboardsSeasonal]: false,
+      },
+    }),
     AdminModule,
   ],
   providers: [

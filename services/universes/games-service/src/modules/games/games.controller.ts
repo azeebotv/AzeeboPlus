@@ -1,6 +1,7 @@
 import { Inject, Controller, Get, Post, Body, UseGuards, Request, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, gamesFlags } from '@azeebo/feature-flags';
 
 import { GamesService } from './games.service.js';
 import { GameResponse } from './interfaces/game-response.interface.js';
@@ -34,7 +35,8 @@ export class GamesController {
   }
 
   @Get('trivia')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(gamesFlags.triviaAi)
   @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Trivia games' })
   @ApiResponse({ status: 200, description: 'Trivia games list' })
@@ -76,7 +78,8 @@ export class GamesController {
   }
 
   @Post('sessions')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(gamesFlags.triviaAi)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Start game session' })
   @ApiResponse({ status: 201, description: 'Session started' })

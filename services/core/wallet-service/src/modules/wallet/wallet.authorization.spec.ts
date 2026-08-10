@@ -8,6 +8,20 @@ import { WalletService } from './wallet.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, CacheInterceptor } from '../../cache/index.js';
 
+jest.mock('@azeebo/feature-flags', () => ({
+  FeatureFlagGuard: jest.fn().mockImplementation(() => ({
+    canActivate: jest.fn().mockReturnValue(true),
+  })),
+  FeatureFlag: () => () => {},
+  walletFlags: {
+    withdrawalsEnabled: 'wallet_withdrawals_enabled',
+    redeemRewards: 'wallet_redeem_rewards',
+    transfersEnabled: 'wallet_transfers_enabled',
+    bonusCredit: 'wallet_bonus_credit',
+    promoCredit: 'wallet_promo_credit',
+  },
+}));
+
 describe('Wallet Service Authorization Tests', () => {
   const mockWalletService = {
     getBalance: jest.fn().mockResolvedValue({

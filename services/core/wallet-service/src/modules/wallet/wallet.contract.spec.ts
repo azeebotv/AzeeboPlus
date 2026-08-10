@@ -9,6 +9,20 @@ import { CacheService, CacheInterceptor } from '../../cache/index.js';
 import { RateLimitGuard, AdminGuard } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 
+jest.mock('@azeebo/feature-flags', () => ({
+  FeatureFlagGuard: jest.fn().mockImplementation(() => ({
+    canActivate: jest.fn().mockReturnValue(true),
+  })),
+  FeatureFlag: () => () => {},
+  walletFlags: {
+    withdrawalsEnabled: 'wallet_withdrawals_enabled',
+    redeemRewards: 'wallet_redeem_rewards',
+    transfersEnabled: 'wallet_transfers_enabled',
+    bonusCredit: 'wallet_bonus_credit',
+    promoCredit: 'wallet_promo_credit',
+  },
+}));
+
 class MockAuthGuard {
   canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest();

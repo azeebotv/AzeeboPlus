@@ -12,6 +12,7 @@ import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
 import { CacheModule } from '@azeebo/shared-services';
+import { FeatureFlagModule, movieFlags } from '@azeebo/feature-flags';
 
 @Module({
   imports: [
@@ -28,6 +29,17 @@ import { CacheModule } from '@azeebo/shared-services';
     HealthModule,
     AdminModule,
     GenreModule,
+    // Movie kill-switches: rentals + premieres ON; CinemaPass and cross-device
+    // watchlist sync OFF until launched.
+    FeatureFlagModule.register({
+      global: true,
+      defaultFlags: {
+        [movieFlags.rentalsEnabled]: true,
+        [movieFlags.premieresEnabled]: true,
+        [movieFlags.cinemaPass]: false,
+        [movieFlags.watchlistSync]: false,
+      },
+    }),
   ],
   providers: [
     {

@@ -1,6 +1,7 @@
 import { Inject, Controller, Get, Post, Body, UseGuards, Request, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, comedyFlags } from '@azeebo/feature-flags';
 
 import { ComedyService } from './comedy.service.js';
 import { ComedyResponse } from './interfaces/comedy-response.interface.js';
@@ -35,6 +36,8 @@ export class ComedyController {
   }
 
   @Post('challenges')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(comedyFlags.challengesEnabled)
   @ApiOperation({ summary: 'Submit comedy challenge entry' })
   @ApiResponse({ status: 201, description: 'Entry submitted' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -46,6 +49,8 @@ export class ComedyController {
   }
 
   @Get('challenges')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(comedyFlags.challengesEnabled)
   @ApiOperation({ summary: 'Active comedy challenges' })
   @ApiResponse({ status: 200, description: 'Challenges' })
   async getChallenges(): Promise<ComedyResponse> {

@@ -13,6 +13,8 @@ import { HealthModule } from './modules/health/health.module.js';
 import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { ObservabilityModule } from '@azeebo/observability';
+import { FeatureFlagModule } from '@azeebo/feature-flags';
+import { authFlags } from '@azeebo/feature-flags';
 
 @Module({
   imports: [
@@ -32,6 +34,25 @@ import { ObservabilityModule } from '@azeebo/observability';
     HealthModule,
     CacheModule,
     ObservabilityModule,
+    // Auth kill-switches: social providers + OTP channels default ON so ops can
+    // disable a provider/channel instantly; MFA + passwordless default OFF until
+    // rolled out; refresh-token rotation defaults ON.
+    FeatureFlagModule.register({
+      global: true,
+      defaultFlags: {
+        [authFlags.socialGoogle]: true,
+        [authFlags.socialApple]: true,
+        [authFlags.mfaTotp]: false,
+        [authFlags.mfaRequiredForAdmins]: false,
+        [authFlags.otpEmail]: true,
+        [authFlags.otpSms]: true,
+        [authFlags.passwordlessMagicLink]: false,
+        [authFlags.deviceLimits]: false,
+        [authFlags.refreshRotation]: true,
+        [authFlags.emailVerificationRequired]: false,
+        [authFlags.roleSelect]: true,
+      },
+    }),
   ],
   providers: [
     {

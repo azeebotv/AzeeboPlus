@@ -1,6 +1,7 @@
-import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
+import { Injectable, NestMiddleware, Logger, Inject } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { randomBytes, createHash, timingSafeEqual } from 'crypto';
+import { FeatureFlagService, gatewayFlags } from '@azeebo/feature-flags';
 
 /**
  * CSRF Protection Middleware (SEC-005)
@@ -20,7 +21,18 @@ export class CsrfMiddleware implements NestMiddleware {
   private static readonly CSRF_HEADER_NAME = 'x-csrf-token';
   private static readonly SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS'];
 
-  use(req: Request, res: Response, next: NextFunction) {
+  constructor(
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
+  ) {}
+
+  async use(req: Request, res: Response, next: NextFunction) {
+    // Emergency kill-switch: gateway_csrf_enforce=false bypasses validation
+    // (e.g., during a CSRF regression or legacy client migration).
+    if (!(await this.featureFlagService.isEnabled(gatewayFlags.csrfEnforce))) {
+      this.logger.warn('CSRF enforcement disabled via feature flag — bypassing');
+      return next();
+    }
+
     // Skip CSRF for safe methods
     if (CsrfMiddleware.SAFE_METHODS.includes(req.method)) {
       // Set CSRF token on safe methods so client can read it

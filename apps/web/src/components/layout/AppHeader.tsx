@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useWallet } from '../../context/WalletContext';
+import { useFlags } from '../../context/FlagsContext';
 import BrandLogo from '../auth/BrandLogo';
 
 /* ─── Constants ─── */
@@ -153,7 +154,7 @@ export default function AppHeader({ active: _active }: { active?: string }) {
     { label: t('nav.library'), href: '/library' },
   ];
 
-  const UNIVERSE_OPTIONS = [
+  const ALL_UNIVERSE_OPTIONS = [
     { key: 'reality', label: t('universes.reality'), href: '/reality' },
     { key: 'creators', label: t('nav.creators'), href: '/creators' },
     { key: 'lifestyle', label: t('universes.lifestyle'), href: '/lifestyle' },
@@ -185,9 +186,14 @@ export default function AppHeader({ active: _active }: { active?: string }) {
 
   const { user, isAuthenticated, logout } = useAuth();
   const { balance } = useWallet();
+  const { universeEnabled } = useFlags();
   const pathname = usePathname();
   const router = useRouter();
   const isCreator = user?.role?.toLowerCase() === 'creator';
+
+  // Per-universe nav gating: hide universes whose `universe.<name>.enabled`
+  // sentinel flag is off (server-evaluated via /feature-flags/bootstrap).
+  const UNIVERSE_OPTIONS = ALL_UNIVERSE_OPTIONS.filter((u) => universeEnabled(u.key));
 
   // UI state
   const [scrolled, setScrolled] = useState(false);

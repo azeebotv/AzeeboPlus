@@ -11,7 +11,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationsService } from './notifications.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { FirebaseService, EmailService, SmsService, CacheService } from '@azeebo/shared-services';
-import { NotFoundException, ForbiddenException } from '@nestjs/common';
+import { FeatureFlagService } from '@azeebo/feature-flags';
+import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 
@@ -59,6 +60,10 @@ describe('NotificationsService', () => {
     sendSmsWithTemplate: jest.fn(),
   };
 
+  const mockFeatureFlagService = {
+    isEnabled: jest.fn().mockResolvedValue(true),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -72,12 +77,16 @@ describe('NotificationsService', () => {
           useValue: { get: jest.fn(), set: jest.fn(), invalidate: jest.fn() },
         },
         { provide: ConfigService, useValue: { get: jest.fn(), getOrThrow: jest.fn() } },
+        { provide: FeatureFlagService, useValue: mockFeatureFlagService },
       ],
     }).compile();
 
     service = module.get<NotificationsService>(NotificationsService);
 
     jest.clearAllMocks();
+    // clearAllMocks keeps implementations; re-establish the default so a
+    // kill-switch test doesn't leak into later tests.
+    mockFeatureFlagService.isEnabled.mockResolvedValue(true);
   });
 
   afterAll(async () => {
@@ -436,6 +445,51 @@ describe('NotificationsService', () => {
           'password-reset',
           { displayName: 'Test User', resetLink: 'https://reset.link' }
         );
+      });
+    });
+
+    describe('sendTemplatedEmail', () => {
+      it('should send a first-class template by name with its subject', async () => {
+        mockEmailService.sendEmail.mockResolvedValue(true);
+
+        const result = await service.sendTemplatedEmail({
+          to: 'test@example.com',
+          template: 'email-verification',
+          data: { displayName: 'Test User', verificationUrl: 'https://azeebo.plus/auth/verify-email?token=abc' },
+        });
+
+        expect(result).toBe(true);
+        expect(mockEmailService.sendEmail).toHaveBeenCalledWith(
+          'test@example.com',
+          'Verify Your Email Address',
+          'email-verification',
+          { displayName: 'Test User', verificationUrl: 'https://azeebo.plus/auth/verify-email?token=abc' }
+        );
+      });
+
+      it('should reject unknown templates', async () => {
+        await expect(
+          service.sendTemplatedEmail({
+            to: 'test@example.com',
+            template: 'not-a-template',
+            data: {},
+          })
+        ).rejects.toThrow(BadRequestException);
+
+        expect(mockEmailService.sendEmail).not.toHaveBeenCalled();
+      });
+
+      it('should skip sends when the email kill-switch is off', async () => {
+        mockFeatureFlagService.isEnabled.mockResolvedValue(false);
+
+        const result = await service.sendTemplatedEmail({
+          to: 'test@example.com',
+          template: 'email-verification',
+          data: {},
+        });
+
+        expect(result).toBe(false);
+        expect(mockEmailService.sendEmail).not.toHaveBeenCalled();
       });
     });
 

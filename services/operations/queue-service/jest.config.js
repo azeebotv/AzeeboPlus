@@ -9,7 +9,7 @@ module.exports = {
     'node_modules/(?!uuid|date-fns)',
   ],
   moduleNameMapper: {
-    '^(\\.{1,2}/.*)\.js$': '$1',
+    '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@azeebo/shared-services$': '<rootDir>/../../../../packages/shared-services/src',
     '^@azeebo/shared-services/(.*)$': '<rootDir>/../../../../packages/shared-services/src/$1',
   },

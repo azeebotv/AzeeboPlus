@@ -5,10 +5,12 @@ import { UploadModule } from '../upload/upload.module';
 import { UploadService } from '../upload/upload.service';
 import { S3Service } from '../upload/s3.service';
 import { PremiumContentService } from '../upload/premium-content.service';
+import { AdminModule } from '../admin/admin.module';
 import { RedisService } from '@azeebo/shared-services';
 import { FileValidationService } from '../../common/services/file-validation.service';
 import { RateLimitGuard, AdminGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
+import { FeatureFlagGuard, FeatureFlagModule, FeatureFlagService } from '@azeebo/feature-flags';
 
 class MockRateLimitGuard implements CanActivate {
   canActivate(_context: ExecutionContext) {
@@ -29,7 +31,17 @@ describe('Media Controller Contract Tests', () => {
     process.env.JWT_ACCESS_SECRET = 'test-jwt-secret';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [UploadModule],
+      // FeatureFlagModule is registered globally in the real app.module; the
+      // contract spec imports it the same way so child-module providers (e.g.
+      // CdnFlagPurgeQueueService) can resolve FeatureFlagService before the
+      // override below replaces it with the mock.
+      imports: [
+        UploadModule,
+        AdminModule,
+        // Stub redis so the real (soon-overridden) FeatureFlagService never
+        // opens a connection that would keep the test worker alive.
+        FeatureFlagModule.register({ global: true, redis: { quit: jest.fn() } as never }),
+      ],
     })
       .overrideProvider(UploadService)
       .useValue({
@@ -76,10 +88,14 @@ describe('Media Controller Contract Tests', () => {
         validateFile: jest.fn(),
         validatePresignedUpload: jest.fn(),
       })
+      .overrideProvider(FeatureFlagService)
+      .useValue({ isEnabled: jest.fn().mockResolvedValue(true) })
       .overrideGuard(RateLimitGuard)
       .useClass(MockRateLimitGuard)
       .overrideGuard(AdminGuard)
       .useClass(MockAdminGuard)
+      .overrideGuard(FeatureFlagGuard)
+      .useClass(MockRateLimitGuard)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -110,6 +126,29 @@ describe('Media Controller Contract Tests', () => {
     }
   });
 
+  describe('POST /admin/cdn/purge', () => {
+    it('should accept a prefix purge request', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/admin/cdn/purge')
+        .set('Authorization', 'Bearer valid-token')
+        .send({ prefix: 'uploads' });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.prefix).toBe('uploads');
+      expect(response.body.data).toHaveProperty('purged');
+    });
+
+    it('should reject a purge with no target', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/admin/cdn/purge')
+        .set('Authorization', 'Bearer valid-token')
+        .send({});
+
+      expect(response.status).toBe(400);
+    });
+  });
+
   describe('POST /media/upload/image', () => {
     it('should upload image', async () => {
       const uploadService = app.get(UploadService);
@@ -121,6 +160,8 @@ describe('Media Controller Contract Tests', () => {
         filename: 'test.jpg',
         mimetype: 'image/jpeg',
         size: 1024,
+        cacheControl: 'public, max-age=31536000, immutable',
+        cachePolicy: 'immutable',
       });
 
       const response = await request(app.getHttpServer())
@@ -129,6 +170,8 @@ describe('Media Controller Contract Tests', () => {
         .attach('file', Buffer.from('test'), 'test.jpg');
 
       expect(response.status).toBe(201);
+      // CDN cache-control header comes from media_cdn_edge_cache.
+      expect(response.headers['cache-control']).toBe('public, max-age=31536000, immutable');
       expect(response.body).toEqual({
         success: true,
         data: expect.objectContaining({

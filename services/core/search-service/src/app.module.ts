@@ -8,6 +8,7 @@ import { HealthModule } from './modules/health/health.module.js';
 import { RateLimiterModule } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { ServiceAuthGuard } from '@azeebo/security';
+import { FeatureFlagModule, searchFlags } from '@azeebo/feature-flags';
 
 @Module({
   imports: [
@@ -20,6 +21,22 @@ import { ServiceAuthGuard } from '@azeebo/security';
     SearchModule,
     AdminModule,
     HealthModule,
+    // Search toggles: trending caching + query logging ON; faceted search,
+    // typo tolerance, and AI suggestions OFF until rolled out.
+    FeatureFlagModule.register({
+      global: true,
+      defaultFlags: {
+        [searchFlags.faceted]: false,
+        [searchFlags.typoTolerance]: false,
+        [searchFlags.suggestionsAi]: false,
+        [searchFlags.trendingCached]: true,
+        [searchFlags.logQueries]: true,
+      },
+      defaultValues: {
+        // Fuzzy blend: 0.4 trigram / 0.6 Levenshtein — runtime-tunable.
+        [searchFlags.fuzzyTrigramWeight]: 0.4,
+      },
+    }),
   ],
   providers: [
     {

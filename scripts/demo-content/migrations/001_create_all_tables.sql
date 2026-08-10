@@ -262,6 +262,7 @@ CREATE TABLE IF NOT EXISTS "content_items" (
   title TEXT NOT NULL,
   description TEXT,
   thumbnail TEXT NOT NULL,
+  duration INTEGER,
   "mediaUrl" TEXT,
   "universeId" TEXT NOT NULL,
   "creatorId" TEXT NOT NULL,
