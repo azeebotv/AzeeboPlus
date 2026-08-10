@@ -12,6 +12,12 @@ import { CsrfMiddleware } from './common/csrf.middleware';
 import { LegacyRedirectMiddleware } from './common/legacy-redirect.middleware';
 import { ContentTypeValidationMiddleware } from './common/content-type-validation.middleware';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
+import {
+  FeatureFlagModule,
+  gatewayFlags,
+  webFlags,
+  universeEnabledKey,
+} from '@azeebo/feature-flags';
 
 @Module({
   imports: [
@@ -46,8 +52,57 @@ import { ResponseWrapperInterceptor } from '@azeebo/logger';
     }),
     HealthModule,
     ProxyModule,
+    // Gateway kill-switches: maintenance mode and new routes default OFF;
+    // circuit breaker / CSRF / legacy redirects / caching default ON so ops can
+    // disable them instantly during incidents.
+    FeatureFlagModule.register({
+      global: true,
+      defaultFlags: {
+        [gatewayFlags.maintenanceMode]: false,
+        [gatewayFlags.newRoutes]: false,
+        [gatewayFlags.circuitBreaker]: true,
+        [gatewayFlags.responseCache]: true,
+        [gatewayFlags.strictRateLimits]: false,
+        [gatewayFlags.csrfEnforce]: true,
+        [gatewayFlags.legacyRedirect]: true,
+        [gatewayFlags.apiV2]: false,
+        // Client-driven flags served via GET /feature-flags/bootstrap.
+        [webFlags.maintenanceMode]: false,
+        [webFlags.newHome]: false,
+        [webFlags.darkMode]: true,
+        [webFlags.autoplay]: true,
+        [webFlags.lowDataDefault]: false,
+        // Per-universe nav sentinels: universe.<name>.enabled (admin toggles these
+        // via the admin app; the web app hides nav entries when disabled).
+        [universeEnabledKey('reality')]: true,
+        [universeEnabledKey('creators')]: true,
+        [universeEnabledKey('lifestyle')]: true,
+        [universeEnabledKey('vertical')]: true,
+        [universeEnabledKey('movies')]: true,
+        [universeEnabledKey('games')]: true,
+        [universeEnabledKey('comedy')]: true,
+        [universeEnabledKey('sports')]: true,
+      },
+      publicFlagKeys: [
+        webFlags.maintenanceMode,
+        webFlags.newHome,
+        webFlags.darkMode,
+        webFlags.autoplay,
+        webFlags.lowDataDefault,
+        universeEnabledKey('reality'),
+        universeEnabledKey('creators'),
+        universeEnabledKey('lifestyle'),
+        universeEnabledKey('vertical'),
+        universeEnabledKey('movies'),
+        universeEnabledKey('games'),
+        universeEnabledKey('comedy'),
+        universeEnabledKey('sports'),
+      ],
+    }),
   ],
   providers: [
+    CsrfMiddleware,
+    LegacyRedirectMiddleware,
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseWrapperInterceptor,

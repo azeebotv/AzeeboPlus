@@ -13,13 +13,16 @@ import {
   ForbiddenException,
   UseGuards,
   Request,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { UploadService } from './upload.service';
 import { PremiumContentService } from './premium-content.service';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
+import { FeatureFlag, FeatureFlagGuard, mediaFlags } from '@azeebo/feature-flags';
 
 @ApiTags('Media Upload')
 @Controller('media')
@@ -38,11 +41,17 @@ export class UploadController {
   @ApiResponse({ status: 201, description: 'Image uploaded successfully' })
   @ApiResponse({ status: 400, description: 'No file provided' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async uploadImage(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
+  async uploadImage(
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req: { user?: { id?: string } },
+    @Res({ passthrough: true }) res: Response
+  ): Promise<unknown> {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
-    return this.uploadService.uploadImage(file);
+    const result = await this.uploadService.uploadImage(file, req.user?.id);
+    res.setHeader('Cache-Control', result.cacheControl);
+    return result;
   }
 
   @Post('upload/video')
@@ -53,11 +62,17 @@ export class UploadController {
   @ApiResponse({ status: 201, description: 'Video uploaded successfully' })
   @ApiResponse({ status: 400, description: 'No file provided' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async uploadVideo(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
+  async uploadVideo(
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req: { user?: { id?: string } },
+    @Res({ passthrough: true }) res: Response
+  ): Promise<unknown> {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
-    return this.uploadService.uploadVideo(file);
+    const result = await this.uploadService.uploadVideo(file, req.user?.id);
+    res.setHeader('Cache-Control', result.cacheControl);
+    return result;
   }
 
   @Post('upload/audio')
@@ -68,11 +83,17 @@ export class UploadController {
   @ApiResponse({ status: 201, description: 'Audio uploaded successfully' })
   @ApiResponse({ status: 400, description: 'No file provided' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async uploadAudio(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
+  async uploadAudio(
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req: { user?: { id?: string } },
+    @Res({ passthrough: true }) res: Response
+  ): Promise<unknown> {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
-    return this.uploadService.uploadAudio(file);
+    const result = await this.uploadService.uploadAudio(file, req.user?.id);
+    res.setHeader('Cache-Control', result.cacheControl);
+    return result;
   }
 
   @Post('upload/document')
@@ -83,11 +104,17 @@ export class UploadController {
   @ApiResponse({ status: 201, description: 'Document uploaded successfully' })
   @ApiResponse({ status: 400, description: 'No file provided' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async uploadDocument(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
+  async uploadDocument(
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req: { user?: { id?: string } },
+    @Res({ passthrough: true }) res: Response
+  ): Promise<unknown> {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
-    return this.uploadService.uploadDocument(file);
+    const result = await this.uploadService.uploadDocument(file, req.user?.id);
+    res.setHeader('Cache-Control', result.cacheControl);
+    return result;
   }
 
   @Post('upload/thumbnail')
@@ -98,11 +125,17 @@ export class UploadController {
   @ApiResponse({ status: 201, description: 'Thumbnail uploaded successfully' })
   @ApiResponse({ status: 400, description: 'No file provided' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async uploadThumbnail(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
+  async uploadThumbnail(
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req: { user?: { id?: string } },
+    @Res({ passthrough: true }) res: Response
+  ): Promise<unknown> {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
-    return this.uploadService.uploadThumbnail(file);
+    const result = await this.uploadService.uploadThumbnail(file, req.user?.id);
+    res.setHeader('Cache-Control', result.cacheControl);
+    return result;
   }
 
   @Post('upload/avatar')
@@ -113,11 +146,17 @@ export class UploadController {
   @ApiResponse({ status: 201, description: 'Avatar uploaded successfully' })
   @ApiResponse({ status: 400, description: 'No file provided' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async uploadAvatar(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
+  async uploadAvatar(
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req: { user?: { id?: string } },
+    @Res({ passthrough: true }) res: Response
+  ): Promise<unknown> {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
-    return this.uploadService.uploadAvatar(file);
+    const result = await this.uploadService.uploadAvatar(file, req.user?.id);
+    res.setHeader('Cache-Control', result.cacheControl);
+    return result;
   }
 
   @Post('upload/banner')
@@ -128,15 +167,23 @@ export class UploadController {
   @ApiResponse({ status: 201, description: 'Banner uploaded successfully' })
   @ApiResponse({ status: 400, description: 'No file provided' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async uploadBanner(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
+  async uploadBanner(
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req: { user?: { id?: string } },
+    @Res({ passthrough: true }) res: Response
+  ): Promise<unknown> {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
-    return this.uploadService.uploadBanner(file);
+    const result = await this.uploadService.uploadBanner(file, req.user?.id);
+    res.setHeader('Cache-Control', result.cacheControl);
+    return result;
   }
 
   @Get('presigned/upload')
   @ApiBearerAuth()
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(mediaFlags.presignedUrls)
   @ApiOperation({ summary: 'Get a presigned upload URL' })
   @ApiResponse({ status: 200, description: 'Presigned URL generated' })
   @ApiResponse({ status: 400, description: 'Missing required parameters' })
@@ -164,6 +211,8 @@ export class UploadController {
 
   @Get('presigned/download')
   @ApiBearerAuth()
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(mediaFlags.presignedUrls)
   @ApiOperation({ summary: 'Get a presigned download URL' })
   @ApiResponse({ status: 200, description: 'Presigned URL generated' })
   @ApiResponse({ status: 400, description: 'Missing or invalid key' })
@@ -243,6 +292,8 @@ export class UploadController {
 
   @Get('transcoding/:jobId/status')
   @ApiBearerAuth()
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(mediaFlags.transcodeAv1)
   @ApiOperation({ summary: 'Get transcoding job status' })
   @ApiResponse({ status: 200, description: 'Job status retrieved' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -256,6 +307,8 @@ export class UploadController {
 
   @Get('transcoding/jobs')
   @ApiBearerAuth()
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(mediaFlags.transcodeAv1)
   @ApiOperation({ summary: 'List transcoding jobs' })
   @ApiResponse({ status: 200, description: 'Jobs retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -267,7 +320,8 @@ export class UploadController {
   }
 
   @Post('transcoding/retry-failed')
-  @UseGuards(AdminGuard)
+  @UseGuards(FeatureFlagGuard, AdminGuard)
+  @FeatureFlag(mediaFlags.transcodeAv1)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Retry failed transcoding jobs' })
   @ApiResponse({ status: 200, description: 'Failed jobs retried' })

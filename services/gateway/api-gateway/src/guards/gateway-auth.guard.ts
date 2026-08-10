@@ -33,6 +33,8 @@ export class GatewayAuthGuard implements CanActivate {
     /^\/(api\/)?(v\d+\/)?auth\/health$/,
     // Gateway health
     /^\/(health|ready|live)$/,
+    // Client feature-flag bootstrap (public, per-user evaluation)
+    /^\/feature-flags\/bootstrap$/,
     // Swagger UI
     /^\/docs(\/.*)?$/,
     // Public settings/universes (content-service)

@@ -1,6 +1,7 @@
-import { Inject, Controller, Get, Delete, Param, Query, UseGuards } from '@nestjs/common';
+import { Inject, Controller, Get, Delete, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
+import { CdnPurgeDto } from './dto/cdn-purge.dto';
 import { AdminGuard } from '@azeebo/security';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
@@ -36,6 +37,16 @@ export class AdminController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async deleteUpload(@Param('id') id: string) {
     const result = await this.adminService.deleteUpload(id);
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Post('cdn/purge')
+  @ApiOperation({ summary: 'Purge cached media from the CDN (admin)' })
+  @ApiResponse({ status: 200, description: 'CDN purge request accepted' })
+  @ApiResponse({ status: 400, description: 'No purge target provided' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  async purgeCdn(@Body() dto: CdnPurgeDto) {
+    const result = await this.adminService.purgeCdn(dto);
     return ApiResponseWrapper.success(result);
   }
 }

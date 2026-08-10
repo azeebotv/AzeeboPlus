@@ -9,6 +9,7 @@ import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
 import { CacheModule } from '@azeebo/shared-services';
+import { FeatureFlagModule, realityFlags } from '@azeebo/feature-flags';
 
 @Module({
   imports: [
@@ -22,6 +23,17 @@ import { CacheModule } from '@azeebo/shared-services';
     RealityModule,
     AdminModule,
     HealthModule,
+    // Reality kill-switches: voting + predictions ON; live voting and auto
+    // elimination OFF until they are production-ready.
+    FeatureFlagModule.register({
+      global: true,
+      defaultFlags: {
+        [realityFlags.votingEnabled]: true,
+        [realityFlags.predictionsEnabled]: true,
+        [realityFlags.liveVoting]: false,
+        [realityFlags.autoElimination]: false,
+      },
+    }),
   ],
   providers: [
     {

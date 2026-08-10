@@ -38,6 +38,7 @@ const ALLOWED_EVENT_NAMES = [
   'refund_completed',
   'reward_earned',
   'reward_redeemed',
+  'media_upload',
   'creator_follow',
   'creator_followed',
   'creator_tip_sent',

@@ -3,6 +3,14 @@ import type { ApiResponse } from './auth';
 
 const MEDIA_BASE_URL = apiClient.getBaseURL();
 
+/** Typed caching behavior of the upload's Cache-Control (media_cdn_edge_cache). */
+export type UploadCachePolicy =
+  | 'no-store'
+  | 'immutable'
+  | 'long-lived'
+  | 'medium-lived'
+  | 'short-lived';
+
 export interface MediaUploadResponse {
   key: string;
   url: string;
@@ -10,6 +18,10 @@ export interface MediaUploadResponse {
   filename: string;
   mimetype: string;
   size: number;
+  /** Raw Cache-Control directive (e.g. `public, max-age=86400`). */
+  cacheControl?: string;
+  /** Typed caching behavior — switch on this instead of parsing cacheControl. */
+  cachePolicy?: UploadCachePolicy;
 }
 
 export interface PresignedUploadResponse {

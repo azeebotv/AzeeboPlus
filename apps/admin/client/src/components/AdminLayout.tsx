@@ -25,6 +25,7 @@ export const ADMIN_NAV = [
   { href: '/audit-logs', label: 'Audit Logs', icon: '📋' },
   { href: '/reports', label: 'Reports', icon: '📊' },
   { href: '/feature-flags', label: 'Feature Flags', icon: '🚩' },
+  { href: '/feature-flags/global', label: 'Global Flags', icon: '🎛️' },
   { href: '/settings', label: 'Settings', icon: '⚙️' },
 ];
 

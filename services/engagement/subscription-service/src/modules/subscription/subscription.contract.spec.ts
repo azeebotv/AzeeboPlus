@@ -20,6 +20,19 @@ jest.mock('@azeebo/security', () => ({
     canActivate = jest.fn().mockReturnValue(true);
   },
 }));
+jest.mock('@azeebo/feature-flags', () => ({
+  FeatureFlagGuard: class MockFeatureFlagGuard {
+    canActivate = jest.fn().mockReturnValue(true);
+  },
+  FeatureFlag: () => () => {},
+  subscriptionFlags: {
+    bundles: 'subscription_bundles',
+    freeTrial: 'subscription_free_trial',
+    promoDiscounts: 'subscription_promo_discounts',
+    dunning: 'subscription_dunning',
+    deviceLimits: 'subscription_device_limits',
+  },
+}));
 jest.mock('class-validator', () => ({
   IsString: () => () => {},
   IsNotEmpty: () => () => {},

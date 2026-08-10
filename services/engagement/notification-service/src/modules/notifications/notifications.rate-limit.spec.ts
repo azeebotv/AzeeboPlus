@@ -13,6 +13,7 @@ jest.mock('class-validator', () => ({
   IsEnum: () => () => {},
   IsNotEmpty: () => () => {},
   IsIn: () => () => {},
+  IsObject: () => () => {},
   ValidateNested: () => () => {},
   Type: () => () => {},
   IsPhoneNumber: () => () => {},
@@ -25,6 +26,9 @@ jest.mock('@azeebo/security', () => {
   const canActivate = jest.fn().mockReturnValue(true);
   return {
     RateLimitGuard: class MockRateLimitGuard {
+      canActivate = canActivate;
+    },
+    ServiceAuthGuard: class MockServiceAuthGuard {
       canActivate = canActivate;
     },
     RateLimit: () => () => {},

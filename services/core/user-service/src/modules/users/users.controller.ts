@@ -23,6 +23,7 @@ import { CompleteProfileSetupDto } from './dto/complete-profile-setup.dto.js';
 import { ContentIdDto } from './dto/content-id.dto.js';
 import { RateLimitGuard, RateLimit, Public } from '@azeebo/security';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
+import { FeatureFlag, FeatureFlagGuard, userFlags } from '@azeebo/feature-flags';
 
 interface AuthenticatedRequest {
   user: {
@@ -76,7 +77,8 @@ export class UsersController {
   }
 
   @Post(':id/follow')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(userFlags.followSystem)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Follow a user' })
   @ApiResponse({ status: 201, description: 'User followed' })
@@ -87,7 +89,8 @@ export class UsersController {
   }
 
   @Delete(':id/follow')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(userFlags.followSystem)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Unfollow a user' })
   @ApiResponse({ status: 200, description: 'User unfollowed' })
@@ -97,6 +100,8 @@ export class UsersController {
   }
 
   @Public()
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(userFlags.followSystem)
   @Get(':id/followers')
   @ApiOperation({ summary: 'Get user followers' })
   @ApiQuery({ name: 'page', required: false, type: Number })
@@ -113,6 +118,8 @@ export class UsersController {
   }
 
   @Public()
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(userFlags.followSystem)
   @Get(':id/following')
   @ApiOperation({ summary: 'Get users being followed' })
   @ApiQuery({ name: 'page', required: false, type: Number })
@@ -201,6 +208,8 @@ export class UsersController {
   }
 
   @Get('me/universe-affinity')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(userFlags.universeAffinity)
   @ApiOperation({ summary: 'Get user universe affinity' })
   @ApiResponse({ status: 200, description: 'Universe affinity' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -210,6 +219,8 @@ export class UsersController {
   }
 
   @Patch('me/universe-affinity')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(userFlags.universeAffinity)
   @ApiOperation({ summary: 'Update user universe affinity' })
   @ApiResponse({ status: 200, description: 'Universe affinity updated' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
@@ -251,6 +262,8 @@ export class UsersController {
   }
 
   @Get('me/continue-watching')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(userFlags.continueWatching)
   @ApiOperation({ summary: 'Get continue watching list' })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Continue watching items' })
@@ -274,6 +287,8 @@ export class UsersController {
   }
 
   @Put('me/privacy-settings')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(userFlags.privacySettingsV2)
   @ApiOperation({ summary: 'Update user privacy settings' })
   @ApiResponse({ status: 200, description: 'Privacy settings updated' })
   @ApiResponse({ status: 400, description: 'Invalid input' })

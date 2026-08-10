@@ -9,6 +9,7 @@ import { PrismaService } from '../database/prisma.service.js';
 import { PaystackProvider } from './providers/paystack.provider.js';
 import { FlutterwaveProvider } from './providers/flutterwave.provider.js';
 import { WebhookRetryService } from './webhook-retry.service.js';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 
 describe('Payments Service Authorization Tests', () => {
   const mockPaymentsService = {
@@ -80,6 +81,7 @@ describe('Payments Service Authorization Tests', () => {
       controllers: [PaymentsController],
       providers: [
         { provide: PaymentsService, useValue: mockPaymentsService },
+        { provide: FeatureFlagService, useValue: { isEnabled: jest.fn().mockResolvedValue(true) } },
         { provide: PrismaService, useValue: {} },
         { provide: PaystackProvider, useValue: {} },
         { provide: FlutterwaveProvider, useValue: {} },
@@ -269,6 +271,7 @@ describe('Payments Service Authorization Tests', () => {
         controllers: [PaymentsController],
         providers: [
           { provide: PaymentsService, useValue: mockPaymentsService },
+          { provide: FeatureFlagService, useValue: { isEnabled: jest.fn().mockResolvedValue(true) } },
           { provide: PrismaService, useValue: {} },
           { provide: PaystackProvider, useValue: {} },
           { provide: FlutterwaveProvider, useValue: {} },

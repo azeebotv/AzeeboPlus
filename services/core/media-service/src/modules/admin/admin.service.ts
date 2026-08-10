@@ -1,6 +1,8 @@
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { UploadService } from '../upload/upload.service';
 import { S3Service } from '../upload/s3.service';
+import { CdnPurgeService } from '../upload/cdn-purge.service';
+import { CdnPurgeDto } from './dto/cdn-purge.dto';
 import { RedisService } from '@azeebo/shared-services';
 
 @Injectable()
@@ -10,8 +12,33 @@ export class AdminService {
   constructor(
     @Inject(UploadService) private readonly uploadService: UploadService,
     @Inject(S3Service) _s3Service: S3Service,
+    @Inject(CdnPurgeService) private readonly cdnPurgeService: CdnPurgeService,
     @Inject(RedisService) private readonly redisService: RedisService
   ) {}
+
+  /**
+   * Purges cached media objects from the CDN edge (CloudFront invalidation).
+   * Used by ops to evict already-cached uploads — e.g. after flipping
+   * media_cdn_edge_cache off, previously cached objects keep serving stale
+   * Cache-Control headers until purged.
+   */
+  async purgeCdn(dto: CdnPurgeDto): Promise<unknown> {
+    const keys = (dto.keys ?? []).filter((k) => k && k.trim());
+    if (keys.length === 0 && !dto.prefix) {
+      throw new BadRequestException('Provide at least one key or a prefix to purge');
+    }
+
+    const byKeys = keys.length > 0 ? await this.cdnPurgeService.purgeKeys(keys) : null;
+    const byPrefix =
+      dto.prefix && dto.prefix.trim() ? await this.cdnPurgeService.purgePrefix(dto.prefix) : null;
+
+    return {
+      keys: keys.length > 0 ? keys : undefined,
+      prefix: dto.prefix?.trim() || undefined,
+      invalidationId: byPrefix?.invalidationId ?? byKeys?.invalidationId,
+      purged: (byKeys?.purged ?? 0) + (byPrefix?.purged ?? 0),
+    };
+  }
 
   async getStats() {
     try {

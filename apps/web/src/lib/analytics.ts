@@ -133,6 +133,27 @@ class Analytics {
     this.track('content_search_failed', { query, error, ...properties });
   }
 
+  /** The 'did you mean' banner was displayed for a fuzzy search whose top
+   * match was a typo-correction. Pairs with contentSearchCorrectionAccepted to
+   * compute the correction acceptance rate. */
+  contentSearchCorrectionShown(
+    query: string,
+    suggestedQuery: string,
+    properties?: EventProperties
+  ): void {
+    this.track('content_search_correction_shown', { query, suggestedQuery, ...properties });
+  }
+
+  /** The user clicked the 'did you mean' banner, accepting the correction
+   * (i.e. re-running the search with the suggested title). */
+  contentSearchCorrectionAccepted(
+    query: string,
+    suggestedQuery: string,
+    properties?: EventProperties
+  ): void {
+    this.track('content_search_correction_accepted', { query, suggestedQuery, ...properties });
+  }
+
   contentViewed(
     contentId: string,
     contentType: string,

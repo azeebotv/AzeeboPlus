@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
+import { FeatureFlagGuard, FeatureFlag, subscriptionFlags } from '@azeebo/feature-flags';
 
 import { BundleService } from './bundle.service.js';
 import { CreateBundleDto } from './dto/create-bundle.dto.js';
@@ -94,7 +95,8 @@ export class BundleController {
   }
 
   @Post(':id/subscribe')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(subscriptionFlags.bundles)
   @RateLimit(5, 3600000)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Subscribe to a bundle' })
@@ -109,7 +111,8 @@ export class BundleController {
   }
 
   @Delete(':id/cancel')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(subscriptionFlags.bundles)
   @RateLimit(5, 3600000)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Cancel a bundle subscription' })

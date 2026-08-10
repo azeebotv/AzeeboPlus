@@ -6,6 +6,7 @@ import { WebhookSecurityService } from './webhook-security.service.js';
 import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@nestjs/common';
 import { RateLimitGuard } from '@azeebo/security';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 
 class MockRateLimitGuard implements CanActivate {
   canActivate(_context: ExecutionContext) {
@@ -37,6 +38,7 @@ describe('WebhookController', () => {
         { provide: WebhookSecurityService, useValue: mockWebhookSecurity },
         { provide: WebhookService, useValue: mockWebhookService },
         { provide: ConfigService, useValue: { get: jest.fn().mockReturnValue(30000) } },
+        { provide: FeatureFlagService, useValue: { isEnabled: jest.fn().mockResolvedValue(true) } },
       ],
     })
       .overrideGuard(RateLimitGuard)

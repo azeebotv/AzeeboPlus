@@ -5,6 +5,7 @@ import { ServiceAuthGuard } from '@azeebo/security';
 import { MfaService } from './mfa.service.js';
 import { EnableMfaDto } from '../dto/enable-mfa.dto.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
+import { FeatureFlag, FeatureFlagGuard, authFlags } from '@azeebo/feature-flags';
 
 interface MfaRequest {
   user: {
@@ -17,7 +18,8 @@ interface MfaRequest {
 }
 
 @ApiTags('MFA')
-@UseGuards(ServiceAuthGuard)
+@FeatureFlag(authFlags.mfaTotp)
+@UseGuards(FeatureFlagGuard, ServiceAuthGuard)
 @Controller('mfa')
 export class MfaController {
   constructor(@Inject(MfaService) private readonly mfaService: MfaService) {}

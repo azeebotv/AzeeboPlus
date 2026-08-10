@@ -8,6 +8,7 @@ import { PrismaService } from '../database/prisma.service.js';
 import { JwtService, JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
 import { RateLimitGuard } from '@azeebo/security';
+import { FeatureFlagModule, FeatureFlagService } from '@azeebo/feature-flags';
 import { AuthGuard } from '@nestjs/passport';
 import * as bcrypt from 'bcrypt';
 
@@ -143,6 +144,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
       findUnique: jest.fn(),
       findFirst: jest.fn(),
       findMany: jest.fn(),
+      count: jest.fn().mockResolvedValue(0),
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
@@ -177,6 +179,9 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
           secret: 'test-jwt-secret-for-integration',
           signOptions: { expiresIn: '15m' },
         }),
+        // Provides the FeatureFlagService token (AuthService injects it); the
+        // overrideProvider below swaps in the mock so no Redis is contacted.
+        FeatureFlagModule.register({ global: true, defaultFlags: {} }),
         AuthModule,
       ],
     })
@@ -189,6 +194,14 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
         get: jest.fn().mockResolvedValue(null),
         set: jest.fn().mockResolvedValue(undefined),
         delete: jest.fn().mockResolvedValue(0),
+      })
+      .overrideProvider(FeatureFlagService)
+      .useValue({
+        // Guards pass for every flag except the email-verification signup
+        // branch, which stays OFF so the default flows issue tokens.
+        isEnabled: jest.fn().mockImplementation((key: string) =>
+          Promise.resolve(key !== 'auth_email_verification_required')
+        ),
       })
       .overrideProvider(JwtService)
       .useValue(

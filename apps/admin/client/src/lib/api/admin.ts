@@ -17,6 +17,7 @@ import type {
   AgbalaPath,
   AgbalaQuiz,
   FeatureFlag,
+  GlobalFeatureFlag,
   SystemSetting,
   SubscriptionPlan,
   SubscriptionStats,
@@ -284,17 +285,45 @@ export const adminApi = {
       method: 'DELETE',
     }),
 
-  // ─── Platform Feature Flags ────────────────────────────────────────────
-  listFeatureFlags: () => apiFetch<unknown>('/api/v1/admin/feature-flags'),
-  createFeatureFlag: (data: { key: string; description?: string; rolloutPercentage?: number }) =>
-    apiFetch<unknown>('/api/v1/admin/feature-flags', {
-      method: 'POST',
+  // ─── Feature Flags (per-universe, published to Redis at runtime) ──────
+  listFeatureFlags: () => apiFetch<unknown>('/api/v1/admin/universes/feature-flags'),
+  createFeatureFlag: (universeId: string, flag: FeatureFlag) =>
+    apiFetch<unknown>(`/api/v1/admin/universes/${universeId}/feature-flags`, {
+      method: 'PUT',
+      body: JSON.stringify(flag),
+    }),
+  toggleFeatureFlag: (universeId: string, flag: FeatureFlag) =>
+    apiFetch<unknown>(`/api/v1/admin/universes/${universeId}/feature-flags`, {
+      method: 'PUT',
+      body: JSON.stringify(flag),
+    }),
+  deleteFeatureFlagByKey: (universeId: string, featureKey: string) =>
+    apiFetch<unknown>(`/api/v1/admin/universes/${universeId}/feature-flags/${featureKey}`, {
+      method: 'DELETE',
+    }),
+
+  // ─── Global Feature Flags (Redis store, merged with registered defaults) ─
+  listGlobalFeatureFlags: () =>
+    apiFetch<GlobalFeatureFlag[]>('/api/v1/admin/feature-flags'),
+  updateGlobalFeatureFlag: (key: string, data: Partial<GlobalFeatureFlag>) =>
+    apiFetch<GlobalFeatureFlag>(`/api/v1/admin/feature-flags/${key}`, {
+      method: 'PUT',
       body: JSON.stringify(data),
     }),
-  toggleFeatureFlag: (key: string) =>
-    apiFetch<unknown>(`/api/v1/admin/feature-flags/${key}/toggle`, { method: 'POST' }),
-  deleteFeatureFlagByKey: (key: string) =>
-    apiFetch<unknown>(`/api/v1/admin/feature-flags/${key}`, { method: 'DELETE' }),
+  resetGlobalFeatureFlag: (key: string) =>
+    apiFetch<{ key: string; removed: boolean }>(`/api/v1/admin/feature-flags/${key}`, {
+      method: 'DELETE',
+    }),
+
+  // ─── CDN (media-service admin purge) ────────────────────────────────────
+  purgeCdn: (data: { keys?: string[]; prefix?: string } = { prefix: 'uploads' }) =>
+    apiFetch<{ invalidationId?: string; purged: number }>(
+      '/api/v1/media/admin/cdn/purge',
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    ),
 
   getUniverseStats: () => apiFetch<unknown>('/api/v1/admin/universes/stats'),
   cloneUniverse: (id: string, data: Record<string, unknown>) =>

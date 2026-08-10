@@ -14,6 +14,20 @@ import { CacheInterceptor, CacheService } from '../../cache/index.js';
 import { EVENT_BUS_SERVICE } from '@azeebo/event-bus';
 import { randomUUID } from 'crypto';
 
+jest.mock('@azeebo/feature-flags', () => ({
+  FeatureFlagGuard: jest.fn().mockImplementation(() => ({
+    canActivate: jest.fn().mockReturnValue(true),
+  })),
+  FeatureFlag: () => () => {},
+  walletFlags: {
+    withdrawalsEnabled: 'wallet_withdrawals_enabled',
+    redeemRewards: 'wallet_redeem_rewards',
+    transfersEnabled: 'wallet_transfers_enabled',
+    bonusCredit: 'wallet_bonus_credit',
+    promoCredit: 'wallet_promo_credit',
+  },
+}));
+
 class MockRateLimitGuard {
   canActivate() {
     return true;

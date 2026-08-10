@@ -5,6 +5,7 @@ import { RateLimitGuard, ServiceAuthGuard } from '@azeebo/security';
 import { UsersController } from './users.controller.js';
 import { UsersService } from './users.service.js';
 import { CacheService } from '@azeebo/shared-services';
+import { FeatureFlagGuard, FeatureFlagService } from '@azeebo/feature-flags';
 
 describe('User Service Pagination Tests', () => {
   let app: INestApplication;
@@ -65,12 +66,20 @@ describe('User Service Pagination Tests', () => {
             invalidate: jest.fn().mockResolvedValue(undefined),
           },
         },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(true) },
+        },
       ],
     })
       .overrideGuard(ServiceAuthGuard)
       .useValue(mockAuthGuard)
       .overrideGuard(RateLimitGuard)
       .useValue(mockRateLimitGuard)
+      .overrideGuard(FeatureFlagGuard)
+      .useValue({
+        canActivate: jest.fn(() => true),
+      })
       .compile();
 
     app = moduleFixture.createNestApplication();

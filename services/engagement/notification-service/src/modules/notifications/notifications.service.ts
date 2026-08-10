@@ -4,6 +4,7 @@ import {
   NotFoundException,
   ForbiddenException,
   ConflictException,
+  BadRequestException,
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -11,6 +12,8 @@ import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '../../prisma/client/index.js';
 import { FirebaseService, EmailService, SmsService } from '@azeebo/shared-services';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { FeatureFlagService, notificationFlags } from '@azeebo/feature-flags';
+import { SendEmailDto } from './dto/send-email.dto.js';
 import axios from 'axios';
 
 interface UserData {
@@ -26,13 +29,23 @@ export class NotificationsService {
   private readonly userServiceBaseUrl: string;
   private readonly analyticsServiceBaseUrl: string;
 
+  // First-class transactional email templates: the template name maps to the
+  // subject sent with it. Only templates listed here can be sent through the
+  // internal POST /v1/notifications/email endpoint — anything else is a 400.
+  // The HTML bodies live in EmailService.registerTemplates (shared-services).
+  private static readonly EMAIL_SUBJECTS: Record<string, string> = {
+    'email-verification': 'Verify Your Email Address',
+    'password-reset': 'Password Reset Request',
+  };
+
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(FirebaseService) private readonly firebaseService: FirebaseService,
     @Inject(EmailService) private readonly emailService: EmailService,
     @Inject(SmsService) private readonly smsService: SmsService,
     @Inject(CacheService) private readonly cache: CacheService,
-    @Inject(ConfigService) private readonly configService: ConfigService
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
   ) {
     this.userServiceBaseUrl = this.configService.get<string>(
       'USER_SERVICE_URL',
@@ -424,6 +437,14 @@ export class NotificationsService {
     body: string,
     data?: Record<string, string>
   ): Promise<boolean> {
+    // Channel kill-switch: push is enabled while either platform is on.
+    const pushEnabled =
+      (await this.featureFlagService.isEnabled(notificationFlags.pushIos)) ||
+      (await this.featureFlagService.isEnabled(notificationFlags.pushAndroid));
+    if (!pushEnabled) {
+      this.logger.warn(`Push notifications disabled by flag; skipping user ${userId}`);
+      return false;
+    }
     try {
       // Get all push tokens for the user
       const tokens = await this.prisma.pushToken.findMany({
@@ -450,7 +471,48 @@ export class NotificationsService {
     }
   }
 
+  /**
+   * Sends a first-class transactional email (e.g. the verification link) by
+   * template name through the shared EmailService. Used by internal services
+   * via POST /v1/notifications/email. Subject and HTML live here/in the
+   * shared template registry, so callers never assemble email content.
+   */
+  async sendTemplatedEmail(dto: SendEmailDto): Promise<boolean> {
+    // Channel kill-switch: halt transactional email sends instantly.
+    if (!(await this.featureFlagService.isEnabled(notificationFlags.emailEnabled))) {
+      this.logger.warn(`Email sends disabled by flag; skipping ${dto.to}`);
+      return false;
+    }
+
+    const subject = NotificationsService.EMAIL_SUBJECTS[dto.template];
+    if (!subject) {
+      throw new BadRequestException(`Unknown email template: ${dto.template}`);
+    }
+
+    try {
+      const result = await this.emailService.sendEmail(dto.to, subject, dto.template, dto.data);
+      if (result) {
+        this.trackAnalyticsEvent('notification_email_sent', 'system', {
+          type: 'email',
+          template: dto.template,
+        });
+      }
+      return result;
+    } catch (error) {
+      this.logger.error(
+        `sendTemplatedEmail failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return false;
+    }
+  }
+
   async sendEmailNotification(userId: string, subject: string, body: string): Promise<boolean> {
+    // Channel kill-switch: halt transactional email sends instantly.
+    if (!(await this.featureFlagService.isEnabled(notificationFlags.emailEnabled))) {
+      this.logger.warn(`Email notifications disabled by flag; skipping user ${userId}`);
+      return false;
+    }
     try {
       const user = await this.getUserData(userId);
       if (!user?.email) {
@@ -621,6 +683,11 @@ export class NotificationsService {
   }
 
   async sendSmsNotification(userId: string, message: string): Promise<boolean> {
+    // Channel kill-switch: halt SMS sends instantly.
+    if (!(await this.featureFlagService.isEnabled(notificationFlags.smsEnabled))) {
+      this.logger.warn(`SMS notifications disabled by flag; skipping user ${userId}`);
+      return false;
+    }
     try {
       // Get user phone number via user-service
       const user = await this.getUserData(userId);

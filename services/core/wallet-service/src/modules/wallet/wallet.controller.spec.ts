@@ -23,6 +23,20 @@ jest.mock('../../cache/index.js', () => ({
   Cache: () => () => {},
 }));
 
+jest.mock('@azeebo/feature-flags', () => ({
+  FeatureFlagGuard: jest.fn().mockImplementation(() => ({
+    canActivate: jest.fn().mockReturnValue(true),
+  })),
+  FeatureFlag: () => () => {},
+  walletFlags: {
+    withdrawalsEnabled: 'wallet_withdrawals_enabled',
+    redeemRewards: 'wallet_redeem_rewards',
+    transfersEnabled: 'wallet_transfers_enabled',
+    bonusCredit: 'wallet_bonus_credit',
+    promoCredit: 'wallet_promo_credit',
+  },
+}));
+
 describe('WalletController', () => {
   let controller: WalletController;
   let walletService: jest.Mocked<WalletService>;

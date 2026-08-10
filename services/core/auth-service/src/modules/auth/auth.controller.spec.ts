@@ -4,6 +4,7 @@ import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { AuthRepository } from './auth.repository.js';
 import { RateLimitService } from '@azeebo/security';
+import { FeatureFlagService, FeatureFlagGuard } from '@azeebo/feature-flags';
 import { Reflector } from '@nestjs/core';
 import { User } from '@azeebo/shared-types';
 import { SelectableRole } from './dto/select-role.dto.js';
@@ -80,7 +81,10 @@ describe('AuthController', () => {
               .mockResolvedValue({ success: true, message: 'Password reset successfully' }),
             verifyEmail: jest
               .fn()
-              .mockResolvedValue({ success: true, message: 'Email verified successfully' }),
+              .mockResolvedValue({
+                success: true,
+                data: { message: 'Email verified successfully' },
+              }),
             resendVerification: jest
               .fn()
               .mockResolvedValue({ success: true, message: 'If the email exists, a verification link has been sent' }),
@@ -99,6 +103,14 @@ describe('AuthController', () => {
             findByEmail: jest.fn(),
             create: jest.fn(),
           },
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(true), getValue: jest.fn() },
+        },
+        {
+          provide: FeatureFlagGuard,
+          useValue: { canActivate: jest.fn().mockResolvedValue(true) },
         },
         {
           provide: RateLimitService,
@@ -328,7 +340,7 @@ describe('AuthController', () => {
         'test-agent'
       );
       expect(result.success).toBe(true);
-      expect(result.message).toContain('verified');
+      expect(result.data?.message).toContain('verified');
     });
 
     it('should propagate BadRequestException for expired token', async () => {

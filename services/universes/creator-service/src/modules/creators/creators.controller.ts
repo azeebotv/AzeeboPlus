@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit, Public, ServiceAuthGuard } from '@azeebo/security';
+import { FeatureFlagGuard, FeatureFlag, creatorFlags } from '@azeebo/feature-flags';
 
 import { CreatorsService } from './creators.service.js';
 import { CreatorResponse } from './interfaces/creator-response.interface.js';
@@ -310,7 +311,8 @@ export class CreatorsController {
   }
 
   @Post('tips/:creatorId')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(creatorFlags.tipsEnabled)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Send tip to creator' })
   @ApiResponse({ status: 201, description: 'Tip sent' })
@@ -353,7 +355,8 @@ export class CreatorsController {
   }
 
   @Post('subscribe/:creatorId')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(creatorFlags.subscriptionsEnabled)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Subscribe to creator' })
   @ApiResponse({ status: 201, description: 'Subscribed' })
@@ -366,7 +369,8 @@ export class CreatorsController {
   }
 
   @Delete('subscribe/:creatorId')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(creatorFlags.subscriptionsEnabled)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Cancel subscription' })
   @ApiResponse({ status: 200, description: 'Subscription cancelled' })
@@ -378,7 +382,8 @@ export class CreatorsController {
   }
 
   @Post('payouts')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(creatorFlags.payoutsEnabled)
   @RateLimit(5, 60000)
   @ApiOperation({ summary: 'Request payout' })
   @ApiResponse({ status: 201, description: 'Payout requested' })

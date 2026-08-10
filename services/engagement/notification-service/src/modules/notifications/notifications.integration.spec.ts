@@ -13,6 +13,7 @@ import { NotificationsService } from './notifications.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { FirebaseService, EmailService, SmsService, CacheService } from '@azeebo/shared-services';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 
 describe('NotificationsService Integration', () => {
   let service: NotificationsService;
@@ -83,6 +84,10 @@ describe('NotificationsService Integration', () => {
           },
         },
         { provide: CacheService, useValue: mockCacheService },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(true) },
+        },
       ],
     }).compile();
 

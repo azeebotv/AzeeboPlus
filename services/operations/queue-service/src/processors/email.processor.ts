@@ -2,6 +2,7 @@ import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
 import { EmailService } from '@azeebo/shared-services';
+import { FeatureFlagService, queueFlags } from '@azeebo/feature-flags';
 
 export interface EmailJobData {
   to: string;
@@ -17,11 +18,20 @@ export class EmailProcessor extends WorkerHost {
   private readonly logger = new Logger(EmailProcessor.name);
   private static readonly DEFAULT_MAX_RETRIES = 3;
 
-  constructor(private readonly emailService: EmailService) {
+  constructor(
+    private readonly emailService: EmailService,
+    private readonly featureFlagService: FeatureFlagService
+  ) {
     super();
   }
 
   async process(job: Job<EmailJobData>): Promise<void> {
+    // Kill-switch: when disabled, drop the job so the email queue drains.
+    if (!(await this.featureFlagService.isEnabled(queueFlags.processEmails))) {
+      this.logger.warn(`Email processing disabled by flag; dropping job ${job.id}`);
+      return;
+    }
+
     this.logger.log(`Processing email job ${job.id} (attempt ${job.attemptsMade + 1})`);
 
     const { to, subject, template, context } = job.data;

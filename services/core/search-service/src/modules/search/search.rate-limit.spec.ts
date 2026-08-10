@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, HttpException, HttpStatus } from '@nestjs/common';
 import request from 'supertest';
 import { Reflector } from '@nestjs/core';
-import { RateLimitGuard } from '@azeebo/security';
+import { RateLimitGuard, ServiceAuthGuard } from '@azeebo/security';
 import { SearchController } from './search.controller.js';
 import { SearchService } from './search.service.js';
 
@@ -50,6 +50,8 @@ describe('Search Service Rate Limiting Tests', () => {
     })
       .overrideGuard(RateLimitGuard)
       .useValue(mockRateLimitGuard)
+      .overrideGuard(ServiceAuthGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .compile();
 
     app = moduleFixture.createNestApplication();

@@ -15,6 +15,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { RateLimitGuard, ServiceAuthGuard } from '@azeebo/security';
 import { CacheService } from '@azeebo/shared-services';
+import { FeatureFlagGuard, FeatureFlagService } from '@azeebo/feature-flags';
 
 describe('Users Controller Contract Tests', () => {
   let app: INestApplication;
@@ -93,11 +94,19 @@ describe('Users Controller Contract Tests', () => {
             getOrThrow: jest.fn((_k: string) => undefined),
           },
         },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(true) },
+        },
       ],
     })
       .overrideGuard(ServiceAuthGuard)
       .useValue(mockAuthGuard)
       .overrideGuard(RateLimitGuard)
+      .useValue({
+        canActivate: jest.fn(() => true),
+      })
+      .overrideGuard(FeatureFlagGuard)
       .useValue({
         canActivate: jest.fn(() => true),
       })

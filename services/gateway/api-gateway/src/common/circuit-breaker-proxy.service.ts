@@ -1,5 +1,6 @@
-import { Injectable, Logger, HttpStatus } from '@nestjs/common';
+import { Injectable, Logger, HttpStatus, Inject } from '@nestjs/common';
 import { CircuitBreaker, CircuitState, CircuitBreakerStats } from '@azeebo/shared-types';
+import { FeatureFlagService, gatewayFlags } from '@azeebo/feature-flags';
 // OpenTelemetry tracing - optional dependency
 let trace: unknown;
 try {
@@ -71,7 +72,9 @@ export class CircuitBreakerProxyService {
   private readonly logger = new Logger(CircuitBreakerProxyService.name);
   private readonly circuitBreakers: Map<string, CircuitBreaker>;
 
-  constructor() {
+  constructor(
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
+  ) {
     this.circuitBreakers = new Map();
   }
 
@@ -116,10 +119,22 @@ export class CircuitBreakerProxyService {
     this.logger.debug(`Proxying ${method} ${path}`, { requestId });
 
     const circuitBreaker = this.getCircuitBreaker(circuitKey);
+    // Kill-switch: when gateway_circuit_breaker is disabled, bypass the breaker
+    // and call upstream directly (e.g., to ride out a breaker misconfiguration).
+    const circuitBreakingEnabled = await this.featureFlagService.isEnabled(
+      gatewayFlags.circuitBreaker
+    );
     const otelTrace = trace as { getTracer(name: string): Tracer } | undefined;
 
     if (!otelTrace?.getTracer) {
       this.logger.debug(`OpenTelemetry not available, proceeding without tracing [${requestId}]`);
+      if (!circuitBreakingEnabled) {
+        const result = await this.executeProxyRequest(method, target, headers, body, timeout, requestId);
+        return {
+          ...result,
+          circuitState: CircuitState.CLOSED,
+        };
+      }
       const result = await circuitBreaker.execute(async () => {
         return this.executeProxyRequest(method, target, headers, body, timeout, requestId);
       });

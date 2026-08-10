@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MfaService } from './mfa.service.js';
 import { AuthRepository } from '../auth.repository.js';
 import { RedisService } from '@azeebo/shared-services';
+import { AuditLogService } from '../../audit/audit.service.js';
 
 jest.mock('otpauth', () => {
   const mockSecret = { base32: 'JBSWY3DPEHPK3PXP' };
@@ -52,6 +53,10 @@ describe('MfaService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MfaService,
+        {
+          provide: AuditLogService,
+          useValue: { log: jest.fn().mockResolvedValue(undefined) },
+        },
         {
           provide: AuthRepository,
           useValue: authRepository,

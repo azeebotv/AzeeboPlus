@@ -22,6 +22,23 @@ jest.mock('@azeebo/security', () => {
   };
 });
 
+// Feature flags are integration-tested elsewhere; mock the package so this
+// contract spec doesn't load the real package (and its @nestjs/common peer
+// chain) into the jest module graph.
+jest.mock('@azeebo/feature-flags', () => ({
+  FeatureFlagService: class {},
+  gatewayFlags: {
+    maintenanceMode: 'gateway_maintenance_mode',
+    newRoutes: 'gateway_new_routes',
+    circuitBreaker: 'gateway_circuit_breaker',
+    responseCache: 'gateway_response_cache',
+    strictRateLimits: 'gateway_strict_rate_limits',
+    csrfEnforce: 'gateway_csrf_enforce',
+    legacyRedirect: 'gateway_legacy_redirect',
+    apiV2: 'gateway_api_v2',
+  },
+}));
+
 import { SERVICE_CONFIGS } from './proxy.controller';
 
 describe('Proxy Controller - API Contract Verification', () => {

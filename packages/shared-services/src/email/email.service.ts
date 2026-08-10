@@ -36,6 +36,7 @@ export class EmailService implements OnModuleInit {
   private registerTemplates(): void {
     const templateOverrides: Record<string, string | undefined> = {
       welcome: this.configService.get('EMAIL_TEMPLATE_WELCOME_HTML'),
+      'email-verification': this.configService.get('EMAIL_TEMPLATE_EMAIL_VERIFICATION_HTML'),
       'password-reset': this.configService.get('EMAIL_TEMPLATE_PASSWORD_RESET_HTML'),
       'payment-confirmation': this.configService.get('EMAIL_TEMPLATE_PAYMENT_CONFIRMATION_HTML'),
       'content-published': this.configService.get('EMAIL_TEMPLATE_CONTENT_PUBLISHED_HTML'),
@@ -50,6 +51,21 @@ export class EmailService implements OnModuleInit {
         <p>Hello {{displayName}},</p>
         <p>Thank you for joining Azeebo+. We're excited to have you on board.</p>
         <p>Start exploring our platform and discover amazing content from your favorite creators.</p>
+        <p>Best regards,<br>The Azeebo+ Team</p>
+      </div>
+    `
+    );
+
+    this.templates['email-verification'] = Handlebars.compile(
+      templateOverrides['email-verification'] ||
+        `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #333;">Verify Your Email Address</h1>
+        <p>Hello {{displayName}},</p>
+        <p>Welcome to Azeebo+! Please confirm your email address by clicking the button below:</p>
+        <p><a href="{{verificationUrl}}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Verify Email</a></p>
+        <p>This link will expire in 1 hour.</p>
+        <p>If you didn't create an account with Azeebo+, you can safely ignore this email.</p>
         <p>Best regards,<br>The Azeebo+ Team</p>
       </div>
     `

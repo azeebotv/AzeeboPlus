@@ -8,6 +8,7 @@ import { AdminModule } from './modules/admin/admin.module.js';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
 import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
+import { FeatureFlagModule, userFlags } from '@azeebo/feature-flags';
 
 @Module({
   imports: [
@@ -20,6 +21,19 @@ import { ServiceAuthGuard } from '@azeebo/security';
     UsersModule,
     HealthModule,
     AdminModule,
+    // User-profile feature toggles: new surfaces default OFF until rolled out;
+    // deletion soft-mode defaults ON as a safety net for hard deletes.
+    FeatureFlagModule.register({
+      global: true,
+      defaultFlags: {
+        [userFlags.profileV2]: false,
+        [userFlags.universeAffinity]: false,
+        [userFlags.continueWatching]: true,
+        [userFlags.deletionSoft]: true,
+        [userFlags.followSystem]: false,
+        [userFlags.privacySettingsV2]: false,
+      },
+    }),
   ],
   controllers: [],
   providers: [

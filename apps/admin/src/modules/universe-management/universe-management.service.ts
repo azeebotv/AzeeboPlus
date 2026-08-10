@@ -16,12 +16,111 @@ import { CloneUniverseDto } from './dto/clone-universe.dto';
 import { ImportUniverseDto } from './dto/import-universe.dto';
 import { Prisma } from '../../generated/prisma';
 import { InputJsonValue } from '@prisma/client/runtime/library';
+import Redis from 'ioredis';
+
+/**
+ * Canonical Redis key for a universe-scoped flag, matching the convention in
+ * `packages/feature-flags` (`universeFlagKey`): feature_flags:universe.<name>.<feature>.
+ */
+const FLAG_REDIS_PREFIX = 'feature_flags:';
+const universeFlagKey = (universeName: string, feature: string): string =>
+  `${FLAG_REDIS_PREFIX}universe.${universeName}.${feature}`;
 
 @Injectable()
 export class UniverseManagementService {
   private readonly logger = new Logger(UniverseManagementService.name);
+  private redis: Redis | null = null;
 
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+
+  /**
+   * Lazily creates the feature-flag Redis client. Failures are non-fatal: the
+   * Postgres tables remain the system of record and Redis is a derived runtime
+   * cache, so a down flag store must not break admin operations.
+   */
+  private getFlagRedis(): Redis | null {
+    if (this.redis) {
+      return this.redis;
+    }
+    const url =
+      process.env.FEATURE_FLAG_REDIS_URL ||
+      process.env.REDIS_URL ||
+      'redis://localhost:6379';
+    try {
+      this.redis = new Redis(url, {
+        lazyConnect: true,
+        maxRetriesPerRequest: 1,
+        enableOfflineQueue: false,
+      });
+      return this.redis;
+    } catch (error) {
+      this.logger.warn(`Feature flag Redis unavailable (${url}): ${error}`);
+      return null;
+    }
+  }
+
+  /** Publishes a universe flag to the runtime Redis store so services honor it. */
+  private async publishFlagToRedis(
+    universeName: string,
+    featureKey: string,
+    isEnabled: boolean,
+    metadata?: Record<string, unknown> | null
+  ): Promise<void> {
+    const redis = this.getFlagRedis();
+    if (!redis) return;
+    const key = `universe.${universeName}.${featureKey}`;
+    try {
+      await redis.set(
+        universeFlagKey(universeName, featureKey),
+        JSON.stringify({
+          key,
+          enabled: isEnabled,
+          description:
+            metadata && typeof metadata.description === 'string'
+              ? metadata.description
+              : undefined,
+          rolloutPercentage:
+            metadata && typeof metadata.rolloutPercentage === 'number'
+              ? metadata.rolloutPercentage
+              : undefined,
+          userIds: metadata && Array.isArray(metadata.userIds) ? metadata.userIds : undefined,
+          metadata: metadata ?? undefined,
+          lastToggledBy: 'admin',
+        })
+      );
+      this.logger.log(`Published flag ${key} (enabled=${isEnabled}) to Redis`);
+    } catch (error) {
+      this.logger.warn(`Failed to publish flag ${key} to Redis: ${error}`);
+    }
+  }
+
+  /** Removes a universe flag from the runtime Redis store. */
+  private async deleteFlagFromRedis(universeName: string, featureKey: string): Promise<void> {
+    const redis = this.getFlagRedis();
+    if (!redis) return;
+    try {
+      await redis.del(universeFlagKey(universeName, featureKey));
+      this.logger.log(`Removed flag universe.${universeName}.${featureKey} from Redis`);
+    } catch (error) {
+      this.logger.warn(`Failed to remove flag universe.${universeName}.${featureKey} from Redis: ${error}`);
+    }
+  }
+
+  /** Publishes the universe-level enabled sentinel used for client nav gating. */
+  private async publishUniverseEnabledToRedis(universeName: string, isEnabled: boolean): Promise<void> {
+    await this.publishFlagToRedis(universeName, 'enabled', isEnabled);
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    if (this.redis) {
+      try {
+        await this.redis.quit();
+      } catch {
+        // Best effort — process is shutting down.
+      }
+      this.redis = null;
+    }
+  }
 
   async getAllUniverses(query: QueryUniverseDto) {
     try {
@@ -179,6 +278,7 @@ export class UniverseManagementService {
         },
       });
 
+      await this.publishUniverseEnabledToRedis(universe.name, universe.isEnabled);
       this.logger.log(`Created universe: ${universe.name}`);
       return universe;
     } catch (error) {
@@ -248,6 +348,7 @@ export class UniverseManagementService {
         where: { id },
       });
 
+      await this.deleteFlagFromRedis(existingUniverse.name, 'enabled');
       this.logger.log(`Deleted universe: ${existingUniverse.name}`);
       return { message: 'Universe deleted successfully' };
     } catch (error) {
@@ -266,6 +367,7 @@ export class UniverseManagementService {
         },
       });
 
+      await this.publishUniverseEnabledToRedis(universe.name, isEnabled);
       this.logger.log(`Toggled universe ${universe.name} to ${isEnabled ? 'enabled' : 'disabled'}`);
       return universe;
     } catch (error) {
@@ -293,6 +395,10 @@ export class UniverseManagementService {
         where: { id: { in: ids } },
         data: { isEnabled },
       });
+
+      for (const universe of existingUniverses) {
+        await this.publishUniverseEnabledToRedis(universe.name, isEnabled);
+      }
 
       this.logger.log(
         `Bulk toggled ${result.count} universes to ${isEnabled ? 'enabled' : 'disabled'}`
@@ -642,6 +748,7 @@ export class UniverseManagementService {
         },
       });
 
+      await this.publishFlagToRedis(universe.name, data.featureKey, data.isEnabled, data.metadata);
       this.logger.log(`Updated feature flag ${data.featureKey} for universe ${universe.name}`);
       return featureFlag;
     } catch (error) {
@@ -652,6 +759,11 @@ export class UniverseManagementService {
 
   async deleteFeatureFlag(universeId: string, featureKey: string) {
     try {
+      const universe = await this.prisma.universe.findUnique({
+        where: { id: universeId },
+        select: { name: true },
+      });
+
       await this.prisma.universeFeatureFlag.delete({
         where: {
           universeId_featureKey: {
@@ -661,6 +773,9 @@ export class UniverseManagementService {
         },
       });
 
+      if (universe) {
+        await this.deleteFlagFromRedis(universe.name, featureKey);
+      }
       this.logger.log(`Deleted feature flag ${featureKey} for universe ${universeId}`);
       return { message: 'Feature flag deleted successfully' };
     } catch (error) {
@@ -673,6 +788,23 @@ export class UniverseManagementService {
   }
 
   async checkFeatureFlag(universeName: string, featureKey: string): Promise<boolean> {
+    // Redis is the runtime source of truth — toggles made via the admin UI are
+    // published there and take effect without a redeploy or DB read.
+    const redis = this.getFlagRedis();
+    if (redis) {
+      try {
+        const raw = await redis.get(universeFlagKey(universeName, featureKey));
+        if (raw) {
+          const flag = JSON.parse(raw) as { enabled?: boolean };
+          return flag.enabled === true;
+        }
+      } catch (error) {
+        this.logger.warn(
+          `Redis read failed for ${universeName}.${featureKey}, falling back to DB: ${error}`
+        );
+      }
+    }
+
     try {
       const universe = await this.prisma.universe.findUnique({
         where: { name: universeName },

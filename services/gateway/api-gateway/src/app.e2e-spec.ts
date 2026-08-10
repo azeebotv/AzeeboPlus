@@ -45,6 +45,41 @@ jest.mock('ioredis', () => {
   return class MockRedis {};
 });
 
+jest.mock('@azeebo/feature-flags', () => {
+  const FeatureFlagService = class {};
+  const noopModule = { module: class {}, global: true, providers: [], exports: [] };
+  return {
+    FeatureFlagService,
+    FeatureFlagModule: {
+      register: () => noopModule,
+    },
+    FeatureFlagGuard: class {
+      canActivate() {
+        return true;
+      }
+    },
+    FeatureFlag: () => () => {},
+    gatewayFlags: {
+      maintenanceMode: 'gateway_maintenance_mode',
+      newRoutes: 'gateway_new_routes',
+      circuitBreaker: 'gateway_circuit_breaker',
+      responseCache: 'gateway_response_cache',
+      strictRateLimits: 'gateway_strict_rate_limits',
+      csrfEnforce: 'gateway_csrf_enforce',
+      legacyRedirect: 'gateway_legacy_redirect',
+      apiV2: 'gateway_api_v2',
+    },
+    webFlags: {
+      maintenanceMode: 'web_maintenance_mode',
+      newHome: 'web_new_home',
+      darkMode: 'web_dark_mode',
+      autoplay: 'web_autoplay',
+      lowDataDefault: 'web_low_data_default',
+    },
+    universeEnabledKey: (name: string) => `universe.${name}.enabled`,
+  };
+});
+
 jest.mock('@azeebo/logger', () => ({
   ResponseWrapperInterceptor: class {
     intercept = jest.fn();

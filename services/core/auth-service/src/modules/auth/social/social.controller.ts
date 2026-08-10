@@ -15,6 +15,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 
 import { SocialAuthService } from './social.service.js';
 import { RateLimitGuard, RateLimit } from '../../../common/guards/rate-limit.guard.js';
+import { FeatureFlag, FeatureFlagGuard, authFlags } from '@azeebo/feature-flags';
 import { SocialAuthCallbackDto, SocialAuthAuthorizeResponseDto } from '../dto/social-auth.dto.js';
 
 interface SocialLoginResponse {
@@ -52,7 +53,8 @@ export class SocialAuthController {
   // ─── Authorize endpoints (initiate OAuth flow) ──────────────────────
 
   @Get('google/authorize')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(authFlags.socialGoogle)
   @RateLimit(10, 60000) // 10 requests per minute
   @ApiOperation({ summary: 'Initiate Google OAuth flow with state parameter' })
   @ApiResponse({ status: 200, description: 'Returns state and authorization URL' })
@@ -69,7 +71,8 @@ export class SocialAuthController {
   }
 
   @Get('apple/authorize')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(authFlags.socialApple)
   @RateLimit(10, 60000) // 10 requests per minute
   @ApiOperation({ summary: 'Initiate Apple OAuth flow with state parameter' })
   @ApiResponse({ status: 200, description: 'Returns state and authorization URL' })

@@ -9,6 +9,9 @@ jest.mock('@azeebo/security', () => ({
   RateLimitGuard: class MockRateLimitGuard {
     canActivate = jest.fn().mockReturnValue(true);
   },
+  ServiceAuthGuard: class MockServiceAuthGuard {
+    canActivate = jest.fn().mockReturnValue(true);
+  },
   RateLimit: () => () => {},
 }));
 jest.mock('class-validator', () => ({
@@ -19,6 +22,7 @@ jest.mock('class-validator', () => ({
   IsEnum: () => () => {},
   IsNotEmpty: () => () => {},
   IsIn: () => () => {},
+  IsObject: () => () => {},
   ValidateNested: () => () => {},
   Type: () => () => {},
   IsPhoneNumber: () => () => {},
@@ -50,6 +54,7 @@ describe('Notifications Controller Contract Tests', () => {
     savePushToken: jest.fn(),
     getPushTokens: jest.fn(),
     deletePushToken: jest.fn(),
+    sendTemplatedEmail: jest.fn(),
   };
 
   const createMockAuthGuard = (canActivate: boolean) => ({
@@ -173,6 +178,29 @@ describe('Notifications Controller Contract Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.data.unreadCount).toBe(5);
+    });
+  });
+
+  describe('POST /v1/notifications/email', () => {
+    it('should send a templated transactional email', async () => {
+      mockNotificationsService.sendTemplatedEmail.mockResolvedValue(true);
+
+      const response = await request(app.getHttpServer())
+        .post('/v1/notifications/email')
+        .set('Authorization', 'Bearer valid-token')
+        .send({
+          to: 'test@example.com',
+          template: 'email-verification',
+          data: { displayName: 'Test User', verificationUrl: 'https://azeebo.plus/verify' },
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(mockNotificationsService.sendTemplatedEmail).toHaveBeenCalledWith({
+        to: 'test@example.com',
+        template: 'email-verification',
+        data: { displayName: 'Test User', verificationUrl: 'https://azeebo.plus/verify' },
+      });
     });
   });
 });

@@ -1,6 +1,7 @@
 import { Inject, Controller, Get, Post, Body, Param, Query, Request, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ServiceAuthGuard, AdminGuard, RateLimitGuard, RateLimit } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, comedyFlags } from '@azeebo/feature-flags';
 import { ComedyFeedService } from './comedy-feed.service.js';
 
 @ApiTags('Comedy Feed')
@@ -35,7 +36,8 @@ export class ComedyFeedController {
   }
 
   @Get('specials')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(comedyFlags.specialsGate)
   @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get premium specials' })
   @ApiResponse({ status: 200, description: 'Specials list' })
@@ -48,7 +50,8 @@ export class ComedyFeedController {
   }
 
   @Get('specials/:id')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(comedyFlags.specialsGate)
   @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get special by id' })
   @ApiResponse({ status: 200, description: 'Special details' })

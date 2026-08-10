@@ -90,6 +90,8 @@ model ContentItem {
   id          String   @id @default(uuid())
   title       String
   description String?
+  thumbnail   String?
+  duration    Int?
   universeId  String
   universe    String
   contentType String

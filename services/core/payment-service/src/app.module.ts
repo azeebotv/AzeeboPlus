@@ -15,6 +15,8 @@ import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { RedisModule, CacheModule } from '@azeebo/shared-services';
 import { ObservabilityModule } from '@azeebo/observability';
+import { FeatureFlagModule } from '@azeebo/feature-flags';
+import { paymentFlags } from '@azeebo/feature-flags';
 
 @Module({
   imports: [
@@ -33,6 +35,22 @@ import { ObservabilityModule } from '@azeebo/observability';
     PricingModule,
     MetricsModule,
     ObservabilityModule,
+    // Provider routing + kill-switches: both gateways default ON so ops can
+    // fail over (or freeze) a provider instantly; refund self-service defaults
+    // OFF until enabled.
+    FeatureFlagModule.register({
+      global: true,
+      defaultFlags: {
+        [paymentFlags.providerPaystack]: true,
+        [paymentFlags.providerFlutterwave]: true,
+        [paymentFlags.webhooksEnabled]: true,
+        [paymentFlags.scheduledTasks]: true,
+        [paymentFlags.selfServiceRefund]: false,
+        [paymentFlags.kycRequired]: false,
+        [paymentFlags.newCheckoutFlow]: false,
+        [paymentFlags.intentsApi]: false,
+      },
+    }),
   ],
   controllers: [PaymentsController],
   providers: [

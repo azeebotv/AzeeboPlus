@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, realityFlags } from '@azeebo/feature-flags';
 
 import { RealityService } from './reality.service.js';
 import { RealityResponse } from './interfaces/reality-response.interface.js';
@@ -292,7 +293,8 @@ export class RealityController {
   // NOTE: This is an alias for /votes with a stricter rate limit (10/min vs 50/min).
   // Consider removing this endpoint and using /votes with a consistent rate limit.
   @Post('shows/:showId/vote')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(realityFlags.votingEnabled)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Vote for contestant (alias for /votes)' })
   @ApiResponse({ status: 201, description: 'Vote submitted' })
@@ -309,7 +311,8 @@ export class RealityController {
   }
 
   @Post('votes')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(realityFlags.votingEnabled)
   @RateLimit(50, 60000)
   @ApiOperation({ summary: 'Submit vote' })
   @ApiResponse({ status: 201, description: 'Vote submitted' })
@@ -322,7 +325,8 @@ export class RealityController {
   }
 
   @Post('votes/quantity')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(realityFlags.votingEnabled)
   @RateLimit(50, 60000)
   @ApiOperation({ summary: 'Submit multiple votes with quantity selector' })
   @ApiResponse({ status: 201, description: 'Votes submitted' })
@@ -334,7 +338,8 @@ export class RealityController {
   }
 
   @Post('supervotes')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(realityFlags.votingEnabled)
   @RateLimit(50, 60000)
   @ApiOperation({ summary: 'Submit supervote' })
   @ApiResponse({ status: 201, description: 'Supervote submitted' })
@@ -347,7 +352,8 @@ export class RealityController {
   }
 
   @Post('predictions')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(realityFlags.predictionsEnabled)
   @RateLimit(50, 60000)
   @ApiOperation({ summary: 'Submit prediction' })
   @ApiResponse({ status: 201, description: 'Prediction submitted' })
@@ -360,6 +366,8 @@ export class RealityController {
   }
 
   @Get('predictions/:showId')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(realityFlags.predictionsEnabled)
   @ApiOperation({ summary: 'Get prediction dashboard' })
   @ApiResponse({ status: 200, description: 'Prediction dashboard' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })

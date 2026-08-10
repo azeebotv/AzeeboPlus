@@ -5,6 +5,7 @@ import { PaystackProvider } from '../payments/providers/paystack.provider.js';
 import { FlutterwaveProvider } from '../payments/providers/flutterwave.provider.js';
 import { WebhookRetryService } from '../payments/webhook-retry.service.js';
 import { RedisService, CacheService } from '@azeebo/shared-services';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 import { BadRequestException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import axios from 'axios';
@@ -66,6 +67,10 @@ describe('PaymentsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PaymentsService,
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(true) },
+        },
         {
           provide: PrismaService,
           useValue: prisma,

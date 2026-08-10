@@ -2,8 +2,11 @@ import {
   Inject,
   Injectable,
   UnauthorizedException,
+  ForbiddenException,
   ConflictException,
   BadRequestException,
+  HttpException,
+  HttpStatus,
   Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -34,6 +37,7 @@ import { User } from '@azeebo/shared-types';
 import { createSuccessResponse } from '@azeebo/shared-types';
 import { OtpService } from './otp/otp.service.js';
 import { RedisService, CacheService, cacheKey } from '@azeebo/shared-services';
+import { FeatureFlagService, authFlags } from '@azeebo/feature-flags';
 
 @Injectable()
 export class AuthService {
@@ -41,6 +45,14 @@ export class AuthService {
   private readonly saltRounds: number;
   private readonly accessTokenExpiry: string;
   private readonly refreshTokenExpiryDays: number;
+
+  // Email verification links expire after 1 hour (same lifetime as password
+  // reset tokens) and each token tolerates only a few verification attempts
+  // before it is burned — see verifyEmail().
+  private static readonly VERIFICATION_TOKEN_TTL_SECONDS = 3600;
+  private static readonly MAX_VERIFY_ATTEMPTS_PER_TOKEN = 5;
+  // Per-user cap on verification emails per hour (inbox-bombing protection).
+  private static readonly MAX_VERIFICATION_RESENDS_PER_HOUR = 3;
   private readonly revokedTokensPrefix = 'revoked:';
   private readonly failedLoginPrefix = 'failed_login:';
   private readonly maxFailedAttempts: number;
@@ -54,7 +66,8 @@ export class AuthService {
     @Inject(OtpService) private readonly otpService: OtpService,
     @Inject(RedisService) private readonly redisService: RedisService,
     @Inject(CacheService) private readonly cacheService: CacheService,
-    @Inject(ConfigService) private readonly configService: ConfigService
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
   ) {
     this.saltRounds = this.configService.get<number>('SALT_ROUNDS', 10);
     this.accessTokenExpiry = this.configService.get<string>('JWT_EXPIRES_IN', '30m');
@@ -129,6 +142,36 @@ export class AuthService {
       timestamp: new Date(),
     });
 
+    // auth_email_verification_required: signup branches into a verification
+    // step — no tokens are issued, so the user cannot log in until the email
+    // is verified (login is also gated below).
+    if (await this.featureFlagService.isEnabled(authFlags.emailVerificationRequired)) {
+      await this.sendVerificationEmail(user);
+
+      this.auditLogService.log({
+        actor: user.id,
+        action: 'registration.verification_required',
+        resourceType: 'user',
+        resourceId: user.id,
+        result: 'success',
+        ipAddress,
+        userAgent,
+        timestamp: new Date(),
+      });
+
+      this.trackAnalyticsEvent('user_registered', user.id, {
+        email: user.email,
+        role: user.role,
+        emailVerificationRequired: true,
+      });
+
+      return createSuccessResponse({
+        user: this.mapToUser(user),
+        requiresEmailVerification: true,
+        message: 'Registration successful. Please verify your email to sign in.',
+      });
+    }
+
     const tokens = await this.generateTokens(user);
 
     this.trackAnalyticsEvent('user_registered', user.id, {
@@ -180,6 +223,30 @@ export class AuthService {
     }
 
     await this.resetFailedLoginAttempts(loginDto.email);
+
+    // auth_email_verification_required: unverified users cannot sign in — they
+    // must verify via the emailed link first (registration issues no tokens).
+    if (await this.featureFlagService.isEnabled(authFlags.emailVerificationRequired)) {
+      if (!user.isVerified) {
+        this.auditLogService.log({
+          actor: user.id,
+          action: 'login.blocked',
+          resourceType: 'user',
+          resourceId: user.id,
+          result: 'failure',
+          error: 'email_not_verified',
+          ipAddress,
+          userAgent,
+          timestamp: new Date(),
+        });
+        this.trackAnalyticsEvent('user_login_blocked', user.id, {
+          reason: 'email_not_verified',
+        });
+        throw new ForbiddenException(
+          'Email not verified. Please verify your email before signing in.'
+        );
+      }
+    }
 
     this.auditLogService.log({
       actor: user.id,
@@ -454,8 +521,49 @@ export class AuthService {
     verifyEmailDto: VerifyEmailDto,
     ipAddress?: string,
     userAgent?: string
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<{
+    success: boolean;
+    data?: {
+      message: string;
+      user?: User;
+      access_token?: string;
+      refresh_token?: string;
+      expiresAt?: string;
+    };
+  }> {
     const verificationTokenKey = `email_verification:${verifyEmailDto.token}`;
+    const attemptsKey = `email_verification_attempts:${verifyEmailDto.token}`;
+
+    // Per-token attempt budget: each token may be tried only a few times
+    // (defense-in-depth beyond the endpoint-level IP rate limit). The counter
+    // lives as long as the token and is deleted on success.
+    const attempts = await this.redisService.incr(attemptsKey);
+    if (attempts === 1) {
+      await this.redisService.expire(
+        attemptsKey,
+        AuthService.VERIFICATION_TOKEN_TTL_SECONDS
+      );
+    }
+    if (attempts > AuthService.MAX_VERIFY_ATTEMPTS_PER_TOKEN) {
+      // Burn the token: no further attempts, regardless of correctness.
+      await this.redisService.del(verificationTokenKey);
+      this.auditLogService.log({
+        actor: null,
+        action: 'email_verification_failed',
+        resourceType: 'user',
+        resourceId: verifyEmailDto.token,
+        result: 'failure',
+        error: 'too_many_attempts',
+        ipAddress,
+        userAgent,
+        timestamp: new Date(),
+      });
+      throw new HttpException(
+        'Too many verification attempts. Please request a new link.',
+        HttpStatus.TOO_MANY_REQUESTS
+      );
+    }
+
     const userId = await this.redisService.get(verificationTokenKey);
 
     if (!userId) {
@@ -500,10 +608,24 @@ export class AuthService {
 
     await this.authRepository.verifyEmail(userId);
     await this.redisService.del(verificationTokenKey);
+    await this.redisService.del(attemptsKey);
+
+    // Post-verification auto-login: the user just proved ownership of the
+    // email, so issue tokens directly — no second sign-in needed. This works
+    // whether or not auth_email_verification_required is on (verifying is
+    // always a legitimate proof of identity).
+    const tokens = await this.generateTokens(user);
 
     this.trackAnalyticsEvent('user_email_verified', userId);
+    this.trackAnalyticsEvent('user_logged_in', userId, { method: 'email_verification' });
 
-    return { success: true, message: 'Email verified successfully' };
+    return createSuccessResponse({
+      message: 'Email verified successfully',
+      user: this.mapToUser(user),
+      access_token: tokens.accessToken,
+      refresh_token: tokens.refreshToken,
+      expiresAt: tokens.expiresAt,
+    });
   }
 
   async resendVerification(
@@ -541,6 +663,33 @@ export class AuthService {
       return { success: true, message: 'Email is already verified' };
     }
 
+    // Per-user resend throttle: bound token issuance per hour so an attacker
+    // cannot spam a victim's inbox with verification emails (each resend
+    // mints a fresh token). The endpoint-level guard is per-IP; this is per
+    // user and survives IP rotation.
+    const resendKey = `email_verification_resend:${user.id}`;
+    const resendCount = await this.redisService.incr(resendKey);
+    if (resendCount === 1) {
+      await this.redisService.expire(resendKey, 3600);
+    }
+    if (resendCount > AuthService.MAX_VERIFICATION_RESENDS_PER_HOUR) {
+      this.auditLogService.log({
+        actor: user.id,
+        action: 'verification_email_resend_failed',
+        resourceType: 'user',
+        resourceId: user.id,
+        result: 'failure',
+        error: 'resend_rate_limited',
+        ipAddress,
+        userAgent,
+        timestamp: new Date(),
+      });
+      throw new HttpException(
+        'Too many verification emails requested. Please try again later.',
+        HttpStatus.TOO_MANY_REQUESTS
+      );
+    }
+
     this.auditLogService.log({
       actor: user.id,
       action: 'verification_email_resended',
@@ -552,9 +701,24 @@ export class AuthService {
       timestamp: new Date(),
     });
 
+    await this.sendVerificationEmail(user);
+
+    return { success: true, message: 'If the email exists, a verification link has been sent' };
+  }
+
+  /**
+   * Stores a fresh verification token in Redis and asks notification-service
+   * to email the verification link. Failures are logged but never thrown so
+   * signup/resend never fail hard on email delivery.
+   */
+  private async sendVerificationEmail(user: UserEntity): Promise<void> {
     const verificationToken = randomUUID();
     const verificationKey = `email_verification:${verificationToken}`;
-    await this.redisService.set(verificationKey, user.id, 86400);
+    await this.redisService.set(
+      verificationKey,
+      user.id,
+      AuthService.VERIFICATION_TOKEN_TTL_SECONDS
+    );
 
     try {
       const notificationServiceUrl = this.configService.get<string>(
@@ -567,7 +731,7 @@ export class AuthService {
         data: {
           verificationToken,
           verificationUrl: `${this.configService.get<string>('FRONTEND_URL', 'http://localhost:4000')}/auth/verify-email?token=${verificationToken}`,
-          userName: user.displayName,
+          displayName: user.displayName,
         },
       });
     } catch (error: unknown) {
@@ -575,8 +739,6 @@ export class AuthService {
         `Failed to send verification email: ${error instanceof Error ? error.message : String(error)}`
       );
     }
-
-    return { success: true, message: 'If the email exists, a verification link has been sent' };
   }
 
   async selectRole(

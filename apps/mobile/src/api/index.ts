@@ -2,7 +2,12 @@ export type { User, AuthResponse, ApiResponse, Device } from './auth';
 export type { ContentItem, PaginatedResponse } from './content';
 export type { WalletBalance, Transaction } from './wallet';
 export type { Notification, NotificationPreferences } from './notification';
-export type { MediaUploadResponse, PresignedUploadResponse, FileMetadata } from './media';
+export type {
+  MediaUploadResponse,
+  PresignedUploadResponse,
+  FileMetadata,
+  UploadCachePolicy,
+} from './media';
 export type { Universe } from './universe';
 export type { Conversation, Message, LiveChatMessage } from './messaging';
 export type { LeaderboardEntry, RankingCategory, PredictionResult } from './engagement';

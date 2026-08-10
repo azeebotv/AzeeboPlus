@@ -10,7 +10,7 @@ import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { CacheModule } from './cache/cache.module.js';
 import { JwtStrategy } from './modules/auth/jwt.strategy.js';
-import { FeatureFlagModule } from '@azeebo/feature-flags';
+import { FeatureFlagModule, contentFlags } from '@azeebo/feature-flags';
 
 @Module({
   imports: [
@@ -24,7 +24,22 @@ import { FeatureFlagModule } from '@azeebo/feature-flags';
     ContentModule,
     HealthModule,
     PublicModule,
-    FeatureFlagModule.register({}),
+    FeatureFlagModule.register({
+      global: true,
+      defaultFlags: {
+        // Content flags: moderation stays ON (kill-switch for safety scans);
+        // new pipelines (AI tags, clip ingestion, transcoding v2, threaded
+        // comments, premium gating, recommended rail) default OFF until ready.
+        [contentFlags.moderationEnabled]: true,
+        [contentFlags.transcodingNew]: false,
+        [contentFlags.aiTags]: false,
+        [contentFlags.clipIngestion]: false,
+        [contentFlags.commentsV2]: false,
+        [contentFlags.windowingEnabled]: true,
+        [contentFlags.premiumGate]: false,
+        [contentFlags.recommendedRail]: false,
+      },
+    }),
   ],
   providers: [
     JwtStrategy,

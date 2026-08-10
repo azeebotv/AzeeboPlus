@@ -33,6 +33,7 @@ import {
   TransactionHistoryResponse,
 } from './interfaces/payment-response.interface.js';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { FeatureFlagGuard, FeatureFlag, paymentFlags } from '@azeebo/feature-flags';
 
 @ApiTags('Payments')
 @ApiBearerAuth()
@@ -276,7 +277,8 @@ export class PaymentsController {
   }
 
   @Post('refund-request')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(paymentFlags.selfServiceRefund)
   @RateLimit(5, 3600000)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Request a refund' })

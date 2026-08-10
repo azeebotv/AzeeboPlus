@@ -8,8 +8,11 @@ export interface AuthResponse {
       avatar?: string | null;
       role: string;
     };
-    access_token: string;
-    refresh_token: string;
+    access_token?: string;
+    refresh_token?: string;
+    /** Set when email verification is required: no tokens are issued until the email is verified. */
+    requiresEmailVerification?: boolean;
+    message?: string;
   };
   error?: {
     code: string;

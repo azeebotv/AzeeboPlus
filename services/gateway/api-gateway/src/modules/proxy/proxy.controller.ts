@@ -25,6 +25,7 @@ import { ConfigService } from '@nestjs/config';
 import { ApiVersioningConfig, API_VERSION_HEADER, DEFAULT_API_VERSION } from '@azeebo/shared-types';
 import { createHash, randomUUID } from 'crypto';
 import { CircuitBreakerProxyService } from '../../common/circuit-breaker-proxy.service';
+import { FeatureFlagService, gatewayFlags } from '@azeebo/feature-flags';
 
 const CACHE_TTL_MS = 300_000; // 5 minutes
 
@@ -414,6 +415,17 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'DELETE', path: '/reports/:id', description: 'Delete report' },
       { method: 'GET', path: '/config', description: 'Get platform config' },
       { method: 'PATCH', path: '/config', description: 'Update platform config' },
+      { method: 'GET', path: '/feature-flags', description: 'List global feature flags with defaults' },
+      {
+        method: 'PUT',
+        path: '/feature-flags/:key',
+        description: 'Set a global feature flag value',
+      },
+      {
+        method: 'DELETE',
+        path: '/feature-flags/:key',
+        description: 'Reset a global feature flag to its default',
+      },
       { method: 'GET', path: '/audit-logs', description: 'Get audit logs' },
       { method: 'GET', path: '/audit-logs/actor/:actorId', description: 'Get audit logs by actor' },
       {
@@ -815,6 +827,11 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'GET', path: '/presigned/download', description: 'Get presigned download URL' },
       { method: 'GET', path: '/metadata', description: 'Get file metadata' },
       { method: 'DELETE', path: '/:key', description: 'Delete file' },
+      {
+        method: 'POST',
+        path: '/admin/cdn/purge',
+        description: 'Purge cached media from the CDN (admin)',
+      },
     ],
   },
   {
@@ -1070,7 +1087,9 @@ export class ProxyController {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @Inject(ConfigService) private configService: ConfigService,
     @Inject(CircuitBreakerProxyService)
-    private circuitBreakerProxyService: CircuitBreakerProxyService
+    private circuitBreakerProxyService: CircuitBreakerProxyService,
+    @Inject(FeatureFlagService)
+    private readonly featureFlagService: FeatureFlagService
   ) {
     this.UPSTREAM_TIMEOUT = this.configService.get<number>('UPSTREAM_TIMEOUT', 30000);
   }
@@ -1467,10 +1486,38 @@ export class ProxyController {
       requestId = randomUUID();
     }
 
+    // Global kill-switch: gateway_maintenance_mode returns 503 for all traffic.
+    const [maintenanceMode, apiV2Enabled, responseCacheEnabled] = await Promise.all([
+      this.featureFlagService.isEnabled(gatewayFlags.maintenanceMode),
+      this.featureFlagService.isEnabled(gatewayFlags.apiV2),
+      this.featureFlagService.isEnabled(gatewayFlags.responseCache),
+    ]);
+    if (maintenanceMode) {
+      res.setHeader(this.REQUEST_ID_HEADER, requestId);
+      res.setHeader('Retry-After', '300');
+      res.status(HttpStatus.SERVICE_UNAVAILABLE).json({
+        message: 'Platform is under maintenance. Please try again later.',
+      });
+      return;
+    }
+
     const route = this.findRoute(service);
     if (!route) {
       res.setHeader(this.REQUEST_ID_HEADER, requestId);
       res.status(HttpStatus.NOT_FOUND).json({ message: 'Service not found' });
+      return;
+    }
+
+    // API v2 is gated behind gateway_api_v2 — newer versions are only reachable
+    // once the flag is enabled (routes may list them in supportedVersions).
+    const normalizedVersion = version.startsWith('v') ? version.substring(1) : version;
+    if (normalizedVersion !== '1' && !apiV2Enabled) {
+      res.setHeader(this.REQUEST_ID_HEADER, requestId);
+      res.status(HttpStatus.NOT_FOUND).json({
+        message: `API version ${version} is not enabled`,
+        supportedVersions: route.supportedVersions,
+        defaultVersion: route.defaultVersion,
+      });
       return;
     }
 
@@ -1486,7 +1533,7 @@ export class ProxyController {
 
     const cacheKey = this.buildCacheKey(req, version);
 
-    if (method === 'GET') {
+    if (method === 'GET' && responseCacheEnabled) {
       const cachedResponse = await this.cacheManager.get(cacheKey);
       if (cachedResponse) {
         res.setHeader(API_VERSION_HEADER, version);
@@ -1506,7 +1553,13 @@ export class ProxyController {
       requestId,
       route
     );
-    if (method === 'GET' && response && typeof response === 'object' && !res.headersSent) {
+    if (
+      method === 'GET' &&
+      responseCacheEnabled &&
+      response &&
+      typeof response === 'object' &&
+      !res.headersSent
+    ) {
       await this.cacheManager.set(cacheKey, response, CACHE_TTL_MS);
     }
   }
