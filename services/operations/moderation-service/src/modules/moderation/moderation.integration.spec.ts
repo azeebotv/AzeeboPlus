@@ -13,6 +13,7 @@ import { PrismaService } from '../database/prisma.service.js';
 import { SafetyScanningService } from './safety-scanning.service.js';
 import { ConfigService } from '@nestjs/config';
 import { CacheService } from '@azeebo/shared-services';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 import axios from 'axios';
 
 jest.mock('axios');
@@ -82,6 +83,10 @@ describe('ModerationService Integration - Cross-Service Communication', () => {
             set: jest.fn().mockResolvedValue(undefined),
             invalidate: jest.fn().mockResolvedValue(undefined),
           },
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(true) },
         },
         {
           provide: ConfigService,

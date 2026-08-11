@@ -93,6 +93,101 @@ azeebo_http_requests_total{method="POST"} 434
 azeebo_http_response_time_seconds 0.045
 ```
 
+## Feature-Flag Metrics
+
+Every `FeatureFlagService` exposes two observability hooks — `onEvaluation`
+and `onToggle` — that no-op by default. Wire them to a Prometheus sink to
+measure rollout health (evaluation volume per flag) and change activity (who
+flipped what, when).### Shared `@azeebo/flag-metrics` package (all 28 services)
+
+The shared `packages/flag-metrics` package ships `FlagMetricsModule` — the
+single implementation wired into **all 28 services** (api-gateway plus every
+core/engagement/intelligence/operations/universe service). It registers two
+prom-client counters with a fixed `service` label and feeds them from the
+`FeatureFlagModule.register` config through a module-level holder keyed by
+service name (the static `@Module` can't receive the service through DI, so
+`FlagMetricsService.onModuleInit` swaps each service's no-op holder entry for
+the live hooks). Metrics are exposed at `GET /metrics`.
+
+```
+# HELP flag_evaluation_total Number of feature-flag evaluations, by service, flag key and result
+# TYPE flag_evaluation_total counter
+flag_evaluation_total{service="auth-service",key="web_maintenance_mode",result="disabled"} 42
+flag_evaluation_total{service="api-gateway",key="web_dark_mode",result="enabled"} 1530
+
+# HELP flag_toggled_total Number of feature-flag toggles, by service, flag key and new value
+# TYPE flag_toggled_total counter
+flag_toggled_total{service="auth-service",key="web_maintenance_mode",value="enabled"} 1
+
+# HELP flag_stale_running_total Number of evaluations of flags that are ENABLED past their staleAfter expiry, by service and flag key
+# TYPE flag_stale_running_total counter
+flag_stale_running_total{service="search-service",key="search_suggestions_ai"} 517
+```
+
+**Expiry-aware evaluation**: the evaluator (`FeatureFlagService` in
+`packages/feature-flags`) reports any flag evaluated as **enabled past its
+`staleAfter`** — the metric hook fires on every such evaluation
+(`flag_stale_running_total`, so rates are measurable), and a built-in console
+warning is logged per key but throttled to once per 5 minutes so a hot stale
+flag can't flood logs. The warning/message names the flag, its expiry, and
+points at the admin stale report. Every service gets this automatically
+through the shared `flagHooks()` wiring.
+
+Wiring is two lines per service — the module registration (with the Prometheus
+`service` label) and the spreadable hooks into `FeatureFlagModule.register`:
+
+```typescript
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
+
+// imports: [
+//   FlagMetricsModule.register({ service: 'auth-service' }),
+//   FeatureFlagModule.register({ global: true, defaultFlags: {...}, ...flagHooks('auth-service') }),
+// ]
+```
+
+Notes:
+
+- **`service` label**: every counter carries `service="<name>"`, so one
+  Prometheus can split per-service dashboards — e.g.
+  `sum by (service) (rate(flag_evaluation_total[5m]))` or a drop-down filter.
+  Label cardinality stays bounded: service + flag key + result/value only, no
+  per-user labels.
+- **Path collisions**: payment/queue/search already own a `/metrics`
+  controller (their own registries), so they mount the module with
+  `path: 'flag-metrics'` and serve flag metrics at `/flag-metrics`; every
+  other service uses the default `/metrics`.
+- **Static-module holder**: `flagHooks(service)` is safe at decorator time —
+  before the service initializes it resolves to a no-op, after
+  `onModuleInit` it resolves to the live counters (per-service keys, so 28+
+  services can coexist in one process).
+
+### Grafana dashboard
+
+Import `services/gateway/api-gateway/prometheus/grafana-dashboard.json`
+(DataSource variable `DS_PROMETHEUS`):
+
+- **Service filter**: a `$service` template variable
+  (`label_values(flag_evaluation_total, service)`) drives every panel — pick
+  one service for a focused view or All for the fleet.
+- **Evaluation volume**: top flags by `rate(flag_evaluation_total[5m])` —
+  spot rollout ramps and abnormal evaluation spikes (e.g. a flag checked in a
+  hot loop).
+- **Evaluation by result**: stacked enabled/disabled per top flag — the
+  rollout health view (a flag flipping to ~100% disabled signals a kill).
+- **Toggle activity**: `sum(rate(flag_toggled_total[1h]))` bars — incident
+  forensics (who toggled what, when) correlates with `audit_logs`.
+
+Scrape every service (`metrics_path: /metrics`, or `/flag-metrics` for
+payment/queue/search) alongside the search-service fuzzy metrics; the search
+dashboard lives at `services/core/search-service/prometheus/grafana-dashboard.json`.
+
+### Wiring it in a new service
+
+Add the package to `package.json` (`@azeebo/flag-metrics: workspace:*`), then
+copy the two lines above into `app.module.ts`. The package spec
+(`packages/flag-metrics/src/flag-metrics.service.spec.ts`) proves the hooks,
+the per-service label isolation, and the `/metrics` + custom-path endpoints.
+
 ## Sentry Integration
 
 Sentry is configured via environment variables in `@azeebo/shared-services`:
@@ -151,4 +246,13 @@ groups:
           severity: critical
         annotations:
           summary: "Average response time above 500ms"
+
+      - alert: FlagRunningPastStaleAfter
+        expr: max by (service, key) (flag_stale_running_total{service=~".+"}) > 0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Flag {{ $labels.key }} is still ENABLED past its staleAfter ({{ $labels.service }})"
+          description: "The flag is running past its removal date — remove it or renew its staleAfter in the admin stale report."
 ```

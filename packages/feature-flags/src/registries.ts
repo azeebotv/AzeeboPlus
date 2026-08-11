@@ -37,6 +37,10 @@ export const creatorFlags = {
   tipsEnabled: 'creator_tips_enabled',
   subscriptionsEnabled: 'creator_subscriptions_enabled',
   monetizationInsights: 'creator_monetization_insights',
+  newAnalytics: 'creator_new_analytics',
+  uploadV2: 'creator_upload_v2',
+  payoutsUi: 'creator_payouts_ui',
+  onboardingWizard: 'creator_onboarding_wizard',
 } as const;
 
 export const subscriptionFlags = {
@@ -100,6 +104,14 @@ export const searchFlags = {
   logQueries: 'search_log_queries',
   /** Numeric: trigram weight in the fuzzy blend (0–1; 0.4 = 60/40 fuzzy/trigram). */
   fuzzyTrigramWeight: 'search_fuzzy_trigram_weight',
+  /** Learn popular 'did you mean' corrections from accepted suggestions. */
+  typoDictionary: 'search_typo_dictionary',
+  /** Scheduled job that denormalizes categories + creator displayName from the
+   * content DB into the search index's content_items. */
+  indexPopulation: 'search_index_population',
+  /** Self-healing: recreate the pg_trgm migration's GIN trigram indexes when
+   * they go missing (the SearchPgTrgmIndexesMissing alert condition). */
+  indexRepair: 'search_index_repair',
 } as const;
 
 export const mediaFlags = {
@@ -120,6 +132,18 @@ export const queueFlags = {
   dlqRetry: 'queue_dlq_retry',
   dlqRetryMaxPasses: 'queue_dlq_retry_max_passes',
   dlqRetryBaseDelayMs: 'queue_dlq_retry_base_delay_ms',
+  // Per-queue DLQ overrides: when stored, these win for their queue (so ops
+  // can tune payment / notification dead-letter budgets independently); unset
+  // per-queue flags fall back to the shared queue_dlq_retry_* flags above.
+  dlqRetryPayments: 'queue_dlq_retry_payments',
+  dlqRetryMaxPassesPayments: 'queue_dlq_retry_max_passes_payments',
+  dlqRetryBaseDelayMsPayments: 'queue_dlq_retry_base_delay_ms_payments',
+  dlqRetryNotifications: 'queue_dlq_retry_notifications',
+  dlqRetryMaxPassesNotifications: 'queue_dlq_retry_max_passes_notifications',
+  dlqRetryBaseDelayMsNotifications: 'queue_dlq_retry_base_delay_ms_notifications',
+  dlqRetryEmails: 'queue_dlq_retry_emails',
+  dlqRetryMaxPassesEmails: 'queue_dlq_retry_max_passes_emails',
+  dlqRetryBaseDelayMsEmails: 'queue_dlq_retry_base_delay_ms_emails',
 } as const;
 
 export const notificationFlags = {
@@ -202,6 +226,13 @@ export const sportsFlags = {
   oddsFeeds: 'sports_odds_feeds',
 } as const;
 
+export const liveEventFlags = {
+  ppv: 'live_event_ppv',
+  streaming: 'live_event_streaming',
+  tickets: 'live_event_tickets',
+  chat: 'live_event_chat',
+} as const;
+
 export const engagementFlags = {
   leaderboards: 'engagement_leaderboards',
   rankings: 'engagement_rankings',
@@ -244,12 +275,37 @@ export const moderationFlags = {
   trustScores: 'moderation_trust_scores',
 } as const;
 
+export const securityFlags = {
+  /** Progressive tightening: halves the effective @RateLimit limit on every
+   * endpoint when on (wired via RateLimiterModule's strictModeResolver). */
+  rateLimitStrict: 'security_rate_limit_strict',
+} as const;
+
 export const webFlags = {
   maintenanceMode: 'web_maintenance_mode',
   newHome: 'web_new_home',
   darkMode: 'web_dark_mode',
   autoplay: 'web_autoplay',
   lowDataDefault: 'web_low_data_default',
+  recommendationsRail: 'web_recommendations_rail',
+  announcementBanner: 'web_announcement_banner',
+  premiumUpsell: 'web_premium_upsell',
+} as const;
+
+export const mobileFlags = {
+  newHome: 'mobile_new_home',
+  darkMode: 'mobile_dark_mode',
+  autoplay: 'mobile_autoplay',
+  lowDataDefault: 'mobile_low_data_default',
+  pushEnabled: 'mobile_push_enabled',
+  biometricAuth: 'mobile_biometric_auth',
+} as const;
+
+export const adminFlags = {
+  newDashboard: 'admin_new_dashboard',
+  featureFlagEditorV2: 'admin_feature_flag_editor_v2',
+  reportBuilder: 'admin_report_builder',
+  bulkActions: 'admin_bulk_actions',
 } as const;
 
 /** Sentinel for per-universe availability, e.g. `universe.reality.enabled`. */
@@ -278,13 +334,17 @@ export const allFlagRegistries = {
   lifestyle: lifestyleFlags,
   vertical: verticalFlags,
   sports: sportsFlags,
+  liveEvent: liveEventFlags,
   engagement: engagementFlags,
   messaging: messagingFlags,
   referral: referralFlags,
   reward: rewardFlags,
   support: supportFlags,
   moderation: moderationFlags,
+  security: securityFlags,
   web: webFlags,
+  mobile: mobileFlags,
+  admin: adminFlags,
 } as const;
 
 export type FlagRegistryName = keyof typeof allFlagRegistries;

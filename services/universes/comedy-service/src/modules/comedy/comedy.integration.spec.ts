@@ -175,9 +175,9 @@ describe('ComedyService Integration - Cross-Service Communication', () => {
       expect(result.success).toBe(true);
       expect(mockPrismaService.comedyChallengeEntry.create).toHaveBeenCalled();
       expect(mockedAxios.post).toHaveBeenCalledWith(
-        expect.stringContaining('/analytics/track'),
+        expect.stringContaining('/v1/analytics/events'),
         expect.objectContaining({
-          eventName: 'challenge_participated',
+          type: 'challenge_participated',
           userId: 'user-1',
           universe: 'comedy',
         })

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
+import { useAdminFlags, ADMIN_FLAG_KEYS } from '@/hooks/useAdminFlags';
 
 interface ContentItem {
   id: string;
@@ -15,12 +16,15 @@ interface ContentItem {
 
 export default function ContentPage() {
   const queryClient = useQueryClient();
+  const { isEnabled: isFlagEnabled } = useAdminFlags();
+  const bulkEnabled = isFlagEnabled(ADMIN_FLAG_KEYS.bulkActions);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [tab, setTab] = useState<'content' | 'categories' | 'tags'>('content');
   const [editItem, setEditItem] = useState<ContentItem | null>(null);
   const [editForm, setEditForm] = useState({ title: '', description: '' });
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'content', page, statusFilter, search],
@@ -71,6 +75,38 @@ export default function ContentPage() {
       setEditItem(null);
     },
   });
+
+  const bulkStatusMutation = useMutation({
+    mutationFn: ({ ids, status }: { ids: string[]; status: string }) =>
+      adminApi.bulkUpdateStatus(ids, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'content'] });
+      setSelected(new Set());
+    },
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (ids: string[]) => adminApi.bulkDelete(ids),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'content'] });
+      setSelected(new Set());
+    },
+  });
+
+  const toggleSelected = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    setSelected((prev) =>
+      prev.size === items.length ? new Set() : new Set(items.map((i) => i.id)),
+    );
+  };
 
   const items = data?.items || [];
   const total = data?.total || 0;
@@ -166,6 +202,16 @@ export default function ContentPage() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid #2A1A1A' }}>
+                      {bulkEnabled && (
+                        <th style={{ padding: '12px 16px', width: 40 }}>
+                          <input
+                            type="checkbox"
+                            checked={items.length > 0 && selected.size === items.length}
+                            onChange={toggleAll}
+                            aria-label="Select all content"
+                          />
+                        </th>
+                      )}
                       {['Title', 'Creator', 'Universe', 'Status', 'Views', 'Actions'].map((h) => (
                         <th
                           key={h}
@@ -186,6 +232,16 @@ export default function ContentPage() {
                   <tbody>
                     {items.map((item) => (
                       <tr key={item.id} style={{ borderBottom: '1px solid #1A0A0A' }}>
+                        {bulkEnabled && (
+                          <td style={{ padding: '12px 16px' }}>
+                            <input
+                              type="checkbox"
+                              checked={selected.has(item.id)}
+                              onChange={() => toggleSelected(item.id)}
+                              aria-label={`Select ${item.title}`}
+                            />
+                          </td>
+                        )}
                         <td
                           style={{
                             padding: '12px 16px',
@@ -294,6 +350,86 @@ export default function ContentPage() {
                 <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A' }}>
                   No content found
                 </p>
+              )}
+              {bulkEnabled && selected.size > 0 && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                    padding: '12px 16px',
+                    borderTop: '1px solid #2A1A1A',
+                    backgroundColor: 'rgba(13,5,5,0.6)',
+                  }}
+                >
+                  <span style={{ color: '#9A8A7A', fontSize: 13 }}>
+                    {selected.size} selected
+                  </span>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      onClick={() =>
+                        bulkStatusMutation.mutate({
+                          ids: Array.from(selected),
+                          status: 'published',
+                        })
+                      }
+                      disabled={bulkStatusMutation.isPending}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: 8,
+                        border: 'none',
+                        background: 'linear-gradient(135deg, #0D3B2E 0%, #1A5E45 100%)',
+                        color: '#fff',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Publish
+                    </button>
+                    <button
+                      onClick={() =>
+                        bulkStatusMutation.mutate({
+                          ids: Array.from(selected),
+                          status: 'archived',
+                        })
+                      }
+                      disabled={bulkStatusMutation.isPending}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: 8,
+                        border: '1px solid #2A1A1A',
+                        background: 'transparent',
+                        color: '#9A8A7A',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Archive
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm(`Delete ${selected.size} items?`))
+                          bulkDeleteMutation.mutate(Array.from(selected));
+                      }}
+                      disabled={bulkDeleteMutation.isPending}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: 8,
+                        border: '1px solid #CC1C1C',
+                        background: 'transparent',
+                        color: '#CC1C1C',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
               )}
               <div style={{ display: 'flex', justifyContent: 'center', gap: 8, padding: 16 }}>
                 <button

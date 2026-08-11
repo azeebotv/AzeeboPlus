@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, rewardFlags } from '@azeebo/feature-flags';
 
 import { RewardsService } from './rewards.service.js';
 import { RedeemRewardDto } from './dto/redeem-reward.dto.js';
@@ -19,6 +20,8 @@ import { RewardResponse } from './interfaces/reward-response.interface.js';
 
 @ApiTags('Rewards')
 @UseGuards(RateLimitGuard, ServiceAuthGuard)
+@UseGuards(FeatureFlagGuard)
+@FeatureFlag(rewardFlags.pointsEnabled)
 @Controller('rewards')
 export class RewardsController {
   constructor(@Inject(RewardsService) private readonly rewardsService: RewardsService) {}
@@ -32,6 +35,8 @@ export class RewardsController {
   }
 
   @Get('missions')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(rewardFlags.missions)
   @ApiOperation({ summary: 'List active missions' })
   @ApiResponse({ status: 200, description: 'Active missions' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -40,6 +45,8 @@ export class RewardsController {
   }
 
   @Get('badges')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(rewardFlags.badges)
   @ApiOperation({ summary: 'List badges' })
   @ApiResponse({ status: 200, description: 'User badges' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -48,6 +55,8 @@ export class RewardsController {
   }
 
   @Get('streak')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(rewardFlags.streaks)
   @ApiOperation({ summary: 'Get current streak' })
   @ApiResponse({ status: 200, description: 'Streak info' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })

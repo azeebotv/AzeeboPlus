@@ -6,6 +6,14 @@ export class SubscribeToPlanDto {
   @IsString()
   planId!: string;
 
+  @ApiPropertyOptional({
+    example: 'LAUNCH10',
+    description: 'Promo code (applies when subscription_promo_discounts is on)',
+  })
+  @IsString()
+  @IsOptional()
+  promoCode?: string;
+
   @ApiPropertyOptional({ example: true })
   @IsBoolean()
   @IsOptional()

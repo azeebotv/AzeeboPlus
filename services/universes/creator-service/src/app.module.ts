@@ -10,6 +10,7 @@ import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { FeatureFlagModule } from '@azeebo/feature-flags';
 import { creatorFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
 @Module({
   imports: [
@@ -24,8 +25,10 @@ import { creatorFlags } from '@azeebo/feature-flags';
     HealthModule,
     // Money-movement kill-switches: payouts default ON so ops can freeze them
     // instantly; tips/subscriptions default OFF until launched.
+    FlagMetricsModule.register({ service: 'creator-service' }),
     FeatureFlagModule.register({
       global: true,
+      ...flagHooks('creator-service'),
       defaultFlags: {
         [creatorFlags.payoutsEnabled]: true,
         [creatorFlags.tipsEnabled]: false,

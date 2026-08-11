@@ -12,6 +12,7 @@ import {
 import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 import { SportsController } from './sports.controller.js';
 import { SportsService } from './sports.service.js';
 
@@ -70,6 +71,10 @@ describe('Sports Service Validation Tests', () => {
         {
           provide: 'JWT',
           useValue: mockAuthGuard,
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(true) },
         },
         {
           provide: APP_GUARD,

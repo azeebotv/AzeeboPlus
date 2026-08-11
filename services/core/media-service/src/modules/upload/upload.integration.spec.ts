@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { RedisService } from '@azeebo/shared-services';
 import { FileValidationService } from '../../common/services/file-validation.service';
 import { CdnPurgeService } from './cdn-purge.service';
-import { FeatureFlagService } from '@azeebo/feature-flags';
+import { FeatureFlagService, mediaFlags } from '@azeebo/feature-flags';
 
 describe('UploadService Integration', () => {
   let service: UploadService;
@@ -52,7 +52,16 @@ describe('UploadService Integration', () => {
         },
         { provide: RedisService, useValue: mockRedisService },
         { provide: FileValidationService, useValue: mockFileValidationService },
-        { provide: FeatureFlagService, useValue: { isEnabled: jest.fn().mockResolvedValue(true) } },
+        {
+          provide: FeatureFlagService,
+          useValue: {
+            isEnabled: jest.fn().mockImplementation((key: string) =>
+              Promise.resolve(
+                key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked
+              )
+            ),
+          },
+        },
         { provide: CdnPurgeService, useValue: { purgeKeys: jest.fn(), purgePrefix: jest.fn() } },
       ],
     }).compile();
@@ -159,7 +168,16 @@ describe('UploadService Integration', () => {
           },
           { provide: RedisService, useValue: mockRedisService },
           { provide: FileValidationService, useValue: mockFileValidationService },
-          { provide: FeatureFlagService, useValue: { isEnabled: jest.fn().mockResolvedValue(true) } },
+          {
+            provide: FeatureFlagService,
+            useValue: {
+              isEnabled: jest.fn().mockImplementation((key: string) =>
+                Promise.resolve(
+                  key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked
+                )
+              ),
+            },
+          },
           { provide: CdnPurgeService, useValue: { purgeKeys: jest.fn(), purgePrefix: jest.fn() } },
         ],
       }).compile();

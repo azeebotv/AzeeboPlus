@@ -25,6 +25,9 @@ jest.mock('@azeebo/feature-flags', () => ({
     canActivate = jest.fn().mockReturnValue(true);
   },
   FeatureFlag: () => () => {},
+  FeatureFlagService: jest.fn().mockImplementation(() => ({
+    isEnabled: jest.fn().mockResolvedValue(false),
+  })),
   subscriptionFlags: {
     bundles: 'subscription_bundles',
     freeTrial: 'subscription_free_trial',
@@ -65,6 +68,7 @@ import { PrismaService } from '../database/prisma.service.js';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, AdminGuard, ServiceAuthGuard } from '@azeebo/security';
 import { CacheService } from '@azeebo/shared-services';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 import { ConfigService } from '@nestjs/config';
 
 class MockAuthGuard {
@@ -172,6 +176,10 @@ describe('Subscription Controller Contract Tests', () => {
           },
         },
         { provide: ConfigService, useValue: { get: jest.fn(), getOrThrow: jest.fn() } },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(false) },
+        },
         {
           provide: APP_GUARD,
           useClass: rejectGuards ? MockServiceAuthGuardReject : MockServiceAuthGuard,

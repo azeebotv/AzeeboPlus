@@ -7,6 +7,7 @@ import { HealthModule } from './modules/health/health.module.js';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
 import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
 import { FeatureFlagModule, mediaFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
 @Module({
   imports: [
@@ -20,8 +21,10 @@ import { FeatureFlagModule, mediaFlags } from '@azeebo/feature-flags';
     HealthModule,
     // Media toggles: presigned URLs default ON; AV1 transcoding and virus
     // scanning default OFF until the pipelines are ready.
+    FlagMetricsModule.register({ service: 'media-service' }),
     FeatureFlagModule.register({
       global: true,
+      ...flagHooks('media-service'),
       defaultFlags: {
         [mediaFlags.uploadChunked]: false,
         [mediaFlags.presignedUrls]: true,

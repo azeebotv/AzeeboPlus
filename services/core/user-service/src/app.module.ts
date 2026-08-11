@@ -9,6 +9,7 @@ import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@az
 import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { FeatureFlagModule, userFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
 @Module({
   imports: [
@@ -23,8 +24,10 @@ import { FeatureFlagModule, userFlags } from '@azeebo/feature-flags';
     AdminModule,
     // User-profile feature toggles: new surfaces default OFF until rolled out;
     // deletion soft-mode defaults ON as a safety net for hard deletes.
+    FlagMetricsModule.register({ service: 'user-service' }),
     FeatureFlagModule.register({
       global: true,
+      ...flagHooks('user-service'),
       defaultFlags: {
         [userFlags.profileV2]: false,
         [userFlags.universeAffinity]: false,

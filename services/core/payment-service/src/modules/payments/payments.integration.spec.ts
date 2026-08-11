@@ -71,7 +71,16 @@ describe('PaymentsService Integration', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PaymentsService,
-        { provide: FeatureFlagService, useValue: { isEnabled: jest.fn().mockResolvedValue(true) } },
+        {
+          provide: FeatureFlagService,
+          useValue: {
+            isEnabled: jest.fn((key: string) =>
+              Promise.resolve(
+                key === 'payment_provider_paystack' || key === 'payment_provider_flutterwave'
+              )
+            ),
+          },
+        },
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: PaystackProvider, useValue: mockPaystackProvider },
         { provide: FlutterwaveProvider, useValue: mockFlutterwaveProvider },

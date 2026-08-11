@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
+import { FeatureFlag, FeatureFlagGuard, lifestyleFlags } from '@azeebo/feature-flags';
 import { MusicService } from './music.service';
 import { UpdateMusicDto } from './dto/update-music.dto';
 
@@ -30,6 +31,8 @@ interface CreateMusicData {
 }
 
 @ApiTags('Music')
+@FeatureFlag(lifestyleFlags.musicEnabled)
+@UseGuards(FeatureFlagGuard)
 @Controller('lifestyle/music')
 export class MusicController {
   constructor(@Inject(MusicService) private readonly musicService: MusicService) {}

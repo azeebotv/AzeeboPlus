@@ -57,6 +57,7 @@ import request from 'supertest';
 import { AnalyticsModule } from './analytics.module.js';
 import { AnalyticsService } from './analytics.service.js';
 import { PrismaService } from '../database/prisma.service.js';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';
 
@@ -126,7 +127,10 @@ describe('Analytics Controller Contract Tests', () => {
         getDetailedDashboard: jest.fn(),
         getKpis: jest.fn(),
         getRealtime: jest.fn(),
+        getClientSamplingConfig: jest.fn().mockResolvedValue({ enabled: false, samplingRate: 100 }),
       })
+      .overrideProvider(FeatureFlagService)
+      .useValue({ isEnabled: jest.fn().mockResolvedValue(false), getValue: jest.fn().mockResolvedValue(100) })
       .overrideGuard(AuthGuard('jwt'))
       .useClass(MockAuthGuard)
       .overrideGuard(RateLimitGuard)
@@ -185,6 +189,34 @@ describe('Analytics Controller Contract Tests', () => {
         success: true,
       });
     });
+
+    it('accepts the canonical EventPayload shape ({ eventName }) emitted by services', async () => {
+      const analyticsService = app.get(AnalyticsService);
+      const trackEvent = jest.spyOn(analyticsService, 'trackEvent').mockResolvedValue({ success: true });
+
+      const response = await request(app.getHttpServer()).post('/v1/analytics/track').send({
+        eventName: 'content_view',
+        userId: 'user-123',
+        metadata: { contentId: 'content-1' },
+        timestamp: new Date().toISOString(),
+      });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ success: true });
+      expect(trackEvent).toHaveBeenCalledWith(
+        'content_view',
+        'user-123',
+        expect.objectContaining({ contentId: 'content-1' })
+      );
+    });
+
+    it('rejects a payload with neither eventName nor type', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/v1/analytics/track')
+        .send({ metadata: {} });
+
+      expect(response.status).toBe(400);
+    });
   });
 
   describe('POST /v1/analytics/track-batch', () => {
@@ -206,6 +238,30 @@ describe('Analytics Controller Contract Tests', () => {
       expect(response.body).toEqual({
         success: true,
       });
+    });
+
+    it('accepts the canonical EventPayload shape ({ eventName }) in batches', async () => {
+      const analyticsService = app.get(AnalyticsService);
+      const trackBatch = jest
+        .spyOn(analyticsService, 'trackBatch')
+        .mockResolvedValue({ success: true });
+
+      const response = await request(app.getHttpServer())
+        .post('/v1/analytics/track-batch')
+        .send({
+          events: [
+            { eventName: 'content_view', metadata: { contentId: 'content-1' } },
+            { eventName: 'play_start', metadata: { contentId: 'content-1' } },
+          ],
+        });
+
+      expect(response.status).toBe(200);
+      expect(trackBatch).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ type: 'content_view' }),
+          expect.objectContaining({ type: 'play_start' }),
+        ])
+      );
     });
   });
 

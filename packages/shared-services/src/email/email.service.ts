@@ -38,9 +38,12 @@ export class EmailService implements OnModuleInit {
       welcome: this.configService.get('EMAIL_TEMPLATE_WELCOME_HTML'),
       'email-verification': this.configService.get('EMAIL_TEMPLATE_EMAIL_VERIFICATION_HTML'),
       'password-reset': this.configService.get('EMAIL_TEMPLATE_PASSWORD_RESET_HTML'),
+      'magic-link': this.configService.get('EMAIL_TEMPLATE_MAGIC_LINK_HTML'),
+      'digest': this.configService.get('EMAIL_TEMPLATE_DIGEST_HTML'),
       'payment-confirmation': this.configService.get('EMAIL_TEMPLATE_PAYMENT_CONFIRMATION_HTML'),
       'content-published': this.configService.get('EMAIL_TEMPLATE_CONTENT_PUBLISHED_HTML'),
       'content-featured': this.configService.get('EMAIL_TEMPLATE_CONTENT_FEATURED_HTML'),
+      'flag-stale': this.configService.get('EMAIL_TEMPLATE_FLAG_STALE_HTML'),
     };
 
     this.templates['welcome'] = Handlebars.compile(
@@ -66,6 +69,33 @@ export class EmailService implements OnModuleInit {
         <p><a href="{{verificationUrl}}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Verify Email</a></p>
         <p>This link will expire in 1 hour.</p>
         <p>If you didn't create an account with Azeebo+, you can safely ignore this email.</p>
+        <p>Best regards,<br>The Azeebo+ Team</p>
+      </div>
+    `
+    );
+
+    this.templates['digest'] = Handlebars.compile(
+      templateOverrides['digest'] ||
+        `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #333;">Your Daily Digest</h1>
+        <p>Hello {{displayName}},</p>
+        <p>Here's what you missed while you were away ({{count}} unread notification(s)):</p>
+        <ul>{{{items}}}</ul>
+        <p>Best regards,<br>The Azeebo+ Team</p>
+      </div>
+    `
+    );
+
+    this.templates['magic-link'] = Handlebars.compile(
+      templateOverrides['magic-link'] ||
+        `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #333;">Your Sign-In Link</h1>
+        <p>Hello {{displayName}},</p>
+        <p>Click the button below to sign in to Azeebo+ securely. This link is single-use and expires in 15 minutes.</p>
+        <p><a href="{{magicLinkUrl}}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Sign In</a></p>
+        <p>If you didn't request this link, you can safely ignore this email.</p>
         <p>Best regards,<br>The Azeebo+ Team</p>
       </div>
     `
@@ -129,6 +159,29 @@ export class EmailService implements OnModuleInit {
         <p><a href="{{contentLink}}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">View Featured Content</a></p>
         <p>Keep creating amazing content!</p>
         <p>Best regards,<br>The Azeebo+ Team</p>
+      </div>
+    `
+    );
+
+    // Stale feature-flag sweep: sent to the flag's owner (or the ops digest)
+    // when a flag's staleAfter passes. Data: flagKey, owner, staleAfter,
+    // enabled, description, adminUrl.
+    this.templates['flag-stale'] = Handlebars.compile(
+      templateOverrides['flag-stale'] ||
+        `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #333;">Action Required: Stale Feature Flag</h1>
+        <p>Hi{{#if owner}} {{owner}}{{/if}},</p>
+        <p>The feature flag <strong>{{flagKey}}</strong> passed its <code>staleAfter</code> expiry
+        (<code>{{staleAfter}}</code>) and is now a removal candidate. Leaving stale flags around
+        increases the governance surface and hides dead code paths behind toggles.</p>
+        <p><strong>Please take one of these actions:</strong></p>
+        <ul>
+          <li>Remove the flag (it falls back to its registered default), or</li>
+          <li>Renew its <code>staleAfter</code> if the feature is still active.</li>
+        </ul>
+        <p><a href="{{adminUrl}}" style="background-color: #E8420A; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Review in the Admin Panel</a></p>
+        <p>Best regards,<br>The Azeebo+ Platform Team</p>
       </div>
     `
     );

@@ -10,6 +10,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  BadRequestException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
@@ -24,6 +25,15 @@ import { IngestEventsDto } from './dto/analytics.dto.js';
 @UseGuards(RateLimitGuard)
 export class AnalyticsController {
   constructor(@Inject(AnalyticsService) private readonly analyticsService: AnalyticsService) {}
+
+  @Get('bootstrap')
+  @RateLimit(120, 60000)
+  @ApiOperation({ summary: 'Get client-side sampling config for the analytics-sdk' })
+  @ApiResponse({ status: 200, description: 'Sampling config' })
+  async getBootstrap(): Promise<{ success: boolean; data: { enabled: boolean; samplingRate: number } }> {
+    const data = await this.analyticsService.getClientSamplingConfig();
+    return { success: true, data };
+  }
 
   @Post('events')
   @RateLimit(100, 60000)
@@ -140,6 +150,14 @@ export class AnalyticsController {
     return this.analyticsService.getDailyStats(targetDate);
   }
 
+  @Get('search/corrections')
+  @ApiOperation({ summary: 'Search correction acceptance (shown vs accepted over time)' })
+  @ApiResponse({ status: 200, description: 'Daily correction acceptance series' })
+  async getSearchCorrections(@Query('days') days?: string): Promise<AnalyticsResponse> {
+    const parsedDays = days ? Number(days) : 30;
+    return this.analyticsService.getSearchCorrections(Number.isFinite(parsedDays) ? parsedDays : 30);
+  }
+
   @Post('track')
   @RateLimit(100, 60000)
   @HttpCode(HttpStatus.OK)
@@ -147,10 +165,16 @@ export class AnalyticsController {
   @ApiResponse({ status: 200, description: 'Event tracked' })
   async trackEvent(
     @Request() req: { user: { sub: string; id: string } },
-    @Body() body: { type: string; metadata?: Record<string, unknown> }
+    @Body() body: { eventName?: string; type?: string; userId?: string; metadata?: Record<string, unknown> }
   ): Promise<unknown> {
-    const userId = req.user?.sub;
-    return this.analyticsService.trackEvent(body.type, userId, body.metadata);
+    // Services emit the canonical EventPayload shape ({ eventName }); the
+    // legacy { type } alias is still accepted for old clients.
+    const eventName = body.eventName ?? body.type;
+    if (!eventName) {
+      throw new BadRequestException('Event name is required (eventName or type)');
+    }
+    const userId = body.userId ?? req.user?.sub;
+    return this.analyticsService.trackEvent(eventName, userId, body.metadata);
   }
 
   @Post('track-batch')
@@ -162,11 +186,19 @@ export class AnalyticsController {
     @Request() req: { user: { sub: string; id: string } },
     @Body()
     body: {
-      events: Array<{ type: string; metadata?: Record<string, unknown> }>;
+      events: Array<{ eventName?: string; type?: string; userId?: string; metadata?: Record<string, unknown> }>;
     }
   ): Promise<{ success: boolean }> {
     const userId = req.user?.sub;
-    const eventsWithUser = body.events.map((e) => ({ ...e, userId }));
+    const eventsWithUser = body.events.map((e) => {
+      // Canonical EventPayload shape first; legacy { type } alias accepted.
+      const eventName = e.eventName ?? e.type;
+      return {
+        type: eventName ?? '',
+        userId: e.userId ?? userId,
+        metadata: e.metadata,
+      };
+    });
     return this.analyticsService.trackBatch(eventsWithUser);
   }
 

@@ -1,7 +1,9 @@
 'use client';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '../../../context/AuthContext';
+import { useFlags } from '../../../context/FlagsContext';
 import { apiFetch } from '../../../lib/api';
+import { shouldAutoPlay } from '../../../lib/low-data';
 import { useVideoPlayer } from '../../../hooks/useVideoPlayer';
 import { detectMediaType } from '../../../lib/media-url';
 import { announceToScreenReader } from '../../../lib/keyboard';
@@ -44,6 +46,7 @@ interface RawComment {
 
 export default function WatchPageClient({ id }: { id: string }): React.JSX.Element {
   const { user } = useAuth();
+  const { isEnabled } = useFlags();
   const [content, setContent] = useState<Content | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState<string>('');
@@ -100,7 +103,8 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   } = useVideoPlayer({
     contentId: id,
     mediaUrl: content?.mediaUrl,
-    autoPlay: false,
+    // Autoplay is gated by the web_autoplay server flag (and low-data mode).
+    autoPlay: shouldAutoPlay(isEnabled),
     onEnded: handleVideoEnded,
     onError: handleVideoError,
   });

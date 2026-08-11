@@ -19,6 +19,14 @@
     "test:client": "vitest run --root client"
   },
   "dependencies": {
+    "@azeebo/auth": "workspace:*",
+    "@azeebo/design-tokens": "workspace:*",
+    "@azeebo/error-handling": "workspace:*",
+    "@azeebo/feature-flags": "workspace:*",
+    "@azeebo/logger": "workspace:*",
+    "@azeebo/security": "workspace:*",
+    "@azeebo/shared-types": "workspace:*",
+    "@azeebo/ui": "workspace:*",
     "@nestjs/common": "^11.1.27",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.1.27",
@@ -46,14 +54,7 @@
     "react-router-dom": "^7.8.0",
     "recharts": "^3.8.0",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.2",
-    "@azeebo/auth": "workspace:*",
-    "@azeebo/design-tokens": "workspace:*",
-    "@azeebo/error-handling": "workspace:*",
-    "@azeebo/security": "workspace:*",
-    "@azeebo/logger": "workspace:*",
-    "@azeebo/shared-types": "workspace:*",
-    "@azeebo/ui": "workspace:*"
+    "rxjs": "^7.8.2"
   },
   "devDependencies": {
     "@nestjs/testing": "^11.1.27",

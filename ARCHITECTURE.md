@@ -271,12 +271,14 @@ User interaction and retention.
 ## Feature Management
 
 ### Feature Flags
-- **Package:** `packages/feature-flags/` — Redis-backed FeatureFlagService
-- **Capabilities:** Enable/disable features, percentage rollouts, user targeting
-- **Admin UI:** `apps/admin/client/src/routes/feature-flags.tsx`
-- **API:** `GET/POST/PUT/DELETE /admin/feature-flags` (content-service admin controller)
-- **Guard:** `FeatureFlagGuard` — NestJS route-level flag checks via `x-feature-flag` header
-- **Usage:** Services import `FeatureFlagModule` and call `featureFlagService.isEnabled(key, userId)`
+- **Package:** `packages/feature-flags/` — Redis-backed `FeatureFlagService` (evaluation cache, percentage rollouts, user targeting, numeric/variant values via `defaultValues`)
+- **Typed registries:** `packages/feature-flags/src/registries.ts` — every flag key is a compile-time-checked constant per domain (wallet, payment, creator, …); conventions enforced by `pnpm check:flags` (snake_case keys, service prefix, no duplicates)
+- **Capabilities:** enable/disable, percentage rollouts (hash-bucket), user allowlists, per-universe flags (`universe.{name}.{feature}`), numeric tuning knobs, public flag subset for client bootstrap
+- **Admin UI:** `apps/admin` — Global Flags page (`/feature-flags/global`) lists stored+default flags, toggles, rollout % + user-list targeting, stale-after; legacy page at `/feature-flags`
+- **API:** `GET/PUT/DELETE /api/v1/admin/feature-flags(/:key)` (admin backend) + `GET /api/v1/admin/feature-flags/stale`; client bootstrap `GET /feature-flags/bootstrap` (gateway, public flags only, per-user evaluation)
+- **Guard:** `FeatureFlagGuard` + `@FeatureFlag(key)` decorator — NestJS route-level kill-switches; services additionally gate logic at the service layer (fail-closed where safety matters)
+- **Module:** services register `FeatureFlagModule.register({ global, defaultFlags, defaultValues, publicFlagKeys })` (or the `FeatureFlagsModule.forRoot()` alias from `@azeebo/shared-services`); rollouts governed by `docs/feature-flag-rollout-policy.md`
+- **Usage:** `featureFlagService.isEnabled(key, userId)` / `getValue(key)` / `evaluateMany(keys)`; `onEvaluation`/`onToggle` hooks for metrics
 
 ### Content Geo Restriction
 - **Schema:** `ContentItem` has `allowedCountries`, `blockedCountries`, `contentRating`, `minAge` fields

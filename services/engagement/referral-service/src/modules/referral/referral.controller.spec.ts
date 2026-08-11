@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ReferralController } from './referral.controller.js';
 import { ReferralService } from './referral.service.js';
 import { Reflector } from '@nestjs/core';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 
 jest.mock('@azeebo/security', () => {
   const guardMock = { canActivate: jest.fn().mockReturnValue(true) };
@@ -37,6 +38,10 @@ describe('ReferralController', () => {
         {
           provide: ReferralService,
           useValue: mockReferralService,
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(true) },
         },
         Reflector,
       ],

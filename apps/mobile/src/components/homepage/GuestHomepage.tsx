@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useFlags } from '@/contexts/FlagsContext';
 import * as Updates from 'expo-updates';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
@@ -50,6 +51,7 @@ const CATEGORY_CARDS = [
 ];
 
 export default function GuestHomepage() {
+  const { universeEnabled } = useFlags();
   const router = useRouter();
   const { t } = useTranslation();
   const [featuredContent, setFeaturedContent] = useState<ContentItem[]>([]);
@@ -204,46 +206,74 @@ export default function GuestHomepage() {
             <Text style={styles.sectionTitle}>{t('home.exploreByUniverse')}</Text>
             <View style={styles.universeGrid}>
               {[
-                { name: 'Movie', icon: '\u{1F3AC}', href: '/movies', color: colors.primary[500] },
+                {
+                  name: 'Movie',
+                  icon: '\u{1F3AC}',
+                  href: '/movies',
+                  color: colors.primary[500],
+                  flag: 'movies',
+                },
                 {
                   name: 'Comedy',
                   icon: '\u{1F602}',
                   href: '/comedy',
                   color: universeColors.comedy,
+                  flag: 'comedy',
                 },
-                { name: 'Sports', icon: '\u26BD', href: '/sports', color: universeColors.sports },
+                {
+                  name: 'Sports',
+                  icon: '\u26BD',
+                  href: '/sports',
+                  color: universeColors.sports,
+                  flag: 'sports',
+                },
                 {
                   name: 'Reality',
                   icon: '\u{1F4FA}',
                   href: '/reality',
                   color: universeColors.reality,
+                  flag: 'reality',
                 },
                 {
                   name: 'Lifestyle',
                   icon: '\u{1F3A8}',
                   href: '/lifestyle',
                   color: universeColors.lifestyle,
+                  flag: 'lifestyle',
                 },
                 {
                   name: 'Vertical',
                   icon: '\u{1F4F1}',
                   href: '/vertical',
                   color: universeColors.vertical,
+                  flag: 'vertical',
                 },
-                { name: 'Games', icon: '\u{1F3AE}', href: '/games', color: universeColors.games },
+                {
+                  name: 'Games',
+                  icon: '\u{1F3AE}',
+                  href: '/games',
+                  color: universeColors.games,
+                  flag: 'games',
+                },
                 {
                   name: 'Creator',
                   icon: '\u{1F4E1}',
                   href: '/creators',
                   color: universeColors.creators,
+                  flag: 'creators',
                 },
                 {
                   name: 'Cinemaxis',
                   icon: '\u{1F3A6}',
                   href: '/cinemaxis',
                   color: universeColors.comedy,
+                  flag: 'cinemaxis',
                 },
-              ].map((u) => (
+              ]
+                // Per-universe nav gating: hide universes disabled by the
+                // bootstrap universe.<name>.enabled sentinels (admin-tunable).
+                .filter((u) => universeEnabled(u.flag))
+                .map((u) => (
                 <Pressable
                   key={u.name}
                   style={styles.universeCard}

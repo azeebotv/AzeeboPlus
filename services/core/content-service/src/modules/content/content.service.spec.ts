@@ -61,6 +61,12 @@ describe('ContentService', () => {
     transcode: jest.fn(),
   };
 
+  const mockFlagService = {
+    isEnabled: jest.fn().mockResolvedValue(true),
+    getFlag: jest.fn().mockResolvedValue(null),
+    setFlag: jest.fn().mockResolvedValue(undefined),
+  };
+
   const mockContentRepository = {
     findAll: jest.fn(),
     findById: jest.fn(),
@@ -70,6 +76,7 @@ describe('ContentService', () => {
     search: jest.fn(),
     getComments: jest.fn(),
     addComment: jest.fn(),
+    findCommentById: jest.fn(),
     getAnalytics: jest.fn(),
     findTrending: jest.fn(),
     findRecommended: jest.fn(),
@@ -141,11 +148,7 @@ describe('ContentService', () => {
         },
         {
           provide: FeatureFlagService,
-          useValue: {
-            isEnabled: jest.fn().mockResolvedValue(true),
-            getFlag: jest.fn().mockResolvedValue(null),
-            setFlag: jest.fn().mockResolvedValue(undefined),
-          },
+          useValue: mockFlagService,
         },
         {
           provide: ContentFeedService,
@@ -606,6 +609,63 @@ describe('ContentService', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockAnalytics);
+    });
+  });
+
+  describe('threaded comments (content_comments_v2)', () => {
+    it('accepts a parentId and stores a reply while the flag is on', async () => {
+      mockFlagService.isEnabled.mockResolvedValue(true);
+      mockContentRepository.findCommentById.mockResolvedValue({
+        id: 'comment-1',
+        contentId: 'content-1',
+        userId: 'user-a',
+        text: 'parent',
+      });
+      mockContentRepository.addComment.mockResolvedValue({
+        id: 'comment-2',
+        contentId: 'content-1',
+        userId: 'user-123',
+        text: 'reply',
+        parentId: 'comment-1',
+      });
+
+      const result = await service.addCommentToContent(
+        'user-123',
+        'content-1',
+        'reply',
+        'comment-1'
+      );
+
+      expect(mockContentRepository.addComment).toHaveBeenCalledWith(
+        'content-1',
+        'user-123',
+        'reply',
+        'comment-1'
+      );
+      expect(result.success).toBe(true);
+    });
+
+    it('rejects a parentId while the flag is off (threads unavailable)', async () => {
+      mockFlagService.isEnabled.mockResolvedValue(false);
+
+      await expect(
+        service.addCommentToContent('user-123', 'content-1', 'reply', 'comment-1')
+      ).rejects.toThrow(BadRequestException);
+      expect(mockContentRepository.addComment).not.toHaveBeenCalled();
+    });
+
+    it('rejects a parent comment from a different content item', async () => {
+      mockFlagService.isEnabled.mockResolvedValue(true);
+      mockContentRepository.findCommentById.mockResolvedValue({
+        id: 'comment-1',
+        contentId: 'other-content',
+        userId: 'user-a',
+        text: 'parent',
+      });
+
+      await expect(
+        service.addCommentToContent('user-123', 'content-1', 'reply', 'comment-1')
+      ).rejects.toThrow(BadRequestException);
     });
   });
 });

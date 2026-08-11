@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { creatorApi } from '@/lib/api/creator';
+import { useCreatorFlags, CREATOR_FLAG_KEYS } from '@/hooks/useCreatorFlags';
+import { OnboardingWizard } from '@/components/OnboardingWizard';
 import type { DashboardStats } from '@/lib/creator-types';
 
 const statCard = (label: string, value: string | number, change: string, icon: string) => (
@@ -37,6 +39,7 @@ const statCard = (label: string, value: string | number, change: string, icon: s
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { isEnabled: isFlagEnabled } = useCreatorFlags();
   const { data, isLoading } = useQuery({
     queryKey: ['creator', 'dashboard'],
     queryFn: async () => {
@@ -51,6 +54,10 @@ export default function DashboardPage() {
         Welcome back{user?.name ? `, ${user.name}` : ''}
       </h1>
       <p style={{ color: '#9A8A7A', marginBottom: 24 }}>Here's your creator dashboard</p>
+
+      {isFlagEnabled(CREATOR_FLAG_KEYS.onboardingWizard) && data && (
+        <OnboardingWizard contentCount={data.contentCount} />
+      )}
 
       {isLoading ? (
         <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>Loading...</p>

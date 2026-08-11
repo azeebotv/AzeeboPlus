@@ -19,6 +19,8 @@ import { RateLimiterModule, AdminGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { CacheModule } from '@azeebo/shared-services';
+import { FeatureFlagModule, supportFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
 @Module({
   imports: [
@@ -41,6 +43,19 @@ import { CacheModule } from '@azeebo/shared-services';
     SuspensionModule,
     DashboardModule,
     AnalyticsModule,
+    // Support feature gates: AI chatbot, self-service refunds, AI escalation
+    // and automated takedown processing all OFF until launched.
+    FlagMetricsModule.register({ service: 'support-service' }),
+    FeatureFlagModule.register({
+      global: true,
+      ...flagHooks('support-service'),
+      defaultFlags: {
+        [supportFlags.aiChatbot]: false,
+        [supportFlags.selfServiceRefunds]: false,
+        [supportFlags.escalationAi]: false,
+        [supportFlags.takedownsAuto]: false,
+      },
+    }),
   ],
   providers: [
     {

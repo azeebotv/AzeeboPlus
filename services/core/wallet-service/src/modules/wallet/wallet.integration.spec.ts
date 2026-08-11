@@ -4,7 +4,8 @@ import { PrismaService } from '../database/prisma.service.js';
 import { BadRequestException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { ConfigModule } from '@nestjs/config';
-import { CacheService } from '@azeebo/shared-services';
+import { CacheService, RedisService } from '@azeebo/shared-services';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 import { EVENT_BUS_SERVICE } from '@azeebo/event-bus';
 
 jest.mock('../database/prisma.service');
@@ -108,6 +109,19 @@ describe('WalletService Integration', () => {
             delete: jest.fn().mockResolvedValue(0),
             deleteByPattern: jest.fn().mockResolvedValue(0),
             invalidate: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: RedisService,
+          useValue: {
+            setIfNotExists: jest.fn().mockResolvedValue(true),
+            del: jest.fn().mockResolvedValue(1),
+          },
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: {
+            isEnabled: jest.fn().mockResolvedValue(false),
           },
         },
         {

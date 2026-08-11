@@ -14,7 +14,6 @@ const resources = {
         recentlyWatched: 'Recently Watched',
         continueWatching: 'Continue Watching',
         forYou: 'For You',
-        trending: 'Trending',
         newReleases: 'New Releases',
         viewAll: 'View All',
         emptyState: 'No content available yet',
@@ -86,7 +85,6 @@ const resources = {
         recentlyWatched: 'Récemment regardé',
         continueWatching: 'Continuer à regarder',
         forYou: 'Pour vous',
-        trending: 'Tendances',
         newReleases: 'Nouveautés',
         viewAll: 'Voir tout',
         emptyState: 'Aucun contenu disponible',
@@ -158,7 +156,6 @@ const resources = {
         recentlyWatched: 'Assistidos recentemente',
         continueWatching: 'Continuar assistindo',
         forYou: 'Para você',
-        trending: 'Em alta',
         newReleases: 'Novos lançamentos',
         viewAll: 'Ver tudo',
         emptyState: 'Nenhum conteúdo disponível',
@@ -230,7 +227,6 @@ const resources = {
         recentlyWatched: 'Kwanan nan da aka kalla',
         continueWatching: 'Ci gaba da kallo',
         forYou: 'A gare ka',
-        trending: 'Shahararru',
         newReleases: 'Sabbin fitowar',
         viewAll: 'Duba duka',
         emptyState: 'Babu abun kallo a yanzu',
@@ -302,7 +298,6 @@ const resources = {
         recentlyWatched: 'Titi di akiwo',
         continueWatching: 'Tẹsiwaju wiwo',
         forYou: 'Fun ọ',
-        trending: 'Gbajumo',
         newReleases: 'Awọn tuntun',
         viewAll: 'Wo gbogbo',
         emptyState: 'Ko si ohun ti o wa',
@@ -312,7 +307,7 @@ const resources = {
         description: 'Wo fiimu, awọn ifihan otito, awada ati diẹ sii',
         trending: 'Gbajumo ni bayi',
         trendingSubtitle: 'Ohun ti o gbona ni bayi',
-        earnWhileWatching: 'JO'GBA ERE NIGBATI O NWO',
+        earnWhileWatching: 'JO\'GBA ERE NIGBATI O NWO',
         unlockRewards: 'Ṣii awọn ere',
         rewardsDescription: 'Jo\'gba ojuami nipa wiwo, ibaraenisepo, ati pipe awọn ọrẹ',
         startEarning: 'Bẹrẹ jijere',
@@ -374,7 +369,6 @@ const resources = {
         recentlyWatched: 'Nke ikpeazụ ị lere',
         continueWatching: 'Gaa n\'ihu ịlele',
         forYou: 'Maka gị',
-        trending: 'Na-ewu ewu',
         newReleases: 'Mwepụta ọhụrụ',
         viewAll: 'Leghachi ihe niile',
         emptyState: 'Enweghị ihe ọdịnaya dị',
@@ -485,7 +479,7 @@ function detectDeviceLanguage(): SupportedLanguage {
 }
 
 // Initialize i18n
-i18n.use(initReactI18next as Parameters<typeof i18n.use>[0]);
+i18n.use(initReactI18next as unknown as Parameters<typeof i18n.use>[0]);
 
 // Load saved language and initialize
 (async () => {

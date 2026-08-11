@@ -37,6 +37,7 @@ describe('PaymentProcessor', () => {
   const mockFeatureFlagService = {
     isEnabled: jest.fn().mockResolvedValue(true),
     getValue: jest.fn(),
+    getFlag: jest.fn().mockResolvedValue(null),
   };
 
   const mockPaymentsQueue = {
@@ -70,6 +71,7 @@ describe('PaymentProcessor', () => {
     // that override isEnabled/getValue would otherwise leak into later tests.
     mockFeatureFlagService.isEnabled.mockResolvedValue(true);
     mockFeatureFlagService.getValue.mockImplementation(defaultGetValue);
+    mockFeatureFlagService.getFlag.mockResolvedValue(null);
     mockPaymentsQueue.add.mockResolvedValue({ id: '1' });
   });
 
@@ -355,6 +357,103 @@ describe('PaymentProcessor', () => {
       expect(job.retry).toHaveBeenCalledWith('failed', {
         resetAttemptsMade: true,
       });
+    });
+
+    it('uses the per-queue max-pass budget when stored (queue_dlq_retry_max_passes_payments)', async () => {
+      mockFeatureFlagService.isEnabled.mockResolvedValue(true);
+      mockFeatureFlagService.getFlag.mockImplementation((key: string) =>
+        Promise.resolve(
+          key === queueFlags.dlqRetryMaxPassesPayments ? { key, enabled: true, value: 1 } : null
+        )
+      );
+      mockFeatureFlagService.getValue.mockImplementation((key: string) =>
+        Promise.resolve(key === queueFlags.dlqRetryMaxPassesPayments ? 1 : 30000)
+      );
+      const firstPass = makeJob({ id: 'pq-1', attemptsMade: 5 });
+
+      await processor.onFailed(firstPass, new Error('provider down'));
+      expect(mockPaymentsQueue.add).toHaveBeenCalled();
+
+      // Second dead-lettering is beyond the per-queue budget (max 1), even
+      // though the shared budget is 3.
+      mockPaymentsQueue.add.mockClear();
+      const secondPass = makeJob({
+        id: 'pq-1',
+        attemptsMade: 5,
+        data: {
+          transactionId: 'tx-pq',
+          userId: 'user-pq',
+          amount: 100,
+          currency: 'NGN',
+          provider: 'paystack',
+          type: 'charge',
+          dlqRetryCount: 1,
+        },
+      });
+
+      await processor.onFailed(secondPass, new Error('provider down'));
+      expect(mockPaymentsQueue.add).not.toHaveBeenCalled();
+      expect(secondPass.retry).not.toHaveBeenCalled();
+    });
+
+    it('uses the per-queue base delay when stored (queue_dlq_retry_base_delay_ms_payments)', async () => {
+      mockFeatureFlagService.isEnabled.mockResolvedValue(true);
+      mockFeatureFlagService.getFlag.mockImplementation((key: string) =>
+        Promise.resolve(
+          key === queueFlags.dlqRetryBaseDelayMsPayments
+            ? { key, enabled: true, value: 120000 }
+            : null
+        )
+      );
+      mockFeatureFlagService.getValue.mockImplementation((key: string) =>
+        Promise.resolve(key === queueFlags.dlqRetryBaseDelayMsPayments ? 120000 : 30000)
+      );
+      const job = makeJob({ id: 'pq-2', attemptsMade: 5 });
+
+      await processor.onFailed(job, new Error('provider down'));
+
+      expect(mockPaymentsQueue.add).toHaveBeenCalledWith(
+        'payments',
+        expect.anything(),
+        expect.objectContaining({ delay: 120000 })
+      );
+      // Metric carries the per-queue base delay.
+      expect(mockMetricsService.incrementDlqRetryScheduled).toHaveBeenCalledWith(
+        'payments',
+        1,
+        120000
+      );
+    });
+
+    it('per-queue toggle off overrides the shared toggle on (queue_dlq_retry_payments)', async () => {
+      mockFeatureFlagService.getFlag.mockImplementation((key: string) =>
+        Promise.resolve(key === queueFlags.dlqRetryPayments ? { key, enabled: false } : null)
+      );
+      // Shared switch is on; the per-queue override says off.
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === queueFlags.dlqRetryPayments ? false : true)
+      );
+      const job = makeJob({ id: 'pq-3', attemptsMade: 5 });
+
+      await processor.onFailed(job, new Error('provider down'));
+
+      expect(mockPaymentsQueue.add).not.toHaveBeenCalled();
+      expect(job.remove).not.toHaveBeenCalled();
+      expect(job.updateData).not.toHaveBeenCalled();
+    });
+
+    it('per-queue toggle on resumes DLQ retry while the shared toggle is off', async () => {
+      mockFeatureFlagService.getFlag.mockImplementation((key: string) =>
+        Promise.resolve(key === queueFlags.dlqRetryPayments ? { key, enabled: true } : null)
+      );
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === queueFlags.dlqRetryPayments ? true : false)
+      );
+      const job = makeJob({ id: 'pq-4', attemptsMade: 5 });
+
+      await processor.onFailed(job, new Error('provider down'));
+
+      expect(mockPaymentsQueue.add).toHaveBeenCalled();
     });
   });
 });

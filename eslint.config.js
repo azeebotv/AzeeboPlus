@@ -3,6 +3,7 @@ const prettierPlugin = require('eslint-plugin-prettier');
 const prettierConfig = require('eslint-config-prettier');
 const globals = require('globals');
 const noHexColors = require('./packages/eslint-rules/no-hex-colors');
+const noConsoleLog = require('./packages/eslint-rules/no-console-log');
 
 module.exports = [
   // Ignore patterns
@@ -34,6 +35,7 @@ module.exports = [
       'azeebo-custom': {
         rules: {
           'no-hex-colors': noHexColors,
+          'no-console-log': noConsoleLog,
         },
       },
     },
@@ -140,6 +142,7 @@ module.exports = [
         },
       ],
       'no-console': 'warn',
+      'azeebo-custom/no-console-log': 'error',
       'azeebo-custom/no-hex-colors': [
         'error',
         {

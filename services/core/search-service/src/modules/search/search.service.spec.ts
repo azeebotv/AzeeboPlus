@@ -4,6 +4,7 @@ import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { CacheService } from '@azeebo/shared-services';
 import { FeatureFlagService } from '@azeebo/feature-flags';
+import { MetricsService } from '../metrics/metrics.service.js';
 import { BadRequestException, Logger } from '@nestjs/common';
 import axios from 'axios';
 
@@ -36,6 +37,8 @@ describe('SearchService', () => {
     universeId: 'universe-1',
     contentType: 'video',
     universe: 'reality',
+    categories: ['Action', 'Comedy'],
+    creatorName: 'Demo Creator',
   };
 
   const mockUniverse = {
@@ -68,9 +71,11 @@ describe('SearchService', () => {
             },
             creatorProfile: {
               findMany: jest.fn(),
+              count: jest.fn(),
             },
             universe: {
               findMany: jest.fn(),
+              count: jest.fn(),
             },
             searchQueryLog: {
               findMany: jest.fn(),
@@ -78,6 +83,10 @@ describe('SearchService', () => {
             },
             userSearch: {
               create: jest.fn(),
+            },
+            searchTypoCorrection: {
+              upsert: jest.fn(),
+              findMany: jest.fn(),
             },
             tag: {
               findMany: jest.fn(),
@@ -104,6 +113,10 @@ describe('SearchService', () => {
         {
           provide: FeatureFlagService,
           useValue: mockFeatureFlagService,
+        },
+        {
+          provide: MetricsService,
+          useValue: { setFuzzyStatus: jest.fn() },
         },
       ],
     }).compile();
@@ -143,13 +156,25 @@ describe('SearchService', () => {
       (prismaService.contentItem.findMany as jest.Mock).mockResolvedValue([mockContentItem]);
       (prismaService.contentItem.count as jest.Mock).mockResolvedValue(1);
       (prismaService.creatorProfile.findMany as jest.Mock).mockResolvedValue([]);
+      (prismaService.creatorProfile.count as jest.Mock).mockResolvedValue(0);
       (prismaService.universe.findMany as jest.Mock).mockResolvedValue([]);
+      (prismaService.universe.count as jest.Mock).mockResolvedValue(0);
 
       const result = await service.search('test query');
 
       expect(result.success).toBe(true);
       expect(result.data).toHaveProperty('results');
       expect(result.data).toHaveProperty('pagination');
+      // Per-surface pagination: creators/universes get their own page/limit +
+      // exact totals alongside the content pagination object.
+      expect(result.data).toHaveProperty('creatorsPagination');
+      expect(result.data).toHaveProperty('universesPagination');
+      expect(result.data?.creatorsPagination).toEqual(
+        expect.objectContaining({ page: 1, limit: 20, total: 0, totalPages: 0 })
+      );
+      expect(result.data?.universesPagination).toEqual(
+        expect.objectContaining({ page: 1, limit: 10, total: 0, totalPages: 0 })
+      );
       expect(cacheService.set).toHaveBeenCalled();
     });
 
@@ -158,7 +183,9 @@ describe('SearchService', () => {
       (prismaService.contentItem.findMany as jest.Mock).mockResolvedValue([]);
       (prismaService.contentItem.count as jest.Mock).mockResolvedValue(0);
       (prismaService.creatorProfile.findMany as jest.Mock).mockResolvedValue([]);
+      (prismaService.creatorProfile.count as jest.Mock).mockResolvedValue(0);
       (prismaService.universe.findMany as jest.Mock).mockResolvedValue([]);
+      (prismaService.universe.count as jest.Mock).mockResolvedValue(0);
 
       await service.search('test', {
         universe: 'universe-1',
@@ -167,6 +194,10 @@ describe('SearchService', () => {
         sort: 'popular',
         page: 2,
         limit: 10,
+        creatorsPage: 2,
+        creatorsLimit: 5,
+        universesPage: 3,
+        universesLimit: 4,
       });
 
       expect(prismaService.contentItem.findMany).toHaveBeenCalledWith(
@@ -176,6 +207,13 @@ describe('SearchService', () => {
           orderBy: { viewCount: 'desc' },
         })
       );
+      // Creators and universes page independently with their own skip/take.
+      expect(prismaService.creatorProfile.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ skip: 5, take: 5 })
+      );
+      expect(prismaService.universe.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ skip: 8, take: 4 })
+      );
     });
 
     it('should handle all sort options', async () => {
@@ -183,7 +221,9 @@ describe('SearchService', () => {
       (prismaService.contentItem.findMany as jest.Mock).mockResolvedValue([]);
       (prismaService.contentItem.count as jest.Mock).mockResolvedValue(0);
       (prismaService.creatorProfile.findMany as jest.Mock).mockResolvedValue([]);
+      (prismaService.creatorProfile.count as jest.Mock).mockResolvedValue(0);
       (prismaService.universe.findMany as jest.Mock).mockResolvedValue([]);
+      (prismaService.universe.count as jest.Mock).mockResolvedValue(0);
 
       const sortOptions = ['newest', 'oldest', 'popular', 'alphabetical', 'rating'] as const;
 
@@ -323,6 +363,10 @@ describe('SearchService', () => {
       expect(typo?.score ?? 0).toBeGreaterThan(0.47); // pure trigram signal
       // Top match is decisive ('Avengers' >= 0.85) → no 'did you mean' hint.
       expect(result.data?.suggestedQuery).toBeUndefined();
+      // Denormalized categories + creator displayName ride along so clients
+      // can filter by category and render the creator chip without a join.
+      expect(exact?.categories).toEqual(['Action', 'Comedy']);
+      expect(exact?.creatorName).toBe('Demo Creator');
       // The explainable components ride along: fuzzyScore is the Levenshtein
       // signal, trigramScore the pg_trgm one.
       expect(exact?.fuzzyScore).toBeCloseTo(0.875);
@@ -412,6 +456,53 @@ describe('SearchService', () => {
       expect(result.data?.suggestedQuery).toBe('Avengers Endgame');
       const content = result.data?.results?.content ?? [];
       expect(content[0]?.id).toBe('content-endgame');
+    });
+
+    it('prefers a learned correction from the typo dictionary over the raw best match', async () => {
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === 'search_typo_tolerance' || key === 'search_typo_dictionary')
+      );
+
+      // Users have repeatedly accepted 'Avengers Infinity War' for 'avngers'
+      // even though 'Avengers Endgame' scores slightly higher this time.
+      (prismaService.searchTypoCorrection.findMany as jest.Mock).mockResolvedValue([
+        {
+          id: 't1',
+          originalQuery: 'avngers',
+          correctedQuery: 'Avengers Infinity War',
+          count: 12,
+          lastAcceptedAt: new Date(),
+          createdAt: new Date(),
+        },
+      ]);
+
+      const endgame = {
+        ...mockContentItem,
+        id: 'content-endgame',
+        title: 'Avengers Endgame',
+        titleSim: 0.47,
+        descSim: 0,
+      };
+      const infinityWar = {
+        ...mockContentItem,
+        id: 'content-infinity-war',
+        title: 'Avengers Infinity War',
+        titleSim: 0.3,
+        descSim: 0,
+      };
+      (prismaService.$queryRaw as jest.Mock)
+        .mockResolvedValueOnce([infinityWar, endgame])
+        .mockResolvedValueOnce([{ count: 2 }])
+        .mockResolvedValueOnce([]) // creators pool
+        .mockResolvedValueOnce([{ count: 0 }]) // creators count
+        .mockResolvedValueOnce([]) // universes pool
+        .mockResolvedValueOnce([{ count: 0 }]); // universes count
+
+      const result = await service.search('avngers');
+
+      // The dictionary overrides the raw best match with the most-accepted
+      // correction (still only when the top match is a non-decisive typo).
+      expect(result.data?.suggestedQuery).toBe('Avengers Infinity War');
     });
 
     it('blends trigram similarity into ranking when fuzzy scores tie', async () => {
@@ -558,6 +649,51 @@ describe('SearchService', () => {
       expect(creators[0]?.trigramScore).toBe(0); // no trigram overlap
     });
 
+    it('pages creators and universes independently with exact totals', async () => {
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === 'search_typo_tolerance')
+      );
+
+      // Same Levenshtein token match (fuzzy 0.7875) for all three; trigram
+      // similarity differentiates the ranking.
+      const creatorsPool = [
+        { id: 'cr1', userId: 'u1', displayName: 'Avengers Endgame', bio: null, email: null, displayNameSim: 0.47, bioSim: 0 },
+        { id: 'cr2', userId: 'u2', displayName: 'Avengers Infinity War', bio: null, email: null, displayNameSim: 0.4, bioSim: 0 },
+        { id: 'cr3', userId: 'u3', displayName: 'Avengers Assemble', bio: null, email: null, displayNameSim: 0.3, bioSim: 0 },
+      ];
+      const universesPool = [
+        { id: 'un1', name: 'Avengers', displayName: 'Avengers Universe', nameSim: 0.47, displayNameSim: 0 },
+        { id: 'un2', name: 'Avengers Hub', displayName: null, nameSim: 0.3, displayNameSim: 0 },
+      ];
+      (prismaService.$queryRaw as jest.Mock)
+        .mockResolvedValueOnce([]) // content pool
+        .mockResolvedValueOnce([{ count: 0 }]) // content count
+        .mockResolvedValueOnce(creatorsPool)
+        .mockResolvedValueOnce([{ count: creatorsPool.length }])
+        .mockResolvedValueOnce(universesPool)
+        .mockResolvedValueOnce([{ count: universesPool.length }]);
+
+      const result = await service.search('avngers', {
+        creatorsPage: 2,
+        creatorsLimit: 2,
+        universesPage: 2,
+        universesLimit: 1,
+      });
+
+      const creators = result.data?.results?.creators ?? [];
+      const universes = result.data?.results?.universes ?? [];
+      // Page 2 of 3 creators (2 per page) → the third-ranked one.
+      expect(creators.map((c) => c.id)).toEqual(['cr3']);
+      expect(result.data?.creatorsPagination).toEqual(
+        expect.objectContaining({ page: 2, limit: 2, total: 3, totalPages: 2 })
+      );
+      // Page 2 of 2 universes (1 per page) → the second-ranked one.
+      expect(universes.map((u) => u.id)).toEqual(['un2']);
+      expect(result.data?.universesPagination).toEqual(
+        expect.objectContaining({ page: 2, limit: 1, total: 2, totalPages: 2 })
+      );
+    });
+
     it('should drop low-similarity candidates below the threshold', async () => {
       mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
         Promise.resolve(key === 'search_typo_tolerance')
@@ -690,7 +826,9 @@ describe('SearchService', () => {
       (prismaService.contentItem.findMany as jest.Mock).mockResolvedValue([mockContentItem]);
       (prismaService.contentItem.count as jest.Mock).mockResolvedValue(1);
       (prismaService.creatorProfile.findMany as jest.Mock).mockResolvedValue([]);
+      (prismaService.creatorProfile.count as jest.Mock).mockResolvedValue(0);
       (prismaService.universe.findMany as jest.Mock).mockResolvedValue([]);
+      (prismaService.universe.count as jest.Mock).mockResolvedValue(0);
 
       const warnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
 
@@ -818,6 +956,75 @@ describe('SearchService', () => {
 
       await expect(service.getSuggestions('test')).rejects.toThrow(BadRequestException);
     });
+
+    describe('search_suggestions_ai ranking', () => {
+      beforeEach(() => {
+        (cacheService.get as jest.Mock).mockResolvedValue(null);
+        (prismaService.searchQueryLog.findMany as jest.Mock).mockResolvedValue([
+          { query: 'test query 1', resultCount: 10 },
+          { query: 'test query 2', resultCount: 5 },
+          { query: 'test query 3', resultCount: 2 },
+        ]);
+      });
+
+      // The overrides below leak into later describes (logSearch); restore the
+      // suite default (everything on except search_typo_tolerance) after each.
+      afterEach(() => {
+        mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+          Promise.resolve(key !== 'search_typo_tolerance')
+        );
+      });
+
+      it('flag off → keeps deterministic popularity ranking', async () => {
+        mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+          Promise.resolve(key !== 'search_suggestions_ai')
+        );
+
+        const result = await service.getSuggestions('test');
+
+        expect(result.data?.suggestions).toEqual(['test query 1', 'test query 2', 'test query 3']);
+      });
+
+      it('flag on but no ranker configured → fallback to popularity order', async () => {
+        mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+          Promise.resolve(key === 'search_suggestions_ai')
+        );
+
+        const result = await service.getSuggestions('test');
+
+        expect(result.data?.suggestions).toEqual(['test query 1', 'test query 2', 'test query 3']);
+      });
+
+      it('flag on with ranker → uses ranker order, appends dropped candidates', async () => {
+        mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+          Promise.resolve(key === 'search_suggestions_ai')
+        );
+        (service as unknown as { suggestionsAiUrl?: string }).suggestionsAiUrl =
+          'http://ai-ranker:9999';
+        (axios.post as jest.Mock).mockResolvedValueOnce({
+          data: { suggestions: ['test query 2', 'test query 3'] },
+        });
+
+        const result = await service.getSuggestions('test');
+
+        expect(result.data?.suggestions).toEqual(['test query 2', 'test query 3', 'test query 1']);
+        delete (service as unknown as { suggestionsAiUrl?: string }).suggestionsAiUrl;
+      });
+
+      it('flag on but ranker errors → fallback to popularity order', async () => {
+        mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+          Promise.resolve(key === 'search_suggestions_ai')
+        );
+        (service as unknown as { suggestionsAiUrl?: string }).suggestionsAiUrl =
+          'http://ai-ranker:9999';
+        (axios.post as jest.Mock).mockRejectedValueOnce(new Error('ranker down'));
+
+        const result = await service.getSuggestions('test');
+
+        expect(result.data?.suggestions).toEqual(['test query 1', 'test query 2', 'test query 3']);
+        delete (service as unknown as { suggestionsAiUrl?: string }).suggestionsAiUrl;
+      });
+    });
   });
 
   describe('getTrending', () => {
@@ -878,6 +1085,37 @@ describe('SearchService', () => {
       expect(prismaService.searchQueryLog.create).toHaveBeenCalled();
       expect(prismaService.userSearch.create).toHaveBeenCalled();
       expect(cacheService.delete).toHaveBeenCalled();
+    });
+
+    it('should learn an accepted correction in the typo dictionary', async () => {
+      (prismaService.searchQueryLog.create as jest.Mock).mockResolvedValue(mockSearchQueryLog);
+      (prismaService.userSearch.create as jest.Mock).mockResolvedValue({});
+      (prismaService.searchTypoCorrection.upsert as jest.Mock).mockResolvedValue({ id: 't1' });
+
+      const result = await service.logSearch('user-1', 'avngers', 5, 'Avengers Endgame', true);
+
+      expect(result.success).toBe(true);
+      expect(prismaService.searchTypoCorrection.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            originalQuery_correctedQuery: {
+              originalQuery: 'avngers',
+              correctedQuery: 'Avengers Endgame',
+            },
+          },
+          create: expect.objectContaining({ count: 1 }),
+          update: expect.objectContaining({ count: { increment: 1 } }),
+        })
+      );
+    });
+
+    it('should not touch the typo dictionary without an accepted correction', async () => {
+      (prismaService.searchQueryLog.create as jest.Mock).mockResolvedValue(mockSearchQueryLog);
+      (prismaService.userSearch.create as jest.Mock).mockResolvedValue({});
+
+      await service.logSearch('user-1', 'test query', 5);
+
+      expect(prismaService.searchTypoCorrection.upsert).not.toHaveBeenCalled();
     });
 
     it('should throw BadRequestException on error', async () => {

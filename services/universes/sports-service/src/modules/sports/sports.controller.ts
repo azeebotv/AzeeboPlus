@@ -1,6 +1,7 @@
 import { Inject, Controller, Get, Post, Body, Param, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, sportsFlags } from '@azeebo/feature-flags';
 
 import { SportsService } from './sports.service.js';
 import { SportsResponse } from './interfaces/sports-response.interface.js';
@@ -91,8 +92,11 @@ export class SportsController {
   }
 
   @Get('live/scores')
-  @ApiOperation({ summary: 'Live match scores' })
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(sportsFlags.liveScores)
+  @ApiOperation({ summary: 'Live match scores (sports_live_scores)' })
   @ApiResponse({ status: 200, description: 'Live scores' })
+  @ApiResponse({ status: 403, description: 'Flag off, or forbidden' })
   async getLiveScores(): Promise<SportsResponse> {
     return this.sportsService.getHome();
   }

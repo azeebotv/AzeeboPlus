@@ -157,5 +157,69 @@ describe('RateLimitGuard', () => {
       expect(result).toBe(true);
       expect(rateLimitService.isBlocked).toHaveBeenCalledWith('10.0.0.1');
     });
+
+    it('should halve the effective limit when the strict-mode resolver is on', async () => {
+      const strictGuard = new RateLimitGuard(reflector, rateLimitService, async () => true);
+      const context = {
+        switchToHttp: () => ({
+          getRequest: () => ({
+            ip: '192.168.1.1',
+            headers: {},
+            path: '/api/test',
+            socket: { remoteAddress: '192.168.1.1' },
+          }),
+          getResponse: () => ({ setHeader: jest.fn() }),
+        }),
+        getHandler: () => jest.fn(),
+        getClass: () => jest.fn(),
+      } as unknown as ExecutionContext;
+
+      rateLimitService.isBlocked.mockResolvedValue(false);
+      rateLimitService.checkRateLimit.mockResolvedValue({
+        allowed: true,
+        remaining: 20,
+        resetAt: Date.now() + 60000,
+        limit: 20,
+      });
+      jest.spyOn(reflector, 'get').mockReturnValue({ limit: 40, windowMs: 60000 });
+
+      await strictGuard.canActivate(context);
+      expect(rateLimitService.checkRateLimit).toHaveBeenCalledWith(
+        expect.any(String),
+        { limit: 20, windowMs: 60000 }
+      );
+    });
+
+    it('should keep the decorated limit when the strict-mode resolver is off', async () => {
+      const laxGuard = new RateLimitGuard(reflector, rateLimitService, async () => false);
+      const context = {
+        switchToHttp: () => ({
+          getRequest: () => ({
+            ip: '192.168.1.1',
+            headers: {},
+            path: '/api/test',
+            socket: { remoteAddress: '192.168.1.1' },
+          }),
+          getResponse: () => ({ setHeader: jest.fn() }),
+        }),
+        getHandler: () => jest.fn(),
+        getClass: () => jest.fn(),
+      } as unknown as ExecutionContext;
+
+      rateLimitService.isBlocked.mockResolvedValue(false);
+      rateLimitService.checkRateLimit.mockResolvedValue({
+        allowed: true,
+        remaining: 40,
+        resetAt: Date.now() + 60000,
+        limit: 40,
+      });
+      jest.spyOn(reflector, 'get').mockReturnValue({ limit: 40, windowMs: 60000 });
+
+      await laxGuard.canActivate(context);
+      expect(rateLimitService.checkRateLimit).toHaveBeenCalledWith(
+        expect.any(String),
+        { limit: 40, windowMs: 60000 }
+      );
+    });
   });
 });

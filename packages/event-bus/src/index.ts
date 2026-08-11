@@ -35,7 +35,18 @@ export interface EventBusConfig {
   enableRetry?: boolean;
   maxRetries?: number;
   retryDelayMs?: number;
+  /**
+   * Per-event consumer toggle, typically backed by the `events_consume_*`
+   * feature flags: `(eventType) => featureFlagService.isEnabled('events_consume_' + eventType)`.
+   * When the resolver returns false, messages for that event type are skipped
+   * (logged + acknowledged) so a flipped flag pauses consumption without loss.
+   * Absent, all events are consumed (backwards compatible).
+   */
+  consumerToggle?: (eventType: string) => Promise<boolean>;
 }
+
+/** Canonical per-event consumption flag key, e.g. `events_consume_user.created`. */
+export const eventConsumeFlagKey = (eventType: string): string => `events_consume_${eventType}`;
 
 // ============================================================================
 // Pre-defined Event Types
@@ -96,6 +107,7 @@ export class EventBusService {
   private readonly enableRetry: boolean;
   private readonly maxRetries: number;
   private readonly retryDelayMs: number;
+  private readonly consumerToggle?: (eventType: string) => Promise<boolean>;
 
   constructor(config: EventBusConfig, serviceName: string) {
     this.prefix = config.prefix || 'azeebo:events';
@@ -103,6 +115,7 @@ export class EventBusService {
     this.enableRetry = config.enableRetry !== false;
     this.maxRetries = config.maxRetries || 3;
     this.retryDelayMs = config.retryDelayMs || 1000;
+    this.consumerToggle = config.consumerToggle;
 
     this.redis = new Redis(config.redisUrl, {
       maxRetriesPerRequest: 3,
@@ -199,6 +212,14 @@ export class EventBusService {
 
       this.logger.debug(`Received event: ${eventType} (id: ${event.id})`);
 
+      // Per-event consumer pause: when the toggle resolves false the message is
+      // skipped (acknowledged) so a flipped events_consume_* flag drains the
+      // channel without losing or reprocessing anything.
+      if (this.consumerToggle && !(await this.consumerToggle(eventType))) {
+        this.logger.warn(`Skipping event ${eventType} (id: ${event.id}): consumption disabled`);
+        return;
+      }
+
       const handlers = this.subscribers.get(eventType);
       if (!handlers || handlers.size === 0) {
         this.logger.warn(`No handlers for event type: ${eventType}`);
@@ -245,6 +266,12 @@ export class EventBusService {
    */
   getSubscriberCount(eventType: string): number {
     return this.subscribers.get(eventType)?.size || 0;
+  }
+
+  /** Whether consumption of an event type is currently enabled (default true). */
+  async isConsumptionEnabled(eventType: string): Promise<boolean> {
+    if (!this.consumerToggle) return true;
+    return this.consumerToggle(eventType);
   }
 
   /**

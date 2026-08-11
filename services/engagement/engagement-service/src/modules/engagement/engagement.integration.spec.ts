@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { EngagementService } from './engagement.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService } from '@azeebo/shared-services';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 
 describe('EngagementService Integration', () => {
   let service: EngagementService;
@@ -48,6 +49,7 @@ describe('EngagementService Integration', () => {
         { provide: CacheService, useValue: mockCacheService },
         { provide: 'BullQueue_analytics', useValue: mockAnalyticsQueue },
         { provide: ConfigService, useValue: mockConfigService },
+        { provide: FeatureFlagService, useValue: { isEnabled: jest.fn().mockResolvedValue(true) } },
       ],
     }).compile();
 

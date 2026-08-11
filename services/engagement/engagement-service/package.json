@@ -21,6 +21,7 @@
     "@azeebo/security": "workspace:*",
     "@azeebo/shared-services": "workspace:*",
     "@azeebo/shared-types": "workspace:*",
+    "@azeebo/flag-metrics": "workspace:*",
     "axios": "^1.7.0",
     "@nestjs/common": "^11.1.27",
     "@nestjs/core": "^11.1.27",

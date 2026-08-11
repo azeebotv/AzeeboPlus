@@ -335,6 +335,9 @@ export class StoriesService {
 
   async incrementViewCount(id: string): Promise<StoryResponse> {
     try {
+      const existing = await this.prisma.cultureStory.findUnique({ where: { id } });
+      if (!existing) throw new NotFoundException(`Story not found: ${id}`);
+
       await this.prisma.cultureStory.update({
         where: { id },
         data: { viewCount: { increment: 1 } },

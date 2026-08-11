@@ -298,9 +298,9 @@ describe('MoviesService Integration - Cross-Service Communication', () => {
       expect(result.success).toBe(true);
       expect(mockPrismaService.watchlistItem.create).toHaveBeenCalled();
       expect(mockedAxios.post).toHaveBeenCalledWith(
-        expect.stringContaining('/analytics/track'),
+        expect.stringContaining('/v1/analytics/events'),
         expect.objectContaining({
-          eventName: 'movie_watchlisted',
+          type: 'movie_watchlisted',
           userId: 'user-1',
         }),
         expect.objectContaining({ timeout: 10000 })
@@ -333,9 +333,9 @@ describe('MoviesService Integration - Cross-Service Communication', () => {
       expect(result.success).toBe(true);
       expect(mockPrismaService.watchlistItem.delete).toHaveBeenCalled();
       expect(mockedAxios.post).toHaveBeenCalledWith(
-        expect.stringContaining('/analytics/track'),
+        expect.stringContaining('/v1/analytics/events'),
         expect.objectContaining({
-          eventName: 'movie_watchlist_removed',
+          type: 'movie_watchlist_removed',
           userId: 'user-1',
         }),
         expect.objectContaining({ timeout: 10000 })

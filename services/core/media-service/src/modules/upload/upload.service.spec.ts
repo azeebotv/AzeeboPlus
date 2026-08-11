@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { UploadService } from './upload.service';
 import { ConfigService } from '@nestjs/config';
 import { S3Service } from './s3.service';
@@ -21,11 +22,15 @@ describe('UploadService', () => {
   const mockS3Service = {
     uploadFile: jest.fn(),
     getSignedUrl: jest.fn(),
+    putBuffer: jest.fn(),
+    getObjectBuffer: jest.fn(),
+    deleteFile: jest.fn(),
   };
 
   const mockRedisService = {
     get: jest.fn(),
     set: jest.fn(),
+    del: jest.fn(),
     scanKeys: jest.fn().mockResolvedValue([]),
   };
 
@@ -35,7 +40,13 @@ describe('UploadService', () => {
   };
 
   const mockFeatureFlagService = {
-    isEnabled: jest.fn().mockResolvedValue(true),
+    // Everything on EXCEPT the off-by-default safety features (virus scan,
+    // chunked uploads) so upload tests don't trip the fail-closed hooks.
+    isEnabled: jest.fn().mockImplementation((key: string) =>
+      Promise.resolve(
+        key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked
+      )
+    ),
   };
 
   const mockCdnPurgeService = {
@@ -82,7 +93,11 @@ describe('UploadService', () => {
     });
 
     it('should return a public immutable cache-control when media_cdn_edge_cache is on', async () => {
-      mockFeatureFlagService.isEnabled.mockResolvedValue(true);
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(
+          key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked
+        )
+      );
       mockS3Service.uploadFile.mockResolvedValue({ url: 'https://example.com/test.jpg' });
 
       const result = await service.uploadImage(mockFile);
@@ -105,7 +120,11 @@ describe('UploadService', () => {
 
   describe('per-type cache-control (media_cdn_edge_cache)', () => {
     const upload = async (mimetype: string) => {
-      mockFeatureFlagService.isEnabled.mockResolvedValue(true);
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(
+          key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked
+        )
+      );
       mockS3Service.uploadFile.mockResolvedValue({ url: 'https://example.com/file' });
       const file = {
         originalname: 'file',
@@ -219,6 +238,13 @@ describe('UploadService', () => {
   });
 
   describe('per-key CDN purge when caching is disabled', () => {
+    // This suite has no global afterEach clearAllMocks, so call history can
+    // bleed across tests — start each test with a clean slate.
+    beforeEach(() => {
+      mockCdnPurgeService.purgeKeys.mockClear();
+      mockCdnPurgeService.purgeKeys.mockResolvedValue({ purged: 1 });
+    });
+
     it('invalidates exactly the uploaded key when media_cdn_edge_cache is off', async () => {
       mockFeatureFlagService.isEnabled.mockResolvedValue(false);
       mockS3Service.uploadFile.mockResolvedValue({
@@ -240,7 +266,11 @@ describe('UploadService', () => {
     });
 
     it('does not purge when caching is enabled (the new object is the cache)', async () => {
-      mockFeatureFlagService.isEnabled.mockResolvedValue(true);
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(
+          key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked
+        )
+      );
       mockS3Service.uploadFile.mockResolvedValue({
         url: 'https://example.com/a.jpg',
         key: 'images/a.jpg',
@@ -292,7 +322,11 @@ describe('UploadService', () => {
       );
       // Implementations persist across clearAllMocks: re-establish the flag
       // default in case an earlier test left isEnabled=false.
-      mockFeatureFlagService.isEnabled.mockResolvedValue(true);
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(
+          key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked
+        )
+      );
       // TTLs are read once at construction, so rebuild the service with the
       // env mock in place (the module-level beforeEach compiled with the
       // default mock, which yields the fallback TTLs).
@@ -369,6 +403,222 @@ describe('UploadService', () => {
         mockCdnPurgeService as unknown as CdnPurgeService
       );
       expect((await upload('video/mp4')).cacheControl).toBe('public, max-age=86400');
+    });
+  });
+
+  describe('chunked upload (media_upload_chunked)', () => {
+    const session = {
+      userId: 'user-1',
+      filename: 'movie.mp4',
+      contentType: 'video/mp4',
+      totalChunks: 2,
+      uploadType: 'video',
+      received: [0, 1],
+      createdAt: Date.now(),
+    };
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === mediaFlags.uploadChunked)
+      );
+    });
+
+    it('creates a session and stores it in Redis', async () => {
+      const result = await service.initChunkedUpload(
+        {
+          filename: 'movie.mp4',
+          contentType: 'video/mp4',
+          totalChunks: 2,
+          uploadType: 'video',
+        },
+        'user-1'
+      );
+
+      expect(result.uploadId).toBeTruthy();
+      expect(result.totalChunks).toBe(2);
+      expect(mockRedisService.set).toHaveBeenCalledWith(
+        expect.stringMatching(/^chunked_upload:/),
+        expect.stringContaining('"totalChunks":2'),
+        24 * 3600
+      );
+    });
+
+    it('rejects init when the flag is off (fail-closed)', async () => {
+      mockFeatureFlagService.isEnabled.mockResolvedValue(false);
+      await expect(
+        service.initChunkedUpload({
+          filename: 'a.mp4',
+          contentType: 'video/mp4',
+          totalChunks: 1,
+          uploadType: 'video',
+        })
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockRedisService.set).not.toHaveBeenCalled();
+    });
+
+    it('stores a chunk to staging and records progress', async () => {
+      mockRedisService.get.mockResolvedValue(
+        JSON.stringify({ ...session, received: [0] })
+      );
+
+      const file = {
+        originalname: 'c1',
+        mimetype: 'video/mp4',
+        buffer: Buffer.from('chunk-1'),
+        size: 7,
+      } as Express.Multer.File;
+
+      const result = await service.uploadChunk('session-1', 1, file);
+
+      expect(mockS3Service.putBuffer).toHaveBeenCalledWith(
+        expect.stringContaining('uploads/chunks/session-1/1'),
+        file.buffer,
+        'video/mp4'
+      );
+      expect(result.received).toBe(2);
+      expect(result.totalChunks).toBe(2);
+    });
+
+    it('rejects a duplicate chunk index', async () => {
+      mockRedisService.get.mockResolvedValue(JSON.stringify(session));
+      const file = {
+        originalname: 'c0',
+        mimetype: 'video/mp4',
+        buffer: Buffer.from('x'),
+        size: 1,
+      } as Express.Multer.File;
+
+      await expect(service.uploadChunk('session-1', 0, file)).rejects.toThrow(
+        BadRequestException
+      );
+      expect(mockS3Service.putBuffer).not.toHaveBeenCalled();
+    });
+
+    it('assembles all chunks through the validated upload path and cleans up', async () => {
+      mockRedisService.get.mockResolvedValue(JSON.stringify(session));
+      mockS3Service.getObjectBuffer
+        .mockResolvedValueOnce(Buffer.from('part-a'))
+        .mockResolvedValueOnce(Buffer.from('part-b'));
+      mockS3Service.uploadFile.mockResolvedValue({
+        key: 'videos/abc.mp4',
+        url: 'https://example.com/videos/abc.mp4',
+        cdnUrl: 'https://cdn.example.com/videos/abc.mp4',
+        duration: 60,
+      });
+      mockS3Service.deleteFile.mockResolvedValue(undefined);
+
+      const result = await service.completeChunkedUpload('session-1');
+
+      // Assembled buffer 'part-apart-b' passed through uploadVideo.
+      expect(mockS3Service.uploadFile).toHaveBeenCalled();
+      expect(result.key).toBe('videos/abc.mp4');
+      // Staging chunks + session cleaned up.
+      expect(mockS3Service.deleteFile).toHaveBeenCalledWith(
+        expect.stringContaining('uploads/chunks/session-1/0')
+      );
+      expect(mockRedisService.del).toHaveBeenCalledWith(
+        expect.stringMatching(/^chunked_upload:/)
+      );
+    });
+
+    it('rejects completing an incomplete session', async () => {
+      mockRedisService.get.mockResolvedValue(
+        JSON.stringify({ ...session, received: [0] })
+      );
+
+      await expect(service.completeChunkedUpload('session-1')).rejects.toThrow(
+        BadRequestException
+      );
+      expect(mockS3Service.getObjectBuffer).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('virus scan (media_virus_scan)', () => {
+    const mockFile = {
+      originalname: 'doc.pdf',
+      mimetype: 'application/pdf',
+      buffer: Buffer.from('pdf'),
+      size: 1024,
+    } as Express.Multer.File;
+
+    it('skips scanning entirely while the flag is off', async () => {
+      jest.clearAllMocks();
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(
+          key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked
+        )
+      );
+      mockS3Service.uploadFile.mockResolvedValue({
+        key: 'documents/x.pdf',
+        url: 'https://example.com/x.pdf',
+      });
+
+      const result = await service.uploadDocument(mockFile);
+
+      expect(result.scanStatus).toBeUndefined();
+      expect(mockedAxios.post).not.toHaveBeenCalledWith(
+        expect.stringContaining('/scan'),
+        expect.any(Object),
+        expect.any(Object)
+      );
+    });
+
+    it('rejects the upload when scanning is on but no scanner is configured (fail-closed)', async () => {
+      jest.clearAllMocks();
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === mediaFlags.virusScan)
+      );
+      mockConfigService.get.mockReturnValue(undefined);
+      mockS3Service.uploadFile.mockResolvedValue({
+        key: 'documents/x.pdf',
+        url: 'https://example.com/x.pdf',
+      });
+
+      await expect(service.uploadDocument(mockFile)).rejects.toThrow(BadRequestException);
+    });
+
+    it('returns scanStatus clean when the scanner confirms', async () => {
+      jest.clearAllMocks();
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === mediaFlags.virusScan)
+      );
+      mockConfigService.get.mockImplementation((key: string) => {
+        if (key === 'MEDIA_VIRUS_SCAN_URL') return 'http://scanner:8080';
+        return undefined;
+      });
+      mockedAxios.post.mockResolvedValue({ data: { clean: true } });
+      mockS3Service.uploadFile.mockResolvedValue({
+        key: 'documents/x.pdf',
+        url: 'https://example.com/x.pdf',
+      });
+
+      const result = await service.uploadDocument(mockFile);
+
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        expect.stringContaining('/scan'),
+        expect.objectContaining({ key: 'documents/x.pdf', mimetype: 'application/pdf' }),
+        expect.any(Object)
+      );
+      expect(result.scanStatus).toBe('clean');
+    });
+
+    it('rejects the upload when the scanner reports a non-clean verdict', async () => {
+      jest.clearAllMocks();
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === mediaFlags.virusScan)
+      );
+      mockConfigService.get.mockImplementation((key: string) => {
+        if (key === 'MEDIA_VIRUS_SCAN_URL') return 'http://scanner:8080';
+        return undefined;
+      });
+      mockedAxios.post.mockResolvedValue({ data: { clean: false } });
+      mockS3Service.uploadFile.mockResolvedValue({
+        key: 'documents/x.pdf',
+        url: 'https://example.com/x.pdf',
+      });
+
+      await expect(service.uploadDocument(mockFile)).rejects.toThrow(BadRequestException);
     });
   });
 });

@@ -52,7 +52,8 @@ const mockedAxios = axios as jest.Mocked<typeof axios>;
 describe('EventsService Integration - Cross-Service Communication', () => {
   let service: EventsService;
 
-  const mockPrismaService = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mockPrismaService: Record<string, any> = {
     event: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
@@ -69,7 +70,13 @@ describe('EventsService Integration - Cross-Service Communication', () => {
     eventCategory: {
       findMany: jest.fn(),
     },
-  };
+    $transaction: jest.fn((fn: unknown) =>
+      typeof fn === 'function'
+        ? (fn as (tx: unknown) => unknown)(mockPrismaService)
+        : Promise.all(fn as unknown[])
+    ) as jest.Mock,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as Record<string, any>;
 
   const mockCacheService = {
     get: jest.fn().mockResolvedValue(null),

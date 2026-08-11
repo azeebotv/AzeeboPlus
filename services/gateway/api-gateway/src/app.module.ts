@@ -6,6 +6,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { JwtModule } from '@nestjs/jwt';
 import { HealthModule } from './modules/health/health.module';
 import { ProxyModule } from './modules/proxy/proxy.module';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 import { GatewayAuthGuard } from './guards/gateway-auth.guard';
 import { AuthThrottlerGuard } from './guards/auth-throttler.guard';
 import { CsrfMiddleware } from './common/csrf.middleware';
@@ -16,6 +17,7 @@ import {
   FeatureFlagModule,
   gatewayFlags,
   webFlags,
+  mobileFlags,
   universeEnabledKey,
 } from '@azeebo/feature-flags';
 
@@ -52,6 +54,7 @@ import {
     }),
     HealthModule,
     ProxyModule,
+    FlagMetricsModule.register({ service: 'api-gateway' }),
     // Gateway kill-switches: maintenance mode and new routes default OFF;
     // circuit breaker / CSRF / legacy redirects / caching default ON so ops can
     // disable them instantly during incidents.
@@ -72,6 +75,16 @@ import {
         [webFlags.darkMode]: true,
         [webFlags.autoplay]: true,
         [webFlags.lowDataDefault]: false,
+        [webFlags.recommendationsRail]: false,
+        [webFlags.announcementBanner]: false,
+        [webFlags.premiumUpsell]: false,
+        // Client-driven mobile flags served via GET /feature-flags/bootstrap.
+        [mobileFlags.newHome]: false,
+        [mobileFlags.darkMode]: true,
+        [mobileFlags.autoplay]: true,
+        [mobileFlags.lowDataDefault]: false,
+        [mobileFlags.pushEnabled]: true,
+        [mobileFlags.biometricAuth]: false,
         // Per-universe nav sentinels: universe.<name>.enabled (admin toggles these
         // via the admin app; the web app hides nav entries when disabled).
         [universeEnabledKey('reality')]: true,
@@ -83,12 +96,26 @@ import {
         [universeEnabledKey('comedy')]: true,
         [universeEnabledKey('sports')]: true,
       },
+      // Prometheus sinks for flag observability (flag_evaluation_total /
+      // flag_toggled_total at GET /metrics, labeled by service) — the gateway
+      // is the central evaluation point, so its hooks see every bootstrap +
+      // kill-switch read. Same shared module every service mounts.
+      ...flagHooks('api-gateway'),
       publicFlagKeys: [
         webFlags.maintenanceMode,
         webFlags.newHome,
         webFlags.darkMode,
         webFlags.autoplay,
         webFlags.lowDataDefault,
+        webFlags.recommendationsRail,
+        webFlags.announcementBanner,
+        webFlags.premiumUpsell,
+        mobileFlags.newHome,
+        mobileFlags.darkMode,
+        mobileFlags.autoplay,
+        mobileFlags.lowDataDefault,
+        mobileFlags.pushEnabled,
+        mobileFlags.biometricAuth,
         universeEnabledKey('reality'),
         universeEnabledKey('creators'),
         universeEnabledKey('lifestyle'),

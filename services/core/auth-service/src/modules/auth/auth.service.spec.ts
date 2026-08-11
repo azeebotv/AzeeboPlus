@@ -3,7 +3,12 @@ import { AuthService } from './auth.service.js';
 import { AuthRepository } from './auth.repository.js';
 import { RedisService } from '@azeebo/shared-services';
 import { OtpService } from './otp/otp.service.js';
+import { MfaService } from './mfa/mfa.service.js';
 import { JwtService } from '@nestjs/jwt';
+import axios from 'axios';
+
+jest.mock('axios');
+const mockedAxios = axios as jest.Mocked<typeof axios>;
 import { ConfigService } from '@nestjs/config';
 import {
   ConflictException,
@@ -45,6 +50,7 @@ describe('AuthService', () => {
   let authRepository: jest.Mocked<AuthRepository>;
   let redisService: jest.Mocked<RedisService>;
   let jwtService: jest.Mocked<JwtService>;
+  let mfaService: { verifyMfaCode: jest.Mock };
 
   const mockFeatureFlagService = {
     isEnabled: jest.fn().mockResolvedValue(false),
@@ -153,6 +159,12 @@ describe('AuthService', () => {
           },
         },
         {
+          provide: MfaService,
+          useValue: {
+            verifyMfaCode: jest.fn().mockResolvedValue(true),
+          },
+        },
+        {
           provide: CacheService,
           useValue: {
             get: jest.fn().mockResolvedValue(null),
@@ -198,6 +210,7 @@ describe('AuthService', () => {
 
     service = module.get<AuthService>(AuthService);
     authRepository = module.get(AuthRepository);
+    mfaService = module.get(MfaService);
     redisService = module.get(RedisService);
     jwtService = module.get(JwtService);
   });
@@ -621,6 +634,176 @@ describe('AuthService', () => {
       expect(error).toBeInstanceOf(HttpException);
       expect((error as HttpException).getStatus()).toBe(429);
       expect(redisService.set).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('magic link (auth_passwordless_magic_link)', () => {
+    beforeEach(() => {
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === authFlags.passwordlessMagicLink)
+      );
+      (mockedAxios.post as jest.Mock).mockResolvedValue({ status: 200, data: {} });
+    });
+
+    it('rejects the request when the flag is off', async () => {
+      mockFeatureFlagService.isEnabled.mockResolvedValue(false);
+      await expect(
+        service.requestMagicLink({ email: 'test@example.com' })
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockedAxios.post).not.toHaveBeenCalled();
+    });
+
+    it('sends a magic link email and stores a single-use token', async () => {
+      (authRepository.findByEmail as jest.Mock).mockResolvedValue(mockUser);
+
+      const result = await service.requestMagicLink({ email: 'test@example.com' });
+
+      expect(result.success).toBe(true);
+      expect(redisService.set).toHaveBeenCalledWith(
+        expect.stringMatching(/^magic_link:/),
+        mockUser.id,
+        900
+      );
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        expect.stringContaining('/v1/notifications/email'),
+        expect.objectContaining({ template: 'magic-link' })
+      );
+    });
+
+    it('does not reveal whether the account exists', async () => {
+      (authRepository.findByEmail as jest.Mock).mockResolvedValue(null);
+
+      const result = await service.requestMagicLink({ email: 'ghost@example.com' });
+
+      expect(result.success).toBe(true);
+      expect(redisService.set).not.toHaveBeenCalled();
+      expect(mockedAxios.post).not.toHaveBeenCalled();
+    });
+
+    it('verifies a valid link and issues tokens (link burned)', async () => {
+      (redisService.get as jest.Mock).mockResolvedValue(mockUser.id);
+      (authRepository.findById as jest.Mock).mockResolvedValue(mockUser);
+      (jwtService.sign as jest.Mock).mockReturnValue('access-token');
+
+      const result = await service.verifyMagicLink({ token: 'valid-token-123456789' });
+
+      expect(redisService.del).toHaveBeenCalledWith(expect.stringMatching(/^magic_link:/));
+      expect(result.data).toHaveProperty('access_token');
+    });
+
+    it('rejects an unknown/expired link', async () => {
+      (redisService.get as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.verifyMagicLink({ token: 'dead-token-1234567890' })).rejects.toThrow(
+        BadRequestException
+      );
+      expect(jwtService.sign).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('admin MFA enforcement (auth_mfa_required_for_admins)', () => {
+    const adminUser = { ...mockUser, role: 'admin' as const };
+
+    it('blocks an admin without MFA enrolled when the flag is on (fail-closed)', async () => {
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === authFlags.mfaRequiredForAdmins)
+      );
+      (authRepository.findByEmail as jest.Mock).mockResolvedValue({
+        ...adminUser,
+        mfaEnabled: false,
+      });
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+
+      await expect(
+        service.login({ email: 'admin@example.com', password: 'Password123!' })
+      ).rejects.toThrow(ForbiddenException);
+      expect(jwtService.sign).not.toHaveBeenCalled();
+    });
+
+    it('returns a 428 challenge for an admin with MFA enrolled instead of tokens', async () => {
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === authFlags.mfaRequiredForAdmins)
+      );
+      (authRepository.findByEmail as jest.Mock).mockResolvedValue({
+        ...adminUser,
+        mfaEnabled: true,
+      });
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (redisService.set as jest.Mock).mockResolvedValue(undefined);
+
+      const error = await service
+        .login({ email: 'admin@example.com', password: 'Password123!' })
+        .catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(HttpException);
+      expect((error as HttpException).getStatus()).toBe(428);
+      const body = (error as HttpException).getResponse() as {
+        mfaRequired: boolean;
+        challengeId: string;
+      };
+      expect(body.mfaRequired).toBe(true);
+      expect(body.challengeId).toBeTruthy();
+      expect(redisService.set).toHaveBeenCalledWith(
+        expect.stringMatching(/^mfa_login_challenge:/),
+        adminUser.id,
+        600
+      );
+      expect(jwtService.sign).not.toHaveBeenCalled();
+    });
+
+    it('lets a non-admin sign in normally when the flag is on', async () => {
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === authFlags.mfaRequiredForAdmins)
+      );
+      (authRepository.findByEmail as jest.Mock).mockResolvedValue(mockUser);
+      (authRepository.createSession as jest.Mock).mockResolvedValue(mockSession);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (jwtService.sign as jest.Mock).mockReturnValue('access-token');
+
+      const result = await service.login({
+        email: 'test@example.com',
+        password: 'Password123!',
+      });
+
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe('verifyMfaLogin', () => {
+    it('completes sign-in with a valid TOTP code and burns the challenge', async () => {
+      (redisService.get as jest.Mock).mockResolvedValue(mockUser.id);
+      (authRepository.findById as jest.Mock).mockResolvedValue(mockUser);
+      mfaService.verifyMfaCode.mockResolvedValue(true);
+      (jwtService.sign as jest.Mock).mockReturnValue('access-token');
+
+      const result = await service.verifyMfaLogin({
+        challengeId: 'challenge-123456789',
+        code: '123456',
+      });
+
+      expect(redisService.del).toHaveBeenCalledWith(
+        expect.stringMatching(/^mfa_login_challenge:/)
+      );
+      expect(result.data).toHaveProperty('access_token');
+    });
+
+    it('rejects an expired/unknown challenge', async () => {
+      (redisService.get as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        service.verifyMfaLogin({ challengeId: 'gone-1234567890', code: '123456' })
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('rejects an invalid TOTP code', async () => {
+      (redisService.get as jest.Mock).mockResolvedValue(mockUser.id);
+      (authRepository.findById as jest.Mock).mockResolvedValue(mockUser);
+      mfaService.verifyMfaCode.mockResolvedValue(false);
+
+      await expect(
+        service.verifyMfaLogin({ challengeId: 'challenge-123456789', code: '000000' })
+      ).rejects.toThrow(UnauthorizedException);
+      expect(redisService.del).not.toHaveBeenCalled();
     });
   });
 });

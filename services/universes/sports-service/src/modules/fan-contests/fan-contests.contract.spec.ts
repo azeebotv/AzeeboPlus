@@ -10,6 +10,7 @@ import { FanContestsModule } from './fan-contests.module.js';
 import { FanContestsService } from './fan-contests.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { RateLimitGuard } from '@azeebo/security';
+import { FeatureFlagGuard } from '@azeebo/feature-flags';
 
 jest.mock('@azeebo/shared-services', () => ({
   CacheService: jest.fn(),
@@ -62,6 +63,8 @@ describe('Fan Contests Controller Contract Tests', () => {
         $disconnect: jest.fn().mockResolvedValue(undefined),
       })
       .overrideGuard(RateLimitGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .overrideGuard(FeatureFlagGuard)
       .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .compile();
 

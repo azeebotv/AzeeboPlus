@@ -21,6 +21,7 @@ import { INestApplication, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
 import { RealityModule } from './reality.module.js';
 import { RealityService } from './reality.service.js';
+import { RealityGateway } from './reality.gateway.js';
 import { JwtService } from '@nestjs/jwt';
 import { CacheService } from '@azeebo/shared-services';
 import { PrismaService } from '../database/prisma.service.js';
@@ -47,6 +48,37 @@ jest.mock('@azeebo/security', () => ({
   AdminGuard: jest.fn(),
   RateLimitService: jest.fn(),
 }));
+jest.mock('@azeebo/feature-flags', () => {
+  const svc = {
+    getFlag: jest.fn().mockResolvedValue(false),
+    setFlag: jest.fn().mockResolvedValue(undefined),
+    getAllFlags: jest.fn().mockResolvedValue([]),
+    isEnabled: jest.fn().mockResolvedValue(false),
+  };
+  class MockFeatureFlagService {}
+  const mockProvider = { provide: MockFeatureFlagService, useValue: svc };
+  class MockFeatureFlagModule {
+    static register() {
+      return {
+        module: MockFeatureFlagModule,
+        providers: [mockProvider],
+        exports: [MockFeatureFlagService],
+      };
+    }
+  }
+  return {
+    FeatureFlagModule: MockFeatureFlagModule,
+    FeatureFlagService: MockFeatureFlagService,
+    FeatureFlagGuard: class {},
+    FeatureFlag: () => () => {},
+    realityFlags: {
+      votingEnabled: 'reality_voting_enabled',
+      predictionsEnabled: 'reality_predictions_enabled',
+      liveVoting: 'reality_live_voting',
+      autoElimination: 'reality_auto_elimination',
+    },
+  };
+});
 
 const mockAuthGuard = {
   canActivate: (context: ExecutionContext) => {
@@ -159,6 +191,8 @@ describe('Reality Controller Contract Tests', () => {
         expire: jest.fn().mockResolvedValue(1),
         exists: jest.fn().mockResolvedValue(0),
       })
+      .overrideProvider(RealityGateway)
+      .useValue({})
       .overrideProvider(JwtService)
       .useValue({
         sign: jest.fn().mockReturnValue('access-token-123'),

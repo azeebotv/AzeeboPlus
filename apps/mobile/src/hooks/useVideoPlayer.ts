@@ -8,6 +8,12 @@ interface UseVideoPlayerOptions {
   initialProgress?: number;
   onProgressUpdate?: (progress: number) => void;
   onComplete?: () => void;
+  /**
+   * Whether playback should start automatically once the source is ready.
+   * Gated by the mobile_autoplay server flag by callers; defaults to false
+   * (tap-to-play) which is the conservative behavior.
+   */
+  autoPlay?: boolean;
 }
 
 interface UseVideoPlayerReturn {
@@ -36,6 +42,7 @@ export function useAzeeboVideoPlayer({
   initialProgress = 0,
   onProgressUpdate,
   onComplete,
+  autoPlay = false,
 }: UseVideoPlayerOptions): UseVideoPlayerReturn {
   const hideControlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -115,6 +122,14 @@ export function useAzeeboVideoPlayer({
       }
     });
   }, [videoSource, player, initialProgress]);
+
+  // mobile_autoplay (on by default): when the caller passes autoPlay=true
+  // (server flag enabled), start playback as soon as the source is ready.
+  useEffect(() => {
+    if (autoPlay && status === 'readyToPlay' && videoSource && !isPlaying) {
+      player.play();
+    }
+  }, [autoPlay, status, videoSource, isPlaying, player]);
 
   useEffect(() => {
     if (status === 'error') {

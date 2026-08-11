@@ -1,6 +1,7 @@
 import { Inject, Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
+import { FeatureFlagService, contentFlags } from '@azeebo/feature-flags';
 import axios from 'axios';
 
 export interface AccessCheckResult {
@@ -16,7 +17,8 @@ export class AccessControlService {
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
-    @Inject(ConfigService) private readonly configService: ConfigService
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
   ) {}
 
   async checkGeoAccess(
@@ -80,6 +82,16 @@ export class AccessControlService {
         return {
           hasAccess: false,
           reason: `Content requires age ${content.minAge}+`,
+        };
+      }
+
+      // content_premium_gate: while the flag is off the entitlement checks
+      // below are bypassed and all published content is unlocked (promo/free
+      // mode). Flipping it on starts enforcing rental/pass/premium gating.
+      if (!(await this.featureFlagService.isEnabled(contentFlags.premiumGate))) {
+        return {
+          hasAccess: true,
+          accessType: content.windowType === 'basic' ? 'free' : 'unlocked',
         };
       }
 

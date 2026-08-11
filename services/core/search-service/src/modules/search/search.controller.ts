@@ -39,7 +39,11 @@ export class SearchController {
     @Query('dateEnd') dateEnd?: string,
     @Query('sort') sort?: string,
     @Query('page') page?: number,
-    @Query('limit') limit?: number
+    @Query('limit') limit?: number,
+    @Query('creatorsPage') creatorsPage?: number,
+    @Query('creatorsLimit') creatorsLimit?: number,
+    @Query('universesPage') universesPage?: number,
+    @Query('universesLimit') universesLimit?: number
   ): Promise<SearchResponse> {
     const safeLimit = Math.min(Math.max(1, limit ? Number(limit) : 20), 100);
     return this.searchService.search(query, {
@@ -51,6 +55,14 @@ export class SearchController {
       sort,
       page: page ? Number(page) : 1,
       limit: safeLimit,
+      creatorsPage: creatorsPage ? Number(creatorsPage) : undefined,
+      creatorsLimit: creatorsLimit
+        ? Math.min(Math.max(1, Number(creatorsLimit)), 100)
+        : undefined,
+      universesPage: universesPage ? Number(universesPage) : undefined,
+      universesLimit: universesLimit
+        ? Math.min(Math.max(1, Number(universesLimit)), 100)
+        : undefined,
     });
   }
 
@@ -122,6 +134,12 @@ export class SearchController {
     if (!userId) {
       throw new UnauthorizedException();
     }
-    return this.searchService.logSearch(userId, body.query, body.resultsCount ?? 0);
+    return this.searchService.logSearch(
+      userId,
+      body.query,
+      body.resultsCount ?? 0,
+      body.correction,
+      body.accepted
+    );
   }
 }

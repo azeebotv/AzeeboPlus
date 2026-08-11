@@ -261,6 +261,36 @@ export class S3Service {
     }
   }
 
+  /**
+   * Writes a raw buffer to an arbitrary key (chunk staging). No sniffing or
+   * extension validation — callers stage untrusted bytes here and validate at
+   * assembly time via uploadFile().
+   */
+  async putBuffer(key: string, buffer: Buffer, contentType?: string): Promise<void> {
+    await this.circuitBreaker.execute(async () => {
+      await this.s3Client.send(
+        new PutObjectCommand({
+          Bucket: this.bucketName,
+          Key: key,
+          Body: buffer,
+          ContentType: contentType || 'application/octet-stream',
+        })
+      );
+    });
+  }
+
+  /** Downloads an object's bytes (used to reassemble staged chunks). */
+  async getObjectBuffer(key: string): Promise<Buffer> {
+    const response = await this.s3Client.send(
+      new GetObjectCommand({ Bucket: this.bucketName, Key: key })
+    );
+    if (!response.Body) {
+      throw new Error(`Object ${key} has no body`);
+    }
+    const bytes = await response.Body.transformToByteArray();
+    return Buffer.from(bytes);
+  }
+
   async getSignedDownloadUrl(key: string, expiresIn = 3600): Promise<string> {
     try {
       const command = new GetObjectCommand({

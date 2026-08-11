@@ -26,6 +26,7 @@ describe('NotificationProcessor', () => {
   const mockFeatureFlagService = {
     isEnabled: jest.fn().mockResolvedValue(true),
     getValue: jest.fn(),
+    getFlag: jest.fn().mockResolvedValue(null),
   };
 
   const mockNotificationsQueue = {
@@ -66,6 +67,7 @@ describe('NotificationProcessor', () => {
     // that override isEnabled/getValue would otherwise leak into later tests.
     mockFeatureFlagService.isEnabled.mockResolvedValue(true);
     mockFeatureFlagService.getValue.mockImplementation(defaultGetValue);
+    mockFeatureFlagService.getFlag.mockResolvedValue(null);
     mockNotificationsQueue.add.mockResolvedValue({ id: 'job-1' });
   });
 
@@ -439,6 +441,131 @@ describe('NotificationProcessor', () => {
       expect(job.retry).toHaveBeenCalledWith('failed', {
         resetAttemptsMade: true,
       });
+    });
+
+    it('uses the per-queue max-pass budget when stored (queue_dlq_retry_max_passes_notifications)', async () => {
+      mockFeatureFlagService.isEnabled.mockResolvedValue(true);
+      mockFeatureFlagService.getFlag.mockImplementation((key: string) =>
+        Promise.resolve(
+          key === queueFlags.dlqRetryMaxPassesNotifications
+            ? { key, enabled: true, value: 1 }
+            : null
+        )
+      );
+      mockFeatureFlagService.getValue.mockImplementation((key: string) =>
+        Promise.resolve(key === queueFlags.dlqRetryMaxPassesNotifications ? 1 : 30000)
+      );
+      const firstPass = makeJob({
+        userId: 'user-pq',
+        type: 'email',
+        title: 'Welcome',
+        message: 'Welcome to Azeebo+',
+        email: 'user@example.com',
+      });
+      firstPass.attemptsMade = 3;
+
+      await processor.onFailed(firstPass, new Error('provider down'));
+      expect(mockNotificationsQueue.add).toHaveBeenCalled();
+
+      // Second dead-lettering is beyond the per-queue budget (max 1), even
+      // though the shared budget is 3.
+      mockNotificationsQueue.add.mockClear();
+      const secondPass = makeJob({
+        userId: 'user-pq',
+        type: 'email',
+        title: 'Welcome',
+        message: 'Welcome to Azeebo+',
+        email: 'user@example.com',
+        dlqRetryCount: 1,
+      });
+      secondPass.attemptsMade = 3;
+
+      await processor.onFailed(secondPass, new Error('provider down'));
+      expect(mockNotificationsQueue.add).not.toHaveBeenCalled();
+      expect(secondPass.retry).not.toHaveBeenCalled();
+    });
+
+    it('uses the per-queue base delay when stored (queue_dlq_retry_base_delay_ms_notifications)', async () => {
+      mockFeatureFlagService.isEnabled.mockResolvedValue(true);
+      mockFeatureFlagService.getFlag.mockImplementation((key: string) =>
+        Promise.resolve(
+          key === queueFlags.dlqRetryBaseDelayMsNotifications
+            ? { key, enabled: true, value: 120000 }
+            : null
+        )
+      );
+      mockFeatureFlagService.getValue.mockImplementation((key: string) =>
+        Promise.resolve(key === queueFlags.dlqRetryBaseDelayMsNotifications ? 120000 : 30000)
+      );
+      const job = makeJob({
+        userId: 'user-pq',
+        type: 'email',
+        title: 'Welcome',
+        message: 'Welcome to Azeebo+',
+        email: 'user@example.com',
+      });
+      job.attemptsMade = 3;
+
+      await processor.onFailed(job, new Error('provider down'));
+
+      expect(mockNotificationsQueue.add).toHaveBeenCalledWith(
+        'notifications',
+        expect.anything(),
+        expect.objectContaining({ delay: 120000 })
+      );
+      // Metric carries the per-queue base delay.
+      expect(mockMetricsService.incrementDlqRetryScheduled).toHaveBeenCalledWith(
+        'notifications',
+        1,
+        120000
+      );
+    });
+
+    it('per-queue toggle off overrides the shared toggle on (queue_dlq_retry_notifications)', async () => {
+      mockFeatureFlagService.getFlag.mockImplementation((key: string) =>
+        Promise.resolve(
+          key === queueFlags.dlqRetryNotifications ? { key, enabled: false } : null
+        )
+      );
+      // Shared switch is on; the per-queue override says off.
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === queueFlags.dlqRetryNotifications ? false : true)
+      );
+      const job = makeJob({
+        userId: 'user-pq',
+        type: 'email',
+        title: 'Welcome',
+        message: 'Welcome to Azeebo+',
+        email: 'user@example.com',
+      });
+      job.attemptsMade = 3;
+
+      await processor.onFailed(job, new Error('provider down'));
+
+      expect(mockNotificationsQueue.add).not.toHaveBeenCalled();
+      expect(job.remove).not.toHaveBeenCalled();
+      expect(job.updateData).not.toHaveBeenCalled();
+    });
+
+    it('per-queue toggle on resumes DLQ retry while the shared toggle is off', async () => {
+      mockFeatureFlagService.getFlag.mockImplementation((key: string) =>
+        Promise.resolve(key === queueFlags.dlqRetryNotifications ? { key, enabled: true } : null)
+      );
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === queueFlags.dlqRetryNotifications ? true : false)
+      );
+      const job = makeJob({
+        userId: 'user-pq',
+        type: 'email',
+        title: 'Welcome',
+        message: 'Welcome to Azeebo+',
+        email: 'user@example.com',
+      });
+      job.attemptsMade = 3;
+
+      await processor.onFailed(job, new Error('provider down'));
+
+      expect(mockNotificationsQueue.add).toHaveBeenCalled();
     });
   });
 });

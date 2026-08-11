@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAdminFlags, ADMIN_FLAG_KEYS } from '@/hooks/useAdminFlags';
 
 export const ADMIN_NAV = [
   { href: '/', label: 'Dashboard', icon: '📊' },
-  { href: '/overview', label: 'Overview', icon: '📈' },
+  { href: '/overview', label: 'Overview', icon: '📈', flag: ADMIN_FLAG_KEYS.newDashboard },
   { href: '/users', label: 'Users', icon: '👥' },
   { href: '/content', label: 'Content', icon: '🎬' },
   { href: '/content-review', label: 'Review Queue', icon: '✅' },
@@ -19,6 +20,7 @@ export const ADMIN_NAV = [
   { href: '/subscriptions', label: 'Subscriptions', icon: '🔄' },
   { href: '/bundle-passes', label: 'Bundle Passes', icon: '🎁' },
   { href: '/engagement', label: 'Engagement', icon: '🔥' },
+  { href: '/search', label: 'Search', icon: '🔍' },
   { href: '/notifications', label: 'Notifications', icon: '🔔' },
   { href: '/announcements', label: 'Announcements', icon: '📢' },
   { href: '/tipping', label: 'Tipping', icon: '💎' },
@@ -103,6 +105,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const { isEnabled: isFlagEnabled } = useAdminFlags();
 
   useEffect(() => {
     setIsMobile(window.innerWidth < 1024);
@@ -203,7 +206,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           }}
         >
           <nav>
-            {ADMIN_NAV.map((item) => (
+            {ADMIN_NAV.filter((item) => !item.flag || isFlagEnabled(item.flag)).map((item) => (
               <a
                 key={item.href}
                 href={item.href}

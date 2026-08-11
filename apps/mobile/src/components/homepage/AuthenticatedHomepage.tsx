@@ -8,6 +8,7 @@ import { api } from '@/api';
 import type { ContentItem } from '@/api';
 import type { HomepageRecommendationGroup } from '@/api';
 import { colors } from '@/theme';
+import { useFlags } from '@/contexts/FlagsContext';
 import { BrandButton } from '@/components/ui/BrandButton';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { logger } from '@/utils/logger';
@@ -30,6 +31,11 @@ export default function AuthenticatedHomepage({
 }: AuthenticatedHomepageProps) {
   const router = useRouter();
   const { t } = useTranslation();
+  const { isEnabled } = useFlags();
+  // mobile_recommendations-style gating mirrors the web app: the personalized
+  // rail and the newer supplementary rails are server-gated.
+  const showRecommendationsRail = isEnabled('mobile_new_home');
+  const showNewHomeRails = isEnabled('mobile_new_home');
 
   // Section 1: Hero Slides
   const [featuredSlides, setFeaturedSlides] = useState<ContentItem[]>([]);
@@ -310,8 +316,8 @@ export default function AuthenticatedHomepage({
         </View>
       ) : null}
 
-      {/* ===== Section 4: Personalized Recommendations ===== */}
-      {recommendationGroups.length > 0 ? (
+      {/* ===== Section 4: Personalized Recommendations (gated by mobile_new_home) ===== */}
+      {showRecommendationsRail && recommendationGroups.length > 0 ? (
         <View testID="recommendation-sections">
           {recommendationGroups.map((group, index) => (
             <ScrollReveal key={`${group.title}-${index}`}>
@@ -327,50 +333,53 @@ export default function AuthenticatedHomepage({
         </View>
       ) : null}
 
-      {/* ===== Section 5: Supplementary Sections ===== */}
+      {/* ===== Section 5: Supplementary Sections (gated by mobile_new_home) ===== */}
+      {showNewHomeRails ? (
+        <>
+          {/* Continue Watching */}
+          <ContentRow
+            title={t('home.continueWatching')}
+            subtitle={t('home.continueWatchingSubtitle')}
+            sectionId="continue-watching"
+            items={continueWatching}
+            isLoading={isLoadingSupplementary}
+            showProgress
+            progressMap={Object.fromEntries(continueWatching.map((c) => [c.id, 0.5]))}
+          />
 
-      {/* Continue Watching */}
-      <ContentRow
-        title={t('home.continueWatching')}
-        subtitle={t('home.continueWatchingSubtitle')}
-        sectionId="continue-watching"
-        items={continueWatching}
-        isLoading={isLoadingSupplementary}
-        showProgress
-        progressMap={Object.fromEntries(continueWatching.map((c) => [c.id, 0.5]))}
-      />
+          {/* Trending Now */}
+          <ContentRow
+            title={t('home.trending')}
+            subtitle={t('home.trendingAcrossPlatform')}
+            sectionId="trending"
+            items={trendingContent}
+            isLoading={isLoadingSupplementary}
+            cardSize="lg"
+          />
 
-      {/* Trending Now */}
-      <ContentRow
-        title={t('home.trending')}
-        subtitle={t('home.trendingAcrossPlatform')}
-        sectionId="trending"
-        items={trendingContent}
-        isLoading={isLoadingSupplementary}
-        cardSize="lg"
-      />
+          {/* New Releases */}
+          <ScrollReveal>
+            <ContentRow
+              title={t('home.newReleases')}
+              subtitle={t('home.newReleasesSubtitle')}
+              sectionId="new-releases"
+              items={newReleases}
+              isLoading={isLoadingSupplementary}
+            />
+          </ScrollReveal>
 
-      {/* New Releases */}
-      <ScrollReveal>
-        <ContentRow
-          title={t('home.newReleases')}
-          subtitle={t('home.newReleasesSubtitle')}
-          sectionId="new-releases"
-          items={newReleases}
-          isLoading={isLoadingSupplementary}
-        />
-      </ScrollReveal>
-
-      {/* Popular in Your Region */}
-      <ScrollReveal>
-        <ContentRow
-          title={t('home.popularInYourRegion')}
-          subtitle={t('home.popularNearYou')}
-          sectionId="popular-region"
-          items={popularInRegion}
-          isLoading={isLoadingSupplementary}
-        />
-      </ScrollReveal>
+          {/* Popular in Your Region */}
+          <ScrollReveal>
+            <ContentRow
+              title={t('home.popularInYourRegion')}
+              subtitle={t('home.popularNearYou')}
+              sectionId="popular-region"
+              items={popularInRegion}
+              isLoading={isLoadingSupplementary}
+            />
+          </ScrollReveal>
+        </>
+      ) : null}
 
       {/* Referral CTA */}
       <ScrollReveal>

@@ -3,6 +3,7 @@ import { UsersService } from './users.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService } from '@azeebo/shared-services';
 import { ConfigService } from '@nestjs/config';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 import { NotFoundException } from '@nestjs/common';
 
 jest.mock('../database/prisma.service');
@@ -79,6 +80,12 @@ describe('UsersService Integration', () => {
               if (key === 'ANALYTICS_SERVICE_URL') return 'http://analytics-service:3040';
               return '';
             }),
+          },
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: {
+            isEnabled: jest.fn().mockResolvedValue(false),
           },
         },
       ],

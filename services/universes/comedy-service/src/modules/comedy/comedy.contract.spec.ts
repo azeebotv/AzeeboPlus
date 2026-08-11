@@ -39,6 +39,15 @@ jest.mock('@azeebo/security', () => ({
   AdminGuard: jest.fn(),
   RateLimitService: jest.fn(),
 }));
+jest.mock('@azeebo/feature-flags', () => ({
+  FeatureFlagService: jest.fn(),
+  FeatureFlagGuard: class {},
+  FeatureFlag: () => () => {},
+  comedyFlags: {
+    challengesEnabled: 'comedy_challenges_enabled',
+    specialsGate: 'comedy_specials_gate',
+  },
+}));
 
 const mockAuthGuard = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

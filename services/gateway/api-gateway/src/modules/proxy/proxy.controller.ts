@@ -49,6 +49,10 @@ interface ServiceRouteConfig {
   // - 'auth-service-strategy': auth service has /v{version} as global prefix, and controller at /auth
   pathStrategy?: 'default' | 'includes-prefix' | 'no-prefix' | 'auth-service-strategy';
   pathRewrite?: Record<string, string>;
+  // New routes ship behind gateway_new_routes (off by default): the route
+  // returns 404 until ops flips the flag. Removed (set false) once the route
+  // is fully rolled out.
+  isNew?: boolean;
 }
 
 interface ServiceRoute {
@@ -59,6 +63,7 @@ interface ServiceRoute {
   endpoints?: Endpoint[];
   pathStrategy?: 'default' | 'includes-prefix' | 'no-prefix' | 'auth-service-strategy';
   pathRewrite?: Record<string, string>;
+  isNew?: boolean;
 }
 
 export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
@@ -272,6 +277,14 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'GET', path: '/trending', description: 'Get trending searches' },
       { method: 'GET', path: '/facets', description: 'Get search facets' },
       { method: 'POST', path: '/log', description: 'Log search query' },
+      { method: 'GET', path: '/metrics', description: 'Prometheus metrics' },
+      { method: 'GET', path: '/admin/stats', description: 'Search service stats (admin)' },
+      { method: 'GET', path: '/admin/queries', description: 'Search query log (admin)' },
+      {
+        method: 'POST',
+        path: '/admin/indexes/repair',
+        description: 'Recreate missing GIN trigram indexes (self-heal; Alertmanager webhook target)',
+      },
     ],
   },
   {
@@ -323,6 +336,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'GET', path: '/kpis', description: 'Get platform KPIs' },
       { method: 'GET', path: '/funnel', description: 'Get funnel analytics' },
       { method: 'GET', path: '/cohort', description: 'Get cohort analytics' },
+      { method: 'GET', path: '/search/corrections', description: 'Search correction acceptance' },
     ],
   },
   {
@@ -416,6 +430,36 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'GET', path: '/config', description: 'Get platform config' },
       { method: 'PATCH', path: '/config', description: 'Update platform config' },
       { method: 'GET', path: '/feature-flags', description: 'List global feature flags with defaults' },
+      {
+        method: 'GET',
+        path: '/feature-flags/known',
+        description: 'Typed known-flags reference (from registries)',
+      },
+      {
+        method: 'GET',
+        path: '/feature-flags/stale',
+        description: 'List stale feature flags (removal candidates)',
+      },
+      {
+        method: 'POST',
+        path: '/feature-flags/prune-stale',
+        description: 'Batch-remove stale flags (archiving each before deletion)',
+      },
+      {
+        method: 'POST',
+        path: '/feature-flags/stale-sweep/run',
+        description: 'Run the stale-flag sweep now (notify owners)',
+      },
+      {
+        method: 'GET',
+        path: '/feature-flags/deleted',
+        description: 'Recently deleted flags (restorable from audit snapshots)',
+      },
+      {
+        method: 'POST',
+        path: '/feature-flags/restore',
+        description: 'Restore deleted flags from archived audit snapshots (undo)',
+      },
       {
         method: 'PUT',
         path: '/feature-flags/:key',
@@ -994,6 +1038,16 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'POST', path: '/enqueue', description: 'Enqueue a job' },
       { method: 'DELETE', path: '/:id', description: 'Cancel queued job' },
       { method: 'GET', path: '/:id/status', description: 'Get job status' },
+      {
+        method: 'GET',
+        path: '/dlq-policy',
+        description: 'Effective resolved DLQ retry policy per queue (admin)',
+      },
+      {
+        method: 'POST',
+        path: '/:queue/jobs/:jobId/retry-now',
+        description: 'Re-queue a permanently dead-lettered job with a fresh attempts budget (admin)',
+      },
     ],
   },
   {
@@ -1034,6 +1088,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     supportedVersions: ['1'],
     defaultVersion: '1',
     pathStrategy: 'default',
+    isNew: true,
     endpoints: [
       { method: 'GET', path: '/', description: 'List vertical content' },
       { method: 'GET', path: '/trending', description: 'Get trending vertical' },
@@ -1063,6 +1118,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     supportedVersions: ['1'],
     defaultVersion: '1',
     pathStrategy: 'default',
+    isNew: true,
     endpoints: [
       { method: 'GET', path: '/', description: 'List upcoming/live events' },
       { method: 'GET', path: '/my-tickets', description: 'User ticket purchases' },
@@ -1252,7 +1308,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    const version = this.resolveVersionFromHeader(req);
+    const version = await this.resolveVersionFromHeader(req);
     return this.handleProxy(
       'GET',
       version,
@@ -1270,7 +1326,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    const version = this.resolveVersionFromHeader(req);
+    const version = await this.resolveVersionFromHeader(req);
     return this.handleProxy(
       'POST',
       version,
@@ -1288,7 +1344,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    const version = this.resolveVersionFromHeader(req);
+    const version = await this.resolveVersionFromHeader(req);
     return this.handleProxy(
       'PUT',
       version,
@@ -1306,7 +1362,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    const version = this.resolveVersionFromHeader(req);
+    const version = await this.resolveVersionFromHeader(req);
     return this.handleProxy(
       'PATCH',
       version,
@@ -1324,7 +1380,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    const version = this.resolveVersionFromHeader(req);
+    const version = await this.resolveVersionFromHeader(req);
     return this.handleProxy(
       'DELETE',
       version,
@@ -1341,14 +1397,14 @@ export class ProxyController {
    * Resolve API version from the request header (for legacy unversioned routes).
    * Validates against the route's supported versions; falls back to default.
    */
-  private resolveVersionFromHeader(req: Request): string {
+  private async resolveVersionFromHeader(req: Request): Promise<string> {
     const headerValue = req.headers[API_VERSION_HEADER.toLowerCase()];
     const version = ApiVersioningConfig.parseVersion(
       Array.isArray(headerValue) ? headerValue[0] : headerValue || ''
     );
     const serviceParam = req.params['service'];
     const service = Array.isArray(serviceParam) ? serviceParam[0] : serviceParam || '';
-    const route = this.findRoute(service);
+    const route = await this.findRoute(service);
     if (route && this.validateVersion(version, route)) {
       return version;
     }
@@ -1393,13 +1449,22 @@ export class ProxyController {
     };
   }
 
-  private findRoute(service: string): ServiceRoute | undefined {
+  private async findRoute(service: string): Promise<ServiceRoute | undefined> {
     const config = SERVICE_CONFIGS.find(
       (r) => r.path === `/${service}` || r.path.startsWith(`/${service}/`)
     );
     if (!config) {
       return undefined;
     }
+
+    // New routes (gateway_new_routes, default off): 404 until ops enables them.
+    if (config.isNew) {
+      const newRoutesEnabled = await this.featureFlagService.isEnabled(gatewayFlags.newRoutes);
+      if (!newRoutesEnabled) {
+        return undefined;
+      }
+    }
+
     return {
       ...config,
       targetUrl: this.configService.get<string>(config.envKey) || config.fallbackUrl,
@@ -1501,7 +1566,7 @@ export class ProxyController {
       return;
     }
 
-    const route = this.findRoute(service);
+    const route = await this.findRoute(service);
     if (!route) {
       res.setHeader(this.REQUEST_ID_HEADER, requestId);
       res.status(HttpStatus.NOT_FOUND).json({ message: 'Service not found' });

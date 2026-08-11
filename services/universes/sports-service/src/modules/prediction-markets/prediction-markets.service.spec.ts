@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PredictionMarketsService } from './prediction-markets.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import axios from 'axios';
 
@@ -80,6 +81,10 @@ describe('PredictionMarketsService', () => {
             get: jest.fn(),
             getOrThrow: jest.fn((_key: string) => 'http://mock-service:3000'),
           },
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(true) },
         },
       ],
     }).compile();
@@ -402,8 +407,9 @@ describe('PredictionMarketsService', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toBeInstanceOf(Array);
-      expect(result.data[0]).toHaveProperty('rank', 1);
-      expect(result.data[0]).toHaveProperty('displayName', 'Champion');
+      const first = (result.data as Array<Record<string, unknown>>)[0];
+      expect(first).toHaveProperty('rank', 1);
+      expect(first).toHaveProperty('displayName', 'Champion');
     });
 
     it('should handle empty leaderboard', async () => {

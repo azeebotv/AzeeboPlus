@@ -17,6 +17,8 @@ export interface FeatureFlag {
   owner?: string;
   /** ISO date after which the flag is considered stale and should be removed. */
   staleAfter?: string;
+  /** ISO timestamp of when the owner was last notified about staleness (sweep dedupe). */
+  staleNotifiedAt?: string;
   /** If true, the evaluated value may be exposed to clients via bootstrap endpoints. */
   isPublic?: boolean;
   /** Actor (user id or service) that last changed the flag. */
@@ -49,6 +51,14 @@ export interface FeatureFlagConfig {
   ) => void;
   /** Audit hook — called whenever a flag is created/updated/toggled. */
   onToggle?: (key: string, enabled: boolean, actor?: string) => void;
+  /**
+   * Observability hook — called whenever a flag is evaluated as ENABLED past
+   * its `staleAfter` expiry (the flag is running past its removal date).
+   * Wire to a Prometheus counter (see @azeebo/flag-metrics). Fires on every
+   * such evaluation so rates are measurable; the built-in console warning is
+   * throttled separately.
+   */
+  onStaleEnabled?: (key: string, flag: FeatureFlag) => void;
 }
 
 interface CacheEntry {
@@ -57,6 +67,9 @@ interface CacheEntry {
 }
 
 const DEFAULT_CACHE_TTL_MS = 30_000;
+
+/** How often the built-in stale-enabled console warning may fire per flag key. */
+const STALE_WARN_THROTTLE_MS = 5 * 60 * 1000;
 
 /** Builds the canonical Redis key for a universe-scoped flag, e.g. `universe.reality.voting_enabled`. */
 export const universeFlagKey = (universeName: string, feature: string): string =>
@@ -75,7 +88,10 @@ export class FeatureFlagService {
   private readonly cacheTtlMs: number;
   private readonly onEvaluation?: FeatureFlagConfig['onEvaluation'];
   private readonly onToggle?: FeatureFlagConfig['onToggle'];
+  private readonly onStaleEnabled?: FeatureFlagConfig['onStaleEnabled'];
   private readonly cache = new Map<string, CacheEntry>();
+  /** Last console-warn timestamp per flag key (throttles stale logging). */
+  private readonly staleWarnedAt = new Map<string, number>();
 
   constructor(config: FeatureFlagConfig = {}) {
     const redisUrl = config.redisUrl || process.env.FEATURE_FLAG_REDIS_URL;
@@ -90,6 +106,7 @@ export class FeatureFlagService {
     this.cacheTtlMs = config.cacheTtlMs ?? DEFAULT_CACHE_TTL_MS;
     this.onEvaluation = config.onEvaluation;
     this.onToggle = config.onToggle;
+    this.onStaleEnabled = config.onStaleEnabled;
   }
 
   async isEnabled(key: string, userId?: string, anonymousId?: string): Promise<boolean> {
@@ -310,6 +327,20 @@ export class FeatureFlagService {
       return false;
     }
 
+    const result = this.evaluateEnabledFlag(flag, key, userId, anonymousId);
+    if (result && flag.staleAfter && Date.parse(flag.staleAfter) <= Date.now()) {
+      this.reportStaleEnabled(key, flag);
+    }
+    return result;
+  }
+
+  /** Access decision for an enabled flag (targeting/rollout). */
+  private evaluateEnabledFlag(
+    flag: FeatureFlag,
+    key: string,
+    userId?: string,
+    anonymousId?: string
+  ): boolean {
     if (flag.userIds && flag.userIds.length > 0 && userId) {
       return flag.userIds.includes(userId);
     }
@@ -329,6 +360,27 @@ export class FeatureFlagService {
     }
 
     return true;
+  }
+
+  /**
+   * Expiry-aware evaluation: a flag still ENABLED past its `staleAfter` is a
+   * governance risk — emit the metric hook on every such evaluation and log a
+   * throttled warning (max once per key per 5 minutes) so ops sees flags
+   * running past their removal date without the hot path spamming logs.
+   */
+  private reportStaleEnabled(key: string, flag: FeatureFlag): void {
+    this.onStaleEnabled?.(key, flag);
+
+    const now = Date.now();
+    const lastWarn = this.staleWarnedAt.get(key) ?? 0;
+    if (now - lastWarn >= STALE_WARN_THROTTLE_MS) {
+      this.staleWarnedAt.set(key, now);
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[feature-flags] Flag "${key}" is still ENABLED past its staleAfter ` +
+          `(${flag.staleAfter}) — remove it or renew the expiry (admin stale report)`
+      );
+    }
   }
 
   private hashUserId(userId: string, key: string): number {

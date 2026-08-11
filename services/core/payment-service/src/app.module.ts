@@ -17,6 +17,7 @@ import { RedisModule, CacheModule } from '@azeebo/shared-services';
 import { ObservabilityModule } from '@azeebo/observability';
 import { FeatureFlagModule } from '@azeebo/feature-flags';
 import { paymentFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
 @Module({
   imports: [
@@ -38,8 +39,10 @@ import { paymentFlags } from '@azeebo/feature-flags';
     // Provider routing + kill-switches: both gateways default ON so ops can
     // fail over (or freeze) a provider instantly; refund self-service defaults
     // OFF until enabled.
+    FlagMetricsModule.register({ service: 'payment-service', path: 'flag-metrics' }),
     FeatureFlagModule.register({
       global: true,
+      ...flagHooks('payment-service'),
       defaultFlags: {
         [paymentFlags.providerPaystack]: true,
         [paymentFlags.providerFlutterwave]: true,

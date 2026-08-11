@@ -9,6 +9,7 @@ import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@az
 import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { FeatureFlagModule, notificationFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
 @Module({
   imports: [
@@ -23,8 +24,10 @@ import { FeatureFlagModule, notificationFlags } from '@azeebo/feature-flags';
     HealthModule,
     // Notification channel kill-switches: disable a channel globally without
     // code changes; digest + preferences v2 default OFF until rolled out.
+    FlagMetricsModule.register({ service: 'notification-service' }),
     FeatureFlagModule.register({
       global: true,
+      ...flagHooks('notification-service'),
       defaultFlags: {
         [notificationFlags.pushIos]: true,
         [notificationFlags.pushAndroid]: true,

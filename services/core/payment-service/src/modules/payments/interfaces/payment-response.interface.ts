@@ -13,6 +13,8 @@ export interface InitializePaymentResponse extends PaymentResponse {
     currency: string;
     status: 'pending' | 'completed' | 'failed';
     createdAt: string;
+    /** New checkout flow (payment_new_checkout_flow): 30-minute session expiry. */
+    expiresAt?: string;
   };
 }
 

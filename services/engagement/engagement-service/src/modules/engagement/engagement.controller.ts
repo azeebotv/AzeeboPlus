@@ -15,6 +15,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 
 import { EngagementService } from './engagement.service.js';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, engagementFlags } from '@azeebo/feature-flags';
 import { User } from '@azeebo/shared-types';
 import { SubmitPredictionDto } from './dto/submit-prediction.dto.js';
 
@@ -30,6 +31,8 @@ export class EngagementController {
   constructor(@Inject(EngagementService) private readonly engagementService: EngagementService) {}
 
   @Get('leaderboard')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(engagementFlags.leaderboards)
   @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get leaderboard entries' })
   @ApiResponse({ status: 200, description: 'Leaderboard data' })
@@ -43,6 +46,8 @@ export class EngagementController {
   }
 
   @Get('leaderboard/export')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(engagementFlags.leaderboards)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Export leaderboard data' })
   @ApiResponse({ status: 200, description: 'Exported leaderboard data' })
@@ -55,6 +60,8 @@ export class EngagementController {
   }
 
   @Delete('leaderboard/:userId/:category')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(engagementFlags.leaderboards)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Delete a leaderboard entry' })
   @ApiResponse({ status: 200, description: 'Leaderboard entry deleted' })
@@ -66,6 +73,8 @@ export class EngagementController {
   }
 
   @Get('rankings')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(engagementFlags.rankings)
   @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get rankings by category' })
   @ApiResponse({ status: 200, description: 'Rankings data' })
@@ -112,6 +121,8 @@ export class EngagementController {
   }
 
   @Get('rankings/history/:userId')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(engagementFlags.rankings)
   @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get ranking history for a user' })
   @ApiResponse({ status: 200, description: 'Ranking history' })
@@ -124,6 +135,8 @@ export class EngagementController {
   }
 
   @Delete('rankings/:userId/:category')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(engagementFlags.rankings)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Delete a ranking' })
   @ApiResponse({ status: 200, description: 'Ranking deleted' })
@@ -132,6 +145,8 @@ export class EngagementController {
   }
 
   @Get('predictions/:contentId/results')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(engagementFlags.predictions)
   @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get prediction results for a content' })
   @ApiResponse({ status: 200, description: 'Prediction results' })
@@ -140,6 +155,8 @@ export class EngagementController {
   }
 
   @Get('predictions/history')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(engagementFlags.predictions)
   @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get prediction history for current user' })
   @ApiResponse({ status: 200, description: 'Prediction history' })
@@ -152,6 +169,8 @@ export class EngagementController {
   }
 
   @Post('predictions')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(engagementFlags.predictions)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Submit a prediction' })
   @ApiResponse({ status: 201, description: 'Prediction submitted' })
@@ -160,6 +179,8 @@ export class EngagementController {
   }
 
   @Put('predictions/:predictionId')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(engagementFlags.predictions)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Update a prediction' })
   @ApiResponse({ status: 200, description: 'Prediction updated' })
@@ -172,6 +193,8 @@ export class EngagementController {
   }
 
   @Delete('predictions/:predictionId')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(engagementFlags.predictions)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Delete a prediction' })
   @ApiResponse({ status: 200, description: 'Prediction deleted' })
@@ -180,6 +203,8 @@ export class EngagementController {
   }
 
   @Post('predictions/bulk')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(engagementFlags.predictions)
   @RateLimit(5, 60000)
   @ApiOperation({ summary: 'Submit multiple predictions' })
   @ApiResponse({ status: 201, description: 'Predictions submitted' })

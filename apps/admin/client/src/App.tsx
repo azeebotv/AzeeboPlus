@@ -15,6 +15,7 @@ import WalletsPage from './routes/wallets';
 import FinancialPage from './routes/financial';
 import PaymentGatewaysPage from './routes/payment-gateways';
 import EngagementPage from './routes/engagement';
+import SearchAnalyticsPage from './routes/search';
 import NotificationsPage from './routes/notifications';
 import AnnouncementsPage from './routes/announcements';
 import AuditLogsPage from './routes/audit-logs';
@@ -29,6 +30,8 @@ import LiveEventsPage from './routes/live-events';
 import BundlePassesPage from './routes/bundle-passes';
 import TippingPage from './routes/tipping';
 import LoginPage from './routes/login';
+import { FlagGate } from './components/FlagGate';
+import { useAdminFlags, ADMIN_FLAG_KEYS } from './hooks/useAdminFlags';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,6 +47,13 @@ function AdminLayoutWrapper() {
   );
 }
 
+/** Picks the old vs new dashboard layout based on admin_new_dashboard. */
+function DashboardGate() {
+  const { isEnabled, isLoading } = useAdminFlags();
+  if (isLoading) return null;
+  return isEnabled(ADMIN_FLAG_KEYS.newDashboard) ? <OverviewPage /> : <DashboardPage />;
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -52,8 +62,15 @@ export default function App() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route element={<AdminLayoutWrapper />}>
-              <Route index element={<DashboardPage />} />
-              <Route path="overview" element={<OverviewPage />} />
+              <Route index element={<DashboardGate />} />
+              <Route
+                path="overview"
+                element={
+                  <FlagGate flag={ADMIN_FLAG_KEYS.newDashboard}>
+                    <OverviewPage />
+                  </FlagGate>
+                }
+              />
               <Route path="users" element={<UsersPage />} />
               <Route path="users/:id" element={<UserDetailPage />} />
               <Route path="content" element={<ContentPage />} />
@@ -65,11 +82,19 @@ export default function App() {
               <Route path="financial" element={<FinancialPage />} />
               <Route path="payment-gateways" element={<PaymentGatewaysPage />} />
               <Route path="engagement" element={<EngagementPage />} />
+              <Route path="search" element={<SearchAnalyticsPage />} />
               <Route path="notifications" element={<NotificationsPage />} />
               <Route path="announcements" element={<AnnouncementsPage />} />
               <Route path="audit-logs" element={<AuditLogsPage />} />
               <Route path="reports" element={<ReportsPage />} />
-              <Route path="reports/builder" element={<ReportBuilderPage />} />
+              <Route
+                path="reports/builder"
+                element={
+                  <FlagGate flag={ADMIN_FLAG_KEYS.reportBuilder}>
+                    <ReportBuilderPage />
+                  </FlagGate>
+                }
+              />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="subscriptions" element={<SubscriptionsPage />} />
               <Route path="feature-flags" element={<FeatureFlagsPage />} />

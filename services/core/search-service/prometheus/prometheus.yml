@@ -1,0 +1,37 @@
+# Prometheus configuration for the search-service alerting example.
+#
+# Scrapes the search-service MetricsModule and evaluates the fuzzy-search
+# alerting rules from ./alerts.yml (mounted at /etc/prometheus/alerts.yml).
+#
+# Metrics endpoint:
+#   Direct (this config):  http://host.docker.internal:3005/v1/metrics
+#   Gateway-exposed:       http://localhost:3013/v1/search/metrics
+#                          (same payload; use this instead if you scrape from
+#                          outside the dev box)
+
+global:
+  scrape_interval: 15s
+  # Rules are evaluated every 30s; each alert's `for:` duration decides how
+  # long a condition must hold before it fires.
+  evaluation_interval: 30s
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+scrape_configs:
+  # The search-service running on the host (npm run start:dev). If the whole
+  # stack runs inside compose instead, point this at the service name, e.g.
+  #   targets: ['search-service:3005']
+  - job_name: search-service
+    metrics_path: /v1/metrics
+    static_configs:
+      - targets: ['host.docker.internal:3005']
+    # Relabel the instance label so the alert annotations stay readable.
+    metric_relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance

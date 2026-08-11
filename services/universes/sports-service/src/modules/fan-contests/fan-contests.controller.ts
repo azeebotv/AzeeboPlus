@@ -11,12 +11,15 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, sportsFlags } from '@azeebo/feature-flags';
 import { FanContestsService } from './fan-contests.service.js';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
 import { JoinContestDto, SubmitContestScoreDto } from './dto/contest.dto.js';
 
 @ApiTags('Fan Contests')
 @ApiBearerAuth()
+@FeatureFlag(sportsFlags.fanContests)
+@UseGuards(FeatureFlagGuard)
 @Controller('sports/fan-contests')
 export class FanContestsController {
   constructor(

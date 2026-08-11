@@ -62,6 +62,20 @@ export function createContentMethods(client: RequestClient) {
       );
     },
 
+    /** Feed an accepted 'did you mean' correction back into the search
+     * service's typo dictionary (POST /v1/search/log). Requires auth —
+     * anonymous sessions get a 401 that callers should swallow. */
+    logSearchCorrection: async (
+      query: string,
+      correction: string
+    ): Promise<ApiResponse<{ message: string }>> => {
+      return client.request<{ message: string }>('/api/v1/search/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, correction, accepted: true, resultsCount: 0 }),
+      });
+    },
+
     getSignedUrl: async (
       contentId: string
     ): Promise<ApiResponse<{ signedUrl: string; expiresIn: number; mediaAssetId: string }>> => {

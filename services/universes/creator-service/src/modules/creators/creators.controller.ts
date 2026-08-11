@@ -237,7 +237,8 @@ export class CreatorsController {
   }
 
   @Get('analytics')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(creatorFlags.monetizationInsights)
   @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get creator analytics' })
   @ApiResponse({ status: 200, description: 'Analytics data' })

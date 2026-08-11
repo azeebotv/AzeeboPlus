@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
+import { FeatureFlag, FeatureFlagGuard, lifestyleFlags } from '@azeebo/feature-flags';
 import { CelebrityService } from './celebrity.service';
 import { UpdateCelebrityDto } from './dto/update-celebrity.dto';
 
@@ -36,6 +37,8 @@ interface CreateNewsData {
 }
 
 @ApiTags('Celebrity')
+@FeatureFlag(lifestyleFlags.celebrityFeed)
+@UseGuards(FeatureFlagGuard)
 @Controller('lifestyle/celebrities')
 export class CelebrityController {
   constructor(@Inject(CelebrityService) private readonly celebrityService: CelebrityService) {}

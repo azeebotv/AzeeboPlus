@@ -71,7 +71,7 @@ describe('PaymentsController', () => {
 
       expect(response.success).toBe(true);
       expect(response.data.paymentId).toBe('pay-abc123');
-      expect(mockPaymentsService.initializePayment).toHaveBeenCalledWith('user-123', dto);
+      expect(mockPaymentsService.initializePayment).toHaveBeenCalledWith('user-123', dto, false);
     });
 
     it('should throw BadRequestException for amount <= 0', async () => {
@@ -127,7 +127,7 @@ describe('PaymentsController', () => {
 
       await controller.initializePayment(req, dto);
 
-      expect(mockPaymentsService.initializePayment).toHaveBeenCalledWith('user-123', dto);
+      expect(mockPaymentsService.initializePayment).toHaveBeenCalledWith('user-123', dto, false);
     });
   });
 

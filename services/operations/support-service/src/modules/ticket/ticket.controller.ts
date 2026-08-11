@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, supportFlags } from '@azeebo/feature-flags';
 import { TicketService } from './ticket.service';
 import { CreateTicketDto, AddMessageDto, TicketQueryDto, UpdateStatusDto } from './dto/ticket.dto';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
@@ -146,6 +147,8 @@ export class TicketController {
 
   @Post('/:id/escalate')
   @UseGuards(AdminGuard)
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(supportFlags.escalationAi)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Escalate ticket (admin)' })
   async escalateTicket(@Param('id') id: string) {

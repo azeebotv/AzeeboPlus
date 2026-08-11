@@ -15,6 +15,7 @@ import { SubscriptionService } from './subscription.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { CacheService } from '@azeebo/shared-services';
+import { FeatureFlagService, subscriptionFlags } from '@azeebo/feature-flags';
 import { NotFoundException } from '@nestjs/common';
 import axios from 'axios';
 
@@ -106,6 +107,8 @@ describe('SubscriptionService', () => {
             get: jest.fn().mockImplementation((key: string, defaultValue?: unknown) => {
               const config: Record<string, unknown> = {
                 PAYMENT_SERVICE_URL: 'http://payment-service:3003',
+                SUBSCRIPTION_PROMO_CODES: '{"LAUNCH10": 10, "WELCOME20": 20}',
+                SUBSCRIPTION_TRIAL_DAYS: '7',
               };
               return config[key] ?? defaultValue;
             }),
@@ -115,6 +118,12 @@ describe('SubscriptionService', () => {
               };
               return config[key];
             }),
+          },
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: {
+            isEnabled: jest.fn().mockResolvedValue(false),
           },
         },
       ],
@@ -276,6 +285,129 @@ describe('SubscriptionService', () => {
 
       expect(diffDays).toBeGreaterThanOrEqual(expectedDays - 1);
       expect(diffDays).toBeLessThanOrEqual(expectedDays + 1);
+    });
+  });
+
+  describe('subscription_free_trial', () => {
+    const dto = { planId: 'plan-1' };
+    // Wallet-paid DTO so non-trial paths have a valid payment method.
+    const paidDto = { planId: 'plan-1', paymentMethod: 'wallet' as const };
+
+    beforeEach(() => {
+      mockPrismaService.subscriptionPlan.findUnique.mockResolvedValue(mockPlan);
+      mockTxSubscription.findFirst.mockResolvedValue(null);
+      mockTxSubscription.create.mockResolvedValue(mockSubscription);
+      mockTxSubscriptionTransaction.create.mockResolvedValue({});
+      (mockedAxios.get as jest.Mock).mockResolvedValue({
+        data: { wallet: { id: 'wallet-1', balance: 10000 } },
+      });
+      (mockedAxios.post as jest.Mock).mockResolvedValue({ data: {} });
+    });
+
+    it('grants a free trial to a first-time subscriber when the flag is on', async () => {
+      (service as unknown as { featureFlagService: { isEnabled: jest.Mock } }).featureFlagService.isEnabled.mockImplementation(
+        (key: string) => Promise.resolve(key === subscriptionFlags.freeTrial)
+      );
+      mockPrismaService.subscription.count.mockResolvedValue(0);
+
+      const result = await service.subscribe('user-1', dto);
+
+      const createCall = mockTxSubscription.create.mock.calls[0][0];
+      expect(createCall.data.paymentMethod).toBe('trial');
+      expect(createCall.data.lastPaymentDate).toBeNull();
+      // Trial end date ≈ 7 days out (plan duration is 30)
+      const endDate = createCall.data.endDate as Date;
+      const diffDays = Math.ceil((endDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      expect(diffDays).toBeGreaterThanOrEqual(6);
+      expect(diffDays).toBeLessThanOrEqual(8);
+      // Zero-amount transaction records the free trial
+      const txCall = mockTxSubscriptionTransaction.create.mock.calls[0][0];
+      expect(txCall.data.amount).toBe(0);
+      expect(txCall.data.paymentProvider).toBe('trial');
+      expect(result).toEqual(mockSubscription);
+    });
+
+    it('charges a returning subscriber even when the flag is on', async () => {
+      (service as unknown as { featureFlagService: { isEnabled: jest.Mock } }).featureFlagService.isEnabled.mockImplementation(
+        (key: string) => Promise.resolve(key === subscriptionFlags.freeTrial)
+      );
+      mockPrismaService.subscription.count.mockResolvedValue(3);
+
+      await service.subscribe('user-1', paidDto);
+
+      const createCall = mockTxSubscription.create.mock.calls[0][0];
+      expect(createCall.data.paymentMethod).toBe('wallet');
+      expect(createCall.data.lastPaymentDate).not.toBeNull();
+    });
+
+    it('does not grant a trial when the flag is off', async () => {
+      (service as unknown as { featureFlagService: { isEnabled: jest.Mock } }).featureFlagService.isEnabled.mockResolvedValue(
+        false
+      );
+
+      await service.subscribe('user-1', paidDto);
+
+      const createCall = mockTxSubscription.create.mock.calls[0][0];
+      expect(createCall.data.paymentMethod).toBe('wallet');
+    });
+  });
+
+  describe('subscription_promo_discounts', () => {
+    const dto = { planId: 'plan-1', paymentMethod: 'wallet' as const, promoCode: 'LAUNCH10' };
+
+    beforeEach(() => {
+      mockPrismaService.subscriptionPlan.findUnique.mockResolvedValue(mockPlan);
+      mockTxSubscription.findFirst.mockResolvedValue(null);
+      mockTxSubscription.create.mockResolvedValue(mockSubscription);
+      mockTxSubscriptionTransaction.create.mockResolvedValue({});
+      (mockedAxios.get as jest.Mock).mockResolvedValue({
+        data: { wallet: { id: 'wallet-1', balance: 10000 } },
+      });
+      (mockedAxios.post as jest.Mock).mockResolvedValue({ data: {} });
+    });
+
+    it('applies the promo discount when the flag is on', async () => {
+      (service as unknown as { featureFlagService: { isEnabled: jest.Mock } }).featureFlagService.isEnabled.mockImplementation(
+        (key: string) => Promise.resolve(key === subscriptionFlags.promoDiscounts)
+      );
+
+      await service.subscribe('user-1', dto);
+
+      // plan price 5000 - 10% = 4500 debited from the wallet
+      const debitCall = (mockedAxios.post as jest.Mock).mock.calls.find((call) =>
+        String(call[0]).includes('/wallet/debit')
+      );
+      expect(debitCall).toBeDefined();
+      expect(debitCall[1].amount).toBe(4500);
+      const txCall = mockTxSubscriptionTransaction.create.mock.calls[0][0];
+      expect(txCall.data.amount).toBe(4500);
+      expect(txCall.data.description).toContain('promo LAUNCH10');
+    });
+
+    it('ignores the promo code when the flag is off', async () => {
+      (service as unknown as { featureFlagService: { isEnabled: jest.Mock } }).featureFlagService.isEnabled.mockResolvedValue(
+        false
+      );
+
+      await service.subscribe('user-1', dto);
+
+      const debitCall = (mockedAxios.post as jest.Mock).mock.calls.find((call) =>
+        String(call[0]).includes('/wallet/debit')
+      );
+      expect(debitCall[1].amount).toBe(5000);
+    });
+
+    it('rejects an unknown promo code by charging full price', async () => {
+      (service as unknown as { featureFlagService: { isEnabled: jest.Mock } }).featureFlagService.isEnabled.mockImplementation(
+        (key: string) => Promise.resolve(key === subscriptionFlags.promoDiscounts)
+      );
+
+      await service.subscribe('user-1', { ...dto, promoCode: 'NOPE99' });
+
+      const debitCall = (mockedAxios.post as jest.Mock).mock.calls.find((call) =>
+        String(call[0]).includes('/wallet/debit')
+      );
+      expect(debitCall[1].amount).toBe(5000);
     });
   });
 

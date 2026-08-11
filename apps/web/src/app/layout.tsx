@@ -4,6 +4,7 @@ import { AuthProvider } from '../context/AuthContext';
 import { FlagsProvider } from '../context/FlagsContext';
 import { WalletProvider } from '../context/WalletContext';
 import { MaintenanceGate } from '../components/layout/MaintenanceGate';
+import AnnouncementBanner from '../components/layout/AnnouncementBanner';
 import { ThemeProvider } from '../context/ThemeContext';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { QueryProvider } from '../providers/QueryProvider';
@@ -92,13 +93,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }):
         </a>
         <ErrorBoundary>
           <QueryProvider>
-            <ThemeProvider>
-              <AuthProvider>
-                <FlagsProvider>
+            <AuthProvider>
+              <FlagsProvider>
+                <ThemeProvider>
                   <WalletProvider>
                     <I18nProvider>
                       <ToastProvider>
                         <KeyboardNavigationProvider>
+                          <AnnouncementBanner />
                           <MaintenanceGate>
                             <main id="main-content" role="main">
                               {children}
@@ -108,9 +110,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }):
                       </ToastProvider>
                     </I18nProvider>
                   </WalletProvider>
-                </FlagsProvider>
-              </AuthProvider>
-            </ThemeProvider>
+                </ThemeProvider>
+              </FlagsProvider>
+            </AuthProvider>
           </QueryProvider>
         </ErrorBoundary>
       </body>

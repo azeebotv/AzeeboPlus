@@ -4,6 +4,7 @@ import request from 'supertest';
 import { TicketController } from './ticket.controller';
 import { TicketService } from './ticket.service';
 import { RateLimitGuard, AdminGuard } from '@azeebo/security';
+import { FeatureFlagGuard, FeatureFlagService } from '@azeebo/feature-flags';
 // Ticket DTO types used implicitly by mock data in tests
 
 describe('Support Service Pagination Tests', () => {
@@ -46,6 +47,14 @@ describe('Support Service Pagination Tests', () => {
         {
           provide: TicketService,
           useValue: mockTicketService,
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(true) },
+        },
+        {
+          provide: FeatureFlagGuard,
+          useValue: { canActivate: jest.fn().mockReturnValue(true) },
         },
       ],
     })

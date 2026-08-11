@@ -25,6 +25,17 @@ jest.mock('@azeebo/security', () => ({
   AdminGuard: jest.fn(),
   RateLimitService: jest.fn(),
 }));
+jest.mock('@azeebo/feature-flags', () => ({
+  FeatureFlagService: jest.fn(),
+  FeatureFlagGuard: jest.fn(),
+  FeatureFlag: () => () => {},
+  realityFlags: {
+    votingEnabled: 'reality_voting_enabled',
+    predictionsEnabled: 'reality_predictions_enabled',
+    liveVoting: 'reality_live_voting',
+    autoElimination: 'reality_auto_elimination',
+  },
+}));
 
 describe('RealityController', () => {
   let controller: RealityController;

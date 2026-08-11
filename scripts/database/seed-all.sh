@@ -388,6 +388,46 @@ seed_analytics_db() {
 }
 
 # ============================================================
+# Feature Flags (Redis)
+# ============================================================
+# Seeds a small set of dev-friendly feature flags into Redis so local runs
+# exercise flag-gated paths out of the box. Idempotent: existing keys are
+# never overwritten (defaults are code-registered per service anyway — these
+# rows only pin the values for local experimentation).
+# Redis key convention: feature_flags:{key} → JSON.
+seed_flags() {
+  if ! command -v redis-cli &>/dev/null; then
+    warn "redis-cli not found — skipping feature-flag seeding"
+    return 0
+  fi
+  if ! redis-cli ping &>/dev/null; then
+    warn "Redis not reachable — skipping feature-flag seeding"
+    return 0
+  fi
+
+  info "Seeding dev feature flags (idempotent — existing keys untouched)"
+  # Each entry is a full JSON payload under feature_flags:{key}; booleans set
+  # enabled, numerics carry a value with enabled=true.
+  local flags=( \
+    "web_maintenance_mode|{\"key\":\"web_maintenance_mode\",\"enabled\":false}" \
+    "web_dark_mode|{\"key\":\"web_dark_mode\",\"enabled\":true}" \
+    "mobile_autoplay|{\"key\":\"mobile_autoplay\",\"enabled\":true}" \
+    "search_typo_tolerance|{\"key\":\"search_typo_tolerance\",\"enabled\":true}" \
+    "search_fuzzy_trigram_weight|{\"key\":\"search_fuzzy_trigram_weight\",\"enabled\":true,\"value\":0.4}" \
+    "content_premium_gate|{\"key\":\"content_premium_gate\",\"enabled\":false}" \
+  )
+  for entry in "${flags[@]}"; do
+    local key="${entry%%|*}" payload="${entry#*|}"
+    # SETNX: only seed when the flag has no stored value yet.
+    if redis-cli --raw SETNX "feature_flags:${key}" "$payload" | grep -q 1; then
+      ok "  Seeded flag ${key}"
+    else
+      info "  Flag ${key} already set — skipped"
+    fi
+  done
+}
+
+# ============================================================
 # Main
 # ============================================================
 
@@ -421,10 +461,14 @@ main() {
       seed_search_db
       seed_notification_db
       seed_analytics_db
+      seed_flags
+      ;;
+    flags)
+      seed_flags
       ;;
     *)
       err "Unknown database: $target_db"
-      echo "Available: auth, user, content, wallet, media, creator, reward, search, notification, analytics, all"
+      echo "Available: auth, user, content, wallet, media, creator, reward, search, notification, analytics, flags, all"
       exit 1
       ;;
   esac

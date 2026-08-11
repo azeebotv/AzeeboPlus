@@ -98,6 +98,12 @@ model ContentItem {
   status      String   @default("published")
   viewCount   Int      @default(0)
   creatorId   String?
+  /// Denormalized category names from the content_categories relation, so the
+  /// universal endpoint can filter by category without a join.
+  categories  String[] @default([])
+  /// Denormalized creator displayName (creator_profiles.displayName), so
+  /// clients render the creator chip without a second lookup.
+  creatorName String?
   metadata    Json?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -167,4 +173,17 @@ model Tag {
 
   @@map("tags")
   @@index([name])
+}
+
+model SearchTypoCorrection {
+  id             String   @id @default(uuid())
+  originalQuery  String   // what the user typed
+  correctedQuery String   // the 'did you mean' suggestion they accepted
+  count          Int      @default(1) // accepted occurrences
+  lastAcceptedAt DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  @@map("search_typo_corrections")
+  @@unique([originalQuery, correctedQuery])
+  @@index([originalQuery, count])
 }

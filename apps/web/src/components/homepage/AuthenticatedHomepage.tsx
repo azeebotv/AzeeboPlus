@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
+import { useFlags } from '@/context/FlagsContext';
 import { api } from '@/lib/api';
 import type { ContentItem, RecommendationGroup } from '@/lib/api';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
@@ -31,6 +32,12 @@ export default function AuthenticatedHomepage({
   siteName = 'Azeebo+',
 }: AuthenticatedHomepageProps): React.JSX.Element {
   const { user } = useAuth();
+  const { isEnabled } = useFlags();
+  // web_recommendations_rail (off): gates the personalized recommendation row.
+  const showRecommendationsRail = isEnabled('web_recommendations_rail');
+  // web_new_home (off): gates the newer home rails (trending / new releases /
+  // popular-in-region supplementary sections).
+  const showNewHomeRails = isEnabled('web_new_home');
 
   // Section 1: Hero Slides
   const [featuredSlides, setFeaturedSlides] = useState<ContentItem[]>([]);
@@ -318,7 +325,7 @@ export default function AuthenticatedHomepage({
         )}
 
         {/* ===== Section 4: Personalized Recommendations ===== */}
-        {recommendationGroups.length > 0 && (
+        {showRecommendationsRail && recommendationGroups.length > 0 && (
           <div data-testid="recommendation-sections">
             {recommendationGroups.map((group, index) => (
               <ScrollReveal key={`${group.title}-${index}`}>
@@ -334,57 +341,60 @@ export default function AuthenticatedHomepage({
           </div>
         )}
 
-        {/* ===== Section 5: Supplementary Sections ===== */}
+        {/* ===== Section 5: Supplementary Sections (gated by web_new_home) ===== */}
+        {showNewHomeRails && (
+          <>
+            {/* Continue Watching */}
+            <ContentRow
+              title="Continue Watching"
+              subtitle="Pick up where you left off"
+              sectionId="continue-watching"
+              items={continueWatching}
+              isLoading={isLoadingSupplementary}
+              showProgress
+              progressMap={
+                Object.fromEntries(
+                  continueWatching.map((c) => [
+                    c.id,
+                    (c as ContentItem & { progress?: number }).progress ?? 0.5,
+                  ])
+                ) as Record<string, number>
+              }
+            />
 
-        {/* Continue Watching */}
-        <ContentRow
-          title="Continue Watching"
-          subtitle="Pick up where you left off"
-          sectionId="continue-watching"
-          items={continueWatching}
-          isLoading={isLoadingSupplementary}
-          showProgress
-          progressMap={
-            Object.fromEntries(
-              continueWatching.map((c) => [
-                c.id,
-                (c as ContentItem & { progress?: number }).progress ?? 0.5,
-              ])
-            ) as Record<string, number>
-          }
-        />
+            {/* Trending Now */}
+            <ContentRow
+              title="Trending Now"
+              subtitle="Popular across the platform"
+              sectionId="trending"
+              items={trendingContent}
+              isLoading={isLoadingSupplementary}
+              cardSize="lg"
+            />
 
-        {/* Trending Now */}
-        <ContentRow
-          title="Trending Now"
-          subtitle="Popular across the platform"
-          sectionId="trending"
-          items={trendingContent}
-          isLoading={isLoadingSupplementary}
-          cardSize="lg"
-        />
+            {/* New Releases */}
+            <ScrollReveal>
+              <ContentRow
+                title="New Releases"
+                subtitle="Fresh content just dropped"
+                sectionId="new-releases"
+                items={newReleases}
+                isLoading={isLoadingSupplementary}
+              />
+            </ScrollReveal>
 
-        {/* New Releases */}
-        <ScrollReveal>
-          <ContentRow
-            title="New Releases"
-            subtitle="Fresh content just dropped"
-            sectionId="new-releases"
-            items={newReleases}
-            isLoading={isLoadingSupplementary}
-          />
-        </ScrollReveal>
-
-        {/* Popular in Your Region */}
-        <ScrollReveal>
-          <ContentRow
-            title="Popular in Your Region"
-            subtitle="What's hot near you"
-            sectionId="popular-region"
-            items={popularInRegion}
-            isLoading={isLoadingSupplementary}
-          />
-        </ScrollReveal>
+            {/* Popular in Your Region */}
+            <ScrollReveal>
+              <ContentRow
+                title="Popular in Your Region"
+                subtitle="What's hot near you"
+                sectionId="popular-region"
+                items={popularInRegion}
+                isLoading={isLoadingSupplementary}
+              />
+            </ScrollReveal>
+          </>
+        )}
 
         {/* Bottom CTA for referrals */}
         <ScrollReveal>

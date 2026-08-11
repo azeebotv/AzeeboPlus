@@ -428,6 +428,20 @@ export interface AnalyticsEventRequest {
   metadata?: Record<string, unknown>;
 }
 
+/**
+ * Canonical analytics event payload for service-to-service tracking (the wire
+ * shape POSTed to `POST /analytics/track`). Services must emit this shape so
+ * the analytics ingestion accepts the event; adopters use the `eventName`
+ * field (not `type`, which was the historical controller-only alias).
+ */
+export interface EventPayload {
+  eventName: string;
+  userId?: string;
+  sessionId?: string;
+  timestamp?: string;
+  metadata?: Record<string, unknown>;
+}
+
 export interface FunnelAnalyticsRequest {
   funnelName: string;
   startDate: Date;
@@ -590,7 +604,7 @@ export { environmentSchema, validateEnvironment } from './env-validation';
 export type { EnvironmentVariables } from './env-validation';
 
 // Pricing constants and utilities
-export { getPricing } from './pricing';
+export { getPricing, PRICE_CONFIG } from './pricing';
 export type { PricingPlan, WalletPricing, ContentPricing } from './pricing';
 
 // Secret Validation

@@ -95,30 +95,36 @@ export class MoviesController {
   }
 
   @Get('premieres')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(movieFlags.premieresEnabled)
   @RateLimit(30, 60000)
-  @ApiOperation({ summary: 'Premieres list' })
+  @ApiOperation({ summary: 'Premieres list (movie_premieres_enabled)' })
   @ApiResponse({ status: 200, description: 'Premieres list' })
+  @ApiResponse({ status: 403, description: 'Flag off, or forbidden' })
   async listPremieres(): Promise<MovieResponse> {
     return this.moviesService.listPremieres();
   }
 
   @Get('watchlist')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(movieFlags.watchlistSync)
   @RateLimit(30, 60000)
-  @ApiOperation({ summary: 'User watchlist' })
+  @ApiOperation({ summary: 'User watchlist (movie_watchlist_sync)' })
   @ApiResponse({ status: 200, description: 'Watchlist' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Flag off, or forbidden' })
   async getWatchlist(@Request() req: { user: { id: string } }): Promise<MovieResponse> {
     return this.moviesService.getWatchlist(req.user.id);
   }
 
   @Post('watchlist')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(movieFlags.watchlistSync)
   @RateLimit(10, 60000)
-  @ApiOperation({ summary: 'Add to watchlist' })
+  @ApiOperation({ summary: 'Add to watchlist (movie_watchlist_sync)' })
   @ApiResponse({ status: 201, description: 'Added to watchlist' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Flag off, or forbidden' })
   async addToWatchlist(
     @Request() req: { user: { id: string } },
     @Body() body: AddToWatchlistDto
@@ -127,11 +133,13 @@ export class MoviesController {
   }
 
   @Delete('watchlist/:movieId')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(movieFlags.watchlistSync)
   @RateLimit(10, 60000)
-  @ApiOperation({ summary: 'Remove from watchlist' })
+  @ApiOperation({ summary: 'Remove from watchlist (movie_watchlist_sync)' })
   @ApiResponse({ status: 200, description: 'Removed from watchlist' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Flag off, or forbidden' })
   async removeFromWatchlist(
     @Request() req: { user: { id: string } },
     @Param('movieId') movieId: string

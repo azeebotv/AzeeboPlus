@@ -15,7 +15,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { RateLimitGuard, ServiceAuthGuard } from '@azeebo/security';
 import { CacheService } from '@azeebo/shared-services';
-import { FeatureFlagGuard, FeatureFlagService } from '@azeebo/feature-flags';
+import { FeatureFlagGuard, FeatureFlagService, userFlags } from '@azeebo/feature-flags';
 
 describe('Users Controller Contract Tests', () => {
   let app: INestApplication;
@@ -30,6 +30,10 @@ describe('Users Controller Contract Tests', () => {
       findUnique: jest.fn(),
       update: jest.fn(),
       create: jest.fn(),
+    },
+    userProfile: {
+      upsert: jest.fn(),
+      findUnique: jest.fn(),
     },
     following: {
       findUnique: jest.fn(),
@@ -96,7 +100,11 @@ describe('Users Controller Contract Tests', () => {
         },
         {
           provide: FeatureFlagService,
-          useValue: { isEnabled: jest.fn().mockResolvedValue(true) },
+          useValue: {
+            isEnabled: jest.fn().mockImplementation((key: string) =>
+              Promise.resolve(key !== userFlags.profileV2)
+            ),
+          },
         },
       ],
     })

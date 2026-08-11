@@ -1,4 +1,28 @@
-import { ROLE_PERMISSIONS, PERMISSIONS_KEY } from './index';
+import { ROLE_PERMISSIONS, PERMISSIONS_KEY, type EventPayload } from './index';
+
+/** Type-level check: the canonical analytics wire shape stays stable. */
+const payloadFixture: EventPayload = {
+  eventName: 'content_view',
+  userId: 'user-123',
+  timestamp: new Date().toISOString(),
+  metadata: { contentId: 'content-1' },
+};
+
+describe('EventPayload (canonical analytics wire shape)', () => {
+  it('carries the fields services emit to POST /analytics/track', () => {
+    expect(payloadFixture.eventName).toBe('content_view');
+    expect(payloadFixture.userId).toBe('user-123');
+    expect(typeof payloadFixture.timestamp).toBe('string');
+    expect(payloadFixture.metadata).toEqual({ contentId: 'content-1' });
+  });
+
+  it('allows sessionId and omits optional fields', () => {
+    const minimal: EventPayload = { eventName: 'play_start' };
+    expect(minimal.sessionId).toBeUndefined();
+    const withSession: EventPayload = { eventName: 'play_start', sessionId: 's-1' };
+    expect(withSession.sessionId).toBe('s-1');
+  });
+});
 
 describe('shared-types constants', () => {
   describe('PERMISSIONS_KEY', () => {

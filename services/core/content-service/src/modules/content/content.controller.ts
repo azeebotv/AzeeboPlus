@@ -539,12 +539,13 @@ export class ContentController {
   async addCommentToContent(
     @Request() req: { user: { id: string } },
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: { text?: string; content?: string }
+    @Body() body: { text?: string; content?: string; parentId?: string }
   ): Promise<ContentResponse> {
     return this.contentService.addCommentToContent(
       req.user.id,
       id,
-      body.text || body.content || ''
+      body.text || body.content || '',
+      body.parentId
     );
   }
 

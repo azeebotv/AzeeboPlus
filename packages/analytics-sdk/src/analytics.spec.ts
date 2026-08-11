@@ -187,4 +187,50 @@ describe('Analytics SDK', () => {
       expect(event.timestamp).toBeInstanceOf(Date);
     });
   });
+
+  describe('Client-side sampling', () => {
+    it('isEntitySampled keeps everything at 100% and nothing at 0%', () => {
+      const { isEntitySampled } = require('./index');
+      expect(isEntitySampled('u1', 100)).toBe(true);
+      expect(isEntitySampled('u1', 0)).toBe(false);
+    });
+
+    it('is deterministic for the same entity', () => {
+      const { isEntitySampled } = require('./index');
+      const a = isEntitySampled('stable-user', 50);
+      const b = isEntitySampled('stable-user', 50);
+      expect(a).toBe(b);
+    });
+
+    it('samples a fraction of distinct users at partial rate', () => {
+      const { isEntitySampled } = require('./index');
+      let kept = 0;
+      for (let i = 0; i < 100; i++) {
+        if (isEntitySampled(`user-${i}`, 50)) kept++;
+      }
+      expect(kept).toBeGreaterThan(10);
+      expect(kept).toBeLessThan(90);
+    });
+
+    it('does not sample when the bootstrap config is disabled', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (analytics as any).samplingConfig = { enabled: false, samplingRate: 50 };
+      analytics.login(true);
+      expect(trackedEvents.length).toBe(1);
+    });
+
+    it('drops events when the bootstrap config is enabled at a low rate', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (analytics as any).samplingConfig = { enabled: true, samplingRate: 0 };
+      trackedEvents = [];
+      analytics.login(true);
+      expect(trackedEvents.length).toBe(0);
+    });
+
+    it('refreshSamplingConfig falls back to full sampling on fetch error', async () => {
+      const noEndpoint = new Analytics({ clientSampling: true });
+      const config = await noEndpoint.refreshSamplingConfig();
+      expect(config).toEqual({ enabled: false, samplingRate: 100 });
+    });
+  });
 });

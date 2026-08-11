@@ -89,6 +89,42 @@ export interface EngagementTrend {
   value: number;
 }
 
+export interface SearchCorrectionDay {
+  date: string;
+  shown: number;
+  accepted: number;
+  /** accepted / shown for that day (0 when nothing was shown). */
+  rate: number;
+}
+
+export interface SearchCorrectionsData {
+  days: number;
+  overall: {
+    shown: number;
+    accepted: number;
+    rate: number;
+  };
+  series: SearchCorrectionDay[];
+}
+
+export interface SearchFuzzyStatus {
+  enabled: boolean;
+  pgTrgm: 'available' | 'missing' | 'unknown';
+  indexes: 'present' | 'missing' | 'unknown';
+  degraded: boolean;
+  warning?: string;
+  mode: 'fuzzy' | 'exact';
+  lastProbeAt: string | null;
+}
+
+export interface SearchStats {
+  totalSearchesToday: number;
+  uniqueSearchers: number;
+  topQueries: unknown[];
+  /** Fuzzy-search guard state — same shape as GET /health's search object. */
+  fuzzy: SearchFuzzyStatus;
+}
+
 export interface NotificationTemplate {
   id: string;
   name: string;
@@ -172,6 +208,8 @@ export interface GlobalFeatureFlag {
   value?: string | number | boolean | null;
   owner?: string;
   staleAfter?: string;
+  /** ISO timestamp of when the stale sweep last notified the owner. */
+  staleNotifiedAt?: string;
   isPublic?: boolean;
   lastToggledBy?: string;
 }

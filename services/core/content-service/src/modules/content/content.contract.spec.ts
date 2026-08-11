@@ -29,11 +29,14 @@ jest.mock('ioredis', () => {
   return { Redis };
 });
 
+import { FeatureFlagService } from '@azeebo/feature-flags';
+
 jest.mock('@azeebo/feature-flags', () => {
   const svc = {
     getFlag: jest.fn().mockResolvedValue(false),
     setFlag: jest.fn().mockResolvedValue(undefined),
     getAllFlags: jest.fn().mockResolvedValue([]),
+    isEnabled: jest.fn().mockResolvedValue(false),
   };
   class MockFeatureFlagService {}
   const mockProvider = { provide: MockFeatureFlagService, useValue: svc };
@@ -50,6 +53,16 @@ jest.mock('@azeebo/feature-flags', () => {
     FeatureFlagModule: MockFeatureFlagModule,
     FeatureFlagService: MockFeatureFlagService,
     FeatureFlagGuard: class {},
+    contentFlags: {
+      moderationEnabled: 'content_moderation_enabled',
+      transcodingNew: 'content_transcoding_new',
+      aiTags: 'content_ai_tags',
+      clipIngestion: 'content_clip_ingestion',
+      commentsV2: 'content_comments_v2',
+      windowingEnabled: 'content_windowing_enabled',
+      premiumGate: 'content_premium_gate',
+      recommendedRail: 'content_recommended_rail',
+    },
   };
 });
 
@@ -82,6 +95,8 @@ describe('Content Controller Contract Tests', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot(), ContentModule],
     })
+      .overrideProvider(FeatureFlagService)
+      .useValue({ isEnabled: jest.fn().mockResolvedValue(false) })
       .overrideProvider(PrismaService)
       .useValue({
         contentItem: {

@@ -14,6 +14,7 @@ import type {
   Report,
 } from '../../prisma/client/index.js';
 import { ModerationResponse } from './interfaces/moderation-response.interface.js';
+import { FeatureFlagService, moderationFlags } from '@azeebo/feature-flags';
 
 export interface CreateCaseRequest {
   reportId: string;
@@ -113,7 +114,8 @@ export class ModerationService {
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(SafetyScanningService) private readonly safetyScanningService: SafetyScanningService,
     @Inject(CacheService) private readonly cache: CacheService,
-    @Inject(ConfigService) private readonly configService: ConfigService
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    private readonly featureFlagService?: FeatureFlagService
   ) {
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
@@ -242,6 +244,16 @@ export class ModerationService {
     });
 
     if (request.action === 'suspend' || request.action === 'ban') {
+      // moderation_auto_suspend: off by default — when disabled, resolving a
+      // case to suspend/ban records the resolution but skips the automated
+      // suspension side effects (trust-score penalty) until the flag is on.
+      if (
+        this.featureFlagService &&
+        !(await this.featureFlagService.isEnabled(moderationFlags.autoSuspend))
+      ) {
+        await this.cache.invalidate(`moderation:cases:${request.caseId}`);
+        return updatedCase;
+      }
       // ARCHITECTURAL NOTE: trustScore is a moderation-specific field owned by this service's
       // bounded context. The canonical User model lives in auth-service. If trustScore needs
       // to be synced to the canonical User, emit an event via queue-service instead of
@@ -364,6 +376,26 @@ export class ModerationService {
       });
 
       await this.cache.invalidate(`moderation:cases:${appeal.caseId}`);
+
+      // moderation_trust_scores: off by default — when disabled, a successful
+      // appeal restores the case but does not recompute the user's trust
+      // score until the flag is enabled.
+      if (
+        this.featureFlagService &&
+        !(await this.featureFlagService.isEnabled(moderationFlags.trustScores))
+      ) {
+        await this.cache.invalidate(`moderation:trust:${appeal.userId}`);
+        await this.createAuditEvent({
+          action: 'resolve',
+          resourceType: 'appeal',
+          resourceId: request.appealId,
+          actorId: request.resolverId,
+          actorType: 'moderator',
+          previousState: { status: 'rejected' },
+          newState: { status: 'successful' },
+        });
+        return updatedAppeal;
+      }
 
       const { oldScore, newScore } = await this.prisma.$transaction(async (tx) => {
         const before = await tx.user.findUnique({

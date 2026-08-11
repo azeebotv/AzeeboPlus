@@ -9,6 +9,8 @@ import { HealthModule } from './modules/health/health.module.js';
 import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { CacheModule } from '@azeebo/shared-services';
+import { FeatureFlagModule, engagementFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
 @Module({
   imports: [
@@ -26,6 +28,19 @@ import { CacheModule } from '@azeebo/shared-services';
     EngagementModule,
     AdminModule,
     HealthModule,
+    // Engagement feature gates: leaderboards/rankings/event-ingest ON;
+    // predictions OFF until launched.
+    FlagMetricsModule.register({ service: 'engagement-service' }),
+    FeatureFlagModule.register({
+      global: true,
+      ...flagHooks('engagement-service'),
+      defaultFlags: {
+        [engagementFlags.leaderboards]: true,
+        [engagementFlags.rankings]: true,
+        [engagementFlags.predictions]: false,
+        [engagementFlags.eventIngest]: true,
+      },
+    }),
   ],
   providers: [
     {

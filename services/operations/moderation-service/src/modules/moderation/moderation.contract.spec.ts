@@ -49,6 +49,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, CanActivate, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
+import { FeatureFlagGuard } from '@azeebo/feature-flags';
 import { ModerationController } from './moderation.controller.js';
 import { ModerationService } from './moderation.service.js';
 
@@ -87,6 +88,8 @@ describe('Moderation Controller Contract Tests', () => {
     })
       .overrideGuard(AuthGuard('jwt'))
       .useClass(MockAuthGuard)
+      .overrideGuard(FeatureFlagGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .compile();
 
     app = moduleFixture.createNestApplication();

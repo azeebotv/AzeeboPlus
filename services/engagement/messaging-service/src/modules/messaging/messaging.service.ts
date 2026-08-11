@@ -1,7 +1,8 @@
-import { Inject, Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { CreateConversationDto, SendMessageDto } from './dto/messaging.dto.js';
+import { FeatureFlagService, messagingFlags } from '@azeebo/feature-flags';
 import axios from 'axios';
 
 @Injectable()
@@ -12,7 +13,8 @@ export class MessagingService {
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
-    @Inject(ConfigService) private readonly configService: ConfigService
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    private readonly featureFlagService?: FeatureFlagService
   ) {
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
@@ -236,12 +238,23 @@ export class MessagingService {
         throw new NotFoundException('Conversation not found');
       }
 
+      // messaging_media_sharing: image/file payloads are gated; when off,
+      // media messages fall back to plain text so no media lands in threads.
+      const messageType = dto.type || 'text';
+      if (
+        messageType !== 'text' &&
+        this.featureFlagService &&
+        !(await this.featureFlagService.isEnabled(messagingFlags.mediaSharing))
+      ) {
+        throw new BadRequestException('Media sharing is disabled');
+      }
+
       const message = await this.prisma.message.create({
         data: {
           conversationId,
           senderId: userId,
           content: dto.content,
-          type: dto.type || 'text',
+          type: messageType,
         },
       });
 

@@ -23,8 +23,19 @@ jest.mock('@azeebo/shared-services', () => ({
 jest.mock('@azeebo/security', () => ({
   RateLimitGuard: jest.fn(),
   RateLimit: () => () => {},
+  ServiceAuthGuard: jest.fn(),
   AdminGuard: jest.fn(),
   RateLimitService: jest.fn(),
+}));
+jest.mock('@azeebo/feature-flags', () => ({
+  FeatureFlagService: jest.fn(),
+  FeatureFlagGuard: class {},
+  FeatureFlag: () => () => {},
+  gamesFlags: {
+    tournamentsEnabled: 'games_tournaments_enabled',
+    triviaAi: 'games_trivia_ai',
+    leaderboardsSeasonal: 'games_leaderboards_seasonal',
+  },
 }));
 
 describe('Games Service Authorization Tests', () => {

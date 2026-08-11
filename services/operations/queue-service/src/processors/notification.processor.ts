@@ -163,7 +163,7 @@ export class NotificationProcessor extends WorkerHost {
    */
   private async maybeDeadLetterRetry(job: Job<NotificationJobData>): Promise<void> {
     try {
-      if (!(await this.featureFlagService.isEnabled(queueFlags.dlqRetry))) {
+      if (!(await this.dlqRetryEnabled())) {
         this.logger.warn(
           `Notification job ${job.id} dead-lettered (dlq retry disabled); leaving in failed set`
         );
@@ -228,21 +228,50 @@ export class NotificationProcessor extends WorkerHost {
     }
   }
 
-  /** Max DLQ passes from queue_dlq_retry_max_passes (positive integer), or
-   * the fallback constant when the flag has no usable value. */
+  /**
+   * Dead-letter retry toggle for notifications. The per-queue flag
+   * (queue_dlq_retry_notifications), when explicitly stored, overrides the
+   * shared queue_dlq_retry — so ops can pause or resume DLQ retry for
+   * notifications independently of the other queues. Unset per-queue flags
+   * follow the shared switch. Stored-ness is checked via getFlag (not
+   * isEnabled) because the admin UI lists the per-queue toggle as default-on.
+   */
+  private async dlqRetryEnabled(): Promise<boolean> {
+    const perQueue = await this.featureFlagService.getFlag(queueFlags.dlqRetryNotifications);
+    if (perQueue) {
+      return this.featureFlagService.isEnabled(queueFlags.dlqRetryNotifications);
+    }
+    return this.featureFlagService.isEnabled(queueFlags.dlqRetry);
+  }
+
+  /** Max DLQ passes for notifications: the per-queue flag
+   * (queue_dlq_retry_max_passes_notifications) when stored, else the shared
+   * queue_dlq_retry_max_passes, else the fallback constant (positive
+   * integer). */
   private async dlqMaxRetries(): Promise<number> {
-    const value = await this.featureFlagService.getValue(queueFlags.dlqRetryMaxPasses);
+    const perQueue = await this.featureFlagService.getFlag(
+      queueFlags.dlqRetryMaxPassesNotifications
+    );
+    const value = perQueue
+      ? await this.featureFlagService.getValue(queueFlags.dlqRetryMaxPassesNotifications)
+      : await this.featureFlagService.getValue(queueFlags.dlqRetryMaxPasses);
     if (typeof value === 'number' && Number.isFinite(value) && value >= 1) {
       return Math.floor(value);
     }
     return NotificationProcessor.DEFAULT_DLQ_MAX_RETRIES;
   }
 
-  /** Base DLQ delay in ms from queue_dlq_retry_base_delay_ms (positive
-   * number); falls back to the enqueuer's per-job retryDelay, then to the
-   * constant, when the flag has no usable value. */
+  /** Base DLQ delay in ms for notifications: the per-queue flag
+   * (queue_dlq_retry_base_delay_ms_notifications) when stored, else the
+   * shared queue_dlq_retry_base_delay_ms, else the enqueuer's per-job
+   * retryDelay, then the constant (positive number). */
   private async dlqBaseDelayMs(jobBaseMs?: number): Promise<number> {
-    const value = await this.featureFlagService.getValue(queueFlags.dlqRetryBaseDelayMs);
+    const perQueue = await this.featureFlagService.getFlag(
+      queueFlags.dlqRetryBaseDelayMsNotifications
+    );
+    const value = perQueue
+      ? await this.featureFlagService.getValue(queueFlags.dlqRetryBaseDelayMsNotifications)
+      : await this.featureFlagService.getValue(queueFlags.dlqRetryBaseDelayMs);
     if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
       return value;
     }

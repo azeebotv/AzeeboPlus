@@ -22,7 +22,7 @@ describe('PollService', () => {
     description: 'Vote for your favorite',
     coverImage: 'https://example.com/cover.jpg',
     status: 'active',
-    expiresAt: new Date('2026-08-01'),
+    expiresAt: new Date(Date.now() + 60 * 60 * 1000),
     totalVotes: 10,
     createdById: 'user-123',
     createdAt: new Date('2024-01-01'),

@@ -5,6 +5,7 @@ import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { AuthRepository } from './auth.repository.js';
 import { OtpService } from './otp/otp.service.js';
+import { MfaService } from './mfa/mfa.service.js';
 import { JwtService } from '@nestjs/jwt';
 import { RedisService, CacheService } from '@azeebo/shared-services';
 import { ConfigService } from '@nestjs/config';
@@ -85,6 +86,10 @@ describe('Auth Controller Contract Tests', () => {
         {
           provide: OtpService,
           useValue: { generateOtp: jest.fn(), verifyOtp: jest.fn(), sendOtpToUser: jest.fn() },
+        },
+        {
+          provide: MfaService,
+          useValue: { verifyMfaCode: jest.fn().mockResolvedValue(true) },
         },
         JwtService,
         {

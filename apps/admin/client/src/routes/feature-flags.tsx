@@ -36,6 +36,7 @@ export default function FeatureFlagsPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [showCreate, setShowCreate] = useState(false);
+  const [staleDrafts, setStaleDrafts] = useState<Record<string, string>>({});
   const [form, setForm] = useState({
     universeId: '',
     key: '',
@@ -88,6 +89,45 @@ export default function FeatureFlagsPage() {
       adminApi.deleteFeatureFlagByKey(args.universeId, args.featureKey),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'feature-flags'] }),
   });
+
+  /** Update a flag's metadata (full-replace PUT) — used by the expiry editor. */
+  const expiryMutation = useMutation({
+    mutationFn: (args: {
+      universeId: string;
+      flag: UniverseFeatureFlagRow;
+      staleAfter?: string;
+    }) => {
+      const metadata: Record<string, unknown> = { ...(args.flag.metadata ?? {}) };
+      if (args.staleAfter !== undefined) metadata.staleAfter = args.staleAfter;
+      else delete metadata.staleAfter;
+      return adminApi.toggleFeatureFlag(args.universeId, {
+        featureKey: args.flag.featureKey,
+        isEnabled: args.flag.isEnabled,
+        metadata,
+      } as never);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'feature-flags'] }),
+  });
+
+  /** Commit the stale-after (expiry) date for a flag. Empty clears the expiry. */
+  const commitStaleAfter = (flag: UniverseFeatureFlagRow) => {
+    const key = `${flag.universeId}:${flag.featureKey}`;
+    const raw = (staleDrafts[key] ?? '').trim();
+    // Empty clears the expiry; otherwise require a parseable date.
+    if (raw !== '' && Number.isNaN(Date.parse(raw))) {
+      return; // leave the draft so the user fixes it
+    }
+    expiryMutation.mutate({
+      universeId: flag.universeId,
+      flag,
+      staleAfter: raw === '' ? undefined : new Date(raw).toISOString(),
+    });
+    setStaleDrafts((d) => {
+      const next = { ...d };
+      delete next[key];
+      return next;
+    });
+  };
 
   const buildCreatePayload = (): Record<string, unknown> | null => {
     const key = form.key.trim();
@@ -325,12 +365,14 @@ export default function FeatureFlagsPage() {
                         style={{
                           padding: '2px 8px',
                           borderRadius: 999,
+                          background: 'rgba(232,66,10,0.25)',
+                          color: '#FF9E6B',
                           fontSize: 11,
-                          backgroundColor: '#3B0D0D',
-                          color: '#F87171',
+                          fontWeight: 600,
                         }}
+                        title={`staleAfter (${new Date(staleAfter as string).toLocaleDateString()}) has passed — removal candidate. Universe flags aren't covered by the global stale sweep; clear or extend the expiry below.`}
                       >
-                        STALE
+                        stale · past expiry
                       </span>
                     )}
                   </div>
@@ -348,9 +390,81 @@ export default function FeatureFlagsPage() {
                         Allowlist: {userIds.length} user{userIds.length === 1 ? '' : 's'}
                       </span>
                     )}
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      marginTop: 8,
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <span style={{ color: '#9A8A7A', fontSize: 11 }}>stale after</span>
+                    <input
+                      type="date"
+                      value={
+                        staleDrafts[`${flag.universeId}:${flag.featureKey}`] ??
+                        (staleAfter ? staleAfter.slice(0, 10) : '')
+                      }
+                      onChange={(e) =>
+                        setStaleDrafts({
+                          ...staleDrafts,
+                          [`${flag.universeId}:${flag.featureKey}`]: e.target.value,
+                        })
+                      }
+                      style={{ ...inputStyle, width: 150, padding: '4px 8px', fontSize: 11 }}
+                      aria-label={`${flag.featureKey} stale-after date`}
+                    />
+                    <button
+                      onClick={() => commitStaleAfter(flag)}
+                      disabled={!staleDrafts[`${flag.universeId}:${flag.featureKey}`]}
+                      style={{
+                        padding: '4px 12px',
+                        borderRadius: 8,
+                        border: 'none',
+                        background: staleDrafts[`${flag.universeId}:${flag.featureKey}`]
+                          ? '#E8420A'
+                          : '#3A2A2A',
+                        color: staleDrafts[`${flag.universeId}:${flag.featureKey}`]
+                          ? '#fff'
+                          : '#9A8A7A',
+                        fontWeight: 600,
+                        fontSize: 11,
+                        cursor: staleDrafts[`${flag.universeId}:${flag.featureKey}`]
+                          ? 'pointer'
+                          : 'not-allowed',
+                      }}
+                      title="Set the date after which this flag is a removal candidate"
+                    >
+                      Set expiry
+                    </button>
+                    <button
+                      onClick={() =>
+                        expiryMutation.mutate({
+                          universeId: flag.universeId,
+                          flag,
+                          staleAfter: undefined,
+                        })
+                      }
+                      disabled={!staleAfter}
+                      style={{
+                        padding: '4px 12px',
+                        borderRadius: 8,
+                        border: '1px solid #2A1A1A',
+                        background: 'transparent',
+                        color: staleAfter ? '#9A8A7A' : '#5A4A4A',
+                        fontWeight: 600,
+                        fontSize: 11,
+                        cursor: staleAfter ? 'pointer' : 'not-allowed',
+                      }}
+                      title="Remove the expiry (flag never goes stale)"
+                    >
+                      Clear expiry
+                    </button>
                     {staleAfter && (
                       <span style={{ color: '#9A8A7A', fontSize: 11 }}>
-                        Stale after: {new Date(staleAfter).toLocaleDateString()}
+                        expires {new Date(staleAfter).toLocaleDateString()}
                       </span>
                     )}
                   </div>
