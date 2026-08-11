@@ -1,6 +1,7 @@
 import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
+import { FeatureFlagService, sportsFlags } from '@azeebo/feature-flags';
 import axios from 'axios';
 
 @Injectable()
@@ -11,7 +12,8 @@ export class PredictionMarketsService {
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
-    @Inject(ConfigService) private readonly configService: ConfigService
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    private readonly featureFlagService: FeatureFlagService
   ) {
     this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
     this.userServiceBaseUrl = this.configService.getOrThrow<string>('USER_SERVICE_URL');
@@ -137,12 +139,18 @@ export class PredictionMarketsService {
         throw new BadRequestException('Market already exists for this event');
       }
 
+      // sports_odds_feeds: third-party odds ingestion is off until the flag is
+      // on — odds payloads are dropped at ingestion so no external odds data
+      // lands in markets.
+      const oddsFeedsEnabled = await this.featureFlagService.isEnabled(
+        sportsFlags.oddsFeeds
+      );
       const market = await this.prisma.predictionMarket.create({
         data: {
           eventId,
           question,
           options: JSON.parse(JSON.stringify(options)),
-          odds: odds ? JSON.parse(JSON.stringify(odds)) : undefined,
+          odds: oddsFeedsEnabled && odds ? JSON.parse(JSON.stringify(odds)) : undefined,
         },
       });
 

@@ -43,6 +43,7 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "@azeebo/utils": "workspace:*",
+    "@azeebo/flag-metrics": "workspace:*",
     "axios": "^1.7.0"
   },
   "devDependencies": {

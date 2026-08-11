@@ -11,7 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '../../prisma/client/index.js';
 import { FirebaseService, EmailService, SmsService } from '@azeebo/shared-services';
-import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { CacheService, cacheKey, RedisService } from '@azeebo/shared-services';
 import { FeatureFlagService, notificationFlags } from '@azeebo/feature-flags';
 import { SendEmailDto } from './dto/send-email.dto.js';
 import axios from 'axios';
@@ -36,6 +36,9 @@ export class NotificationsService {
   private static readonly EMAIL_SUBJECTS: Record<string, string> = {
     'email-verification': 'Verify Your Email Address',
     'password-reset': 'Password Reset Request',
+    'magic-link': 'Your Azeebo+ Sign-In Link',
+    'digest': 'Your Azeebo+ Daily Digest',
+    'flag-stale': 'Action Required: Stale Feature Flag',
   };
 
   constructor(
@@ -44,6 +47,7 @@ export class NotificationsService {
     @Inject(EmailService) private readonly emailService: EmailService,
     @Inject(SmsService) private readonly smsService: SmsService,
     @Inject(CacheService) private readonly cache: CacheService,
+    @Inject(RedisService) private readonly redisService: RedisService,
     @Inject(ConfigService) private readonly configService: ConfigService,
     @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
   ) {
@@ -205,27 +209,89 @@ export class NotificationsService {
   }
 
   // updatePreferences writes to the canonical NotificationPreference model
-  // for proper relational storage and querying.
+  // for proper relational storage and querying. With notification_preferences_v2
+  // ON the full model surface is honored (per-channel columns, quiet hours,
+  // timezone, category overrides); OFF it preserves the legacy flat-map
+  // behavior (categoryOverrides only) so the migration switch is real.
   async updatePreferences(
     userId: string,
-    preferences: Record<string, boolean>
+    preferences: {
+      email?: boolean;
+      push?: boolean;
+      sms?: boolean;
+      inApp?: boolean;
+      quietHoursStart?: string;
+      quietHoursEnd?: string;
+      timezone?: string;
+      categoryOverrides?: Record<string, boolean>;
+      [key: string]: unknown;
+    }
   ): Promise<{ success: boolean; data: { message: string } }> {
     try {
-      // Read existing preferences from NotificationPreference or fall back to empty
+      const v2Enabled = await this.featureFlagService.isEnabled(
+        notificationFlags.preferencesV2
+      );
+
       const existing = await this.prisma.notificationPreference.findUnique({
         where: { userId },
       });
       const existingPrefs = (existing?.categoryOverrides as Record<string, boolean>) || {};
-      const deepMerged = { ...existingPrefs, ...preferences };
+      const {
+        quietHoursStart: _quietHoursStart,
+        quietHoursEnd: _quietHoursEnd,
+        timezone: _timezone,
+        categoryOverrides: _categoryOverrides,
+        ...legacyFlatPrefs
+      } = preferences;
+      // Legacy path merges the flat channel map into categoryOverrides (the
+      // pre-v2 shape); the v2 path keeps the per-channel columns + a separate
+      // categoryOverrides map.
+      const deepMerged = v2Enabled
+        ? {
+            ...existingPrefs,
+            ...(preferences.categoryOverrides || {}),
+          }
+        : {
+            ...existingPrefs,
+            ...legacyFlatPrefs,
+          };
 
-      await this.prisma.notificationPreference.upsert({
-        where: { userId },
-        update: { categoryOverrides: deepMerged as Prisma.InputJsonValue },
-        create: {
-          userId,
-          categoryOverrides: deepMerged as Prisma.InputJsonValue,
-        },
-      });
+      if (v2Enabled) {
+        await this.prisma.notificationPreference.upsert({
+          where: { userId },
+          update: {
+            pushEnabled: preferences.push ?? existing?.pushEnabled ?? true,
+            emailEnabled: preferences.email ?? existing?.emailEnabled ?? true,
+            smsEnabled: preferences.sms ?? existing?.smsEnabled ?? false,
+            inAppEnabled: preferences.inApp ?? existing?.inAppEnabled ?? true,
+            quietHoursStart: preferences.quietHoursStart ?? existing?.quietHoursStart ?? null,
+            quietHoursEnd: preferences.quietHoursEnd ?? existing?.quietHoursEnd ?? null,
+            timezone: preferences.timezone ?? existing?.timezone ?? null,
+            categoryOverrides: deepMerged as Prisma.InputJsonValue,
+          },
+          create: {
+            userId,
+            pushEnabled: preferences.push ?? true,
+            emailEnabled: preferences.email ?? true,
+            smsEnabled: preferences.sms ?? false,
+            inAppEnabled: preferences.inApp ?? true,
+            quietHoursStart: preferences.quietHoursStart ?? null,
+            quietHoursEnd: preferences.quietHoursEnd ?? null,
+            timezone: preferences.timezone ?? null,
+            categoryOverrides: deepMerged as Prisma.InputJsonValue,
+          },
+        });
+      } else {
+        // Legacy path: only the flat category override map is touched.
+        await this.prisma.notificationPreference.upsert({
+          where: { userId },
+          update: { categoryOverrides: deepMerged as Prisma.InputJsonValue },
+          create: {
+            userId,
+            categoryOverrides: deepMerged as Prisma.InputJsonValue,
+          },
+        });
+      }
 
       await this.cache.invalidate(`notification:preferences:${userId}*`);
 
@@ -258,11 +324,26 @@ export class NotificationsService {
         where: { userId },
       });
 
+      const v2Enabled = await this.featureFlagService.isEnabled(
+        notificationFlags.preferencesV2
+      );
+
       const result = {
         success: true,
-        data: {
-          settings: pref?.categoryOverrides || {},
-        },
+        data: v2Enabled
+          ? {
+              push: pref?.pushEnabled ?? true,
+              email: pref?.emailEnabled ?? true,
+              sms: pref?.smsEnabled ?? false,
+              inApp: pref?.inAppEnabled ?? true,
+              quietHoursStart: pref?.quietHoursStart ?? null,
+              quietHoursEnd: pref?.quietHoursEnd ?? null,
+              timezone: pref?.timezone ?? null,
+              categoryOverrides: pref?.categoryOverrides || {},
+            }
+          : {
+              settings: pref?.categoryOverrides || {},
+            },
       };
 
       await this.cache.set(cacheK, result, 300);
@@ -505,6 +586,101 @@ export class NotificationsService {
       );
       return false;
     }
+  }
+
+  /**
+   * Daily digest (notification_digest): emails each user a summary of their
+   * unread notifications since the last digest (24h default), tracked via a
+   * per-user Redis marker so digests never duplicate. Flag off → 403.
+   * Admin-triggered via POST /v1/notifications/admin/digest/send.
+   */
+  async sendDailyDigest(userId?: string): Promise<{
+    success: boolean;
+    data: { sent: number; skipped: number; users: number };
+  }> {
+    if (!(await this.featureFlagService.isEnabled(notificationFlags.digest))) {
+      throw new ForbiddenException('Daily digests are not enabled');
+    }
+
+    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const targetUserIds: string[] = [];
+
+    if (userId) {
+      targetUserIds.push(userId);
+    } else {
+      const rows = await this.prisma.notification.findMany({
+        where: { readAt: null, createdAt: { gte: cutoff } },
+        select: { userId: true },
+        distinct: ['userId'],
+      });
+      targetUserIds.push(...rows.map((r) => r.userId));
+    }
+
+    let sent = 0;
+    let skipped = 0;
+
+    for (const targetId of targetUserIds) {
+      try {
+        const marker = `notification:digest:last:${targetId}`;
+        const lastSentRaw = await this.redisService.get(marker);
+        const since = lastSentRaw ? new Date(parseInt(lastSentRaw, 10)) : cutoff;
+
+        const items = await this.prisma.notification.findMany({
+          where: { userId: targetId, readAt: null, createdAt: { gte: since } },
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+          select: {
+            id: true,
+            type: true,
+            title: true,
+            message: true,
+            createdAt: true,
+          },
+        });
+
+        if (items.length === 0) {
+          skipped++;
+          continue;
+        }
+
+        const user = await this.getUserData(targetId);
+        if (!user?.email) {
+          skipped++;
+          continue;
+        }
+
+        const digestHtml = items
+          .map(
+            (item) =>
+              `<li><strong>${item.title.replace(/</g, '&lt;')}</strong> — ${item.message.replace(/</g, '&lt;')}</li>`
+          )
+          .join('');
+
+        const ok = await this.emailService.sendEmail(
+          user.email,
+          NotificationsService.EMAIL_SUBJECTS['digest'],
+          'digest',
+          { count: items.length, items: digestHtml, displayName: user.displayName || 'there' }
+        );
+        if (ok) {
+          sent++;
+          await this.redisService.set(marker, String(Date.now()), 7 * 24 * 3600);
+          this.trackAnalyticsEvent('notification_digest_sent', targetId, {
+            count: items.length,
+          });
+        } else {
+          skipped++;
+        }
+      } catch (error) {
+        this.logger.warn(`Digest failed for user ${targetId}: ${(error as Error).message}`);
+        skipped++;
+      }
+    }
+
+    return {
+      success: true,
+      data: { sent, skipped, users: targetUserIds.length },
+    };
   }
 
   async sendEmailNotification(userId: string, subject: string, body: string): Promise<boolean> {

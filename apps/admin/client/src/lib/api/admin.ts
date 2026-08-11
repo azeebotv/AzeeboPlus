@@ -8,6 +8,8 @@ import type {
   ContentReviewItem,
   EngagementMetrics,
   EngagementTrend,
+  SearchCorrectionsData,
+  SearchStats,
   NotificationTemplate,
   NotificationStats,
   AdminReport,
@@ -229,6 +231,11 @@ export const adminApi = {
   getEngagementTrends: (range: string) =>
     apiFetch<EngagementTrend[]>(`/api/v1/admin/engagement/trends?range=${range}`),
 
+  // ─── Search Analytics ───────────────────────────────────────────────────
+  getSearchCorrections: (days = 30) =>
+    apiFetch<SearchCorrectionsData>(`/api/v1/analytics/search/corrections?days=${days}`),
+  getSearchStats: () => apiFetch<SearchStats>('/api/v1/search/admin/stats'),
+
   // ─── Notifications ──────────────────────────────────────────────────────
   getNotificationTemplates: () =>
     apiFetch<NotificationTemplate[]>('/api/v1/admin/notification-templates'),
@@ -313,6 +320,41 @@ export const adminApi = {
   resetGlobalFeatureFlag: (key: string) =>
     apiFetch<{ key: string; removed: boolean }>(`/api/v1/admin/feature-flags/${key}`, {
       method: 'DELETE',
+    }),
+  listKnownFlags: () =>
+    apiFetch<{
+      domains: Array<{ domain: string; flags: Array<{ property: string; key: string }> }>;
+      total: number;
+    }>('/api/v1/admin/feature-flags/known'),
+  pruneStaleFlags: (keys?: string[]) =>
+    apiFetch<{
+      removedCount: number;
+      removedKeys: string[];
+      archivedCount: number;
+      skipped: string[];
+    }>('/api/v1/admin/feature-flags/prune-stale', {
+      method: 'POST',
+      body: JSON.stringify(keys && keys.length ? { keys } : {}),
+    }),
+  listRecentlyDeletedFlags: (limit = 20) =>
+    apiFetch<
+      Array<{
+        key: string;
+        deletedAt: string;
+        deletedBy?: string | null;
+        archived: boolean;
+        enabled?: boolean;
+      }>
+    >(`/api/v1/admin/feature-flags/deleted?limit=${limit}`),
+  restoreFlags: (keys: string[]) =>
+    apiFetch<{
+      restoredCount: number;
+      restored: Array<{ key: string; enabled?: boolean }>;
+      skipped: Array<{ key: string; reason: string }>;
+
+    }>('/api/v1/admin/feature-flags/restore', {
+      method: 'POST',
+      body: JSON.stringify({ keys }),
     }),
 
   // ─── CDN (media-service admin purge) ────────────────────────────────────

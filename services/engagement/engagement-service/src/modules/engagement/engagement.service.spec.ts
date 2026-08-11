@@ -3,6 +3,7 @@ import { EngagementService } from './engagement.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { CacheService } from '@azeebo/shared-services';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 
 jest.mock('axios');
 
@@ -38,6 +39,7 @@ describe('EngagementService', () => {
           useValue: { get: jest.fn((_key: string, defaultValue: unknown) => defaultValue) },
         },
         { provide: 'BullQueue_analytics', useValue: { add: jest.fn() } },
+        { provide: FeatureFlagService, useValue: { isEnabled: jest.fn().mockResolvedValue(true) } },
       ],
     }).compile();
 

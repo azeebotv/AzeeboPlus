@@ -7,6 +7,8 @@ import { HealthModule } from './modules/health/health.module.js';
 import { AdminModule } from './modules/admin/admin.module.js';
 import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
+import { FeatureFlagModule, messagingFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
 @Module({
   imports: [
@@ -19,6 +21,19 @@ import { ResponseWrapperInterceptor } from '@azeebo/logger';
     MessagingModule,
     HealthModule,
     AdminModule,
+    // Messaging feature gates: DMs ON; read receipts, typing indicator and
+    // media sharing OFF until launched.
+    FlagMetricsModule.register({ service: 'messaging-service' }),
+    FeatureFlagModule.register({
+      global: true,
+      ...flagHooks('messaging-service'),
+      defaultFlags: {
+        [messagingFlags.dmEnabled]: true,
+        [messagingFlags.readReceipts]: false,
+        [messagingFlags.typingIndicator]: false,
+        [messagingFlags.mediaSharing]: false,
+      },
+    }),
   ],
   providers: [
     {

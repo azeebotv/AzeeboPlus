@@ -7,6 +7,7 @@ import {
 } from '@nestjs/throttler';
 import { Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { FeatureFlagService, gatewayFlags } from '@azeebo/feature-flags';
 import type Redis from 'ioredis';
 
 /**
@@ -40,7 +41,9 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
   constructor(
     @Inject('THROTTLER:MODULE_OPTIONS') options: ThrottlerModuleOptions,
     @Inject(ThrottlerStorage) storageService: ThrottlerStorage,
-    @Inject(Reflector) reflector: Reflector
+    @Inject(Reflector) reflector: Reflector,
+    @Inject(FeatureFlagService)
+    private readonly featureFlagService: FeatureFlagService
   ) {
     super(options, storageService, reflector);
     if (process.env.REDIS_URL) {
@@ -75,6 +78,20 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
     return AuthThrottlerGuard.AUTH_PATH_PATTERNS.some((pattern) => pattern.test(path));
   }
 
+  /**
+   * gateway_strict_rate_limits (off by default): when on, auth endpoints are
+   * throttled far more aggressively (limit 3 / 60s instead of 10 / 60s) — for
+   * credential-stuffing incidents or pre-launch hardening.
+   */
+  private async getEffectiveAuthLimit(): Promise<number> {
+    try {
+      const strict = await this.featureFlagService.isEnabled(gatewayFlags.strictRateLimits);
+      return strict ? 3 : this.AUTH_LIMIT;
+    } catch {
+      return this.AUTH_LIMIT;
+    }
+  }
+
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const path = request.path || request.url || '';
@@ -83,6 +100,7 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
       return super.canActivate(context);
     }
 
+    const authLimit = await this.getEffectiveAuthLimit();
     const clientIp = request.ip || request.socket?.remoteAddress || 'unknown';
     const window = Math.floor(Date.now() / (this.AUTH_TTL * 1000));
 
@@ -90,9 +108,9 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
     const endpoint = path.replace(/^\/+|\/+$/g, '').replace(/\//g, ':');
     const ipKey = `${this.KEY_PREFIX}${clientIp}:${endpoint}:${window}`;
     if (this.useRedis && this.redisClient) {
-      await this.checkWithRedis(ipKey, clientIp);
+      await this.checkWithRedis(ipKey, clientIp, authLimit);
     } else {
-      this.checkInMemory(`${clientIp}:${endpoint}`, window);
+      this.checkInMemory(`${clientIp}:${endpoint}`, window, authLimit);
     }
 
     // Per-account + endpoint rate limit (extract email/phone from body if available)
@@ -100,23 +118,27 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
     if (account_id) {
       const accountKey = `${this.KEY_PREFIX}acct:${account_id}:${endpoint}:${window}`;
       if (this.useRedis && this.redisClient) {
-        await this.checkWithRedis(accountKey, `account:${account_id}`);
+        await this.checkWithRedis(accountKey, `account:${account_id}`, authLimit);
       } else {
-        this.checkInMemory(`acct:${account_id}:${endpoint}`, window);
+        this.checkInMemory(`acct:${account_id}:${endpoint}`, window, authLimit);
       }
     }
 
     return true;
   }
 
-  private async checkWithRedis(key: string, clientIp: string): Promise<boolean> {
+  private async checkWithRedis(
+    key: string,
+    clientIp: string,
+    limit: number = this.AUTH_LIMIT
+  ): Promise<boolean> {
     try {
       const count = await this.redisClient!.incr(key);
       if (count === 1) {
         await this.redisClient!.expire(key, this.AUTH_TTL);
       }
 
-      if (count > this.AUTH_LIMIT) {
+      if (count > limit) {
         this.logger.warn(`Auth rate limit exceeded for IP: ${clientIp}`);
         throw new ThrottlerException('Too many authentication attempts. Please try again later.');
       }
@@ -128,17 +150,21 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
         `Redis throttler error, falling back to in-memory: ${(error as Error).message}`
       );
       this.redisClient = null;
-      return this.checkInMemory(clientIp, Math.floor(Date.now() / (this.AUTH_TTL * 1000)));
+      return this.checkInMemory(
+        clientIp,
+        Math.floor(Date.now() / (this.AUTH_TTL * 1000)),
+        limit
+      );
     }
   }
 
-  private checkInMemory(clientIp: string, window: number): boolean {
+  private checkInMemory(clientIp: string, window: number, limit: number = this.AUTH_LIMIT): boolean {
     const now = Date.now();
     const key = `${this.KEY_PREFIX}${clientIp}:${window}`;
     const entry = this.inMemoryRequests.get(key);
 
     if (entry && entry.resetTime > now) {
-      if (entry.count >= this.AUTH_LIMIT) {
+      if (entry.count >= limit) {
         this.logger.warn(`Auth rate limit exceeded for IP: ${clientIp}`);
         throw new ThrottlerException('Too many authentication attempts. Please try again later.');
       }

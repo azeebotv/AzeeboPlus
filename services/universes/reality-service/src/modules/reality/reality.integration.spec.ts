@@ -299,9 +299,9 @@ describe('RealityService Integration - Cross-Service Communication', () => {
 
       expect(result.success).toBe(true);
       expect(mockedAxios.post).toHaveBeenCalledWith(
-        expect.stringContaining('/analytics/track'),
+        expect.stringContaining('/v1/analytics/events'),
         expect.objectContaining({
-          eventName: 'vote_submitted',
+          type: 'vote_submitted',
           userId: 'user-1',
           universe: 'reality',
         }),
@@ -355,9 +355,9 @@ describe('RealityService Integration - Cross-Service Communication', () => {
 
       expect(result.success).toBe(true);
       expect(mockedAxios.post).toHaveBeenCalledWith(
-        expect.stringContaining('/analytics/track'),
+        expect.stringContaining('/v1/analytics/events'),
         expect.objectContaining({
-          eventName: 'prediction_placed',
+          type: 'prediction_placed',
           userId: 'user-1',
         }),
         expect.objectContaining({ timeout: 10000 })

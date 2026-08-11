@@ -8,6 +8,8 @@ import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
 import { CacheModule } from '@azeebo/shared-services';
+import { FeatureFlagModule, liveEventFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
 @Module({
   imports: [
@@ -20,6 +22,19 @@ import { CacheModule } from '@azeebo/shared-services';
     DatabaseModule,
     LiveEventModule,
     HealthModule,
+    // Live-event kill-switches: PPV + streaming default ON (core product),
+    // ticket sales + chat default OFF until launched.
+    FlagMetricsModule.register({ service: 'live-event-service' }),
+    FeatureFlagModule.register({
+      global: true,
+      ...flagHooks('live-event-service'),
+      defaultFlags: {
+        [liveEventFlags.ppv]: true,
+        [liveEventFlags.streaming]: true,
+        [liveEventFlags.tickets]: false,
+        [liveEventFlags.chat]: false,
+      },
+    }),
   ],
   providers: [
     {

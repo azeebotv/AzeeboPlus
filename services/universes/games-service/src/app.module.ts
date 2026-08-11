@@ -12,6 +12,7 @@ import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { CacheModule } from '@azeebo/shared-services';
 import { FeatureFlagModule, gamesFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
 @Module({
   imports: [
@@ -28,8 +29,10 @@ import { FeatureFlagModule, gamesFlags } from '@azeebo/feature-flags';
     HealthModule,
     // Games toggles: tournament engine, AI trivia, and seasonal leaderboards
     // all default OFF until the features launch.
+    FlagMetricsModule.register({ service: 'games-service' }),
     FeatureFlagModule.register({
       global: true,
+      ...flagHooks('games-service'),
       defaultFlags: {
         [gamesFlags.tournamentsEnabled]: false,
         [gamesFlags.triviaAi]: false,

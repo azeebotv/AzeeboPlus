@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, useRef } from 'react';
+import { useFlags } from './FlagsContext';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -32,11 +33,19 @@ function getInitialTheme(): Theme {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
+  const { isEnabled } = useFlags();
+  // web_dark_mode (on by default): when disabled, dark mode is unavailable and
+  // the app is forced to light regardless of stored/system preference.
+  const darkModeEnabled = isEnabled('web_dark_mode');
+
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (darkModeEnabled) return getInitialTheme();
+    return 'light';
+  });
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() =>
-    resolveTheme(getInitialTheme())
+    darkModeEnabled ? resolveTheme(getInitialTheme()) : 'light'
   );
-  const themeRef = useRef<Theme>(getInitialTheme());
+  const themeRef = useRef<Theme>(darkModeEnabled ? getInitialTheme() : 'light');
 
   useEffect(() => {
     const stored = localStorage.getItem('theme') as Theme | null;
@@ -63,6 +72,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    // Keep light-only when the dark-mode flag is off, even mid-session.
+    if (!darkModeEnabled) {
+      themeRef.current = 'light';
+      setThemeState('light');
+      setResolvedTheme('light');
+      document.documentElement.classList.remove('dark');
+      return;
+    }
+
     const newResolved = resolveTheme(theme);
     setResolvedTheme(newResolved);
 
@@ -73,7 +91,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
 
     localStorage.setItem('theme', theme);
-  }, [theme]);
+  }, [theme, darkModeEnabled]);
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);

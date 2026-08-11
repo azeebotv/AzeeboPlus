@@ -18,8 +18,11 @@ ANALYTICS_SERVICE_URL=http://analytics-service:3008
 # WebSocket (needed by messaging-service and reality-service)
 WS_CORS_ORIGIN=https://app.azeeboplus.com
 
-# Feature Flags (needed by content-service)
+# Feature Flags (runtime store — needed by every service that registers FeatureFlagModule)
 FEATURE_FLAG_REDIS_URL=redis://localhost:6379
+# Optional per-flag default overrides when the store is empty (e.g. emergency dark-launch):
+# FEATURE_FLAG_DEFAULT_WEB_MAINTENANCE_MODE=true
+# FEATURE_FLAG_DEFAULT_QUEUE_PROCESS_PAYMENTS=false
 
 # Event Bus (needed by wallet-service)
 EVENT_BUS_REDIS_URL=redis://localhost:6379
@@ -229,6 +232,14 @@ health-check:
         curl -sf "http://localhost:3013/api/v1/auth/health" || exit 1
         curl -sf "http://localhost:3013/api/v1/users/health" || exit 1
         echo "✅ Smoke tests passed"
+
+    - name: Verify feature-flag store reachable + defaults loaded
+      run: |
+        # Bootstrap endpoint returns public flags with defaults when the store is up;
+        # empty store still resolves registered defaults (not an error). A 5xx or
+        # timeout means FEATURE_FLAG_REDIS_URL is unreachable.
+        curl -sf "http://localhost:3013/feature-flags/bootstrap" | grep -q '"success":true' || exit 1
+        echo "✅ Feature flag store reachable, defaults resolved"
 ```
 
 ---

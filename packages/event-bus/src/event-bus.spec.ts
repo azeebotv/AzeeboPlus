@@ -1,4 +1,4 @@
-import { EventBusService, EventTypes, EventBusModule, EVENT_BUS_SERVICE } from './index';
+import { EventBusService, EventTypes, EventBusModule, EVENT_BUS_SERVICE, eventConsumeFlagKey } from './index';
 
 jest.mock('ioredis', () => {
   const inst: any = {};
@@ -206,6 +206,55 @@ describe('EventBusService', () => {
       const logError = jest.spyOn((eventBus as any).logger, 'error').mockImplementation();
       await (eventBus as any).handleMessage('test:events:test', 'invalid-json');
       expect(logError).toHaveBeenCalledWith(expect.stringContaining('Failed to handle message'));
+    });
+
+    it('should skip events when the consumer toggle resolves false', async () => {
+      const toggle = jest.fn(async () => false);
+      const toggledBus = new EventBusService({ ...mockConfig, consumerToggle: toggle }, 'test');
+      const handler = jest.fn().mockResolvedValue(undefined);
+      await toggledBus.subscribe('payment.success', handler);
+
+      const message = JSON.stringify({
+        id: 'evt-2',
+        type: 'payment.success',
+        source: 'payment-service',
+        timestamp: new Date().toISOString(),
+        data: {},
+      });
+      const logWarn = jest.spyOn((toggledBus as any).logger, 'warn').mockImplementation();
+      await (toggledBus as any).handleMessage('test:events:payment.success', message);
+
+      expect(toggle).toHaveBeenCalledWith('payment.success');
+      expect(handler).not.toHaveBeenCalled();
+      expect(logWarn).toHaveBeenCalledWith(expect.stringContaining('consumption disabled'));
+    });
+
+    it('should dispatch events when the consumer toggle resolves true', async () => {
+      const toggle = jest.fn(async () => true);
+      const toggledBus = new EventBusService({ ...mockConfig, consumerToggle: toggle }, 'test');
+      const handler = jest.fn().mockResolvedValue(undefined);
+      await toggledBus.subscribe('payment.success', handler);
+
+      const message = JSON.stringify({
+        id: 'evt-3',
+        type: 'payment.success',
+        source: 'payment-service',
+        timestamp: new Date().toISOString(),
+        data: {},
+      });
+      await (toggledBus as any).handleMessage('test:events:payment.success', message);
+      expect(handler).toHaveBeenCalledTimes(1);
+    });
+
+    it('isConsumptionEnabled returns true when no toggle is configured', async () => {
+      expect(await eventBus.isConsumptionEnabled('user.created')).toBe(true);
+    });
+  });
+
+  describe('eventConsumeFlagKey', () => {
+    it('builds canonical events_consume_* flag keys', () => {
+      expect(eventConsumeFlagKey('user.created')).toBe('events_consume_user.created');
+      expect(eventConsumeFlagKey('payment.success')).toBe('events_consume_payment.success');
     });
   });
 

@@ -3,6 +3,7 @@ import {
   Controller,
   Post,
   Get,
+  Put,
   Delete,
   Param,
   Query,
@@ -21,6 +22,7 @@ import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { UploadService } from './upload.service';
 import { PremiumContentService } from './premium-content.service';
+import { InitChunkedUploadDto } from './dto/chunked-upload.dto.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 import { FeatureFlag, FeatureFlagGuard, mediaFlags } from '@azeebo/feature-flags';
 
@@ -178,6 +180,56 @@ export class UploadController {
     const result = await this.uploadService.uploadBanner(file, req.user?.id);
     res.setHeader('Cache-Control', result.cacheControl);
     return result;
+  }
+
+  @Post('upload/chunked/init')
+  @ApiBearerAuth()
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(mediaFlags.uploadChunked)
+  @ApiOperation({ summary: 'Start a chunked/resumable upload session (media_upload_chunked)' })
+  @ApiResponse({ status: 201, description: 'Upload session created' })
+  @ApiResponse({ status: 403, description: 'Chunked uploads disabled' })
+  async initChunkedUpload(
+    @Request() req: { user?: { id?: string } },
+    @Body() dto: InitChunkedUploadDto
+  ): Promise<unknown> {
+    const result = await this.uploadService.initChunkedUpload(dto, req.user?.id);
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Put('upload/chunked/:uploadId/:index')
+  @ApiBearerAuth()
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(mediaFlags.uploadChunked)
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Upload one chunk of a chunked upload session' })
+  @ApiResponse({ status: 200, description: 'Chunk stored' })
+  @ApiResponse({ status: 400, description: 'Invalid chunk index or size' })
+  @ApiResponse({ status: 403, description: 'Chunked uploads disabled' })
+  async uploadChunk(
+    @Param('uploadId') uploadId: string,
+    @Param('index') index: string,
+    @UploadedFile() file: Express.Multer.File
+  ): Promise<unknown> {
+    const result = await this.uploadService.uploadChunk(
+      uploadId,
+      Number.parseInt(index, 10),
+      file
+    );
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Post('upload/chunked/:uploadId/complete')
+  @ApiBearerAuth()
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(mediaFlags.uploadChunked)
+  @ApiOperation({ summary: 'Assemble a chunked upload and process it like a normal upload' })
+  @ApiResponse({ status: 201, description: 'Upload completed' })
+  @ApiResponse({ status: 400, description: 'Incomplete session or assembly failure' })
+  @ApiResponse({ status: 403, description: 'Chunked uploads disabled' })
+  async completeChunkedUpload(@Param('uploadId') uploadId: string): Promise<unknown> {
+    const result = await this.uploadService.completeChunkedUpload(uploadId);
+    return ApiResponseWrapper.success(result);
   }
 
   @Get('presigned/upload')

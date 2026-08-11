@@ -176,6 +176,19 @@ describe('FeatureFlagService', () => {
       await service.isEnabled('x');
       expect(redis.getCalls).toBeGreaterThan(before);
     });
+
+    it('load: 1000 evaluations hit Redis once per cached flag (cache absorbs the volume)', async () => {
+      const { service, redis } = makeService({ cacheTtlMs: 60_000 });
+      await service.setFlag({ key: 'hot', enabled: true });
+      const before = redis.getCalls;
+
+      for (let i = 0; i < 1000; i++) {
+        await service.isEnabled('hot');
+      }
+
+      // First read populates the cache; the other 999 must not touch Redis.
+      expect(redis.getCalls - before).toBe(1);
+    });
   });
 
   describe('batch + public flags', () => {
@@ -219,6 +232,84 @@ describe('FeatureFlagService', () => {
         { key: 'alpha', enabled: true, actor: 'admin-1' },
         { key: 'alpha', enabled: false, actor: 'admin-2' },
       ]);
+    });
+  });
+
+  describe('stale expiry awareness', () => {
+    const PAST = '2000-01-01T00:00:00.000Z';
+    const FUTURE = '2999-01-01T00:00:00.000Z';
+
+    beforeEach(() => {
+      jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    });
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('fires onStaleEnabled on every evaluation of an ENABLED flag past its staleAfter, and warns once (throttled)', async () => {
+      const staleHits: string[] = [];
+      const { service, redis } = makeService({
+        onStaleEnabled: (key) => staleHits.push(key),
+      });
+      await redis.set('feature_flags:expired_flag', JSON.stringify({ key: 'expired_flag', enabled: true, staleAfter: PAST }));
+
+      await service.isEnabled('expired_flag');
+      await service.isEnabled('expired_flag');
+      await service.isEnabled('expired_flag');
+
+      // Metric hook fires per evaluation (rate-measurable); the console
+      // warning is throttled to one per key per 5 minutes.
+      expect(staleHits).toEqual(['expired_flag', 'expired_flag', 'expired_flag']);
+      expect(console.warn).toHaveBeenCalledTimes(1);
+      expect(console.warn).toHaveBeenCalledWith(
+        expect.stringContaining('"expired_flag" is still ENABLED past its staleAfter (2000-01-01T00:00:00.000Z)')
+      );
+    });
+
+    it('does NOT report a DISABLED flag past its staleAfter', async () => {
+      const staleHits: string[] = [];
+      const { service, redis } = makeService({ onStaleEnabled: (key) => staleHits.push(key) });
+      await redis.set('feature_flags:expired_off', JSON.stringify({ key: 'expired_off', enabled: false, staleAfter: PAST }));
+
+      expect(await service.isEnabled('expired_off')).toBe(false);
+      expect(staleHits).toEqual([]);
+      expect(console.warn).not.toHaveBeenCalled();
+    });
+
+    it('does NOT report a flag whose staleAfter is still in the future', async () => {
+      const staleHits: string[] = [];
+      const { service, redis } = makeService({ onStaleEnabled: (key) => staleHits.push(key) });
+      await redis.set('feature_flags:fresh_flag', JSON.stringify({ key: 'fresh_flag', enabled: true, staleAfter: FUTURE }));
+
+      expect(await service.isEnabled('fresh_flag')).toBe(true);
+      expect(staleHits).toEqual([]);
+      expect(console.warn).not.toHaveBeenCalled();
+    });
+
+    it('reports through getValue too (enabled variant flag past expiry)', async () => {
+      const staleHits: string[] = [];
+      const { service, redis } = makeService({ onStaleEnabled: (key) => staleHits.push(key) });
+      await redis.set(
+        'feature_flags:expired_value',
+        JSON.stringify({ key: 'expired_value', enabled: true, value: 42, staleAfter: PAST })
+      );
+
+      expect(await service.getValue('expired_value')).toBe(42);
+      expect(staleHits).toEqual(['expired_value']);
+    });
+
+    it('reports only when the flag is actually served to the caller (targeted rollout false → no report)', async () => {
+      const staleHits: string[] = [];
+      const { service, redis } = makeService({ onStaleEnabled: (key) => staleHits.push(key) });
+      await redis.set(
+        'feature_flags:expired_targeted',
+        JSON.stringify({ key: 'expired_targeted', enabled: true, staleAfter: PAST, userIds: ['u-allow'] })
+      );
+
+      expect(await service.isEnabled('expired_targeted', 'u-other')).toBe(false);
+      expect(staleHits).toEqual([]);
+      expect(await service.isEnabled('expired_targeted', 'u-allow')).toBe(true);
+      expect(staleHits).toEqual(['expired_targeted']);
     });
   });
 

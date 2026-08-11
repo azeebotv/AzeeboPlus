@@ -1142,19 +1142,33 @@ export class ContentService {
   async addCommentToContent(
     userId: string,
     contentId: string,
-    text: string
+    text: string,
+    parentId?: string
   ): Promise<{
     success: boolean;
     data: { id: string; contentId: string; userId: string; text: string; createdAt: Date };
   }> {
     try {
-      const comment = await this.contentRepository.addComment(contentId, userId, text);
+      // content_comments_v2: threaded replies are only accepted while the flag
+      // is on — off, a parentId is rejected so clients can't depend on threads.
+      if (parentId) {
+        if (!(await this.featureFlagService.isEnabled(contentFlags.commentsV2))) {
+          throw new BadRequestException('Threaded comments are not enabled');
+        }
+        const parent = await this.contentRepository.findCommentById(parentId);
+        if (!parent || parent.contentId !== contentId) {
+          throw new BadRequestException('Parent comment not found on this content');
+        }
+      }
+
+      const comment = await this.contentRepository.addComment(contentId, userId, text, parentId);
 
       return {
         success: true,
         data: comment,
       };
     } catch (error) {
+      if (error instanceof BadRequestException) throw error;
       this.logger.error(`Failed to add comment to content: ${error}`);
       return {
         success: false,

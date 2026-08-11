@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
+import { FeatureFlagService, liveEventFlags } from '@azeebo/feature-flags';
 import axios from 'axios';
 
 @Injectable()
@@ -18,7 +19,8 @@ export class LiveEventService {
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
-    @Inject(ConfigService) private readonly config: ConfigService
+    @Inject(ConfigService) private readonly config: ConfigService,
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
   ) {
     this.walletServiceUrl =
       this.config.get<string>('WALLET_SERVICE_URL') || 'http://wallet-service:3002';
@@ -68,6 +70,11 @@ export class LiveEventService {
     maxViewers?: number;
     chatEnabled?: boolean;
   }) {
+    // live_event_chat: when off, chat is disabled on new events regardless of
+    // the organizer's request (moderation kill-switch).
+    const chatEnabled =
+      (data.chatEnabled ?? true) && (await this.featureFlagService.isEnabled(liveEventFlags.chat));
+
     return this.prisma.liveEvent.create({
       data: {
         title: data.title,
@@ -79,7 +86,7 @@ export class LiveEventService {
         ticketPrice: data.ticketPrice,
         currency: data.currency || 'NGN',
         maxViewers: data.maxViewers,
-        chatEnabled: data.chatEnabled ?? true,
+        chatEnabled,
         status: 'scheduled',
       },
     });
@@ -123,6 +130,11 @@ export class LiveEventService {
   }
 
   async purchaseTicket(eventId: string, userId: string) {
+    // live_event_tickets: when off, ticket sales are disabled entirely.
+    if (!(await this.featureFlagService.isEnabled(liveEventFlags.tickets, userId))) {
+      throw new ForbiddenException('Ticket sales are currently disabled');
+    }
+
     const event = await this.prisma.liveEvent.findUnique({
       where: { id: eventId },
       include: { _count: { select: { tickets: true } } },
@@ -185,6 +197,11 @@ export class LiveEventService {
   }
 
   async getStreamUrl(eventId: string, userId: string) {
+    // live_event_streaming: when off, the streaming backend is switched off.
+    if (!(await this.featureFlagService.isEnabled(liveEventFlags.streaming, userId))) {
+      throw new ForbiddenException('Live streaming is currently disabled');
+    }
+
     const event = await this.prisma.liveEvent.findUnique({ where: { id: eventId } });
     if (!event) throw new NotFoundException('Event not found');
 
@@ -192,11 +209,17 @@ export class LiveEventService {
       throw new ForbiddenException('Event has not started yet');
     }
 
-    const ticket = await this.prisma.liveEventTicket.findFirst({
-      where: { eventId, userId, status: 'purchased' },
-    });
-    if (!ticket) {
-      throw new ForbiddenException('You must purchase a ticket to watch this event');
+    // live_event_ppv: when on, paid events enforce ticket purchase (PPV gate);
+    // when off, the ticket requirement is lifted for all events.
+    const ppvEnabled = await this.featureFlagService.isEnabled(liveEventFlags.ppv, userId);
+    const requiresTicket = ppvEnabled && Number(event.ticketPrice) > 0;
+    if (requiresTicket) {
+      const ticket = await this.prisma.liveEventTicket.findFirst({
+        where: { eventId, userId, status: 'purchased' },
+      });
+      if (!ticket) {
+        throw new ForbiddenException('You must purchase a ticket to watch this event');
+      }
     }
 
     if (event.streamUrl) return { streamUrl: event.streamUrl, event };

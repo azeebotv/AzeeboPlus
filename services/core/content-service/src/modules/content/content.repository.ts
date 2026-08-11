@@ -144,14 +144,24 @@ export class ContentRepository {
     };
   }
 
-  async addComment(contentId: string, userId: string, text: string): Promise<CommentEntity> {
+  async addComment(
+    contentId: string,
+    userId: string,
+    text: string,
+    parentId?: string
+  ): Promise<CommentEntity> {
     return this.prisma.comment.create({
       data: {
         contentId,
         userId,
         text,
+        ...(parentId ? { parentId } : {}),
       },
     }) as Promise<CommentEntity>;
+  }
+
+  async findCommentById(id: string): Promise<CommentEntity | null> {
+    return this.prisma.comment.findUnique({ where: { id } }) as Promise<CommentEntity | null>;
   }
 
   async getAnalytics(contentId: string): Promise<AnalyticsResult> {

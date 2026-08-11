@@ -29,6 +29,9 @@ export const WEB_FLAG_KEYS = {
   darkMode: 'web_dark_mode',
   autoplay: 'web_autoplay',
   lowDataDefault: 'web_low_data_default',
+  recommendationsRail: 'web_recommendations_rail',
+  announcementBanner: 'web_announcement_banner',
+  premiumUpsell: 'web_premium_upsell',
 } as const;
 
 /** Sentinel key for per-universe availability, e.g. `universe.reality.enabled`. */

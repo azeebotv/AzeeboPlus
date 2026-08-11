@@ -9,6 +9,7 @@ import { RewardsService } from './rewards.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { CacheService } from '@azeebo/shared-services';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 
 interface TxMocks {
   $queryRaw: jest.Mock;
@@ -79,6 +80,16 @@ describe('RewardsService', () => {
               };
               return config[key] ?? defaultValue;
             }),
+          },
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: {
+            // streaks ON (checkIn tests exercise the streak path); all other
+            // reward flags OFF (doublePoints off keeps earnPoints at base).
+            isEnabled: jest.fn().mockImplementation((key: string) =>
+              Promise.resolve(key === 'reward_streaks')
+            ),
           },
         },
         {

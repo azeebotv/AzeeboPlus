@@ -11,6 +11,7 @@ import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Server, Socket } from 'socket.io';
 import { MessagingService } from './messaging.service.js';
+import { FeatureFlagService, messagingFlags } from '@azeebo/feature-flags';
 
 @WebSocketGateway({
   cors: {
@@ -27,7 +28,8 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
 
   constructor(
     private readonly messagingService: MessagingService,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    private readonly featureFlagService: FeatureFlagService
   ) {}
 
   afterInit() {
@@ -119,12 +121,18 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
   }
 
   @SubscribeMessage('typing')
-  handleTyping(
+  async handleTyping(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { conversationId: string; isTyping: boolean }
   ) {
     const userId = client.data.userId;
     if (!userId) return;
+
+    // messaging_typing_indicator: off by default — drop typing events so no
+    // presence traffic reaches clients until the flag is enabled.
+    if (!(await this.featureFlagService.isEnabled(messagingFlags.typingIndicator))) {
+      return;
+    }
 
     client.to(`conversation:${data.conversationId}`).emit('user_typing', {
       userId,
@@ -141,6 +149,12 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
     const userId = client.data.userId;
     if (!userId) {
       return { event: 'error', data: { message: 'Not authenticated' } };
+    }
+
+    // messaging_read_receipts: off by default — drop read receipts so no
+    // delivery-confirmation traffic reaches clients until the flag is enabled.
+    if (!(await this.featureFlagService.isEnabled(messagingFlags.readReceipts))) {
+      return { event: 'mark_read_success', data: { messageId: data.messageId } };
     }
 
     const result = await this.messagingService.markAsRead(

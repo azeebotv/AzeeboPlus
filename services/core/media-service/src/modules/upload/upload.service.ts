@@ -1,4 +1,5 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { S3Service } from './s3.service';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from '@azeebo/shared-services';
@@ -39,6 +40,8 @@ export interface UploadResponse {
   cacheControl: string;
   /** Typed caching behavior of `cacheControl` (see UploadCachePolicy). */
   cachePolicy: UploadCachePolicy;
+  /** Present ('clean') when media_virus_scan is on and the scan passed. */
+  scanStatus?: 'clean';
 }
 
 export interface PresignedUploadResponse {
@@ -101,7 +104,8 @@ export class UploadService {
   ): Promise<UploadResponse> {
     this.fileValidationService.validateFile(file, 'image');
     const result = await this.s3Service.uploadFile(file, 'images');
-    return this.formatUploadResponse(result, file, { userId, uploadType: 'image' });
+    const scanStatus = await this.scanUploadIfEnabled(result.key, file.mimetype);
+    return this.formatUploadResponse(result, file, { userId, uploadType: 'image', scanStatus });
   }
 
   async uploadVideo(
@@ -110,12 +114,13 @@ export class UploadService {
   ): Promise<UploadResponse> {
     this.fileValidationService.validateFile(file, 'video');
     const result = await this.s3Service.uploadFile(file, 'videos');
+    const scanStatus = await this.scanUploadIfEnabled(result.key, file.mimetype);
 
     if (this.transcodingEnabled && result.duration) {
       await this.scheduleTranscoding(result.key, result.duration);
     }
 
-    return this.formatUploadResponse(result, file, { userId, uploadType: 'video' });
+    return this.formatUploadResponse(result, file, { userId, uploadType: 'video', scanStatus });
   }
 
   async uploadAudio(
@@ -124,7 +129,8 @@ export class UploadService {
   ): Promise<UploadResponse> {
     this.fileValidationService.validateFile(file, 'audio');
     const result = await this.s3Service.uploadFile(file, 'audio');
-    return this.formatUploadResponse(result, file, { userId, uploadType: 'audio' });
+    const scanStatus = await this.scanUploadIfEnabled(result.key, file.mimetype);
+    return this.formatUploadResponse(result, file, { userId, uploadType: 'audio', scanStatus });
   }
 
   async uploadDocument(
@@ -133,7 +139,8 @@ export class UploadService {
   ): Promise<UploadResponse> {
     this.fileValidationService.validateFile(file, 'document');
     const result = await this.s3Service.uploadFile(file, 'documents');
-    return this.formatUploadResponse(result, file, { userId, uploadType: 'document' });
+    const scanStatus = await this.scanUploadIfEnabled(result.key, file.mimetype);
+    return this.formatUploadResponse(result, file, { userId, uploadType: 'document', scanStatus });
   }
 
   async uploadThumbnail(
@@ -142,7 +149,8 @@ export class UploadService {
   ): Promise<UploadResponse> {
     this.fileValidationService.validateFile(file, 'image');
     const result = await this.s3Service.uploadFile(file, 'thumbnails');
-    return this.formatUploadResponse(result, file, { userId, uploadType: 'thumbnail' });
+    const scanStatus = await this.scanUploadIfEnabled(result.key, file.mimetype);
+    return this.formatUploadResponse(result, file, { userId, uploadType: 'thumbnail', scanStatus });
   }
 
   async uploadAvatar(
@@ -151,7 +159,8 @@ export class UploadService {
   ): Promise<UploadResponse> {
     this.fileValidationService.validateFile(file, 'image');
     const result = await this.s3Service.uploadFile(file, 'avatars');
-    return this.formatUploadResponse(result, file, { userId, uploadType: 'avatar' });
+    const scanStatus = await this.scanUploadIfEnabled(result.key, file.mimetype);
+    return this.formatUploadResponse(result, file, { userId, uploadType: 'avatar', scanStatus });
   }
 
   async uploadBanner(
@@ -160,7 +169,215 @@ export class UploadService {
   ): Promise<UploadResponse> {
     this.fileValidationService.validateFile(file, 'image');
     const result = await this.s3Service.uploadFile(file, 'banners');
-    return this.formatUploadResponse(result, file, { userId, uploadType: 'banner' });
+    const scanStatus = await this.scanUploadIfEnabled(result.key, file.mimetype);
+    return this.formatUploadResponse(result, file, { userId, uploadType: 'banner', scanStatus });
+  }
+
+  // ─── Chunked / resumable upload (media_upload_chunked) ───────────────
+
+  private static readonly CHUNKED_UPLOAD_PREFIX = 'chunked_upload:';
+  private static readonly CHUNK_STAGING_PREFIX = 'uploads/chunks/';
+  private static readonly CHUNKED_UPLOAD_TTL_SECONDS = 24 * 3600;
+  private static readonly MAX_CHUNK_BYTES = 10 * 1024 * 1024;
+
+  async initChunkedUpload(
+    dto: { filename: string; contentType: string; totalChunks: number; uploadType: string },
+    userId?: string
+  ): Promise<{ uploadId: string; chunkSize: number; totalChunks: number; expiresAt: string }> {
+    if (!(await this.featureFlagService.isEnabled(mediaFlags.uploadChunked))) {
+      throw new ForbiddenException('Chunked uploads are not enabled');
+    }
+
+    const uploadId = randomUUID();
+    const session = {
+      userId: userId ?? null,
+      filename: dto.filename,
+      contentType: dto.contentType,
+      totalChunks: dto.totalChunks,
+      uploadType: dto.uploadType,
+      received: [] as number[],
+      createdAt: Date.now(),
+    };
+
+    await this.redisService.set(
+      `${UploadService.CHUNKED_UPLOAD_PREFIX}${uploadId}`,
+      JSON.stringify(session),
+      UploadService.CHUNKED_UPLOAD_TTL_SECONDS
+    );
+
+    return {
+      uploadId,
+      chunkSize: UploadService.MAX_CHUNK_BYTES,
+      totalChunks: dto.totalChunks,
+      expiresAt: new Date(Date.now() + UploadService.CHUNKED_UPLOAD_TTL_SECONDS * 1000).toISOString(),
+    };
+  }
+
+  async uploadChunk(
+    uploadId: string,
+    index: number,
+    file: Express.Multer.File
+  ): Promise<{ uploadId: string; received: number; totalChunks: number }> {
+    if (!(await this.featureFlagService.isEnabled(mediaFlags.uploadChunked))) {
+      throw new ForbiddenException('Chunked uploads are not enabled');
+    }
+
+    const session = await this.getChunkedSession(uploadId);
+    if (!Number.isInteger(index) || index < 0 || index >= session.totalChunks) {
+      throw new BadRequestException(
+        `Chunk index ${index} out of range (0-${session.totalChunks - 1})`
+      );
+    }
+    if (session.received.includes(index)) {
+      throw new BadRequestException(`Chunk ${index} already uploaded`);
+    }
+    if (!file || file.size === 0 || file.size > UploadService.MAX_CHUNK_BYTES) {
+      throw new BadRequestException(
+        `Chunk must be between 1 byte and ${UploadService.MAX_CHUNK_BYTES / 1024 / 1024}MB`
+      );
+    }
+
+    const key = `${UploadService.CHUNK_STAGING_PREFIX}${uploadId}/${index}`;
+    await this.s3Service.putBuffer(key, file.buffer, file.mimetype);
+
+    session.received.push(index);
+    await this.redisService.set(
+      `${UploadService.CHUNKED_UPLOAD_PREFIX}${uploadId}`,
+      JSON.stringify(session),
+      UploadService.CHUNKED_UPLOAD_TTL_SECONDS
+    );
+
+    return {
+      uploadId,
+      received: session.received.length,
+      totalChunks: session.totalChunks,
+    };
+  }
+
+  async completeChunkedUpload(uploadId: string): Promise<UploadResponse> {
+    if (!(await this.featureFlagService.isEnabled(mediaFlags.uploadChunked))) {
+      throw new ForbiddenException('Chunked uploads are not enabled');
+    }
+
+    const session = await this.getChunkedSession(uploadId);
+    if (session.received.length !== session.totalChunks) {
+      throw new BadRequestException(
+        `Incomplete upload: ${session.received.length}/${session.totalChunks} chunks received`
+      );
+    }
+
+    // Reassemble in order, then run through the same validated upload path as
+    // a single-shot upload (sniffing, size caps, transcoding, cache policy).
+    const buffers: Buffer[] = [];
+    for (let i = 0; i < session.totalChunks; i++) {
+      const chunk = await this.s3Service.getObjectBuffer(
+        `${UploadService.CHUNK_STAGING_PREFIX}${uploadId}/${i}`
+      );
+      buffers.push(chunk);
+    }
+    const assembled = Buffer.concat(buffers);
+    const file = {
+      buffer: assembled,
+      mimetype: session.contentType,
+      originalname: session.filename,
+      size: assembled.length,
+      fieldname: 'file',
+      encoding: '7bit',
+      destination: '',
+      filename: session.filename,
+      path: '',
+    } as Express.Multer.File;
+
+    try {
+      const uploadType = session.uploadType;
+      const dispatch: Record<string, (f: Express.Multer.File, u?: string) => Promise<UploadResponse>> = {
+        image: (f, u) => this.uploadImage(f, u),
+        video: (f, u) => this.uploadVideo(f, u),
+        audio: (f, u) => this.uploadAudio(f, u),
+        document: (f, u) => this.uploadDocument(f, u),
+      };
+      const handler = dispatch[uploadType];
+      if (!handler) {
+        throw new BadRequestException(`Unsupported upload type: ${uploadType}`);
+      }
+      return await handler(file, session.userId ?? undefined);
+    } finally {
+      // Best-effort cleanup of the staged chunks + session.
+      await this.cleanupChunkedUpload(uploadId, session.totalChunks);
+    }
+  }
+
+  private async getChunkedSession(uploadId: string): Promise<{
+    userId: string | null;
+    filename: string;
+    contentType: string;
+    totalChunks: number;
+    uploadType: string;
+    received: number[];
+    createdAt: number;
+  }> {
+    const raw = await this.redisService.get(`${UploadService.CHUNKED_UPLOAD_PREFIX}${uploadId}`);
+    if (!raw) {
+      throw new BadRequestException('Upload session not found or expired');
+    }
+    try {
+      return JSON.parse(raw);
+    } catch {
+      throw new BadRequestException('Upload session is corrupt');
+    }
+  }
+
+  private async cleanupChunkedUpload(uploadId: string, totalChunks: number): Promise<void> {
+    try {
+      const keys = Array.from(
+        { length: totalChunks },
+        (_, i) => `${UploadService.CHUNK_STAGING_PREFIX}${uploadId}/${i}`
+      );
+      await Promise.all(keys.map((key) => this.s3Service.deleteFile(key)));
+    } catch (error) {
+      this.logger.warn(
+        `Failed to clean up chunked upload ${uploadId}: ${(error as Error).message}`
+      );
+    }
+    await this.redisService.del(`${UploadService.CHUNKED_UPLOAD_PREFIX}${uploadId}`);
+  }
+
+  // ─── Virus scan hook (media_virus_scan) ──────────────────────────────
+
+  /**
+   * Upload scanning hook. While the flag is on every upload must pass a scan
+   * against MEDIA_VIRUS_SCAN_URL (a scanner that POSTs back { clean: boolean })
+   * before it is served — fail-closed: no scanner configured, scanner
+   * unreachable, or a non-clean verdict all reject the upload.
+   */
+  private async scanUploadIfEnabled(key: string, mimetype: string): Promise<'clean' | undefined> {
+    if (!(await this.featureFlagService.isEnabled(mediaFlags.virusScan))) {
+      return undefined;
+    }
+
+    const scannerUrl = this.configService.get<string>('MEDIA_VIRUS_SCAN_URL');
+    if (!scannerUrl) {
+      throw new BadRequestException(
+        'Virus scanning is enabled but no scanner is configured (MEDIA_VIRUS_SCAN_URL)'
+      );
+    }
+
+    try {
+      const response = await axios.post(
+        `${scannerUrl}/scan`,
+        { key, mimetype },
+        { timeout: 30_000 }
+      );
+      const verdict = response.data?.clean === true;
+      if (!verdict) {
+        throw new BadRequestException('Upload failed virus scan');
+      }
+      return 'clean';
+    } catch (error) {
+      if (error instanceof BadRequestException) throw error;
+      this.logger.error(`Virus scan failed for ${key}: ${(error as Error).message}`);
+      throw new BadRequestException('Upload could not be scanned. Please try again later.');
+    }
   }
 
   async getPresignedDownloadUrl(key: string, expiresIn = 3600): Promise<string> {
@@ -428,7 +645,9 @@ export class UploadService {
   private async formatUploadResponse(
     result: { key: string; url: string; cdnUrl: string; duration?: number },
     file: Express.Multer.File,
-    meta: { userId?: string; uploadType: string } = { uploadType: 'unknown' }
+    meta: { userId?: string; uploadType: string; scanStatus?: 'clean' } = {
+      uploadType: 'unknown',
+    }
   ): Promise<UploadResponse> {
     const { value: cacheControl, policy: cachePolicy } =
       await this.resolveCacheControl(file.mimetype);
@@ -467,6 +686,7 @@ export class UploadService {
       duration: result.duration,
       cacheControl,
       cachePolicy,
+      ...(meta.scanStatus ? { scanStatus: meta.scanStatus } : {}),
     };
   }
 
@@ -476,6 +696,7 @@ export class UploadService {
    * throws — a failed purge must not fail the upload.
    */
   private async purgeKeyFromCdn(key: string): Promise<void> {
+    if (!key) return;
     try {
       await this.cdnPurgeService.purgeKeys([key]);
     } catch (error) {

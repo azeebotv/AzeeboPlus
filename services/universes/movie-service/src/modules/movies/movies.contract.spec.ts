@@ -13,6 +13,7 @@ import { MoviesService } from './movies.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { RateLimitGuard } from '@azeebo/security';
+import { FeatureFlagGuard } from '@azeebo/feature-flags';
 
 class MockAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
@@ -105,6 +106,8 @@ describe('Movies Controller Contract Tests', () => {
         getOrThrow: jest.fn().mockReturnValue('test-value'),
       })
       .overrideGuard(RateLimitGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .overrideGuard(FeatureFlagGuard)
       .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .compile();
 

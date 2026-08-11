@@ -14,7 +14,8 @@ import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { ObservabilityModule } from '@azeebo/observability';
 import { FeatureFlagModule } from '@azeebo/feature-flags';
-import { authFlags } from '@azeebo/feature-flags';
+import { authFlags, subscriptionFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
 @Module({
   imports: [
@@ -37,8 +38,10 @@ import { authFlags } from '@azeebo/feature-flags';
     // Auth kill-switches: social providers + OTP channels default ON so ops can
     // disable a provider/channel instantly; MFA + passwordless default OFF until
     // rolled out; refresh-token rotation defaults ON.
+    FlagMetricsModule.register({ service: 'auth-service' }),
     FeatureFlagModule.register({
       global: true,
+      ...flagHooks('auth-service'),
       defaultFlags: {
         [authFlags.socialGoogle]: true,
         [authFlags.socialApple]: true,
@@ -51,6 +54,9 @@ import { authFlags } from '@azeebo/feature-flags';
         [authFlags.refreshRotation]: true,
         [authFlags.emailVerificationRequired]: false,
         [authFlags.roleSelect]: true,
+        // subscription_device_limits: when on, the device cap comes from the
+        // user's subscription plan (maxDevices) instead of the env default.
+        [subscriptionFlags.deviceLimits]: false,
       },
     }),
   ],

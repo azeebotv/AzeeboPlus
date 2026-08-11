@@ -7,6 +7,8 @@ import { HealthModule } from './modules/health/health.module.js';
 import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { CacheModule } from '@azeebo/shared-services';
+import { FeatureFlagModule, moderationFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
 @Module({
   imports: [
@@ -19,6 +21,19 @@ import { CacheModule } from '@azeebo/shared-services';
     DatabaseModule,
     ModerationModule,
     HealthModule,
+    // Moderation feature gates: AI scans, auto-approval, auto-suspension and
+    // trust-score computation all OFF until launched.
+    FlagMetricsModule.register({ service: 'moderation-service' }),
+    FeatureFlagModule.register({
+      global: true,
+      ...flagHooks('moderation-service'),
+      defaultFlags: {
+        [moderationFlags.aiScans]: false,
+        [moderationFlags.autoApprove]: false,
+        [moderationFlags.autoSuspend]: false,
+        [moderationFlags.trustScores]: false,
+      },
+    }),
   ],
   providers: [
     {

@@ -1,3 +1,8 @@
+// Feature flags
+/** Convenience wrapper around `@azeebo/feature-flags` FeatureFlagModule. */
+export { FeatureFlagsModule, FeatureFlagModule } from './feature-flags/feature-flags.module';
+export type { FeatureFlagConfig } from './feature-flags/feature-flags.module';
+
 // Redis
 /** NestJS wrapper around the ioredis client with lifecycle management. */
 export { RedisService } from './redis/redis.service';

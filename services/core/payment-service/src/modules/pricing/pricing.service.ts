@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { PRICE_CONFIG } from '@azeebo/shared-types';
 
 @Injectable()
 export class PricingService {
@@ -7,13 +8,16 @@ export class PricingService {
 
   constructor(@Inject(ConfigService) private readonly configService: ConfigService) {}
 
-  private getConfig(key: string, defaultValue: string): string {
+  private getConfig(key: string, defaultValue?: string): string {
+    // Centralized default: the canonical PRICE_CONFIG map in shared-types is
+    // the single source of truth; per-call defaults remain as overrides.
+    const fallback = defaultValue ?? PRICE_CONFIG[key] ?? '';
     const value = this.configService.get<string>(key);
     if (!value) {
       if (process.env.NODE_ENV === 'production') {
-        this.logger.warn(`Missing required pricing config: ${key}, using default: ${defaultValue}`);
+        this.logger.warn(`Missing required pricing config: ${key}, using default: ${fallback}`);
       }
-      return defaultValue;
+      return fallback;
     }
     return value;
   }
@@ -26,19 +30,19 @@ export class PricingService {
           rent48h: {
             id: 'rent-48h',
             type: 'Rent (48h)',
-            price: parseInt(this.getConfig('MOVIE_RENT_PRICE', '500'), 10),
+            price: parseInt(this.getConfig('MOVIE_RENT_PRICE'), 10),
             currency: 'NGN',
           },
           buy: {
             id: 'buy',
             type: 'Buy',
-            price: parseInt(this.getConfig('MOVIE_BUY_PRICE', '1500'), 10),
+            price: parseInt(this.getConfig('MOVIE_BUY_PRICE'), 10),
             currency: 'NGN',
           },
           pass: {
             id: 'pass',
             type: 'Pass',
-            price: parseInt(this.getConfig('MOVIE_PASS_PRICE', '4500'), 10),
+            price: parseInt(this.getConfig('MOVIE_PASS_PRICE'), 10),
             currency: 'NGN',
             period: 'monthly',
           },
@@ -57,25 +61,25 @@ export class PricingService {
           {
             id: 'std-1',
             votes: 10,
-            price: parseInt(this.getConfig('VOTE_STANDARD_10', '100'), 10),
+            price: parseInt(this.getConfig('VOTE_STANDARD_10'), 10),
             bonus: 0,
           },
           {
             id: 'std-2',
             votes: 50,
-            price: parseInt(this.getConfig('VOTE_STANDARD_50', '450'), 10),
+            price: parseInt(this.getConfig('VOTE_STANDARD_50'), 10),
             bonus: 5,
           },
           {
             id: 'std-3',
             votes: 100,
-            price: parseInt(this.getConfig('VOTE_STANDARD_100', '850'), 10),
+            price: parseInt(this.getConfig('VOTE_STANDARD_100'), 10),
             bonus: 15,
           },
           {
             id: 'std-4',
             votes: 500,
-            price: parseInt(this.getConfig('VOTE_STANDARD_500', '4000'), 10),
+            price: parseInt(this.getConfig('VOTE_STANDARD_500'), 10),
             bonus: 100,
           },
         ],
@@ -83,25 +87,25 @@ export class PricingService {
           {
             id: 'rty-1',
             votes: 100,
-            price: parseInt(this.getConfig('VOTE_REALITY_100', '100'), 10),
+            price: parseInt(this.getConfig('VOTE_REALITY_100'), 10),
             bonus: 0,
           },
           {
             id: 'rty-2',
             votes: 500,
-            price: parseInt(this.getConfig('VOTE_REALITY_500', '450'), 10),
+            price: parseInt(this.getConfig('VOTE_REALITY_500'), 10),
             bonus: 50,
           },
           {
             id: 'rty-3',
             votes: 1000,
-            price: parseInt(this.getConfig('VOTE_REALITY_1000', '850'), 10),
+            price: parseInt(this.getConfig('VOTE_REALITY_1000'), 10),
             bonus: 100,
           },
           {
             id: 'rty-4',
             votes: 5000,
-            price: parseInt(this.getConfig('VOTE_REALITY_5000', '4000'), 10),
+            price: parseInt(this.getConfig('VOTE_REALITY_5000'), 10),
             bonus: 500,
           },
         ],
@@ -109,25 +113,25 @@ export class PricingService {
           {
             id: 'sv-1',
             votes: 1,
-            price: parseInt(this.getConfig('SUPER_VOTE_1', '500'), 10),
+            price: parseInt(this.getConfig('SUPER_VOTE_1'), 10),
             multiplier: 10,
           },
           {
             id: 'sv-2',
             votes: 5,
-            price: parseInt(this.getConfig('SUPER_VOTE_5', '2000'), 10),
+            price: parseInt(this.getConfig('SUPER_VOTE_5'), 10),
             multiplier: 10,
           },
           {
             id: 'sv-3',
             votes: 10,
-            price: parseInt(this.getConfig('SUPER_VOTE_10', '3500'), 10),
+            price: parseInt(this.getConfig('SUPER_VOTE_10'), 10),
             multiplier: 10,
           },
           {
             id: 'sv-4',
             votes: 25,
-            price: parseInt(this.getConfig('SUPER_VOTE_25', '8000'), 10),
+            price: parseInt(this.getConfig('SUPER_VOTE_25'), 10),
             multiplier: 10,
           },
         ],
@@ -151,7 +155,7 @@ export class PricingService {
           basic: {
             id: 'sub-basic',
             name: 'Basic',
-            price: parseInt(this.getConfig('SUB_BASIC_PRICE', '0'), 10),
+            price: parseInt(this.getConfig('SUB_BASIC_PRICE'), 10),
             currency: 'NGN',
             period: 'monthly',
             features: this.getConfig(
@@ -162,7 +166,7 @@ export class PricingService {
           premium: {
             id: 'sub-premium',
             name: 'Premium',
-            price: parseInt(this.getConfig('SUB_PREMIUM_PRICE', '2000'), 10),
+            price: parseInt(this.getConfig('SUB_PREMIUM_PRICE'), 10),
             currency: 'NGN',
             period: 'monthly',
             features: this.getConfig(
@@ -173,7 +177,7 @@ export class PricingService {
           vip: {
             id: 'sub-vip',
             name: 'VIP',
-            price: parseInt(this.getConfig('SUB_VIP_PRICE', '5000'), 10),
+            price: parseInt(this.getConfig('SUB_VIP_PRICE'), 10),
             currency: 'NGN',
             period: 'monthly',
             features: this.getConfig(
@@ -205,9 +209,9 @@ export class PricingService {
         data: {
           presetAmounts: presetAmountsStr.split(',').map(Number),
           limits: {
-            minDeposit: parseInt(this.getConfig('WALLET_MIN_DEPOSIT', '100'), 10),
-            maxDeposit: parseInt(this.getConfig('WALLET_MAX_DEPOSIT', '1000000'), 10),
-            minWithdrawal: parseInt(this.getConfig('WALLET_MIN_WITHDRAWAL', '500'), 10),
+            minDeposit: parseInt(this.getConfig('WALLET_MIN_DEPOSIT'), 10),
+            maxDeposit: parseInt(this.getConfig('WALLET_MAX_DEPOSIT'), 10),
+            minWithdrawal: parseInt(this.getConfig('WALLET_MIN_WITHDRAWAL'), 10),
           },
           withdrawalQuickAmounts: withdrawalQuickStr.split(',').map(Number),
         },
@@ -226,21 +230,21 @@ export class PricingService {
           daily: {
             id: 'pass-daily',
             name: 'Daily Pass',
-            price: parseInt(this.getConfig('PASS_DAILY_PRICE', '200'), 10),
+            price: parseInt(this.getConfig('PASS_DAILY_PRICE'), 10),
             currency: 'NGN',
             duration: '24 hours',
           },
           weekly: {
             id: 'pass-weekly',
             name: 'Weekly Pass',
-            price: parseInt(this.getConfig('PASS_WEEKLY_PRICE', '1500'), 10),
+            price: parseInt(this.getConfig('PASS_WEEKLY_PRICE'), 10),
             currency: 'NGN',
             duration: '7 days',
           },
           monthly: {
             id: 'pass-monthly',
             name: 'Monthly Pass',
-            price: parseInt(this.getConfig('PASS_MONTHLY_PRICE', '5000'), 10),
+            price: parseInt(this.getConfig('PASS_MONTHLY_PRICE'), 10),
             currency: 'NGN',
             duration: '30 days',
           },

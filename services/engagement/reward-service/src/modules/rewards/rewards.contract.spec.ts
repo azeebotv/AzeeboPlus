@@ -43,6 +43,7 @@ import request from 'supertest';
 import { RewardsModule } from './rewards.module.js';
 import { RewardsService } from './rewards.service.js';
 import { PrismaService } from '../database/prisma.service.js';
+import { FeatureFlagGuard } from '@azeebo/feature-flags';
 import { AuthGuard } from '@nestjs/passport';
 
 class MockAuthGuard {
@@ -76,6 +77,8 @@ describe('Rewards Controller Contract Tests', () => {
     })
       .overrideProvider(PrismaService)
       .useValue(mockPrismaService)
+      .overrideGuard(FeatureFlagGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .overrideProvider(RewardsService)
       .useValue({
         getRewardAccount: jest.fn(),

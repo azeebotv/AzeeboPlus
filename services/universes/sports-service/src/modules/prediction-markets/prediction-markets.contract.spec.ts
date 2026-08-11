@@ -11,6 +11,7 @@ import { PredictionMarketsService } from './prediction-markets.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';
+import { FeatureFlagGuard } from '@azeebo/feature-flags';
 
 jest.mock('@azeebo/shared-services', () => ({
   CacheService: jest.fn(),
@@ -84,6 +85,8 @@ describe('Prediction Markets Controller Contract Tests', () => {
         $disconnect: jest.fn().mockResolvedValue(undefined),
       })
       .overrideGuard(RateLimitGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .overrideGuard(FeatureFlagGuard)
       .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .overrideGuard(AuthGuard('jwt'))
       .useValue(mockAuthGuard)

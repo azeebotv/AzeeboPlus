@@ -10,6 +10,7 @@ import { RewardsService } from './rewards.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { CacheService } from '@azeebo/shared-services';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 
 describe('RewardsService Integration', () => {
   let service: RewardsService;
@@ -71,6 +72,10 @@ describe('RewardsService Integration', () => {
           },
         },
         { provide: CacheService, useValue: mockCacheService },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(false) },
+        },
       ],
     }).compile();
 

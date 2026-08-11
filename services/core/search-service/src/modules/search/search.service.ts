@@ -3,9 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 import { FeatureFlagService, searchFlags } from '@azeebo/feature-flags';
+import { MetricsService } from '../metrics/metrics.service.js';
 import axios from 'axios';
 // Prisma client types available via PrismaService
-import { Prisma } from '../../prisma/client/index.js';
+import { Prisma, type SearchTypoCorrection } from '../../prisma/client/index.js';
 import { SearchResponse } from './interfaces/search-response.interface.js';
 import {
   scoreFuzzyCandidate,
@@ -36,6 +37,8 @@ export interface FuzzyStatus {
 
 interface FacetedFilters {
   universe?: string;
+  /** Category NAMES — the search index stores denormalized names (the
+   * content_categories relation resolved to categories.name). */
   categories?: string[];
   tags?: string[];
   contentType?: string[];
@@ -44,6 +47,12 @@ interface FacetedFilters {
   sort?: string;
   page?: number;
   limit?: number;
+  /** Per-surface pagination: page/limit for creators and universes, whose
+   * totals are exact since the counts run over the same predicate. */
+  creatorsPage?: number;
+  creatorsLimit?: number;
+  universesPage?: number;
+  universesLimit?: number;
 }
 
 interface Facet {
@@ -67,6 +76,8 @@ interface FuzzyContentRow {
   universe?: string;
   thumbnail?: string;
   duration?: number;
+  categories?: string[];
+  creatorName?: string | null;
   titleSim?: number | null;
   descSim?: number | null;
 }
@@ -118,6 +129,7 @@ export class SearchService implements OnModuleInit {
   private pgTrgmLastProbeMs = 0;
   private pgTrgmWarned = false;
   private pgTrgmIndexesWarned = false;
+  private readonly suggestionsAiUrl?: string;
   private static readonly PG_TRGM_REPROBE_INTERVAL_MS = 60_000;
   // The GIN trigram indexes created by the pg_trgm migration (one per
   // searchable column). All six must exist for index-backed retrieval.
@@ -134,12 +146,14 @@ export class SearchService implements OnModuleInit {
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(CacheService) private readonly cache: CacheService,
     @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    @Inject(MetricsService) private readonly metricsService: MetricsService
   ) {
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
       'http://analytics-service:3040'
     );
+    this.suggestionsAiUrl = this.configService.get<string>('SEARCH_SUGGESTIONS_AI_URL');
   }
 
   // Fuzzy (search_typo_tolerance) candidate retrieval is computed in Postgres
@@ -149,8 +163,6 @@ export class SearchService implements OnModuleInit {
   // trigram threshold), unlike the old contains/token + popular-fallback pool.
   private static readonly FUZZY_POOL_SIZE = 1000;
   private static readonly FUZZY_PERSON_POOL = 200;
-  private static readonly FUZZY_CREATOR_LIMIT = 20;
-  private static readonly FUZZY_UNIVERSE_LIMIT = 10;
   // SQL retrieval threshold: candidates above this trigram similarity enter
   // the pool, then the in-process fuzzyScore (threshold FUZZY_MATCH_THRESHOLD)
   // does final ranking. The retrieval threshold is deliberately lower (recall)
@@ -244,10 +256,28 @@ export class SearchService implements OnModuleInit {
   }
 
   async onModuleInit(): Promise<void> {
+    await this.refreshFuzzyProbe();
+  }
+
+  /** Re-run the pg_trgm probe now and refresh the metrics gauges. Public so
+   * the index-repair job can flip /health + /metrics to 'present' immediately
+   * after recreating missing GIN indexes. Never throws. */
+  async refreshFuzzyProbe(): Promise<void> {
     const probe = await this.probePgTrgm();
     this.pgTrgmAvailable = probe.available;
     this.pgTrgmIndexesPresent = probe.indexesPresent;
     this.warnMissingTrgmIndexes();
+    await this.updateFuzzyMetrics();
+  }
+
+  /** Push the latest fuzzy-guard state onto the Prometheus gauges so
+   * /metrics (and alerts on search_fuzzy_degraded) track every probe. */
+  private async updateFuzzyMetrics(): Promise<void> {
+    try {
+      this.metricsService.setFuzzyStatus(await this.getFuzzyStatus());
+    } catch (error) {
+      this.logger.error('Failed to update fuzzy metrics', (error as Error).stack);
+    }
   }
 
   /** Ops-facing view of the fuzzy-search guard state (exposed via /health).
@@ -306,6 +336,8 @@ export class SearchService implements OnModuleInit {
         this.pgTrgmAvailable = result.available;
         this.pgTrgmIndexesPresent = result.indexesPresent;
         this.pgTrgmProbeInFlight = null;
+        // State changed on a re-probe — keep /metrics current.
+        void this.updateFuzzyMetrics();
         return result;
       });
       await this.pgTrgmProbeInFlight;
@@ -321,6 +353,23 @@ export class SearchService implements OnModuleInit {
       return false;
     }
     return true;
+  }
+
+  /** Resolve per-surface pagination (creators/universes) from the filters,
+   * with the same clamping convention as the content page/limit (controller
+   * clamps to 100; these defaults are the pre-pagination caps 20/10). */
+  private surfacePagination(filters: FacetedFilters | undefined): {
+    creatorsPage: number;
+    creatorsLimit: number;
+    universesPage: number;
+    universesLimit: number;
+  } {
+    return {
+      creatorsPage: Math.max(1, filters?.creatorsPage || 1),
+      creatorsLimit: Math.min(Math.max(1, filters?.creatorsLimit || 20), 100),
+      universesPage: Math.max(1, filters?.universesPage || 1),
+      universesLimit: Math.min(Math.max(1, filters?.universesLimit || 10), 100),
+    };
   }
 
   /** True when a fuzzy-path failure is the missing-extension signature rather
@@ -410,8 +459,22 @@ export class SearchService implements OnModuleInit {
       }
     }
 
+    // Per-surface pagination: creators/universes page independently of
+    // content, with exact totals (count over the same predicate).
+    const { creatorsPage, creatorsLimit, universesPage, universesLimit } =
+      this.surfacePagination(filters);
+    const creatorsSkip = (creatorsPage - 1) * creatorsLimit;
+    const universesSkip = (universesPage - 1) * universesLimit;
+
     try {
-      const [contentItems, contentTotal, creators, universes] = await Promise.all([
+      const [
+        contentItems,
+        contentTotal,
+        creators,
+        creatorsTotal,
+        universes,
+        universesTotal,
+      ] = await Promise.all([
         this.prisma.contentItem.findMany({
           where: whereCondition,
           skip,
@@ -423,7 +486,13 @@ export class SearchService implements OnModuleInit {
           where: {
             bio: { contains: escapedQuery, mode: 'insensitive' },
           },
-          take: Math.min(limit, 20),
+          skip: creatorsSkip,
+          take: creatorsLimit,
+        }),
+        this.prisma.creatorProfile.count({
+          where: {
+            bio: { contains: escapedQuery, mode: 'insensitive' },
+          },
         }),
         this.prisma.universe.findMany({
           where: {
@@ -432,7 +501,16 @@ export class SearchService implements OnModuleInit {
               { displayName: { contains: escapedQuery, mode: 'insensitive' } },
             ],
           },
-          take: Math.min(limit, 10),
+          skip: universesSkip,
+          take: universesLimit,
+        }),
+        this.prisma.universe.count({
+          where: {
+            OR: [
+              { name: { contains: escapedQuery, mode: 'insensitive' } },
+              { displayName: { contains: escapedQuery, mode: 'insensitive' } },
+            ],
+          },
         }),
       ]);
 
@@ -453,6 +531,8 @@ export class SearchService implements OnModuleInit {
               universe: item.universe,
               thumbnail: item.thumbnail ?? undefined,
               duration: item.duration ?? undefined,
+              categories: item.categories ?? [],
+              creatorName: item.creatorName ?? undefined,
             })),
             creators: creators.map((creator) => ({
               id: creator.id,
@@ -469,12 +549,24 @@ export class SearchService implements OnModuleInit {
               displayName: uni.displayName,
             })),
           },
-          total: contentTotal + creators.length + universes.length,
+          total: contentTotal + creatorsTotal + universesTotal,
           pagination: {
             page,
             limit,
             total: contentTotal,
             totalPages: Math.ceil(contentTotal / limit),
+          },
+          creatorsPagination: {
+            page: creatorsPage,
+            limit: creatorsLimit,
+            total: creatorsTotal,
+            totalPages: Math.ceil(creatorsTotal / creatorsLimit),
+          },
+          universesPagination: {
+            page: universesPage,
+            limit: universesLimit,
+            total: universesTotal,
+            totalPages: Math.ceil(universesTotal / universesLimit),
           },
         },
       };
@@ -559,7 +651,7 @@ export class SearchService implements OnModuleInit {
         await Promise.all([
           this.prisma.$queryRaw<FuzzyContentRow[]>(Prisma.sql`
             SELECT ci.id, ci.title, ci.description, ci.status, ci."viewCount", ci."createdAt", ci."updatedAt",
-              ci."contentType", ci.universe, ci.thumbnail, ci.duration,
+              ci."contentType", ci.universe, ci.thumbnail, ci.duration, ci.categories, ci."creatorName",
               similarity(ci.title, ${query}) AS "titleSim",
               similarity(coalesce(ci.description, ''), ${query}) AS "descSim"
             FROM content_items ci
@@ -634,10 +726,41 @@ export class SearchService implements OnModuleInit {
       // typo-correction (below the decisive anchor), offer its title as a
       // one-click re-search. Computed over the full ranked pool (scored[0]),
       // not the current page, so paging never hides the true top match.
-      const suggestedQuery =
-        scored.length > 0 && scored[0].score < DECISIVE_MATCH_SCORE
-          ? scored[0].item.title
-          : undefined;
+      let suggestedQuery: string | undefined;
+      if (scored.length > 0 && scored[0].score < DECISIVE_MATCH_SCORE) {
+        suggestedQuery = scored[0].item.title;
+      }
+
+      // Learned-correction preference (search_typo_dictionary): when users
+      // have repeatedly accepted a specific 'did you mean' for this query,
+      // prefer that correction over the raw best match — the dictionary makes
+      // popular corrections sticky. Only consulted when a suggestion is
+      // otherwise warranted (top match below the decisive anchor).
+      if (
+        suggestedQuery &&
+        (await this.featureFlagService.isEnabled(searchFlags.typoDictionary))
+      ) {
+        const learned = await this.getTypoCorrections(query, 5);
+        if (learned.length > 0) {
+          const poolByTitle = new Map(
+            scored.map((s) => [s.item.title.toLowerCase(), s.item.title])
+          );
+          const hit = learned.find((c) => poolByTitle.has(c.correctedQuery.toLowerCase()));
+          if (hit) {
+            suggestedQuery = poolByTitle.get(hit.correctedQuery.toLowerCase()) as string;
+          }
+        }
+      }
+
+      // Per-surface pagination: creators/universes page independently of
+      // content (their pools are scored in full; totals are the exact SQL
+      // counts over the same trigram predicate).
+      const { creatorsPage, creatorsLimit, universesPage, universesLimit } =
+        this.surfacePagination(filters);
+      const creatorsSkip = (creatorsPage - 1) * creatorsLimit;
+      const universesSkip = (universesPage - 1) * universesLimit;
+      const pageCreators = creators.slice(creatorsSkip, creatorsSkip + creatorsLimit);
+      const pageUniverses = universes.slice(universesSkip, universesSkip + universesLimit);
 
       const result: SearchResponse = {
         success: true,
@@ -657,13 +780,15 @@ export class SearchService implements OnModuleInit {
               universe: item.universe,
               thumbnail: item.thumbnail ?? undefined,
               duration: item.duration ?? undefined,
+              categories: item.categories ?? [],
+              creatorName: item.creatorName ?? undefined,
               // Per-item fuzzy relevance (0–1) for rank badges / did-you-mean,
               // plus its two explainable components ('matched because').
               score,
               fuzzyScore: fuzzy,
               trigramScore: trigram,
             })),
-            creators: creators.map(({ creator, score, fuzzy, trigram }) => ({
+            creators: pageCreators.map(({ creator, score, fuzzy, trigram }) => ({
               id: creator.id,
               bio: creator.bio,
               user: {
@@ -675,7 +800,7 @@ export class SearchService implements OnModuleInit {
               fuzzyScore: fuzzy,
               trigramScore: trigram,
             })),
-            universes: universes.map(({ uni, score, fuzzy, trigram }) => ({
+            universes: pageUniverses.map(({ uni, score, fuzzy, trigram }) => ({
               id: uni.id,
               name: uni.name,
               displayName: uni.displayName,
@@ -690,6 +815,18 @@ export class SearchService implements OnModuleInit {
             limit,
             total: contentTotal,
             totalPages: Math.ceil(contentTotal / limit),
+          },
+          creatorsPagination: {
+            page: creatorsPage,
+            limit: creatorsLimit,
+            total: creatorsTotal,
+            totalPages: Math.ceil(creatorsTotal / creatorsLimit),
+          },
+          universesPagination: {
+            page: universesPage,
+            limit: universesLimit,
+            total: universesTotal,
+            totalPages: Math.ceil(universesTotal / universesLimit),
           },
         },
       };
@@ -714,6 +851,8 @@ export class SearchService implements OnModuleInit {
         );
         this.pgTrgmAvailable = false;
         this.pgTrgmWarned = true;
+        // Runtime degradation is the alerting event — reflect it immediately.
+        void this.updateFuzzyMetrics();
         return this.searchWithExact(query, filters, page, limit, cacheK);
       }
       this.logger.error('Failed to perform fuzzy search', error);
@@ -757,8 +896,41 @@ export class SearchService implements OnModuleInit {
         };
       })
       .filter((c) => c.fuzzy >= FUZZY_MATCH_THRESHOLD)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, SearchService.FUZZY_CREATOR_LIMIT);
+      .sort((a, b) => b.score - a.score);
+  }
+
+  /** Fail-open AI suggestion ranking: POST the query + candidate list to the
+   * configured ranker and use the returned ordering. Any problem (no URL,
+   * timeout, malformed payload) logs and returns the input order unchanged. */
+  private async rankSuggestionsWithAi(
+    query: string,
+    candidates: string[]
+  ): Promise<string[]> {
+    if (!this.suggestionsAiUrl || candidates.length === 0) {
+      return candidates;
+    }
+    try {
+      const response = await axios.post(
+        `${this.suggestionsAiUrl}/rank`,
+        { query, candidates },
+        { timeout: 10_000 }
+      );
+      const ranked = Array.isArray(response.data?.suggestions)
+        ? (response.data.suggestions as string[])
+        : [];
+      if (ranked.length === 0) {
+        return candidates;
+      }
+      // Keep only suggestions the ranker returned that were candidates,
+      // then append any it dropped so the response never shrinks.
+      const candidateSet = new Set(candidates);
+      return [...ranked.filter((s) => candidateSet.has(s)), ...candidates.filter((s) => !ranked.includes(s))];
+    } catch (error) {
+      this.logger.warn(
+        `AI suggestion ranking failed for "${query}": ${(error as Error).message}`
+      );
+      return candidates;
+    }
   }
 
   /** Exact, uncapped creator count over the SAME trigram predicate as the
@@ -805,8 +977,7 @@ export class SearchService implements OnModuleInit {
         };
       })
       .filter((u) => u.fuzzy >= FUZZY_MATCH_THRESHOLD)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, SearchService.FUZZY_UNIVERSE_LIMIT);
+      .sort((a, b) => b.score - a.score);
   }
 
   /** Exact, uncapped universe count over the SAME trigram predicate as the
@@ -875,7 +1046,7 @@ export class SearchService implements OnModuleInit {
             ...(filters?.universe ? { universeId: filters.universe } : {}),
             ...(filters?.categories && filters.categories.length > 0
               ? {
-                  categories: { some: { id: { in: filters.categories } } },
+                  categories: { hasSome: filters.categories },
                 }
               : {}),
             ...(filters?.tags && filters.tags.length > 0
@@ -918,6 +1089,8 @@ export class SearchService implements OnModuleInit {
               viewCount: item.viewCount || 0,
               createdAt: item.createdAt,
               updatedAt: item.updatedAt,
+              categories: item.categories ?? [],
+              creatorName: item.creatorName ?? undefined,
             })),
             creators: creators.map((creator) => ({
               id: creator.id,
@@ -1038,7 +1211,7 @@ export class SearchService implements OnModuleInit {
     if (cached) return cached;
 
     try {
-      const suggestions = await this.prisma.searchQueryLog.findMany({
+      const candidates = await this.prisma.searchQueryLog.findMany({
         where: {
           query: { contains: this.escapeRegex(query), mode: 'insensitive' },
         },
@@ -1047,10 +1220,20 @@ export class SearchService implements OnModuleInit {
         take: 10,
       });
 
+      // search_suggestions_ai (off): when enabled and an AI ranker is
+      // configured, let it re-rank the popular candidates so suggestions
+      // reflect semantic closeness to the partial query, not just past
+      // popularity. Fail-open: any misconfiguration or error falls back to
+      // the deterministic ranking below.
+      let ranked = candidates.map((s) => s.query);
+      if (await this.featureFlagService.isEnabled(searchFlags.suggestionsAi)) {
+        ranked = await this.rankSuggestionsWithAi(query, ranked);
+      }
+
       const result: SearchResponse = {
         success: true,
         data: {
-          suggestions: suggestions.map((s) => s.query),
+          suggestions: ranked,
         },
       };
 
@@ -1204,8 +1387,15 @@ export class SearchService implements OnModuleInit {
     }
   }
 
-  async logSearch(userId: string, query: string, resultCount: number): Promise<SearchResponse> {
+  async logSearch(
+    userId: string,
+    query: string,
+    resultCount: number,
+    correction?: string,
+    accepted?: boolean
+  ): Promise<SearchResponse> {
     // Kill-switch: stop writing search logs (storage cost, privacy surface).
+    // The typo dictionary derives from these logs, so it shares the gate.
     if (!(await this.featureFlagService.isEnabled(searchFlags.logQueries))) {
       return {
         success: true,
@@ -1221,6 +1411,30 @@ export class SearchService implements OnModuleInit {
         data: { userId, query, resultCount },
       });
 
+      // Learn popular corrections: every accepted 'did you mean' click
+      // increments the (original query → correction) pair, so repeated
+      // acceptance makes the suggestion sticky (see suggestedQuery in the
+      // fuzzy path, gated by search_typo_dictionary).
+      if (correction && accepted && correction.toLowerCase() !== query.toLowerCase()) {
+        await this.prisma.searchTypoCorrection.upsert({
+          where: {
+            originalQuery_correctedQuery: {
+              originalQuery: query,
+              correctedQuery: correction,
+            },
+          },
+          create: {
+            originalQuery: query,
+            correctedQuery: correction,
+            count: 1,
+          },
+          update: {
+            count: { increment: 1 },
+            lastAcceptedAt: new Date(),
+          },
+        });
+      }
+
       // Invalidate suggestions cache since search log affects trending
       await this.cache.delete(cacheKey('search', `suggestions:${query}`));
 
@@ -1231,6 +1445,23 @@ export class SearchService implements OnModuleInit {
     } catch (error: unknown) {
       this.logger.error('Failed to log search', error);
       throw new BadRequestException('Failed to log search');
+    }
+  }
+
+  /**
+   * Top learned corrections for a query (most-accepted first). Empty when the
+   * typo dictionary has never seen the query.
+   */
+  async getTypoCorrections(query: string, limit = 5): Promise<SearchTypoCorrection[]> {
+    try {
+      return await this.prisma.searchTypoCorrection.findMany({
+        where: { originalQuery: query },
+        orderBy: [{ count: 'desc' }, { lastAcceptedAt: 'desc' }],
+        take: limit,
+      });
+    } catch (error: unknown) {
+      this.logger.error('Failed to read typo corrections', error);
+      return [];
     }
   }
 }

@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'react-native';
 import { AuthProvider } from '../src/contexts/AuthContext';
+import { FlagsProvider, useFlags } from '../src/contexts/FlagsContext';
 import { WalletProvider } from '../src/contexts/WalletContext';
 import { NotificationProvider } from '../src/contexts/NotificationContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -22,17 +23,23 @@ const queryClient = new QueryClient({
 // Initialize certificate pinning at app startup
 initializeCertificatePinning();
 
-export default function RootLayout() {
+function RootNavigator() {
   const colorScheme = useColorScheme();
+  const { isEnabled } = useFlags();
+  // mobile_dark_mode (on by default): when disabled the app is forced to the
+  // light system scheme regardless of device preference.
+  const darkModeEnabled = isEnabled('mobile_dark_mode');
+  const resolvedDark = darkModeEnabled && colorScheme === 'dark';
 
   return (
     <SafeAreaProvider>
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <WalletProvider>
-              <NotificationProvider>
-                <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+            <FlagsProvider>
+              <WalletProvider>
+                <NotificationProvider>
+                <StatusBar style={resolvedDark ? 'light' : 'dark'} />
                 <Stack
                   screenOptions={{
                     headerShown: false,
@@ -76,11 +83,16 @@ export default function RootLayout() {
                   <Stack.Screen name="notifications" options={{ headerShown: false }} />
                   <Stack.Screen name="premium" options={{ headerShown: false }} />
                 </Stack>
-              </NotificationProvider>
-            </WalletProvider>
+                </NotificationProvider>
+              </WalletProvider>
+            </FlagsProvider>
           </AuthProvider>
         </QueryClientProvider>
       </ErrorBoundary>
     </SafeAreaProvider>
   );
+}
+
+export default function RootLayout() {
+  return <RootNavigator />;
 }

@@ -146,7 +146,8 @@ export class SocialAuthController {
   // In production, tokens should be verified against the provider's API.
 
   @Post('google')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(authFlags.socialGoogle)
   @RateLimit(5, 900000) // 5 requests per 15 minutes
   @ApiOperation({ summary: 'Google social login (legacy - prefer /authorize + /callback)' })
   @ApiResponse({ status: 200, description: 'Login successful' })
@@ -183,7 +184,8 @@ export class SocialAuthController {
   }
 
   @Post('apple')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(authFlags.socialApple)
   @RateLimit(5, 900000) // 5 requests per 15 minutes
   @ApiOperation({ summary: 'Apple social login (legacy - prefer /authorize + /callback)' })
   @ApiResponse({ status: 200, description: 'Login successful' })

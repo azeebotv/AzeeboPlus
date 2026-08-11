@@ -3,6 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { EngagementController } from './engagement.controller.js';
 import { EngagementService } from './engagement.service.js';
 import { RateLimitService } from '@azeebo/security';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 
 describe('EngagementController', () => {
   let controller: EngagementController;
@@ -23,6 +24,10 @@ describe('EngagementController', () => {
         {
           provide: EngagementService,
           useValue: mockEngagementService,
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(true) },
         },
         {
           provide: RateLimitService,

@@ -12,11 +12,14 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AdminGuard } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, verticalFlags } from '@azeebo/feature-flags';
 import { LoreService } from './lore.service';
 import { CreateLoreData } from './lore.service';
 import { UpdateLoreDto } from './dto/update-lore.dto';
 
 @ApiTags('Lore')
+@FeatureFlag(verticalFlags.loreAi)
+@UseGuards(FeatureFlagGuard)
 @Controller('vertical/lore')
 export class LoreController {
   constructor(@Inject(LoreService) private readonly loreService: LoreService) {}

@@ -9,11 +9,13 @@ import { MetricsModule } from './modules/metrics/metrics.module.js';
 import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { CacheModule } from './cache/index.js';
+import { RedisModule } from '@azeebo/shared-services';
 import { ObservabilityModule } from '@azeebo/observability';
 import { JwtConfigModule } from '@azeebo/shared-services';
 import { EventBusModule } from '@azeebo/event-bus';
 import { FeatureFlagModule } from '@azeebo/feature-flags';
 import { walletFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
 @Module({
   imports: [
@@ -23,6 +25,7 @@ import { walletFlags } from '@azeebo/feature-flags';
     }),
     RateLimiterModule.forRoot(),
     CacheModule,
+    RedisModule,
     TerminusModule,
     JwtConfigModule,
     WalletModule,
@@ -38,14 +41,22 @@ import { walletFlags } from '@azeebo/feature-flags';
     // Kill-switch defaults: money-movement flags default ON so a toggle in the
     // admin UI can freeze withdrawals/redemptions instantly; marketing credit
     // features default OFF until enabled during a campaign.
+    // - distributedLock (ON): Redis lock around debit/credit entry points.
+    // - ledgerV2 (OFF): append-only wallet_ledger audit trail.
+    // - fraudChecks (OFF): velocity/pattern limits on withdraw/transfer.
+    FlagMetricsModule.register({ service: 'wallet-service' }),
     FeatureFlagModule.register({
       global: true,
+      ...flagHooks('wallet-service'),
       defaultFlags: {
         [walletFlags.withdrawalsEnabled]: true,
         [walletFlags.redeemRewards]: true,
         [walletFlags.transfersEnabled]: false,
         [walletFlags.bonusCredit]: false,
         [walletFlags.promoCredit]: false,
+        [walletFlags.distributedLock]: true,
+        [walletFlags.ledgerV2]: false,
+        [walletFlags.fraudChecks]: false,
       },
     }),
   ],

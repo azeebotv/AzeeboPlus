@@ -2,6 +2,7 @@ import { Inject, Controller, Get, Post, Body, Param, Query, Request, Logger, Use
 import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { ServiceAuthGuard } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, verticalFlags } from '@azeebo/feature-flags';
 import { AgbalaTitlesService as TitlesService } from './agbala/titles.service';
 import { AgbalaCharactersService as CharactersService } from './agbala/characters.service';
 import { TheoryService } from './agbala/theory.service';
@@ -11,6 +12,8 @@ import { StoryworldMetadataService } from './agbala/storyworld-metadata.service'
 
 @ApiTags('Storyworlds')
 @UseGuards(ServiceAuthGuard)
+@FeatureFlag(verticalFlags.storyworldsCreate)
+@UseGuards(FeatureFlagGuard)
 @Controller('vertical/storyworlds')
 export class StoryworldsController {
   private readonly logger = new Logger(StoryworldsController.name);

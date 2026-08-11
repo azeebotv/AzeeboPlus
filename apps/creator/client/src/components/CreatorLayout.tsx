@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useCreatorFlags, CREATOR_FLAG_KEYS } from '@/hooks/useCreatorFlags';
 
 export const CREATOR_NAV = [
   { href: '/', label: 'Dashboard', icon: '📊' },
   { href: '/overview', label: 'Overview', icon: '📈' },
-  { href: '/analytics', label: 'Analytics', icon: '📉' },
+  { href: '/analytics', label: 'Analytics', icon: '📉', flag: CREATOR_FLAG_KEYS.newAnalytics },
   { href: '/content', label: 'Content', icon: '🎬' },
   { href: '/upload', label: 'Upload', icon: '⬆️' },
   { href: '/earnings', label: 'Earnings', icon: '💰' },
-  { href: '/payouts', label: 'Payouts', icon: '💳' },
+  { href: '/payouts', label: 'Payouts', icon: '💳', flag: CREATOR_FLAG_KEYS.payoutsUi },
   { href: '/subscribers', label: 'Subscribers', icon: '👥' },
   { href: '/monetization', label: 'Monetization', icon: '🏷️' },
   { href: '/challenges', label: 'Challenges', icon: '🏆' },
@@ -90,6 +91,7 @@ export default function CreatorLayout({ children }: { children: React.ReactNode 
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const { isEnabled: isFlagEnabled } = useCreatorFlags();
 
   useEffect(() => {
     setIsMobile(window.innerWidth < 1024);
@@ -190,7 +192,7 @@ export default function CreatorLayout({ children }: { children: React.ReactNode 
           }}
         >
           <nav>
-            {CREATOR_NAV.map((item) => (
+            {CREATOR_NAV.filter((item) => !item.flag || isFlagEnabled(item.flag)).map((item) => (
               <a
                 key={item.href}
                 href={item.href}

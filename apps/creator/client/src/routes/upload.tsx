@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { creatorApi } from '@/lib/api/creator';
+import { useCreatorFlags, CREATOR_FLAG_KEYS } from '@/hooks/useCreatorFlags';
 import type { UploadProgress } from '@/lib/creator-types';
 
 const inputStyle = {
@@ -28,6 +29,8 @@ const statusText: Record<string, string> = {
 
 export default function UploadPage() {
   const queryClient = useQueryClient();
+  const { isEnabled: isFlagEnabled } = useCreatorFlags();
+  const uploadV2 = isFlagEnabled(CREATOR_FLAG_KEYS.uploadV2);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -138,28 +141,36 @@ export default function UploadPage() {
             </div>
 
             <div
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragActive(true);
-              }}
-              onDragLeave={() => setDragActive(false)}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-              style={{
-                padding: 32,
-                borderRadius: 12,
-                border: `2px dashed ${dragActive ? '#E8420A' : '#2A1A1A'}`,
-                backgroundColor: dragActive ? 'rgba(232,66,10,0.05)' : 'rgba(13,5,5,0.3)',
-                textAlign: 'center',
-                cursor: 'pointer',
-                marginBottom: 16,
-                transition: 'all 0.2s',
-              }}
+              {...(uploadV2
+                ? {
+                    onDragOver: (e: React.DragEvent) => {
+                      e.preventDefault();
+                      setDragActive(true);
+                    },
+                    onDragLeave: () => setDragActive(false),
+                    onDrop: handleDrop,
+                    onClick: () => fileInputRef.current?.click(),
+                  }
+                : {})}
+              style={
+                uploadV2
+                  ? {
+                      padding: 32,
+                      borderRadius: 12,
+                      border: `2px dashed ${dragActive ? '#E8420A' : '#2A1A1A'}`,
+                      backgroundColor: dragActive ? 'rgba(232,66,10,0.05)' : 'rgba(13,5,5,0.3)',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      marginBottom: 16,
+                      transition: 'all 0.2s',
+                    }
+                  : { marginBottom: 16 }
+              }
             >
               <p style={{ fontSize: 14, color: '#9A8A7A', marginBottom: 8 }}>
-                {selectedFile ? selectedFile.name : 'Drag & drop or click to select'}
+                {selectedFile ? selectedFile.name : uploadV2 ? 'Drag & drop or click to select' : 'Select a file'}
               </p>
-              <p style={{ fontSize: 12, color: '#5A4A4A' }}>Max 500MB</p>
+              {uploadV2 && <p style={{ fontSize: 12, color: '#5A4A4A' }}>Max 500MB</p>}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -167,6 +178,24 @@ export default function UploadPage() {
                 accept="video/*,audio/*,.pdf,.doc,.docx"
                 style={{ display: 'none' }}
               />
+              {!uploadV2 && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    marginTop: 8,
+                    padding: '8px 16px',
+                    borderRadius: 8,
+                    border: '1px solid #2A1A1A',
+                    background: 'transparent',
+                    color: '#F5F0EB',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Choose file
+                </button>
+              )}
             </div>
 
             <button
@@ -206,7 +235,9 @@ export default function UploadPage() {
               backgroundColor: 'rgba(26,10,10,0.5)',
             }}
           >
-            <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Processing Status</h3>
+            <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>
+              {uploadV2 ? 'Processing Status' : 'Your Uploads'}
+            </h3>
             {isLoading ? (
               <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 20 }}>Loading...</p>
             ) : uploads && uploads.length > 0 ? (

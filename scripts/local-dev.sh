@@ -276,6 +276,8 @@ generate_local_secrets() {
 JWT_ACCESS_SECRET=${jwt_access}
 JWT_REFRESH_SECRET=${jwt_refresh}
 GATEWAY_SECRET=${gateway_secret}
+# Feature-flag store (FeatureFlagService falls back to REDIS_URL if unset)
+FEATURE_FLAG_REDIS_URL=redis://localhost:6379
 ENVEOF
   chmod 600 "$env_local"
   log_ok "Secrets saved to .env.local"

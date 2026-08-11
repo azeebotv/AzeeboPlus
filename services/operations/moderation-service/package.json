@@ -18,10 +18,12 @@
   },
   "dependencies": {
     "@azeebo/error-handling": "workspace:*",
+    "@azeebo/feature-flags": "workspace:*",
     "@azeebo/logger": "workspace:*",
     "@azeebo/security": "workspace:*",
     "@azeebo/shared-services": "workspace:*",
     "@azeebo/shared-types": "workspace:*",
+    "@azeebo/flag-metrics": "workspace:*",
     "@nestjs/common": "^11.1.27",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.1.27",

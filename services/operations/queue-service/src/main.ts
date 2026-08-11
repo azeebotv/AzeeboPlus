@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger, VersioningType } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { createHelmetConfig, configureCors } from '@azeebo/security';
 
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
@@ -33,6 +34,18 @@ async function bootstrap() {
   }
   const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim());
   configureCors(app, { allowedOrigins, credentials: true });
+
+  const config = new DocumentBuilder()
+    .setTitle('Queue API')
+    .setDescription('Queue service API documentation')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  if (process.env.NODE_ENV !== 'production') {
+    SwaggerModule.setup('api', app, document);
+  }
 
   app.enableShutdownHooks();
 

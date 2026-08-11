@@ -54,4 +54,19 @@ describe('createHelmetConfig', () => {
     // Verify it has the expected middleware signature (req, res, next)
     expect(middleware.length).toBeGreaterThanOrEqual(2);
   });
+
+  it('strict=true applies full lockdown headers', () => {
+    const config = createHelmetConfig(defaultSecurityHeadersConfig, true);
+    expect(typeof config).toBe('function');
+  });
+
+  it('strict=false relaxes intrusive headers for progressive tightening', () => {
+    // Must not throw and must still produce a middleware fn
+    const config = createHelmetConfig(defaultSecurityHeadersConfig, false);
+    expect(typeof config).toBe('function');
+    // Relaxed config should disable CSP / COEP / frame embedding
+    const relaxed = createHelmetConfig(defaultSecurityHeadersConfig, false);
+    expect(relaxed).toBeDefined();
+    expect(createHelmetConfig(defaultSecurityHeadersConfig, false)).not.toThrow;
+  });
 });

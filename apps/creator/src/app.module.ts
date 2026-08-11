@@ -10,6 +10,7 @@ import { HealthModule } from './modules/health/health.module';
 import { WebModule } from './web/web.module';
 import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
+import { FeatureFlagModule, creatorFlags } from '@azeebo/feature-flags';
 import { CsrfMiddleware } from './common/csrf.middleware';
 
 @Module({
@@ -19,6 +20,23 @@ import { CsrfMiddleware } from './common/csrf.middleware';
       envFilePath: ['.env', '../../.env'],
     }),
     RateLimiterModule.forRoot(),
+    FeatureFlagModule.register({
+      global: true,
+      // Creator studio UI flags: the v2 surfaces (new analytics, upload v2,
+      // payouts UI, onboarding wizard) start dark and roll out per flag.
+      defaultFlags: {
+        [creatorFlags.newAnalytics]: false,
+        [creatorFlags.uploadV2]: false,
+        [creatorFlags.payoutsUi]: false,
+        [creatorFlags.onboardingWizard]: false,
+      },
+      publicFlagKeys: [
+        creatorFlags.newAnalytics,
+        creatorFlags.uploadV2,
+        creatorFlags.payoutsUi,
+        creatorFlags.onboardingWizard,
+      ],
+    }),
     DatabaseModule,
     AuthModule,
     ApiModule,

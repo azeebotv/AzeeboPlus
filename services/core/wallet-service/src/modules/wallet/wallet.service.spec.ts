@@ -2,7 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { WalletService } from './wallet.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
-import { CacheService } from '@azeebo/shared-services';
+import { CacheService, RedisService } from '@azeebo/shared-services';
+import { FeatureFlagService, walletFlags } from '@azeebo/feature-flags';
 import { EVENT_BUS_SERVICE } from '@azeebo/event-bus';
 
 jest.mock('../database/prisma.service');
@@ -52,6 +53,10 @@ describe('WalletService', () => {
               findUnique: jest.fn(),
               findFirst: jest.fn(),
               count: jest.fn(),
+              aggregate: jest.fn(),
+            },
+            walletLedger: {
+              create: jest.fn().mockResolvedValue({ id: 'ledger-1' }),
             },
             $transaction: jest.fn(),
             $queryRaw: jest.fn(),
@@ -72,6 +77,21 @@ describe('WalletService', () => {
             delete: jest.fn().mockResolvedValue(0),
             deleteByPattern: jest.fn().mockResolvedValue(0),
             invalidate: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: RedisService,
+          useValue: {
+            setIfNotExists: jest.fn().mockResolvedValue(true),
+            del: jest.fn().mockResolvedValue(1),
+          },
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: {
+            // Default: all wallet flags OFF so existing tests run the plain
+            // paths; individual tests re-enable what they exercise.
+            isEnabled: jest.fn().mockResolvedValue(false),
           },
         },
         {
@@ -380,6 +400,208 @@ describe('WalletService', () => {
 
       expect(result.success).toBe(true);
       expect((result.data as Record<string, unknown>).transactions).toEqual([]);
+    });
+  });
+
+  describe('wallet_distributed_lock', () => {
+    beforeEach(() => {
+      (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
+      (prismaService.wallet.update as jest.Mock).mockResolvedValue({ ...mockWallet, balance: 900 });
+      (prismaService.walletTransaction.create as jest.Mock).mockResolvedValue({
+        ...mockTransaction,
+        type: 'debit',
+      });
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValue([
+        { id: 'wallet-123', balance: 1000 },
+      ]);
+      (prismaService.$transaction as jest.Mock).mockImplementation(async (cb) => cb(prismaService));
+    });
+
+    it('acquires + releases the Redis lock around debit when the flag is on', async () => {
+      const flagService = (service as unknown as {
+        featureFlagService: { isEnabled: jest.Mock };
+      }).featureFlagService;
+      flagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === walletFlags.distributedLock)
+      );
+      const redis = (service as unknown as { redisService: { setIfNotExists: jest.Mock; del: jest.Mock } }).redisService;
+
+      const result = await service.debitBalance('wallet-123', 100, 'Debit test');
+
+      expect(result.success).toBe(true);
+      expect(redis.setIfNotExists).toHaveBeenCalledWith('wallet:lock:wallet-123', '1', 15);
+      expect(redis.del).toHaveBeenCalledWith('wallet:lock:wallet-123');
+    });
+
+    it('skips the Redis lock when the flag is off', async () => {
+      const redis = (service as unknown as { redisService: { setIfNotExists: jest.Mock } }).redisService;
+
+      const result = await service.debitBalance('wallet-123', 100, 'Debit test');
+
+      expect(result.success).toBe(true);
+      expect(redis.setIfNotExists).not.toHaveBeenCalled();
+    });
+
+    it('rejects a concurrent operation when the lock is held', async () => {
+      const flagService = (service as unknown as {
+        featureFlagService: { isEnabled: jest.Mock };
+      }).featureFlagService;
+      flagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === walletFlags.distributedLock)
+      );
+      const redis = (service as unknown as { redisService: { setIfNotExists: jest.Mock } }).redisService;
+      redis.setIfNotExists.mockResolvedValueOnce(false);
+
+      await expect(service.debitBalance('wallet-123', 100, 'Debit test')).rejects.toThrow(
+        'Another operation is already processing this wallet'
+      );
+      expect(prismaService.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('fails open when Redis is unavailable', async () => {
+      const flagService = (service as unknown as {
+        featureFlagService: { isEnabled: jest.Mock };
+      }).featureFlagService;
+      flagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === walletFlags.distributedLock)
+      );
+      const redis = (service as unknown as { redisService: { setIfNotExists: jest.Mock } }).redisService;
+      redis.setIfNotExists.mockRejectedValueOnce(new Error('redis down'));
+
+      const result = await service.debitBalance('wallet-123', 100, 'Debit test');
+
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe('wallet_ledger_v2', () => {
+    beforeEach(() => {
+      (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
+      (prismaService.wallet.update as jest.Mock).mockResolvedValue({ ...mockWallet, balance: 900 });
+      (prismaService.walletTransaction.create as jest.Mock).mockResolvedValue({
+        ...mockTransaction,
+        type: 'debit',
+      });
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValue([
+        { id: 'wallet-123', balance: 1000 },
+      ]);
+      (prismaService.$transaction as jest.Mock).mockImplementation(async (cb) => cb(prismaService));
+    });
+
+    it('writes a ledger entry on debit when the flag is on', async () => {
+      const flagService = (service as unknown as {
+        featureFlagService: { isEnabled: jest.Mock };
+      }).featureFlagService;
+      flagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === walletFlags.ledgerV2)
+      );
+
+      const result = await service.debitBalance('wallet-123', 100, 'Debit test');
+
+      expect(result.success).toBe(true);
+      expect(prismaService.walletLedger.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            walletId: 'wallet-123',
+            operationType: 'debit',
+            amount: 100,
+            balanceAfter: '1000',
+          }),
+        })
+      );
+    });
+
+    it('skips the ledger write when the flag is off', async () => {
+      await service.debitBalance('wallet-123', 100, 'Debit test');
+
+      expect(prismaService.walletLedger.create).not.toHaveBeenCalled();
+    });
+
+    it('never fails the money movement when the ledger write errors', async () => {
+      const flagService = (service as unknown as {
+        featureFlagService: { isEnabled: jest.Mock };
+      }).featureFlagService;
+      flagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === walletFlags.ledgerV2)
+      );
+      (prismaService.walletLedger.create as jest.Mock).mockRejectedValueOnce(
+        new Error('ledger down')
+      );
+
+      const result = await service.debitBalance('wallet-123', 100, 'Debit test');
+
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe('wallet_fraud_checks', () => {
+    beforeEach(() => {
+      (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
+      (prismaService.wallet.update as jest.Mock).mockResolvedValue({ ...mockWallet, balance: 900 });
+      (prismaService.walletTransaction.create as jest.Mock).mockResolvedValue({
+        ...mockTransaction,
+        type: 'debit',
+      });
+      (prismaService.walletTransaction.count as jest.Mock).mockResolvedValue(0);
+      (prismaService.walletTransaction.aggregate as jest.Mock).mockResolvedValue({
+        _sum: { amount: 0 },
+      });
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValue([
+        { id: 'wallet-123', balance: 1000 },
+      ]);
+      (prismaService.$transaction as jest.Mock).mockImplementation(async (cb) => cb(prismaService));
+    });
+
+    it('blocks a withdrawal when the hourly velocity limit is exceeded', async () => {
+      const flagService = (service as unknown as {
+        featureFlagService: { isEnabled: jest.Mock };
+      }).featureFlagService;
+      flagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === walletFlags.fraudChecks)
+      );
+      (prismaService.walletTransaction.count as jest.Mock).mockResolvedValueOnce(3);
+
+      await expect(
+        service.withdraw('user-123', {
+          amount: 100,
+          bankAccountId: 'bank-1',
+        })
+      ).rejects.toThrow('Transaction frequency limit exceeded');
+    });
+
+    it('blocks a withdrawal when the daily amount cap is exceeded', async () => {
+      const flagService = (service as unknown as {
+        featureFlagService: { isEnabled: jest.Mock };
+      }).featureFlagService;
+      flagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === walletFlags.fraudChecks)
+      );
+      (prismaService.walletTransaction.aggregate as jest.Mock).mockResolvedValue({
+        _sum: { amount: 999999 },
+      });
+
+      await expect(
+        service.withdraw('user-123', {
+          amount: 1000,
+          bankAccountId: 'bank-1',
+        })
+      ).rejects.toThrow('Daily transaction amount limit exceeded');
+    });
+
+    it('allows the withdrawal when limits are respected', async () => {
+      const flagService = (service as unknown as {
+        featureFlagService: { isEnabled: jest.Mock };
+      }).featureFlagService;
+      flagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === walletFlags.fraudChecks)
+      );
+
+      const result = await service.withdraw('user-123', {
+        amount: 100,
+        bankAccountId: 'bank-1',
+      });
+
+      expect(result.success).toBe(true);
     });
   });
 });

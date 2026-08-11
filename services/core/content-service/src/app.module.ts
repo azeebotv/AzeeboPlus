@@ -11,6 +11,7 @@ import { ServiceAuthGuard } from '@azeebo/security';
 import { CacheModule } from './cache/cache.module.js';
 import { JwtStrategy } from './modules/auth/jwt.strategy.js';
 import { FeatureFlagModule, contentFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
 @Module({
   imports: [
@@ -24,8 +25,10 @@ import { FeatureFlagModule, contentFlags } from '@azeebo/feature-flags';
     ContentModule,
     HealthModule,
     PublicModule,
+    FlagMetricsModule.register({ service: 'content-service' }),
     FeatureFlagModule.register({
       global: true,
+      ...flagHooks('content-service'),
       defaultFlags: {
         // Content flags: moderation stays ON (kill-switch for safety scans);
         // new pipelines (AI tags, clip ingestion, transcoding v2, threaded

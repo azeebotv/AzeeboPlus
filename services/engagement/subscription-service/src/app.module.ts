@@ -11,6 +11,7 @@ import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { CacheModule, JwtConfigModule } from '@azeebo/shared-services';
 import { FeatureFlagModule } from '@azeebo/feature-flags';
 import { subscriptionFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
 @Module({
   imports: [
@@ -24,8 +25,10 @@ import { subscriptionFlags } from '@azeebo/feature-flags';
     DatabaseModule,
     HealthModule,
     // Bundles default OFF until launched; renew/recovery paths default ON.
+    FlagMetricsModule.register({ service: 'subscription-service' }),
     FeatureFlagModule.register({
       global: true,
+      ...flagHooks('subscription-service'),
       defaultFlags: {
         [subscriptionFlags.bundles]: false,
         [subscriptionFlags.freeTrial]: false,

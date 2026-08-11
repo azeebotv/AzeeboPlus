@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { RewardResponse } from './interfaces/reward-response.interface.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { FeatureFlagService, rewardFlags } from '@azeebo/feature-flags';
 import axios from 'axios';
 
 interface MissionWithCompletion {
@@ -24,7 +25,8 @@ export class RewardsService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(CacheService) private readonly cacheService: CacheService,
-    @Inject(ConfigService) private readonly configService: ConfigService
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    private readonly featureFlagService?: FeatureFlagService
   ) {
     this.defaultPaginationLimit = this.configService.get<number>('DEFAULT_PAGINATION_LIMIT', 100);
     this.analyticsServiceBaseUrl = this.configService.get<string>(
@@ -446,6 +448,20 @@ export class RewardsService {
   }
 
   async checkIn(userId: string): Promise<RewardResponse> {
+    // reward_streaks: off by default — check-ins only advance the streak
+    // counter when the flag is enabled; otherwise fall through to points.
+    if (
+      this.featureFlagService &&
+      !(await this.featureFlagService.isEnabled(rewardFlags.streaks))
+    ) {
+      return {
+        success: true,
+        data: {
+          message: 'Streaks disabled',
+          streak: { current: 0, lastCheckInAt: null },
+        },
+      };
+    }
     try {
       const rewardAccount = await this.prisma.rewardAccount.findUnique({
         where: { userId },
@@ -613,6 +629,16 @@ export class RewardsService {
     if (!points) {
       throw new BadRequestException('Unknown activity');
     }
+
+    // reward_double_points: off by default — when enabled, every activity
+    // earns double points for promotions without changing the base config.
+    if (
+      this.featureFlagService &&
+      (await this.featureFlagService.isEnabled(rewardFlags.doublePoints))
+    ) {
+      return points * 2;
+    }
+
     return points;
   }
 

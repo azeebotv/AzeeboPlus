@@ -65,6 +65,12 @@ describe('QuizService', () => {
               findMany: jest.fn(),
               update: jest.fn(),
             },
+            $transaction: jest.fn((fn: unknown) => {
+              const prismaMock = (service as unknown as { prisma: Record<string, unknown> })?.prisma;
+              return typeof fn === 'function'
+                ? (fn as (tx: unknown) => unknown)(prismaMock ?? {})
+                : Promise.all(fn as unknown[]);
+            }),
           },
         },
       ],

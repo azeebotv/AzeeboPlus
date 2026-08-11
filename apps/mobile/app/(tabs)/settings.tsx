@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../src/contexts/AuthContext';
+import { useFlags } from '../../src/contexts/FlagsContext';
 import { notificationApi, type NotificationPreferences } from '../../src/api';
 import { useBiometric } from '../../src/hooks/useBiometric';
 import Constants from 'expo-constants';
@@ -29,6 +30,10 @@ const safeConstants = Constants as unknown as { expoConfig?: { version?: string;
 export default function SettingsScreen() {
   const colorScheme = useColorScheme();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isEnabled: isFlagEnabled } = useFlags();
+  // mobile_biometric_auth (off by default): the security section (biometric
+  // sign-in) is hidden until ops enables the flag.
+  const biometricAuthEnabled = isFlagEnabled('mobile_biometric_auth');
   const { t, i18n } = useTranslation();
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState<SupportedLanguage>(
@@ -458,50 +463,54 @@ export default function SettingsScreen() {
           </Pressable>
         </Modal>
 
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#888' : '#666' }]}>
-            Security
-          </Text>
+        {biometricAuthEnabled ? (
+          <View style={styles.section}>
+            <Text
+              style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#888' : '#666' }]}
+            >
+              Security
+            </Text>
 
-          <View
-            style={[
-              styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
-            ]}
-          >
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingIcon}>
-                {biometricType === 'face' ? '👤' : biometricType === 'fingerprint' ? '👆' : '🔐'}
-              </Text>
-              <View>
-                <Text
-                  style={[
-                    styles.settingLabel,
-                    { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
-                  ]}
-                >
-                  {getBiometricLabel()}
+            <View
+              style={[
+                styles.settingItem,
+                { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
+              ]}
+            >
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingIcon}>
+                  {biometricType === 'face' ? '👤' : biometricType === 'fingerprint' ? '👆' : '🔐'}
                 </Text>
-                <Text style={styles.settingDescription}>
-                  {isAvailable
-                    ? `Use ${getBiometricLabel().toLowerCase()} to sign in quickly`
-                    : 'Not available on this device'}
-                </Text>
+                <View>
+                  <Text
+                    style={[
+                      styles.settingLabel,
+                      { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+                    ]}
+                  >
+                    {getBiometricLabel()}
+                  </Text>
+                  <Text style={styles.settingDescription}>
+                    {isAvailable
+                      ? `Use ${getBiometricLabel().toLowerCase()} to sign in quickly`
+                      : 'Not available on this device'}
+                  </Text>
+                </View>
               </View>
+              {isBiometricToggling ? (
+                <ActivityIndicator size="small" color="#E8420A" />
+              ) : (
+                <Switch
+                  value={isEnabled}
+                  onValueChange={handleBiometricToggle}
+                  trackColor={{ false: '#333', true: '#E8420A' }}
+                  thumbColor="#fff"
+                  disabled={!isAvailable || isBiometricToggling}
+                />
+              )}
             </View>
-            {isBiometricToggling ? (
-              <ActivityIndicator size="small" color="#E8420A" />
-            ) : (
-              <Switch
-                value={isEnabled}
-                onValueChange={handleBiometricToggle}
-                trackColor={{ false: '#333', true: '#E8420A' }}
-                thumbColor="#fff"
-                disabled={!isAvailable || isBiometricToggling}
-              />
-            )}
           </View>
-        </View>
+        ) : null}
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#888' : '#666' }]}>

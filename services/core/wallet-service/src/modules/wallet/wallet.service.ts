@@ -1,4 +1,12 @@
-import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  ConflictException,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
 import { Prisma, WalletTransaction } from '../../prisma/client/index.js';
@@ -7,10 +15,11 @@ import { FundWalletDto } from './dto/fund-wallet.dto.js';
 import { WithdrawWalletDto, TransferWalletDto } from './dto/withdraw-transfer.dto.js';
 import { WalletResponse } from './interfaces/wallet-response.interface.js';
 import { toNumber, addDecimals } from '@azeebo/utils';
-import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { CacheService, cacheKey, RedisService } from '@azeebo/shared-services';
 import { createErrorResponse } from '@azeebo/shared-types';
 import axios from 'axios';
 import { EventBusService, EventTypes, EVENT_BUS_SERVICE } from '@azeebo/event-bus';
+import { FeatureFlagService, walletFlags } from '@azeebo/feature-flags';
 
 type WalletRow = {
   id: string;
@@ -34,7 +43,9 @@ export class WalletService {
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(CacheService) private readonly cacheService: CacheService,
     @Inject(ConfigService) private readonly configService: ConfigService,
-    @Inject(EVENT_BUS_SERVICE) private readonly eventBus: EventBusService
+    @Inject(EVENT_BUS_SERVICE) private readonly eventBus: EventBusService,
+    @Inject(RedisService) private readonly redisService: RedisService,
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
   ) {
     this.pointsToNairaRate = this.configService.get<number>('POINTS_TO_NAIRA_RATE', 100);
     this.webhookSecret = this.configService.getOrThrow<string>('WEBHOOK_SECRET');
@@ -88,6 +99,141 @@ export class WalletService {
       select: { userId: true },
     });
     if (wallet) await this.invalidateWalletCache(wallet.userId);
+  }
+
+  /**
+   * Redis distributed lock around debit/credit money-movement entry points
+   * (gated by the `wallet_distributed_lock` flag). The DB row lock (`FOR UPDATE`)
+   * remains the primary serialization; this adds a cross-instance lock around
+   * the idempotency-key pre-checks that run *outside* the DB transaction, so
+   * concurrent same-key debits can't both pass the duplicate check.
+   *
+   * Returns a release function. When the flag is off (or Redis is unavailable)
+   * the lock is skipped and the operation proceeds — fail-open, because the
+   * DB transaction still guarantees balance integrity.
+   */
+  private async withWalletLock<T>(lockKey: string, operation: () => Promise<T>): Promise<T> {
+    const distributedLockEnabled = await this.featureFlagService.isEnabled(
+      walletFlags.distributedLock
+    );
+    if (!distributedLockEnabled) {
+      return operation();
+    }
+
+    try {
+      const acquired = await this.redisService.setIfNotExists(lockKey, '1', 15);
+      if (!acquired) {
+        throw new ConflictException('Another operation is already processing this wallet');
+      }
+    } catch (error: unknown) {
+      if (error instanceof ConflictException) throw error;
+      // Redis unavailable — fail open, the DB row lock still protects balance.
+      this.logger.warn(`Distributed lock unavailable for key ${lockKey}: ${error}`);
+      return operation();
+    }
+
+    try {
+      return await operation();
+    } finally {
+      await this.redisService.del(lockKey).catch(() => undefined);
+    }
+  }
+
+  /**
+   * Appends an immutable entry to `wallet_ledger` when the `wallet_ledger_v2`
+   * flag is on. Never throws — the ledger is an audit trail, so a ledger write
+   * failure must not fail the money movement itself.
+   */
+  private async writeLedgerEntry(params: {
+    walletId: string;
+    userId: string;
+    operationType: string;
+    amount: number;
+    balanceAfter?: number | string;
+    reference?: string | null;
+    idempotencyKey?: string | null;
+    metadata?: Record<string, unknown>;
+  }): Promise<void> {
+    try {
+      const ledgerV2Enabled = await this.featureFlagService.isEnabled(walletFlags.ledgerV2);
+      if (!ledgerV2Enabled) return;
+
+      await this.prisma.walletLedger.create({
+        data: {
+          walletId: params.walletId,
+          userId: params.userId,
+          operationType: params.operationType,
+          amount: params.amount,
+          balanceAfter: params.balanceAfter ?? 0,
+          reference: params.reference ?? undefined,
+          idempotencyKey: params.idempotencyKey ?? undefined,
+          metadata: params.metadata ? (params.metadata as Prisma.InputJsonValue) : undefined,
+        },
+      });
+    } catch (error: unknown) {
+      this.logger.warn(
+        `Failed to write wallet ledger entry (${params.operationType}): ${error}`
+      );
+    }
+  }
+
+  /**
+   * Velocity/pattern checks gated by the `wallet_fraud_checks` flag. When on,
+   * money-out operations (withdraw/transfer) are rejected when the user exceeds
+   * the per-hour count, per-day count, or per-day amount limits. Limits are
+   * env-tunable (WALLET_FRAUD_MAX_PER_HOUR/PER_DAY/DAILY_AMOUNT) with
+   * withdraw-tight, transfer-loose defaults.
+   */
+  private async assertFraudChecksPass(
+    userId: string,
+    kind: 'withdraw' | 'transfer',
+    amount: number
+  ): Promise<void> {
+    const fraudChecksEnabled = await this.featureFlagService.isEnabled(walletFlags.fraudChecks);
+    if (!fraudChecksEnabled) return;
+
+    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    if (!wallet) return;
+
+    const type = kind === 'withdraw' ? 'withdraw' : 'transfer_out';
+    const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    const [hourCount, dayCount, dayAgg] = await Promise.all([
+      this.prisma.walletTransaction.count({
+        where: { walletId: wallet.id, type, createdAt: { gte: hourAgo } },
+      }),
+      this.prisma.walletTransaction.count({
+        where: { walletId: wallet.id, type, createdAt: { gte: dayAgo } },
+      }),
+      this.prisma.walletTransaction.aggregate({
+        where: { walletId: wallet.id, type, status: 'completed', createdAt: { gte: dayAgo } },
+        _sum: { amount: true },
+      }),
+    ]);
+
+    const maxPerHour = this.configService.get<number>(
+      'WALLET_FRAUD_MAX_PER_HOUR',
+      kind === 'withdraw' ? 3 : 5
+    );
+    const maxPerDay = this.configService.get<number>(
+      'WALLET_FRAUD_MAX_PER_DAY',
+      kind === 'withdraw' ? 10 : 20
+    );
+    const maxDailyAmount = this.configService.get<number>('WALLET_FRAUD_MAX_DAILY_AMOUNT', 1000000);
+
+    if (hourCount >= maxPerHour) {
+      throw new ForbiddenException(
+        'Transaction frequency limit exceeded, please try again later'
+      );
+    }
+    if (dayCount >= maxPerDay) {
+      throw new ForbiddenException('Daily transaction limit exceeded, please try again later');
+    }
+    const dailyAmount = toNumber((dayAgg._sum?.amount ?? 0).toString());
+    if (dailyAmount + amount > maxDailyAmount) {
+      throw new ForbiddenException('Daily transaction amount limit exceeded');
+    }
   }
 
   verifyWebhookSignature(payload: string, signature: string): boolean {
@@ -412,6 +558,8 @@ export class WalletService {
    */
   async withdraw(userId: string, withdrawDto: WithdrawWalletDto): Promise<WalletResponse> {
     try {
+      await this.assertFraudChecksPass(userId, 'withdraw', withdrawDto.amount);
+
       const reference = `WD-${randomUUID()}`;
       const idempotencyKey = `withdraw-${userId}-${withdrawDto.amount}-${Date.now()}`;
 
@@ -454,6 +602,16 @@ export class WalletService {
 
       await this.invalidateWalletCache(userId);
 
+      await this.writeLedgerEntry({
+        walletId: updatedWallet!.id,
+        userId,
+        operationType: 'withdraw',
+        amount: withdrawDto.amount,
+        balanceAfter: updatedWallet!.balance.toString(),
+        reference,
+        idempotencyKey,
+      });
+
       this.trackAnalyticsEvent('wallet_withdrawal_initiated', userId, {
         transactionId: reference,
         amount: withdrawDto.amount,
@@ -473,7 +631,12 @@ export class WalletService {
         },
       };
     } catch (error: unknown) {
-      if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException ||
+        error instanceof ForbiddenException
+      )
+        throw error;
       this.logger.error(`Failed to withdraw for user ${userId}: ${error}`);
       return {
         success: false,
@@ -497,6 +660,8 @@ export class WalletService {
       if (senderId === transferDto.recipientId) {
         throw new BadRequestException('Cannot transfer to yourself');
       }
+
+      await this.assertFraudChecksPass(senderId, 'transfer', transferDto.amount);
 
       const senderReference = `TRF-OUT-${randomUUID()}`;
       const recipientReference = `TRF-IN-${randomUUID()}`;
@@ -572,6 +737,28 @@ export class WalletService {
       await this.invalidateWalletCache(senderId);
       await this.invalidateWalletCache(transferDto.recipientId);
 
+      const recipientWalletAfter = await this.prisma.wallet.findUnique({
+        where: { userId: transferDto.recipientId },
+        select: { id: true, balance: true },
+      });
+      await this.writeLedgerEntry({
+        walletId: updatedSenderWallet!.id,
+        userId: senderId,
+        operationType: 'transfer_out',
+        amount: transferDto.amount,
+        balanceAfter: updatedSenderWallet!.balance.toString(),
+        reference: senderReference,
+        idempotencyKey,
+      });
+      await this.writeLedgerEntry({
+        walletId: recipientWalletAfter?.id ?? updatedSenderWallet!.id,
+        userId: transferDto.recipientId,
+        operationType: 'transfer_in',
+        amount: transferDto.amount,
+        balanceAfter: recipientWalletAfter?.balance.toString() ?? '0',
+        reference: recipientReference,
+      });
+
       this.trackAnalyticsEvent('wallet_transfer_completed', senderId, {
         recipientId: transferDto.recipientId,
         amount: transferDto.amount,
@@ -605,7 +792,12 @@ export class WalletService {
         },
       };
     } catch (error: unknown) {
-      if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException ||
+        error instanceof ForbiddenException
+      )
+        throw error;
       this.logger.error(`Failed to transfer from user ${senderId}: ${error}`);
       return {
         success: false,
@@ -777,6 +969,7 @@ export class WalletService {
     description: string,
     idempotencyKey?: string
   ): Promise<WalletResponse> {
+    return this.withWalletLock(`wallet:lock:${walletId}`, async () => {
     try {
       if (idempotencyKey) {
         const existingTransaction = await this.prisma.walletTransaction.findUnique({
@@ -834,6 +1027,15 @@ export class WalletService {
 
       await this.invalidateWalletCacheByWalletId(walletId);
 
+      await this.writeLedgerEntry({
+        walletId,
+        userId: updatedWallet!.userId,
+        operationType: 'credit',
+        amount,
+        balanceAfter: updatedWallet!.balance.toString(),
+        idempotencyKey: idempotencyKey ?? null,
+      });
+
       // Track credit event — look up userId from wallet
       const walletOwner = await this.prisma.wallet.findUnique({
         where: { id: walletId },
@@ -867,6 +1069,7 @@ export class WalletService {
         error: { code: 'CREDIT_BALANCE_FAILED', message: 'Failed to credit wallet balance' },
       };
     }
+    });
   }
 
   /**
@@ -890,6 +1093,7 @@ export class WalletService {
     reference?: string,
     idempotencyKey?: string
   ): Promise<WalletResponse> {
+    return this.withWalletLock(`wallet:lock:${walletId}`, async () => {
     try {
       const updatedWallet = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         const [wallet] = await tx.$queryRaw<WalletRow[]>`
@@ -960,6 +1164,16 @@ export class WalletService {
 
       await this.invalidateWalletCacheByWalletId(walletId);
 
+      await this.writeLedgerEntry({
+        walletId,
+        userId: wallet.userId,
+        operationType: 'debit',
+        amount,
+        balanceAfter: wallet.balance.toString(),
+        reference: reference ?? null,
+        idempotencyKey: idempotencyKey ?? null,
+      });
+
       this.trackAnalyticsEvent('wallet_debit_completed', wallet.userId, {
         walletId,
         amount,
@@ -988,6 +1202,7 @@ export class WalletService {
         error: { code: 'DEBIT_BALANCE_FAILED', message: 'Failed to debit wallet balance' },
       };
     }
+    });
   }
 
   /**
@@ -1447,6 +1662,7 @@ export class WalletService {
   }): Promise<{ transactionId: string; balance: number }> {
     const { userId, amount, idempotencyKey, description, metadata } = params;
 
+    return this.withWalletLock(`wallet:lock:user:${userId}`, async () => {
     // Check for duplicate via idempotency key
     const existingTransaction = await this.prisma.walletTransaction.findUnique({
       where: { idempotencyKey },
@@ -1500,6 +1716,19 @@ export class WalletService {
 
     await this.invalidateWalletCache(userId);
 
+    await this.writeLedgerEntry({
+      walletId: result.walletId,
+      userId,
+      operationType: 'charge',
+      amount,
+      balanceAfter: (await this.prisma.wallet.findUnique({
+        where: { userId },
+        select: { balance: true },
+      }))?.balance.toString() ?? '0',
+      idempotencyKey,
+      metadata,
+    });
+
     this.trackAnalyticsEvent('wallet_charge_completed', userId, {
       transactionId: result.transactionId,
       amount,
@@ -1516,6 +1745,7 @@ export class WalletService {
       transactionId: result.transactionId,
       balance: toNumber(updatedWallet?.balance.toString() || '0'),
     };
+    });
   }
 
   /**
@@ -1535,6 +1765,7 @@ export class WalletService {
   }): Promise<{ transactionId: string; balance: number }> {
     const { userId, amount, idempotencyKey, description, metadata } = params;
 
+    return this.withWalletLock(`wallet:lock:user:${userId}`, async () => {
     // Check for duplicate via idempotency key
     const existingTransaction = await this.prisma.walletTransaction.findUnique({
       where: { idempotencyKey },
@@ -1584,6 +1815,19 @@ export class WalletService {
 
     await this.invalidateWalletCache(userId);
 
+    await this.writeLedgerEntry({
+      walletId: result.walletId,
+      userId,
+      operationType: 'reverse',
+      amount,
+      balanceAfter: (await this.prisma.wallet.findUnique({
+        where: { userId },
+        select: { balance: true },
+      }))?.balance.toString() ?? '0',
+      idempotencyKey,
+      metadata,
+    });
+
     this.trackAnalyticsEvent('wallet_credit_reverse_completed', userId, {
       transactionId: result.transactionId,
       amount,
@@ -1600,6 +1844,7 @@ export class WalletService {
       transactionId: result.transactionId,
       balance: toNumber(updatedWallet?.balance.toString() || '0'),
     };
+    });
   }
 
   async processWebhook(

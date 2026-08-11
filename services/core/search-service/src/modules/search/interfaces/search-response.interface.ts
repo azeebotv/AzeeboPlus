@@ -18,6 +18,12 @@ export interface SearchResult {
   /** Duration in seconds (direct column) — clients render a duration chip and
    * filter by length without a second lookup. */
   duration?: number;
+  /** Denormalized category names from the content_categories relation —
+   * clients filter by category without a join. */
+  categories: string[];
+  /** Denormalized creator displayName (creator_profiles.displayName) —
+   * clients render the creator chip without a second lookup. */
+  creatorName?: string;
   /** Per-item relevance (0–1), blended from the in-process Levenshtein
    * fuzzyScore and the row's pg_trgm similarity() — present when
    * search_typo_tolerance is on. Clean/exact matches keep a high score
@@ -98,6 +104,21 @@ export interface SearchResponse {
     total?: number;
     message?: string;
     pagination?: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+    /** Per-surface pagination for creators and universes (same shape as
+     * `pagination`, which pages content). Present on both paths — totals are
+     * exact counts over the same predicate as the returned rows. */
+    creatorsPagination?: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+    universesPagination?: {
       page: number;
       limit: number;
       total: number;

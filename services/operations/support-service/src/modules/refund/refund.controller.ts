@@ -22,6 +22,7 @@ import { ApiResponseWrapper } from '@azeebo/shared-types';
 import { Prisma } from '../../prisma/client/index.js';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { AdminGuard } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, supportFlags } from '@azeebo/feature-flags';
 
 interface AuthenticatedRequest {
   user: {
@@ -38,6 +39,8 @@ export class RefundController {
   constructor(@Inject(RefundService) private refundService: RefundService) {}
 
   @Post()
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(supportFlags.selfServiceRefunds)
   @ApiOperation({ summary: 'Request a refund' })
   async requestRefund(@Request() req: AuthenticatedRequest, @Body() dto: RequestRefundDto) {
     const refund = await this.refundService.requestRefund({
@@ -52,6 +55,8 @@ export class RefundController {
   }
 
   @Get('my')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(supportFlags.selfServiceRefunds)
   @ApiOperation({ summary: 'Get my refunds' })
   async getMyRefunds(@Request() req: AuthenticatedRequest, @Query() query: RefundQueryDto) {
     const result = await this.refundService.getUserRefunds(req.user.id, query);

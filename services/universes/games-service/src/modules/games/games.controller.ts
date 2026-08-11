@@ -106,10 +106,12 @@ export class GamesController {
   }
 
   @Get('leaderboard')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(gamesFlags.leaderboardsSeasonal)
   @RateLimit(100, 60000)
-  @ApiOperation({ summary: 'Games leaderboard' })
+  @ApiOperation({ summary: 'Games leaderboard (games_leaderboards_seasonal)' })
   @ApiResponse({ status: 200, description: 'Leaderboard' })
+  @ApiResponse({ status: 403, description: 'Flag off, or forbidden' })
   async getLeaderboard(): Promise<GameResponse> {
     return this.gamesService.getLeaderboard();
   }

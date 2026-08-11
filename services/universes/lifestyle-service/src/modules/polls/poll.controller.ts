@@ -12,6 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { FeatureFlag, FeatureFlagGuard, lifestyleFlags } from '@azeebo/feature-flags';
 import { ServiceAuthGuard } from '@azeebo/security';
 
 import { PollService } from './poll.service';
@@ -20,6 +21,8 @@ import { VotePollDto } from './dto/vote-poll.dto';
 
 @ApiTags('Polls')
 @UseGuards(ServiceAuthGuard)
+@FeatureFlag(lifestyleFlags.pollsEnabled)
+@UseGuards(FeatureFlagGuard)
 @Controller('polls')
 export class PollController {
   constructor(@Inject(PollService) private readonly pollService: PollService) {}

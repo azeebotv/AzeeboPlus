@@ -58,6 +58,7 @@ describe('Search Controller Contract Tests', () => {
                 viewCount: 100,
                 createdAt: new Date(),
                 updatedAt: new Date(),
+                categories: [],
               },
             ],
             creators: [],

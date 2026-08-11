@@ -9,6 +9,8 @@
   },
   "scripts": {
     "lint": "pnpm -r run lint",
+    "check:flags": "node scripts/check-flag-conventions.mjs",
+    "sweep:flags": "node scripts/sweep-flag-usage.mjs",
     "typecheck": "tsc --noEmit",
     "test": "pnpm -r run test",
     "build": "pnpm -r run build",
@@ -16,7 +18,9 @@
     "docs-sync:watch": "nodemon --watch services --exec ts-node --project tsconfig.scripts.json scripts/docs-sync.ts",
     "coverage-analyze": "ts-node --project tsconfig.scripts.json scripts/coverage-analyzer.ts",
     "contracts": "pnpm --filter @azeebo/contract-tests test:contracts",
-    "contracts:watch": "pnpm --filter @azeebo/contract-tests test:watch"
+    "contracts:watch": "pnpm --filter @azeebo/contract-tests test:watch",
+    "test:flags:redis": "docker compose -f docker-compose.test.yml up -d --wait redis-test && pnpm --filter @azeebo/admin test:redis && docker compose -f docker-compose.test.yml down",
+    "test:payments:failover": "docker compose -f docker-compose.test.yml up -d --wait redis-test postgres-test paystack-mock flutterwave-mock && pnpm --filter @azeebo/payment-service test:e2e:failover && docker compose -f docker-compose.test.yml down"
   },
   "dependencies": {
     "glob": "^13.0.6",

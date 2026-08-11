@@ -13,6 +13,7 @@ import { VideoView } from 'expo-video';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAzeeboVideoPlayer } from '../../src/hooks/useVideoPlayer';
+import { useFlags } from '../../src/contexts/FlagsContext';
 import { contentApi, type ContentItem } from '../../src/api';
 import { logger } from '../../src/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
@@ -23,6 +24,7 @@ export default function WatchScreen() {
   const router = useRouter();
   const { contentId } = useLocalSearchParams<{ contentId: string }>();
   const colorScheme = useColorScheme();
+  const { isEnabled } = useFlags();
 
   const [content, setContent] = useState<ContentItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,6 +68,9 @@ export default function WatchScreen() {
     contentId: contentId || '',
     onProgressUpdate: handleProgressUpdate,
     onComplete: handleComplete,
+    // mobile_autoplay (on by default): auto-start playback when ready; off
+    // keeps the conservative tap-to-play behavior.
+    autoPlay: isEnabled('mobile_autoplay'),
   });
 
   const fetchContent = useCallback(async () => {

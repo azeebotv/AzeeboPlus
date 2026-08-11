@@ -25,6 +25,34 @@ export interface AnalyticsConfig {
   flushInterval?: number;
   flushBatchSize?: number;
   defaultConsent?: Partial<Record<ConsentCategory, boolean>>;
+  /**
+   * Sampling config resolution: when `clientSampling` is true (default) the SDK
+   * fetches `GET {endpoint}/v1/analytics/bootstrap` once and pre-samples events
+   * client-side using the server's `analytics_client_sampling` flag + rate.
+   */
+  clientSampling?: boolean;
+  /** Bootstrap fetch TTL in ms (default 5 minutes). */
+  bootstrapTtlMs?: number;
+}
+
+/** Client-side sampling config resolved from the analytics bootstrap endpoint. */
+export interface SamplingConfig {
+  enabled: boolean;
+  samplingRate: number;
+}
+
+const DEFAULT_SAMPLING: SamplingConfig = { enabled: false, samplingRate: 100 };
+
+/** Deterministic per-entity sampling so a user is fully kept or fully dropped. */
+export function isEntitySampled(entity: string | undefined, rate: number): boolean {
+  if (rate >= 100) return true;
+  if (rate <= 0) return false;
+  const seed = entity ?? 'anonymous';
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  return hash % 100 < rate;
 }
 
 /** User context attached to analytics events for identification. */
@@ -110,6 +138,9 @@ export class Analytics {
   private maxRetries = 3;
   private maxQueueSize = 1000;
   private consentManager: ConsentManager;
+  private samplingConfig: SamplingConfig = DEFAULT_SAMPLING;
+  private samplingFetchedAt = 0;
+  private samplingFetchPromise: Promise<void> | null = null;
 
   constructor(config: AnalyticsConfig = {}) {
     this.config = {
@@ -117,10 +148,16 @@ export class Analytics {
       debug: false,
       flushInterval: 30000,
       flushBatchSize: 10,
+      clientSampling: true,
+      bootstrapTtlMs: 5 * 60 * 1000,
       ...config,
     };
 
     this.consentManager = new ConsentManager(config.defaultConsent);
+
+    if (this.config.clientSampling !== false && this.config.endpoint) {
+      void this.refreshSamplingConfig();
+    }
 
     if (this.config.endpoint && this.config.enabled) {
       this.flushTimer = setInterval(() => {
@@ -129,16 +166,79 @@ export class Analytics {
     }
   }
 
+  /**
+   * Fetches the server-side sampling config (`analytics_client_sampling` flag +
+   * effective rate) from the bootstrap endpoint. Falls back to full sampling on
+   * any error so tracking is never blocked by this call.
+   */
+  async refreshSamplingConfig(): Promise<SamplingConfig> {
+    if (!this.config.endpoint || this.config.clientSampling === false) {
+      return DEFAULT_SAMPLING;
+    }
+    if (this.samplingFetchPromise) {
+      await this.samplingFetchPromise;
+      return this.samplingConfig;
+    }
+    this.samplingFetchPromise = (async () => {
+      try {
+        const now = Date.now();
+        if (now - this.samplingFetchedAt < (this.config.bootstrapTtlMs ?? 5 * 60 * 1000)) {
+          return;
+        }
+        const response = await fetch(`${this.config.endpoint}/v1/analytics/bootstrap`, {
+          headers: { Accept: 'application/json' },
+        });
+        if (!response.ok) return;
+        const body = (await response.json()) as { success?: boolean; data?: SamplingConfig };
+        if (body?.data) {
+          this.samplingConfig = {
+            enabled: body.data.enabled === true,
+            samplingRate:
+              typeof body.data.samplingRate === 'number' ? body.data.samplingRate : 100,
+          };
+          this.samplingFetchedAt = Date.now();
+        }
+      } catch {
+        // Bootstrap unavailable — keep full sampling
+      } finally {
+        this.samplingFetchPromise = null;
+      }
+    })();
+    await this.samplingFetchPromise;
+    return this.samplingConfig;
+  }
+
+  /** Whether a given entity should be sent given the current sampling config. */
+  shouldSample(entity: string | undefined): boolean {
+    return isEntitySampled(entity, this.samplingConfig.samplingRate);
+  }
+
+  getSamplingConfig(): Readonly<SamplingConfig> {
+    return this.samplingConfig;
+  }
+
   track(event: AnalyticsEvent): void {
     if (!this.config.enabled) return;
 
     const category = event.category ?? ConsentCategory.ANALYTICS;
     if (!this.consentManager.hasConsent(category)) {
       if (this.config.debug) {
-        // eslint-disable-next-line no-console
+        // eslint-disable-next-line no-console, azeebo-custom/no-console-log
         console.log('[Analytics] Skipping event (no consent):', event.name, 'category:', category);
       }
       return;
+    }
+
+    // Client-side sampling (mirrors the server's deterministic per-entity hash).
+    if (this.samplingConfig.enabled) {
+      const entity = event.userId ?? event.sessionId ?? this.userContext?.userId;
+      if (!this.shouldSample(entity)) {
+        if (this.config.debug) {
+          // eslint-disable-next-line no-console, azeebo-custom/no-console-log
+          console.log('[Analytics] Skipping event (sampled out):', event.name);
+        }
+        return;
+      }
     }
 
     const fullEvent: AnalyticsEvent = {
@@ -154,7 +254,7 @@ export class Analytics {
     }
 
     if (this.config.debug) {
-      // eslint-disable-next-line no-console
+      // eslint-disable-next-line no-console, azeebo-custom/no-console-log
       console.log('[Analytics]', fullEvent.name, fullEvent.properties);
     }
 

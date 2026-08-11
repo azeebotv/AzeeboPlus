@@ -9,7 +9,7 @@ module.exports = {
     'node_modules/(?!uuid|zod|date-fns)',
   ],
   moduleNameMapper: {
-    '^(\\.{1,2}/.*)\.js$': '$1',
+    '^(\\.{1,2}/.*)\\.js$': '$1',
   },
   collectCoverageFrom: [
     '**/*.(t|j)s',

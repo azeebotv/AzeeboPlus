@@ -21,6 +21,8 @@ import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
 import { CacheModule } from '@azeebo/shared-services';
+import { FeatureFlagModule, lifestyleFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
 @Module({
   imports: [
@@ -46,6 +48,24 @@ import { CacheModule } from '@azeebo/shared-services';
     PollModule,
     QuizModule,
     AdminModule,
+    // Lifestyle feature gates: shipped surfaces ON, incubating modules OFF.
+    FlagMetricsModule.register({ service: 'lifestyle-service' }),
+    FeatureFlagModule.register({
+      global: true,
+      ...flagHooks('lifestyle-service'),
+      defaultFlags: {
+        [lifestyleFlags.eventsTicketing]: false,
+        [lifestyleFlags.storiesEnabled]: true,
+        [lifestyleFlags.cityGuide]: false,
+        [lifestyleFlags.influencerVerification]: false,
+        [lifestyleFlags.nightlifeBooking]: false,
+        [lifestyleFlags.pollsEnabled]: true,
+        [lifestyleFlags.quizzesEnabled]: true,
+        [lifestyleFlags.celebrityFeed]: true,
+        [lifestyleFlags.musicEnabled]: true,
+        [lifestyleFlags.socialEnabled]: true,
+      },
+    }),
   ],
   providers: [
     {

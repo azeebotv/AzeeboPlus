@@ -3,6 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { MoviesController } from './movies.controller.js';
 import { MoviesService } from './movies.service.js';
 import { RateLimitService } from '@azeebo/security';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 
 jest.mock('@azeebo/shared-services', () => ({
   CacheService: jest.fn().mockImplementation(() => ({
@@ -57,6 +58,12 @@ describe('MoviesController', () => {
         {
           provide: RateLimitService,
           useValue: mockRateLimitService,
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: {
+            isEnabled: jest.fn().mockResolvedValue(true),
+          },
         },
         Reflector,
       ],

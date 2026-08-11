@@ -30,12 +30,18 @@ import {
 import { SelectRoleDto } from './dto/select-role.dto.js';
 import { RequestOtpDto } from './dto/request-otp.dto.js';
 import { VerifyOtpDto } from './dto/verify-otp.dto.js';
+import {
+  RequestMagicLinkDto,
+  VerifyMagicLinkDto,
+  VerifyMfaLoginDto,
+} from './dto/magic-link.dto.js';
 import { AuthResponse } from './interfaces/auth-response.interface.js';
 import { RefreshTokenResponse } from './interfaces/refresh-token-response.interface.js';
 import { UserEntity } from './interfaces/auth-entity.interface.js';
 import { User } from '@azeebo/shared-types';
 import { createSuccessResponse } from '@azeebo/shared-types';
 import { OtpService } from './otp/otp.service.js';
+import { MfaService } from './mfa/mfa.service.js';
 import { RedisService, CacheService, cacheKey } from '@azeebo/shared-services';
 import { FeatureFlagService, authFlags } from '@azeebo/feature-flags';
 
@@ -53,6 +59,13 @@ export class AuthService {
   private static readonly MAX_VERIFY_ATTEMPTS_PER_TOKEN = 5;
   // Per-user cap on verification emails per hour (inbox-bombing protection).
   private static readonly MAX_VERIFICATION_RESENDS_PER_HOUR = 3;
+  // Magic links are single-use and short-lived (15 minutes).
+  private static readonly MAGIC_LINK_TTL_SECONDS = 900;
+  // MFA login challenges expire after 10 minutes (same lifetime as the MFA
+  // setup pending secret).
+  private static readonly MFA_LOGIN_CHALLENGE_TTL_SECONDS = 600;
+  private readonly magicLinkPrefix = 'magic_link:';
+  private readonly mfaLoginChallengePrefix = 'mfa_login_challenge:';
   private readonly revokedTokensPrefix = 'revoked:';
   private readonly failedLoginPrefix = 'failed_login:';
   private readonly maxFailedAttempts: number;
@@ -64,6 +77,7 @@ export class AuthService {
     @Inject(AuditLogService) private readonly auditLogService: AuditLogService,
     @Inject(JwtService) private readonly jwtService: JwtService,
     @Inject(OtpService) private readonly otpService: OtpService,
+    @Inject(MfaService) private readonly mfaService: MfaService,
     @Inject(RedisService) private readonly redisService: RedisService,
     @Inject(CacheService) private readonly cacheService: CacheService,
     @Inject(ConfigService) private readonly configService: ConfigService,
@@ -244,6 +258,63 @@ export class AuthService {
         });
         throw new ForbiddenException(
           'Email not verified. Please verify your email before signing in.'
+        );
+      }
+    }
+
+    // auth_mfa_required_for_admins: admins must complete a TOTP challenge at
+    // sign-in — tokens are withheld until POST /auth/mfa/verify-login succeeds.
+    // Fail-closed: an admin without MFA enrolled cannot sign in (enforce via
+    // the existing /auth/mfa/setup flow first).
+    if (await this.featureFlagService.isEnabled(authFlags.mfaRequiredForAdmins)) {
+      if (user.role === 'admin') {
+        if (!user.mfaEnabled) {
+          this.auditLogService.log({
+            actor: user.id,
+            action: 'login.blocked',
+            resourceType: 'user',
+            resourceId: user.id,
+            result: 'failure',
+            error: 'admin_mfa_not_enrolled',
+            ipAddress,
+            userAgent,
+            timestamp: new Date(),
+          });
+          this.trackAnalyticsEvent('user_login_blocked', user.id, {
+            reason: 'admin_mfa_not_enrolled',
+          });
+          throw new ForbiddenException(
+            'Admins must enable MFA before signing in. Complete MFA setup in your security settings.'
+          );
+        }
+
+        const challengeId = randomUUID();
+        await this.redisService.set(
+          `${this.mfaLoginChallengePrefix}${challengeId}`,
+          user.id,
+          AuthService.MFA_LOGIN_CHALLENGE_TTL_SECONDS
+        );
+
+        this.auditLogService.log({
+          actor: user.id,
+          action: 'login.mfa_challenge',
+          resourceType: 'user',
+          resourceId: user.id,
+          result: 'success',
+          error: JSON.stringify({ challengeId }),
+          ipAddress,
+          userAgent,
+          timestamp: new Date(),
+        });
+
+        throw new HttpException(
+          {
+            mfaRequired: true,
+            method: 'totp',
+            challengeId,
+            message: 'MFA verification required to complete sign-in.',
+          },
+          HttpStatus.PRECONDITION_REQUIRED
         );
       }
     }
@@ -799,6 +870,180 @@ export class AuthService {
     await this.otpService.verifyOtp(user.id, verifyOtpDto.code);
 
     const tokens = await this.generateTokens(user);
+
+    return createSuccessResponse({
+      user: this.mapToUser(user),
+      access_token: tokens.accessToken,
+      refresh_token: tokens.refreshToken,
+    });
+  }
+
+  async requestMagicLink(
+    requestMagicLinkDto: RequestMagicLinkDto
+  ): Promise<{ success: boolean; message: string }> {
+    // Fail-closed: the endpoint only exists while the flag is on.
+    if (!(await this.featureFlagService.isEnabled(authFlags.passwordlessMagicLink))) {
+      throw new ForbiddenException('Passwordless login is not available');
+    }
+
+    const user = await this.findUserByEmailCached(requestMagicLinkDto.email);
+    if (!user) {
+      // Never reveal whether the account exists.
+      return {
+        success: true,
+        message: 'If the email exists, a sign-in link has been sent',
+      };
+    }
+
+    const token = randomUUID();
+    await this.redisService.set(
+      `${this.magicLinkPrefix}${token}`,
+      user.id,
+      AuthService.MAGIC_LINK_TTL_SECONDS
+    );
+
+    try {
+      const notificationServiceUrl = this.configService.get<string>(
+        'NOTIFICATION_SERVICE_URL',
+        'http://notification-service:3006'
+      );
+      await axios.post(`${notificationServiceUrl}/v1/notifications/email`, {
+        to: user.email,
+        template: 'magic-link',
+        data: {
+          magicLinkUrl: `${this.configService.get<string>('FRONTEND_URL', 'http://localhost:4000')}/auth/magic-link?token=${token}`,
+          displayName: user.displayName,
+        },
+      });
+    } catch (error: unknown) {
+      this.logger.error(
+        `Failed to send magic link email: ${error instanceof Error ? error.message : String(error)}`
+      );
+      await this.redisService.del(`${this.magicLinkPrefix}${token}`);
+      throw new BadRequestException('Failed to send sign-in link. Please try again.');
+    }
+
+    this.auditLogService.log({
+      actor: user.id,
+      action: 'magic_link.requested',
+      resourceType: 'user',
+      resourceId: user.id,
+      result: 'success',
+      timestamp: new Date(),
+    });
+
+    return {
+      success: true,
+      message: 'If the email exists, a sign-in link has been sent',
+    };
+  }
+
+  async verifyMagicLink(verifyMagicLinkDto: VerifyMagicLinkDto): Promise<AuthResponse> {
+    if (!(await this.featureFlagService.isEnabled(authFlags.passwordlessMagicLink))) {
+      throw new ForbiddenException('Passwordless login is not available');
+    }
+
+    const key = `${this.magicLinkPrefix}${verifyMagicLinkDto.token}`;
+    const userId = await this.redisService.get(key);
+    if (!userId) {
+      throw new BadRequestException('Invalid or expired sign-in link');
+    }
+
+    // Single-use: burn the link before issuing tokens.
+    await this.redisService.del(key);
+
+    const user = await this.authRepository.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException('Invalid or expired sign-in link');
+    }
+
+    // MFA challenge still applies to admins on passwordless sign-in.
+    if (await this.featureFlagService.isEnabled(authFlags.mfaRequiredForAdmins)) {
+      if (user.role === 'admin' && user.mfaEnabled) {
+        const challengeId = randomUUID();
+        await this.redisService.set(
+          `${this.mfaLoginChallengePrefix}${challengeId}`,
+          user.id,
+          AuthService.MFA_LOGIN_CHALLENGE_TTL_SECONDS
+        );
+        throw new HttpException(
+          {
+            mfaRequired: true,
+            method: 'totp',
+            challengeId,
+            message: 'MFA verification required to complete sign-in.',
+          },
+          HttpStatus.PRECONDITION_REQUIRED
+        );
+      }
+    }
+
+    const tokens = await this.generateTokens(user);
+
+    this.auditLogService.log({
+      actor: user.id,
+      action: 'login.success',
+      resourceType: 'user',
+      resourceId: user.id,
+      result: 'success',
+      error: JSON.stringify({ method: 'magic_link' }),
+      timestamp: new Date(),
+    });
+    this.trackAnalyticsEvent('user_logged_in', user.id, {
+      method: 'magic_link',
+    });
+
+    return createSuccessResponse({
+      user: this.mapToUser(user),
+      access_token: tokens.accessToken,
+      refresh_token: tokens.refreshToken,
+    });
+  }
+
+  async verifyMfaLogin(verifyMfaLoginDto: VerifyMfaLoginDto): Promise<AuthResponse> {
+    const key = `${this.mfaLoginChallengePrefix}${verifyMfaLoginDto.challengeId}`;
+    const userId = await this.redisService.get(key);
+    if (!userId) {
+      throw new UnauthorizedException('MFA challenge expired. Please sign in again.');
+    }
+
+    const user = await this.authRepository.findById(userId);
+    if (!user) {
+      await this.redisService.del(key);
+      throw new UnauthorizedException('MFA challenge expired. Please sign in again.');
+    }
+
+    const valid = await this.mfaService.verifyMfaCode(user.id, verifyMfaLoginDto.code);
+    if (!valid) {
+      this.auditLogService.log({
+        actor: user.id,
+        action: 'login.mfa_failed',
+        resourceType: 'user',
+        resourceId: user.id,
+        result: 'failure',
+        error: 'invalid_totp_code',
+        timestamp: new Date(),
+      });
+      throw new UnauthorizedException('Invalid MFA code');
+    }
+
+    // Burn the challenge — the login completes now.
+    await this.redisService.del(key);
+
+    const tokens = await this.generateTokens(user);
+
+    this.auditLogService.log({
+      actor: user.id,
+      action: 'login.success',
+      resourceType: 'user',
+      resourceId: user.id,
+      result: 'success',
+      error: JSON.stringify({ method: 'password_mfa' }),
+      timestamp: new Date(),
+    });
+    this.trackAnalyticsEvent('user_logged_in', user.id, {
+      method: 'password_mfa',
+    });
 
     return createSuccessResponse({
       user: this.mapToUser(user),

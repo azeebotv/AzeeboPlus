@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger, VersioningType } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
 import { createHelmetConfig, configureCors } from '@azeebo/security';
 
@@ -34,6 +35,18 @@ async function bootstrap(): Promise<void> {
   }
   const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim());
   configureCors(app, { allowedOrigins, credentials: true });
+
+  const config = new DocumentBuilder()
+    .setTitle('Reward API')
+    .setDescription('Reward service API documentation')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  if (process.env.NODE_ENV !== 'production') {
+    SwaggerModule.setup('api', app, document);
+  }
 
   // Versioning disabled: controllers already prefix routes with 'v1/' manually
 

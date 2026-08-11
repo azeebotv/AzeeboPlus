@@ -12,6 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { FeatureFlag, FeatureFlagGuard, lifestyleFlags } from '@azeebo/feature-flags';
 import { ServiceAuthGuard } from '@azeebo/security';
 
 import { QuizService } from './quiz.service';
@@ -20,6 +21,8 @@ import { SubmitQuizDto } from './dto/submit-quiz.dto';
 
 @ApiTags('Quizzes')
 @UseGuards(ServiceAuthGuard)
+@FeatureFlag(lifestyleFlags.quizzesEnabled)
+@UseGuards(FeatureFlagGuard)
 @Controller('quizzes')
 export class QuizController {
   constructor(@Inject(QuizService) private readonly quizService: QuizService) {}

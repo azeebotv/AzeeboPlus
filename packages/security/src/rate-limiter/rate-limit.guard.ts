@@ -5,6 +5,8 @@ import {
   HttpException,
   HttpStatus,
   SetMetadata,
+  Inject,
+  Optional,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Request, Response } from 'express';
@@ -13,12 +15,29 @@ import { RateLimitService, RateLimitConfig } from './rate-limit.service';
 export const RateLimit = (limit: number, windowMs: number): ReturnType<typeof SetMetadata> =>
   SetMetadata('rateLimit', { limit, windowMs });
 
+export type RateLimitStrictResolver = () => Promise<boolean>;
+
 @Injectable()
 export class RateLimitGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
-    private rateLimitService: RateLimitService
+    private rateLimitService: RateLimitService,
+    @Optional() @Inject('RATE_LIMIT_STRICT_RESOLVER') private strictResolver?: RateLimitStrictResolver
   ) {}
+
+  /**
+   * Progressive tightening (`security_rate_limit_strict`): when the resolver
+   * returns true the effective limit is halved (min 1) across every endpoint
+   * that declares @RateLimit, without touching the decorated values.
+   */
+  private async resolveEffectiveLimit(
+    options: RateLimitConfig
+  ): Promise<RateLimitConfig> {
+    if (this.strictResolver && (await this.strictResolver())) {
+      return { ...options, limit: Math.max(1, Math.floor(options.limit / 2)) };
+    }
+    return options;
+  }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
@@ -46,9 +65,11 @@ export class RateLimitGuard implements CanActivate {
       return true;
     }
 
+    const effectiveOptions = await this.resolveEffectiveLimit(rateLimitOptions);
+
     const key = this.generateKey(clientIp, request.path);
 
-    const result = await this.rateLimitService.checkRateLimit(key, rateLimitOptions);
+    const result = await this.rateLimitService.checkRateLimit(key, effectiveOptions);
 
     this.setRateLimitHeaders(response, result);
 

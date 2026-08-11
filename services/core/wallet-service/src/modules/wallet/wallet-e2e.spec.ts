@@ -11,6 +11,8 @@ import { WalletController } from './wallet.controller.js';
 import { WalletService } from './wallet.service.js';
 import { RateLimitGuard, RateLimitService, AdminGuard } from '@azeebo/security';
 import { CacheInterceptor, CacheService } from '../../cache/index.js';
+import { RedisService } from '@azeebo/shared-services';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 import { EVENT_BUS_SERVICE } from '@azeebo/event-bus';
 import { randomUUID } from 'crypto';
 
@@ -19,12 +21,18 @@ jest.mock('@azeebo/feature-flags', () => ({
     canActivate: jest.fn().mockReturnValue(true),
   })),
   FeatureFlag: () => () => {},
+  FeatureFlagService: jest.fn().mockImplementation(() => ({
+    isEnabled: jest.fn().mockResolvedValue(false),
+  })),
   walletFlags: {
     withdrawalsEnabled: 'wallet_withdrawals_enabled',
     redeemRewards: 'wallet_redeem_rewards',
     transfersEnabled: 'wallet_transfers_enabled',
     bonusCredit: 'wallet_bonus_credit',
     promoCredit: 'wallet_promo_credit',
+    distributedLock: 'wallet_distributed_lock',
+    ledgerV2: 'wallet_ledger_v2',
+    fraudChecks: 'wallet_fraud_checks',
   },
 }));
 
@@ -131,6 +139,19 @@ describe('Wallet E2E Tests - Webhooks, Retries, and Failures', () => {
             delete: jest.fn().mockResolvedValue(undefined),
             deleteByPattern: jest.fn().mockResolvedValue(0),
             invalidate: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: RedisService,
+          useValue: {
+            setIfNotExists: jest.fn().mockResolvedValue(true),
+            del: jest.fn().mockResolvedValue(1),
+          },
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: {
+            isEnabled: jest.fn().mockResolvedValue(false),
           },
         },
         {

@@ -13,6 +13,7 @@ import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { api } from '@/lib/api';
 import type { ContentItem } from '@/lib/api';
 import ContentRow from './ContentRow';
+import PremiumUpsell from './PremiumUpsell';
 
 type CategoryCard = {
   category: string;
@@ -392,6 +393,13 @@ export default function GuestHomepage(): React.JSX.Element {
             cardSize="lg"
           />
         )}
+
+        {/* Premium upsell placement (gated by web_premium_upsell) */}
+        <ScrollReveal>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+            <PremiumUpsell />
+          </div>
+        </ScrollReveal>
 
         {/* Rewards & Call to Action */}
         <ScrollReveal>

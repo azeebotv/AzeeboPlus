@@ -13,6 +13,11 @@ import {
 } from './dto/password-reset.dto.js';
 import { RequestOtpDto } from './dto/request-otp.dto.js';
 import { VerifyOtpDto } from './dto/verify-otp.dto.js';
+import {
+  RequestMagicLinkDto,
+  VerifyMagicLinkDto,
+  VerifyMfaLoginDto,
+} from './dto/magic-link.dto.js';
 import { SelectRoleDto } from './dto/select-role.dto.js';
 import { AuthResponse } from './interfaces/auth-response.interface.js';
 import { RefreshTokenResponse } from './interfaces/refresh-token-response.interface.js';
@@ -181,5 +186,43 @@ async resendVerification(@Request() req: AuthRequest, @Body() resendVerification
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   async verifyOtp(@Body() verifyOtpDto: VerifyOtpDto): Promise<AuthResponse> {
     return this.authService.verifyOtp(verifyOtpDto);
+  }
+
+  @Post('magic-link/request')
+  @Public()
+  @UseGuards(RateLimitGuard)
+  @RateLimit(3, 3600000) // 3 requests per hour
+  @ApiOperation({ summary: 'Request a passwordless sign-in link (auth_passwordless_magic_link)' })
+  @ApiResponse({ status: 200, description: 'Sign-in link sent (if the email exists)' })
+  @ApiResponse({ status: 403, description: 'Passwordless login disabled' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  async requestMagicLink(@Body() requestMagicLinkDto: RequestMagicLinkDto) {
+    return this.authService.requestMagicLink(requestMagicLinkDto);
+  }
+
+  @Post('magic-link/verify')
+  @Public()
+  @UseGuards(RateLimitGuard)
+  @RateLimit(5, 900000) // 5 attempts per 15 minutes
+  @ApiOperation({ summary: 'Exchange a sign-in link for tokens (auth_passwordless_magic_link)' })
+  @ApiResponse({ status: 200, description: 'Login successful' })
+  @ApiResponse({ status: 400, description: 'Invalid or expired sign-in link' })
+  @ApiResponse({ status: 403, description: 'Passwordless login disabled' })
+  @ApiResponse({ status: 428, description: 'MFA challenge required (admins)' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  async verifyMagicLink(@Body() verifyMagicLinkDto: VerifyMagicLinkDto): Promise<AuthResponse> {
+    return this.authService.verifyMagicLink(verifyMagicLinkDto);
+  }
+
+  @Post('mfa/verify-login')
+  @Public()
+  @UseGuards(RateLimitGuard)
+  @RateLimit(5, 900000) // 5 attempts per 15 minutes
+  @ApiOperation({ summary: 'Complete sign-in with a TOTP code (auth_mfa_required_for_admins)' })
+  @ApiResponse({ status: 200, description: 'Login successful' })
+  @ApiResponse({ status: 401, description: 'Invalid code or expired challenge' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  async verifyMfaLogin(@Body() verifyMfaLoginDto: VerifyMfaLoginDto): Promise<AuthResponse> {
+    return this.authService.verifyMfaLogin(verifyMfaLoginDto);
   }
 }

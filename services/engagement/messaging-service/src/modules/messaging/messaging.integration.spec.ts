@@ -3,6 +3,7 @@ import { NotFoundException } from '@nestjs/common';
 import { MessagingService } from './messaging.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 
 describe('MessagingService Integration', () => {
   let service: MessagingService;
@@ -42,6 +43,10 @@ describe('MessagingService Integration', () => {
               return defaultValue;
             }),
           },
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(true) },
         },
       ],
     }).compile();

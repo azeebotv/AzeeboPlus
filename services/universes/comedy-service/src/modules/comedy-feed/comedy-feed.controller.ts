@@ -60,8 +60,12 @@ export class ComedyFeedController {
   }
 
   @Post('specials/:id/like')
-  @ApiOperation({ summary: 'Like/unlike special' })
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(comedyFlags.specialsGate)
+  @RateLimit(100, 60000)
+  @ApiOperation({ summary: 'Like/unlike special (comedy_specials_gate)' })
   @ApiResponse({ status: 200, description: 'Result' })
+  @ApiResponse({ status: 403, description: 'Flag off, or forbidden' })
   async likeSpecial(
     @Param('id') id: string,
     @Request() req: { user: { id: string } }

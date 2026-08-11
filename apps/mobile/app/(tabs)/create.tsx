@@ -13,7 +13,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
-import { universeApi, contentApi } from '../../src/api';
+import { universeApi, contentApi, mediaApi } from '../../src/api';
+import { mediaFingerprint } from '../../src/utils/mediaCache';
 import { logger } from '../../src/utils/logger';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 
@@ -122,28 +123,57 @@ export default function CreateScreen() {
 
     setIsUploading(true);
     try {
-      const result = await contentApi.createContentWithFile({
-        title: title.trim(),
-        description: description.trim() || undefined,
-        universe: selectedUniverse,
-        contentType: selectedType,
-        fileUri: selectedFile.uri,
-        fileType: selectedFile.type,
-        fileName: selectedFile.name,
-      });
-
-      if (result.success) {
-        Alert.alert('Success', 'Content published successfully!', [{ text: 'OK' }]);
-        setTitle('');
-        setDescription('');
-        setSelectedUniverse(null);
-        setSelectedFile(null);
+      // Images are `immutable` on the media service: uploading the same image
+      // again (retry after a failure, or re-publishing the same file) skips
+      // the network upload entirely via the media cache and reuses the cached
+      // object URL. Videos/stories/live go through the multipart path.
+      if (selectedType === 'image') {
+        const formData = new FormData();
+        formData.append('file', {
+          uri: selectedFile.uri,
+          type: selectedFile.type,
+          name: selectedFile.name,
+        } as unknown as Blob);
+        const upload = await mediaApi.uploadImage(formData, {
+          fingerprint: mediaFingerprint(selectedFile),
+        });
+        if (!upload.success || !upload.data) {
+          throw new Error((upload.error as unknown as string) || 'Failed to upload image');
+        }
+        const contentResult = await contentApi.createContent({
+          title: title.trim(),
+          description: description.trim() || undefined,
+          universe: selectedUniverse,
+          contentType: 'image',
+          mediaUrl: upload.data.url,
+        });
+        if (!contentResult.success) {
+          throw new Error(contentResult.message || 'Failed to publish content');
+        }
       } else {
-        Alert.alert(
-          'Upload Failed',
-          (result.error as unknown as string) || 'Failed to upload content'
-        );
+        const result = await contentApi.createContentWithFile({
+          title: title.trim(),
+          description: description.trim() || undefined,
+          universe: selectedUniverse,
+          contentType: selectedType,
+          fileUri: selectedFile.uri,
+          fileType: selectedFile.type,
+          fileName: selectedFile.name,
+        });
+        if (!result.success) {
+          Alert.alert(
+            'Upload Failed',
+            (result.error as unknown as string) || 'Failed to upload content'
+          );
+          return;
+        }
       }
+
+      Alert.alert('Success', 'Content published successfully!', [{ text: 'OK' }]);
+      setTitle('');
+      setDescription('');
+      setSelectedUniverse(null);
+      setSelectedFile(null);
     } catch (err) {
       logger.error('Failed to upload content:', err);
       Alert.alert('Upload Error', 'Failed to upload content. Please try again.');

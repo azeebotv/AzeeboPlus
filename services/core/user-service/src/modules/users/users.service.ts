@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { FeatureFlagService, userFlags } from '@azeebo/feature-flags';
 import { UpdateUniverseAffinityDto } from './dto/update-universe-affinity.dto.js';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto.js';
 import { CompleteProfileSetupDto } from './dto/complete-profile-setup.dto.js';
@@ -28,6 +29,7 @@ export class UsersService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(CacheService) private readonly cache: CacheService,
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService,
     private readonly configService: ConfigService
   ) {
     this.analyticsServiceBaseUrl = this.configService.get<string>(
@@ -417,6 +419,11 @@ export class UsersService {
         throw new NotFoundException(`User not found`);
       }
 
+      // user_profile_v2: the richer profile surface (bio/location/isPublic on
+      // UserProfile) is only written while the flag is on; off keeps the
+      // legacy displayName/avatar-only behavior so the v2 fields are ignored.
+      const v2Enabled = await this.featureFlagService.isEnabled(userFlags.profileV2);
+
       const updatedUser = await this.prisma.user.update({
         where: { id: userId },
         data: {
@@ -434,16 +441,40 @@ export class UsersService {
         },
       });
 
+      let userProfile: Record<string, unknown> | null = null;
+      if (v2Enabled) {
+        userProfile = await this.prisma.userProfile.upsert({
+          where: { userId },
+          update: {
+            ...(dto.bio !== undefined && { bio: dto.bio }),
+            ...(dto.location !== undefined && { location: dto.location }),
+            ...(dto.isPublic !== undefined && { isPublic: dto.isPublic }),
+          },
+          create: {
+            userId,
+            displayName: dto.displayName ?? null,
+            avatar: dto.avatar ?? null,
+            bio: dto.bio ?? null,
+            location: dto.location ?? null,
+            isPublic: dto.isPublic ?? true,
+          },
+        });
+      }
+
       // Invalidate profile cache
       await this.cache.delete(cacheKey('user', `profile:${userId}`));
 
       this.trackAnalyticsEvent('user_profile_updated', userId, {
         fields: Object.keys(dto).filter((k) => dto[k as keyof UpdateUserProfileDto] !== undefined),
+        v2: v2Enabled,
       });
 
       return {
         success: true,
-        data: updatedUser,
+        data: {
+          ...updatedUser,
+          ...(userProfile ? { profile: userProfile } : {}),
+        },
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to update profile for user ${userId}`, error);

@@ -1,10 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { adminApi } from '@/lib/api/admin';
+import { useAdminFlags, ADMIN_FLAG_KEYS } from '@/hooks/useAdminFlags';
 import type { AdminReport } from '@/lib/admin-types';
 
 export default function ReportsPage() {
   const navigate = useNavigate();
+  const { isEnabled } = useAdminFlags();
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ['admin', 'reports'],
     queryFn: async () => {
@@ -27,21 +29,23 @@ export default function ReportsPage() {
           <h1 style={{ fontSize: 28, fontWeight: 700 }}>Reports</h1>
           <p style={{ color: '#9A8A7A', marginTop: 4 }}>{reports.length} reports</p>
         </div>
-        <button
-          onClick={() => navigate('/reports/builder')}
-          style={{
-            padding: '10px 20px',
-            borderRadius: 12,
-            border: 'none',
-            background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-            color: '#fff',
-            fontWeight: 600,
-            fontSize: 14,
-            cursor: 'pointer',
-          }}
-        >
-          Build Report
-        </button>
+        {isEnabled(ADMIN_FLAG_KEYS.reportBuilder) && (
+          <button
+            onClick={() => navigate('/reports/builder')}
+            style={{
+              padding: '10px 20px',
+              borderRadius: 12,
+              border: 'none',
+              background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+              color: '#fff',
+              fontWeight: 600,
+              fontSize: 14,
+              cursor: 'pointer',
+            }}
+          >
+            Build Report
+          </button>
+        )}
       </div>
 
       {isLoading ? (

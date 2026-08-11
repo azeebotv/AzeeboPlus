@@ -1,0 +1,54 @@
+# Prometheus alerting rules for the search service's fuzzy-search guard.
+#
+# Both conditions are exported as 1/0 gauges on GET /v1/search/metrics
+# (search-service MetricsModule):
+#   search_fuzzy_degraded           — flag on, pg_trgm unavailable → exact fallback
+#   search_pg_trgm_indexes_missing  — extension present, GIN indexes absent → unindexed
+#
+# Load this file into Prometheus (rule_files) and route the alerts to the
+# appropriate receiver; alertmanager.yml is left to each environment.
+
+groups:
+  - name: search-fuzzy
+    rules:
+      # Fuzzy search is supposed to be on but pg_trgm cannot serve it — every
+      # search() degrades to the exact path until the extension is restored.
+      - alert: SearchFuzzyDegraded
+        expr: search_fuzzy_degraded == 1
+        for: 2m
+        labels:
+          severity: critical
+          service: search-service
+        annotations:
+          summary: "Search fuzzy matching degraded to exact path"
+          description: "search_typo_tolerance is enabled but pg_trgm is unavailable (extension missing or DB unreachable). search() is falling back to the exact path. Restore the pg_trgm extension (migration 20260810000001_pg_trgm_fuzzy_search) or disable the flag."
+
+      # The extension exists but the migration's GIN trigram indexes are
+      # missing — fuzzy search still works, just without index acceleration
+      # (slower on large catalogs). Warning, not critical. The search service
+      # self-heals this: search_index_repair (default on) recreates the
+      # indexes within its cron cycle (SEARCH_INDEX_REPAIR_CRON, default */5
+      # minutes), so this alert is the escalation when repair is disabled,
+      # failing, or the DDL itself is blocked.
+      - alert: SearchPgTrgmIndexesMissing
+        expr: search_pg_trgm_indexes_missing == 1
+        for: 5m
+        labels:
+          severity: warning
+          service: search-service
+        annotations:
+          summary: "pg_trgm present but GIN trigram indexes missing"
+          description: "The pg_trgm extension exists but the GIN trigram indexes from migration 20260810000001_pg_trgm_fuzzy_search are absent — fuzzy search runs without index acceleration. The search service's self-healing repair (search_index_repair) recreates them automatically; if this alert still fires, the repair is disabled or failing. Trigger it manually via POST /v1/search/admin/indexes/repair or apply the migration."
+
+      # Probe has not succeeded (DB down at boot or probe errors) — the state
+      # is unknown rather than healthy; flag it so a silently unprobed service
+      # is visible even when the flag is off.
+      - alert: SearchPgTrgmStateUnknown
+        expr: search_pg_trgm_state{state="unknown"} == 1
+        for: 10m
+        labels:
+          severity: warning
+          service: search-service
+        annotations:
+          summary: "pg_trgm availability probe unknown"
+          description: "The search service has not successfully probed pg_trgm availability for 10 minutes (database unreachable or probe errors). The fuzzy path is running with unknown state."

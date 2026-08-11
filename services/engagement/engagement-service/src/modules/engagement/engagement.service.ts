@@ -5,6 +5,7 @@ import { Queue } from 'bullmq';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 import { Prisma } from '../../prisma/client/index.js';
+import { FeatureFlagService, engagementFlags } from '@azeebo/feature-flags';
 import axios from 'axios';
 
 // Event types for engagement service
@@ -60,7 +61,8 @@ export class EngagementService {
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(CacheService) private readonly cache: CacheService,
     @Inject(ConfigService) private readonly configService: ConfigService,
-    @InjectQueue('analytics') private readonly analyticsQueue?: Queue
+    @InjectQueue('analytics') private readonly analyticsQueue?: Queue,
+    private readonly featureFlagService?: FeatureFlagService
   ) {
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
@@ -360,6 +362,15 @@ export class EngagementService {
     timePeriod: string
   ) {
     try {
+      // engagement_event_ingest: when off, drop external event-driven
+      // leaderboard writes so no ingest lands in the DB until re-enabled.
+      if (
+        this.featureFlagService &&
+        !(await this.featureFlagService.isEnabled(engagementFlags.eventIngest))
+      ) {
+        this.logger.debug(`event ingest disabled — dropping leaderboard update for ${userId}`);
+        return { success: false, error: 'Event ingest is disabled' };
+      }
       const existing = await this.prisma.leaderboardEntry.findUnique({
         where: {
           userId_category_timePeriod: {

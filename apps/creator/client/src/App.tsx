@@ -14,6 +14,8 @@ import UploadPage from './routes/upload';
 import MonetizationPage from './routes/monetization';
 import ChallengesPage from './routes/challenges';
 import LoginPage from './routes/login';
+import { FlagGate } from './components/FlagGate';
+import { CREATOR_FLAG_KEYS } from './hooks/useCreatorFlags';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,11 +41,25 @@ export default function App() {
             <Route element={<CreatorLayoutWrapper />}>
               <Route index element={<DashboardPage />} />
               <Route path="overview" element={<OverviewPage />} />
-              <Route path="analytics" element={<AnalyticsPage />} />
+              <Route
+                path="analytics"
+                element={
+                  <FlagGate flag={CREATOR_FLAG_KEYS.newAnalytics}>
+                    <AnalyticsPage />
+                  </FlagGate>
+                }
+              />
               <Route path="earnings" element={<EarningsPage />} />
               <Route path="content" element={<ContentPage />} />
               <Route path="upload" element={<UploadPage />} />
-              <Route path="payouts" element={<PayoutsPage />} />
+              <Route
+                path="payouts"
+                element={
+                  <FlagGate flag={CREATOR_FLAG_KEYS.payoutsUi}>
+                    <PayoutsPage />
+                  </FlagGate>
+                }
+              />
               <Route path="subscribers" element={<SubscribersPage />} />
               <Route path="monetization" element={<MonetizationPage />} />
               <Route path="challenges" element={<ChallengesPage />} />

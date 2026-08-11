@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsInt, Min } from 'class-validator';
+import { IsString, IsOptional, IsInt, Min, IsBoolean } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
@@ -13,4 +13,20 @@ export class LogSearchDto {
   @Min(0)
   @IsOptional()
   resultsCount?: number;
+
+  @ApiProperty({
+    description: "The 'did you mean' suggestion shown for this query",
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  correction?: string;
+
+  @ApiProperty({
+    description: 'Whether the user accepted the suggested correction',
+    required: false,
+  })
+  @IsBoolean()
+  @IsOptional()
+  accepted?: boolean;
 }

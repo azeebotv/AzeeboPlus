@@ -16,6 +16,7 @@ import { CreatorService, ContentItem } from './creator.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { FeatureFlagService, creatorFlags } from '@azeebo/feature-flags';
 
 interface AuthRequest extends Request {
   user: { id: string; email: string; role: string };
@@ -25,7 +26,21 @@ interface AuthRequest extends Request {
 @Roles('creator', 'admin', 'superadmin')
 @Controller('creator')
 export class CreatorController {
-  constructor(@Inject(CreatorService) private readonly creatorService: CreatorService) {}
+  constructor(
+    @Inject(CreatorService) private readonly creatorService: CreatorService,
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
+  ) {}
+
+  /** Studio UI flags: the client gates v2 surfaces (analytics, upload, payouts, onboarding) on these. */
+  @Get('flags')
+  async getFlags(): Promise<{ success: boolean; data: unknown }> {
+    const all = await this.featureFlagService.getAllFlagsWithDefaults();
+    const uiKeys = new Set(Object.values(creatorFlags));
+    return {
+      success: true,
+      data: all.filter((f) => uiKeys.has(f.key as (typeof creatorFlags)[keyof typeof creatorFlags])),
+    };
+  }
 
   @Get('dashboard')
   async getDashboard(@Request() req: AuthRequest): Promise<{ success: boolean; data: unknown }> {

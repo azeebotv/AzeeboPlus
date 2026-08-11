@@ -17,6 +17,7 @@ jest.mock('class-validator', () => ({
   ValidateNested: () => () => {},
   Type: () => () => {},
   IsPhoneNumber: () => () => {},
+  Matches: () => () => {},
 }));
 jest.mock('class-transformer', () => ({
   Type: () => () => {},
