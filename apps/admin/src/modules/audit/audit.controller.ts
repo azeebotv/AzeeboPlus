@@ -22,11 +22,19 @@ export class AuditController {
     @Query('page') page = 1,
     @Query('limit') limit = 50
   ): Promise<{ logs: unknown[]; total: number; page: number; limit: number; totalPages: number }> {
+    // A comma-separated targetType (e.g. `content,category,tag`) becomes a
+    // group filter — the admin UI's group chips rely on this.
+    const targetTypes = targetType?.includes(',')
+      ? targetType
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : targetType;
     return this.auditService.getLogs(
       {
         actorId,
         action,
-        targetType,
+        targetType: targetTypes,
         targetId,
         startDate: startDate ? new Date(startDate) : undefined,
         endDate: endDate ? new Date(endDate) : undefined,

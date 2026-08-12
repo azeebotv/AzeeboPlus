@@ -1,7 +1,22 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAdminFlags, ADMIN_FLAG_KEYS } from '@/hooks/useAdminFlags';
+import { adminApi } from '@/lib/api/admin';
+import type { StaleFlagMetrics } from '@/lib/admin-types';
+import StaleFlagSummary from './StaleFlagSummary';
+
+/** Minimal shape of the universe-feature-flag rows used for the stale list. */
+interface StaleUniverseFlagRow {
+  universeId: string;
+  featureKey: string;
+  metadata: Record<string, unknown> | null;
+  universe: { name: string; displayName: string };
+}
+
+const isStaleDate = (iso: unknown): iso is string =>
+  typeof iso === 'string' && !Number.isNaN(Date.parse(iso)) && Date.parse(iso) <= Date.now();
 
 export const ADMIN_NAV = [
   { href: '/', label: 'Dashboard', icon: '📊' },
@@ -105,7 +120,107 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const { isEnabled: isFlagEnabled } = useAdminFlags();
+  const { isEnabled: isFlagEnabled, flags } = useAdminFlags();
+  // Removal candidates: flags whose staleAfter date has passed (same predicate
+  // as the Global Flags page). Shared query key => updates live after prune/
+  // restore invalidations.
+  const staleGlobal = flags
+    .filter((f) => isStaleDate(f.staleAfter))
+    .map((f) => ({ key: f.key, staleAfter: f.staleAfter as string }));
+  const staleCount = staleGlobal.length;
+
+  // Per-universe expiry backlog: same query key as the Feature Flags page, so
+  // its prune/invalidation keeps the sidebar badge in sync.
+  const { data: universeFlags = [] } = useQuery<StaleUniverseFlagRow[]>({
+    queryKey: ['admin', 'feature-flags'],
+    queryFn: async () => {
+      const res = await adminApi.listFeatureFlags();
+      return res.success && Array.isArray(res.data)
+        ? (res.data as StaleUniverseFlagRow[])
+        : [];
+    },
+  });
+  const staleUniverse = universeFlags
+    .filter((f) => isStaleDate(f.metadata?.staleAfter))
+    .map((f) => ({
+      key: f.featureKey,
+      universeId: f.universeId,
+      universe: f.universe.displayName || f.universe.name,
+      staleAfter: f.metadata?.staleAfter as string,
+    }));
+  const universeStaleCount = staleUniverse.length;
+
+  // Self-disable events: flag_auto_disabled_total per stale global flag
+  // (same query key as the Global Flags page, so the cache is shared and the
+  // 30s poll keeps the chip live). The safety only auto-disables flags past
+  // their staleAfter, so every hit is already in the stale list above.
+  const { data: staleMetrics } = useQuery<StaleFlagMetrics>({
+    queryKey: ['admin', 'global-feature-flags', 'stale-metrics'],
+    queryFn: async () => {
+      const res = await adminApi.listStaleFlagMetrics();
+      return res.success && res.data
+        ? res.data
+        : { available: false, fetchedAt: null, staleRunning: {}, autoDisabled: {} };
+    },
+    staleTime: 30_000,
+    refetchInterval: 30_000,
+  });
+  const autoDisabledKeys = new Set(
+    Object.entries(staleMetrics?.autoDisabled ?? {})
+      .filter(([, m]) => m.total > 0)
+      .map(([key]) => key)
+  );
+
+  // Recent removal activity: universe-feature-flag prunes (and single
+  // deletions) write feature_flag.deleted audit entries with
+  // targetType=universe_feature_flag. Count those within a rolling 24h window
+  // so ops spots removal activity without opening the logs page. limit=1
+  // keeps the payload tiny — only `total` is read.
+  const PRUNE_ACTIVITY_WINDOW_MS = 24 * 60 * 60 * 1000;
+  const { data: recentPrunes = 0 } = useQuery<number>({
+    queryKey: ['admin', 'audit-logs', 'universe-prunes'],
+    queryFn: async () => {
+      const res = await adminApi.getAuditLogs({
+        action: 'feature_flag.deleted',
+        targetType: 'universe_feature_flag',
+        startDate: new Date(Date.now() - PRUNE_ACTIVITY_WINDOW_MS).toISOString(),
+        limit: 1,
+      });
+      return res.success ? (res.data?.total ?? 0) : 0;
+    },
+    // Fresh even without an explicit invalidation (e.g. the nightly stale-flag
+    // sweep pruning universe flags while no page is open).
+    refetchInterval: 60_000,
+  });
+
+  const badgeFor = (href: string): number => {
+    if (href === '/feature-flags/global') return staleCount;
+    if (href === '/feature-flags') return universeStaleCount;
+    if (href === '/audit-logs') return recentPrunes;
+    return 0;
+  };
+  const badgeTitleFor = (href: string): string =>
+    href === '/feature-flags/global'
+      ? `${staleCount} stale global flag(s) — click to view removal candidates`
+      : href === '/feature-flags'
+        ? `${universeStaleCount} stale universe flag(s) — click to view expiry backlog`
+        : `${recentPrunes} universe-flag prune(s) in the last 24h — click to view the removal activity`;
+  // Removal activity (audit badge) is blue so it's visually separable from
+  // the orange stale-removal-candidate badges.
+  const badgeColorFor = (href: string): string =>
+    href === '/audit-logs' ? '#3B82F6' : '#E8420A';
+  const badgeHrefFor = (href: string): string | null =>
+    href === '/feature-flags/global'
+      ? // #stale is the hash-fragment shortcut: the Global Flags page ALSO
+        // auto-scrolls to + highlights the first stale row on arrival.
+        '/feature-flags/global?stale=1#stale'
+      : href === '/feature-flags'
+        ? '/feature-flags?stale=1#stale'
+        : href === '/audit-logs'
+          ? // Mirrors the ?stale=1 pattern: land pre-filtered to the same
+            // 24h removal window the badge counts (feature_flag.deleted).
+            '/audit-logs?action=feature_flag.deleted&range=24h'
+          : null;
 
   useEffect(() => {
     setIsMobile(window.innerWidth < 1024);
@@ -162,6 +277,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <a href="/" style={styles.logo}>
           Azeebo+ Admin
         </a>
+
+        <StaleFlagSummary
+          staleGlobal={staleGlobal}
+          staleUniverse={staleUniverse}
+          autoDisabledKeys={autoDisabledKeys}
+        />
+
         <div style={styles.userBadge}>
           <span>{user.email}</span>
           <span
@@ -206,35 +328,81 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           }}
         >
           <nav>
-            {ADMIN_NAV.filter((item) => !item.flag || isFlagEnabled(item.flag)).map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigate(item.href);
-                  setSidebarOpen(false);
-                }}
-                aria-current={isActive(item.href) ? 'page' : undefined}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  padding: '10px 14px',
-                  borderRadius: 10,
-                  marginBottom: 4,
-                  textDecoration: 'none',
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: isActive(item.href) ? '#E8420A' : '#9A8A7A',
-                  backgroundColor: isActive(item.href) ? 'rgba(232,66,10,0.1)' : 'transparent',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                <span style={{ fontSize: 18 }}>{item.icon}</span>
-                {item.label}
-              </a>
-            ))}
+            {ADMIN_NAV.filter((item) => !item.flag || isFlagEnabled(item.flag)).map((item) => {
+              const badgeCount = badgeFor(item.href);
+              return (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate(item.href);
+                    setSidebarOpen(false);
+                  }}
+                  aria-current={isActive(item.href) ? 'page' : undefined}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '10px 14px',
+                    borderRadius: 10,
+                    marginBottom: 4,
+                    textDecoration: 'none',
+                    fontSize: 14,
+                    fontWeight: 500,
+                    color: isActive(item.href) ? '#E8420A' : '#9A8A7A',
+                    backgroundColor: isActive(item.href) ? 'rgba(232,66,10,0.1)' : 'transparent',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <span style={{ fontSize: 18 }}>{item.icon}</span>
+                  {item.label}
+                  {badgeCount > 0 && (
+                    <span
+                      role="link"
+                      tabIndex={0}
+                      title={badgeTitleFor(item.href)}
+                      aria-label={
+                        item.href === '/audit-logs'
+                          ? `${badgeCount} removal activit${badgeCount === 1 ? 'y' : 'ies'} in the last 24h — open the removal log`
+                          : `${badgeCount} stale flags to review — open the stale-filtered view`
+                      }
+                      onClick={(e) => {
+                        const href = badgeHrefFor(item.href);
+                        if (!href) return;
+                        e.preventDefault();
+                        e.stopPropagation();
+                        navigate(href);
+                        setSidebarOpen(false);
+                      }}
+                      onKeyDown={(e) => {
+                        const href = badgeHrefFor(item.href);
+                        if (!href) return;
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          navigate(href);
+                          setSidebarOpen(false);
+                        }
+                      }}
+                      style={{
+                        marginLeft: 'auto',
+                        padding: '2px 8px',
+                        borderRadius: 999,
+                        background: badgeColorFor(item.href),
+                        color: '#fff',
+                        fontSize: 11,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        outline: 'none',
+                      }}
+                    >
+                      {badgeCount}
+                    </span>
+                  )}
+                </a>
+              );
+            })}
           </nav>
         </aside>
 

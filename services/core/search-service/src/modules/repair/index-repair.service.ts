@@ -1,4 +1,11 @@
-import { Inject, Injectable, Logger, OnApplicationBootstrap, OnModuleInit } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  OnApplicationBootstrap,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
@@ -46,9 +53,12 @@ const DEFAULT_COOLDOWN_MS = 5 * 60 * 1000;
  * migration's job), and healthy indexes make every trigger a no-op.
  */
 @Injectable()
-export class IndexRepairService implements OnApplicationBootstrap, OnModuleInit {
+export class IndexRepairService
+  implements OnApplicationBootstrap, OnModuleInit, OnModuleDestroy
+{
   private readonly logger = new Logger(IndexRepairService.name);
   private lastAttemptMs = 0;
+  private job?: CronJob;
 
   // The six GIN trigram indexes from migration 20260810000001_pg_trgm_fuzzy_search,
   // recreated verbatim so the probe's pg_indexes count sees them as present.
@@ -61,13 +71,18 @@ export class IndexRepairService implements OnApplicationBootstrap, OnModuleInit 
     'CREATE INDEX CONCURRENTLY IF NOT EXISTS universes_displayName_trgm_idx ON universes USING gin ("displayName" gin_trgm_ops)',
   ];
 
+  // The names the DDL above actually produces: the CREATE INDEX statements
+  // are unquoted, so PostgreSQL folds the mixed-case ones to lowercase
+  // (creator_profiles_displayname_trgm_idx, universes_displayname_trgm_idx).
+  // The probe must compare against these folded names or it can never see the
+  // indexes as present — which would loop this job forever even when healthy.
   private static readonly INDEX_NAMES = [
     'content_items_title_trgm_idx',
     'content_items_description_trgm_idx',
-    'creator_profiles_displayName_trgm_idx',
+    'creator_profiles_displayname_trgm_idx',
     'creator_profiles_bio_trgm_idx',
     'universes_name_trgm_idx',
-    'universes_displayName_trgm_idx',
+    'universes_displayname_trgm_idx',
   ];
 
   constructor(
@@ -83,9 +98,17 @@ export class IndexRepairService implements OnApplicationBootstrap, OnModuleInit 
     const job = new CronJob(expression, () => {
       void this.repairMissingIndexes('cron');
     });
+    this.job = job;
     this.scheduler.addCronJob(JOB_NAME, job);
     job.start();
     this.logger.log(`Index repair scheduled: cron "${expression}" (${JOB_NAME})`);
+  }
+
+  /** Stop the recurring job on shutdown so the pending timer never keeps the
+   * process (or a test run) alive after teardown. */
+  async onModuleDestroy(): Promise<void> {
+    this.job?.stop();
+    this.job = undefined;
   }
 
   async onApplicationBootstrap(): Promise<void> {

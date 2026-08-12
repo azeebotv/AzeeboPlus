@@ -197,3 +197,35 @@ describe('Proxy Controller - API Contract Verification', () => {
     expect(endpoints).toContain('/subscribe');
   });
 });
+
+describe('Proxy Controller - Admin universe-flag undo routes', () => {
+  const adminRoute = () => SERVICE_CONFIGS.find((r) => r.path === '/admin');
+
+  it('routes /admin to the admin service (no-prefix + ^/v1 strip)', () => {
+    const route = adminRoute();
+    expect(route).toBeDefined();
+    expect(route?.envKey).toBe('ADMIN_SERVICE_URL');
+    expect(route?.fallbackUrl).toBe('http://admin-service:4016');
+    expect(route?.pathStrategy).toBe('no-prefix');
+    expect(route?.pathRewrite).toEqual({ '^/v1': '' });
+  });
+
+  it('registers POST /universes/feature-flags/restore for forwarding', () => {
+    const endpoints = adminRoute()?.endpoints ?? [];
+    const restore = endpoints.find((e) => e.path === '/universes/feature-flags/restore');
+    expect(restore).toBeDefined();
+    expect(restore?.method).toBe('POST');
+    // The prune + recently-deleted siblings ride the same no-prefix path, so
+    // ops can undo a prune without a redeploy.
+    expect(
+      endpoints.some(
+        (e) => e.method === 'POST' && e.path === '/universes/feature-flags/prune-stale'
+      )
+    ).toBe(true);
+    expect(
+      endpoints.some(
+        (e) => e.method === 'GET' && e.path === '/universes/feature-flags/deleted'
+      )
+    ).toBe(true);
+  });
+});

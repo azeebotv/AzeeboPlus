@@ -1,0 +1,198 @@
+name: Dockerized E2E (flags:redis + payments:failover + search pg_trgm + cache-thrash)
+
+# Runs the opt-in dockerized e2e suites that need real infrastructure,
+# plus a FlagCacheThrash load assertion against a staging gateway:
+#
+#   test:flags:redis        admin toggle → Redis → service chain
+#                           (apps/admin feature-flags.redis-live spec, prefix
+#                           feature_flags_test:)
+#   test:payments:failover  Paystack down → Flutterwave fallback against a real
+#                           Postgres + Redis (payments.failover.e2e spec)      #   test:e2e:pgtrgm         search-service pg_trgm fuzzy search against REAL
+      #                           Postgres (schema-first `prisma db push` + the
+      #                           extension and GIN indexes applied as idempotent
+      #                           raw SQL) and REAL Redis
+#                           (search_typo_tolerance flag); proves the trigram
+#                           path serves scored results and falls back when off
+#                           (search.pgtrgm.e2e spec, prefix search_e2e:)
+#   cache-thrash check      a minimal staging gateway (same flag machinery the
+#                           real api-gateway uses, service label api-gateway)
+#                           is booted against the Redis service container,
+#                           loaded over HTTP (flag eval + bootstrap), and a
+#                           post-load step asserts the FlagCacheThrash alert
+#                           condition (run-window Redis read share <= 10% for
+#                           both the per-key TTL cache and the list cache).
+#
+# Redis and Postgres run as GitHub Actions SERVICE CONTAINERS (fast, standard
+# CI pattern). Only the two provider STUBS (paystack-mock / flutterwave-mock)
+# are booted via docker-compose.test.yml, since they're local volume-mounted
+# node stubs with control endpoints (__control/status) that only exist there.
+# The suites are pointed at the service containers with env overrides, so the
+# compose file's dev ports (6380/5433) are not needed in CI.
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '22.16.0'
+  PNPM_VERSION: '10.33.2'
+  # GitHub service containers are reachable at localhost on the mapped port.
+  REDIS_TEST_URL: redis://localhost:6379
+  PAYMENT_TEST_DATABASE_URL: postgresql://azeebo_test:azeebo_test@localhost:5432/azeebo_payment_test?schema=public
+
+jobs:
+  # Workflow-syntax gate: runs BEFORE the dockerized-e2e job (which `needs:`
+  # this job), so actionlint validates every workflow's YAML/action syntax
+  # before the Redis/Postgres service containers even boot. Pinned actionlint
+  # binary (v1.7.12, linux/amd64) downloaded from the official release.
+  #
+  # One known pattern is suppressed via -ignore: cd.yml uses step-level
+  # `if: ${{ secrets.X != '' }}` deploy conditions, which the official context
+  # availability table does NOT list for steps.if (secrets is absent from the
+  # allowed set), so actionlint flags them. Runtime tolerance means deploys
+  # work today, but fixing that is a deploy-behavior decision for the owner —
+  # it is deliberately excluded from this gate rather than changed here.
+  actionlint:
+    name: Actionlint (workflow syntax)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run actionlint on all workflows
+        run: |
+          curl -sSfL -o /tmp/actionlint.tar.gz \
+            https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz
+          tar -C /tmp -xzf /tmp/actionlint.tar.gz actionlint
+          /tmp/actionlint -color -shellcheck= -pyflakes= \
+            -ignore 'context "secrets" is not allowed here' \
+            .github/workflows/*.yml
+
+  dockerized-e2e:
+    name: Dockerized e2e suites
+    runs-on: ubuntu-latest
+    needs: actionlint
+    timeout-minutes: 30
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: azeebo_test
+          POSTGRES_PASSWORD: azeebo_test
+          POSTGRES_DB: azeebo_payment_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U azeebo_test -d azeebo_payment_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      # Generated Prisma clients must exist for the failover spec's
+      # `prisma migrate deploy` + PrismaService (payment) and the admin
+      # FeatureFlagsService import graph.
+      - name: Generate Prisma clients
+        run: |
+          pnpm --filter @azeebo/admin prisma:generate
+          pnpm --filter @azeebo/payment-service prisma:generate
+          pnpm --filter @azeebo/search-service prisma:generate
+
+      - name: Flag chain e2e — admin → Redis (test:flags:redis)
+        run: pnpm --filter @azeebo/admin test:redis
+        env:
+          RUN_LIVE_REDIS: '1'
+          REDIS_TEST_URL: ${{ env.REDIS_TEST_URL }}
+
+      - name: Boot provider stubs (paystack DOWN / flutterwave UP)
+        run: docker compose -f docker-compose.test.yml up -d --wait paystack-mock flutterwave-mock
+
+      - name: Payment failover e2e — Paystack down → Flutterwave (test:payments:failover)
+        run: pnpm --filter @azeebo/payment-service test:e2e:failover
+        env:
+          RUN_PAYMENT_FAILOVER_E2E: '1'
+          REDIS_TEST_URL: ${{ env.REDIS_TEST_URL }}
+          PAYMENT_TEST_DATABASE_URL: ${{ env.PAYMENT_TEST_DATABASE_URL }}
+          PAYSTACK_MOCK_URL: http://localhost:8091
+          FLUTTERWAVE_MOCK_URL: http://localhost:8092
+
+      # The postgres service container only creates POSTGRES_DB; create the
+      # dedicated search database for the pg_trgm suite (idempotent). The
+      # suite applies its schema itself via `prisma db push` (schema-first),
+      # so this step only has to create the empty database.
+      - name: Create search test database
+        run: |
+          CID=$(docker ps -q --filter "publish=5432" | head -1)
+          if [ -z "$CID" ]; then
+            echo "postgres service container not found"
+            exit 1
+          fi
+          docker exec "$CID" psql -U azeebo_test -c 'CREATE DATABASE azeebo_search_test' || true
+
+      - name: Search pg_trgm e2e — real Postgres + Redis (test:e2e:pgtrgm)
+        run: pnpm --filter @azeebo/search-service test:e2e:pgtrgm
+        env:
+          RUN_SEARCH_PGTRGM_E2E: '1'
+          REDIS_TEST_URL: ${{ env.REDIS_TEST_URL }}
+          SEARCH_TEST_DATABASE_URL: postgresql://azeebo_test:azeebo_test@localhost:5432/azeebo_search_test?schema=public
+
+      # --- FlagCacheThrash: load a staging gateway, then assert the alert
+      # condition from the run-window counter deltas (dist is gitignored, so
+      # the packages are built here; the gateway's flag data lives under the
+      # ci_flags: prefix and never touches real flags).
+      - name: Build flag packages for the staging gateway
+        run: |
+          pnpm --filter @azeebo/feature-flags build
+          pnpm --filter @azeebo/flag-metrics build
+
+      - name: Boot staging gateway (flag eval + bootstrap + /metrics)
+        run: |
+          nohup node scripts/staging-gateway.mjs > /tmp/staging-gateway.log 2>&1 &
+          echo $! > /tmp/staging-gateway.pid
+          for i in $(seq 1 30); do
+            curl -fsS http://localhost:4017/metrics >/dev/null 2>&1 && break
+            sleep 1
+          done
+          curl -fsS http://localhost:4017/metrics >/dev/null
+        env:
+          REDIS_URL: ${{ env.REDIS_TEST_URL }}
+          PORT: '4017'
+
+      - name: Snapshot pre-load cache counters
+        run: node scripts/flag-cache-thrash-check.mjs snapshot --out /tmp/flags-before.json --url http://localhost:4017/metrics
+
+      - name: Load the staging gateway (flag eval + bootstrap)
+        run: node scripts/flag-eval-load-http.mjs
+        env:
+          BASE_URL: http://localhost:4017
+          REQUESTS: '4000'
+          CONCURRENCY: '50'
+
+      - name: Assert FlagCacheThrash — run-window Redis read share ≤ 10%
+        run: node scripts/flag-cache-thrash-check.mjs check --before /tmp/flags-before.json --url http://localhost:4017/metrics --threshold 0.1
+
+      - name: Tear down staging gateway
+        if: always()
+        run: kill $(cat /tmp/staging-gateway.pid) 2>/dev/null || true
+
+      - name: Tear down provider stubs
+        if: always()
+        run: docker compose -f docker-compose.test.yml down

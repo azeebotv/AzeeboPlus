@@ -94,5 +94,4 @@ jobs:
         run: pnpm audit --audit-level=high
       - name: Run CodeQL
         uses: github/codeql-action/analyze@v3
-        with:
-          languages: javascript-typescript
+        # Note: v3 removed the `languages` input — languages are auto-detected.

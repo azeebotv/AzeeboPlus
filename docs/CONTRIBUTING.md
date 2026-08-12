@@ -71,6 +71,42 @@ Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `style`, `perf`
 4. You've added tests for new functionality
 5. PR is under 400 lines (split if larger)
 
+### Branch Protection & Required Checks
+
+`main` and `develop` are protected: PRs must pass every required status check
+and get 1 approval before squash-merge. Configure the rules at
+**Settings → Branches → Branch protection rules** ("Require status checks to
+pass before merging") and require the exact check names below — a required
+check is matched by its **job name**.
+
+**PR-time required checks** (run on every PR via `pr-checks.yml` + the
+dockerized-e2e workflow):
+
+| Check name | Workflow |
+| --- | --- |
+| PR Validation | PR Checks |
+| Lint PR | PR Checks |
+| Flag & Swagger Conventions | PR Checks |
+| Type Check PR | PR Checks |
+| Test PR | PR Checks |
+| Integration Tests PR | PR Checks |
+| Build PR | PR Checks |
+| Actionlint (workflow syntax) | Dockerized E2E |
+| Dockerized e2e suites | Dockerized E2E |
+
+**Push-time checks (post-merge / CD gate)** — `ci.yml` (Build, E2E Tests,
+Security Scan) is deliberately push-triggered (the full merge pipeline runs
+after merge, per its header comment), and is enforced as the **deploy gate**:
+`cd.yml`'s `verify-ci-checks` job waits for those five checks (CI ×3 +
+Dockerized E2E ×2) on the commit and fails the deployment if any failed or is
+missing, so a red main never reaches staging or production. Manual
+(`workflow_dispatch`) deploys skip the gate — they are gated by the
+environment approval instead.
+
+> **Gotcha:** a required check that has never run will block merges. Merge (or
+> push) once so the workflow runs and its check appears, then add it to the
+> required list.
+
 ### PR Template
 
 Use the template in `.github/PULL_REQUEST_TEMPLATE.md`. Every PR should include:

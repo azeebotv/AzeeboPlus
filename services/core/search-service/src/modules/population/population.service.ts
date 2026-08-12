@@ -1,4 +1,11 @@
-import { Inject, Injectable, Logger, OnApplicationBootstrap, OnModuleInit } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  OnApplicationBootstrap,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
@@ -32,9 +39,12 @@ const JOB_NAME = 'search-index-population';
  * instance.
  */
 @Injectable()
-export class PopulationService implements OnApplicationBootstrap, OnModuleInit {
+export class PopulationService
+  implements OnApplicationBootstrap, OnModuleInit, OnModuleDestroy
+{
   private readonly logger = new Logger(PopulationService.name);
   private running = false;
+  private job?: CronJob;
 
   constructor(
     @Inject(ContentDbService) private readonly contentDb: ContentDbService,
@@ -53,9 +63,17 @@ export class PopulationService implements OnApplicationBootstrap, OnModuleInit {
     const job = new CronJob(expression, () => {
       void this.scheduledRun();
     });
+    this.job = job;
     this.scheduler.addCronJob(JOB_NAME, job);
     job.start();
     this.logger.log(`Index population scheduled: cron "${expression}" (${JOB_NAME})`);
+  }
+
+  /** Stop the recurring job on shutdown so the pending timer never keeps the
+   * process (or a test run) alive after teardown. */
+  async onModuleDestroy(): Promise<void> {
+    this.job?.stop();
+    this.job = undefined;
   }
 
   async onApplicationBootstrap(): Promise<void> {

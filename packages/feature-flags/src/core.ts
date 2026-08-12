@@ -19,6 +19,10 @@ export interface FeatureFlag {
   staleAfter?: string;
   /** ISO timestamp of when the owner was last notified about staleness (sweep dedupe). */
   staleNotifiedAt?: string;
+  /** ISO timestamp when the self-disable safety turned this flag off (past the
+   *  staleAfter + autoDisableAfterDays grace deadline). Cleared when ops renews
+   *  the expiry via an admin update. */
+  autoDisabledAt?: string;
   /** If true, the evaluated value may be exposed to clients via bootstrap endpoints. */
   isPublic?: boolean;
   /** Actor (user id or service) that last changed the flag. */
@@ -43,12 +47,29 @@ export interface FeatureFlagConfig {
   prefix?: string;
   /** In-process cache TTL for flag lookups (ms). Defaults to 30_000. */
   cacheTtlMs?: number;
+  /** In-process snapshot-cache TTL for the full flag list (ms). Defaults to
+   *  30_000. Drives the bootstrap path: repeated getPublicFlags/listFlags
+   *  calls within the TTL serve from memory instead of scan+get Redis reads. */
+  listCacheTtlMs?: number;
   /** Metrics hook — called on every evaluation. */
   onEvaluation?: (
     key: string,
     result: boolean,
     context?: { userId?: string; anonymousId?: string }
   ) => void;
+  /** Observability hook — called when a flag lookup is served from the
+   *  in-process TTL cache (no Redis read). Pair with `onCacheMiss` to compute
+   *  the TTL hit ratio under load (see @azeebo/flag-metrics). */
+  onCacheHit?: (key: string) => void;
+  /** Observability hook — called when a flag lookup reads Redis (cache miss). */
+  onCacheMiss?: (key: string) => void;
+  /** Observability hook — called when the FULL flag list (snapshot) is served
+   *  from the in-process list cache (no scan+get Redis reads). Pair with
+   *  `onListCacheMiss` to compute the bootstrap list hit ratio under load. */
+  onListCacheHit?: () => void;
+  /** Observability hook — called when the full flag list is rebuilt from
+   *  Redis (scan + per-key gets). */
+  onListCacheMiss?: () => void;
   /** Audit hook — called whenever a flag is created/updated/toggled. */
   onToggle?: (key: string, enabled: boolean, actor?: string) => void;
   /**
@@ -56,9 +77,31 @@ export interface FeatureFlagConfig {
    * its `staleAfter` expiry (the flag is running past its removal date).
    * Wire to a Prometheus counter (see @azeebo/flag-metrics). Fires on every
    * such evaluation so rates are measurable; the built-in console warning is
-   * throttled separately.
+   * throttled separately. The optional third argument carries the evaluation
+   * context (caller id) so consumers can correlate stale evaluations with
+   * user-visible behavior.
    */
-  onStaleEnabled?: (key: string, flag: FeatureFlag) => void;
+  onStaleEnabled?: (
+    key: string,
+    flag: FeatureFlag,
+    context?: { userId?: string; anonymousId?: string }
+  ) => void;
+  /**
+   * Days past `staleAfter` after which an ENABLED flag is auto-disabled by the
+   * evaluator (the self-disable safety). Defaults to 7. A per-flag override can
+   * be set via `metadata.autoDisableGraceDays`; `metadata.autoDisable: false`
+   * opts a flag out entirely. Ops renews a flag by extending its staleAfter
+   * (any admin update clears the auto-disabled stamp).
+   */
+  autoDisableAfterDays?: number;
+  /**
+   * Observability hook — called whenever the evaluator decides a flag is past
+   * its auto-disable deadline (staleAfter + grace) and serves it as DISABLED.
+   * Wire to a Prometheus counter (see @azeebo/flag-metrics). Fires per
+   * evaluation until the persisted state catches up, so rates are measurable;
+   * the persistence itself is deduped in-flight.
+   */
+  onAutoDisabled?: (key: string, flag: FeatureFlag) => void;
 }
 
 interface CacheEntry {
@@ -68,8 +111,16 @@ interface CacheEntry {
 
 const DEFAULT_CACHE_TTL_MS = 30_000;
 
+/** Default TTL for the full-list snapshot cache (bootstrap path). */
+const DEFAULT_LIST_CACHE_TTL_MS = 30_000;
+
 /** How often the built-in stale-enabled console warning may fire per flag key. */
 const STALE_WARN_THROTTLE_MS = 5 * 60 * 1000;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Default grace: auto-disable N days past staleAfter unless ops renews. */
+const DEFAULT_AUTO_DISABLE_AFTER_DAYS = 7;
 
 /** Builds the canonical Redis key for a universe-scoped flag, e.g. `universe.reality.voting_enabled`. */
 export const universeFlagKey = (universeName: string, feature: string): string =>
@@ -86,12 +137,25 @@ export class FeatureFlagService {
   private readonly defaultValues: Record<string, FlagValue>;
   private readonly publicFlagKeys: Set<string>;
   private readonly cacheTtlMs: number;
+  private readonly listCacheTtlMs: number;
   private readonly onEvaluation?: FeatureFlagConfig['onEvaluation'];
+  private readonly onCacheHit?: FeatureFlagConfig['onCacheHit'];
+  private readonly onCacheMiss?: FeatureFlagConfig['onCacheMiss'];
+  private readonly onListCacheHit?: FeatureFlagConfig['onListCacheHit'];
+  private readonly onListCacheMiss?: FeatureFlagConfig['onListCacheMiss'];
   private readonly onToggle?: FeatureFlagConfig['onToggle'];
   private readonly onStaleEnabled?: FeatureFlagConfig['onStaleEnabled'];
+  private readonly onAutoDisabled?: FeatureFlagConfig['onAutoDisabled'];
+  private readonly autoDisableAfterDays: number;
   private readonly cache = new Map<string, CacheEntry>();
+  /** Full-list snapshot cache (bootstrap path). Invalidated on every write. */
+  private listCache: { flags: FeatureFlag[]; expiresAt: number } | null = null;
   /** Last console-warn timestamp per flag key (throttles stale logging). */
   private readonly staleWarnedAt = new Map<string, number>();
+  /** Last console-warn timestamp per flag key (throttles auto-disable logging). */
+  private readonly autoDisabledWarnedAt = new Map<string, number>();
+  /** In-flight auto-disable persists (dedupes concurrent evaluations). */
+  private readonly autoDisableInFlight = new Map<string, Promise<void>>();
 
   constructor(config: FeatureFlagConfig = {}) {
     const redisUrl = config.redisUrl || process.env.FEATURE_FLAG_REDIS_URL;
@@ -104,9 +168,17 @@ export class FeatureFlagService {
     this.defaultValues = config.defaultValues || {};
     this.publicFlagKeys = new Set(config.publicFlagKeys || []);
     this.cacheTtlMs = config.cacheTtlMs ?? DEFAULT_CACHE_TTL_MS;
+    this.listCacheTtlMs = config.listCacheTtlMs ?? DEFAULT_LIST_CACHE_TTL_MS;
     this.onEvaluation = config.onEvaluation;
+    this.onCacheHit = config.onCacheHit;
+    this.onCacheMiss = config.onCacheMiss;
+    this.onListCacheHit = config.onListCacheHit;
+    this.onListCacheMiss = config.onListCacheMiss;
     this.onToggle = config.onToggle;
     this.onStaleEnabled = config.onStaleEnabled;
+    this.onAutoDisabled = config.onAutoDisabled;
+    this.autoDisableAfterDays =
+      config.autoDisableAfterDays ?? DEFAULT_AUTO_DISABLE_AFTER_DAYS;
   }
 
   async isEnabled(key: string, userId?: string, anonymousId?: string): Promise<boolean> {
@@ -177,10 +249,12 @@ export class FeatureFlagService {
     const cacheKey = `${this.prefix}${key}`;
     const cached = this.cache.get(cacheKey);
     if (cached && cached.expiresAt > Date.now()) {
+      this.onCacheHit?.(key);
       return cached.flag;
     }
 
     const data = await this.redis.get(cacheKey);
+    this.onCacheMiss?.(key);
     let flag: FeatureFlag | null = null;
     if (data) {
       try {
@@ -206,6 +280,7 @@ export class FeatureFlagService {
   async setFlag(flag: FeatureFlag): Promise<void> {
     await this.redis.set(`${this.prefix}${flag.key}`, JSON.stringify(flag));
     this.cache.delete(`${this.prefix}${flag.key}`);
+    this.listCache = null; // the snapshot must reflect the new state
     this.onToggle?.(flag.key, flag.enabled, flag.lastToggledBy);
   }
 
@@ -246,14 +321,30 @@ export class FeatureFlagService {
   async deleteFlag(key: string): Promise<void> {
     await this.redis.del(`${this.prefix}${key}`);
     this.cache.delete(`${this.prefix}${key}`);
+    this.listCache = null; // the snapshot must reflect the deletion
   }
 
-  /** Drops the in-process cache (e.g., after bulk admin imports). */
+  /** Drops the in-process caches (e.g., after bulk admin imports). */
   clearCache(): void {
     this.cache.clear();
+    this.listCache = null;
   }
 
+  /**
+   * Full flag list (bootstrap path), served from the in-process snapshot
+   * cache within `listCacheTtlMs` — repeated listFlags/getPublicFlags calls
+   * avoid the scan + per-key Redis reads entirely. The snapshot is rebuilt
+   * after every write (setFlag/deleteFlag/clearCache), so it can't go stale
+   * within a process; cross-process toggles land within one TTL window.
+   */
   async listFlags(): Promise<FeatureFlag[]> {
+    const cached = this.listCache;
+    if (cached && cached.expiresAt > Date.now()) {
+      this.onListCacheHit?.();
+      return [...cached.flags];
+    }
+
+    this.onListCacheMiss?.();
     const keys = await this.scanKeys(`${this.prefix}*`);
     const flags: FeatureFlag[] = [];
 
@@ -268,6 +359,7 @@ export class FeatureFlagService {
       }
     }
 
+    this.listCache = { flags, expiresAt: Date.now() + this.listCacheTtlMs };
     return flags;
   }
 
@@ -328,8 +420,19 @@ export class FeatureFlagService {
     }
 
     const result = this.evaluateEnabledFlag(flag, key, userId, anonymousId);
-    if (result && flag.staleAfter && Date.parse(flag.staleAfter) <= Date.now()) {
-      this.reportStaleEnabled(key, flag);
+    if (!result) {
+      return false;
+    }
+    const now = Date.now();
+    if (flag.staleAfter && Date.parse(flag.staleAfter) <= now) {
+      this.reportStaleEnabled(key, flag, userId, anonymousId);
+    }
+    if (this.isPastAutoDisableDeadline(flag)) {
+      // Self-disable safety: past the staleAfter + grace deadline the flag is
+      // NEVER served as enabled, and the persisted state is flipped off in the
+      // background so admin lists / public flags / other instances agree.
+      this.triggerAutoDisable(key, flag);
+      return false;
     }
     return result;
   }
@@ -368,8 +471,13 @@ export class FeatureFlagService {
    * throttled warning (max once per key per 5 minutes) so ops sees flags
    * running past their removal date without the hot path spamming logs.
    */
-  private reportStaleEnabled(key: string, flag: FeatureFlag): void {
-    this.onStaleEnabled?.(key, flag);
+  private reportStaleEnabled(
+    key: string,
+    flag: FeatureFlag,
+    userId?: string,
+    anonymousId?: string
+  ): void {
+    this.onStaleEnabled?.(key, flag, { userId, anonymousId });
 
     const now = Date.now();
     const lastWarn = this.staleWarnedAt.get(key) ?? 0;
@@ -381,6 +489,84 @@ export class FeatureFlagService {
           `(${flag.staleAfter}) — remove it or renew the expiry (admin stale report)`
       );
     }
+  }
+
+  /**
+   * Self-disable safety: true when the flag is enabled and past its
+   * staleAfter + grace deadline (default 7 days, configurable per module and
+   * overridable per flag via `metadata.autoDisableGraceDays`).
+   * `metadata.autoDisable: false` opts a flag out entirely.
+   */
+  private isPastAutoDisableDeadline(flag: FeatureFlag): boolean {
+    if (!flag.staleAfter) return false;
+    if (flag.metadata?.autoDisable === false) return false;
+    const graceDays =
+      typeof flag.metadata?.autoDisableGraceDays === 'number'
+        ? flag.metadata.autoDisableGraceDays
+        : this.autoDisableAfterDays;
+    if (graceDays < 0) return false;
+    return Date.now() > Date.parse(flag.staleAfter) + graceDays * DAY_MS;
+  }
+
+  /**
+   * Evaluator-side auto-disable: fires the metric hook, throttled log, and
+   * schedules a single background persist that flips the stored flag to
+   * disabled + stamps `autoDisabledAt`. Deduped in-flight so a hot flag only
+   * triggers one Redis write (the persisted disable makes later evaluations
+   * return false before ever reaching here).
+   */
+  private triggerAutoDisable(key: string, flag: FeatureFlag): void {
+    this.onAutoDisabled?.(key, flag);
+
+    const now = Date.now();
+    const lastWarn = this.autoDisabledWarnedAt.get(key) ?? 0;
+    if (now - lastWarn >= STALE_WARN_THROTTLE_MS) {
+      this.autoDisabledWarnedAt.set(key, now);
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[feature-flags] Flag "${key}" AUTO-DISABLED (self-disable safety): past ` +
+          `staleAfter ${flag.staleAfter} + grace — renew the expiry or remove it`
+      );
+    }
+
+    if (this.autoDisableInFlight.has(key)) return;
+    const pending = this.persistAutoDisable(key)
+      .catch((error: unknown) => {
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[feature-flags] Auto-disable persist failed for "${key}": ${(error as Error).message}`
+        );
+      })
+      .finally(() => {
+        this.autoDisableInFlight.delete(key);
+      });
+    this.autoDisableInFlight.set(key, pending);
+    void pending;
+  }
+
+  /**
+   * Persists the auto-disable. Reads Redis directly (bypassing the in-process
+   * cache) so a just-renewed flag is never disabled off a stale cached copy;
+   * re-checks the deadline + enabled state so concurrent/manual changes win.
+   */
+  private async persistAutoDisable(key: string): Promise<void> {
+    const raw = await this.redis.get(`${this.prefix}${key}`);
+    if (!raw) return;
+    let flag: FeatureFlag;
+    try {
+      flag = JSON.parse(raw) as FeatureFlag;
+    } catch {
+      return;
+    }
+    if (!flag.enabled) return;
+    if (flag.autoDisabledAt) return;
+    if (!this.isPastAutoDisableDeadline(flag)) return;
+    await this.setFlag({
+      ...flag,
+      enabled: false,
+      autoDisabledAt: new Date().toISOString(),
+      lastToggledBy: 'system:auto-disable',
+    });
   }
 
   private hashUserId(userId: string, key: string): number {

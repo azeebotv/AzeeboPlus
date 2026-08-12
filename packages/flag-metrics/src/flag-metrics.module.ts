@@ -11,6 +11,12 @@ export interface FlagMetricsModuleOptions {
    * `path: 'flag-metrics'` so both endpoints coexist.
    */
   path?: string;
+  /**
+   * Analytics-service base URL for the payment-style `flag_stale_enabled`
+   * event (per stale-enabled evaluation). Falls back to env
+   * `ANALYTICS_SERVICE_URL`; unset → Prometheus counters only, no HTTP.
+   */
+  analyticsUrl?: string;
 }
 
 export const FLAG_METRICS_OPTIONS = 'FLAG_METRICS_OPTIONS';
@@ -26,7 +32,8 @@ export class FlagMetricsModule {
         { provide: FLAG_METRICS_OPTIONS, useValue: options },
         {
           provide: FlagMetricsService,
-          useFactory: (opts: FlagMetricsModuleOptions) => new FlagMetricsService(opts.service),
+          useFactory: (opts: FlagMetricsModuleOptions) =>
+            new FlagMetricsService(opts.service, opts.analyticsUrl),
           inject: [FLAG_METRICS_OPTIONS],
         },
       ],

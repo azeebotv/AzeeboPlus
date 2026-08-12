@@ -138,6 +138,75 @@ describe('ProxyController routing gates', () => {
     expect(circuitBreaker.proxyRequest).not.toHaveBeenCalled();
   });
 
+  it('forwards POST /admin/universes/feature-flags/restore to the admin service', async () => {
+    const res = mockRes();
+    const circuitBreaker = (controller as unknown as {
+      circuitBreakerProxyService: { proxyRequest: jest.Mock };
+    }).circuitBreakerProxyService;
+    circuitBreaker.proxyRequest.mockResolvedValue({
+      status: 200,
+      data: { restoredCount: 1 },
+      headers: {},
+      circuitState: 'CLOSED',
+    });
+    const body = { keys: [{ universeId: 'u-1', featureKey: 'voting_enabled' }] };
+
+    await (controller as unknown as {
+      proxyVersionedPost: (v: string, s: string, r: Request, res: unknown) => Promise<void>;
+    }).proxyVersionedPost(
+      'v1',
+      'admin',
+      mockReq({
+        url: '/api/v1/admin/universes/feature-flags/restore',
+        params: { version: 'v1', service: 'admin', path: 'universes/feature-flags/restore' },
+        method: 'POST',
+        body,
+        user: { role: 'superadmin' },
+      }),
+      res
+    );
+
+    expect(circuitBreaker.proxyRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        method: 'POST',
+        // no-prefix strategy builds /admin + the wildcard path; the ^/v1
+        // rewrite only strips a version prefix, which isn't in the target.
+        path: '/admin/universes/feature-flags/restore',
+        targetUrl: 'http://admin-service:4016',
+        body,
+      })
+    );
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ restoredCount: 1 });
+  });
+
+  it('rejects POST /admin/universes/feature-flags/restore without an admin role (gateway-side fail-closed)', async () => {
+    const res = mockRes();
+    const circuitBreaker = (controller as unknown as {
+      circuitBreakerProxyService: { proxyRequest: jest.Mock };
+    }).circuitBreakerProxyService;
+
+    await (controller as unknown as {
+      proxyVersionedPost: (v: string, s: string, r: Request, res: unknown) => Promise<void>;
+    }).proxyVersionedPost(
+      'v1',
+      'admin',
+      mockReq({
+        url: '/api/v1/admin/universes/feature-flags/restore',
+        params: { version: 'v1', service: 'admin', path: 'universes/feature-flags/restore' },
+        method: 'POST',
+        body: { keys: [{ universeId: 'u-1', featureKey: 'voting_enabled' }] },
+        // No user on the request: the proxy's own admin gate must deny BEFORE
+        // any upstream communication, even with AdminGuard bypassed.
+      }),
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Admin access required' });
+    expect(circuitBreaker.proxyRequest).not.toHaveBeenCalled();
+  });
+
   it('rejects API v2 requests when gateway_api_v2 is off', async () => {
     flagService.isEnabled.mockImplementation((key: string) =>
       Promise.resolve(

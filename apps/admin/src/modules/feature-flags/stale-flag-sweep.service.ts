@@ -4,6 +4,7 @@ import axios from 'axios';
 import { FeatureFlagService } from '@azeebo/feature-flags';
 import { FeatureFlagsService } from './feature-flags.service';
 import { AuditLogService } from '../audit/audit.service';
+import { UniverseManagementService } from '../universe-management/universe-management.service';
 
 /**
  * Stale-flag sweep: periodically finds flags whose `staleAfter` has passed and
@@ -22,9 +23,14 @@ import { AuditLogService } from '../audit/audit.service';
  *   STALE_FLAG_SWEEP_INTERVAL_MS  default 6h (starts once at boot too)
  *   ADMIN_BASE_URL        link in the email, default http://localhost:4016
  *
- * Emails go through the notification-service's internal transactional endpoint
- * (POST /v1/notifications/email, template `flag-stale`) — the same path
- * auth-service uses for verification/reset emails.
+ * Covers BOTH global flags (Redis-backed, `staleNotifiedAt` top-level field)
+ * and per-universe flags (DB-backed `universe_feature_flags`, `staleAfter` /
+ * `owner` / `staleNotifiedAt` inside `metadata`). Universe flags are notified
+ * with the same `flag-stale` template (data includes `scope: 'universe'` +
+ * universe name) and stamped via `UniverseManagementService.stampStaleNotifiedAt`
+ * so repeat sweeps skip them. Emails go through the notification-service's
+ * internal transactional endpoint (POST /v1/notifications/email, template
+ * `flag-stale`) — the same path auth-service uses for verification/reset emails.
  */
 @Injectable()
 export class StaleFlagSweepService implements OnModuleInit, OnModuleDestroy {
@@ -40,7 +46,8 @@ export class StaleFlagSweepService implements OnModuleInit, OnModuleDestroy {
     @Inject(FeatureFlagsService) private readonly flagsService: FeatureFlagsService,
     @Inject(FeatureFlagService) private readonly flagStore: FeatureFlagService,
     @Inject(AuditLogService) private readonly auditService: AuditLogService,
-    @Inject(ConfigService) private readonly configService: ConfigService
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(UniverseManagementService) private readonly universeService: UniverseManagementService
   ) {
     this.notificationServiceUrl = this.configService.get<string>(
       'NOTIFICATION_SERVICE_URL',
@@ -90,6 +97,7 @@ export class StaleFlagSweepService implements OnModuleInit, OnModuleDestroy {
     noRecipientStamped: string[];
   }> {
     const stale = await this.flagsService.getStaleFlags();
+    const staleUniverseFlags = await this.getStaleUniverseFlags();
     const notified: string[] = [];
     const alreadyNotified: string[] = [];
     const failed: string[] = [];
@@ -142,19 +150,80 @@ export class StaleFlagSweepService implements OnModuleInit, OnModuleDestroy {
       }
     }
 
+    // Universe pass: dedupe on metadata.staleNotifiedAt, then notify the rest.
+    const universePending: typeof staleUniverseFlags = [];
+    for (const flag of staleUniverseFlags) {
+      if (flag.staleNotifiedAt) {
+        alreadyNotified.push(flag.key);
+        continue;
+      }
+      universePending.push(flag);
+    }
+    await this.notifyUniverseFlags(universePending, notified, failed, noRecipientStamped);
+
+    const totalChecked = stale.length + staleUniverseFlags.length;
     this.logger.log(
-      `Stale sweep: ${stale.length} stale (${notified.length} notified, ` +
+      `Stale sweep: ${totalChecked} stale (${notified.length} notified, ` +
         `${alreadyNotified.length} already notified, ${failed.length} failed, ` +
         `${noRecipientStamped.length} stamped without recipient)`
     );
     return {
-      checked: stale.length,
-      stale: stale.length,
+      checked: totalChecked,
+      stale: totalChecked,
       notified,
       alreadyNotified,
       failed,
       noRecipientStamped,
     };
+  }
+
+  /**
+   * Per-universe flags whose `metadata.staleAfter` has passed and whose
+   * `metadata.staleNotifiedAt` is not yet set (notify-once, same as global).
+   */
+  private async getStaleUniverseFlags(): Promise<
+    Array<{
+      key: string;
+      universeId: string;
+      featureKey: string;
+      universeName: string;
+      isEnabled: boolean;
+      owner?: string;
+      staleAfter: string;
+      description?: string;
+      staleNotifiedAt?: string;
+    }>
+  > {
+    const flags = await this.universeService.getAllFeatureFlags();
+    const now = Date.now();
+    const out: Array<{
+      key: string;
+      universeId: string;
+      featureKey: string;
+      universeName: string;
+      isEnabled: boolean;
+      owner?: string;
+      staleAfter: string;
+      description?: string;
+      staleNotifiedAt?: string;
+    }> = [];
+    for (const flag of flags) {
+      const meta = (flag.metadata ?? {}) as Record<string, unknown>;
+      const staleAfter = meta.staleAfter;
+      if (typeof staleAfter !== 'string' || Date.parse(staleAfter) > now) continue;
+      out.push({
+        key: `${flag.universe.name}.${flag.featureKey}`,
+        universeId: flag.universe.id,
+        featureKey: flag.featureKey,
+        universeName: flag.universe.displayName ?? flag.universe.name,
+        isEnabled: flag.isEnabled,
+        owner: typeof meta.owner === 'string' ? meta.owner : undefined,
+        staleAfter,
+        description: typeof meta.description === 'string' ? meta.description : undefined,
+        staleNotifiedAt: typeof meta.staleNotifiedAt === 'string' ? meta.staleNotifiedAt : undefined,
+      });
+    }
+    return out;
   }
 
   /** Writes staleNotifiedAt onto the stored flag, preserving everything else. */
@@ -173,5 +242,102 @@ export class StaleFlagSweepService implements OnModuleInit, OnModuleDestroy {
       targetId: key,
       details: { staleAfter: flag?.staleAfter, notifiedAt: new Date().toISOString(), recipient, channel },
     });
+  }
+
+  /**
+   * Universe variant of the sweep pass — shares the notify-once + retry-on-
+   * failure semantics of the global pass; the stamp lives in `metadata`.
+   */
+  private async notifyUniverseFlags(
+    flags: Array<{
+      key: string;
+      universeId: string;
+      featureKey: string;
+      universeName: string;
+      isEnabled: boolean;
+      owner?: string;
+      staleAfter: string;
+      description?: string;
+    }>,
+    notified: string[],
+    failed: string[],
+    noRecipientStamped: string[]
+  ): Promise<void> {
+    for (const flag of flags) {
+      const recipient =
+        (flag.owner ? this.ownerEmails[flag.owner] : undefined) ?? this.fallbackEmail;
+
+      if (recipient) {
+        try {
+          await axios.post(`${this.notificationServiceUrl}/v1/notifications/email`, {
+            to: recipient,
+            template: 'flag-stale',
+            data: {
+              flagKey: flag.featureKey,
+              scope: 'universe',
+              universe: flag.universeName,
+              universeId: flag.universeId,
+              owner: flag.owner,
+              staleAfter: flag.staleAfter,
+              enabled: flag.isEnabled,
+              description: flag.description,
+              adminUrl: `${this.adminBaseUrl}/admin/feature-flags`,
+            },
+          });
+          await this.universeService.stampStaleNotifiedAt(
+            flag.universeId,
+            flag.featureKey,
+            new Date().toISOString()
+          );
+          await this.auditService.log({
+            actorId: 'system',
+            actorType: 'system',
+            action: 'feature_flag.stale_notified',
+            targetType: 'universe_feature_flag',
+            targetId: flag.key,
+            details: {
+              universeId: flag.universeId,
+              staleAfter: flag.staleAfter,
+              notifiedAt: new Date().toISOString(),
+              recipient,
+              channel: 'email',
+            },
+          });
+          notified.push(flag.key);
+          this.logger.log(`Notified ${recipient} about stale universe flag ${flag.key}`);
+        } catch (error) {
+          failed.push(flag.key);
+          this.logger.warn(
+            `Failed to notify about stale universe flag ${flag.key}: ${
+              error instanceof Error ? error.message : String(error)
+            }`
+          );
+        }
+      } else {
+        await this.universeService.stampStaleNotifiedAt(
+          flag.universeId,
+          flag.featureKey,
+          new Date().toISOString()
+        );
+        await this.auditService.log({
+          actorId: 'system',
+          actorType: 'system',
+          action: 'feature_flag.stale_notified',
+          targetType: 'universe_feature_flag',
+          targetId: flag.key,
+          details: {
+            universeId: flag.universeId,
+            staleAfter: flag.staleAfter,
+            notifiedAt: new Date().toISOString(),
+            channel: 'no-recipient',
+          },
+        });
+        noRecipientStamped.push(flag.key);
+        this.logger.warn(
+          `Stale universe flag ${flag.key} has no owner email and no STALE_FLAG_NOTIFY_EMAIL — ` +
+            'stamped as notified (configure FLAG_OWNER_EMAILS to actually notify)'
+        );
+      }
+    }
   }
 }

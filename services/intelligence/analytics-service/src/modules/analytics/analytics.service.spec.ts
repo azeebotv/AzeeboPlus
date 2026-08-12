@@ -181,6 +181,30 @@ describe('AnalyticsService', () => {
       expect(result.data!.rejected).toBe(0);
     });
 
+    it('should accept flag_stale_enabled events (payment-style stale-flag analytics)', async () => {
+      const events = [
+        {
+          type: 'flag_stale_enabled',
+          metadata: {
+            key: 'search_suggestions_ai',
+            service: 'search-service',
+            staleAfter: '2026-01-01T00:00:00Z',
+            session_id: 's1',
+            platform: 'web',
+            timestamp: '2026-01-01T00:00:00Z',
+          },
+        },
+      ];
+
+      mockPrismaService.productEvent.createMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.ingestEvents(events);
+
+      expect(result.success).toBe(true);
+      expect(result.data!.ingested).toBe(1);
+      expect(result.data!.rejected).toBe(0);
+    });
+
     it('should reject events with missing required metadata fields', async () => {
       const events = [{ type: 'content_view', metadata: {} }];
 

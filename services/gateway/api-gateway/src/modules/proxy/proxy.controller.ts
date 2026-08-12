@@ -441,6 +441,11 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
         description: 'List stale feature flags (removal candidates)',
       },
       {
+        method: 'GET',
+        path: '/feature-flags/stale/metrics',
+        description: 'Per-key flag_stale_running_total (which stale flags are actively served past expiry)',
+      },
+      {
         method: 'POST',
         path: '/feature-flags/prune-stale',
         description: 'Batch-remove stale flags (archiving each before deletion)',
@@ -449,6 +454,11 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
         method: 'POST',
         path: '/feature-flags/stale-sweep/run',
         description: 'Run the stale-flag sweep now (notify owners)',
+      },
+      {
+        method: 'POST',
+        path: '/feature-flags/nightly/run',
+        description: 'Run the nightly stale-flag pass now (owner sweep → auto-prune → ops-channel summary)',
       },
       {
         method: 'GET',
@@ -496,6 +506,21 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'DELETE', path: '/universes/:id', description: 'Delete universe' },
       { method: 'PUT', path: '/universes/:id/toggle', description: 'Toggle universe enabled' },
       { method: 'PUT', path: '/universes/:id/feature-flags', description: 'Update feature flag' },
+      {
+        method: 'POST',
+        path: '/universes/feature-flags/prune-stale',
+        description: 'Batch-remove stale universe flags (archiving each before deletion)',
+      },
+      {
+        method: 'POST',
+        path: '/universes/feature-flags/restore',
+        description: 'Restore pruned universe flags from their archived audit snapshots (undo)',
+      },
+      {
+        method: 'GET',
+        path: '/universes/feature-flags/deleted',
+        description: 'Recently deleted universe flags (restorable from audit snapshots)',
+      },
       {
         method: 'DELETE',
         path: '/universes/:id/feature-flags/:featureKey',

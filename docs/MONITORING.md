@@ -122,6 +122,18 @@ flag_toggled_total{service="auth-service",key="web_maintenance_mode",value="enab
 # HELP flag_stale_running_total Number of evaluations of flags that are ENABLED past their staleAfter expiry, by service and flag key
 # TYPE flag_stale_running_total counter
 flag_stale_running_total{service="search-service",key="search_suggestions_ai"} 517
+
+# HELP flag_auto_disabled_total Number of evaluations where the self-disable safety served a flag as DISABLED past its staleAfter + grace deadline, by service and flag key
+# TYPE flag_auto_disabled_total counter
+flag_auto_disabled_total{service="search-service",key="search_suggestions_ai"} 2
+
+# HELP flag_cache_hits_total Flag lookups served from the in-process TTL cache without a Redis read, by service and flag key
+# TYPE flag_cache_hits_total counter
+flag_cache_hits_total{service="api-gateway",key="gateway_maintenance_mode"} 1520
+
+# HELP flag_redis_reads_total Flag lookups that read Redis (cache miss), by service and flag key — TTL hit ratio = flag_cache_hits_total / (flag_cache_hits_total + flag_redis_reads_total)
+# TYPE flag_redis_reads_total counter
+flag_redis_reads_total{service="api-gateway",key="gateway_maintenance_mode"} 3
 ```
 
 **Expiry-aware evaluation**: the evaluator (`FeatureFlagService` in
@@ -132,6 +144,56 @@ warning is logged per key but throttled to once per 5 minutes so a hot stale
 flag can't flood logs. The warning/message names the flag, its expiry, and
 points at the admin stale report. Every service gets this automatically
 through the shared `flagHooks()` wiring.
+
+**TTL cache hit ratio**: the evaluator's in-process cache (default 30s) serves
+flag lookups without touching Redis — `getFlag` fires `onCacheHit` when the
+entry is fresh and `onCacheMiss` when it reads Redis (both forwarded through
+`flagHooks()`, counted as `flag_cache_hits_total{service,key}` /
+`flag_redis_reads_total{service,key}`). Hit ratio = `hits / (hits + reads)`;
+under sustained load with the default TTL it sits at ≈ 0.999, so a collapse
+means cache thrash (TTL too low, `cacheTtlMs: 0`, or keys churning). The
+Grafana dashboard has a **TTL cache hit ratio (last 5m)** panel, and the k6
+load script `scripts/flag-eval-load-test.js` drives the gateway's
+`/feature-flags/bootstrap` (per-user rollout bucketing) plus a proxied route
+(the per-request maintenance/apiV2/response-cache evaluations) at production
+scale and asserts the ratio from these counters. The script also runs a
+**mid-run sampler** — a 1-VU scenario polls `/metrics` every `SAMPLE_INTERVAL`
+(default 30s) and records each per-window ratio into `ttl_hit_ratio_series` /
+`bootstrap_list_hit_ratio_series` (k6 `Trend`s, `min`-thresholded — a healthy
+cache is ≈ 1.0 in every window, so a single dipped window fails the run even
+when the aggregate looks fine; zero-lookup windows are skipped) — so cache
+thrash shows up as a curve in the k6 summary (min/avg/max/p90 over the run)
+instead of a single start/end number.
+
+**Bootstrap list cache hit ratio**: the bootstrap path is cache-aware too —
+`listFlags()` (the full-flag snapshot behind `getPublicFlags`) serves from an
+in-process list cache (`listCacheTtlMs`, default 30s) instead of the scan +
+per-key Redis reads, firing `onListCacheHit` / `onListCacheMiss` (counted as
+`flag_list_cache_hits_total{service}` / `flag_list_redis_reads_total{service}`,
+no key label — it is a whole-snapshot cache). The snapshot is invalidated on
+every write (`setFlag`/`deleteFlag`/`clearCache`), so it can't go stale within
+a process; cross-process toggles land within one TTL window. Ratio =
+`hits / (hits + reads)`; the k6 script reports `bootstrap_list_hit_ratio`
+alongside `ttl_hit_ratio`. **Local re-run without k6/docker**: `node
+scripts/flag-eval-load-test.local.mjs` drives the same two scenarios against a
+real Redis (default `redis://localhost:6379`, all data under the `loadtest:`
+prefix, flushed before + after) using the built packages, and prints both
+ratios. A recent run: bootstrap **0.999800** (5,000 calls → 1 snapshot
+rebuild), cached-eval **0.998800** (20,000 calls → 24 Redis reads, one per
+flag key).
+
+**Self-disable safety**: beyond reporting, the evaluator **auto-disables** a
+flag that stays enabled past `staleAfter` + a grace period — `autoDisableAfterDays`
+(default 7, module config) — unless ops renews it (extends `staleAfter`;
+renewing survives even an in-flight persist, which re-reads Redis and re-checks
+the deadline). Past the deadline the flag is *never* served as enabled, the
+persisted state is flipped to `enabled: false` with an `autoDisabledAt` stamp
+(cleared by any admin update — i.e. renewal), and every such evaluation bumps
+`flag_auto_disabled_total{service, key}` via the shared `onAutoDisabled` hook
+(the built-in console warning is throttled per key). Per-flag escape hatches:
+`metadata.autoDisableGraceDays` overrides the module grace, and
+`metadata.autoDisable: false` opts a flag out entirely. Ops surfaces the state
+in the admin Global Flags page as an **auto-disabled** badge.
 
 Wiring is two lines per service — the module registration (with the Prometheus
 `service` label) and the spreadable hooks into `FeatureFlagModule.register`:
@@ -255,4 +317,68 @@ groups:
         annotations:
           summary: "Flag {{ $labels.key }} is still ENABLED past its staleAfter ({{ $labels.service }})"
           description: "The flag is running past its removal date — remove it or renew its staleAfter in the admin stale report."
+
+      - alert: FlagAutoDisabled
+        expr: max by (service, key) (flag_auto_disabled_total{service=~".+"}) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Flag {{ $labels.key }} was auto-disabled by the self-disable safety ({{ $labels.service }})"
+          description: "The flag ran past its staleAfter + grace and was turned OFF automatically — renew the expiry or remove it in the admin stale report."
+
+      - alert: FlagCacheThrash
+        expr: sum(rate(flag_redis_reads_total[5m])) / (sum(rate(flag_cache_hits_total[5m])) + sum(rate(flag_redis_reads_total[5m]))) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Flag TTL cache hit ratio below 90% ({{ $labels.service }})"
+          description: "More than 10% of flag lookups are reading Redis — the in-process TTL cache is thrashing (check cacheTtlMs / key churn); every evaluation is paying a Redis round-trip."
+
+      - alert: BootstrapListCacheThrash
+        expr: sum(rate(flag_list_redis_reads_total[5m])) / (sum(rate(flag_list_cache_hits_total[5m])) + sum(rate(flag_list_redis_reads_total[5m]))) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Bootstrap list cache hit ratio below 90% ({{ $labels.service }})"
+          description: "More than 10% of bootstrap snapshot loads are rebuilding from Redis — the list cache is thrashing (check listCacheTtlMs / write frequency)."
 ```
+
+**CI gate for the alert** — the dockerized e2e workflow
+(`.github/workflows/dockerized-e2e.yml`) boots a minimal **staging gateway**
+(`scripts/staging-gateway.mjs` — the same `FeatureFlagService` +
+`FlagMetricsService` machinery the real api-gateway uses, service label
+`api-gateway`, data under the `ci_flags:` prefix) against the job's Redis
+service container, loads it over HTTP
+(`scripts/flag-eval-load-http.mjs`: flag eval + bootstrap with rotating
+anonymous ids), and a post-load step
+(`scripts/flag-cache-thrash-check.mjs check`) applies the **same read-share
+expression** to the load-window counter deltas (pre-load snapshot vs
+post-load) for both caches, failing the job when either share exceeds the 0.1
+threshold — i.e. CI asserts the alert condition on every PR run. Local run of
+the same pipeline: boot the staging gateway, snapshot, load, check (all three
+scripts are env-driven; `METRICS_URL`/`BASE_URL`/`PORT`/`REDIS_URL`).
+
+The same workflow also runs the **search pg_trgm e2e**
+(`services/core/search-service/src/modules/search/search.pgtrgm.e2e.spec.ts`, via
+`pnpm --filter @azeebo/search-service test:e2e:pgtrgm`) against the job's
+Postgres service container (a dedicated `azeebo_search_test` database) +
+Redis: it applies the search schema schema-first (`prisma db push`), creates
+pg_trgm + the six GIN trigram indexes as idempotent raw SQL (mirroring the
+migration, which `migrate deploy` can't apply to a fresh DB — its ALTERs
+target tables that only exist after `db push`), then proves the typo path
+serves scored results against real Postgres and that disabling
+`search_typo_tolerance` falls back to the exact path. Because it exercises
+the production probe against real `pg_indexes`, it guards the
+`TRGM_INDEX_NAMES` list against case-folding drift (PostgreSQL folds the
+migration's unquoted `displayName` index names to lowercase; the probe must
+match what `pg_indexes` stores, or `search_fuzzy_degraded` / the
+`SearchPgTrgmIndexesMissing` repair loop misfire). Opt-in locally:
+`docker compose -f docker-compose.test.yml up -d --wait postgres-test` (the
+init script creates `azeebo_search_test`), then
+`RUN_SEARCH_PGTRGM_E2E=1 SEARCH_TEST_DATABASE_URL=… REDIS_TEST_URL=… pnpm --filter @azeebo/search-service test:e2e:pgtrgm`.
+One shot (boots `redis-test postgres-test`, runs the same spec with the
+compose-default URLs, tears down — mirrors the `test:flags:redis` pattern):
+`pnpm test:e2e:pgtrgm`.

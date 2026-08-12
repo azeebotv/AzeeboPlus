@@ -22,6 +22,7 @@
 # Or in one shot:
 #   pnpm test:flags:redis          # flag chain only
 #   pnpm test:payments:failover    # payment provider failover e2e
+#   pnpm test:e2e:pgtrgm           # search pg_trgm fuzzy e2e (real Postgres + Redis)
 #
 # Ports are deliberately NOT the dev defaults: Redis 6380 (dev 6379),
 # Postgres 5433 (dev 5432), mocks 8091/8092 — a local dev stack is
@@ -54,6 +55,9 @@ services:
       POSTGRES_DB: azeebo_payment_test
     ports:
       - "5433:5432"
+    # Creates azeebo_search_test alongside the payment DB (search pg_trgm e2e).
+    volumes:
+      - ./test/postgres-init:/docker-entrypoint-initdb.d:ro
     command: ["postgres", "-c", "fsync=off"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U azeebo_test -d azeebo_payment_test"]

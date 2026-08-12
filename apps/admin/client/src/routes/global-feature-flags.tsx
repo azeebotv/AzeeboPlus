@@ -1,7 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { adminApi } from '@/lib/api/admin';
-import type { GlobalFeatureFlag } from '@/lib/admin-types';
+import type {
+  GlobalFeatureFlag,
+  LastNightlyRun,
+  StaleFlagMetrics,
+} from '@/lib/admin-types';
 
 interface ServiceContext {
   label: string;
@@ -56,13 +61,97 @@ function isNumericFlag(flag: GlobalFeatureFlag): boolean {
   return typeof flag.value === 'number';
 }
 
+/** Human labels for the last nightly pass's webhook status. */
+const WEBHOOK_LABEL: Record<LastNightlyRun['webhook'], string> = {
+  posted: 'webhook posted',
+  'skipped-empty': 'skipped · empty',
+  'no-webhook': 'no webhook',
+  failed: 'webhook failed',
+};
+const WEBHOOK_BG: Record<LastNightlyRun['webhook'], string> = {
+  posted: 'rgba(31,138,76,0.2)',
+  'skipped-empty': 'rgba(245,240,235,0.08)',
+  'no-webhook': 'rgba(245,240,235,0.08)',
+  failed: 'rgba(232,66,10,0.25)',
+};
+const WEBHOOK_FG: Record<LastNightlyRun['webhook'], string> = {
+  posted: '#4ADE80',
+  'skipped-empty': '#9A8A7A',
+  'no-webhook': '#9A8A7A',
+  failed: '#FF9E6B',
+};
+
 function flagValueLabel(flag: GlobalFeatureFlag): string {
   if (typeof flag.value === 'number') return String(flag.value);
   return flag.enabled ? 'on' : 'off';
 }
 
+// Per-tab persistence key for the stale-filter choice (sessionStorage): once
+// the user arrives via the badge (?stale=1), the choice sticks for the tab
+// session, so a refresh keeps the stale view instead of dropping back to all
+// flags. "Show all flags" clears it.
+const STALE_STORAGE_KEY = 'admin-flags-global-stale-view';
+
+const readStoredStale = (): boolean => {
+  try {
+    return window.sessionStorage.getItem(STALE_STORAGE_KEY) === '1';
+  } catch {
+    return false; // storage unavailable — the URL param still works
+  }
+};
+
 export default function GlobalFeatureFlagsPage() {
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  // ?stale=1 (linked from the admin nav badge) pre-filters the list to
+  // removal candidates — flags past their staleAfter date. The sessionStorage
+  // choice restores the same view after a refresh (or a plain sidebar visit)
+  // within this tab.
+  const [storedStale, setStoredStale] = useState<boolean>(readStoredStale);
+  const staleOnly = searchParams.get('stale') === '1' || storedStale;
+  // Write-through: arriving via ?stale=1 (badge or deep-link) persists the
+  // choice for this tab session.
+  useEffect(() => {
+    if (searchParams.get('stale') === '1') {
+      try {
+        window.sessionStorage.setItem(STALE_STORAGE_KEY, '1');
+      } catch {
+        /* storage unavailable — the URL param already shows the view */
+      }
+    }
+  }, [searchParams]);
+  // #stale (appended to the nav-badge / summary links) is the hash-fragment
+  // shortcut: it ALSO auto-scrolls to and highlights the first stale row,
+  // not just filters. The router re-renders on hash-only navigations.
+  const { hash } = useLocation();
+  const staleShortcut = staleOnly || hash === '#stale';
+
+  // Enter/leave stale mode from the page itself (the "Stale only" chip and
+  // the banner's "Show all flags"): both keep the sessionStorage choice and
+  // the URL in sync, so a refresh agrees with the rendered view.
+  const enterStaleMode = () => {
+    try {
+      window.sessionStorage.setItem(STALE_STORAGE_KEY, '1');
+    } catch {
+      /* storage unavailable — the URL param still drives the view */
+    }
+    setStoredStale(true);
+    navigate('/feature-flags/global?stale=1#stale');
+  };
+  const exitStaleMode = () => {
+    try {
+      window.sessionStorage.removeItem(STALE_STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
+    setStoredStale(false);
+    navigate('/feature-flags/global');
+  };
+  const toggleStaleMode = () => (staleOnly ? exitStaleMode() : enterStaleMode());
+  // ?flag=<key> (linked from the top-bar stale summary rows) deep-links to a
+  // specific flag: the list is scrolled to it and the row is highlighted.
+  const focusKey = searchParams.get('flag');
   const [search, setSearch] = useState('');
   const [contextFilter, setContextFilter] = useState<string>('all');
   const [drafts, setDrafts] = useState<Record<string, string>>({});
@@ -80,6 +169,34 @@ export default function GlobalFeatureFlagsPage() {
       const res = await adminApi.listGlobalFeatureFlags();
       return res.success ? (res.data ?? []) : [];
     },
+  });
+
+  // Prometheus flag_stale_running_total joined per key — which stale flags are
+  // ACTIVELY being served past expiry (not just removal candidates).
+  const { data: staleMetrics } = useQuery<StaleFlagMetrics>({
+    queryKey: ['admin', 'global-feature-flags', 'stale-metrics'],
+    queryFn: async () => {
+      const res = await adminApi.listStaleFlagMetrics();
+      return res.success && res.data
+        ? res.data
+        : { available: false, fetchedAt: null, staleRunning: {}, autoDisabled: {} };
+    },
+    staleTime: 30_000,
+    // Poll every 30s — the admin backend caches the Prometheus join for the
+    // same window, so the dashboard stays live without hammering Prometheus.
+    refetchInterval: 30_000,
+  });
+
+  // Most recent nightly pass (audit-recorded): times, counts, webhook status.
+  // Polled so the panel stays fresh when ops triggers a pass from elsewhere
+  // without opening the page.
+  const { data: lastRun } = useQuery<LastNightlyRun | null>({
+    queryKey: ['admin', 'global-feature-flags', 'last-nightly-run'],
+    queryFn: async () => {
+      const res = await adminApi.getLastNightlyRun();
+      return res.success ? (res.data ?? null) : null;
+    },
+    refetchInterval: 60_000,
   });
 
   const saveMutation = useMutation({
@@ -161,12 +278,20 @@ export default function GlobalFeatureFlagsPage() {
       (ctx?.label === contextFilter) ||
       (contextFilter === 'other' && !ctx);
     if (!matchesContext) return false;
+    if (
+      staleOnly &&
+      !(flag.staleAfter && Date.parse(flag.staleAfter) <= Date.now())
+    ) {
+      return false;
+    }
     if (!search) return true;
     const haystack = [flag.key, flag.description ?? '', ctx?.label ?? '']
       .join(' ')
       .toLowerCase();
     return haystack.includes(search.toLowerCase());
   });
+
+
 
   const numericCount = flags.filter(isNumericFlag).length;
 
@@ -244,6 +369,30 @@ export default function GlobalFeatureFlagsPage() {
     Boolean(flag.staleAfter && Date.parse(flag.staleAfter) <= Date.now());
 
   const staleFlags = flags.filter(isStale);
+  const servingStaleFlags = staleFlags.filter((f) => Boolean(staleMetrics?.staleRunning?.[f.key]));
+  // Stale flags the self-disable safety has flipped off at least once — the
+  // auto-off signal (counter is authoritative even if the stamp was cleared).
+  const autoDisabledStaleFlags = staleFlags.filter(
+    (f) => (staleMetrics?.autoDisabled?.[f.key]?.total ?? 0) > 0
+  );
+
+  // Focus target: a specific ?flag= deep-link wins; otherwise the stale
+  // shortcut (?stale=1 / #stale) focuses the FIRST stale row so the badge
+  // lands on a removal candidate, not just a filtered list.
+  const focusTarget = focusKey ?? (staleShortcut ? (staleFlags[0]?.key ?? null) : null);
+
+  // Auto-scroll to the focused flag once its row renders (data loads async),
+  // scrolling only once per target. The highlight persists while the
+  // ?flag= param or the stale shortcut is present.
+  const scrolledRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!focusTarget) return;
+    if (scrolledRef.current === focusTarget) return;
+    const el = document.getElementById(`flag-row-${focusTarget}`);
+    if (!el) return;
+    scrolledRef.current = focusTarget;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [focusTarget, filtered]);
 
   const [pruneFeedback, setPruneFeedback] = useState<{
     message: string;
@@ -267,6 +416,8 @@ export default function GlobalFeatureFlagsPage() {
       });
       queryClient.invalidateQueries({ queryKey: ['admin', 'global-feature-flags'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'recently-deleted-flags'] });
+      // Audit-log badge (nav): removal activity happened.
+      queryClient.invalidateQueries({ queryKey: ['admin', 'audit-logs'] });
     },
     onError: (err: unknown) => {
       setPruneFeedback({
@@ -290,6 +441,9 @@ export default function GlobalFeatureFlagsPage() {
       });
       queryClient.invalidateQueries({ queryKey: ['admin', 'global-feature-flags'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'recently-deleted-flags'] });
+      // Audit-log badge (nav): a restore removes the prune's activity signal
+      // for the restored flags — refresh the count.
+      queryClient.invalidateQueries({ queryKey: ['admin', 'audit-logs'] });
     },
     onError: (err: unknown) => {
       setPruneFeedback({
@@ -344,6 +498,12 @@ export default function GlobalFeatureFlagsPage() {
 
   return (
     <div>
+      {/* Flash animation for the deep-linked (focused) flag row — brightens
+          once on arrival, then settles into the persistent highlight. */}
+      <style>{`@keyframes flagFlash {
+  0% { background-color: rgba(232,66,10,0.45); }
+  100% { background-color: rgba(232,66,10,0.12); }
+}`}</style>
       <div
         style={{
           display: 'flex',
@@ -358,6 +518,29 @@ export default function GlobalFeatureFlagsPage() {
             {flags.length} flags ({numericCount} numeric) · stored in Redis, merged with service
             defaults
           </p>
+          {staleMetrics && (
+            <>
+              <p
+                style={{
+                  marginTop: 4,
+                  fontSize: 12,
+                  color: servingStaleFlags.length > 0 ? '#E8420A' : '#9A8A7A',
+                }}
+              >
+                {staleMetrics.available
+                  ? servingStaleFlags.length > 0
+                    ? `⚠ ${servingStaleFlags.length} stale flag(s) actively served past expiry (last 5m)`
+                    : 'No stale flag is currently being served past expiry'
+                  : 'Stale-serving metrics unavailable — set PROMETHEUS_URL on the admin backend'}
+              </p>
+              {staleMetrics.available && autoDisabledStaleFlags.length > 0 && (
+                <p style={{ marginTop: 4, fontSize: 12, color: '#E8420A' }}>
+                  ⚠ {autoDisabledStaleFlags.length} stale flag(s) auto-disabled by the
+                  self-disable safety (flag_auto_disabled_total)
+                </p>
+              )}
+            </>
+          )}
         </div>
         <div style={{ textAlign: 'right' }}>
           <button
@@ -417,6 +600,81 @@ export default function GlobalFeatureFlagsPage() {
           )}
         </div>
       </div>
+
+      {/* Last nightly pass (audit-recorded): times, counts, webhook status. */}
+      {lastRun && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 16,
+            flexWrap: 'wrap',
+            padding: '10px 16px',
+            borderRadius: 10,
+            border: '1px solid #2A1A1A',
+            backgroundColor: 'rgba(26,10,10,0.5)',
+            marginBottom: 16,
+            fontSize: 12,
+          }}
+        >
+          <span style={{ color: '#9A8A7A', fontWeight: 600 }}>
+            Last nightly pass ·{' '}
+            <span style={{ color: '#F5F0EB' }}>
+              {new Date(lastRun.ranAt).toLocaleString()}
+            </span>
+          </span>
+          <span style={{ color: '#C9B8A8' }}>
+            {lastRun.staleCount} stale global · {lastRun.universeStaleCount} universe
+          </span>
+          <span style={{ color: '#C9B8A8' }}>
+            {lastRun.notifiedCount} owner{lastRun.notifiedCount === 1 ? '' : 's'} notified
+          </span>
+          {lastRun.dryRunUniverse ? (
+            <span
+              style={{ color: '#FFB37E' }}
+              title="Preview only — nothing was removed in the universe scope"
+            >
+              would prune {lastRun.wouldPruneUniverse ?? 0} universe (dry-run)
+              {lastRun.autoPruned > 0
+                ? ` · pruned ${lastRun.autoPruned} global`
+                : ''}
+            </span>
+          ) : (
+            <span style={{ color: '#C9B8A8' }}>
+              pruned {lastRun.autoPruned} global · {lastRun.autoPrunedUniverse} universe
+            </span>
+          )}
+          {lastRun.pruneBlocked === 'no-webhook' && (
+            <span
+              style={{
+                padding: '2px 10px',
+                borderRadius: 999,
+                fontSize: 11,
+                fontWeight: 600,
+                background: 'rgba(232,66,10,0.25)',
+                color: '#FF9E6B',
+              }}
+              title="Auto-prune is enabled but no STALE_FLAG_OPS_WEBHOOK_URL is set — the pass blocked removals to prevent silent pruning. Configure the webhook or set STALE_FLAG_ALLOW_PRUNE_WITHOUT_WEBHOOK=true."
+            >
+              ⚠ prune blocked · no webhook
+            </span>
+          )}
+          <span
+            style={{
+              marginLeft: 'auto',
+              padding: '2px 10px',
+              borderRadius: 999,
+              fontSize: 11,
+              fontWeight: 600,
+              background: WEBHOOK_BG[lastRun.webhook],
+              color: WEBHOOK_FG[lastRun.webhook],
+            }}
+            title={`Webhook status of the last pass: ${lastRun.webhook}`}
+          >
+            {WEBHOOK_LABEL[lastRun.webhook]}
+          </span>
+        </div>
+      )}
 
       {recentlyDeleted.length > 0 && (
         <div
@@ -500,6 +758,40 @@ export default function GlobalFeatureFlagsPage() {
         </div>
       )}
 
+      {staleOnly && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            padding: '10px 16px',
+            borderRadius: 10,
+            border: '1px solid #7A2A0A',
+            backgroundColor: 'rgba(122,42,10,0.15)',
+            marginBottom: 16,
+            fontSize: 13,
+          }}
+        >
+          <span style={{ color: '#F5F0EB', fontWeight: 600 }}>
+            Showing {staleFlags.length} stale flag(s) — removal candidates
+          </span>
+          <button onClick={exitStaleMode}
+            style={{
+              marginLeft: 'auto',
+              padding: '4px 12px',
+              borderRadius: 6,
+              border: '1px solid #2A1A1A',
+              background: 'transparent',
+              color: '#9A8A7A',
+              cursor: 'pointer',
+              fontSize: 12,
+            }}
+          >
+            Show all flags
+          </button>
+        </div>
+      )}
+
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
         <button
           onClick={() => setContextFilter('all')}
@@ -550,6 +842,27 @@ export default function GlobalFeatureFlagsPage() {
         >
           Other
         </button>
+        {/* "Stale only" toggle — switch the view without the nav badge. */}
+        <button
+          onClick={toggleStaleMode}
+          title={
+            staleOnly
+              ? 'Show all flags — clear the stale-only filter'
+              : 'Show only flags past their staleAfter expiry'
+          }
+          style={{
+            padding: '6px 14px',
+            borderRadius: 999,
+            border: staleOnly ? '1px solid #FF9E6B' : '1px solid #2A1A1A',
+            background: staleOnly ? '#7A2A0A' : 'transparent',
+            color: staleOnly ? '#FFD9C2' : '#9A8A7A',
+            cursor: 'pointer',
+            fontWeight: 600,
+            fontSize: 13,
+          }}
+        >
+          {staleOnly ? `Stale only (${staleFlags.length})` : 'Stale only'}
+        </button>
       </div>
 
       <input
@@ -564,6 +877,9 @@ export default function GlobalFeatureFlagsPage() {
       {filtered.map((flag) => {
         const ctx = contextFor(flag.key);
         const isNumeric = isNumericFlag(flag);
+        const isFocused = focusTarget !== null && flag.key === focusTarget;
+        // Self-disable flip count for this key (0 when Prometheus is off).
+        const autoTotal = staleMetrics?.autoDisabled?.[flag.key]?.total ?? 0;
         const draft = drafts[flag.key];
         const dirty = draft !== undefined && draft.trim() !== '' && draft.trim() !== String(flag.value);
         // Targeting draft state for boolean flags (rollout % + user IDs).
@@ -578,11 +894,14 @@ export default function GlobalFeatureFlagsPage() {
         return (
           <div
             key={flag.key}
+            id={`flag-row-${flag.key}`}
             style={{
               padding: '16px 20px',
               borderRadius: 16,
-              border: '1px solid #2A1A1A',
-              backgroundColor: 'rgba(26,10,10,0.8)',
+              border: isFocused ? '2px solid #E8420A' : '1px solid #2A1A1A',
+              backgroundColor: isFocused ? 'rgba(232,66,10,0.12)' : 'rgba(26,10,10,0.8)',
+              boxShadow: isFocused ? '0 0 0 3px rgba(232,66,10,0.25)' : undefined,
+              animation: isFocused ? 'flagFlash 1.8s ease-out' : undefined,
               marginBottom: 12,
             }}
           >
@@ -663,6 +982,51 @@ export default function GlobalFeatureFlagsPage() {
                       }
                     >
                       stale{flag.staleNotifiedAt ? ' · notified' : ' · un-notified'}
+                    </span>
+                  )}
+                  {isStale(flag) && !flag.enabled && !flag.autoDisabledAt && autoTotal === 0 && (
+                    <span
+                      style={{
+                        padding: '2px 8px',
+                        borderRadius: 999,
+                        background: 'rgba(245,240,235,0.08)',
+                        color: '#9A8A7A',
+                        fontSize: 11,
+                        fontWeight: 600,
+                      }}
+                      title="Disabled by an admin — no auto-disable recorded (flag_auto_disabled_total = 0)"
+                    >
+                      manually off
+                    </span>
+                  )}
+                  {(flag.autoDisabledAt || autoTotal > 0) && (
+                    <span
+                      style={{
+                        padding: '2px 8px',
+                        borderRadius: 999,
+                        background: 'rgba(232,66,10,0.35)',
+                        color: '#FFB37E',
+                        fontSize: 11,
+                        fontWeight: 600,
+                      }}
+                      title={`Auto-disabled by the self-disable safety${autoTotal > 0 ? ` ${autoTotal}× (flag_auto_disabled_total)` : ''}${flag.autoDisabledAt ? ` on ${new Date(flag.autoDisabledAt).toLocaleString()}` : ''} — renew the expiry (extend staleAfter) to re-enable`}
+                    >
+                      auto-off{autoTotal > 0 ? ` · ${autoTotal}×` : ''}
+                    </span>
+                  )}
+                  {isStale(flag) && staleMetrics?.available && staleMetrics.staleRunning?.[flag.key] && (
+                    <span
+                      style={{
+                        padding: '2px 8px',
+                        borderRadius: 999,
+                        background: '#E8420A',
+                        color: '#fff',
+                        fontSize: 11,
+                        fontWeight: 600,
+                      }}
+                      title={`Still served past expiry — ${staleMetrics.staleRunning[flag.key]!.rate5m.toFixed(1)} eval/min in the last 5m · ${staleMetrics.staleRunning[flag.key]!.total} lifetime evaluations`}
+                    >
+                      serving past expiry
                     </span>
                   )}
                   {ctx && (

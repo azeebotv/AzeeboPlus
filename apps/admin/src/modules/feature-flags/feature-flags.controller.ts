@@ -5,6 +5,8 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { FeatureFlagsService } from './feature-flags.service';
 import { StaleFlagSweepService } from './stale-flag-sweep.service';
+import { StaleFlagNightlyService } from './stale-flag-nightly.service';
+import { StaleFlagMetricsService } from './stale-metrics.service';
 import { UpdateFeatureFlagDto } from './dto/update-feature-flag.dto';
 import { PruneStaleFlagsDto } from './dto/prune-stale-flags.dto';
 import { RestoreFlagsDto } from './dto/restore-flags.dto';
@@ -21,7 +23,9 @@ interface AdminRequest extends Request {
 export class FeatureFlagsController {
   constructor(
     @Inject(FeatureFlagsService) private readonly featureFlagsService: FeatureFlagsService,
-    @Inject(StaleFlagSweepService) private readonly staleSweepService: StaleFlagSweepService
+    @Inject(StaleFlagSweepService) private readonly staleSweepService: StaleFlagSweepService,
+    @Inject(StaleFlagNightlyService) private readonly staleNightlyService: StaleFlagNightlyService,
+    @Inject(StaleFlagMetricsService) private readonly staleMetricsService: StaleFlagMetricsService
   ) {}
 
   @Get()
@@ -36,6 +40,15 @@ export class FeatureFlagsController {
   @ApiResponse({ status: 200, description: 'Stale feature flags' })
   async getStale() {
     return this.featureFlagsService.getStaleFlags();
+  }
+
+  @Get('stale/metrics')
+  @ApiOperation({
+    summary: 'Per-key flag_stale_running_total from Prometheus — which stale flags are ACTIVELY served past expiry',
+  })
+  @ApiResponse({ status: 200, description: 'Stale-serving metrics (available, fetchedAt, staleRunning per key)' })
+  async getStaleMetrics() {
+    return this.staleMetricsService.getStaleRunningByKey();
   }
 
   @Post('prune-stale')
@@ -57,6 +70,29 @@ export class FeatureFlagsController {
   @ApiResponse({ status: 200, description: 'Sweep summary (notified, alreadyNotified, failed)' })
   async runStaleSweep() {
     return this.staleSweepService.runSweep();
+  }
+
+  @Post('nightly/run')
+  @ApiOperation({
+    summary:
+      'Run the nightly stale-flag pass now (owner sweep → optional auto-prune → ops-channel summary). ' +
+      'Pass ?dryRun=1 to preview the universe prune without removing anything (reports exactly what ' +
+      'STALE_FLAG_AUTO_PRUNE_UNIVERSE=true would remove)',
+  })
+  @ApiResponse({ status: 200, description: 'Nightly summary (stale, sweep, prune, universePrune, dryRunUniverse, webhook)' })
+  async runNightly(@Query('dryRun') dryRun?: string) {
+    const dryRunUniverse = dryRun === '1' || dryRun === 'true';
+    return this.staleNightlyService.runNightly({ dryRunUniverse });
+  }
+
+  @Get('nightly/last')
+  @ApiOperation({
+    summary:
+      'Most recent nightly stale-flag pass recorded in the audit log — times, counts, and webhook status',
+  })
+  @ApiResponse({ status: 200, description: 'Last nightly run summary, or null before the first pass' })
+  async getLastNightlyRun() {
+    return this.staleNightlyService.getLastRun();
   }
 
   @Get('deleted')
