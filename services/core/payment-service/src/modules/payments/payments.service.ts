@@ -4,6 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  ConflictException,
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -23,6 +24,7 @@ import {
 } from './interfaces/payment-response.interface.js';
 import { toNumber } from '@azeebo/utils';
 import { FeatureFlagService, paymentFlags } from '@azeebo/feature-flags';
+import { tryUpdatePaymentIntent } from './payment-intent.optimistic-lock.js';
 
 interface ProviderResponse {
   reference: string;
@@ -116,9 +118,7 @@ export class PaymentsService {
     } catch (error: unknown) {
       const fallback: PaymentProvider = active === 'paystack' ? 'flutterwave' : 'paystack';
       const fallbackFlag =
-        fallback === 'paystack'
-          ? paymentFlags.providerPaystack
-          : paymentFlags.providerFlutterwave;
+        fallback === 'paystack' ? paymentFlags.providerPaystack : paymentFlags.providerFlutterwave;
       const fallbackEnabled = await this.featureFlagService.isEnabled(fallbackFlag, userId);
       if (!fallbackEnabled) {
         throw error;
@@ -296,13 +296,22 @@ export class PaymentsService {
       const { provider: activeProvider, response: providerResponse } =
         await this.initializeWithFailover(userId, amount, currency || 'NGN');
 
-      await this.prisma.paymentIntent.update({
-        where: { id: paymentIntent.id },
-        data: {
+      const marked = await tryUpdatePaymentIntent(
+        this.prisma,
+        paymentIntent.id,
+        paymentIntent.version,
+        {
           providerReference: providerResponse.reference,
           status: 'processing',
-        },
-      });
+        }
+      );
+      if (!marked) {
+        // The intent was just created by this call, so a stale write means
+        // something else raced it — surface the conflict instead of proceeding.
+        throw new ConflictException(
+          'Payment intent was modified concurrently; retry initialization'
+        );
+      }
 
       return {
         success: true,
@@ -319,12 +328,19 @@ export class PaymentsService {
         },
       };
     } catch (error: unknown) {
-      await this.prisma.paymentIntent.update({
-        where: { id: paymentIntent.id },
-        data: {
+      const markedFailed = await tryUpdatePaymentIntent(
+        this.prisma,
+        paymentIntent.id,
+        paymentIntent.version,
+        {
           status: 'failed',
-        },
-      });
+        }
+      );
+      if (!markedFailed) {
+        this.logger.warn(
+          `Payment intent ${paymentIntent.id} was modified concurrently; skipped failed-mark`
+        );
+      }
 
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new BadRequestException(`Payment initialization failed: ${errorMessage}`);
@@ -398,10 +414,7 @@ export class PaymentsService {
    * Intents API: confirms a previously created intent by calling the active
    * provider, returning the checkout URL the client redirects to.
    */
-  async confirmIntent(
-    userId: string,
-    intentId: string
-  ): Promise<PaymentResponse> {
+  async confirmIntent(userId: string, intentId: string): Promise<PaymentResponse> {
     const paymentIntent = await this.prisma.paymentIntent.findUnique({
       where: { id: intentId },
     });
@@ -424,13 +437,21 @@ export class PaymentsService {
           paymentIntent.currency
         );
 
-      await this.prisma.paymentIntent.update({
-        where: { id: paymentIntent.id },
-        data: {
+      const marked = await tryUpdatePaymentIntent(
+        this.prisma,
+        paymentIntent.id,
+        paymentIntent.version,
+        {
           providerReference: providerResponse.reference,
           status: 'processing',
-        },
-      });
+        }
+      );
+      if (!marked) {
+        // A concurrent confirm already transitioned this intent — reject the
+        // stale confirmation (the provider initialize call is idempotent, but
+        // the intent bookkeeping must not be double-written).
+        throw new ConflictException('Payment intent was modified concurrently; retry confirmation');
+      }
 
       return {
         success: true,
@@ -443,6 +464,11 @@ export class PaymentsService {
         },
       };
     } catch (error: unknown) {
+      // A stale-write Conflict must not be masked as a generic confirmation
+      // failure — the client should retry against the current state.
+      if (error instanceof ConflictException) {
+        throw error;
+      }
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new BadRequestException(`Payment intent confirmation failed: ${errorMessage}`);
     }
@@ -466,7 +492,9 @@ export class PaymentsService {
     if (metadataJson.checkoutExpiresAt) {
       const expiresAt = new Date(metadataJson.checkoutExpiresAt as string).getTime();
       if (Number.isNaN(expiresAt) || expiresAt < Date.now()) {
-        throw new BadRequestException('Checkout session has expired, please initialize a new payment');
+        throw new BadRequestException(
+          'Checkout session has expired, please initialize a new payment'
+        );
       }
     }
 
@@ -522,9 +550,8 @@ export class PaymentsService {
       }
 
       const activeProvider = await this.getActiveProvider(userId);
-      const providerResponse = await this.getProvider(activeProvider).verifyPayment(
-        providerReference
-      );
+      const providerResponse =
+        await this.getProvider(activeProvider).verifyPayment(providerReference);
 
       if (providerResponse.status === 'success') {
         await this.creditWallet(
@@ -534,15 +561,39 @@ export class PaymentsService {
           providerReference
         );
 
+        // Optimistic-concurrency claim on the version column: only the writer
+        // whose read is still current may transition to 'completed' (and thus
+        // be the one that reports success). A stale claim means a concurrent
+        // writer already transitioned the intent.
+        let claimed = false;
         await this.prisma.$transaction(async (tx) => {
-          await tx.paymentIntent.update({
-            where: { id: paymentIntent.id },
-            data: {
-              status: 'completed',
-              completedAt: new Date(),
-            },
+          claimed = await tryUpdatePaymentIntent(tx, paymentIntent.id, paymentIntent.version, {
+            status: 'completed',
+            completedAt: new Date(),
           });
         });
+        if (!claimed) {
+          const fresh = await this.prisma.paymentIntent.findUnique({
+            where: { id: paymentIntent.id },
+          });
+          if (fresh?.status === 'completed') {
+            // A concurrent request completed + credited it — idempotent success.
+            return {
+              success: true,
+              data: {
+                paymentId: fresh.id,
+                provider: 'paystack',
+                reference: fresh.providerReference || '',
+                status: 'completed',
+                amount: toNumber(fresh.amount.toString()),
+                currency: fresh.currency,
+                paidAt: fresh.completedAt?.toISOString(),
+                transactionId: fresh.providerReference || undefined,
+              },
+            };
+          }
+          throw new ConflictException('Payment was modified concurrently; retry verification');
+        }
 
         await this.trackAnalyticsEvent('payment_success', userId, {
           paymentId: paymentIntent.id,
@@ -570,12 +621,24 @@ export class PaymentsService {
 
       throw new BadRequestException('Payment verification failed');
     } catch (error: unknown) {
-      await this.prisma.paymentIntent.update({
-        where: { id: paymentIntent.id },
-        data: {
+      // A stale-write Conflict must not be swallowed by the generic failure
+      // path (which would mask it as BadRequest and try a stale failed-mark).
+      if (error instanceof ConflictException) {
+        throw error;
+      }
+      const markedFailed = await tryUpdatePaymentIntent(
+        this.prisma,
+        paymentIntent.id,
+        paymentIntent.version,
+        {
           status: 'failed',
-        },
-      });
+        }
+      );
+      if (!markedFailed) {
+        this.logger.warn(
+          `Payment intent ${paymentIntent.id} was modified concurrently; skipped failed-mark`
+        );
+      }
 
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new BadRequestException(`Payment verification failed: ${errorMessage}`);
@@ -821,12 +884,12 @@ export class PaymentsService {
           },
         });
 
-        await tx.paymentIntent.update({
-          where: { id: paymentIntent.id },
-          data: {
-            refundAmount: paymentIntent.amount,
-          },
+        const marked = await tryUpdatePaymentIntent(tx, paymentIntent.id, paymentIntent.version, {
+          refundAmount: paymentIntent.amount,
         });
+        if (!marked) {
+          throw new ConflictException('Payment intent was modified concurrently; retry the refund');
+        }
       });
 
       await this.trackAnalyticsEvent('refund_completed', userId, {
@@ -906,15 +969,23 @@ export class PaymentsService {
         provider
       );
 
+      // Optimistic-concurrency claim: only the writer whose read is current
+      // may transition to 'completed'. The wallet credit above is idempotent
+      // (deduped by reference at the wallet service), so a stale claim just
+      // means a concurrent writer already completed this payment — skip.
+      let claimed = false;
       await this.prisma.$transaction(async (tx) => {
-        await tx.paymentIntent.update({
-          where: { id: paymentIntent.id },
-          data: {
-            status: 'completed',
-            completedAt: new Date(),
-          },
+        claimed = await tryUpdatePaymentIntent(tx, paymentIntent.id, paymentIntent.version, {
+          status: 'completed',
+          completedAt: new Date(),
         });
       });
+      if (!claimed) {
+        this.logger.warn(
+          `Payment ${paymentIntent.id} was completed by a concurrent writer; skipping`
+        );
+        return;
+      }
 
       await this.trackAnalyticsEvent('payment_success', paymentIntent.userId, {
         paymentId: paymentIntent.id,
@@ -937,12 +1008,22 @@ export class PaymentsService {
     });
 
     if (paymentIntent) {
-      await this.prisma.paymentIntent.update({
-        where: { id: paymentIntent.id },
-        data: {
+      const marked = await tryUpdatePaymentIntent(
+        this.prisma,
+        paymentIntent.id,
+        paymentIntent.version,
+        {
           status: 'failed',
-        },
-      });
+        }
+      );
+      if (!marked) {
+        // A concurrent writer (e.g. charge.success) already transitioned the
+        // intent — don't clobber a completed row with a stale failed-mark.
+        this.logger.warn(
+          `Payment intent ${paymentIntent.id} was modified concurrently; skipped failed-mark`
+        );
+        return;
+      }
 
       await this.trackAnalyticsEvent('payment_failed', paymentIntent.userId, {
         paymentId: paymentIntent.id,

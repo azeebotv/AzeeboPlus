@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '../../prisma/client/index.js';
+import { tryUpdatePaymentIntent } from './payment-intent.optimistic-lock.js';
 
 @Injectable()
 export class WebhookRetryService implements OnModuleInit, OnModuleDestroy {
@@ -212,10 +213,20 @@ export class WebhookRetryService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    await this.prisma.paymentIntent.update({
-      where: { id: paymentIntent.id },
-      data: { status: 'completed', completedAt: new Date() },
-    });
+    const marked = await tryUpdatePaymentIntent(
+      this.prisma,
+      paymentIntent.id,
+      paymentIntent.version,
+      {
+        status: 'completed',
+        completedAt: new Date(),
+      }
+    );
+    if (!marked) {
+      this.logger.warn(
+        `Payment intent ${paymentIntent.id} was modified concurrently; skipping retry completed-mark`
+      );
+    }
   }
 
   private async processPaymentFailed(reference: string): Promise<void> {
@@ -224,10 +235,19 @@ export class WebhookRetryService implements OnModuleInit, OnModuleDestroy {
     });
 
     if (paymentIntent) {
-      await this.prisma.paymentIntent.update({
-        where: { id: paymentIntent.id },
-        data: { status: 'failed' },
-      });
+      const marked = await tryUpdatePaymentIntent(
+        this.prisma,
+        paymentIntent.id,
+        paymentIntent.version,
+        {
+          status: 'failed',
+        }
+      );
+      if (!marked) {
+        this.logger.warn(
+          `Payment intent ${paymentIntent.id} was modified concurrently; skipping retry failed-mark`
+        );
+      }
     }
   }
 

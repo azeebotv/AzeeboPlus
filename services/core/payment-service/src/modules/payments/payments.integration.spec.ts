@@ -218,6 +218,7 @@ describe('PaymentsService Integration', () => {
         metadata: {},
         idempotencyKey: null,
         providerReference: null,
+        version: 0,
         createdAt: new Date('2025-01-01'),
       });
 
@@ -231,9 +232,11 @@ describe('PaymentsService Integration', () => {
         })
       ).rejects.toThrow(BadRequestException);
 
+      // The failed-mark is an optimistic-concurrency write keyed on the version
+      // the caller read (0) and atomically increments it.
       expect(mockPrismaService.paymentIntent.update).toHaveBeenCalledWith({
-        where: { id: 'pi-1' },
-        data: { status: 'failed' },
+        where: { id: 'pi-1', version: 0 },
+        data: { status: 'failed', version: { increment: 1 } },
       });
     });
   });
@@ -628,6 +631,7 @@ describe('PaymentsService Integration', () => {
         amount: 5000,
         status: 'processing',
         providerReference: 'psk-ref-1',
+        version: 0,
       });
 
       const result = await service.handleWebhook(
@@ -640,9 +644,10 @@ describe('PaymentsService Integration', () => {
       );
 
       expect(result.success).toBe(true);
+      // The failed-mark is keyed on the version read (0) and increments it.
       expect(mockPrismaService.paymentIntent.update).toHaveBeenCalledWith({
-        where: { id: 'pi-1' },
-        data: { status: 'failed' },
+        where: { id: 'pi-1', version: 0 },
+        data: { status: 'failed', version: { increment: 1 } },
       });
     });
 
