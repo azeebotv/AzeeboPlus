@@ -77,7 +77,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run actionlint on all workflows
         run: |
-          curl -sSfL -o /tmp/actionlint.tar.gz \
+          # GitHub release downloads from runner IPs are occasionally
+          # rate-limited/transient; retry so the syntax gate doesn't flake.
+          curl -sSfL --retry 5 --retry-all-errors --retry-delay 3 -o /tmp/actionlint.tar.gz \
             https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz
           tar -C /tmp -xzf /tmp/actionlint.tar.gz actionlint
           /tmp/actionlint -color -shellcheck= -pyflakes= \
