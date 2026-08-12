@@ -1,16 +1,27 @@
-name: Dockerized E2E (flags:redis + payments:failover + search pg_trgm + cache-thrash)
+name: Dockerized E2E (flag chain + failover + pg_trgm + cache-thrash)
 
 # Runs the opt-in dockerized e2e suites that need real infrastructure,
 # plus a FlagCacheThrash load assertion against a staging gateway:
 #
-#   test:flags:redis        admin toggle → Redis → service chain
-#                           (apps/admin feature-flags.redis-live spec, prefix
+#   test:flags:redis        admin toggle → Redis → service chain (in-process,
+#                           apps/admin feature-flags.redis-live spec, prefix
 #                           feature_flags_test:)
+#   flag-chain containers   the REAL admin + api-gateway containers (built from
+#                           their Dockerfiles) boot against the shared Redis;
+#                           the admin API PUTs gateway_maintenance_mode=true and
+#                           the gateway container must flip to 503, then back.
+#                           Proves the admin → Redis → service chain across
+#                           processes/containers (docker-compose.flagchain.yml +
+#                           scripts/flag-chain-container-check.mjs). Runs on
+#                           pushes and workflow_dispatch only — the two docker
+#                           builds are the slowest part of this job, so PRs keep
+#                           the fast jest suites.
 #   test:payments:failover  Paystack down → Flutterwave fallback against a real
-#                           Postgres + Redis (payments.failover.e2e spec)      #   test:e2e:pgtrgm         search-service pg_trgm fuzzy search against REAL
-      #                           Postgres (schema-first `prisma db push` + the
-      #                           extension and GIN indexes applied as idempotent
-      #                           raw SQL) and REAL Redis
+#                           Postgres + Redis (payments.failover.e2e spec)
+#   test:e2e:pgtrgm         search-service pg_trgm fuzzy search against REAL
+#                           Postgres (schema-first `prisma db push` + the
+#                           extension and GIN indexes applied as idempotent
+#                           raw SQL) and REAL Redis
 #                           (search_typo_tolerance flag); proves the trigram
 #                           path serves scored results and falls back when off
 #                           (search.pgtrgm.e2e spec, prefix search_e2e:)
@@ -27,7 +38,8 @@ name: Dockerized E2E (flags:redis + payments:failover + search pg_trgm + cache-t
 # are booted via docker-compose.test.yml, since they're local volume-mounted
 # node stubs with control endpoints (__control/status) that only exist there.
 # The suites are pointed at the service containers with env overrides, so the
-# compose file's dev ports (6380/5433) are not needed in CI.
+# compose file's dev ports (6380/5433) are not needed in CI. The flag-chain
+# containers reach the same service containers via host.docker.internal.
 
 on:
   pull_request:
@@ -42,6 +54,9 @@ env:
   # GitHub service containers are reachable at localhost on the mapped port.
   REDIS_TEST_URL: redis://localhost:6379
   PAYMENT_TEST_DATABASE_URL: postgresql://azeebo_test:azeebo_test@localhost:5432/azeebo_payment_test?schema=public
+  # CI-only shared JWT secret for the real-container flag chain (admin + gateway
+  # containers mint/verify test tokens with it; never used in production).
+  JWT_SECRET: 'ci-flagchain-jwt-secret-0123456789abcdef0123456789abcdef0123456789abcdef'
 
 jobs:
   # Workflow-syntax gate: runs BEFORE the dockerized-e2e job (which `needs:`
@@ -73,7 +88,7 @@ jobs:
     name: Dockerized e2e suites
     runs-on: ubuntu-latest
     needs: actionlint
-    timeout-minutes: 30
+    timeout-minutes: 45
     services:
       redis:
         image: redis:7-alpine
@@ -121,6 +136,44 @@ jobs:
         env:
           RUN_LIVE_REDIS: '1'
           REDIS_TEST_URL: ${{ env.REDIS_TEST_URL }}
+
+      # --- Real-container flag chain: admin API container → shared Redis →
+      # api-gateway container. Push + manual dispatch only: the two docker
+      # builds are the slowest steps in this job, so PRs keep the fast jest
+      # suites and workflow_dispatch can run this against any branch.
+      - name: Create admin test database
+        if: github.event_name != 'pull_request'
+        run: |
+          CID=$(docker ps -q --filter "publish=5432" | head -1)
+          if [ -z "$CID" ]; then
+            echo "postgres service container not found"
+            exit 1
+          fi
+          docker exec "$CID" psql -U azeebo_test -c 'CREATE DATABASE azeebo_admin_test' || true
+
+      - name: Migrate admin schema (azeebo_admin_test)
+        if: github.event_name != 'pull_request'
+        run: |
+          DATABASE_URL="postgresql://azeebo_test:azeebo_test@localhost:5432/azeebo_admin_test?schema=public" \
+            pnpm --filter @azeebo/admin exec prisma migrate deploy
+
+      - name: Build flag-chain images (admin + api-gateway)
+        if: github.event_name != 'pull_request'
+        run: docker compose -f docker-compose.flagchain.yml build
+
+      - name: Boot flag-chain containers against the shared Redis
+        if: github.event_name != 'pull_request'
+        run: docker compose -f docker-compose.flagchain.yml up -d --wait
+        env:
+          FLAGCHAIN_JWT_SECRET: ${{ env.JWT_SECRET }}
+
+      - name: Flag chain across containers — admin toggles gateway kill-switch
+        if: github.event_name != 'pull_request'
+        run: node scripts/flag-chain-container-check.mjs
+        env:
+          ADMIN_URL: http://localhost:4016
+          GATEWAY_URL: http://localhost:3013
+          JWT_SECRET: ${{ env.JWT_SECRET }}
 
       - name: Boot provider stubs (paystack DOWN / flutterwave UP)
         run: docker compose -f docker-compose.test.yml up -d --wait paystack-mock flutterwave-mock
@@ -192,6 +245,10 @@ jobs:
       - name: Tear down staging gateway
         if: always()
         run: kill $(cat /tmp/staging-gateway.pid) 2>/dev/null || true
+
+      - name: Tear down flag-chain containers
+        if: always()
+        run: docker compose -f docker-compose.flagchain.yml down --remove-orphans || true
 
       - name: Tear down provider stubs
         if: always()

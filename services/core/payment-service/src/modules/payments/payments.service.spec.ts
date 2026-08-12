@@ -6,8 +6,9 @@ import { FlutterwaveProvider } from '../payments/providers/flutterwave.provider.
 import { WebhookRetryService } from '../payments/webhook-retry.service.js';
 import { RedisService, CacheService } from '@azeebo/shared-services';
 import { FeatureFlagService } from '@azeebo/feature-flags';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
+import { Prisma } from '../../prisma/client/index.js';
 import axios from 'axios';
 
 jest.mock('axios');
@@ -26,6 +27,7 @@ describe('PaymentsService', () => {
       paymentIntent: {
         create: jest.fn(),
         findUnique: jest.fn(),
+        findFirst: jest.fn(),
         findMany: jest.fn(),
         update: jest.fn(),
       },
@@ -550,8 +552,9 @@ describe('PaymentsService', () => {
         reference: 'ref_paystack',
         authorizationUrl: 'https://checkout.paystack.com/abc',
       });
-      (service as unknown as { flutterwaveProvider: { initializePayment: jest.Mock } })
-        .flutterwaveProvider.initializePayment.mockResolvedValue({
+      (
+        service as unknown as { flutterwaveProvider: { initializePayment: jest.Mock } }
+      ).flutterwaveProvider.initializePayment.mockResolvedValue({
         reference: 'ref_flutterwave',
         authorizationUrl: 'https://checkout.flutterwave.com/abc',
       });
@@ -612,14 +615,13 @@ describe('PaymentsService', () => {
         updatedAt: new Date(),
       });
       prisma.paymentIntent.update.mockResolvedValue({ id: 'pay-123', status: 'processing' });
-      (service as unknown as { flutterwaveProvider: { initializePayment: jest.Mock } })
-        .flutterwaveProvider.initializePayment.mockResolvedValue({
+      (
+        service as unknown as { flutterwaveProvider: { initializePayment: jest.Mock } }
+      ).flutterwaveProvider.initializePayment.mockResolvedValue({
         reference: 'ref_flutterwave',
         authorizationUrl: 'https://checkout.flutterwave.com/abc',
       });
-      paystackProvider.initializePayment.mockRejectedValue(
-        new Error('Paystack is down (503)')
-      );
+      paystackProvider.initializePayment.mockRejectedValue(new Error('Paystack is down (503)'));
       // Both provider flags ON by default → the fallback chain is active.
       flagService.isEnabled.mockImplementation((key: string) =>
         Promise.resolve(
@@ -667,10 +669,9 @@ describe('PaymentsService', () => {
     });
 
     it('surfaces the primary provider error when BOTH providers fail', async () => {
-      (service as unknown as { flutterwaveProvider: { initializePayment: jest.Mock } })
-        .flutterwaveProvider.initializePayment.mockRejectedValue(
-          new Error('Flutterwave also down')
-        );
+      (
+        service as unknown as { flutterwaveProvider: { initializePayment: jest.Mock } }
+      ).flutterwaveProvider.initializePayment.mockRejectedValue(new Error('Flutterwave also down'));
 
       await expect(service.initializePayment('user-123', dto)).rejects.toThrow(
         'Paystack is down (503)'
@@ -685,9 +686,11 @@ describe('PaymentsService', () => {
       flagService.isEnabled.mockImplementation((key: string) =>
         Promise.resolve(key === 'payment_provider_paystack')
       );
-      const flutterwaveInit = (service as unknown as {
-        flutterwaveProvider: { initializePayment: jest.Mock };
-      }).flutterwaveProvider.initializePayment;
+      const flutterwaveInit = (
+        service as unknown as {
+          flutterwaveProvider: { initializePayment: jest.Mock };
+        }
+      ).flutterwaveProvider.initializePayment;
 
       await expect(service.initializePayment('user-123', dto)).rejects.toThrow(
         'Paystack is down (503)'
@@ -701,14 +704,11 @@ describe('PaymentsService', () => {
       flagService.isEnabled.mockImplementation((key: string) =>
         Promise.resolve(key === 'payment_provider_flutterwave')
       );
-      (service as unknown as { flutterwaveProvider: { initializePayment: jest.Mock } })
-        .flutterwaveProvider.initializePayment.mockRejectedValue(
-          new Error('Flutterwave down')
-        );
+      (
+        service as unknown as { flutterwaveProvider: { initializePayment: jest.Mock } }
+      ).flutterwaveProvider.initializePayment.mockRejectedValue(new Error('Flutterwave down'));
 
-      await expect(service.initializePayment('user-123', dto)).rejects.toThrow(
-        'Flutterwave down'
-      );
+      await expect(service.initializePayment('user-123', dto)).rejects.toThrow('Flutterwave down');
       expect(paystackProvider.initializePayment).not.toHaveBeenCalled();
     });
 
@@ -991,6 +991,269 @@ describe('PaymentsService', () => {
 
       await expect(service.confirmIntent('user-123', 'intent-1')).rejects.toThrow(
         'Payment intent is not awaiting confirmation'
+      );
+    });
+  });
+
+  describe('optimistic concurrency (PaymentIntent.version)', () => {
+    const staleWriteError = () =>
+      new Prisma.PrismaClientKnownRequestError('Record not found', {
+        code: 'P2025',
+        clientVersion: '6.19.3',
+      });
+
+    it('initializePayment marks the intent with a version-guarded write that increments version', async () => {
+      const userId = 'user-123';
+      const dto = { amount: 1000, currency: 'NGN', description: 'Test payment' };
+
+      prisma.paymentIntent.create.mockResolvedValue({
+        id: 'pay-123',
+        userId,
+        amount: new Decimal(1000),
+        currency: 'NGN',
+        status: 'pending',
+        description: 'Test payment',
+        providerReference: null,
+        metadata: {},
+        completedAt: null,
+        idempotencyKey: null,
+        version: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      prisma.paymentIntent.update.mockResolvedValue({
+        id: 'pay-123',
+        status: 'processing',
+        version: 1,
+      });
+      paystackProvider.initializePayment.mockResolvedValue({
+        reference: 'ref_1',
+        authorizationUrl: 'https://checkout.paystack.com/abc',
+      });
+
+      await service.initializePayment(userId, dto);
+
+      expect(prisma.paymentIntent.update).toHaveBeenCalledWith({
+        where: { id: 'pay-123', version: 0 },
+        data: {
+          providerReference: 'ref_1',
+          status: 'processing',
+          version: { increment: 1 },
+        },
+      });
+    });
+
+    it('confirmIntent rejects a stale confirmation with ConflictException instead of double-writing', async () => {
+      prisma.paymentIntent.findUnique.mockResolvedValue({
+        id: 'intent-1',
+        userId: 'user-123',
+        amount: new Decimal(1000),
+        currency: 'NGN',
+        status: 'requires_payment',
+        description: 'Test payment',
+        providerReference: null,
+        metadata: {},
+        completedAt: null,
+        idempotencyKey: null,
+        version: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      paystackProvider.initializePayment.mockResolvedValue({
+        reference: 'ref_1',
+        authorizationUrl: 'https://checkout.paystack.com/abc',
+      });
+      // A concurrent request already confirmed the intent → version moved.
+      prisma.paymentIntent.update.mockRejectedValue(staleWriteError());
+
+      await expect(service.confirmIntent('user-123', 'intent-1')).rejects.toThrow(
+        ConflictException
+      );
+
+      expect(prisma.paymentIntent.update).toHaveBeenCalledWith({
+        where: { id: 'intent-1', version: 1 },
+        data: {
+          providerReference: 'ref_1',
+          status: 'processing',
+          version: { increment: 1 },
+        },
+      });
+    });
+
+    it('verifyPayment treats a stale completed-claim as idempotent success when the intent is already completed', async () => {
+      const userId = 'user-123';
+      const transactionId = 'pay-123';
+      const reference = 'ref_123';
+
+      prisma.paymentIntent.findUnique
+        .mockResolvedValueOnce({
+          id: transactionId,
+          userId,
+          amount: new Decimal(1000),
+          currency: 'NGN',
+          status: 'processing',
+          description: null,
+          providerReference: reference,
+          metadata: {},
+          completedAt: null,
+          idempotencyKey: null,
+          version: 0,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .mockResolvedValueOnce({
+          id: transactionId,
+          userId,
+          amount: new Decimal(1000),
+          currency: 'NGN',
+          status: 'completed',
+          description: null,
+          providerReference: reference,
+          metadata: {},
+          completedAt: new Date(),
+          idempotencyKey: null,
+          version: 1,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+
+      paystackProvider.verifyPayment.mockResolvedValue({
+        status: 'success',
+        amount: 1000,
+        currency: 'NGN',
+        paidAt: new Date(),
+        customerEmail: 'test@example.com',
+        reference,
+      });
+      prisma.wallet.update.mockResolvedValue({});
+      prisma.wallet.findUnique.mockResolvedValue({
+        id: 'wallet-123',
+        userId,
+        balance: new Decimal(10000),
+      });
+      prisma.walletTransaction.create.mockResolvedValue({});
+      // A concurrent writer won the completed-claim → our write is stale.
+      prisma.paymentIntent.update.mockRejectedValue(staleWriteError());
+
+      const result = await service.verifyPayment(userId, transactionId);
+
+      expect(result.success).toBe(true);
+      expect((result.data as Record<string, unknown>).status).toBe('completed');
+    });
+
+    it('verifyPayment throws ConflictException when the stale claim was not completed elsewhere', async () => {
+      const userId = 'user-123';
+      const transactionId = 'pay-123';
+      const reference = 'ref_123';
+      const processingIntent = {
+        id: transactionId,
+        userId,
+        amount: new Decimal(1000),
+        currency: 'NGN',
+        status: 'processing',
+        description: null,
+        providerReference: reference,
+        metadata: {},
+        completedAt: null,
+        idempotencyKey: null,
+        version: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      // Initial read AND the fresh re-check both see a non-completed intent.
+      prisma.paymentIntent.findUnique
+        .mockResolvedValueOnce(processingIntent)
+        .mockResolvedValueOnce(processingIntent);
+      paystackProvider.verifyPayment.mockResolvedValue({
+        status: 'success',
+        amount: 1000,
+        currency: 'NGN',
+        paidAt: new Date(),
+        customerEmail: 'test@example.com',
+        reference,
+      });
+      prisma.wallet.update.mockResolvedValue({});
+      prisma.wallet.findUnique.mockResolvedValue({
+        id: 'wallet-123',
+        userId,
+        balance: new Decimal(10000),
+      });
+      prisma.walletTransaction.create.mockResolvedValue({});
+      prisma.paymentIntent.update.mockRejectedValue(staleWriteError());
+
+      await expect(service.verifyPayment(userId, transactionId)).rejects.toThrow(ConflictException);
+    });
+
+    it('webhook charge.success skips credit-side analytics when the completed-claim is stale', async () => {
+      const reference = 'ref_123';
+      const intent = {
+        id: 'pay-123',
+        userId: 'user-123',
+        amount: new Decimal(1000),
+        currency: 'NGN',
+        status: 'processing',
+        description: null,
+        providerReference: reference,
+        metadata: {},
+        completedAt: null,
+        idempotencyKey: null,
+        version: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      prisma.paymentIntent.findFirst.mockResolvedValue(intent);
+      prisma.paymentIntent.findUnique.mockResolvedValue(intent); // fresh re-check after the lock
+      prisma.paymentIntent.update.mockRejectedValue(staleWriteError());
+      (axios.post as jest.Mock).mockClear(); // isolate analytics calls for this test
+
+      await (
+        service as unknown as {
+          handlePaymentSuccess: (data: { reference: string }, provider: string) => Promise<void>;
+        }
+      ).handlePaymentSuccess({ reference }, 'paystack');
+
+      // The stale claim must not fire payment_success analytics (a concurrent
+      // writer owns that transition).
+      expect(axios.post).not.toHaveBeenCalledWith(
+        'http://localhost:3001/analytics/track',
+        expect.objectContaining({ eventName: 'payment_success' })
+      );
+      expect(prisma.paymentIntent.update).toHaveBeenCalledWith({
+        where: { id: 'pay-123', version: 1 },
+        data: expect.objectContaining({ status: 'completed', version: { increment: 1 } }),
+      });
+    });
+
+    it('webhook charge.failed does not clobber an intent a concurrent writer transitioned', async () => {
+      const reference = 'ref_123';
+      prisma.paymentIntent.findFirst.mockResolvedValue({
+        id: 'pay-123',
+        userId: 'user-123',
+        amount: new Decimal(1000),
+        currency: 'NGN',
+        status: 'processing',
+        description: null,
+        providerReference: reference,
+        metadata: {},
+        completedAt: null,
+        idempotencyKey: null,
+        version: 2,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      prisma.paymentIntent.update.mockRejectedValue(staleWriteError());
+      (axios.post as jest.Mock).mockClear(); // isolate analytics calls for this test
+
+      await (
+        service as unknown as {
+          handlePaymentFailed: (data: { reference: string }, provider: string) => Promise<void>;
+        }
+      ).handlePaymentFailed({ reference }, 'paystack');
+
+      // No payment_failed analytics for a stale mark that never landed.
+      expect(axios.post).not.toHaveBeenCalledWith(
+        'http://localhost:3001/analytics/track',
+        expect.objectContaining({ eventName: 'payment_failed' })
       );
     });
   });

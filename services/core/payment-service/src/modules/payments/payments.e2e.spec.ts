@@ -354,7 +354,10 @@ describe('PaymentsService E2E Tests', () => {
 
       expect(result.success).toBe(true);
       expect(prisma.paymentIntent.update).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: 'pi-123' }, data: { status: 'failed' } })
+        expect.objectContaining({
+          where: expect.objectContaining({ id: 'pi-123' }),
+          data: expect.objectContaining({ status: 'failed', version: { increment: 1 } }),
+        })
       );
     });
   });
