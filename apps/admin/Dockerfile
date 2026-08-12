@@ -3,7 +3,7 @@ WORKDIR /app
 
 RUN for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 && break || (echo "Retry $i/5..." && sleep 10); done
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json .npmrc ./
 COPY packages ./packages
 COPY apps/admin/package.json ./apps/admin/
 
@@ -36,12 +36,13 @@ RUN apk add --no-cache tini && \
     adduser -S nodejs -u 65532 && \
     for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 && break || (echo "Retry $i/5..." && sleep 10); done
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY apps/admin/package.json ./apps/admin/
 
 # Copy the BUILT packages (dist included) from the builder; the source tree's
 # dist is gitignored and never lands in the context. pnpm install --prod below
-# re-links node_modules per the lockfile.
+# re-links node_modules per the lockfile. .npmrc's shamefully-hoist is what
+# lets the app resolve transitive deps from the root node_modules.
 COPY --from=builder /app/packages ./packages
 
 RUN for i in 1 2 3 4 5; do pnpm install --prod --frozen-lockfile && break || (echo "Retry $i/5..." && sleep 10); done
