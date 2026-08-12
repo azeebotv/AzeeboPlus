@@ -135,11 +135,11 @@ jobs:
       # they must be built before any suite imports them. Every dockerized
       # suite (admin redis-live, payment failover, search pg_trgm) and the
       # staging gateway import @azeebo/* packages; pnpm -r orders the builds
-      # topologically (deps first). test-utils is deliberately excluded: its
-      # build needs @prisma/client generation this job doesn't run, and no
-      # suite here imports it.
+      # topologically (deps first). test-utils and contract-tests are excluded
+      # (their builds need @prisma/client generation / spec-only src that the
+      # docker context strips); no suite here imports either.
       - name: Build workspace packages
-        run: pnpm -r --filter './packages/**' --filter '!@azeebo/test-utils' run build
+        run: pnpm -r --filter './packages/**' --filter '!@azeebo/test-utils' --filter '!@azeebo/contract-tests' run build
 
       - name: Flag chain e2e — admin → Redis (test:flags:redis)
         run: pnpm --filter @azeebo/admin test:redis
