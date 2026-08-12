@@ -40,7 +40,7 @@ export class StaleFlagSweepService implements OnModuleInit, OnModuleDestroy {
   private readonly fallbackEmail?: string;
   private readonly adminBaseUrl: string;
   private readonly intervalMs: number;
-  private interval?: NodeJS.Timeout;
+  private interval?: ReturnType<typeof setInterval>;
 
   constructor(
     @Inject(FeatureFlagsService) private readonly flagsService: FeatureFlagsService,
@@ -76,7 +76,9 @@ export class StaleFlagSweepService implements OnModuleInit, OnModuleDestroy {
     // short-lived processes never stay alive just because of the sweep).
     void this.runSweep();
     this.interval = setInterval(() => void this.runSweep(), this.intervalMs);
-    this.interval.unref();
+    if (this.interval) {
+      (this.interval as unknown as NodeJS.Timeout).unref();
+    }
     this.logger.log(
       `Stale-flag sweep scheduled every ${Math.round(this.intervalMs / 60000)}m` +
         (this.fallbackEmail ? ` (ops digest → ${this.fallbackEmail})` : '')

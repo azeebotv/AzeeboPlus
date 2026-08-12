@@ -59,7 +59,7 @@ const { mockUseAuth, mockPush, mockUseWallet, translations } = vi.hoisted(() => 
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) => translations[key] ?? key,
+    t: (key: string) => (translations as Record<string, string>)[key] ?? key,
   }),
 }));
 

@@ -47,7 +47,7 @@ export class LiveEventController {
   @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get current user ticket purchases' })
   @ApiResponse({ status: 200, description: 'User tickets' })
-  async getMyTickets(@Request() req) {
+  async getMyTickets(@Request() req: { user: { id: string } }) {
     return this.liveEventService.getUserTickets(req.user.id);
   }
 
@@ -65,7 +65,10 @@ export class LiveEventController {
   @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get stream URL for a purchased event' })
   @ApiResponse({ status: 200, description: 'Stream URL' })
-  async getStream(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
+  async getStream(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: { user: { id: string } }
+  ) {
     return this.liveEventService.getStreamUrl(id, req.user.id);
   }
 
@@ -74,7 +77,10 @@ export class LiveEventController {
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Create a new live event (organizer/admin)' })
   @ApiResponse({ status: 201, description: 'Event created' })
-  async createEvent(@Body() dto: CreateEventDto, @Request() req) {
+  async createEvent(
+    @Body() dto: CreateEventDto,
+    @Request() req: { user: { id: string } }
+  ) {
     return this.liveEventService.createEvent({
       ...dto,
       organizerId: req.user.id,
@@ -89,7 +95,7 @@ export class LiveEventController {
   async purchaseTicket(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() _dto: PurchaseTicketDto,
-    @Request() req
+    @Request() req: { user: { id: string } }
   ) {
     return this.liveEventService.purchaseTicket(id, req.user.id);
   }

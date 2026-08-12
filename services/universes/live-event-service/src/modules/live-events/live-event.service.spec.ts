@@ -3,7 +3,6 @@ import { LiveEventService } from './live-event.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { FeatureFlagService, liveEventFlags } from '@azeebo/feature-flags';
-import { ForbiddenException } from '@nestjs/common';
 import axios from 'axios';
 
 jest.mock('axios');
