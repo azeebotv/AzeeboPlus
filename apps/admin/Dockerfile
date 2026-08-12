@@ -50,7 +50,10 @@ RUN for i in 1 2 3 4 5; do pnpm install --prod --frozen-lockfile && break || (ec
 COPY --from=builder /app/apps/admin/dist ./apps/admin/dist
 COPY --from=builder /app/apps/admin/client/dist ./apps/admin/client/dist
 COPY --from=builder /app/apps/admin/prisma ./apps/admin/prisma
-COPY --from=builder /app/apps/admin/src/generated ./apps/admin/src/generated
+# The generated Prisma client is plain JS (index.js + engines) that tsc does
+# not emit into dist/generated, yet the compiled code requires
+# '../generated/prisma' relative to dist — so copy it there, not src/generated.
+COPY --from=builder /app/apps/admin/src/generated ./apps/admin/dist/generated
 
 RUN chown -R nodejs:nodejs /app
 
