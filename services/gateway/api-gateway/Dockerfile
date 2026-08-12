@@ -10,9 +10,10 @@ COPY services/gateway/api-gateway/package.json ./services/gateway/api-gateway/
 RUN for i in 1 2 3 4 5; do pnpm install --frozen-lockfile && break || (echo "Retry $i/5..." && sleep 10); done
 
 # Workspace packages ship dist-based exports (dist is gitignored), so build
-# them before the app: tsc resolves @azeebo/* to packages/*/dist. test-utils
-# is excluded (its build needs @prisma/client generation; nothing imports it).
-RUN pnpm -r --filter './packages/**' --filter '!@azeebo/test-utils' run build
+# them before the app: tsc resolves @azeebo/* to packages/*/dist. Excluded:
+# test-utils (needs @prisma/client generation) and contract-tests (its src is
+# 100% *.spec.ts files, which .dockerignore strips from the context).
+RUN pnpm -r --filter './packages/**' --filter '!@azeebo/test-utils' --filter '!@azeebo/contract-tests' run build
 
 COPY services/gateway/api-gateway/src ./services/gateway/api-gateway/src
 COPY services/gateway/api-gateway/tsconfig*.json ./services/gateway/api-gateway/
