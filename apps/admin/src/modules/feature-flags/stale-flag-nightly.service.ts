@@ -64,7 +64,7 @@ export class StaleFlagNightlyService implements OnModuleInit, OnModuleDestroy {
   private readonly opsChannel?: string;
   private readonly postWhenEmpty: boolean;
   private lastRunAt = 0;
-  private interval?: NodeJS.Timeout;
+  private interval?: ReturnType<typeof setInterval>;
 
   constructor(
     @Inject(FeatureFlagsService) private readonly flagsService: FeatureFlagsService,
@@ -94,7 +94,9 @@ export class StaleFlagNightlyService implements OnModuleInit, OnModuleDestroy {
     // Run once at boot (catch-up after a restart), then poll the 24h gate.
     void this.maybeRunNightly();
     this.interval = setInterval(() => void this.maybeRunNightly(), this.checkIntervalMs);
-    this.interval.unref();
+    if (this.interval) {
+      (this.interval as unknown as NodeJS.Timeout).unref();
+    }
     this.logger.log(
       `Stale-flag nightly job scheduled (poll every ${Math.round(this.checkIntervalMs / 60000)}m; ` +
         `auto-prune global ${this.autoPrune ? 'ON' : 'off'} / universe ${this.autoPruneUniverse ? 'ON' : 'off'}` +

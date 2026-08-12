@@ -48,7 +48,9 @@ export class CdnFlagPurgeQueueService implements OnModuleInit, OnModuleDestroy {
 
     this.timer = setInterval(() => void this.checkFlag(), safePollMs);
     // Do not hold the process open just for the poller (dev/test hygiene).
-    this.timer.unref?.();
+    if (this.timer) {
+      (this.timer as unknown as NodeJS.Timeout).unref();
+    }
     this.logger.log(
       `Watching media_cdn_edge_cache every ${safePollMs}ms for on→off transitions`
     );

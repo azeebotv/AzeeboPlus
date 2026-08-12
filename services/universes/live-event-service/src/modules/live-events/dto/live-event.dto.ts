@@ -5,7 +5,7 @@ export class CreateEventDto {
   @ApiProperty({ description: 'Event title' })
   @IsString()
   @MaxLength(200)
-  title: string;
+  title!: string;
 
   @ApiPropertyOptional({ description: 'Event description' })
   @IsOptional()
@@ -15,21 +15,21 @@ export class CreateEventDto {
 
   @ApiProperty({ description: 'Thumbnail URL' })
   @IsString()
-  thumbnail: string;
+  thumbnail!: string;
 
   @ApiProperty({ description: 'Scheduled date/time (ISO 8601)' })
   @IsString()
-  scheduledAt: string;
+  scheduledAt!: string;
 
   @ApiProperty({ description: 'Duration in minutes' })
   @IsNumber()
   @Min(1)
-  duration: number;
+  duration!: number;
 
   @ApiProperty({ description: 'Ticket price' })
   @IsNumber()
   @Min(0)
-  ticketPrice: number;
+  ticketPrice!: number;
 
   @ApiPropertyOptional({ description: 'Currency code', default: 'NGN' })
   @IsOptional()

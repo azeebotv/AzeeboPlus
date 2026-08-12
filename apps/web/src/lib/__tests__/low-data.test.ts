@@ -1,10 +1,4 @@
-import {
-  LOW_DATA_FLAG_KEYS,
-  isLowDataMode,
-  shouldAutoPlay,
-  getImageQuality,
-  getImageSize,
-} from '../low-data';
+import { isLowDataMode, shouldAutoPlay, getImageQuality, getImageSize } from '../low-data';
 
 const flagOn = (key: string): boolean => key === 'web_autoplay' || key === 'web_low_data_default';
 const flagOff = (): boolean => false;
@@ -14,7 +8,6 @@ describe('shouldAutoPlay (web_autoplay gate)', () => {
     navigator,
     'connection'
   );
-  const originalLocalStorage = window.localStorage;
 
   afterEach(() => {
     window.localStorage.clear();
