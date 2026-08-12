@@ -79,7 +79,7 @@ const server = http.createServer((req, res) => {
         status: true,
         message: 'Authorization URL created',
         data: {
-          authorization_url: `https://checkout.paystack.mock/pay/${reference}`,
+          authorization_url: `http://localhost:${PORT}/pay/${reference}`,
           access_code: `ps-ac-${refCounter}`,
           reference,
         },

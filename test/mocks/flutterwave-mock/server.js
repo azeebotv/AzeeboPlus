@@ -82,7 +82,7 @@ const server = http.createServer((req, res) => {
           id: refCounter,
           tx_ref: `tx_${refCounter}`,
           reference,
-          link: `https://checkout.flutterwave.mock/pay/${reference}`,
+          link: `http://localhost:${PORT}/pay/${reference}`,
         },
       });
     }
