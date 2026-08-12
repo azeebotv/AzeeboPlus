@@ -160,7 +160,10 @@ liveDescribe('payment provider failover (paystack down → flutterwave fallback)
 
   afterAll(async () => {
     await prisma?.$disconnect();
-    await flagRedis?.quit().catch(() => undefined);
+    // moduleRef.close() quits flagRedis once via FeatureFlagService's
+    // onModuleDestroy hook (and RedisService's own connection). Quitting it
+    // here too would race the hook's quit — ioredis rejects the queued QUIT
+    // with "Connection is closed" when the socket drains mid-teardown.
     await moduleRef?.close();
   });
 

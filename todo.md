@@ -1,10 +1,11 @@
 # Azeebo+ Feature Flag Program — Executive Summary
 
-> **Status: COMPLETE** — all planned phases (0–7) implemented and verified. See
+> **Status: COMPLETE** — all planned phases (0–7) implemented, committed as the
+> milestone `ede91266` (`Major-Upgrade`), and verified. See
 > `docs/feature-flags-implementation.md` for the full plan this summary condenses.
-> The only remaining work is the three infra-dependent follow-ups in the Open
-> section below, which require a docker host / production-scale Redis not
-> available in this workspace.
+> The infra-dependent follow-ups below (redis flag chain, payment failover,
+> search pg_trgm, load/thrash checks) have since been executed against real
+> Redis/Postgres/HTTP stubs and are green.
 
 ---
 
@@ -44,14 +45,25 @@
 
 ## Verification
 
-- All 28 services typecheck clean; suites green (auth 152 · content 100 · search 123 · queue 77 · gateway 28 · admin 42 · payment 138 · wallet 105 · analytics 63 · media 55 · lifestyle 182 …).
-- `pnpm check:flags` (191 keys), `check-swagger-consistency` (28 services), `sweep-flag-usage` all pass.
-- Dockerized e2e suites *written and unit-verified* (Redis propagation chain, payment provider failover) — see Open below.
+- **Authoritative serial sweep** — 48/48 suites green (20 packages + 28 services) via `jest --runInBand --forceExit`: **2,758 tests passed, 0 failed, 5 skipped** (the opt-in dockerized payment-failover e2e). Largest suites: lifestyle 182 · auth 152 · payment 138 · sports 135 · search 123 · reality 110 · wallet 105 · content/movie 100.
+- `--runInBand` eliminated the intra-suite port/state flakiness; `--forceExit` fixed the search/auth teardown hang (search went from >600s to 123/123 in 19s). The last red — the pre-existing fail-open/fail-closed disagreement in `packages/security` `rate-limit.service.spec.ts` — is fixed: `isBlocked` now asserts fail-closed like its siblings, security **46/46**.
+- All 28 services typecheck clean; `pnpm check:flags` (191 keys), `check-swagger-consistency` (28 services), and `sweep-flag-usage` all pass.
+- **Machine-checked appendix** — `docs/feature-flags-implementation.md` ends with **Appendix A — Per-Service Flag Registry**: all 32 domains / 191 keys regenerated from `packages/feature-flags/src/registries.ts` by `scripts/generate-flag-registry-table.mjs` (`pnpm generate:flags:docs`); CI (`check:flags:docs` in `pr-checks.yml`) fails if the table drifts from the registries.
+- Dockerized e2e suites (Redis propagation chain, payment provider failover, search pg_trgm) *written, unit-verified, and now green end-to-end against real infra* — see the Infra-Dependent Follow-ups section below.
 
 ---
 
-## Open — Infra-Dependent Follow-ups (need docker / production Redis)
+## Infra-Dependent Follow-ups — DONE (executed locally with real servers)
 
-- [ ] **Run `pnpm test:flags:redis` on a docker host** — the real-Redis admin→Redis→service propagation e2e (`docker-compose.test.yml` + `feature-flags.redis-live.spec.ts`, port 6380) skips cleanly without docker and fails fast when Redis is down; the full chain has not been exercised against a real Redis server.
-- [ ] **Run `pnpm test:payments:failover` on a docker host** — the Paystack-down → Flutterwave-fallback dockerized e2e (`postgres-test` + provider mocks in `test/mocks/`); failover logic is unit-covered (payment 138/138), but the full-chain run against real Postgres/Redis/HTTP stubs needs docker.
-- [ ] **Production-scale load test** — `packages/feature-flags` has a unit-level caching assertion (1,000 evaluations → 1 Redis read); a real Redis-backed load test at production scale (TTL-hit ratios, rollout hash throughput) remains unrun.
+All three docker-gated follow-ups were run against the same real servers the docker-compose stack would provide — a real Redis 8.6.1 on :6380, real Postgres 18.3 on :5433, and the two node provider stubs on :8091/:8092 (docker is unavailable in this workspace; the compose file's non-default ports were honored, so a dev stack was never touched).
+
+- [x] **Flag chain e2e — admin → Redis → service** (`feature-flags.redis-live.spec.ts`): **6/6 pass** against real Redis. Toggle on/off/removal, rollout targeting, numeric `value`, and `staleAfter` all propagate across two independent ioredis connections.
+- [x] **Payment provider failover e2e** (`payments.failover.e2e.spec.ts`): **5/5 pass** against real Postgres + Redis + HTTP stubs — Paystack down → Flutterwave fallback, recovery, both-down, kill-switch, and `confirmIntent` fallback. The run surfaced and fixed three real defects:
+  - **Schema drift** — `PaymentIntent.version` existed in `schema.prisma` (added in `e361db4c`) with no migration, so a fresh DB failed `paymentIntent.create()` with "column `version` does not exist". Added migration `20260812000000_payment_intent_version` (`ALTER TABLE payment_intents ADD COLUMN version INTEGER NOT NULL DEFAULT 0`); `prisma migrate deploy` now converges fresh DBs.
+  - **Unpassable checkout-URL assertions** — the mocks returned `checkout.*.mock` domains while the spec asserts the URLs contain the mock port (8091/8092); impossible in docker too. `test/mocks/{paystack,flutterwave}-mock/server.js` now return checkout URLs at their own base (`http://localhost:${PORT}/pay/…`).
+  - **Teardown race** — afterAll quit `flagRedis` while `moduleRef.close()` also quits it via `FeatureFlagService.onModuleDestroy`; the second QUIT races the drain and ioredis rejects it with "Connection is closed", failing the suite despite all-green tests. Removed the explicit quit (verified: Nest calls the hook on the `useValue` provider, so the connection is still closed).
+- [x] **Search pg_trgm e2e** (`search.pgtrgm.e2e.spec.ts`, part of the same dockerized job): **7/7 pass** against real Postgres (GIN trigram indexes present) + real Redis — fuzzy typo path, scored creators/universes, exact fallback when `search_typo_tolerance` is off.
+- [x] **FlagCacheThrash load pipeline** (staging gateway + HTTP load + thrash assertion — the dockerized CI job's last section): staging gateway booted against real Redis, 4,000 HTTP requests (2,023 bootstraps + 1,977 evals) at 0 errors, then the run-window assertion — **TTL cache read-share 0.15%** (5,922 hits / 9 reads) and **bootstrap list-cache read-share 0.74%** (2,008 hits / 15 reads), both far under the 10% FlagCacheThrash alert threshold.
+- [x] **Production-scale flag load test** (`scripts/flag-eval-load-test.local.mjs` against real Redis): 5,000 bootstraps → 4,999 list-cache hits / **1 Redis read** (bootstrap_list_hit_ratio 0.999800); 20,000 evaluations → 19,976 TTL hits / 24 Redis reads (ttl_hit_ratio 0.998800). Both above the 0.95 thresholds; the `loadtest:` prefix was flushed at start and end.
+
+Regression safety: payment-service unit suite still **138/138** (5 opt-in skips) after the spec/mock/migration changes.
