@@ -78,6 +78,7 @@ jobs:
       - run: node scripts/check-flag-conventions.mjs
       - run: node scripts/check-swagger-consistency.mjs
       - run: node scripts/sweep-flag-usage.mjs
+      - run: node scripts/generate-flag-registry-table.mjs --check
 
   typecheck-pr:
     name: Type Check PR

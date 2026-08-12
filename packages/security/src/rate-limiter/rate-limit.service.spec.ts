@@ -94,12 +94,12 @@ describe('RateLimitService', () => {
         expect(result).toBe(false);
       });
 
-      it('should return false on Redis error', async () => {
+      it('should return true on Redis error (fail closed)', async () => {
         redis.get.mockRejectedValue(new Error('Redis error'));
 
         const result = await service.isBlocked('192.168.1.1');
 
-        expect(result).toBe(false);
+        expect(result).toBe(true);
       });
     });
 

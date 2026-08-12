@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { adminApi } from '@/lib/api/admin';
 
 interface UniverseFeatureFlagRow {
@@ -32,8 +33,74 @@ const inputStyle: React.CSSProperties = {
 
 const labelStyle: React.CSSProperties = { color: '#9A8A7A', fontSize: 13 };
 
+// Per-tab persistence key for the stale-filter choice (sessionStorage): once
+// the user arrives via the badge (?stale=1), the choice sticks for the tab
+// session, so a refresh keeps the stale view instead of dropping back to all
+// flags. "Show all flags" clears it.
+const STALE_STORAGE_KEY = 'admin-flags-universe-stale-view';
+
+const readStoredStale = (): boolean => {
+  try {
+    return window.sessionStorage.getItem(STALE_STORAGE_KEY) === '1';
+  } catch {
+    return false; // storage unavailable — the URL param still works
+  }
+};
+
 export default function FeatureFlagsPage() {
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  // ?stale=1 (linked from the admin nav badge) pre-filters the list to the
+  // expiry backlog — universe flags past their metadata.staleAfter date. The
+  // sessionStorage choice restores the same view after a refresh (or a plain
+  // sidebar visit) within this tab.
+  const [storedStale, setStoredStale] = useState<boolean>(readStoredStale);
+  const staleOnly = searchParams.get('stale') === '1' || storedStale;
+  // Write-through: arriving via ?stale=1 (badge or deep-link) persists the
+  // choice for this tab session.
+  useEffect(() => {
+    if (searchParams.get('stale') === '1') {
+      try {
+        window.sessionStorage.setItem(STALE_STORAGE_KEY, '1');
+      } catch {
+        /* storage unavailable — the URL param already shows the view */
+      }
+    }
+  }, [searchParams]);
+  // #stale (appended to the nav-badge / summary links) is the hash-fragment
+  // shortcut: it ALSO auto-scrolls to and highlights the first stale row,
+  // not just filters. The router re-renders on hash-only navigations.
+  const { hash } = useLocation();
+  const staleShortcut = staleOnly || hash === '#stale';
+
+  // Enter/leave stale mode from the page itself (the "Stale only" chip and
+  // the banner's "Show all flags"): both keep the sessionStorage choice and
+  // the URL in sync, so a refresh agrees with the rendered view.
+  const enterStaleMode = () => {
+    try {
+      window.sessionStorage.setItem(STALE_STORAGE_KEY, '1');
+    } catch {
+      /* storage unavailable — the URL param still drives the view */
+    }
+    setStoredStale(true);
+    navigate('/feature-flags?stale=1#stale');
+  };
+  const exitStaleMode = () => {
+    try {
+      window.sessionStorage.removeItem(STALE_STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
+    setStoredStale(false);
+    navigate('/feature-flags');
+  };
+  const toggleStaleMode = () => (staleOnly ? exitStaleMode() : enterStaleMode());
+  // ?flag=<featureKey>&universe=<universeId> (linked from the top-bar stale
+  // summary rows) deep-links to a specific flag: the list is scrolled to it
+  // and the row is highlighted.
+  const focusFeatureKey = searchParams.get('flag');
+  const focusUniverseId = searchParams.get('universe');
   const [search, setSearch] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [staleDrafts, setStaleDrafts] = useState<Record<string, string>>({});
@@ -91,6 +158,89 @@ export default function FeatureFlagsPage() {
   });
 
   /** Update a flag's metadata (full-replace PUT) — used by the expiry editor. */
+  const [pruneFeedback, setPruneFeedback] = useState<{
+    message: string;
+    error?: boolean;
+    /** The confirmed pruned batch, so 'undo' can restore exactly those. */
+    removed?: Array<{ universeId: string; featureKey: string }>;
+  } | null>(null);
+  const pruneMutation = useMutation({
+    mutationFn: (keys?: Array<{ universeId: string; featureKey: string }>) =>
+      adminApi.pruneStaleUniverseFlags(keys),
+    onSuccess: (res, keys) => {
+      const d = res?.data;
+      const count = d?.removedCount ?? 0;
+      setPruneFeedback({
+        message:
+          count === 0
+            ? 'No stale universe flags were removed (nothing past staleAfter).'
+            : `Removed ${count} stale universe flag(s) — ${d?.archivedCount ?? 0} archived to the audit log` +
+              (d?.skipped?.length ? `, ${d.skipped.length} skipped` : '') +
+              (d?.removedKeys?.length ? ` Removed: ${d.removedKeys.join(', ')}` : ''),
+        removed: keys,
+      });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'feature-flags'] });
+      // Recently removed section + audit-log badge (nav): removal activity happened.
+      queryClient.invalidateQueries({ queryKey: ['admin', 'recently-deleted-universe-flags'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'audit-logs'] });
+    },
+    onError: (err: unknown) => {
+      setPruneFeedback({
+        message: `Remove failed: ${err instanceof Error ? err.message : String(err)}`,
+        error: true,
+      });
+    },
+  });
+
+  const restoreUniverseMutation = useMutation({
+    mutationFn: (keys: Array<{ universeId: string; featureKey: string }>) =>
+      adminApi.restoreUniverseFlags(keys),
+    onSuccess: (res, keys) => {
+      const d = res?.data;
+      setPruneFeedback({
+        message:
+          `Restored ${d?.restoredCount ?? 0} of ${keys.length} universe flag(s) from the audit archive.` +
+          (d?.skipped?.length
+            ? ` Skipped: ${d.skipped.map((s) => `${s.key} (${s.reason})`).join(', ')}`
+            : ''),
+        removed: undefined,
+      });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'feature-flags'] });
+      // The restored rows are no longer in the recently-removed list.
+      queryClient.invalidateQueries({ queryKey: ['admin', 'recently-deleted-universe-flags'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'audit-logs'] });
+    },
+    onError: (err: unknown) => {
+      setPruneFeedback({
+        message: `Restore failed: ${err instanceof Error ? err.message : String(err)}`,
+        error: true,
+      });
+    },
+  });
+
+  const undoPruneUniverse = () => {
+    const removed = pruneFeedback?.removed;
+    if (!removed?.length) return;
+    if (window.confirm(`Restore ${removed.length} universe flag(s) from the audit archive?`)) {
+      restoreUniverseMutation.mutate(removed);
+    }
+  };
+
+  const confirmPruneUniverse = () => {
+    if (staleFlags.length === 0) return;
+    const keys = staleFlags.map((f) => ({ universeId: f.universeId, featureKey: f.featureKey }));
+    const list = staleFlags
+      .map((f) => `${f.universe?.name ?? f.universeId}.${f.featureKey}`)
+      .join('\n');
+    if (
+      window.confirm(
+        `Remove ${staleFlags.length} stale universe flag(s)?\n\nEach is archived to the audit log before deletion.\n\n${list}`
+      )
+    ) {
+      pruneMutation.mutate(keys);
+    }
+  };
+
   const expiryMutation = useMutation({
     mutationFn: (args: {
       universeId: string;
@@ -145,12 +295,22 @@ export default function FeatureFlagsPage() {
     return { featureKey: key, isEnabled: true, metadata };
   };
 
-  const filtered = flags.filter(
-    (f) =>
+  const filtered = flags.filter((f) => {
+    const matchesSearch =
       !search ||
       f.featureKey.toLowerCase().includes(search.toLowerCase()) ||
-      f.universe?.name.toLowerCase().includes(search.toLowerCase())
-  );
+      f.universe?.name.toLowerCase().includes(search.toLowerCase());
+    if (!matchesSearch) return false;
+    if (staleOnly) {
+      const staleAfter = f.metadata?.staleAfter;
+      return (
+        typeof staleAfter === 'string' &&
+        !Number.isNaN(Date.parse(staleAfter)) &&
+        new Date(staleAfter) < new Date()
+      );
+    }
+    return true;
+  });
 
   const enabledCount = flags.filter((f) => f.isEnabled).length;
   const staleFlags = flags.filter((f) => {
@@ -158,8 +318,59 @@ export default function FeatureFlagsPage() {
     return typeof staleAfter === 'string' && !Number.isNaN(Date.parse(staleAfter)) && new Date(staleAfter) < new Date();
   });
 
+  // Focus target: a specific ?flag=+?universe= deep-link wins; otherwise the
+  // stale shortcut (?stale=1 / #stale) focuses the FIRST stale row so the
+  // badge lands on an expiry candidate, not just a filtered list.
+  const focusTargetKey =
+    focusFeatureKey && focusUniverseId
+      ? `${focusUniverseId}:${focusFeatureKey}`
+      : staleShortcut && staleFlags[0]
+        ? `${staleFlags[0].universeId}:${staleFlags[0].featureKey}`
+        : null;
+
+  // Auto-scroll to the focused flag once its row renders (data loads async),
+  // scrolling only once per target. The highlight persists while the
+  // ?flag=+?universe= params or the stale shortcut is present.
+  const scrolledRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!focusTargetKey) return;
+    if (scrolledRef.current === focusTargetKey) return;
+    const el = document.getElementById(`flag-row-${focusTargetKey}`);
+    if (!el) return;
+    scrolledRef.current = focusTargetKey;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [focusTargetKey, filtered]);
+
+  // Recently removed universe flags (undo list): restorable from their
+  // archived audit snapshots (feature_flag.deleted + universe_feature_flag).
+  const { data: recentlyDeleted = [] } = useQuery<
+    Array<{
+      key: string;
+      universeId?: string;
+      featureKey?: string;
+      universeName?: string;
+      deletedAt: string;
+      deletedBy?: string | null;
+      archived: boolean;
+      enabled?: boolean;
+    }>
+  >({
+    queryKey: ['admin', 'recently-deleted-universe-flags'],
+    queryFn: async () => {
+      const res = await adminApi.listRecentlyDeletedUniverseFlags();
+      return res.data ?? [];
+    },
+  });
+  const [showDeleted, setShowDeleted] = useState(false);
+
   return (
     <div>
+      {/* Flash animation for the deep-linked (focused) flag row — brightens
+          once on arrival, then settles into the persistent highlight. */}
+      <style>{`@keyframes flagFlash {
+  0% { background-color: rgba(232,66,10,0.45); }
+  100% { background-color: rgba(232,66,10,0.12); }
+}`}</style>
       <div
         style={{
           display: 'flex',
@@ -177,29 +388,239 @@ export default function FeatureFlagsPage() {
             )}
           </p>
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          style={{
-            padding: '10px 20px',
-            borderRadius: 12,
-            border: 'none',
-            background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-            color: '#fff',
-            fontWeight: 600,
-            fontSize: 14,
-            cursor: 'pointer',
-          }}
-        >
-          Create Flag
-        </button>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <button
+            onClick={confirmPruneUniverse}
+            disabled={staleFlags.length === 0 || pruneMutation.isPending}
+            style={{
+              padding: '10px 20px',
+              borderRadius: 12,
+              border: '1px solid #2A1A1A',
+              background: staleFlags.length > 0 ? '#E8420A' : '#1A1A1A',
+              color: staleFlags.length > 0 ? '#fff' : '#6B5B4B',
+              cursor: staleFlags.length > 0 ? 'pointer' : 'not-allowed',
+              fontWeight: 600,
+              fontSize: 14,
+            }}
+            title={
+              staleFlags.length === 0
+                ? 'No universe flags are past their staleAfter date'
+                : 'Archive + remove every universe flag past its staleAfter date'
+            }
+          >
+            {pruneMutation.isPending
+              ? 'Removing…'
+              : `Remove stale flags (${staleFlags.length})`}
+          </button>
+          <button
+            onClick={() => setShowCreate(true)}
+            style={{
+              padding: '10px 20px',
+              borderRadius: 12,
+              border: 'none',
+              background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+              color: '#fff',
+              fontWeight: 600,
+              fontSize: 14,
+              cursor: 'pointer',
+            }}
+          >
+            Create Flag
+          </button>
+        </div>
       </div>
 
-      <input
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search flags by key or universe..."
-        style={{ ...inputStyle, marginBottom: 24 }}
-      />
+      {pruneFeedback && (
+        <div style={{ marginBottom: 12, maxWidth: 480 }}>
+          <p
+            style={{
+              fontSize: 12,
+              color: pruneFeedback.error ? '#E8420A' : '#1F8A4C',
+              whiteSpace: 'pre-wrap',
+              margin: '0 0 6px',
+            }}
+          >
+            {pruneFeedback.message}
+          </p>
+          {!pruneFeedback.error && pruneFeedback.removed?.length ? (
+            <button
+              onClick={undoPruneUniverse}
+              disabled={restoreUniverseMutation.isPending}
+              style={{
+                padding: '5px 12px',
+                borderRadius: 6,
+                border: '1px solid #2A1A1A',
+                background: '#1F8A4C',
+                color: '#fff',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: 12,
+              }}
+            >
+              {restoreUniverseMutation.isPending
+                ? 'Restoring…'
+                : '↩ Undo — restore from audit archive'}
+            </button>
+          ) : null}
+        </div>
+      )}
+
+      {recentlyDeleted.length > 0 && (
+        <div
+          style={{
+            border: '1px solid #2A1A1A',
+            borderRadius: 10,
+            marginBottom: 16,
+            background: 'rgba(31,138,76,0.05)',
+          }}
+        >
+          <button
+            onClick={() => setShowDeleted((v) => !v)}
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              width: '100%',
+              padding: '12px 18px',
+              background: 'transparent',
+              border: 'none',
+              color: '#D8C9B8',
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: 13,
+            }}
+          >
+            <span>
+              Recently removed universe flags ({recentlyDeleted.length}) — restorable from
+              the audit archive
+            </span>
+            <span>{showDeleted ? '▾' : '▸'}</span>
+          </button>
+          {showDeleted && (
+            <div style={{ padding: '0 18px 18px' }}>
+              {recentlyDeleted.map((f) => {
+                // The restore endpoint identifies flags by snapshot identity
+                // (universeId + featureKey); without an archive there is
+                // nothing to replay, so the row renders as not-restorable.
+                const restorable = f.archived && !!f.universeId && !!f.featureKey;
+                const label =
+                  [f.universeName, f.featureKey].filter(Boolean).join('.') || f.key;
+                return (
+                  <div
+                    key={`${f.universeId ?? ''}:${f.featureKey ?? ''}:${f.deletedAt}`}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '8px 0',
+                      borderBottom: '1px solid #2A2A2A',
+                      fontSize: 13,
+                    }}
+                  >
+                    <div>
+                      <code style={{ color: '#D8C9B8' }}>{label}</code>
+                      <span style={{ color: '#9A8A7A', marginLeft: 8, fontSize: 12 }}>
+                        removed{' '}
+                        {f.deletedAt ? new Date(f.deletedAt).toLocaleString() : ''}
+                        {f.deletedBy ? ` by ${f.deletedBy}` : ''}
+                        {!f.archived ? ' · no archive' : ''}
+                      </span>
+                    </div>
+                    {restorable && (
+                      <button
+                        onClick={() => {
+                          if (!window.confirm(`Restore "${label}" from the audit archive?`))
+                            return;
+                          restoreUniverseMutation.mutate([
+                            { universeId: f.universeId!, featureKey: f.featureKey! },
+                          ]);
+                        }}
+                        disabled={restoreUniverseMutation.isPending}
+                        style={{
+                          padding: '4px 10px',
+                          borderRadius: 6,
+                          border: '1px solid #2A1A1A',
+                          background: '#1F8A4C',
+                          color: '#fff',
+                          cursor: 'pointer',
+                          fontWeight: 600,
+                          fontSize: 12,
+                        }}
+                      >
+                        Restore
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {staleOnly && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            padding: '10px 16px',
+            borderRadius: 10,
+            border: '1px solid #7A2A0A',
+            backgroundColor: 'rgba(122,42,10,0.15)',
+            marginBottom: 16,
+            fontSize: 13,
+          }}
+        >
+          <span style={{ color: '#F5F0EB', fontWeight: 600 }}>
+            Showing {staleFlags.length} stale universe flag(s) — expiry backlog
+          </span>
+          <button onClick={exitStaleMode}
+            style={{
+              marginLeft: 'auto',
+              padding: '4px 12px',
+              borderRadius: 6,
+              border: '1px solid #2A1A1A',
+              background: 'transparent',
+              color: '#9A8A7A',
+              cursor: 'pointer',
+              fontSize: 12,
+            }}
+          >
+            Show all flags
+          </button>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24, alignItems: 'center', flexWrap: 'wrap' }}>
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search flags by key or universe..."
+          style={{ ...inputStyle, flex: 1, minWidth: 220 }}
+        />
+        {/* "Stale only" toggle — switch the view without the nav badge. */}
+        <button
+          onClick={toggleStaleMode}
+          title={
+            staleOnly
+              ? 'Show all flags — clear the stale-only filter'
+              : 'Show only flags past their staleAfter expiry'
+          }
+          style={{
+            padding: '6px 14px',
+            borderRadius: 999,
+            border: staleOnly ? '1px solid #FF9E6B' : '1px solid #2A1A1A',
+            background: staleOnly ? '#7A2A0A' : 'transparent',
+            color: staleOnly ? '#FFD9C2' : '#9A8A7A',
+            cursor: 'pointer',
+            fontWeight: 600,
+            fontSize: 13,
+          }}
+        >
+          {staleOnly ? `Stale only (${staleFlags.length})` : 'Stale only'}
+        </button>
+      </div>
 
       {showCreate && (
         <div
@@ -321,17 +742,24 @@ export default function FeatureFlagsPage() {
               typeof staleAfter === 'string' &&
               !Number.isNaN(Date.parse(staleAfter)) &&
               new Date(staleAfter) < new Date();
+            const rowKey = `${flag.universeId}:${flag.featureKey}`;
+            const isFocused = focusTargetKey === rowKey;
             return (
               <div
-                key={`${flag.universeId}:${flag.featureKey}`}
+                key={rowKey}
+                id={`flag-row-${rowKey}`}
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   padding: '14px 16px',
                   borderRadius: 12,
-                  border: `1px solid ${isStale ? '#7A2A0A' : '#2A1A1A'}`,
-                  backgroundColor: 'rgba(26,10,10,0.5)',
+                  border: isFocused
+                    ? '2px solid #E8420A'
+                    : `1px solid ${isStale ? '#7A2A0A' : '#2A1A1A'}`,
+                  backgroundColor: isFocused ? 'rgba(232,66,10,0.12)' : 'rgba(26,10,10,0.5)',
+                  boxShadow: isFocused ? '0 0 0 3px rgba(232,66,10,0.25)' : undefined,
+                  animation: isFocused ? 'flagFlash 1.8s ease-out' : undefined,
                 }}
               >
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -370,9 +798,16 @@ export default function FeatureFlagsPage() {
                           fontSize: 11,
                           fontWeight: 600,
                         }}
-                        title={`staleAfter (${new Date(staleAfter as string).toLocaleDateString()}) has passed — removal candidate. Universe flags aren't covered by the global stale sweep; clear or extend the expiry below.`}
+                        title={`staleAfter (${new Date(staleAfter as string).toLocaleDateString()}) has passed — removal candidate. ${
+                          typeof flag.metadata?.staleNotifiedAt === 'string'
+                            ? `Owner already notified by the stale sweep on ${new Date(flag.metadata.staleNotifiedAt as string).toLocaleString()}.`
+                            : 'Owner not yet notified by the stale sweep (pending).'
+                        } Clear or extend the expiry below.`}
                       >
                         stale · past expiry
+                        {typeof flag.metadata?.staleNotifiedAt === 'string'
+                          ? ' · notified'
+                          : ' · un-notified'}
                       </span>
                     )}
                   </div>

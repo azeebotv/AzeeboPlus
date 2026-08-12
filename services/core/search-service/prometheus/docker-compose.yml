@@ -1,20 +1,28 @@
 # =============================================================================
-# Azeebo+ Search-service alerting — local Prometheus + Alertmanager stack
+# Azeebo+ local monitoring — Prometheus + Alertmanager stack
 # =============================================================================
 # Loads ./alerts.yml (the fuzzy-search alerting rules) so the rules are
-# runnable and testable on a dev machine without any cloud infra.
+# runnable and testable on a dev machine without any cloud infra. Also scrapes
+# the api-gateway so the flag lifecycle counters (flag_stale_running_total,
+# flag_auto_disabled_total, …) exist locally — the data behind the admin
+# stale-serving report.
 #
 # Usage:
 #   cd services/core/search-service/prometheus
 #   docker compose up -d
 #
-# The search-service must be running on the host (port 3005) so its metrics
-# endpoint (/v1/metrics) can be scraped:
-#   cd services/core/search-service && npm run start:dev
+# Services to run on the host first (their metrics endpoints get scraped):
+#   cd services/core/search-service && npm run start:dev   # port 3005
+#   cd services/gateway/api-gateway  && npm run start:dev   # port 3013
 #
 # Then open:
 #   Prometheus rules:   http://localhost:9090/#/alerts
 #   Alertmanager UI:    http://localhost:9093
+#
+# Admin stale-serving badge out of the box:
+#   Set PROMETHEUS_URL=http://localhost:9090 in apps/admin/.env, restart the
+#   admin backend, and the Global Flags page's serving-past-expiry / auto-off
+#   badges + header lines work (GET /admin/feature-flags/stale/metrics).
 #
 # Grafana dashboard: import ./grafana-dashboard.json (Dashboards → Import) and
 # point it at the Prometheus data source. It visualizes the fuzzy-guard gauges

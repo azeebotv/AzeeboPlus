@@ -210,8 +210,39 @@ export interface GlobalFeatureFlag {
   staleAfter?: string;
   /** ISO timestamp of when the stale sweep last notified the owner. */
   staleNotifiedAt?: string;
+  /** ISO timestamp when the self-disable safety auto-turned this flag off
+   *  (past staleAfter + grace). Cleared when ops renews the expiry. */
+  autoDisabledAt?: string;
   isPublic?: boolean;
   lastToggledBy?: string;
+}
+
+/** The most recent nightly stale-flag pass (audit-recorded) — times, counts,
+ *  and webhook status, for the Global Flags page's "last run" panel. */
+export interface LastNightlyRun {
+  ranAt: string;
+  staleCount: number;
+  universeStaleCount: number;
+  notifiedCount: number;
+  autoPruned: number;
+  autoPrunedUniverse: number;
+  /** Present only when the pass ran in universe dry-run mode. */
+  wouldPruneUniverse?: number;
+  dryRunUniverse?: boolean;
+  /** Set to 'no-webhook' when the pass blocked auto-prune (webhook missing). */
+  pruneBlocked?: 'no-webhook';
+  webhook: 'posted' | 'skipped-empty' | 'no-webhook' | 'failed';
+}
+
+/** Per-key Prometheus flag_stale_running_total + flag_auto_disabled_total
+ *  joined into the stale report. */
+export interface StaleFlagMetrics {
+  available: boolean;
+  fetchedAt: string | null;
+  /** key → lifetime count + evaluations/min over the last 5 minutes. */
+  staleRunning: Record<string, { total: number; rate5m: number }>;
+  /** key → lifetime count of self-disable flips by the safety. */
+  autoDisabled: Record<string, { total: number }>;
 }
 
 export interface SubscriptionPlan {

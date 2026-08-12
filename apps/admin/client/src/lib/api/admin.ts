@@ -20,6 +20,8 @@ import type {
   AgbalaQuiz,
   FeatureFlag,
   GlobalFeatureFlag,
+  StaleFlagMetrics,
+  LastNightlyRun,
   SystemSetting,
   SubscriptionPlan,
   SubscriptionStats,
@@ -294,6 +296,38 @@ export const adminApi = {
 
   // ─── Feature Flags (per-universe, published to Redis at runtime) ──────
   listFeatureFlags: () => apiFetch<unknown>('/api/v1/admin/universes/feature-flags'),
+  pruneStaleUniverseFlags: (keys?: Array<{ universeId: string; featureKey: string }>) =>
+    apiFetch<{
+      removedCount: number;
+      removedKeys: string[];
+      archivedCount: number;
+      skipped: string[];
+    }>('/api/v1/admin/universes/feature-flags/prune-stale', {
+      method: 'POST',
+      body: JSON.stringify(keys && keys.length ? { keys } : {}),
+    }),
+  restoreUniverseFlags: (keys: Array<{ universeId: string; featureKey: string }>) =>
+    apiFetch<{
+      restoredCount: number;
+      restored: Array<{ key: string; enabled?: boolean }>;
+      skipped: Array<{ key: string; reason: string }>;
+    }>('/api/v1/admin/universes/feature-flags/restore', {
+      method: 'POST',
+      body: JSON.stringify({ keys }),
+    }),
+  listRecentlyDeletedUniverseFlags: (limit = 20) =>
+    apiFetch<
+      Array<{
+        key: string;
+        universeId?: string;
+        featureKey?: string;
+        universeName?: string;
+        deletedAt: string;
+        deletedBy?: string | null;
+        archived: boolean;
+        enabled?: boolean;
+      }>
+    >(`/api/v1/admin/universes/feature-flags/deleted?limit=${limit}`),
   createFeatureFlag: (universeId: string, flag: FeatureFlag) =>
     apiFetch<unknown>(`/api/v1/admin/universes/${universeId}/feature-flags`, {
       method: 'PUT',
@@ -326,6 +360,10 @@ export const adminApi = {
       domains: Array<{ domain: string; flags: Array<{ property: string; key: string }> }>;
       total: number;
     }>('/api/v1/admin/feature-flags/known'),
+  listStaleFlagMetrics: () =>
+    apiFetch<StaleFlagMetrics>('/api/v1/admin/feature-flags/stale/metrics'),
+  getLastNightlyRun: () =>
+    apiFetch<LastNightlyRun | null>('/api/v1/admin/feature-flags/nightly/last'),
   pruneStaleFlags: (keys?: string[]) =>
     apiFetch<{
       removedCount: number;
@@ -563,6 +601,8 @@ export const adminApi = {
       page?: number;
       limit?: number;
       category?: string;
+      action?: string;
+      targetType?: string;
       startDate?: string;
       endDate?: string;
     } = {}
@@ -571,8 +611,12 @@ export const adminApi = {
     if (params.page) q.set('page', String(params.page));
     if (params.limit) q.set('limit', String(params.limit));
     if (params.category) q.set('category', params.category);
+    if (params.action) q.set('action', params.action);
+    if (params.targetType) q.set('targetType', params.targetType);
     if (params.startDate) q.set('startDate', params.startDate);
     if (params.endDate) q.set('endDate', params.endDate);
-    return apiFetch<{ items: AuditLogEntry[]; total: number }>(`/api/v1/admin/audit?${q}`);
+    return apiFetch<{ logs: AuditLogEntry[]; total: number; page: number; limit: number; totalPages: number }>(
+      `/api/v1/admin/audit?${q}`
+    );
   },
 };

@@ -236,7 +236,10 @@ describe('FeatureFlagService', () => {
   });
 
   describe('stale expiry awareness', () => {
-    const PAST = '2000-01-01T00:00:00.000Z';
+    // Two days ago: past staleAfter but WITHIN the default 7-day auto-disable
+    // grace, so these tests exercise stale reporting without the self-disable
+    // safety flipping the flag off (see 'self-disable safety' below).
+    const RECENT_PAST = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
     const FUTURE = '2999-01-01T00:00:00.000Z';
 
     beforeEach(() => {
@@ -251,7 +254,7 @@ describe('FeatureFlagService', () => {
       const { service, redis } = makeService({
         onStaleEnabled: (key) => staleHits.push(key),
       });
-      await redis.set('feature_flags:expired_flag', JSON.stringify({ key: 'expired_flag', enabled: true, staleAfter: PAST }));
+      await redis.set('feature_flags:expired_flag', JSON.stringify({ key: 'expired_flag', enabled: true, staleAfter: RECENT_PAST }));
 
       await service.isEnabled('expired_flag');
       await service.isEnabled('expired_flag');
@@ -262,14 +265,33 @@ describe('FeatureFlagService', () => {
       expect(staleHits).toEqual(['expired_flag', 'expired_flag', 'expired_flag']);
       expect(console.warn).toHaveBeenCalledTimes(1);
       expect(console.warn).toHaveBeenCalledWith(
-        expect.stringContaining('"expired_flag" is still ENABLED past its staleAfter (2000-01-01T00:00:00.000Z)')
+        expect.stringContaining('"expired_flag" is still ENABLED past its staleAfter')
       );
+    });
+
+    it('passes the evaluation context (userId/anonymousId) to onStaleEnabled', async () => {
+      const contexts: Array<{ userId?: string; anonymousId?: string }> = [];
+      const { service, redis } = makeService({
+        onStaleEnabled: (_key, _flag, context) => contexts.push(context ?? {}),
+      });
+      await redis.set(
+        'feature_flags:expired_ctx',
+        JSON.stringify({ key: 'expired_ctx', enabled: true, staleAfter: RECENT_PAST })
+      );
+
+      expect(await service.isEnabled('expired_ctx', 'u-7')).toBe(true);
+      expect(await service.isEnabled('expired_ctx', undefined, 'anon-9')).toBe(true);
+
+      expect(contexts).toEqual([
+        { userId: 'u-7', anonymousId: undefined },
+        { userId: undefined, anonymousId: 'anon-9' },
+      ]);
     });
 
     it('does NOT report a DISABLED flag past its staleAfter', async () => {
       const staleHits: string[] = [];
       const { service, redis } = makeService({ onStaleEnabled: (key) => staleHits.push(key) });
-      await redis.set('feature_flags:expired_off', JSON.stringify({ key: 'expired_off', enabled: false, staleAfter: PAST }));
+      await redis.set('feature_flags:expired_off', JSON.stringify({ key: 'expired_off', enabled: false, staleAfter: RECENT_PAST }));
 
       expect(await service.isEnabled('expired_off')).toBe(false);
       expect(staleHits).toEqual([]);
@@ -291,7 +313,7 @@ describe('FeatureFlagService', () => {
       const { service, redis } = makeService({ onStaleEnabled: (key) => staleHits.push(key) });
       await redis.set(
         'feature_flags:expired_value',
-        JSON.stringify({ key: 'expired_value', enabled: true, value: 42, staleAfter: PAST })
+        JSON.stringify({ key: 'expired_value', enabled: true, value: 42, staleAfter: RECENT_PAST })
       );
 
       expect(await service.getValue('expired_value')).toBe(42);
@@ -303,13 +325,329 @@ describe('FeatureFlagService', () => {
       const { service, redis } = makeService({ onStaleEnabled: (key) => staleHits.push(key) });
       await redis.set(
         'feature_flags:expired_targeted',
-        JSON.stringify({ key: 'expired_targeted', enabled: true, staleAfter: PAST, userIds: ['u-allow'] })
+        JSON.stringify({ key: 'expired_targeted', enabled: true, staleAfter: RECENT_PAST, userIds: ['u-allow'] })
       );
 
       expect(await service.isEnabled('expired_targeted', 'u-other')).toBe(false);
       expect(staleHits).toEqual([]);
       expect(await service.isEnabled('expired_targeted', 'u-allow')).toBe(true);
       expect(staleHits).toEqual(['expired_targeted']);
+    });
+  });
+
+  describe('self-disable safety', () => {
+    const PAST = '2000-01-01T00:00:00.000Z';
+    const FUTURE = '2999-01-01T00:00:00.000Z';
+    const flush = () => new Promise((r) => setTimeout(r, 10));
+
+    beforeEach(() => {
+      jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    });
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('serves a flag past staleAfter + grace as DISABLED and persists the flip with autoDisabledAt', async () => {
+      const autoDisabled: string[] = [];
+      const toggles: Array<{ key: string; enabled: boolean; actor?: string }> = [];
+      const { service, redis } = makeService({
+        onAutoDisabled: (key) => autoDisabled.push(key),
+        onToggle: (key, enabled, actor) => toggles.push({ key, enabled, actor }),
+      });
+      await redis.set(
+        'feature_flags:zombie',
+        JSON.stringify({ key: 'zombie', enabled: true, staleAfter: PAST })
+      );
+
+      // Never served as enabled past the grace deadline.
+      expect(await service.isEnabled('zombie')).toBe(false);
+      await flush();
+
+      // Hook fired on the evaluation; the persisted flag is now off + stamped.
+      expect(autoDisabled).toEqual(['zombie']);
+      expect(toggles).toEqual([
+        { key: 'zombie', enabled: false, actor: 'system:auto-disable' },
+      ]);
+      const stored = await service.getFlag('zombie');
+      expect(stored?.enabled).toBe(false);
+      expect(stored?.autoDisabledAt).toEqual(expect.any(String));
+    });
+
+    it('stays enabled within the grace window (only stale reporting fires)', async () => {
+      const staleHits: string[] = [];
+      const autoDisabled: string[] = [];
+      const { service, redis } = makeService({
+        onStaleEnabled: (key) => staleHits.push(key),
+        onAutoDisabled: (key) => autoDisabled.push(key),
+      });
+      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      await redis.set(
+        'feature_flags:recent',
+        JSON.stringify({ key: 'recent', enabled: true, staleAfter: yesterday })
+      );
+
+      expect(await service.isEnabled('recent')).toBe(true);
+      await flush();
+
+      expect(staleHits).toEqual(['recent']); // past staleAfter → governance warning
+      expect(autoDisabled).toEqual([]); // within grace → NOT auto-disabled
+      expect((await service.getFlag('recent'))?.enabled).toBe(true);
+    });
+
+    it('a renewed flag (staleAfter extended past the deadline) survives an in-flight persist', async () => {
+      const autoDisabled: string[] = [];
+      const { service, redis } = makeService({ onAutoDisabled: (key) => autoDisabled.push(key) });
+      await redis.set(
+        'feature_flags:renewed',
+        JSON.stringify({ key: 'renewed', enabled: true, staleAfter: PAST })
+      );
+
+      expect(await service.isEnabled('renewed')).toBe(false); // schedules persist
+      // Ops renews before the background persist reads: overwrite the store.
+      await redis.set(
+        'feature_flags:renewed',
+        JSON.stringify({ key: 'renewed', enabled: true, staleAfter: FUTURE })
+      );
+      await flush();
+
+      // The persist re-reads + re-checks the deadline, so the renewal survives.
+      const stored = await service.getFlag('renewed');
+      expect(stored?.enabled).toBe(true);
+      expect(stored?.autoDisabledAt).toBeUndefined();
+    });
+
+    it('metadata.autoDisable: false opts a flag out of the safety entirely', async () => {
+      const autoDisabled: string[] = [];
+      const { service, redis } = makeService({ onAutoDisabled: (key) => autoDisabled.push(key) });
+      await redis.set(
+        'feature_flags:opted_out',
+        JSON.stringify({
+          key: 'opted_out',
+          enabled: true,
+          staleAfter: PAST,
+          metadata: { autoDisable: false },
+        })
+      );
+
+      expect(await service.isEnabled('opted_out')).toBe(true);
+      await flush();
+      expect(autoDisabled).toEqual([]);
+      expect((await service.getFlag('opted_out'))?.enabled).toBe(true);
+    });
+
+    it('honors the per-flag autoDisableGraceDays override over the module default', async () => {
+      const { service, redis } = makeService(); // default grace: 7 days
+      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      await redis.set(
+        'feature_flags:quick_expire',
+        JSON.stringify({
+          key: 'quick_expire',
+          enabled: true,
+          staleAfter: yesterday,
+          metadata: { autoDisableGraceDays: 0 },
+        })
+      );
+      await redis.set(
+        'feature_flags:long_lived',
+        JSON.stringify({
+          key: 'long_lived',
+          enabled: true,
+          staleAfter: yesterday,
+          metadata: { autoDisableGraceDays: 365 },
+        })
+      );
+
+      expect(await service.isEnabled('quick_expire')).toBe(false);
+      expect(await service.isEnabled('long_lived')).toBe(true);
+      await flush();
+      expect((await service.getFlag('quick_expire'))?.enabled).toBe(false);
+      expect((await service.getFlag('long_lived'))?.enabled).toBe(true);
+    });
+
+    it('autoDisableAfterDays: 0 disables as soon as staleAfter passes (config-level)', async () => {
+      const { service, redis } = makeService({ autoDisableAfterDays: 0 });
+      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      await redis.set(
+        'feature_flags:zero_grace',
+        JSON.stringify({ key: 'zero_grace', enabled: true, staleAfter: yesterday })
+      );
+
+      expect(await service.isEnabled('zero_grace')).toBe(false);
+      await flush();
+      expect((await service.getFlag('zero_grace'))?.enabled).toBe(false);
+    });
+
+    it('dedupes the persist across concurrent evaluations (exactly one write)', async () => {
+      const toggles: Array<{ key: string; enabled: boolean }> = [];
+      const { service, redis } = makeService({
+        onToggle: (key, enabled) => toggles.push({ key, enabled }),
+      });
+      await redis.set(
+        'feature_flags:hot',
+        JSON.stringify({ key: 'hot', enabled: true, staleAfter: PAST })
+      );
+
+      await Promise.all([service.isEnabled('hot'), service.isEnabled('hot'), service.isEnabled('hot')]);
+      await flush();
+
+      expect(toggles).toEqual([{ key: 'hot', enabled: false }]); // exactly one persist
+    });
+  });
+
+  describe('TTL cache hit-ratio hooks', () => {
+    it('miss → hit within the TTL → miss again after expiry', async () => {
+      const events: string[] = [];
+      const { service, redis } = makeService({
+        cacheTtlMs: 20,
+        onCacheHit: (key) => events.push(`hit:${key}`),
+        onCacheMiss: (key) => events.push(`miss:${key}`),
+      });
+      await redis.set(
+        'feature_flags:cached_flag',
+        JSON.stringify({ key: 'cached_flag', enabled: true })
+      );
+
+      await service.isEnabled('cached_flag'); // miss (populates the cache)
+      await service.isEnabled('cached_flag'); // hit (within TTL)
+      await new Promise((r) => setTimeout(r, 25));
+      await service.isEnabled('cached_flag'); // miss again (TTL expired)
+
+      expect(events).toEqual(['miss:cached_flag', 'hit:cached_flag', 'miss:cached_flag']);
+    });
+
+    it('with cacheTtlMs 0 every lookup reads Redis (no hits)', async () => {
+      const events: string[] = [];
+      const { service, redis } = makeService({
+        cacheTtlMs: 0,
+        onCacheHit: (key) => events.push(`hit:${key}`),
+        onCacheMiss: (key) => events.push(`miss:${key}`),
+      });
+      await redis.set(
+        'feature_flags:never_cached',
+        JSON.stringify({ key: 'never_cached', enabled: true })
+      );
+
+      await service.isEnabled('never_cached');
+      await service.isEnabled('never_cached');
+
+      expect(events).toEqual(['miss:never_cached', 'miss:never_cached']);
+    });
+
+    it('setFlag invalidates the cache so the next lookup misses again', async () => {
+      const events: string[] = [];
+      const { service } = makeService({
+        onCacheHit: (key) => events.push(`hit:${key}`),
+        onCacheMiss: (key) => events.push(`miss:${key}`),
+      });
+
+      await service.setFlag({ key: 'flip_flag', enabled: true });
+      await service.isEnabled('flip_flag'); // miss
+      await service.isEnabled('flip_flag'); // hit
+      await service.setFlag({ key: 'flip_flag', enabled: false });
+      await service.isEnabled('flip_flag'); // miss again (invalidate)
+
+      expect(events).toEqual(['miss:flip_flag', 'hit:flip_flag', 'miss:flip_flag']);
+    });
+
+    it('covers the batch evaluateMany path (each key through getFlag)', async () => {
+      const events: string[] = [];
+      const { service, redis } = makeService({
+        onCacheHit: (key) => events.push(`hit:${key}`),
+        onCacheMiss: (key) => events.push(`miss:${key}`),
+      });
+      await redis.set('feature_flags:a', JSON.stringify({ key: 'a', enabled: true }));
+      await redis.set('feature_flags:b', JSON.stringify({ key: 'b', enabled: true }));
+
+      await service.evaluateMany(['a', 'b']); // 2 misses (populate)
+      await service.evaluateMany(['a', 'b']); // 2 hits
+
+      expect(events).toEqual(['miss:a', 'miss:b', 'hit:a', 'hit:b']);
+    });
+  });
+
+  describe('list snapshot cache hooks (bootstrap path)', () => {
+    it('listFlags miss → hit within the list TTL → miss again after expiry', async () => {
+      const events: string[] = [];
+      const { service, redis } = makeService({
+        listCacheTtlMs: 20,
+        onListCacheHit: () => events.push('hit'),
+        onListCacheMiss: () => events.push('miss'),
+      });
+      await redis.set('feature_flags:a', JSON.stringify({ key: 'a', enabled: true }));
+      await redis.set('feature_flags:b', JSON.stringify({ key: 'b', enabled: true }));
+
+      await service.listFlags(); // miss (rebuild snapshot)
+      await service.listFlags(); // hit (within TTL)
+      await new Promise((r) => setTimeout(r, 25));
+      await service.listFlags(); // miss again (TTL expired)
+
+      expect(events).toEqual(['miss', 'hit', 'miss']);
+    });
+
+    it('with listCacheTtlMs 0 every list rebuilds from Redis (no hits)', async () => {
+      const events: string[] = [];
+      const { service } = makeService({
+        listCacheTtlMs: 0,
+        onListCacheHit: () => events.push('hit'),
+        onListCacheMiss: () => events.push('miss'),
+      });
+
+      await service.listFlags();
+      await service.listFlags();
+
+      expect(events).toEqual(['miss', 'miss']);
+    });
+
+    it('setFlag invalidates the list snapshot so the next list misses again', async () => {
+      const events: string[] = [];
+      const { service } = makeService({
+        onListCacheHit: () => events.push('hit'),
+        onListCacheMiss: () => events.push('miss'),
+      });
+
+      await service.listFlags(); // miss (empty snapshot)
+      await service.listFlags(); // hit
+      await service.setFlag({ key: 'a', enabled: true });
+      await service.listFlags(); // miss again (invalidated)
+
+      expect(events).toEqual(['miss', 'hit', 'miss']);
+    });
+
+    it('deleteFlag invalidates the list snapshot too', async () => {
+      const events: string[] = [];
+      const { service, redis } = makeService({
+        onListCacheHit: () => events.push('hit'),
+        onListCacheMiss: () => events.push('miss'),
+      });
+      await redis.set('feature_flags:a', JSON.stringify({ key: 'a', enabled: true }));
+
+      await service.listFlags(); // miss
+      await service.listFlags(); // hit
+      await service.deleteFlag('a');
+      await service.listFlags(); // miss again
+
+      expect(events).toEqual(['miss', 'hit', 'miss']);
+    });
+
+    it('load: repeated getPublicFlags calls serve the snapshot (1 Redis get per flag per TTL window)', async () => {
+      const { service, redis } = makeService({ listCacheTtlMs: 60_000 });
+      await redis.set(
+        'feature_flags:web_maintenance_mode',
+        JSON.stringify({ key: 'web_maintenance_mode', enabled: false, isPublic: true })
+      );
+      await redis.set(
+        'feature_flags:web_dark_mode',
+        JSON.stringify({ key: 'web_dark_mode', enabled: true, isPublic: true })
+      );
+
+      const before = redis.getCalls;
+      for (let i = 0; i < 500; i++) {
+        await service.getPublicFlags(undefined, `anon-${i % 50}`);
+      }
+
+      // One rebuild (2 gets for the 2 stored public flags) — the other 499
+      // bootstrap calls serve the snapshot cache with zero Redis reads.
+      expect(redis.getCalls - before).toBe(2);
     });
   });
 

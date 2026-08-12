@@ -151,5 +151,8 @@ describe('IndexRepairService', () => {
     await svc.onModuleInit();
 
     expect(addCronJob).toHaveBeenCalledWith('search-index-repair', expect.any(Object));
+
+    // Stop the job so its pending timer can't keep jest from exiting.
+    await svc.onModuleDestroy();
   });
 });

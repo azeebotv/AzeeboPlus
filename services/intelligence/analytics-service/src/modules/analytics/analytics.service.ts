@@ -75,6 +75,7 @@ const ALLOWED_EVENT_NAMES = [
   'verification_submitted',
   'content_search_correction_shown',
   'content_search_correction_accepted',
+  'flag_stale_enabled',
 ];
 
 const REQUIRED_METADATA_FIELDS = ['session_id', 'platform', 'timestamp'];

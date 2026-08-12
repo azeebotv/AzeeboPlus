@@ -15,7 +15,8 @@ export interface AuditLogEntry {
 interface LogFilters {
   actorId?: string;
   action?: string;
-  targetType?: string;
+  /** Single targetType, or a list (e.g. ['content', 'category', 'tag']) for group filters. */
+  targetType?: string | string[];
   targetId?: string;
   startDate?: Date;
   endDate?: Date;
@@ -60,7 +61,10 @@ export class AuditLogService {
     }
 
     if (filters?.targetType) {
-      where.targetType = filters.targetType;
+      const types = Array.isArray(filters.targetType)
+        ? filters.targetType
+        : [filters.targetType];
+      where.targetType = types.length === 1 ? types[0] : { in: types };
     }
 
     if (filters?.targetId) {

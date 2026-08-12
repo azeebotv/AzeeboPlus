@@ -172,6 +172,10 @@ export class EmailService implements OnModuleInit {
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #333;">Action Required: Stale Feature Flag</h1>
         <p>Hi{{#if owner}} {{owner}}{{/if}},</p>
+        {{#if universe}}
+        <p>Scope: <strong>Universe</strong> — {{universe}} (per-universe flag, managed on the
+        per-universe Feature Flags page).</p>
+        {{/if}}
         <p>The feature flag <strong>{{flagKey}}</strong> passed its <code>staleAfter</code> expiry
         (<code>{{staleAfter}}</code>) and is now a removal candidate. Leaving stale flags around
         increases the governance surface and hides dead code paths behind toggles.</p>

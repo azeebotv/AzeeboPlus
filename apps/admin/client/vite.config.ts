@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
@@ -27,5 +27,10 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+  },
+  test: {
+    // Unit tests live under src/ only. e2e/*.spec.ts is Playwright and must
+    // not be picked up by vitest's default **/*.{test,spec}.* include.
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
   },
 });

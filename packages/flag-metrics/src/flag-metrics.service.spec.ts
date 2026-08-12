@@ -1,13 +1,21 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
+import axios from 'axios';
 import { FlagMetricsService, setFlagHooks, getFlagHooks, flagHooks } from './flag-metrics.service';
 import { FlagMetricsModule } from './flag-metrics.module';
+
+jest.mock('axios');
+const mockedAxiosPost = axios.post as jest.Mock;
 
 describe('FlagMetricsService', () => {
   let service: FlagMetricsService;
 
   beforeEach(() => {
+    mockedAxiosPost.mockReset();
+    // Auto-mocked axios.post returns undefined — give it a resolved promise so
+    // the fire-and-forget .catch() chain is valid (tests override per-call).
+    mockedAxiosPost.mockResolvedValue({ data: {} });
     service = new FlagMetricsService('auth-service');
   });
 
@@ -75,6 +83,154 @@ describe('FlagMetricsService', () => {
     expect(metrics).toContain(
       'flag_stale_running_total{service="auth-service",key="another_expired"} 1'
     );
+  });
+
+  it('bumps flag_cache_hits_total and flag_redis_reads_total (TTL hit-ratio inputs)', async () => {
+    const hooks = service.getFlagHooks();
+    hooks.onCacheHit?.('web_dark_mode');
+    hooks.onCacheHit?.('web_dark_mode');
+    hooks.onCacheMiss?.('web_dark_mode');
+    hooks.onCacheMiss?.('mobile_autoplay');
+
+    const metrics = await service.getMetrics();
+    expect(metrics).toContain(
+      'flag_cache_hits_total{service="auth-service",key="web_dark_mode"} 2'
+    );
+    expect(metrics).toContain(
+      'flag_redis_reads_total{service="auth-service",key="web_dark_mode"} 1'
+    );
+    expect(metrics).toContain(
+      'flag_redis_reads_total{service="auth-service",key="mobile_autoplay"} 1'
+    );
+  });
+
+  it('bumps flag_list_cache_hits_total / flag_list_redis_reads_total (bootstrap list hit-ratio inputs)', async () => {
+    const hooks = service.getFlagHooks();
+    hooks.onListCacheHit?.();
+    hooks.onListCacheHit?.();
+    hooks.onListCacheHit?.();
+    hooks.onListCacheMiss?.();
+
+    const metrics = await service.getMetrics();
+    expect(metrics).toContain('flag_list_cache_hits_total{service="auth-service"} 3');
+    expect(metrics).toContain('flag_list_redis_reads_total{service="auth-service"} 1');
+  });
+
+  it('bumps flag_auto_disabled_total for flags the self-disable safety turned off', async () => {
+    const hooks = service.getFlagHooks();
+    hooks.onAutoDisabled?.('zombie_flag', {
+      key: 'zombie_flag',
+      enabled: true,
+      staleAfter: '2000-01-01',
+    });
+    hooks.onAutoDisabled?.('zombie_flag', {
+      key: 'zombie_flag',
+      enabled: true,
+      staleAfter: '2000-01-01',
+    });
+    hooks.onAutoDisabled?.('other_zombie', {
+      key: 'other_zombie',
+      enabled: true,
+      staleAfter: '2000-01-01',
+    });
+
+    const metrics = await service.getMetrics();
+    expect(metrics).toContain('flag_auto_disabled_total');
+    expect(metrics).toContain(
+      'flag_auto_disabled_total{service="auth-service",key="zombie_flag"} 2'
+    );
+    expect(metrics).toContain(
+      'flag_auto_disabled_total{service="auth-service",key="other_zombie"} 1'
+    );
+  });
+
+  it('emits a payment-style flag_stale_enabled event per stale evaluation (with caller context)', async () => {
+    const svc = new FlagMetricsService('auth-service', 'http://analytics:4000');
+    try {
+      svc
+        .getFlagHooks()
+        .onStaleEnabled?.(
+          'expired_flag',
+          { key: 'expired_flag', enabled: true, staleAfter: '2000-01-01', owner: 'payments' },
+          { userId: 'u-1' }
+        );
+
+      expect(mockedAxiosPost).toHaveBeenCalledTimes(1);
+      const [url, payload] = mockedAxiosPost.mock.calls[0] as [string, Record<string, unknown>];
+      expect(url).toBe('http://analytics:4000/analytics/track');
+      expect(payload).toEqual({
+        eventName: 'flag_stale_enabled',
+        userId: 'u-1',
+        universe: 'auth-service',
+        metadata: expect.objectContaining({
+          key: 'expired_flag',
+          service: 'auth-service',
+          staleAfter: '2000-01-01',
+          owner: 'payments',
+        }),
+        timestamp: expect.any(String),
+      });
+    } finally {
+      svc.onModuleDestroy();
+    }
+  });
+
+  it('marks anonymous evaluations in the event metadata', async () => {
+    const svc = new FlagMetricsService('auth-service', 'http://analytics:4000');
+    try {
+      svc
+        .getFlagHooks()
+        .onStaleEnabled?.(
+          'expired_anon',
+          { key: 'expired_anon', enabled: true },
+          { anonymousId: 'anon-9' }
+        );
+
+      const [, payload] = mockedAxiosPost.mock.calls[0] as [string, Record<string, unknown>];
+      expect(payload.userId).toBeUndefined();
+      expect(payload.metadata).toEqual(
+        expect.objectContaining({ key: 'expired_anon', anonymous: true })
+      );
+    } finally {
+      svc.onModuleDestroy();
+    }
+  });
+
+  it('skips the analytics POST when no analytics URL is configured', () => {
+    service
+      .getFlagHooks()
+      .onStaleEnabled?.('expired_flag', { key: 'expired_flag', enabled: true }, { userId: 'u-2' });
+    expect(mockedAxiosPost).not.toHaveBeenCalled();
+  });
+
+  it('swallows analytics POST failures (never affects the evaluation path)', async () => {
+    const svc = new FlagMetricsService('auth-service', 'http://analytics:4000');
+    mockedAxiosPost.mockRejectedValueOnce(new Error('ECONNREFUSED'));
+    try {
+      expect(() =>
+        svc.getFlagHooks().onStaleEnabled?.('expired_flag', { key: 'expired_flag', enabled: true })
+      ).not.toThrow();
+      // Give the fire-and-forget rejection a tick to be handled by the catch.
+      await new Promise((r) => setTimeout(r, 5));
+    } finally {
+      svc.onModuleDestroy();
+    }
+  });
+
+  it('flagHooks(service) forwards onAutoDisabled to the live holder', async () => {
+    const hooks = flagHooks('notification-service');
+    const notif = new FlagMetricsService('notification-service');
+    try {
+      notif.onModuleInit();
+      hooks.onAutoDisabled?.('zombie_notif', { key: 'zombie_notif', enabled: true });
+
+      const metrics = await notif.getMetrics();
+      expect(metrics).toContain(
+        'flag_auto_disabled_total{service="notification-service",key="zombie_notif"} 1'
+      );
+    } finally {
+      notif.onModuleDestroy();
+    }
   });
 
   it('flagHooks(service) forwards onStaleEnabled to the live holder', async () => {
@@ -155,6 +311,8 @@ describe('FlagMetricsService', () => {
     const fake: Parameters<typeof setFlagHooks>[1] = {
       onEvaluation: () => undefined,
       onToggle: () => undefined,
+      onStaleEnabled: () => undefined,
+      onAutoDisabled: () => undefined,
     };
     setFlagHooks('auth-service', fake);
     expect(getFlagHooks('auth-service')).toBe(fake);

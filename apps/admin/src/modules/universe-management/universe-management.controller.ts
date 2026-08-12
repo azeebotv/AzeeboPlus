@@ -15,11 +15,14 @@ import {
   Req,
 } from '@nestjs/common';
 import { Request } from 'express';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UniverseManagementService } from './universe-management.service';
 import { AuditLogService } from '../audit/audit.service';
 import { CreateUniverseDto } from './dto/create-universe.dto';
 import { UpdateUniverseDto } from './dto/update-universe.dto';
 import { UniverseFeatureFlagDto } from './dto/universe-feature-flag.dto';
+import { PruneStaleUniverseFlagsDto } from './dto/prune-stale-universe-flags.dto';
+import { RestoreUniverseFlagsDto } from './dto/restore-universe-flags.dto';
 import { QueryUniverseDto } from './dto/query-universe.dto';
 import { BulkToggleUniverseDto } from './dto/bulk-toggle-universe.dto';
 import { CloneUniverseDto } from './dto/clone-universe.dto';
@@ -32,6 +35,7 @@ interface AdminRequest extends Request {
   user?: { id?: string; sub?: string };
 }
 
+@ApiTags('Admin - Universe Management')
 @Controller('admin/universes')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin', 'superadmin')
@@ -62,6 +66,36 @@ export class UniverseManagementController {
   @Get('feature-flags')
   async getAllFeatureFlags() {
     return this.universeManagementService.getAllFeatureFlags();
+  }
+
+  @Get('feature-flags/deleted')
+  @ApiOperation({ summary: 'Recently deleted universe flags (restorable from archived audit snapshots)' })
+  @ApiResponse({ status: 200, description: 'Deleted universe flags with archive availability' })
+  async getRecentlyDeletedUniverseFlags(@Query('limit') limit?: string) {
+    const n = limit ? Math.min(Math.max(parseInt(limit, 10) || 20, 1), 100) : 20;
+    return this.universeManagementService.getRecentlyDeletedUniverseFlags(n);
+  }
+
+  @Post('feature-flags/prune-stale')
+  async pruneStaleFeatureFlags(
+    @Body() dto: PruneStaleUniverseFlagsDto,
+    @Req() req: AdminRequest
+  ) {
+    return this.universeManagementService.pruneStaleFeatureFlags(
+      req.user?.id ?? req.user?.sub,
+      dto.keys
+    );
+  }
+
+  @Post('feature-flags/restore')
+  async restoreFeatureFlags(
+    @Body() dto: RestoreUniverseFlagsDto,
+    @Req() req: AdminRequest
+  ) {
+    return this.universeManagementService.restoreManyUniverseFlags(
+      dto.keys,
+      req.user?.id ?? req.user?.sub
+    );
   }
 
   @Get('relationships')

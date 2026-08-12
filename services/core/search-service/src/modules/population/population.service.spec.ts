@@ -117,6 +117,9 @@ describe('PopulationService', () => {
       'search-index-population',
       expect.any(Object)
     );
+
+    // Stop the job so its pending timer can't keep jest from exiting.
+    await svc.onModuleDestroy();
   });
 
   it('skips when search_index_population is disabled', async () => {

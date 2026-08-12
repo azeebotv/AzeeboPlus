@@ -133,13 +133,16 @@ export class SearchService implements OnModuleInit {
   private static readonly PG_TRGM_REPROBE_INTERVAL_MS = 60_000;
   // The GIN trigram indexes created by the pg_trgm migration (one per
   // searchable column). All six must exist for index-backed retrieval.
+  // NOTE: the migration (and the index-repair job) write these names WITHOUT
+  // quoting, so PostgreSQL folds the mixed-case ones to lowercase — the probe
+  // must match what pg_indexes actually stores, not the DDL's source text.
   private static readonly TRGM_INDEX_NAMES = [
     'content_items_title_trgm_idx',
     'content_items_description_trgm_idx',
-    'creator_profiles_displayName_trgm_idx',
+    'creator_profiles_displayname_trgm_idx',
     'creator_profiles_bio_trgm_idx',
     'universes_name_trgm_idx',
-    'universes_displayName_trgm_idx',
+    'universes_displayname_trgm_idx',
   ];
 
   constructor(

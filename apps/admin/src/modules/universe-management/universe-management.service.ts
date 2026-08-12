@@ -7,6 +7,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
+import { AuditLogService } from '../audit/audit.service';
 import { CreateUniverseDto } from './dto/create-universe.dto';
 import { UpdateUniverseDto } from './dto/update-universe.dto';
 import { UniverseFeatureFlagDto } from './dto/universe-feature-flag.dto';
@@ -31,7 +32,10 @@ export class UniverseManagementService {
   private readonly logger = new Logger(UniverseManagementService.name);
   private redis: Redis | null = null;
 
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(AuditLogService) private readonly auditService: AuditLogService
+  ) {}
 
   /**
    * Lazily creates the feature-flag Redis client. Failures are non-fatal: the
@@ -755,6 +759,263 @@ export class UniverseManagementService {
       this.logger.error(`Failed to update feature flag for universe ${universeId}`, error);
       throw error;
     }
+  }
+
+  /**
+   * Batch-removes universe flags whose `metadata.staleAfter` has passed,
+   * archiving each one (full snapshot → `feature_flag.deleted` audit with
+   * `targetType: 'universe_feature_flag'`) BEFORE the hard delete — the same
+   * archive-before-remove contract as the global prune, so a removed universe
+   * flag can later be restored from the audit log. `keys` optionally restricts
+   * the batch to a confirmed subset; a key that isn't actually past its
+   * staleAfter is still skipped. One failing key never aborts the rest.
+   */
+  async pruneStaleFeatureFlags(
+    actorId?: string,
+    keys?: Array<{ universeId: string; featureKey: string }>
+  ) {
+    const flags = await this.getAllFeatureFlags();
+    const now = Date.now();
+    const keySet = keys
+      ? new Set(keys.map((k) => `${k.universeId}:${k.featureKey}`))
+      : null;
+
+    const targets = flags.filter((f) => {
+      const meta = (f.metadata ?? {}) as Record<string, unknown>;
+      const staleAfter = meta.staleAfter;
+      const isStale =
+        typeof staleAfter === 'string' &&
+        !Number.isNaN(Date.parse(staleAfter)) &&
+        Date.parse(staleAfter) <= now;
+      if (!isStale) return false;
+      return !keySet || keySet.has(`${f.universeId}:${f.featureKey}`);
+    });
+
+    const removed: Array<{ key: string; archived: boolean }> = [];
+    const skipped: string[] = [];
+    for (const flag of targets) {
+      const key = `${flag.universe.name}.${flag.featureKey}`;
+      try {
+        await this.archiveFeatureFlag(flag, actorId);
+        await this.deleteFeatureFlag(flag.universeId, flag.featureKey);
+        removed.push({ key, archived: true });
+      } catch (error) {
+        skipped.push(key);
+        this.logger.warn(`Failed to prune stale universe flag ${key}: ${(error as Error).message}`);
+      }
+    }
+
+    this.logger.log(
+      `Pruned ${removed.length} stale universe flag(s)${skipped.length ? `, skipped ${skipped.length}` : ''} by ${actorId ?? 'unknown'}`
+    );
+    return {
+      success: true,
+      data: {
+        removedCount: removed.length,
+        removedKeys: removed.map((r) => r.key),
+        archivedCount: removed.filter((r) => r.archived).length,
+        skipped,
+      },
+    };
+  }
+
+  /** Archives a universe flag's last-known state to the audit log before removal. */
+  private async archiveFeatureFlag(
+    flag: Awaited<ReturnType<UniverseManagementService['getAllFeatureFlags']>>[number],
+    actorId?: string
+  ): Promise<void> {
+    await this.auditService.log({
+      actorId,
+      actorType: 'admin',
+      action: 'feature_flag.deleted',
+      targetType: 'universe_feature_flag',
+      targetId: `${flag.universe.name}.${flag.featureKey}`,
+      details: {
+        archivedSnapshot: {
+          featureKey: flag.featureKey,
+          universeId: flag.universeId,
+          universeName: flag.universe.name,
+          universeDisplayName: flag.universe.displayName,
+          isEnabled: flag.isEnabled,
+          metadata: flag.metadata,
+          archivedAt: new Date().toISOString(),
+        },
+      },
+    });
+  }
+
+  /**
+   * Undo path for prune/remove: replays the flag's archived snapshot from the
+   * audit log (the `feature_flag.deleted` entry with `archivedSnapshot`),
+   * re-creating the `universe_feature_flags` row exactly as it was before
+   * deletion and re-publishing it to the runtime Redis store. Mirrors the
+   * global flags' undo path. The snapshot's `archivedAt` stamp is dropped (it
+   * belongs to the deletion, not the flag). Refuses to clobber a flag that
+   * already exists, and reports a clean miss when no archive exists.
+   */
+  async restoreUniverseFlag(
+    universeId: string,
+    featureKey: string,
+    actorId?: string
+  ): Promise<{ key: string; restored: boolean; reason?: string; enabled?: boolean }> {
+    const key = `${universeId}.${featureKey}`;
+    const existing = await this.prisma.universeFeatureFlag.findUnique({
+      where: { universeId_featureKey: { universeId, featureKey } },
+    });
+    if (existing) {
+      return { key, restored: false, reason: 'already-exists' };
+    }
+
+    // Newest-first delete entries; the most recent archive for this key wins.
+    const result = await this.auditService.getLogs(
+      { action: 'feature_flag.deleted', targetType: 'universe_feature_flag' },
+      1,
+      200
+    );
+    const deletedLog = result.logs.find((log) => {
+      const entry = log as Record<string, unknown>;
+      const details = (entry.details as Record<string, unknown> | undefined) ?? {};
+      const snapshot = details.archivedSnapshot as Record<string, unknown> | undefined;
+      return snapshot?.universeId === universeId && snapshot?.featureKey === featureKey;
+    }) as
+      | (Record<string, unknown> & { details?: Record<string, unknown> })
+      | undefined;
+    const snapshot = deletedLog?.details?.archivedSnapshot as
+      | Record<string, unknown>
+      | undefined;
+    if (!snapshot) {
+      return { key, restored: false, reason: 'no-archive' };
+    }
+
+    const isEnabled = snapshot.isEnabled === true;
+    const metadata = (snapshot.metadata ?? null) as InputJsonValue | null;
+    try {
+      await this.prisma.universeFeatureFlag.create({
+        data: {
+          universeId,
+          featureKey,
+          isEnabled,
+          metadata: metadata ?? undefined,
+        },
+      });
+    } catch (error) {
+      // Double-restore race: between our findUnique and create, a concurrent
+      // request won the unique constraint (universeId_featureKey) and created
+      // the row. The constraint already guards the write; surface the outcome
+      // as a clean already-exists instead of a 500. The winner owns the audit
+      // entry + Redis publish, so this request must NOT write a duplicate.
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        this.logger.warn(
+          `Restore of universe flag ${key} lost the create race (unique constraint P2002) — already exists`
+        );
+        return { key, restored: false, reason: 'already-exists' };
+      }
+      throw error;
+    }
+
+    const universe = await this.prisma.universe.findUnique({
+      where: { id: universeId },
+      select: { name: true },
+    });
+    if (universe) {
+      await this.publishFlagToRedis(
+        universe.name,
+        featureKey,
+        isEnabled,
+        (snapshot.metadata ?? null) as Record<string, unknown> | null
+      );
+    }
+
+    await this.auditService.log({
+      actorId,
+      actorType: 'admin',
+      action: 'feature_flag.restored',
+      targetType: 'universe_feature_flag',
+      targetId: `${universe?.name ?? universeId}.${featureKey}`,
+      details: {
+        restoredFromSnapshotAt: snapshot.archivedAt,
+        restoredAt: new Date().toISOString(),
+      },
+    });
+
+    this.logger.log(`Universe feature flag ${universe?.name ?? universeId}.${featureKey} restored by ${actorId ?? 'unknown'}`);
+    return { key, restored: true as const, enabled: isEnabled };
+  }
+
+  /** Batch undo: restores several pruned universe flags from their archived snapshots. */
+  async restoreManyUniverseFlags(
+    keys: Array<{ universeId: string; featureKey: string }>,
+    actorId?: string
+  ) {
+    const restored: Array<{ key: string; enabled?: boolean }> = [];
+    const skipped: Array<{ key: string; reason: string }> = [];
+    for (const k of keys) {
+      const res = await this.restoreUniverseFlag(k.universeId, k.featureKey, actorId);
+      if (res.restored) {
+        restored.push({ key: res.key, enabled: res.enabled });
+      } else {
+        skipped.push({ key: res.key, reason: res.reason ?? 'unknown' });
+      }
+    }
+    return {
+      success: true,
+      data: { restoredCount: restored.length, restored, skipped },
+    };
+  }
+
+  /**
+   * Recently removed universe flags (undo list): newest-first
+   * `feature_flag.deleted` audit entries for `universe_feature_flag`, mapped
+   * to restorable rows. `archived` is true only when the entry carries an
+   * `archivedSnapshot` (the archive-before-remove contract guarantees it for
+   * prune/remove paths); unarchived entries render as not-restorable. Mirrors
+   * the global flags' `getRecentlyDeleted`.
+   */
+  async getRecentlyDeletedUniverseFlags(limit = 20) {
+    const { logs } = await this.auditService.getLogs(
+      { action: 'feature_flag.deleted', targetType: 'universe_feature_flag' },
+      1,
+      limit
+    );
+    return logs.map((log) => {
+      const entry = log as Record<string, unknown>;
+      const details = (entry.details as Record<string, unknown> | undefined) ?? {};
+      const snapshot = details.archivedSnapshot as Record<string, unknown> | undefined;
+      return {
+        key: entry.targetId,
+        universeId: typeof snapshot?.universeId === 'string' ? snapshot.universeId : undefined,
+        featureKey: typeof snapshot?.featureKey === 'string' ? snapshot.featureKey : undefined,
+        universeName:
+          typeof snapshot?.universeName === 'string' ? snapshot.universeName : undefined,
+        deletedAt: entry.createdAt,
+        deletedBy: entry.actorId,
+        archived: Boolean(snapshot),
+        enabled: typeof snapshot?.isEnabled === 'boolean' ? snapshot.isEnabled : undefined,
+      };
+    });
+  }
+
+  /**
+   * Sweep bookkeeping for universe flags: merges `staleNotifiedAt` into the
+   * flag's `metadata` (DB-only — the runtime Redis payload is unchanged; the
+   * stamp drives sweep dedupe + the admin UI's 'stale · notified' badge).
+   */
+  async stampStaleNotifiedAt(
+    universeId: string,
+    featureKey: string,
+    notifiedAt: string
+  ): Promise<unknown> {
+    const existing = await this.prisma.universeFeatureFlag.findUnique({
+      where: { universeId_featureKey: { universeId, featureKey } },
+    });
+    if (!existing) return null;
+    const metadata = (existing.metadata ?? {}) as Record<string, unknown>;
+    return this.prisma.universeFeatureFlag.update({
+      where: { universeId_featureKey: { universeId, featureKey } },
+      data: {
+        metadata: { ...metadata, staleNotifiedAt: notifiedAt } as InputJsonValue,
+      },
+    });
   }
 
   async deleteFeatureFlag(universeId: string, featureKey: string) {

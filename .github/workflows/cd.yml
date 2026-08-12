@@ -19,11 +19,74 @@ env:
   PNPM_VERSION: '10.33.2'
 
 jobs:
+  # CD approval gate: branch protection only covers PRs, so push-to-main
+  # deploys get their own gate — this job waits for the push-time CI checks
+  # (CI: Build / E2E Tests / Security Scan; Dockerized E2E: Actionlint /
+  # Dockerized e2e suites) on this commit and fails the deployment if any of
+  # them failed or is missing. Manual (workflow_dispatch) deploys skip the
+  # gate — they are already gated by the environment approval.
+  verify-ci-checks:
+    name: Verify Required Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Wait for required checks on this commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REQUIRED=(
+            "Build"
+            "E2E Tests"
+            "Security Scan"
+            "Actionlint (workflow syntax)"
+            "Dockerized e2e suites"
+          )
+          SHA="${{ github.sha }}"
+          DEADLINE=$((SECONDS + 1200))
+          while [ $SECONDS -lt $DEADLINE ]; do
+            gh api "repos/${{ github.repository }}/commits/$SHA/check-runs" \
+              --jq '[.check_runs[] | {name, status, conclusion}]' > /tmp/checks.json
+            ALL_DONE=1
+            for name in "${REQUIRED[@]}"; do
+              STATUS=$(jq -r --arg n "$name" '.[] | select(.name == $n) | .status' /tmp/checks.json)
+              if [ -z "$STATUS" ]; then
+                echo "⏳ check \"$name\" not started yet"
+                ALL_DONE=0
+                continue
+              fi
+              if [ "$STATUS" != "completed" ]; then
+                echo "⏳ check \"$name\" is $STATUS"
+                ALL_DONE=0
+                continue
+              fi
+              CONCLUSION=$(jq -r --arg n "$name" '.[] | select(.name == $n) | (.conclusion // "none")' /tmp/checks.json)
+              if [ "$CONCLUSION" != "success" ]; then
+                echo "❌ Required check \"$name\" finished with conclusion: $CONCLUSION"
+                cat /tmp/checks.json
+                exit 1
+              fi
+            done
+            if [ $ALL_DONE -eq 1 ]; then
+              echo "✅ All required checks passed for $SHA"
+              exit 0
+            fi
+            echo "⏳ Waiting for checks to complete… $((DEADLINE - SECONDS))s left"
+            sleep 20
+          done
+          echo "❌ Timed out waiting for required checks on $SHA"
+          cat /tmp/checks.json
+          exit 1
+
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'staging'
+    needs: [verify-ci-checks]
+    if: (github.ref == 'refs/heads/main' || github.event.inputs.environment == 'staging') && (needs.verify-ci-checks.result == 'success' || needs.verify-ci-checks.result == 'skipped')
     environment: staging
     steps:
       - uses: actions/checkout@v4
