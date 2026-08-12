@@ -9,6 +9,11 @@ COPY apps/admin/package.json ./apps/admin/
 
 RUN for i in 1 2 3 4 5; do pnpm install --frozen-lockfile && break || (echo "Retry $i/5..." && sleep 10); done
 
+# Workspace packages ship dist-based exports (dist is gitignored), so build
+# them before the app: tsc resolves @azeebo/* to packages/*/dist. test-utils
+# is excluded (its build needs @prisma/client generation; nothing imports it).
+RUN pnpm -r --filter './packages/**' --filter '!@azeebo/test-utils' run build
+
 COPY apps/admin/src ./apps/admin/src
 COPY apps/admin/client ./apps/admin/client
 COPY apps/admin/tsconfig*.json ./apps/admin/
@@ -32,7 +37,11 @@ RUN apk add --no-cache tini && \
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/admin/package.json ./apps/admin/
-COPY packages ./packages
+
+# Copy the BUILT packages (dist included) from the builder; the source tree's
+# dist is gitignored and never lands in the context. pnpm install --prod below
+# re-links node_modules per the lockfile.
+COPY --from=builder /app/packages ./packages
 
 RUN for i in 1 2 3 4 5; do pnpm install --prod --frozen-lockfile && break || (echo "Retry $i/5..." && sleep 10); done
 
