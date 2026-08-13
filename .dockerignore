@@ -69,6 +69,11 @@ logs/
 **/.next/
 **/.nuxt/
 **/.output/
+# Incremental tsc build info: with `incremental: true` the packages' tsconfigs
+# write tsconfig.tsbuildinfo at the package root (and dist/tsconfig.tsbuildinfo).
+# If it survives into the context, the in-image tsc treats the build as
+# up-to-date and SKIPS emitting dist entirely — so it must not be shipped.
+**/*.tsbuildinfo
 
 # Generated Prisma clients (will be regenerated in Docker)
 **/src/generated/
