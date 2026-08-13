@@ -31,6 +31,9 @@ RUN for i in 1 2 3 4 5; do pnpm install --frozen-lockfile && break || (echo "Ret
 # from the context).
 RUN pnpm -r --filter './packages/**' --filter '!@azeebo/test-utils' --filter '!@azeebo/contract-tests' run build
 
+# Debug aid: confirm the workspace dist was actually emitted in-image.
+RUN echo '=== packages/security/dist after packages build ===' && ls packages/security/dist/ 2>&1 | head -5 || true
+
 COPY apps/admin/src ./apps/admin/src
 COPY apps/admin/client ./apps/admin/client
 COPY apps/admin/tsconfig*.json ./apps/admin/
