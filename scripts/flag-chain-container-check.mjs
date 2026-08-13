@@ -105,9 +105,11 @@ async function main() {
   results.adminUrl = ADMIN_URL;
   results.gatewayUrl = GATEWAY_URL;
 
-  // Wait for both containers to be healthy.
-  await waitFor('admin /health', async () => {
-    const r = await req(`${ADMIN_URL}/health`);
+  // Wait for both containers to be healthy. The admin URI-versioning (prefix
+  // 'v', defaultVersion '1') exposes the health routes at /v1/health — the
+  // @Version('') decorators map to the default version, not to a neutral one.
+  await waitFor('admin /v1/health', async () => {
+    const r = await req(`${ADMIN_URL}/v1/health`);
     return { ok: r.status === 200, detail: { status: r.status } };
   });
   console.log('[flag-chain] admin container healthy');

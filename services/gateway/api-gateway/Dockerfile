@@ -31,9 +31,7 @@ RUN for i in 1 2 3 4 5; do pnpm install --frozen-lockfile && break || (echo "Ret
 # from the context).
 RUN pnpm -r --filter './packages/**' --filter '!@azeebo/test-utils' --filter '!@azeebo/contract-tests' run build
 
-# Debug aid: confirm the workspace dist was actually emitted in-image, and
-# locate the emitted .js if it landed somewhere unexpected.
-RUN echo '=== packages/security/dist after packages build ===' && ls packages/security/dist/ 2>&1 | head -5; echo '=== tsbuildinfo files ===' && find /app/packages -name '*.tsbuildinfo' 2>/dev/null | head -5; echo '=== emitted cors.config.js locations ===' && find /app -name 'cors.config.js' -not -path '*/node_modules/*' 2>/dev/null | head -5; true
+
 
 COPY services/gateway/api-gateway/src ./services/gateway/api-gateway/src
 COPY services/gateway/api-gateway/tsconfig*.json ./services/gateway/api-gateway/
