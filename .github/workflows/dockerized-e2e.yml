@@ -175,6 +175,23 @@ jobs:
         env:
           FLAGCHAIN_JWT_SECRET: ${{ env.JWT_SECRET }}
 
+      # Debug aid: confirm the built images contain the workspace packages' dist
+      # and that the app-level node_modules symlinks point back into ./packages.
+      # Removed once the container boot is stable.
+      - name: Inspect flag-chain images (dist layout)
+        if: github.event_name != 'pull_request'
+        run: |
+          set +e
+          for img in azeeboplus-gateway azeeboplus-admin; do
+            echo "=== $img ==="
+            docker run --rm --entrypoint /bin/sh "$img" -c '
+              echo "-- packages/security/dist/index.js:"; ls -la packages/security/dist/index.js 2>&1
+              echo "-- gateway app symlink:"; readlink services/gateway/api-gateway/node_modules/@azeebo/security 2>&1 || true
+              echo "-- admin app symlink:"; readlink apps/admin/node_modules/@azeebo/security 2>&1 || true
+              echo "-- security pkg dir:"; ls packages/security/ 2>&1 | head -8
+            '
+          done
+
       - name: Boot flag-chain containers against the shared Redis
         if: github.event_name != 'pull_request'
         run: |

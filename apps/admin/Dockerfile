@@ -20,7 +20,11 @@ COPY apps/admin/client ./apps/admin/client
 COPY apps/admin/tsconfig*.json ./apps/admin/
 COPY apps/admin/prisma ./apps/admin/prisma
 
-RUN for i in 1 2 3 4 5; do pnpm --filter @azeebo/admin prisma generate && break || (echo "Retry prisma generate $i/5..." && sleep 15); done
+RUN i=0; until pnpm --filter @azeebo/admin prisma:generate; do \
+      i=$((i+1)); \
+      [ "$i" -ge 5 ] && echo "prisma generate failed 5 times" && exit 1; \
+      echo "Retry prisma generate $i/5..."; sleep 15; \
+    done
 RUN pnpm --filter @azeebo/admin run build:client
 RUN pnpm --filter @azeebo/admin run build
 
@@ -40,12 +44,20 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY apps/admin/package.json ./apps/admin/
 
 # Copy the BUILT packages (dist included) from the builder; the source tree's
-# dist is gitignored and never lands in the context. pnpm install --prod below
-# re-links node_modules per the lockfile. .npmrc's shamefully-hoist is what
-# lets the app resolve transitive deps from the root node_modules.
+# dist is gitignored and never lands in the context. .npmrc's
+# shamefully-hoist is what lets the app resolve transitive deps from the root
+# node_modules.
 COPY --from=builder /app/packages ./packages
 
 RUN for i in 1 2 3 4 5; do pnpm install --prod --frozen-lockfile && break || (echo "Retry $i/5..." && sleep 10); done
+
+# Re-apply the built packages AFTER the prod install: pnpm --prod rewires the
+# workspace symlinks and, depending on the platform, can prune the packages'
+# dist output. The app resolves @azeebo/* through node_modules symlinks that
+# point back into ./packages, so the dist must be present in the final image.
+COPY --from=builder /app/packages ./packages
+
+RUN test -f packages/security/dist/index.js && test -f packages/feature-flags/dist/index.js
 
 COPY --from=builder /app/apps/admin/dist ./apps/admin/dist
 COPY --from=builder /app/apps/admin/client/dist ./apps/admin/client/dist
