@@ -177,7 +177,16 @@ jobs:
 
       - name: Boot flag-chain containers against the shared Redis
         if: github.event_name != 'pull_request'
-        run: docker compose -f docker-compose.flagchain.yml up -d --wait
+        run: |
+          docker compose -f docker-compose.flagchain.yml up -d --wait || {
+            echo '::group::gateway container logs'
+            docker compose -f docker-compose.flagchain.yml logs gateway || true
+            echo '::endgroup::'
+            echo '::group::admin container logs'
+            docker compose -f docker-compose.flagchain.yml logs admin || true
+            echo '::endgroup::'
+            exit 1
+          }
         env:
           FLAGCHAIN_JWT_SECRET: ${{ env.JWT_SECRET }}
 
