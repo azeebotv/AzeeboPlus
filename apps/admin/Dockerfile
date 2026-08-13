@@ -31,8 +31,6 @@ RUN for i in 1 2 3 4 5; do pnpm install --frozen-lockfile && break || (echo "Ret
 # from the context).
 RUN pnpm -r --filter './packages/**' --filter '!@azeebo/test-utils' --filter '!@azeebo/contract-tests' run build
 
-# Debug aid: confirm the workspace dist was actually emitted in-image.
-RUN echo '=== packages/security/dist after packages build ===' && ls packages/security/dist/ 2>&1 | head -5 || true
 
 COPY apps/admin/src ./apps/admin/src
 COPY apps/admin/client ./apps/admin/client
@@ -59,7 +57,7 @@ USER nodejs
 EXPOSE 4016
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD node -e "fetch('http://localhost:4016/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+    CMD node -e "fetch('http://localhost:4016/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "apps/admin/dist/main.js"]
