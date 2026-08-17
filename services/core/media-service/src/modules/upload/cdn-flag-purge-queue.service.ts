@@ -40,7 +40,8 @@ export class CdnFlagPurgeQueueService implements OnModuleInit, OnModuleDestroy {
     const pollMs =
       this.configService.get<number>('MEDIA_CDN_FLAG_POLL_MS') ??
       CdnFlagPurgeQueueService.DEFAULT_POLL_MS;
-    const safePollMs = Number.isFinite(pollMs) && pollMs > 0 ? pollMs : CdnFlagPurgeQueueService.DEFAULT_POLL_MS;
+    const safePollMs =
+      Number.isFinite(pollMs) && pollMs > 0 ? pollMs : CdnFlagPurgeQueueService.DEFAULT_POLL_MS;
 
     // Seed the last-known state before starting the interval so a boot with
     // the flag already off does not fire a spurious purge.
@@ -51,9 +52,7 @@ export class CdnFlagPurgeQueueService implements OnModuleInit, OnModuleDestroy {
     if (this.timer) {
       (this.timer as unknown as NodeJS.Timeout).unref();
     }
-    this.logger.log(
-      `Watching media_cdn_edge_cache every ${safePollMs}ms for on→off transitions`
-    );
+    this.logger.log(`Watching media_cdn_edge_cache every ${safePollMs}ms for on→off transitions`);
   }
 
   onModuleDestroy() {
@@ -76,9 +75,7 @@ export class CdnFlagPurgeQueueService implements OnModuleInit, OnModuleDestroy {
       }
     } catch (error) {
       // A poll failure must never crash the service; retry next interval.
-      this.logger.warn(
-        `Failed to poll media_cdn_edge_cache: ${(error as Error).message}`
-      );
+      this.logger.warn(`Failed to poll media_cdn_edge_cache: ${(error as Error).message}`);
     }
   }
 
@@ -114,16 +111,10 @@ export class CdnFlagPurgeQueueService implements OnModuleInit, OnModuleDestroy {
       this.logger.warn(
         `CDN purge job ${jobKey} — invalidating /${CdnFlagPurgeQueueService.PURGE_PREFIX}/*`
       );
-      const result = await this.cdnPurgeService.purgePrefix(
-        CdnFlagPurgeQueueService.PURGE_PREFIX
-      );
-      this.logger.warn(
-        `CDN purge job ${jobKey} complete (${result.purged} path(s) submitted)`
-      );
+      const result = await this.cdnPurgeService.purgePrefix(CdnFlagPurgeQueueService.PURGE_PREFIX);
+      this.logger.warn(`CDN purge job ${jobKey} complete (${result.purged} path(s) submitted)`);
     } catch (error) {
-      this.logger.error(
-        `CDN purge job ${jobKey} failed: ${(error as Error).message}`
-      );
+      this.logger.error(`CDN purge job ${jobKey} failed: ${(error as Error).message}`);
     }
   }
 }

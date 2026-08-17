@@ -1,4 +1,16 @@
-import { Controller, Get, Put, Post, Delete, Param, Body, Query, Req, Inject, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Put,
+  Post,
+  Delete,
+  Param,
+  Body,
+  Query,
+  Req,
+  Inject,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -44,9 +56,13 @@ export class FeatureFlagsController {
 
   @Get('stale/metrics')
   @ApiOperation({
-    summary: 'Per-key flag_stale_running_total from Prometheus — which stale flags are ACTIVELY served past expiry',
+    summary:
+      'Per-key flag_stale_running_total from Prometheus — which stale flags are ACTIVELY served past expiry',
   })
-  @ApiResponse({ status: 200, description: 'Stale-serving metrics (available, fetchedAt, staleRunning per key)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Stale-serving metrics (available, fetchedAt, staleRunning per key)',
+  })
   async getStaleMetrics() {
     return this.staleMetricsService.getStaleRunningByKey();
   }
@@ -55,12 +71,12 @@ export class FeatureFlagsController {
   @ApiOperation({
     summary: 'Batch-remove flags past their staleAfter, archiving each before deletion',
   })
-  @ApiResponse({ status: 200, description: 'Prune summary (removedCount, removedKeys, archivedCount, skipped)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Prune summary (removedCount, removedKeys, archivedCount, skipped)',
+  })
   async pruneStale(@Body() dto: PruneStaleFlagsDto, @Req() req: AdminRequest) {
-    return this.featureFlagsService.pruneStaleFlags(
-      req.user?.id ?? req.user?.sub,
-      dto.keys
-    );
+    return this.featureFlagsService.pruneStaleFlags(req.user?.id ?? req.user?.sub, dto.keys);
   }
 
   @Post('stale-sweep/run')
@@ -79,7 +95,10 @@ export class FeatureFlagsController {
       'Pass ?dryRun=1 to preview the universe prune without removing anything (reports exactly what ' +
       'STALE_FLAG_AUTO_PRUNE_UNIVERSE=true would remove)',
   })
-  @ApiResponse({ status: 200, description: 'Nightly summary (stale, sweep, prune, universePrune, dryRunUniverse, webhook)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Nightly summary (stale, sweep, prune, universePrune, dryRunUniverse, webhook)',
+  })
   async runNightly(@Query('dryRun') dryRun?: string) {
     const dryRunUniverse = dryRun === '1' || dryRun === 'true';
     return this.staleNightlyService.runNightly({ dryRunUniverse });
@@ -90,7 +109,10 @@ export class FeatureFlagsController {
     summary:
       'Most recent nightly stale-flag pass recorded in the audit log — times, counts, and webhook status',
   })
-  @ApiResponse({ status: 200, description: 'Last nightly run summary, or null before the first pass' })
+  @ApiResponse({
+    status: 200,
+    description: 'Last nightly run summary, or null before the first pass',
+  })
   async getLastNightlyRun() {
     return this.staleNightlyService.getLastRun();
   }
@@ -123,7 +145,10 @@ export class FeatureFlagsController {
       domain,
       flags: Object.entries(registry).map(([property, key]) => ({ property, key })),
     }));
-    return { success: true, data: { domains, total: domains.reduce((n, d) => n + d.flags.length, 0) } };
+    return {
+      success: true,
+      data: { domains, total: domains.reduce((n, d) => n + d.flags.length, 0) },
+    };
   }
 
   @Put(':key')

@@ -63,6 +63,7 @@ const mockAuthGuard = {
 
 describe('Comedy Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockComedyService = {
     getClips: jest.fn(),
@@ -109,6 +110,8 @@ describe('Comedy Controller Contract Tests', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -126,7 +129,7 @@ describe('Comedy Controller Contract Tests', () => {
         data: [{ id: 'clip-1', title: 'Funny Clip' }],
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/comedy/clips')
         .expect(200)
         .expect((res) => {
@@ -143,7 +146,7 @@ describe('Comedy Controller Contract Tests', () => {
         data: [{ id: 'comedian-1', name: 'John Doe' }],
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/comedy/comedians')
         .expect(200)
         .expect((res) => {
@@ -159,7 +162,7 @@ describe('Comedy Controller Contract Tests', () => {
         data: [{ id: 'series-1', title: 'Comedy Show' }],
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/comedy/series')
         .expect(200)
         .expect((res) => {
@@ -175,7 +178,7 @@ describe('Comedy Controller Contract Tests', () => {
         data: [{ id: 'challenge-1', title: 'Funny Challenge' }],
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/comedy/challenges')
         .expect(200)
         .expect((res) => {
@@ -191,7 +194,7 @@ describe('Comedy Controller Contract Tests', () => {
         data: { entryId: 'entry-1', status: 'submitted' },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/comedy/challenges')
         .send({ challengeId: 'challenge-1', clipUrl: 'https://example.com/clip.mp4' });
 
@@ -206,7 +209,7 @@ describe('Comedy Controller Contract Tests', () => {
         data: [{ id: 'clip-1', views: 10000 }],
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/comedy/trending')
         .expect(200)
         .expect((res) => {
@@ -222,7 +225,7 @@ describe('Comedy Controller Contract Tests', () => {
         data: [],
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/comedy/clips')
         .expect((res) => {
           expect(res.body).toHaveProperty('success');
@@ -238,7 +241,7 @@ describe('Comedy Controller Contract Tests', () => {
         data: { items: [], page: 1, limit: 20, total: 0 },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/comedy/clips')
         .expect((res) => {
           if (res.body.data && typeof res.body.data === 'object') {
@@ -255,7 +258,7 @@ describe('Comedy Controller Contract Tests', () => {
         success: true,
         data: [],
       });
-      return request(app.getHttpServer()).get('/comedy/challenges').expect(200);
+      return request(baseUrl).get('/comedy/challenges').expect(200);
     });
   });
 });

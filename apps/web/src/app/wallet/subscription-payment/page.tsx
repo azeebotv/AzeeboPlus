@@ -105,13 +105,10 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
       setStep('success');
       // Conversion event: fires once when the checkout lands on the success step.
       if (selectedPlan) {
-        analytics.paymentProcessed(
-          'subscription',
-          selectedPlan.price,
-          'NGN',
-          paymentMethod,
-          { planId: selectedPlan.id, planName: selectedPlan.name }
-        );
+        analytics.paymentProcessed('subscription', selectedPlan.price, 'NGN', paymentMethod, {
+          planId: selectedPlan.id,
+          planName: selectedPlan.name,
+        });
       }
       queryClient.invalidateQueries({ queryKey: ['subscription-current'] });
       queryClient.invalidateQueries({ queryKey: ['wallet'] });

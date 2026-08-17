@@ -39,6 +39,7 @@ const TEST_FLAG = 'test_chain_flag';
 jest.setTimeout(30_000);
 
 if (!RUN_LIVE) {
+  // eslint-disable-next-line azeebo-custom/no-console-log -- opt-in skip guidance for ops
   console.log(
     `[feature-flags.redis-live] Skipping — opt-in. ` +
       `Run \`pnpm --filter @azeebo/admin test:redis\` (or set REDIS_TEST_URL) to ` +
@@ -219,7 +220,6 @@ liveDescribe(`live Redis chain (${REDIS_URL})`, () => {
 /** ExecutionContext whose handler is decorated with the real @FeatureFlag. */
 @FeatureFlag('test_chain_flag')
 class FlaggedController {
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   flaggedRoute() {}
 }
 

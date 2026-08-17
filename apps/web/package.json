@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "NODE_ENV=production next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint src",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
@@ -15,6 +15,7 @@
   "dependencies": {
     "@azeebo/analytics-sdk": "workspace:*",
     "@azeebo/design-tokens": "workspace:*",
+    "@azeebo/feature-flags": "workspace:*",
     "@azeebo/shared-types": "workspace:*",
     "@azeebo/ui": "workspace:*",
     "@tanstack/react-query": "^5.101.0",

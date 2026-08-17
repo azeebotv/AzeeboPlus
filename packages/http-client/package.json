@@ -18,7 +18,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "lint": "eslint src --fix"
+    "lint": "eslint src"
   },
   "dependencies": {
     "@azeebo/shared-types": "workspace:*",

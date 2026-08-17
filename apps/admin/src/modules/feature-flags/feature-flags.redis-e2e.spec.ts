@@ -48,10 +48,9 @@ describe('admin toggle → Redis → service behavior (e2e)', () => {
       redis: new FakeRedis() as unknown as never,
       defaultFlags: { [gatewayFlags.maintenanceMode]: false },
     });
-    adminFlagsService = new FeatureFlagsService(
-      flagService,
-      { log: auditLog } as unknown as AuditLogService
-    );
+    adminFlagsService = new FeatureFlagsService(flagService, {
+      log: auditLog,
+    } as unknown as AuditLogService);
   });
 
   it('admin toggle on → consumer isEnabled flips → guard allows', async () => {

@@ -129,7 +129,10 @@ export class NightlifeService {
       };
     } catch (error) {
       this.logger.error(`Failed to get nightlife entries: ${error}`);
-      return { success: false, error: { code: 'FETCH_ERROR', message: 'Failed to fetch nightlife entries' } };
+      return {
+        success: false,
+        error: { code: 'FETCH_ERROR', message: 'Failed to fetch nightlife entries' },
+      };
     }
   }
 
@@ -149,7 +152,10 @@ export class NightlifeService {
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to get nightlife entry ${slug}: ${error}`);
-      return { success: false, error: { code: 'FETCH_ERROR', message: 'Failed to fetch nightlife entry' } };
+      return {
+        success: false,
+        error: { code: 'FETCH_ERROR', message: 'Failed to fetch nightlife entry' },
+      };
     }
   }
 
@@ -163,7 +169,10 @@ export class NightlifeService {
       return { success: true, data: entries.map((e) => this.formatEntry(e)) };
     } catch (error) {
       this.logger.error(`Failed to get featured nightlife entries: ${error}`);
-      return { success: false, error: { code: 'FETCH_ERROR', message: 'Failed to fetch featured entries' } };
+      return {
+        success: false,
+        error: { code: 'FETCH_ERROR', message: 'Failed to fetch featured entries' },
+      };
     }
   }
 
@@ -198,7 +207,10 @@ export class NightlifeService {
       return { success: true, data: this.formatEntry(entry) };
     } catch (error) {
       this.logger.error(`Failed to create nightlife entry: ${error}`);
-      return { success: false, error: { code: 'CREATE_ERROR', message: 'Failed to create nightlife entry' } };
+      return {
+        success: false,
+        error: { code: 'CREATE_ERROR', message: 'Failed to create nightlife entry' },
+      };
     }
   }
 
@@ -243,7 +255,10 @@ export class NightlifeService {
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to update nightlife entry ${id}: ${error}`);
-      return { success: false, error: { code: 'UPDATE_ERROR', message: 'Failed to update nightlife entry' } };
+      return {
+        success: false,
+        error: { code: 'UPDATE_ERROR', message: 'Failed to update nightlife entry' },
+      };
     }
   }
 
@@ -259,7 +274,10 @@ export class NightlifeService {
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to delete nightlife entry ${id}: ${error}`);
-      return { success: false, error: { code: 'DELETE_ERROR', message: 'Failed to delete nightlife entry' } };
+      return {
+        success: false,
+        error: { code: 'DELETE_ERROR', message: 'Failed to delete nightlife entry' },
+      };
     }
   }
 }

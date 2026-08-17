@@ -55,11 +55,11 @@ describe('UploadService Integration', () => {
         {
           provide: FeatureFlagService,
           useValue: {
-            isEnabled: jest.fn().mockImplementation((key: string) =>
-              Promise.resolve(
-                key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked
-              )
-            ),
+            isEnabled: jest
+              .fn()
+              .mockImplementation((key: string) =>
+                Promise.resolve(key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked)
+              ),
           },
         },
         { provide: CdnPurgeService, useValue: { purgeKeys: jest.fn(), purgePrefix: jest.fn() } },
@@ -171,11 +171,11 @@ describe('UploadService Integration', () => {
           {
             provide: FeatureFlagService,
             useValue: {
-              isEnabled: jest.fn().mockImplementation((key: string) =>
-                Promise.resolve(
-                  key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked
-                )
-              ),
+              isEnabled: jest
+                .fn()
+                .mockImplementation((key: string) =>
+                  Promise.resolve(key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked)
+                ),
             },
           },
           { provide: CdnPurgeService, useValue: { purgeKeys: jest.fn(), purgePrefix: jest.fn() } },

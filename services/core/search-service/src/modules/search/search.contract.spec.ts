@@ -7,6 +7,7 @@ import { RateLimitGuard, ServiceAuthGuard } from '@azeebo/security';
 
 describe('Search Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
   let searchService: jest.Mocked<SearchService>;
 
   beforeAll(async () => {
@@ -36,6 +37,8 @@ describe('Search Controller Contract Tests', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -68,7 +71,7 @@ describe('Search Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/search?q=test');
+      const response = await request(baseUrl).get('/search?q=test');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -82,7 +85,7 @@ describe('Search Controller Contract Tests', () => {
         new BadRequestException('Search query must be at least 2 characters')
       );
 
-      const response = await request(app.getHttpServer()).get('/search');
+      const response = await request(baseUrl).get('/search');
 
       expect(response.status).toBe(400);
     });
@@ -97,7 +100,7 @@ describe('Search Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/search/suggestions?q=test');
+      const response = await request(baseUrl).get('/search/suggestions?q=test');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -117,7 +120,7 @@ describe('Search Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/search/trending');
+      const response = await request(baseUrl).get('/search/trending');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -140,7 +143,7 @@ describe('Search Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/search/facets');
+      const response = await request(baseUrl).get('/search/facets');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);

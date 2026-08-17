@@ -133,11 +133,7 @@ describe('ContentFeedService (content_recommended_rail + universe bridge)', () =
       ]);
       // games has an explicitly-disabled row in the Redis bridge.
       mockFlagService.getFlag.mockImplementation((key: string) =>
-        Promise.resolve(
-          key === 'universe.games.discovery_enabled'
-            ? { key, enabled: false }
-            : null
-        )
+        Promise.resolve(key === 'universe.games.discovery_enabled' ? { key, enabled: false } : null)
       );
 
       const ids = await service.getEnabledUniverseIds('discovery_enabled');

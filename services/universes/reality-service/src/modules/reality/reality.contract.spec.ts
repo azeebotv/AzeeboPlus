@@ -19,6 +19,7 @@ jest.mock('@nestjs/websockets', () => ({
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
+import { FeatureFlagModule } from '@azeebo/feature-flags';
 import { RealityModule } from './reality.module.js';
 import { RealityService } from './reality.service.js';
 import { RealityGateway } from './reality.gateway.js';
@@ -90,13 +91,14 @@ const mockAuthGuard = {
 
 describe('Reality Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
   let realityService: RealityService;
 
   beforeAll(async () => {
     process.env.JWT_ACCESS_SECRET = 'test-jwt-secret';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [RealityModule],
+      imports: [FeatureFlagModule.register({}), RealityModule],
     })
       .overrideProvider(PrismaService)
       .useValue({
@@ -220,6 +222,8 @@ describe('Reality Controller Contract Tests', () => {
     app = moduleFixture.createNestApplication();
     realityService = moduleFixture.get(RealityService);
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -245,7 +249,7 @@ describe('Reality Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/reality/shows');
+      const response = await request(baseUrl).get('/reality/shows');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -269,7 +273,7 @@ describe('Reality Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/reality/shows/show-1');
+      const response = await request(baseUrl).get('/reality/shows/show-1');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -286,7 +290,7 @@ describe('Reality Controller Contract Tests', () => {
         .spyOn(realityService, 'getShow')
         .mockRejectedValue(new (require('@nestjs/common').NotFoundException)('Show not found'));
 
-      const response = await request(app.getHttpServer()).get('/reality/shows/nonexistent');
+      const response = await request(baseUrl).get('/reality/shows/nonexistent');
 
       expect(response.status).toBe(404);
     });
@@ -304,7 +308,7 @@ describe('Reality Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/reality/votes')
         .set('Authorization', 'Bearer valid-token')
         .send({
@@ -337,7 +341,7 @@ describe('Reality Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/reality/votes')
         .set('Authorization', 'Bearer valid-token')
         .send({
@@ -365,7 +369,7 @@ describe('Reality Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/reality/predictions')
         .set('Authorization', 'Bearer valid-token')
         .send({
@@ -400,7 +404,7 @@ describe('Reality Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/reality/shows/show-1/leaderboard');
+      const response = await request(baseUrl).get('/reality/shows/show-1/leaderboard');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -430,7 +434,7 @@ describe('Reality Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/reality/pricing');
+      const response = await request(baseUrl).get('/reality/pricing');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({

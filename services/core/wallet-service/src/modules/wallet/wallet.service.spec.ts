@@ -418,13 +418,17 @@ describe('WalletService', () => {
     });
 
     it('acquires + releases the Redis lock around debit when the flag is on', async () => {
-      const flagService = (service as unknown as {
-        featureFlagService: { isEnabled: jest.Mock };
-      }).featureFlagService;
+      const flagService = (
+        service as unknown as {
+          featureFlagService: { isEnabled: jest.Mock };
+        }
+      ).featureFlagService;
       flagService.isEnabled.mockImplementation((key: string) =>
         Promise.resolve(key === walletFlags.distributedLock)
       );
-      const redis = (service as unknown as { redisService: { setIfNotExists: jest.Mock; del: jest.Mock } }).redisService;
+      const redis = (
+        service as unknown as { redisService: { setIfNotExists: jest.Mock; del: jest.Mock } }
+      ).redisService;
 
       const result = await service.debitBalance('wallet-123', 100, 'Debit test');
 
@@ -434,7 +438,8 @@ describe('WalletService', () => {
     });
 
     it('skips the Redis lock when the flag is off', async () => {
-      const redis = (service as unknown as { redisService: { setIfNotExists: jest.Mock } }).redisService;
+      const redis = (service as unknown as { redisService: { setIfNotExists: jest.Mock } })
+        .redisService;
 
       const result = await service.debitBalance('wallet-123', 100, 'Debit test');
 
@@ -443,13 +448,16 @@ describe('WalletService', () => {
     });
 
     it('rejects a concurrent operation when the lock is held', async () => {
-      const flagService = (service as unknown as {
-        featureFlagService: { isEnabled: jest.Mock };
-      }).featureFlagService;
+      const flagService = (
+        service as unknown as {
+          featureFlagService: { isEnabled: jest.Mock };
+        }
+      ).featureFlagService;
       flagService.isEnabled.mockImplementation((key: string) =>
         Promise.resolve(key === walletFlags.distributedLock)
       );
-      const redis = (service as unknown as { redisService: { setIfNotExists: jest.Mock } }).redisService;
+      const redis = (service as unknown as { redisService: { setIfNotExists: jest.Mock } })
+        .redisService;
       redis.setIfNotExists.mockResolvedValueOnce(false);
 
       await expect(service.debitBalance('wallet-123', 100, 'Debit test')).rejects.toThrow(
@@ -459,13 +467,16 @@ describe('WalletService', () => {
     });
 
     it('fails open when Redis is unavailable', async () => {
-      const flagService = (service as unknown as {
-        featureFlagService: { isEnabled: jest.Mock };
-      }).featureFlagService;
+      const flagService = (
+        service as unknown as {
+          featureFlagService: { isEnabled: jest.Mock };
+        }
+      ).featureFlagService;
       flagService.isEnabled.mockImplementation((key: string) =>
         Promise.resolve(key === walletFlags.distributedLock)
       );
-      const redis = (service as unknown as { redisService: { setIfNotExists: jest.Mock } }).redisService;
+      const redis = (service as unknown as { redisService: { setIfNotExists: jest.Mock } })
+        .redisService;
       redis.setIfNotExists.mockRejectedValueOnce(new Error('redis down'));
 
       const result = await service.debitBalance('wallet-123', 100, 'Debit test');
@@ -489,9 +500,11 @@ describe('WalletService', () => {
     });
 
     it('writes a ledger entry on debit when the flag is on', async () => {
-      const flagService = (service as unknown as {
-        featureFlagService: { isEnabled: jest.Mock };
-      }).featureFlagService;
+      const flagService = (
+        service as unknown as {
+          featureFlagService: { isEnabled: jest.Mock };
+        }
+      ).featureFlagService;
       flagService.isEnabled.mockImplementation((key: string) =>
         Promise.resolve(key === walletFlags.ledgerV2)
       );
@@ -518,9 +531,11 @@ describe('WalletService', () => {
     });
 
     it('never fails the money movement when the ledger write errors', async () => {
-      const flagService = (service as unknown as {
-        featureFlagService: { isEnabled: jest.Mock };
-      }).featureFlagService;
+      const flagService = (
+        service as unknown as {
+          featureFlagService: { isEnabled: jest.Mock };
+        }
+      ).featureFlagService;
       flagService.isEnabled.mockImplementation((key: string) =>
         Promise.resolve(key === walletFlags.ledgerV2)
       );
@@ -553,9 +568,11 @@ describe('WalletService', () => {
     });
 
     it('blocks a withdrawal when the hourly velocity limit is exceeded', async () => {
-      const flagService = (service as unknown as {
-        featureFlagService: { isEnabled: jest.Mock };
-      }).featureFlagService;
+      const flagService = (
+        service as unknown as {
+          featureFlagService: { isEnabled: jest.Mock };
+        }
+      ).featureFlagService;
       flagService.isEnabled.mockImplementation((key: string) =>
         Promise.resolve(key === walletFlags.fraudChecks)
       );
@@ -570,9 +587,11 @@ describe('WalletService', () => {
     });
 
     it('blocks a withdrawal when the daily amount cap is exceeded', async () => {
-      const flagService = (service as unknown as {
-        featureFlagService: { isEnabled: jest.Mock };
-      }).featureFlagService;
+      const flagService = (
+        service as unknown as {
+          featureFlagService: { isEnabled: jest.Mock };
+        }
+      ).featureFlagService;
       flagService.isEnabled.mockImplementation((key: string) =>
         Promise.resolve(key === walletFlags.fraudChecks)
       );
@@ -589,9 +608,11 @@ describe('WalletService', () => {
     });
 
     it('allows the withdrawal when limits are respected', async () => {
-      const flagService = (service as unknown as {
-        featureFlagService: { isEnabled: jest.Mock };
-      }).featureFlagService;
+      const flagService = (
+        service as unknown as {
+          featureFlagService: { isEnabled: jest.Mock };
+        }
+      ).featureFlagService;
       flagService.isEnabled.mockImplementation((key: string) =>
         Promise.resolve(key === walletFlags.fraudChecks)
       );

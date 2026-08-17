@@ -20,7 +20,7 @@ describe('buildPopulationQuery', () => {
     expect(sql).toContain('LEFT JOIN categories c ON c.id = j."A"');
     expect(sql).toContain('LEFT JOIN users usr ON usr.id = ci."creatorId"');
     expect(sql).toContain('usr."displayName" AS "creatorName"');
-    expect(sql).toContain("array_agg(c.name ORDER BY c.name) FILTER (WHERE c.name IS NOT NULL)");
+    expect(sql).toContain('array_agg(c.name ORDER BY c.name) FILTER (WHERE c.name IS NOT NULL)');
     expect(sql).toContain("ci.status = 'published'");
     expect(sql).toContain('ci.id > $1');
     expect(sql).toContain('ORDER BY ci.id');
@@ -44,10 +44,7 @@ describe('ContentDbService', () => {
 
   async function build(url: string | undefined): Promise<ContentDbService> {
     const moduleRef: TestingModule = await Test.createTestingModule({
-      providers: [
-        ContentDbService,
-        { provide: ConfigService, useValue: mockConfig(url) },
-      ],
+      providers: [ContentDbService, { provide: ConfigService, useValue: mockConfig(url) }],
     }).compile();
     return moduleRef.get(ContentDbService);
   }
@@ -79,7 +76,9 @@ describe('ContentDbService', () => {
 
     expect(MockPool).toHaveBeenCalledTimes(1);
     expect(MockPool).toHaveBeenCalledWith(
-      expect.objectContaining({ connectionString: 'postgresql://u:p@localhost:5432/azeebo_content' })
+      expect.objectContaining({
+        connectionString: 'postgresql://u:p@localhost:5432/azeebo_content',
+      })
     );
     expect(fakePool.query).toHaveBeenCalledWith(expect.any(String), ['', 100]);
     expect(rows[0].creatorName).toBe('Demo Creator');

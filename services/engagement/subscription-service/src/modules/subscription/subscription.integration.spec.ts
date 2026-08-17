@@ -119,7 +119,10 @@ describe('SubscriptionService Integration', () => {
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: CacheService, useValue: mockCacheService },
         { provide: ConfigService, useValue: mockConfigService },
-        { provide: FeatureFlagService, useValue: { isEnabled: jest.fn().mockResolvedValue(false) } },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(false) },
+        },
       ],
     }).compile();
 

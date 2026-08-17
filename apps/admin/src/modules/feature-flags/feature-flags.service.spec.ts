@@ -66,7 +66,10 @@ describe('FeatureFlagsService', () => {
     await service.update('search_fuzzy_trigram_weight', { value: 0.5 }, 'admin-2');
 
     expect(mockCore.setFlag).toHaveBeenCalledWith(
-      expect.not.objectContaining({ rolloutPercentage: expect.anything(), userIds: expect.anything() })
+      expect.not.objectContaining({
+        rolloutPercentage: expect.anything(),
+        userIds: expect.anything(),
+      })
     );
   });
 
@@ -200,7 +203,10 @@ describe('FeatureFlagsService', () => {
           actorId: 'admin-9',
           targetId: 'expired_a',
           details: expect.objectContaining({
-            archivedSnapshot: expect.objectContaining({ enabled: true, archivedAt: expect.any(String) }),
+            archivedSnapshot: expect.objectContaining({
+              enabled: true,
+              archivedAt: expect.any(String),
+            }),
           }),
         })
       );
@@ -250,7 +256,11 @@ describe('FeatureFlagsService', () => {
     it('no stale flags → nothing removed, nothing archived', async () => {
       mockCore.getAllFlagsWithDefaults.mockResolvedValue([
         { key: 'fresh_1', enabled: true },
-        { key: 'fresh_2', enabled: true, staleAfter: new Date(Date.now() + 86_400_000).toISOString() },
+        {
+          key: 'fresh_2',
+          enabled: true,
+          staleAfter: new Date(Date.now() + 86_400_000).toISOString(),
+        },
       ]);
 
       const result = await service.pruneStaleFlags('admin-9');
@@ -346,9 +356,7 @@ describe('FeatureFlagsService', () => {
       mockAudit.getLogs.mockImplementation((filters: { targetId?: string }) => {
         if (filters.targetId === 'with_archive') {
           return Promise.resolve({
-            logs: [
-              deletedLog({ key: 'with_archive', enabled: true, staleAfter: '2026-09-01' }),
-            ],
+            logs: [deletedLog({ key: 'with_archive', enabled: true, staleAfter: '2026-09-01' })],
             total: 1,
           });
         }

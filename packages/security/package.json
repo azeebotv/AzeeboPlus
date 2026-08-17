@@ -17,7 +17,7 @@
     "test": "jest",
     "test:cov": "jest --coverage",
     "clean": "rm -rf dist",
-    "lint": "eslint src --fix"
+    "lint": "eslint src"
   },
   "dependencies": {
     "@azeebo/shared-types": "workspace:*",

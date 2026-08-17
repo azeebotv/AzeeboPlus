@@ -53,9 +53,7 @@ const DEFAULT_COOLDOWN_MS = 5 * 60 * 1000;
  * migration's job), and healthy indexes make every trigger a no-op.
  */
 @Injectable()
-export class IndexRepairService
-  implements OnApplicationBootstrap, OnModuleInit, OnModuleDestroy
-{
+export class IndexRepairService implements OnApplicationBootstrap, OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(IndexRepairService.name);
   private lastAttemptMs = 0;
   private job?: CronJob;
@@ -167,7 +165,7 @@ export class IndexRepairService
     }
     if (!state.extensionPresent) {
       this.logger.log(
-        'Skipping index repair — pg_trgm extension is missing (creating extensions is the migration\'s job)'
+        "Skipping index repair — pg_trgm extension is missing (creating extensions is the migration's job)"
       );
       return { trigger, repaired: false, reason: 'extension-missing', indexes: null, at };
     }

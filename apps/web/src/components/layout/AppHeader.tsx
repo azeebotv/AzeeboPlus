@@ -7,6 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useWallet } from '../../context/WalletContext';
 import { useFlags } from '../../context/FlagsContext';
+import { UNIVERSE_SLUGS } from '../../lib/flags';
+import type { UniverseSlug } from '../../lib/flags';
 import BrandLogo from '../auth/BrandLogo';
 
 /* ─── Constants ─── */
@@ -154,16 +156,27 @@ export default function AppHeader({ active: _active }: { active?: string }) {
     { label: t('nav.library'), href: '/library' },
   ];
 
-  const ALL_UNIVERSE_OPTIONS = [
-    { key: 'reality', label: t('universes.reality'), href: '/reality' },
-    { key: 'creators', label: t('nav.creators'), href: '/creators' },
-    { key: 'lifestyle', label: t('universes.lifestyle'), href: '/lifestyle' },
-    { key: 'vertical', label: t('universes.vertical'), href: '/vertical' },
-    { key: 'movies', label: t('universes.movies'), href: '/movies' },
-    { key: 'games', label: t('universes.games'), href: '/games' },
-    { key: 'comedy', label: t('universes.comedy'), href: '/comedy' },
-    { key: 'sports', label: t('universes.sports'), href: '/sports' },
-  ] as const;
+  // Per-slug presentation (label + route) for universes that have a web page.
+  // Keys are canonical DB slugs, gated at render time by the `universe.<name>.enabled`
+  // sentinels so admin toggles control which entries appear.
+  const UNIVERSE_NAV_LINKS: Partial<Record<UniverseSlug, { label: string; href: string }>> = {
+    reality: { label: t('universes.reality'), href: '/reality' },
+    creator: { label: t('nav.creators'), href: '/creators' },
+    lifestyle: { label: t('universes.lifestyle'), href: '/lifestyle' },
+    vertical: { label: t('universes.vertical'), href: '/vertical' },
+    movie: { label: t('universes.movies'), href: '/movies' },
+    games: { label: t('universes.games'), href: '/games' },
+    comedy: { label: t('universes.comedy'), href: '/comedy' },
+    sports: { label: t('universes.sports'), href: '/sports' },
+    music: { label: t('universes.music'), href: '/music' },
+  };
+
+  // Derived from the shared slug map so every key is a canonical DB universe
+  // slug (admin toggles reach exactly these keys).
+  const ALL_UNIVERSE_OPTIONS = UNIVERSE_SLUGS.flatMap((key) => {
+    const link = UNIVERSE_NAV_LINKS[key];
+    return link ? [{ key, ...link }] : [];
+  });
 
   const PROFILE_MENU_ITEMS: {
     label: string;

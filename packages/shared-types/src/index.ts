@@ -4,6 +4,7 @@
 // ApiError: { code, message, details? }
 
 import type { ApiError } from './api-response-types';
+import type { Universe } from './universe';
 
 // Permission types
 /** Union of all granular permission strings used across the platform. */
@@ -173,17 +174,8 @@ export interface ContentItem {
 /** Supported content media types. */
 export type ContentType = 'video' | 'audio' | 'image' | 'article' | 'document';
 
-/** Platform universe categories. */
-export type Universe =
-  | 'reality'
-  | 'creator'
-  | 'lifestyle'
-  | 'vertical'
-  | 'movie'
-  | 'games'
-  | 'comedy'
-  | 'sports'
-  | 'music';
+// `Universe` is defined in universe.ts, derived from the canonical UNIVERSE_SLUGS
+// list so the type-level union and runtime universe values can never drift.
 export type PublishStatus = 'draft' | 'pending' | 'published' | 'archived';
 
 export interface ContentCreateRequest {
@@ -628,6 +620,11 @@ export type {
   ConsentAuditLog,
 } from './privacy-policy';
 export { PRIVACY_POLICY, checkConsentCompliance } from './privacy-policy';
+
+// Universe slugs + key builders (single source of truth for universe-scoped
+// feature-flag keys and nav sentinels — see universe.ts).
+export { UNIVERSE_SLUGS, universeEnabledKey, universeFlagKey } from './universe';
+export type { Universe, UniverseSlug } from './universe';
 
 // Universe-specific types
 export interface UniverseKpi {

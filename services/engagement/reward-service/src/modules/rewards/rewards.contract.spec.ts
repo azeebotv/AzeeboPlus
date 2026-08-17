@@ -56,6 +56,7 @@ class MockAuthGuard {
 
 describe('Rewards Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockPrismaService = {
     rewardAccount: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
@@ -64,7 +65,7 @@ describe('Rewards Controller Contract Tests', () => {
     badge: { findMany: jest.fn() },
     reward: { findUnique: jest.fn() },
     rewardRedemption: { create: jest.fn() },
-    level: { findFirst: jest.fn() },
+    level: { findUnique: jest.fn() },
     pointsLedger: { create: jest.fn(), findMany: jest.fn(), count: jest.fn() },
     $transaction: jest.fn((operations: unknown[]) => Promise.all(operations as Promise<unknown>[])),
   };
@@ -100,6 +101,8 @@ describe('Rewards Controller Contract Tests', () => {
     app = moduleFixture.createNestApplication();
     app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -136,7 +139,7 @@ describe('Rewards Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/v1/rewards/missions');
+      const response = await request(baseUrl).get('/v1/rewards/missions');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -168,7 +171,7 @@ describe('Rewards Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/rewards/redeem')
         .set('Authorization', 'Bearer valid-token')
         .send({ rewardId: 'reward-1' });
@@ -203,7 +206,7 @@ describe('Rewards Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/rewards/balance')
         .set('Authorization', 'Bearer valid-token');
 

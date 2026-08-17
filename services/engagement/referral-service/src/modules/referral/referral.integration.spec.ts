@@ -59,7 +59,10 @@ describe('ReferralService Integration', () => {
           },
         },
         { provide: CacheService, useValue: mockCacheService },
-        { provide: FeatureFlagService, useValue: { isEnabled: jest.fn().mockResolvedValue(false) } },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(false) },
+        },
       ],
     }).compile();
 

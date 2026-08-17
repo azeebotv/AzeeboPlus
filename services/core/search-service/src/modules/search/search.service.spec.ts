@@ -19,9 +19,9 @@ describe('SearchService', () => {
   // Everything ON except search_typo_tolerance, so the default search() tests
   // exercise the exact path; fuzzy tests override per-test.
   const mockFeatureFlagService = {
-    isEnabled: jest.fn().mockImplementation((key: string) =>
-      Promise.resolve(key !== 'search_typo_tolerance')
-    ),
+    isEnabled: jest
+      .fn()
+      .mockImplementation((key: string) => Promise.resolve(key !== 'search_typo_tolerance')),
     // Numeric flags: the shipped default trigram weight (0.4 = 60/40 blend).
     getValue: jest.fn().mockResolvedValue(0.4),
   };
@@ -415,9 +415,7 @@ describe('SearchService', () => {
       expect(exact?.score).toBeCloseTo(0.875);
       // The cleaner match still ranks first.
       expect(content[0]?.id).toBe('content-exact');
-      expect(mockFeatureFlagService.getValue).toHaveBeenCalledWith(
-        'search_fuzzy_trigram_weight'
-      );
+      expect(mockFeatureFlagService.getValue).toHaveBeenCalledWith('search_fuzzy_trigram_weight');
     });
 
     it('offers a suggestedQuery when the top match is a typo-correction', async () => {
@@ -657,12 +655,42 @@ describe('SearchService', () => {
       // Same Levenshtein token match (fuzzy 0.7875) for all three; trigram
       // similarity differentiates the ranking.
       const creatorsPool = [
-        { id: 'cr1', userId: 'u1', displayName: 'Avengers Endgame', bio: null, email: null, displayNameSim: 0.47, bioSim: 0 },
-        { id: 'cr2', userId: 'u2', displayName: 'Avengers Infinity War', bio: null, email: null, displayNameSim: 0.4, bioSim: 0 },
-        { id: 'cr3', userId: 'u3', displayName: 'Avengers Assemble', bio: null, email: null, displayNameSim: 0.3, bioSim: 0 },
+        {
+          id: 'cr1',
+          userId: 'u1',
+          displayName: 'Avengers Endgame',
+          bio: null,
+          email: null,
+          displayNameSim: 0.47,
+          bioSim: 0,
+        },
+        {
+          id: 'cr2',
+          userId: 'u2',
+          displayName: 'Avengers Infinity War',
+          bio: null,
+          email: null,
+          displayNameSim: 0.4,
+          bioSim: 0,
+        },
+        {
+          id: 'cr3',
+          userId: 'u3',
+          displayName: 'Avengers Assemble',
+          bio: null,
+          email: null,
+          displayNameSim: 0.3,
+          bioSim: 0,
+        },
       ];
       const universesPool = [
-        { id: 'un1', name: 'Avengers', displayName: 'Avengers Universe', nameSim: 0.47, displayNameSim: 0 },
+        {
+          id: 'un1',
+          name: 'Avengers',
+          displayName: 'Avengers Universe',
+          nameSim: 0.47,
+          displayNameSim: 0,
+        },
         { id: 'un2', name: 'Avengers Hub', displayName: null, nameSim: 0.3, displayNameSim: 0 },
       ];
       (prismaService.$queryRaw as jest.Mock)

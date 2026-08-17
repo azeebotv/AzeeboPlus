@@ -20,6 +20,17 @@ import {
   mobileFlags,
   universeEnabledKey,
 } from '@azeebo/feature-flags';
+import { UNIVERSE_SLUGS } from '@azeebo/shared-types';
+
+/**
+ * Per-universe nav sentinels: `universe.<slug>.enabled` default ON for every
+ * canonical universe slug (including the reserved `music`). The admin app
+ * publishes these exact keys (keyed by DB universe name) so web/mobile nav
+ * gating follows admin toggles.
+ */
+const universeSentinelDefaults = Object.fromEntries(
+  UNIVERSE_SLUGS.map((slug) => [universeEnabledKey(slug), true])
+) as Record<string, boolean>;
 
 @Module({
   imports: [
@@ -85,16 +96,11 @@ import {
         [mobileFlags.lowDataDefault]: false,
         [mobileFlags.pushEnabled]: true,
         [mobileFlags.biometricAuth]: false,
-        // Per-universe nav sentinels: universe.<name>.enabled (admin toggles these
-        // via the admin app; the web app hides nav entries when disabled).
-        [universeEnabledKey('reality')]: true,
-        [universeEnabledKey('creators')]: true,
-        [universeEnabledKey('lifestyle')]: true,
-        [universeEnabledKey('vertical')]: true,
-        [universeEnabledKey('movies')]: true,
-        [universeEnabledKey('games')]: true,
-        [universeEnabledKey('comedy')]: true,
-        [universeEnabledKey('sports')]: true,
+        // Per-universe nav sentinels: universe.<name>.enabled keyed by the
+        // canonical DB universe names (admin toggles these via the admin app;
+        // web/mobile hide nav entries when disabled). Derived from the shared
+        // slug map so the gateway serves exactly the keys clients consume.
+        ...universeSentinelDefaults,
       },
       // Prometheus sinks for flag observability (flag_evaluation_total /
       // flag_toggled_total at GET /metrics, labeled by service) — the gateway
@@ -116,14 +122,7 @@ import {
         mobileFlags.lowDataDefault,
         mobileFlags.pushEnabled,
         mobileFlags.biometricAuth,
-        universeEnabledKey('reality'),
-        universeEnabledKey('creators'),
-        universeEnabledKey('lifestyle'),
-        universeEnabledKey('vertical'),
-        universeEnabledKey('movies'),
-        universeEnabledKey('games'),
-        universeEnabledKey('comedy'),
-        universeEnabledKey('sports'),
+        ...UNIVERSE_SLUGS.map(universeEnabledKey),
       ],
     }),
   ],

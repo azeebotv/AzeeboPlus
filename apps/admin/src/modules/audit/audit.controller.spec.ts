@@ -39,8 +39,7 @@ describe('AuditController', () => {
   });
 
   it('passes a comma-separated targetType through as a group filter (array)', async () => {
-    const getLogs = (controller['auditService'] as unknown as { getLogs: jest.Mock })
-      .getLogs;
+    const getLogs = (controller['auditService'] as unknown as { getLogs: jest.Mock }).getLogs;
 
     await controller.getLogs(undefined, undefined, 'content,category,tag');
 
@@ -52,8 +51,7 @@ describe('AuditController', () => {
   });
 
   it('keeps a single targetType as-is', async () => {
-    const getLogs = (controller['auditService'] as unknown as { getLogs: jest.Mock })
-      .getLogs;
+    const getLogs = (controller['auditService'] as unknown as { getLogs: jest.Mock }).getLogs;
 
     await controller.getLogs(undefined, undefined, 'feature_flag');
 
@@ -65,8 +63,7 @@ describe('AuditController', () => {
   });
 
   it('trims blanks out of a comma-separated targetType', async () => {
-    const getLogs = (controller['auditService'] as unknown as { getLogs: jest.Mock })
-      .getLogs;
+    const getLogs = (controller['auditService'] as unknown as { getLogs: jest.Mock }).getLogs;
 
     await controller.getLogs(undefined, undefined, 'admin_user, role, ,settings');
 

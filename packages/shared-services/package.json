@@ -17,7 +17,7 @@
     "prebuild": "prisma generate --schema=prisma/schema.prisma",
     "build": "tsc -p tsconfig.json",
     "clean": "rm -rf dist",
-    "lint": "eslint src --fix",
+    "lint": "eslint src",
     "test": "jest",
     "test:watch": "jest --watch"
   },

@@ -64,6 +64,7 @@ const mockUsersService = {
  */
 describe('Users kill-switch (user_* flags)', () => {
   let app: INestApplication;
+  let baseUrl: string;
   const mockFeatureFlagService = {
     isEnabled: jest.fn().mockResolvedValue(false), // all user flags off
   };
@@ -96,6 +97,8 @@ describe('Users kill-switch (user_* flags)', () => {
       }
     );
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -106,23 +109,27 @@ describe('Users kill-switch (user_* flags)', () => {
     beforeAll(() => jest.clearAllMocks());
 
     it('POST /v1/users/:id/follow → 403', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/v1/users/550e8400-e29b-41d4-a716-446655440000/follow');
+      const res = await request(baseUrl).post(
+        '/v1/users/550e8400-e29b-41d4-a716-446655440000/follow'
+      );
       expect(res.status).toBe(403);
     });
     it('DELETE /v1/users/:id/follow → 403', async () => {
-      const res = await request(app.getHttpServer())
-        .delete('/v1/users/550e8400-e29b-41d4-a716-446655440000/follow');
+      const res = await request(baseUrl).delete(
+        '/v1/users/550e8400-e29b-41d4-a716-446655440000/follow'
+      );
       expect(res.status).toBe(403);
     });
     it('GET /v1/users/:id/followers → 403', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/v1/users/550e8400-e29b-41d4-a716-446655440000/followers');
+      const res = await request(baseUrl).get(
+        '/v1/users/550e8400-e29b-41d4-a716-446655440000/followers'
+      );
       expect(res.status).toBe(403);
     });
     it('GET /v1/users/:id/following → 403', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/v1/users/550e8400-e29b-41d4-a716-446655440000/following');
+      const res = await request(baseUrl).get(
+        '/v1/users/550e8400-e29b-41d4-a716-446655440000/following'
+      );
       expect(res.status).toBe(403);
     });
   });
@@ -131,12 +138,12 @@ describe('Users kill-switch (user_* flags)', () => {
     beforeAll(() => jest.clearAllMocks());
 
     it('GET /v1/users/me/universe-affinity → 403', async () => {
-      const res = await request(app.getHttpServer()).get('/v1/users/me/universe-affinity');
+      const res = await request(baseUrl).get('/v1/users/me/universe-affinity');
       expect(res.status).toBe(403);
       expect(mockUsersService.getUniverseAffinity).not.toHaveBeenCalled();
     });
     it('PATCH /v1/users/me/universe-affinity → 403', async () => {
-      const res = await request(app.getHttpServer())
+      const res = await request(baseUrl)
         .patch('/v1/users/me/universe-affinity')
         .send({ universeId: 'universe-1', score: 5 });
       expect(res.status).toBe(403);
@@ -145,7 +152,7 @@ describe('Users kill-switch (user_* flags)', () => {
 
   describe('continue_watching off', () => {
     it('GET /v1/users/me/continue-watching → 403', async () => {
-      const res = await request(app.getHttpServer()).get('/v1/users/me/continue-watching');
+      const res = await request(baseUrl).get('/v1/users/me/continue-watching');
       expect(res.status).toBe(403);
       expect(mockUsersService.getContinueWatching).not.toHaveBeenCalled();
     });
@@ -153,7 +160,7 @@ describe('Users kill-switch (user_* flags)', () => {
 
   describe('privacy_settings_v2 off', () => {
     it('PUT /v1/users/me/privacy-settings → 403', async () => {
-      const res = await request(app.getHttpServer())
+      const res = await request(baseUrl)
         .put('/v1/users/me/privacy-settings')
         .send({ profileVisibility: 'private' });
       expect(res.status).toBe(403);
@@ -165,15 +172,14 @@ describe('Users kill-switch (user_* flags)', () => {
     beforeAll(() => jest.clearAllMocks());
 
     it('POST /v1/privacy/deletion-request → 403', async () => {
-      const res = await request(app.getHttpServer())
+      const res = await request(baseUrl)
         .post('/v1/privacy/deletion-request')
         .send({ reason: 'test' });
       expect(res.status).toBe(403);
       expect(mockUsersService.requestDeletion).not.toHaveBeenCalled();
     });
     it('DELETE /v1/privacy/data/:userId → 403', async () => {
-      const res = await request(app.getHttpServer())
-        .delete('/v1/privacy/data/user-123');
+      const res = await request(baseUrl).delete('/v1/privacy/data/user-123');
       expect(res.status).toBe(403);
       expect(mockUsersService.deleteUserData).not.toHaveBeenCalled();
     });
@@ -181,23 +187,23 @@ describe('Users kill-switch (user_* flags)', () => {
 
   describe('non-gated routes stay reachable with flags off', () => {
     it('GET /v1/users/me → 200', async () => {
-      const res = await request(app.getHttpServer()).get('/v1/users/me');
+      const res = await request(baseUrl).get('/v1/users/me');
       expect(res.status).toBe(200);
     });
     it('GET /v1/users/me/preferences → 200', async () => {
-      const res = await request(app.getHttpServer()).get('/v1/users/me/preferences');
+      const res = await request(baseUrl).get('/v1/users/me/preferences');
       expect(res.status).toBe(200);
     });
     it('GET /v1/users/me/history → 200', async () => {
-      const res = await request(app.getHttpServer()).get('/v1/users/me/history');
+      const res = await request(baseUrl).get('/v1/users/me/history');
       expect(res.status).toBe(200);
     });
     it('GET /v1/users/me/privacy-settings → 200', async () => {
-      const res = await request(app.getHttpServer()).get('/v1/users/me/privacy-settings');
+      const res = await request(baseUrl).get('/v1/users/me/privacy-settings');
       expect(res.status).toBe(200);
     });
     it('GET /v1/privacy/deletion-status/:userId → 200', async () => {
-      const res = await request(app.getHttpServer()).get('/v1/privacy/deletion-status/user-123');
+      const res = await request(baseUrl).get('/v1/privacy/deletion-status/user-123');
       expect(res.status).toBe(200);
     });
   });

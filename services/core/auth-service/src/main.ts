@@ -12,7 +12,6 @@ import { createHelmetConfig, configureCors } from '@azeebo/security';
 
 import { validateEnvironment } from '@azeebo/shared-types';
 
-
 async function bootstrap(): Promise<void> {
   // Validate JWT secrets before starting
   const requiredJwtSecrets = ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'];

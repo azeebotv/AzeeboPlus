@@ -53,7 +53,8 @@ describe('HealthController', () => {
       pgTrgm: 'missing',
       indexes: 'missing',
       degraded: true,
-      warning: 'search_typo_tolerance is enabled but pg_trgm is missing — falling back to the exact path',
+      warning:
+        'search_typo_tolerance is enabled but pg_trgm is missing — falling back to the exact path',
       mode: 'exact',
       lastProbeAt: '2023-11-14T22:13:20.000Z',
     });

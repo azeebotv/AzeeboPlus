@@ -90,9 +90,7 @@ describe('IndexRepairService', () => {
     for (const call of prisma.$executeRawUnsafe.mock.calls) {
       expect(String(call[0])).toMatch(/^CREATE INDEX CONCURRENTLY IF NOT EXISTS .* USING gin/);
     }
-    expect(prisma.$executeRawUnsafe.mock.calls[0][0]).toContain(
-      'content_items_title_trgm_idx'
-    );
+    expect(prisma.$executeRawUnsafe.mock.calls[0][0]).toContain('content_items_title_trgm_idx');
     expect(searchService.refreshFuzzyProbe).toHaveBeenCalled();
   });
 

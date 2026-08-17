@@ -19,7 +19,13 @@ describe('RecommendationService flags', () => {
   let service: RecommendationService;
   let flags: { isEnabled: jest.Mock };
   let prisma: {
-    contentItem: { findMany: jest.Mock; count: jest.Mock; aggregate: jest.Mock; findUnique: jest.Mock; findFirst: jest.Mock };
+    contentItem: {
+      findMany: jest.Mock;
+      count: jest.Mock;
+      aggregate: jest.Mock;
+      findUnique: jest.Mock;
+      findFirst: jest.Mock;
+    };
     creatorProfile: { findMany: jest.Mock; findUnique: jest.Mock };
     userSegment: { findFirst: jest.Mock };
     productEvent: { count: jest.Mock; findFirst: jest.Mock };
@@ -29,7 +35,13 @@ describe('RecommendationService flags', () => {
   };
 
   const mockPrisma = () => ({
-    contentItem: { findMany: jest.fn(), count: jest.fn(), aggregate: jest.fn(), findUnique: jest.fn(), findFirst: jest.fn() },
+    contentItem: {
+      findMany: jest.fn(),
+      count: jest.fn(),
+      aggregate: jest.fn(),
+      findUnique: jest.fn(),
+      findFirst: jest.fn(),
+    },
     creatorProfile: { findMany: jest.fn(), findUnique: jest.fn() },
     userSegment: { findFirst: jest.fn() },
     productEvent: { count: jest.fn(), findFirst: jest.fn() },
@@ -43,7 +55,10 @@ describe('RecommendationService flags', () => {
       providers: [
         RecommendationService,
         { provide: PrismaService, useValue: prisma },
-        { provide: CacheService, useValue: { get: jest.fn().mockResolvedValue(null), set: jest.fn(), delete: jest.fn() } },
+        {
+          provide: CacheService,
+          useValue: { get: jest.fn().mockResolvedValue(null), set: jest.fn(), delete: jest.fn() },
+        },
         {
           provide: ConfigService,
           useValue: { get: jest.fn((_key: string, defaultValue: unknown) => defaultValue) },
@@ -118,8 +133,9 @@ describe('RecommendationService flags', () => {
 
     it('buckets the same user to the same algorithm across calls (consistency)', async () => {
       // Two algorithms enabled → hash-bucket per user
-      flags.isEnabled.mockImplementation((key: string) =>
-        key === 'recommendation_collaborative' || key === 'recommendation_content_based'
+      flags.isEnabled.mockImplementation(
+        (key: string) =>
+          key === 'recommendation_collaborative' || key === 'recommendation_content_based'
       );
       service = await compile();
       seedUserPath([publishedContent('1')]);
@@ -131,8 +147,9 @@ describe('RecommendationService flags', () => {
     });
 
     it('may bucket different users to different algorithms when both are on', async () => {
-      flags.isEnabled.mockImplementation((key: string) =>
-        key === 'recommendation_collaborative' || key === 'recommendation_content_based'
+      flags.isEnabled.mockImplementation(
+        (key: string) =>
+          key === 'recommendation_collaborative' || key === 'recommendation_content_based'
       );
       service = await compile();
 
@@ -203,8 +220,8 @@ describe('RecommendationService flags', () => {
     });
 
     it('uses cache when recommendation_caching is on', async () => {
-      flags.isEnabled.mockImplementation((key: string) =>
-        key === 'recommendation_hybrid' || key === 'recommendation_caching'
+      flags.isEnabled.mockImplementation(
+        (key: string) => key === 'recommendation_hybrid' || key === 'recommendation_caching'
       );
       service = await compile();
       const cache = (service as unknown as { cache: { get: jest.Mock; set: jest.Mock } }).cache;

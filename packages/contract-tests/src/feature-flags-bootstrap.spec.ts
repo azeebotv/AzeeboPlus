@@ -26,7 +26,7 @@ const ANONYMOUS_RESPONSE = {
     flags: [
       { key: 'web_maintenance_mode', enabled: false },
       { key: 'web_new_home', enabled: true },
-      { key: 'universe.movies.enabled', enabled: true },
+      { key: 'universe.movie.enabled', enabled: true },
     ],
     generatedAt: '2026-08-11T10:00:00.000Z',
     evaluatedFor: 'anonymous',

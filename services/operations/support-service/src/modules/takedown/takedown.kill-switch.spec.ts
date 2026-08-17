@@ -44,6 +44,7 @@ const mockTakedownService = {
  */
 describe('Support takedown kill-switch (support_takedowns_auto)', () => {
   let app: INestApplication;
+  let baseUrl: string;
   const mockFeatureFlagService = {
     isEnabled: jest.fn().mockResolvedValue(false), // all support flags off
   };
@@ -66,6 +67,8 @@ describe('Support takedown kill-switch (support_takedowns_auto)', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -78,21 +81,19 @@ describe('Support takedown kill-switch (support_takedowns_auto)', () => {
   });
 
   it('403s POST /support/takedowns when support_takedowns_auto is off', async () => {
-    const res = await request(app.getHttpServer())
+    const res = await request(baseUrl)
       .post('/support/takedowns')
       .set('Authorization', 'Bearer test')
       .send({ ticketId: 't1', contentId: 'c1', reason: 'DMCA' });
 
     expect(res.status).toBe(403);
-    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(
-      supportFlags.takedownsAuto
-    );
+    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(supportFlags.takedownsAuto);
     expect(mockTakedownService.createTakedown).not.toHaveBeenCalled();
   });
 
   it('passes the routes through when support_takedowns_auto is on', async () => {
     mockFeatureFlagService.isEnabled.mockResolvedValue(true);
-    const res = await request(app.getHttpServer())
+    const res = await request(baseUrl)
       .post('/support/takedowns')
       .set('Authorization', 'Bearer test')
       .send({ ticketId: 't1', contentId: 'c1', reason: 'DMCA' });

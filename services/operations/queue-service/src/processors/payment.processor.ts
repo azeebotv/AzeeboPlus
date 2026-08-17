@@ -311,9 +311,7 @@ export class PaymentProcessor extends WorkerHost {
    * queue_dlq_retry_max_passes, else the fallback constant (positive
    * integer). */
   private async dlqMaxRetries(): Promise<number> {
-    const perQueue = await this.featureFlagService.getFlag(
-      queueFlags.dlqRetryMaxPassesPayments
-    );
+    const perQueue = await this.featureFlagService.getFlag(queueFlags.dlqRetryMaxPassesPayments);
     const value = perQueue
       ? await this.featureFlagService.getValue(queueFlags.dlqRetryMaxPassesPayments)
       : await this.featureFlagService.getValue(queueFlags.dlqRetryMaxPasses);
@@ -328,9 +326,7 @@ export class PaymentProcessor extends WorkerHost {
    * queue_dlq_retry_base_delay_ms, else the enqueuer's per-job retryDelay,
    * then the constant (positive number). */
   private async dlqBaseDelayMs(jobBaseMs?: number): Promise<number> {
-    const perQueue = await this.featureFlagService.getFlag(
-      queueFlags.dlqRetryBaseDelayMsPayments
-    );
+    const perQueue = await this.featureFlagService.getFlag(queueFlags.dlqRetryBaseDelayMsPayments);
     const value = perQueue
       ? await this.featureFlagService.getValue(queueFlags.dlqRetryBaseDelayMsPayments)
       : await this.featureFlagService.getValue(queueFlags.dlqRetryBaseDelayMs);

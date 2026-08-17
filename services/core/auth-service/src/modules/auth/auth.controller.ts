@@ -36,10 +36,7 @@ export class AuthController {
   constructor(@Inject(AuthService) private readonly authService: AuthService) {}
 
   private getUserAgent(req: AuthRequest): string | undefined {
-    const headers = req.headers as unknown as Record<
-      string,
-      string | string[] | undefined
-    >;
+    const headers = req.headers as unknown as Record<string, string | string[] | undefined>;
     const value = headers['user-agent'];
     return Array.isArray(value) ? value[0] : value;
   }
@@ -52,8 +49,11 @@ export class AuthController {
   @ApiResponse({ status: 201, description: 'Account created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
-async signup(@Request() req: AuthRequest, @Body() registerDto: RegisterDto): Promise<AuthResponse> {
-  return this.authService.register(registerDto, req.ip, this.getUserAgent(req));
+  async signup(
+    @Request() req: AuthRequest,
+    @Body() registerDto: RegisterDto
+  ): Promise<AuthResponse> {
+    return this.authService.register(registerDto, req.ip, this.getUserAgent(req));
   }
 
   @Post('login')
@@ -63,7 +63,10 @@ async signup(@Request() req: AuthRequest, @Body() registerDto: RegisterDto): Pro
   @ApiOperation({ summary: 'User login' })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
-  @ApiResponse({ status: 403, description: 'Email not verified (when auth_email_verification_required is on)' })
+  @ApiResponse({
+    status: 403,
+    description: 'Email not verified (when auth_email_verification_required is on)',
+  })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   async login(@Request() req: AuthRequest, @Body() loginDto: LoginDto): Promise<AuthResponse> {
     return this.authService.login(loginDto, req.ip, this.getUserAgent(req));
@@ -134,7 +137,7 @@ async signup(@Request() req: AuthRequest, @Body() registerDto: RegisterDto): Pro
   @ApiResponse({ status: 200, description: 'Email verified; access + refresh tokens issued' })
   @ApiResponse({ status: 400, description: 'Invalid token' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
-async verifyEmail(@Request() req: AuthRequest, @Body() verifyEmailDto: VerifyEmailDto) {
+  async verifyEmail(@Request() req: AuthRequest, @Body() verifyEmailDto: VerifyEmailDto) {
     return this.authService.verifyEmail(verifyEmailDto, req.ip, this.getUserAgent(req));
   }
 
@@ -146,8 +149,15 @@ async verifyEmail(@Request() req: AuthRequest, @Body() verifyEmailDto: VerifyEma
   @ApiResponse({ status: 200, description: 'Verification email sent' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
-async resendVerification(@Request() req: AuthRequest, @Body() resendVerificationDto: ResendVerificationDto) {
-    return this.authService.resendVerification(resendVerificationDto, req.ip, this.getUserAgent(req));
+  async resendVerification(
+    @Request() req: AuthRequest,
+    @Body() resendVerificationDto: ResendVerificationDto
+  ) {
+    return this.authService.resendVerification(
+      resendVerificationDto,
+      req.ip,
+      this.getUserAgent(req)
+    );
   }
 
   @Post('select-role')

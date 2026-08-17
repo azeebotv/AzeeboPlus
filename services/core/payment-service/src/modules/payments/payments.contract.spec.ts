@@ -10,6 +10,7 @@ import { FeatureFlagService } from '@azeebo/feature-flags';
 
 describe('Payments Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockPaymentsService = {
     initializePayment: jest.fn(),
@@ -58,6 +59,8 @@ describe('Payments Controller Contract Tests', () => {
       next();
     });
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -80,7 +83,7 @@ describe('Payments Controller Contract Tests', () => {
         },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .post('/v1/payments/initialize')
         .set('Authorization', 'Bearer valid-token')
         .send({
@@ -102,7 +105,7 @@ describe('Payments Controller Contract Tests', () => {
         new (require('@nestjs/common').BadRequestException)('Amount must be greater than 0')
       );
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .post('/v1/payments/initialize')
         .set('Authorization', 'Bearer valid-token')
         .send({ amount: 50, currency: 'NGN' })
@@ -121,7 +124,7 @@ describe('Payments Controller Contract Tests', () => {
         },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .post('/v1/payments/verify')
         .set('Authorization', 'Bearer valid-token')
         .send({ transactionId: 'ref-123' })
@@ -148,7 +151,7 @@ describe('Payments Controller Contract Tests', () => {
         },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/payments/history')
         .set('Authorization', 'Bearer valid-token')
         .expect(200)
@@ -173,7 +176,7 @@ describe('Payments Controller Contract Tests', () => {
         },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/payments/pay-abc123')
         .set('Authorization', 'Bearer valid-token')
         .expect(200)
@@ -185,7 +188,7 @@ describe('Payments Controller Contract Tests', () => {
 
   describe('error responses', () => {
     it('should return 400 for invalid request body', () => {
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .post('/v1/payments/initialize')
         .set('Authorization', 'Bearer valid-token')
         .send({})

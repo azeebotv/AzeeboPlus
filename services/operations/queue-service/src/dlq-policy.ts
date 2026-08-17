@@ -38,26 +38,24 @@ export const DLQ_QUEUE_DEFAULTS: Record<DlqQueue, { maxPasses: number; baseDelay
   emails: { maxPasses: 3, baseDelayMs: 60000 },
 };
 
-const PER_QUEUE_KEYS: Record<
-  DlqQueue,
-  { toggle: string; maxPasses: string; baseDelayMs: string }
-> = {
-  payments: {
-    toggle: queueFlags.dlqRetryPayments,
-    maxPasses: queueFlags.dlqRetryMaxPassesPayments,
-    baseDelayMs: queueFlags.dlqRetryBaseDelayMsPayments,
-  },
-  notifications: {
-    toggle: queueFlags.dlqRetryNotifications,
-    maxPasses: queueFlags.dlqRetryMaxPassesNotifications,
-    baseDelayMs: queueFlags.dlqRetryBaseDelayMsNotifications,
-  },
-  emails: {
-    toggle: queueFlags.dlqRetryEmails,
-    maxPasses: queueFlags.dlqRetryMaxPassesEmails,
-    baseDelayMs: queueFlags.dlqRetryBaseDelayMsEmails,
-  },
-};
+const PER_QUEUE_KEYS: Record<DlqQueue, { toggle: string; maxPasses: string; baseDelayMs: string }> =
+  {
+    payments: {
+      toggle: queueFlags.dlqRetryPayments,
+      maxPasses: queueFlags.dlqRetryMaxPassesPayments,
+      baseDelayMs: queueFlags.dlqRetryBaseDelayMsPayments,
+    },
+    notifications: {
+      toggle: queueFlags.dlqRetryNotifications,
+      maxPasses: queueFlags.dlqRetryMaxPassesNotifications,
+      baseDelayMs: queueFlags.dlqRetryBaseDelayMsNotifications,
+    },
+    emails: {
+      toggle: queueFlags.dlqRetryEmails,
+      maxPasses: queueFlags.dlqRetryMaxPassesEmails,
+      baseDelayMs: queueFlags.dlqRetryBaseDelayMsEmails,
+    },
+  };
 
 /** Validate a numeric flag payload the way the processors do (positive
  * finite number; max passes floored to an integer ≥ 1). */
@@ -95,7 +93,11 @@ export async function resolveDlqPolicy(
       key: keys.toggle,
     };
   } else if (sharedToggle) {
-    toggle = { source: 'shared', value: await flags.isEnabled(queueFlags.dlqRetry), key: queueFlags.dlqRetry };
+    toggle = {
+      source: 'shared',
+      value: await flags.isEnabled(queueFlags.dlqRetry),
+      key: queueFlags.dlqRetry,
+    };
   } else {
     toggle = {
       source: 'default',

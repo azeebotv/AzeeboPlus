@@ -588,9 +588,7 @@ export class AnalyticsService {
     }
     try {
       const samplingRate = await this.getSamplingRate();
-      const sampled = events.filter((event) =>
-        this.isSampled(event.userId, samplingRate)
-      );
+      const sampled = events.filter((event) => this.isSampled(event.userId, samplingRate));
 
       await this.writeEvents(
         sampled.map((event) => ({

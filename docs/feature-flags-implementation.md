@@ -334,7 +334,6 @@ Naming: `snake_case`, `{domain}_{feature}_enabled` for kill-switches. Defaults: 
 | `packages/feature-flags` | The upgrades in §2 (cache, typed registry, bootstrap endpoint, browser bundle, audit, metrics) |
 | `packages/analytics-sdk` | `analytics_client_sampling` — sample client events via bootstrap flags |
 | `packages/api-client` | Read `featureFlags` from bootstrap response; expose `isFlagEnabled()` to all apps |
-| `packages/shared-queue` | `queue_*` per-processor toggles consumed centrally |
 | `packages/event-bus` | `events_consume_{eventType}` — pause consumers per event type (already an event catalog) |
 | `packages/shared-services` | A global `FeatureFlagModule.forRoot()` shared by all services so Redis URL/prefix/audit are configured once |
 | `packages/security` | `security_rate_limit_strict`, `security_helmet_strict` — tighten middleware progressively |

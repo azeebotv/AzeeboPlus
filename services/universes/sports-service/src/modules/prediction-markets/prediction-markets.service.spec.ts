@@ -172,11 +172,10 @@ describe('PredictionMarketsService', () => {
       (prismaService.predictionMarket.findUnique as jest.Mock).mockResolvedValue(null);
       (prismaService.predictionMarket.create as jest.Mock).mockResolvedValue(mockMarket);
 
-      const result = await service.createPredictionMarket(
-        'event-1',
-        'Will Team A win?',
-        ['Yes', 'No']
-      );
+      const result = await service.createPredictionMarket('event-1', 'Will Team A win?', [
+        'Yes',
+        'No',
+      ]);
 
       expect(result.success).toBe(true);
       expect(result.data).toHaveProperty('marketId');
@@ -222,9 +221,9 @@ describe('PredictionMarketsService', () => {
     it('should throw NotFoundException if market not found', async () => {
       (prismaService.predictionMarket.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(
-        service.placePrediction('user-1', 'nonexistent', 'Yes')
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.placePrediction('user-1', 'nonexistent', 'Yes')).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw BadRequestException if market is not active', async () => {
@@ -233,9 +232,9 @@ describe('PredictionMarketsService', () => {
         status: 'settled',
       });
 
-      await expect(
-        service.placePrediction('user-1', 'market-1', 'Yes')
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.placePrediction('user-1', 'market-1', 'Yes')).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should throw BadRequestException if event has already started', async () => {
@@ -245,9 +244,9 @@ describe('PredictionMarketsService', () => {
         status: 'live',
       });
 
-      await expect(
-        service.placePrediction('user-1', 'market-1', 'Yes')
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.placePrediction('user-1', 'market-1', 'Yes')).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should throw BadRequestException if user already has a prediction', async () => {
@@ -258,9 +257,9 @@ describe('PredictionMarketsService', () => {
       });
       (prismaService.predictionEntry.findFirst as jest.Mock).mockResolvedValue(mockEntry);
 
-      await expect(
-        service.placePrediction('user-1', 'market-1', 'Yes')
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.placePrediction('user-1', 'market-1', 'Yes')).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should throw NotFoundException if wallet not found', async () => {
@@ -272,9 +271,9 @@ describe('PredictionMarketsService', () => {
       (prismaService.predictionEntry.findFirst as jest.Mock).mockResolvedValue(null);
       (axios.get as jest.Mock).mockResolvedValue({ data: null });
 
-      await expect(
-        service.placePrediction('user-1', 'market-1', 'Yes')
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.placePrediction('user-1', 'market-1', 'Yes')).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw BadRequestException if insufficient balance', async () => {
@@ -286,9 +285,9 @@ describe('PredictionMarketsService', () => {
       (prismaService.predictionEntry.findFirst as jest.Mock).mockResolvedValue(null);
       (axios.get as jest.Mock).mockResolvedValue({ data: { id: 'wallet-1', balance: 1 } });
 
-      await expect(
-        service.placePrediction('user-1', 'market-1', 'Yes', 100)
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.placePrediction('user-1', 'market-1', 'Yes', 100)).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should compensate wallet on DB failure', async () => {
@@ -302,9 +301,7 @@ describe('PredictionMarketsService', () => {
       (prismaService.predictionMarket.update as jest.Mock).mockResolvedValue(mockMarket);
       (prismaService.predictionEntry.create as jest.Mock).mockRejectedValue(new Error('DB error'));
 
-      await expect(
-        service.placePrediction('user-1', 'market-1', 'Yes', 10)
-      ).rejects.toThrow();
+      await expect(service.placePrediction('user-1', 'market-1', 'Yes', 10)).rejects.toThrow();
 
       // Verify compensation call was made
       expect(axios.post).toHaveBeenCalledWith(
@@ -352,9 +349,7 @@ describe('PredictionMarketsService', () => {
     it('should handle no winners gracefully', async () => {
       const marketWithEntries = {
         ...mockMarket,
-        entries: [
-          { ...mockEntry, prediction: { selectedOption: 'No' } },
-        ],
+        entries: [{ ...mockEntry, prediction: { selectedOption: 'No' } }],
       };
       (prismaService.predictionMarket.findUnique as jest.Mock).mockResolvedValue(marketWithEntries);
       (prismaService.$transaction as jest.Mock).mockImplementation(async (cb) => {
@@ -422,9 +417,7 @@ describe('PredictionMarketsService', () => {
     });
 
     it('should throw on error', async () => {
-      (prismaService.predictionEntry.groupBy as jest.Mock).mockRejectedValue(
-        new Error('DB error')
-      );
+      (prismaService.predictionEntry.groupBy as jest.Mock).mockRejectedValue(new Error('DB error'));
 
       await expect(service.getLeaderboard()).rejects.toThrow();
     });

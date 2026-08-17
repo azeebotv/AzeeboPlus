@@ -88,7 +88,13 @@ describe('MetricsService', () => {
   it('reports the flag-off state as not degraded', async () => {
     service.onModuleInit();
     service.setFuzzyStatus(
-      status({ enabled: false, pgTrgm: 'missing', indexes: 'unknown', degraded: false, mode: 'exact' })
+      status({
+        enabled: false,
+        pgTrgm: 'missing',
+        indexes: 'unknown',
+        degraded: false,
+        mode: 'exact',
+      })
     );
 
     const metrics = await service.getMetrics();

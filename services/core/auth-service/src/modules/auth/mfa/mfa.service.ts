@@ -23,9 +23,12 @@ export class MfaService {
     @Inject(RedisService) private readonly redisService: RedisService
   ) {}
 
-  async generateMfaSecret(
-    userId: string
-  ): Promise<{ secret: string; qrCode: string; backupCodes: string[]; hashedBackupCodes: string[] }> {
+  async generateMfaSecret(userId: string): Promise<{
+    secret: string;
+    qrCode: string;
+    backupCodes: string[];
+    hashedBackupCodes: string[];
+  }> {
     try {
       const totp = new OTPAuth.TOTP({
         issuer: 'Azeebo+',
@@ -67,7 +70,10 @@ export class MfaService {
     try {
       return await this.redisService.get(`${MFA_PENDING_PREFIX}${userId}`);
     } catch (error) {
-      this.logger.error(`Failed to get pending MFA secret for user ${userId}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get pending MFA secret for user ${userId}`,
+        (error as Error).stack
+      );
       throw error;
     }
   }
@@ -77,7 +83,10 @@ export class MfaService {
       await this.redisService.del(`${MFA_PENDING_PREFIX}${userId}`);
       await this.redisService.del(`${MFA_PENDING_BACKUP_PREFIX}${userId}`);
     } catch (error) {
-      this.logger.error(`Failed to clear pending MFA secret for user ${userId}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to clear pending MFA secret for user ${userId}`,
+        (error as Error).stack
+      );
       throw error;
     }
   }
@@ -87,7 +96,10 @@ export class MfaService {
       const raw = await this.redisService.get(`${MFA_PENDING_BACKUP_PREFIX}${userId}`);
       return raw ? JSON.parse(raw) : null;
     } catch (error) {
-      this.logger.error(`Failed to get pending backup codes for user ${userId}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get pending backup codes for user ${userId}`,
+        (error as Error).stack
+      );
       throw error;
     }
   }

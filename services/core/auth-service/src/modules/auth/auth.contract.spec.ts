@@ -22,6 +22,7 @@ class MockRateLimitGuard {
 
 describe('Auth Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
   let hashedPassword: string;
 
   const mockAuthRepository = {
@@ -55,9 +56,11 @@ describe('Auth Controller Contract Tests', () => {
   // Flag-aware mock: guards pass (true) but the email-verification signup branch
   // stays OFF so the default contract flows issue tokens.
   const mockFeatureFlagService = {
-    isEnabled: jest.fn().mockImplementation((key: string) =>
-      Promise.resolve(key !== 'auth_email_verification_required')
-    ),
+    isEnabled: jest
+      .fn()
+      .mockImplementation((key: string) =>
+        Promise.resolve(key !== 'auth_email_verification_required')
+      ),
   };
 
   beforeAll(async () => {
@@ -150,6 +153,8 @@ describe('Auth Controller Contract Tests', () => {
       }
     );
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -190,7 +195,7 @@ describe('Auth Controller Contract Tests', () => {
         return `token-${(payload as any).sub}`;
       });
 
-      const response = await request(app.getHttpServer()).post('/auth/signup').send({
+      const response = await request(baseUrl).post('/auth/signup').send({
         email: 'test@example.com',
         password: 'password123',
         displayName: 'Test User',
@@ -224,7 +229,7 @@ describe('Auth Controller Contract Tests', () => {
       );
 
       try {
-        const response = await request(app.getHttpServer()).post('/auth/signup').send({
+        const response = await request(baseUrl).post('/auth/signup').send({
           email: 'test@example.com',
           password: 'password123',
           displayName: 'Test User',
@@ -273,7 +278,7 @@ describe('Auth Controller Contract Tests', () => {
         return `token-${(payload as any).sub}`;
       });
 
-      const response = await request(app.getHttpServer()).post('/auth/login').send({
+      const response = await request(baseUrl).post('/auth/login').send({
         email: 'test@example.com',
         password: 'password123',
       });
@@ -334,7 +339,7 @@ describe('Auth Controller Contract Tests', () => {
         return `token-${(payload as any).sub}`;
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/auth/verify-email')
         .send({ token: 'valid-verification-token' });
 
@@ -381,7 +386,7 @@ describe('Auth Controller Contract Tests', () => {
       });
       jest.spyOn(jwtService, 'sign').mockReturnValue('new-access-token');
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/auth/refresh')
         .send({ refreshToken: 'valid-refresh-token' });
 
@@ -397,7 +402,7 @@ describe('Auth Controller Contract Tests', () => {
         throw new Error('Invalid token');
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/auth/refresh')
         .send({ refreshToken: 'invalid-refresh-token' });
 
@@ -411,7 +416,7 @@ describe('Auth Controller Contract Tests', () => {
     it('should return success response', async () => {
       mockAuthRepository.deleteSessionByUserId.mockResolvedValue(1);
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/auth/logout')
         .set('Authorization', 'Bearer valid-token');
 
@@ -440,7 +445,7 @@ describe('Auth Controller Contract Tests', () => {
         updatedAt: new Date(),
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/auth/me')
         .set('Authorization', 'Bearer valid-token');
 
@@ -457,7 +462,7 @@ describe('Auth Controller Contract Tests', () => {
     it('should return error for missing authorization', async () => {
       // Without Authorization header, middleware won't set req.user
       // The service should handle missing user gracefully
-      const response = await request(app.getHttpServer()).get('/auth/me');
+      const response = await request(baseUrl).get('/auth/me');
 
       // Without the global ServiceAuthGuard, unauthenticated requests
       // may return 500 (no user) or be handled by the service

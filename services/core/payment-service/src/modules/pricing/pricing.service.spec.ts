@@ -60,7 +60,9 @@ describe('PricingService (centralized PRICE_CONFIG defaults)', () => {
 
   it('wallet limits + passes fall back to PRICE_CONFIG', async () => {
     const wallet = await service.getWalletPricing();
-    const wdata = wallet.data as { limits: { minDeposit: number; maxDeposit: number; minWithdrawal: number } };
+    const wdata = wallet.data as {
+      limits: { minDeposit: number; maxDeposit: number; minWithdrawal: number };
+    };
     expect(wdata.limits.minDeposit).toBe(Number(PRICE_CONFIG.WALLET_MIN_DEPOSIT));
     expect(wdata.limits.maxDeposit).toBe(Number(PRICE_CONFIG.WALLET_MAX_DEPOSIT));
     expect(wdata.limits.minWithdrawal).toBe(Number(PRICE_CONFIG.WALLET_MIN_WITHDRAWAL));

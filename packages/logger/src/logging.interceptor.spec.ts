@@ -14,7 +14,14 @@ describe('LoggingInterceptor', () => {
       user: { id: 'user-123' },
       traceId: undefined,
       spanId: undefined,
-    } as unknown as { headers: Record<string, string | undefined>; method: string; url: string; user?: { id?: string }; traceId?: string; spanId?: string };
+    } as unknown as {
+      headers: Record<string, string | undefined>;
+      method: string;
+      url: string;
+      user?: { id?: string };
+      traceId?: string;
+      spanId?: string;
+    };
     return {
       switchToHttp: () => ({
         getRequest: () => request,
@@ -32,7 +39,8 @@ describe('LoggingInterceptor', () => {
       error: jest.fn(),
     };
     // Swap the private Nest Logger for a spy.
-    (interceptor as unknown as { logger: { log: jest.Mock; error: jest.Mock } }).logger = loggerSpy as never;
+    (interceptor as unknown as { logger: { log: jest.Mock; error: jest.Mock } }).logger =
+      loggerSpy as never;
   });
 
   afterEach(() => {
@@ -67,31 +75,27 @@ describe('LoggingInterceptor', () => {
   it('reuses an incoming x-request-id as the trace id', (done) => {
     const context = buildContext({ traceId: 'incoming-trace-42' });
 
-    interceptor
-      .intercept(context, { handle: () => of(null) } as CallHandler)
-      .subscribe({
-        complete: () => {
-          const entry = JSON.parse(loggerSpy.log.mock.calls[0][0] as string);
-          expect(entry.traceId).toBe('incoming-trace-42');
-          done();
-        },
-      });
+    interceptor.intercept(context, { handle: () => of(null) } as CallHandler).subscribe({
+      complete: () => {
+        const entry = JSON.parse(loggerSpy.log.mock.calls[0][0] as string);
+        expect(entry.traceId).toBe('incoming-trace-42');
+        done();
+      },
+    });
   });
 
   it('generates a trace id when the request has none', (done) => {
     const context = buildContext();
     const request = context.switchToHttp().getRequest() as unknown as { traceId?: string };
 
-    interceptor
-      .intercept(context, { handle: () => of(null) } as CallHandler)
-      .subscribe({
-        complete: () => {
-          const entry = JSON.parse(loggerSpy.log.mock.calls[0][0] as string);
-          expect(entry.traceId).toBeDefined();
-          expect(request.traceId).toBe(entry.traceId);
-          done();
-        },
-      });
+    interceptor.intercept(context, { handle: () => of(null) } as CallHandler).subscribe({
+      complete: () => {
+        const entry = JSON.parse(loggerSpy.log.mock.calls[0][0] as string);
+        expect(entry.traceId).toBeDefined();
+        expect(request.traceId).toBe(entry.traceId);
+        done();
+      },
+    });
   });
 
   it('logs the error branch with the failing message when the handler throws', (done) => {
@@ -117,14 +121,12 @@ describe('LoggingInterceptor', () => {
     const requestless = buildContext();
     (requestless.switchToHttp().getRequest() as unknown as { user?: unknown }).user = undefined;
 
-    interceptor
-      .intercept(requestless, { handle: () => of(null) } as CallHandler)
-      .subscribe({
-        complete: () => {
-          const entry = JSON.parse(loggerSpy.log.mock.calls[0][0] as string);
-          expect(entry.userId).toBeUndefined();
-          done();
-        },
-      });
+    interceptor.intercept(requestless, { handle: () => of(null) } as CallHandler).subscribe({
+      complete: () => {
+        const entry = JSON.parse(loggerSpy.log.mock.calls[0][0] as string);
+        expect(entry.userId).toBeUndefined();
+        done();
+      },
+    });
   });
 });

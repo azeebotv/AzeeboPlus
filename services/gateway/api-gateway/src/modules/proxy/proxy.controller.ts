@@ -283,7 +283,8 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       {
         method: 'POST',
         path: '/admin/indexes/repair',
-        description: 'Recreate missing GIN trigram indexes (self-heal; Alertmanager webhook target)',
+        description:
+          'Recreate missing GIN trigram indexes (self-heal; Alertmanager webhook target)',
       },
     ],
   },
@@ -429,7 +430,11 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'DELETE', path: '/reports/:id', description: 'Delete report' },
       { method: 'GET', path: '/config', description: 'Get platform config' },
       { method: 'PATCH', path: '/config', description: 'Update platform config' },
-      { method: 'GET', path: '/feature-flags', description: 'List global feature flags with defaults' },
+      {
+        method: 'GET',
+        path: '/feature-flags',
+        description: 'List global feature flags with defaults',
+      },
       {
         method: 'GET',
         path: '/feature-flags/known',
@@ -443,7 +448,8 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       {
         method: 'GET',
         path: '/feature-flags/stale/metrics',
-        description: 'Per-key flag_stale_running_total (which stale flags are actively served past expiry)',
+        description:
+          'Per-key flag_stale_running_total (which stale flags are actively served past expiry)',
       },
       {
         method: 'POST',
@@ -458,7 +464,8 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       {
         method: 'POST',
         path: '/feature-flags/nightly/run',
-        description: 'Run the nightly stale-flag pass now (owner sweep → auto-prune → ops-channel summary)',
+        description:
+          'Run the nightly stale-flag pass now (owner sweep → auto-prune → ops-channel summary)',
       },
       {
         method: 'GET',
@@ -1071,7 +1078,8 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       {
         method: 'POST',
         path: '/:queue/jobs/:jobId/retry-now',
-        description: 'Re-queue a permanently dead-lettered job with a fresh attempts budget (admin)',
+        description:
+          'Re-queue a permanently dead-lettered job with a fresh attempts budget (admin)',
       },
     ],
   },

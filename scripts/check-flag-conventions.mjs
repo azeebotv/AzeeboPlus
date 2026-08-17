@@ -1,57 +1,45 @@
 #!/usr/bin/env node
 /**
- * Flag conventions CI check.
+ * Flag conventions CI check — CLI entry point.
  *
- * Scans `packages/feature-flags/src/registries.ts` and fails on:
- *  - keys not matching `^[a-z][a-z0-9_]*$` (snake_case, service-prefixed)
- *  - registries with no leading service segment on any key (e.g. `mobile_`)
- *  - duplicated flag keys across registries
- *  - keys whose literal string differs from the property name (kebab/mixed)
+ * All rule logic lives in `scripts/lib/flag-conventions-core.mjs` so the rules
+ * can be unit-tested against fixture trees (see scripts/__tests__). This file
+ * only resolves the repo root, prints violations, and sets the exit code.
+ *
+ * Parts covered (see core module for details):
+ *   1 — registry keys in `packages/feature-flags/src/registries.ts`
+ *   2 — universe sentinels (canonical UNIVERSE_SLUGS, sentinel keys, builder
+ *       args, nav-config `flag:` values, gateway derivation)
+ *   3 — single-registration hygiene for shared dynamic modules per workspace
+ *   4 — FeatureFlagGuard must be paired with a matching @FeatureFlag (A-8)
  *
  * Run: `node scripts/check-flag-conventions.mjs`
+ *
+ * Optional `--root <dir>` overrides the repo root (used by the unit tests in
+ * scripts/__tests__ to run the CLI against fixture trees).
  */
 
-import { readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { runFlagConventionChecks } from './lib/flag-conventions-core.mjs';
 
-const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const file = path.join(root, 'packages/feature-flags/src/registries.ts');
-const src = readFileSync(file, 'utf8');
-
-const KEY_RE = /\b([a-zA-Z][a-zA-Z0-9]*):\s*'((?:[a-z]+_)*[a-z][a-z0-9_]*)'/g;
-const errors = [];
-
-const seen = new Map();
-let match;
-while ((match = KEY_RE.exec(src)) !== null) {
-  const prop = match[1];
-  const key = match[2];
-  if (seen.has(key)) {
-    errors.push(`duplicate flag key "${key}" (first seen at ${seen.get(key)})`);
-    continue;
+const rootArgIndex = process.argv.indexOf('--root');
+let root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+if (rootArgIndex !== -1) {
+  const rootArg = process.argv[rootArgIndex + 1];
+  if (!rootArg) {
+    console.error('--root requires a directory path');
+    process.exit(2);
   }
-  seen.set(key, match.index);
-  if (!/^[a-z][a-z0-9_]*$/.test(key)) {
-    errors.push(`flag key "${key}" is not snake_case`);
-  }
-  const segments = key.split('_');
-  if (segments.length < 2) {
-    errors.push(`flag key "${key}" has no service prefix`);
-  }
-  // Property is camelCase of the key WITHOUT the domain prefix. Most registries
-  // strip one segment (walletFlags.withdrawalsEnabled ↔ wallet_withdrawals_enabled);
-  // liveEventFlags strips two (ppv ↔ live_event_ppv), so accept 1–2 segments.
-  const parts = key.split('_');
-  const toCamel = (s) => s.replace(/_([a-z0-9])/g, (_, c) => c.toUpperCase());
-  const one = toCamel(parts.slice(1).join('_'));
-  const two = toCamel(parts.slice(2).join('_'));
-  if (prop !== one && prop !== two) {
-    errors.push(
-      `flag key "${key}" has mismatched property "${prop}" (expected "${one}" or "${two}")`
-    );
+  root = path.resolve(rootArg);
+  if (!existsSync(root)) {
+    console.error(`--root directory does not exist: ${root}`);
+    process.exit(2);
   }
 }
+
+const { errors, uniqueKeys, slugCount } = runFlagConventionChecks(root);
 
 if (errors.length > 0) {
   console.error('Flag convention violations:');
@@ -59,4 +47,6 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
-console.log(`Flag conventions OK (${seen.size} unique keys checked).`);
+console.log(
+  `Flag conventions OK (${uniqueKeys} unique keys, ${slugCount} universe slugs).`
+);

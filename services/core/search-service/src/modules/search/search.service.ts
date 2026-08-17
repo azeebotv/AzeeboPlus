@@ -125,7 +125,10 @@ export class SearchService implements OnModuleInit {
   // unindexed), so that combination warns without degrading.
   private pgTrgmAvailable: boolean | null = null;
   private pgTrgmIndexesPresent: boolean | null = null;
-  private pgTrgmProbeInFlight: Promise<{ available: boolean | null; indexesPresent: boolean | null }> | null = null;
+  private pgTrgmProbeInFlight: Promise<{
+    available: boolean | null;
+    indexesPresent: boolean | null;
+  }> | null = null;
   private pgTrgmLastProbeMs = 0;
   private pgTrgmWarned = false;
   private pgTrgmIndexesWarned = false;
@@ -317,9 +320,7 @@ export class SearchService implements OnModuleInit {
       degraded,
       warning,
       mode: enabled && this.pgTrgmAvailable !== false ? 'fuzzy' : 'exact',
-      lastProbeAt: this.pgTrgmLastProbeMs
-        ? new Date(this.pgTrgmLastProbeMs).toISOString()
-        : null,
+      lastProbeAt: this.pgTrgmLastProbeMs ? new Date(this.pgTrgmLastProbeMs).toISOString() : null,
     };
   }
 
@@ -332,9 +333,7 @@ export class SearchService implements OnModuleInit {
   private async isPgTrgmUsable(): Promise<boolean> {
     if (this.pgTrgmProbeInFlight) {
       await this.pgTrgmProbeInFlight;
-    } else if (
-      Date.now() - this.pgTrgmLastProbeMs >= SearchService.PG_TRGM_REPROBE_INTERVAL_MS
-    ) {
+    } else if (Date.now() - this.pgTrgmLastProbeMs >= SearchService.PG_TRGM_REPROBE_INTERVAL_MS) {
       this.pgTrgmProbeInFlight = this.probePgTrgm().then((result) => {
         this.pgTrgmAvailable = result.available;
         this.pgTrgmIndexesPresent = result.indexesPresent;
@@ -395,9 +394,7 @@ export class SearchService implements OnModuleInit {
     // path (and warn) instead of failing every fuzzy request. The *effective*
     // mode is part of the cache key so toggling the flag or the extension
     // doesn't serve stale results across modes.
-    const typoToleranceEnabled = await this.featureFlagService.isEnabled(
-      searchFlags.typoTolerance
-    );
+    const typoToleranceEnabled = await this.featureFlagService.isEnabled(searchFlags.typoTolerance);
     const fuzzyUsable = typoToleranceEnabled && (await this.isPgTrgmUsable());
 
     // Check cache
@@ -470,52 +467,46 @@ export class SearchService implements OnModuleInit {
     const universesSkip = (universesPage - 1) * universesLimit;
 
     try {
-      const [
-        contentItems,
-        contentTotal,
-        creators,
-        creatorsTotal,
-        universes,
-        universesTotal,
-      ] = await Promise.all([
-        this.prisma.contentItem.findMany({
-          where: whereCondition,
-          skip,
-          take: limit,
-          orderBy,
-        }),
-        this.prisma.contentItem.count({ where: whereCondition }),
-        this.prisma.creatorProfile.findMany({
-          where: {
-            bio: { contains: escapedQuery, mode: 'insensitive' },
-          },
-          skip: creatorsSkip,
-          take: creatorsLimit,
-        }),
-        this.prisma.creatorProfile.count({
-          where: {
-            bio: { contains: escapedQuery, mode: 'insensitive' },
-          },
-        }),
-        this.prisma.universe.findMany({
-          where: {
-            OR: [
-              { name: { contains: escapedQuery, mode: 'insensitive' } },
-              { displayName: { contains: escapedQuery, mode: 'insensitive' } },
-            ],
-          },
-          skip: universesSkip,
-          take: universesLimit,
-        }),
-        this.prisma.universe.count({
-          where: {
-            OR: [
-              { name: { contains: escapedQuery, mode: 'insensitive' } },
-              { displayName: { contains: escapedQuery, mode: 'insensitive' } },
-            ],
-          },
-        }),
-      ]);
+      const [contentItems, contentTotal, creators, creatorsTotal, universes, universesTotal] =
+        await Promise.all([
+          this.prisma.contentItem.findMany({
+            where: whereCondition,
+            skip,
+            take: limit,
+            orderBy,
+          }),
+          this.prisma.contentItem.count({ where: whereCondition }),
+          this.prisma.creatorProfile.findMany({
+            where: {
+              bio: { contains: escapedQuery, mode: 'insensitive' },
+            },
+            skip: creatorsSkip,
+            take: creatorsLimit,
+          }),
+          this.prisma.creatorProfile.count({
+            where: {
+              bio: { contains: escapedQuery, mode: 'insensitive' },
+            },
+          }),
+          this.prisma.universe.findMany({
+            where: {
+              OR: [
+                { name: { contains: escapedQuery, mode: 'insensitive' } },
+                { displayName: { contains: escapedQuery, mode: 'insensitive' } },
+              ],
+            },
+            skip: universesSkip,
+            take: universesLimit,
+          }),
+          this.prisma.universe.count({
+            where: {
+              OR: [
+                { name: { contains: escapedQuery, mode: 'insensitive' } },
+                { displayName: { contains: escapedQuery, mode: 'insensitive' } },
+              ],
+            },
+          }),
+        ]);
 
       const result: SearchResponse = {
         success: true,
@@ -739,10 +730,7 @@ export class SearchService implements OnModuleInit {
       // prefer that correction over the raw best match — the dictionary makes
       // popular corrections sticky. Only consulted when a suggestion is
       // otherwise warranted (top match below the decisive anchor).
-      if (
-        suggestedQuery &&
-        (await this.featureFlagService.isEnabled(searchFlags.typoDictionary))
-      ) {
+      if (suggestedQuery && (await this.featureFlagService.isEnabled(searchFlags.typoDictionary))) {
         const learned = await this.getTypoCorrections(query, 5);
         if (learned.length > 0) {
           const poolByTitle = new Map(
@@ -866,9 +854,7 @@ export class SearchService implements OnModuleInit {
   private async fuzzyCreators(
     query: string,
     trigramWeight: number
-  ): Promise<
-    Array<{ creator: FuzzyCreatorRow; score: number; fuzzy: number; trigram: number }>
-  > {
+  ): Promise<Array<{ creator: FuzzyCreatorRow; score: number; fuzzy: number; trigram: number }>> {
     const candidates = await this.prisma.$queryRaw<FuzzyCreatorRow[]>(Prisma.sql`
       SELECT c.id, c."userId", c."displayName", c.bio, c.email,
         similarity(c."displayName", ${query}) AS "displayNameSim",
@@ -905,10 +891,7 @@ export class SearchService implements OnModuleInit {
   /** Fail-open AI suggestion ranking: POST the query + candidate list to the
    * configured ranker and use the returned ordering. Any problem (no URL,
    * timeout, malformed payload) logs and returns the input order unchanged. */
-  private async rankSuggestionsWithAi(
-    query: string,
-    candidates: string[]
-  ): Promise<string[]> {
+  private async rankSuggestionsWithAi(query: string, candidates: string[]): Promise<string[]> {
     if (!this.suggestionsAiUrl || candidates.length === 0) {
       return candidates;
     }
@@ -927,11 +910,12 @@ export class SearchService implements OnModuleInit {
       // Keep only suggestions the ranker returned that were candidates,
       // then append any it dropped so the response never shrinks.
       const candidateSet = new Set(candidates);
-      return [...ranked.filter((s) => candidateSet.has(s)), ...candidates.filter((s) => !ranked.includes(s))];
+      return [
+        ...ranked.filter((s) => candidateSet.has(s)),
+        ...candidates.filter((s) => !ranked.includes(s)),
+      ];
     } catch (error) {
-      this.logger.warn(
-        `AI suggestion ranking failed for "${query}": ${(error as Error).message}`
-      );
+      this.logger.warn(`AI suggestion ranking failed for "${query}": ${(error as Error).message}`);
       return candidates;
     }
   }

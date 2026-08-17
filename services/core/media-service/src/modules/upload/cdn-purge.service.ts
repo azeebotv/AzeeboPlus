@@ -40,9 +40,7 @@ export class CdnPurgeService {
       : null;
 
     if (!this.cloudFront) {
-      this.logger.warn(
-        'CLOUDFRONT_DISTRIBUTION_ID not set — CDN purges will be no-ops (dev mode)'
-      );
+      this.logger.warn('CLOUDFRONT_DISTRIBUTION_ID not set — CDN purges will be no-ops (dev mode)');
     }
   }
 
@@ -50,11 +48,7 @@ export class CdnPurgeService {
   async purgeKeys(keys: string[]): Promise<CdnPurgeResult> {
     // Normalize each key to a leading-slash path, then dedupe.
     const paths = [
-      ...new Set(
-        keys
-          .filter((k) => k && k.trim())
-          .map((k) => `/${k.trim().replace(/^\/+/, '')}`)
-      ),
+      ...new Set(keys.filter((k) => k && k.trim()).map((k) => `/${k.trim().replace(/^\/+/, '')}`)),
     ];
     return this.createInvalidation(paths);
   }
@@ -73,9 +67,7 @@ export class CdnPurgeService {
       return { purged: 0 };
     }
     if (!this.cloudFront) {
-      this.logger.warn(
-        `CDN purge skipped (CloudFront not configured): ${paths.length} path(s)`
-      );
+      this.logger.warn(`CDN purge skipped (CloudFront not configured): ${paths.length} path(s)`);
       return { purged: 0 };
     }
 

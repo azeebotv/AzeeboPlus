@@ -14,7 +14,7 @@ import {
   fetchBootstrapFlags,
   getFlagValue,
   isFlagEnabled,
-  universeFlagKey,
+  universeEnabledKey,
   type BootstrapFlag,
 } from '../lib/flags';
 
@@ -57,7 +57,7 @@ export function FlagsProvider({ children }: { children: ReactNode }): React.JSX.
       ready,
       isEnabled: (key) => isFlagEnabled(flags, key),
       getValue: (key) => getFlagValue(flags, key),
-      universeEnabled: (name) => isFlagEnabled(flags, universeFlagKey(name)),
+      universeEnabled: (name) => isFlagEnabled(flags, universeEnabledKey(name)),
       refresh: async () => {
         if (typeof window !== 'undefined') {
           try {

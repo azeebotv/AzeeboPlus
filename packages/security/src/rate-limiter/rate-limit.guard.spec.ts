@@ -184,10 +184,10 @@ describe('RateLimitGuard', () => {
       jest.spyOn(reflector, 'get').mockReturnValue({ limit: 40, windowMs: 60000 });
 
       await strictGuard.canActivate(context);
-      expect(rateLimitService.checkRateLimit).toHaveBeenCalledWith(
-        expect.any(String),
-        { limit: 20, windowMs: 60000 }
-      );
+      expect(rateLimitService.checkRateLimit).toHaveBeenCalledWith(expect.any(String), {
+        limit: 20,
+        windowMs: 60000,
+      });
     });
 
     it('should keep the decorated limit when the strict-mode resolver is off', async () => {
@@ -216,10 +216,10 @@ describe('RateLimitGuard', () => {
       jest.spyOn(reflector, 'get').mockReturnValue({ limit: 40, windowMs: 60000 });
 
       await laxGuard.canActivate(context);
-      expect(rateLimitService.checkRateLimit).toHaveBeenCalledWith(
-        expect.any(String),
-        { limit: 40, windowMs: 60000 }
-      );
+      expect(rateLimitService.checkRateLimit).toHaveBeenCalledWith(expect.any(String), {
+        limit: 40,
+        windowMs: 60000,
+      });
     });
   });
 });

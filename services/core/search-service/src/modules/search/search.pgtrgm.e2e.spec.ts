@@ -50,6 +50,7 @@ const UNIVERSE_SEED_IDS = ['e2e-mcu', 'e2e-dc'];
 jest.setTimeout(120_000);
 
 if (!RUN) {
+  // eslint-disable-next-line azeebo-custom/no-console-log -- opt-in skip guidance for ops
   console.log(
     `[search.pgtrgm.e2e] Skipping — opt-in. Boot docker infra with \`docker compose ` +
       `-f docker-compose.test.yml up -d --wait redis-test postgres-test\` then run \`pnpm ` +
@@ -123,22 +124,22 @@ liveDescribe('search pg_trgm fuzzy search (real Postgres + real Redis)', () => {
     // path index-backed instead of an in-process pool.
     await prisma.$executeRawUnsafe('CREATE EXTENSION IF NOT EXISTS pg_trgm');
     await prisma.$executeRawUnsafe(
-      'CREATE INDEX IF NOT EXISTS content_items_title_trgm_idx ON content_items USING gin (title gin_trgm_ops)',
+      'CREATE INDEX IF NOT EXISTS content_items_title_trgm_idx ON content_items USING gin (title gin_trgm_ops)'
     );
     await prisma.$executeRawUnsafe(
-      'CREATE INDEX IF NOT EXISTS content_items_description_trgm_idx ON content_items USING gin (description gin_trgm_ops)',
+      'CREATE INDEX IF NOT EXISTS content_items_description_trgm_idx ON content_items USING gin (description gin_trgm_ops)'
     );
     await prisma.$executeRawUnsafe(
-      'CREATE INDEX IF NOT EXISTS creator_profiles_displayName_trgm_idx ON creator_profiles USING gin ("displayName" gin_trgm_ops)',
+      'CREATE INDEX IF NOT EXISTS creator_profiles_displayName_trgm_idx ON creator_profiles USING gin ("displayName" gin_trgm_ops)'
     );
     await prisma.$executeRawUnsafe(
-      'CREATE INDEX IF NOT EXISTS creator_profiles_bio_trgm_idx ON creator_profiles USING gin (bio gin_trgm_ops)',
+      'CREATE INDEX IF NOT EXISTS creator_profiles_bio_trgm_idx ON creator_profiles USING gin (bio gin_trgm_ops)'
     );
     await prisma.$executeRawUnsafe(
-      'CREATE INDEX IF NOT EXISTS universes_name_trgm_idx ON universes USING gin (name gin_trgm_ops)',
+      'CREATE INDEX IF NOT EXISTS universes_name_trgm_idx ON universes USING gin (name gin_trgm_ops)'
     );
     await prisma.$executeRawUnsafe(
-      'CREATE INDEX IF NOT EXISTS universes_displayName_trgm_idx ON universes USING gin ("displayName" gin_trgm_ops)',
+      'CREATE INDEX IF NOT EXISTS universes_displayName_trgm_idx ON universes USING gin ("displayName" gin_trgm_ops)'
     );
 
     // Seed creator profiles + universes so the fuzzy creators/universes

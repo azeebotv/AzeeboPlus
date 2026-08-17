@@ -211,7 +211,8 @@ export default function GuestHomepage() {
                   icon: '\u{1F3AC}',
                   href: '/movies',
                   color: colors.primary[500],
-                  flag: 'movies',
+                  // Canonical DB slug (matches admin-published `universe.movie.enabled`).
+                  flag: 'movie',
                 },
                 {
                   name: 'Comedy',
@@ -226,6 +227,14 @@ export default function GuestHomepage() {
                   href: '/sports',
                   color: universeColors.sports,
                   flag: 'sports',
+                },
+                {
+                  name: 'Music',
+                  icon: '\u{1F3B5}',
+                  href: '/music',
+                  color: universeColors.music,
+                  // Canonical DB slug (matches admin-published `universe.music.enabled`).
+                  flag: 'music',
                 },
                 {
                   name: 'Reality',
@@ -260,7 +269,8 @@ export default function GuestHomepage() {
                   icon: '\u{1F4E1}',
                   href: '/creators',
                   color: universeColors.creators,
-                  flag: 'creators',
+                  // Canonical DB slug (matches admin-published `universe.creator.enabled`).
+                  flag: 'creator',
                 },
                 {
                   name: 'Cinemaxis',
@@ -274,19 +284,19 @@ export default function GuestHomepage() {
                 // bootstrap universe.<name>.enabled sentinels (admin-tunable).
                 .filter((u) => universeEnabled(u.flag))
                 .map((u) => (
-                <Pressable
-                  key={u.name}
-                  style={styles.universeCard}
-                  onPress={() => router.push(u.href as string)}
-                  accessibilityLabel={`${t('home.explore')} ${u.name}`}
-                  accessibilityRole="button"
-                >
-                  <View style={[styles.universeIcon, { backgroundColor: `${u.color}22` }]}>
-                    <Text style={styles.universeEmoji}>{u.icon}</Text>
-                  </View>
-                  <Text style={styles.universeName}>{u.name}</Text>
-                </Pressable>
-              ))}
+                  <Pressable
+                    key={u.name}
+                    style={styles.universeCard}
+                    onPress={() => router.push(u.href as string)}
+                    accessibilityLabel={`${t('home.explore')} ${u.name}`}
+                    accessibilityRole="button"
+                  >
+                    <View style={[styles.universeIcon, { backgroundColor: `${u.color}22` }]}>
+                      <Text style={styles.universeEmoji}>{u.icon}</Text>
+                    </View>
+                    <Text style={styles.universeName}>{u.name}</Text>
+                  </Pressable>
+                ))}
             </View>
           </View>
         </ScrollReveal>

@@ -70,6 +70,7 @@ const mockRateLimitGuard = {
 
 describe('Notification Service Rate Limiting & Pagination Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockNotificationsService = {
     getNotifications: jest.fn().mockResolvedValue({
@@ -132,6 +133,8 @@ describe('Notification Service Rate Limiting & Pagination Tests', () => {
     app = moduleFixture.createNestApplication();
     app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -154,7 +157,7 @@ describe('Notification Service Rate Limiting & Pagination Tests', () => {
 
   describe('Rate Limiting - GET /v1/notifications', () => {
     it('should allow requests within rate limit', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/notifications')
         .set('Authorization', 'Bearer test-token');
 
@@ -170,7 +173,7 @@ describe('Notification Service Rate Limiting & Pagination Tests', () => {
         );
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/notifications')
         .set('Authorization', 'Bearer test-token');
 
@@ -182,7 +185,7 @@ describe('Notification Service Rate Limiting & Pagination Tests', () => {
         throw new UnauthorizedException();
       });
 
-      const response = await request(app.getHttpServer()).get('/v1/notifications');
+      const response = await request(baseUrl).get('/v1/notifications');
 
       expect(response.status).toBe(401);
     });
@@ -190,7 +193,7 @@ describe('Notification Service Rate Limiting & Pagination Tests', () => {
 
   describe('Pagination - GET /v1/notifications', () => {
     it('should return paginated results with default page/limit', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/notifications')
         .set('Authorization', 'Bearer test-token');
 
@@ -217,7 +220,7 @@ describe('Notification Service Rate Limiting & Pagination Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/notifications?page=3')
         .set('Authorization', 'Bearer test-token');
 
@@ -243,7 +246,7 @@ describe('Notification Service Rate Limiting & Pagination Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/notifications?limit=50')
         .set('Authorization', 'Bearer test-token');
 
@@ -268,7 +271,7 @@ describe('Notification Service Rate Limiting & Pagination Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/notifications?limit=1000')
         .set('Authorization', 'Bearer test-token');
 
@@ -293,7 +296,7 @@ describe('Notification Service Rate Limiting & Pagination Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/notifications?page=2')
         .set('Authorization', 'Bearer test-token');
 

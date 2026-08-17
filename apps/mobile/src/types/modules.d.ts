@@ -25,21 +25,36 @@ declare module '@expo/vector-icons' {
 declare module '@expo/vector-icons/Ionicons' {
   import { ComponentType } from 'react';
   import { StyleProp, TextStyle } from 'react-native';
-  const Ionicons: ComponentType<{ name: string; size?: number; color?: string; style?: StyleProp<TextStyle> }>;
+  const Ionicons: ComponentType<{
+    name: string;
+    size?: number;
+    color?: string;
+    style?: StyleProp<TextStyle>;
+  }>;
   export default Ionicons;
 }
 
 declare module '@expo/vector-icons/MaterialIcons' {
   import { ComponentType } from 'react';
   import { StyleProp, TextStyle } from 'react-native';
-  const MaterialIcons: ComponentType<{ name: string; size?: number; color?: string; style?: StyleProp<TextStyle> }>;
+  const MaterialIcons: ComponentType<{
+    name: string;
+    size?: number;
+    color?: string;
+    style?: StyleProp<TextStyle>;
+  }>;
   export default MaterialIcons;
 }
 
 declare module '@expo/vector-icons/FontAwesome' {
   import { ComponentType } from 'react';
   import { StyleProp, TextStyle } from 'react-native';
-  const FontAwesome: ComponentType<{ name: string; size?: number; color?: string; style?: StyleProp<TextStyle> }>;
+  const FontAwesome: ComponentType<{
+    name: string;
+    size?: number;
+    color?: string;
+    style?: StyleProp<TextStyle>;
+  }>;
   export default FontAwesome;
 }
 

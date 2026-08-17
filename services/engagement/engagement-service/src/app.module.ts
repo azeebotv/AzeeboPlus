@@ -11,6 +11,7 @@ import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { CacheModule } from '@azeebo/shared-services';
 import { FeatureFlagModule, engagementFlags } from '@azeebo/feature-flags';
 import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
+import { JOB_RETENTION_POLICY } from '@azeebo/queue-policy';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
         port: parseInt(process.env.REDIS_PORT || '6379'),
         password: process.env.REDIS_PASSWORD,
       },
+      defaultJobOptions: JOB_RETENTION_POLICY,
     }),
     EngagementModule,
     AdminModule,

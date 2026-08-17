@@ -85,16 +85,13 @@ export class DeviceLimitService {
     if (!secret) return null;
 
     try {
-      const response = await axios.get(
-        `${this.subscriptionServiceUrl}/v1/subscriptions/current`,
-        {
-          headers: {
-            'x-user-id': userId,
-            'x-gateway-secret': secret,
-          },
-          timeout: 5000,
-        }
-      );
+      const response = await axios.get(`${this.subscriptionServiceUrl}/v1/subscriptions/current`, {
+        headers: {
+          'x-user-id': userId,
+          'x-gateway-secret': secret,
+        },
+        timeout: 5000,
+      });
       const subscription = response.data?.data;
       const planMax = subscription?.plan?.maxDevices;
       return typeof planMax === 'number' && planMax > 0 ? planMax : null;

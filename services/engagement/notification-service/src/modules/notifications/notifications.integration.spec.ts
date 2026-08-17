@@ -26,9 +26,11 @@ describe('NotificationsService Integration', () => {
   let service: NotificationsService;
 
   const mockFlagService = {
-    isEnabled: jest.fn().mockImplementation((key: string) =>
-      Promise.resolve(key !== notificationFlags.preferencesV2)
-    ),
+    isEnabled: jest
+      .fn()
+      .mockImplementation((key: string) =>
+        Promise.resolve(key !== notificationFlags.preferencesV2)
+      ),
   };
 
   const mockPrismaService = {

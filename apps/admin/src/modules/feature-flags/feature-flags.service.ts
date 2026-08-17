@@ -28,9 +28,7 @@ export class FeatureFlagsService {
       ...(dto.value !== undefined ? { value: dto.value } : {}),
       ...(dto.description !== undefined ? { description: dto.description } : {}),
       ...(dto.owner !== undefined ? { owner: dto.owner } : {}),
-      ...(dto.rolloutPercentage !== undefined
-        ? { rolloutPercentage: dto.rolloutPercentage }
-        : {}),
+      ...(dto.rolloutPercentage !== undefined ? { rolloutPercentage: dto.rolloutPercentage } : {}),
       ...(dto.userIds !== undefined ? { userIds: dto.userIds } : {}),
       ...(dto.staleAfter !== undefined ? { staleAfter: dto.staleAfter } : {}),
       ...(actorId ? { lastToggledBy: actorId } : {}),
@@ -96,9 +94,7 @@ export class FeatureFlagsService {
         removed.push(await this.remove(flag.key, actorId));
       } catch (error) {
         skipped.push(flag.key);
-        this.logger.warn(
-          `Failed to prune stale flag ${flag.key}: ${(error as Error).message}`
-        );
+        this.logger.warn(`Failed to prune stale flag ${flag.key}: ${(error as Error).message}`);
       }
     }
 
@@ -138,9 +134,7 @@ export class FeatureFlagsService {
     const deletedLog = result.logs[0] as
       | (Record<string, unknown> & { details?: Record<string, unknown> })
       | undefined;
-    const snapshot = deletedLog?.details?.archivedSnapshot as
-      | Record<string, unknown>
-      | undefined;
+    const snapshot = deletedLog?.details?.archivedSnapshot as Record<string, unknown> | undefined;
     if (!snapshot) {
       return { key, restored: false, reason: 'no-archive' };
     }
@@ -225,7 +219,9 @@ export class FeatureFlagsService {
         };
       }
     } catch (error) {
-      this.logger.warn(`Failed to snapshot flag ${key} before removal: ${(error as Error).message}`);
+      this.logger.warn(
+        `Failed to snapshot flag ${key} before removal: ${(error as Error).message}`
+      );
     }
 
     await this.featureFlagService.deleteFlag(key);

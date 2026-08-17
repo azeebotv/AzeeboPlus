@@ -37,7 +37,7 @@ export class NotificationsService {
     'email-verification': 'Verify Your Email Address',
     'password-reset': 'Password Reset Request',
     'magic-link': 'Your Azeebo+ Sign-In Link',
-    'digest': 'Your Azeebo+ Daily Digest',
+    digest: 'Your Azeebo+ Daily Digest',
     'flag-stale': 'Action Required: Stale Feature Flag',
   };
 
@@ -228,9 +228,7 @@ export class NotificationsService {
     }
   ): Promise<{ success: boolean; data: { message: string } }> {
     try {
-      const v2Enabled = await this.featureFlagService.isEnabled(
-        notificationFlags.preferencesV2
-      );
+      const v2Enabled = await this.featureFlagService.isEnabled(notificationFlags.preferencesV2);
 
       const existing = await this.prisma.notificationPreference.findUnique({
         where: { userId },
@@ -324,9 +322,7 @@ export class NotificationsService {
         where: { userId },
       });
 
-      const v2Enabled = await this.featureFlagService.isEnabled(
-        notificationFlags.preferencesV2
-      );
+      const v2Enabled = await this.featureFlagService.isEnabled(notificationFlags.preferencesV2);
 
       const result = {
         success: true,

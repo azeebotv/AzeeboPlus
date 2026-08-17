@@ -9,6 +9,7 @@
  */
 
 import { resolvedApiUrl } from './api/base';
+import { webFlags } from '@azeebo/feature-flags/registries';
 
 export interface BootstrapFlag {
   key: string;
@@ -22,20 +23,15 @@ export interface BootstrapResponse {
   evaluatedFor: 'user' | 'anonymous';
 }
 
-/** Client-side flag keys (mirrors @azeebo/feature-flags webFlags registry). */
-export const WEB_FLAG_KEYS = {
-  maintenanceMode: 'web_maintenance_mode',
-  newHome: 'web_new_home',
-  darkMode: 'web_dark_mode',
-  autoplay: 'web_autoplay',
-  lowDataDefault: 'web_low_data_default',
-  recommendationsRail: 'web_recommendations_rail',
-  announcementBanner: 'web_announcement_banner',
-  premiumUpsell: 'web_premium_upsell',
-} as const;
+/** Client-side flag keys — single source of truth: @azeebo/feature-flags webFlags registry. */
+export const WEB_FLAG_KEYS = webFlags;
 
-/** Sentinel key for per-universe availability, e.g. `universe.reality.enabled`. */
-export const universeFlagKey = (name: string): string => `universe.${name}.enabled`;
+// Universe sentinel builder, re-exported from @azeebo/shared-types — the single
+// source of truth for universe slug VALUES (e.g. `movie`, `creator`), so the
+// keys the web app looks up match what the admin publishes and the gateway
+// serves.
+export { universeEnabledKey, UNIVERSE_SLUGS } from '@azeebo/shared-types';
+export type { UniverseSlug } from '@azeebo/shared-types';
 
 const CACHE_PREFIX = 'azeebo_flags';
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -47,7 +43,11 @@ interface CacheEntry {
   expiresAt: number;
 }
 
-const cacheKey = (userId?: string): string => `${CACHE_PREFIX}_${userId || 'anon'}`;
+// Anonymous visitors are keyed by their stable visitor id (the same value the
+// gateway buckets on via `x-anonymous-id`) so two anonymous visitors can never
+// share a cache entry within the TTL.
+const cacheKey = (userId?: string, visitorId?: string): string =>
+  `${CACHE_PREFIX}_${userId || `anon_${visitorId || 'unknown'}`}`;
 
 /** Stable per-browser visitor id for anonymous rollout bucketing. */
 export function getOrCreateVisitorId(): string {
@@ -63,14 +63,18 @@ export function getOrCreateVisitorId(): string {
   return id;
 }
 
-function readCachedFlags(userId?: string): Record<string, BootstrapFlag> | null {
+function readCachedFlags(
+  userId?: string,
+  visitorId?: string
+): Record<string, BootstrapFlag> | null {
   if (typeof window === 'undefined') return null;
   try {
-    const raw = localStorage.getItem(cacheKey(userId));
+    const key = cacheKey(userId, visitorId);
+    const raw = localStorage.getItem(key);
     if (!raw) return null;
     const entry = JSON.parse(raw) as CacheEntry;
     if (entry.expiresAt < Date.now()) {
-      localStorage.removeItem(cacheKey(userId));
+      localStorage.removeItem(key);
       return null;
     }
     return entry.flags;
@@ -79,13 +83,17 @@ function readCachedFlags(userId?: string): Record<string, BootstrapFlag> | null 
   }
 }
 
-function writeCachedFlags(userId: string | undefined, flags: BootstrapFlag[]): void {
+function writeCachedFlags(
+  userId: string | undefined,
+  visitorId: string | undefined,
+  flags: BootstrapFlag[]
+): void {
   if (typeof window === 'undefined') return;
   try {
     const map: Record<string, BootstrapFlag> = {};
     for (const flag of flags) map[flag.key] = flag;
     const entry: CacheEntry = { flags: map, expiresAt: Date.now() + CACHE_TTL_MS };
-    localStorage.setItem(cacheKey(userId), JSON.stringify(entry));
+    localStorage.setItem(cacheKey(userId, visitorId), JSON.stringify(entry));
   } catch {
     // Storage unavailable (private mode / quota) — skip caching.
   }
@@ -97,7 +105,8 @@ function writeCachedFlags(userId: string | undefined, flags: BootstrapFlag[]): v
  * so the app keeps rendering with conservative (disabled) flag values.
  */
 export async function fetchBootstrapFlags(userId?: string): Promise<Record<string, BootstrapFlag>> {
-  const cached = readCachedFlags(userId);
+  const visitorId = getOrCreateVisitorId();
+  const cached = readCachedFlags(userId, visitorId);
   if (cached) return cached;
 
   try {
@@ -108,7 +117,7 @@ export async function fetchBootstrapFlags(userId?: string): Promise<Record<strin
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        'x-anonymous-id': getOrCreateVisitorId(),
+        'x-anonymous-id': visitorId,
       },
       signal: controller.signal,
     });
@@ -121,13 +130,13 @@ export async function fetchBootstrapFlags(userId?: string): Promise<Record<strin
     const json = await response.json();
     const data = (json.data ?? json) as BootstrapResponse;
     const flags = Array.isArray(data.flags) ? data.flags : [];
-    writeCachedFlags(userId, flags);
+    writeCachedFlags(userId, visitorId, flags);
 
     const map: Record<string, BootstrapFlag> = {};
     for (const flag of flags) map[flag.key] = flag;
     return map;
   } catch {
-    return readCachedFlags(userId) ?? {};
+    return readCachedFlags(userId, visitorId) ?? {};
   }
 }
 

@@ -20,7 +20,7 @@ describe('BundleService', () => {
     id: 'bundle-1',
     name: 'Entertainment Bundle',
     description: 'Reality, Comedy & Movies',
-    universeIds: ['reality', 'comedy', 'movies'],
+    universeIds: ['reality', 'comedy', 'movie'],
     price: 2100,
     originalPrice: 3000,
     discountPercent: 30,
@@ -251,9 +251,9 @@ describe('BundleService', () => {
     it('should throw NotFoundException if bundle not found', async () => {
       (prismaService.bundlePass.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(
-        service.subscribe('user-1', 'nonexistent', mockSubscribeDto)
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.subscribe('user-1', 'nonexistent', mockSubscribeDto)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw BadRequestException if bundle is inactive', async () => {
@@ -262,9 +262,9 @@ describe('BundleService', () => {
         isActive: false,
       });
 
-      await expect(
-        service.subscribe('user-1', 'bundle-1', mockSubscribeDto)
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.subscribe('user-1', 'bundle-1', mockSubscribeDto)).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should throw BadRequestException for external payment without reference', async () => {
@@ -291,9 +291,9 @@ describe('BundleService', () => {
         return cb(tx);
       });
 
-      await expect(
-        service.subscribe('user-1', 'bundle-1', mockSubscribeDto)
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.subscribe('user-1', 'bundle-1', mockSubscribeDto)).rejects.toThrow(
+        BadRequestException
+      );
     });
   });
 

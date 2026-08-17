@@ -43,7 +43,9 @@ describe('UniverseManagementService — restoreUniverseFlag (undo)', () => {
       universe: { findUnique: jest.fn().mockResolvedValue({ name: 'reality' }) },
     };
     audit = {
-      getLogs: jest.fn().mockResolvedValue({ logs: [deletedLog()], total: 1, page: 1, limit: 200, totalPages: 1 }),
+      getLogs: jest
+        .fn()
+        .mockResolvedValue({ logs: [deletedLog()], total: 1, page: 1, limit: 200, totalPages: 1 }),
       log: jest.fn().mockResolvedValue(undefined),
     };
 
@@ -97,7 +99,11 @@ describe('UniverseManagementService — restoreUniverseFlag (undo)', () => {
 
     const result = await service.restoreUniverseFlag('u-1', 'voting_enabled');
 
-    expect(result).toEqual({ key: 'u-1.voting_enabled', restored: false, reason: 'already-exists' });
+    expect(result).toEqual({
+      key: 'u-1.voting_enabled',
+      restored: false,
+      reason: 'already-exists',
+    });
     expect(prisma.universeFeatureFlag.create).not.toHaveBeenCalled();
     expect(audit.log).not.toHaveBeenCalled();
   });
@@ -167,7 +173,11 @@ describe('UniverseManagementService — restoreUniverseFlag (undo)', () => {
     expect(result.restored).toBe(true);
     expect(prisma.universeFeatureFlag.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ universeId: 'u-1', featureKey: 'voting_enabled', isEnabled: false }),
+        data: expect.objectContaining({
+          universeId: 'u-1',
+          featureKey: 'voting_enabled',
+          isEnabled: false,
+        }),
       })
     );
     expect(audit.log).toHaveBeenCalledWith(

@@ -197,7 +197,9 @@ export class SafetyScanningService {
         orderBy: { createdAt: 'desc' },
       });
     } catch (error) {
-      this.logger.error(`Failed to get scans for content ${contentId}: ${(error as Error).message}`);
+      this.logger.error(
+        `Failed to get scans for content ${contentId}: ${(error as Error).message}`
+      );
       return [];
     }
   }
@@ -236,7 +238,9 @@ export class SafetyScanningService {
 
       return { isSafe: true, lastScan, issues: [] };
     } catch (error) {
-      this.logger.error(`Failed to check content safety for ${contentId}: ${(error as Error).message}`);
+      this.logger.error(
+        `Failed to check content safety for ${contentId}: ${(error as Error).message}`
+      );
       return { isSafe: false, issues: ['Failed to check content safety'] };
     }
   }

@@ -9,6 +9,17 @@ jest.mock('@azeebo/shared-types', () => ({
   DEFAULT_API_VERSION: '1',
   environmentSchema: {},
   validateEnvironment: jest.fn(),
+  UNIVERSE_SLUGS: [
+    'reality',
+    'creator',
+    'lifestyle',
+    'vertical',
+    'movie',
+    'games',
+    'comedy',
+    'sports',
+    'music',
+  ],
 }));
 
 jest.mock('@azeebo/security', () => {
@@ -111,6 +122,7 @@ class SimpleHealthController {
 
 describe('API Gateway Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -119,6 +131,8 @@ describe('API Gateway Contract Tests', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -127,19 +141,19 @@ describe('API Gateway Contract Tests', () => {
 
   describe('Gateway Health Check', () => {
     it('should respond with 200 OK', () => {
-      return request(app.getHttpServer()).get('/health').expect(200);
+      return request(baseUrl).get('/health').expect(200);
     });
   });
 
   describe('Route Validation', () => {
     it('should return 404 for unknown routes', () => {
-      return request(app.getHttpServer()).get('/nonexistent-route-12345').expect(404);
+      return request(baseUrl).get('/nonexistent-route-12345').expect(404);
     });
   });
 
   describe('API Gateway Response Format', () => {
     it('should return JSON response', async () => {
-      const response = await request(app.getHttpServer()).get('/health');
+      const response = await request(baseUrl).get('/health');
       expect(response.type).toBe('application/json');
     });
   });

@@ -32,7 +32,9 @@ describe('LiveEventService', () => {
         findUnique: jest.fn().mockResolvedValue(mockEvent),
         findMany: jest.fn().mockResolvedValue([]),
         count: jest.fn().mockResolvedValue(0),
-        create: jest.fn().mockImplementation(({ data }) => Promise.resolve({ ...mockEvent, ...data })),
+        create: jest
+          .fn()
+          .mockImplementation(({ data }) => Promise.resolve({ ...mockEvent, ...data })),
       },
       liveEventTicket: {
         findFirst: jest.fn().mockResolvedValue(null),

@@ -61,6 +61,7 @@ jest.mock('@nestjs/swagger', () => ({
 
 describe('Universe Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockUniverseService = {
     getUniverses: jest.fn(),
@@ -99,6 +100,8 @@ describe('Universe Controller Contract Tests', () => {
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('v1');
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -116,7 +119,7 @@ describe('Universe Controller Contract Tests', () => {
         data: { items: [{ id: 'universe-1', name: 'Heroes' }], page: 1, limit: 20, total: 1 },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/vertical/universes')
         .expect(200)
         .expect((res) => {
@@ -130,7 +133,7 @@ describe('Universe Controller Contract Tests', () => {
         data: { items: [], page: 2, limit: 10, total: 0 },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/vertical/universes?page=2&limit=10')
         .expect(200)
         .expect((res) => {
@@ -146,7 +149,7 @@ describe('Universe Controller Contract Tests', () => {
         data: { id: 'map-1', slug: 'heroes', locations: [] },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/vertical/universes/map/heroes')
         .expect(200)
         .expect((res) => {
@@ -162,7 +165,7 @@ describe('Universe Controller Contract Tests', () => {
         data: [{ id: 'location-1', name: 'City' }],
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/vertical/universes/locations')
         .expect(200)
         .expect((res) => {
@@ -176,7 +179,7 @@ describe('Universe Controller Contract Tests', () => {
         data: [{ id: 'location-1', universe: 'heroes' }],
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/vertical/universes/locations?universe=heroes')
         .expect(200)
         .expect((res) => {
@@ -192,7 +195,7 @@ describe('Universe Controller Contract Tests', () => {
         data: { id: 'location-1', slug: 'metropolis', name: 'Metropolis' },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/vertical/universes/locations/metropolis')
         .expect(200)
         .expect((res) => {
@@ -208,7 +211,7 @@ describe('Universe Controller Contract Tests', () => {
         data: { id: 'location-new', name: 'New City' },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .post('/v1/vertical/universes/locations')
         .send({ name: 'New City', universeId: 'universe-1', description: 'A new city' })
         .expect(201)
@@ -225,7 +228,7 @@ describe('Universe Controller Contract Tests', () => {
         data: [{ id: 'category-1', name: 'Action' }],
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/vertical/universes/categories')
         .expect(200)
         .expect((res) => {
@@ -241,7 +244,7 @@ describe('Universe Controller Contract Tests', () => {
         data: { items: [], page: 1, limit: 20, total: 0 },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/vertical/universes')
         .expect((res) => {
           expect(res.body).toHaveProperty('success');
@@ -257,7 +260,7 @@ describe('Universe Controller Contract Tests', () => {
         data: { items: [], page: 1, limit: 20, total: 0 },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/vertical/universes')
         .expect((res) => {
           expect(res.body.data).toHaveProperty('page');
@@ -271,7 +274,7 @@ describe('Universe Controller Contract Tests', () => {
     it('should return 404 for non-existent location', () => {
       mockUniverseService.getLocationBySlug.mockRejectedValue(new Error('Location not found'));
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/vertical/universes/locations/nonexistent')
         .expect(500);
     });

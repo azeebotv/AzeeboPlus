@@ -9,7 +9,7 @@
     "start:dev": "bash start-dev.sh",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "lint": "eslint src --fix",
+    "lint": "eslint src",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",

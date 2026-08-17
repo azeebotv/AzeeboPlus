@@ -40,10 +40,7 @@ export default function LanguageSwitcher({ placement = 'header' }: LanguageSwitc
   return (
     <>
       <TouchableOpacity
-        style={[
-          styles.trigger,
-          placement === 'footer' && styles.triggerFooter,
-        ]}
+        style={[styles.trigger, placement === 'footer' && styles.triggerFooter]}
         onPress={() => setModalVisible(true)}
         accessibilityLabel={t('settings.selectLanguage')}
         accessibilityRole="button"
@@ -93,9 +90,7 @@ export default function LanguageSwitcher({ placement = 'header' }: LanguageSwitc
                   styles.languageOption,
                   currentLanguage === lang.code && {
                     backgroundColor:
-                      colorScheme === 'dark'
-                        ? 'rgba(232,66,10,0.15)'
-                        : 'rgba(232,66,10,0.08)',
+                      colorScheme === 'dark' ? 'rgba(232,66,10,0.15)' : 'rgba(232,66,10,0.08)',
                   },
                 ]}
                 onPress={() => handleLanguageChange(lang.code)}
@@ -122,9 +117,7 @@ export default function LanguageSwitcher({ placement = 'header' }: LanguageSwitc
                   </Text>
                   <Text style={styles.languageNative}>{lang.nativeName}</Text>
                 </View>
-                {currentLanguage === lang.code && (
-                  <Text style={styles.languageCheck}>✓</Text>
-                )}
+                {currentLanguage === lang.code && <Text style={styles.languageCheck}>✓</Text>}
               </TouchableOpacity>
             ))}
 
@@ -208,7 +201,7 @@ const styles = StyleSheet.create({
   },
   languageNative: {
     fontSize: 13,
-    color: '#888',
+    color: colors.text.tertiary,
     marginTop: 2,
   },
   languageCheck: {

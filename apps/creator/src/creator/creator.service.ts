@@ -219,7 +219,7 @@ export class CreatorService {
     // Look up default universe if not provided
     let universeId = data.universeId;
     if (!universeId) {
-      const defaultUniverse = await this.prisma.universe.findFirst({
+      const defaultUniverse = await this.prisma.universe.findUnique({
         where: { name: 'vertical' },
         select: { id: true },
       });

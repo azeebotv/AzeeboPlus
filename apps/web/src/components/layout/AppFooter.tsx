@@ -30,6 +30,7 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
         { label: t('footer.comedy'), href: '/browse?category=comedy' },
         { label: t('footer.sports'), href: '/browse?category=sports' },
         { label: t('footer.lifestyle'), href: '/browse?category=lifestyle' },
+        { label: t('footer.music'), href: '/music' },
       ],
     },
     support: {

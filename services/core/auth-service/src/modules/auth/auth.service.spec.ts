@@ -588,9 +588,7 @@ describe('AuthService', () => {
     it('should burn the token after too many attempts (429)', async () => {
       (redisService.incr as jest.Mock).mockResolvedValue(6);
 
-      const error = await service
-        .verifyEmail({ token: 'burned-token' })
-        .catch((e: unknown) => e);
+      const error = await service.verifyEmail({ token: 'burned-token' }).catch((e: unknown) => e);
       expect(error).toBeInstanceOf(HttpException);
       expect((error as HttpException).getStatus()).toBe(429);
 
@@ -647,9 +645,9 @@ describe('AuthService', () => {
 
     it('rejects the request when the flag is off', async () => {
       mockFeatureFlagService.isEnabled.mockResolvedValue(false);
-      await expect(
-        service.requestMagicLink({ email: 'test@example.com' })
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.requestMagicLink({ email: 'test@example.com' })).rejects.toThrow(
+        ForbiddenException
+      );
       expect(mockedAxios.post).not.toHaveBeenCalled();
     });
 
@@ -781,9 +779,7 @@ describe('AuthService', () => {
         code: '123456',
       });
 
-      expect(redisService.del).toHaveBeenCalledWith(
-        expect.stringMatching(/^mfa_login_challenge:/)
-      );
+      expect(redisService.del).toHaveBeenCalledWith(expect.stringMatching(/^mfa_login_challenge:/));
       expect(result.data).toHaveProperty('access_token');
     });
 

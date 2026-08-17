@@ -24,7 +24,6 @@ interface ValidatedUser {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-
   constructor(configService: ConfigService) {
     const secret = configService.get<string>('JWT_ACCESS_SECRET');
     if (!secret) {
@@ -34,7 +33,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (isPlaceholderSecret(secret)) {
       throw new Error(
         'JWT_ACCESS_SECRET contains a placeholder value and will NOT work. ' +
-        'Generate a real secret with: openssl rand -base64 48'
+          'Generate a real secret with: openssl rand -base64 48'
       );
     }
 

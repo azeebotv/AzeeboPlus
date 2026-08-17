@@ -24,7 +24,12 @@ describe('MetricsService (shared-services)', () => {
     });
 
     it('should register a histogram metric', () => {
-      service.registerMetric({ name: 'latency', help: 'Latency', type: 'histogram', buckets: [1, 5] });
+      service.registerMetric({
+        name: 'latency',
+        help: 'Latency',
+        type: 'histogram',
+        buckets: [1, 5],
+      });
       service.getHistogram('latency').observe(3);
       // Histogram data not in getMetrics, just verify no throw
     });

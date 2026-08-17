@@ -38,6 +38,7 @@ const { mockUseAuth, mockPush, mockUseWallet, translations } = vi.hoisted(() => 
     'universes.games': 'Games',
     'universes.comedy': 'Comedy',
     'universes.sports': 'Sports',
+    'universes.music': 'Music',
     'appHeader.universes': 'Universes',
     'appHeader.searchPlaceholder': 'Search shows, creators, movies…',
     'appHeader.searchPlaceholderMobile': 'Search…',

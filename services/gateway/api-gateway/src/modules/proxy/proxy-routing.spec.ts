@@ -90,8 +90,9 @@ describe('ProxyController routing gates', () => {
     );
     const res = mockRes();
 
-    await (controller as unknown as { proxyGet: (s: string, r: Request, res: unknown) => Promise<void> })
-      .proxyGet('vertical', mockReq(), res);
+    await (
+      controller as unknown as { proxyGet: (s: string, r: Request, res: unknown) => Promise<void> }
+    ).proxyGet('vertical', mockReq(), res);
 
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith(
@@ -104,9 +105,11 @@ describe('ProxyController routing gates', () => {
       Promise.resolve(key !== gatewayFlags.maintenanceMode)
     );
     const res = mockRes();
-    const circuitBreaker = (controller as unknown as {
-      circuitBreakerProxyService: { proxyRequest: jest.Mock };
-    }).circuitBreakerProxyService;
+    const circuitBreaker = (
+      controller as unknown as {
+        circuitBreakerProxyService: { proxyRequest: jest.Mock };
+      }
+    ).circuitBreakerProxyService;
     circuitBreaker.proxyRequest.mockResolvedValue({
       status: 200,
       data: { ok: true },
@@ -114,8 +117,9 @@ describe('ProxyController routing gates', () => {
       circuitState: 'CLOSED',
     });
 
-    await (controller as unknown as { proxyGet: (s: string, r: Request, res: unknown) => Promise<void> })
-      .proxyGet('vertical', mockReq(), res);
+    await (
+      controller as unknown as { proxyGet: (s: string, r: Request, res: unknown) => Promise<void> }
+    ).proxyGet('vertical', mockReq(), res);
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(circuitBreaker.proxyRequest).toHaveBeenCalled();
@@ -124,12 +128,15 @@ describe('ProxyController routing gates', () => {
   it('returns 503 during maintenance mode before any forwarding', async () => {
     flagService.isEnabled.mockResolvedValue(true); // maintenance on, everything on
     const res = mockRes();
-    const circuitBreaker = (controller as unknown as {
-      circuitBreakerProxyService: { proxyRequest: jest.Mock };
-    }).circuitBreakerProxyService;
+    const circuitBreaker = (
+      controller as unknown as {
+        circuitBreakerProxyService: { proxyRequest: jest.Mock };
+      }
+    ).circuitBreakerProxyService;
 
-    await (controller as unknown as { proxyGet: (s: string, r: Request, res: unknown) => Promise<void> })
-      .proxyGet('auth', mockReq({ params: { service: 'auth', path: '' } }), res);
+    await (
+      controller as unknown as { proxyGet: (s: string, r: Request, res: unknown) => Promise<void> }
+    ).proxyGet('auth', mockReq({ params: { service: 'auth', path: '' } }), res);
 
     expect(res.status).toHaveBeenCalledWith(503);
     expect(res.json).toHaveBeenCalledWith(
@@ -140,9 +147,11 @@ describe('ProxyController routing gates', () => {
 
   it('forwards POST /admin/universes/feature-flags/restore to the admin service', async () => {
     const res = mockRes();
-    const circuitBreaker = (controller as unknown as {
-      circuitBreakerProxyService: { proxyRequest: jest.Mock };
-    }).circuitBreakerProxyService;
+    const circuitBreaker = (
+      controller as unknown as {
+        circuitBreakerProxyService: { proxyRequest: jest.Mock };
+      }
+    ).circuitBreakerProxyService;
     circuitBreaker.proxyRequest.mockResolvedValue({
       status: 200,
       data: { restoredCount: 1 },
@@ -151,9 +160,11 @@ describe('ProxyController routing gates', () => {
     });
     const body = { keys: [{ universeId: 'u-1', featureKey: 'voting_enabled' }] };
 
-    await (controller as unknown as {
-      proxyVersionedPost: (v: string, s: string, r: Request, res: unknown) => Promise<void>;
-    }).proxyVersionedPost(
+    await (
+      controller as unknown as {
+        proxyVersionedPost: (v: string, s: string, r: Request, res: unknown) => Promise<void>;
+      }
+    ).proxyVersionedPost(
       'v1',
       'admin',
       mockReq({
@@ -182,13 +193,17 @@ describe('ProxyController routing gates', () => {
 
   it('rejects POST /admin/universes/feature-flags/restore without an admin role (gateway-side fail-closed)', async () => {
     const res = mockRes();
-    const circuitBreaker = (controller as unknown as {
-      circuitBreakerProxyService: { proxyRequest: jest.Mock };
-    }).circuitBreakerProxyService;
+    const circuitBreaker = (
+      controller as unknown as {
+        circuitBreakerProxyService: { proxyRequest: jest.Mock };
+      }
+    ).circuitBreakerProxyService;
 
-    await (controller as unknown as {
-      proxyVersionedPost: (v: string, s: string, r: Request, res: unknown) => Promise<void>;
-    }).proxyVersionedPost(
+    await (
+      controller as unknown as {
+        proxyVersionedPost: (v: string, s: string, r: Request, res: unknown) => Promise<void>;
+      }
+    ).proxyVersionedPost(
       'v1',
       'admin',
       mockReq({
@@ -209,17 +224,17 @@ describe('ProxyController routing gates', () => {
 
   it('rejects API v2 requests when gateway_api_v2 is off', async () => {
     flagService.isEnabled.mockImplementation((key: string) =>
-      Promise.resolve(
-        key !== gatewayFlags.maintenanceMode && key !== gatewayFlags.apiV2
-      )
+      Promise.resolve(key !== gatewayFlags.maintenanceMode && key !== gatewayFlags.apiV2)
     );
     const res = mockRes();
 
     // Version comes straight from the URL param on the versioned routes
     // (/api/:version/:service), bypassing the header fallback.
-    await (controller as unknown as {
-      proxyVersionedRootGet: (v: string, s: string, r: Request, res: unknown) => Promise<void>;
-    }).proxyVersionedRootGet('v2', 'auth', mockReq(), res);
+    await (
+      controller as unknown as {
+        proxyVersionedRootGet: (v: string, s: string, r: Request, res: unknown) => Promise<void>;
+      }
+    ).proxyVersionedRootGet('v2', 'auth', mockReq(), res);
 
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith(

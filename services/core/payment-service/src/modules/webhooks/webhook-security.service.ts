@@ -78,7 +78,10 @@ export class WebhookSecurityService {
       const key = `${this.replayPrefix}${reference}`;
       await this.redisService.set(key, '1', this.maxAge);
     } catch (error) {
-      this.logger.error(`Failed to record replay window for webhook ${reference}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to record replay window for webhook ${reference}`,
+        (error as Error).stack
+      );
       throw error;
     }
   }

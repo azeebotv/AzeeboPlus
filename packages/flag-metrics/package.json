@@ -19,7 +19,7 @@
     "clean": "rm -rf dist",
     "test": "jest",
     "test:watch": "jest --watch",
-    "lint": "eslint src --fix"
+    "lint": "eslint src"
   },
   "dependencies": {
     "@azeebo/feature-flags": "workspace:*",

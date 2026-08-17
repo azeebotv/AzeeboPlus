@@ -223,9 +223,7 @@ describe('Proxy Controller - Admin universe-flag undo routes', () => {
       )
     ).toBe(true);
     expect(
-      endpoints.some(
-        (e) => e.method === 'GET' && e.path === '/universes/feature-flags/deleted'
-      )
+      endpoints.some((e) => e.method === 'GET' && e.path === '/universes/feature-flags/deleted')
     ).toBe(true);
   });
 });

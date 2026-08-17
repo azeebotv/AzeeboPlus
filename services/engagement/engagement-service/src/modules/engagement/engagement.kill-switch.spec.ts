@@ -49,6 +49,7 @@ const mockEngagementService = {
  */
 describe('Engagement kill-switch (engagement_* flags)', () => {
   let app: INestApplication;
+  let baseUrl: string;
   const mockFeatureFlagService = {
     isEnabled: jest.fn().mockResolvedValue(false), // all engagement flags off
   };
@@ -69,6 +70,8 @@ describe('Engagement kill-switch (engagement_* flags)', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -81,29 +84,23 @@ describe('Engagement kill-switch (engagement_* flags)', () => {
   });
 
   it('blocks GET /engagement/leaderboard with 403 when engagement_leaderboards is off', async () => {
-    await request(app.getHttpServer()).get('/engagement/leaderboard').expect(403);
-    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(
-      engagementFlags.leaderboards
-    );
+    await request(baseUrl).get('/engagement/leaderboard').expect(403);
+    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(engagementFlags.leaderboards);
     expect(mockEngagementService.getLeaderboard).not.toHaveBeenCalled();
   });
 
   it('blocks GET /engagement/rankings with 403 when engagement_rankings is off', async () => {
-    await request(app.getHttpServer()).get('/engagement/rankings').expect(403);
-    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(
-      engagementFlags.rankings
-    );
+    await request(baseUrl).get('/engagement/rankings').expect(403);
+    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(engagementFlags.rankings);
     expect(mockEngagementService.getRankings).not.toHaveBeenCalled();
   });
 
   it('blocks POST /engagement/predictions with 403 when engagement_predictions is off', async () => {
-    await request(app.getHttpServer())
+    await request(baseUrl)
       .post('/engagement/predictions')
       .send({ contentId: 'content-1', prediction: 'home_win' })
       .expect(403);
-    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(
-      engagementFlags.predictions
-    );
+    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(engagementFlags.predictions);
     expect(mockEngagementService.submitPrediction).not.toHaveBeenCalled();
   });
 });

@@ -154,7 +154,8 @@ export class PaymentsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Confirm a payment intent',
-    description: 'Calls the active payment provider to obtain the checkout URL for a created intent.',
+    description:
+      'Calls the active payment provider to obtain the checkout URL for a created intent.',
   })
   @ApiOkResponse({ description: 'Payment intent confirmed' })
   @ApiBadRequestResponse({ description: 'Invalid intent or provider failure' })

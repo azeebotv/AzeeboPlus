@@ -77,10 +77,7 @@ export class LiveEventController {
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Create a new live event (organizer/admin)' })
   @ApiResponse({ status: 201, description: 'Event created' })
-  async createEvent(
-    @Body() dto: CreateEventDto,
-    @Request() req: { user: { id: string } }
-  ) {
+  async createEvent(@Body() dto: CreateEventDto, @Request() req: { user: { id: string } }) {
     return this.liveEventService.createEvent({
       ...dto,
       organizerId: req.user.id,

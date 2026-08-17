@@ -55,6 +55,7 @@ const mockAuthGuard = {
 
 describe('Games Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockGamesService = {
     getHome: jest.fn(),
@@ -107,6 +108,8 @@ describe('Games Controller Contract Tests', () => {
     app = moduleFixture.createNestApplication();
     app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -124,7 +127,7 @@ describe('Games Controller Contract Tests', () => {
         data: { featured: [], trending: [] },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/games/home')
         .set('Authorization', 'Bearer valid-token')
         .expect(200)
@@ -142,7 +145,7 @@ describe('Games Controller Contract Tests', () => {
         data: { id: 'challenge-1', question: 'What is 2+2?' },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/games/daily-challenge')
         .set('Authorization', 'Bearer valid-token')
         .expect(200)
@@ -152,7 +155,7 @@ describe('Games Controller Contract Tests', () => {
     });
 
     it('should return 401 without authorization', () => {
-      return request(app.getHttpServer()).get('/v1/games/daily-challenge').expect(401);
+      return request(baseUrl).get('/v1/games/daily-challenge').expect(401);
     });
   });
 
@@ -163,7 +166,7 @@ describe('Games Controller Contract Tests', () => {
         data: { correct: true, points: 10 },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .post('/v1/games/daily-challenge/submit')
         .set('Authorization', 'Bearer valid-token')
         .send({ answer: '4' })
@@ -181,7 +184,7 @@ describe('Games Controller Contract Tests', () => {
         data: { sessionId: 'session-1', status: 'active' },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .post('/v1/games/sessions')
         .set('Authorization', 'Bearer valid-token')
         .send({ challengeId: 'challenge-1' })
@@ -200,7 +203,7 @@ describe('Games Controller Contract Tests', () => {
         data: { correct: false, points: 0 },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .post('/v1/games/sessions/session-1/submit')
         .set('Authorization', 'Bearer valid-token')
         .send({ answer: 'wrong-answer' })
@@ -218,7 +221,7 @@ describe('Games Controller Contract Tests', () => {
         data: { rankings: [] },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/games/leaderboard')
         .set('Authorization', 'Bearer valid-token')
         .expect(200)
@@ -235,7 +238,7 @@ describe('Games Controller Contract Tests', () => {
         data: {},
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/games/home')
         .set('Authorization', 'Bearer valid-token')
         .expect((res) => {
@@ -247,7 +250,7 @@ describe('Games Controller Contract Tests', () => {
 
   describe('error responses', () => {
     it('should return 401 for protected endpoints without token', () => {
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .post('/v1/games/sessions')
         .send({ challengeId: 'challenge-1' })
         .expect(401);

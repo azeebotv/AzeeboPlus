@@ -47,6 +47,7 @@ const mockRewardsService = {
  */
 describe('Rewards kill-switch (reward_* flags)', () => {
   let app: INestApplication;
+  let baseUrl: string;
   const mockFeatureFlagService = {
     isEnabled: jest.fn().mockResolvedValue(false), // all reward flags off
   };
@@ -69,6 +70,8 @@ describe('Rewards kill-switch (reward_* flags)', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -81,13 +84,11 @@ describe('Rewards kill-switch (reward_* flags)', () => {
   });
 
   it('403s GET /rewards when reward_points_enabled is off', async () => {
-    await request(app.getHttpServer())
+    await request(baseUrl)
       .get('/rewards')
       .set('Authorization', 'Bearer test')
       .expect(403);
-    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(
-      rewardFlags.pointsEnabled
-    );
+    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(rewardFlags.pointsEnabled);
     expect(mockRewardsService.getRewardAccount).not.toHaveBeenCalled();
   });
 
@@ -97,7 +98,7 @@ describe('Rewards kill-switch (reward_* flags)', () => {
       Promise.resolve(key === rewardFlags.pointsEnabled)
     );
 
-    await request(app.getHttpServer())
+    await request(baseUrl)
       .get('/rewards/missions')
       .set('Authorization', 'Bearer test')
       .expect(403);
@@ -109,7 +110,7 @@ describe('Rewards kill-switch (reward_* flags)', () => {
       Promise.resolve(key === rewardFlags.pointsEnabled)
     );
 
-    const res = await request(app.getHttpServer())
+    const res = await request(baseUrl)
       .get('/rewards')
       .set('Authorization', 'Bearer test');
     expect(res.status).toBe(200);

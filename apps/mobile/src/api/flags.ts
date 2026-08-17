@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { mobileFlags } from '@azeebo/feature-flags/registries';
 import { apiClient } from './client';
 
 /**
@@ -23,18 +24,15 @@ export interface BootstrapResponse {
   evaluatedFor: 'user' | 'anonymous';
 }
 
-/** Client-side flag keys (mirrors @azeebo/feature-flags mobileFlags registry). */
-export const MOBILE_FLAG_KEYS = {
-  newHome: 'mobile_new_home',
-  darkMode: 'mobile_dark_mode',
-  autoplay: 'mobile_autoplay',
-  lowDataDefault: 'mobile_low_data_default',
-  pushEnabled: 'mobile_push_enabled',
-  biometricAuth: 'mobile_biometric_auth',
-} as const;
+/** Client-side flag keys — single source of truth: @azeebo/feature-flags mobileFlags registry. */
+export const MOBILE_FLAG_KEYS = mobileFlags;
 
-/** Sentinel key for per-universe availability, e.g. `universe.reality.enabled`. */
-export const universeFlagKey = (name: string): string => `universe.${name}.enabled`;
+// Universe sentinel builder, re-exported from @azeebo/shared-types — the single
+// source of truth for universe slug VALUES (e.g. `movie`, `creator`), so the
+// keys the mobile app looks up match what the admin publishes and the gateway
+// serves.
+export { universeEnabledKey, UNIVERSE_SLUGS } from '@azeebo/shared-types';
+export type { UniverseSlug } from '@azeebo/shared-types';
 
 const CACHE_PREFIX = 'azeebo_flags';
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -46,7 +44,11 @@ interface CacheEntry {
   expiresAt: number;
 }
 
-const cacheKey = (userId?: string): string => `${CACHE_PREFIX}_${userId || 'anon'}`;
+// Anonymous visitors are keyed by their stable visitor id (the same value the
+// gateway buckets on via `x-anonymous-id`) so two anonymous installs can never
+// share a cache entry within the TTL.
+const cacheKey = (userId?: string, visitorId?: string): string =>
+  `${CACHE_PREFIX}_${userId || `anon_${visitorId || 'unknown'}`}`;
 
 /** Stable per-install visitor id for anonymous rollout bucketing. */
 export async function getOrCreateVisitorId(): Promise<string> {
@@ -62,13 +64,17 @@ export async function getOrCreateVisitorId(): Promise<string> {
   }
 }
 
-async function readCachedFlags(userId?: string): Promise<BootstrapFlag[] | null> {
+async function readCachedFlags(
+  userId?: string,
+  visitorId?: string
+): Promise<BootstrapFlag[] | null> {
   try {
-    const raw = await AsyncStorage.getItem(cacheKey(userId));
+    const key = cacheKey(userId, visitorId);
+    const raw = await AsyncStorage.getItem(key);
     if (!raw) return null;
     const entry = JSON.parse(raw) as CacheEntry;
     if (entry.expiresAt < Date.now()) {
-      await AsyncStorage.removeItem(cacheKey(userId));
+      await AsyncStorage.removeItem(key);
       return null;
     }
     return entry.flags;
@@ -77,10 +83,14 @@ async function readCachedFlags(userId?: string): Promise<BootstrapFlag[] | null>
   }
 }
 
-async function writeCachedFlags(userId: string | undefined, flags: BootstrapFlag[]): Promise<void> {
+async function writeCachedFlags(
+  userId: string | undefined,
+  visitorId: string | undefined,
+  flags: BootstrapFlag[]
+): Promise<void> {
   try {
     const entry: CacheEntry = { flags, expiresAt: Date.now() + CACHE_TTL_MS };
-    await AsyncStorage.setItem(cacheKey(userId), JSON.stringify(entry));
+    await AsyncStorage.setItem(cacheKey(userId, visitorId), JSON.stringify(entry));
   } catch {
     // Storage unavailable — skip caching.
   }
@@ -92,26 +102,23 @@ async function writeCachedFlags(userId: string | undefined, flags: BootstrapFlag
  * array so the app keeps rendering with conservative (disabled) flag values.
  */
 export async function fetchBootstrapFlags(userId?: string): Promise<BootstrapFlag[]> {
-  const cached = await readCachedFlags(userId);
+  const visitorId = await getOrCreateVisitorId();
+  const cached = await readCachedFlags(userId, visitorId);
   if (cached) return cached;
 
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), BOOTSTRAP_TIMEOUT_MS);
-    const visitorId = await getOrCreateVisitorId();
 
     try {
-      const response = await fetch(
-        `${apiClient.getBaseURL()}/feature-flags/bootstrap`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-anonymous-id': visitorId,
-          },
-          signal: controller.signal,
-        }
-      );
+      const response = await fetch(`${apiClient.getBaseURL()}/feature-flags/bootstrap`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-anonymous-id': visitorId,
+        },
+        signal: controller.signal,
+      });
 
       if (!response.ok) {
         throw new Error(`Feature-flag bootstrap failed with status ${response.status}`);
@@ -120,13 +127,13 @@ export async function fetchBootstrapFlags(userId?: string): Promise<BootstrapFla
       const json = (await response.json()) as { data?: BootstrapResponse };
       const data = json.data ?? (json as unknown as BootstrapResponse);
       const flags = Array.isArray(data.flags) ? data.flags : [];
-      await writeCachedFlags(userId, flags);
+      await writeCachedFlags(userId, visitorId, flags);
       return flags;
     } finally {
       clearTimeout(timeoutId);
     }
   } catch {
-    return (await readCachedFlags(userId)) ?? [];
+    return (await readCachedFlags(userId, visitorId)) ?? [];
   }
 }
 

@@ -14,7 +14,8 @@ class UniverseFlagKeyDto {
 
 export class PruneStaleUniverseFlagsDto {
   @ApiPropertyOptional({
-    description: 'Optional subset of flags to remove (the confirmed batch); flags not actually past staleAfter are still skipped',
+    description:
+      'Optional subset of flags to remove (the confirmed batch); flags not actually past staleAfter are still skipped',
     type: [UniverseFlagKeyDto],
   })
   @IsOptional()

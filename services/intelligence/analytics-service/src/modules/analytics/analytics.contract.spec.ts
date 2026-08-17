@@ -79,6 +79,7 @@ class MockRateLimitGuard {
 
 describe('Analytics Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockPrismaService = {
     productEvent: {
@@ -130,7 +131,10 @@ describe('Analytics Controller Contract Tests', () => {
         getClientSamplingConfig: jest.fn().mockResolvedValue({ enabled: false, samplingRate: 100 }),
       })
       .overrideProvider(FeatureFlagService)
-      .useValue({ isEnabled: jest.fn().mockResolvedValue(false), getValue: jest.fn().mockResolvedValue(100) })
+      .useValue({
+        isEnabled: jest.fn().mockResolvedValue(false),
+        getValue: jest.fn().mockResolvedValue(100),
+      })
       .overrideGuard(AuthGuard('jwt'))
       .useClass(MockAuthGuard)
       .overrideGuard(RateLimitGuard)
@@ -140,6 +144,8 @@ describe('Analytics Controller Contract Tests', () => {
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('v1');
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -153,7 +159,7 @@ describe('Analytics Controller Contract Tests', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       jest.spyOn(analyticsService, 'ingestEvents').mockResolvedValue({ success: true } as any);
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/analytics/events')
         .send({
           events: [
@@ -178,7 +184,7 @@ describe('Analytics Controller Contract Tests', () => {
 
       jest.spyOn(analyticsService, 'trackEvent').mockResolvedValue({ success: true });
 
-      const response = await request(app.getHttpServer()).post('/v1/analytics/track').send({
+      const response = await request(baseUrl).post('/v1/analytics/track').send({
         type: 'content_view',
         userId: 'user-123',
         contentId: 'content-1',
@@ -192,14 +198,18 @@ describe('Analytics Controller Contract Tests', () => {
 
     it('accepts the canonical EventPayload shape ({ eventName }) emitted by services', async () => {
       const analyticsService = app.get(AnalyticsService);
-      const trackEvent = jest.spyOn(analyticsService, 'trackEvent').mockResolvedValue({ success: true });
+      const trackEvent = jest
+        .spyOn(analyticsService, 'trackEvent')
+        .mockResolvedValue({ success: true });
 
-      const response = await request(app.getHttpServer()).post('/v1/analytics/track').send({
-        eventName: 'content_view',
-        userId: 'user-123',
-        metadata: { contentId: 'content-1' },
-        timestamp: new Date().toISOString(),
-      });
+      const response = await request(baseUrl)
+        .post('/v1/analytics/track')
+        .send({
+          eventName: 'content_view',
+          userId: 'user-123',
+          metadata: { contentId: 'content-1' },
+          timestamp: new Date().toISOString(),
+        });
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({ success: true });
@@ -211,7 +221,7 @@ describe('Analytics Controller Contract Tests', () => {
     });
 
     it('rejects a payload with neither eventName nor type', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/analytics/track')
         .send({ metadata: {} });
 
@@ -225,7 +235,7 @@ describe('Analytics Controller Contract Tests', () => {
 
       jest.spyOn(analyticsService, 'trackBatch').mockResolvedValue({ success: true });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/analytics/track-batch')
         .send({
           events: [
@@ -246,7 +256,7 @@ describe('Analytics Controller Contract Tests', () => {
         .spyOn(analyticsService, 'trackBatch')
         .mockResolvedValue({ success: true });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/analytics/track-batch')
         .send({
           events: [
@@ -279,7 +289,7 @@ describe('Analytics Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/analytics/me/summary')
         .set('Authorization', 'Bearer admin-token');
 
@@ -307,7 +317,7 @@ describe('Analytics Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/analytics/daily-stats')
         .set('Authorization', 'Bearer admin-token');
 

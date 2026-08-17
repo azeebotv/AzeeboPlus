@@ -9,7 +9,6 @@ import { GlobalExceptionFilter } from '@azeebo/error-handling';
 import { LoggingInterceptor } from '@azeebo/logger';
 import { validateEnvironment } from '@azeebo/shared-types';
 
-
 async function bootstrap() {
   validateEnvironment(process.env);
 
@@ -20,7 +19,7 @@ async function bootstrap() {
 
   app.useGlobalInterceptors(new LoggingInterceptor());
 
-    app.use(createHelmetConfig());
+  app.use(createHelmetConfig());
 
   const allowedOrigins = configService
     .get<string>('ALLOWED_ORIGINS')

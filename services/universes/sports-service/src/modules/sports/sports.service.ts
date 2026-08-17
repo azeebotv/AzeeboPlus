@@ -352,10 +352,12 @@ export class SportsService {
       throw new BadRequestException('Contest has already ended');
     }
 
-    const existingEntry = await this.prisma.contestEntry.findFirst({
+    const existingEntry = await this.prisma.contestEntry.findUnique({
       where: {
-        userId,
-        contestId,
+        contestId_userId: {
+          userId,
+          contestId,
+        },
       },
     });
 

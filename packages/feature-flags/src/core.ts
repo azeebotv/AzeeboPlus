@@ -102,6 +102,19 @@ export interface FeatureFlagConfig {
    * the persistence itself is deduped in-flight.
    */
   onAutoDisabled?: (key: string, flag: FeatureFlag) => void;
+  /**
+   * Observability hook — called whenever a Redis READ fails and the service
+   * degrades to the registered default (fail-closed). Wire to a Prometheus
+   * counter (see @azeebo/flag-metrics, `flag_redis_error_total`).
+   */
+  onRedisError?: (key: string, error: Error) => void;
+  /**
+   * When true (default), Redis READ failures degrade to the registered default
+   * instead of throwing: getFlag → null (served as defaultFlags/defaultValues),
+   * listFlags → [] (publicFlagKeys still evaluated against defaults). Writes
+   * still fail loudly. Set false to keep strict (throw) semantics.
+   */
+  failClosedOnRedisError?: boolean;
 }
 
 interface CacheEntry {
@@ -122,9 +135,10 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 /** Default grace: auto-disable N days past staleAfter unless ops renews. */
 const DEFAULT_AUTO_DISABLE_AFTER_DAYS = 7;
 
-/** Builds the canonical Redis key for a universe-scoped flag, e.g. `universe.reality.voting_enabled`. */
-export const universeFlagKey = (universeName: string, feature: string): string =>
-  `universe.${universeName}.${feature}`;
+// Canonical universe key builder, delegated to @azeebo/shared-types — the
+// single source of truth for universe slug VALUES + key shapes, shared with the
+// admin publisher and the web/mobile clients.
+export { universeFlagKey } from '@azeebo/shared-types';
 
 /** Metadata key used by the @FeatureFlag decorator (shared with the NestJS glue). */
 export const FEATURE_FLAG_KEY = 'feature_flag_key';
@@ -146,6 +160,8 @@ export class FeatureFlagService {
   private readonly onToggle?: FeatureFlagConfig['onToggle'];
   private readonly onStaleEnabled?: FeatureFlagConfig['onStaleEnabled'];
   private readonly onAutoDisabled?: FeatureFlagConfig['onAutoDisabled'];
+  private readonly onRedisError?: FeatureFlagConfig['onRedisError'];
+  private readonly failClosedOnRedisError: boolean;
   private readonly autoDisableAfterDays: number;
   private readonly cache = new Map<string, CacheEntry>();
   /** Full-list snapshot cache (bootstrap path). Invalidated on every write. */
@@ -154,6 +170,8 @@ export class FeatureFlagService {
   private readonly staleWarnedAt = new Map<string, number>();
   /** Last console-warn timestamp per flag key (throttles auto-disable logging). */
   private readonly autoDisabledWarnedAt = new Map<string, number>();
+  /** Last console-warn timestamp per Redis-read key (throttles fail-closed logging). */
+  private readonly redisErrorWarnedAt = new Map<string, number>();
   /** In-flight auto-disable persists (dedupes concurrent evaluations). */
   private readonly autoDisableInFlight = new Map<string, Promise<void>>();
 
@@ -177,8 +195,9 @@ export class FeatureFlagService {
     this.onToggle = config.onToggle;
     this.onStaleEnabled = config.onStaleEnabled;
     this.onAutoDisabled = config.onAutoDisabled;
-    this.autoDisableAfterDays =
-      config.autoDisableAfterDays ?? DEFAULT_AUTO_DISABLE_AFTER_DAYS;
+    this.onRedisError = config.onRedisError;
+    this.failClosedOnRedisError = config.failClosedOnRedisError ?? true;
+    this.autoDisableAfterDays = config.autoDisableAfterDays ?? DEFAULT_AUTO_DISABLE_AFTER_DAYS;
   }
 
   async isEnabled(key: string, userId?: string, anonymousId?: string): Promise<boolean> {
@@ -234,7 +253,11 @@ export class FeatureFlagService {
     for (const flag of flags) {
       if (flag.isPublic !== true) continue;
       const enabled = this.evaluateFlag(flag, flag.key, userId, anonymousId);
-      out.push({ key: flag.key, enabled, ...(flag.value !== undefined ? { value: flag.value } : {}) });
+      out.push({
+        key: flag.key,
+        enabled,
+        ...(flag.value !== undefined ? { value: flag.value } : {}),
+      });
     }
     for (const key of this.publicFlagKeys) {
       if (out.some((f) => f.key === key)) continue;
@@ -253,7 +276,16 @@ export class FeatureFlagService {
       return cached.flag;
     }
 
-    const data = await this.redis.get(cacheKey);
+    let data: string | null;
+    try {
+      data = await this.redis.get(cacheKey);
+    } catch (error) {
+      if (this.failClosedOnRedisError) {
+        this.reportRedisError(key, error);
+        return null;
+      }
+      throw error;
+    }
     this.onCacheMiss?.(key);
     let flag: FeatureFlag | null = null;
     if (data) {
@@ -349,7 +381,16 @@ export class FeatureFlagService {
     const flags: FeatureFlag[] = [];
 
     for (const key of keys) {
-      const data = await this.redis.get(key);
+      let data: string | null;
+      try {
+        data = await this.redis.get(key);
+      } catch (error) {
+        if (this.failClosedOnRedisError) {
+          this.reportRedisError(key, error);
+          continue;
+        }
+        throw error;
+      }
       if (data) {
         try {
           flags.push(JSON.parse(data) as FeatureFlag);
@@ -367,11 +408,41 @@ export class FeatureFlagService {
     const keys: string[] = [];
     let cursor = '0';
     do {
-      const [nextCursor, batch] = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', count);
+      let nextCursor: string;
+      let batch: string[];
+      try {
+        [nextCursor, batch] = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', count);
+      } catch (error) {
+        if (this.failClosedOnRedisError) {
+          this.reportRedisError(pattern, error);
+          return [];
+        }
+        throw error;
+      }
       cursor = nextCursor;
       keys.push(...batch);
     } while (cursor !== '0');
     return keys;
+  }
+
+  /**
+   * Fail-closed Redis read: fire the metric hook and log a throttled warning
+   * (max once per key per 5 minutes) so a Redis outage degrades flags to their
+   * registered defaults without spamming the hot path.
+   */
+  private reportRedisError(key: string, error: unknown): void {
+    const err = error instanceof Error ? error : new Error(String(error));
+    this.onRedisError?.(key, err);
+
+    const now = Date.now();
+    const lastWarn = this.redisErrorWarnedAt.get(key) ?? 0;
+    if (now - lastWarn >= STALE_WARN_THROTTLE_MS) {
+      this.redisErrorWarnedAt.set(key, now);
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[feature-flags] Redis read failed for "${key}" — serving default (fail-closed): ${err.message}`
+      );
+    }
   }
 
   async getAllFlagsWithDefaults(): Promise<FeatureFlag[]> {

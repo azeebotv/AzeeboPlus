@@ -41,6 +41,7 @@ const mockModerationService = {
  */
 describe('Moderation kill-switch (moderation_* flags)', () => {
   let app: INestApplication;
+  let baseUrl: string;
   const mockFeatureFlagService = {
     isEnabled: jest.fn().mockResolvedValue(false), // all moderation flags off
   };
@@ -63,6 +64,8 @@ describe('Moderation kill-switch (moderation_* flags)', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -75,21 +78,19 @@ describe('Moderation kill-switch (moderation_* flags)', () => {
   });
 
   it('403s POST /moderation/scan when moderation_ai_scans is off', async () => {
-    const res = await request(app.getHttpServer())
+    const res = await request(baseUrl)
       .post('/moderation/scan')
       .set('Authorization', 'Bearer test')
       .send({ contentId: 'c1', mediaUrl: 'https://cdn.example.com/video.mp4' });
 
     expect(res.status).toBe(403);
-    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(
-      moderationFlags.aiScans
-    );
+    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(moderationFlags.aiScans);
     expect(mockModerationService.scanContentMedia).not.toHaveBeenCalled();
   });
 
   it('passes the scan route through when moderation_ai_scans is on', async () => {
     mockFeatureFlagService.isEnabled.mockResolvedValue(true);
-    const res = await request(app.getHttpServer())
+    const res = await request(baseUrl)
       .post('/moderation/scan')
       .set('Authorization', 'Bearer test')
       .send({ contentId: 'c1', mediaUrl: 'https://cdn.example.com/video.mp4' });

@@ -144,9 +144,7 @@ export class SubscriptionService {
       }
 
       const endDate = new Date();
-      endDate.setDate(
-        endDate.getDate() + (isTrial ? this.getTrialDays() : plan.duration)
-      );
+      endDate.setDate(endDate.getDate() + (isTrial ? this.getTrialDays() : plan.duration));
 
       const newSubscription = await tx.subscription.create({
         data: {
@@ -168,11 +166,7 @@ export class SubscriptionService {
           amount: isTrial ? 0 : chargedPrice,
           currency: plan.currency,
           status: 'completed',
-          paymentProvider: isTrial
-            ? 'trial'
-            : paymentMethod === 'wallet'
-              ? 'wallet'
-              : 'external',
+          paymentProvider: isTrial ? 'trial' : paymentMethod === 'wallet' ? 'wallet' : 'external',
           description: isTrial
             ? `Free trial of ${plan.name} (${this.getTrialDays()} days)`
             : `Subscription to ${plan.name}${appliedPromo ? ` - promo ${appliedPromo.code} (-${appliedPromo.percent}%)` : ''}${dto.paymentReference ? ` - ref: ${dto.paymentReference}` : ''}`,

@@ -179,9 +179,9 @@ describe('UsersService', () => {
       jest.clearAllMocks();
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.updateProfile('ghost', { displayName: 'New' })
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.updateProfile('ghost', { displayName: 'New' })).rejects.toThrow(
+        NotFoundException
+      );
       expect(mockPrismaService.user.update).not.toHaveBeenCalled();
     });
   });

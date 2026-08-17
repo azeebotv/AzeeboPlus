@@ -72,9 +72,7 @@ export class CircuitBreakerProxyService {
   private readonly logger = new Logger(CircuitBreakerProxyService.name);
   private readonly circuitBreakers: Map<string, CircuitBreaker>;
 
-  constructor(
-    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
-  ) {
+  constructor(@Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService) {
     this.circuitBreakers = new Map();
   }
 
@@ -129,7 +127,14 @@ export class CircuitBreakerProxyService {
     if (!otelTrace?.getTracer) {
       this.logger.debug(`OpenTelemetry not available, proceeding without tracing [${requestId}]`);
       if (!circuitBreakingEnabled) {
-        const result = await this.executeProxyRequest(method, target, headers, body, timeout, requestId);
+        const result = await this.executeProxyRequest(
+          method,
+          target,
+          headers,
+          body,
+          timeout,
+          requestId
+        );
         return {
           ...result,
           circuitState: CircuitState.CLOSED,

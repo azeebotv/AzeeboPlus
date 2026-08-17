@@ -8,7 +8,14 @@ import { FeatureFlagService } from '@azeebo/feature-flags';
 jest.mock('axios', () => ({ default: { get: jest.fn() } }));
 
 const mockPrismaService = {
-  productEvent: { create: jest.fn(), createMany: jest.fn(), count: jest.fn(), findMany: jest.fn(), groupBy: jest.fn(), aggregate: jest.fn() },
+  productEvent: {
+    create: jest.fn(),
+    createMany: jest.fn(),
+    count: jest.fn(),
+    findMany: jest.fn(),
+    groupBy: jest.fn(),
+    aggregate: jest.fn(),
+  },
   analyticsEvent: { count: jest.fn(), groupBy: jest.fn() },
   user: { count: jest.fn() },
   contentItem: { count: jest.fn() },
@@ -31,7 +38,14 @@ describe('AnalyticsService flags', () => {
         AnalyticsService,
         { provide: PrismaService, useValue: prisma },
         { provide: ConfigService, useValue: { get: jest.fn((_k: string, d: unknown) => d) } },
-        { provide: CacheService, useValue: { get: jest.fn().mockResolvedValue(null), set: jest.fn().mockResolvedValue(undefined), invalidate: jest.fn().mockResolvedValue(undefined) } },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            invalidate: jest.fn().mockResolvedValue(undefined),
+          },
+        },
         { provide: FeatureFlagService, useValue: flags },
       ],
     }).compile();
@@ -39,10 +53,15 @@ describe('AnalyticsService flags', () => {
   };
 
   beforeEach(() => {
-    prisma = JSON.parse(JSON.stringify(mockPrismaService, (_k, v) => (typeof v === 'function' ? jest.fn() : v)));
+    prisma = JSON.parse(
+      JSON.stringify(mockPrismaService, (_k, v) => (typeof v === 'function' ? jest.fn() : v))
+    );
     prisma.productEvent.create = jest.fn();
     prisma.productEvent.createMany = jest.fn();
-    flags = { isEnabled: jest.fn().mockResolvedValue(false), getValue: jest.fn().mockResolvedValue(100) };
+    flags = {
+      isEnabled: jest.fn().mockResolvedValue(false),
+      getValue: jest.fn().mockResolvedValue(100),
+    };
   });
 
   describe('sampling rate', () => {

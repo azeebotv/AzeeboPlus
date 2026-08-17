@@ -40,6 +40,7 @@ class MockRateLimitGuard implements CanActivate {
  */
 describe('GamesController kill-switch (games_* flags)', () => {
   let app: INestApplication;
+  let baseUrl: string;
   const mockGamesService = {
     getHome: jest.fn().mockResolvedValue({ success: true, data: {} }),
     getTrending: jest.fn().mockResolvedValue({ success: true, data: {} }),
@@ -76,6 +77,8 @@ describe('GamesController kill-switch (games_* flags)', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -88,13 +91,13 @@ describe('GamesController kill-switch (games_* flags)', () => {
   });
 
   it('blocks GET /games/trivia with 403 when games_trivia_ai is off', async () => {
-    await request(app.getHttpServer()).get('/games/trivia').expect(403);
+    await request(baseUrl).get('/games/trivia').expect(403);
     expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(gamesFlags.triviaAi);
     expect(mockGamesService.getTrivia).not.toHaveBeenCalled();
   });
 
   it('blocks POST /games/sessions with 403 when games_trivia_ai is off', async () => {
-    await request(app.getHttpServer())
+    await request(baseUrl)
       .post('/games/sessions')
       .send({ gameId: 'trivia-1' })
       .expect(403);
@@ -102,15 +105,13 @@ describe('GamesController kill-switch (games_* flags)', () => {
   });
 
   it('blocks GET /games/leaderboard with 403 when games_leaderboards_seasonal is off', async () => {
-    await request(app.getHttpServer()).get('/games/leaderboard').expect(403);
-    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(
-      gamesFlags.leaderboardsSeasonal
-    );
+    await request(baseUrl).get('/games/leaderboard').expect(403);
+    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(gamesFlags.leaderboardsSeasonal);
     expect(mockGamesService.getLeaderboard).not.toHaveBeenCalled();
   });
 
   it('serves ungated catalog endpoints when the flags are off', async () => {
-    await request(app.getHttpServer()).get('/games/home').expect(200);
+    await request(baseUrl).get('/games/home').expect(200);
     expect(mockGamesService.getHome).toHaveBeenCalled();
   });
 });

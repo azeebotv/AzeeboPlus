@@ -40,6 +40,11 @@ jest.mock('@azeebo/feature-flags', () => ({
 
 describe('Games Service Authorization Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
+
+  // Mutable auth state read at request time by the shared guards —
+  // every test runs against ONE bound app (no per-test listen/close churn).
+  let authEnabled: boolean;
 
   const mockGamesService = {
     getDailyChallenge: jest.fn().mockResolvedValue({
@@ -61,23 +66,23 @@ describe('Games Service Authorization Tests', () => {
     }),
   };
 
-  const createMockAuthGuard = (canActivate: boolean) => ({
+  const mockAuthGuard = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     canActivate: jest.fn().mockImplementation((context: any) => {
-      if (!canActivate) {
+      if (!authEnabled) {
         throw new UnauthorizedException();
       }
       const req = context.switchToHttp().getRequest();
       req.user = { sub: 'user-123', role: 'user' };
       return true;
     }),
-  });
+  };
 
-  const createAppGuardProvider = (canActivate: boolean) => ({
+  const appGuardProvider = {
     provide: APP_GUARD,
     useFactory: () => ({
       canActivate: (context: ExecutionContext) => {
-        if (!canActivate) {
+        if (!authEnabled) {
           throw new UnauthorizedException();
         }
         const req = context.switchToHttp().getRequest();
@@ -85,7 +90,7 @@ describe('Games Service Authorization Tests', () => {
         return true;
       },
     }),
-  });
+  };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -95,11 +100,11 @@ describe('Games Service Authorization Tests', () => {
           provide: GamesService,
           useValue: mockGamesService,
         },
-        createAppGuardProvider(true),
+        appGuardProvider,
       ],
     })
       .overrideGuard(AuthGuard('jwt'))
-      .useValue(createMockAuthGuard(true))
+      .useValue(mockAuthGuard)
       .overrideGuard(RateLimitGuard)
       .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .compile();
@@ -107,6 +112,8 @@ describe('Games Service Authorization Tests', () => {
     app = moduleFixture.createNestApplication();
     app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -114,192 +121,67 @@ describe('Games Service Authorization Tests', () => {
   });
 
   beforeEach(() => {
+    authEnabled = true;
     jest.clearAllMocks();
   });
 
   describe('Authorization - GET /v1/games/daily-challenge', () => {
     it('should allow authenticated users to access daily challenge', async () => {
-      const mockAuthGuard = createMockAuthGuard(true);
-
-      const moduleFixture = await Test.createTestingModule({
-        controllers: [GamesController],
-        providers: [
-          { provide: GamesService, useValue: mockGamesService },
-          { provide: 'JWT', useValue: mockAuthGuard },
-          createAppGuardProvider(true),
-        ],
-      })
-        .overrideGuard(AuthGuard('jwt'))
-        .useValue(mockAuthGuard)
-        .overrideGuard(RateLimitGuard)
-        .useValue({ canActivate: jest.fn().mockReturnValue(true) })
-        .compile();
-
-      const testApp = moduleFixture.createNestApplication();
-      testApp.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer())
+      authEnabled = true;
+      const response = await request(baseUrl)
         .get('/v1/games/daily-challenge')
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-
-      await testApp.close();
     });
 
     it('should reject unauthenticated users accessing daily challenge', async () => {
-      const mockAuthGuard = createMockAuthGuard(false);
-
-      const moduleFixture = await Test.createTestingModule({
-        controllers: [GamesController],
-        providers: [
-          { provide: GamesService, useValue: mockGamesService },
-          { provide: 'JWT', useValue: mockAuthGuard },
-          createAppGuardProvider(false),
-        ],
-      })
-        .overrideGuard(AuthGuard('jwt'))
-        .useValue(mockAuthGuard)
-        .overrideGuard(RateLimitGuard)
-        .useValue({ canActivate: jest.fn().mockReturnValue(true) })
-        .compile();
-
-      const testApp = moduleFixture.createNestApplication();
-      testApp.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer()).get('/v1/games/daily-challenge');
+      authEnabled = false;
+      const response = await request(baseUrl).get('/v1/games/daily-challenge');
 
       expect(response.status).toBe(401);
-
-      await testApp.close();
     });
 
     it('should reject requests with invalid token', async () => {
-      const mockAuthGuard = createMockAuthGuard(false);
-
-      const moduleFixture = await Test.createTestingModule({
-        controllers: [GamesController],
-        providers: [
-          { provide: GamesService, useValue: mockGamesService },
-          { provide: 'JWT', useValue: mockAuthGuard },
-          createAppGuardProvider(false),
-        ],
-      })
-        .overrideGuard(AuthGuard('jwt'))
-        .useValue(mockAuthGuard)
-        .overrideGuard(RateLimitGuard)
-        .useValue({ canActivate: jest.fn().mockReturnValue(true) })
-        .compile();
-
-      const testApp = moduleFixture.createNestApplication();
-      testApp.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer())
+      authEnabled = false;
+      const response = await request(baseUrl)
         .get('/v1/games/daily-challenge')
         .set('Authorization', 'Bearer invalid-token');
 
       expect(response.status).toBe(401);
-
-      await testApp.close();
     });
   });
 
   describe('Authorization - POST /v1/games/daily-challenge/submit', () => {
     it('should allow authenticated users to submit answers', async () => {
-      const mockAuthGuard = createMockAuthGuard(true);
-
-      const moduleFixture = await Test.createTestingModule({
-        controllers: [GamesController],
-        providers: [
-          { provide: GamesService, useValue: mockGamesService },
-          { provide: 'JWT', useValue: mockAuthGuard },
-          createAppGuardProvider(true),
-        ],
-      })
-        .overrideGuard(AuthGuard('jwt'))
-        .useValue(mockAuthGuard)
-        .overrideGuard(RateLimitGuard)
-        .useValue({ canActivate: jest.fn().mockReturnValue(true) })
-        .compile();
-
-      const testApp = moduleFixture.createNestApplication();
-      testApp.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer())
+      authEnabled = true;
+      const response = await request(baseUrl)
         .post('/v1/games/daily-challenge/submit')
         .set('Authorization', 'Bearer valid-token')
         .send({ answer: 'A' });
 
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
-
-      await testApp.close();
     });
 
     it('should reject unauthenticated users submitting answers', async () => {
-      const mockAuthGuard = createMockAuthGuard(false);
-
-      const moduleFixture = await Test.createTestingModule({
-        controllers: [GamesController],
-        providers: [
-          { provide: GamesService, useValue: mockGamesService },
-          { provide: 'JWT', useValue: mockAuthGuard },
-          createAppGuardProvider(false),
-        ],
-      })
-        .overrideGuard(AuthGuard('jwt'))
-        .useValue(mockAuthGuard)
-        .overrideGuard(RateLimitGuard)
-        .useValue({ canActivate: jest.fn().mockReturnValue(true) })
-        .compile();
-
-      const testApp = moduleFixture.createNestApplication();
-      testApp.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer())
+      authEnabled = false;
+      const response = await request(baseUrl)
         .post('/v1/games/daily-challenge/submit')
         .send({ answer: 'A' });
 
       expect(response.status).toBe(401);
-
-      await testApp.close();
     });
 
     it('should require answer in request body', async () => {
-      const mockAuthGuard = createMockAuthGuard(true);
-
-      const moduleFixture = await Test.createTestingModule({
-        controllers: [GamesController],
-        providers: [
-          { provide: GamesService, useValue: mockGamesService },
-          { provide: 'JWT', useValue: mockAuthGuard },
-          createAppGuardProvider(true),
-        ],
-      })
-        .overrideGuard(AuthGuard('jwt'))
-        .useValue(mockAuthGuard)
-        .overrideGuard(RateLimitGuard)
-        .useValue({ canActivate: jest.fn().mockReturnValue(true) })
-        .compile();
-
-      const testApp = moduleFixture.createNestApplication();
-      testApp.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer())
+      authEnabled = true;
+      const response = await request(baseUrl)
         .post('/v1/games/daily-challenge/submit')
         .set('Authorization', 'Bearer valid-token')
         .send({});
 
       expect([200, 201, 400]).toContain(response.status);
-
-      await testApp.close();
     });
   });
 });

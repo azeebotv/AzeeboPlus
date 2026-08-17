@@ -15,15 +15,15 @@ pnpm add @azeebo/feature-flags
 ### Basic Usage
 
 ```typescript
-import { FeatureFlagService } from '@azeebo/feature-flags';
+import { FeatureFlagService, paymentFlags } from '@azeebo/feature-flags';
 
 // Initialize with your Redis connection
 const featureFlagService = new FeatureFlagService({
   redisUrl: process.env.REDIS_URL,
 });
 
-// Check if a feature is enabled
-const isEnabled = await featureFlagService.isEnabled('new-payment-flow');
+// Check if a feature is enabled (typed key — never a string literal)
+const isEnabled = await featureFlagService.isEnabled(paymentFlags.newCheckoutFlow);
 if (isEnabled) {
   // Use new payment flow
 }
@@ -33,15 +33,15 @@ if (isEnabled) {
 
 ```typescript
 import { Module } from '@nestjs/common';
-import { FeatureFlagModule } from '@azeebo/feature-flags';
+import { FeatureFlagModule, paymentFlags, webFlags } from '@azeebo/feature-flags';
 
 @Module({
   imports: [
     FeatureFlagModule.register({
       redisUrl: process.env.REDIS_URL,
       defaultFlags: {
-        'new-payment-flow': false,
-        'dark-mode': true,
+        [paymentFlags.newCheckoutFlow]: false,
+        [webFlags.darkMode]: true,
       },
     }),
   ],
@@ -151,7 +151,7 @@ actor + old→new details).
 2. **Defaults**: risky/experimental features default OFF; existing behavior made reversible defaults ON.
 3. **Kill-switches**: dangerous surfaces (payments, emails, CDN purge, DLQ retries) get service-level gates, not just route guards.
 4. **Rollout**: 0% → 10% → 50% → 100% with monitoring gates (see rollout policy doc).
-5. **Cleanup**: set `staleAfter` at 100%, remove 2 sprints later, sweep leftover `isEnabled` calls.
+5. **Cleanup**: set `staleAfter` at 100%, remove 2 sprints later, sweep leftover `isEnabled` calls. Every flag must carry an `owner` (and default-on kill-switches a `staleAfter`) so the admin stale report and owner-notification sweep can track it.
 6. **Monitoring**: `onEvaluation`/`onToggle` hooks exist for metrics wiring; flag state is audit-logged.
 
 ## Environments
@@ -160,5 +160,4 @@ actor + old→new details).
 |-------------|-------------|
 | Development | Local development with default flags (Redis at `FEATURE_FLAG_REDIS_URL`) |
 | Staging | Testing flags with full access |
-| Production | `FEATURE_FLAG_REDIS_URL` required — service throws if unset |
-| Production | Gradual rollout with monitoring |
+| Production | `FEATURE_FLAG_REDIS_URL` required — service throws if unset; gradual rollout with monitoring |

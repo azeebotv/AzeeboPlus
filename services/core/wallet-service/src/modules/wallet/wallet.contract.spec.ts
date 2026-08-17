@@ -107,6 +107,7 @@ const mockWalletService = {
 
 describe('Wallet Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   beforeAll(async () => {
     process.env.JWT_ACCESS_SECRET = 'test-jwt-secret';
@@ -153,6 +154,8 @@ describe('Wallet Controller Contract Tests', () => {
     } as NestInterceptor);
     app.setGlobalPrefix('v1');
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -163,7 +166,7 @@ describe('Wallet Controller Contract Tests', () => {
 
   describe('GET /v1/wallet', () => {
     it('should return current user wallet', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/wallet')
         .set('Authorization', 'Bearer valid-token');
 
@@ -178,7 +181,7 @@ describe('Wallet Controller Contract Tests', () => {
 
   describe('GET /v1/wallet/summary', () => {
     it('should return wallet summary', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/wallet/summary')
         .set('Authorization', 'Bearer valid-token');
 
@@ -193,7 +196,7 @@ describe('Wallet Controller Contract Tests', () => {
 
   describe('POST /v1/wallet/fund', () => {
     it('should fund wallet', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/wallet/fund')
         .set('Authorization', 'Bearer valid-token')
         .send({ amount: 50000, reference: 'pay-ref-123' });
@@ -209,7 +212,7 @@ describe('Wallet Controller Contract Tests', () => {
 
   describe('GET /v1/wallet/transactions', () => {
     it('should return transaction history', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/wallet/transactions')
         .set('Authorization', 'Bearer valid-token');
 
@@ -224,7 +227,7 @@ describe('Wallet Controller Contract Tests', () => {
 
   describe('GET /v1/wallet/audit-trail', () => {
     it('should return audit trail', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/wallet/audit-trail')
         .set('Authorization', 'Bearer valid-token');
 

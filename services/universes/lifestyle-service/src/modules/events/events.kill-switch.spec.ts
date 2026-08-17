@@ -27,9 +27,8 @@ jest.mock('@azeebo/shared-services', () => ({
   CacheService: jest.fn(),
   cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
   RolesGuard: jest.fn().mockImplementation(() => ({ canActivate: () => true })),
-  Roles: () =>
-    (_target: unknown, _propertyKey?: string, descriptor?: PropertyDescriptor) =>
-      descriptor,
+  Roles: () => (_target: unknown, _propertyKey?: string, descriptor?: PropertyDescriptor) =>
+    descriptor,
 }));
 
 /**
@@ -39,6 +38,7 @@ jest.mock('@azeebo/shared-services', () => ({
  */
 describe('Lifestyle stories kill-switch (lifestyle_stories_enabled)', () => {
   let app: INestApplication;
+  let baseUrl: string;
   const mockStoriesService = {
     getStories: jest.fn().mockResolvedValue({ success: true, data: { stories: [] } }),
     getStoryBySlug: jest.fn().mockResolvedValue({ success: true, data: {} }),
@@ -61,6 +61,8 @@ describe('Lifestyle stories kill-switch (lifestyle_stories_enabled)', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -73,21 +75,19 @@ describe('Lifestyle stories kill-switch (lifestyle_stories_enabled)', () => {
   });
 
   it('blocks GET /lifestyle/stories with 403 when lifestyle_stories_enabled is off', async () => {
-    await request(app.getHttpServer()).get('/lifestyle/stories').expect(403);
-    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(
-      lifestyleFlags.storiesEnabled
-    );
+    await request(baseUrl).get('/lifestyle/stories').expect(403);
+    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(lifestyleFlags.storiesEnabled);
     expect(mockStoriesService.getStories).not.toHaveBeenCalled();
   });
 
   it('blocks GET /lifestyle/stories/:slug with 403 when lifestyle_stories_enabled is off', async () => {
-    await request(app.getHttpServer()).get('/lifestyle/stories/my-story').expect(403);
+    await request(baseUrl).get('/lifestyle/stories/my-story').expect(403);
     expect(mockStoriesService.getStoryBySlug).not.toHaveBeenCalled();
   });
 
   it('serves stories when lifestyle_stories_enabled is on', async () => {
     mockFeatureFlagService.isEnabled.mockResolvedValue(true);
-    await request(app.getHttpServer()).get('/lifestyle/stories').expect(200);
+    await request(baseUrl).get('/lifestyle/stories').expect(200);
     expect(mockStoriesService.getStories).toHaveBeenCalled();
   });
 });

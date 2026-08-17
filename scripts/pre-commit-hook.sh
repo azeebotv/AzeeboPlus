@@ -101,4 +101,24 @@ if [ $FOUND -eq 1 ]; then
 fi
 
 echo "No hardcoded secrets detected."
+
+# --- Lint + typecheck (read-only) ---
+# Only run when staged files include source code so doc-only commits stay fast.
+CODE_STAGED=$(echo "$STAGED_FILES" | grep -E '\.(ts|tsx|js|jsx|mjs|prisma)$' || true)
+if [ -n "$CODE_STAGED" ]; then
+  echo ""
+  echo "Running lint + typecheck (read-only)..."
+  if ! pnpm lint; then
+    echo -e "${RED}Lint failed! Commit blocked.${NC}"
+    echo "Fix lint errors, or use: git commit --no-verify"
+    exit 1
+  fi
+  if ! pnpm typecheck; then
+    echo -e "${RED}Typecheck failed! Commit blocked.${NC}"
+    echo "Fix type errors, or use: git commit --no-verify"
+    exit 1
+  fi
+  echo "Lint + typecheck passed."
+fi
+
 exit 0

@@ -348,7 +348,7 @@ export class RewardsService {
         throw new NotFoundException(`Reward account not found for user ${userId}`);
       }
 
-      const nextLevel = await this.prisma.level.findFirst({
+      const nextLevel = await this.prisma.level.findUnique({
         where: { rank: rewardAccount.level.rank + 1 },
       });
 

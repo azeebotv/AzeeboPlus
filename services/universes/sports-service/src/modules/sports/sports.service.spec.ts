@@ -189,7 +189,7 @@ describe('SportsService', () => {
       const mockExistingEntry = { id: 'existing-entry-1', userId, contestId };
 
       (prismaService.contest.findUnique as jest.Mock).mockResolvedValue(mockContest);
-      (prismaService.contestEntry.findFirst as jest.Mock).mockResolvedValue(mockExistingEntry);
+      (prismaService.contestEntry.findUnique as jest.Mock).mockResolvedValue(mockExistingEntry);
 
       const result = await service.enterContest(userId, contestId);
 

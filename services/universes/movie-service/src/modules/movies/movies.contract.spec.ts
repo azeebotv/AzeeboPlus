@@ -67,6 +67,7 @@ jest.mock('@azeebo/shared-services', () => {
 
 describe('Movies Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockMoviesService = {
     listMovies: jest.fn().mockResolvedValue({ success: true, data: [] }),
@@ -113,6 +114,8 @@ describe('Movies Controller Contract Tests', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -130,7 +133,7 @@ describe('Movies Controller Contract Tests', () => {
         data: [{ id: 'movie-1', title: 'Action Movie' }],
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/movies')
         .set('x-user-id', 'user-123')
         .set('x-user-id', 'user-123')
@@ -149,7 +152,7 @@ describe('Movies Controller Contract Tests', () => {
         data: { id: 'movie-1', title: 'Action Movie', description: 'An action film' },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/movies/movie-1')
         .set('x-user-id', 'user-123')
         .expect(200)
@@ -162,7 +165,7 @@ describe('Movies Controller Contract Tests', () => {
     it('should return error for non-existent movie', () => {
       mockMoviesService.getMovie.mockRejectedValue(new NotFoundException('Movie not found'));
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/movies/nonexistent')
         .set('x-user-id', 'user-123')
         .expect(404);
@@ -176,7 +179,7 @@ describe('Movies Controller Contract Tests', () => {
         data: { rentalId: 'rental-1', expiresAt: '2024-12-31' },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .post('/movies/movie-1/rent')
         .set('Authorization', 'Bearer valid-token')
         .expect(201)
@@ -186,7 +189,7 @@ describe('Movies Controller Contract Tests', () => {
     });
 
     it('should return 401 without authorization', () => {
-      return request(app.getHttpServer()).post('/movies/movie-1/rent').expect(401);
+      return request(baseUrl).post('/movies/movie-1/rent').expect(401);
     });
   });
 
@@ -197,7 +200,7 @@ describe('Movies Controller Contract Tests', () => {
         data: [{ id: 'premiere-1', title: 'New Release' }],
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/movies/premieres')
         .set('x-user-id', 'user-123')
         .expect(200)
@@ -214,7 +217,7 @@ describe('Movies Controller Contract Tests', () => {
         data: [{ id: 'movie-1', title: 'Watchlisted Movie' }],
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/movies/watchlist')
         .set('Authorization', 'Bearer valid-token')
         .expect(200)
@@ -224,7 +227,7 @@ describe('Movies Controller Contract Tests', () => {
     });
 
     it('should return 401 without authorization', () => {
-      return request(app.getHttpServer()).get('/movies/watchlist').expect(401);
+      return request(baseUrl).get('/movies/watchlist').expect(401);
     });
   });
 
@@ -235,7 +238,7 @@ describe('Movies Controller Contract Tests', () => {
         data: { watchlistId: 'wl-1', movieId: 'movie-1' },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .post('/movies/watchlist')
         .set('Authorization', 'Bearer valid-token')
         .send({ movieId: 'movie-1' })
@@ -253,7 +256,7 @@ describe('Movies Controller Contract Tests', () => {
         data: [],
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/movies')
         .set('x-user-id', 'user-123')
         .expect((res) => {
@@ -270,7 +273,7 @@ describe('Movies Controller Contract Tests', () => {
         data: { items: [], page: 1, limit: 20, total: 0 },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/movies')
         .set('x-user-id', 'user-123')
         .expect((res) => {
@@ -284,7 +287,7 @@ describe('Movies Controller Contract Tests', () => {
 
   describe('error responses', () => {
     it('should return 401 for protected endpoints without token', () => {
-      return request(app.getHttpServer()).post('/movies/movie-1/rent').expect(401);
+      return request(baseUrl).post('/movies/movie-1/rent').expect(401);
     });
   });
 });

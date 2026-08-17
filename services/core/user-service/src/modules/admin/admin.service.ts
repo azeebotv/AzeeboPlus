@@ -55,7 +55,10 @@ export class AdminService {
         },
       });
     } catch (error) {
-      this.logger.error(`Failed to create audit log for action ${entry.action}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to create audit log for action ${entry.action}`,
+        (error as Error).stack
+      );
     }
   }
 
@@ -314,7 +317,10 @@ export class AdminService {
       return { message: 'Watch history deleted successfully' };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
-      this.logger.error(`Failed to delete watch history for user ${userId}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to delete watch history for user ${userId}`,
+        (error as Error).stack
+      );
       throw error;
     }
   }

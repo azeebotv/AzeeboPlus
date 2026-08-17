@@ -14,6 +14,7 @@ class MockRolesGuard implements CanActivate {
 
 describe('Moderation Validation Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockModerationService = {
     scanContent: jest.fn().mockResolvedValue({ success: true }),
@@ -27,7 +28,7 @@ describe('Moderation Validation Tests', () => {
     getModerationStats: jest.fn().mockResolvedValue({ success: true }),
   };
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [ModerationController],
       providers: [
@@ -52,15 +53,21 @@ describe('Moderation Validation Tests', () => {
       next();
     });
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
-  afterEach(async () => {
+  afterAll(async () => {
     await app.close();
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
   describe('POST /moderation/cases - Validation', () => {
     it('should create a case with valid data', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/moderation/cases')
         .send({
           contentId: 'content-1',
@@ -76,7 +83,7 @@ describe('Moderation Validation Tests', () => {
     });
 
     it('should create a case even without optional fields', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/moderation/cases')
         .send({
           type: 'content',
@@ -93,7 +100,7 @@ describe('Moderation Validation Tests', () => {
 
   describe('PATCH /moderation/cases/:id/resolve - Validation', () => {
     it('should return 400 for missing resolution', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .patch('/moderation/cases/case-1/resolve')
         .send({ notes: 'Content is appropriate' })
         .set('Authorization', 'Bearer valid-token');
@@ -102,7 +109,7 @@ describe('Moderation Validation Tests', () => {
     });
 
     it('should accept any resolution value', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .patch('/moderation/cases/case-1/resolve')
         .send({ resolution: 'invalid', notes: 'Content is appropriate' })
         .set('Authorization', 'Bearer valid-token');
@@ -111,7 +118,7 @@ describe('Moderation Validation Tests', () => {
     });
 
     it('should resolve a case with valid data', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .patch('/moderation/cases/case-1/resolve')
         .send({ resolution: 'resolved', notes: 'Content is appropriate' })
         .set('Authorization', 'Bearer valid-token');
@@ -122,7 +129,7 @@ describe('Moderation Validation Tests', () => {
 
   describe('POST /moderation/scan/:contentId - Validation', () => {
     it('should scan content with valid type', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/moderation/scan/content-1')
         .send({ type: 'nsfw' })
         .set('Authorization', 'Bearer valid-token');
@@ -131,7 +138,7 @@ describe('Moderation Validation Tests', () => {
     });
 
     it('should return 404 for empty contentId', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/moderation/scan/')
         .send({ type: 'nsfw' })
         .set('Authorization', 'Bearer valid-token');

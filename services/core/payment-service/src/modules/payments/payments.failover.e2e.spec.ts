@@ -47,6 +47,7 @@ const TEST_USER = 'e2e-failover-user';
 jest.setTimeout(120_000);
 
 if (!RUN) {
+  // eslint-disable-next-line azeebo-custom/no-console-log -- opt-in skip guidance for ops
   console.log(
     `[payments.failover.e2e] Skipping — opt-in. Boot docker infra with \`docker compose ` +
       `-f docker-compose.test.yml up -d --wait redis-test postgres-test paystack-mock ` +

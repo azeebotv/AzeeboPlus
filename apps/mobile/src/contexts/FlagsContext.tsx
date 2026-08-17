@@ -1,13 +1,6 @@
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth } from './AuthContext';
-import { fetchBootstrapFlags, universeFlagKey, type BootstrapFlag } from '../api/flags';
+import { fetchBootstrapFlags, universeEnabledKey, type BootstrapFlag } from '../api/flags';
 
 interface FlagsContextValue {
   /** Evaluated public flags (key → flag). Empty until the first fetch resolves. */
@@ -54,7 +47,7 @@ export function FlagsProvider({ children }: { children: React.ReactNode }): Reac
         if (flag?.enabled !== true) return null;
         return flag.value ?? null;
       },
-      universeEnabled: (name) => flags[universeFlagKey(name)]?.enabled === true,
+      universeEnabled: (name) => flags[universeEnabledKey(name)]?.enabled === true,
       refresh: load,
     }),
     [flags, ready, load]

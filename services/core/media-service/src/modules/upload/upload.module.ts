@@ -12,7 +12,13 @@ import { CommonModule } from '../../common/common.module';
 @Module({
   imports: [ConfigModule, CommonModule, JwtConfigModule],
   controllers: [UploadController],
-  providers: [UploadService, S3Service, CdnPurgeService, CdnFlagPurgeQueueService, PremiumContentService],
+  providers: [
+    UploadService,
+    S3Service,
+    CdnPurgeService,
+    CdnFlagPurgeQueueService,
+    PremiumContentService,
+  ],
   exports: [UploadService, S3Service, CdnPurgeService, PremiumContentService],
 })
 export class UploadModule {}

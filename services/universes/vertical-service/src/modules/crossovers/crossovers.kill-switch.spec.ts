@@ -48,6 +48,7 @@ class MockAdminGuard implements CanActivate {
  */
 describe('Vertical controllers kill-switch (vertical_* flags)', () => {
   let app: INestApplication;
+  let baseUrl: string;
   const mockCrossoversService = {
     getAllCrossovers: jest.fn().mockResolvedValue({ success: true, data: { crossovers: [] } }),
     createCrossover: jest.fn().mockResolvedValue({ success: true, data: {} }),
@@ -78,6 +79,8 @@ describe('Vertical controllers kill-switch (vertical_* flags)', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -90,10 +93,8 @@ describe('Vertical controllers kill-switch (vertical_* flags)', () => {
   });
 
   it('blocks GET /vertical/crossovers with 403 when vertical_crossovers_enabled is off', async () => {
-    await request(app.getHttpServer()).get('/vertical/crossovers').expect(403);
-    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(
-      verticalFlags.crossoversEnabled
-    );
+    await request(baseUrl).get('/vertical/crossovers').expect(403);
+    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(verticalFlags.crossoversEnabled);
     expect(mockCrossoversService.getAllCrossovers).not.toHaveBeenCalled();
   });
 
@@ -101,12 +102,12 @@ describe('Vertical controllers kill-switch (vertical_* flags)', () => {
     mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
       Promise.resolve(key === verticalFlags.timelineEnabled)
     );
-    await request(app.getHttpServer()).get('/vertical/timeline').expect(200);
+    await request(baseUrl).get('/vertical/timeline').expect(200);
     expect(mockTimelineService.getTimeline).toHaveBeenCalled();
   });
 
   it('blocks the timeline with 403 when vertical_timeline_enabled is off', async () => {
-    await request(app.getHttpServer()).get('/vertical/timeline').expect(403);
+    await request(baseUrl).get('/vertical/timeline').expect(403);
     expect(mockTimelineService.getTimeline).not.toHaveBeenCalled();
   });
 });

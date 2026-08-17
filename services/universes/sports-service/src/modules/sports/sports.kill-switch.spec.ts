@@ -57,6 +57,7 @@ const mockFanContestsService = {
  */
 describe('Sports kill-switch (sports_* flags)', () => {
   let app: INestApplication;
+  let baseUrl: string;
   const mockFeatureFlagService = {
     isEnabled: jest.fn().mockResolvedValue(false), // all sports flags off
   };
@@ -78,6 +79,8 @@ describe('Sports kill-switch (sports_* flags)', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -90,29 +93,25 @@ describe('Sports kill-switch (sports_* flags)', () => {
   });
 
   it('blocks GET /sports/live/scores with 403 when sports_live_scores is off', async () => {
-    await request(app.getHttpServer()).get('/sports/live/scores').expect(403);
-    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(
-      sportsFlags.liveScores
-    );
+    await request(baseUrl).get('/sports/live/scores').expect(403);
+    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(sportsFlags.liveScores);
     expect(mockSportsService.getHome).not.toHaveBeenCalled();
   });
 
   it('serves GET /sports/live/scores when sports_live_scores is on', async () => {
     mockFeatureFlagService.isEnabled.mockResolvedValue(true);
-    await request(app.getHttpServer()).get('/sports/live/scores').expect(200);
+    await request(baseUrl).get('/sports/live/scores').expect(200);
     expect(mockSportsService.getHome).toHaveBeenCalled();
   });
 
   it('blocks GET /sports/fan-contests with 403 when sports_fan_contests is off', async () => {
-    await request(app.getHttpServer()).get('/sports/fan-contests').expect(403);
-    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(
-      sportsFlags.fanContests
-    );
+    await request(baseUrl).get('/sports/fan-contests').expect(403);
+    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(sportsFlags.fanContests);
     expect(mockFanContestsService.getContests).not.toHaveBeenCalled();
   });
 
   it('serves ungated catalog endpoints when the flags are off', async () => {
-    await request(app.getHttpServer()).get('/sports/home').expect(200);
+    await request(baseUrl).get('/sports/home').expect(200);
     expect(mockSportsService.getHome).toHaveBeenCalled();
   });
 });
