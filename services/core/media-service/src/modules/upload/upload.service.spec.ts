@@ -42,11 +42,11 @@ describe('UploadService', () => {
   const mockFeatureFlagService = {
     // Everything on EXCEPT the off-by-default safety features (virus scan,
     // chunked uploads) so upload tests don't trip the fail-closed hooks.
-    isEnabled: jest.fn().mockImplementation((key: string) =>
-      Promise.resolve(
-        key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked
-      )
-    ),
+    isEnabled: jest
+      .fn()
+      .mockImplementation((key: string) =>
+        Promise.resolve(key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked)
+      ),
   };
 
   const mockCdnPurgeService = {
@@ -94,9 +94,7 @@ describe('UploadService', () => {
 
     it('should return a public immutable cache-control when media_cdn_edge_cache is on', async () => {
       mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
-        Promise.resolve(
-          key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked
-        )
+        Promise.resolve(key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked)
       );
       mockS3Service.uploadFile.mockResolvedValue({ url: 'https://example.com/test.jpg' });
 
@@ -121,9 +119,7 @@ describe('UploadService', () => {
   describe('per-type cache-control (media_cdn_edge_cache)', () => {
     const upload = async (mimetype: string) => {
       mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
-        Promise.resolve(
-          key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked
-        )
+        Promise.resolve(key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked)
       );
       mockS3Service.uploadFile.mockResolvedValue({ url: 'https://example.com/file' });
       const file = {
@@ -136,9 +132,7 @@ describe('UploadService', () => {
     };
 
     it('keeps immutable year-long caching for images', async () => {
-      expect((await upload('image/jpeg')).cacheControl).toBe(
-        'public, max-age=31536000, immutable'
-      );
+      expect((await upload('image/jpeg')).cacheControl).toBe('public, max-age=31536000, immutable');
       expect((await upload('image/jpeg')).cachePolicy).toBe('immutable');
     });
 
@@ -267,9 +261,7 @@ describe('UploadService', () => {
 
     it('does not purge when caching is enabled (the new object is the cache)', async () => {
       mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
-        Promise.resolve(
-          key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked
-        )
+        Promise.resolve(key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked)
       );
       mockS3Service.uploadFile.mockResolvedValue({
         url: 'https://example.com/a.jpg',
@@ -323,9 +315,7 @@ describe('UploadService', () => {
       // Implementations persist across clearAllMocks: re-establish the flag
       // default in case an earlier test left isEnabled=false.
       mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
-        Promise.resolve(
-          key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked
-        )
+        Promise.resolve(key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked)
       );
       // TTLs are read once at construction, so rebuild the service with the
       // env mock in place (the module-level beforeEach compiled with the
@@ -355,9 +345,7 @@ describe('UploadService', () => {
     }
 
     it('uses the env-tuned TTLs per content type', async () => {
-      expect((await upload('image/jpeg')).cacheControl).toBe(
-        'public, max-age=86400, immutable'
-      );
+      expect((await upload('image/jpeg')).cacheControl).toBe('public, max-age=86400, immutable');
       expect((await upload('image/jpeg')).cachePolicy).toBe('immutable');
       expect((await upload('video/mp4')).cacheControl).toBe('public, max-age=172800');
       expect((await upload('video/mp4')).cachePolicy).toBe('medium-lived');
@@ -386,9 +374,7 @@ describe('UploadService', () => {
     });
 
     it('keeps the immutable directive on images regardless of TTL', async () => {
-      expect((await upload('image/png')).cacheControl).toBe(
-        'public, max-age=86400, immutable'
-      );
+      expect((await upload('image/png')).cacheControl).toBe('public, max-age=86400, immutable');
     });
 
     it('falls back to defaults when an env TTL is invalid', async () => {
@@ -458,9 +444,7 @@ describe('UploadService', () => {
     });
 
     it('stores a chunk to staging and records progress', async () => {
-      mockRedisService.get.mockResolvedValue(
-        JSON.stringify({ ...session, received: [0] })
-      );
+      mockRedisService.get.mockResolvedValue(JSON.stringify({ ...session, received: [0] }));
 
       const file = {
         originalname: 'c1',
@@ -489,9 +473,7 @@ describe('UploadService', () => {
         size: 1,
       } as Express.Multer.File;
 
-      await expect(service.uploadChunk('session-1', 0, file)).rejects.toThrow(
-        BadRequestException
-      );
+      await expect(service.uploadChunk('session-1', 0, file)).rejects.toThrow(BadRequestException);
       expect(mockS3Service.putBuffer).not.toHaveBeenCalled();
     });
 
@@ -517,19 +499,13 @@ describe('UploadService', () => {
       expect(mockS3Service.deleteFile).toHaveBeenCalledWith(
         expect.stringContaining('uploads/chunks/session-1/0')
       );
-      expect(mockRedisService.del).toHaveBeenCalledWith(
-        expect.stringMatching(/^chunked_upload:/)
-      );
+      expect(mockRedisService.del).toHaveBeenCalledWith(expect.stringMatching(/^chunked_upload:/));
     });
 
     it('rejects completing an incomplete session', async () => {
-      mockRedisService.get.mockResolvedValue(
-        JSON.stringify({ ...session, received: [0] })
-      );
+      mockRedisService.get.mockResolvedValue(JSON.stringify({ ...session, received: [0] }));
 
-      await expect(service.completeChunkedUpload('session-1')).rejects.toThrow(
-        BadRequestException
-      );
+      await expect(service.completeChunkedUpload('session-1')).rejects.toThrow(BadRequestException);
       expect(mockS3Service.getObjectBuffer).not.toHaveBeenCalled();
     });
   });
@@ -545,9 +521,7 @@ describe('UploadService', () => {
     it('skips scanning entirely while the flag is off', async () => {
       jest.clearAllMocks();
       mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
-        Promise.resolve(
-          key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked
-        )
+        Promise.resolve(key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked)
       );
       mockS3Service.uploadFile.mockResolvedValue({
         key: 'documents/x.pdf',

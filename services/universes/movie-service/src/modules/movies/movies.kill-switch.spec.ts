@@ -46,6 +46,7 @@ class MockRateLimitGuard implements CanActivate {
  */
 describe('MoviesController kill-switch (movie_* flags)', () => {
   let app: INestApplication;
+  let baseUrl: string;
   const mockMoviesService = {
     listMovies: jest.fn().mockResolvedValue({ success: true, data: { movies: [] } }),
     listPremieres: jest.fn().mockResolvedValue({ success: true, data: { premieres: [] } }),
@@ -86,6 +87,8 @@ describe('MoviesController kill-switch (movie_* flags)', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -98,23 +101,19 @@ describe('MoviesController kill-switch (movie_* flags)', () => {
   });
 
   it('blocks GET /movies/premieres with 403 when movie_premieres_enabled is off', async () => {
-    await request(app.getHttpServer()).get('/movies/premieres').expect(403);
-    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(
-      movieFlags.premieresEnabled
-    );
+    await request(baseUrl).get('/movies/premieres').expect(403);
+    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(movieFlags.premieresEnabled);
     expect(mockMoviesService.listPremieres).not.toHaveBeenCalled();
   });
 
   it('blocks GET /movies/watchlist with 403 when movie_watchlist_sync is off', async () => {
-    await request(app.getHttpServer()).get('/movies/watchlist').expect(403);
-    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(
-      movieFlags.watchlistSync
-    );
+    await request(baseUrl).get('/movies/watchlist').expect(403);
+    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(movieFlags.watchlistSync);
     expect(mockMoviesService.getWatchlist).not.toHaveBeenCalled();
   });
 
   it('blocks POST /movies/watchlist with 403 when movie_watchlist_sync is off', async () => {
-    await request(app.getHttpServer())
+    await request(baseUrl)
       .post('/movies/watchlist')
       .send({ movieId: 'movie-1' })
       .expect(403);
@@ -122,20 +121,18 @@ describe('MoviesController kill-switch (movie_* flags)', () => {
   });
 
   it('blocks DELETE /movies/watchlist/:movieId with 403 when movie_watchlist_sync is off', async () => {
-    await request(app.getHttpServer()).delete('/movies/watchlist/movie-1').expect(403);
+    await request(baseUrl).delete('/movies/watchlist/movie-1').expect(403);
     expect(mockMoviesService.removeFromWatchlist).not.toHaveBeenCalled();
   });
 
   it('blocks POST /movies/:movieId/rent with 403 when movie_rentals_enabled is off', async () => {
-    await request(app.getHttpServer()).post('/movies/movie-1/rent').expect(403);
-    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(
-      movieFlags.rentalsEnabled
-    );
+    await request(baseUrl).post('/movies/movie-1/rent').expect(403);
+    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(movieFlags.rentalsEnabled);
     expect(mockMoviesService.rentMovie).not.toHaveBeenCalled();
   });
 
   it('serves ungated catalog endpoints when the flags are off', async () => {
-    await request(app.getHttpServer()).get('/movies').expect(200);
+    await request(baseUrl).get('/movies').expect(200);
     expect(mockMoviesService.listMovies).toHaveBeenCalled();
   });
 });

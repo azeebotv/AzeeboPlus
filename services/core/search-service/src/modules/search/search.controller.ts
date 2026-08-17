@@ -56,9 +56,7 @@ export class SearchController {
       page: page ? Number(page) : 1,
       limit: safeLimit,
       creatorsPage: creatorsPage ? Number(creatorsPage) : undefined,
-      creatorsLimit: creatorsLimit
-        ? Math.min(Math.max(1, Number(creatorsLimit)), 100)
-        : undefined,
+      creatorsLimit: creatorsLimit ? Math.min(Math.max(1, Number(creatorsLimit)), 100) : undefined,
       universesPage: universesPage ? Number(universesPage) : undefined,
       universesLimit: universesLimit
         ? Math.min(Math.max(1, Number(universesLimit)), 100)

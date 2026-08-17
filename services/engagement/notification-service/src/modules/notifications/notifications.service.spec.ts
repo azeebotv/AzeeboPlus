@@ -71,9 +71,11 @@ describe('NotificationsService', () => {
   };
 
   const mockFeatureFlagService = {
-    isEnabled: jest.fn().mockImplementation((key: string) =>
-      Promise.resolve(key !== notificationFlags.preferencesV2)
-    ),
+    isEnabled: jest
+      .fn()
+      .mockImplementation((key: string) =>
+        Promise.resolve(key !== notificationFlags.preferencesV2)
+      ),
   };
 
   beforeEach(async () => {
@@ -272,7 +274,14 @@ describe('NotificationsService', () => {
         Promise.resolve(key !== notificationFlags.preferencesV2)
       );
       (mockPrismaService.notification.findMany as jest.Mock).mockResolvedValue([
-        { id: 'n1', userId: 'user-1', type: 'payment', title: 'Payment', message: '$50 received', createdAt: new Date() },
+        {
+          id: 'n1',
+          userId: 'user-1',
+          type: 'payment',
+          title: 'Payment',
+          message: '$50 received',
+          createdAt: new Date(),
+        },
       ]);
       (mockEmailService.sendEmail as jest.Mock).mockResolvedValue(true);
       mockedAxios.get.mockResolvedValue({
@@ -527,7 +536,10 @@ describe('NotificationsService', () => {
         const result = await service.sendTemplatedEmail({
           to: 'test@example.com',
           template: 'email-verification',
-          data: { displayName: 'Test User', verificationUrl: 'https://azeebo.plus/auth/verify-email?token=abc' },
+          data: {
+            displayName: 'Test User',
+            verificationUrl: 'https://azeebo.plus/auth/verify-email?token=abc',
+          },
         });
 
         expect(result).toBe(true);
@@ -535,7 +547,10 @@ describe('NotificationsService', () => {
           'test@example.com',
           'Verify Your Email Address',
           'email-verification',
-          { displayName: 'Test User', verificationUrl: 'https://azeebo.plus/auth/verify-email?token=abc' }
+          {
+            displayName: 'Test User',
+            verificationUrl: 'https://azeebo.plus/auth/verify-email?token=abc',
+          }
         );
       });
 

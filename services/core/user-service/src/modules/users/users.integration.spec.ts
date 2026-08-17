@@ -141,7 +141,7 @@ describe('UsersService Integration', () => {
     it('should update universe affinity for user', async () => {
       const userId = 'user-123';
       const dto = {
-        interests: ['reality', 'movies'],
+        interests: ['reality', 'movie'],
       };
 
       (prisma.userPreferences.findUnique as jest.Mock).mockResolvedValue({

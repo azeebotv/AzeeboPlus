@@ -186,9 +186,7 @@ export class RecommendationService {
     try {
       const { userId, limit = 20, universe, freshnessDays = 7 } = input;
       const algorithm = await this.resolveAlgorithm(userId);
-      const cachingEnabled = await this.featureFlagService.isEnabled(
-        recommendationFlags.caching
-      );
+      const cachingEnabled = await this.featureFlagService.isEnabled(recommendationFlags.caching);
       const crossUniverseEnabled = await this.featureFlagService.isEnabled(
         recommendationFlags.crossUniverse
       );
@@ -805,7 +803,16 @@ export class RecommendationService {
   async getChurnRisk(userId: string): Promise<{ success: boolean; data?: ChurnRisk }> {
     // Kill-switch: churn model defaults OFF until calibrated.
     if (!(await this.featureFlagService.isEnabled(recommendationFlags.churnModel))) {
-      return { success: true, data: { userId, riskScore: 0, riskLevel: 'low', contributingFactors: [], recommendations: [] } };
+      return {
+        success: true,
+        data: {
+          userId,
+          riskScore: 0,
+          riskLevel: 'low',
+          contributingFactors: [],
+          recommendations: [],
+        },
+      };
     }
     try {
       const thirtyDaysAgo = new Date();

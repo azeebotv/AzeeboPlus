@@ -31,7 +31,9 @@ export class StoryworldMetadataService {
   ): Promise<{ data: StoryworldMetadataItem[]; total: number }> {
     try {
       const cacheK = `realms:${universeId}:${page}:${limit}`;
-      const cached = await this.cache.get<{ data: StoryworldMetadataItem[]; total: number }>(cacheK);
+      const cached = await this.cache.get<{ data: StoryworldMetadataItem[]; total: number }>(
+        cacheK
+      );
       if (cached) return cached;
 
       const [data, total] = await Promise.all([
@@ -72,7 +74,9 @@ export class StoryworldMetadataService {
   ): Promise<{ data: StoryworldMetadataItem[]; total: number }> {
     try {
       const cacheK = `orisa:${universeId}:${page}:${limit}`;
-      const cached = await this.cache.get<{ data: StoryworldMetadataItem[]; total: number }>(cacheK);
+      const cached = await this.cache.get<{ data: StoryworldMetadataItem[]; total: number }>(
+        cacheK
+      );
       if (cached) return cached;
 
       const [data, total] = await Promise.all([
@@ -89,7 +93,10 @@ export class StoryworldMetadataService {
       await this.cache.set(cacheK, result, 300);
       return result;
     } catch (error) {
-      this.logger.error(`Failed to get orisa files for universe ${universeId}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get orisa files for universe ${universeId}`,
+        (error as Error).stack
+      );
       throw error;
     }
   }
@@ -113,7 +120,9 @@ export class StoryworldMetadataService {
   ): Promise<{ data: StoryworldMetadataItem[]; total: number }> {
     try {
       const cacheK = `artifacts:${universeId}:${page}:${limit}`;
-      const cached = await this.cache.get<{ data: StoryworldMetadataItem[]; total: number }>(cacheK);
+      const cached = await this.cache.get<{ data: StoryworldMetadataItem[]; total: number }>(
+        cacheK
+      );
       if (cached) return cached;
 
       const [data, total] = await Promise.all([
@@ -130,7 +139,10 @@ export class StoryworldMetadataService {
       await this.cache.set(cacheK, result, 300);
       return result;
     } catch (error) {
-      this.logger.error(`Failed to get artifacts for universe ${universeId}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get artifacts for universe ${universeId}`,
+        (error as Error).stack
+      );
       throw error;
     }
   }
@@ -154,7 +166,9 @@ export class StoryworldMetadataService {
   ): Promise<{ data: StoryworldMetadataItem[]; total: number }> {
     try {
       const cacheK = `prophecies:${universeId}:${page}:${limit}`;
-      const cached = await this.cache.get<{ data: StoryworldMetadataItem[]; total: number }>(cacheK);
+      const cached = await this.cache.get<{ data: StoryworldMetadataItem[]; total: number }>(
+        cacheK
+      );
       if (cached) return cached;
 
       const [data, total] = await Promise.all([
@@ -171,7 +185,10 @@ export class StoryworldMetadataService {
       await this.cache.set(cacheK, result, 300);
       return result;
     } catch (error) {
-      this.logger.error(`Failed to get prophecies for universe ${universeId}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get prophecies for universe ${universeId}`,
+        (error as Error).stack
+      );
       throw error;
     }
   }
@@ -195,7 +212,9 @@ export class StoryworldMetadataService {
   ): Promise<{ data: StoryworldMetadataItem[]; total: number }> {
     try {
       const cacheK = `maps:${universeId}:${page}:${limit}`;
-      const cached = await this.cache.get<{ data: StoryworldMetadataItem[]; total: number }>(cacheK);
+      const cached = await this.cache.get<{ data: StoryworldMetadataItem[]; total: number }>(
+        cacheK
+      );
       if (cached) return cached;
 
       const [data, total] = await Promise.all([
@@ -212,7 +231,10 @@ export class StoryworldMetadataService {
       await this.cache.set(cacheK, result, 300);
       return result;
     } catch (error) {
-      this.logger.error(`Failed to get world maps for universe ${universeId}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get world maps for universe ${universeId}`,
+        (error as Error).stack
+      );
       throw error;
     }
   }

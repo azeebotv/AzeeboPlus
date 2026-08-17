@@ -16,9 +16,9 @@ jest.mock('@azeebo/security', () => ({
 
 jest.mock('../../cache/index.js', () => ({
   CacheInterceptor: jest.fn().mockImplementation(() => ({
-    intercept: jest.fn().mockImplementation(
-      (_context: unknown, next: { handle: () => unknown }) => next.handle()
-    ),
+    intercept: jest
+      .fn()
+      .mockImplementation((_context: unknown, next: { handle: () => unknown }) => next.handle()),
   })),
   Cache: () => () => {},
 }));
@@ -276,9 +276,7 @@ describe('WalletController', () => {
     });
 
     it('should throw BadRequestException on insufficient balance', async () => {
-      walletService.debitBalance.mockRejectedValue(
-        new BadRequestException('Insufficient balance')
-      );
+      walletService.debitBalance.mockRejectedValue(new BadRequestException('Insufficient balance'));
 
       const body = {
         walletId: mockWalletId,
@@ -534,7 +532,16 @@ describe('WalletController', () => {
         success: true,
         data: {
           transactions: [mockTransaction],
-          pagination: { page: 1, limit: 20, total: 1, totalPages: 1, hasNextPage: false, hasPrevPage: false, nextCursor: null, prevCursor: null },
+          pagination: {
+            page: 1,
+            limit: 20,
+            total: 1,
+            totalPages: 1,
+            hasNextPage: false,
+            hasPrevPage: false,
+            nextCursor: null,
+            prevCursor: null,
+          },
         },
       };
       walletService.getTransactions.mockResolvedValue(txResult as never);
@@ -549,7 +556,19 @@ describe('WalletController', () => {
     it('should clamp limit between 1 and 100', async () => {
       walletService.getTransactions.mockResolvedValue({
         success: true,
-        data: { transactions: [], pagination: { page: 1, limit: 100, total: 0, totalPages: 0, hasNextPage: false, hasPrevPage: false, nextCursor: null, prevCursor: null } },
+        data: {
+          transactions: [],
+          pagination: {
+            page: 1,
+            limit: 100,
+            total: 0,
+            totalPages: 0,
+            hasNextPage: false,
+            hasPrevPage: false,
+            nextCursor: null,
+            prevCursor: null,
+          },
+        },
       } as never);
 
       const req = { user: { id: mockUserId } };
@@ -647,7 +666,13 @@ describe('WalletController', () => {
       walletService.getWalletIdByUserId.mockResolvedValue(mockWalletId);
       const bonusResult = {
         success: true,
-        data: { amount: 500, reason: 'Referral bonus', balance: 1000, bonusBalance: 550, promoBalance: 25 },
+        data: {
+          amount: 500,
+          reason: 'Referral bonus',
+          balance: 1000,
+          bonusBalance: 550,
+          promoBalance: 25,
+        },
       };
       walletService.addBonusCredit.mockResolvedValue(bonusResult as never);
 
@@ -657,7 +682,11 @@ describe('WalletController', () => {
 
       expect(result.success).toBe(true);
       expect(walletService.getWalletIdByUserId).toHaveBeenCalledWith(mockUserId);
-      expect(walletService.addBonusCredit).toHaveBeenCalledWith(mockWalletId, 500, 'Referral bonus');
+      expect(walletService.addBonusCredit).toHaveBeenCalledWith(
+        mockWalletId,
+        500,
+        'Referral bonus'
+      );
     });
   });
 
@@ -666,7 +695,14 @@ describe('WalletController', () => {
       walletService.getWalletIdByUserId.mockResolvedValue(mockWalletId);
       const promoResult = {
         success: true,
-        data: { amount: 100, promoCode: 'SUMMER2024', expiresAt: new Date().toISOString(), balance: 1000, bonusBalance: 50, promoBalance: 125 },
+        data: {
+          amount: 100,
+          promoCode: 'SUMMER2024',
+          expiresAt: new Date().toISOString(),
+          balance: 1000,
+          bonusBalance: 50,
+          promoBalance: 125,
+        },
       };
       walletService.addPromoCredit.mockResolvedValue(promoResult as never);
 

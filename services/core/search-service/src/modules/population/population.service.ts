@@ -39,9 +39,7 @@ const JOB_NAME = 'search-index-population';
  * instance.
  */
 @Injectable()
-export class PopulationService
-  implements OnApplicationBootstrap, OnModuleInit, OnModuleDestroy
-{
+export class PopulationService implements OnApplicationBootstrap, OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PopulationService.name);
   private running = false;
   private job?: CronJob;

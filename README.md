@@ -188,7 +188,7 @@ JWT_REFRESH_SECRET=<random-64-char-hex>
 These override the placeholder values in service `.env` files at runtime.
 For production, set secrets via Coolify UI or Docker environment variables.
 
-## Shared Packages (21 total)
+## Shared Packages (20 total)
 
 | Package | Description |
 |---------|-------------|
@@ -210,7 +210,6 @@ For production, set secrets via Coolify UI or Docker environment variables.
 | `design-tokens` | Design tokens (colors, spacing, typography) |
 | `http-client` | HTTP client for service-to-service calls |
 | `event-bus` | Event bus for inter-service communication |
-| `shared-queue` | Shared queue processing utilities |
 | `opentelemetry` | OpenTelemetry tracing and instrumentation |
 | `contract-tests` | API contract testing utilities |
 

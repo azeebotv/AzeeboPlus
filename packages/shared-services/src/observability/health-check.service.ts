@@ -133,13 +133,21 @@ export class HealthCheckService {
     };
   }
 
-  async checkDatabase(): Promise<{ status: 'up' | 'down' | 'degraded'; message?: string; latencyMs?: number }> {
+  async checkDatabase(): Promise<{
+    status: 'up' | 'down' | 'degraded';
+    message?: string;
+    latencyMs?: number;
+  }> {
     if (!this.prisma) {
       return { status: 'up', latencyMs: 0, message: 'Prisma not configured' };
     }
     const start = Date.now();
     try {
-      await (this.prisma as any).$queryRaw`SELECT 1`;
+      await (
+        this.prisma as unknown as {
+          $queryRaw: (query: TemplateStringsArray, ...values: unknown[]) => Promise<unknown>;
+        }
+      ).$queryRaw`SELECT 1`;
       return { status: 'up', latencyMs: Date.now() - start };
     } catch (error) {
       this.logger.error('Database health check failed', error as Error);
@@ -151,7 +159,11 @@ export class HealthCheckService {
     }
   }
 
-  async checkRedis(): Promise<{ status: 'up' | 'down' | 'degraded'; message?: string; latencyMs?: number }> {
+  async checkRedis(): Promise<{
+    status: 'up' | 'down' | 'degraded';
+    message?: string;
+    latencyMs?: number;
+  }> {
     const start = Date.now();
 
     if (!this.redisService) {

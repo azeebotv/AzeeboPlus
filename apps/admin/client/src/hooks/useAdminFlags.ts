@@ -1,14 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
+import { adminFlags } from '@azeebo/feature-flags/registries';
 import { adminApi } from '@/lib/api/admin';
 import type { GlobalFeatureFlag } from '@/lib/admin-types';
 
-/** Client-side admin flag keys (mirrors @azeebo/feature-flags adminFlags). */
-export const ADMIN_FLAG_KEYS = {
-  newDashboard: 'admin_new_dashboard',
-  featureFlagEditorV2: 'admin_feature_flag_editor_v2',
-  reportBuilder: 'admin_report_builder',
-  bulkActions: 'admin_bulk_actions',
-} as const;
+/** Client-side admin flag keys — single source of truth: @azeebo/feature-flags adminFlags registry. */
+export const ADMIN_FLAG_KEYS = adminFlags;
 
 /** Registered defaults mirroring the backend FeatureFlagModule registration. */
 export const ADMIN_FLAG_DEFAULTS: Record<string, boolean> = {

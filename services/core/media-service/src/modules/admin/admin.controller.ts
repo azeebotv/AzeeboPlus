@@ -1,4 +1,14 @@
-import { Inject, Controller, Get, Delete, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Delete,
+  Post,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { CdnPurgeDto } from './dto/cdn-purge.dto';

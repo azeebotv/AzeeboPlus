@@ -9,6 +9,7 @@ import { FeatureFlagGuard, FeatureFlagService } from '@azeebo/feature-flags';
 
 describe('User Service Pagination Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockUsersService = {
     getWatchHistory: jest.fn().mockResolvedValue({
@@ -92,6 +93,8 @@ describe('User Service Pagination Tests', () => {
       next();
     });
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -120,7 +123,7 @@ describe('User Service Pagination Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/users/me/history')
         .set('Authorization', 'Bearer test-token');
 
@@ -146,7 +149,7 @@ describe('User Service Pagination Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/users/me/history?page=3')
         .set('Authorization', 'Bearer test-token');
 
@@ -168,7 +171,7 @@ describe('User Service Pagination Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/users/me/history?limit=10')
         .set('Authorization', 'Bearer test-token');
 
@@ -190,7 +193,7 @@ describe('User Service Pagination Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/users/me/history?limit=1000')
         .set('Authorization', 'Bearer test-token');
 
@@ -212,7 +215,7 @@ describe('User Service Pagination Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/users/me/history')
         .set('Authorization', 'Bearer test-token');
 
@@ -234,7 +237,7 @@ describe('User Service Pagination Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/users/me/history?page=3')
         .set('Authorization', 'Bearer test-token');
 
@@ -256,7 +259,7 @@ describe('User Service Pagination Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/users/me/history')
         .set('Authorization', 'Bearer test-token');
 
@@ -280,7 +283,7 @@ describe('User Service Pagination Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/users/me/saved')
         .set('Authorization', 'Bearer test-token');
 
@@ -305,7 +308,7 @@ describe('User Service Pagination Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/users/me/saved?page=2&limit=10')
         .set('Authorization', 'Bearer test-token');
 

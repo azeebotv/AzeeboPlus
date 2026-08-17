@@ -57,18 +57,14 @@ describe('StaleFlagMetricsService', () => {
       .mockResolvedValueOnce({
         data: {
           data: {
-            result: [
-              { metric: { key: 'search_suggestions_ai' }, value: [1710000000, '0.83'] },
-            ],
+            result: [{ metric: { key: 'search_suggestions_ai' }, value: [1710000000, '0.83'] }],
           },
         },
       })
       .mockResolvedValueOnce({
         data: {
           data: {
-            result: [
-              { metric: { key: 'wallet_withdrawals_enabled' }, value: [1710000000, '3'] },
-            ],
+            result: [{ metric: { key: 'wallet_withdrawals_enabled' }, value: [1710000000, '3'] }],
           },
         },
       });
@@ -88,7 +84,9 @@ describe('StaleFlagMetricsService', () => {
     // All three PromQL queries were issued.
     expect(mockedAxiosGet).toHaveBeenCalledTimes(3);
     expect(mockedAxiosGet.mock.calls[0][1].params.query).toContain('flag_stale_running_total');
-    expect(mockedAxiosGet.mock.calls[1][1].params.query).toContain('rate(flag_stale_running_total[5m])');
+    expect(mockedAxiosGet.mock.calls[1][1].params.query).toContain(
+      'rate(flag_stale_running_total[5m])'
+    );
     expect(mockedAxiosGet.mock.calls[2][1].params.query).toContain('flag_auto_disabled_total');
   });
 
@@ -149,9 +147,7 @@ describe('StaleFlagMetricsService', () => {
   it('dedupes concurrent in-flight fetches (single-flight, no stampede)', async () => {
     service = await boot('http://prom:9090');
     const resolvers: Array<(v: unknown) => void> = [];
-    mockedAxiosGet.mockImplementation(
-      () => new Promise((resolve) => resolvers.push(resolve))
-    );
+    mockedAxiosGet.mockImplementation(() => new Promise((resolve) => resolvers.push(resolve)));
 
     const p1 = service.getStaleRunningByKey();
     const p2 = service.getStaleRunningByKey();

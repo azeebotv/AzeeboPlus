@@ -142,9 +142,7 @@ export class PredictionMarketsService {
       // sports_odds_feeds: third-party odds ingestion is off until the flag is
       // on — odds payloads are dropped at ingestion so no external odds data
       // lands in markets.
-      const oddsFeedsEnabled = await this.featureFlagService.isEnabled(
-        sportsFlags.oddsFeeds
-      );
+      const oddsFeedsEnabled = await this.featureFlagService.isEnabled(sportsFlags.oddsFeeds);
       const market = await this.prisma.predictionMarket.create({
         data: {
           eventId,

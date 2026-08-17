@@ -16,6 +16,7 @@ const AuthGuardPass: CanActivate = {
 
 describe('Content E2E', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockContentService = {
     listContent: jest.fn(),
@@ -60,6 +61,8 @@ describe('Content E2E', () => {
     );
     app.useGlobalGuards(AuthGuardPass);
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -110,7 +113,7 @@ describe('Content E2E', () => {
 
       mockContentService.listContent.mockResolvedValue(listResult);
 
-      const res = await request(app.getHttpServer()).get('/v1/content').expect(200);
+      const res = await request(baseUrl).get('/v1/content').expect(200);
 
       expect(res.body.success).toBe(true);
       expect(res.body.data.items).toHaveLength(2);
@@ -130,7 +133,7 @@ describe('Content E2E', () => {
         data: { items: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 0 } },
       });
 
-      await request(app.getHttpServer())
+      await request(baseUrl)
         .get('/v1/content')
         .query({ universe: 'univ_001' })
         .expect(200);
@@ -148,7 +151,7 @@ describe('Content E2E', () => {
         data: { items: [], pagination: { page: 2, limit: 10, total: 50, totalPages: 5 } },
       });
 
-      const res = await request(app.getHttpServer())
+      const res = await request(baseUrl)
         .get('/v1/content')
         .query({ page: 2, limit: 10 })
         .expect(200);
@@ -163,7 +166,7 @@ describe('Content E2E', () => {
         data: { items: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 0 } },
       });
 
-      const res = await request(app.getHttpServer())
+      const res = await request(baseUrl)
         .get('/v1/content')
         .query({ universe: 'nonexistent_universe' })
         .expect(200);
@@ -201,7 +204,7 @@ describe('Content E2E', () => {
       });
       mockPrismaService.contentItem.update.mockResolvedValue({});
 
-      const res = await request(app.getHttpServer()).get('/v1/content/content_001').expect(200);
+      const res = await request(baseUrl).get('/v1/content/content_001').expect(200);
 
       expect(res.body.success).toBe(true);
       expect(res.body.data.id).toBe('content_001');
@@ -215,7 +218,7 @@ describe('Content E2E', () => {
         message: 'Content not found',
       });
 
-      const res = await request(app.getHttpServer()).get('/v1/content/nonexistent_id').expect(404);
+      const res = await request(baseUrl).get('/v1/content/nonexistent_id').expect(404);
 
       expect(res.body.message).toBe('Content not found');
     });
@@ -247,7 +250,7 @@ describe('Content E2E', () => {
         data: createdContent,
       });
 
-      const res = await request(app.getHttpServer()).post('/v1/content').send(dto).expect(201);
+      const res = await request(baseUrl).post('/v1/content').send(dto).expect(201);
 
       expect(res.body.success).toBe(true);
       expect(res.body.data.title).toBe('My New Show');
@@ -271,7 +274,7 @@ describe('Content E2E', () => {
         data: { id: 'content_full_001', ...dto, creatorId: 'usr_creator01' },
       });
 
-      const res = await request(app.getHttpServer()).post('/v1/content').send(dto).expect(201);
+      const res = await request(baseUrl).post('/v1/content').send(dto).expect(201);
 
       expect(res.body.success).toBe(true);
       expect(res.body.data.title).toBe('Full Content');
@@ -283,7 +286,7 @@ describe('Content E2E', () => {
         universeId: '550e8400-e29b-41d4-a716-446655440000',
       };
 
-      await request(app.getHttpServer()).post('/v1/content').send(dto).expect(400);
+      await request(baseUrl).post('/v1/content').send(dto).expect(400);
 
       expect(mockContentService.createContent).not.toHaveBeenCalled();
     });
@@ -294,7 +297,7 @@ describe('Content E2E', () => {
         universeId: '550e8400-e29b-41d4-a716-446655440000',
       };
 
-      await request(app.getHttpServer()).post('/v1/content').send(dto).expect(400);
+      await request(baseUrl).post('/v1/content').send(dto).expect(400);
 
       expect(mockContentService.createContent).not.toHaveBeenCalled();
     });
@@ -306,13 +309,13 @@ describe('Content E2E', () => {
         universeId: 'not-a-uuid',
       };
 
-      await request(app.getHttpServer()).post('/v1/content').send(dto).expect(400);
+      await request(baseUrl).post('/v1/content').send(dto).expect(400);
 
       expect(mockContentService.createContent).not.toHaveBeenCalled();
     });
 
     it('should reject creation with empty body', async () => {
-      await request(app.getHttpServer()).post('/v1/content').send({}).expect(400);
+      await request(baseUrl).post('/v1/content').send({}).expect(400);
 
       expect(mockContentService.createContent).not.toHaveBeenCalled();
     });
@@ -325,7 +328,7 @@ describe('Content E2E', () => {
         status: 'invalid_status',
       };
 
-      await request(app.getHttpServer()).post('/v1/content').send(dto).expect(400);
+      await request(baseUrl).post('/v1/content').send(dto).expect(400);
 
       expect(mockContentService.createContent).not.toHaveBeenCalled();
     });

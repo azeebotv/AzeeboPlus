@@ -13,7 +13,15 @@ import { NotificationsService } from './notifications.service.js';
 import { DatabaseModule } from '../database/database.module.js';
 
 @Module({
-  imports: [DatabaseModule, FirebaseModule, EmailModule, SmsModule, CacheModule, RedisModule, JwtConfigModule],
+  imports: [
+    DatabaseModule,
+    FirebaseModule,
+    EmailModule,
+    SmsModule,
+    CacheModule,
+    RedisModule,
+    JwtConfigModule,
+  ],
   controllers: [NotificationsController],
   providers: [NotificationsService],
   exports: [NotificationsService, DatabaseModule],

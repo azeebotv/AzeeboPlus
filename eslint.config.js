@@ -174,12 +174,17 @@ module.exports = [
     files: ['**/logger/**', '**/scripts/**', '**/logger.ts'],
     rules: {
       'no-console': 'off',
+      // Logger implementations are the structured logger — they must call
+      // console under the hood (the custom rule exists for app code).
+      'azeebo-custom/no-console-log': 'off',
     },
   },
   // Relaxed naming conventions for test files
   {
     files: ['**/*.spec.ts', '**/*.test.ts'],
     rules: {
+      // Tests legitimately spy on console methods and print skip/opt-in guidance.
+      'no-console': 'off',
       '@typescript-eslint/naming-convention': [
         'error',
         {

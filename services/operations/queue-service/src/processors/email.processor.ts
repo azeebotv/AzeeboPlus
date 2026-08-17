@@ -214,9 +214,7 @@ export class EmailProcessor extends WorkerHost {
    * queue_dlq_retry_base_delay_ms, else the enqueuer's per-job retryDelay,
    * then the constant (positive number). */
   private async dlqBaseDelayMs(jobBaseMs?: number): Promise<number> {
-    const perQueue = await this.featureFlagService.getFlag(
-      queueFlags.dlqRetryBaseDelayMsEmails
-    );
+    const perQueue = await this.featureFlagService.getFlag(queueFlags.dlqRetryBaseDelayMsEmails);
     const value = perQueue
       ? await this.featureFlagService.getValue(queueFlags.dlqRetryBaseDelayMsEmails)
       : await this.featureFlagService.getValue(queueFlags.dlqRetryBaseDelayMs);

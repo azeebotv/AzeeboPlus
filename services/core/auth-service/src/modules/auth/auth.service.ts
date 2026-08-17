@@ -416,7 +416,12 @@ export class AuthService {
     }
   }
 
-  async logout(userId: string, accessToken?: string, ipAddress?: string, userAgent?: string): Promise<{ success: boolean }> {
+  async logout(
+    userId: string,
+    accessToken?: string,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<{ success: boolean }> {
     await this.authRepository.deleteSessionByUserId(userId);
 
     this.auditLogService.log({
@@ -610,10 +615,7 @@ export class AuthService {
     // lives as long as the token and is deleted on success.
     const attempts = await this.redisService.incr(attemptsKey);
     if (attempts === 1) {
-      await this.redisService.expire(
-        attemptsKey,
-        AuthService.VERIFICATION_TOKEN_TTL_SECONDS
-      );
+      await this.redisService.expire(attemptsKey, AuthService.VERIFICATION_TOKEN_TTL_SECONDS);
     }
     if (attempts > AuthService.MAX_VERIFY_ATTEMPTS_PER_TOKEN) {
       // Burn the token: no further attempts, regardless of correctness.

@@ -231,9 +231,7 @@ describe('NotificationProcessor', () => {
 
       await processor.onFailed(job, new Error('provider down'));
 
-      expect(job.updateData).toHaveBeenCalledWith(
-        expect.objectContaining({ dlqRetryCount: 1 })
-      );
+      expect(job.updateData).toHaveBeenCalledWith(expect.objectContaining({ dlqRetryCount: 1 }));
       expect(job.remove).toHaveBeenCalled();
       expect(mockNotificationsQueue.add).toHaveBeenCalledWith(
         'notifications',
@@ -269,9 +267,7 @@ describe('NotificationProcessor', () => {
 
       await processor.onFailed(job, new Error('provider down'));
 
-      expect(job.updateData).toHaveBeenCalledWith(
-        expect.objectContaining({ dlqRetryCount: 2 })
-      );
+      expect(job.updateData).toHaveBeenCalledWith(expect.objectContaining({ dlqRetryCount: 2 }));
       expect(mockNotificationsQueue.add).toHaveBeenCalledWith(
         'notifications',
         expect.objectContaining({ dlqRetryCount: 2 }),
@@ -295,9 +291,7 @@ describe('NotificationProcessor', () => {
 
       await processor.onFailed(job, new Error('provider down'));
 
-      expect(mockFeatureFlagService.getValue).toHaveBeenCalledWith(
-        queueFlags.dlqRetryBaseDelayMs
-      );
+      expect(mockFeatureFlagService.getValue).toHaveBeenCalledWith(queueFlags.dlqRetryBaseDelayMs);
       expect(mockNotificationsQueue.add).toHaveBeenCalledWith(
         'notifications',
         expect.anything(),
@@ -523,9 +517,7 @@ describe('NotificationProcessor', () => {
 
     it('per-queue toggle off overrides the shared toggle on (queue_dlq_retry_notifications)', async () => {
       mockFeatureFlagService.getFlag.mockImplementation((key: string) =>
-        Promise.resolve(
-          key === queueFlags.dlqRetryNotifications ? { key, enabled: false } : null
-        )
+        Promise.resolve(key === queueFlags.dlqRetryNotifications ? { key, enabled: false } : null)
       );
       // Shared switch is on; the per-queue override says off.
       mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>

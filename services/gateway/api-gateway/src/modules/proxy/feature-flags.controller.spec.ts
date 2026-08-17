@@ -42,7 +42,7 @@ describe('FeatureFlagsController', () => {
   it('returns only the flags the service exposes as public', async () => {
     featureFlagService.getPublicFlags.mockResolvedValue([
       { key: 'web_maintenance_mode', enabled: false },
-      { key: 'universe.movies.enabled', enabled: true },
+      { key: 'universe.movie.enabled', enabled: true },
     ]);
 
     const result = await controller.bootstrap(makeReq());
@@ -72,9 +72,7 @@ describe('FeatureFlagsController', () => {
   it('passes the x-anonymous-id header through for stable anonymous bucketing', async () => {
     featureFlagService.getPublicFlags.mockResolvedValue([]);
 
-    await controller.bootstrap(
-      makeReq({ headers: { 'x-anonymous-id': 'visitor-42' } })
-    );
+    await controller.bootstrap(makeReq({ headers: { 'x-anonymous-id': 'visitor-42' } }));
 
     expect(featureFlagService.getPublicFlags).toHaveBeenCalledWith(undefined, 'visitor-42');
   });
@@ -82,9 +80,7 @@ describe('FeatureFlagsController', () => {
   it('ignores an invalid bearer token and evaluates as anonymous', async () => {
     featureFlagService.getPublicFlags.mockResolvedValue([]);
 
-    await controller.bootstrap(
-      makeReq({ headers: { authorization: 'Bearer not-a-real-token' } })
-    );
+    await controller.bootstrap(makeReq({ headers: { authorization: 'Bearer not-a-real-token' } }));
 
     expect(featureFlagService.getPublicFlags).toHaveBeenCalledWith(undefined, undefined);
   });

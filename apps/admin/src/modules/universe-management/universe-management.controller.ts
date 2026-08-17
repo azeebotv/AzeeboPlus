@@ -69,7 +69,9 @@ export class UniverseManagementController {
   }
 
   @Get('feature-flags/deleted')
-  @ApiOperation({ summary: 'Recently deleted universe flags (restorable from archived audit snapshots)' })
+  @ApiOperation({
+    summary: 'Recently deleted universe flags (restorable from archived audit snapshots)',
+  })
   @ApiResponse({ status: 200, description: 'Deleted universe flags with archive availability' })
   async getRecentlyDeletedUniverseFlags(@Query('limit') limit?: string) {
     const n = limit ? Math.min(Math.max(parseInt(limit, 10) || 20, 1), 100) : 20;
@@ -77,10 +79,7 @@ export class UniverseManagementController {
   }
 
   @Post('feature-flags/prune-stale')
-  async pruneStaleFeatureFlags(
-    @Body() dto: PruneStaleUniverseFlagsDto,
-    @Req() req: AdminRequest
-  ) {
+  async pruneStaleFeatureFlags(@Body() dto: PruneStaleUniverseFlagsDto, @Req() req: AdminRequest) {
     return this.universeManagementService.pruneStaleFeatureFlags(
       req.user?.id ?? req.user?.sub,
       dto.keys
@@ -88,10 +87,7 @@ export class UniverseManagementController {
   }
 
   @Post('feature-flags/restore')
-  async restoreFeatureFlags(
-    @Body() dto: RestoreUniverseFlagsDto,
-    @Req() req: AdminRequest
-  ) {
+  async restoreFeatureFlags(@Body() dto: RestoreUniverseFlagsDto, @Req() req: AdminRequest) {
     return this.universeManagementService.restoreManyUniverseFlags(
       dto.keys,
       req.user?.id ?? req.user?.sub

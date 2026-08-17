@@ -68,9 +68,7 @@ export class S3Service {
 
     this.s3Client = new S3Client({
       region: this.region,
-      ...(accessKeyId && secretAccessKey
-        ? { credentials: { accessKeyId, secretAccessKey } }
-        : {}),
+      ...(accessKeyId && secretAccessKey ? { credentials: { accessKeyId, secretAccessKey } } : {}),
     });
 
     this.circuitBreaker = new CircuitBreaker({

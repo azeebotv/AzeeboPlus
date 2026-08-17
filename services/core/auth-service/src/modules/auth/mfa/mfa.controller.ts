@@ -79,7 +79,10 @@ export class MfaController {
     const isValid = await this.mfaService.verifyMfaCode(req.user.id, dto.code);
 
     if (!isValid) {
-      return ApiResponseWrapper.error('MFA_INVALID_CODE', 'Invalid TOTP code required to disable MFA');
+      return ApiResponseWrapper.error(
+        'MFA_INVALID_CODE',
+        'Invalid TOTP code required to disable MFA'
+      );
     }
 
     await this.mfaService.disableMfa(req.user.id);

@@ -1,7 +1,4 @@
-import {
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { AdminService } from './admin.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 
@@ -14,7 +11,9 @@ describe('AdminService auto-elimination (reality_auto_elimination)', () => {
     };
   };
 
-  const showWithContestants = (contestants: { id: string; name: string; votes: { quantity: number }[] }[]) => ({
+  const showWithContestants = (
+    contestants: { id: string; name: string; votes: { quantity: number }[] }[]
+  ) => ({
     id: 'show-1',
     name: 'Reality Show',
     metadata: { eliminationRound: 2 },
@@ -34,9 +33,7 @@ describe('AdminService auto-elimination (reality_auto_elimination)', () => {
   it('throws NotFoundException for an unknown show', async () => {
     prisma.realityShow.findUnique.mockResolvedValue(null);
 
-    await expect(service.autoEliminate('missing-show')).rejects.toThrow(
-      NotFoundException
-    );
+    await expect(service.autoEliminate('missing-show')).rejects.toThrow(NotFoundException);
     expect(prisma.realityShow.update).not.toHaveBeenCalled();
   });
 
@@ -45,9 +42,7 @@ describe('AdminService auto-elimination (reality_auto_elimination)', () => {
       showWithContestants([{ id: 'c1', name: 'Solo', votes: [{ quantity: 5 }] }])
     );
 
-    await expect(service.autoEliminate('show-1')).rejects.toThrow(
-      BadRequestException
-    );
+    await expect(service.autoEliminate('show-1')).rejects.toThrow(BadRequestException);
     expect(prisma.realityShow.update).not.toHaveBeenCalled();
   });
 

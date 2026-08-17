@@ -53,9 +53,7 @@ describe('CdnFlagPurgeQueueService', () => {
 
   it('purges the uploads prefix once when the flag transitions on → off', async () => {
     // Seed: on. Next poll: off → transition.
-    mockFeatureFlagService.isEnabled
-      .mockResolvedValueOnce(true)
-      .mockResolvedValue(false);
+    mockFeatureFlagService.isEnabled.mockResolvedValueOnce(true).mockResolvedValue(false);
 
     service.onModuleInit();
     await jest.advanceTimersByTimeAsync(30_000);
@@ -65,9 +63,7 @@ describe('CdnFlagPurgeQueueService', () => {
   });
 
   it('does not enqueue duplicate purges while the flag stays off', async () => {
-    mockFeatureFlagService.isEnabled
-      .mockResolvedValueOnce(true)
-      .mockResolvedValue(false);
+    mockFeatureFlagService.isEnabled.mockResolvedValueOnce(true).mockResolvedValue(false);
 
     service.onModuleInit();
     await jest.advanceTimersByTimeAsync(90_000); // three polls after seeding
@@ -96,9 +92,7 @@ describe('CdnFlagPurgeQueueService', () => {
 
   it('uses the env-configured poll interval', async () => {
     mockConfigService.get.mockReturnValue(10_000);
-    mockFeatureFlagService.isEnabled
-      .mockResolvedValueOnce(true)
-      .mockResolvedValue(false);
+    mockFeatureFlagService.isEnabled.mockResolvedValueOnce(true).mockResolvedValue(false);
 
     service = new CdnFlagPurgeQueueService(
       mockFeatureFlagService as unknown as FeatureFlagService,

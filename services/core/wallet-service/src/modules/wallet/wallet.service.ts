@@ -171,9 +171,7 @@ export class WalletService {
         },
       });
     } catch (error: unknown) {
-      this.logger.warn(
-        `Failed to write wallet ledger entry (${params.operationType}): ${error}`
-      );
+      this.logger.warn(`Failed to write wallet ledger entry (${params.operationType}): ${error}`);
     }
   }
 
@@ -223,9 +221,7 @@ export class WalletService {
     const maxDailyAmount = this.configService.get<number>('WALLET_FRAUD_MAX_DAILY_AMOUNT', 1000000);
 
     if (hourCount >= maxPerHour) {
-      throw new ForbiddenException(
-        'Transaction frequency limit exceeded, please try again later'
-      );
+      throw new ForbiddenException('Transaction frequency limit exceeded, please try again later');
     }
     if (dayCount >= maxPerDay) {
       throw new ForbiddenException('Daily transaction limit exceeded, please try again later');
@@ -970,105 +966,107 @@ export class WalletService {
     idempotencyKey?: string
   ): Promise<WalletResponse> {
     return this.withWalletLock(`wallet:lock:${walletId}`, async () => {
-    try {
-      if (idempotencyKey) {
-        const existingTransaction = await this.prisma.walletTransaction.findUnique({
-          where: { idempotencyKey },
-        });
-        if (existingTransaction) {
-          const wallet = await this.prisma.wallet.findUnique({
-            where: { id: walletId },
+      try {
+        if (idempotencyKey) {
+          const existingTransaction = await this.prisma.walletTransaction.findUnique({
+            where: { idempotencyKey },
           });
-          return {
-            success: true,
-            data: {
-              walletId: existingTransaction.walletId,
-              amount: toNumber(existingTransaction.amount.toString()),
-              status: existingTransaction.status,
-              reference: existingTransaction.reference,
-              metadata: existingTransaction.metadata as Record<string, unknown> | null,
-              createdAt: existingTransaction.createdAt,
-              updatedAt: existingTransaction.updatedAt,
-              balance: toNumber(wallet?.balance.toString() || '0'),
-              bonusBalance: toNumber(wallet?.bonusBalance.toString() || '0'),
-              promoBalance: toNumber(wallet?.promoBalance.toString() || '0'),
-            },
-          };
+          if (existingTransaction) {
+            const wallet = await this.prisma.wallet.findUnique({
+              where: { id: walletId },
+            });
+            return {
+              success: true,
+              data: {
+                walletId: existingTransaction.walletId,
+                amount: toNumber(existingTransaction.amount.toString()),
+                status: existingTransaction.status,
+                reference: existingTransaction.reference,
+                metadata: existingTransaction.metadata as Record<string, unknown> | null,
+                createdAt: existingTransaction.createdAt,
+                updatedAt: existingTransaction.updatedAt,
+                balance: toNumber(wallet?.balance.toString() || '0'),
+                bonusBalance: toNumber(wallet?.bonusBalance.toString() || '0'),
+                promoBalance: toNumber(wallet?.promoBalance.toString() || '0'),
+              },
+            };
+          }
         }
-      }
 
-      const updatedWallet = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        const [lockedWallet] = await tx.$queryRaw<WalletRow[]>`
+        const updatedWallet = await this.prisma.$transaction(
+          async (tx: Prisma.TransactionClient) => {
+            const [lockedWallet] = await tx.$queryRaw<WalletRow[]>`
           SELECT * FROM "wallets" WHERE "id" = ${walletId} FOR UPDATE
         `;
 
-        if (!lockedWallet) {
-          throw new NotFoundException('Wallet not found');
+            if (!lockedWallet) {
+              throw new NotFoundException('Wallet not found');
+            }
+
+            await tx.wallet.update({
+              where: { id: walletId },
+              data: { balance: { increment: amount } },
+            });
+
+            await tx.walletTransaction.create({
+              data: {
+                walletId,
+                type: 'credit',
+                amount,
+                status: 'completed',
+                description,
+                idempotencyKey,
+              },
+            });
+
+            return tx.wallet.findUnique({ where: { id: walletId } });
+          }
+        );
+
+        await this.invalidateWalletCacheByWalletId(walletId);
+
+        await this.writeLedgerEntry({
+          walletId,
+          userId: updatedWallet!.userId,
+          operationType: 'credit',
+          amount,
+          balanceAfter: updatedWallet!.balance.toString(),
+          idempotencyKey: idempotencyKey ?? null,
+        });
+
+        // Track credit event — look up userId from wallet
+        const walletOwner = await this.prisma.wallet.findUnique({
+          where: { id: walletId },
+          select: { userId: true },
+        });
+        if (walletOwner) {
+          this.trackAnalyticsEvent('wallet_credit_completed', walletOwner.userId, {
+            walletId,
+            amount,
+            description,
+          });
         }
 
-        await tx.wallet.update({
-          where: { id: walletId },
-          data: { balance: { increment: amount } },
-        });
-
-        await tx.walletTransaction.create({
+        return {
+          success: true,
           data: {
             walletId,
-            type: 'credit',
             amount,
-            status: 'completed',
+            status: 'completed' as const,
             description,
-            idempotencyKey,
+            balance: toNumber(updatedWallet!.balance.toString()),
+            bonusBalance: toNumber(updatedWallet!.bonusBalance.toString()),
+            promoBalance: toNumber(updatedWallet!.promoBalance.toString()),
           },
-        });
-
-        return tx.wallet.findUnique({ where: { id: walletId } });
-      });
-
-      await this.invalidateWalletCacheByWalletId(walletId);
-
-      await this.writeLedgerEntry({
-        walletId,
-        userId: updatedWallet!.userId,
-        operationType: 'credit',
-        amount,
-        balanceAfter: updatedWallet!.balance.toString(),
-        idempotencyKey: idempotencyKey ?? null,
-      });
-
-      // Track credit event — look up userId from wallet
-      const walletOwner = await this.prisma.wallet.findUnique({
-        where: { id: walletId },
-        select: { userId: true },
-      });
-      if (walletOwner) {
-        this.trackAnalyticsEvent('wallet_credit_completed', walletOwner.userId, {
-          walletId,
-          amount,
-          description,
-        });
+        };
+      } catch (error: unknown) {
+        if (error instanceof NotFoundException) throw error;
+        this.logger.error(`Failed to credit balance for wallet ${walletId}: ${error}`);
+        return {
+          success: false,
+          error: { code: 'CREDIT_BALANCE_FAILED', message: 'Failed to credit wallet balance' },
+        };
       }
-
-      return {
-        success: true,
-        data: {
-          walletId,
-          amount,
-          status: 'completed' as const,
-          description,
-          balance: toNumber(updatedWallet!.balance.toString()),
-          bonusBalance: toNumber(updatedWallet!.bonusBalance.toString()),
-          promoBalance: toNumber(updatedWallet!.promoBalance.toString()),
-        },
-      };
-    } catch (error: unknown) {
-      if (error instanceof NotFoundException) throw error;
-      this.logger.error(`Failed to credit balance for wallet ${walletId}: ${error}`);
-      return {
-        success: false,
-        error: { code: 'CREDIT_BALANCE_FAILED', message: 'Failed to credit wallet balance' },
-      };
-    }
     });
   }
 
@@ -1094,114 +1092,116 @@ export class WalletService {
     idempotencyKey?: string
   ): Promise<WalletResponse> {
     return this.withWalletLock(`wallet:lock:${walletId}`, async () => {
-    try {
-      const updatedWallet = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        const [wallet] = await tx.$queryRaw<WalletRow[]>`
+      try {
+        const updatedWallet = await this.prisma.$transaction(
+          async (tx: Prisma.TransactionClient) => {
+            const [wallet] = await tx.$queryRaw<WalletRow[]>`
           SELECT * FROM "wallets" WHERE "id" = ${walletId} FOR UPDATE
         `;
 
-        if (!wallet) {
-          throw new NotFoundException('Wallet not found');
-        }
+            if (!wallet) {
+              throw new NotFoundException('Wallet not found');
+            }
 
-        if (idempotencyKey) {
-          const existingTransaction = await tx.walletTransaction.findUnique({
-            where: { idempotencyKey },
-          });
-          if (existingTransaction) {
-            return {
-              wallet,
-              existingTransaction,
-            };
+            if (idempotencyKey) {
+              const existingTransaction = await tx.walletTransaction.findUnique({
+                where: { idempotencyKey },
+              });
+              if (existingTransaction) {
+                return {
+                  wallet,
+                  existingTransaction,
+                };
+              }
+            }
+
+            if (toNumber(wallet.balance.toString()) < amount) {
+              throw new BadRequestException('Insufficient balance');
+            }
+
+            await tx.wallet.update({
+              where: { id: walletId },
+              data: { balance: { decrement: amount } },
+            });
+
+            await tx.walletTransaction.create({
+              data: {
+                walletId,
+                type: 'debit',
+                amount,
+                status: 'completed',
+                description,
+                reference,
+                idempotencyKey,
+              },
+            });
+
+            return { wallet: await tx.wallet.findUnique({ where: { id: walletId } }) };
           }
+        );
+
+        if (updatedWallet.existingTransaction) {
+          const existingTransaction = updatedWallet.existingTransaction;
+          await this.invalidateWalletCacheByWalletId(walletId);
+          return {
+            success: true,
+            data: {
+              walletId: existingTransaction.walletId,
+              amount: toNumber(existingTransaction.amount.toString()),
+              status: existingTransaction.status,
+              reference: existingTransaction.reference,
+              metadata: existingTransaction.metadata as Record<string, unknown> | null,
+              createdAt: existingTransaction.createdAt,
+              updatedAt: existingTransaction.updatedAt,
+              balance: toNumber(updatedWallet.wallet.balance.toString()),
+              bonusBalance: toNumber(updatedWallet.wallet.bonusBalance.toString()),
+              promoBalance: toNumber(updatedWallet.wallet.promoBalance.toString()),
+            },
+          };
         }
 
-        if (toNumber(wallet.balance.toString()) < amount) {
-          throw new BadRequestException('Insufficient balance');
-        }
+        const wallet = updatedWallet.wallet!;
 
-        await tx.wallet.update({
-          where: { id: walletId },
-          data: { balance: { decrement: amount } },
-        });
-
-        await tx.walletTransaction.create({
-          data: {
-            walletId,
-            type: 'debit',
-            amount,
-            status: 'completed',
-            description,
-            reference,
-            idempotencyKey,
-          },
-        });
-
-        return { wallet: await tx.wallet.findUnique({ where: { id: walletId } }) };
-      });
-
-      if (updatedWallet.existingTransaction) {
-        const existingTransaction = updatedWallet.existingTransaction;
         await this.invalidateWalletCacheByWalletId(walletId);
+
+        await this.writeLedgerEntry({
+          walletId,
+          userId: wallet.userId,
+          operationType: 'debit',
+          amount,
+          balanceAfter: wallet.balance.toString(),
+          reference: reference ?? null,
+          idempotencyKey: idempotencyKey ?? null,
+        });
+
+        this.trackAnalyticsEvent('wallet_debit_completed', wallet.userId, {
+          walletId,
+          amount,
+          description,
+          reference,
+        });
+
         return {
           success: true,
           data: {
-            walletId: existingTransaction.walletId,
-            amount: toNumber(existingTransaction.amount.toString()),
-            status: existingTransaction.status,
-            reference: existingTransaction.reference,
-            metadata: existingTransaction.metadata as Record<string, unknown> | null,
-            createdAt: existingTransaction.createdAt,
-            updatedAt: existingTransaction.updatedAt,
-            balance: toNumber(updatedWallet.wallet.balance.toString()),
-            bonusBalance: toNumber(updatedWallet.wallet.bonusBalance.toString()),
-            promoBalance: toNumber(updatedWallet.wallet.promoBalance.toString()),
+            walletId,
+            amount,
+            status: 'completed' as const,
+            description,
+            reference,
+            balance: toNumber(wallet.balance.toString()),
+            bonusBalance: toNumber(wallet.bonusBalance.toString()),
+            promoBalance: toNumber(wallet.promoBalance.toString()),
           },
         };
+      } catch (error: unknown) {
+        if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
+        this.logger.error(`Failed to debit balance for wallet ${walletId}: ${error}`);
+        return {
+          success: false,
+          error: { code: 'DEBIT_BALANCE_FAILED', message: 'Failed to debit wallet balance' },
+        };
       }
-
-      const wallet = updatedWallet.wallet!;
-
-      await this.invalidateWalletCacheByWalletId(walletId);
-
-      await this.writeLedgerEntry({
-        walletId,
-        userId: wallet.userId,
-        operationType: 'debit',
-        amount,
-        balanceAfter: wallet.balance.toString(),
-        reference: reference ?? null,
-        idempotencyKey: idempotencyKey ?? null,
-      });
-
-      this.trackAnalyticsEvent('wallet_debit_completed', wallet.userId, {
-        walletId,
-        amount,
-        description,
-        reference,
-      });
-
-      return {
-        success: true,
-        data: {
-          walletId,
-          amount,
-          status: 'completed' as const,
-          description,
-          reference,
-          balance: toNumber(wallet.balance.toString()),
-          bonusBalance: toNumber(wallet.bonusBalance.toString()),
-          promoBalance: toNumber(wallet.promoBalance.toString()),
-        },
-      };
-    } catch (error: unknown) {
-      if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
-      this.logger.error(`Failed to debit balance for wallet ${walletId}: ${error}`);
-      return {
-        success: false,
-        error: { code: 'DEBIT_BALANCE_FAILED', message: 'Failed to debit wallet balance' },
-      };
-    }
     });
   }
 
@@ -1663,88 +1663,91 @@ export class WalletService {
     const { userId, amount, idempotencyKey, description, metadata } = params;
 
     return this.withWalletLock(`wallet:lock:user:${userId}`, async () => {
-    // Check for duplicate via idempotency key
-    const existingTransaction = await this.prisma.walletTransaction.findUnique({
-      where: { idempotencyKey },
-    });
-
-    if (existingTransaction) {
-      const wallet = await this.prisma.wallet.findUnique({
-        where: { userId },
+      // Check for duplicate via idempotency key
+      const existingTransaction = await this.prisma.walletTransaction.findUnique({
+        where: { idempotencyKey },
       });
-      if (!wallet) {
-        throw new NotFoundException(`Wallet not found for user ${userId}`);
-      }
-      return {
-        transactionId: existingTransaction.id,
-        balance: toNumber(wallet.balance.toString()),
-      };
-    }
 
-    const result = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      const [wallet] = await tx.$queryRaw<WalletRow[]>`
+      if (existingTransaction) {
+        const wallet = await this.prisma.wallet.findUnique({
+          where: { userId },
+        });
+        if (!wallet) {
+          throw new NotFoundException(`Wallet not found for user ${userId}`);
+        }
+        return {
+          transactionId: existingTransaction.id,
+          balance: toNumber(wallet.balance.toString()),
+        };
+      }
+
+      const result = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        const [wallet] = await tx.$queryRaw<WalletRow[]>`
         SELECT * FROM "wallets" WHERE "userId" = ${userId} FOR UPDATE
       `;
 
-      if (!wallet) {
-        throw new NotFoundException(`Wallet not found for user ${userId}`);
-      }
+        if (!wallet) {
+          throw new NotFoundException(`Wallet not found for user ${userId}`);
+        }
 
-      if (toNumber(wallet.balance.toString()) < amount) {
-        throw new BadRequestException('Insufficient balance');
-      }
+        if (toNumber(wallet.balance.toString()) < amount) {
+          throw new BadRequestException('Insufficient balance');
+        }
 
-      const transaction = await tx.walletTransaction.create({
-        data: {
-          walletId: wallet.id,
-          type: 'debit',
-          amount,
-          status: 'completed',
-          description,
-          idempotencyKey,
-          ...(metadata ? { metadata: metadata as unknown as Prisma.InputJsonValue } : {}),
-        },
+        const transaction = await tx.walletTransaction.create({
+          data: {
+            walletId: wallet.id,
+            type: 'debit',
+            amount,
+            status: 'completed',
+            description,
+            idempotencyKey,
+            ...(metadata ? { metadata: metadata as unknown as Prisma.InputJsonValue } : {}),
+          },
+        });
+
+        await tx.wallet.update({
+          where: { id: wallet.id },
+          data: { balance: { decrement: amount } },
+        });
+
+        return { transactionId: transaction.id, walletId: wallet.id };
       });
 
-      await tx.wallet.update({
-        where: { id: wallet.id },
-        data: { balance: { decrement: amount } },
+      await this.invalidateWalletCache(userId);
+
+      await this.writeLedgerEntry({
+        walletId: result.walletId,
+        userId,
+        operationType: 'charge',
+        amount,
+        balanceAfter:
+          (
+            await this.prisma.wallet.findUnique({
+              where: { userId },
+              select: { balance: true },
+            })
+          )?.balance.toString() ?? '0',
+        idempotencyKey,
+        metadata,
       });
 
-      return { transactionId: transaction.id, walletId: wallet.id };
-    });
+      this.trackAnalyticsEvent('wallet_charge_completed', userId, {
+        transactionId: result.transactionId,
+        amount,
+        description,
+        idempotencyKey,
+      });
 
-    await this.invalidateWalletCache(userId);
-
-    await this.writeLedgerEntry({
-      walletId: result.walletId,
-      userId,
-      operationType: 'charge',
-      amount,
-      balanceAfter: (await this.prisma.wallet.findUnique({
+      const updatedWallet = await this.prisma.wallet.findUnique({
         where: { userId },
         select: { balance: true },
-      }))?.balance.toString() ?? '0',
-      idempotencyKey,
-      metadata,
-    });
+      });
 
-    this.trackAnalyticsEvent('wallet_charge_completed', userId, {
-      transactionId: result.transactionId,
-      amount,
-      description,
-      idempotencyKey,
-    });
-
-    const updatedWallet = await this.prisma.wallet.findUnique({
-      where: { userId },
-      select: { balance: true },
-    });
-
-    return {
-      transactionId: result.transactionId,
-      balance: toNumber(updatedWallet?.balance.toString() || '0'),
-    };
+      return {
+        transactionId: result.transactionId,
+        balance: toNumber(updatedWallet?.balance.toString() || '0'),
+      };
     });
   }
 
@@ -1766,84 +1769,87 @@ export class WalletService {
     const { userId, amount, idempotencyKey, description, metadata } = params;
 
     return this.withWalletLock(`wallet:lock:user:${userId}`, async () => {
-    // Check for duplicate via idempotency key
-    const existingTransaction = await this.prisma.walletTransaction.findUnique({
-      where: { idempotencyKey },
-    });
-
-    if (existingTransaction) {
-      const wallet = await this.prisma.wallet.findUnique({
-        where: { userId },
+      // Check for duplicate via idempotency key
+      const existingTransaction = await this.prisma.walletTransaction.findUnique({
+        where: { idempotencyKey },
       });
-      if (!wallet) {
-        throw new NotFoundException(`Wallet not found for user ${userId}`);
-      }
-      return {
-        transactionId: existingTransaction.id,
-        balance: toNumber(wallet.balance.toString()),
-      };
-    }
 
-    const result = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      const [wallet] = await tx.$queryRaw<WalletRow[]>`
+      if (existingTransaction) {
+        const wallet = await this.prisma.wallet.findUnique({
+          where: { userId },
+        });
+        if (!wallet) {
+          throw new NotFoundException(`Wallet not found for user ${userId}`);
+        }
+        return {
+          transactionId: existingTransaction.id,
+          balance: toNumber(wallet.balance.toString()),
+        };
+      }
+
+      const result = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        const [wallet] = await tx.$queryRaw<WalletRow[]>`
         SELECT * FROM "wallets" WHERE "userId" = ${userId} FOR UPDATE
       `;
 
-      if (!wallet) {
-        throw new NotFoundException(`Wallet not found for user ${userId}`);
-      }
+        if (!wallet) {
+          throw new NotFoundException(`Wallet not found for user ${userId}`);
+        }
 
-      const transaction = await tx.walletTransaction.create({
-        data: {
-          walletId: wallet.id,
-          type: 'credit',
-          amount,
-          status: 'completed',
-          description,
-          idempotencyKey,
-          ...(metadata ? { metadata: metadata as unknown as Prisma.InputJsonValue } : {}),
-        },
+        const transaction = await tx.walletTransaction.create({
+          data: {
+            walletId: wallet.id,
+            type: 'credit',
+            amount,
+            status: 'completed',
+            description,
+            idempotencyKey,
+            ...(metadata ? { metadata: metadata as unknown as Prisma.InputJsonValue } : {}),
+          },
+        });
+
+        await tx.wallet.update({
+          where: { id: wallet.id },
+          data: { balance: { increment: amount } },
+        });
+
+        return { transactionId: transaction.id, walletId: wallet.id };
       });
 
-      await tx.wallet.update({
-        where: { id: wallet.id },
-        data: { balance: { increment: amount } },
+      await this.invalidateWalletCache(userId);
+
+      await this.writeLedgerEntry({
+        walletId: result.walletId,
+        userId,
+        operationType: 'reverse',
+        amount,
+        balanceAfter:
+          (
+            await this.prisma.wallet.findUnique({
+              where: { userId },
+              select: { balance: true },
+            })
+          )?.balance.toString() ?? '0',
+        idempotencyKey,
+        metadata,
       });
 
-      return { transactionId: transaction.id, walletId: wallet.id };
-    });
+      this.trackAnalyticsEvent('wallet_credit_reverse_completed', userId, {
+        transactionId: result.transactionId,
+        amount,
+        description,
+        idempotencyKey,
+      });
 
-    await this.invalidateWalletCache(userId);
-
-    await this.writeLedgerEntry({
-      walletId: result.walletId,
-      userId,
-      operationType: 'reverse',
-      amount,
-      balanceAfter: (await this.prisma.wallet.findUnique({
+      const updatedWallet = await this.prisma.wallet.findUnique({
         where: { userId },
         select: { balance: true },
-      }))?.balance.toString() ?? '0',
-      idempotencyKey,
-      metadata,
-    });
+      });
 
-    this.trackAnalyticsEvent('wallet_credit_reverse_completed', userId, {
-      transactionId: result.transactionId,
-      amount,
-      description,
-      idempotencyKey,
-    });
-
-    const updatedWallet = await this.prisma.wallet.findUnique({
-      where: { userId },
-      select: { balance: true },
-    });
-
-    return {
-      transactionId: result.transactionId,
-      balance: toNumber(updatedWallet?.balance.toString() || '0'),
-    };
+      return {
+        transactionId: result.transactionId,
+        balance: toNumber(updatedWallet?.balance.toString() || '0'),
+      };
     });
   }
 

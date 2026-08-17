@@ -146,7 +146,9 @@ describe('StaleFlagSweepService', () => {
   });
 
   it('falls back to the ops digest email for owners without a mapping', async () => {
-    flagsService.getStaleFlags.mockResolvedValue([staleFlag('expired_a', { owner: 'unknown-team' })]);
+    flagsService.getStaleFlags.mockResolvedValue([
+      staleFlag('expired_a', { owner: 'unknown-team' }),
+    ]);
     flagStore.getFlag.mockResolvedValue({ key: 'expired_a', enabled: true, owner: 'unknown-team' });
 
     const result = await service.runSweep();
@@ -222,7 +224,8 @@ describe('StaleFlagSweepService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         StaleFlagSweepService,
-        { provide: FeatureFlagsService, useValue: flagsService },        { provide: FeatureFlagService, useValue: flagStore },
+        { provide: FeatureFlagsService, useValue: flagsService },
+        { provide: FeatureFlagService, useValue: flagStore },
         { provide: AuditLogService, useValue: audit },
         { provide: UniverseManagementService, useValue: universeService },
         {
@@ -247,7 +250,6 @@ describe('StaleFlagSweepService', () => {
     flagStore.getFlag.mockResolvedValue({ key: 'expired_a', enabled: true });
 
     const result = await svc.runSweep();
-
 
     expect(result.notified).toEqual(['expired_a']);
     expect(axios.post).toHaveBeenCalledWith(
@@ -294,7 +296,11 @@ describe('StaleFlagSweepService', () => {
           action: 'feature_flag.stale_notified',
           targetType: 'universe_feature_flag',
           targetId: 'reality.voting_enabled',
-          details: expect.objectContaining({ universeId: 'u-1', recipient: 'pay@azeebo.plus', channel: 'email' }),
+          details: expect.objectContaining({
+            universeId: 'u-1',
+            recipient: 'pay@azeebo.plus',
+            channel: 'email',
+          }),
         })
       );
     });

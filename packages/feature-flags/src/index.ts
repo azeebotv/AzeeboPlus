@@ -4,5 +4,10 @@
 export * from './core';
 // Explicit re-export: `FeatureFlag` is both the flag type (core) and the route
 // decorator (nestjs) — the merged name resolves via this explicit export.
-export { FeatureFlag, FeatureFlagGuard, FeatureFlagModule, createFeatureFlagModule } from './nestjs';
+export {
+  FeatureFlag,
+  FeatureFlagGuard,
+  FeatureFlagModule,
+  createFeatureFlagModule,
+} from './nestjs';
 export * from './registries';

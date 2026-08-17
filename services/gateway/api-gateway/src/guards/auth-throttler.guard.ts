@@ -150,15 +150,15 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
         `Redis throttler error, falling back to in-memory: ${(error as Error).message}`
       );
       this.redisClient = null;
-      return this.checkInMemory(
-        clientIp,
-        Math.floor(Date.now() / (this.AUTH_TTL * 1000)),
-        limit
-      );
+      return this.checkInMemory(clientIp, Math.floor(Date.now() / (this.AUTH_TTL * 1000)), limit);
     }
   }
 
-  private checkInMemory(clientIp: string, window: number, limit: number = this.AUTH_LIMIT): boolean {
+  private checkInMemory(
+    clientIp: string,
+    window: number,
+    limit: number = this.AUTH_LIMIT
+  ): boolean {
     const now = Date.now();
     const key = `${this.KEY_PREFIX}${clientIp}:${window}`;
     const entry = this.inMemoryRequests.get(key);

@@ -36,7 +36,7 @@ const mockPrismaService = {
   mission: { findMany: jest.fn() },
   missionCompletion: { findMany: jest.fn() },
   badge: { findMany: jest.fn() },
-  level: { findFirst: jest.fn() },
+  level: { findUnique: jest.fn() },
   pointsLedger: {
     create: jest.fn(),
     findMany: jest.fn(),
@@ -87,9 +87,9 @@ describe('RewardsService', () => {
           useValue: {
             // streaks ON (checkIn tests exercise the streak path); all other
             // reward flags OFF (doublePoints off keeps earnPoints at base).
-            isEnabled: jest.fn().mockImplementation((key: string) =>
-              Promise.resolve(key === 'reward_streaks')
-            ),
+            isEnabled: jest
+              .fn()
+              .mockImplementation((key: string) => Promise.resolve(key === 'reward_streaks')),
           },
         },
         {
@@ -321,7 +321,7 @@ describe('RewardsService', () => {
         streak: 5,
         level: { id: 'level-2', name: 'Intermediate', rank: 2, minPoints: 200 },
       });
-      mockPrismaService.level.findFirst.mockResolvedValue({
+      mockPrismaService.level.findUnique.mockResolvedValue({
         id: 'level-3',
         name: 'Advanced',
         rank: 3,
@@ -343,7 +343,7 @@ describe('RewardsService', () => {
         levelId: 'level-5',
         level: { id: 'level-5', name: 'Legend', rank: 5, minPoints: 1000 },
       });
-      mockPrismaService.level.findFirst.mockResolvedValue(null);
+      mockPrismaService.level.findUnique.mockResolvedValue(null);
 
       const result = await service.getLevel('user-1');
 

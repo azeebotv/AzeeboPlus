@@ -24,6 +24,7 @@ type StaleFlag = Parameters<NonNullable<FeatureFlagConfig['onStaleEnabled']>>[1]
  *   flag_list_cache_hits_total{service}     — full-list snapshot served from the list cache
  *   flag_list_redis_reads_total{service}    — full-list snapshot rebuilt from Redis
  *   → bootstrap list hit ratio = hits / (hits + reads)
+ *   flag_redis_error_total{service, key}    — Redis READ failure served fail-closed
  *
  * The `service` label lets a single Prometheus/Grafana setup split per-service
  * dashboards — e.g. `sum by (service) (rate(flag_evaluation_total[5m]))`.
@@ -46,6 +47,7 @@ type FlagHooks = Pick<
   | 'onCacheMiss'
   | 'onListCacheHit'
   | 'onListCacheMiss'
+  | 'onRedisError'
 >;
 
 const NOOP_HOOKS: FlagHooks = {
@@ -57,6 +59,7 @@ const NOOP_HOOKS: FlagHooks = {
   onCacheMiss: () => undefined,
   onListCacheHit: () => undefined,
   onListCacheMiss: () => undefined,
+  onRedisError: () => undefined,
 };
 
 // Per-service hook holders: no-ops until each service's FlagMetricsService
@@ -91,6 +94,7 @@ export function flagHooks(service: string): FlagHooks {
     onCacheMiss: (key) => getFlagHooks(service).onCacheMiss?.(key),
     onListCacheHit: () => getFlagHooks(service).onListCacheHit?.(),
     onListCacheMiss: () => getFlagHooks(service).onListCacheMiss?.(),
+    onRedisError: (key, error) => getFlagHooks(service).onRedisError?.(key, error),
   };
 }
 
@@ -106,9 +110,13 @@ export class FlagMetricsService implements OnModuleInit, OnModuleDestroy {
   private readonly redisReadsCounter: client.Counter<string>;
   private readonly listCacheHitsCounter: client.Counter<string>;
   private readonly listRedisReadsCounter: client.Counter<string>;
+  private readonly redisErrorCounter: client.Counter<string>;
   private readonly analyticsUrl?: string;
 
-  constructor(private readonly service: string, analyticsUrl?: string) {
+  constructor(
+    private readonly service: string,
+    analyticsUrl?: string
+  ) {
     // Payment-style analytics events (flag_stale_enabled) go to the shared
     // analytics-service track endpoint. Configured explicitly via module
     // options or env (ANALYTICS_SERVICE_URL); unset → Prometheus counters
@@ -173,6 +181,13 @@ export class FlagMetricsService implements OnModuleInit, OnModuleDestroy {
       labelNames: ['service'],
       registers: [this.register],
     });
+
+    this.redisErrorCounter = new client.Counter({
+      name: 'flag_redis_error_total',
+      help: 'Number of Redis READ failures served fail-closed (registered default) instead of throwing, by service and flag key',
+      labelNames: ['service', 'key'],
+      registers: [this.register],
+    });
   }
 
   onModuleInit(): void {
@@ -224,6 +239,12 @@ export class FlagMetricsService implements OnModuleInit, OnModuleDestroy {
       },
       onListCacheMiss: () => {
         this.listRedisReadsCounter.labels(this.service).inc();
+      },
+      onRedisError: (key, error) => {
+        this.redisErrorCounter.labels(this.service, key).inc();
+        this.logger.error(
+          `flag_redis_error_total{service=${this.service},key=${key}} — ${error.message}`
+        );
       },
     };
   }

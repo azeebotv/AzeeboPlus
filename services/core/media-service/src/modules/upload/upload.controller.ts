@@ -211,11 +211,7 @@ export class UploadController {
     @Param('index') index: string,
     @UploadedFile() file: Express.Multer.File
   ): Promise<unknown> {
-    const result = await this.uploadService.uploadChunk(
-      uploadId,
-      Number.parseInt(index, 10),
-      file
-    );
+    const result = await this.uploadService.uploadChunk(uploadId, Number.parseInt(index, 10), file);
     return ApiResponseWrapper.success(result);
   }
 

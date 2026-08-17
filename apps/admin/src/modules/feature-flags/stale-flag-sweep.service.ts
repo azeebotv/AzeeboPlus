@@ -53,10 +53,7 @@ export class StaleFlagSweepService implements OnModuleInit, OnModuleDestroy {
       'NOTIFICATION_SERVICE_URL',
       'http://notification-service:3006'
     );
-    this.adminBaseUrl = this.configService.get<string>(
-      'ADMIN_BASE_URL',
-      'http://localhost:4016'
-    );
+    this.adminBaseUrl = this.configService.get<string>('ADMIN_BASE_URL', 'http://localhost:4016');
     this.fallbackEmail = this.configService.get<string>('STALE_FLAG_NOTIFY_EMAIL');
     const rawOwners = this.configService.get<string>('FLAG_OWNER_EMAILS', '{}');
     try {
@@ -222,7 +219,8 @@ export class StaleFlagSweepService implements OnModuleInit, OnModuleDestroy {
         owner: typeof meta.owner === 'string' ? meta.owner : undefined,
         staleAfter,
         description: typeof meta.description === 'string' ? meta.description : undefined,
-        staleNotifiedAt: typeof meta.staleNotifiedAt === 'string' ? meta.staleNotifiedAt : undefined,
+        staleNotifiedAt:
+          typeof meta.staleNotifiedAt === 'string' ? meta.staleNotifiedAt : undefined,
       });
     }
     return out;
@@ -242,7 +240,12 @@ export class StaleFlagSweepService implements OnModuleInit, OnModuleDestroy {
       action: 'feature_flag.stale_notified',
       targetType: 'feature_flag',
       targetId: key,
-      details: { staleAfter: flag?.staleAfter, notifiedAt: new Date().toISOString(), recipient, channel },
+      details: {
+        staleAfter: flag?.staleAfter,
+        notifiedAt: new Date().toISOString(),
+        recipient,
+        channel,
+      },
     });
   }
 

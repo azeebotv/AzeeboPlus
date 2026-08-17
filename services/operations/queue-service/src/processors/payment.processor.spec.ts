@@ -167,9 +167,7 @@ describe('PaymentProcessor', () => {
 
       await processor.onFailed(job, new Error('provider down'));
 
-      expect(job.updateData).toHaveBeenCalledWith(
-        expect.objectContaining({ dlqRetryCount: 1 })
-      );
+      expect(job.updateData).toHaveBeenCalledWith(expect.objectContaining({ dlqRetryCount: 1 }));
       expect(job.remove).toHaveBeenCalled();
       expect(mockPaymentsQueue.add).toHaveBeenCalledWith(
         'payments',
@@ -208,9 +206,7 @@ describe('PaymentProcessor', () => {
 
       await processor.onFailed(job, new Error('provider down'));
 
-      expect(job.updateData).toHaveBeenCalledWith(
-        expect.objectContaining({ dlqRetryCount: 2 })
-      );
+      expect(job.updateData).toHaveBeenCalledWith(expect.objectContaining({ dlqRetryCount: 2 }));
       expect(mockPaymentsQueue.add).toHaveBeenCalledWith(
         'payments',
         expect.objectContaining({ dlqRetryCount: 2 }),
@@ -227,9 +223,7 @@ describe('PaymentProcessor', () => {
 
       await processor.onFailed(job, new Error('provider down'));
 
-      expect(mockFeatureFlagService.getValue).toHaveBeenCalledWith(
-        queueFlags.dlqRetryBaseDelayMs
-      );
+      expect(mockFeatureFlagService.getValue).toHaveBeenCalledWith(queueFlags.dlqRetryBaseDelayMs);
       expect(mockPaymentsQueue.add).toHaveBeenCalledWith(
         'payments',
         expect.anything(),

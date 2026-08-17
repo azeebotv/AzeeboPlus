@@ -1347,7 +1347,10 @@ export class ContentService {
     if (!(await this.featureFlagService.isEnabled(contentFlags.windowingEnabled))) {
       return {
         success: true,
-        data: { isAvailable: true, reason: 'windowing disabled' } as unknown as ContentAvailabilityResult,
+        data: {
+          isAvailable: true,
+          reason: 'windowing disabled',
+        } as unknown as ContentAvailabilityResult,
       };
     }
     try {

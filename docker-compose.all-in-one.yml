@@ -57,6 +57,7 @@ services:
       PAYSTACK_WEBHOOK_SECRET: ${PAYSTACK_WEBHOOK_SECRET:-}
       FLW_SECRET_KEY: ${FLW_SECRET_KEY:-}
       FLW_WEBHOOK_SECRET: ${FLW_WEBHOOK_SECRET:-}
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:-}
 
       # Email
       SMTP_HOST: ${SMTP_HOST:-}
@@ -90,10 +91,10 @@ services:
       WS_CORS_ORIGIN: ${WS_CORS_ORIGIN:-https://app.azeeboplus.com}
 
       # Feature Flags (NEW - required for content-service)
-      FEATURE_FLAG_REDIS_URL: redis://localhost:6379
+      FEATURE_FLAG_REDIS_URL: redis://:${REDIS_PASSWORD}@localhost:6379
 
       # Event Bus (NEW - required for wallet-service)
-      EVENT_BUS_REDIS_URL: redis://localhost:6379
+      EVENT_BUS_REDIS_URL: redis://:${REDIS_PASSWORD}@localhost:6379
 
       # OpenTelemetry (NEW - required for observability)
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://localhost:4318}

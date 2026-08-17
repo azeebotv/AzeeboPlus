@@ -50,7 +50,8 @@ export class BrowserFeatureFlagService {
   constructor(config: BrowserFlagConfig = {}) {
     this.defaultFlags = config.defaultFlags || {};
     this.defaultValues = config.defaultValues || {};
-    this.storage = config.storage ?? (typeof localStorage !== 'undefined' ? localStorage : undefined);
+    this.storage =
+      config.storage ?? (typeof localStorage !== 'undefined' ? localStorage : undefined);
     this.storageKeyPrefix = config.storageKeyPrefix ?? DEFAULT_PREFIX;
   }
 
@@ -78,17 +79,24 @@ export class BrowserFeatureFlagService {
 
   /** Full flag resolution: override wins, then default, then off. */
   getFlag(key: string): BrowserFlag | null {
-    return this.getOverride(key) ?? {
-      key,
-      // Numeric/variant defaults imply the feature is active by default (same
-      // semantics as the server's getAllFlagsWithDefaults).
-      enabled: this.defaultFlags[key] === true || this.defaultValues[key] !== undefined,
-      value: this.defaultValues[key] ?? null,
-    };
+    return (
+      this.getOverride(key) ?? {
+        key,
+        // Numeric/variant defaults imply the feature is active by default (same
+        // semantics as the server's getAllFlagsWithDefaults).
+        enabled: this.defaultFlags[key] === true || this.defaultValues[key] !== undefined,
+        value: this.defaultValues[key] ?? null,
+      }
+    );
   }
 
   /** Same semantics as the server evaluator: targeted users first, then rollout bucket. */
-  evaluateFlag(flag: BrowserFlag | null, key: string, userId?: string, anonymousId?: string): boolean {
+  evaluateFlag(
+    flag: BrowserFlag | null,
+    key: string,
+    userId?: string,
+    anonymousId?: string
+  ): boolean {
     if (!flag) return this.defaultFlags[key] === true;
     if (!flag.enabled) return false;
 

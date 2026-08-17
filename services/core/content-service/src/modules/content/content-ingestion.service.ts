@@ -60,9 +60,7 @@ export class ContentIngestionService {
         },
       });
     } catch (error) {
-      this.logger.warn(
-        `AI tagging failed for content ${content.id}: ${(error as Error).message}`
-      );
+      this.logger.warn(`AI tagging failed for content ${content.id}: ${(error as Error).message}`);
     }
   }
 

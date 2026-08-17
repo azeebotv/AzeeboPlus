@@ -8,7 +8,6 @@ import { GlobalExceptionFilter } from '@azeebo/error-handling';
 import { LoggingInterceptor } from '@azeebo/logger';
 import { validateEnvironment } from '@azeebo/shared-types';
 
-
 async function bootstrap(): Promise<void> {
   validateEnvironment(process.env);
 
@@ -18,7 +17,7 @@ async function bootstrap(): Promise<void> {
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalInterceptors(new LoggingInterceptor());
 
-    app.use(createHelmetConfig());
+  app.use(createHelmetConfig());
 
   app.useGlobalPipes(
     new ValidationPipe({

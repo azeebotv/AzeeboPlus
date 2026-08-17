@@ -305,8 +305,10 @@ describe('SubscriptionService', () => {
     });
 
     it('grants a free trial to a first-time subscriber when the flag is on', async () => {
-      (service as unknown as { featureFlagService: { isEnabled: jest.Mock } }).featureFlagService.isEnabled.mockImplementation(
-        (key: string) => Promise.resolve(key === subscriptionFlags.freeTrial)
+      (
+        service as unknown as { featureFlagService: { isEnabled: jest.Mock } }
+      ).featureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === subscriptionFlags.freeTrial)
       );
       mockPrismaService.subscription.count.mockResolvedValue(0);
 
@@ -328,8 +330,10 @@ describe('SubscriptionService', () => {
     });
 
     it('charges a returning subscriber even when the flag is on', async () => {
-      (service as unknown as { featureFlagService: { isEnabled: jest.Mock } }).featureFlagService.isEnabled.mockImplementation(
-        (key: string) => Promise.resolve(key === subscriptionFlags.freeTrial)
+      (
+        service as unknown as { featureFlagService: { isEnabled: jest.Mock } }
+      ).featureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === subscriptionFlags.freeTrial)
       );
       mockPrismaService.subscription.count.mockResolvedValue(3);
 
@@ -341,9 +345,9 @@ describe('SubscriptionService', () => {
     });
 
     it('does not grant a trial when the flag is off', async () => {
-      (service as unknown as { featureFlagService: { isEnabled: jest.Mock } }).featureFlagService.isEnabled.mockResolvedValue(
-        false
-      );
+      (
+        service as unknown as { featureFlagService: { isEnabled: jest.Mock } }
+      ).featureFlagService.isEnabled.mockResolvedValue(false);
 
       await service.subscribe('user-1', paidDto);
 
@@ -367,8 +371,10 @@ describe('SubscriptionService', () => {
     });
 
     it('applies the promo discount when the flag is on', async () => {
-      (service as unknown as { featureFlagService: { isEnabled: jest.Mock } }).featureFlagService.isEnabled.mockImplementation(
-        (key: string) => Promise.resolve(key === subscriptionFlags.promoDiscounts)
+      (
+        service as unknown as { featureFlagService: { isEnabled: jest.Mock } }
+      ).featureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === subscriptionFlags.promoDiscounts)
       );
 
       await service.subscribe('user-1', dto);
@@ -385,9 +391,9 @@ describe('SubscriptionService', () => {
     });
 
     it('ignores the promo code when the flag is off', async () => {
-      (service as unknown as { featureFlagService: { isEnabled: jest.Mock } }).featureFlagService.isEnabled.mockResolvedValue(
-        false
-      );
+      (
+        service as unknown as { featureFlagService: { isEnabled: jest.Mock } }
+      ).featureFlagService.isEnabled.mockResolvedValue(false);
 
       await service.subscribe('user-1', dto);
 
@@ -398,8 +404,10 @@ describe('SubscriptionService', () => {
     });
 
     it('rejects an unknown promo code by charging full price', async () => {
-      (service as unknown as { featureFlagService: { isEnabled: jest.Mock } }).featureFlagService.isEnabled.mockImplementation(
-        (key: string) => Promise.resolve(key === subscriptionFlags.promoDiscounts)
+      (
+        service as unknown as { featureFlagService: { isEnabled: jest.Mock } }
+      ).featureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === subscriptionFlags.promoDiscounts)
       );
 
       await service.subscribe('user-1', { ...dto, promoCode: 'NOPE99' });

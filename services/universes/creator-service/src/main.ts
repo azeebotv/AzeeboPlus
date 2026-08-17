@@ -8,7 +8,6 @@ import { GlobalExceptionFilter } from '@azeebo/error-handling';
 import { LoggingInterceptor } from '@azeebo/logger';
 import { validateEnvironment } from '@azeebo/shared-types';
 
-
 async function bootstrap(): Promise<void> {
   try {
     validateEnvironment(process.env);
@@ -22,7 +21,7 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
   app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
 
-    app.use(createHelmetConfig());
+  app.use(createHelmetConfig());
 
   app.useGlobalFilters(new GlobalExceptionFilter());
 

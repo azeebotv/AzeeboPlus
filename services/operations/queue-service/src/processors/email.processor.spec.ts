@@ -136,9 +136,7 @@ describe('EmailProcessor', () => {
 
       await processor.onFailed(job, new Error('provider down'));
 
-      expect(job.updateData).toHaveBeenCalledWith(
-        expect.objectContaining({ dlqRetryCount: 1 })
-      );
+      expect(job.updateData).toHaveBeenCalledWith(expect.objectContaining({ dlqRetryCount: 1 }));
       expect(job.remove).toHaveBeenCalled();
       expect(mockEmailsQueue.add).toHaveBeenCalledWith(
         'emails',
@@ -173,9 +171,7 @@ describe('EmailProcessor', () => {
 
       await processor.onFailed(job, new Error('provider down'));
 
-      expect(job.updateData).toHaveBeenCalledWith(
-        expect.objectContaining({ dlqRetryCount: 2 })
-      );
+      expect(job.updateData).toHaveBeenCalledWith(expect.objectContaining({ dlqRetryCount: 2 }));
       expect(mockEmailsQueue.add).toHaveBeenCalledWith(
         'emails',
         expect.objectContaining({ dlqRetryCount: 2 }),
@@ -198,9 +194,7 @@ describe('EmailProcessor', () => {
 
       await processor.onFailed(job, new Error('provider down'));
 
-      expect(mockFeatureFlagService.getValue).toHaveBeenCalledWith(
-        queueFlags.dlqRetryBaseDelayMs
-      );
+      expect(mockFeatureFlagService.getValue).toHaveBeenCalledWith(queueFlags.dlqRetryBaseDelayMs);
       expect(mockEmailsQueue.add).toHaveBeenCalledWith(
         'emails',
         expect.anything(),

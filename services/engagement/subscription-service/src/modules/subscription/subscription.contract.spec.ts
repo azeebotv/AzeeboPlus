@@ -79,33 +79,9 @@ class MockAuthGuard {
   }
 }
 
-class MockAuthGuardReject {
-  canActivate() {
-    throw new UnauthorizedException();
-  }
-}
-
-class MockRateLimitGuardReject {
-  canActivate() {
-    throw new UnauthorizedException();
-  }
-}
-
-class MockAdminGuardReject {
-  canActivate() {
-    throw new UnauthorizedException();
-  }
-}
-
 class MockServiceAuthGuard {
   canActivate() {
     return true;
-  }
-}
-
-class MockServiceAuthGuardReject {
-  canActivate() {
-    throw new UnauthorizedException();
   }
 }
 
@@ -123,6 +99,7 @@ class MockAdminGuard {
 
 describe('Subscription Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
   let subscriptionService: SubscriptionService;
 
   const mockTxSubscription = {
@@ -159,8 +136,11 @@ describe('Subscription Controller Contract Tests', () => {
     ),
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const buildApp = async (authGuard: any = MockAuthGuard, rejectGuards = false) => {
+  // Mutable flag read at request time by the shared APP_GUARD — the reject
+  // tests flip it instead of building a second app (no per-test port churn).
+  let rejectAll = false;
+
+  const buildApp = async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [SubscriptionController],
       providers: [
@@ -182,18 +162,25 @@ describe('Subscription Controller Contract Tests', () => {
         },
         {
           provide: APP_GUARD,
-          useClass: rejectGuards ? MockServiceAuthGuardReject : MockServiceAuthGuard,
+          useFactory: () => ({
+            canActivate: () => {
+              if (rejectAll) {
+                throw new UnauthorizedException();
+              }
+              return true;
+            },
+          }),
         },
       ],
     })
       .overrideGuard(AuthGuard('jwt'))
-      .useClass(authGuard)
+      .useClass(MockAuthGuard)
       .overrideGuard(RateLimitGuard)
-      .useClass(rejectGuards ? MockRateLimitGuardReject : MockRateLimitGuard)
+      .useClass(MockRateLimitGuard)
       .overrideGuard(AdminGuard)
-      .useClass(rejectGuards ? MockAdminGuardReject : MockAdminGuard)
+      .useClass(MockAdminGuard)
       .overrideGuard(ServiceAuthGuard)
-      .useClass(rejectGuards ? MockServiceAuthGuardReject : MockServiceAuthGuard)
+      .useClass(MockServiceAuthGuard)
       .compile();
 
     const testApp = moduleFixture.createNestApplication();
@@ -203,7 +190,9 @@ describe('Subscription Controller Contract Tests', () => {
   };
 
   beforeAll(async () => {
-    app = await buildApp(MockAuthGuard);
+    app = await buildApp();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
     subscriptionService = app.get<SubscriptionService>(SubscriptionService);
   });
 
@@ -212,6 +201,7 @@ describe('Subscription Controller Contract Tests', () => {
   });
 
   beforeEach(() => {
+    rejectAll = false;
     jest.clearAllMocks();
   });
 
@@ -224,7 +214,7 @@ describe('Subscription Controller Contract Tests', () => {
 
       mockPrismaService.subscriptionPlan.findMany.mockResolvedValue(plans);
 
-      const response = await request(app.getHttpServer()).get('/v1/subscription/plans');
+      const response = await request(baseUrl).get('/v1/subscription/plans');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(plans);
@@ -233,7 +223,7 @@ describe('Subscription Controller Contract Tests', () => {
     it('should return empty array when no plans exist', async () => {
       mockPrismaService.subscriptionPlan.findMany.mockResolvedValue([]);
 
-      const response = await request(app.getHttpServer()).get('/v1/subscription/plans');
+      const response = await request(baseUrl).get('/v1/subscription/plans');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual([]);
@@ -246,7 +236,7 @@ describe('Subscription Controller Contract Tests', () => {
 
       mockPrismaService.subscriptionPlan.findUnique.mockResolvedValue(plan);
 
-      const response = await request(app.getHttpServer()).get('/v1/subscription/plans/plan-1');
+      const response = await request(baseUrl).get('/v1/subscription/plans/plan-1');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(plan);
@@ -255,7 +245,7 @@ describe('Subscription Controller Contract Tests', () => {
     it('should return 404 when plan not found', async () => {
       mockPrismaService.subscriptionPlan.findUnique.mockResolvedValue(null);
 
-      const response = await request(app.getHttpServer()).get('/v1/subscription/plans/nonexistent');
+      const response = await request(baseUrl).get('/v1/subscription/plans/nonexistent');
 
       expect(response.status).toBe(404);
     });
@@ -263,9 +253,8 @@ describe('Subscription Controller Contract Tests', () => {
 
   describe('POST /v1/subscription/plans', () => {
     it('should return 401 without authentication', async () => {
-      const testApp = await buildApp(MockAuthGuardReject, true);
-
-      const response = await request(testApp.getHttpServer())
+      rejectAll = true;
+      const response = await request(baseUrl)
         .post('/v1/subscription/plans')
         .send({
           name: 'New Plan',
@@ -277,53 +266,44 @@ describe('Subscription Controller Contract Tests', () => {
         });
 
       expect(response.status).toBe(401);
-      await testApp.close();
     });
   });
 
   describe('POST /v1/subscription/subscribe', () => {
     it('should return 401 without authentication', async () => {
-      const testApp = await buildApp(MockAuthGuardReject, true);
-
-      const response = await request(testApp.getHttpServer())
+      rejectAll = true;
+      const response = await request(baseUrl)
         .post('/v1/subscription/subscribe')
         .send({ planId: 'plan-1', paymentReference: 'pay-ref-1' });
 
       expect(response.status).toBe(401);
-      await testApp.close();
     });
   });
 
   describe('GET /v1/subscription/current', () => {
     it('should return 401 without authentication', async () => {
-      const testApp = await buildApp(MockAuthGuardReject, true);
-
-      const response = await request(testApp.getHttpServer()).get('/v1/subscription/current');
+      rejectAll = true;
+      const response = await request(baseUrl).get('/v1/subscription/current');
 
       expect(response.status).toBe(401);
-      await testApp.close();
     });
   });
 
   describe('GET /v1/subscription/history', () => {
     it('should return 401 without authentication', async () => {
-      const testApp = await buildApp(MockAuthGuardReject, true);
-
-      const response = await request(testApp.getHttpServer()).get('/v1/subscription/history');
+      rejectAll = true;
+      const response = await request(baseUrl).get('/v1/subscription/history');
 
       expect(response.status).toBe(401);
-      await testApp.close();
     });
   });
 
   describe('DELETE /v1/subscription/:id', () => {
     it('should return 401 without authentication', async () => {
-      const testApp = await buildApp(MockAuthGuardReject, true);
-
-      const response = await request(testApp.getHttpServer()).delete('/v1/subscription/sub-1');
+      rejectAll = true;
+      const response = await request(baseUrl).delete('/v1/subscription/sub-1');
 
       expect(response.status).toBe(401);
-      await testApp.close();
     });
   });
 

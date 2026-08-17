@@ -21,10 +21,15 @@ class MockRateLimitGuard implements CanActivate {
  */
 describe('SocialAuthController provider kill-switch (auth_social_google/apple)', () => {
   let app: INestApplication;
+  let baseUrl: string;
   const mockSocialAuthService = {
     generateState: jest.fn().mockResolvedValue('state-123'),
-    buildAuthorizeUrl: jest.fn().mockReturnValue('https://accounts.google.com/o/oauth2/auth?state=state-123'),
-    verifyGoogleToken: jest.fn().mockResolvedValue({ email: 'g@example.com', sub: 'g-1', name: 'G User' }),
+    buildAuthorizeUrl: jest
+      .fn()
+      .mockReturnValue('https://accounts.google.com/o/oauth2/auth?state=state-123'),
+    verifyGoogleToken: jest
+      .fn()
+      .mockResolvedValue({ email: 'g@example.com', sub: 'g-1', name: 'G User' }),
     verifyAppleToken: jest.fn().mockResolvedValue({ email: 'a@example.com', sub: 'a-1' }),
     socialLogin: jest.fn().mockResolvedValue({
       success: true,
@@ -56,6 +61,8 @@ describe('SocialAuthController provider kill-switch (auth_social_google/apple)',
 
     app = moduleFixture.createNestApplication();
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -68,14 +75,12 @@ describe('SocialAuthController provider kill-switch (auth_social_google/apple)',
   });
 
   it('blocks GET /auth/social/google/authorize with 403 when the flag is off', async () => {
-    await request(app.getHttpServer())
-      .get('/auth/social/google/authorize')
-      .expect(403);
+    await request(baseUrl).get('/auth/social/google/authorize').expect(403);
     expect(mockSocialAuthService.generateState).not.toHaveBeenCalled();
   });
 
   it('blocks legacy POST /auth/social/google with 403 when the flag is off', async () => {
-    await request(app.getHttpServer())
+    await request(baseUrl)
       .post('/auth/social/google')
       .send({ idToken: 'id-token', email: 'g@example.com' })
       .expect(403);
@@ -83,7 +88,7 @@ describe('SocialAuthController provider kill-switch (auth_social_google/apple)',
   });
 
   it('blocks POST /auth/social/apple with 403 when the flag is off', async () => {
-    await request(app.getHttpServer())
+    await request(baseUrl)
       .post('/auth/social/apple')
       .send({ identityToken: 'id-token', email: 'a@example.com' })
       .expect(403);
@@ -95,7 +100,7 @@ describe('SocialAuthController provider kill-switch (auth_social_google/apple)',
       Promise.resolve(key === authFlags.socialGoogle)
     );
 
-    await request(app.getHttpServer())
+    await request(baseUrl)
       .get('/auth/social/google/authorize')
       .expect(200)
       .expect((res: { body: { state?: string; authorizeUrl?: string } }) => {
@@ -110,6 +115,6 @@ describe('SocialAuthController provider kill-switch (auth_social_google/apple)',
       Promise.resolve(key === authFlags.socialGoogle)
     );
 
-    await request(app.getHttpServer()).get('/auth/social/apple/authorize').expect(403);
+    await request(baseUrl).get('/auth/social/apple/authorize').expect(403);
   });
 });

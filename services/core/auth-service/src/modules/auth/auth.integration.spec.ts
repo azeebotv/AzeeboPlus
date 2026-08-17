@@ -118,6 +118,7 @@ class MockRateLimitGuard {
 
 describe('AuthService - Refresh Token Rotation (Integration)', () => {
   let app: INestApplication;
+  let baseUrl: string;
   let jwtService: JwtService;
 
   const mockRedisService = {
@@ -199,9 +200,11 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
       .useValue({
         // Guards pass for every flag except the email-verification signup
         // branch, which stays OFF so the default flows issue tokens.
-        isEnabled: jest.fn().mockImplementation((key: string) =>
-          Promise.resolve(key !== 'auth_email_verification_required')
-        ),
+        isEnabled: jest
+          .fn()
+          .mockImplementation((key: string) =>
+            Promise.resolve(key !== 'auth_email_verification_required')
+          ),
       })
       .overrideProvider(JwtService)
       .useValue(
@@ -244,6 +247,8 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
       }
     );
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
 
     jwtService = moduleFixture.get<JwtService>(JwtService);
   });
@@ -330,7 +335,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
         updatedAt: new Date(),
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/auth/refresh')
         .send({ refreshToken })
         .expect(201);
@@ -363,14 +368,14 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
         updatedAt: new Date(),
       });
 
-      await request(app.getHttpServer())
+      await request(baseUrl)
         .post('/v1/auth/refresh')
         .send({ refreshToken })
         .expect(201);
 
       mockPrismaService.session.findFirst.mockResolvedValue(null);
 
-      const secondRefreshResponse = await request(app.getHttpServer())
+      const secondRefreshResponse = await request(baseUrl)
         .post('/v1/auth/refresh')
         .send({ refreshToken })
         .expect(401);
@@ -391,7 +396,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
         }
       );
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/auth/refresh')
         .send({ refreshToken: expiredToken })
         .expect(401);
@@ -400,7 +405,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
     });
 
     it('should reject invalid refresh token', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/auth/refresh')
         .send({ refreshToken: 'invalid-token' })
         .expect(401);
@@ -413,7 +418,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
 
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/auth/refresh')
         .send({ refreshToken })
         .expect(401);
@@ -444,9 +449,9 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
       });
 
       const promises = [
-        request(app.getHttpServer()).post('/v1/auth/refresh').send({ refreshToken }),
-        request(app.getHttpServer()).post('/v1/auth/refresh').send({ refreshToken }),
-        request(app.getHttpServer()).post('/v1/auth/refresh').send({ refreshToken }),
+        request(baseUrl).post('/v1/auth/refresh').send({ refreshToken }),
+        request(baseUrl).post('/v1/auth/refresh').send({ refreshToken }),
+        request(baseUrl).post('/v1/auth/refresh').send({ refreshToken }),
       ];
 
       const results = await Promise.allSettled(promises);
@@ -463,7 +468,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
 
       mockPrismaService.session.deleteMany.mockResolvedValue({ count: 1 });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/auth/logout')
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(201);
@@ -474,7 +479,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
     it('should return user profile for valid token', async () => {
       const { accessToken } = generateTokens();
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/auth/me')
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(200);
@@ -498,7 +503,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
         updatedAt: new Date(),
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/auth/login')
         .send({
           email: 'test@example.com',
@@ -515,7 +520,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
     it('should reject invalid credentials', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/auth/login')
         .send({
           email: 'invalid@example.com',
@@ -552,7 +557,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
       });
 
       for (let i = 0; i < 5; i++) {
-        await request(app.getHttpServer())
+        await request(baseUrl)
           .post('/v1/auth/login')
           .send({
             email,
@@ -561,7 +566,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
           .expect(401);
       }
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/auth/login')
         .send({
           email,

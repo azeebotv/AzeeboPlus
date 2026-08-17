@@ -39,7 +39,7 @@ export class EmailService implements OnModuleInit {
       'email-verification': this.configService.get('EMAIL_TEMPLATE_EMAIL_VERIFICATION_HTML'),
       'password-reset': this.configService.get('EMAIL_TEMPLATE_PASSWORD_RESET_HTML'),
       'magic-link': this.configService.get('EMAIL_TEMPLATE_MAGIC_LINK_HTML'),
-      'digest': this.configService.get('EMAIL_TEMPLATE_DIGEST_HTML'),
+      digest: this.configService.get('EMAIL_TEMPLATE_DIGEST_HTML'),
       'payment-confirmation': this.configService.get('EMAIL_TEMPLATE_PAYMENT_CONFIRMATION_HTML'),
       'content-published': this.configService.get('EMAIL_TEMPLATE_CONTENT_PUBLISHED_HTML'),
       'content-featured': this.configService.get('EMAIL_TEMPLATE_CONTENT_FEATURED_HTML'),

@@ -44,6 +44,7 @@ class MockRateLimitGuard implements CanActivate {
  */
 describe('ComedyFeedController kill-switch (comedy_specials_gate)', () => {
   let app: INestApplication;
+  let baseUrl: string;
   const mockComedyFeedService = {
     getFeed: jest.fn().mockResolvedValue({ success: true, data: { items: [] } }),
     getTrending: jest.fn().mockResolvedValue({ success: true, data: { items: [] } }),
@@ -75,6 +76,8 @@ describe('ComedyFeedController kill-switch (comedy_specials_gate)', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -87,25 +90,23 @@ describe('ComedyFeedController kill-switch (comedy_specials_gate)', () => {
   });
 
   it('blocks GET /comedy/specials with 403 when comedy_specials_gate is off', async () => {
-    await request(app.getHttpServer()).get('/comedy/specials').expect(403);
-    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(
-      comedyFlags.specialsGate
-    );
+    await request(baseUrl).get('/comedy/specials').expect(403);
+    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(comedyFlags.specialsGate);
     expect(mockComedyFeedService.getSpecials).not.toHaveBeenCalled();
   });
 
   it('blocks GET /comedy/specials/:id with 403 when comedy_specials_gate is off', async () => {
-    await request(app.getHttpServer()).get('/comedy/specials/special-1').expect(403);
+    await request(baseUrl).get('/comedy/specials/special-1').expect(403);
     expect(mockComedyFeedService.getSpecialById).not.toHaveBeenCalled();
   });
 
   it('blocks POST /comedy/specials/:id/like with 403 when comedy_specials_gate is off', async () => {
-    await request(app.getHttpServer()).post('/comedy/specials/special-1/like').expect(403);
+    await request(baseUrl).post('/comedy/specials/special-1/like').expect(403);
     expect(mockComedyFeedService.likeSpecial).not.toHaveBeenCalled();
   });
 
   it('serves ungated feed endpoints when the gate is off', async () => {
-    await request(app.getHttpServer()).get('/comedy').expect(200);
+    await request(baseUrl).get('/comedy').expect(200);
     expect(mockComedyFeedService.getFeed).toHaveBeenCalled();
   });
 });

@@ -64,7 +64,7 @@ export class CompleteProfileSetupDto {
   @IsOptional()
   bio?: string;
 
-  @ApiProperty({ example: ['comedy', 'movies', 'sports'], required: false })
+  @ApiProperty({ example: ['comedy', 'movie', 'sports'], required: false })
   @IsArray()
   @IsString({ each: true })
   @IsOptional()

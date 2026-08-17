@@ -61,9 +61,7 @@ export class AuditLogService {
     }
 
     if (filters?.targetType) {
-      const types = Array.isArray(filters.targetType)
-        ? filters.targetType
-        : [filters.targetType];
+      const types = Array.isArray(filters.targetType) ? filters.targetType : [filters.targetType];
       where.targetType = types.length === 1 ? types[0] : { in: types };
     }
 

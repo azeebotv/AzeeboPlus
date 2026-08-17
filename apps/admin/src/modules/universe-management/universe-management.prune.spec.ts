@@ -11,11 +11,7 @@ describe('UniverseManagementService — pruneStaleFeatureFlags', () => {
   };
   let audit: { log: jest.Mock };
 
-  const flag = (
-    featureKey: string,
-    staleAfter: string,
-    extra: Record<string, unknown> = {}
-  ) => ({
+  const flag = (featureKey: string, staleAfter: string, extra: Record<string, unknown> = {}) => ({
     id: `row-${featureKey}`,
     universeId: 'u-1',
     featureKey,
@@ -105,9 +101,7 @@ describe('UniverseManagementService — pruneStaleFeatureFlags', () => {
   });
 
   it('skips requested keys that are not actually past their staleAfter', async () => {
-    prisma.universeFeatureFlag.findMany.mockResolvedValue([
-      flag('future_flag', '2999-01-01'),
-    ]);
+    prisma.universeFeatureFlag.findMany.mockResolvedValue([flag('future_flag', '2999-01-01')]);
 
     const result = await service.pruneStaleFeatureFlags('admin-1', [
       { universeId: 'u-1', featureKey: 'future_flag' },

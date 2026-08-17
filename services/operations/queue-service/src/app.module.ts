@@ -7,6 +7,7 @@ import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { EmailModule, FirebaseModule, JwtConfigModule, SmsModule } from '@azeebo/shared-services';
 import { FeatureFlagModule, queueFlags } from '@azeebo/feature-flags';
 import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
+import { JOB_RETENTION_POLICY } from '@azeebo/queue-policy';
 import { DatabaseModule } from './modules/database/database.module';
 import { HealthModule } from './modules/health/health.module';
 import { MetricsModule } from './modules/metrics/metrics.module';
@@ -112,16 +113,7 @@ const QUEUE_CONFIG = {
         port: parseInt(process.env.REDIS_PORT || '6379'),
         password: process.env.REDIS_PASSWORD,
       },
-      defaultJobOptions: {
-        removeOnComplete: {
-          age: 86400,
-          count: 1000,
-        },
-        removeOnFail: {
-          age: 604800,
-          count: 5000,
-        },
-      },
+      defaultJobOptions: JOB_RETENTION_POLICY,
     }),
     BullModule.registerQueue(
       { name: 'notifications', ...QUEUE_CONFIG.notifications },

@@ -158,10 +158,7 @@ export function scoreFuzzyCandidate(
   secondarySim: number | null | undefined,
   trigramWeight: number = DEFAULT_TRIGRAM_WEIGHT
 ): FuzzyCandidateScore {
-  const fuzzy = Math.max(
-    fuzzyScore(query, primary ?? ''),
-    fuzzyScore(query, secondary ?? '')
-  );
+  const fuzzy = Math.max(fuzzyScore(query, primary ?? ''), fuzzyScore(query, secondary ?? ''));
   const trigram = Math.max(primarySim ?? 0, secondarySim ?? 0);
   return { fuzzy, trigram, score: blendScore(fuzzy, trigram, trigramWeight) };
 }

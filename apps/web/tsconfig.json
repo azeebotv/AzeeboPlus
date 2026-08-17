@@ -26,6 +26,7 @@
       "@/*": [
         "./src/*"
       ],
+      "@azeebo/feature-flags/registries": ["../../packages/feature-flags/dist/registries"],
       "@azeebo/*": ["../../packages/*/dist"],
       "@azeebo/ui": [
         "../../packages/ui/src"

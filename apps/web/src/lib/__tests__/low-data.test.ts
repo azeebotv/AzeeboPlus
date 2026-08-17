@@ -4,10 +4,7 @@ const flagOn = (key: string): boolean => key === 'web_autoplay' || key === 'web_
 const flagOff = (): boolean => false;
 
 describe('shouldAutoPlay (web_autoplay gate)', () => {
-  const originalConnection = Object.getOwnPropertyDescriptor(
-    navigator,
-    'connection'
-  );
+  const originalConnection = Object.getOwnPropertyDescriptor(navigator, 'connection');
 
   afterEach(() => {
     window.localStorage.clear();

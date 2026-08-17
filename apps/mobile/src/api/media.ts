@@ -35,7 +35,6 @@ export interface MediaUploadOptions {
   fingerprint?: string;
 }
 
-
 export interface PresignedUploadResponse {
   uploadUrl: string;
   key: string;

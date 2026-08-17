@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
-
 /** In-memory AsyncStorage mock — shared across all specs in this file. */
 const mockStore = new Map<string, string>();
 
@@ -233,7 +231,12 @@ describe('signed-URL cache (revalidate-after-TTL)', () => {
 describe('clear', () => {
   it('removes all upload and signed-URL entries', async () => {
     await mediaCache.rememberUpload('fp1', {
-      key: 'k1', url: 'u', cdnUrl: 'u', filename: 'f', mimetype: 'image/jpeg', size: 1,
+      key: 'k1',
+      url: 'u',
+      cdnUrl: 'u',
+      filename: 'f',
+      mimetype: 'image/jpeg',
+      size: 1,
       cachePolicy: 'immutable',
     });
     await mediaCache.rememberSignedUrl('sk1', 'short-lived', 'https://u', 3600);

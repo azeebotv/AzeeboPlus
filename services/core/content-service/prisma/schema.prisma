@@ -11,7 +11,7 @@ datasource db {
 
 model Universe {
   id          String   @id @default(uuid())
-  name        String   @unique // reality, creator, lifestyle, vertical, movie, games, comedy, sports
+  name        String   @unique // canonical slugs: reality, creator, lifestyle, vertical, movie, games, comedy, sports, music
   displayName String
   description String?
   icon        String?

@@ -82,7 +82,10 @@ export class QueueService {
       const queue = this.getQueue(queueName);
       return (await queue.getJob(jobId)) ?? null;
     } catch (error) {
-      this.logger.error(`Failed to get job ${jobId} from queue ${queueName}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get job ${jobId} from queue ${queueName}`,
+        (error as Error).stack
+      );
       throw error;
     }
   }
@@ -98,7 +101,10 @@ export class QueueService {
       this.logger.log(`Retried job ${jobId} in queue ${queueName}`);
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
-      this.logger.error(`Failed to retry job ${jobId} in queue ${queueName}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to retry job ${jobId} in queue ${queueName}`,
+        (error as Error).stack
+      );
       throw error;
     }
   }
@@ -158,7 +164,10 @@ export class QueueService {
       this.logger.log(`Retried ${retried} failed jobs in queue ${queueName}`);
       return retried;
     } catch (error) {
-      this.logger.error(`Failed to retry all failed jobs in queue ${queueName}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to retry all failed jobs in queue ${queueName}`,
+        (error as Error).stack
+      );
       throw error;
     }
   }
@@ -174,7 +183,10 @@ export class QueueService {
       this.logger.log(`Removed job ${jobId} from queue ${queueName}`);
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
-      this.logger.error(`Failed to remove job ${jobId} from queue ${queueName}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to remove job ${jobId} from queue ${queueName}`,
+        (error as Error).stack
+      );
       throw error;
     }
   }
@@ -206,7 +218,10 @@ export class QueueService {
       const queue = this.getQueue(queueName);
       return await queue.getFailed(start, end);
     } catch (error) {
-      this.logger.error(`Failed to get failed jobs from queue ${queueName}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get failed jobs from queue ${queueName}`,
+        (error as Error).stack
+      );
       throw error;
     }
   }
@@ -216,7 +231,10 @@ export class QueueService {
       const queue = this.getQueue(queueName);
       return await queue.getDelayed(start, end);
     } catch (error) {
-      this.logger.error(`Failed to get delayed jobs from queue ${queueName}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get delayed jobs from queue ${queueName}`,
+        (error as Error).stack
+      );
       throw error;
     }
   }

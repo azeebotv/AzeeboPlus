@@ -10,7 +10,6 @@ import { LoggingInterceptor } from '@azeebo/logger';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
 import { validateEnvironment } from '@azeebo/shared-types';
 
-
 async function bootstrap(): Promise<void> {
   validateEnvironment(process.env);
 
@@ -65,7 +64,9 @@ async function bootstrap(): Promise<void> {
       .filter((o: string) => {
         if (!o) return false;
         if (!VALID_ORIGIN.test(o)) {
-          Logger.warn(`Skipping invalid ALLOWED_ORIGINS entry: "${o}" (must start with http:// or https://)`);
+          Logger.warn(
+            `Skipping invalid ALLOWED_ORIGINS entry: "${o}" (must start with http:// or https://)`
+          );
           return false;
         }
         return true;

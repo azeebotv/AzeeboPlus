@@ -40,7 +40,24 @@ class FakeRedis {
   }
 }
 
-const makeService = (overrides: Partial<ConstructorParameters<typeof FeatureFlagService>[0]> = {}) => {
+/** Redis stand-in whose reads/writes all reject (simulates an outage). */
+class FailingRedis extends FakeRedis {
+  async get(): Promise<string | null> {
+    throw new Error('ECONNREFUSED');
+  }
+
+  async scan(): Promise<[string, string[]]> {
+    throw new Error('ECONNREFUSED');
+  }
+
+  async set(): Promise<'OK'> {
+    throw new Error('ECONNREFUSED');
+  }
+}
+
+const makeService = (
+  overrides: Partial<ConstructorParameters<typeof FeatureFlagService>[0]> = {}
+) => {
   const redis = new FakeRedis();
   const service = new FeatureFlagService({
     redis: redis as unknown as never,
@@ -71,6 +88,55 @@ describe('FeatureFlagService', () => {
       const { service } = makeService();
       await expect(service.getValue('analytics_sampling_rate')).resolves.toBe(100);
       await expect(service.getValue('missing_variant')).resolves.toBeNull();
+    });
+  });
+
+  describe('Redis read failure (fail-closed)', () => {
+    it('serves defaultFlags instead of throwing when a get fails', async () => {
+      const redis = new FailingRedis();
+      const onRedisError = jest.fn();
+      const service = new FeatureFlagService({
+        redis: redis as unknown as never,
+        defaultFlags: { kill_switch: true, new_feature: false },
+        onRedisError,
+      });
+      await expect(service.isEnabled('kill_switch')).resolves.toBe(true);
+      await expect(service.isEnabled('new_feature')).resolves.toBe(false);
+      expect(onRedisError).toHaveBeenCalledWith('kill_switch', expect.any(Error));
+      expect(onRedisError).toHaveBeenCalledWith('new_feature', expect.any(Error));
+    });
+
+    it('serves defaultValues instead of throwing when a get fails', async () => {
+      const service = new FeatureFlagService({
+        redis: new FailingRedis() as unknown as never,
+        defaultValues: { analytics_sampling_rate: 100 },
+      });
+      await expect(service.getValue('analytics_sampling_rate')).resolves.toBe(100);
+      await expect(service.getValue('missing_variant')).resolves.toBeNull();
+    });
+
+    it('listFlags degrades to [] when a scan fails', async () => {
+      const service = new FeatureFlagService({
+        redis: new FailingRedis() as unknown as never,
+      });
+      await expect(service.listFlags()).resolves.toEqual([]);
+    });
+
+    it('rethrows when failClosedOnRedisError is false', async () => {
+      const service = new FeatureFlagService({
+        redis: new FailingRedis() as unknown as never,
+        failClosedOnRedisError: false,
+      });
+      await expect(service.isEnabled('kill_switch')).rejects.toThrow('ECONNREFUSED');
+    });
+
+    it('writes still fail loudly on a Redis error', async () => {
+      const service = new FeatureFlagService({
+        redis: new FailingRedis() as unknown as never,
+      });
+      await expect(service.setFlag({ key: 'alpha', enabled: true })).rejects.toThrow(
+        'ECONNREFUSED'
+      );
     });
   });
 
@@ -254,7 +320,10 @@ describe('FeatureFlagService', () => {
       const { service, redis } = makeService({
         onStaleEnabled: (key) => staleHits.push(key),
       });
-      await redis.set('feature_flags:expired_flag', JSON.stringify({ key: 'expired_flag', enabled: true, staleAfter: RECENT_PAST }));
+      await redis.set(
+        'feature_flags:expired_flag',
+        JSON.stringify({ key: 'expired_flag', enabled: true, staleAfter: RECENT_PAST })
+      );
 
       await service.isEnabled('expired_flag');
       await service.isEnabled('expired_flag');
@@ -291,7 +360,10 @@ describe('FeatureFlagService', () => {
     it('does NOT report a DISABLED flag past its staleAfter', async () => {
       const staleHits: string[] = [];
       const { service, redis } = makeService({ onStaleEnabled: (key) => staleHits.push(key) });
-      await redis.set('feature_flags:expired_off', JSON.stringify({ key: 'expired_off', enabled: false, staleAfter: RECENT_PAST }));
+      await redis.set(
+        'feature_flags:expired_off',
+        JSON.stringify({ key: 'expired_off', enabled: false, staleAfter: RECENT_PAST })
+      );
 
       expect(await service.isEnabled('expired_off')).toBe(false);
       expect(staleHits).toEqual([]);
@@ -301,7 +373,10 @@ describe('FeatureFlagService', () => {
     it('does NOT report a flag whose staleAfter is still in the future', async () => {
       const staleHits: string[] = [];
       const { service, redis } = makeService({ onStaleEnabled: (key) => staleHits.push(key) });
-      await redis.set('feature_flags:fresh_flag', JSON.stringify({ key: 'fresh_flag', enabled: true, staleAfter: FUTURE }));
+      await redis.set(
+        'feature_flags:fresh_flag',
+        JSON.stringify({ key: 'fresh_flag', enabled: true, staleAfter: FUTURE })
+      );
 
       expect(await service.isEnabled('fresh_flag')).toBe(true);
       expect(staleHits).toEqual([]);
@@ -325,7 +400,12 @@ describe('FeatureFlagService', () => {
       const { service, redis } = makeService({ onStaleEnabled: (key) => staleHits.push(key) });
       await redis.set(
         'feature_flags:expired_targeted',
-        JSON.stringify({ key: 'expired_targeted', enabled: true, staleAfter: RECENT_PAST, userIds: ['u-allow'] })
+        JSON.stringify({
+          key: 'expired_targeted',
+          enabled: true,
+          staleAfter: RECENT_PAST,
+          userIds: ['u-allow'],
+        })
       );
 
       expect(await service.isEnabled('expired_targeted', 'u-other')).toBe(false);
@@ -365,9 +445,7 @@ describe('FeatureFlagService', () => {
 
       // Hook fired on the evaluation; the persisted flag is now off + stamped.
       expect(autoDisabled).toEqual(['zombie']);
-      expect(toggles).toEqual([
-        { key: 'zombie', enabled: false, actor: 'system:auto-disable' },
-      ]);
+      expect(toggles).toEqual([{ key: 'zombie', enabled: false, actor: 'system:auto-disable' }]);
       const stored = await service.getFlag('zombie');
       expect(stored?.enabled).toBe(false);
       expect(stored?.autoDisabledAt).toEqual(expect.any(String));
@@ -487,7 +565,11 @@ describe('FeatureFlagService', () => {
         JSON.stringify({ key: 'hot', enabled: true, staleAfter: PAST })
       );
 
-      await Promise.all([service.isEnabled('hot'), service.isEnabled('hot'), service.isEnabled('hot')]);
+      await Promise.all([
+        service.isEnabled('hot'),
+        service.isEnabled('hot'),
+        service.isEnabled('hot'),
+      ]);
       await flush();
 
       expect(toggles).toEqual([{ key: 'hot', enabled: false }]); // exactly one persist

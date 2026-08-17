@@ -15,6 +15,7 @@ const AuthGuardPass: CanActivate = {
 
 describe('Wallet E2E', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockWalletService = {
     getBalance: jest.fn(),
@@ -54,6 +55,8 @@ describe('Wallet E2E', () => {
     // Override the global ServiceAuthGuard to bypass auth in tests
     app.useGlobalGuards(AuthGuardPass);
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -79,7 +82,7 @@ describe('Wallet E2E', () => {
         },
       });
 
-      const res = await request(app.getHttpServer()).get('/wallet').expect(200);
+      const res = await request(baseUrl).get('/wallet').expect(200);
 
       expect(res.body.success).toBe(true);
       expect(res.body.data.balance).toBe(5000);
@@ -102,7 +105,7 @@ describe('Wallet E2E', () => {
         },
       });
 
-      const res = await request(app.getHttpServer()).get('/wallet').expect(200);
+      const res = await request(baseUrl).get('/wallet').expect(200);
 
       expect(res.body.data.balance).toBe(0);
       expect(res.body.data.totalBalance).toBe(0);
@@ -128,7 +131,7 @@ describe('Wallet E2E', () => {
         },
       });
 
-      const res = await request(app.getHttpServer()).post('/wallet/fund').send(dto).expect(201);
+      const res = await request(baseUrl).post('/wallet/fund').send(dto).expect(201);
 
       expect(res.body.success).toBe(true);
       expect(res.body.data.transactionId).toBe('txn_fund_001');
@@ -153,7 +156,7 @@ describe('Wallet E2E', () => {
         },
       });
 
-      const res = await request(app.getHttpServer()).post('/wallet/fund').send(dto).expect(201);
+      const res = await request(baseUrl).post('/wallet/fund').send(dto).expect(201);
 
       expect(res.body.success).toBe(true);
       expect(res.body.data.amount).toBe(1000);
@@ -162,7 +165,7 @@ describe('Wallet E2E', () => {
     it('should reject funding with zero amount', async () => {
       const dto = { amount: 0 };
 
-      await request(app.getHttpServer()).post('/wallet/fund').send(dto).expect(400);
+      await request(baseUrl).post('/wallet/fund').send(dto).expect(400);
 
       expect(mockWalletService.initializeFunding).not.toHaveBeenCalled();
     });
@@ -170,13 +173,13 @@ describe('Wallet E2E', () => {
     it('should reject funding with negative amount', async () => {
       const dto = { amount: -500 };
 
-      await request(app.getHttpServer()).post('/wallet/fund').send(dto).expect(400);
+      await request(baseUrl).post('/wallet/fund').send(dto).expect(400);
 
       expect(mockWalletService.initializeFunding).not.toHaveBeenCalled();
     });
 
     it('should reject funding with missing amount', async () => {
-      await request(app.getHttpServer()).post('/wallet/fund').send({}).expect(400);
+      await request(baseUrl).post('/wallet/fund').send({}).expect(400);
 
       expect(mockWalletService.initializeFunding).not.toHaveBeenCalled();
     });
@@ -184,7 +187,7 @@ describe('Wallet E2E', () => {
     it('should reject funding with non-numeric amount', async () => {
       const dto = { amount: 'not-a-number' };
 
-      await request(app.getHttpServer()).post('/wallet/fund').send(dto).expect(400);
+      await request(baseUrl).post('/wallet/fund').send(dto).expect(400);
 
       expect(mockWalletService.initializeFunding).not.toHaveBeenCalled();
     });
@@ -214,7 +217,7 @@ describe('Wallet E2E', () => {
         },
       });
 
-      const res = await request(app.getHttpServer()).post('/wallet/transfer').send(dto).expect(201);
+      const res = await request(baseUrl).post('/wallet/transfer').send(dto).expect(201);
 
       expect(res.body.success).toBe(true);
       expect(res.body.data.amount).toBe(500);
@@ -243,7 +246,7 @@ describe('Wallet E2E', () => {
         },
       });
 
-      const res = await request(app.getHttpServer()).post('/wallet/transfer').send(dto).expect(201);
+      const res = await request(baseUrl).post('/wallet/transfer').send(dto).expect(201);
 
       expect(res.body.success).toBe(true);
       expect(res.body.data.amount).toBe(200);
@@ -260,7 +263,7 @@ describe('Wallet E2E', () => {
         message: 'Insufficient balance',
       });
 
-      const res = await request(app.getHttpServer()).post('/wallet/transfer').send(dto).expect(400);
+      const res = await request(baseUrl).post('/wallet/transfer').send(dto).expect(400);
 
       expect(res.body.message).toBe('Insufficient balance');
     });
@@ -276,7 +279,7 @@ describe('Wallet E2E', () => {
         message: 'Cannot transfer to yourself',
       });
 
-      const res = await request(app.getHttpServer()).post('/wallet/transfer').send(dto).expect(400);
+      const res = await request(baseUrl).post('/wallet/transfer').send(dto).expect(400);
 
       expect(res.body.message).toBe('Cannot transfer to yourself');
     });
@@ -284,7 +287,7 @@ describe('Wallet E2E', () => {
     it('should reject transfer with missing recipientId', async () => {
       const dto = { amount: 100 };
 
-      await request(app.getHttpServer()).post('/wallet/transfer').send(dto).expect(400);
+      await request(baseUrl).post('/wallet/transfer').send(dto).expect(400);
 
       expect(mockWalletService.transfer).not.toHaveBeenCalled();
     });
@@ -292,7 +295,7 @@ describe('Wallet E2E', () => {
     it('should reject transfer with missing amount', async () => {
       const dto = { recipientId: 'usr_recipient01' };
 
-      await request(app.getHttpServer()).post('/wallet/transfer').send(dto).expect(400);
+      await request(baseUrl).post('/wallet/transfer').send(dto).expect(400);
 
       expect(mockWalletService.transfer).not.toHaveBeenCalled();
     });
@@ -300,13 +303,13 @@ describe('Wallet E2E', () => {
     it('should reject transfer with zero amount', async () => {
       const dto = { amount: 0, recipientId: 'usr_recipient01' };
 
-      await request(app.getHttpServer()).post('/wallet/transfer').send(dto).expect(400);
+      await request(baseUrl).post('/wallet/transfer').send(dto).expect(400);
 
       expect(mockWalletService.transfer).not.toHaveBeenCalled();
     });
 
     it('should reject transfer with empty body', async () => {
-      await request(app.getHttpServer()).post('/wallet/transfer').send({}).expect(400);
+      await request(baseUrl).post('/wallet/transfer').send({}).expect(400);
 
       expect(mockWalletService.transfer).not.toHaveBeenCalled();
     });

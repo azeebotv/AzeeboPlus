@@ -73,9 +73,6 @@
       "@azeebo/shared-services/*": [
         "./packages/shared-services/dist/*"
       ],
-      "@azeebo/shared-queue": [
-        "./packages/shared-queue/dist"
-      ],
       "@azeebo/auth": [
         "./packages/auth/dist"
       ],
@@ -93,6 +90,9 @@
       ],
       "@azeebo/feature-flags": [
         "./packages/feature-flags/dist"
+      ],
+      "@azeebo/feature-flags/registries": [
+        "./packages/feature-flags/dist/registries"
       ],
       "@azeebo/http-client": [
         "./packages/http-client/dist"

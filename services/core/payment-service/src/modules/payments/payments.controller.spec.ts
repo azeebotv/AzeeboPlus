@@ -308,9 +308,7 @@ describe('PaymentsController', () => {
     });
 
     it('should throw NotFoundException for non-existent payment', async () => {
-      mockPaymentsService.getPayment.mockRejectedValue(
-        new NotFoundException('Payment not found')
-      );
+      mockPaymentsService.getPayment.mockRejectedValue(new NotFoundException('Payment not found'));
 
       await expect(controller.getPayment(req, 'pay-nonexistent')).rejects.toThrow(
         NotFoundException
@@ -386,12 +384,14 @@ describe('PaymentsController', () => {
     it('should have history route before wildcard :id route', () => {
       // Nest stores route-path metadata on the method function itself, not on
       // the prototype keyed by method name.
-      const methodRoutes = Object.getOwnPropertyNames(
-        PaymentsController.prototype
-      ).filter((name) => {
-        const fn = (PaymentsController.prototype as unknown as Record<string, unknown>)[name];
-        return typeof fn === 'function' && Reflect.getMetadata('path', fn as object) !== undefined;
-      });
+      const methodRoutes = Object.getOwnPropertyNames(PaymentsController.prototype).filter(
+        (name) => {
+          const fn = (PaymentsController.prototype as unknown as Record<string, unknown>)[name];
+          return (
+            typeof fn === 'function' && Reflect.getMetadata('path', fn as object) !== undefined
+          );
+        }
+      );
 
       expect(methodRoutes).toContain('getPaymentHistory');
       expect(methodRoutes).toContain('getPayment');

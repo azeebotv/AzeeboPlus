@@ -89,9 +89,9 @@ describe('ChallengeService', () => {
 
       await service.getChallenges(1, 20, 'photo');
 
-      expect(
-        (prismaService.challenge.findMany as jest.Mock).mock.calls[0][0].where.type
-      ).toBe('photo');
+      expect((prismaService.challenge.findMany as jest.Mock).mock.calls[0][0].where.type).toBe(
+        'photo'
+      );
     });
 
     it('should filter by status', async () => {
@@ -100,9 +100,9 @@ describe('ChallengeService', () => {
 
       await service.getChallenges(1, 20, undefined, 'active');
 
-      expect(
-        (prismaService.challenge.findMany as jest.Mock).mock.calls[0][0].where.status
-      ).toBe('active');
+      expect((prismaService.challenge.findMany as jest.Mock).mock.calls[0][0].where.status).toBe(
+        'active'
+      );
     });
 
     it('should handle errors gracefully', async () => {
@@ -192,9 +192,7 @@ describe('ChallengeService', () => {
 
     it('should throw BadRequestException if already submitted', async () => {
       (prismaService.challenge.findUnique as jest.Mock).mockResolvedValue(mockChallenge);
-      (prismaService.challengeSubmission.findUnique as jest.Mock).mockResolvedValue(
-        mockSubmission
-      );
+      (prismaService.challengeSubmission.findUnique as jest.Mock).mockResolvedValue(mockSubmission);
 
       await expect(
         service.submitToChallenge('challenge-1', 'user-456', { content: 'My photo' })

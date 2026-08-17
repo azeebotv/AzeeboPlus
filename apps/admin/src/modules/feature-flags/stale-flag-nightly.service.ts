@@ -10,9 +10,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Stale predicate for universe flags (metadata.staleAfter past), matching
  * `UniverseManagementService.pruneStaleFeatureFlags` + the admin UI. */
-const isUniverseFlagStale = (f: {
-  metadata: unknown;
-}): boolean => {
+const isUniverseFlagStale = (f: { metadata: unknown }): boolean => {
   const meta = (f.metadata ?? {}) as Record<string, unknown>;
   const staleAfter = meta.staleAfter;
   return (
@@ -87,7 +85,8 @@ export class StaleFlagNightlyService implements OnModuleInit, OnModuleDestroy {
       this.configService.get<string>('STALE_FLAG_ALLOW_PRUNE_WITHOUT_WEBHOOK', 'false') === 'true';
     this.opsWebhookUrl = this.configService.get<string>('STALE_FLAG_OPS_WEBHOOK_URL');
     this.opsChannel = this.configService.get<string>('STALE_FLAG_OPS_CHANNEL');
-    this.postWhenEmpty = this.configService.get<string>('STALE_FLAG_OPS_POST_EMPTY', 'false') === 'true';
+    this.postWhenEmpty =
+      this.configService.get<string>('STALE_FLAG_OPS_POST_EMPTY', 'false') === 'true';
   }
 
   onModuleInit(): void {
@@ -130,7 +129,8 @@ export class StaleFlagNightlyService implements OnModuleInit, OnModuleDestroy {
    * re-triggers one pass at boot, which is safe — prune is archived+idempotent).
    */
   async maybeRunNightly(): Promise<
-    { ran: false; reason: 'within-24h-window' } | Awaited<ReturnType<StaleFlagNightlyService['runNightly']>>
+    | { ran: false; reason: 'within-24h-window' }
+    | Awaited<ReturnType<StaleFlagNightlyService['runNightly']>>
   > {
     if (Date.now() - this.lastRunAt < DAY_MS) {
       return { ran: false, reason: 'within-24h-window' };
@@ -174,8 +174,8 @@ export class StaleFlagNightlyService implements OnModuleInit, OnModuleDestroy {
 
     // 2. Fresh stale lists (post-sweep) for the summary + optional prunes.
     const stale = await this.flagsService.getStaleFlags();
-    const universeStale = (await this.universeManagementService.getAllFeatureFlags()).filter(
-      (f) => isUniverseFlagStale(f)
+    const universeStale = (await this.universeManagementService.getAllFeatureFlags()).filter((f) =>
+      isUniverseFlagStale(f)
     );
 
     let prune: Awaited<ReturnType<FeatureFlagsService['pruneStaleFlags']>> | null = null;
@@ -203,9 +203,7 @@ export class StaleFlagNightlyService implements OnModuleInit, OnModuleDestroy {
         success: true,
         data: {
           removedCount: universeStale.length,
-          removedKeys: universeStale.map(
-            (f) => `${f.universe.name}.${f.featureKey}`
-          ),
+          removedKeys: universeStale.map((f) => `${f.universe.name}.${f.featureKey}`),
           archivedCount: 0,
           skipped: [],
         },
@@ -277,9 +275,7 @@ export class StaleFlagNightlyService implements OnModuleInit, OnModuleDestroy {
         // In dry-run nothing was removed; report the would-be count separately
         // so the audit trail never reads as a real prune.
         autoPrunedUniverse: dryRunUniverse ? 0 : (universePrune?.data.removedCount ?? 0),
-        wouldPruneUniverse: dryRunUniverse
-          ? (universePrune?.data.removedCount ?? 0)
-          : undefined,
+        wouldPruneUniverse: dryRunUniverse ? (universePrune?.data.removedCount ?? 0) : undefined,
         dryRunUniverse: dryRunUniverse || undefined,
         pruneBlocked: pruneBlockedByMissingWebhook ? 'no-webhook' : undefined,
         webhook,
@@ -336,9 +332,7 @@ export class StaleFlagNightlyService implements OnModuleInit, OnModuleDestroy {
       wouldPruneUniverse: d.wouldPruneUniverse as number | undefined,
       dryRunUniverse: d.dryRunUniverse as boolean | undefined,
       pruneBlocked: d.pruneBlocked as 'no-webhook' | undefined,
-      webhook:
-        (d.webhook as 'posted' | 'skipped-empty' | 'no-webhook' | 'failed') ??
-        'no-webhook',
+      webhook: (d.webhook as 'posted' | 'skipped-empty' | 'no-webhook' | 'failed') ?? 'no-webhook',
     };
   }
 
@@ -402,7 +396,9 @@ export class StaleFlagNightlyService implements OnModuleInit, OnModuleDestroy {
       } else {
         lines.push(
           `Auto-prune (universe): removed ${universePrune.data.removedCount} (${universePrune.data.archivedCount} archived)` +
-            (universePrune.data.skipped.length > 0 ? `, ${universePrune.data.skipped.length} skipped` : '') +
+            (universePrune.data.skipped.length > 0
+              ? `, ${universePrune.data.skipped.length} skipped`
+              : '') +
             '.'
         );
       }

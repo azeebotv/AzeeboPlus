@@ -392,10 +392,12 @@ export class AuthClient {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(event),
         }).catch(() => {
+          // eslint-disable-next-line no-console -- best-effort analytics fallback
           console.error('[Auth] Failed to emit event to analytics', event);
         });
       }
     } else {
+      // eslint-disable-next-line no-console -- debug fallback when analytics is disabled
       console.debug('[Auth]', event);
     }
   }

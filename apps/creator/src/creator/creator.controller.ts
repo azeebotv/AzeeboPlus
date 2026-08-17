@@ -38,7 +38,9 @@ export class CreatorController {
     const uiKeys = new Set(Object.values(creatorFlags));
     return {
       success: true,
-      data: all.filter((f) => uiKeys.has(f.key as (typeof creatorFlags)[keyof typeof creatorFlags])),
+      data: all.filter((f) =>
+        uiKeys.has(f.key as (typeof creatorFlags)[keyof typeof creatorFlags])
+      ),
     };
   }
 

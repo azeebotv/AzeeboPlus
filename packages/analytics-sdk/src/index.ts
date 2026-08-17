@@ -193,8 +193,7 @@ export class Analytics {
         if (body?.data) {
           this.samplingConfig = {
             enabled: body.data.enabled === true,
-            samplingRate:
-              typeof body.data.samplingRate === 'number' ? body.data.samplingRate : 100,
+            samplingRate: typeof body.data.samplingRate === 'number' ? body.data.samplingRate : 100,
           };
           this.samplingFetchedAt = Date.now();
         }

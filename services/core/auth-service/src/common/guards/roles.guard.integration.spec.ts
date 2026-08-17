@@ -93,17 +93,16 @@ type MockRequest = Request & { user?: MockUser };
 type MockResponse = Response;
 type MockNext = NextFunction;
 
-function createAuthMiddleware(
-  userRole: string
-): (req: MockRequest, res: MockResponse, next: MockNext) => void {
-  return (req: MockRequest, _res: MockResponse, next: MockNext): void => {
-    req.user = { id: 'test-user', role: userRole };
-    next();
-  };
-}
-
 describe('RolesGuard Integration Tests', () => {
-  const createTestModule = (userRole: string): ReturnType<typeof Test.createTestingModule> => {
+  let app: INestApplication;
+  let baseUrl: string;
+
+  // Mutable request context read at request time by the shared middleware —
+  // every test runs against ONE bound app (no per-test listen/close churn).
+  let currentRole: string;
+  let attachUser: boolean;
+
+  const createTestModule = (): ReturnType<typeof Test.createTestingModule> => {
     return Test.createTestingModule({
       controllers: [
         AdminController,
@@ -119,228 +118,193 @@ describe('RolesGuard Integration Tests', () => {
         },
         {
           provide: 'MOCK_USER_ROLE',
-          useValue: userRole,
+          useValue: 'admin',
         },
       ],
     });
   };
 
-  const setupApp = async (userRole: string): Promise<INestApplication> => {
-    const moduleFixture = await createTestModule(userRole).compile();
-    const app = moduleFixture.createNestApplication();
+  beforeAll(async () => {
+    const moduleFixture = await createTestModule().compile();
+    app = moduleFixture.createNestApplication();
 
-    app.use(createAuthMiddleware(userRole));
+    app.use((req: MockRequest, _res: MockResponse, next: MockNext): void => {
+      if (attachUser) {
+        req.user = { id: 'test-user', role: currentRole };
+      }
+      next();
+    });
 
     await app.init();
-    return app;
-  };
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  beforeEach(() => {
+    currentRole = 'user';
+    attachUser = true;
+  });
 
   describe('Admin Routes - Access Control', () => {
     it('should allow admin access to admin dashboard', async () => {
-      const app = await setupApp('admin');
-      const response = await request(app.getHttpServer()).get('/admin/dashboard');
+      currentRole = 'admin';
+      const response = await request(baseUrl).get('/admin/dashboard');
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body.success).toBe(true);
-      await app.close();
     });
 
     it('should allow admin access to admin users', async () => {
-      const app = await setupApp('admin');
-      const response = await request(app.getHttpServer()).get('/admin/users');
+      currentRole = 'admin';
+      const response = await request(baseUrl).get('/admin/users');
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body.success).toBe(true);
-      await app.close();
     });
 
     it('should deny non-admin access to admin dashboard', async () => {
-      const app = await setupApp('user');
-      const response = await request(app.getHttpServer()).get('/admin/dashboard');
+      currentRole = 'user';
+      const response = await request(baseUrl).get('/admin/dashboard');
       expect(response.status).toBe(HttpStatus.FORBIDDEN);
-      await app.close();
     });
   });
 
   describe('Creator Routes - Access Control', () => {
     it('should allow creator access to creator dashboard', async () => {
-      const app = await setupApp('creator');
-      const response = await request(app.getHttpServer()).get('/creator/dashboard');
+      currentRole = 'creator';
+      const response = await request(baseUrl).get('/creator/dashboard');
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body.success).toBe(true);
-      await app.close();
     });
 
     it('should allow creator access to creator content', async () => {
-      const app = await setupApp('creator');
-      const response = await request(app.getHttpServer()).get('/creator/content');
+      currentRole = 'creator';
+      const response = await request(baseUrl).get('/creator/content');
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body.success).toBe(true);
-      await app.close();
     });
 
     it('should deny non-creator access to creator dashboard', async () => {
-      const app = await setupApp('user');
-      const response = await request(app.getHttpServer()).get('/creator/dashboard');
+      currentRole = 'user';
+      const response = await request(baseUrl).get('/creator/dashboard');
       expect(response.status).toBe(HttpStatus.FORBIDDEN);
-      await app.close();
     });
   });
 
   describe('Moderation Routes - Access Control', () => {
     it('should allow moderator access to moderation reports', async () => {
-      const app = await setupApp('moderator');
-      const response = await request(app.getHttpServer()).get('/moderation/reports');
+      currentRole = 'moderator';
+      const response = await request(baseUrl).get('/moderation/reports');
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body.success).toBe(true);
-      await app.close();
     });
 
     it('should allow moderator access to moderation actions', async () => {
-      const app = await setupApp('moderator');
-      const response = await request(app.getHttpServer()).get('/moderation/actions');
+      currentRole = 'moderator';
+      const response = await request(baseUrl).get('/moderation/actions');
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body.success).toBe(true);
-      await app.close();
     });
 
     it('should deny non-moderator access to moderation reports', async () => {
-      const app = await setupApp('user');
-      const response = await request(app.getHttpServer()).get('/moderation/reports');
+      currentRole = 'user';
+      const response = await request(baseUrl).get('/moderation/reports');
       expect(response.status).toBe(HttpStatus.FORBIDDEN);
-      await app.close();
     });
   });
 
   describe('Wallet Audit Routes - Access Control', () => {
     it('should allow admin access to wallet audit', async () => {
-      const app = await setupApp('admin');
-      const response = await request(app.getHttpServer()).get('/wallet/audit');
+      currentRole = 'admin';
+      const response = await request(baseUrl).get('/wallet/audit');
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body.success).toBe(true);
-      await app.close();
     });
 
     it('should deny non-admin access to wallet audit', async () => {
-      const app = await setupApp('user');
-      const response = await request(app.getHttpServer()).get('/wallet/audit');
+      currentRole = 'user';
+      const response = await request(baseUrl).get('/wallet/audit');
       expect(response.status).toBe(HttpStatus.FORBIDDEN);
-      await app.close();
     });
   });
 
   describe('Payout Routes - Access Control', () => {
     it('should allow admin access to payouts', async () => {
-      const app = await setupApp('admin');
-      const response = await request(app.getHttpServer()).get('/wallet/payouts');
+      currentRole = 'admin';
+      const response = await request(baseUrl).get('/wallet/payouts');
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body.success).toBe(true);
-      await app.close();
     });
 
     it('should allow creator access to payouts', async () => {
-      const app = await setupApp('creator');
-      const response = await request(app.getHttpServer()).get('/wallet/payouts');
+      currentRole = 'creator';
+      const response = await request(baseUrl).get('/wallet/payouts');
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body.success).toBe(true);
-      await app.close();
     });
 
     it('should deny user access to payouts', async () => {
-      const app = await setupApp('user');
-      const response = await request(app.getHttpServer()).get('/wallet/payouts');
+      currentRole = 'user';
+      const response = await request(baseUrl).get('/wallet/payouts');
       expect(response.status).toBe(HttpStatus.FORBIDDEN);
-      await app.close();
     });
   });
 
   describe('Content Management Routes - Access Control', () => {
     it('should allow admin access to content management', async () => {
-      const app = await setupApp('admin');
-      const response = await request(app.getHttpServer()).get('/content/manage');
+      currentRole = 'admin';
+      const response = await request(baseUrl).get('/content/manage');
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body.success).toBe(true);
-      await app.close();
     });
 
     it('should allow creator access to content management', async () => {
-      const app = await setupApp('creator');
-      const response = await request(app.getHttpServer()).get('/content/manage');
+      currentRole = 'creator';
+      const response = await request(baseUrl).get('/content/manage');
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body.success).toBe(true);
-      await app.close();
     });
 
     it('should allow admin access to content publish', async () => {
-      const app = await setupApp('admin');
-      const response = await request(app.getHttpServer()).get('/content/publish');
+      currentRole = 'admin';
+      const response = await request(baseUrl).get('/content/publish');
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body.success).toBe(true);
-      await app.close();
     });
 
     it('should allow creator access to content publish', async () => {
-      const app = await setupApp('creator');
-      const response = await request(app.getHttpServer()).get('/content/publish');
+      currentRole = 'creator';
+      const response = await request(baseUrl).get('/content/publish');
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body.success).toBe(true);
-      await app.close();
     });
 
     it('should deny user access to content management', async () => {
-      const app = await setupApp('user');
-      const response = await request(app.getHttpServer()).get('/content/manage');
+      currentRole = 'user';
+      const response = await request(baseUrl).get('/content/manage');
       expect(response.status).toBe(HttpStatus.FORBIDDEN);
-      await app.close();
     });
 
     it('should deny user access to content publish', async () => {
-      const app = await setupApp('user');
-      const response = await request(app.getHttpServer()).get('/content/publish');
+      currentRole = 'user';
+      const response = await request(baseUrl).get('/content/publish');
       expect(response.status).toBe(HttpStatus.FORBIDDEN);
-      await app.close();
     });
   });
 
   describe('Edge Cases', () => {
     it('should deny access when user has no role', async () => {
-      const moduleFixture = await Test.createTestingModule({
-        controllers: [AdminController],
-        providers: [
-          {
-            provide: APP_GUARD,
-            useClass: RolesGuard,
-          },
-        ],
-      }).compile();
-
-      const app = moduleFixture.createNestApplication();
-      app.use((req: MockRequest, _res: MockResponse, next: MockNext) => {
-        req.user = { id: 'test-user', role: '' };
-        next();
-      });
-      await app.init();
-
-      const response = await request(app.getHttpServer()).get('/admin/dashboard');
+      currentRole = '';
+      const response = await request(baseUrl).get('/admin/dashboard');
       expect(response.status).toBe(HttpStatus.FORBIDDEN);
-      await app.close();
     });
 
     it('should deny access when no user is present', async () => {
-      const moduleFixture = await Test.createTestingModule({
-        controllers: [AdminController],
-        providers: [
-          {
-            provide: APP_GUARD,
-            useClass: RolesGuard,
-          },
-        ],
-      }).compile();
-
-      const app = moduleFixture.createNestApplication();
-      await app.init();
-
-      const response = await request(app.getHttpServer()).get('/admin/dashboard');
+      attachUser = false;
+      const response = await request(baseUrl).get('/admin/dashboard');
       expect(response.status).toBe(HttpStatus.FORBIDDEN);
-      await app.close();
     });
   });
 });

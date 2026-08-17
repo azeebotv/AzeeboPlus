@@ -30,7 +30,10 @@ export class AnalyticsController {
   @RateLimit(120, 60000)
   @ApiOperation({ summary: 'Get client-side sampling config for the analytics-sdk' })
   @ApiResponse({ status: 200, description: 'Sampling config' })
-  async getBootstrap(): Promise<{ success: boolean; data: { enabled: boolean; samplingRate: number } }> {
+  async getBootstrap(): Promise<{
+    success: boolean;
+    data: { enabled: boolean; samplingRate: number };
+  }> {
     const data = await this.analyticsService.getClientSamplingConfig();
     return { success: true, data };
   }
@@ -155,7 +158,9 @@ export class AnalyticsController {
   @ApiResponse({ status: 200, description: 'Daily correction acceptance series' })
   async getSearchCorrections(@Query('days') days?: string): Promise<AnalyticsResponse> {
     const parsedDays = days ? Number(days) : 30;
-    return this.analyticsService.getSearchCorrections(Number.isFinite(parsedDays) ? parsedDays : 30);
+    return this.analyticsService.getSearchCorrections(
+      Number.isFinite(parsedDays) ? parsedDays : 30
+    );
   }
 
   @Post('track')
@@ -165,7 +170,8 @@ export class AnalyticsController {
   @ApiResponse({ status: 200, description: 'Event tracked' })
   async trackEvent(
     @Request() req: { user: { sub: string; id: string } },
-    @Body() body: { eventName?: string; type?: string; userId?: string; metadata?: Record<string, unknown> }
+    @Body()
+    body: { eventName?: string; type?: string; userId?: string; metadata?: Record<string, unknown> }
   ): Promise<unknown> {
     // Services emit the canonical EventPayload shape ({ eventName }); the
     // legacy { type } alias is still accepted for old clients.
@@ -186,7 +192,12 @@ export class AnalyticsController {
     @Request() req: { user: { sub: string; id: string } },
     @Body()
     body: {
-      events: Array<{ eventName?: string; type?: string; userId?: string; metadata?: Record<string, unknown> }>;
+      events: Array<{
+        eventName?: string;
+        type?: string;
+        userId?: string;
+        metadata?: Record<string, unknown>;
+      }>;
     }
   ): Promise<{ success: boolean }> {
     const userId = req.user?.sub;

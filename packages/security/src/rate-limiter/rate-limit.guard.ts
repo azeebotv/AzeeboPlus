@@ -22,7 +22,9 @@ export class RateLimitGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private rateLimitService: RateLimitService,
-    @Optional() @Inject('RATE_LIMIT_STRICT_RESOLVER') private strictResolver?: RateLimitStrictResolver
+    @Optional()
+    @Inject('RATE_LIMIT_STRICT_RESOLVER')
+    private strictResolver?: RateLimitStrictResolver
   ) {}
 
   /**
@@ -30,9 +32,7 @@ export class RateLimitGuard implements CanActivate {
    * returns true the effective limit is halved (min 1) across every endpoint
    * that declares @RateLimit, without touching the decorated values.
    */
-  private async resolveEffectiveLimit(
-    options: RateLimitConfig
-  ): Promise<RateLimitConfig> {
+  private async resolveEffectiveLimit(options: RateLimitConfig): Promise<RateLimitConfig> {
     if (this.strictResolver && (await this.strictResolver())) {
       return { ...options, limit: Math.max(1, Math.floor(options.limit / 2)) };
     }

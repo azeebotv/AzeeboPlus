@@ -11,14 +11,13 @@ import { GlobalExceptionFilter } from '@azeebo/error-handling';
 import { LoggingInterceptor } from '@azeebo/logger';
 import { validateEnvironment } from '@azeebo/shared-types';
 
-
 async function bootstrap(): Promise<void> {
   validateEnvironment(process.env);
 
   const app = await NestFactory.create(AppModule);
   app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
 
-    app.use(createHelmetConfig());
+  app.use(createHelmetConfig());
 
   // Global prefix is set in controller @Controller() decorators
 

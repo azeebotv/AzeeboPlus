@@ -186,7 +186,14 @@ export const creatorApi = {
     limit = 20
   ): Promise<
     ApiResponse<{
-      items: Array<{ id: string; creatorId: string; amount: number; tier: string | null; message: string | null; createdAt: string }>;
+      items: Array<{
+        id: string;
+        creatorId: string;
+        amount: number;
+        tier: string | null;
+        message: string | null;
+        createdAt: string;
+      }>;
       total: number;
       page: number;
       limit: number;
@@ -195,7 +202,14 @@ export const creatorApi = {
   > => {
     return apiClient.get<
       ApiResponse<{
-        items: Array<{ id: string; creatorId: string; amount: number; tier: string | null; message: string | null; createdAt: string }>;
+        items: Array<{
+          id: string;
+          creatorId: string;
+          amount: number;
+          tier: string | null;
+          message: string | null;
+          createdAt: string;
+        }>;
         total: number;
         page: number;
         limit: number;

@@ -4,15 +4,15 @@ import {
   getFlagValue,
   getOrCreateVisitorId,
   fetchBootstrapFlags,
-  universeFlagKey,
+  universeEnabledKey,
   WEB_FLAG_KEYS,
   type BootstrapFlag,
 } from '../flags';
 
 const makeFlags = (): Record<string, BootstrapFlag> => ({
   [WEB_FLAG_KEYS.maintenanceMode]: { key: WEB_FLAG_KEYS.maintenanceMode, enabled: true },
-  [universeFlagKey('reality')]: { key: universeFlagKey('reality'), enabled: false },
-  [universeFlagKey('movies')]: { key: universeFlagKey('movies'), enabled: true },
+  [universeEnabledKey('reality')]: { key: universeEnabledKey('reality'), enabled: false },
+  [universeEnabledKey('movie')]: { key: universeEnabledKey('movie'), enabled: true },
   variant_flag: { key: 'variant_flag', enabled: true, value: 'high' },
 });
 
@@ -24,13 +24,13 @@ describe('flags helpers', () => {
   });
 
   it('builds universe sentinel keys', () => {
-    expect(universeFlagKey('reality')).toBe('universe.reality.enabled');
+    expect(universeEnabledKey('reality')).toBe('universe.reality.enabled');
   });
 
   it('hides disabled universes and shows enabled ones', () => {
     const flags = makeFlags();
-    expect(isFlagEnabled(flags, universeFlagKey('reality'))).toBe(false);
-    expect(isFlagEnabled(flags, universeFlagKey('movies'))).toBe(true);
+    expect(isFlagEnabled(flags, universeEnabledKey('reality'))).toBe(false);
+    expect(isFlagEnabled(flags, universeEnabledKey('movie'))).toBe(true);
   });
 
   it('returns variant payloads only for enabled flags', () => {
@@ -57,7 +57,7 @@ describe('fetchBootstrapFlags', () => {
       data: {
         flags: [
           { key: 'web_maintenance_mode', enabled: true },
-          { key: 'universe.movies.enabled', enabled: true },
+          { key: 'universe.movie.enabled', enabled: true },
         ],
         generatedAt: new Date().toISOString(),
         evaluatedFor: 'anonymous',
@@ -71,7 +71,7 @@ describe('fetchBootstrapFlags', () => {
 
     const flags = await fetchBootstrapFlags('user-1');
     expect(flags['web_maintenance_mode']?.enabled).toBe(true);
-    expect(flags['universe.movies.enabled']?.enabled).toBe(true);
+    expect(flags['universe.movie.enabled']?.enabled).toBe(true);
     expect(localStorage.getItem('azeebo_flags_user-1')).not.toBeNull();
   });
 

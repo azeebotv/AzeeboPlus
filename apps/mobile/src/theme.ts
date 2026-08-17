@@ -5,10 +5,7 @@
  */
 
 // Re-export base tokens from design-tokens package for consistency
-export {
-  zIndex,
-  themes,
-} from '@azeebo/design-tokens';
+export { zIndex, themes } from '@azeebo/design-tokens';
 
 // ── Brand Colors ──────────────────────────────────────────────
 export const colors = {
@@ -176,6 +173,7 @@ export const universeColors: Record<string, string> = {
   games: '#06b6d4',
   comedy: '#fbbf24',
   sports: '#22c55e',
+  music: '#d946ef',
   cinemaxis: '#0A1A3B',
 };
 

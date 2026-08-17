@@ -125,13 +125,12 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       # Generated Prisma clients must exist for the failover spec's
-      # `prisma migrate deploy` + PrismaService (payment) and the admin
-      # FeatureFlagsService import graph.
+      # `prisma migrate deploy` + PrismaService (payment), the admin
+      # FeatureFlagsService import graph, and every suite that imports
+      # `@prisma/client` at module load. Generate for ALL schemas (the
+      # per-service filters below would only cover three of them).
       - name: Generate Prisma clients
-        run: |
-          pnpm --filter @azeebo/admin prisma:generate
-          pnpm --filter @azeebo/payment-service prisma:generate
-          pnpm --filter @azeebo/search-service prisma:generate
+        run: pnpm run prisma:generate
 
       # Workspace packages ship dist-based exports (dist is gitignored), so
       # they must be built before any suite imports them. Every dockerized

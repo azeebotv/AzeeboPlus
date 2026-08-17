@@ -46,7 +46,9 @@ export class AdminController {
   @Post('reality-shows/:showId/auto-eliminate')
   @UseGuards(FeatureFlagGuard)
   @FeatureFlag(realityFlags.autoElimination)
-  @ApiOperation({ summary: 'Eliminate the lowest-voted contestant (admin; reality_auto_elimination)' })
+  @ApiOperation({
+    summary: 'Eliminate the lowest-voted contestant (admin; reality_auto_elimination)',
+  })
   @ApiResponse({ status: 201, description: 'Contestant eliminated' })
   @ApiResponse({ status: 400, description: 'Show has fewer than 2 contestants' })
   @ApiResponse({ status: 403, description: 'Flag off, or forbidden' })

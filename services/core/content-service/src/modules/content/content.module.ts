@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtConfigModule } from '@azeebo/shared-services';
-import { FeatureFlagModule, contentFlags } from '@azeebo/feature-flags';
 
 import { ContentController } from './content.controller.js';
 import { ContentService } from './content.service.js';
@@ -17,27 +16,7 @@ import { MediaModule } from '../media/media.module.js';
 import { CacheModule } from '../../cache/cache.module.js';
 
 @Module({
-  imports: [
-    ConfigModule,
-    DatabaseModule,
-    MediaModule,
-    CacheModule,
-    JwtConfigModule,
-    // Self-contained flag defaults so the module works standalone (tests,
-    // contracts) as well as under the app's global registration.
-    FeatureFlagModule.register({
-      defaultFlags: {
-        [contentFlags.moderationEnabled]: true,
-        [contentFlags.transcodingNew]: false,
-        [contentFlags.aiTags]: false,
-        [contentFlags.clipIngestion]: false,
-        [contentFlags.commentsV2]: false,
-        [contentFlags.windowingEnabled]: true,
-        [contentFlags.premiumGate]: false,
-        [contentFlags.recommendedRail]: false,
-      },
-    }),
-  ],
+  imports: [ConfigModule, DatabaseModule, MediaModule, CacheModule, JwtConfigModule],
   controllers: [ContentController],
   providers: [
     ContentService,

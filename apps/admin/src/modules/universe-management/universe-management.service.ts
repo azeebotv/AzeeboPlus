@@ -47,9 +47,7 @@ export class UniverseManagementService {
       return this.redis;
     }
     const url =
-      process.env.FEATURE_FLAG_REDIS_URL ||
-      process.env.REDIS_URL ||
-      'redis://localhost:6379';
+      process.env.FEATURE_FLAG_REDIS_URL || process.env.REDIS_URL || 'redis://localhost:6379';
     try {
       this.redis = new Redis(url, {
         lazyConnect: true,
@@ -80,9 +78,7 @@ export class UniverseManagementService {
           key,
           enabled: isEnabled,
           description:
-            metadata && typeof metadata.description === 'string'
-              ? metadata.description
-              : undefined,
+            metadata && typeof metadata.description === 'string' ? metadata.description : undefined,
           rolloutPercentage:
             metadata && typeof metadata.rolloutPercentage === 'number'
               ? metadata.rolloutPercentage
@@ -106,12 +102,17 @@ export class UniverseManagementService {
       await redis.del(universeFlagKey(universeName, featureKey));
       this.logger.log(`Removed flag universe.${universeName}.${featureKey} from Redis`);
     } catch (error) {
-      this.logger.warn(`Failed to remove flag universe.${universeName}.${featureKey} from Redis: ${error}`);
+      this.logger.warn(
+        `Failed to remove flag universe.${universeName}.${featureKey} from Redis: ${error}`
+      );
     }
   }
 
   /** Publishes the universe-level enabled sentinel used for client nav gating. */
-  private async publishUniverseEnabledToRedis(universeName: string, isEnabled: boolean): Promise<void> {
+  private async publishUniverseEnabledToRedis(
+    universeName: string,
+    isEnabled: boolean
+  ): Promise<void> {
     await this.publishFlagToRedis(universeName, 'enabled', isEnabled);
   }
 
@@ -316,6 +317,13 @@ export class UniverseManagementService {
           featureFlags: true,
         },
       });
+
+      // The edit page can change the enabled state too — keep the runtime nav
+      // sentinel in sync (same key the toggles publish: universe.<name>.enabled)
+      // so web/mobile nav gating follows edits, not just toggle/bulk/create.
+      if (data.isEnabled !== undefined) {
+        await this.publishUniverseEnabledToRedis(universe.name, universe.isEnabled);
+      }
 
       this.logger.log(`Updated universe: ${universe.name}`);
       return universe;
@@ -776,9 +784,7 @@ export class UniverseManagementService {
   ) {
     const flags = await this.getAllFeatureFlags();
     const now = Date.now();
-    const keySet = keys
-      ? new Set(keys.map((k) => `${k.universeId}:${k.featureKey}`))
-      : null;
+    const keySet = keys ? new Set(keys.map((k) => `${k.universeId}:${k.featureKey}`)) : null;
 
     const targets = flags.filter((f) => {
       const meta = (f.metadata ?? {}) as Record<string, unknown>;
@@ -877,12 +883,8 @@ export class UniverseManagementService {
       const details = (entry.details as Record<string, unknown> | undefined) ?? {};
       const snapshot = details.archivedSnapshot as Record<string, unknown> | undefined;
       return snapshot?.universeId === universeId && snapshot?.featureKey === featureKey;
-    }) as
-      | (Record<string, unknown> & { details?: Record<string, unknown> })
-      | undefined;
-    const snapshot = deletedLog?.details?.archivedSnapshot as
-      | Record<string, unknown>
-      | undefined;
+    }) as (Record<string, unknown> & { details?: Record<string, unknown> }) | undefined;
+    const snapshot = deletedLog?.details?.archivedSnapshot as Record<string, unknown> | undefined;
     if (!snapshot) {
       return { key, restored: false, reason: 'no-archive' };
     }
@@ -938,7 +940,9 @@ export class UniverseManagementService {
       },
     });
 
-    this.logger.log(`Universe feature flag ${universe?.name ?? universeId}.${featureKey} restored by ${actorId ?? 'unknown'}`);
+    this.logger.log(
+      `Universe feature flag ${universe?.name ?? universeId}.${featureKey} restored by ${actorId ?? 'unknown'}`
+    );
     return { key, restored: true as const, enabled: isEnabled };
   }
 
@@ -1069,18 +1073,19 @@ export class UniverseManagementService {
     try {
       const universe = await this.prisma.universe.findUnique({
         where: { name: universeName },
-        include: {
-          featureFlags: {
-            where: { featureKey },
-          },
-        },
+        select: { id: true, isEnabled: true },
       });
 
       if (!universe || !universe.isEnabled) {
         return false;
       }
 
-      const flag = universe.featureFlags[0];
+      // The regenerated client exposes the (universeId, featureKey) compound
+      // unique finder — use it directly instead of fetching the universe's
+      // featureFlags relation and taking `[0]`.
+      const flag = await this.prisma.universeFeatureFlag.findUnique({
+        where: { universeId_featureKey: { universeId: universe.id, featureKey } },
+      });
       return flag ? flag.isEnabled : false;
     } catch (error) {
       this.logger.error(

@@ -42,7 +42,8 @@ export class FeatureFlagsController {
   @ApiOperation({ summary: 'Get evaluated public feature flags for the caller' })
   @ApiResponse({ status: 200, description: 'Public flags evaluated for the caller' })
   async bootstrap(
-    @Req() req: Request & {
+    @Req()
+    req: Request & {
       user?: { sub?: string };
       headers: Record<string, string | undefined>;
     }

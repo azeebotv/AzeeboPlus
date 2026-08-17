@@ -1,4 +1,10 @@
-import { Inject, Injectable, Logger, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { S3Service } from './s3.service';
 import { ConfigService } from '@nestjs/config';
@@ -98,20 +104,14 @@ export class UploadService {
     return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
   }
 
-  async uploadImage(
-    file: Express.Multer.File,
-    userId?: string
-  ): Promise<UploadResponse> {
+  async uploadImage(file: Express.Multer.File, userId?: string): Promise<UploadResponse> {
     this.fileValidationService.validateFile(file, 'image');
     const result = await this.s3Service.uploadFile(file, 'images');
     const scanStatus = await this.scanUploadIfEnabled(result.key, file.mimetype);
     return this.formatUploadResponse(result, file, { userId, uploadType: 'image', scanStatus });
   }
 
-  async uploadVideo(
-    file: Express.Multer.File,
-    userId?: string
-  ): Promise<UploadResponse> {
+  async uploadVideo(file: Express.Multer.File, userId?: string): Promise<UploadResponse> {
     this.fileValidationService.validateFile(file, 'video');
     const result = await this.s3Service.uploadFile(file, 'videos');
     const scanStatus = await this.scanUploadIfEnabled(result.key, file.mimetype);
@@ -123,50 +123,35 @@ export class UploadService {
     return this.formatUploadResponse(result, file, { userId, uploadType: 'video', scanStatus });
   }
 
-  async uploadAudio(
-    file: Express.Multer.File,
-    userId?: string
-  ): Promise<UploadResponse> {
+  async uploadAudio(file: Express.Multer.File, userId?: string): Promise<UploadResponse> {
     this.fileValidationService.validateFile(file, 'audio');
     const result = await this.s3Service.uploadFile(file, 'audio');
     const scanStatus = await this.scanUploadIfEnabled(result.key, file.mimetype);
     return this.formatUploadResponse(result, file, { userId, uploadType: 'audio', scanStatus });
   }
 
-  async uploadDocument(
-    file: Express.Multer.File,
-    userId?: string
-  ): Promise<UploadResponse> {
+  async uploadDocument(file: Express.Multer.File, userId?: string): Promise<UploadResponse> {
     this.fileValidationService.validateFile(file, 'document');
     const result = await this.s3Service.uploadFile(file, 'documents');
     const scanStatus = await this.scanUploadIfEnabled(result.key, file.mimetype);
     return this.formatUploadResponse(result, file, { userId, uploadType: 'document', scanStatus });
   }
 
-  async uploadThumbnail(
-    file: Express.Multer.File,
-    userId?: string
-  ): Promise<UploadResponse> {
+  async uploadThumbnail(file: Express.Multer.File, userId?: string): Promise<UploadResponse> {
     this.fileValidationService.validateFile(file, 'image');
     const result = await this.s3Service.uploadFile(file, 'thumbnails');
     const scanStatus = await this.scanUploadIfEnabled(result.key, file.mimetype);
     return this.formatUploadResponse(result, file, { userId, uploadType: 'thumbnail', scanStatus });
   }
 
-  async uploadAvatar(
-    file: Express.Multer.File,
-    userId?: string
-  ): Promise<UploadResponse> {
+  async uploadAvatar(file: Express.Multer.File, userId?: string): Promise<UploadResponse> {
     this.fileValidationService.validateFile(file, 'image');
     const result = await this.s3Service.uploadFile(file, 'avatars');
     const scanStatus = await this.scanUploadIfEnabled(result.key, file.mimetype);
     return this.formatUploadResponse(result, file, { userId, uploadType: 'avatar', scanStatus });
   }
 
-  async uploadBanner(
-    file: Express.Multer.File,
-    userId?: string
-  ): Promise<UploadResponse> {
+  async uploadBanner(file: Express.Multer.File, userId?: string): Promise<UploadResponse> {
     this.fileValidationService.validateFile(file, 'image');
     const result = await this.s3Service.uploadFile(file, 'banners');
     const scanStatus = await this.scanUploadIfEnabled(result.key, file.mimetype);
@@ -209,7 +194,9 @@ export class UploadService {
       uploadId,
       chunkSize: UploadService.MAX_CHUNK_BYTES,
       totalChunks: dto.totalChunks,
-      expiresAt: new Date(Date.now() + UploadService.CHUNKED_UPLOAD_TTL_SECONDS * 1000).toISOString(),
+      expiresAt: new Date(
+        Date.now() + UploadService.CHUNKED_UPLOAD_TTL_SECONDS * 1000
+      ).toISOString(),
     };
   }
 
@@ -290,7 +277,10 @@ export class UploadService {
 
     try {
       const uploadType = session.uploadType;
-      const dispatch: Record<string, (f: Express.Multer.File, u?: string) => Promise<UploadResponse>> = {
+      const dispatch: Record<
+        string,
+        (f: Express.Multer.File, u?: string) => Promise<UploadResponse>
+      > = {
         image: (f, u) => this.uploadImage(f, u),
         video: (f, u) => this.uploadVideo(f, u),
         audio: (f, u) => this.uploadAudio(f, u),
@@ -649,8 +639,9 @@ export class UploadService {
       uploadType: 'unknown',
     }
   ): Promise<UploadResponse> {
-    const { value: cacheControl, policy: cachePolicy } =
-      await this.resolveCacheControl(file.mimetype);
+    const { value: cacheControl, policy: cachePolicy } = await this.resolveCacheControl(
+      file.mimetype
+    );
 
     // Caching disabled (media_cdn_edge_cache off): a re-upload of this key
     // must not be shadowed by a previously cached edge copy, so invalidate
@@ -700,9 +691,7 @@ export class UploadService {
     try {
       await this.cdnPurgeService.purgeKeys([key]);
     } catch (error) {
-      this.logger.warn(
-        `Failed to purge CDN key ${key}: ${(error as Error).message}`
-      );
+      this.logger.warn(`Failed to purge CDN key ${key}: ${(error as Error).message}`);
     }
   }
 

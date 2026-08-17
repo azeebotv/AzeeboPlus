@@ -38,6 +38,7 @@ describe('SportsService Integration - Cross-Service Communication', () => {
       findUnique: jest.fn(),
     },
     contestEntry: {
+      findUnique: jest.fn(),
       findFirst: jest.fn(),
       create: jest.fn(),
     },
@@ -350,7 +351,7 @@ describe('SportsService Integration - Cross-Service Communication', () => {
         status: 'active',
         endsAt: new Date('2099-12-31'),
       });
-      mockPrismaService.contestEntry.findFirst.mockResolvedValue(null);
+      mockPrismaService.contestEntry.findUnique.mockResolvedValue(null);
 
       mockedAxios.get.mockResolvedValue({
         data: { id: 'wallet-1', balance: 100 },
@@ -420,7 +421,7 @@ describe('SportsService Integration - Cross-Service Communication', () => {
         status: 'active',
         endsAt: new Date('2099-12-31'),
       });
-      mockPrismaService.contestEntry.findFirst.mockResolvedValue({
+      mockPrismaService.contestEntry.findUnique.mockResolvedValue({
         id: 'entry-existing',
         userId: 'user-1',
         contestId: 'contest-1',
@@ -439,7 +440,7 @@ describe('SportsService Integration - Cross-Service Communication', () => {
         status: 'active',
         endsAt: new Date('2099-12-31'),
       });
-      mockPrismaService.contestEntry.findFirst.mockResolvedValue(null);
+      mockPrismaService.contestEntry.findUnique.mockResolvedValue(null);
 
       mockedAxios.get.mockRejectedValue(new Error('Wallet service unavailable'));
 
@@ -452,7 +453,7 @@ describe('SportsService Integration - Cross-Service Communication', () => {
         status: 'active',
         endsAt: new Date('2099-12-31'),
       });
-      mockPrismaService.contestEntry.findFirst.mockResolvedValue(null);
+      mockPrismaService.contestEntry.findUnique.mockResolvedValue(null);
 
       mockedAxios.get.mockResolvedValue({
         data: { id: 'wallet-1', balance: 10 },
@@ -469,7 +470,7 @@ describe('SportsService Integration - Cross-Service Communication', () => {
         status: 'active',
         endsAt: new Date('2099-12-31'),
       });
-      mockPrismaService.contestEntry.findFirst.mockResolvedValue(null);
+      mockPrismaService.contestEntry.findUnique.mockResolvedValue(null);
 
       mockedAxios.get.mockResolvedValue({
         data: { id: 'wallet-1', balance: 100 },

@@ -60,7 +60,13 @@ describe('PollService', () => {
               create: jest.fn(),
             },
             $transaction: jest.fn((fn: unknown) =>
-              typeof fn === 'function' ? fn({ pollVote: { create: jest.fn() }, pollOption: { update: jest.fn() }, poll: { update: jest.fn() } }) : Promise.all(fn as unknown[])
+              typeof fn === 'function'
+                ? fn({
+                    pollVote: { create: jest.fn() },
+                    pollOption: { update: jest.fn() },
+                    poll: { update: jest.fn() },
+                  })
+                : Promise.all(fn as unknown[])
             ),
           },
         },

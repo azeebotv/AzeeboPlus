@@ -29,7 +29,7 @@ jest.mock('ioredis', () => {
   return { Redis };
 });
 
-import { FeatureFlagService } from '@azeebo/feature-flags';
+import { FeatureFlagService, FeatureFlagModule } from '@azeebo/feature-flags';
 
 jest.mock('@azeebo/feature-flags', () => {
   const svc = {
@@ -43,6 +43,9 @@ jest.mock('@azeebo/feature-flags', () => {
   class MockFeatureFlagModule {
     static register() {
       return {
+        // Mirrors production: the app registers FeatureFlagModule globally at
+        // the root, and ContentModule injects the service without importing it.
+        global: true,
         module: MockFeatureFlagModule,
         providers: [mockProvider],
         exports: [MockFeatureFlagService],
@@ -88,12 +91,13 @@ class MockAdminGuard implements CanActivate {
 
 describe('Content Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   beforeAll(async () => {
     process.env.JWT_ACCESS_SECRET = 'test-jwt-secret';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [ConfigModule.forRoot(), ContentModule],
+      imports: [ConfigModule.forRoot(), FeatureFlagModule.register({}), ContentModule],
     })
       .overrideProvider(FeatureFlagService)
       .useValue({ isEnabled: jest.fn().mockResolvedValue(false) })
@@ -231,6 +235,8 @@ describe('Content Controller Contract Tests', () => {
       next();
     });
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -241,7 +247,7 @@ describe('Content Controller Contract Tests', () => {
 
   describe('GET /content', () => {
     it('should list content with filters', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/content')
         .query({ universe: 'reality' });
 
@@ -255,7 +261,7 @@ describe('Content Controller Contract Tests', () => {
 
   describe('GET /content/:id', () => {
     it('should get content by ID', async () => {
-      const response = await request(app.getHttpServer()).get('/content/content-1');
+      const response = await request(baseUrl).get('/content/content-1');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -270,7 +276,7 @@ describe('Content Controller Contract Tests', () => {
 
   describe('POST /content', () => {
     it('should create content', async () => {
-      const response = await request(app.getHttpServer()).post('/content').send({
+      const response = await request(baseUrl).post('/content').send({
         title: 'New Content',
         description: 'Test description',
         type: 'video',
@@ -289,7 +295,7 @@ describe('Content Controller Contract Tests', () => {
 
   describe('PATCH /content/:id', () => {
     it('should update content', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .patch('/content/550e8400-e29b-41d4-a716-446655440000')
         .send({ title: 'Updated Title' });
 
@@ -305,7 +311,7 @@ describe('Content Controller Contract Tests', () => {
 
   describe('DELETE /content/:id', () => {
     it('should delete content', async () => {
-      const response = await request(app.getHttpServer()).delete(
+      const response = await request(baseUrl).delete(
         '/content/550e8400-e29b-41d4-a716-446655440000'
       );
 
@@ -319,7 +325,7 @@ describe('Content Controller Contract Tests', () => {
 
   describe('GET /content/:id/comments', () => {
     it('should get content comments', async () => {
-      const response = await request(app.getHttpServer()).get(
+      const response = await request(baseUrl).get(
         '/content/550e8400-e29b-41d4-a716-446655440000/comments'
       );
 
@@ -333,7 +339,7 @@ describe('Content Controller Contract Tests', () => {
 
   describe('POST /content/:id/comments', () => {
     it('should add comment', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/content/550e8400-e29b-41d4-a716-446655440000/comments')
         .send({ text: 'New comment' });
 
@@ -349,7 +355,7 @@ describe('Content Controller Contract Tests', () => {
 
   describe('GET /content/:id/analytics', () => {
     it('should get content analytics', async () => {
-      const response = await request(app.getHttpServer()).get('/content/content-1/analytics');
+      const response = await request(baseUrl).get('/content/content-1/analytics');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({

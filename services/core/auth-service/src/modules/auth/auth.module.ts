@@ -16,7 +16,6 @@ import { DeviceController } from './device/device.controller.js';
 import { DeviceService } from './device/device.service.js';
 import { JwtStrategy } from './strategies/jwt.strategy.js';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy.js';
-import { RateLimiterModule } from '@azeebo/security';
 import { CacheModule, RedisModule, JwtConfigModule } from '@azeebo/shared-services';
 import { AuditModule } from '../audit/audit.module.js';
 
@@ -27,7 +26,6 @@ import { AuditModule } from '../audit/audit.module.js';
     ConfigModule,
     CacheModule,
     RedisModule,
-    RateLimiterModule.forRoot(),
     JwtConfigModule,
     AuditModule,
   ],

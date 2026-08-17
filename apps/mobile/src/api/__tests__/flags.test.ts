@@ -2,7 +2,7 @@ import {
   fetchBootstrapFlags,
   isFlagEnabled,
   getFlagValue,
-  universeFlagKey,
+  universeEnabledKey,
   MOBILE_FLAG_KEYS,
 } from '../flags';
 
@@ -37,10 +37,10 @@ const mockFetch = jest.fn();
 global.fetch = mockFetch as unknown as typeof fetch;
 
 // Expose the in-memory store for test isolation.
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const storageStore = (require('@react-native-async-storage/async-storage').default as {
+
+const storageStore = require('@react-native-async-storage/async-storage').default as {
   __store?: Record<string, string>;
-});
+};
 
 function clearStorage(): void {
   // Delete every key (the mock's closure reads/writes the same object, so we
@@ -82,7 +82,7 @@ describe('mobile flag helpers', () => {
     });
 
     it('builds universe sentinel keys', () => {
-      expect(universeFlagKey('reality')).toBe('universe.reality.enabled');
+      expect(universeEnabledKey('reality')).toBe('universe.reality.enabled');
     });
   });
 

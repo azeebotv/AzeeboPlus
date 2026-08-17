@@ -132,9 +132,9 @@ describe('SocialService', () => {
 
       await service.getSavedItems('user-123', 1, 20, 'event');
 
-      expect(
-        (prismaService.savedItem.findMany as jest.Mock).mock.calls[0][0].where.itemType
-      ).toBe('event');
+      expect((prismaService.savedItem.findMany as jest.Mock).mock.calls[0][0].where.itemType).toBe(
+        'event'
+      );
     });
 
     it('should handle errors gracefully', async () => {

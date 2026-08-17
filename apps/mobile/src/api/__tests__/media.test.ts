@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
-
 /** In-memory AsyncStorage mock — shared across all specs in this file. */
 const mockStore = new Map<string, string>();
 

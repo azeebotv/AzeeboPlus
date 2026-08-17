@@ -19,6 +19,7 @@ import { FeatureFlagGuard, FeatureFlagService, userFlags } from '@azeebo/feature
 
 describe('Users Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockPrismaService = {
     user: {
@@ -101,9 +102,9 @@ describe('Users Controller Contract Tests', () => {
         {
           provide: FeatureFlagService,
           useValue: {
-            isEnabled: jest.fn().mockImplementation((key: string) =>
-              Promise.resolve(key !== userFlags.profileV2)
-            ),
+            isEnabled: jest
+              .fn()
+              .mockImplementation((key: string) => Promise.resolve(key !== userFlags.profileV2)),
           },
         },
       ],
@@ -140,6 +141,8 @@ describe('Users Controller Contract Tests', () => {
       }
     );
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -162,7 +165,7 @@ describe('Users Controller Contract Tests', () => {
         updatedAt: new Date(),
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/users/me')
         .set('Authorization', 'Bearer valid-token');
 
@@ -178,7 +181,7 @@ describe('Users Controller Contract Tests', () => {
     });
 
     it('should return error for missing authorization', async () => {
-      const response = await request(app.getHttpServer()).get('/v1/users/me');
+      const response = await request(baseUrl).get('/v1/users/me');
 
       expect(response.status).toBe(401);
     });
@@ -202,7 +205,7 @@ describe('Users Controller Contract Tests', () => {
         updatedAt: new Date(),
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .patch('/v1/users/me')
         .set('Authorization', 'Bearer valid-token')
         .send({
@@ -230,7 +233,7 @@ describe('Users Controller Contract Tests', () => {
         updatedAt: new Date(),
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/users/me/preferences')
         .set('Authorization', 'Bearer valid-token');
 
@@ -253,7 +256,7 @@ describe('Users Controller Contract Tests', () => {
         createdAt: new Date(),
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/users/user-456')
         .set('Authorization', 'Bearer valid-token');
 
@@ -270,7 +273,7 @@ describe('Users Controller Contract Tests', () => {
     it('should return not found for non-existent user', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/users/nonexistent')
         .set('Authorization', 'Bearer valid-token');
 
@@ -293,7 +296,7 @@ describe('Users Controller Contract Tests', () => {
         createdAt: new Date(),
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/users/550e8400-e29b-41d4-a716-446655440000/follow')
         .set('Authorization', 'Bearer valid-token');
 
@@ -317,7 +320,7 @@ describe('Users Controller Contract Tests', () => {
         followingId: '550e8400-e29b-41d4-a716-446655440000',
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .delete('/v1/users/550e8400-e29b-41d4-a716-446655440000/follow')
         .set('Authorization', 'Bearer valid-token');
 

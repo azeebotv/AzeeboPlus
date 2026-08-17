@@ -1,4 +1,14 @@
-import { Inject, Controller, Get, Post, Body, Param, Query, Request, UseGuards } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { GameCatalogService } from './game-catalog.service.js';

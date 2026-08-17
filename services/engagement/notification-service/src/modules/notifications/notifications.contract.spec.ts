@@ -44,6 +44,7 @@ import { PrismaService } from '../database/prisma.service.js';
 
 describe('Notifications Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockNotificationsService = {
     getNotifications: jest.fn(),
@@ -91,6 +92,8 @@ describe('Notifications Controller Contract Tests', () => {
     app = moduleFixture.createNestApplication();
     app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -125,7 +128,7 @@ describe('Notifications Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/notifications')
         .set('Authorization', 'Bearer valid-token');
 
@@ -141,7 +144,7 @@ describe('Notifications Controller Contract Tests', () => {
         data: { message: 'Notification marked as read' },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .patch('/v1/notifications/550e8400-e29b-41d4-a716-446655440000/read')
         .set('Authorization', 'Bearer valid-token');
 
@@ -157,7 +160,7 @@ describe('Notifications Controller Contract Tests', () => {
         data: { message: 'All notifications marked as read' },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .patch('/v1/notifications/read-all')
         .set('Authorization', 'Bearer valid-token');
 
@@ -173,7 +176,7 @@ describe('Notifications Controller Contract Tests', () => {
         data: { unreadCount: 5 },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/notifications/unread-count')
         .set('Authorization', 'Bearer valid-token');
 
@@ -186,7 +189,7 @@ describe('Notifications Controller Contract Tests', () => {
     it('should send a templated transactional email', async () => {
       mockNotificationsService.sendTemplatedEmail.mockResolvedValue(true);
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/notifications/email')
         .set('Authorization', 'Bearer valid-token')
         .send({

@@ -66,9 +66,11 @@ describe('SearchService Integration', () => {
           useValue: {
             // Everything ON except search_typo_tolerance so the integration
             // search() tests exercise the exact path.
-            isEnabled: jest.fn().mockImplementation((key: string) =>
-              Promise.resolve(key !== 'search_typo_tolerance')
-            ),
+            isEnabled: jest
+              .fn()
+              .mockImplementation((key: string) =>
+                Promise.resolve(key !== 'search_typo_tolerance')
+              ),
           },
         },
         {

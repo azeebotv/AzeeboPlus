@@ -27,6 +27,7 @@ jest.mock('@azeebo/security', () => ({
 
 describe('Fan Contests Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
   let fanContestsService: FanContestsService;
 
   beforeAll(async () => {
@@ -72,6 +73,8 @@ describe('Fan Contests Controller Contract Tests', () => {
     app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
     fanContestsService = moduleFixture.get(FanContestsService);
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -102,7 +105,7 @@ describe('Fan Contests Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/v1/sports/fan-contests');
+      const response = await request(baseUrl).get('/v1/sports/fan-contests');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -139,7 +142,7 @@ describe('Fan Contests Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/v1/sports/fan-contests/contest-1');
+      const response = await request(baseUrl).get('/v1/sports/fan-contests/contest-1');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -161,7 +164,7 @@ describe('Fan Contests Controller Contract Tests', () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
-      const response = await request(app.getHttpServer()).get(
+      const response = await request(baseUrl).get(
         '/v1/sports/fan-contests/nonexistent'
       );
 
@@ -189,7 +192,7 @@ describe('Fan Contests Controller Contract Tests', () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/sports/fan-contests/contest-1/enter')
         .send({
           userId: 'user-123',
@@ -226,7 +229,7 @@ describe('Fan Contests Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get(
+      const response = await request(baseUrl).get(
         '/v1/sports/fan-contests/contest-1/leaderboard'
       );
 
@@ -260,7 +263,7 @@ describe('Fan Contests Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get(
+      const response = await request(baseUrl).get(
         '/v1/sports/fan-contests/contest-1/rank/user-123'
       );
 

@@ -47,6 +47,7 @@ const mockMessagingService = {
  */
 describe('Messaging kill-switch (messaging_* flags)', () => {
   let app: INestApplication;
+  let baseUrl: string;
   const mockFeatureFlagService = {
     isEnabled: jest.fn().mockResolvedValue(false), // all messaging flags off
   };
@@ -69,6 +70,8 @@ describe('Messaging kill-switch (messaging_* flags)', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -81,16 +84,14 @@ describe('Messaging kill-switch (messaging_* flags)', () => {
   });
 
   it('403s the read-receipt endpoint when messaging_read_receipts is off', async () => {
-    const res = await request(app.getHttpServer())
+    const res = await request(baseUrl)
       .post('/messaging/conversations/c1/read')
       .set('Authorization', 'Bearer test')
       .send({ messageId: 'm1' });
 
     expect(res.status).toBe(403);
     expect(mockMessagingService.markAsRead).not.toHaveBeenCalled();
-    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(
-      messagingFlags.readReceipts
-    );
+    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(messagingFlags.readReceipts);
   });
 
   it('passes the DM routes through when messaging_dm_enabled is on', async () => {
@@ -98,7 +99,7 @@ describe('Messaging kill-switch (messaging_* flags)', () => {
       Promise.resolve(key === messagingFlags.dmEnabled)
     );
 
-    const res = await request(app.getHttpServer())
+    const res = await request(baseUrl)
       .get('/messaging/conversations')
       .set('Authorization', 'Bearer test');
 

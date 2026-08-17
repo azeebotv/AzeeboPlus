@@ -18,7 +18,7 @@
     "clean": "rm -rf dist",
     "test": "jest",
     "test:cov": "jest --coverage",
-    "lint": "eslint src --fix"
+    "lint": "eslint src"
   },
   "dependencies": {},
   "peerDependencies": {

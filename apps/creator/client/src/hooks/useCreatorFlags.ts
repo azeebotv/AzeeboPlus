@@ -1,12 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
+import { creatorFlags } from '@azeebo/feature-flags/registries';
 import { creatorApi } from '@/lib/api/creator';
 
-/** Client-side creator UI flag keys (mirrors @azeebo/feature-flags creatorFlags UI subset). */
+/** Client-side creator UI flag keys — sourced from @azeebo/feature-flags
+ *  creatorFlags registry (the studio's UI subset). */
 export const CREATOR_FLAG_KEYS = {
-  newAnalytics: 'creator_new_analytics',
-  uploadV2: 'creator_upload_v2',
-  payoutsUi: 'creator_payouts_ui',
-  onboardingWizard: 'creator_onboarding_wizard',
+  newAnalytics: creatorFlags.newAnalytics,
+  uploadV2: creatorFlags.uploadV2,
+  payoutsUi: creatorFlags.payoutsUi,
+  onboardingWizard: creatorFlags.onboardingWizard,
 } as const;
 
 /** Registered defaults mirroring the backend FeatureFlagModule registration. */

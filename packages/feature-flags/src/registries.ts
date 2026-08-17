@@ -308,8 +308,11 @@ export const adminFlags = {
   bulkActions: 'admin_bulk_actions',
 } as const;
 
-/** Sentinel for per-universe availability, e.g. `universe.reality.enabled`. */
-export const universeEnabledKey = (name: string): string => `universe.${name}.enabled`;
+// The universe sentinel builder is re-exported from @azeebo/shared-types — the
+// single source of truth for universe slug VALUES (e.g. `movie`, `creator`), so
+// the gateway serves exactly the keys the admin publishes and clients consume.
+// (`universeFlagKey` lives in core.ts, also delegated to shared-types.)
+export { universeEnabledKey } from '@azeebo/shared-types';
 
 /** Aggregated registry for admin reference / docs generation. */
 export const allFlagRegistries = {
@@ -350,4 +353,5 @@ export const allFlagRegistries = {
 export type FlagRegistryName = keyof typeof allFlagRegistries;
 
 /** Union of every known flag key — usable in DTOs and admin tooling. */
-export type KnownFlagKey = (typeof allFlagRegistries)[FlagRegistryName][keyof (typeof allFlagRegistries)[FlagRegistryName]];
+export type KnownFlagKey =
+  (typeof allFlagRegistries)[FlagRegistryName][keyof (typeof allFlagRegistries)[FlagRegistryName]];

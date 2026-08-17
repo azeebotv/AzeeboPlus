@@ -325,9 +325,7 @@ describe('FlagMetricsService', () => {
 
     const metrics = await service.getMetrics();
     expect(
-      metrics
-        .split('\n')
-        .some((l) => l.startsWith('flag_evaluation_total{service="auth-service"'))
+      metrics.split('\n').some((l) => l.startsWith('flag_evaluation_total{service="auth-service"'))
     ).toBe(true);
     expect(metrics).toMatch(
       /flag_evaluation_total\{service="auth-service",key="mobile_autoplay",result="enabled"\} 1/
@@ -336,50 +334,51 @@ describe('FlagMetricsService', () => {
 });
 
 describe('FlagMetricsModule', () => {
+  // Each test registers a different module config (service/path), so it needs
+  // its own app — but every app is bound ONCE and stays alive for the whole
+  // file (closed in afterAll), eliminating per-test close/relisten port churn.
+  const apps: INestApplication[] = [];
+
+  afterAll(async () => {
+    await Promise.all(apps.map((liveApp) => liveApp.close()));
+  });
+
   it('serves metrics at the default /metrics path', async () => {
-    const app = await bootApp('media-service');
-    try {
-      const res = await request(app.getHttpServer()).get('/metrics').expect(200);
-      expect(res.headers['content-type']).toMatch(/text\/plain/);
-      expect(res.text).toContain('flag_evaluation_total');
-    } finally {
-      await app.close();
-    }
+    const { app, url: baseUrl } = await bootApp('media-service');
+    apps.push(app);
+    const res = await request(baseUrl).get('/metrics').expect(200);
+    expect(res.headers['content-type']).toMatch(/text\/plain/);
+    expect(res.text).toContain('flag_evaluation_total');
   });
 
   it('serves metrics at a custom path when one is configured', async () => {
-    const app = await bootApp('payment-service', 'flag-metrics');
-    try {
-      const res = await request(app.getHttpServer()).get('/flag-metrics').expect(200);
-      expect(res.text).toContain('flag_evaluation_total');
-      await request(app.getHttpServer()).get('/metrics').expect(404);
-    } finally {
-      await app.close();
-    }
+    const { app, url: baseUrl } = await bootApp('payment-service', 'flag-metrics');
+    apps.push(app);
+    const res = await request(baseUrl).get('/flag-metrics').expect(200);
+    expect(res.text).toContain('flag_evaluation_total');
+    await request(baseUrl).get('/metrics').expect(404);
   });
 
   it('hooks wired through the module reach the live counters end-to-end', async () => {
-    const app = await bootApp('notification-service');
-    try {
-      // Simulate what FeatureFlagModule.register({ ...flagHooks('notification-service') })
-      // does after app init: evaluations flow into the counters.
-      getFlagHooks('notification-service').onEvaluation?.('notification_digest', true, {});
+    const { app, url: baseUrl } = await bootApp('notification-service');
+    apps.push(app);
+    // Simulate what FeatureFlagModule.register({ ...flagHooks('notification-service') })
+    // does after app init: evaluations flow into the counters.
+    getFlagHooks('notification-service').onEvaluation?.('notification_digest', true, {});
 
-      const res = await request(app.getHttpServer()).get('/metrics').expect(200);
-      expect(res.text).toContain(
-        'flag_evaluation_total{service="notification-service",key="notification_digest",result="enabled"} 1'
-      );
-    } finally {
-      await app.close();
-    }
+    const res = await request(baseUrl).get('/metrics').expect(200);
+    expect(res.text).toContain(
+      'flag_evaluation_total{service="notification-service",key="notification_digest",result="enabled"} 1'
+    );
   });
 });
 
-async function bootApp(service: string, path?: string): Promise<INestApplication> {
+async function bootApp(service: string, path?: string): Promise<{ app: INestApplication; url: string }> {
   const moduleRef = await Test.createTestingModule({
     imports: [FlagMetricsModule.register({ service, path })],
   }).compile();
   const app = moduleRef.createNestApplication();
   await app.init();
-  return app;
+  await app.listen(0);
+  return { app, url: `http://127.0.0.1:${app.getHttpServer().address().port}` };
 }

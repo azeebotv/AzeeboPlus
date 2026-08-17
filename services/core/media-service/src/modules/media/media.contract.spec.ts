@@ -26,6 +26,7 @@ class MockAdminGuard implements CanActivate {
 
 describe('Media Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   beforeAll(async () => {
     process.env.JWT_ACCESS_SECRET = 'test-jwt-secret';
@@ -118,6 +119,8 @@ describe('Media Controller Contract Tests', () => {
       }
     );
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -128,7 +131,7 @@ describe('Media Controller Contract Tests', () => {
 
   describe('POST /admin/cdn/purge', () => {
     it('should accept a prefix purge request', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/admin/cdn/purge')
         .set('Authorization', 'Bearer valid-token')
         .send({ prefix: 'uploads' });
@@ -140,7 +143,7 @@ describe('Media Controller Contract Tests', () => {
     });
 
     it('should reject a purge with no target', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/admin/cdn/purge')
         .set('Authorization', 'Bearer valid-token')
         .send({});
@@ -164,7 +167,7 @@ describe('Media Controller Contract Tests', () => {
         cachePolicy: 'immutable',
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/media/upload/image')
         .set('Authorization', 'Bearer valid-token')
         .attach('file', Buffer.from('test'), 'test.jpg');
@@ -193,7 +196,7 @@ describe('Media Controller Contract Tests', () => {
         metadata: {},
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/media/metadata?key=images/test.jpg')
         .set('Authorization', 'Bearer valid-token');
 
@@ -214,7 +217,7 @@ describe('Media Controller Contract Tests', () => {
 
       jest.spyOn(uploadService, 'deleteFile').mockResolvedValue(undefined);
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .delete('/media/images%2Ftest.jpg')
         .set('Authorization', 'Bearer valid-token');
 

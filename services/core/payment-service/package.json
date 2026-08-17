@@ -8,7 +8,7 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
     "start:dev": "bash start-dev.sh",
-    "lint": "eslint src --fix",
+    "lint": "eslint src",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:e2e:failover": "RUN_PAYMENT_FAILOVER_E2E=1 jest payments.failover.e2e --runInBand",

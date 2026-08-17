@@ -224,7 +224,12 @@ export default function SearchPage(): React.JSX.Element {
           universesPagination: response.data.universesPagination,
         };
       }
-      return { items: [], pagination: undefined, creatorsPagination: undefined, universesPagination: undefined };
+      return {
+        items: [],
+        pagination: undefined,
+        creatorsPagination: undefined,
+        universesPagination: undefined,
+      };
     },
     initialPageParam: 1,
     // 'Load more' is driven by the /v1/search pagination object: there is a

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ExecutionContext, NestInterceptor, UnauthorizedException } from '@nestjs/common';
+import { INestApplication, ExecutionContext, NestInterceptor, UnauthorizedException } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
 import { RateLimitGuard, AdminGuard } from '@azeebo/security';
@@ -23,6 +23,13 @@ jest.mock('@azeebo/feature-flags', () => ({
 }));
 
 describe('Wallet Service Authorization Tests', () => {
+  let app: INestApplication;
+  let baseUrl: string;
+
+  // Mutable auth state read at request time by the shared APP_GUARD —
+  // every test runs against ONE bound app (no per-test listen/close churn).
+  let authEnabled: boolean;
+
   const mockWalletService = {
     getBalance: jest.fn().mockResolvedValue({
       success: true,
@@ -109,16 +116,16 @@ describe('Wallet Service Authorization Tests', () => {
     }),
   };
 
-  const createMockAuthGuard = (canActivate: boolean) => ({
+  const mockAuthGuard = {
     canActivate: jest.fn().mockImplementation((context: ExecutionContext) => {
-      if (!canActivate) {
+      if (!authEnabled) {
         throw new UnauthorizedException();
       }
       const request = context.switchToHttp().getRequest();
       request.user = { id: 'user-123', sub: 'user-123' };
       return true;
     }),
-  });
+  };
 
   const createMockRateLimitGuard = () => ({
     canActivate: jest.fn().mockReturnValue(true),
@@ -128,9 +135,7 @@ describe('Wallet Service Authorization Tests', () => {
     canActivate: jest.fn().mockReturnValue(true),
   });
 
-  const createTestApp = async (authGuardReturnValue: boolean) => {
-    const mockAuthGuard = createMockAuthGuard(authGuardReturnValue);
-
+  const createTestApp = async (): Promise<INestApplication> => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [WalletController],
       providers: [
@@ -166,74 +171,72 @@ describe('Wallet Service Authorization Tests', () => {
     return testApp;
   };
 
+  beforeAll(async () => {
+    authEnabled = true;
+    app = await createTestApp();
+    await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  beforeEach(() => {
+    authEnabled = true;
+  });
+
   afterEach(async () => {
     jest.clearAllMocks();
   });
 
   describe('Authorization - GET /wallet', () => {
     it('should allow authenticated users to view balance', async () => {
-      const testApp = await createTestApp(true);
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer())
+      authEnabled = true;
+      const response = await request(baseUrl)
         .get('/wallet')
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(mockWalletService.getBalance).toHaveBeenCalled();
-
-      await testApp.close();
     });
 
     it('should reject unauthenticated users from viewing balance', async () => {
-      const testApp = await createTestApp(false);
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer()).get('/wallet');
+      authEnabled = false;
+      const response = await request(baseUrl).get('/wallet');
 
       expect(response.status).toBe(401);
       expect(mockWalletService.getBalance).not.toHaveBeenCalled();
-
-      await testApp.close();
     });
   });
 
   describe('Authorization - GET /wallet/transactions', () => {
     it('should allow authenticated users to view transactions', async () => {
-      const testApp = await createTestApp(true);
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer())
+      authEnabled = true;
+      const response = await request(baseUrl)
         .get('/wallet/transactions')
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(mockWalletService.getTransactions).toHaveBeenCalled();
-
-      await testApp.close();
     });
 
     it('should reject unauthenticated users from viewing transactions', async () => {
-      const testApp = await createTestApp(false);
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer()).get('/wallet/transactions');
+      authEnabled = false;
+      const response = await request(baseUrl).get('/wallet/transactions');
 
       expect(response.status).toBe(401);
       expect(mockWalletService.getTransactions).not.toHaveBeenCalled();
-
-      await testApp.close();
     });
   });
 
   describe('Authorization - POST /wallet/fund', () => {
     it('should allow authenticated users to fund wallet', async () => {
-      const testApp = await createTestApp(true);
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer())
+      authEnabled = true;
+      const response = await request(baseUrl)
         .post('/wallet/fund')
         .set('Authorization', 'Bearer valid-token')
         .send({ amount: 1000, currency: 'NGN', paymentMethod: 'card' });
@@ -241,31 +244,23 @@ describe('Wallet Service Authorization Tests', () => {
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
       expect(mockWalletService.initializeFunding).toHaveBeenCalled();
-
-      await testApp.close();
     });
 
     it('should reject unauthenticated users from funding wallet', async () => {
-      const testApp = await createTestApp(false);
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer())
+      authEnabled = false;
+      const response = await request(baseUrl)
         .post('/wallet/fund')
         .send({ amount: 1000, currency: 'NGN', paymentMethod: 'card' });
 
       expect(response.status).toBe(401);
       expect(mockWalletService.initializeFunding).not.toHaveBeenCalled();
-
-      await testApp.close();
     });
   });
 
   describe('Authorization - POST /wallet/withdraw', () => {
     it('should allow authenticated users to withdraw funds', async () => {
-      const testApp = await createTestApp(true);
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer())
+      authEnabled = true;
+      const response = await request(baseUrl)
         .post('/wallet/withdraw')
         .set('Authorization', 'Bearer valid-token')
         .send({ amount: 500, bankAccountId: 'bank-123' });
@@ -273,31 +268,23 @@ describe('Wallet Service Authorization Tests', () => {
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
       expect(mockWalletService.withdraw).toHaveBeenCalled();
-
-      await testApp.close();
     });
 
     it('should reject unauthenticated users from withdrawing funds', async () => {
-      const testApp = await createTestApp(false);
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer())
+      authEnabled = false;
+      const response = await request(baseUrl)
         .post('/wallet/withdraw')
         .send({ amount: 500, bankAccountId: 'bank-123' });
 
       expect(response.status).toBe(401);
       expect(mockWalletService.withdraw).not.toHaveBeenCalled();
-
-      await testApp.close();
     });
   });
 
   describe('Authorization - POST /wallet/transfer', () => {
     it('should allow authenticated users to transfer funds', async () => {
-      const testApp = await createTestApp(true);
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer())
+      authEnabled = true;
+      const response = await request(baseUrl)
         .post('/wallet/transfer')
         .set('Authorization', 'Bearer valid-token')
         .send({ recipientId: 'user-456', amount: 200 });
@@ -305,118 +292,38 @@ describe('Wallet Service Authorization Tests', () => {
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
       expect(mockWalletService.transfer).toHaveBeenCalled();
-
-      await testApp.close();
     });
 
     it('should reject unauthenticated users from transferring funds', async () => {
-      const testApp = await createTestApp(false);
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer())
+      authEnabled = false;
+      const response = await request(baseUrl)
         .post('/wallet/transfer')
         .send({ recipientId: 'user-456', amount: 200 });
 
       expect(response.status).toBe(401);
       expect(mockWalletService.transfer).not.toHaveBeenCalled();
-
-      await testApp.close();
     });
   });
 
   describe('Authorization - Service-to-service endpoints', () => {
     it('should allow debit requests with service authentication', async () => {
-      const mockAuthGuard = createMockAuthGuard(true);
-
-      const moduleFixture: TestingModule = await Test.createTestingModule({
-        controllers: [WalletController],
-        providers: [
-          { provide: WalletService, useValue: mockWalletService },
-          { provide: PrismaService, useValue: {} },
-          {
-            provide: CacheService,
-            useValue: {
-              get: jest.fn().mockResolvedValue(null),
-              set: jest.fn().mockResolvedValue(undefined),
-              delete: jest.fn().mockResolvedValue(0),
-              deleteByPattern: jest.fn().mockResolvedValue(0),
-              invalidate: jest.fn().mockResolvedValue(undefined),
-            },
-          },
-          { provide: APP_GUARD, useValue: mockAuthGuard },
-        ],
-      })
-        .overrideGuard(RateLimitGuard)
-        .useValue(createMockRateLimitGuard())
-        .overrideGuard(AdminGuard)
-        .useValue(createMockAdminGuard())
-        .overrideInterceptor(CacheInterceptor)
-        .useValue({
-          intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle(),
-        })
-        .compile();
-
-      const testApp = moduleFixture.createNestApplication();
-      testApp.useGlobalInterceptors({
-        intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle(),
-      } as NestInterceptor);
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer())
+      authEnabled = true;
+      const response = await request(baseUrl)
         .post('/wallet/debit')
         .send({ walletId: 'wallet-123', amount: 100, description: 'Test debit' });
 
       expect(response.status).toBe(201);
       expect(mockWalletService.debitBalance).toHaveBeenCalled();
-
-      await testApp.close();
     });
 
     it('should allow credit requests with service authentication', async () => {
-      const mockAuthGuard = createMockAuthGuard(true);
-
-      const moduleFixture: TestingModule = await Test.createTestingModule({
-        controllers: [WalletController],
-        providers: [
-          { provide: WalletService, useValue: mockWalletService },
-          { provide: PrismaService, useValue: {} },
-          {
-            provide: CacheService,
-            useValue: {
-              get: jest.fn().mockResolvedValue(null),
-              set: jest.fn().mockResolvedValue(undefined),
-              delete: jest.fn().mockResolvedValue(0),
-              deleteByPattern: jest.fn().mockResolvedValue(0),
-              invalidate: jest.fn().mockResolvedValue(undefined),
-            },
-          },
-          { provide: APP_GUARD, useValue: mockAuthGuard },
-        ],
-      })
-        .overrideGuard(RateLimitGuard)
-        .useValue(createMockRateLimitGuard())
-        .overrideGuard(AdminGuard)
-        .useValue(createMockAdminGuard())
-        .overrideInterceptor(CacheInterceptor)
-        .useValue({
-          intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle(),
-        })
-        .compile();
-
-      const testApp = moduleFixture.createNestApplication();
-      testApp.useGlobalInterceptors({
-        intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle(),
-      } as NestInterceptor);
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer())
+      authEnabled = true;
+      const response = await request(baseUrl)
         .post('/wallet/credit')
         .send({ walletId: 'wallet-123', amount: 100, description: 'Test credit' });
 
       expect(response.status).toBe(201);
       expect(mockWalletService.creditBalance).toHaveBeenCalled();
-
-      await testApp.close();
     });
   });
 });

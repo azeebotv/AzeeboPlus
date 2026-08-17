@@ -74,7 +74,7 @@ export default function SocialScreen() {
           router.push(`/lifestyle/influencer-detail?id=${item.id}`);
           break;
         case 'music':
-          router.push('/lifestyle/music');
+          router.push('/music');
           break;
         case 'venue':
           router.push('/lifestyle/nightlife');
