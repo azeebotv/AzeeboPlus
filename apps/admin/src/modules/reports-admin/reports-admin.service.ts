@@ -1,5 +1,11 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
+
+interface CreateReportDto {
+  type: string;
+  name: string;
+  config: unknown;
+}
 
 @Injectable()
 export class ReportsAdminService {
@@ -28,7 +34,14 @@ export class ReportsAdminService {
       }),
       this.prisma.report.findMany({
         where: { createdAt: { gte: startDate } },
-        select: { status: true, type: true, createdAt: true },
+        select: {
+          id: true,
+          status: true,
+          type: true,
+          reason: true,
+          createdAt: true,
+          resolvedAt: true,
+        },
         orderBy: { createdAt: 'asc' },
       }),
     ]);
@@ -59,5 +72,58 @@ export class ReportsAdminService {
         ),
       },
     };
+  }
+
+  async createReport(body: CreateReportDto) {
+    const report = await this.prisma.report.create({
+      data: {
+        reportingUserId: 'system',
+        type: body.type,
+        reason: body.name,
+        status: 'pending',
+      },
+    });
+
+    return {
+      id: report.id,
+      type: report.type,
+      name: body.name,
+      status: report.status,
+      config: body.config,
+      createdAt: report.createdAt.toISOString(),
+    };
+  }
+
+  async executeReport(reportId: string) {
+    const report = await this.prisma.report.findUnique({ where: { id: reportId } });
+    if (!report) {
+      throw new NotFoundException(`Report ${reportId} not found`);
+    }
+
+    // Mark as resolved with execution metadata
+    const updated = await this.prisma.report.update({
+      where: { id: reportId },
+      data: {
+        status: 'resolved',
+        resolvedAt: new Date(),
+        resolutionAction: 'executed',
+      },
+    });
+
+    return {
+      id: updated.id,
+      status: updated.status,
+      executedAt: updated.resolvedAt?.toISOString() ?? new Date().toISOString(),
+    };
+  }
+
+  async deleteReport(id: string) {
+    const report = await this.prisma.report.findUnique({ where: { id } });
+    if (!report) {
+      throw new NotFoundException(`Report ${id} not found`);
+    }
+
+    await this.prisma.report.delete({ where: { id } });
+    return { id, deleted: true, deletedAt: new Date().toISOString() };
   }
 }

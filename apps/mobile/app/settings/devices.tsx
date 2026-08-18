@@ -14,6 +14,7 @@ import { useRouter } from 'expo-router';
 import { authApi, type Device } from '../../src/api';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { logger } from '../../src/utils/logger';
+import { colors } from '../../src/theme';
 
 export default function DeviceManagementScreen() {
   const router = useRouter();
@@ -238,12 +239,12 @@ warningBanner: {
     padding: 16,
   },
   deviceCard: {
-    backgroundColor: colors.bg.glass.toString('rgba(255,255,255,0.08)'),
+    backgroundColor: colors.bg.glass,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: colors.bg.glassBorder.toString('rgba(255,255,255,0.2)'),
+    borderColor: colors.bg.glassBorder,
   },
   deviceCardCurrent: {
     borderColor: colors.primary[500],

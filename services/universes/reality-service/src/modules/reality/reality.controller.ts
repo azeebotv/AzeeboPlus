@@ -17,6 +17,7 @@ import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
 import { FeatureFlag, FeatureFlagGuard, realityFlags } from '@azeebo/feature-flags';
 
 import { RealityService } from './reality.service.js';
+import { RealityGateway } from './reality.gateway.js';
 import { RealityResponse } from './interfaces/reality-response.interface.js';
 import { CastVoteDto, BuyVoteDto, MakePredictionDto } from './dto/vote.dto.js';
 import {
@@ -34,7 +35,10 @@ import { CreateCommentDto, ShareShowDto } from './dto/social.dto.js';
 @ApiBearerAuth()
 @Controller('reality')
 export class RealityController {
-  constructor(@Inject(RealityService) private readonly realityService: RealityService) {}
+  constructor(
+    @Inject(RealityService) private readonly realityService: RealityService,
+    @Inject(RealityGateway) private readonly gateway: RealityGateway
+  ) {}
 
   @Get('shows')
   @Get('shows/current')
@@ -295,8 +299,9 @@ export class RealityController {
   @RateLimit(60, 60000)
   @ApiOperation({ summary: 'Get current viewer count for a show' })
   @ApiResponse({ status: 200, description: 'Viewer count' })
-  async getViewerCount(@Param('showId') _showId: string): Promise<RealityResponse> {
-    return { success: true, data: { count: 0 } };
+  async getViewerCount(@Param('showId') showId: string): Promise<RealityResponse> {
+    const count = await this.gateway.getViewerCount(showId);
+    return { success: true, data: { count } };
   }
 
   // NOTE: This is an alias for /votes with a stricter rate limit (10/min vs 50/min).

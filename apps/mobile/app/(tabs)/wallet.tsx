@@ -20,8 +20,8 @@ import {
   useFundWallet,
   useWithdraw,
 } from '../../src/hooks/useWalletQuery';
-import { colors, radius, spacing, typography } from '../../src/theme';
-import { colors as dtColors } from '../../src/theme/design-tokens';
+import { colors, radius } from '../../src/theme';
+import { colors as dtColors } from '@azeebo/design-tokens';
 
 export default function WalletScreen() {
   const colorScheme = useColorScheme();
@@ -139,7 +139,7 @@ export default function WalletScreen() {
             backgroundColor:
               colorScheme === 'dark'
                 ? colors.bg.primary
-                : dtColors.gray[50],
+                : colors.light[50],
           },
         ]}
       >
@@ -158,7 +158,7 @@ export default function WalletScreen() {
             backgroundColor:
               colorScheme === 'dark'
                 ? colors.bg.primary
-                : dtColors.gray[50],
+                : colors.light[50],
           },
         ]}
       >
@@ -170,7 +170,7 @@ export default function WalletScreen() {
               color:
                 colorScheme === 'dark'
                   ? colors.text.primary
-                  : dtColors.gray[900],
+                  : colors.light[900],
             },
           ]}
         >
@@ -188,7 +188,7 @@ export default function WalletScreen() {
           backgroundColor:
             colorScheme === 'dark'
               ? colors.bg.primary
-              : dtColors.gray[50],
+              : colors.light[50],
         },
       ]}
     >
@@ -212,7 +212,7 @@ export default function WalletScreen() {
                 color:
                   colorScheme === 'dark'
                     ? colors.text.primary
-                    : dtColors.gray[900],
+                    : colors.light[900],
               },
             ]}
           >
@@ -498,7 +498,7 @@ export default function WalletScreen() {
                   },
                 ]}
                 placeholder="Enter account number"
-                placeholderTextColor={dtColors.gray[500]}
+                placeholderTextColor={colors.light[500]}
                 keyboardType="number-pad"
                 value={accountNumber}
                 onChangeText={setAccountNumber}
@@ -514,7 +514,7 @@ export default function WalletScreen() {
                     borderColor:
                       colorScheme === 'dark'
                         ? colors.bg.tertiary
-                        : dtColors.gray[200],
+                        : colors.light[200],
                   },
                 ]}
                 onPress={() => setShowWithdrawModal(false)}
@@ -528,7 +528,7 @@ export default function WalletScreen() {
                       color:
                         colorScheme === 'dark'
                           ? colors.text.primary
-                          : dtColors.gray[900],
+                          : colors.light[900],
                     },
                   ]}
                 >
@@ -542,7 +542,7 @@ export default function WalletScreen() {
                 accessibilityLabel="Confirm withdrawal"
               >
                 {withdrawMutation.isPending ? (
-                  <ActivityIndicator color={dtColors.white} size="small" />
+                  <ActivityIndicator color={colors.light[50]} size="small" />
                 ) : (
                   <Text style={styles.confirmButtonText}>Withdraw</Text>
                 )}
@@ -588,14 +588,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   errorContainer: {
-    backgroundColor: dtColors.error.light,
+    backgroundColor: colors.error[50],
     margin: 20,
     marginTop: 0,
     padding: 16,
     borderRadius: radius.lg,
   },
   errorText: {
-    color: dtColors.error.main,
+    color: colors.error[500],
     fontSize: 14,
     textAlign: 'center',
   },
@@ -747,7 +747,7 @@ const styles = StyleSheet.create({
   },
   quickAmountButton: {
     flex: 1,
-    backgroundColor: dtColors.gray[100],
+    backgroundColor: colors.light[100],
     padding: 12,
     borderRadius: radius.sm,
     alignItems: 'center',
@@ -767,7 +767,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: dtColors.gray[300],
+    borderColor: colors.light[300],
     alignItems: 'center',
   },
   cancelButtonText: {
@@ -783,7 +783,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   confirmButtonText: {
-    color: dtColors.white,
+    color: colors.light[50],
     fontSize: 16,
     fontWeight: '600',
   },

@@ -21,6 +21,8 @@ import { AgbalaModule } from './modules/vertical/agbala/agbala.module';
 import { HealthModule } from './modules/health/health.module';
 import { WebModule } from './web/web.module';
 import { FeatureFlagsModule } from './modules/feature-flags/feature-flags.module';
+import { PaymentGatewaysModule } from './modules/payment-gateways/payment-gateways.module';
+import { RealityShowsModule } from './modules/reality-shows/reality-shows.module';
 import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
 import { FeatureFlagModule, queueFlags, adminFlags } from '@azeebo/feature-flags';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
@@ -52,6 +54,8 @@ import { CsrfMiddleware } from './common/csrf.middleware';
       },
     }),
     FeatureFlagsModule,
+    PaymentGatewaysModule,
+    RealityShowsModule,
     AuthModule,
     DatabaseModule,
     UserManagementModule,

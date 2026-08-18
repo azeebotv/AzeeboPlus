@@ -248,4 +248,10 @@ export class RealityGateway implements OnGatewayConnection, OnGatewayDisconnect 
   broadcastToRoom(room: string, event: string, data: unknown): void {
     this.server.to(room).emit(event, data);
   }
+
+  async getViewerCount(showId: string): Promise<number> {
+    const room = `show:${showId}`;
+    const sockets = await this.server.in(room).fetchSockets();
+    return sockets.length;
+  }
 }

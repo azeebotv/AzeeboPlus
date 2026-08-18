@@ -22,6 +22,7 @@ import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { UploadService } from './upload.service';
 import { PremiumContentService } from './premium-content.service';
+import { CdnPurgeService } from './cdn-purge.service';
 import { InitChunkedUploadDto } from './dto/chunked-upload.dto.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 import { FeatureFlag, FeatureFlagGuard, mediaFlags } from '@azeebo/feature-flags';
@@ -32,7 +33,8 @@ import { FeatureFlag, FeatureFlagGuard, mediaFlags } from '@azeebo/feature-flags
 export class UploadController {
   constructor(
     @Inject(UploadService) private readonly uploadService: UploadService,
-    @Inject(PremiumContentService) private readonly premiumContentService: PremiumContentService
+    @Inject(PremiumContentService) private readonly premiumContentService: PremiumContentService,
+    @Inject(CdnPurgeService) private readonly cdnPurgeService: CdnPurgeService
   ) {}
 
   @Post('upload/image')
@@ -510,6 +512,14 @@ export class UploadController {
   @ApiResponse({ status: 200, description: 'CDN purge initiated' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async purgeCdn(@Body() body: { keys?: string[]; prefix?: string }): Promise<unknown> {
-    return ApiResponseWrapper.success({ purged: body.keys?.length || 0, prefix: body.prefix });
+    if (body.keys?.length) {
+      const result = await this.cdnPurgeService.purgeKeys(body.keys);
+      return ApiResponseWrapper.success(result);
+    }
+    if (body.prefix) {
+      const result = await this.cdnPurgeService.purgePrefix(body.prefix);
+      return ApiResponseWrapper.success(result);
+    }
+    return ApiResponseWrapper.success({ purged: 0, message: 'Provide keys or prefix to purge' });
   }
 }

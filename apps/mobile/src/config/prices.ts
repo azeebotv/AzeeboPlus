@@ -34,7 +34,7 @@ export async function getMoviePricing(): Promise<MoviePricing> {
       return res.data;
     }
   } catch (e) {
-    logger.warn('Failed to fetch movie pricing', e);
+    logger.warn('Failed to fetch movie pricing', String(e));
   }
   throw new Error('Movie pricing unavailable. Please check your connection and try again.');
 }
@@ -48,7 +48,7 @@ export async function getVotePackages(type: string): Promise<VotePackage[]> {
       return res.data;
     }
   } catch (e) {
-    logger.warn('Failed to fetch vote packages', e);
+    logger.warn('Failed to fetch vote packages', String(e));
   }
   throw new Error('Vote packages unavailable. Please check your connection and try again.');
 }
@@ -62,7 +62,7 @@ export async function getWalletPricing(): Promise<WalletPricing> {
       return res.data;
     }
   } catch (e) {
-    logger.warn('Failed to fetch wallet pricing', e);
+    logger.warn('Failed to fetch wallet pricing', String(e));
   }
   throw new Error('Wallet pricing unavailable. Please check your connection and try again.');
 }
@@ -76,7 +76,7 @@ export async function getPassesPricing(): Promise<PassPricing> {
       return res.data;
     }
   } catch (e) {
-    logger.warn('Failed to fetch passes pricing', e);
+    logger.warn('Failed to fetch passes pricing', String(e));
   }
   throw new Error('Passes pricing unavailable. Please check your connection and try again.');
 }
@@ -87,3 +87,38 @@ export function clearPricingCache(): void {
   cachedWalletPricing = null;
   cachedPassesPricing = null;
 }
+
+// ── Backward-compatible exports ───────────────────────────────────────
+// Old consumers import these as constants. Provide fallback values that
+// work while the async API fetch loads in the background.
+
+export const votePackages: Record<string, VotePackage[]> = {
+  superVote: [],
+  regular: [],
+  reality: [],
+};
+
+export const moviePricing: Record<
+  string,
+  { id: string; type: string; label: string; price: number }
+> = {
+  rent48h: { id: 'rent48h', type: 'rent48h', label: 'Rent 48h', price: 0 },
+  rent: { id: 'rent', type: 'rent', label: 'Rent', price: 0 },
+  buy: { id: 'buy', type: 'buy', label: 'Buy', price: 0 },
+  pass: { id: 'pass', type: 'pass', label: 'Pass', price: 0 },
+  subscription: { id: 'subscription', type: 'subscription', label: 'Subscription', price: 0 },
+};
+
+export const moviePassPrice = 0;
+export const rentPrice = 0;
+export const paymentPresetAmounts = [500, 1000, 2000, 5000];
+export const addFundsPresetAmounts = [500, 1000, 2000, 5000];
+export const walletPresetAmounts = [500, 1000, 2000, 5000];
+export const walletLimits = {
+  min: 100,
+  max: 100000,
+  minimumDeposit: 100,
+  maximumDeposit: 100000,
+  minimumWithdrawal: 500,
+};
+export const comedySubscription = { monthly: 0, yearly: 0, label: 'Comedy Pass' };

@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
 import { apiClient } from '../src/api/client';
-import { verticalSubscription } from '../src/config/prices';
+import { comedySubscription } from '../src/config/prices';
 import { ApiResponse } from '../src/types/api';
 import { analytics } from '../src/utils/analytics';
 
@@ -220,7 +220,7 @@ export default function VerticalUniverseHome() {
             <View style={styles.passContent}>
               <Text style={styles.passTitle}>🎬 Vertical Pass</Text>
               <Text style={styles.passSubtitle}>
-                Access all Nigerian series from {verticalSubscription.label}
+                Access all Nigerian series from ₦{comedySubscription.monthly.toLocaleString()}/month
               </Text>
               <TouchableOpacity
                 style={styles.passButton}

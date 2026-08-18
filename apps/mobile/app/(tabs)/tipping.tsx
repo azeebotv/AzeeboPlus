@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity }
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { creatorApi } from '../../src/api/creator';
-import { universeColors, colors as dtColors } from '../../src/theme/design-tokens';
 import { colors, spacing, typography, radius } from '../../src/theme';
 
 const TIER_COLORS: Record<string, string> = {
@@ -66,7 +65,7 @@ export default function TipsHistoryScreen() {
               {
                 backgroundColor: `${
                   TIER_COLORS[item.tier.toLowerCase()] ??
-                  dtColors.text.muted
+                  colors.text.muted
                 }20`,
               }
             ]}
@@ -77,7 +76,7 @@ export default function TipsHistoryScreen() {
                 {
                   color:
                     TIER_COLORS[item.tier.toLowerCase()] ??
-                    dtColors.text.muted,
+                    colors.text.muted,
                 },
               ]}
             >
@@ -139,7 +138,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: colors.text.primary,
-    fontSize: typography.fontSize['2xl'],
+    fontSize: typography.fontSize.xxl,
     fontWeight: typography.fontWeight.bold,
   },
   subtitle: {

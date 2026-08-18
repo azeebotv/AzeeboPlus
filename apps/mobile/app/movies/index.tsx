@@ -157,7 +157,7 @@ export default function MoviesUniverseHome() {
           <View style={styles.passBannerContent}>
             <Text style={styles.passBannerTitle}>🎥 Cinema Plus</Text>
             <Text style={styles.passBannerSubtitle}>
-              Unlimited movies from {moviePassPrice.label}
+              Unlimited movies from ₦{moviePassPrice.toLocaleString()}
             </Text>
             <TouchableOpacity style={styles.passButton}>
               <Text style={styles.passButtonText}>Get Pass</Text>

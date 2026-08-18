@@ -1451,4 +1451,64 @@ export class SearchService implements OnModuleInit {
       return [];
     }
   }
+
+  // ── Admin queries ──────────────────────────────────────────────
+  async getAdminStats() {
+    const now = new Date();
+    const today = new Date(now);
+    today.setHours(0, 0, 0, 0);
+    const weekAgo = new Date(today);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+
+    const [totalQueries, todayQueries, weekQueries, avgResultCount] = await Promise.all([
+      this.prisma.searchQueryLog.count(),
+      this.prisma.searchQueryLog.count({ where: { createdAt: { gte: today } } }),
+      this.prisma.searchQueryLog.count({ where: { createdAt: { gte: weekAgo } } }),
+      this.prisma.searchQueryLog.aggregate({ _avg: { resultCount: true } }),
+    ]);
+
+    const topQueries = await this.prisma.searchQueryLog.groupBy({
+      by: ['query'],
+      _count: { query: true },
+      orderBy: { _count: { query: 'desc' } },
+      take: 10,
+    });
+
+    return {
+      totalQueries,
+      todayQueries,
+      weekQueries,
+      avgResultCount: avgResultCount._avg.resultCount ?? 0,
+      topQueries: topQueries.map((q) => ({ query: q.query, count: q._count.query })),
+    };
+  }
+
+  async getAdminQueries(page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const [items, total] = await Promise.all([
+      this.prisma.searchQueryLog.findMany({
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.searchQueryLog.count(),
+    ]);
+    return { items, total, page, limit, hasMore: skip + limit < total };
+  }
+
+  async repairIndexes() {
+    // Re-create the GIN trigram indexes if missing
+    try {
+      await this.prisma.$executeRawUnsafe(
+        `CREATE INDEX IF NOT EXISTS idx_content_items_title_trgm ON content_items USING gin (title gin_trgm_ops)`
+      );
+      await this.prisma.$executeRawUnsafe(
+        `CREATE INDEX IF NOT EXISTS idx_content_items_description_trgm ON content_items USING gin (description gin_trgm_ops)`
+      );
+      return { success: true, data: { repaired: 2, indexes: ['title_trgm', 'description_trgm'] } };
+    } catch (error: unknown) {
+      this.logger.error('Failed to repair indexes', error);
+      return { success: true, data: { repaired: 0, error: String(error) } };
+    }
+  }
 }
