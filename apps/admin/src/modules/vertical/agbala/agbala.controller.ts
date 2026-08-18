@@ -38,7 +38,7 @@ function resolveId(result: unknown): string | undefined {
   );
 }
 
-@Controller('admin/vertical/agbala')
+@Controller('admin/agbala')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin', 'superadmin')
 export class AgbalaController {

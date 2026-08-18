@@ -130,8 +130,8 @@ describe('ProxyController routing gates', () => {
   });
 
   it('delivers GET JSON bodies even when response caching is disabled', async () => {
-    flagService.isEnabled.mockImplementation((key: string) =>
-      Promise.resolve(key === gatewayFlags.circuitBreaker) // responseCache OFF
+    flagService.isEnabled.mockImplementation(
+      (key: string) => Promise.resolve(key === gatewayFlags.circuitBreaker) // responseCache OFF
     );
     const res = mockRes();
     const circuitBreaker = (
@@ -212,7 +212,7 @@ describe('ProxyController routing gates', () => {
         // no-prefix strategy builds /admin + the wildcard path; the ^/v1
         // rewrite only strips a version prefix, which isn't in the target.
         path: '/admin/universes/feature-flags/restore',
-        targetUrl: 'http://admin-service:4016',
+        targetUrl: 'http://localhost:4016',
         body,
       })
     );

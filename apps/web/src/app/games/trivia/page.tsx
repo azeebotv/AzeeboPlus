@@ -74,7 +74,7 @@ function TriviaPageContent(): React.JSX.Element {
   const categoriesQuery = useQuery({
     queryKey: ['trivia-categories'],
     queryFn: async () => {
-      const res = await apiFetch<TriviaCategory[]>('/api/v1/games/trivia/categories');
+      const res = await apiFetch<TriviaCategory[]>('/api/v1/games/trivia');
       if (res.success && res.data) return res.data;
       throw new Error(res.message || 'Failed to load trivia categories');
     },
@@ -84,8 +84,8 @@ function TriviaPageContent(): React.JSX.Element {
   const startSessionMutation = useMutation({
     mutationFn: async (categoryId: string) => {
       const res = await apiFetch<{ sessionId: string; questions: TriviaQuestion[] }>(
-        '/api/v1/games/trivia/start',
-        { method: 'POST', body: JSON.stringify({ categoryId, questionCount: 10 }) }
+        '/api/v1/games/sessions',
+        { method: 'POST', body: JSON.stringify({ challengeId: categoryId }) }
       );
       if (res.success && res.data) return res.data;
       throw new Error(res.message || 'Failed to start trivia session');
@@ -106,15 +106,16 @@ function TriviaPageContent(): React.JSX.Element {
   });
 
   const answerMutation = useMutation({
-    mutationFn: async ({ questionId, answer }: { questionId: string; answer: string }) => {
-      const res = await apiFetch<TriviaResult>(`/api/v1/games/trivia/answer`, {
-        method: 'POST',
-        body: JSON.stringify({
-          sessionId: session?.sessionId,
-          questionId,
-          answer,
-        }),
-      });
+    mutationFn: async ({ answer }: { questionId: string; answer: string }) => {
+      const res = await apiFetch<TriviaResult>(
+        `/api/v1/games/sessions/${session?.sessionId}/submit`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            answer,
+          }),
+        }
+      );
       if (res.success && res.data) return res.data;
       throw new Error(res.message || 'Failed to submit answer');
     },

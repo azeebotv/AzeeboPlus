@@ -462,6 +462,23 @@ export class CreatorService {
     };
   }
 
+  async getCreatorProfile(userId: string): Promise<Record<string, unknown> | null> {
+    const profile = await this.prisma.creatorProfile.findUnique({
+      where: { userId },
+    });
+    if (!profile) return null;
+    return {
+      id: profile.id,
+      userId: profile.userId,
+      bio: profile.bio,
+      banner: profile.banner,
+      socialLinks: profile.socialLinks,
+      verified: profile.verified,
+      createdAt: profile.createdAt,
+      updatedAt: profile.updatedAt,
+    };
+  }
+
   async getSettings(userId: string): Promise<{
     payoutMethod: string;
     minimumPayout: number;

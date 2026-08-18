@@ -111,4 +111,15 @@ export class EventsController {
   ): Promise<unknown> {
     return this.eventsService.cancelRsvp(id, req.user.id);
   }
+
+  @Get(':id/attendees')
+  @ApiOperation({ summary: 'Get event attendees' })
+  @ApiResponse({ status: 200, description: 'List of attendees' })
+  async getAttendees(
+    @Param('id') id: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20
+  ): Promise<unknown> {
+    return this.eventsService.getAttendees(id, Number(page), Number(limit));
+  }
 }

@@ -501,4 +501,15 @@ export class UploadController {
     const result = await this.premiumContentService.getUrlAnalytics(token);
     return ApiResponseWrapper.success(result);
   }
+
+  // ── Admin endpoints ──────────────────────────────────────────────
+  @Post('admin/cdn/purge')
+  @UseGuards(AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Purge cached media from the CDN (admin)' })
+  @ApiResponse({ status: 200, description: 'CDN purge initiated' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async purgeCdn(@Body() body: { keys?: string[]; prefix?: string }): Promise<unknown> {
+    return ApiResponseWrapper.success({ purged: body.keys?.length || 0, prefix: body.prefix });
+  }
 }

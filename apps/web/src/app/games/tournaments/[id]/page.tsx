@@ -91,7 +91,7 @@ function TournamentDetailPageContent(): React.JSX.Element {
 
   const registerMutation = useMutation({
     mutationFn: async () => {
-      const res = await api.request(`/api/v1/games/tournaments/${id}/register`, {
+      const res = await api.request(`/api/v1/games/tournaments/${id}/enter`, {
         method: registered ? 'DELETE' : 'POST',
       });
       if (!res.success) throw new Error(res.message || 'Failed to update registration');

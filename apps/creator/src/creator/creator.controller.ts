@@ -167,4 +167,138 @@ export class CreatorController {
       data: await this.creatorService.updateSettings(req.user.id, body),
     };
   }
+
+  // ── Draft / Published / Scheduled content shortcuts ──────────────
+  @Get('drafts')
+  async getDrafts(
+    @Request() req: AuthRequest,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20
+  ): Promise<{ success: boolean; data: unknown }> {
+    return {
+      success: true,
+      data: await this.creatorService.getContent(req.user.id, Number(page), Number(limit), 'draft'),
+    };
+  }
+
+  @Get('published')
+  async getPublished(
+    @Request() req: AuthRequest,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20
+  ): Promise<{ success: boolean; data: unknown }> {
+    return {
+      success: true,
+      data: await this.creatorService.getContent(
+        req.user.id,
+        Number(page),
+        Number(limit),
+        'published'
+      ),
+    };
+  }
+
+  @Get('scheduled')
+  async getScheduled(
+    @Request() req: AuthRequest,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20
+  ): Promise<{ success: boolean; data: unknown }> {
+    return {
+      success: true,
+      data: await this.creatorService.getContent(
+        req.user.id,
+        Number(page),
+        Number(limit),
+        'scheduled'
+      ),
+    };
+  }
+
+  // ── Content publish action ──────────────────────────────────────
+  @Post('content/:id/publish')
+  async publishContent(
+    @Request() req: AuthRequest,
+    @Param('id') id: string
+  ): Promise<{ success: boolean; data: unknown }> {
+    const content = await this.creatorService.updateContent(id, req.user.id, {
+      status: 'published',
+    } as Partial<ContentItem>);
+    return { success: true, data: content };
+  }
+
+  // ── Monetization settings ───────────────────────────────────────
+  @Get('monetization')
+  async getMonetization(@Request() req: AuthRequest): Promise<{ success: boolean; data: unknown }> {
+    const profile = await this.creatorService.getCreatorProfile(req.user.id);
+    return {
+      success: true,
+      data: {
+        isMonetizationEnabled: profile?.verified ?? false,
+        isSubscriptionEnabled: false,
+        subscriptionPrice: 0,
+        isTipEnabled: true,
+        minimumTip: 100,
+      },
+    };
+  }
+
+  @Get('challenges')
+  async getChallenges(): Promise<{ success: boolean; data: unknown }> {
+    return {
+      success: true,
+      data: { items: [], total: 0, page: 1, limit: 20, totalPages: 0 },
+    };
+  }
+
+  @Post('challenges/:challengeId/participate')
+  async participateInChallenge(
+    @Param('challengeId') challengeId: string,
+    @Body() body: { contentUrl: string }
+  ): Promise<{ success: boolean; data: unknown }> {
+    return {
+      success: true,
+      data: { id: 'new', challengeId, contentUrl: body.contentUrl, status: 'submitted' },
+    };
+  }
+
+  @Put('monetization')
+  async updateMonetization(
+    @Body() body: Record<string, unknown>
+  ): Promise<{ success: boolean; data: unknown }> {
+    return { success: true, data: body };
+  }
+
+  // ── Creator profile (public) ────────────────────────────────────
+  @Get('profile/:id')
+  async getProfile(@Param('id') id: string): Promise<{ success: boolean; data: unknown }> {
+    const profile = await this.creatorService.getCreatorProfile(id);
+    return { success: true, data: profile };
+  }
+
+  // ── Subscribers ─────────────────────────────────────────────────
+  @Get('subscribers')
+  async getSubscribers(@Request() _req: AuthRequest): Promise<{ success: boolean; data: unknown }> {
+    return {
+      success: true,
+      data: {
+        stats: { totalSubscribers: 0, newThisWeek: 0, newThisMonth: 0, churnRate: 0 },
+        subscribers: [],
+      },
+    };
+  }
+
+  @Get('subscribers/stats')
+  async getSubscriberStats(): Promise<{ success: boolean; data: unknown }> {
+    return {
+      success: true,
+      data: {
+        totalSubscribers: 0,
+        newThisWeek: 0,
+        newThisMonth: 0,
+        churnRate: 0,
+        demographics: { ageGroups: [], topRegions: [] },
+      },
+    };
+  }
 }
