@@ -78,3 +78,8 @@ export const logger = new MobileLogger('MobileApp');
 export function createMobileLogger(serviceName: string): MobileLogger {
   return new MobileLogger(serviceName);
 }
+
+/** Alias used by pricing config and other modules */
+export function createLogger(serviceName: string): MobileLogger {
+  return new MobileLogger(serviceName);
+}

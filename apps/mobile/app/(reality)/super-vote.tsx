@@ -15,7 +15,8 @@ import { contentApi, walletApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
 import { analytics } from '../../src/utils/analytics';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
-import { votePackages as defaultVotePackages } from '../../src/config/prices';
+import { getVotePackages } from '../../src/config/prices';
+import type { VotePackage } from '../../src/types/api';
 
 interface Contestant {
   id: string;
@@ -23,15 +24,6 @@ interface Contestant {
   avatar: string;
   votes: number;
   rank: number;
-}
-
-interface VotePackage {
-  id: string;
-  name: string;
-  votes: number;
-  price: number;
-  description: string;
-  isPopular?: boolean;
 }
 
 export default function SuperVoteScreen() {
@@ -47,10 +39,11 @@ export default function SuperVoteScreen() {
   const [isVoting, setIsVoting] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
 
-  const votePackages: VotePackage[] = defaultVotePackages.superVote as unknown as VotePackage[];
+  const [votePackages, setVotePackages] = useState<VotePackage[]>([]);
 
   useEffect(() => {
     loadData();
+    getVotePackages('superVote').then((pkgs) => setVotePackages(pkgs)).catch(() => {});
   }, [episodeId]);
 
   const loadData = async () => {

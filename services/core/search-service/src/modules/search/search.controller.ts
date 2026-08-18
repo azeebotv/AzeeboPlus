@@ -11,8 +11,8 @@ import {
   HttpStatus,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { RateLimitGuard, RateLimit, ServiceAuthGuard, AdminGuard } from '@azeebo/security';
 
 import { SearchService } from './search.service.js';
 import { SearchResponse } from './interfaces/search-response.interface.js';
@@ -143,26 +143,31 @@ export class SearchController {
 
   // ── Admin endpoints ──────────────────────────────────────────────
   @Get('admin/stats')
+  @UseGuards(AdminGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Search service stats (admin)' })
   @ApiResponse({ status: 200, description: 'Search stats' })
-  async getAdminStats(): Promise<{ success: boolean; data: unknown }> {
-    return { success: true, data: { totalQueries: 0, avgResponseTime: 0 } };
+  async getAdminStats() {
+    const stats = await this.searchService.getAdminStats();
+    return { success: true, data: stats };
   }
 
   @Get('admin/queries')
+  @UseGuards(AdminGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Search query log (admin)' })
   @ApiResponse({ status: 200, description: 'Recent queries' })
-  async getAdminQueries(
-    @Query('page') page = 1,
-    @Query('limit') limit = 20
-  ): Promise<{ success: boolean; data: unknown }> {
-    return { success: true, data: { items: [], total: 0, page, limit } };
+  async getAdminQueries(@Query('page') page = 1, @Query('limit') limit = 20) {
+    const result = await this.searchService.getAdminQueries(Number(page), Number(limit));
+    return { success: true, data: result };
   }
 
   @Post('admin/indexes/repair')
+  @UseGuards(AdminGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Recreate missing GIN trigram indexes' })
   @ApiResponse({ status: 200, description: 'Indexes repaired' })
-  async repairIndexes(): Promise<{ success: boolean; data: unknown }> {
-    return { success: true, data: { repaired: 0 } };
+  async repairIndexes() {
+    return this.searchService.repairIndexes();
   }
 }

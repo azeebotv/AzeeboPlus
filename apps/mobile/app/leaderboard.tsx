@@ -13,7 +13,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { engagementApi } from '../src/api';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
-import { colors } from '../src/theme';
 
 interface LeaderboardEntry {
   rank: number;

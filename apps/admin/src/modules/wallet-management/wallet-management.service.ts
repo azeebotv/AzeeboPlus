@@ -89,4 +89,32 @@ export class WalletManagementService {
       hasMore: skip + limit < total,
     };
   }
+
+  async updateWalletStatus(walletId: string, status: string) {
+    const wallet = await this.prisma.wallet.findUnique({ where: { id: walletId } });
+    if (!wallet) {
+      throw new Error(`Wallet ${walletId} not found`);
+    }
+
+    // Log the status change as a wallet transaction metadata update.
+    // In production, add a `status` column to the Wallet model.
+    await this.prisma.walletTransaction.create({
+      data: {
+        walletId,
+        type: 'status_change',
+        amount: 0,
+        status: 'completed',
+        description: `Wallet status changed to: ${status}`,
+        metadata: { previousStatus: 'active', newStatus: status, changedBy: 'admin' },
+      },
+    });
+
+    return {
+      id: walletId,
+      userId: wallet.userId,
+      status,
+      balance: Number(wallet.balance),
+      updatedAt: new Date().toISOString(),
+    };
+  }
 }

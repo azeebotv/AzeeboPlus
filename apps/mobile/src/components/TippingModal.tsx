@@ -19,7 +19,7 @@ const TIER_COLORS: Record<string, string> = {
   bronze: colors.accent.bronze,
   silver: colors.accent.silver,
   gold: colors.accent.gold,
-  platinum: colors.accent.platinum,
+  platinum: '#E5E4E2',
 };
 
 interface TippingModalProps {

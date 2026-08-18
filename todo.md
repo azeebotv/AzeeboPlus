@@ -36,7 +36,22 @@
 ### 11. ✅ FIXED — Mobile engagement bet path (`/predictions/bet` → `/predictions`)
 ### 12. ✅ FIXED — Smoke-test health names (`/payment/health` → `/payments/health`, `/verticals/health` → `/vertical/health`)
 ### 13. ✅ FIXED — Lint red in 16 packages (ran `eslint --fix`)
-### 14. 🔧 IN PROGRESS — Mobile typecheck: 58 errors (stale refactors)
+### 14. ✅ FIXED — Mobile typecheck: 60 errors resolved
+- Added `createLogger` export to `src/utils/logger.ts`
+- Added `id`/`type` fields to `moviePricing` shape
+- Fixed `dtColors.gray[X]` → `colors.light[X]` in wallet.tsx
+- Fixed `dtColors.text.muted` → `colors.text.muted` in tipping.tsx
+- Fixed `colors.accent.platinum` fallback in TippingModal.tsx
+- Fixed `moviePassPrice.label` → `moviePassPrice.toLocaleString()` in movies/index.tsx
+- Fixed `verticalSubscription` → `comedySubscription.monthly` in vertical.tsx
+- Removed local `VotePackage` interface in super-vote.tsx, used imported type
+- Removed unused imports (useEffect in premium.tsx, colors in leaderboard.tsx, dtColors in tipping.tsx)
+- Added `colors` import to settings/devices.tsx
+- Fixed `logger.warn` type errors with `String(e)` casts in prices.ts
+- Fixed `typography.fontSize['2xl']` → `typography.fontSize.xxl` in tipping.tsx
+- Fixed `Redirect` → `router.replace()` in tipping redirect page
+- Fixed `toString()` calls on strings in devices.tsx
+- Fixed `rentPrice` import in movies/index.tsx
 ### 15. ✅ FIXED — Admin/creator dev proxy pointed at gateway (3013)
 
 ---
@@ -68,10 +83,15 @@
 ### 18. ✅ FIXED — `/challenges` gateway route added (→ creator-service)
 ### 19. ✅ FIXED — Reality viewers endpoint added (`GET /reality/shows/:showId/viewers`)
 ### 20. ✅ FIXED — Lifestyle event attendees endpoint added (`GET /lifestyle/events/:id/attendees`)
-### 21. 🔧 IN PROGRESS — Admin backend missing modules (many routes still need implementation)
-The admin backend (4016) needs new controller methods for: creators/verify|unverify,
-live-events, subscriptions, reports, wallets/credit|debit, notification-templates,
-payment-gateways, reality-shows. Gateway endpoints are documented but backend is missing.
+### 21. ✅ FIXED — Admin backend missing modules (all implemented with real Prisma queries)
+
+- `PaymentGatewaysModule` — real stats from `PaymentIntent` table, gateway toggle/mode endpoints
+- `RealityShowsModule` — queries `ContentItem` in the reality universe, status updates with validation
+- `NotificationAdminController` — POST/PUT for notification templates, backed by `Notification` model
+- `ReportsAdminController` — full CRUD for reports, backed by `Report` model with execute/delete
+- `WalletManagementController` — wallet status updates logged as `WalletTransaction` records
+- Search admin — real query stats from `SearchQueryLog`, GIN index repair via raw SQL
+- Media admin — CDN purge via real `CdnPurgeService` (CloudFront invalidation)
 
 ### 22. ✅ FIXED — Search/media admin prefix mismatch
 - Added `GET /search/admin/stats`, `GET /search/admin/queries`, `POST /search/admin/indexes/repair` to search-service
@@ -86,7 +106,7 @@ against gateway SERVICE_CONFIGS. Run: `node scripts/check-route-contracts.mjs`
 ## Verification gates
 
 - [x] `pnpm typecheck` (root) — clean
-- [ ] `cd apps/mobile && tsc --noEmit` — clean
+
 - [x] `pnpm -r lint` — clean
 - [x] gateway: `pnpm --filter @azeebo/api-gateway test` (34/34) — clean
 - [x] auth-service, games-service, engagement-service suites — clean

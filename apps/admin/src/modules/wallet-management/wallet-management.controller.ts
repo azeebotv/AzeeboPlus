@@ -1,4 +1,4 @@
-import { Inject, Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Inject, Controller, Get, Put, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { WalletManagementService } from './wallet-management.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -29,5 +29,10 @@ export class WalletManagementController {
     @Query('limit') limit = 20
   ) {
     return this.walletService.getWalletTransactions(id, Number(page), Number(limit));
+  }
+
+  @Put(':walletId/status')
+  async updateWalletStatus(@Param('walletId') walletId: string, @Body('status') status: string) {
+    return this.walletService.updateWalletStatus(walletId, status);
   }
 }
