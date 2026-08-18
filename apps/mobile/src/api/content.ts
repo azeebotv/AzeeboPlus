@@ -253,7 +253,7 @@ export const contentApi = {
   },
 
   getEpisode: async (episodeId: string): Promise<ApiResponse<Episode>> => {
-    return apiClient.get<ApiResponse<Episode>>(`/api/v1/content/episodes/${episodeId}`);
+    return apiClient.get<ApiResponse<Episode>>(`/api/v1/reality/episodes/${episodeId}`);
   },
 
   vote: async (data: {
@@ -261,21 +261,22 @@ export const contentApi = {
     contestantId?: string;
     isSuperVote: boolean;
   }): Promise<ApiResponse<Vote>> => {
-    return apiClient.post<ApiResponse<Vote>>('/api/v1/content/vote', data);
+    return apiClient.post<ApiResponse<Vote>>('/api/v1/reality/votes', {
+      contestantId: data.contestantId,
+      showId: data.episodeId,
+    });
   },
 
   getEpisodes: async (contentId: string): Promise<ApiResponse<Episode[]>> => {
-    return apiClient.get<ApiResponse<Episode[]>>(`/api/v1/content/${contentId}/episodes`);
+    return apiClient.get<ApiResponse<Episode[]>>(`/api/v1/reality/shows/${contentId}/episodes`);
   },
 
   getContestant: async (contestantId: string): Promise<ApiResponse<Contestant>> => {
-    return apiClient.get<ApiResponse<Contestant>>(`/api/v1/content/contestants/${contestantId}`);
+    return apiClient.get<ApiResponse<Contestant>>(`/api/v1/reality/contestants/${contestantId}`);
   },
 
-  getContestants: async (episodeId: string): Promise<ApiResponse<Contestant[]>> => {
-    return apiClient.get<ApiResponse<Contestant[]>>(
-      `/api/v1/content/episodes/${episodeId}/contestants`
-    );
+  getContestants: async (showId: string): Promise<ApiResponse<Contestant[]>> => {
+    return apiClient.get<ApiResponse<Contestant[]>>(`/api/v1/reality/shows/${showId}/contestants`);
   },
 
   superVote: async (data: {
@@ -283,11 +284,14 @@ export const contentApi = {
     episodeId: string;
     voteCount: number;
   }): Promise<ApiResponse<Vote>> => {
-    return apiClient.post<ApiResponse<Vote>>('/api/v1/content/super-vote', data);
+    return apiClient.post<ApiResponse<Vote>>('/api/v1/reality/supervotes', {
+      contestantId: data.contestantId,
+      showId: data.episodeId,
+    });
   },
 
   getResults: async (contentId: string): Promise<ApiResponse<VoteResult[]>> => {
-    return apiClient.get<ApiResponse<VoteResult[]>>(`/api/v1/content/${contentId}/results`);
+    return apiClient.get<ApiResponse<VoteResult[]>>(`/api/v1/reality/predictions/${contentId}`);
   },
 
   getCreatorContent: async (): Promise<ApiResponse<CreatorContent[]>> => {
@@ -354,8 +358,8 @@ export const contentApi = {
 
   getRecommendations: async (type?: string): Promise<ApiResponse<Recommendation[]>> => {
     const url = type
-      ? `/api/v1/content/recommendations?type=${type}`
-      : '/api/v1/content/recommendations';
+      ? `/api/v1/recommendation/content?type=${type}`
+      : '/api/v1/recommendation/content';
     return apiClient.get<ApiResponse<Recommendation[]>>(url);
   },
 

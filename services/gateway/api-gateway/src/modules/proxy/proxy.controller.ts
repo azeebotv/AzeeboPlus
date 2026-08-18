@@ -1168,6 +1168,23 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'DELETE', path: '/:id/cancel', description: 'Cancel event' },
     ],
   },
+  {
+    path: '/challenges',
+    envKey: 'CREATOR_SERVICE_URL',
+    fallbackUrl: 'http://creator-service:3018',
+    supportedVersions: ['1'],
+    defaultVersion: '1',
+    pathStrategy: 'default',
+    endpoints: [
+      { method: 'GET', path: '/', description: 'List challenges' },
+      { method: 'POST', path: '/', description: 'Create challenge' },
+      {
+        method: 'POST',
+        path: '/:challengeId/participate',
+        description: 'Participate in challenge',
+      },
+    ],
+  },
 ];
 @ApiTags('Gateway')
 @Controller('api')

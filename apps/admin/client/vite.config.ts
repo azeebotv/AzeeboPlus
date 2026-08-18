@@ -19,11 +19,11 @@ export default defineConfig({
     port: 4100,
     proxy: {
       '/api': {
-        target: 'http://localhost:4016',
+        target: 'http://localhost:3013',
         changeOrigin: true,
       },
       '/health': {
-        target: 'http://localhost:4016',
+        target: 'http://localhost:3013',
         changeOrigin: true,
       },
     },

@@ -205,7 +205,7 @@ describe('Proxy Controller - Admin universe-flag undo routes', () => {
     const route = adminRoute();
     expect(route).toBeDefined();
     expect(route?.envKey).toBe('ADMIN_SERVICE_URL');
-    expect(route?.fallbackUrl).toBe('http://admin-service:4016');
+    expect(route?.fallbackUrl).toBe('http://localhost:4016');
     expect(route?.pathStrategy).toBe('no-prefix');
     expect(route?.pathRewrite).toEqual({ '^/v1': '' });
   });

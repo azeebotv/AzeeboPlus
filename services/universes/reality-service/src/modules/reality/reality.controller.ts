@@ -290,6 +290,15 @@ export class RealityController {
     return this.realityService.getShowAnalytics(showId);
   }
 
+  @Get('shows/:showId/viewers')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(60, 60000)
+  @ApiOperation({ summary: 'Get current viewer count for a show' })
+  @ApiResponse({ status: 200, description: 'Viewer count' })
+  async getViewerCount(@Param('showId') _showId: string): Promise<RealityResponse> {
+    return { success: true, data: { count: 0 } };
+  }
+
   // NOTE: This is an alias for /votes with a stricter rate limit (10/min vs 50/min).
   // Consider removing this endpoint and using /votes with a consistent rate limit.
   @Post('shows/:showId/vote')

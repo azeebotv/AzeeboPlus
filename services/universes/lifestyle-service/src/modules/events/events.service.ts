@@ -653,4 +653,54 @@ export class EventsService {
       };
     }
   }
+
+  async getAttendees(
+    eventId: string,
+    page = 1,
+    limit = 20
+  ): Promise<{ success: boolean; data: unknown; error?: { code: string; message: string } }> {
+    try {
+      const event = await this.prisma.event.findUnique({ where: { id: eventId } });
+      if (!event) throw new NotFoundException(`Event not found: ${eventId}`);
+
+      const [rsvps, total] = await Promise.all([
+        this.prisma.eventRsvp.findMany({
+          where: { eventId, status: 'attending' },
+          skip: (page - 1) * limit,
+          take: limit,
+          orderBy: { createdAt: 'asc' },
+        }),
+        this.prisma.eventRsvp.count({ where: { eventId, status: 'attending' } }),
+      ]);
+
+      const attendees = rsvps.map((rsvp) => ({
+        id: rsvp.userId,
+        userId: rsvp.userId,
+        eventId: rsvp.eventId,
+        status: rsvp.status,
+        guests: rsvp.guests,
+        note: rsvp.note || '',
+        createdAt: rsvp.createdAt.toISOString(),
+      }));
+
+      return {
+        success: true,
+        data: {
+          items: attendees,
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to get attendees: ${error}`);
+      return {
+        success: false,
+        data: undefined,
+        error: { code: 'FETCH_FAILED', message: 'Failed to get attendees' },
+      };
+    }
+  }
 }

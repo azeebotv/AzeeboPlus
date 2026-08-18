@@ -20,6 +20,8 @@ SKIP_FILES=(
   'pnpm-lock.yaml'
   'package-lock.json'
   '*.md'
+  'scripts/pre-commit-hook.sh'
+  'scripts/__tests__/pre-commit-secrets.test.mjs'
 )
 
 echo "Checking for secrets in staged files..."
@@ -35,8 +37,9 @@ if [ -z "$STAGED_FILES" ]; then
 fi
 
 for FILE in $STAGED_FILES; do
-  # Skip non-text files
-  if ! file "$FILE" 2>/dev/null | grep -qi 'text'; then
+  # Skip non-text files (but keep PEM/cert files — they can contain private keys)
+  FILE_TYPE=$(file "$FILE" 2>/dev/null || true)
+  if ! echo "$FILE_TYPE" | grep -qiE 'text|PEM|certificate'; then
     continue
   fi
 
@@ -65,9 +68,17 @@ for FILE in $STAGED_FILES; do
     [[ "$line" =~ \<[a-z] ]] && continue
     [[ "$line" =~ your-.*-here ]] && continue
     [[ "$line" =~ change-this ]] && continue
-    # Skip CI-only test secrets (smoke_*, ci-* prefixed, or docker -e smoke_* patterns)
-    [[ "$line" =~ smoke_ ]] && continue
-    [[ "$line" =~ ci-flagchain ]] && continue
+    # Check CI test secret allowlist (.github/ci-test-secret-allowlist)
+    if [[ -f ".github/ci-test-secret-allowlist" ]]; then
+      while IFS= read -r allowlist_pattern; do
+        # Skip comments and blank lines
+        [[ "$allowlist_pattern" =~ ^[[:space:]]*# ]] && continue
+        [[ -z "$allowlist_pattern" ]] && continue
+        if echo "$line" | grep -qiE "$allowlist_pattern"; then
+          continue 2  # skip outer while loop — value is allowlisted
+        fi
+      done < .github/ci-test-secret-allowlist
+    fi
 
     # Check for real secrets
     if echo "$line" | grep -qiE 'JWT_ACCESS_SECRET=[A-Za-z0-9+/=_-]{20,}'; then
@@ -79,7 +90,7 @@ for FILE in $STAGED_FILES; do
     elif echo "$line" | grep -qiE 'GATEWAY_SECRET=[A-Za-z0-9+/=_-]{20,}'; then
       echo -e "${RED}Hardcoded GATEWAY_SECRET found in:${NC} $FILE"
       FOUND=1
-    elif echo "$line" | grep -qiE 'PAYSTACK_SECRET_KEY=sk_[a-zA-Z0-9]{20,}'; then
+    elif echo "$line" | grep -qiE 'PAYSTACK_SECRET_KEY=sk_[a-zA-Z0-9_]{20,}'; then
       echo -e "${RED}Hardcoded PAYSTACK_SECRET_KEY found in:${NC} $FILE"
       FOUND=1
     elif echo "$line" | grep -qiE 'FLUTTERWAVE_SECRET_KEY=FLWSECK-[a-zA-Z0-9]{20,}'; then
@@ -92,7 +103,7 @@ for FILE in $STAGED_FILES; do
       echo -e "${RED}Private key found in:${NC} $FILE"
       FOUND=1
     fi
-  done < <(grep -iE -e 'JWT_ACCESS_SECRET=' -e 'JWT_REFRESH_SECRET=' -e 'GATEWAY_SECRET=' -e 'PAYSTACK_SECRET_KEY=' -e 'FLUTTERWAVE_SECRET_KEY=' -e 'TWILIO_AUTH_TOKEN=' -e 'PRIVATE_KEY=' "$FILE" 2>/dev/null || true)
+  done < <(grep -iE -e 'JWT_ACCESS_SECRET=' -e 'JWT_REFRESH_SECRET=' -e 'GATEWAY_SECRET=' -e 'PAYSTACK_SECRET_KEY=' -e 'FLUTTERWAVE_SECRET_KEY=' -e 'TWILIO_AUTH_TOKEN=' -e 'PRIVATE_KEY=' -e 'BEGIN.*PRIVATE KEY' "$FILE" 2>/dev/null || true)
 done
 
 if [ $FOUND -eq 1 ]; then

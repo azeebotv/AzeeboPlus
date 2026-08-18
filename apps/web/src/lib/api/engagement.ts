@@ -60,7 +60,7 @@ export function createEngagementMethods(client: RequestClient) {
     },
 
     getPersonalizedRecommendations: async (): Promise<ApiResponse<RecommendationGroup[]>> => {
-      return client.request<RecommendationGroup[]>('/api/v1/recommendation/personalized');
+      return client.request<RecommendationGroup[]>('/api/v1/recommendation/personalized-feed');
     },
 
     getFeaturedSlides: async (limit = 5): Promise<ApiResponse<ContentItem[]>> => {

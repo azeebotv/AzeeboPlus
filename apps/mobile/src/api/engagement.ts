@@ -72,7 +72,7 @@ export const engagementApi = {
     amount: number;
   }): Promise<ApiResponse<{ success: boolean }>> {
     return apiClient.post<ApiResponse<{ success: boolean }>>(
-      '/api/v1/engagement/predictions/bet',
+      '/api/v1/engagement/predictions',
       data
     );
   },
@@ -229,7 +229,7 @@ export const homepageEngagementApi = {
 
   getPersonalizedRecommendations: async (): Promise<ApiResponse<RecommendationGroup[]>> => {
     const response = await apiClient.get<RecommendationGroup[]>(
-      '/api/v1/recommendation/personalized'
+      '/api/v1/recommendation/personalized-feed'
     );
     return { success: true, data: response };
   },

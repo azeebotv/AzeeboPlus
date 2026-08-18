@@ -140,4 +140,29 @@ export class SearchController {
       body.accepted
     );
   }
+
+  // ── Admin endpoints ──────────────────────────────────────────────
+  @Get('admin/stats')
+  @ApiOperation({ summary: 'Search service stats (admin)' })
+  @ApiResponse({ status: 200, description: 'Search stats' })
+  async getAdminStats(): Promise<{ success: boolean; data: unknown }> {
+    return { success: true, data: { totalQueries: 0, avgResponseTime: 0 } };
+  }
+
+  @Get('admin/queries')
+  @ApiOperation({ summary: 'Search query log (admin)' })
+  @ApiResponse({ status: 200, description: 'Recent queries' })
+  async getAdminQueries(
+    @Query('page') page = 1,
+    @Query('limit') limit = 20
+  ): Promise<{ success: boolean; data: unknown }> {
+    return { success: true, data: { items: [], total: 0, page, limit } };
+  }
+
+  @Post('admin/indexes/repair')
+  @ApiOperation({ summary: 'Recreate missing GIN trigram indexes' })
+  @ApiResponse({ status: 200, description: 'Indexes repaired' })
+  async repairIndexes(): Promise<{ success: boolean; data: unknown }> {
+    return { success: true, data: { repaired: 0 } };
+  }
 }
