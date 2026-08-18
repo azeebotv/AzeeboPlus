@@ -113,10 +113,7 @@ describe('MoviesController kill-switch (movie_* flags)', () => {
   });
 
   it('blocks POST /movies/watchlist with 403 when movie_watchlist_sync is off', async () => {
-    await request(baseUrl)
-      .post('/movies/watchlist')
-      .send({ movieId: 'movie-1' })
-      .expect(403);
+    await request(baseUrl).post('/movies/watchlist').send({ movieId: 'movie-1' }).expect(403);
     expect(mockMoviesService.addToWatchlist).not.toHaveBeenCalled();
   });
 

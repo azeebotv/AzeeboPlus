@@ -221,9 +221,7 @@ describe('Analytics Controller Contract Tests', () => {
     });
 
     it('rejects a payload with neither eventName nor type', async () => {
-      const response = await request(baseUrl)
-        .post('/v1/analytics/track')
-        .send({ metadata: {} });
+      const response = await request(baseUrl).post('/v1/analytics/track').send({ metadata: {} });
 
       expect(response.status).toBe(400);
     });

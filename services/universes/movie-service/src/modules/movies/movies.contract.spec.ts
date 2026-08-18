@@ -165,10 +165,7 @@ describe('Movies Controller Contract Tests', () => {
     it('should return error for non-existent movie', () => {
       mockMoviesService.getMovie.mockRejectedValue(new NotFoundException('Movie not found'));
 
-      return request(baseUrl)
-        .get('/movies/nonexistent')
-        .set('x-user-id', 'user-123')
-        .expect(404);
+      return request(baseUrl).get('/movies/nonexistent').set('x-user-id', 'user-123').expect(404);
     });
   });
 

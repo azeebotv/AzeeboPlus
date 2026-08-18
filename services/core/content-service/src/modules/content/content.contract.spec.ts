@@ -247,9 +247,7 @@ describe('Content Controller Contract Tests', () => {
 
   describe('GET /content', () => {
     it('should list content with filters', async () => {
-      const response = await request(baseUrl)
-        .get('/content')
-        .query({ universe: 'reality' });
+      const response = await request(baseUrl).get('/content').query({ universe: 'reality' });
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({

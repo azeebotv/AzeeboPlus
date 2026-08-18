@@ -97,10 +97,7 @@ describe('GamesController kill-switch (games_* flags)', () => {
   });
 
   it('blocks POST /games/sessions with 403 when games_trivia_ai is off', async () => {
-    await request(baseUrl)
-      .post('/games/sessions')
-      .send({ gameId: 'trivia-1' })
-      .expect(403);
+    await request(baseUrl).post('/games/sessions').send({ gameId: 'trivia-1' }).expect(403);
     expect(mockGamesService.startSession).not.toHaveBeenCalled();
   });
 

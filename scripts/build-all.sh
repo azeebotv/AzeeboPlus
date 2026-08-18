@@ -144,14 +144,6 @@ build_t0() {
       continue
     fi
 
-    # shared-services needs prisma generate first
-    if [[ "$pkg" == "shared-services" ]] && [[ "$SKIP_PRISMA" != "true" ]]; then
-      if [[ -f "$pkg_dir/prisma/schema.prisma" ]]; then
-        log "  [$count/${#T0_PACKAGES[@]}] $pkg: generating prisma..."
-        (cd "$pkg_dir" && pnpm run prisma:generate 2>&1) >/dev/null 2>&1 || true
-      fi
-    fi
-
     if [[ "$DRY_RUN" == "true" ]]; then
       log "  [$count/${#T0_PACKAGES[@]}] $pkg: [dry-run] would build"
       continue
@@ -188,21 +180,6 @@ build_services() {
     if [[ "$DRY_RUN" == "true" ]]; then
       log "  [$count/${#SERVICES[@]}] $pkg: [dry-run] would build"
       continue
-    fi
-
-    # Prisma generate
-    if [[ "$has_prisma" == "true" ]] && [[ "$SKIP_PRISMA" != "true" ]]; then
-      if [[ -f "$service_dir/prisma/schema.prisma" ]]; then
-        log "  [$count/${#SERVICES[@]}] $pkg: generating prisma..."
-        local prisma_out
-        if ! prisma_out="$(cd "$service_dir" && pnpm run prisma:generate 2>&1)"; then
-          error "  [$count/${#SERVICES[@]}] $pkg: prisma:generate FAILED"
-          error "    $prisma_out" | tail -3
-          FAILED=$((FAILED + 1))
-          continue
-        fi
-        bash "$ROOT_DIR/scripts/patch-prisma-client.sh" 2>/dev/null || true
-      fi
     fi
 
     # Build
@@ -256,6 +233,20 @@ build_apps() {
 main() {
   log "Azeebo+ Build (dry-run: ${DRY_RUN})"
   log "T0: ${BUILD_T0} | Services: ${BUILD_SERVICES} | Apps: ${BUILD_APPS}"
+
+  # Single-pass Prisma client generation for every schema, then the repo-wide
+  # client patch once — mirrors Dockerfile.all-in-one's T-1 step instead of
+  # running `prisma:generate` per service (which also skips the shared
+  # @prisma/client verification). Skipped with --no-prisma; --dry-run never
+  # mutates the tree.
+  if [[ "$SKIP_PRISMA" != "true" ]] && [[ "$DRY_RUN" != "true" ]]; then
+    section "Generating Prisma clients (single pass)"
+    if ! bash "$ROOT_DIR/scripts/generate-prisma-clients.sh"; then
+      error "prisma:generate FAILED"
+      exit 1
+    fi
+    bash "$ROOT_DIR/scripts/patch-prisma-client.sh" 2>/dev/null || true
+  fi
 
   [[ "$BUILD_T0" == "true" ]]       && build_t0
   [[ "$BUILD_SERVICES" == "true" ]] && build_services

@@ -27,6 +27,7 @@ scripts/
 !scripts/demo-content/
 !scripts/patch-prisma-client.sh
 !scripts/patch-build-tsconfig.sh
+!scripts/generate-prisma-clients.sh
 
 # Markdown (except README)
 *.md

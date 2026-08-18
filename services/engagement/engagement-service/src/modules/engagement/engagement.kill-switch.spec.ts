@@ -70,7 +70,11 @@ describe('Engagement kill-switch (engagement_* flags)', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
-    await app.listen(0);
+    // Bind IPv4 loopback EXPLICITLY: plain listen(0) binds `::` (IPv6 wildcard),
+    // which can silently coexist with another process's 127.0.0.1 listener on the
+    // same port — and the v4 socket then answers our requests, so a dev server's
+    // guard (403) is served instead of this app's (isEnabled never called).
+    await app.listen(0, '127.0.0.1');
     baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
@@ -85,13 +89,21 @@ describe('Engagement kill-switch (engagement_* flags)', () => {
 
   it('blocks GET /engagement/leaderboard with 403 when engagement_leaderboards is off', async () => {
     await request(baseUrl).get('/engagement/leaderboard').expect(403);
-    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(engagementFlags.leaderboards);
+    expect(mockFeatureFlagService.isEnabled).toHaveBeenCalledWith(
+      engagementFlags.leaderboards,
+      undefined,
+      undefined
+    );
     expect(mockEngagementService.getLeaderboard).not.toHaveBeenCalled();
   });
 
   it('blocks GET /engagement/rankings with 403 when engagement_rankings is off', async () => {
     await request(baseUrl).get('/engagement/rankings').expect(403);
-    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(engagementFlags.rankings);
+    expect(mockFeatureFlagService.isEnabled).toHaveBeenCalledWith(
+      engagementFlags.rankings,
+      undefined,
+      undefined
+    );
     expect(mockEngagementService.getRankings).not.toHaveBeenCalled();
   });
 
@@ -100,7 +112,11 @@ describe('Engagement kill-switch (engagement_* flags)', () => {
       .post('/engagement/predictions')
       .send({ contentId: 'content-1', prediction: 'home_win' })
       .expect(403);
-    expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(engagementFlags.predictions);
+    expect(mockFeatureFlagService.isEnabled).toHaveBeenCalledWith(
+      engagementFlags.predictions,
+      undefined,
+      undefined
+    );
     expect(mockEngagementService.submitPrediction).not.toHaveBeenCalled();
   });
 });

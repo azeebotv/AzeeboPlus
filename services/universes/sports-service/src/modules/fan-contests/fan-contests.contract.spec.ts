@@ -164,9 +164,7 @@ describe('Fan Contests Controller Contract Tests', () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
-      const response = await request(baseUrl).get(
-        '/v1/sports/fan-contests/nonexistent'
-      );
+      const response = await request(baseUrl).get('/v1/sports/fan-contests/nonexistent');
 
       expect([404, 200]).toContain(response.status);
       expect(response.body).toEqual({
@@ -229,9 +227,7 @@ describe('Fan Contests Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(baseUrl).get(
-        '/v1/sports/fan-contests/contest-1/leaderboard'
-      );
+      const response = await request(baseUrl).get('/v1/sports/fan-contests/contest-1/leaderboard');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({

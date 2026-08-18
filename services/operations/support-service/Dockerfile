@@ -13,7 +13,11 @@ COPY services/operations/support-service/src ./services/operations/support-servi
 COPY services/operations/support-service/tsconfig*.json ./services/operations/support-service/
 COPY services/operations/support-service/prisma ./services/operations/support-service/prisma
 
-RUN for i in 1 2 3 4 5; do pnpm --filter @azeebo/support-service prisma:generate && break || (echo "Retry prisma generate $i/5..." && sleep 15); done
+# Single-pass Prisma client generation for every schema in this context
+# (support-service + the workspace packages), mirroring Dockerfile.all-in-one's
+# T-1 step — no per-service prisma:generate to drift.
+COPY scripts/generate-prisma-clients.sh ./scripts/generate-prisma-clients.sh
+RUN bash scripts/generate-prisma-clients.sh
 RUN pnpm --filter @azeebo/support-service run build
 
 FROM node:22.16.0-alpine AS runner

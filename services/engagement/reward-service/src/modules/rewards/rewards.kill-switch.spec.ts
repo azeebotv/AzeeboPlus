@@ -84,10 +84,7 @@ describe('Rewards kill-switch (reward_* flags)', () => {
   });
 
   it('403s GET /rewards when reward_points_enabled is off', async () => {
-    await request(baseUrl)
-      .get('/rewards')
-      .set('Authorization', 'Bearer test')
-      .expect(403);
+    await request(baseUrl).get('/rewards').set('Authorization', 'Bearer test').expect(403);
     expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(rewardFlags.pointsEnabled);
     expect(mockRewardsService.getRewardAccount).not.toHaveBeenCalled();
   });
@@ -98,10 +95,7 @@ describe('Rewards kill-switch (reward_* flags)', () => {
       Promise.resolve(key === rewardFlags.pointsEnabled)
     );
 
-    await request(baseUrl)
-      .get('/rewards/missions')
-      .set('Authorization', 'Bearer test')
-      .expect(403);
+    await request(baseUrl).get('/rewards/missions').set('Authorization', 'Bearer test').expect(403);
     expect(mockRewardsService.getMissions).not.toHaveBeenCalled();
   });
 
@@ -110,9 +104,7 @@ describe('Rewards kill-switch (reward_* flags)', () => {
       Promise.resolve(key === rewardFlags.pointsEnabled)
     );
 
-    const res = await request(baseUrl)
-      .get('/rewards')
-      .set('Authorization', 'Bearer test');
+    const res = await request(baseUrl).get('/rewards').set('Authorization', 'Bearer test');
     expect(res.status).toBe(200);
     expect(mockRewardsService.getRewardAccount).toHaveBeenCalled();
   });

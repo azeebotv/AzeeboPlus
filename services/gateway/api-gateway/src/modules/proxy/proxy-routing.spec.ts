@@ -123,6 +123,35 @@ describe('ProxyController routing gates', () => {
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(circuitBreaker.proxyRequest).toHaveBeenCalled();
+    // Regression: a refactor cached GET JSON responses but never wrote them to
+    // the client — the first GET to any endpoint returned an empty body. The
+    // proxied body must be delivered (and cached) on cache miss.
+    expect(res.json).toHaveBeenCalledWith({ ok: true });
+  });
+
+  it('delivers GET JSON bodies even when response caching is disabled', async () => {
+    flagService.isEnabled.mockImplementation((key: string) =>
+      Promise.resolve(key === gatewayFlags.circuitBreaker) // responseCache OFF
+    );
+    const res = mockRes();
+    const circuitBreaker = (
+      controller as unknown as {
+        circuitBreakerProxyService: { proxyRequest: jest.Mock };
+      }
+    ).circuitBreakerProxyService;
+    circuitBreaker.proxyRequest.mockResolvedValue({
+      status: 200,
+      data: { ok: true, uncached: true },
+      headers: {},
+      circuitState: 'CLOSED',
+    });
+
+    await (
+      controller as unknown as { proxyGet: (s: string, r: Request, res: unknown) => Promise<void> }
+    ).proxyGet('content', mockReq({ params: { service: 'content', path: 'home' } }), res);
+
+    expect(res.json).toHaveBeenCalledWith({ ok: true, uncached: true });
+    expect(circuitBreaker.proxyRequest).toHaveBeenCalled();
   });
 
   it('returns 503 during maintenance mode before any forwarding', async () => {

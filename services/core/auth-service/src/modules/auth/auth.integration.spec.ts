@@ -368,10 +368,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
         updatedAt: new Date(),
       });
 
-      await request(baseUrl)
-        .post('/v1/auth/refresh')
-        .send({ refreshToken })
-        .expect(201);
+      await request(baseUrl).post('/v1/auth/refresh').send({ refreshToken }).expect(201);
 
       mockPrismaService.session.findFirst.mockResolvedValue(null);
 

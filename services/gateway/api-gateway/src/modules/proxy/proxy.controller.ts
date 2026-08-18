@@ -363,7 +363,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
   {
     path: '/admin',
     envKey: 'ADMIN_SERVICE_URL',
-    fallbackUrl: 'http://admin-service:4016',
+    fallbackUrl: 'http://localhost:4016',
     supportedVersions: ['1'],
     defaultVersion: '1',
     pathStrategy: 'no-prefix',
@@ -694,8 +694,11 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
   },
   {
     path: '/creator',
-    envKey: 'CREATOR_SERVICE_URL',
-    fallbackUrl: 'http://creator:4014',
+    // The standalone creator dashboard app (:4014), NOT the creator
+    // microservice (:3018) — a dedicated env key so /creator and /creators
+    // can point at different upstreams.
+    envKey: 'CREATOR_APP_URL',
+    fallbackUrl: 'http://localhost:4014',
     supportedVersions: ['1'],
     defaultVersion: '1',
     pathStrategy: 'no-prefix',
@@ -979,7 +982,9 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     ],
   },
   {
-    path: '/movie',
+    // movie-service controllers are @Controller('movies') — plural — so the
+    // gateway route must be /movies (web app calls /api/v1/movies/*).
+    path: '/movies',
     envKey: 'MOVIE_SERVICE_URL',
     fallbackUrl: 'http://movie-service:3011',
     supportedVersions: ['1'],
@@ -1007,7 +1012,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     ],
   },
   {
-    path: '/movie-genres',
+    path: '/genres',
     envKey: 'MOVIE_SERVICE_URL',
     fallbackUrl: 'http://movie-service:3011',
     supportedVersions: ['1'],
@@ -1651,14 +1656,17 @@ export class ProxyController {
       requestId,
       route
     );
-    if (
-      method === 'GET' &&
-      responseCacheEnabled &&
-      response &&
-      typeof response === 'object' &&
-      !res.headersSent
-    ) {
-      await this.cacheManager.set(cacheKey, response, CACHE_TTL_MS);
+    // forwardRequest() returns the parsed body for JSON GET responses but does
+    // NOT write it to `res` (it only writes text/stream bodies). Deliver it to
+    // the client here — and cache it for subsequent requests. Regression: a
+    // refactor dropped the old `res.json(response)` call, so the first GET to
+    // any endpoint returned an empty body (or hung) and only cached repeats
+    // within the 5-minute TTL succeeded.
+    if (method === 'GET' && response && typeof response === 'object' && !res.headersSent) {
+      if (responseCacheEnabled) {
+        await this.cacheManager.set(cacheKey, response, CACHE_TTL_MS);
+      }
+      res.json(response);
     }
   }
 

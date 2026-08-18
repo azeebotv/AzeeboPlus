@@ -274,9 +274,7 @@ describe('Universe Controller Contract Tests', () => {
     it('should return 404 for non-existent location', () => {
       mockUniverseService.getLocationBySlug.mockRejectedValue(new Error('Location not found'));
 
-      return request(baseUrl)
-        .get('/v1/vertical/universes/locations/nonexistent')
-        .expect(500);
+      return request(baseUrl).get('/v1/vertical/universes/locations/nonexistent').expect(500);
     });
   });
 });

@@ -101,6 +101,7 @@ jobs:
   test-pr:
     name: Test PR
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     services:
       postgres:
         image: postgres:15
@@ -135,11 +136,32 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm run prisma:generate --if-present
-      - run: pnpm run test --if-present
+      # Same serial sweep as local `pnpm test:sweep`: prisma:generate first,
+      # then every workspace's jest/vitest suite serially (--runInBand). Direct
+      # jest invocation dodges the pnpm 10 `--` leak that `pnpm -r run test`
+      # suffers, so CI and local runs exercise the exact same suites/flags.
+      # CI opts into --fail-fast (abort at the first failing workspace) and
+      # writes the JSON summary; local runs keep the full report by default.
+      - name: Full serial test sweep
+        run: pnpm run test:sweep -- --fail-fast --json-out=/tmp/test-sweep-summary.json
+      - name: Surface sweep summary
+        if: always()
+        run: |
+          if [ -f /tmp/test-sweep-summary.json ]; then
+            node -e 'const fs=require("fs"); const s=JSON.parse(fs.readFileSync("/tmp/test-sweep-summary.json","utf8")); console.log("workspaces: "+s.workspaces.total+" (failed: "+s.workspaces.failed+", skipped: "+s.workspaces.skipped+")"); console.log("tests: "+s.totals.tests+" passed, "+s.totals.skipped+" skipped, "+s.totals.failed+" failed"); if (s.failedWorkspaces.length) console.log("failed: "+s.failedWorkspaces.join(", "));'
+          fi
       - name: Detect leaked clients (auth-service open handles)
         timeout-minutes: 3
         run: pnpm --filter @azeebo/auth-service test:openhandles
       - run: pnpm run contracts --if-present
+      - name: Upload sweep artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-sweep-artifacts
+          path: |
+            /tmp/codebuff-test-sweep.log
+            /tmp/test-sweep-summary.json
 
   integration-test-pr:
     name: Integration Tests PR

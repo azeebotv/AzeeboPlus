@@ -20,7 +20,10 @@ interface MfaRequest {
 @ApiTags('MFA')
 @FeatureFlag(authFlags.mfaTotp)
 @UseGuards(FeatureFlagGuard, ServiceAuthGuard)
-@Controller('mfa')
+// Served through the gateway as /v1/auth/mfa/* (the gateway routes /auth and
+// prefixes the controller path) — the controller must live under 'auth/mfa'
+// to match the documented/guarded /auth/mfa/* contract.
+@Controller('auth/mfa')
 export class MfaController {
   constructor(@Inject(MfaService) private readonly mfaService: MfaService) {}
 
