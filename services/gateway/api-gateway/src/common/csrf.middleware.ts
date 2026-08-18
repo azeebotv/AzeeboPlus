@@ -49,6 +49,17 @@ export class CsrfMiddleware implements NestMiddleware {
       return next();
     }
 
+    // CSRF only protects cookie-authenticated flows: a browser automatically
+    // attaches cookies to cross-origin requests, but never Authorization
+    // headers. Requests carrying a bearer token cannot be CSRF-attacked, so
+    // skip validation for them. This is also what lets native/mobile clients
+    // (which have no cookie jar) perform state-changing calls through the
+    // gateway without a CSRF token.
+    const authHeader = req.headers['authorization'];
+    if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
+      return next();
+    }
+
     // Reject if cookie-parser is not configured (cookies unavailable) — cannot validate CSRF
     if (!req.cookies) {
       this.logger.warn(`CSRF validation failed: cookies unavailable [${req.method} ${req.path}]`);

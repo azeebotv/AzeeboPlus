@@ -20,6 +20,12 @@ export type TestAppConfigurator = (app: INestApplication) => void;
  * the whole suite and makes requests deterministic. Always request with
  * `request(baseUrl)`, never `request(app.getHttpServer())`.
  *
+ * The app is bound to 127.0.0.1 explicitly (not `listen(0)`'s default `::`):
+ * a bare IPv6-wildcard bind can silently coexist with another process's
+ * 127.0.0.1 listener on the same port, and the v4 socket then answers our
+ * requests — so a dev server's response (e.g. 403) is served instead of the
+ * test app's. Pinning 127.0.0.1 guarantees loopback traffic reaches us.
+ *
  * Usage:
  *   let app: INestApplication;
  *   let baseUrl: string;
@@ -56,7 +62,9 @@ export async function bootTestApp(
   const app = moduleFixture.createNestApplication();
   configure?.(app);
   await app.init();
-  await app.listen(0);
+  // Explicit IPv4-loopback bind — see the docblock above for why `listen(0)`
+  // alone is not deterministic on hosts running other servers.
+  await app.listen(0, '127.0.0.1');
   const address = app.getHttpServer().address();
   if (!address || typeof address === 'string') {
     throw new Error('bootTestApp: app is not listening on a TCP port');

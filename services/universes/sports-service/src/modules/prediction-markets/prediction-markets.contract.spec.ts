@@ -215,13 +215,11 @@ describe('Prediction Markets Controller Contract Tests', () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
-      const response = await request(baseUrl)
-        .post('/v1/sports/predictions/market-1/predict')
-        .send({
-          userId: 'user-123',
-          selectedOption: 'Team A',
-          stake: 100,
-        });
+      const response = await request(baseUrl).post('/v1/sports/predictions/market-1/predict').send({
+        userId: 'user-123',
+        selectedOption: 'Team A',
+        stake: 100,
+      });
 
       expect(response.status).toBe(201);
       expect(response.body).toEqual({

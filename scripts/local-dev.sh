@@ -348,6 +348,7 @@ load_env() {
   export LIFESTYLE_SERVICE_URL="${LIFESTYLE_SERVICE_URL:-http://localhost:3016}"
   export VERTICAL_SERVICE_URL="${VERTICAL_SERVICE_URL:-http://localhost:3017}"
   export CREATOR_SERVICE_URL="${CREATOR_SERVICE_URL:-http://localhost:3018}"
+  export CREATOR_APP_URL="${CREATOR_APP_URL:-http://localhost:4014}"
   export SPORTS_SERVICE_URL="${SPORTS_SERVICE_URL:-http://localhost:3021}"
 }
 

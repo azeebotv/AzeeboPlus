@@ -15,7 +15,10 @@ interface OtpRequest {
 }
 
 @ApiTags('OTP')
-@Controller('otp')
+// Served through the gateway as /v1/auth/otp/* — must live under 'auth/otp'
+// to match the documented /auth/otp/* contract (gateway endpoint list,
+// auth throttler patterns, and the web/mobile clients).
+@Controller('auth/otp')
 export class OtpController {
   constructor(@Inject(OtpService) private readonly otpService: OtpService) {}
 

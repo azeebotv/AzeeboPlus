@@ -32,6 +32,17 @@ name: Dockerized E2E (flag chain + failover + pg_trgm + cache-thrash)
 #                           post-load step asserts the FlagCacheThrash alert
 #                           condition (run-window Redis read share <= 10% for
 #                           both the per-key TTL cache and the list cache).
+#   all-in-one-smoke        builds Dockerfile.all-in-one and boots the image
+#                           with its REAL entrypoint (Postgres init → service
+#                           DBs → Prisma migrations → supervisord), waits for
+#                           the image HEALTHCHECK, probes the exposed ports and
+#                           runs scripts/docker-smoke-tests.sh (nginx → gateway
+#                           → every service health). This is the gate that
+#                           validates Dockerfile/deploy changes (e.g. the T-1
+#                           prisma-generate step) without a local Docker
+#                           engine. PRs only trigger it when Docker-relevant
+#                           files change (docker-changes filter); push and
+#                           workflow_dispatch always run it.
 #
 # Redis and Postgres run as GitHub Actions SERVICE CONTAINERS (fast, standard
 # CI pattern). Only the two provider STUBS (paystack-mock / flutterwave-mock)
@@ -85,6 +96,128 @@ jobs:
           /tmp/actionlint -color -shellcheck= -pyflakes= \
             -ignore 'context "secrets" is not allowed here' \
             .github/workflows/*.yml
+
+  # Path filter for the all-in-one smoke job. PRs only run the (slow) docker
+  # build when the Dockerfile or its inputs actually changed; on push and
+  # workflow_dispatch the filter is skipped and the result defaults to true
+  # (those events always run the smoke).
+  docker-changes:
+    name: Detect Docker-relevant changes
+    runs-on: ubuntu-latest
+    outputs:
+      docker: ${{ steps.filter.outputs.docker || steps.manual.outputs.docker }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: filter
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            docker:
+              - 'Dockerfile.all-in-one'
+              - '.dockerignore'
+              - 'deploy/**'
+              - 'docker-compose.all-in-one.yml'
+              - 'scripts/generate-prisma-clients.sh'
+              - 'scripts/patch-prisma-client.sh'
+              - 'scripts/docker-smoke-tests.sh'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+      - id: manual
+        if: github.event_name != 'pull_request'
+        run: echo "docker=true" >> "$GITHUB_OUTPUT"
+
+  all-in-one-smoke:
+    name: All-in-One build + entrypoint healthcheck
+    runs-on: ubuntu-latest
+    needs: [actionlint, docker-changes]
+    timeout-minutes: 120
+    if: ${{ github.event_name != 'pull_request' || needs.docker-changes.outputs.docker == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build all-in-one image
+        run: |
+          docker build -f Dockerfile.all-in-one \
+            -t azeebo-all-in-one:smoke \
+            --build-arg NEXT_PUBLIC_API_URL=http://localhost:3013 \
+            --build-arg CACHEBUST="${{ github.sha }}" \
+            .
+
+      - name: Boot container with entrypoint
+        run: |
+          docker run -d --name azeebo-smoke --shm-size=1g \
+            -p 80:80 -p 3013:3013 -p 4000:4000 -p 4014:4014 -p 4016:4016 \
+            -e POSTGRES_USER=azeebo \
+            -e POSTGRES_PASSWORD=smoke_postgres_pw \
+            -e POSTGRES_DB=azeebo_dev \
+            -e REDIS_PASSWORD=smoke_redis_pw \
+            -e JWT_ACCESS_SECRET=smoke_jwt_access_secret_0123456789abcdef0123456789abcdef0123456789abcdef \
+            -e JWT_REFRESH_SECRET=smoke_jwt_refresh_secret_0123456789abcdef0123456789abcdef0123456789abcdef \
+            -e INTERNAL_API_KEY=smoke_internal_api_key \
+            -e GATEWAY_SECRET=smoke_gateway_secret \
+            -e WEBHOOK_SECRET=smoke_webhook_secret \
+            -e ALLOWED_ORIGINS=http://localhost:80,http://localhost:3013 \
+            azeebo-all-in-one:smoke
+
+      - name: Wait for Docker HEALTHCHECK (nginx /health → gateway)
+        run: |
+          for i in $(seq 1 90); do
+            status=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' azeebo-smoke 2>/dev/null || echo "starting")
+            echo "poll ${i}/90: $status"
+            [ "$status" = "healthy" ] && exit 0
+            if [ "$status" = "unhealthy" ]; then
+              echo "::group::container log tail (unhealthy)"
+              docker logs azeebo-smoke --tail 200 2>&1 || true
+              echo "::endgroup::"
+              exit 1
+            fi
+            sleep 10
+          done
+          echo "Timed out waiting for container to become healthy"
+          echo "::group::container log tail (timeout)"
+          docker logs azeebo-smoke --tail 200 2>&1 || true
+          echo "::endgroup::"
+          exit 1
+
+      - name: Probe exposed entry points
+        run: |
+          set -e
+          echo "== gateway :3013/health =="
+          curl -fsS --max-time 10 http://localhost:3013/health; echo
+          echo "== nginx :80/health =="
+          curl -fsS --max-time 10 http://localhost/health; echo
+          # Frontends start last (supervisord priority 60) — poll until they
+          # answer; they only need to boot, not return 200.
+          for name_port in "web 4000 /" "creator 4014 /" "admin 4016 /"; do
+            read -r name port path <<< "$name_port"
+            code="000"
+            for i in $(seq 1 30); do
+              code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "http://localhost:${port}${path}" 2>/dev/null || echo "000")
+              [ "$code" != "000" ] && break
+              sleep 5
+            done
+            if [ "$code" = "000" ]; then
+              echo "FAIL $name :$port never answered"
+              exit 1
+            fi
+            echo "OK $name :$port answered HTTP $code"
+          done
+
+      - name: Service health smoke checks (nginx → gateway → services)
+        run: bash scripts/docker-smoke-tests.sh http://localhost:80
+
+      - name: Dump container logs on failure
+        if: failure()
+        run: |
+          docker inspect azeebo-smoke --format 'health={{if .State.Health}}{{.State.Health.Status}}{{else}}n/a{{end}}' 2>/dev/null || true
+          docker logs azeebo-smoke --tail 300 2>&1 || true
+
+      - name: Tear down
+        if: always()
+        run: |
+          docker rm -f azeebo-smoke 2>/dev/null || true
+          docker image rm azeebo-all-in-one:smoke 2>/dev/null || true
 
   dockerized-e2e:
     name: Dockerized e2e suites

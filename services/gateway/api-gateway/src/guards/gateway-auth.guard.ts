@@ -55,9 +55,9 @@ export class GatewayAuthGuard implements CanActivate {
     /^\/api\/v\d+\/creators\/[^/]+\/content$/,
     /^\/api\/v\d+\/creators\/[^/]+$/,
     // Universe-specific trending and listing (read-only) — explicit sub-routes
-    /^\/api\/v\d+\/(comedy|games|reality|movie|sports|lifestyle|vertical)\/(trending|featured|popular|new|list)$/,
-    /^\/api\/v\d+\/(comedy|games|reality|movie|sports|lifestyle|vertical)\/[^/]+$/,
-    /^\/api\/v\d+\/(comedy|games|reality|movie|sports|lifestyle|vertical)$/,
+    /^\/api\/v\d+\/(comedy|games|reality|movies|sports|lifestyle|vertical)\/(trending|featured|popular|new|list)$/,
+    /^\/api\/v\d+\/(comedy|games|reality|movies|sports|lifestyle|vertical)\/[^/]+$/,
+    /^\/api\/v\d+\/(comedy|games|reality|movies|sports|lifestyle|vertical)$/,
     // Search suggestions and trending searches
     /^\/api\/v\d+\/search\/(trending|suggestions)$/,
     // Engagement public data (leaderboard, rankings, prediction results)

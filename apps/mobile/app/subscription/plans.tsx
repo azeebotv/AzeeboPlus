@@ -26,8 +26,10 @@ export default function SubscriptionPlansScreen() {
     setIsLoading(true);
     try {
       const [plansRes, currentRes] = await Promise.all([
-        apiClient.get<SubscriptionPlan[]>('/api/v1/subscriptions/plans'),
-        apiClient.get<SubscriptionPlan>('/api/v1/subscriptions/current').catch(() => null),
+        // Note: gateway route is /subscription (singular) — the rest of the
+        // mobile API layer already uses /v1/subscription/*.
+        apiClient.get<SubscriptionPlan[]>('/v1/subscription/plans'),
+        apiClient.get<SubscriptionPlan>('/v1/subscription/current').catch(() => null),
       ]);
 
       if (plansRes) {

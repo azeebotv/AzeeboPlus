@@ -13,7 +13,11 @@ COPY services/universes/lifestyle-service/src ./services/universes/lifestyle-ser
 COPY services/universes/lifestyle-service/tsconfig*.json ./services/universes/lifestyle-service/
 COPY services/universes/lifestyle-service/prisma ./services/universes/lifestyle-service/prisma
 
-RUN for i in 1 2 3 4 5; do pnpm --filter @azeebo/lifestyle-service prisma:generate && break || (echo "Retry prisma generate $i/5..." && sleep 15); done
+# Single-pass Prisma client generation for every schema in this context
+# (lifestyle-service + the workspace packages), mirroring Dockerfile.all-in-one's
+# T-1 step — no per-service prisma:generate to drift.
+COPY scripts/generate-prisma-clients.sh ./scripts/generate-prisma-clients.sh
+RUN bash scripts/generate-prisma-clients.sh
 RUN pnpm --filter @azeebo/lifestyle-service run build
 
 FROM node:22.16.0-alpine AS runner
@@ -37,7 +41,10 @@ RUN for i in 1 2 3 4 5; do pnpm install --prod --frozen-lockfile && break || (ec
 
 COPY --from=builder /app/services/universes/lifestyle-service/dist ./services/universes/lifestyle-service/dist
 COPY services/universes/lifestyle-service/prisma ./services/universes/lifestyle-service/prisma
-RUN for i in 1 2 3 4 5; do pnpm --filter @azeebo/lifestyle-service prisma:generate && break || (echo "Retry prisma generate $i/5..." && sleep 15); done
+# Single-pass Prisma client generation (see builder stage note) — regenerates
+# the client after the prod-only install wiped it.
+COPY scripts/generate-prisma-clients.sh ./scripts/generate-prisma-clients.sh
+RUN bash scripts/generate-prisma-clients.sh
 
 RUN chown -R nodejs:nodejs /app
 

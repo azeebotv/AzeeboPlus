@@ -60,11 +60,18 @@ DATABASE_URL="${DATABASE_URL:-postgresql://azeebo:azeebo@localhost:5432/azeebo?s
 export DATABASE_URL
 
 section "Discovering Prisma schemas"
+# Only search roots that exist in THIS context — per-service Docker builds
+# (services/*/Dockerfile) COPY just the one service + packages/, so apps/ and
+# most of services/ are absent there.
+SCHEMA_ROOTS=()
+for d in "$ROOT_DIR/services" "$ROOT_DIR/apps" "$ROOT_DIR/packages"; do
+  [ -d "$d" ] && SCHEMA_ROOTS+=("$d")
+done
 # bash 3.2 (macOS default) has no mapfile, so populate via a read loop.
 SCHEMAS=()
 while IFS= read -r schema; do
   SCHEMAS+=("$schema")
-done < <(find "$ROOT_DIR/services" "$ROOT_DIR/apps" "$ROOT_DIR/packages" \
+done < <(find "${SCHEMA_ROOTS[@]}" \
   -maxdepth 5 -name schema.prisma \
   -not -path "*/node_modules/*" \
   -not -path "*/dist/*" \

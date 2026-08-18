@@ -83,10 +83,7 @@ describe('Referral kill-switch (referral_* flags)', () => {
   });
 
   it('403s GET /referrals/code when referral_program_enabled is off', async () => {
-    await request(baseUrl)
-      .get('/referrals/code')
-      .set('Authorization', 'Bearer test')
-      .expect(403);
+    await request(baseUrl).get('/referrals/code').set('Authorization', 'Bearer test').expect(403);
     expect(mockFeatureFlagService.isEnabled.mock.calls[0][0]).toBe(referralFlags.programEnabled);
     expect(mockReferralService.getReferralCode).not.toHaveBeenCalled();
   });
@@ -102,9 +99,7 @@ describe('Referral kill-switch (referral_* flags)', () => {
 
   it('passes the routes through when referral_program_enabled is on', async () => {
     mockFeatureFlagService.isEnabled.mockResolvedValue(true);
-    const res = await request(baseUrl)
-      .get('/referrals/code')
-      .set('Authorization', 'Bearer test');
+    const res = await request(baseUrl).get('/referrals/code').set('Authorization', 'Bearer test');
     expect(res.status).toBe(200);
     expect(mockReferralService.getReferralCode).toHaveBeenCalled();
   });

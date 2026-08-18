@@ -65,6 +65,9 @@ for FILE in $STAGED_FILES; do
     [[ "$line" =~ \<[a-z] ]] && continue
     [[ "$line" =~ your-.*-here ]] && continue
     [[ "$line" =~ change-this ]] && continue
+    # Skip CI-only test secrets (smoke_*, ci-* prefixed, or docker -e smoke_* patterns)
+    [[ "$line" =~ smoke_ ]] && continue
+    [[ "$line" =~ ci-flagchain ]] && continue
 
     # Check for real secrets
     if echo "$line" | grep -qiE 'JWT_ACCESS_SECRET=[A-Za-z0-9+/=_-]{20,}'; then

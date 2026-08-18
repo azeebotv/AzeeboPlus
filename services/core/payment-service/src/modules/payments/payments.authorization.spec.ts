@@ -237,12 +237,10 @@ describe('Payments Service Authorization Tests', () => {
 
     it('should reject unauthenticated users from requesting refunds', async () => {
       authEnabled = false;
-      const response = await request(baseUrl)
-        .post('/v1/payments/refund-request')
-        .send({
-          transactionId: 'trx-abc123',
-          reason: 'Product not received',
-        });
+      const response = await request(baseUrl).post('/v1/payments/refund-request').send({
+        transactionId: 'trx-abc123',
+        reason: 'Product not received',
+      });
 
       // Without user context, request fails auth (403) or crashes (500)
       expect([403, 500]).toContain(response.status);

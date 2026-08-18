@@ -373,7 +373,10 @@ describe('FlagMetricsModule', () => {
   });
 });
 
-async function bootApp(service: string, path?: string): Promise<{ app: INestApplication; url: string }> {
+async function bootApp(
+  service: string,
+  path?: string
+): Promise<{ app: INestApplication; url: string }> {
   const moduleRef = await Test.createTestingModule({
     imports: [FlagMetricsModule.register({ service, path })],
   }).compile();
