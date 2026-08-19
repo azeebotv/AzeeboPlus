@@ -6,6 +6,7 @@ import { CreatorResponse } from './interfaces/creator-response.interface.js';
 import axios from 'axios';
 import { randomUUID } from 'crypto';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { sanitizeFields } from '@azeebo/validation';
 
 interface UpdateProfileData {
   displayName?: string;
@@ -455,10 +456,15 @@ export class CreatorsService {
       throw new NotFoundException(`Creator profile not found`);
     }
 
+    const sanitized = sanitizeFields(
+      profileData as unknown as Record<string, unknown>,
+      ['displayName', 'bio']
+    ) as unknown as UpdateProfileData;
+
     const updatedProfile = await this.prisma.creatorProfile.update({
       where: { userId },
       data: {
-        ...profileData,
+        ...sanitized,
         socialLinks: profileData.socialLinks as unknown as Prisma.InputJsonValue | undefined,
       },
     });

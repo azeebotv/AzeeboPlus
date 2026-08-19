@@ -14,6 +14,15 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger('ExceptionFilter');
 
   /**
+   * Remove internal service URLs from error messages to prevent leaking
+   * infrastructure details to clients (e.g. http://auth-service:3000).
+   */
+  private sanitizeMessage(msg: string): string {
+    // Matches http:// or https:// followed by a hostname and optional port/path
+    return msg.replace(/https?:\/\/[^\s"']+/g, '[internal service]');
+  }
+
+  /**
    * Derive an RFC 7807 problem type URI from the HTTP status code.
    * @see https://www.rfc-editor.org/rfc/rfc9457#name-https-api-rfc9110org-
    */
@@ -83,6 +92,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       code = 'INTERNAL_SERVER_ERROR';
 
       this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack);
+    } else if (exception instanceof Error && /https?:\/\//.test(exception.message)) {
+      // Axios/fetch errors often include the full URL in the message.
+      status = HttpStatus.BAD_GATEWAY;
+      message = 'Bad gateway';
+      error = 'Bad Gateway';
+      code = 'BAD_GATEWAY';
+
+      this.logger.error(`Upstream error: ${exception.message}`, exception.stack);
     } else {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
       message = 'An unknown error occurred';
@@ -92,6 +109,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       this.logger.error(`Unknown exception type: ${exception}`);
     }
 
+    // Sanitize the message to remove internal URLs before sending to client.
+    const sanitizedMessage = this.sanitizeMessage(message);
+
     // RFC 7807 (Problem Details for HTTP APIs) response envelope
     const errorResponse: ErrorResponse = {
       success: false,
@@ -100,12 +120,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       type: this.getProblemTypeUri(status),
       title: this.getProblemTitle(status),
       status,
-      detail: message,
+      detail: sanitizedMessage,
       instance: request?.url,
 
       // Application-level fields
       code,
-      message,
+      message: sanitizedMessage,
       error,
       statusCode: status,
       ...(details ? { details } : {}),

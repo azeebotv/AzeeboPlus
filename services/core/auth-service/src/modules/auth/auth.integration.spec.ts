@@ -127,6 +127,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
     del: jest.fn(),
     incr: jest.fn(),
     expire: jest.fn(),
+    ttl: jest.fn().mockResolvedValue(300),
     exists: jest.fn(),
     quit: jest.fn(),
   };
@@ -538,19 +539,27 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
 
       mockPrismaService.user.findUnique.mockResolvedValue(lockoutUser);
 
-      let failCount = 0;
+      // Track state per key so incr/get/ttl work coherently
+      const store = new Map<string, string>();
       mockRedisService.get.mockImplementation((key: string) => {
-        if (key.startsWith('failed_login:')) {
-          return failCount >= 5 ? String(failCount) : null;
-        }
-        return null;
+        return Promise.resolve(store.get(key) ?? null);
+      });
+      mockRedisService.set.mockImplementation((key: string, value: string) => {
+        store.set(key, value);
+        return Promise.resolve('OK');
       });
       mockRedisService.incr.mockImplementation((key: string) => {
-        if (key.startsWith('failed_login:')) {
-          failCount++;
-          return failCount;
-        }
-        return 1;
+        const current = parseInt(store.get(key) ?? '0', 10);
+        const next = current + 1;
+        store.set(key, String(next));
+        return Promise.resolve(next);
+      });
+      mockRedisService.del.mockImplementation((key: string) => {
+        store.delete(key);
+        return Promise.resolve(1);
+      });
+      mockRedisService.ttl.mockImplementation((key: string) => {
+        return store.has(key) ? Promise.resolve(300) : Promise.resolve(-2);
       });
 
       for (let i = 0; i < 5; i++) {

@@ -44,3 +44,10 @@ export { Public, IS_PUBLIC_KEY } from './decorators/public.decorator';
 
 /** Metadata key for storing permissions on route handlers. */
 export { PERMISSIONS_KEY } from '@azeebo/shared-types';
+
+/** WebSocket origin validation for cross-site WebSocket hijacking prevention. */
+export {
+  createWebSocketCorsConfig,
+  isOriginAllowed,
+  getWebSocketOrigins,
+} from './websocket-origin.validator';

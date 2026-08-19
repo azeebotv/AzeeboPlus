@@ -266,12 +266,36 @@ export class SocialAuthService {
    * The state parameter is embedded in the URL and will be returned
    * to the client's callback endpoint.
    */
-  buildAuthorizeUrl(provider: 'google' | 'apple', state: string, _redirectUri?: string): string {
+  buildAuthorizeUrl(provider: 'google' | 'apple', state: string, redirectUri?: string): string {
     const googleClientId = this.configService.get<string>('GOOGLE_CLIENT_ID', '');
     const appleClientId = this.configService.get<string>('APPLE_CLIENT_ID', '');
 
     const callbackBase = `${this.configService.get<string>('BASE_URL', 'http://localhost:3000')}/auth/social/callback`;
     const callbackUrl = `${callbackBase}?provider=${provider}`;
+
+    // Validate redirectUri against an allowlist to prevent open redirect attacks
+    if (redirectUri) {
+      const allowedRedirectHosts = this.configService
+        .get<string>('SOCIAL_AUTH_ALLOWED_REDIRECT_HOSTS', '')
+        .split(',')
+        .map((h) => h.trim())
+        .filter(Boolean);
+
+      if (allowedRedirectHosts.length > 0) {
+        try {
+          const redirectHost = new URL(redirectUri).host;
+          if (!allowedRedirectHosts.includes(redirectHost)) {
+            this.logger.warn(
+              `Rejected social auth redirect to non-allowed host: ${redirectHost}`
+            );
+            throw new BadRequestException('Redirect URI is not on the allowed list');
+          }
+        } catch (e) {
+          if (e instanceof BadRequestException) throw e;
+          throw new BadRequestException('Invalid redirect URI');
+        }
+      }
+    }
 
     switch (provider) {
       case 'google': {

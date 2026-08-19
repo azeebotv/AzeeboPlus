@@ -29,7 +29,7 @@ import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
         [mediaFlags.uploadChunked]: false,
         [mediaFlags.presignedUrls]: true,
         [mediaFlags.transcodeAv1]: false,
-        [mediaFlags.virusScan]: false,
+        [mediaFlags.virusScan]: true,
         [mediaFlags.cdnEdgeCache]: true,
       },
     }),

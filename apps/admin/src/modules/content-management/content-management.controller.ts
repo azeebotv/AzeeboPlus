@@ -204,6 +204,7 @@ export class ContentManagementController {
   }
 
   @Post('bulk/delete')
+  @Roles('superadmin')
   async bulkDelete(@Req() req: AuthRequest, @Body() body: { ids: string[] }) {
     this.logger.log(`Bulk soft-deleting ${body.ids.length} items`);
     const result = await this.contentService.bulkDelete(body.ids);

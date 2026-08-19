@@ -55,13 +55,15 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
           lazyConnect: true,
         });
         this.redisClient!.on('error', (err: Error) => {
-          this.logger.warn(
-            `Redis throttler connection error, falling back to in-memory: ${err.message}`
+          this.logger.error(
+            `[CRITICAL] Redis throttler connection lost — falling back to in-memory rate limiting. Rate limits are NOT enforced across instances! Error: ${err.message}`
           );
           this.redisClient = null;
         });
         this.redisClient!.connect().catch((err) => {
-          this.logger.warn('Redis connect failed', err);
+          this.logger.error(
+            `[CRITICAL] Redis throttler connect failed — falling back to in-memory rate limiting. Rate limits are NOT enforced across instances! Error: ${(err as Error).message}`
+          );
           this.redisClient = null;
         });
         this.useRedis = true;

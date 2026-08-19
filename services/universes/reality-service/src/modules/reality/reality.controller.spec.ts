@@ -13,6 +13,7 @@ import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { RealityController } from './reality.controller.js';
 import { RealityService } from './reality.service.js';
+import { RealityGateway } from './reality.gateway.js';
 import { RateLimitService } from '@azeebo/security';
 
 jest.mock('@azeebo/shared-services', () => ({
@@ -90,6 +91,12 @@ describe('RealityController', () => {
         {
           provide: RealityService,
           useValue: mockRealityService,
+        },
+        {
+          provide: RealityGateway,
+          useValue: {
+            getViewerCount: jest.fn().mockResolvedValue(0),
+          },
         },
         {
           provide: RateLimitService,

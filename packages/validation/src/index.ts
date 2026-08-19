@@ -4,6 +4,9 @@ export { ValidationModule } from './validation.module';
 /** Interceptor that sanitizes outgoing response payloads. */
 export { SanitizeOutputInterceptor } from './pipes/sanitize-output.interceptor';
 
+/** Sanitize user-generated input before persisting to prevent stored XSS. */
+export { sanitizeInput, sanitizeFields, USER_CONTENT_FIELDS } from './pipes/sanitize-input';
+
 /** Validator decorator that enforces strong password requirements. */
 export { IsStrongPassword } from './validators/password.validator';
 
