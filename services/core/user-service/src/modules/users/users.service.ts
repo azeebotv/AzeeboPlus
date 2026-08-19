@@ -9,6 +9,7 @@ import { UpdateUserProfileDto } from './dto/update-user-profile.dto.js';
 import { CompleteProfileSetupDto } from './dto/complete-profile-setup.dto.js';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto.js';
 import { Prisma } from '../../prisma/client/index.js';
+import { sanitizeFields } from '@azeebo/validation';
 
 interface UniverseAffinityResponse {
   userId: string;
@@ -419,6 +420,11 @@ export class UsersService {
         throw new NotFoundException(`User not found`);
       }
 
+      const sanitized = sanitizeFields(
+        dto as unknown as Record<string, unknown>,
+        ['displayName', 'bio']
+      ) as unknown as UpdateUserProfileDto;
+
       // user_profile_v2: the richer profile surface (bio/location/isPublic on
       // UserProfile) is only written while the flag is on; off keeps the
       // legacy displayName/avatar-only behavior so the v2 fields are ignored.
@@ -427,8 +433,8 @@ export class UsersService {
       const updatedUser = await this.prisma.user.update({
         where: { id: userId },
         data: {
-          ...(dto.displayName && { displayName: dto.displayName }),
-          ...(dto.avatar && { avatar: dto.avatar }),
+          ...(sanitized.displayName && { displayName: sanitized.displayName }),
+          ...(sanitized.avatar && { avatar: sanitized.avatar }),
         },
         select: {
           id: true,
@@ -446,15 +452,15 @@ export class UsersService {
         userProfile = await this.prisma.userProfile.upsert({
           where: { userId },
           update: {
-            ...(dto.bio !== undefined && { bio: dto.bio }),
+            ...(sanitized.bio !== undefined && { bio: sanitized.bio }),
             ...(dto.location !== undefined && { location: dto.location }),
             ...(dto.isPublic !== undefined && { isPublic: dto.isPublic }),
           },
           create: {
             userId,
-            displayName: dto.displayName ?? null,
-            avatar: dto.avatar ?? null,
-            bio: dto.bio ?? null,
+            displayName: sanitized.displayName ?? null,
+            avatar: sanitized.avatar ?? null,
+            bio: sanitized.bio ?? null,
             location: dto.location ?? null,
             isPublic: dto.isPublic ?? true,
           },

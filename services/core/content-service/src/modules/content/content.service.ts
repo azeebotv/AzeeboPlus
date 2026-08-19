@@ -24,6 +24,7 @@ import { ContentRelationshipService } from './content-relationship.service.js';
 import { ContentCategoryService } from './content-category.service.js';
 import { ContentIngestionService } from './content-ingestion.service.js';
 import { FeatureFlagService, contentFlags } from '@azeebo/feature-flags';
+import { sanitizeFields, sanitizeInput } from '@azeebo/validation';
 
 type ContentWithUniverse = Prisma.ContentItemGetPayload<{ include: { universe: true } }>;
 type ContentWithUniverseCategories = Prisma.ContentItemGetPayload<{
@@ -550,8 +551,12 @@ export class ContentService {
     createContentDto: CreateContentDto
   ): Promise<{ success: boolean; data: ContentWithUniverse }> {
     try {
+      const sanitized = sanitizeFields(
+        createContentDto as unknown as Record<string, unknown>,
+        ['title', 'description', 'name']
+      ) as unknown as CreateContentDto;
       const content = (await this.contentRepository.create({
-        ...createContentDto,
+        ...sanitized,
         creatorId: userId,
       })) as ContentWithUniverse;
 
@@ -590,9 +595,13 @@ export class ContentService {
         throw new ForbiddenException('Not authorized to update this content');
       }
 
+      const sanitized = sanitizeFields(
+        updateContentDto as unknown as Record<string, unknown>,
+        ['title', 'description', 'name']
+      ) as unknown as UpdateContentDto;
       const updatedContent = (await this.contentRepository.update(
         id,
-        updateContentDto as Partial<Record<string, unknown>>
+        sanitized as Partial<Record<string, unknown>>
       )) as ContentWithUniverse;
 
       // Invalidate content cache
@@ -1161,7 +1170,8 @@ export class ContentService {
         }
       }
 
-      const comment = await this.contentRepository.addComment(contentId, userId, text, parentId);
+      const sanitizedText = sanitizeInput(text) as string;
+      const comment = await this.contentRepository.addComment(contentId, userId, sanitizedText, parentId);
 
       return {
         success: true,

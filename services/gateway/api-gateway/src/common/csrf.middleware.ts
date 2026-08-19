@@ -40,11 +40,15 @@ export class CsrfMiddleware implements NestMiddleware {
       if (!csrfToken) {
         csrfToken = randomBytes(32).toString('hex');
         res.cookie(CsrfMiddleware.CSRF_COOKIE_NAME, csrfToken, {
-          httpOnly: false, // Client needs to read this to set the header
-          secure: process.env.NODE_ENV === 'production',
+          httpOnly: true, // Prevents XSS exfiltration — token is sent in response header instead
+          secure: process.env.NODE_ENV !== 'development',
           sameSite: 'strict',
           path: '/',
         });
+        // Send token in response header so clients can read it and set the
+        // X-CSRF-Token header on subsequent requests. httpOnly cookie blocks
+        // JavaScript access; this header is the client-side source of truth.
+        res.setHeader('X-CSRF-Token', csrfToken);
       }
       return next();
     }

@@ -10,6 +10,7 @@ module.exports = {
   ],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^sanitize-html$': '<rootDir>/__mocks__/sanitize-html.ts',
   },
   collectCoverageFrom: [
     '**/*.(t|j)s',

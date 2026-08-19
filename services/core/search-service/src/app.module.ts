@@ -7,6 +7,7 @@ import { DatabaseModule } from './modules/database/database.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { PopulationModule } from './modules/population/population.module.js';
 import { RepairModule } from './modules/repair/repair.module.js';
+import { RetentionModule } from './modules/retention/retention.module.js';
 import { RateLimiterModule } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { ServiceAuthGuard } from '@azeebo/security';
@@ -26,6 +27,7 @@ import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
     HealthModule,
     PopulationModule,
     RepairModule,
+    RetentionModule,
     // Search toggles: trending caching + query logging ON; faceted search,
     // typo tolerance, and AI suggestions OFF until rolled out.
     FlagMetricsModule.register({ service: 'search-service', path: 'flag-metrics' }),

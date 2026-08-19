@@ -13,7 +13,15 @@ import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.ALLOWED_ORIGINS?.split(',').map((o) => o.trim()) || [],
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      // LOW-07: Validate WebSocket origins against a strict allowlist.
+      if (!origin) return callback(null, true);
+      const allowed = process.env.ALLOWED_ORIGINS?.split(',').map((o) => o.trim()) || [];
+      if (allowed.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Origin not allowed'), false);
+    },
     credentials: true,
   },
   namespace: '/sports',
@@ -62,12 +70,11 @@ export class SportsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   private extractToken(client: Socket): string | null {
+    // MED-04: Removed query string token support — tokens in URLs are logged
+    // in server access logs, proxy logs, and browser history.
     const authHeader = client.handshake.auth?.token || client.handshake.headers?.authorization;
     if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
       return authHeader.substring(7);
-    }
-    if (typeof client.handshake.query?.token === 'string') {
-      return client.handshake.query.token;
     }
     return null;
   }

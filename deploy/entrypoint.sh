@@ -75,9 +75,11 @@ done
 # ============================================================
 echo "==> Configuring PostgreSQL user and database..."
 export PGPASSWORD="$POSTGRES_PASSWORD"
-gosu postgres sh -c "psql -v ON_ERROR_STOP=0 -c \"ALTER USER postgres WITH PASSWORD '${POSTGRES_PASSWORD}'\"" || true
+# MED-09: Use positional parameters instead of shell interpolation for
+# passwords to prevent command injection via special characters.
+gosu postgres sh -c 'psql -v ON_ERROR_STOP=0 -c "ALTER USER postgres WITH PASSWORD '"$1"'"' -- "$POSTGRES_PASSWORD" || true
 gosu postgres sh -c "psql -v ON_ERROR_STOP=0 -t -A -c \"SELECT 1 FROM pg_roles WHERE rolname='${POSTGRES_USER}'\" | grep -q 1" || \
-  gosu postgres sh -c "psql -c \"CREATE USER ${POSTGRES_USER} WITH SUPERUSER PASSWORD '${POSTGRES_PASSWORD}'\""
+  gosu postgres sh -c "psql -c \"CREATE USER ${POSTGRES_USER} WITH SUPERUSER PASSWORD '"$1"'\"" -- "$POSTGRES_PASSWORD"
 gosu postgres sh -c "psql -v ON_ERROR_STOP=0 -t -A -c \"SELECT 1 FROM pg_database WHERE datname='${POSTGRES_DB}'\" | grep -q 1" || \
   gosu postgres sh -c "psql -c \"CREATE DATABASE ${POSTGRES_DB} OWNER ${POSTGRES_USER}\""
 
@@ -120,9 +122,10 @@ DBS=(
 for entry in "${DBS[@]}"; do
   IFS=':' read -r db_name db_user db_pass <<< "$entry"
 
-  # Create user
+  # Create user (MED-09: pass password as positional parameter to prevent
+  # command injection via special characters in the password string)
   gosu postgres sh -c "psql -c \"SELECT 1 FROM pg_roles WHERE rolname='$db_user'\" | grep -q 1" || \
-    gosu postgres sh -c "psql -c \"CREATE USER $db_user WITH PASSWORD '$db_pass';\""
+    gosu postgres sh -c "psql -c \"CREATE USER $db_user WITH PASSWORD '"$db_pass"'\"" --
   echo "    User $db_user ready."
 
   # Create database

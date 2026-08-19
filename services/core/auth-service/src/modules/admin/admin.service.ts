@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { AuthRepository } from '../auth/auth.repository.js';
 import { PrismaService } from '../database/prisma.service.js';
+import { AuditLogService } from '../audit/audit.service.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
 @Injectable()
@@ -9,7 +10,8 @@ export class AdminService {
 
   constructor(
     @Inject(AuthRepository) private readonly authRepository: AuthRepository,
-    @Inject(PrismaService) private readonly prisma: PrismaService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(AuditLogService) private readonly auditLogService: AuditLogService
   ) {}
 
   async getStats() {
@@ -96,13 +98,25 @@ export class AdminService {
     }
   }
 
-  async suspendUser(id: string) {
+  async suspendUser(id: string, actorId?: string, ipAddress?: string) {
     try {
       const user = await this.authRepository.findById(id);
       if (!user) {
         throw new NotFoundException('User not found');
       }
+      const previousRole = (user as { role?: string }).role;
       const updated = await this.authRepository.update(id, { role: 'suspended' });
+
+      this.auditLogService.log({
+        actor: actorId || null,
+        action: `admin.user.suspended:${previousRole}->suspended`,
+        resourceType: 'user',
+        resourceId: id,
+        result: 'success',
+        ipAddress,
+        timestamp: new Date(),
+      });
+
       return ApiResponseWrapper.success(updated);
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
@@ -114,13 +128,25 @@ export class AdminService {
     }
   }
 
-  async activateUser(id: string) {
+  async activateUser(id: string, actorId?: string, ipAddress?: string) {
     try {
       const user = await this.authRepository.findById(id);
       if (!user) {
         throw new NotFoundException('User not found');
       }
+      const previousRole = (user as { role?: string }).role;
       const updated = await this.authRepository.update(id, { role: 'user' });
+
+      this.auditLogService.log({
+        actor: actorId || null,
+        action: `admin.user.activated:${previousRole}->user`,
+        resourceType: 'user',
+        resourceId: id,
+        result: 'success',
+        ipAddress,
+        timestamp: new Date(),
+      });
+
       return ApiResponseWrapper.success(updated);
     } catch (error) {
       if (error instanceof NotFoundException) throw error;

@@ -113,6 +113,7 @@ export class UserManagementController {
   }
 
   @Delete(':id')
+  @Roles('superadmin')
   async deleteUser(@Param('id') id: string, @Req() req: AuthRequest): Promise<unknown> {
     const actorId = resolveActorId(req);
     const result = await this.userService.deleteUser(id, actorId);

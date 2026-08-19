@@ -13,6 +13,7 @@ import { RealityResponse } from './interfaces/reality-response.interface.js';
 import axios from 'axios';
 import { randomUUID } from 'crypto';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { sanitizeInput } from '@azeebo/validation';
 
 interface VoteWithQuantity {
   contestantId: string;
@@ -1454,8 +1455,9 @@ export class RealityService {
       throw new NotFoundException('Show not found');
     }
 
+    const sanitizedContent = sanitizeInput(content) as string;
     const comment = await this.prisma.showComment.create({
-      data: { userId, showId, content },
+      data: { userId, showId, content: sanitizedContent },
     });
 
     await this.trackEvent('comment_added', userId, {

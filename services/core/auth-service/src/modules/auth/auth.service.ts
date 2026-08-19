@@ -52,9 +52,12 @@ export class AuthService {
   private readonly accessTokenExpiry: string;
   private readonly refreshTokenExpiryDays: number;
 
-  // Email verification links expire after 1 hour (same lifetime as password
-  // reset tokens) and each token tolerates only a few verification attempts
-  // before it is burned — see verifyEmail().
+  // Password reset tokens expire after 15 minutes and are single-use with
+  // a per-token attempt budget to prevent brute-force guessing.
+  private static readonly RESET_TOKEN_TTL_SECONDS = 900;
+  private static readonly MAX_RESET_ATTEMPTS_PER_TOKEN = 5;
+  // Email verification links expire after 1 hour and each token tolerates
+  // only a few verification attempts before it is burned — see verifyEmail().
   private static readonly VERIFICATION_TOKEN_TTL_SECONDS = 3600;
   private static readonly MAX_VERIFY_ATTEMPTS_PER_TOKEN = 5;
   // Per-user cap on verification emails per hour (inbox-bombing protection).
@@ -68,8 +71,10 @@ export class AuthService {
   private readonly mfaLoginChallengePrefix = 'mfa_login_challenge:';
   private readonly revokedTokensPrefix = 'revoked:';
   private readonly failedLoginPrefix = 'failed_login:';
+  private readonly lockoutLevelPrefix = 'lockout_level:';
   private readonly maxFailedAttempts: number;
-  private readonly lockoutDurationSeconds: number;
+  // Exponential backoff tiers (seconds): 5m, 15m, 1h, 4h, 24h
+  private static readonly LOCKOUT_BACKOFF_SECONDS = [300, 900, 3600, 14400, 86400];
   private readonly analyticsServiceBaseUrl: string;
 
   constructor(
@@ -87,10 +92,6 @@ export class AuthService {
     this.accessTokenExpiry = this.configService.get<string>('JWT_EXPIRES_IN', '30m');
     this.refreshTokenExpiryDays = this.configService.get<number>('REFRESH_TOKEN_EXPIRY_DAYS', 7);
     this.maxFailedAttempts = this.configService.get<number>('MAX_FAILED_ATTEMPTS', 5);
-    this.lockoutDurationSeconds = this.configService.get<number>(
-      'LOCKOUT_DURATION_SECONDS',
-      15 * 60
-    );
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
       'http://analytics-service:3040'
@@ -212,7 +213,11 @@ export class AuthService {
 
     const failedAttempts = await this.getFailedLoginAttempts(loginDto.email);
     if (failedAttempts >= this.maxFailedAttempts) {
-      throw new UnauthorizedException('Account locked. Please try again later.');
+      const remainingTtl = await this.getLockoutRemainingTtl(loginDto.email);
+      const minutes = Math.ceil(remainingTtl / 60);
+      throw new UnauthorizedException(
+        `Account locked due to too many failed attempts. Try again in ${minutes} minute${minutes === 1 ? '' : 's'}.`
+      );
     }
 
     const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
@@ -356,8 +361,61 @@ export class AuthService {
     const key = `${this.failedLoginPrefix}${email}`;
     const count = await this.redisService.incr(key);
     if (count === 1) {
-      await this.redisService.expire(key, this.lockoutDurationSeconds);
+      // First failure in this window — use the lockout duration based on
+      // the current backoff level (exponential backoff).
+      const duration = await this.computeLockoutDuration(email);
+      await this.redisService.expire(key, duration);
     }
+    // When the threshold is crossed, advance the lockout level so the next
+    // window uses a longer duration.
+    if (count === this.maxFailedAttempts) {
+      await this.advanceLockoutLevel(email);
+    }
+  }
+
+  /**
+   * Advance the lockout level for the given email. Each level applies a
+   * longer lockout duration (exponential backoff). The level persists across
+   * lockout windows until the account is unlocked or the max level is reached.
+   */
+  private async advanceLockoutLevel(email: string): Promise<void> {
+    const levelKey = `${this.lockoutLevelPrefix}${email}`;
+    const currentLevel = await this.redisService.get(levelKey);
+    const level = currentLevel ? parseInt(currentLevel, 10) : 0;
+    const nextLevel = Math.min(
+      level + 1,
+      AuthService.LOCKOUT_BACKOFF_SECONDS.length - 1
+    );
+    // TTL = sum of all backoff tiers up to and including this level, so the
+    // level counter lives long enough to survive the lockout window.
+    const totalTtl = AuthService.LOCKOUT_BACKOFF_SECONDS.slice(0, nextLevel + 1).reduce(
+      (a, b) => a + b,
+      0
+    );
+    await this.redisService.set(levelKey, String(nextLevel), totalTtl);
+  }
+
+  private async getLockoutLevel(email: string): Promise<number> {
+    const levelKey = `${this.lockoutLevelPrefix}${email}`;
+    const value = await this.redisService.get(levelKey);
+    return value ? parseInt(value, 10) : 0;
+  }
+
+  private async getLockoutRemainingTtl(email: string): Promise<number> {
+    const key = `${this.failedLoginPrefix}${email}`;
+    // Redis TTL returns -2 (key missing) or -1 (no expiry); treat as 0.
+    const ttl = await this.redisService.ttl(key);
+    return ttl > 0 ? ttl : 0;
+  }
+
+  /**
+   * Compute the lockout duration for the current level. Uses exponential
+   * backoff tiers: 5m → 15m → 1h → 4h → 24h.
+   */
+  private async computeLockoutDuration(email: string): Promise<number> {
+    const level = await this.getLockoutLevel(email);
+    const tiers = AuthService.LOCKOUT_BACKOFF_SECONDS;
+    return tiers[Math.min(level, tiers.length - 1)];
   }
 
   private async resetFailedLoginAttempts(email: string): Promise<void> {
@@ -366,8 +424,8 @@ export class AuthService {
   }
 
   async unlockAccount(email: string): Promise<{ success: boolean }> {
-    const key = `${this.failedLoginPrefix}${email}`;
-    await this.redisService.del(key);
+    await this.redisService.del(`${this.failedLoginPrefix}${email}`);
+    await this.redisService.del(`${this.lockoutLevelPrefix}${email}`);
     return createSuccessResponse({ success: true });
   }
 
@@ -391,6 +449,10 @@ export class AuthService {
 
       const session = await this.authRepository.findSessionByUserId(user.id);
       if (!session) {
+        // Constant-time response: perform a dummy bcrypt compare to prevent
+        // session enumeration via timing analysis (HIGH-04).
+        const dummyHash = '$2b$10$dummyhashdummyhashdummyhashdummyhashdummyhashdum';
+        await bcrypt.compare(refreshToken, dummyHash);
         throw new UnauthorizedException('Invalid refresh token');
       }
 
@@ -527,7 +589,7 @@ export class AuthService {
 
     const resetToken = randomUUID();
     const resetTokenKey = `password_reset:${resetToken}`;
-    await this.redisService.set(resetTokenKey, user.id, 3600);
+    await this.redisService.set(resetTokenKey, user.id, AuthService.RESET_TOKEN_TTL_SECONDS);
 
     try {
       const notificationServiceUrl = this.configService.get<string>(
@@ -558,6 +620,22 @@ export class AuthService {
     userAgent?: string
   ): Promise<{ success: boolean; message: string }> {
     const resetTokenKey = `password_reset:${resetPasswordDto.token}`;
+    const attemptsKey = `password_reset_attempts:${resetPasswordDto.token}`;
+
+    // Per-token attempt budget: each token may be tried only a few times
+    // (defense-in-depth beyond the endpoint-level IP rate limit). The counter
+    // lives as long as the token and is deleted on success.
+    const attempts = await this.redisService.incr(attemptsKey);
+    if (attempts === 1) {
+      await this.redisService.expire(attemptsKey, AuthService.RESET_TOKEN_TTL_SECONDS);
+    }
+    if (attempts > AuthService.MAX_RESET_ATTEMPTS_PER_TOKEN) {
+      // Burn the token to prevent further guessing.
+      await this.redisService.del(resetTokenKey);
+      await this.redisService.del(attemptsKey);
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
     const userId = await this.redisService.get(resetTokenKey);
 
     if (!userId) {
@@ -572,7 +650,9 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(resetPasswordDto.newPassword, this.saltRounds);
     await this.authRepository.updatePassword(userId, hashedPassword);
 
+    // Single-use: delete the token and attempt counter after successful reset.
     await this.redisService.del(resetTokenKey);
+    await this.redisService.del(attemptsKey);
     await this.authRepository.deleteSessionByUserId(userId);
 
     this.auditLogService.log({

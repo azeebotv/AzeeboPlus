@@ -4,6 +4,7 @@ import { PrismaService } from '../database/prisma.service.js';
 import { CreateConversationDto, SendMessageDto } from './dto/messaging.dto.js';
 import { FeatureFlagService, messagingFlags } from '@azeebo/feature-flags';
 import axios from 'axios';
+import { sanitizeInput } from '@azeebo/validation';
 
 @Injectable()
 export class MessagingService {
@@ -249,11 +250,12 @@ export class MessagingService {
         throw new BadRequestException('Media sharing is disabled');
       }
 
+      const sanitizedContent = sanitizeInput(dto.content) as string;
       const message = await this.prisma.message.create({
         data: {
           conversationId,
           senderId: userId,
-          content: dto.content,
+          content: sanitizedContent,
           type: messageType,
         },
       });
@@ -594,8 +596,9 @@ export class MessagingService {
       if (parentMessage.conversationId !== conversationId)
         return { success: false, error: 'Message not in this conversation' };
 
+      const sanitizedContent = sanitizeInput(content) as string;
       const message = await this.prisma.message.create({
-        data: { conversationId, senderId: userId, content, replyToId },
+        data: { conversationId, senderId: userId, content: sanitizedContent, replyToId },
       });
 
       return { success: true, data: message };
