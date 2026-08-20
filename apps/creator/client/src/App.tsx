@@ -13,6 +13,7 @@ import SubscribersPage from './routes/subscribers';
 import UploadPage from './routes/upload';
 import MonetizationPage from './routes/monetization';
 import ChallengesPage from './routes/challenges';
+import ProfilePage from './routes/profile';
 import LoginPage from './routes/login';
 import { FlagGate } from './components/FlagGate';
 import { CREATOR_FLAG_KEYS } from './hooks/useCreatorFlags';
@@ -63,6 +64,7 @@ export default function App() {
               <Route path="subscribers" element={<SubscribersPage />} />
               <Route path="monetization" element={<MonetizationPage />} />
               <Route path="challenges" element={<ChallengesPage />} />
+              <Route path="profile" element={<ProfilePage />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>
           </Routes>

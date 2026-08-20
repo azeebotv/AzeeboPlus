@@ -1,14 +1,6 @@
 'use client';
-import { Suspense, lazy, useEffect } from 'react';
 
-export const metadata = {
-  title: 'Celebrity Profile | Azeebo',
-  description: 'View celebrity profile, bio, and exclusive content on Azeebo.',
-  openGraph: {
-    title: 'Celebrity Profile | Azeebo',
-    description: 'View celebrity profile, bio, and exclusive content on Azeebo.',
-  },
-};
+import { Suspense, lazy, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
@@ -35,8 +27,14 @@ function CelebrityDetailContent(): React.JSX.Element {
   } = useQuery({
     queryKey: ['celebrity', id],
     queryFn: async (): Promise<ContentItem | null> => {
-      const res = await api.request<ContentItem>(`/api/v1/content/${id}`);
-      return (res.success ? res.data : null) as ContentItem | null;
+      try {
+        const res = await api.content.getContent(id);
+        if (res.success && res.data) return res.data as ContentItem;
+      } catch {
+        // Fallback to direct request
+      }
+      const direct = await api.request<ContentItem>(`/api/v1/content/${id}`);
+      return (direct.success ? direct.data : null) as ContentItem | null;
     },
     staleTime: 60000,
     enabled: !!id,

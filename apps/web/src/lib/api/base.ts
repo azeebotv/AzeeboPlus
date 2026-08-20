@@ -432,9 +432,14 @@ export async function apiFetch<T>(
           }
           // Refresh failed or no refresh token — clear session
           if (typeof window !== 'undefined') {
+            const hadSession = !!localStorage.getItem(ACCESS_TOKEN_KEY);
             localStorage.removeItem(ACCESS_TOKEN_KEY);
             localStorage.removeItem(REFRESH_TOKEN_KEY);
             localStorage.removeItem(USER_KEY);
+
+            if (hadSession && !window.location.pathname.startsWith('/auth/')) {
+              window.location.href = '/auth/expired-session';
+            }
           }
           return {
             success: false,

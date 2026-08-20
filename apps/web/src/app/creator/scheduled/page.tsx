@@ -41,7 +41,7 @@ export default function ScheduledPage(): React.JSX.Element {
     queryKey: ['creator', 'scheduled'],
     queryFn: async () => {
       const response = await apiFetch<ScheduledContent[] | { items?: ScheduledContent[] }>(
-        '/v1/content/me?status=scheduled'
+        '/v1/creator/scheduled'
       );
       if (response.success && response.data) {
         const items: ScheduledContent[] = Array.isArray(response.data)

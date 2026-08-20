@@ -107,9 +107,27 @@ export const creatorApi = {
   getChallengeSubmissions: () =>
     apiFetch<ChallengeSubmission[]>(`${API}/creator/challenges/submissions`),
 
-  submitChallenge: (challengeId: string, title: string) =>
-    apiFetch<ChallengeSubmission>(`${API}/creator/challenges/${challengeId}/submit`, {
-      method: 'POST',
-      body: JSON.stringify({ title }),
+  // Profile
+  getProfile: () =>
+    apiFetch<{
+      id: string;
+      displayName: string;
+      email: string;
+      avatar?: string;
+      bio?: string;
+      website?: string;
+      socialLinks?: { twitter?: string; instagram?: string; youtube?: string; tiktok?: string };
+    }>(`${API}/creator/profile`),
+
+  updateProfile: (data: {
+    displayName?: string;
+    bio?: string;
+    avatar?: string;
+    website?: string;
+    socialLinks?: { twitter?: string; instagram?: string; youtube?: string; tiktok?: string };
+  }) =>
+    apiFetch<{ success: boolean; message?: string }>(`${API}/creator/profile`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
     }),
 };

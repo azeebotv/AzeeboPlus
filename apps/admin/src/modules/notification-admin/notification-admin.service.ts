@@ -156,4 +156,11 @@ export class NotificationAdminService {
       updatedAt: new Date().toISOString(),
     };
   }
+
+  async deleteTemplate(id: string) {
+    await this.prisma.notification.deleteMany({
+      where: { type: id },
+    });
+    return { success: true, id, message: `Template ${id} deleted` };
+  }
 }
