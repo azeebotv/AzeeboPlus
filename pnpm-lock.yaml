@@ -2351,6 +2351,9 @@ importers:
       '@azeebo/shared-types':
         specifier: workspace:*
         version: link:../../../packages/shared-types
+      '@azeebo/validation':
+        specifier: workspace:*
+        version: link:../../../packages/validation
       '@nestjs/common':
         specifier: ^11.1.27
         version: 11.1.28(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -2753,6 +2756,9 @@ importers:
       '@azeebo/shared-types':
         specifier: workspace:*
         version: link:../../../packages/shared-types
+      '@azeebo/validation':
+        specifier: workspace:*
+        version: link:../../../packages/validation
       '@nestjs/common':
         specifier: ^11.1.27
         version: 11.1.28(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -4274,6 +4280,9 @@ importers:
       '@azeebo/shared-types':
         specifier: workspace:*
         version: link:../../../packages/shared-types
+      '@azeebo/validation':
+        specifier: workspace:*
+        version: link:../../../packages/validation
       '@nestjs/common':
         specifier: ^11.1.27
         version: 11.1.28(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -4885,6 +4894,9 @@ importers:
       '@azeebo/shared-types':
         specifier: workspace:*
         version: link:../../../packages/shared-types
+      '@azeebo/validation':
+        specifier: workspace:*
+        version: link:../../../packages/validation
       '@nestjs/common':
         specifier: ^11.1.27
         version: 11.1.28(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)

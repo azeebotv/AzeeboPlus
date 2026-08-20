@@ -68,7 +68,7 @@ export default function ContentManagerPage(): React.JSX.Element {
   });
 
   const publishMutation = useMutation({
-    mutationFn: (id: string) => apiFetch(`/v1/content/${id}/publish`, { method: 'POST' }),
+    mutationFn: (id: string) => apiFetch(`/v1/creator/content/${id}/publish`, { method: 'POST' }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['creator', 'content'] }),
   });
 

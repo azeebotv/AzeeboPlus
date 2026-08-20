@@ -14,6 +14,7 @@ export const CREATOR_NAV = [
   { href: '/subscribers', label: 'Subscribers', icon: '👥' },
   { href: '/monetization', label: 'Monetization', icon: '🏷️' },
   { href: '/challenges', label: 'Challenges', icon: '🏆' },
+  { href: '/profile', label: 'Profile', icon: '👤' },
   { href: '/settings', label: 'Settings', icon: '⚙️' },
 ];
 

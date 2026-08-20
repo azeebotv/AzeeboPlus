@@ -13,6 +13,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
+      '@azeebo/feature-flags/registries': path.resolve(__dirname, '../../../packages/feature-flags/src/registries.ts'),
+      '@azeebo/feature-flags': path.resolve(__dirname, '../../../packages/feature-flags/src/index.ts'),
+      '@azeebo/shared-types': path.resolve(__dirname, '../../../packages/shared-types/src/index.ts'),
+      '@azeebo/design-tokens': path.resolve(__dirname, '../../../packages/design-tokens/src/index.ts'),
     },
   },
   server: {

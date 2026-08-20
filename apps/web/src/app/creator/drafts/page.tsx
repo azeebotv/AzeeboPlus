@@ -40,7 +40,7 @@ export default function DraftsPage(): React.JSX.Element {
     queryKey: ['creator', 'drafts'],
     queryFn: async () => {
       const response = await apiFetch<DraftContent[] | { items?: DraftContent[] }>(
-        '/v1/content/me?status=draft'
+        '/v1/creator/drafts'
       );
       if (response.success && response.data) {
         const items: DraftContent[] = Array.isArray(response.data)
