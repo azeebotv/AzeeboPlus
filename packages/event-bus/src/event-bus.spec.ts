@@ -404,7 +404,7 @@ describe('EventBusModule', () => {
     expect(EVENT_BUS_SERVICE).toBe('EVENT_BUS_SERVICE');
     // Enhanced module: providers are [REDIS, SCHEMA_REGISTRY, DLQ, ORDERING, EVENT_BUS]
     const eventBusProvider = mod.providers?.find(
-      (p) => (p as { provide?: string })?.provide === EVENT_BUS_SERVICE,
+      (p) => (p as { provide?: string })?.provide === EVENT_BUS_SERVICE
     );
     expect(eventBusProvider).toBeDefined();
   });
@@ -420,11 +420,9 @@ describe('EventBusModule', () => {
   });
 
   it('should not provide enhanced services when enableEnhanced is false', () => {
-    const mod = EventBusModule.forRoot(
-      { redisUrl: 'redis://localhost:6379' },
-      'test',
-      { enableEnhanced: false },
-    );
+    const mod = EventBusModule.forRoot({ redisUrl: 'redis://localhost:6379' }, 'test', {
+      enableEnhanced: false,
+    });
     const tokens = mod.providers?.map((p) => (p as { provide?: string })?.provide);
     expect(tokens).toContain(EVENT_BUS_SERVICE);
     expect(tokens).not.toContain(EVENT_SCHEMA_REGISTRY);

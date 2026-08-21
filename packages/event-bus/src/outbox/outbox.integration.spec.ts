@@ -1,9 +1,4 @@
-import {
-  OutboxService,
-  OutboxStorage,
-  OutboxEntry,
-  EventPublisher,
-} from './outbox.service';
+import { OutboxService, OutboxStorage, OutboxEntry, EventPublisher } from './outbox.service';
 
 // ============================================================================
 // In-Memory Implementations (simulate real infrastructure)
@@ -100,7 +95,7 @@ class InMemoryEventPublisher implements EventPublisher {
   async publish(
     eventType: string,
     payload: Record<string, unknown>,
-    metadata?: Record<string, unknown>,
+    metadata?: Record<string, unknown>
   ): Promise<void> {
     if (this.failEventTypes.has(eventType)) {
       this.failCount++;
@@ -170,7 +165,7 @@ describe('Outbox Pattern Integration', () => {
         userId,
         'user.created',
         { id: userId, name: userName },
-        { correlationId: 'txn-001' },
+        { correlationId: 'txn-001' }
       );
 
       // Verify entry was created with correct data
@@ -226,12 +221,10 @@ describe('Outbox Pattern Integration', () => {
 
   describe('Event Publishing', () => {
     it('should publish pending entry and mark as published', async () => {
-      const entry = await outboxService.createOutboxEntry(
-        'content',
-        'c1',
-        'content.published',
-        { id: 'c1', title: 'Article' },
-      );
+      const entry = await outboxService.createOutboxEntry('content', 'c1', 'content.published', {
+        id: 'c1',
+        title: 'Article',
+      });
 
       const result = await outboxService.publishEntry(entry.id);
 
@@ -286,7 +279,7 @@ describe('Outbox Pattern Integration', () => {
         'm1',
         'content.moderated',
         { contentId: 'c1', action: 'approved' },
-        metadata,
+        metadata
       );
 
       await outboxService.publishEntry(entry.id);
@@ -318,12 +311,9 @@ describe('Outbox Pattern Integration', () => {
 
   describe('Error Handling & Retry', () => {
     it('should increment retry count on publish failure', async () => {
-      const entry = await outboxService.createOutboxEntry(
-        'payment',
-        'p1',
-        'payment.success',
-        { amount: 5000 },
-      );
+      const entry = await outboxService.createOutboxEntry('payment', 'p1', 'payment.success', {
+        amount: 5000,
+      });
 
       // Make publisher fail for this event type
       publisher.shouldFail('payment.success');
@@ -340,12 +330,9 @@ describe('Outbox Pattern Integration', () => {
     });
 
     it('should mark entry as failed after max retries exhausted', async () => {
-      const entry = await outboxService.createOutboxEntry(
-        'payment',
-        'p1',
-        'payment.success',
-        { amount: 5000 },
-      );
+      const entry = await outboxService.createOutboxEntry('payment', 'p1', 'payment.success', {
+        amount: 5000,
+      });
 
       publisher.shouldFail('payment.success');
 
@@ -360,12 +347,9 @@ describe('Outbox Pattern Integration', () => {
     });
 
     it('should not retry already-published entries', async () => {
-      const entry = await outboxService.createOutboxEntry(
-        'user',
-        'u1',
-        'user.created',
-        { name: 'Alice' },
-      );
+      const entry = await outboxService.createOutboxEntry('user', 'u1', 'user.created', {
+        name: 'Alice',
+      });
 
       // Publish successfully
       await outboxService.publishEntry(entry.id);
@@ -381,12 +365,9 @@ describe('Outbox Pattern Integration', () => {
     });
 
     it('should recover after publisher stops failing', async () => {
-      const entry = await outboxService.createOutboxEntry(
-        'payment',
-        'p1',
-        'payment.success',
-        { amount: 1000 },
-      );
+      const entry = await outboxService.createOutboxEntry('payment', 'p1', 'payment.success', {
+        amount: 1000,
+      });
 
       // Fail once
       publisher.shouldFail('payment.success');
@@ -412,9 +393,7 @@ describe('Outbox Pattern Integration', () => {
       // Create 10 entries
       const entries = [];
       for (let i = 0; i < 10; i++) {
-        entries.push(
-          await outboxService.createOutboxEntry('item', `i${i}`, 'item.created', { i }),
-        );
+        entries.push(await outboxService.createOutboxEntry('item', `i${i}`, 'item.created', { i }));
       }
 
       // Publish in two concurrent batches
@@ -442,7 +421,12 @@ describe('Outbox Pattern Integration', () => {
       // Create entries — payment first so it's picked up early
       const ePay = await outboxService.createOutboxEntry('payment', 'p1', 'payment.success', {});
       const eUser = await outboxService.createOutboxEntry('user', 'u1', 'user.created', {});
-      const eContent = await outboxService.createOutboxEntry('content', 'c1', 'content.published', {});
+      const eContent = await outboxService.createOutboxEntry(
+        'content',
+        'c1',
+        'content.published',
+        {}
+      );
 
       // Make only payment fail
       publisher.shouldFail('payment.success');
@@ -540,19 +524,19 @@ describe('Outbox Pattern Integration', () => {
       const userEvents = publisher.getEventsByType('user.created');
       expect(userEvents).toHaveLength(1);
       expect(userEvents[0].payload).toEqual(
-        expect.objectContaining({ id: userId, name: userName }),
+        expect.objectContaining({ id: userId, name: userName })
       );
 
       const walletEvents = publisher.getEventsByType('wallet.funded');
       expect(walletEvents).toHaveLength(1);
       expect(walletEvents[0].payload).toEqual(
-        expect.objectContaining({ amount: 500, currency: 'NGN' }),
+        expect.objectContaining({ amount: 500, currency: 'NGN' })
       );
 
       const notificationEvents = publisher.getEventsByType('notification.sent');
       expect(notificationEvents).toHaveLength(1);
       expect(notificationEvents[0].payload).toEqual(
-        expect.objectContaining({ template: 'welcome' }),
+        expect.objectContaining({ template: 'welcome' })
       );
     });
   });

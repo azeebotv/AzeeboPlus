@@ -37,12 +37,9 @@ describe('OutboxService', () => {
       };
       mockStorage.create.mockResolvedValue(entry);
 
-      const result = await service.createOutboxEntry(
-        'user',
-        'user-1',
-        'user.created',
-        { name: 'Test' },
-      );
+      const result = await service.createOutboxEntry('user', 'user-1', 'user.created', {
+        name: 'Test',
+      });
 
       expect(result.id).toBe('outbox-1');
       expect(mockStorage.create).toHaveBeenCalledWith({
@@ -63,9 +60,7 @@ describe('OutboxService', () => {
 
       await service.createOutboxEntry('user', 'u1', 'user.updated', {}, metadata);
 
-      expect(mockStorage.create).toHaveBeenCalledWith(
-        expect.objectContaining({ metadata }),
-      );
+      expect(mockStorage.create).toHaveBeenCalledWith(expect.objectContaining({ metadata }));
     });
   });
 
@@ -91,12 +86,12 @@ describe('OutboxService', () => {
       expect(mockPublisher.publish).toHaveBeenCalledWith(
         'user.created',
         { name: 'Test' },
-        undefined,
+        undefined
       );
       expect(mockStorage.updateStatus).toHaveBeenCalledWith(
         'outbox-1',
         'published',
-        expect.any(Date),
+        expect.any(Date)
       );
     });
 
@@ -135,8 +130,28 @@ describe('OutboxService', () => {
   describe('publishPendingEntries', () => {
     it('should batch publish multiple entries', async () => {
       const entries = [
-        { id: 'e1', eventType: 'user.created', payload: {}, status: 'pending' as const, retryCount: 0, maxRetries: 3, createdAt: new Date(), aggregateType: 'user', aggregateId: 'u1' },
-        { id: 'e2', eventType: 'content.published', payload: {}, status: 'pending' as const, retryCount: 0, maxRetries: 3, createdAt: new Date(), aggregateType: 'content', aggregateId: 'c1' },
+        {
+          id: 'e1',
+          eventType: 'user.created',
+          payload: {},
+          status: 'pending' as const,
+          retryCount: 0,
+          maxRetries: 3,
+          createdAt: new Date(),
+          aggregateType: 'user',
+          aggregateId: 'u1',
+        },
+        {
+          id: 'e2',
+          eventType: 'content.published',
+          payload: {},
+          status: 'pending' as const,
+          retryCount: 0,
+          maxRetries: 3,
+          createdAt: new Date(),
+          aggregateType: 'content',
+          aggregateId: 'c1',
+        },
       ];
       mockStorage.findPending.mockResolvedValue(entries);
 
@@ -157,10 +172,7 @@ describe('OutboxService', () => {
 
   describe('getStats', () => {
     it('should return pending count', async () => {
-      mockStorage.findPending.mockResolvedValue([
-        { id: 'e1' } as never,
-        { id: 'e2' } as never,
-      ]);
+      mockStorage.findPending.mockResolvedValue([{ id: 'e1' } as never, { id: 'e2' } as never]);
 
       const stats = await service.getStats();
       expect(stats.pending).toBe(2);
