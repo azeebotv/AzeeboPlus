@@ -42,7 +42,9 @@ export default function ContestantDynamicProfilePage(): React.JSX.Element {
           setContestant(result.data);
         } else {
           // Fallback endpoint
-          const fallback = await apiFetch<ContestantDetail>(`/v1/content/contestant/${contestantId}`);
+          const fallback = await apiFetch<ContestantDetail>(
+            `/v1/content/contestant/${contestantId}`
+          );
           if (fallback.success && fallback.data) setContestant(fallback.data);
         }
       } catch (error) {
@@ -165,7 +167,8 @@ export default function ContestantDynamicProfilePage(): React.JSX.Element {
           <div className="mt-4">
             <h1 className="text-3xl font-bold text-white">{contestant.name}</h1>
             <p className="text-white/50 mt-1">
-              📍 {contestant.location || 'Lagos, Nigeria'} {contestant.age ? `• Age ${contestant.age}` : ''}
+              📍 {contestant.location || 'Lagos, Nigeria'}{' '}
+              {contestant.age ? `• Age ${contestant.age}` : ''}
             </p>
           </div>
 

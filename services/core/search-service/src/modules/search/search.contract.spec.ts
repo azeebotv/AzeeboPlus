@@ -3,6 +3,7 @@ import { INestApplication, BadRequestException } from '@nestjs/common';
 import request from 'supertest';
 import { SearchController } from './search.controller.js';
 import { SearchService } from './search.service.js';
+import { SearchIntelligenceService } from './search-intelligence.service.js';
 import { RateLimitGuard, ServiceAuthGuard, AdminGuard } from '@azeebo/security';
 
 describe('Search Controller Contract Tests', () => {
@@ -26,6 +27,10 @@ describe('Search Controller Contract Tests', () => {
         {
           provide: SearchService,
           useValue: searchService,
+        },
+        {
+          provide: SearchIntelligenceService,
+          useValue: { filterByAvailability: jest.fn(), trackZeroResult: jest.fn(), getSearchQualityMetrics: jest.fn() },
         },
       ],
     })

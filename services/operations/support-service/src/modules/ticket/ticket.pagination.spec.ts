@@ -3,6 +3,7 @@ import { INestApplication, ValidationPipe, ExecutionContext } from '@nestjs/comm
 import request from 'supertest';
 import { TicketController } from './ticket.controller';
 import { TicketService } from './ticket.service';
+import { SupportAccessControlService } from '../support/support-access-control.service';
 import { RateLimitGuard, AdminGuard } from '@azeebo/security';
 import { FeatureFlagGuard, FeatureFlagService } from '@azeebo/feature-flags';
 // Ticket DTO types used implicitly by mock data in tests
@@ -45,6 +46,10 @@ describe('Support Service Pagination Tests', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [TicketController],
       providers: [
+        {
+          provide: SupportAccessControlService,
+          useValue: { getScope: jest.fn(), canAccessTicket: jest.fn().mockReturnValue(true), enforceAccess: jest.fn(), maskPII: jest.fn((data: unknown) => data) },
+        },
         {
           provide: TicketService,
           useValue: mockTicketService,

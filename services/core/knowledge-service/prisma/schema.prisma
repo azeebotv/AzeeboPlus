@@ -1,0 +1,169 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+  output   = "../src/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// Knowledge Graph Schema (TAA §16-20)
+// ============================================================================
+
+/// Canonical events represent real-world occurrences that are indisputable facts.
+/// E.g., "Episode 3 aired on date X", "Contestant Y was eliminated".
+model CanonicalEvent {
+  id          String   @id @default(uuid())
+  eventCode   String   @unique // Machine-readable: "S03E02_AIR_DATE"
+  title       String
+  description String?
+  universeId  String   // Links to content-service universe
+  eventDate   DateTime
+  metadata    Json?    // Bounded extensible metadata
+  version     Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  knowledgeUnits  KnowledgeUnit[]
+  dependencies    KnowledgeDependency[] @relation("DependsOn")
+  dependents      KnowledgeDependency[] @relation("DependsOnEvent")
+  contentCheckpoints ContentCheckpoint[]
+
+  @@index([universeId])
+  @@index([eventDate])
+  @@map("canonical_events")
+}
+
+/// Knowledge units are the atomic pieces of knowledge a user can acquire.
+model KnowledgeUnit {
+  id              String   @id @default(uuid())
+  canonicalEventId String
+  title           String
+  description     String?
+  knowledgeType   String   // "fact", "character", "plot_point", "location", "timeline"
+  spoilerLevel    String   @default("none") // "none", "mild", "major", "severe"
+  metadata        Json?
+  version         Int      @default(1)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  canonicalEvent CanonicalEvent @relation(fields: [canonicalEventId], references: [id], onDelete: Cascade)
+  dependencies   KnowledgeDependency[] @relation("DependsOnUnit")
+  dependents     KnowledgeDependency[] @relation("DependsOnKnowledgeUnit")
+  grants         CheckpointGrant[]
+  equivalenceSet EquivalenceSet?
+
+  @@index([canonicalEventId])
+  @@index([knowledgeType])
+  @@map("knowledge_units")
+}
+
+/// Dependencies between knowledge units (e.g., need to know X before Y).
+model KnowledgeDependency {
+  id              String @id @default(uuid())
+  dependsOnEventId String
+  dependsOnUnitId  String
+  dependentEventId String
+  dependentUnitId  String
+  dependencyType  String @default("prerequisite") // "prerequisite", "contextual", "enhancement"
+  createdAt       DateTime @default(now())
+
+  dependsOnEvent CanonicalEvent @relation("DependsOn", fields: [dependsOnEventId], references: [id], onDelete: Cascade)
+  dependsOnUnit  KnowledgeUnit @relation("DependsOnUnit", fields: [dependsOnUnitId], references: [id], onDelete: Cascade)
+  dependentEvent CanonicalEvent @relation("DependsOnEvent", fields: [dependentEventId], references: [id], onDelete: Cascade)
+  dependentUnit  KnowledgeUnit @relation("DependsOnKnowledgeUnit", fields: [dependentUnitId], references: [id], onDelete: Cascade)
+
+  @@unique([dependsOnUnitId, dependentUnitId])
+  @@map("knowledge_dependencies")
+}
+
+/// Content checkpoints represent narrative milestones that unlock knowledge.
+model ContentCheckpoint {
+  id              String   @id @default(uuid())
+  contentId       String   // Reference to content-service content_item
+  canonicalEventId String
+  checkpointType  String   @default("narrative") // "narrative", "achievement", "discovery"
+  title           String
+  description     String?
+  triggerCondition Json?   // Conditions that must be met
+  metadata        Json?
+  version         Int      @default(1)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  canonicalEvent CanonicalEvent @relation(fields: [canonicalEventId], references: [id], onDelete: Cascade)
+  grants         CheckpointGrant[]
+
+  @@index([contentId])
+  @@index([canonicalEventId])
+  @@map("content_checkpoints")
+}
+
+/// Grants track which knowledge units were granted via checkpoint completion.
+model CheckpointGrant {
+  id                  String @id @default(uuid())
+  checkpointId        String
+  knowledgeUnitId     String
+  grantType           String @default("automatic") // "automatic", "manual", "earned"
+  createdAt           DateTime @default(now())
+
+  checkpoint      ContentCheckpoint @relation(fields: [checkpointId], references: [id], onDelete: Cascade)
+  knowledgeUnit   KnowledgeUnit @relation(fields: [knowledgeUnitId], references: [id], onDelete: Cascade)
+
+  @@unique([checkpointId, knowledgeUnitId])
+  @@map("checkpoint_grants")
+}
+
+/// Equivalence sets group knowledge units that represent the same information
+/// across different formats (e.g., movie version vs. TV series version).
+model EquivalenceSet {
+  id          String @id @default(uuid())
+  setCode     String @unique // Machine-readable identifier for the equivalence group
+  name        String
+  description String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  knowledgeUnits KnowledgeUnit[]
+
+  @@map("equivalence_sets")
+}
+
+/// User knowledge grants - append-only ledger of knowledge a user has acquired.
+model UserKnowledgeGrant {
+  id              String   @id @default(uuid())
+  userId          String
+  knowledgeUnitId String
+  grantSource     String   // "checkpoint", "purchase", "admin", "promo"
+  sourceId        String?  // ID of the source (checkpoint_id, purchase_id, etc.)
+  grantedAt       DateTime @default(now())
+  expiresAt       DateTime? // Optional expiration
+  metadata        Json?
+  supersedesId    String?  // For canon versioning - ID of the grant this supersedes
+
+  knowledgeUnit KnowledgeUnit @relation(fields: [knowledgeUnitId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, knowledgeUnitId])
+  @@index([userId])
+  @@index([knowledgeUnitId])
+  @@index([grantedAt])
+  @@map("user_knowledge_grants")
+}
+
+/// Knowledge projection read model - pre-computed user knowledge state.
+model KnowledgeProjection {
+  id              String @id @default(uuid())
+  userId          String
+  knownUnitIds    String[] // Array of knowledge unit IDs the user knows
+  projectionVersion Int @default(1)
+  lastComputedAt  DateTime @default(now())
+  metadata        Json?
+
+  @@unique([userId])
+  @@index([lastComputedAt])
+  @@map("knowledge_projections")
+}

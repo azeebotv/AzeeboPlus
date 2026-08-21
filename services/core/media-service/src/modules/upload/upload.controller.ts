@@ -23,6 +23,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { UploadService } from './upload.service';
 import { PremiumContentService } from './premium-content.service';
 import { CdnPurgeService } from './cdn-purge.service';
+import { MediaLifecycleService } from '../media/media-lifecycle.service';
 import { InitChunkedUploadDto } from './dto/chunked-upload.dto.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 import { FeatureFlag, FeatureFlagGuard, mediaFlags } from '@azeebo/feature-flags';
@@ -34,7 +35,8 @@ export class UploadController {
   constructor(
     @Inject(UploadService) private readonly uploadService: UploadService,
     @Inject(PremiumContentService) private readonly premiumContentService: PremiumContentService,
-    @Inject(CdnPurgeService) private readonly cdnPurgeService: CdnPurgeService
+    @Inject(CdnPurgeService) private readonly cdnPurgeService: CdnPurgeService,
+    @Inject(MediaLifecycleService) private readonly mediaLifecycle: MediaLifecycleService,
   ) {}
 
   @Post('upload/image')
@@ -521,5 +523,52 @@ export class UploadController {
       return ApiResponseWrapper.success(result);
     }
     return ApiResponseWrapper.success({ purged: 0, message: 'Provide keys or prefix to purge' });
+  }
+
+  // ========================
+  // Media lifecycle endpoints
+  // ========================
+
+  @Post('lifecycle/cdn-purge')
+  @UseGuards(AdminGuard)
+  @ApiBearerAuth()
+  @RateLimit(5, 60000)
+  @ApiOperation({ summary: 'Purge CDN by URLs and patterns' })
+  @ApiResponse({ status: 200, description: 'CDN purge completed' })
+  async lifecycleCDNPurge(@Body() body: { urls: string[]; patterns?: string[]; region?: string }) {
+    const result = await this.mediaLifecycle.purgeCDN(body);
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Get('lifecycle/transcoding/:jobId')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get transcoding job status via lifecycle service' })
+  @ApiResponse({ status: 200, description: 'Transcoding status' })
+  async getTranscodingLifecycleStatus(@Param('jobId') jobId: string) {
+    const status = await this.mediaLifecycle.getTranscodingStatus(jobId);
+    return ApiResponseWrapper.success(status);
+  }
+
+  @Post('lifecycle/cleanup/orphaned')
+  @UseGuards(AdminGuard)
+  @ApiBearerAuth()
+  @RateLimit(5, 60000)
+  @ApiOperation({ summary: 'Cleanup orphaned media files' })
+  @ApiResponse({ status: 200, description: 'Cleanup completed' })
+  async cleanupOrphaned() {
+    const result = await this.mediaLifecycle.cleanupOrphanedMedia();
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Get('lifecycle/premium/:mediaUploadId')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Generate premium media URL' })
+  @ApiResponse({ status: 200, description: 'Premium URL' })
+  async generatePremiumMediaUrl(
+    @Param('mediaUploadId') mediaUploadId: string,
+    @Query('expiresIn') expiresIn?: number
+  ) {
+    const result = await this.mediaLifecycle.generatePremiumUrl(mediaUploadId, { expiresIn });
+    return ApiResponseWrapper.success(result);
   }
 }

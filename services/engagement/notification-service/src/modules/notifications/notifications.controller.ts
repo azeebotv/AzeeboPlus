@@ -14,9 +14,10 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
-import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, ServiceAuthGuard, AdminGuard } from '@azeebo/security';
 
 import { NotificationsService } from './notifications.service.js';
+import { NotificationSLOService } from '../notification/notification-slo.service.js';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto.js';
 import { SavePushTokenDto } from './dto/save-push-token.dto.js';
 import { SendEmailDto } from './dto/send-email.dto.js';
@@ -27,7 +28,8 @@ import { NotificationResponse } from './interfaces/notification-response.interfa
 @Controller('notifications')
 export class NotificationsController {
   constructor(
-    @Inject(NotificationsService) private readonly notificationsService: NotificationsService
+    @Inject(NotificationsService) private readonly notificationsService: NotificationsService,
+    @Inject(NotificationSLOService) private readonly sloService: NotificationSLOService,
   ) {}
 
   @Get()
@@ -175,5 +177,37 @@ export class NotificationsController {
     @Param('tokenId', ParseUUIDPipe) tokenId: string
   ): Promise<NotificationResponse> {
     return this.notificationsService.deletePushTokenById(req.user.id, tokenId);
+  }
+
+  // ========================
+  // SLO monitoring endpoints
+  // ========================
+
+  @Get('slo/status')
+  @UseGuards(AdminGuard)
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
+  @ApiOperation({ summary: 'Get notification delivery SLO status' })
+  @ApiResponse({ status: 200, description: 'SLO status' })
+  async getSLOStatus() {
+    const status = await this.sloService.getCurrentSLOStatus();
+    return { success: true, data: status };
+  }
+
+  @Get('slo/measure')
+  @UseGuards(AdminGuard)
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
+  @ApiOperation({ summary: 'Measure SLO for a time range' })
+  @ApiResponse({ status: 200, description: 'SLO measurement' })
+  async measureSLO(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string
+  ) {
+    const measurement = await this.sloService.measureSLO(
+      new Date(startDate),
+      new Date(endDate)
+    );
+    return { success: true, data: measurement };
   }
 }

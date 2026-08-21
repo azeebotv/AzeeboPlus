@@ -4,6 +4,7 @@ import { Reflector } from '@nestjs/core';
 import request from 'supertest';
 import { GamesController } from './games.controller.js';
 import { GamesService } from './games.service.js';
+import { GameRealtimeService } from './game-realtime.service.js';
 import { FeatureFlagGuard, FeatureFlagService, gamesFlags } from '@azeebo/feature-flags';
 
 jest.mock('@azeebo/security', () => ({
@@ -64,6 +65,7 @@ describe('GamesController kill-switch (games_* flags)', () => {
       controllers: [GamesController],
       providers: [
         { provide: GamesService, useValue: mockGamesService },
+        { provide: GameRealtimeService, useValue: { createSession: jest.fn(), joinSession: jest.fn(), startSession: jest.fn(), getPlayerSession: jest.fn(), getGameSessions: jest.fn() } },
         { provide: FeatureFlagService, useValue: mockFeatureFlagService },
         { provide: Reflector, useValue: new Reflector() },
         FeatureFlagGuard,

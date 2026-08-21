@@ -89,7 +89,7 @@ export default function MessagesPage(): React.JSX.Element {
   const conversationsQuery = useQuery({
     queryKey: ['messages', 'conversations'],
     queryFn: async () => {
-      const response = await apiFetch<RawConversation[]>('/messages/conversations');
+      const response = await apiFetch<RawConversation[]>('/messaging/conversations');
       if (response.success && response.data) {
         const data = Array.isArray(response.data) ? response.data : [];
         return data.map((conv: RawConversation) => ({
@@ -253,7 +253,7 @@ export default function MessagesPage(): React.JSX.Element {
 
   const editMessageMutation = useMutation({
     mutationFn: async ({ messageId, content }: { messageId: string; content: string }) => {
-      return apiFetch(`/messages/messages/${messageId}`, {
+      return apiFetch(`/messaging/messages/${messageId}`, {
         method: 'PUT',
         body: JSON.stringify({ content }),
       });
@@ -269,7 +269,7 @@ export default function MessagesPage(): React.JSX.Element {
 
   const deleteMessageMutation = useMutation({
     mutationFn: async (messageId: string) => {
-      return apiFetch(`/messages/messages/${messageId}`, { method: 'DELETE' });
+      return apiFetch(`/messaging/messages/${messageId}`, { method: 'DELETE' });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -280,7 +280,7 @@ export default function MessagesPage(): React.JSX.Element {
 
   const reactMutation = useMutation({
     mutationFn: async ({ messageId, emoji }: { messageId: string; emoji: string }) => {
-      return apiFetch(`/messages/messages/${messageId}/react`, {
+      return apiFetch(`/messaging/conversations/${conversationId}/messages/${messageId}/react`, {
         method: 'POST',
         body: JSON.stringify({ emoji }),
       });
@@ -294,7 +294,7 @@ export default function MessagesPage(): React.JSX.Element {
 
   const pinMutation = useMutation({
     mutationFn: async ({ messageId, pinned }: { messageId: string; pinned: boolean }) => {
-      return apiFetch(`/messages/messages/${messageId}/pin`, {
+      return apiFetch(`/messaging/messages/${messageId}/pin`, {
         method: 'PUT',
         body: JSON.stringify({ pinned }),
       });
@@ -308,7 +308,7 @@ export default function MessagesPage(): React.JSX.Element {
 
   const muteMutation = useMutation({
     mutationFn: async ({ conversationId, muted }: { conversationId: string; muted: boolean }) => {
-      return apiFetch(`/messages/conversations/${conversationId}/mute`, {
+      return apiFetch(`/messaging/conversations/${conversationId}/mute`, {
         method: 'PUT',
         body: JSON.stringify({ muted }),
       });
@@ -326,7 +326,7 @@ export default function MessagesPage(): React.JSX.Element {
       conversationId: string;
       archived: boolean;
     }) => {
-      return apiFetch(`/messages/conversations/${conversationId}/archive`, {
+      return apiFetch(`/messaging/conversations/${conversationId}/archive`, {
         method: 'PUT',
         body: JSON.stringify({ archived }),
       });

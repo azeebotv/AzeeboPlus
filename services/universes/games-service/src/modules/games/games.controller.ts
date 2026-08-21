@@ -4,6 +4,7 @@ import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
 import { FeatureFlag, FeatureFlagGuard, gamesFlags } from '@azeebo/feature-flags';
 
 import { GamesService } from './games.service.js';
+import { GameRealtimeService } from './game-realtime.service.js';
 import { GameResponse } from './interfaces/game-response.interface.js';
 import { SubmitAnswerDto } from './dto/submit-answer.dto.js';
 import { StartSessionDto } from './dto/start-session.dto.js';
@@ -13,7 +14,10 @@ import { StartSessionDto } from './dto/start-session.dto.js';
 @UseGuards(ServiceAuthGuard)
 @Controller('games')
 export class GamesController {
-  constructor(@Inject(GamesService) private readonly gamesService: GamesService) {}
+  constructor(
+    @Inject(GamesService) private readonly gamesService: GamesService,
+    @Inject(GameRealtimeService) private readonly realtimeService: GameRealtimeService,
+  ) {}
 
   @Get('home')
   @Get('featured')
@@ -136,5 +140,67 @@ export class GamesController {
     @Param('tournamentId') tournamentId: string
   ): Promise<GameResponse> {
     return this.gamesService.enterTournament(req.user.id, tournamentId);
+  }
+
+  // ========================
+  // Real-time multiplayer sessions
+  // ========================
+
+  @Post('multiplayer/sessions')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
+  @ApiOperation({ summary: 'Create multiplayer game session' })
+  @ApiResponse({ status: 201, description: 'Session created' })
+  async createSession(
+    @Request() req: { user: { id: string } },
+    @Body() body: { gameId: string; maxPlayers?: number }
+  ) {
+    const session = await this.realtimeService.createSession(body.gameId, req.user.id, body.maxPlayers);
+    return { success: true, data: session };
+  }
+
+  @Post('multiplayer/sessions/:sessionId/join')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
+  @ApiOperation({ summary: 'Join multiplayer session' })
+  @ApiResponse({ status: 200, description: 'Joined session' })
+  async joinSession(
+    @Request() req: { user: { id: string } },
+    @Param('sessionId') sessionId: string
+  ) {
+    const session = await this.realtimeService.joinSession(sessionId, req.user.id);
+    return { success: true, data: session };
+  }
+
+  @Post('multiplayer/sessions/:sessionId/start')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
+  @ApiOperation({ summary: 'Start multiplayer session' })
+  @ApiResponse({ status: 200, description: 'Session started' })
+  async startMultiplayerSession(@Param('sessionId') sessionId: string) {
+    const session = await this.realtimeService.startSession(sessionId);
+    return { success: true, data: session };
+  }
+
+  @Get('multiplayer/sessions/:sessionId')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
+  @ApiOperation({ summary: 'Get session state' })
+  @ApiResponse({ status: 200, description: 'Session state' })
+  async getSessionState(
+    @Request() req: { user: { id: string } }
+  ) {
+    const session = this.realtimeService.getPlayerSession(req.user.id);
+    return { success: true, data: session };
+  }
+
+  @Get('multiplayer/game/:gameId/sessions')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
+  @ApiOperation({ summary: 'List active sessions for a game' })
+  @ApiResponse({ status: 200, description: 'Active sessions' })
+  async listGameSessions(@Param('gameId') gameId: string) {
+    const sessions = this.realtimeService.getGameSessions(gameId);
+    return { success: true, data: sessions };
   }
 }

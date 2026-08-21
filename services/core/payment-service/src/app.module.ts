@@ -9,6 +9,7 @@ import { HealthModule } from './modules/health/health.module.js';
 import { WebhookModule } from './modules/webhooks/webhook.module.js';
 import { ScheduledTasksModule } from './modules/scheduled-tasks/scheduled-tasks.module.js';
 import { PricingModule } from './modules/pricing/pricing.module.js';
+import { PaymentReconciliationService } from './modules/payment/payment-reconciliation.service.js';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
 import { MetricsModule } from './modules/metrics/metrics.module.js';
 import { RateLimiterModule } from '@azeebo/security';
@@ -58,6 +59,7 @@ import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
   controllers: [PaymentsController],
   providers: [
     PaymentsService,
+    PaymentReconciliationService,
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseWrapperInterceptor,

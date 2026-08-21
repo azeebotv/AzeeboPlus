@@ -21,6 +21,9 @@ import { CacheInterceptor, Cache } from '@azeebo/shared-services';
 
 import { ContentService } from './content.service.js';
 import { AccessControlService } from './access-control.service.js';
+import { ContentReleaseSchedulerService } from './content-release-scheduler.service.js';
+import { ContentVersioningService } from './content-versioning.service.js';
+import { ACDPValidationService } from './content-acdp-validation.service.js';
 import { CreateContentDto } from './dto/create-content.dto.js';
 import { UpdateContentDto } from './dto/update-content.dto.js';
 import { CreateMediaAssetDto } from './dto/create-media-asset.dto.js';
@@ -34,7 +37,10 @@ import { ApiResponseWrapper } from '@azeebo/shared-types';
 export class ContentController {
   constructor(
     @Inject(ContentService) private readonly contentService: ContentService,
-    @Inject(AccessControlService) private readonly accessControlService: AccessControlService
+    @Inject(AccessControlService) private readonly accessControlService: AccessControlService,
+    @Inject(ContentReleaseSchedulerService) private readonly releaseScheduler: ContentReleaseSchedulerService,
+    @Inject(ContentVersioningService) private readonly versioningService: ContentVersioningService,
+    @Inject(ACDPValidationService) private readonly acdpValidation: ACDPValidationService,
   ) {}
 
   // ========================
@@ -855,5 +861,125 @@ export class ContentController {
     @Param('id', ParseUUIDPipe) id: string
   ): Promise<ContentResponse> {
     return this.contentService.deleteTag(id);
+  }
+
+  // ========================
+  // Versioning endpoints
+  // ========================
+
+  @Get(':id/versions')
+  @ApiOperation({ summary: 'Get content version history' })
+  @ApiResponse({ status: 200, description: 'Version history' })
+  async getVersionHistory(@Param('id') id: string) {
+    const versions = await this.versioningService.getVersionHistory(id);
+    return ApiResponseWrapper.success(versions);
+  }
+
+  @Get(':id/versions/:versionNumber')
+  @ApiOperation({ summary: 'Get specific content version' })
+  @ApiResponse({ status: 200, description: 'Version detail' })
+  async getVersion(
+    @Param('id') id: string,
+    @Param('versionNumber') versionNumber: string
+  ) {
+    const version = await this.versioningService.getVersion(id, Number(versionNumber));
+    return ApiResponseWrapper.success(version);
+  }
+
+  @Post(':id/versions')
+  @UseGuards(AdminGuard)
+  @ApiOperation({ summary: 'Create content version snapshot (admin)' })
+  @ApiResponse({ status: 201, description: 'Version created' })
+  async createVersionSnapshot(
+    @Request() req: { user: { id: string } },
+    @Param('id') id: string,
+    @Body() body: { changeNote?: string }
+  ) {
+    const version = await this.versioningService.createSnapshot(id, req.user.id, body.changeNote);
+    return ApiResponseWrapper.success(version);
+  }
+
+  @Post(':id/versions/:versionNumber/rollback')
+  @UseGuards(AdminGuard)
+  @ApiOperation({ summary: 'Rollback content to specific version (admin)' })
+  @ApiResponse({ status: 200, description: 'Rollback successful' })
+  async rollbackToVersion(
+    @Request() req: { user: { id: string } },
+    @Param('id') id: string,
+    @Param('versionNumber') versionNumber: string
+  ) {
+    const result = await this.versioningService.rollbackToVersion(id, Number(versionNumber), req.user.id);
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Get(':id/versions/compare')
+  @ApiOperation({ summary: 'Compare two content versions' })
+  @ApiResponse({ status: 200, description: 'Version comparison' })
+  async compareVersions(
+    @Param('id') id: string,
+    @Query('a') versionA: string,
+    @Query('b') versionB: string
+  ) {
+    const result = await this.versioningService.compareVersions(id, Number(versionA), Number(versionB));
+    return ApiResponseWrapper.success(result);
+  }
+
+  // ========================
+  // Release window validation
+  // ========================
+
+  @Post('validate/release-window')
+  @ApiOperation({ summary: 'Validate release window constraints' })
+  @ApiResponse({ status: 200, description: 'Validation result' })
+  async validateReleaseWindow(
+    @Body() body: {
+      releaseDate?: string;
+      theatricalReleaseDate?: string;
+      streamingReleaseDate?: string;
+      windowEndDate?: string;
+      windowType?: string;
+    }
+  ) {
+    const result = this.releaseScheduler.validateReleaseWindow({
+      releaseDate: body.releaseDate ? new Date(body.releaseDate) : undefined,
+      theatricalReleaseDate: body.theatricalReleaseDate ? new Date(body.theatricalReleaseDate) : undefined,
+      streamingReleaseDate: body.streamingReleaseDate ? new Date(body.streamingReleaseDate) : undefined,
+      windowEndDate: body.windowEndDate ? new Date(body.windowEndDate) : undefined,
+      windowType: body.windowType,
+    });
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Get('available')
+  @Public()
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
+  @ApiOperation({ summary: 'Get content with active streaming windows' })
+  @ApiResponse({ status: 200, description: 'Available content IDs' })
+  async getAvailableContent(@Query('universeId') universeId?: string) {
+    const ids = await this.releaseScheduler.getAvailableContent(universeId);
+    return ApiResponseWrapper.success(ids);
+  }
+
+  // ========================
+  // ACDP validation
+  // ========================
+
+  @Post('validate/acdp')
+  @ApiOperation({ summary: 'Validate content metadata against ACDP requirements' })
+  @ApiResponse({ status: 200, description: 'ACDP validation result' })
+  async validateACDP(@Body() body: Record<string, unknown>) {
+    const result = this.acdpValidation.validateContentMetadata(body);
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Post('validate/universe-fit')
+  @ApiOperation({ summary: 'Validate content fits target universe age rating' })
+  @ApiResponse({ status: 200, description: 'Universe fit validation' })
+  async validateUniverseFit(
+    @Body() body: { content: Record<string, unknown>; universeName: string }
+  ) {
+    const result = this.acdpValidation.validateUniverseFit(body.content, body.universeName);
+    return ApiResponseWrapper.success(result);
   }
 }

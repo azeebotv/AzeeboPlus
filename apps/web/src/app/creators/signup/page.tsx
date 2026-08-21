@@ -23,19 +23,65 @@ interface ContentTypeOption {
 }
 
 const DEFAULT_CATEGORIES: CategoryOption[] = [
-  { id: 'entertainment', label: 'Entertainment & Comedy', emoji: '🎭', description: 'Skits, stand-up specials, and comedic shorts' },
-  { id: 'lifestyle', label: 'Lifestyle & Culture', emoji: '✨', description: 'Fashion, food, travel, and cultural stories' },
-  { id: 'film', label: 'Film & Cinema', emoji: '🎬', description: 'Short films, web series, and documentaries' },
-  { id: 'reality', label: 'Reality & Unscripted', emoji: '🏆', description: 'Talent shows, social experiments, and competitions' },
-  { id: 'music', label: 'Music & Performance', emoji: '🎵', description: 'Music videos, live sessions, and podcasts' },
-  { id: 'gaming', label: 'Gaming & Tech', emoji: '🎮', description: 'Let’s plays, esports commentary, and reviews' },
+  {
+    id: 'entertainment',
+    label: 'Entertainment & Comedy',
+    emoji: '🎭',
+    description: 'Skits, stand-up specials, and comedic shorts',
+  },
+  {
+    id: 'lifestyle',
+    label: 'Lifestyle & Culture',
+    emoji: '✨',
+    description: 'Fashion, food, travel, and cultural stories',
+  },
+  {
+    id: 'film',
+    label: 'Film & Cinema',
+    emoji: '🎬',
+    description: 'Short films, web series, and documentaries',
+  },
+  {
+    id: 'reality',
+    label: 'Reality & Unscripted',
+    emoji: '🏆',
+    description: 'Talent shows, social experiments, and competitions',
+  },
+  {
+    id: 'music',
+    label: 'Music & Performance',
+    emoji: '🎵',
+    description: 'Music videos, live sessions, and podcasts',
+  },
+  {
+    id: 'gaming',
+    label: 'Gaming & Tech',
+    emoji: '🎮',
+    description: 'Let’s plays, esports commentary, and reviews',
+  },
 ];
 
 const DEFAULT_CONTENT_TYPES: ContentTypeOption[] = [
-  { id: 'series', label: 'Episodic Series', description: 'Multi-episode shows with recurring storylines' },
-  { id: 'standalone', label: 'Short & Feature Films', description: 'Self-contained films and special presentations' },
-  { id: 'livestream', label: 'Interactive Live Streams', description: 'Real-time broadcast events with live tipping & chat' },
-  { id: 'shorts', label: 'Vertical & Quick Bites', description: 'Mobile-first vertical format short clips' },
+  {
+    id: 'series',
+    label: 'Episodic Series',
+    description: 'Multi-episode shows with recurring storylines',
+  },
+  {
+    id: 'standalone',
+    label: 'Short & Feature Films',
+    description: 'Self-contained films and special presentations',
+  },
+  {
+    id: 'livestream',
+    label: 'Interactive Live Streams',
+    description: 'Real-time broadcast events with live tipping & chat',
+  },
+  {
+    id: 'shorts',
+    label: 'Vertical & Quick Bites',
+    description: 'Mobile-first vertical format short clips',
+  },
 ];
 
 export default function CreatorSignupPage(): React.JSX.Element {
@@ -93,7 +139,7 @@ export default function CreatorSignupPage(): React.JSX.Element {
 
     setIsSubmitting(true);
     try {
-      const res = await apiFetch('/v1/creator/onboard', {
+      const res = await apiFetch('/v1/creators/onboard', {
         method: 'POST',
         body: JSON.stringify({
           category: selectedCategory,
@@ -121,7 +167,10 @@ export default function CreatorSignupPage(): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
+    >
       <AppHeader active="Creators" />
 
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-12">
@@ -136,7 +185,8 @@ export default function CreatorSignupPage(): React.JSX.Element {
             Join the Azeebo+ Creator Network
           </h1>
           <p className="text-white/60 text-sm sm:text-base leading-relaxed">
-            Monetize your premium stories, connect directly with global audiences, and receive direct tipping and subscriptions.
+            Monetize your premium stories, connect directly with global audiences, and receive
+            direct tipping and subscriptions.
           </p>
         </div>
 
@@ -159,7 +209,9 @@ export default function CreatorSignupPage(): React.JSX.Element {
               >
                 {step > s.num ? '✓' : s.num}
               </div>
-              <span className={`text-xs font-medium hidden sm:inline ${step >= s.num ? 'text-white' : 'text-white/40'}`}>
+              <span
+                className={`text-xs font-medium hidden sm:inline ${step >= s.num ? 'text-white' : 'text-white/40'}`}
+              >
                 {s.label}
               </span>
               {s.num < 3 && <div className="w-8 sm:w-12 h-0.5 bg-white/10 mx-1" />}
@@ -172,8 +224,12 @@ export default function CreatorSignupPage(): React.JSX.Element {
           {step === 1 && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">Select Your Primary Category</h2>
-                <p className="text-white/60 text-sm">Choose the category that best describes your core creative work.</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
+                  Select Your Primary Category
+                </h2>
+                <p className="text-white/60 text-sm">
+                  Choose the category that best describes your core creative work.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
@@ -205,7 +261,9 @@ export default function CreatorSignupPage(): React.JSX.Element {
                   onClick={handleNext}
                   disabled={!selectedCategory}
                   className="px-8 py-3.5 rounded-full font-bold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{ background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))' }}
+                  style={{
+                    background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
+                  }}
                 >
                   Continue to Format →
                 </button>
@@ -216,8 +274,12 @@ export default function CreatorSignupPage(): React.JSX.Element {
           {step === 2 && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">What is your primary content format?</h2>
-                <p className="text-white/60 text-sm">You can publish across multiple formats, but tell us your main focus.</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
+                  What is your primary content format?
+                </h2>
+                <p className="text-white/60 text-sm">
+                  You can publish across multiple formats, but tell us your main focus.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
@@ -253,7 +315,9 @@ export default function CreatorSignupPage(): React.JSX.Element {
                   onClick={handleNext}
                   disabled={!selectedContentType}
                   className="px-8 py-3.5 rounded-full font-bold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{ background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))' }}
+                  style={{
+                    background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
+                  }}
                 >
                   Continue to Profile →
                 </button>
@@ -264,8 +328,12 @@ export default function CreatorSignupPage(): React.JSX.Element {
           {step === 3 && (
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">Creator Profile Details</h2>
-                <p className="text-white/60 text-sm">Tell your audience and our curation team about yourself.</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
+                  Creator Profile Details
+                </h2>
+                <p className="text-white/60 text-sm">
+                  Tell your audience and our curation team about yourself.
+                </p>
               </div>
 
               <div className="space-y-4 pt-2">
@@ -336,9 +404,13 @@ export default function CreatorSignupPage(): React.JSX.Element {
                   type="submit"
                   disabled={isSubmitting || !formData.displayName.trim()}
                   className="px-8 py-3.5 rounded-full font-bold text-white transition-all disabled:opacity-40 shadow-lg hover:scale-105"
-                  style={{ background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))' }}
+                  style={{
+                    background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
+                  }}
                 >
-                  {isSubmitting ? 'Submitting Application...' : 'Complete & Launch Creator Studio 🚀'}
+                  {isSubmitting
+                    ? 'Submitting Application...'
+                    : 'Complete & Launch Creator Studio 🚀'}
                 </button>
               </div>
             </form>

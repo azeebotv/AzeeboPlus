@@ -63,7 +63,9 @@ export default function VerticalTitlePage(): React.JSX.Element {
             setLore(res.data.lore || []);
           }
         } else {
-          const res = await apiFetch<VerticalTitleData[] | { items: VerticalTitleData[] }>('/v1/vertical/titles');
+          const res = await apiFetch<VerticalTitleData[] | { items: VerticalTitleData[] }>(
+            '/v1/vertical/titles'
+          );
           if (res.success && res.data) {
             const list = Array.isArray(res.data) ? res.data : res.data.items || [];
             if (list.length > 0) {
@@ -83,7 +85,10 @@ export default function VerticalTitlePage(): React.JSX.Element {
   }, [titleId]);
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
+    >
       <AppHeader active="Vertical" />
 
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-8">
@@ -143,14 +148,17 @@ export default function VerticalTitlePage(): React.JSX.Element {
                   {titleData.title}
                 </h1>
                 <p className="text-white/70 text-sm sm:text-base leading-relaxed mb-6">
-                  {titleData.synopsis || 'Immerse in mobile-first 9:16 vertical storytelling crafted for quick drama hooks and rich worldbuilding.'}
+                  {titleData.synopsis ||
+                    'Immerse in mobile-first 9:16 vertical storytelling crafted for quick drama hooks and rich worldbuilding.'}
                 </p>
 
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
                   <Link
                     href={`/watch/${titleData.id}`}
                     className="px-7 py-3 rounded-full font-bold text-white transition-transform hover:scale-105 shadow-lg inline-flex items-center gap-2"
-                    style={{ background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))' }}
+                    style={{
+                      background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
+                    }}
                   >
                     <span>▶</span> Play Episode 1
                   </Link>
@@ -210,7 +218,8 @@ export default function VerticalTitlePage(): React.JSX.Element {
               <div className="az-glass p-6 rounded-3xl space-y-4">
                 <h3 className="text-lg font-bold text-white">Story Synopsis</h3>
                 <p className="text-white/70 leading-relaxed">
-                  {titleData.synopsis || 'Explore an expansive vertical narrative written for fast-paced visual storytelling and episodic cliffhangers.'}
+                  {titleData.synopsis ||
+                    'Explore an expansive vertical narrative written for fast-paced visual storytelling and episodic cliffhangers.'}
                 </p>
               </div>
             )}
@@ -218,21 +227,35 @@ export default function VerticalTitlePage(): React.JSX.Element {
             {activeTab === 'characters' && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {characters.length === 0 ? (
-                  <p className="text-white/40 py-8 col-span-3 text-center">No character details listed.</p>
+                  <p className="text-white/40 py-8 col-span-3 text-center">
+                    No character details listed.
+                  </p>
                 ) : (
                   characters.map((c) => (
-                    <div key={c.id} className="az-glass p-4 rounded-2xl flex items-center gap-4 border border-white/5">
+                    <div
+                      key={c.id}
+                      className="az-glass p-4 rounded-2xl flex items-center gap-4 border border-white/5"
+                    >
                       <div className="w-14 h-14 rounded-full overflow-hidden bg-white/10 flex-shrink-0 flex items-center justify-center font-bold text-white">
                         {c.avatar ? (
-                          <OptimizedImage src={c.avatar} alt={c.name} fill className="object-cover" />
+                          <OptimizedImage
+                            src={c.avatar}
+                            alt={c.name}
+                            fill
+                            className="object-cover"
+                          />
                         ) : (
                           c.name.charAt(0)
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
                         <h4 className="text-sm font-bold text-white truncate">{c.name}</h4>
-                        <p className="text-xs text-[var(--brand-orange)] truncate">{c.role || 'Main Character'}</p>
-                        {c.description && <p className="text-xs text-white/50 line-clamp-1 mt-1">{c.description}</p>}
+                        <p className="text-xs text-[var(--brand-orange)] truncate">
+                          {c.role || 'Main Character'}
+                        </p>
+                        {c.description && (
+                          <p className="text-xs text-white/50 line-clamp-1 mt-1">{c.description}</p>
+                        )}
                       </div>
                     </div>
                   ))
@@ -248,7 +271,10 @@ export default function VerticalTitlePage(): React.JSX.Element {
                   </div>
                 ) : (
                   lore.map((item, i) => (
-                    <div key={i} className="az-glass p-6 rounded-2xl border border-white/5 space-y-2">
+                    <div
+                      key={i}
+                      className="az-glass p-6 rounded-2xl border border-white/5 space-y-2"
+                    >
                       <h4 className="text-base font-bold text-white">{item.title}</h4>
                       <p className="text-sm text-white/70 leading-relaxed">{item.content}</p>
                     </div>

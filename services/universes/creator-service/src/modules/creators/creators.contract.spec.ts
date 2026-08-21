@@ -8,6 +8,8 @@ import { Reflector } from '@nestjs/core';
 import request from 'supertest';
 import { CreatorsController } from './creators.controller.js';
 import { CreatorsService } from './creators.service.js';
+import { CreatorPayoutService } from '../creator/creator-payout.service.js';
+import { CreatorTrustSafetyService } from '../creator/creator-trust-safety.service.js';
 import { RateLimitGuard } from '@azeebo/security';
 import { JwtStrategy } from '@azeebo/shared-services';
 
@@ -108,6 +110,14 @@ describe('Creators Controller Contract Tests', () => {
         {
           provide: CreatorsService,
           useValue: mockCreatorsService,
+        },
+        {
+          provide: CreatorPayoutService,
+          useValue: { getCreatorEarnings: jest.fn(), requestPayout: jest.fn(), getPayoutHistory: jest.fn() },
+        },
+        {
+          provide: CreatorTrustSafetyService,
+          useValue: { getTrustScore: jest.fn(), recordViolation: jest.fn(), checkMonetizationEligibility: jest.fn() },
         },
         Reflector,
         JwtStrategy,

@@ -4,6 +4,7 @@ import { Reflector } from '@nestjs/core';
 import request from 'supertest';
 import { RewardsController } from './rewards.controller.js';
 import { RewardsService } from './rewards.service.js';
+import { RewardAbuseControlsService } from '../reward/reward-abuse-controls.service.js';
 import { FeatureFlagGuard, FeatureFlagService, rewardFlags } from '@azeebo/feature-flags';
 
 jest.mock('@azeebo/security', () => ({
@@ -57,6 +58,7 @@ describe('Rewards kill-switch (reward_* flags)', () => {
       controllers: [RewardsController],
       providers: [
         { provide: RewardsService, useValue: mockRewardsService },
+        { provide: RewardAbuseControlsService, useValue: { checkAbuse: jest.fn(), recordAdminAdjustment: jest.fn(), redeemSponsorReward: jest.fn() } },
         { provide: FeatureFlagService, useValue: mockFeatureFlagService },
         { provide: Reflector, useValue: new Reflector() },
         FeatureFlagGuard,

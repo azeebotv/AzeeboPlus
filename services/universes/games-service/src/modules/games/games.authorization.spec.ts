@@ -14,6 +14,7 @@ import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
 import { GamesController } from './games.controller.js';
 import { GamesService } from './games.service.js';
+import { GameRealtimeService } from './game-realtime.service.js';
 import { RateLimitGuard } from '@azeebo/security';
 
 jest.mock('@azeebo/shared-services', () => ({
@@ -99,6 +100,10 @@ describe('Games Service Authorization Tests', () => {
         {
           provide: GamesService,
           useValue: mockGamesService,
+        },
+        {
+          provide: GameRealtimeService,
+          useValue: { createSession: jest.fn(), joinSession: jest.fn(), startSession: jest.fn(), getPlayerSession: jest.fn(), getGameSessions: jest.fn() },
         },
         appGuardProvider,
       ],

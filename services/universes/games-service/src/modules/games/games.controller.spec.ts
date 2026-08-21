@@ -6,6 +6,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Reflector } from '@nestjs/core';
 import { GamesController } from './games.controller.js';
 import { GamesService } from './games.service.js';
+import { GameRealtimeService } from './game-realtime.service.js';
 import { RateLimitService } from '@azeebo/security';
 
 jest.mock('@azeebo/shared-services', () => ({
@@ -59,6 +60,10 @@ describe('GamesController', () => {
         {
           provide: GamesService,
           useValue: mockGamesService,
+        },
+        {
+          provide: GameRealtimeService,
+          useValue: { createSession: jest.fn(), joinSession: jest.fn(), startSession: jest.fn(), getPlayerSession: jest.fn(), getGameSessions: jest.fn() },
         },
         {
           provide: RateLimitService,

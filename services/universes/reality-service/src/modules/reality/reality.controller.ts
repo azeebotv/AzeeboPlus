@@ -18,6 +18,7 @@ import { FeatureFlag, FeatureFlagGuard, realityFlags } from '@azeebo/feature-fla
 
 import { RealityService } from './reality.service.js';
 import { RealityGateway } from './reality.gateway.js';
+import { VoteFraudDetectionService } from './vote-fraud-detection.service.js';
 import { RealityResponse } from './interfaces/reality-response.interface.js';
 import { CastVoteDto, BuyVoteDto, MakePredictionDto } from './dto/vote.dto.js';
 import {
@@ -37,7 +38,8 @@ import { CreateCommentDto, ShareShowDto } from './dto/social.dto.js';
 export class RealityController {
   constructor(
     @Inject(RealityService) private readonly realityService: RealityService,
-    @Inject(RealityGateway) private readonly gateway: RealityGateway
+    @Inject(RealityGateway) private readonly gateway: RealityGateway,
+    @Inject(VoteFraudDetectionService) private readonly fraudDetection: VoteFraudDetectionService,
   ) {}
 
   @Get('shows')
@@ -332,9 +334,22 @@ export class RealityController {
   @ApiResponse({ status: 201, description: 'Vote submitted' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async submitVote(
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string; ip?: string } },
     @Body() body: CastVoteDto
   ): Promise<RealityResponse> {
+    // Run fraud detection before submitting vote
+    const fraudResult = await this.fraudDetection.checkVote({
+      userId: req.user.id,
+      showId: body.showId,
+      contestantId: body.contestantId,
+      voteType: 'regular',
+      ipAddress: req.user.ip,
+    });
+
+    if (!fraudResult.passed) {
+      return { success: false, error: { code: 'FRAUD_DETECTED', message: `Vote blocked: ${fraudResult.flags.join(', ')}` } } as RealityResponse;
+    }
+
     return this.realityService.submitVote(req.user.id, body);
   }
 
@@ -454,6 +469,15 @@ export class RealityController {
   @ApiResponse({ status: 200, description: 'Vote fraud detection results' })
   async detectVoteFraud(@Param('showId') showId: string): Promise<RealityResponse> {
     return this.realityService.detectVoteFraud(showId);
+  }
+
+  @Get('votes/:voteId/audit')
+  @UseGuards(AdminGuard)
+  @ApiOperation({ summary: 'Get vote audit trail with integrity hash' })
+  @ApiResponse({ status: 200, description: 'Vote audit trail' })
+  async getVoteAuditTrail(@Param('voteId') voteId: string) {
+    const trail = await this.fraudDetection.getVoteAuditTrail(voteId);
+    return { success: true, data: trail };
   }
 
   @Get('shows/:showId/fraud/supervotes')

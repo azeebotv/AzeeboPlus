@@ -106,7 +106,10 @@ export default function GameplayPage(): React.JSX.Element {
   const q = questions[currentQuestion];
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
+    >
       <AppHeader active="Games" />
 
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-10 flex flex-col items-center justify-center">
@@ -132,7 +135,9 @@ export default function GameplayPage(): React.JSX.Element {
               <button
                 onClick={restartGame}
                 className="px-6 py-3 rounded-full font-bold text-white transition-transform hover:scale-105"
-                style={{ background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))' }}
+                style={{
+                  background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
+                }}
               >
                 Play Again
               </button>
@@ -149,7 +154,9 @@ export default function GameplayPage(): React.JSX.Element {
             {/* Header stats */}
             <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/10">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-widest text-white/50">Question</span>
+                <span className="text-xs font-bold uppercase tracking-widest text-white/50">
+                  Question
+                </span>
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[var(--brand-orange)] text-white">
                   {currentQuestion + 1}/{questions.length}
                 </span>
@@ -157,7 +164,9 @@ export default function GameplayPage(): React.JSX.Element {
               <div className="flex items-center gap-6">
                 <div className="text-right">
                   <span className="text-xs text-white/40 block">Time</span>
-                  <span className={`font-mono font-bold text-lg ${timeLeft < 15 ? 'text-red-400 animate-pulse' : 'text-white'}`}>
+                  <span
+                    className={`font-mono font-bold text-lg ${timeLeft < 15 ? 'text-red-400 animate-pulse' : 'text-white'}`}
+                  >
                     0:{timeLeft.toString().padStart(2, '0')}
                   </span>
                 </div>
@@ -198,9 +207,7 @@ export default function GameplayPage(): React.JSX.Element {
                     {selectedAnswer !== null && opt === q.correct && (
                       <span className="text-emerald-400 font-bold">✓</span>
                     )}
-                    {isChosen && !isCorrect && (
-                      <span className="text-red-400 font-bold">✗</span>
-                    )}
+                    {isChosen && !isCorrect && <span className="text-red-400 font-bold">✗</span>}
                   </button>
                 );
               })}
