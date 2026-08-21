@@ -1,4 +1,4 @@
-name: Dockerized E2E (flag chain + failover + pg_trgm + cache-thrash)
+name: Dockerized E2E (flag chain + failover + pg_trgm + security + cache-thrash)
 
 # Runs the opt-in dockerized e2e suites that need real infrastructure,
 # plus a FlagCacheThrash load assertion against a staging gateway:
@@ -18,6 +18,11 @@ name: Dockerized E2E (flag chain + failover + pg_trgm + cache-thrash)
 #                           the fast jest suites.
 #   test:payments:failover  Paystack down → Flutterwave fallback against a real
 #                           Postgres + Redis (payments.failover.e2e spec)
+#   test:e2e:security       security services e2e against REAL Redis (BreakGlass
+#                           sessions with TTL) + REAL PostgreSQL (DualControl
+#                           approval workflow + ImmutableAudit hash chain).
+#                           Proves persistence, concurrent access, and chain
+#                           integrity (security.integration.e2e spec).
 #   test:e2e:pgtrgm         search-service pg_trgm fuzzy search against REAL
 #                           Postgres (schema-first `prisma db push` + the
 #                           extension and GIN indexes applied as idempotent
@@ -223,7 +228,7 @@ jobs:
     name: Dockerized e2e suites
     runs-on: ubuntu-latest
     needs: actionlint
-    timeout-minutes: 45
+    timeout-minutes: 50
     services:
       redis:
         image: redis:7-alpine
@@ -361,6 +366,23 @@ jobs:
           RUN_SEARCH_PGTRGM_E2E: '1'
           REDIS_TEST_URL: ${{ env.REDIS_TEST_URL }}
           SEARCH_TEST_DATABASE_URL: postgresql://azeebo_test:azeebo_test@localhost:5432/azeebo_search_test?schema=public
+
+      # --- Security E2E: BreakGlass Redis + DualControl PostgreSQL + ImmutableAudit PostgreSQL
+      - name: Create security test database
+        run: |
+          CID=$(docker ps -q --filter "publish=5432" | head -1)
+          if [ -z "$CID" ]; then
+            echo "postgres service container not found"
+            exit 1
+          fi
+          docker exec "$CID" psql -U azeebo_test -c 'CREATE DATABASE azeebo_security_test' || true
+
+      - name: Security E2E — real Redis + PostgreSQL (test:e2e:security)
+        run: pnpm --filter @azeebo/security test:e2e:security
+        env:
+          RUN_SECURITY_E2E: '1'
+          REDIS_TEST_URL: ${{ env.REDIS_TEST_URL }}
+          SECURITY_TEST_DATABASE_URL: postgresql://azeebo_test:azeebo_test@localhost:5432/azeebo_security_test?schema=public
 
       # --- FlagCacheThrash: load a staging gateway, then assert the alert
       # condition from the run-window counter deltas. The gateway's flag data

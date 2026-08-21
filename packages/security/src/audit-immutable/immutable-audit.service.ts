@@ -1,9 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { createHash } from 'crypto';
 
 // ============================================================================
 // Immutable Audit Log (TAA §56)
+//
+// Production mode: Uses PostgreSQL via PrismaClient for persistent storage
+// Test mode: Falls back to in-memory array when no PrismaClient is provided
 // ============================================================================
 
 export interface ImmutableAuditEntry {
@@ -45,22 +48,71 @@ export interface ImmutableAuditEntry {
 /**
  * Append-only audit log with hash chain for integrity.
  * No edit/delete operations allowed — truly immutable.
+ *
+ * Uses PostgreSQL when PrismaClient is injected (production),
+ * falls back to in-memory array for testing.
  */
-const auditLog: ImmutableAuditEntry[] = [];
-let sequenceCounter = 0;
-let lastHash = '0'.repeat(64); // Genesis hash
-
 @Injectable()
 export class ImmutableAuditService {
   private readonly logger = new Logger(ImmutableAuditService.name);
+  private prisma: any; // PrismaClient — optional injection
+
+  // In-memory fallback (used when no PrismaClient)
+  private static inMemoryLog: ImmutableAuditEntry[] = [];
+  private static sequenceCounter = 0;
+  private static lastHash = '0'.repeat(64);
+
+  constructor(@Optional() prismaClient?: any) {
+    this.prisma = prismaClient;
+  }
+
+  /**
+   * Set the Prisma client (for dependency injection)
+   */
+  setPrismaClient(client: any): void {
+    this.prisma = client;
+  }
+
+  /**
+   * Check if running in production mode (PostgreSQL)
+   */
+  private get isProduction(): boolean {
+    return !!this.prisma;
+  }
 
   /**
    * Clear the in-memory store (for testing only)
    */
   static clearStore(): void {
-    auditLog.length = 0;
-    sequenceCounter = 0;
-    lastHash = '0'.repeat(64);
+    ImmutableAuditService.inMemoryLog.length = 0;
+    ImmutableAuditService.sequenceCounter = 0;
+    ImmutableAuditService.lastHash = '0'.repeat(64);
+  }
+
+  /**
+   * Get the next sequence number
+   */
+  private async getNextSequence(): Promise<number> {
+    if (this.isProduction) {
+      const result = await this.prisma.$queryRaw`
+        SELECT COALESCE(MAX("sequenceNumber"), 0) + 1 as next_seq FROM audit_log
+      `;
+      return Number(result[0].next_seq);
+    }
+    return ++ImmutableAuditService.sequenceCounter;
+  }
+
+  /**
+   * Get the last hash
+   */
+  private async getLastHash(): Promise<string> {
+    if (this.isProduction) {
+      const result = await this.prisma.$queryRaw`
+        SELECT hash FROM audit_log ORDER BY "sequenceNumber" DESC LIMIT 1
+      `;
+      return result.length > 0 ? result[0].hash : '0'.repeat(64);
+    }
+    return ImmutableAuditService.lastHash;
   }
 
   /**
@@ -80,15 +132,17 @@ export class ImmutableAuditService {
     userAgent?: string;
     status: 'success' | 'failure' | 'pending_approval';
   }): Promise<ImmutableAuditEntry> {
-    sequenceCounter++;
+    const sequenceNumber = await this.getNextSequence();
+    const previousHash = await this.getLastHash();
+    const now = new Date();
 
     const newEntry: ImmutableAuditEntry = {
       id: randomUUID(),
-      sequenceNumber: sequenceCounter,
-      hash: '', // Will be computed
-      previousHash: lastHash,
+      sequenceNumber,
+      hash: '',
+      previousHash,
       ...entry,
-      timestamp: new Date(),
+      timestamp: now,
     };
 
     // Compute hash (SHA-256 of entry content + previous hash)
@@ -102,10 +156,36 @@ export class ImmutableAuditService {
       previousHash: newEntry.previousHash,
     });
     newEntry.hash = createHash('sha256').update(contentToHash).digest('hex');
-    lastHash = newEntry.hash;
 
-    // Append-only — no modification possible
-    auditLog.push(newEntry);
+    if (this.isProduction) {
+      // Persist to PostgreSQL
+      await this.prisma.auditLog.create({
+        data: {
+          id: newEntry.id,
+          sequenceNumber: newEntry.sequenceNumber,
+          hash: newEntry.hash,
+          previousHash: newEntry.previousHash,
+          actorId: newEntry.actorId,
+          actorRole: newEntry.actorRole,
+          action: newEntry.action,
+          resourceType: newEntry.resourceType,
+          resourceId: newEntry.resourceId,
+          previousState: newEntry.previousState,
+          newState: newEntry.newState,
+          reason: newEntry.reason,
+          correlationId: newEntry.correlationId,
+          ipAddress: newEntry.ipAddress,
+          userAgent: newEntry.userAgent,
+          timestamp: newEntry.timestamp,
+          status: newEntry.status,
+        },
+      });
+      ImmutableAuditService.lastHash = newEntry.hash;
+    } else {
+      // In-memory fallback
+      ImmutableAuditService.lastHash = newEntry.hash;
+      ImmutableAuditService.inMemoryLog.push(newEntry);
+    }
 
     this.logger.log(
       `AUDIT: [${newEntry.sequenceNumber}] ${newEntry.action} on ${newEntry.resourceType}/${newEntry.resourceId} by ${newEntry.actorId} (${newEntry.actorRole})`
@@ -126,7 +206,30 @@ export class ImmutableAuditService {
     until?: Date;
     limit?: number;
   }): Promise<ImmutableAuditEntry[]> {
-    let results = [...auditLog];
+    if (this.isProduction) {
+      const where: any = {};
+
+      if (filters?.actorId) where.actorId = filters.actorId;
+      if (filters?.action) where.action = filters.action;
+      if (filters?.resourceType) where.resourceType = filters.resourceType;
+      if (filters?.resourceId) where.resourceId = filters.resourceId;
+      if (filters?.since || filters?.until) {
+        where.timestamp = {};
+        if (filters.since) where.timestamp.gte = filters.since;
+        if (filters.until) where.timestamp.lte = filters.until;
+      }
+
+      const rows = await this.prisma.auditLog.findMany({
+        where,
+        orderBy: { sequenceNumber: 'asc' },
+        take: filters?.limit,
+      });
+
+      return rows.map(this.mapRowToEntry);
+    }
+
+    // In-memory fallback
+    let results = [...ImmutableAuditService.inMemoryLog];
 
     if (filters) {
       if (filters.actorId) {
@@ -149,7 +252,6 @@ export class ImmutableAuditService {
       }
     }
 
-    // Return in chronological order
     results.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
 
     if (filters?.limit) {
@@ -170,22 +272,70 @@ export class ImmutableAuditService {
     const errors: string[] = [];
     let previousHash = '0'.repeat(64);
 
-    for (let i = 0; i < auditLog.length; i++) {
-      const entry = auditLog[i];
+    if (this.isProduction) {
+      const allEntries = await this.prisma.auditLog.findMany({
+        orderBy: { sequenceNumber: 'asc' },
+      });
 
-      // Check sequence continuity
-      if (entry.sequenceNumber !== i + 1) {
-        errors.push(`Sequence gap at index ${i}: expected ${i + 1}, got ${entry.sequenceNumber}`);
+      for (let i = 0; i < allEntries.length; i++) {
+        const entry = allEntries[i];
+
+        if (entry.sequenceNumber !== i + 1) {
+          errors.push(
+            `Sequence gap at index ${i}: expected ${i + 1}, got ${entry.sequenceNumber}`
+          );
+        }
+
+        if (entry.previousHash !== previousHash) {
+          errors.push(
+            `Hash chain broken at entry ${entry.sequenceNumber}: expected ${previousHash}, got ${entry.previousHash}`
+          );
+        }
+
+        const contentToHash = JSON.stringify({
+          sequenceNumber: entry.sequenceNumber,
+          actorId: entry.actorId,
+          action: entry.action,
+          resourceType: entry.resourceType,
+          resourceId: entry.resourceId,
+          timestamp: entry.timestamp.toISOString(),
+          previousHash: entry.previousHash,
+        });
+        const expectedHash = createHash('sha256').update(contentToHash).digest('hex');
+        if (entry.hash !== expectedHash) {
+          errors.push(
+            `Hash mismatch at entry ${entry.sequenceNumber}: expected ${expectedHash}, got ${entry.hash}`
+          );
+        }
+
+        previousHash = entry.hash;
       }
 
-      // Check previous hash chain
+      return {
+        valid: errors.length === 0,
+        totalEntries: allEntries.length,
+        errors,
+      };
+    }
+
+    // In-memory fallback
+    const log = ImmutableAuditService.inMemoryLog;
+
+    for (let i = 0; i < log.length; i++) {
+      const entry = log[i];
+
+      if (entry.sequenceNumber !== i + 1) {
+        errors.push(
+          `Sequence gap at index ${i}: expected ${i + 1}, got ${entry.sequenceNumber}`
+        );
+      }
+
       if (entry.previousHash !== previousHash) {
         errors.push(
           `Hash chain broken at entry ${entry.sequenceNumber}: expected ${previousHash}, got ${entry.previousHash}`
         );
       }
 
-      // Verify hash
       const contentToHash = JSON.stringify({
         sequenceNumber: entry.sequenceNumber,
         actorId: entry.actorId,
@@ -207,7 +357,7 @@ export class ImmutableAuditService {
 
     return {
       valid: errors.length === 0,
-      totalEntries: auditLog.length,
+      totalEntries: log.length,
       errors,
     };
   }
@@ -216,13 +366,47 @@ export class ImmutableAuditService {
    * Get the last entry in the chain
    */
   async getLastEntry(): Promise<ImmutableAuditEntry | undefined> {
-    return auditLog[auditLog.length - 1];
+    if (this.isProduction) {
+      const row = await this.prisma.auditLog.findFirst({
+        orderBy: { sequenceNumber: 'desc' },
+      });
+      return row ? this.mapRowToEntry(row) : undefined;
+    }
+    return ImmutableAuditService.inMemoryLog[ImmutableAuditService.inMemoryLog.length - 1];
   }
 
   /**
    * Get total entry count
    */
   async getEntryCount(): Promise<number> {
-    return auditLog.length;
+    if (this.isProduction) {
+      return this.prisma.auditLog.count();
+    }
+    return ImmutableAuditService.inMemoryLog.length;
+  }
+
+  /**
+   * Map database row to entry interface
+   */
+  private mapRowToEntry(row: any): ImmutableAuditEntry {
+    return {
+      id: row.id,
+      sequenceNumber: row.sequenceNumber,
+      hash: row.hash,
+      previousHash: row.previousHash,
+      actorId: row.actorId,
+      actorRole: row.actorRole,
+      action: row.action,
+      resourceType: row.resourceType,
+      resourceId: row.resourceId,
+      previousState: row.previousState ?? undefined,
+      newState: row.newState ?? undefined,
+      reason: row.reason ?? undefined,
+      correlationId: row.correlationId ?? undefined,
+      ipAddress: row.ipAddress ?? undefined,
+      userAgent: row.userAgent ?? undefined,
+      timestamp: row.timestamp,
+      status: row.status,
+    };
   }
 }

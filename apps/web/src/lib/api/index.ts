@@ -1,7 +1,7 @@
 // ApiClient – assembled from domain-specific modules
 // Re-exports everything for backward compatibility with `import { api, apiFetch, ... } from '../lib/api'`
 
-import { resolvedApiUrl, RETRY_CONFIG, gatewayPath } from './base';
+import { resolvedApiUrl, RETRY_CONFIG, gatewayPath, generateCorrelationId, generateIdempotencyKey } from './base';
 import type { RetryOptions } from './base';
 import { createAuthMethods } from './auth';
 import { createUserMethods } from './user';
@@ -213,8 +213,19 @@ class ApiClient {
       ...(options.headers as Record<string, string>),
     };
 
+    // Correlation ID for request tracing (TAA §9)
+    if (!headers['x-correlation-id']) {
+      headers['x-correlation-id'] = generateCorrelationId();
+    }
+
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`;
+    }
+
+    // Idempotency key for state-changing methods (TAA §9)
+    const method = (options.method || 'GET').toUpperCase();
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && !headers['Idempotency-Key']) {
+      headers['Idempotency-Key'] = generateIdempotencyKey();
     }
 
     const controller = new AbortController();

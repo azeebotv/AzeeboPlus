@@ -1,8 +1,11 @@
-import { Injectable, Logger, UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException, ForbiddenException, Optional } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 
 // ============================================================================
 // Break-Glass Access System (TAA §86)
+//
+// Production mode: Uses Redis for session storage with automatic TTL-based expiry
+// Test mode: Falls back to in-memory Map when no Redis client is provided
 // ============================================================================
 
 export type BreakGlassReason =
@@ -50,23 +53,45 @@ export interface BreakGlassActivationRequest {
   reAuthenticated: boolean;
 }
 
-/**
- * In-memory store for break-glass sessions.
- * In production, persist to database with restricted write access.
- */
-const breakGlassSessions = new Map<string, BreakGlassSession>();
-
 const MAX_DURATION_MS = 60 * 60 * 1000; // 60 minutes
+const KEY_PREFIX = 'break_glass:';
+const SESSION_INDEX_KEY = 'break_glass:sessions';
+const USER_SESSIONS_PREFIX = 'break_glass:user:';
 
+/**
+ * Break-glass service with Redis persistence (production) or in-memory fallback (testing).
+ */
 @Injectable()
 export class BreakGlassService {
   private readonly logger = new Logger(BreakGlassService.name);
+  private redis: any; // Redis client — optional injection
+
+  // In-memory fallback (used when no Redis)
+  private static inMemorySessions = new Map<string, BreakGlassSession>();
+
+  constructor(@Optional() redisClient?: any) {
+    this.redis = redisClient;
+  }
+
+  /**
+   * Set the Redis client (for dependency injection)
+   */
+  setRedisClient(client: any): void {
+    this.redis = client;
+  }
+
+  /**
+   * Check if running in production mode (Redis)
+   */
+  private get isProduction(): boolean {
+    return !!this.redis;
+  }
 
   /**
    * Clear the in-memory store (for testing only)
    */
   static clearStore(): void {
-    breakGlassSessions.clear();
+    BreakGlassService.inMemorySessions.clear();
   }
 
   /**
@@ -94,9 +119,22 @@ export class BreakGlassService {
     }
 
     // Check for existing active session
-    for (const session of breakGlassSessions.values()) {
-      if (session.userId === request.userId && session.status === 'active') {
-        throw new ForbiddenException('User already has an active break-glass session');
+    if (this.isProduction) {
+      const userSessionIds = await this.redis.smembers(`${USER_SESSIONS_PREFIX}${request.userId}`);
+      for (const sid of userSessionIds) {
+        const existing = await this.redis.get(`${KEY_PREFIX}${sid}`);
+        if (existing) {
+          const session = JSON.parse(existing) as BreakGlassSession;
+          if (session.status === 'active') {
+            throw new ForbiddenException('User already has an active break-glass session');
+          }
+        }
+      }
+    } else {
+      for (const session of BreakGlassService.inMemorySessions.values()) {
+        if (session.userId === request.userId && session.status === 'active') {
+          throw new ForbiddenException('User already has an active break-glass session');
+        }
       }
     }
 
@@ -115,7 +153,15 @@ export class BreakGlassService {
       status: 'active',
     };
 
-    breakGlassSessions.set(session.id, session);
+    if (this.isProduction) {
+      // Store in Redis with TTL = session duration + 1 hour buffer
+      const ttlSeconds = Math.ceil((MAX_DURATION_MS + 60 * 60 * 1000) / 1000);
+      await this.redis.setex(`${KEY_PREFIX}${session.id}`, ttlSeconds, JSON.stringify(session));
+      await this.redis.sadd(SESSION_INDEX_KEY, session.id);
+      await this.redis.sadd(`${USER_SESSIONS_PREFIX}${request.userId}`, session.id);
+    } else {
+      BreakGlassService.inMemorySessions.set(session.id, session);
+    }
 
     this.logger.warn(
       `BREAK-GLASS ACTIVATED: User ${request.userId} elevated from ${request.originalRole} to ${request.elevatedRole} ` +
@@ -129,7 +175,20 @@ export class BreakGlassService {
    * Validate a break-glass session is still active
    */
   async validate(sessionId: string): Promise<BreakGlassSession> {
-    const session = breakGlassSessions.get(sessionId);
+    let session: BreakGlassSession | null = null;
+
+    if (this.isProduction) {
+      const data = await this.redis.get(`${KEY_PREFIX}${sessionId}`);
+      if (data) {
+        session = JSON.parse(data) as BreakGlassSession;
+      }
+    } else {
+      const found = BreakGlassService.inMemorySessions.get(sessionId);
+      if (found) {
+        session = found;
+      }
+    }
+
     if (!session) {
       throw new UnauthorizedException('Break-glass session not found');
     }
@@ -140,6 +199,9 @@ export class BreakGlassService {
 
     if (new Date() > session.expiresAt) {
       session.status = 'expired';
+      if (this.isProduction) {
+        await this.redis.set(`${KEY_PREFIX}${sessionId}`, JSON.stringify(session));
+      }
       this.logger.warn(`BREAK-GLASS EXPIRED: Session ${sessionId} for user ${session.userId}`);
       throw new UnauthorizedException('Break-glass session has expired');
     }
@@ -151,13 +213,30 @@ export class BreakGlassService {
    * Revoke a break-glass session
    */
   async revoke(sessionId: string, revokedBy: string): Promise<BreakGlassSession> {
-    const session = breakGlassSessions.get(sessionId);
+    let session: BreakGlassSession | null = null;
+
+    if (this.isProduction) {
+      const data = await this.redis.get(`${KEY_PREFIX}${sessionId}`);
+      if (data) {
+        session = JSON.parse(data) as BreakGlassSession;
+      }
+    } else {
+      const found = BreakGlassService.inMemorySessions.get(sessionId);
+      if (found) {
+        session = found;
+      }
+    }
+
     if (!session) {
       throw new UnauthorizedException('Break-glass session not found');
     }
 
     session.status = 'revoked';
     session.reviewedBy = revokedBy;
+
+    if (this.isProduction) {
+      await this.redis.set(`${KEY_PREFIX}${sessionId}`, JSON.stringify(session));
+    }
 
     this.logger.warn(
       `BREAK-GLASS REVOKED: Session ${sessionId} for user ${session.userId} revoked by ${revokedBy}`
@@ -170,7 +249,20 @@ export class BreakGlassService {
    * Review a break-glass session (mandatory by next business day)
    */
   async review(sessionId: string, reviewedBy: string, notes: string): Promise<BreakGlassSession> {
-    const session = breakGlassSessions.get(sessionId);
+    let session: BreakGlassSession | null = null;
+
+    if (this.isProduction) {
+      const data = await this.redis.get(`${KEY_PREFIX}${sessionId}`);
+      if (data) {
+        session = JSON.parse(data) as BreakGlassSession;
+      }
+    } else {
+      const found = BreakGlassService.inMemorySessions.get(sessionId);
+      if (found) {
+        session = found;
+      }
+    }
+
     if (!session) {
       throw new UnauthorizedException('Break-glass session not found');
     }
@@ -178,6 +270,10 @@ export class BreakGlassService {
     session.status = 'reviewed';
     session.reviewedBy = reviewedBy;
     session.reviewNotes = notes;
+
+    if (this.isProduction) {
+      await this.redis.set(`${KEY_PREFIX}${sessionId}`, JSON.stringify(session));
+    }
 
     this.logger.log(`BREAK-GLASS REVIEWED: Session ${sessionId} reviewed by ${reviewedBy}`);
 
@@ -188,20 +284,58 @@ export class BreakGlassService {
    * Get all active sessions (for security monitoring)
    */
   async getActiveSessions(): Promise<BreakGlassSession[]> {
-    // Auto-expire old sessions
-    for (const session of breakGlassSessions.values()) {
+    if (this.isProduction) {
+      const sessionIds = await this.redis.smembers(SESSION_INDEX_KEY);
+      const activeSessions: BreakGlassSession[] = [];
+
+      for (const sid of sessionIds) {
+        const data = await this.redis.get(`${KEY_PREFIX}${sid}`);
+        if (!data) continue;
+
+        const session = JSON.parse(data) as BreakGlassSession;
+
+        // Auto-expire old sessions
+        if (session.status === 'active' && new Date() > session.expiresAt) {
+          session.status = 'expired';
+          await this.redis.set(`${KEY_PREFIX}${sid}`, JSON.stringify(session));
+        }
+
+        if (session.status === 'active') {
+          activeSessions.push(session);
+        }
+      }
+
+      return activeSessions;
+    }
+
+    // In-memory fallback
+    for (const session of BreakGlassService.inMemorySessions.values()) {
       if (session.status === 'active' && new Date() > session.expiresAt) {
         session.status = 'expired';
       }
     }
 
-    return Array.from(breakGlassSessions.values()).filter((s) => s.status === 'active');
+    return Array.from(BreakGlassService.inMemorySessions.values()).filter((s) => s.status === 'active');
   }
 
   /**
    * Get all sessions for audit (including expired/revoked)
    */
   async getAllSessions(): Promise<BreakGlassSession[]> {
-    return Array.from(breakGlassSessions.values());
+    if (this.isProduction) {
+      const sessionIds = await this.redis.smembers(SESSION_INDEX_KEY);
+      const sessions: BreakGlassSession[] = [];
+
+      for (const sid of sessionIds) {
+        const data = await this.redis.get(`${KEY_PREFIX}${sid}`);
+        if (data) {
+          sessions.push(JSON.parse(data) as BreakGlassSession);
+        }
+      }
+
+      return sessions;
+    }
+
+    return Array.from(BreakGlassService.inMemorySessions.values());
   }
 }

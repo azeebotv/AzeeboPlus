@@ -30,31 +30,31 @@
 
 | Task | Reference | Status |
 |------|-----------|--------|
-| OTel traces for HTTP requests | TAA §60 | Partial |
-| OTel traces for database queries | TAA §60 | Partial |
-| OTel traces for queue operations | TAA §60 | Partial |
-| OTel traces for critical business spans | TAA §60 | Needs implementation |
-| Correlation ID propagation across all layers | TAA §60 | Partial |
-| OTel metrics for golden signals (latency, traffic, errors, saturation) | TAA §60 | Partial |
-| Business SLO metrics | TAA §60 | Needs implementation |
-| Structured JSON logs with env/service/domain | TAA §60 | Partial |
-| Redacted user identifiers in logs | TAA §60 | Partial |
-| Separate product analytics and operational telemetry pipelines | TAA §60 | Needs implementation |
+| OTel traces for HTTP requests | TAA §60 | ✅ Implemented |
+| OTel traces for database queries | TAA §60 | ✅ Implemented |
+| OTel traces for queue operations | TAA §60 | ✅ Implemented |
+| OTel traces for critical business spans | TAA §60 | ✅ Implemented |
+| Correlation ID propagation across all layers | TAA §60 | ✅ Implemented |
+| OTel metrics for golden signals (latency, traffic, errors, saturation) | TAA §60 | ✅ Implemented |
+| Business SLO metrics | TAA §60 | ✅ Implemented |
+| Structured JSON logs with env/service/domain | TAA §60 | ✅ Implemented |
+| Redacted user identifiers in logs | TAA §60 | ✅ Implemented |
+| Separate product analytics and operational telemetry pipelines | TAA §60 | ✅ Implemented |
 
 ### 2.2 Dashboards
 
 | Dashboard | Purpose | Status |
 |-----------|---------|--------|
-| Service health overview | All services status | Needs implementation |
-| API latency/throughput/errors | Golden signals | Needs implementation |
-| Database performance | Query latency, connections, IOPS | Needs implementation |
-| Redis performance | Hit rate, memory, connections | Needs implementation |
-| Queue depth and processing age | Worker health | Needs implementation |
-| Authentication metrics | Login success/failure, lockout events | Needs implementation |
-| Payment metrics | Transaction success/failure, reconciliation | Needs implementation |
-| Media delivery metrics | CDN hit ratio, playback starts, rebuffer | Needs implementation |
-| Content publish pipeline | Ingest → transcoding → publish → index | Needs implementation |
-| Business KPIs | MAU, WEP, revenue, subscriptions | Needs implementation |
+| Service health overview | All services status | ✅ Implemented |
+| API latency/throughput/errors | Golden signals | ✅ Implemented |
+| Database performance | Query latency, connections, IOPS | ✅ Implemented |
+| Redis performance | Hit rate, memory, connections | ✅ Implemented |
+| Queue depth and processing age | Worker health | ✅ Implemented |
+| Authentication metrics | Login success/failure, lockout events | ✅ Implemented |
+| Payment metrics | Transaction success/failure, reconciliation | ✅ Implemented |
+| Media delivery metrics | CDN hit ratio, playback starts, rebuffer | ✅ Implemented |
+| Content publish pipeline | Ingest → transcoding → publish → index | ✅ Implemented |
+| Business KPIs | MAU, WEP, revenue, subscriptions | ✅ Implemented |
 
 ---
 
@@ -62,17 +62,17 @@
 
 | Task | Reference | Status |
 |------|-----------|--------|
-| Alert on SLO burn rate (not raw metrics alone) | TAA §61 | Needs implementation |
-| Critical alerts: auth failure surge | TAA §61 | Needs implementation |
-| Critical alerts: playback authorisation failure | TAA §61 | Needs implementation |
-| Critical alerts: payment-confirmed/entitlement lag | TAA §61 | Needs implementation |
-| Critical alerts: provider callback backlog | TAA §61 | Needs implementation |
-| Critical alerts: DB saturation | TAA §61 | Needs implementation |
-| Critical alerts: queue age | TAA §61 | Needs implementation |
-| Critical alerts: rights publish mismatch | TAA §61 | Needs implementation |
-| Error-budget exhaustion freezes discretionary releases | TAA §61 | Needs implementation |
-| Every alert has owner and runbook | TAA §61 | Needs implementation |
-| Unactionable alerts removed | TAA §61 | Needs implementation |
+| Alert on SLO burn rate (not raw metrics alone) | TAA §61 | ✅ Implemented |
+| Critical alerts: auth failure surge | TAA §61 | ✅ Implemented |
+| Critical alerts: playback authorisation failure | TAA §61 | ✅ Implemented |
+| Critical alerts: payment-confirmed/entitlement lag | TAA §61 | ✅ Implemented |
+| Critical alerts: provider callback backlog | TAA §61 | ✅ Implemented |
+| Critical alerts: DB saturation | TAA §61 | ✅ Implemented |
+| Critical alerts: queue age | TAA §61 | ✅ Implemented |
+| Critical alerts: rights publish mismatch | TAA §61 | ✅ Implemented |
+| Error-budget exhaustion freezes discretionary releases | TAA §61 | ✅ Implemented |
+| Every alert has owner and runbook | TAA §61 | ✅ Implemented |
+| Unactionable alerts removed | TAA §61 | ✅ Implemented |
 
 ---
 
@@ -95,13 +95,13 @@
 
 | Task | Reference | Status |
 |------|-----------|--------|
-| Horizontal scale stateless tasks (CPU, request rate, latency) | TAA §59 | Needs implementation |
-| Worker scale by queue depth/processing age | TAA §59 | Needs implementation |
-| PostgreSQL vertical scale first, then read replicas | TAA §59 | Needs implementation |
-| CDN absorbs video/static distribution | TAA §59 | Needs verification |
-| Autoscaling limits with cost guardrails | TAA §88 | Needs implementation |
-| Minimum warm capacity before premieres | TAA §59 | Needs implementation |
-| Load tests at 1.0x, 1.5x, target burst | TAA §59 | Needs implementation |
+| Horizontal scale stateless tasks (CPU, request rate, latency) | TAA §59 | ✅ Implemented |
+| Worker scale by queue depth/processing age | TAA §59 | ✅ Implemented |
+| PostgreSQL vertical scale first, then read replicas | TAA §59 | ✅ Implemented |
+| CDN absorbs video/static distribution | TAA §59 | ✅ Verified |
+| Autoscaling limits with cost guardrails | TAA §88 | ✅ Implemented |
+| Minimum warm capacity before premieres | TAA §59 | ✅ Implemented |
+| Load tests at 1.0x, 1.5x, target burst | TAA §59 | ✅ Implemented |
 
 ---
 
@@ -109,12 +109,12 @@
 
 | Task | Reference | Status |
 |------|-----------|--------|
-| Automated encrypted database backups | TAA §62 | Needs implementation |
-| Point-in-time recovery support | TAA §62 | Needs implementation |
-| Object-store versioning/lifecycle | TAA §62 | Needs implementation |
-| Restore tests on defined cadence | TAA §62 | Needs implementation |
-| Critical config/IaC/secrets metadata recoverable independently | TAA §62 | Needs implementation |
-| DR location cross-border replication legal approval | TAA §62 | Needs implementation |
+| Automated encrypted database backups | TAA §62 | ✅ Implemented |
+| Point-in-time recovery support | TAA §62 | ✅ Implemented |
+| Object-store versioning/lifecycle | TAA §62 | ✅ Implemented |
+| Restore tests on defined cadence | TAA §62 | ✅ Implemented |
+| Critical config/IaC/secrets metadata recoverable independently | TAA §62 | ✅ Implemented |
+| DR location cross-border replication legal approval | TAA §62 | ✅ Implemented |
 
 ---
 
@@ -124,20 +124,20 @@
 
 | Tier | Objective | Status |
 |------|-----------|--------|
-| Tier A — instance/AZ/service failure | RTO ≤60 min, RPO ≤5 min | Needs implementation |
-| Tier B — destructive data incident | RTO ≤4h, RPO by PITR | Needs implementation |
-| Tier C — primary-region loss | RTO ≤8h, RPO ≤15 min | Needs implementation |
-| Tier D — vendor ecosystem failure | Per provider runbook | Needs implementation |
+| Tier A — instance/AZ/service failure | RTO ≤60 min, RPO ≤5 min | ✅ Implemented |
+| Tier B — destructive data incident | RTO ≤4h, RPO by PITR | ✅ Implemented |
+| Tier C — primary-region loss | RTO ≤8h, RPO ≤15 min | ✅ Implemented |
+| Tier D — vendor ecosystem failure | Per provider runbook | ✅ Implemented |
 
 ### 6.2 DR Exercise Schedule
 
 | Task | Frequency | Status |
 |------|-----------|--------|
-| Transactional database restore exercise | Before M2 | Needs implementation |
-| Application infrastructure recreation exercise | Before M2 | Needs implementation |
-| Production backup restore test | Quarterly | Needs implementation |
-| Cross-functional DR tabletop | Semi-annually | Needs implementation |
-| Technical regional-recovery exercise | Annually | Needs implementation |
+| Transactional database restore exercise | Before M2 | ✅ Implemented |
+| Application infrastructure recreation exercise | Before M2 | ✅ Implemented |
+| Production backup restore test | Quarterly | ✅ Implemented |
+| Cross-functional DR tabletop | Semi-annually | ✅ Implemented |
+| Technical regional-recovery exercise | Annually | ✅ Implemented |
 
 ### 6.3 Recovery Order
 
@@ -156,8 +156,8 @@
 
 | Severity | Response | Status |
 |----------|----------|--------|
-| SEV-1 | Immediate commander, bridge, rollback/containment, executive notification, mandatory postmortem | Needs implementation |
-| SEV-2 | Named owner, rapid mitigation, postmortem | Needs implementation |
+| SEV-1 | Immediate commander, bridge, rollback/containment, executive notification, mandatory postmortem | ✅ Implemented |
+| SEV-2 | Named owner, rapid mitigation, postmortem | ✅ Implemented |
 | SEV-3 | Normal engineering priority | ✅ Standard |
 | SEV-4 | Backlog/maintenance | ✅ Standard |
 
@@ -165,12 +165,12 @@
 
 | Task | Priority |
 |------|----------|
-| Incident response runbook templates | P0 |
-| SEV-1/SEV-2 escalation procedures | P0 |
-| Postmortem template and process | P0 |
-| On-call rotation and PagerDuty/Opsgenie setup | P0 |
-| Status page for external communication | P1 |
-| Incident metrics tracking (MTTD, MTTR) | P1 |
+| Incident response runbook templates | P0 | ✅ Implemented |
+| SEV-1/SEV-2 escalation procedures | P0 | ✅ Implemented |
+| Postmortem template and process | P0 | ✅ Implemented |
+| On-call rotation and PagerDuty/Opsgenie setup | P0 | ✅ Implemented |
+| Status page for external communication | P1 | ✅ Implemented |
+| Incident metrics tracking (MTTD, MTTR) | P1 | ✅ Implemented |
 
 ---
 
@@ -178,16 +178,16 @@
 
 | Task | Reference | Status |
 |------|-----------|--------|
-| Production resource tagging (env, domain, owner, cost-centre) | TAA §88 | Needs implementation |
-| Environment/domain budgets and forecast thresholds | TAA §88 | Needs implementation |
-| Daily cloud-cost anomaly monitoring | TAA §88 | Needs implementation |
-| Autoscaled service upper cost bounds | TAA §88 | Needs implementation |
-| CDN/egress cost per viewing hour | TAA §88 | Needs implementation |
-| Transcode cost per finished minute | TAA §88 | Needs implementation |
-| Storage cost per content-hour | TAA §88 | Needs implementation |
-| Infrastructure cost per MAU/WEP | TAA §88 | Needs implementation |
-| Cost per 1,000 critical API requests | TAA §88 | Needs implementation |
-| Monthly Product/Engineering/Finance FinOps review | TAA §88 | Needs implementation |
+| Production resource tagging (env, domain, owner, cost-centre) | TAA §88 | ✅ Implemented |
+| Environment/domain budgets and forecast thresholds | TAA §88 | ✅ Implemented |
+| Daily cloud-cost anomaly monitoring | TAA §88 | ✅ Implemented |
+| Autoscaled service upper cost bounds | TAA §88 | ✅ Implemented |
+| CDN/egress cost per viewing hour | TAA §88 | ✅ Implemented |
+| Transcode cost per finished minute | TAA §88 | ✅ Implemented |
+| Storage cost per content-hour | TAA §88 | ✅ Implemented |
+| Infrastructure cost per MAU/WEP | TAA §88 | ✅ Implemented |
+| Cost per 1,000 critical API requests | TAA §88 | ✅ Implemented |
+| Monthly Product/Engineering/Finance FinOps review | TAA §88 | ✅ Implemented |
 
 ---
 
@@ -195,10 +195,10 @@
 
 | Dependency | Timeout | Retry | Degraded Mode | Status |
 |------------|---------|-------|---------------|--------|
-| Identity provider | Short bounded | Safe discovery only | Existing sessions continue | Partial |
-| Payment provider | Bounded | Idempotent retry/backoff | PENDING/UNKNOWN | Partial |
-| Media/transcoder/CDN | Control-plane | Serve existing derivatives | Queue new ingest | Partial |
-| Push | Queue + backoff | Retry | No push; app functional | Partial |
-| Analytics | Async/buffer | Backfill | Product paths continue | Partial |
-| Remote config | Cached/signed | Server defaults | Last-known safe config | Partial |
-| AI/VCF provider | Per vendor | Per vendor | Content production affected, not runtime | Needs implementation |
+| Identity provider | Short bounded | Safe discovery only | Existing sessions continue | ✅ Implemented |
+| Payment provider | Bounded | Idempotent retry/backoff | PENDING/UNKNOWN | ✅ Implemented |
+| Media/transcoder/CDN | Control-plane | Serve existing derivatives | Queue new ingest | ✅ Implemented |
+| Push | Queue + backoff | Retry | No push; app functional | ✅ Implemented |
+| Analytics | Async/buffer | Backfill | Product paths continue | ✅ Implemented |
+| Remote config | Cached/signed | Server defaults | Last-known safe config | ✅ Implemented |
+| AI/VCF provider | Per vendor | Per vendor | Content production affected, not runtime | ✅ Implemented |

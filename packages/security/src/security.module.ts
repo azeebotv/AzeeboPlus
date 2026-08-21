@@ -1,4 +1,5 @@
 import { Module, Global } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { DataClassificationService } from './classification/data-classification.service';
 import { BreakGlassService } from './break-glass/break-glass.service';
 import { DualControlService } from './dual-control/dual-control.service';
@@ -31,6 +32,7 @@ import { MfaGuard } from './mfa/mfa-guard.service';
 @Global()
 @Module({
   providers: [
+    Reflector,
     DataClassificationService,
     BreakGlassService,
     DualControlService,
