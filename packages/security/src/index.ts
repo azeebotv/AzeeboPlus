@@ -51,3 +51,72 @@ export {
   isOriginAllowed,
   getWebSocketOrigins,
 } from './websocket-origin.validator';
+
+// ============================================================================
+// Security Services (TAA §49-56, §82-86)
+// ============================================================================
+
+/** Data classification labels and access control (TAA §51). */
+export {
+  DataClassificationService,
+  DataClassification,
+  ClassificationLabel,
+  CLASSIFICATION_REGISTRY,
+} from './classification/data-classification.service';
+
+/** Break-glass access system with time-bound elevation (TAA §86). */
+export {
+  BreakGlassService,
+  BreakGlassSession,
+  BreakGlassReason,
+  BreakGlassActivationRequest,
+} from './break-glass/break-glass.service';
+
+/** Dual-control approval for high-risk admin actions (TAA §55). */
+export {
+  DualControlService,
+  DualControlRequest,
+  DualControlApproval,
+  DualControlAction,
+} from './dual-control/dual-control.service';
+
+/** Sensitive log field redaction (TAA §52). */
+export { LogRedactionService } from './log-redaction/log-redaction.service';
+
+/** Account merge preserving purchase/history (TAA §49). */
+export {
+  AccountMergeService,
+  AccountMergeRequest,
+  MergeStatus,
+} from './account-merge/account-merge.service';
+
+/** Emergency rights kill path (TAA §82). */
+export {
+  RightsKillService,
+  RightsKillOrder,
+  RightsKillTrigger,
+  RightsKillScope,
+} from './rights-kill/rights-kill.service';
+
+/** Immutable audit log with hash chain integrity (TAA §56). */
+export {
+  ImmutableAuditService,
+  ImmutableAuditEntry,
+} from './audit-immutable/immutable-audit.service';
+
+/** MFA enforcement guard for admin actions (TAA §49). */
+export {
+  MfaGuard,
+  RequiresMFA,
+  REQUIRES_MFA_KEY,
+} from './mfa/mfa-guard.service';
+
+// ============================================================================
+// Security Module — Import this to get all security services
+// ============================================================================
+
+/**
+ * Global NestJS module providing all security services.
+ * Import once in your root module or feature modules.
+ */
+export { SecurityModule } from './security.module';
