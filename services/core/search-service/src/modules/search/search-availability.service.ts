@@ -8,14 +8,12 @@ import { PrismaService } from '../database/prisma.service.js';
 export interface AvailabilityFilter {
   /** Filter by content status */
   statuses?: string[];
-  /** Filter by release window */
-  includeUnreleased?: boolean;
-  /** Filter by geo-restrictions */
-  allowedCountries?: string[];
-  /** Filter by age restrictions */
-  minAge?: number;
-  /** Filter by content rating */
-  allowedRatings?: string[];
+  /** Filter by content type */
+  contentTypes?: string[];
+  /** Filter by universe */
+  universes?: string[];
+  /** Filter by categories */
+  categories?: string[];
 }
 
 export interface AvailabilityCheckResult {
@@ -23,12 +21,6 @@ export interface AvailabilityCheckResult {
   available: boolean;
   /** Reason if not available */
   reason?: string;
-  /** Available regions (if geo-restricted) */
-  availableRegions?: string[];
-  /** Age requirement (if restricted) */
-  ageRequirement?: number;
-  /** Content rating */
-  contentRating?: string;
 }
 
 export interface ZeroResultTelemetry {
@@ -57,7 +49,7 @@ export class SearchAvailabilityService {
    */
   async filterAvailableContent(
     contentIds: string[],
-    filters: AvailabilityFilter
+    filters: AvailabilityFilter,
   ): Promise<string[]> {
     const availableIds: string[] = [];
 
@@ -76,19 +68,16 @@ export class SearchAvailabilityService {
    */
   async checkContentAvailability(
     contentId: string,
-    filters: AvailabilityFilter
+    filters: AvailabilityFilter,
   ): Promise<AvailabilityCheckResult> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
       select: {
         id: true,
         status: true,
-        releaseDate: true,
-        windowEndDate: true,
-        allowedCountries: true,
-        blockedCountries: true,
-        contentRating: true,
-        minAge: true,
+        contentType: true,
+        universe: true,
+        categories: true,
       },
     });
 
@@ -109,81 +98,41 @@ export class SearchAvailabilityService {
       };
     }
 
-    // Check release window
-    if (content.releaseDate && content.releaseDate > new Date()) {
-      if (!filters.includeUnreleased) {
+    // Check content type
+    if (filters.contentTypes && filters.contentTypes.length > 0) {
+      if (!filters.contentTypes.includes(content.contentType)) {
         return {
           available: false,
-          reason: 'Content is not yet released',
+          reason: `Content type '${content.contentType}' is not in allowed types`,
         };
       }
     }
 
-    // Check window end date
-    if (content.windowEndDate && content.windowEndDate < new Date()) {
-      return {
-        available: false,
-        reason: 'Content window has ended',
-      };
-    }
-
-    // Check geo-restrictions
-    if (filters.allowedCountries && filters.allowedCountries.length > 0) {
-      if (content.blockedCountries && content.blockedCountries.length > 0) {
-        const isBlocked = filters.allowedCountries.some((country) =>
-          content.blockedCountries.includes(country)
-        );
-        if (isBlocked) {
-          return {
-            available: false,
-            reason: 'Content is geo-restricted in your region',
-            availableRegions: content.allowedCountries,
-          };
-        }
-      }
-
-      if (content.allowedCountries && content.allowedCountries.length > 0) {
-        const isAllowed = filters.allowedCountries.some((country) =>
-          content.allowedCountries.includes(country)
-        );
-        if (!isAllowed) {
-          return {
-            available: false,
-            reason: 'Content is not available in your region',
-            availableRegions: content.allowedCountries,
-          };
-        }
-      }
-    }
-
-    // Check age restrictions
-    if (filters.minAge !== undefined && content.minAge !== null) {
-      if (filters.minAge < content.minAge) {
+    // Check universe
+    if (filters.universes && filters.universes.length > 0) {
+      if (!filters.universes.includes(content.universe)) {
         return {
           available: false,
-          reason: `Content requires age ${content.minAge}+`,
-          ageRequirement: content.minAge,
-          contentRating: content.contentRating || undefined,
+          reason: `Content universe '${content.universe}' is not in allowed universes`,
         };
       }
     }
 
-    // Check content rating
-    if (filters.allowedRatings && filters.allowedRatings.length > 0) {
-      if (content.contentRating && !filters.allowedRatings.includes(content.contentRating)) {
+    // Check categories
+    if (filters.categories && filters.categories.length > 0) {
+      const hasMatchingCategory = content.categories.some((cat) =>
+        filters.categories!.includes(cat),
+      );
+      if (!hasMatchingCategory) {
         return {
           available: false,
-          reason: `Content rating '${content.contentRating}' is not allowed`,
-          contentRating: content.contentRating,
+          reason: 'Content does not match any allowed categories',
         };
       }
     }
 
     return {
       available: true,
-      availableRegions: content.allowedCountries,
-      ageRequirement: content.minAge || undefined,
-      contentRating: content.contentRating || undefined,
     };
   }
 
@@ -196,11 +145,9 @@ export class SearchAvailabilityService {
    */
   async trackZeroResult(telemetry: ZeroResultTelemetry): Promise<void> {
     this.logger.log(
-      `Zero-result search: "${telemetry.query}" (userId: ${telemetry.userId || 'anonymous'})`
+      `Zero-result search: "${telemetry.query}" (userId: ${telemetry.userId || 'anonymous'})`,
     );
 
-    // Store in analytics (implementation depends on analytics service)
-    // For now, log to structured output
     const logEntry = {
       event: 'search_zero_result',
       query: telemetry.query,
@@ -219,16 +166,12 @@ export class SearchAvailabilityService {
    * Generate search suggestions for zero-result queries
    */
   async generateSuggestions(query: string): Promise<string[]> {
-    // Basic suggestion logic - could be enhanced with ML
     const suggestions: string[] = [];
 
-    // Try partial matches
+    // Try partial matches on title
     const partialMatches = await this.prisma.contentItem.findMany({
       where: {
-        OR: [
-          { title: { contains: query, mode: 'insensitive' } },
-          { description: { contains: query, mode: 'insensitive' } },
-        ],
+        title: { contains: query, mode: 'insensitive' },
       },
       select: { title: true },
       take: 5,
@@ -264,11 +207,11 @@ export class SearchAvailabilityService {
    */
   async measureSearchLatency(
     query: string,
-    filters: AvailabilityFilter
+    filters: AvailabilityFilter,
   ): Promise<{ latencyMs: number; resultCount: number }> {
     const startTime = Date.now();
 
-    // Execute search with availability filtering
+    // Execute search
     const results = await this.prisma.contentItem.findMany({
       where: {
         status: 'published',
@@ -280,7 +223,7 @@ export class SearchAvailabilityService {
     // Apply availability filters
     const availableIds = await this.filterAvailableContent(
       results.map((r) => r.id),
-      filters
+      filters,
     );
 
     const latencyMs = Date.now() - startTime;
