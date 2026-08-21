@@ -6,8 +6,7 @@ import { AdminModule } from './modules/admin/admin.module.js';
 import { DatabaseModule } from './modules/database/database.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
-import { RateLimiterModule } from '@azeebo/security';
-import { ServiceAuthGuard } from '@azeebo/security';
+import { RateLimiterModule, ServiceAuthGuard, SecurityModule } from '@azeebo/security';
 import { FeatureFlagModule, notificationFlags } from '@azeebo/feature-flags';
 import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
@@ -18,6 +17,7 @@ import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
       envFilePath: ['.env', '../../.env'],
     }),
     RateLimiterModule.forRoot(),
+    SecurityModule,
     DatabaseModule,
     NotificationsModule,
     AdminModule,
