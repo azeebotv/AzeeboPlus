@@ -284,4 +284,72 @@ export class WalletController {
     const result = await this.walletService.getTransaction(req.user.id, id);
     return ApiResponseWrapper.success((result as { data: unknown }).data);
   }
+
+  // ─── Alias routes (frontend uses different names) ──────────────────
+
+  @Get('balance')
+  @Cache({ key: 'wallet:balance', ttl: 60 })
+  @ApiOperation({ summary: 'Get wallet balance (alias for GET /)' })
+  @ApiResponse({ status: 200, description: 'Wallet balance' })
+  async getBalanceAlias(@Request() req: AuthenticatedRequest) {
+    const result = await this.walletService.getBalance(req.user.id);
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
+  }
+
+  @Get('accounts')
+  @ApiOperation({ summary: 'Get linked bank accounts' })
+  @ApiResponse({ status: 200, description: 'List of bank accounts' })
+  async getAccounts(@Request() req: AuthenticatedRequest) {
+    const result = await this.walletService.getLinkedAccounts(req.user.id);
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
+  }
+
+  @Get('bank-accounts')
+  @ApiOperation({ summary: 'Get linked bank accounts (alias)' })
+  async getBankAccounts(@Request() req: AuthenticatedRequest) {
+    const result = await this.walletService.getLinkedAccounts(req.user.id);
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
+  }
+
+  @Post('bank-accounts')
+  @ApiOperation({ summary: 'Link a bank account' })
+  async linkBankAccount(@Request() req: AuthenticatedRequest, @Body() body: { bankName: string; accountNumber: string; accountName: string }) {
+    const result = await this.walletService.linkBankAccount(req.user.id, body);
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
+  }
+
+  @Get('withdrawal-methods')
+  @ApiOperation({ summary: 'Get available withdrawal methods' })
+  async getWithdrawalMethods(@Request() req: AuthenticatedRequest) {
+    const result = await this.walletService.getWithdrawalMethods(req.user.id);
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
+  }
+
+  @Get('withdrawal-pricing')
+  @ApiOperation({ summary: 'Get withdrawal pricing/fees' })
+  async getWithdrawalPricing(@Request() req: AuthenticatedRequest) {
+    const result = await this.walletService.getWithdrawalPricing(req.user.id);
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
+  }
+
+  @Get('pricing')
+  @ApiOperation({ summary: 'Get wallet pricing (fees, limits)' })
+  async getPricing() {
+    const result = await this.walletService.getWalletPricing();
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
+  }
+
+  @Get('payment-methods')
+  @ApiOperation({ summary: 'Get available payment methods' })
+  async getPaymentMethods(@Request() req: AuthenticatedRequest) {
+    const result = await this.walletService.getPaymentMethods(req.user.id);
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
+  }
+
+  @Post('deposit')
+  @ApiOperation({ summary: 'Deposit funds (alias for fund)' })
+  async deposit(@Request() req: AuthenticatedRequest, @Body() fundDto: FundWalletDto) {
+    const result = await this.walletService.initializeFunding(req.user.id, fundDto);
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
+  }
 }

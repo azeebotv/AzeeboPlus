@@ -4,6 +4,9 @@ import request from 'supertest';
 import { ContentController } from './content.controller.js';
 import { ContentService } from './content.service.js';
 import { AccessControlService } from './access-control.service.js';
+import { ContentReleaseSchedulerService } from './content-release-scheduler.service.js';
+import { ContentVersioningService } from './content-versioning.service.js';
+import { ACDPValidationService } from './content-acdp-validation.service.js';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, AdminGuard } from '@azeebo/security';
 import { CacheInterceptor } from '../../cache/index.js';
@@ -100,6 +103,18 @@ describe('Content Service Caching Tests', () => {
         {
           provide: AccessControlService,
           useValue: mockAccessControlService,
+        },
+        {
+          provide: ContentReleaseSchedulerService,
+          useValue: { validateReleaseWindow: jest.fn(), getAvailableContent: jest.fn() },
+        },
+        {
+          provide: ContentVersioningService,
+          useValue: { getVersionHistory: jest.fn(), createSnapshot: jest.fn() },
+        },
+        {
+          provide: ACDPValidationService,
+          useValue: { validateContentMetadata: jest.fn(), validateUniverseFit: jest.fn() },
         },
       ],
     })

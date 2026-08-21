@@ -10,7 +10,10 @@ export default function PredictionDetailError({
   reset: () => void;
 }): React.JSX.Element {
   return (
-    <div className="min-h-[50vh] flex items-center justify-center p-6" style={{ backgroundColor: 'var(--brand-near-black)' }}>
+    <div
+      className="min-h-[50vh] flex items-center justify-center p-6"
+      style={{ backgroundColor: 'var(--brand-near-black)' }}
+    >
       <div className="text-center max-w-md mx-auto">
         <div className="text-5xl mb-4">🎯</div>
         <h2 className="text-2xl font-bold text-white mb-2">Prediction Market Not Found</h2>
@@ -21,7 +24,9 @@ export default function PredictionDetailError({
           <button
             onClick={reset}
             className="px-6 py-2.5 rounded-full font-semibold text-white"
-            style={{ background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)' }}
+            style={{
+              background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+            }}
           >
             Retry
           </button>

@@ -15,6 +15,7 @@ import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
 import { FeatureFlag, FeatureFlagGuard, rewardFlags } from '@azeebo/feature-flags';
 
 import { RewardsService } from './rewards.service.js';
+import { RewardAbuseControlsService } from '../reward/reward-abuse-controls.service.js';
 import { RedeemRewardDto } from './dto/redeem-reward.dto.js';
 import { RewardResponse } from './interfaces/reward-response.interface.js';
 
@@ -24,7 +25,10 @@ import { RewardResponse } from './interfaces/reward-response.interface.js';
 @FeatureFlag(rewardFlags.pointsEnabled)
 @Controller('rewards')
 export class RewardsController {
-  constructor(@Inject(RewardsService) private readonly rewardsService: RewardsService) {}
+  constructor(
+    @Inject(RewardsService) private readonly rewardsService: RewardsService,
+    @Inject(RewardAbuseControlsService) private readonly abuseControls: RewardAbuseControlsService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Get reward account overview' })
@@ -118,5 +122,34 @@ export class RewardsController {
     @Query('limit') limit?: number
   ): Promise<RewardResponse> {
     return this.rewardsService.getHistory(req.user.id, Number(page) || 1, Number(limit) || 20);
+  }
+
+  // ========================
+  // Abuse control endpoints
+  // ========================
+
+  @Get('abuse-check')
+  @UseGuards(ServiceAuthGuard)
+  @RateLimit(30, 60000)
+  @ApiOperation({ summary: 'Check for reward abuse' })
+  @ApiResponse({ status: 200, description: 'Abuse check result' })
+  async checkAbuse(@Request() req: { user: { id: string } }) {
+    const result = await this.abuseControls.checkAbuse(req.user.id);
+    return { success: true, data: result };
+  }
+
+  @Post('admin/adjust')
+  @UseGuards(ServiceAuthGuard)
+  @RateLimit(10, 60000)
+  @ApiOperation({ summary: 'Admin reward adjustment' })
+  @ApiResponse({ status: 200, description: 'Adjustment recorded' })
+  async adminAdjust(
+    @Request() req: { user: { id: string } },
+    @Body() body: { userId: string; amount: number; reason: string }
+  ) {
+    const result = await this.abuseControls.recordAdminAdjustment(
+      body.userId, body.amount, body.reason, req.user.id
+    );
+    return { success: true, data: result };
   }
 }

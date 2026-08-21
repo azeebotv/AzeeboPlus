@@ -5,6 +5,7 @@ import { Reflector } from '@nestjs/core';
 import { RateLimitGuard, ServiceAuthGuard, AdminGuard } from '@azeebo/security';
 import { SearchController } from './search.controller.js';
 import { SearchService } from './search.service.js';
+import { SearchIntelligenceService } from './search-intelligence.service.js';
 
 const mockRateLimitGuard = {
   canActivate: jest.fn().mockImplementation(() => {
@@ -45,6 +46,10 @@ describe('Search Service Rate Limiting Tests', () => {
         {
           provide: SearchService,
           useValue: mockSearchService,
+        },
+        {
+          provide: SearchIntelligenceService,
+          useValue: { filterByAvailability: jest.fn(), trackZeroResult: jest.fn(), getSearchQualityMetrics: jest.fn() },
         },
         Reflector,
       ],

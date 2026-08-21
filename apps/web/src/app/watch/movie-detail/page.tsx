@@ -49,7 +49,10 @@ export default function MovieDetailPage(): React.JSX.Element {
   }, [movieId]);
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
+    >
       <AppHeader active="Movies" />
 
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
@@ -102,7 +105,9 @@ export default function MovieDetailPage(): React.JSX.Element {
                   <Link
                     href={`/watch/${movie.id}`}
                     className="px-8 py-3.5 rounded-full font-bold text-white transition-all hover:scale-105 shadow-xl inline-flex items-center gap-2"
-                    style={{ background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))' }}
+                    style={{
+                      background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
+                    }}
                   >
                     <span>▶</span> Watch Movie
                   </Link>

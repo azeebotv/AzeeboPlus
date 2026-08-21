@@ -16,6 +16,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { AnalyticsService } from './analytics.service.js';
+import { WEPAnalyticsService } from './wep-analytics.service.js';
 import { AnalyticsResponse } from './interfaces/analytics-response.interface.js';
 import { IngestEventsDto } from './dto/analytics.dto.js';
 
@@ -24,7 +25,10 @@ import { IngestEventsDto } from './dto/analytics.dto.js';
 @Controller('analytics')
 @UseGuards(RateLimitGuard)
 export class AnalyticsController {
-  constructor(@Inject(AnalyticsService) private readonly analyticsService: AnalyticsService) {}
+  constructor(
+    @Inject(AnalyticsService) private readonly analyticsService: AnalyticsService,
+    @Inject(WEPAnalyticsService) private readonly wepAnalytics: WEPAnalyticsService,
+  ) {}
 
   @Get('bootstrap')
   @RateLimit(120, 60000)
@@ -227,5 +231,62 @@ export class AnalyticsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getRealtime(): Promise<AnalyticsResponse> {
     return this.analyticsService.getRealtime();
+  }
+
+  // ========================
+  // WEP & Campaign Attribution
+  // ========================
+
+  @Get('wep/user/:userId')
+  @ApiOperation({ summary: 'Calculate WEP for a user' })
+  @ApiResponse({ status: 200, description: 'User WEP calculation' })
+  async getUserWEP(
+    @Param('userId') userId: string,
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string
+  ) {
+    const result = await this.wepAnalytics.calculateUserWEP(
+      userId, new Date(startDate), new Date(endDate)
+    );
+    return { success: true, data: result };
+  }
+
+  @Get('wep/platform')
+  @ApiOperation({ summary: 'Get platform-wide WEP metrics' })
+  @ApiResponse({ status: 200, description: 'Platform WEP' })
+  async getPlatformWEP(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string
+  ) {
+    const result = await this.wepAnalytics.getPlatformWEP(
+      new Date(startDate), new Date(endDate)
+    );
+    return { success: true, data: result };
+  }
+
+  @Get('wep/contribution')
+  @ApiOperation({ summary: 'Get contribution per WEP' })
+  @ApiResponse({ status: 200, description: 'Contribution per WEP' })
+  async getContributionPerWEP(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string
+  ) {
+    const result = await this.wepAnalytics.getContributionPerWEP(
+      new Date(startDate), new Date(endDate)
+    );
+    return { success: true, data: result };
+  }
+
+  @Get('campaigns/attribution')
+  @ApiOperation({ summary: 'Get campaign attribution analytics' })
+  @ApiResponse({ status: 200, description: 'Campaign attribution' })
+  async getCampaignAttribution(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string
+  ) {
+    const result = await this.wepAnalytics.getCampaignAttribution(
+      new Date(startDate), new Date(endDate)
+    );
+    return { success: true, data: result };
   }
 }

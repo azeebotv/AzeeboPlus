@@ -13,6 +13,7 @@ import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { RealityController } from './reality.controller.js';
 import { RealityService } from './reality.service.js';
+import { VoteFraudDetectionService } from './vote-fraud-detection.service.js';
 import { RealityGateway } from './reality.gateway.js';
 import { RateLimitService } from '@azeebo/security';
 
@@ -96,6 +97,13 @@ describe('RealityController', () => {
           provide: RealityGateway,
           useValue: {
             getViewerCount: jest.fn().mockResolvedValue(0),
+          },
+        },
+        {
+          provide: VoteFraudDetectionService,
+          useValue: {
+            checkVote: jest.fn().mockResolvedValue({ passed: true, flags: [], riskScore: 0, action: 'allow' }),
+            getVoteAuditTrail: jest.fn(),
           },
         },
         {

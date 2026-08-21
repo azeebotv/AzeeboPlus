@@ -12,6 +12,9 @@ jest.mock('@azeebo/security', () => ({
   ServiceAuthGuard: class MockServiceAuthGuard {
     canActivate = jest.fn().mockReturnValue(true);
   },
+  AdminGuard: class MockAdminGuard {
+    canActivate = jest.fn().mockReturnValue(true);
+  },
   RateLimit: () => () => {},
 }));
 jest.mock('class-validator', () => ({
@@ -40,6 +43,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';
 import { NotificationsController } from './notifications.controller.js';
 import { NotificationsService } from './notifications.service.js';
+import { NotificationSLOService } from '../notification/notification-slo.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 
 describe('Notifications Controller Contract Tests', () => {
@@ -74,6 +78,7 @@ describe('Notifications Controller Contract Tests', () => {
       controllers: [NotificationsController],
       providers: [
         { provide: NotificationsService, useValue: mockNotificationsService },
+        { provide: NotificationSLOService, useValue: { getCurrentSLOStatus: jest.fn(), measureSLO: jest.fn() } },
         { provide: PrismaService, useValue: {} },
       ],
     })

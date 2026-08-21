@@ -6,7 +6,10 @@ import AppFooter from '@/components/layout/AppFooter';
 
 export default function ExpiredSessionPage(): React.JSX.Element {
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
+    >
       <AppHeader />
 
       <main className="flex-1 flex items-center justify-center p-6">
@@ -15,19 +18,20 @@ export default function ExpiredSessionPage(): React.JSX.Element {
             ⌛
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-3">
-            Session Expired
-          </h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-3">Session Expired</h1>
 
           <p className="text-white/60 text-sm leading-relaxed mb-8">
-            Your login session has timed out due to inactivity or security policy. Please sign in again to continue.
+            Your login session has timed out due to inactivity or security policy. Please sign in
+            again to continue.
           </p>
 
           <div className="space-y-3">
             <Link
               href="/auth/login"
               className="block w-full py-3.5 rounded-full font-bold text-white transition-transform hover:scale-105 shadow-lg"
-              style={{ background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))' }}
+              style={{
+                background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
+              }}
             >
               Sign In Again
             </Link>

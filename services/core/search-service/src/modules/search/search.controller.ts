@@ -15,6 +15,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { RateLimitGuard, RateLimit, ServiceAuthGuard, AdminGuard } from '@azeebo/security';
 
 import { SearchService } from './search.service.js';
+import { SearchIntelligenceService } from './search-intelligence.service.js';
 import { SearchResponse } from './interfaces/search-response.interface.js';
 import { LogSearchDto } from './dto/log-search.dto.js';
 
@@ -22,7 +23,10 @@ import { LogSearchDto } from './dto/log-search.dto.js';
 @UseGuards(ServiceAuthGuard)
 @Controller('search')
 export class SearchController {
-  constructor(@Inject(SearchService) private readonly searchService: SearchService) {}
+  constructor(
+    @Inject(SearchService) private readonly searchService: SearchService,
+    @Inject(SearchIntelligenceService) private readonly intelligenceService: SearchIntelligenceService,
+  ) {}
 
   @Get()
   @UseGuards(RateLimitGuard)
@@ -169,5 +173,36 @@ export class SearchController {
   @ApiResponse({ status: 200, description: 'Indexes repaired' })
   async repairIndexes() {
     return this.searchService.repairIndexes();
+  }
+
+  // ========================
+  // Search intelligence endpoints
+  // ========================
+
+  @Get('quality/metrics')
+  @UseGuards(AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get search quality metrics' })
+  @ApiResponse({ status: 200, description: 'Search quality metrics' })
+  async getSearchQualityMetrics(@Query('days') days?: number) {
+    const metrics = await this.intelligenceService.getSearchQualityMetrics(days);
+    return { success: true, data: metrics };
+  }
+
+  @Post('track/zero-result')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Track zero-result search query' })
+  @ApiResponse({ status: 200, description: 'Zero result tracked' })
+  async trackZeroResult(
+    @Request() req: { user?: { id: string } },
+    @Body() body: { query: string; resultCount: number; filters?: Record<string, unknown> }
+  ) {
+    this.intelligenceService.trackZeroResult({
+      query: body.query,
+      userId: req.user?.id,
+      resultCount: body.resultCount,
+      filters: body.filters,
+    });
+    return { success: true };
   }
 }

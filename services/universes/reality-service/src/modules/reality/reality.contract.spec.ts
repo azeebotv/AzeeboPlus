@@ -133,9 +133,12 @@ describe('Reality Controller Contract Tests', () => {
           delete: jest.fn(),
         },
         vote: {
-          findMany: jest.fn(),
+          findMany: jest.fn().mockResolvedValue([]),
+          findUnique: jest.fn(),
           create: jest.fn(),
+          count: jest.fn().mockResolvedValue(0),
         },
+        $queryRawUnsafe: jest.fn().mockResolvedValue([{ count: 0 }]),
         supervote: {
           findMany: jest.fn(),
           create: jest.fn(),

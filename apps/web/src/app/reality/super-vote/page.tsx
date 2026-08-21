@@ -125,7 +125,7 @@ export default function SuperVotePage(): React.JSX.Element {
         setConfirmDialog((prev) => ({ ...prev, open: false }));
         setIsVoting(true);
         try {
-          const result = await apiFetch('/v1/content/super-vote', {
+          const result = await apiFetch('/reality/supervotes', {
             method: 'POST',
             body: JSON.stringify({
               contestantId: selectedContestant,

@@ -11,6 +11,7 @@ import {
 import { NotificationsController } from './notifications.controller.js';
 import { NotificationsService } from './notifications.service.js';
 import { DatabaseModule } from '../database/database.module.js';
+import { NotificationSLOService } from '../notification/notification-slo.service.js';
 
 @Module({
   imports: [
@@ -23,7 +24,7 @@ import { DatabaseModule } from '../database/database.module.js';
     JwtConfigModule,
   ],
   controllers: [NotificationsController],
-  providers: [NotificationsService],
-  exports: [NotificationsService, DatabaseModule],
+  providers: [NotificationsService, NotificationSLOService],
+  exports: [NotificationsService, NotificationSLOService, DatabaseModule],
 })
 export class NotificationsModule {}

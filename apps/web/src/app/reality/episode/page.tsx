@@ -93,7 +93,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
 
   const handleVote = async (isSuper: boolean): Promise<void> => {
     try {
-      const result = await apiFetch('/v1/content/vote', {
+      const result = await apiFetch('/reality/votes', {
         method: 'POST',
         body: JSON.stringify({ episodeId, isSuperVote: isSuper }),
       });

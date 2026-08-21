@@ -17,6 +17,8 @@ import { RateLimitGuard, RateLimit, Public, ServiceAuthGuard } from '@azeebo/sec
 import { FeatureFlagGuard, FeatureFlag, creatorFlags } from '@azeebo/feature-flags';
 
 import { CreatorsService } from './creators.service.js';
+import { CreatorPayoutService } from '../creator/creator-payout.service.js';
+import { CreatorTrustSafetyService } from '../creator/creator-trust-safety.service.js';
 import { CreatorResponse } from './interfaces/creator-response.interface.js';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
 import {
@@ -69,7 +71,11 @@ interface PayoutBody {
 @UseGuards(ServiceAuthGuard)
 @Controller('creators')
 export class CreatorsController {
-  constructor(@Inject(CreatorsService) private readonly creatorsService: CreatorsService) {}
+  constructor(
+    @Inject(CreatorsService) private readonly creatorsService: CreatorsService,
+    @Inject(CreatorPayoutService) private readonly payoutService: CreatorPayoutService,
+    @Inject(CreatorTrustSafetyService) private readonly trustSafetyService: CreatorTrustSafetyService,
+  ) {}
 
   @Post('onboard')
   @UseGuards(RateLimitGuard)
@@ -454,5 +460,56 @@ export class CreatorsController {
     @Query('limit') limit = 20
   ): Promise<CreatorResponse> {
     return this.creatorsService.getCreatorContent(creatorId, Number(page), Number(limit));
+  }
+
+  // ========================
+  // Payout endpoints
+  // ========================
+
+  @Get('payouts/summary')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
+  @ApiOperation({ summary: 'Get payout earnings summary' })
+  @ApiResponse({ status: 200, description: 'Earnings summary' })
+  async getPayoutSummary(@Request() req: { user: { id: string } }) {
+    const earnings = await this.payoutService.getCreatorEarnings(req.user.id);
+    return { success: true, data: earnings };
+  }
+
+  @Get('payouts/history')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
+  @ApiOperation({ summary: 'Get detailed payout history' })
+  @ApiResponse({ status: 200, description: 'Payout history' })
+  async getPayoutDetailedHistory(
+    @Request() req: { user: { id: string } },
+    @Query('limit') limit?: number
+  ) {
+    const history = await this.payoutService.getPayoutHistory(req.user.id, limit);
+    return { success: true, data: history };
+  }
+
+  // ========================
+  // Trust & Safety endpoints
+  // ========================
+
+  @Get('trust-score')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
+  @ApiOperation({ summary: 'Get creator trust score' })
+  @ApiResponse({ status: 200, description: 'Trust score' })
+  async getTrustScore(@Request() req: { user: { id: string } }) {
+    const score = await this.trustSafetyService.getTrustScore(req.user.id);
+    return { success: true, data: score };
+  }
+
+  @Get('monetization-eligibility')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
+  @ApiOperation({ summary: 'Check monetization eligibility' })
+  @ApiResponse({ status: 200, description: 'Eligibility check' })
+  async checkMonetizationEligibility(@Request() req: { user: { id: string } }) {
+    const eligibility = await this.trustSafetyService.checkMonetizationEligibility(req.user.id);
+    return { success: true, data: eligibility };
   }
 }

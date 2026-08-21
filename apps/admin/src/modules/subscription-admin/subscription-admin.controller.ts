@@ -78,7 +78,11 @@ export class SubscriptionAdminController {
     @Body() body: { status: string },
     @Req() req: { user?: { sub: string; id?: string } }
   ) {
-    return this.subscriptionService.toggleSubscriptionPlanStatus(id, body.status, this.getActorId(req));
+    return this.subscriptionService.toggleSubscriptionPlanStatus(
+      id,
+      body.status,
+      this.getActorId(req)
+    );
   }
 
   @Delete(':id')

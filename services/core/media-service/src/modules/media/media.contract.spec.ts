@@ -6,7 +6,8 @@ import { UploadService } from '../upload/upload.service';
 import { S3Service } from '../upload/s3.service';
 import { PremiumContentService } from '../upload/premium-content.service';
 import { AdminModule } from '../admin/admin.module';
-import { RedisService } from '@azeebo/shared-services';
+import { RedisService, CacheService } from '@azeebo/shared-services';
+import { PrismaService } from '../database/prisma.service';
 import { FileValidationService } from '../../common/services/file-validation.service';
 import { RateLimitGuard, AdminGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
@@ -83,6 +84,17 @@ describe('Media Controller Contract Tests', () => {
         set: jest.fn(),
         del: jest.fn(),
         keys: jest.fn(),
+      })
+      .overrideProvider(PrismaService)
+      .useValue({
+        transcodingJob: { findUnique: jest.fn(), update: jest.fn() },
+        mediaUpload: { findMany: jest.fn(), findUnique: jest.fn(), delete: jest.fn() },
+      })
+      .overrideProvider(CacheService)
+      .useValue({
+        get: jest.fn(),
+        set: jest.fn(),
+        delete: jest.fn(),
       })
       .overrideProvider(FileValidationService)
       .useValue({

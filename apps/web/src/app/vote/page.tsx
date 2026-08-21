@@ -121,7 +121,10 @@ export default function VotePage(): React.JSX.Element {
     },
     onSuccess: () => {
       setIsSuccess(true);
-      toast.showToast(`Successfully cast ${totalVotes} votes for ${selectedContestant?.name}!`, 'success');
+      toast.showToast(
+        `Successfully cast ${totalVotes} votes for ${selectedContestant?.name}!`,
+        'success'
+      );
       queryClient.invalidateQueries({ queryKey: ['reality'] });
     },
     onError: (err: Error) => {
@@ -130,7 +133,10 @@ export default function VotePage(): React.JSX.Element {
   });
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
+    >
       <AppHeader active="Reality" />
 
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-8">
@@ -148,8 +154,8 @@ export default function VotePage(): React.JSX.Element {
             <div className="text-6xl mb-4">🎉</div>
             <h2 className="text-2xl font-bold text-white mb-2">Vote Submitted!</h2>
             <p className="text-white/70 mb-6">
-              You cast <strong className="text-[var(--brand-orange)]">{totalVotes} votes</strong> for{' '}
-              <strong>{selectedContestant?.name}</strong>.
+              You cast <strong className="text-[var(--brand-orange)]">{totalVotes} votes</strong>{' '}
+              for <strong>{selectedContestant?.name}</strong>.
             </p>
             <div className="flex gap-4 justify-center">
               <button
@@ -161,7 +167,9 @@ export default function VotePage(): React.JSX.Element {
               <button
                 onClick={() => router.push('/reality/results')}
                 className="px-6 py-2.5 rounded-full font-semibold text-white transition-all"
-                style={{ background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))' }}
+                style={{
+                  background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
+                }}
               >
                 View Leaderboard
               </button>
@@ -319,11 +327,15 @@ export default function VotePage(): React.JSX.Element {
                   </div>
                   <div className="flex justify-between text-white/60">
                     <span>Wallet Balance:</span>
-                    <span className="font-semibold text-white">₦{currentBalance.toLocaleString()}</span>
+                    <span className="font-semibold text-white">
+                      ₦{currentBalance.toLocaleString()}
+                    </span>
                   </div>
                   <div className="flex justify-between text-base font-bold text-white pt-2 border-t border-white/5">
                     <span>Total Cost:</span>
-                    <span className="text-[var(--brand-orange)]">₦{totalPrice.toLocaleString()}</span>
+                    <span className="text-[var(--brand-orange)]">
+                      ₦{totalPrice.toLocaleString()}
+                    </span>
                   </div>
                 </div>
 
@@ -331,7 +343,9 @@ export default function VotePage(): React.JSX.Element {
                   <button
                     onClick={() => router.push('/auth/login')}
                     className="w-full py-3.5 rounded-full font-bold text-white text-center transition-all hover:scale-102"
-                    style={{ background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))' }}
+                    style={{
+                      background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
+                    }}
                   >
                     Log In to Vote
                   </button>
@@ -352,11 +366,11 @@ export default function VotePage(): React.JSX.Element {
                     disabled={!selectedContestant || voteMutation.isPending}
                     onClick={() => voteMutation.mutate()}
                     className="w-full py-3.5 rounded-full font-bold text-white text-center transition-all hover:scale-102 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-                    style={{ background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))' }}
+                    style={{
+                      background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
+                    }}
                   >
-                    {voteMutation.isPending
-                      ? 'Submitting Votes...'
-                      : `Cast ${totalVotes} Votes`}
+                    {voteMutation.isPending ? 'Submitting Votes...' : `Cast ${totalVotes} Votes`}
                   </button>
                 )}
               </div>

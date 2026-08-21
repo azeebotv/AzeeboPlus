@@ -26,7 +26,13 @@ interface RealityShowDetail {
   viewerCount?: number;
   status?: string;
   seasonNumber?: number;
-  episodes?: Array<{ id: string; title: string; episodeNumber: number; duration?: number; thumbnail?: string }>;
+  episodes?: Array<{
+    id: string;
+    title: string;
+    episodeNumber: number;
+    duration?: number;
+    thumbnail?: string;
+  }>;
 }
 
 export default function RealityShowViewerPage(): React.JSX.Element {
@@ -56,7 +62,9 @@ export default function RealityShowViewerPage(): React.JSX.Element {
             setContestants(Array.isArray(cRes.data) ? cRes.data : cRes.data.items || []);
           }
         } else {
-          const allShows = await apiFetch<RealityShowDetail[] | { items: RealityShowDetail[] }>('/v1/reality/shows');
+          const allShows = await apiFetch<RealityShowDetail[] | { items: RealityShowDetail[] }>(
+            '/v1/reality/shows'
+          );
           if (allShows.success && allShows.data) {
             const list = Array.isArray(allShows.data) ? allShows.data : allShows.data.items || [];
             if (list.length > 0) {
@@ -80,7 +88,10 @@ export default function RealityShowViewerPage(): React.JSX.Element {
   }, [showId]);
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
+    >
       <AppHeader active="Reality" />
 
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
@@ -145,7 +156,9 @@ export default function RealityShowViewerPage(): React.JSX.Element {
                   <Link
                     href={`/reality/episode?id=${show.id}`}
                     className="px-8 py-3.5 rounded-full font-bold text-white transition-all hover:scale-105 shadow-xl inline-flex items-center gap-2"
-                    style={{ background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))' }}
+                    style={{
+                      background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
+                    }}
                   >
                     <span>▶</span> Stream Episode
                   </Link>

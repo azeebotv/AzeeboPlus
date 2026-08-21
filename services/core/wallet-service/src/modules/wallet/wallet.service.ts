@@ -1934,4 +1934,65 @@ export class WalletService {
       return { success: false };
     }
   }
+
+  // ─── Alias / convenience methods ──────────────────────────────────────
+
+  async getLinkedAccounts(_userId: string): Promise<WalletResponse> {
+    // Bank accounts are stored via external payment provider; return empty until integrated.
+    return { success: true, data: [] };
+  }
+
+  async linkBankAccount(_userId: string, _body: { bankName: string; accountNumber: string; accountName: string }): Promise<WalletResponse> {
+    throw new BadRequestException('Bank account linking not yet available');
+  }
+
+  async getWithdrawalMethods(_userId: string): Promise<WalletResponse> {
+    return {
+      success: true,
+      data: [
+        { id: 'bank_transfer', name: 'Bank Transfer', processingTime: '1-3 business days', fee: 50 },
+        { id: 'mobile_money', name: 'Mobile Money', processingTime: 'Instant', fee: 25 },
+      ],
+    };
+  }
+
+  async getWithdrawalPricing(_userId: string): Promise<WalletResponse> {
+    return {
+      success: true,
+      data: {
+        minimumAmount: 1000,
+        maximumAmount: 500000,
+        fees: [
+          { method: 'bank_transfer', percentage: 0.5, flat: 50, min: 50, max: 2000 },
+          { method: 'mobile_money', percentage: 1.0, flat: 25, min: 25, max: 1000 },
+        ],
+      },
+    };
+  }
+
+  async getWalletPricing(): Promise<WalletResponse> {
+    return {
+      success: true,
+      data: {
+        minimumDeposit: 100,
+        maximumDeposit: 5000000,
+        fees: [
+          { method: 'card', percentage: 1.5, flat: 0 },
+          { method: 'bank_transfer', percentage: 0, flat: 0 },
+          { method: 'ussd', percentage: 0.5, flat: 0 },
+        ],
+      },
+    };
+  }
+
+  async getPaymentMethods(_userId: string): Promise<WalletResponse> {
+    return {
+      success: true,
+      data: [
+        { id: 'card', name: 'Debit/Credit Card', enabled: true },
+        { id: 'bank_transfer', name: 'Bank Transfer', enabled: true },
+        { id: 'ussd', name: 'USSD', enabled: true },
+      ],
+    };
+  }
 }

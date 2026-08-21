@@ -32,6 +32,9 @@ jest.mock('@azeebo/security', () => {
     ServiceAuthGuard: class MockServiceAuthGuard {
       canActivate = canActivate;
     },
+    AdminGuard: class MockAdminGuard {
+      canActivate = canActivate;
+    },
     RateLimit: () => () => {},
     __mockCanActivate: canActivate,
   };
@@ -51,6 +54,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';
 import { NotificationsController } from './notifications.controller.js';
 import { NotificationsService } from './notifications.service.js';
+import { NotificationSLOService } from '../notification/notification-slo.service.js';
 
 const mockAuthGuard = {
   canActivate: jest.fn().mockImplementation((context: ExecutionContext) => {
@@ -121,6 +125,10 @@ describe('Notification Service Rate Limiting & Pagination Tests', () => {
         {
           provide: NotificationsService,
           useValue: mockNotificationsService,
+        },
+        {
+          provide: NotificationSLOService,
+          useValue: { getCurrentSLOStatus: jest.fn(), measureSLO: jest.fn() },
         },
       ],
     })

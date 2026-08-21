@@ -99,7 +99,7 @@ export default function ProfileSetupPage(): React.JSX.Element {
       const formData = new FormData();
       formData.append('file', file);
 
-      const result = await apiFetch('/v1/media/upload', {
+      const result = await apiFetch('/media/upload/avatar', {
         method: 'POST',
         body: formData,
         headers: {},

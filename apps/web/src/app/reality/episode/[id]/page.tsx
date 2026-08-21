@@ -120,7 +120,10 @@ export default function RealityDynamicEpisodePlayerPage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
+    >
       <AppHeader active="Reality" />
 
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-8">
@@ -152,8 +155,12 @@ export default function RealityDynamicEpisodePlayerPage(): React.JSX.Element {
               />
             </div>
             <div className="flex items-center justify-between text-xs text-white/70">
-              <span>{formatTime(currentTime)} / {formatTime(episode.duration || 0)}</span>
-              <span className="font-semibold text-white">Season {episode.seasonNumber} Episode {episode.episodeNumber}</span>
+              <span>
+                {formatTime(currentTime)} / {formatTime(episode.duration || 0)}
+              </span>
+              <span className="font-semibold text-white">
+                Season {episode.seasonNumber} Episode {episode.episodeNumber}
+              </span>
             </div>
           </div>
         </div>
@@ -171,7 +178,9 @@ export default function RealityDynamicEpisodePlayerPage(): React.JSX.Element {
               <Link
                 href="/vote"
                 className="px-6 py-2.5 rounded-full font-bold text-white transition-all hover:scale-105"
-                style={{ background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))' }}
+                style={{
+                  background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
+                }}
               >
                 Vote in This Episode
               </Link>

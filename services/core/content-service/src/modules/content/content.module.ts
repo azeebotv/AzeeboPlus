@@ -11,6 +11,9 @@ import { ContentCategoryService } from './content-category.service.js';
 import { ContentIngestionService } from './content-ingestion.service.js';
 import { ContentRepository } from './content.repository.js';
 import { AccessControlService } from './access-control.service.js';
+import { ContentReleaseSchedulerService } from './content-release-scheduler.service.js';
+import { ContentVersioningService } from './content-versioning.service.js';
+import { ACDPValidationService } from './content-acdp-validation.service.js';
 import { DatabaseModule } from '../database/database.module.js';
 import { MediaModule } from '../media/media.module.js';
 import { CacheModule } from '../../cache/cache.module.js';
@@ -27,6 +30,9 @@ import { CacheModule } from '../../cache/cache.module.js';
     ContentIngestionService,
     ContentRepository,
     AccessControlService,
+    ContentReleaseSchedulerService,
+    ContentVersioningService,
+    ACDPValidationService,
   ],
   exports: [
     ContentService,
@@ -37,6 +43,9 @@ import { CacheModule } from '../../cache/cache.module.js';
     ContentIngestionService,
     ContentRepository,
     AccessControlService,
+    ContentReleaseSchedulerService,
+    ContentVersioningService,
+    ACDPValidationService,
     DatabaseModule,
   ],
 })

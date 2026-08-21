@@ -31,10 +31,12 @@ export class SubscriptionAdminService {
     const activePlans = plans.filter((p: { status?: string }) => p.status === 'active').length;
 
     // Fetch intent count for subscriptions
-    const totalRevenueResult = await this.prisma.paymentIntent.aggregate({
-      where: { status: 'completed' },
-      _sum: { amount: true },
-    }).catch(() => ({ _sum: { amount: 0 } }));
+    const totalRevenueResult = await this.prisma.paymentIntent
+      .aggregate({
+        where: { status: 'completed' },
+        _sum: { amount: true },
+      })
+      .catch(() => ({ _sum: { amount: 0 } }));
 
     const totalRevenue = Number(totalRevenueResult._sum?.amount || 0);
 
@@ -63,7 +65,9 @@ export class SubscriptionAdminService {
     const limit = Number(query.limit || 15);
 
     const plansResult = await this.systemSettingsService.getSubscriptionPlans().catch(() => []);
-    let plans: SubscriptionPlanItem[] = Array.isArray(plansResult) ? (plansResult as SubscriptionPlanItem[]) : [];
+    let plans: SubscriptionPlanItem[] = Array.isArray(plansResult)
+      ? (plansResult as SubscriptionPlanItem[])
+      : [];
 
     // Provide robust defaults if none yet created
     if (plans.length === 0) {
@@ -103,7 +107,12 @@ export class SubscriptionAdminService {
           durationDays: 30,
           tier: 'premium',
           status: 'active',
-          features: ['All Universes', 'Unlimited Super Votes', 'Early Screenings', 'Offline Downloads'],
+          features: [
+            'All Universes',
+            'Unlimited Super Votes',
+            'Early Screenings',
+            'Offline Downloads',
+          ],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         },
@@ -151,8 +160,8 @@ export class SubscriptionAdminService {
       features: Array.isArray(data.features)
         ? data.features.map(String)
         : typeof data.features === 'string'
-        ? (data.features as string).split(',').map((f) => f.trim())
-        : [],
+          ? (data.features as string).split(',').map((f) => f.trim())
+          : [],
     });
   }
 

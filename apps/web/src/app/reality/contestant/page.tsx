@@ -51,7 +51,7 @@ export default function ContestantProfilePage(): React.JSX.Element {
   const handleVote = async (isSuper: boolean): Promise<void> => {
     setIsVoting(true);
     try {
-      const result = await apiFetch('/v1/content/vote', {
+      const result = await apiFetch('/reality/votes', {
         method: 'POST',
         body: JSON.stringify({ contestantId, isSuperVote: isSuper }),
       });

@@ -12,10 +12,11 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
 import { FeatureFlag, FeatureFlagGuard, supportFlags } from '@azeebo/feature-flags';
 import { TicketService } from './ticket.service';
+import { SupportAccessControlService } from '../support/support-access-control.service';
 import { CreateTicketDto, AddMessageDto, TicketQueryDto, UpdateStatusDto } from './dto/ticket.dto';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
@@ -29,7 +30,10 @@ interface AuthenticatedRequest {
 @ApiTags('Support Tickets')
 @Controller('support/tickets')
 export class TicketController {
-  constructor(@Inject(TicketService) private ticketService: TicketService) {}
+  constructor(
+    @Inject(TicketService) private ticketService: TicketService,
+    @Inject(SupportAccessControlService) private accessControl: SupportAccessControlService,
+  ) {}
 
   @Post('/')
   @UseGuards(RateLimitGuard)
@@ -163,5 +167,45 @@ export class TicketController {
   async closeTicket(@Param('id') id: string) {
     const ticket = await this.ticketService.closeTicket(id);
     return ApiResponseWrapper.success({ ticket });
+  }
+
+  // ========================
+  // Access control endpoints
+  // ========================
+
+  @Get('/:id/access-check')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Check ticket access for current agent' })
+  @ApiResponse({ status: 200, description: 'Access check result' })
+  async checkAccess(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string
+  ) {
+    const ticket = await this.ticketService.getTicketById(id);
+    if (!ticket || typeof ticket !== 'object') {
+      return ApiResponseWrapper.error('NOT_FOUND', 'Ticket not found');
+    }
+    const ticketRecord = ticket as { assignedTo?: string | null; teamId?: string };
+    const role = (req.user.role?.toLowerCase() || 'agent') as 'agent' | 'supervisor' | 'admin';
+    const canAccess = this.accessControl.canAccessTicket(role, req.user.id, ticketRecord);
+    const scope = this.accessControl.getScope(role);
+    return ApiResponseWrapper.success({ canAccess, scope });
+  }
+
+  @Get('/:id/pii')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get ticket with PII masked based on role' })
+  @ApiResponse({ status: 200, description: 'Ticket with masked PII' })
+  async getTicketWithMaskedPII(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string
+  ) {
+    const ticket = await this.ticketService.getTicketById(id);
+    if (!ticket || typeof ticket !== 'object') {
+      return ApiResponseWrapper.error('NOT_FOUND', 'Ticket not found');
+    }
+    const role = (req.user.role?.toLowerCase() || 'agent') as 'agent' | 'supervisor' | 'admin';
+    const maskedTicket = this.accessControl.maskPII(ticket as Record<string, unknown>, role);
+    return ApiResponseWrapper.success({ ticket: maskedTicket });
   }
 }
