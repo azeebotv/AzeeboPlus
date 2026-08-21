@@ -23,9 +23,7 @@ import { CorrectKnowledgeUnitDto } from './dto/correct-knowledge-unit.dto.js';
 @ApiTags('Knowledge')
 @Controller('knowledge')
 export class KnowledgeController {
-  constructor(
-    @Inject(KnowledgeService) private readonly knowledgeService: KnowledgeService,
-  ) {}
+  constructor(@Inject(KnowledgeService) private readonly knowledgeService: KnowledgeService) {}
 
   // ========================
   // Canonical Events (TAA §16)
@@ -59,7 +57,7 @@ export class KnowledgeController {
   @ApiResponse({ status: 200, description: 'Event superseded' })
   async supersedeCanonicalEvent(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: { metadata?: Record<string, unknown> },
+    @Body() body: { metadata?: Record<string, unknown> }
   ) {
     const event = await this.knowledgeService.updateCanonicalEventVersion(id, body.metadata);
     return { success: true, data: event };
@@ -97,7 +95,7 @@ export class KnowledgeController {
   @ApiResponse({ status: 201, description: 'Corrected knowledge unit' })
   async correctKnowledgeUnit(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: CorrectKnowledgeUnitDto,
+    @Body() dto: CorrectKnowledgeUnitDto
   ) {
     const unit = await this.knowledgeService.correctKnowledgeUnit(id, {
       title: dto.title,
@@ -170,12 +168,12 @@ export class KnowledgeController {
   @ApiOperation({ summary: 'Create an equivalence set linking knowledge units across formats' })
   @ApiResponse({ status: 201, description: 'Equivalence set created' })
   async createEquivalenceSet(
-    @Body() body: { setCode: string; name: string; knowledgeUnitIds: string[] },
+    @Body() body: { setCode: string; name: string; knowledgeUnitIds: string[] }
   ) {
     const set = await this.knowledgeService.createEquivalenceSet(
       body.setCode,
       body.name,
-      body.knowledgeUnitIds,
+      body.knowledgeUnitIds
     );
     return { success: true, data: set };
   }
@@ -204,7 +202,7 @@ export class KnowledgeController {
       title: string;
       description?: string;
       triggerCondition?: Record<string, unknown>;
-    },
+    }
   ) {
     const checkpoint = await this.knowledgeService.createContentCheckpoint(body);
     return { success: true, data: checkpoint };
@@ -215,7 +213,7 @@ export class KnowledgeController {
   @ApiResponse({ status: 200, description: 'Checkpoint triggered, knowledge granted' })
   async triggerCheckpoint(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: { userId: string },
+    @Body() body: { userId: string }
   ) {
     const result = await this.knowledgeService.triggerCheckpoint(id, body.userId);
     return { success: true, data: result };
@@ -228,12 +226,10 @@ export class KnowledgeController {
   @Post('spoiler-filter')
   @ApiOperation({ summary: 'Filter knowledge unit IDs by spoiler level' })
   @ApiResponse({ status: 200, description: 'Filtered unit IDs' })
-  async filterBySpoilerLevel(
-    @Body() body: { unitIds: string[]; maxSpoilerLevel: string },
-  ) {
+  async filterBySpoilerLevel(@Body() body: { unitIds: string[]; maxSpoilerLevel: string }) {
     const filtered = await this.knowledgeService.filterBySpoilerLevel(
       body.unitIds,
-      body.maxSpoilerLevel,
+      body.maxSpoilerLevel
     );
     return { success: true, data: { filteredUnitIds: filtered } };
   }

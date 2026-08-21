@@ -78,7 +78,7 @@ export class RightsKillService {
     scope: RightsKillScope,
     trigger: RightsKillTrigger,
     initiatedBy: string,
-    expiresAt?: Date,
+    expiresAt?: Date
   ): Promise<RightsKillOrder> {
     const order: RightsKillOrder = {
       id: randomUUID(),
@@ -105,7 +105,7 @@ export class RightsKillService {
     rightsKillOrders.set(order.id, order);
 
     this.logger.warn(
-      `RIGHTS KILL ORDER CREATED: ${scope} ${targetId} for ${trigger} by ${initiatedBy}`,
+      `RIGHTS KILL ORDER CREATED: ${scope} ${targetId} for ${trigger} by ${initiatedBy}`
     );
 
     return order;
@@ -134,7 +134,7 @@ export class RightsKillService {
     });
 
     this.logger.warn(
-      `RIGHTS KILL ACTIVATED: ${order.scope} ${order.targetId} — propagating policy`,
+      `RIGHTS KILL ACTIVATED: ${order.scope} ${order.targetId} — propagating policy`
     );
 
     // In production: trigger CDN purge, API block, search exclusion
@@ -157,7 +157,7 @@ export class RightsKillService {
     });
 
     this.logger.warn(
-      `RIGHTS KILL PROPAGATED: ${order.scope} ${order.targetId} — policy active across all services`,
+      `RIGHTS KILL PROPAGATED: ${order.scope} ${order.targetId} — policy active across all services`
     );
 
     return order;
@@ -173,7 +173,9 @@ export class RightsKillService {
     }
 
     if (order.status !== 'active') {
-      throw new ForbiddenException(`Can only revoke active orders, current status: ${order.status}`);
+      throw new ForbiddenException(
+        `Can only revoke active orders, current status: ${order.status}`
+      );
     }
 
     order.status = 'revoked';
@@ -184,9 +186,7 @@ export class RightsKillService {
       details: {},
     });
 
-    this.logger.warn(
-      `RIGHTS KILL REVOKED: ${order.scope} ${order.targetId} by ${revokedBy}`,
-    );
+    this.logger.warn(`RIGHTS KILL REVOKED: ${order.scope} ${order.targetId} by ${revokedBy}`);
 
     return order;
   }
@@ -227,8 +227,6 @@ export class RightsKillService {
       }
     }
 
-    return Array.from(rightsKillOrders.values()).filter(
-      (o) => o.status === 'active',
-    );
+    return Array.from(rightsKillOrders.values()).filter((o) => o.status === 'active');
   }
 }

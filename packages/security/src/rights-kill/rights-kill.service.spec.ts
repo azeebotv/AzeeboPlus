@@ -14,7 +14,7 @@ describe('RightsKillService', () => {
         'content-123',
         'single-title',
         'legal-takedown',
-        'legal-team',
+        'legal-team'
       );
 
       expect(result.id).toBeDefined();
@@ -28,7 +28,7 @@ describe('RightsKillService', () => {
         'content-123',
         'single-title',
         'legal-takedown',
-        'legal-team',
+        'legal-team'
       );
 
       expect(result.auditTrail.length).toBe(1);
@@ -42,7 +42,7 @@ describe('RightsKillService', () => {
         'content-123',
         'single-title',
         'legal-takedown',
-        'legal-team',
+        'legal-team'
       );
 
       const activated = await service.activateOrder(order.id, 'ops-lead');
@@ -57,7 +57,7 @@ describe('RightsKillService', () => {
         'content-123',
         'single-title',
         'legal-takedown',
-        'legal-team',
+        'legal-team'
       );
 
       await service.activateOrder(order.id, 'ops-lead');
@@ -73,7 +73,7 @@ describe('RightsKillService', () => {
         'content-123',
         'single-title',
         'legal-takedown',
-        'legal-team',
+        'legal-team'
       );
       await service.activateOrder(order.id, 'ops-lead');
 
@@ -91,7 +91,7 @@ describe('RightsKillService', () => {
         'content-123',
         'single-title',
         'legal-takedown',
-        'legal-team',
+        'legal-team'
       );
       await service.activateOrder(order.id, 'ops-lead');
 
@@ -104,9 +104,11 @@ describe('RightsKillService', () => {
         'content-123',
         'single-title',
         'legal-takedown',
-        'legal-team',
+        'legal-team'
       );
-      await expect(service.revokeOrder(order.id, 'legal-lead')).rejects.toThrow('only revoke active');
+      await expect(service.revokeOrder(order.id, 'legal-lead')).rejects.toThrow(
+        'only revoke active'
+      );
     });
   });
 

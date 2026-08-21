@@ -102,7 +102,9 @@ describe('RealityController', () => {
         {
           provide: VoteFraudDetectionService,
           useValue: {
-            checkVote: jest.fn().mockResolvedValue({ passed: true, flags: [], riskScore: 0, action: 'allow' }),
+            checkVote: jest
+              .fn()
+              .mockResolvedValue({ passed: true, flags: [], riskScore: 0, action: 'allow' }),
             getVoteAuditTrail: jest.fn(),
           },
         },

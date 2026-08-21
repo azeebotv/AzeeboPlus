@@ -63,7 +63,13 @@ describe('GamesController', () => {
         },
         {
           provide: GameRealtimeService,
-          useValue: { createSession: jest.fn(), joinSession: jest.fn(), startSession: jest.fn(), getPlayerSession: jest.fn(), getGameSessions: jest.fn() },
+          useValue: {
+            createSession: jest.fn(),
+            joinSession: jest.fn(),
+            startSession: jest.fn(),
+            getPlayerSession: jest.fn(),
+            getGameSessions: jest.fn(),
+          },
         },
         {
           provide: RateLimitService,

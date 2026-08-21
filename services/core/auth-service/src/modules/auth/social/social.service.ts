@@ -285,9 +285,7 @@ export class SocialAuthService {
         try {
           const redirectHost = new URL(redirectUri).host;
           if (!allowedRedirectHosts.includes(redirectHost)) {
-            this.logger.warn(
-              `Rejected social auth redirect to non-allowed host: ${redirectHost}`
-            );
+            this.logger.warn(`Rejected social auth redirect to non-allowed host: ${redirectHost}`);
             throw new BadRequestException('Redirect URI is not on the allowed list');
           }
         } catch (e) {

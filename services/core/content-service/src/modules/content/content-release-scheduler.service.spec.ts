@@ -202,10 +202,7 @@ describe('ContentReleaseSchedulerService', () => {
 
   describe('getAvailableContent', () => {
     it('should return content with active windows', async () => {
-      mockPrisma.contentItem.findMany.mockResolvedValue([
-        { id: 'content-1' },
-        { id: 'content-2' },
-      ]);
+      mockPrisma.contentItem.findMany.mockResolvedValue([{ id: 'content-1' }, { id: 'content-2' }]);
 
       const result = await service.getAvailableContent();
 

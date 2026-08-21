@@ -32,7 +32,7 @@ interface AuthenticatedRequest {
 export class TicketController {
   constructor(
     @Inject(TicketService) private ticketService: TicketService,
-    @Inject(SupportAccessControlService) private accessControl: SupportAccessControlService,
+    @Inject(SupportAccessControlService) private accessControl: SupportAccessControlService
   ) {}
 
   @Post('/')
@@ -177,10 +177,7 @@ export class TicketController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Check ticket access for current agent' })
   @ApiResponse({ status: 200, description: 'Access check result' })
-  async checkAccess(
-    @Request() req: AuthenticatedRequest,
-    @Param('id') id: string
-  ) {
+  async checkAccess(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
     const ticket = await this.ticketService.getTicketById(id);
     if (!ticket || typeof ticket !== 'object') {
       return ApiResponseWrapper.error('NOT_FOUND', 'Ticket not found');
@@ -196,10 +193,7 @@ export class TicketController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get ticket with PII masked based on role' })
   @ApiResponse({ status: 200, description: 'Ticket with masked PII' })
-  async getTicketWithMaskedPII(
-    @Request() req: AuthenticatedRequest,
-    @Param('id') id: string
-  ) {
+  async getTicketWithMaskedPII(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
     const ticket = await this.ticketService.getTicketById(id);
     if (!ticket || typeof ticket !== 'object') {
       return ApiResponseWrapper.error('NOT_FOUND', 'Ticket not found');

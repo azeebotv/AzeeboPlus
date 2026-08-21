@@ -22,10 +22,7 @@ describe('PaymentReconciliationService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        PaymentReconciliationService,
-        { provide: PrismaService, useValue: mockPrisma },
-      ],
+      providers: [PaymentReconciliationService, { provide: PrismaService, useValue: mockPrisma }],
     }).compile();
 
     service = module.get<PaymentReconciliationService>(PaymentReconciliationService);
@@ -134,9 +131,9 @@ describe('PaymentReconciliationService', () => {
     it('should throw NotFoundException when refund not found', async () => {
       mockPrisma.refund.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.processRefund('nonexistent', 'approved', 'admin')
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.processRefund('nonexistent', 'approved', 'admin')).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw BadRequestException when refund already processed', async () => {
@@ -145,9 +142,9 @@ describe('PaymentReconciliationService', () => {
         status: 'approved',
       });
 
-      await expect(
-        service.processRefund('refund-1', 'approved', 'admin')
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.processRefund('refund-1', 'approved', 'admin')).rejects.toThrow(
+        BadRequestException
+      );
     });
   });
 

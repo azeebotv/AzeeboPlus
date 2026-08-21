@@ -14,7 +14,10 @@ import { EngagementService } from './engagement.service.js';
 
 @WebSocketGateway({
   cors: {
-    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void
+    ) => {
       // LOW-07: Validate WebSocket origins against a strict allowlist.
       if (!origin) return callback(null, true);
       const allowed = process.env.ALLOWED_ORIGINS?.split(',').map((o) => o.trim()) || [];

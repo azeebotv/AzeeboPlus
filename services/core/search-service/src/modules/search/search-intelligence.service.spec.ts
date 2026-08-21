@@ -18,10 +18,7 @@ describe('SearchIntelligenceService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        SearchIntelligenceService,
-        { provide: PrismaService, useValue: mockPrisma },
-      ],
+      providers: [SearchIntelligenceService, { provide: PrismaService, useValue: mockPrisma }],
     }).compile();
 
     service = module.get<SearchIntelligenceService>(SearchIntelligenceService);

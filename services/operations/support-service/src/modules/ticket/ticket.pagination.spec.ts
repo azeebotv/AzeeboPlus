@@ -48,7 +48,12 @@ describe('Support Service Pagination Tests', () => {
       providers: [
         {
           provide: SupportAccessControlService,
-          useValue: { getScope: jest.fn(), canAccessTicket: jest.fn().mockReturnValue(true), enforceAccess: jest.fn(), maskPII: jest.fn((data: unknown) => data) },
+          useValue: {
+            getScope: jest.fn(),
+            canAccessTicket: jest.fn().mockReturnValue(true),
+            enforceAccess: jest.fn(),
+            maskPII: jest.fn((data: unknown) => data),
+          },
         },
         {
           provide: TicketService,

@@ -39,7 +39,7 @@ export class RealityController {
   constructor(
     @Inject(RealityService) private readonly realityService: RealityService,
     @Inject(RealityGateway) private readonly gateway: RealityGateway,
-    @Inject(VoteFraudDetectionService) private readonly fraudDetection: VoteFraudDetectionService,
+    @Inject(VoteFraudDetectionService) private readonly fraudDetection: VoteFraudDetectionService
   ) {}
 
   @Get('shows')
@@ -347,7 +347,10 @@ export class RealityController {
     });
 
     if (!fraudResult.passed) {
-      return { success: false, error: { code: 'FRAUD_DETECTED', message: `Vote blocked: ${fraudResult.flags.join(', ')}` } } as RealityResponse;
+      return {
+        success: false,
+        error: { code: 'FRAUD_DETECTED', message: `Vote blocked: ${fraudResult.flags.join(', ')}` },
+      } as RealityResponse;
     }
 
     return this.realityService.submitVote(req.user.id, body);

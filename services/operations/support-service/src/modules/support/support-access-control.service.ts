@@ -75,7 +75,7 @@ export class SupportAccessControlService {
   canAccessTicket(
     agentRole: SupportRole,
     agentId: string,
-    ticket: { assignedTo?: string | null; teamId?: string },
+    ticket: { assignedTo?: string | null; teamId?: string }
   ): boolean {
     const scope = this.getScope(agentRole);
 
@@ -103,11 +103,11 @@ export class SupportAccessControlService {
     agentRole: SupportRole,
     agentId: string,
     ticket: { assignedTo?: string | null; teamId?: string },
-    action: string,
+    action: string
   ): void {
     if (!this.canAccessTicket(agentRole, agentId, ticket)) {
       this.logger.warn(
-        `Access denied: ${agentRole} ${agentId} attempted ${action} on ticket assigned to ${ticket.assignedTo}`,
+        `Access denied: ${agentRole} ${agentId} attempted ${action} on ticket assigned to ${ticket.assignedTo}`
       );
       throw new ForbiddenException('You do not have access to this ticket');
     }
@@ -126,8 +126,10 @@ export class SupportAccessControlService {
     for (const field of piiFields) {
       if (masked[field] && typeof masked[field] === 'string') {
         const value = masked[field] as string;
-        masked[field] = value.replace(/(.{2})(.*)(.*)/, (_m: string, a: string, b: string, c: string) =>
-          a + '*'.repeat(Math.min(b.length, 8)) + (c.slice(-2) || '')
+        masked[field] = value.replace(
+          /(.{2})(.*)(.*)/,
+          (_m: string, a: string, b: string, c: string) =>
+            a + '*'.repeat(Math.min(b.length, 8)) + (c.slice(-2) || '')
         );
       }
     }

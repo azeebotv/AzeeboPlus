@@ -21,7 +21,7 @@ export class ContentReleaseSchedulerService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cache: CacheService,
-    @Optional() @Inject(EventBusService) private readonly eventBus?: EventBusService,
+    @Optional() @Inject(EventBusService) private readonly eventBus?: EventBusService
   ) {}
 
   /**
@@ -152,7 +152,9 @@ export class ContentReleaseSchedulerService {
 
     const validWindowTypes = ['standard', 'premium', 'exclusive', 'permanent'];
     if (params.windowType && !validWindowTypes.includes(params.windowType)) {
-      errors.push(`Invalid windowType: ${params.windowType}. Must be one of: ${validWindowTypes.join(', ')}`);
+      errors.push(
+        `Invalid windowType: ${params.windowType}. Must be one of: ${validWindowTypes.join(', ')}`
+      );
     }
 
     return { valid: errors.length === 0, errors };
@@ -166,11 +168,7 @@ export class ContentReleaseSchedulerService {
 
     const where: Record<string, unknown> = {
       status: 'published',
-      OR: [
-        { windowEndDate: null },
-        { windowEndDate: { gt: now } },
-        { windowType: 'permanent' },
-      ],
+      OR: [{ windowEndDate: null }, { windowEndDate: { gt: now } }, { windowType: 'permanent' }],
     };
 
     if (universeId) {

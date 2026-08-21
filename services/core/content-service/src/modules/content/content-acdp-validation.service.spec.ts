@@ -79,7 +79,9 @@ describe('ACDPValidationService', () => {
       });
 
       expect(result.valid).toBe(true);
-      expect(result.warnings).toContain('Description exceeds recommended length of 2000 characters');
+      expect(result.warnings).toContain(
+        'Description exceeds recommended length of 2000 characters'
+      );
     });
 
     it('should fail for invalid age rating', () => {
@@ -116,7 +118,9 @@ describe('ACDPValidationService', () => {
         metadata: { contentDescriptors: ['violence'] },
       });
 
-      expect(result.warnings).toContain('Content has mature descriptors but no age rating — will default to PG-13');
+      expect(result.warnings).toContain(
+        'Content has mature descriptors but no age rating — will default to PG-13'
+      );
     });
 
     it('should set parentalAdvisory for R, NC-17, and 18+', () => {
@@ -150,29 +154,20 @@ describe('ACDPValidationService', () => {
 
   describe('validateUniverseFit', () => {
     it('should return valid when rating meets universe minimum', () => {
-      const result = service.validateUniverseFit(
-        { metadata: { ageRating: 'PG' } },
-        'comedy'
-      );
+      const result = service.validateUniverseFit({ metadata: { ageRating: 'PG' } }, 'comedy');
 
       expect(result.valid).toBe(true);
     });
 
     it('should fail when rating is below universe minimum', () => {
-      const result = service.validateUniverseFit(
-        { metadata: { ageRating: 'G' } },
-        'comedy'
-      );
+      const result = service.validateUniverseFit({ metadata: { ageRating: 'G' } }, 'comedy');
 
       expect(result.valid).toBe(false);
       expect(result.errors[0]).toContain('below minimum PG');
     });
 
     it('should fail for G-rated content in lifestyle universe', () => {
-      const result = service.validateUniverseFit(
-        { metadata: { ageRating: 'G' } },
-        'lifestyle'
-      );
+      const result = service.validateUniverseFit({ metadata: { ageRating: 'G' } }, 'lifestyle');
 
       // G is the minimum for lifestyle, so it should be valid
       expect(result.valid).toBe(true);

@@ -15,10 +15,7 @@ describe('NotificationSLOService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        NotificationSLOService,
-        { provide: PrismaService, useValue: mockPrisma },
-      ],
+      providers: [NotificationSLOService, { provide: PrismaService, useValue: mockPrisma }],
     }).compile();
 
     service = module.get<NotificationSLOService>(NotificationSLOService);

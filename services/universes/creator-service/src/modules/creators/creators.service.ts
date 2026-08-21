@@ -456,10 +456,10 @@ export class CreatorsService {
       throw new NotFoundException(`Creator profile not found`);
     }
 
-    const sanitized = sanitizeFields(
-      profileData as unknown as Record<string, unknown>,
-      ['displayName', 'bio']
-    ) as unknown as UpdateProfileData;
+    const sanitized = sanitizeFields(profileData as unknown as Record<string, unknown>, [
+      'displayName',
+      'bio',
+    ]) as unknown as UpdateProfileData;
 
     const updatedProfile = await this.prisma.creatorProfile.update({
       where: { userId },

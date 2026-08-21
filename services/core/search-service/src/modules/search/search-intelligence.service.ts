@@ -40,10 +40,7 @@ export class SearchIntelligenceService {
    * Filter and rank results by availability (AZP-SEARCH-003).
    * Uses content status as the primary availability signal.
    */
-  async filterByAvailability(
-    results: SearchResult[],
-    _userId?: string,
-  ): Promise<SearchResult[]> {
+  async filterByAvailability(results: SearchResult[], _userId?: string): Promise<SearchResult[]> {
     const contentIds = results.map((r) => r.id);
     const contentItems = await this.prisma.contentItem.findMany({
       where: { id: { in: contentIds } },
@@ -113,7 +110,7 @@ export class SearchIntelligenceService {
 
   async getRankedSuggestions(
     _query: string,
-    _limit: number = 10,
+    _limit: number = 10
   ): Promise<Array<{ suggestion: string; score: number }>> {
     return [];
   }

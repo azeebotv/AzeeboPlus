@@ -74,7 +74,7 @@ export class PaymentReconciliationService {
     refundId: string,
     decision: 'approved' | 'rejected',
     processedBy: string,
-    note?: string,
+    note?: string
   ): Promise<{ refundId: string; status: string }> {
     const refund = await this.prisma.refund.findUnique({
       where: { id: refundId },
@@ -121,7 +121,9 @@ export class PaymentReconciliationService {
     let mismatched = 0;
 
     for (const payment of payments) {
-      const metadata = (payment as Record<string, unknown>).metadata as Record<string, unknown> | undefined;
+      const metadata = (payment as Record<string, unknown>).metadata as
+        | Record<string, unknown>
+        | undefined;
       const providerVerified = metadata?.providerVerified as boolean | undefined;
 
       if (providerVerified === undefined) {
@@ -137,7 +139,9 @@ export class PaymentReconciliationService {
       }
     }
 
-    this.logger.log(`Reconciliation for ${targetDate.toISOString().split('T')[0]}: ${matched} matched, ${mismatched} mismatched`);
+    this.logger.log(
+      `Reconciliation for ${targetDate.toISOString().split('T')[0]}: ${matched} matched, ${mismatched} mismatched`
+    );
 
     return {
       date: targetDate.toISOString().split('T')[0],
@@ -147,7 +151,9 @@ export class PaymentReconciliationService {
     };
   }
 
-  async getGatewayStatus(): Promise<Array<{ provider: string; enabled: boolean; mode: 'test' | 'live' }>> {
+  async getGatewayStatus(): Promise<
+    Array<{ provider: string; enabled: boolean; mode: 'test' | 'live' }>
+  > {
     return ['paystack', 'flutterwave'].map((provider) => ({
       provider,
       enabled: true,
@@ -155,12 +161,22 @@ export class PaymentReconciliationService {
     }));
   }
 
-  async toggleGateway(provider: string, enabled: boolean, toggledBy: string): Promise<{ provider: string; enabled: boolean }> {
-    this.logger.log(`Payment gateway ${provider} ${enabled ? 'enabled' : 'disabled'} by ${toggledBy}`);
+  async toggleGateway(
+    provider: string,
+    enabled: boolean,
+    toggledBy: string
+  ): Promise<{ provider: string; enabled: boolean }> {
+    this.logger.log(
+      `Payment gateway ${provider} ${enabled ? 'enabled' : 'disabled'} by ${toggledBy}`
+    );
     return { provider, enabled };
   }
 
-  async switchGatewayMode(provider: string, mode: 'test' | 'live', switchedBy: string): Promise<{ provider: string; mode: string }> {
+  async switchGatewayMode(
+    provider: string,
+    mode: 'test' | 'live',
+    switchedBy: string
+  ): Promise<{ provider: string; mode: string }> {
     this.logger.log(`Payment gateway ${provider} switched to ${mode} by ${switchedBy}`);
     return { provider, mode };
   }

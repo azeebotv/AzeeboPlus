@@ -6,8 +6,7 @@ import { WalletModule } from './modules/wallet/wallet.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
 import { MetricsModule } from './modules/metrics/metrics.module.js';
-import { RateLimiterModule } from '@azeebo/security';
-import { ServiceAuthGuard } from '@azeebo/security';
+import { RateLimiterModule, ServiceAuthGuard, SecurityModule } from '@azeebo/security';
 import { CacheModule } from './cache/index.js';
 import { RedisModule } from '@azeebo/shared-services';
 import { ObservabilityModule } from '@azeebo/observability';
@@ -24,6 +23,7 @@ import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
       envFilePath: ['.env', '../../.env'],
     }),
     RateLimiterModule.forRoot(),
+    SecurityModule,
     CacheModule,
     RedisModule,
     TerminusModule,

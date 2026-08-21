@@ -27,7 +27,7 @@ import { RewardResponse } from './interfaces/reward-response.interface.js';
 export class RewardsController {
   constructor(
     @Inject(RewardsService) private readonly rewardsService: RewardsService,
-    @Inject(RewardAbuseControlsService) private readonly abuseControls: RewardAbuseControlsService,
+    @Inject(RewardAbuseControlsService) private readonly abuseControls: RewardAbuseControlsService
   ) {}
 
   @Get()
@@ -148,7 +148,10 @@ export class RewardsController {
     @Body() body: { userId: string; amount: number; reason: string }
   ) {
     const result = await this.abuseControls.recordAdminAdjustment(
-      body.userId, body.amount, body.reason, req.user.id
+      body.userId,
+      body.amount,
+      body.reason,
+      req.user.id
     );
     return { success: true, data: result };
   }

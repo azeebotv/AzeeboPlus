@@ -25,7 +25,8 @@ import { LogSearchDto } from './dto/log-search.dto.js';
 export class SearchController {
   constructor(
     @Inject(SearchService) private readonly searchService: SearchService,
-    @Inject(SearchIntelligenceService) private readonly intelligenceService: SearchIntelligenceService,
+    @Inject(SearchIntelligenceService)
+    private readonly intelligenceService: SearchIntelligenceService
   ) {}
 
   @Get()

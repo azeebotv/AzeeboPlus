@@ -20,10 +20,7 @@ describe('CreatorPayoutService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        CreatorPayoutService,
-        { provide: PrismaService, useValue: mockPrisma },
-      ],
+      providers: [CreatorPayoutService, { provide: PrismaService, useValue: mockPrisma }],
     }).compile();
 
     service = module.get<CreatorPayoutService>(CreatorPayoutService);
@@ -35,10 +32,7 @@ describe('CreatorPayoutService', () => {
 
   describe('getCreatorEarnings', () => {
     it('should calculate earnings correctly', async () => {
-      mockPrisma.creatorEarning.findMany.mockResolvedValue([
-        { amount: 10000 },
-        { amount: 5000 },
-      ]);
+      mockPrisma.creatorEarning.findMany.mockResolvedValue([{ amount: 10000 }, { amount: 5000 }]);
       mockPrisma.payoutRequest.findMany.mockResolvedValue([
         { amount: 3000, status: 'completed' },
         { amount: 2000, status: 'pending' },
@@ -63,9 +57,7 @@ describe('CreatorPayoutService', () => {
 
   describe('requestPayout', () => {
     it('should create payout request when sufficient balance', async () => {
-      mockPrisma.creatorEarning.findMany.mockResolvedValue([
-        { amount: 100000 },
-      ]);
+      mockPrisma.creatorEarning.findMany.mockResolvedValue([{ amount: 100000 }]);
       mockPrisma.payoutRequest.findMany.mockResolvedValue([]);
       mockPrisma.payoutRequest.create.mockResolvedValue({
         id: 'payout-1',
@@ -88,9 +80,7 @@ describe('CreatorPayoutService', () => {
     });
 
     it('should throw when insufficient balance', async () => {
-      mockPrisma.creatorEarning.findMany.mockResolvedValue([
-        { amount: 10000 },
-      ]);
+      mockPrisma.creatorEarning.findMany.mockResolvedValue([{ amount: 10000 }]);
       mockPrisma.payoutRequest.findMany.mockResolvedValue([]);
 
       await expect(
@@ -104,9 +94,7 @@ describe('CreatorPayoutService', () => {
     });
 
     it('should throw when below minimum payout', async () => {
-      mockPrisma.creatorEarning.findMany.mockResolvedValue([
-        { amount: 100000 },
-      ]);
+      mockPrisma.creatorEarning.findMany.mockResolvedValue([{ amount: 100000 }]);
       mockPrisma.payoutRequest.findMany.mockResolvedValue([]);
 
       await expect(
@@ -123,8 +111,22 @@ describe('CreatorPayoutService', () => {
   describe('getPayoutHistory', () => {
     it('should return payout history', async () => {
       mockPrisma.payoutRequest.findMany.mockResolvedValue([
-        { id: 'p1', creatorId: 'c1', amount: 50000, method: 'bank_transfer', status: 'completed', createdAt: new Date() },
-        { id: 'p2', creatorId: 'c1', amount: 30000, method: 'mobile_money', status: 'pending', createdAt: new Date() },
+        {
+          id: 'p1',
+          creatorId: 'c1',
+          amount: 50000,
+          method: 'bank_transfer',
+          status: 'completed',
+          createdAt: new Date(),
+        },
+        {
+          id: 'p2',
+          creatorId: 'c1',
+          amount: 30000,
+          method: 'mobile_money',
+          status: 'pending',
+          createdAt: new Date(),
+        },
       ]);
 
       const result = await service.getPayoutHistory('creator-1');

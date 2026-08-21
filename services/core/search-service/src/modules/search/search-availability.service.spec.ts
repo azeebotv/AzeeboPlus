@@ -16,10 +16,7 @@ describe('SearchAvailabilityService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        SearchAvailabilityService,
-        { provide: PrismaService, useValue: mockPrisma },
-      ],
+      providers: [SearchAvailabilityService, { provide: PrismaService, useValue: mockPrisma }],
     }).compile();
 
     service = module.get<SearchAvailabilityService>(SearchAvailabilityService);
@@ -146,16 +143,25 @@ describe('SearchAvailabilityService', () => {
     it('should return only available content IDs', async () => {
       mockPrisma.contentItem.findUnique
         .mockResolvedValueOnce({
-          id: 'c1', status: 'published', contentType: 'video',
-          universe: 'reality', categories: [],
+          id: 'c1',
+          status: 'published',
+          contentType: 'video',
+          universe: 'reality',
+          categories: [],
         })
         .mockResolvedValueOnce({
-          id: 'c2', status: 'draft', contentType: 'video',
-          universe: 'reality', categories: [],
+          id: 'c2',
+          status: 'draft',
+          contentType: 'video',
+          universe: 'reality',
+          categories: [],
         })
         .mockResolvedValueOnce({
-          id: 'c3', status: 'published', contentType: 'video',
-          universe: 'reality', categories: [],
+          id: 'c3',
+          status: 'published',
+          contentType: 'video',
+          universe: 'reality',
+          categories: [],
         });
 
       const result = await service.filterAvailableContent(['c1', 'c2', 'c3'], {});
@@ -164,8 +170,11 @@ describe('SearchAvailabilityService', () => {
 
     it('should return empty array when no content available', async () => {
       mockPrisma.contentItem.findUnique.mockResolvedValue({
-        id: 'c1', status: 'draft', contentType: 'video',
-        universe: 'reality', categories: [],
+        id: 'c1',
+        status: 'draft',
+        contentType: 'video',
+        universe: 'reality',
+        categories: [],
       });
 
       const result = await service.filterAvailableContent(['c1'], {});
@@ -194,18 +203,21 @@ describe('SearchAvailabilityService', () => {
 
   describe('measureSearchLatency', () => {
     it('should measure latency and return result count', async () => {
-      mockPrisma.contentItem.findMany.mockResolvedValue([
-        { id: 'c1' },
-        { id: 'c2' },
-      ]);
+      mockPrisma.contentItem.findMany.mockResolvedValue([{ id: 'c1' }, { id: 'c2' }]);
       mockPrisma.contentItem.findUnique
         .mockResolvedValueOnce({
-          id: 'c1', status: 'published', contentType: 'video',
-          universe: 'reality', categories: [],
+          id: 'c1',
+          status: 'published',
+          contentType: 'video',
+          universe: 'reality',
+          categories: [],
         })
         .mockResolvedValueOnce({
-          id: 'c2', status: 'published', contentType: 'video',
-          universe: 'reality', categories: [],
+          id: 'c2',
+          status: 'published',
+          contentType: 'video',
+          universe: 'reality',
+          categories: [],
         });
 
       const result = await service.measureSearchLatency('test', {});
@@ -221,7 +233,7 @@ describe('SearchAvailabilityService', () => {
           query: 'nonexistent',
           timestamp: new Date(),
           resultCount: 0,
-        }),
+        })
       ).resolves.toBeUndefined();
     });
   });

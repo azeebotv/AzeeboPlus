@@ -551,10 +551,11 @@ export class ContentService {
     createContentDto: CreateContentDto
   ): Promise<{ success: boolean; data: ContentWithUniverse }> {
     try {
-      const sanitized = sanitizeFields(
-        createContentDto as unknown as Record<string, unknown>,
-        ['title', 'description', 'name']
-      ) as unknown as CreateContentDto;
+      const sanitized = sanitizeFields(createContentDto as unknown as Record<string, unknown>, [
+        'title',
+        'description',
+        'name',
+      ]) as unknown as CreateContentDto;
       const content = (await this.contentRepository.create({
         ...sanitized,
         creatorId: userId,
@@ -595,10 +596,11 @@ export class ContentService {
         throw new ForbiddenException('Not authorized to update this content');
       }
 
-      const sanitized = sanitizeFields(
-        updateContentDto as unknown as Record<string, unknown>,
-        ['title', 'description', 'name']
-      ) as unknown as UpdateContentDto;
+      const sanitized = sanitizeFields(updateContentDto as unknown as Record<string, unknown>, [
+        'title',
+        'description',
+        'name',
+      ]) as unknown as UpdateContentDto;
       const updatedContent = (await this.contentRepository.update(
         id,
         sanitized as Partial<Record<string, unknown>>
@@ -1171,7 +1173,12 @@ export class ContentService {
       }
 
       const sanitizedText = sanitizeInput(text) as string;
-      const comment = await this.contentRepository.addComment(contentId, userId, sanitizedText, parentId);
+      const comment = await this.contentRepository.addComment(
+        contentId,
+        userId,
+        sanitizedText,
+        parentId
+      );
 
       return {
         success: true,

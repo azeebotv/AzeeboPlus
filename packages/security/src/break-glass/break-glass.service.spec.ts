@@ -36,7 +36,7 @@ describe('BreakGlassService', () => {
           justification: 'Emergency',
           mfaVerified: false,
           reAuthenticated: true,
-        }),
+        })
       ).rejects.toThrow('MFA verification');
     });
 
@@ -50,7 +50,7 @@ describe('BreakGlassService', () => {
           justification: 'Emergency',
           mfaVerified: true,
           reAuthenticated: false,
-        }),
+        })
       ).rejects.toThrow('re-authentication');
     });
 
@@ -64,7 +64,7 @@ describe('BreakGlassService', () => {
           justification: 'Regular work',
           mfaVerified: true,
           reAuthenticated: true,
-        }),
+        })
       ).rejects.toThrow('SEV-1/emergency incident');
     });
 
@@ -88,7 +88,7 @@ describe('BreakGlassService', () => {
           justification: 'Second',
           mfaVerified: true,
           reAuthenticated: true,
-        }),
+        })
       ).rejects.toThrow('already has an active');
     });
   });

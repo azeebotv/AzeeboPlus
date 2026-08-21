@@ -420,10 +420,10 @@ export class UsersService {
         throw new NotFoundException(`User not found`);
       }
 
-      const sanitized = sanitizeFields(
-        dto as unknown as Record<string, unknown>,
-        ['displayName', 'bio']
-      ) as unknown as UpdateUserProfileDto;
+      const sanitized = sanitizeFields(dto as unknown as Record<string, unknown>, [
+        'displayName',
+        'bio',
+      ]) as unknown as UpdateUserProfileDto;
 
       // user_profile_v2: the richer profile surface (bio/location/isPublic on
       // UserProfile) is only written while the flag is on; off keeps the

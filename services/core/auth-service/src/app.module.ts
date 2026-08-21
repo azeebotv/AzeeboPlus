@@ -10,7 +10,7 @@ import { CacheModule, RedisModule } from '@azeebo/shared-services';
 import { CommonModule } from './common/common.module.js';
 import { MetricsModule } from './modules/metrics/metrics.module.js';
 import { HealthModule } from './modules/health/health.module.js';
-import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
+import { RateLimiterModule, ServiceAuthGuard, SecurityModule } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { ObservabilityModule } from '@azeebo/observability';
 import { FeatureFlagModule } from '@azeebo/feature-flags';
@@ -25,6 +25,7 @@ import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
     }),
     RedisModule,
     RateLimiterModule.forRoot(),
+    SecurityModule,
     TerminusModule,
     AuditModule,
     AuthModule,

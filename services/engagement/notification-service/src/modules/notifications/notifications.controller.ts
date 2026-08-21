@@ -29,7 +29,7 @@ import { NotificationResponse } from './interfaces/notification-response.interfa
 export class NotificationsController {
   constructor(
     @Inject(NotificationsService) private readonly notificationsService: NotificationsService,
-    @Inject(NotificationSLOService) private readonly sloService: NotificationSLOService,
+    @Inject(NotificationSLOService) private readonly sloService: NotificationSLOService
   ) {}
 
   @Get()
@@ -200,14 +200,8 @@ export class NotificationsController {
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Measure SLO for a time range' })
   @ApiResponse({ status: 200, description: 'SLO measurement' })
-  async measureSLO(
-    @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string
-  ) {
-    const measurement = await this.sloService.measureSLO(
-      new Date(startDate),
-      new Date(endDate)
-    );
+  async measureSLO(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
+    const measurement = await this.sloService.measureSLO(new Date(startDate), new Date(endDate));
     return { success: true, data: measurement };
   }
 }

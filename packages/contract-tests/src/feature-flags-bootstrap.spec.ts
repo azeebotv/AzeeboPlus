@@ -67,9 +67,7 @@ describe('GET /feature-flags/bootstrap contract', () => {
 
   it('generatedAt is an ISO-8601 timestamp', () => {
     for (const response of [ANONYMOUS_RESPONSE, USER_RESPONSE]) {
-      expect(new Date(response.data.generatedAt).toISOString()).toBe(
-        response.data.generatedAt
-      );
+      expect(new Date(response.data.generatedAt).toISOString()).toBe(response.data.generatedAt);
     }
   });
 

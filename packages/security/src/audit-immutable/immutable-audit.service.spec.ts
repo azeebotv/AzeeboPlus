@@ -53,12 +53,20 @@ describe('ImmutableAuditService', () => {
   describe('getEntries', () => {
     it('should return all entries', async () => {
       await service.writeEntry({
-        actorId: 'admin-1', actorRole: 'admin', action: 'test',
-        resourceType: 'user', resourceId: 'u1', status: 'success',
+        actorId: 'admin-1',
+        actorRole: 'admin',
+        action: 'test',
+        resourceType: 'user',
+        resourceId: 'u1',
+        status: 'success',
       });
       await service.writeEntry({
-        actorId: 'admin-2', actorRole: 'admin', action: 'test',
-        resourceType: 'user', resourceId: 'u2', status: 'success',
+        actorId: 'admin-2',
+        actorRole: 'admin',
+        action: 'test',
+        resourceType: 'user',
+        resourceId: 'u2',
+        status: 'success',
       });
 
       const entries = await service.getEntries();
@@ -67,12 +75,20 @@ describe('ImmutableAuditService', () => {
 
     it('should filter by action', async () => {
       await service.writeEntry({
-        actorId: 'a', actorRole: 'admin', action: 'user.suspend',
-        resourceType: 'user', resourceId: 'u1', status: 'success',
+        actorId: 'a',
+        actorRole: 'admin',
+        action: 'user.suspend',
+        resourceType: 'user',
+        resourceId: 'u1',
+        status: 'success',
       });
       await service.writeEntry({
-        actorId: 'a', actorRole: 'admin', action: 'payment.refund',
-        resourceType: 'payment', resourceId: 'p1', status: 'success',
+        actorId: 'a',
+        actorRole: 'admin',
+        action: 'payment.refund',
+        resourceType: 'payment',
+        resourceId: 'p1',
+        status: 'success',
       });
 
       const entries = await service.getEntries({ action: 'user.suspend' });
@@ -81,12 +97,20 @@ describe('ImmutableAuditService', () => {
 
     it('should filter by actorId', async () => {
       await service.writeEntry({
-        actorId: 'admin-1', actorRole: 'admin', action: 'test',
-        resourceType: 'user', resourceId: 'u1', status: 'success',
+        actorId: 'admin-1',
+        actorRole: 'admin',
+        action: 'test',
+        resourceType: 'user',
+        resourceId: 'u1',
+        status: 'success',
       });
       await service.writeEntry({
-        actorId: 'admin-2', actorRole: 'admin', action: 'test',
-        resourceType: 'user', resourceId: 'u2', status: 'success',
+        actorId: 'admin-2',
+        actorRole: 'admin',
+        action: 'test',
+        resourceType: 'user',
+        resourceId: 'u2',
+        status: 'success',
       });
 
       const entries = await service.getEntries({ actorId: 'admin-1' });
@@ -97,12 +121,20 @@ describe('ImmutableAuditService', () => {
   describe('verifyIntegrity', () => {
     it('should verify clean chain', async () => {
       await service.writeEntry({
-        actorId: 'a', actorRole: 'admin', action: 'test',
-        resourceType: 'user', resourceId: 'u1', status: 'success',
+        actorId: 'a',
+        actorRole: 'admin',
+        action: 'test',
+        resourceType: 'user',
+        resourceId: 'u1',
+        status: 'success',
       });
       await service.writeEntry({
-        actorId: 'b', actorRole: 'admin', action: 'test',
-        resourceType: 'user', resourceId: 'u2', status: 'success',
+        actorId: 'b',
+        actorRole: 'admin',
+        action: 'test',
+        resourceType: 'user',
+        resourceId: 'u2',
+        status: 'success',
       });
 
       const result = await service.verifyIntegrity();
@@ -121,12 +153,20 @@ describe('ImmutableAuditService', () => {
   describe('getLastEntry', () => {
     it('should return the most recent entry', async () => {
       await service.writeEntry({
-        actorId: 'a', actorRole: 'admin', action: 'first',
-        resourceType: 'user', resourceId: 'u1', status: 'success',
+        actorId: 'a',
+        actorRole: 'admin',
+        action: 'first',
+        resourceType: 'user',
+        resourceId: 'u1',
+        status: 'success',
       });
       await service.writeEntry({
-        actorId: 'b', actorRole: 'admin', action: 'second',
-        resourceType: 'user', resourceId: 'u2', status: 'success',
+        actorId: 'b',
+        actorRole: 'admin',
+        action: 'second',
+        resourceType: 'user',
+        resourceId: 'u2',
+        status: 'success',
       });
 
       const last = await service.getLastEntry();

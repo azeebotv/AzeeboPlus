@@ -22,6 +22,12 @@ import { MediaLifecycleService } from '../media/media-lifecycle.service.js';
     PremiumContentService,
     MediaLifecycleService,
   ],
-  exports: [UploadService, S3Service, CdnPurgeService, PremiumContentService, MediaLifecycleService],
+  exports: [
+    UploadService,
+    S3Service,
+    CdnPurgeService,
+    PremiumContentService,
+    MediaLifecycleService,
+  ],
 })
 export class UploadModule {}

@@ -382,10 +382,7 @@ export class AuthService {
     const levelKey = `${this.lockoutLevelPrefix}${email}`;
     const currentLevel = await this.redisService.get(levelKey);
     const level = currentLevel ? parseInt(currentLevel, 10) : 0;
-    const nextLevel = Math.min(
-      level + 1,
-      AuthService.LOCKOUT_BACKOFF_SECONDS.length - 1
-    );
+    const nextLevel = Math.min(level + 1, AuthService.LOCKOUT_BACKOFF_SECONDS.length - 1);
     // TTL = sum of all backoff tiers up to and including this level, so the
     // level counter lives long enough to survive the lockout window.
     const totalTtl = AuthService.LOCKOUT_BACKOFF_SECONDS.slice(0, nextLevel + 1).reduce(

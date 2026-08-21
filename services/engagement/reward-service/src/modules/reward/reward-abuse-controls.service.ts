@@ -60,7 +60,7 @@ export class RewardAbuseControlsService {
     userId: string,
     amount: number,
     reason: string,
-    adjustedBy: string,
+    adjustedBy: string
   ): Promise<AdminAdjustment> {
     const id = randomUUID();
 
@@ -78,14 +78,16 @@ export class RewardAbuseControlsService {
       },
     });
 
-    this.logger.log(`Admin reward adjustment: user=${userId} amount=${amount} by=${adjustedBy} reason="${reason}"`);
+    this.logger.log(
+      `Admin reward adjustment: user=${userId} amount=${amount} by=${adjustedBy} reason="${reason}"`
+    );
 
     return { id, userId, amount, reason, adjustedBy, timestamp: new Date() };
   }
 
   async redeemSponsorReward(
     userId: string,
-    _rewardId: string,
+    _rewardId: string
   ): Promise<{ success: boolean; message: string }> {
     const abuseCheck = await this.checkAbuse(userId);
     if (!abuseCheck.passed) {

@@ -12,13 +12,15 @@ async function bootstrap(): Promise<void> {
       whitelist: true,
       transform: true,
       forbidNonWhitelisted: true,
-    }),
+    })
   );
 
   // Swagger
   const config = new DocumentBuilder()
     .setTitle('Knowledge Service')
-    .setDescription('Knowledge Graph API — canonical events, knowledge units, grants, and projections')
+    .setDescription(
+      'Knowledge Graph API — canonical events, knowledge units, grants, and projections'
+    )
     .setVersion('1.0')
     .addBearerAuth()
     .build();

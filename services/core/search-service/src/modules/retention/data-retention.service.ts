@@ -36,9 +36,7 @@ const DELETE_DAYS = 90;
  * locking the table for extended periods.
  */
 @Injectable()
-export class DataRetentionService
-  implements OnModuleInit, OnModuleDestroy, OnApplicationBootstrap
-{
+export class DataRetentionService implements OnModuleInit, OnModuleDestroy, OnApplicationBootstrap {
   private readonly logger = new Logger(DataRetentionService.name);
   private running = false;
   private anonymizeJob?: CronJob;
@@ -51,8 +49,7 @@ export class DataRetentionService
   ) {}
 
   async onModuleInit(): Promise<void> {
-    const expression =
-      this.config.get<string>('SEARCH_RETENTION_CRON') || DEFAULT_CRON;
+    const expression = this.config.get<string>('SEARCH_RETENTION_CRON') || DEFAULT_CRON;
 
     this.anonymizeJob = new CronJob(expression, () => {
       void this.anonymizeOldQueries();
@@ -67,9 +64,7 @@ export class DataRetentionService
     this.anonymizeJob.start();
     this.deleteJob.start();
 
-    this.logger.log(
-      `Data retention scheduled: cron "${expression}" (anonymize + delete)`
-    );
+    this.logger.log(`Data retention scheduled: cron "${expression}" (anonymize + delete)`);
   }
 
   async onApplicationBootstrap(): Promise<void> {

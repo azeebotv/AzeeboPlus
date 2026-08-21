@@ -24,7 +24,7 @@ import { FeatureFlagsModule } from './modules/feature-flags/feature-flags.module
 import { PaymentGatewaysModule } from './modules/payment-gateways/payment-gateways.module';
 import { RealityShowsModule } from './modules/reality-shows/reality-shows.module';
 import { SubscriptionAdminModule } from './modules/subscription-admin/subscription-admin.module';
-import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
+import { ServiceAuthGuard, RateLimiterModule, SecurityModule } from '@azeebo/security';
 import { FeatureFlagModule, queueFlags, adminFlags } from '@azeebo/feature-flags';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { CsrfMiddleware } from './common/csrf.middleware';
@@ -36,6 +36,7 @@ import { CsrfMiddleware } from './common/csrf.middleware';
       envFilePath: ['.env', '../../.env'],
     }),
     RateLimiterModule.forRoot(),
+    SecurityModule,
     // Global flag registry for the admin UI: the DLQ tuning knobs are numeric
     // flags owned by the queue-service — registering their defaults here makes
     // them visible/tunable in the admin feature-flags page. The admin flags

@@ -74,7 +74,8 @@ export class CreatorsController {
   constructor(
     @Inject(CreatorsService) private readonly creatorsService: CreatorsService,
     @Inject(CreatorPayoutService) private readonly payoutService: CreatorPayoutService,
-    @Inject(CreatorTrustSafetyService) private readonly trustSafetyService: CreatorTrustSafetyService,
+    @Inject(CreatorTrustSafetyService)
+    private readonly trustSafetyService: CreatorTrustSafetyService
   ) {}
 
   @Post('onboard')

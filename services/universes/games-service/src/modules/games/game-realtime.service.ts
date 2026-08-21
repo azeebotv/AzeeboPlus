@@ -21,7 +21,7 @@ export class GameRealtimeService {
   async createSession(
     gameId: string,
     hostId: string,
-    maxPlayers: number = 2,
+    maxPlayers: number = 2
   ): Promise<GameSession> {
     const { randomUUID } = await import('crypto');
 
@@ -81,7 +81,11 @@ export class GameRealtimeService {
     return session;
   }
 
-  async updateState(sessionId: string, playerId: string, stateUpdate: Record<string, unknown>): Promise<void> {
+  async updateState(
+    sessionId: string,
+    playerId: string,
+    stateUpdate: Record<string, unknown>
+  ): Promise<void> {
     const session = this.activeSessions.get(sessionId);
     if (!session) return;
     if (!session.players.includes(playerId)) return;
@@ -97,7 +101,7 @@ export class GameRealtimeService {
 
   getGameSessions(gameId: string): GameSession[] {
     return Array.from(this.activeSessions.values()).filter(
-      (s) => s.gameId === gameId && s.status !== 'cancelled',
+      (s) => s.gameId === gameId && s.status !== 'cancelled'
     );
   }
 }

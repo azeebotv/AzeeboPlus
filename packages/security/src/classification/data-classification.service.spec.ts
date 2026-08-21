@@ -93,8 +93,14 @@ describe('DataClassificationService', () => {
   describe('registry completeness', () => {
     it('should have classifications for all major domain models', () => {
       const expectedModels = [
-        'User', 'Payment', 'Wallet', 'ContentItem',
-        'PointsLedger', 'KnowledgeGrant', 'AuditLog', 'SearchQueryLog',
+        'User',
+        'Payment',
+        'Wallet',
+        'ContentItem',
+        'PointsLedger',
+        'KnowledgeGrant',
+        'AuditLog',
+        'SearchQueryLog',
       ];
       for (const model of expectedModels) {
         expect(CLASSIFICATION_REGISTRY[model]).toBeDefined();

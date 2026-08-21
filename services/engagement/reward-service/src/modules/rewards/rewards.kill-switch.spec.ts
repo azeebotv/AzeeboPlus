@@ -58,7 +58,14 @@ describe('Rewards kill-switch (reward_* flags)', () => {
       controllers: [RewardsController],
       providers: [
         { provide: RewardsService, useValue: mockRewardsService },
-        { provide: RewardAbuseControlsService, useValue: { checkAbuse: jest.fn(), recordAdminAdjustment: jest.fn(), redeemSponsorReward: jest.fn() } },
+        {
+          provide: RewardAbuseControlsService,
+          useValue: {
+            checkAbuse: jest.fn(),
+            recordAdminAdjustment: jest.fn(),
+            redeemSponsorReward: jest.fn(),
+          },
+        },
         { provide: FeatureFlagService, useValue: mockFeatureFlagService },
         { provide: Reflector, useValue: new Reflector() },
         FeatureFlagGuard,

@@ -45,26 +45,22 @@ describe('GameRealtimeService', () => {
     });
 
     it('should throw when session not found', async () => {
-      await expect(
-        service.joinSession('nonexistent', 'player-1')
-      ).rejects.toThrow('Session not found');
+      await expect(service.joinSession('nonexistent', 'player-1')).rejects.toThrow(
+        'Session not found'
+      );
     });
 
     it('should throw when session is full', async () => {
       const session = await service.createSession('trivia', 'host-1', 2);
       await service.joinSession(session.id, 'player-2');
 
-      await expect(
-        service.joinSession(session.id, 'player-3')
-      ).rejects.toThrow('Session is full');
+      await expect(service.joinSession(session.id, 'player-3')).rejects.toThrow('Session is full');
     });
 
     it('should throw when player already in session', async () => {
       const session = await service.createSession('trivia', 'host-1');
 
-      await expect(
-        service.joinSession(session.id, 'host-1')
-      ).rejects.toThrow('Already in session');
+      await expect(service.joinSession(session.id, 'host-1')).rejects.toThrow('Already in session');
     });
 
     it('should throw when session is in progress', async () => {
@@ -72,9 +68,9 @@ describe('GameRealtimeService', () => {
       await service.joinSession(session.id, 'player-2');
       await service.startSession(session.id);
 
-      await expect(
-        service.joinSession(session.id, 'player-3')
-      ).rejects.toThrow('Cannot join session in progress');
+      await expect(service.joinSession(session.id, 'player-3')).rejects.toThrow(
+        'Cannot join session in progress'
+      );
     });
   });
 
@@ -106,9 +102,7 @@ describe('GameRealtimeService', () => {
     });
 
     it('should handle leaving non-existent session gracefully', async () => {
-      await expect(
-        service.leaveSession('nonexistent', 'player-1')
-      ).resolves.not.toThrow();
+      await expect(service.leaveSession('nonexistent', 'player-1')).resolves.not.toThrow();
     });
   });
 
@@ -126,15 +120,11 @@ describe('GameRealtimeService', () => {
     it('should throw when not enough players', async () => {
       const session = await service.createSession('trivia', 'host-1');
 
-      await expect(service.startSession(session.id)).rejects.toThrow(
-        'Need at least 2 players'
-      );
+      await expect(service.startSession(session.id)).rejects.toThrow('Need at least 2 players');
     });
 
     it('should throw when session not found', async () => {
-      await expect(service.startSession('nonexistent')).rejects.toThrow(
-        'Session not found'
-      );
+      await expect(service.startSession('nonexistent')).rejects.toThrow('Session not found');
     });
   });
 
