@@ -133,7 +133,7 @@ export class EventBusService {
       schemaRegistry?: EventSchemaRegistry;
       deadLetterQueue?: DeadLetterQueue;
       aggregateOrdering?: AggregateOrdering;
-    },
+    }
   ) {
     this.prefix = config.prefix || 'azeebo:events';
     this.serviceName = serviceName;
@@ -176,14 +176,17 @@ export class EventBusService {
   async publish<T = Record<string, unknown>>(
     eventType: string,
     data: T,
-    metadata?: DomainEvent['metadata'],
+    metadata?: DomainEvent['metadata']
   ): Promise<void> {
     // Schema validation (if registry is available)
     if (this.schemaRegistry) {
-      const validation = this.schemaRegistry.validateEvent(eventType, data as Record<string, unknown>);
+      const validation = this.schemaRegistry.validateEvent(
+        eventType,
+        data as Record<string, unknown>
+      );
       if (!validation.valid) {
         this.logger.warn(
-          `Schema validation failed for ${eventType}: ${validation.errors.join(', ')}`,
+          `Schema validation failed for ${eventType}: ${validation.errors.join(', ')}`
         );
         // Log but don't block — schemas may not be registered yet
       }
@@ -201,9 +204,7 @@ export class EventBusService {
     // Aggregate ordering (if available and metadata includes aggregate info)
     let sequenceNumber: number | undefined;
     if (this.aggregateOrdering && metadata?.aggregateId) {
-      sequenceNumber = await this.aggregateOrdering.getNextSequence(
-        metadata.aggregateId as string,
-      );
+      sequenceNumber = await this.aggregateOrdering.getNextSequence(metadata.aggregateId as string);
     }
 
     const channel = `${this.prefix}:${eventType}`;
@@ -215,7 +216,7 @@ export class EventBusService {
     try {
       await this.publisher.publish(channel, message);
       this.logger.debug(
-        `Published event: ${eventType} (id: ${event.id}${sequenceNumber !== undefined ? `, seq: ${sequenceNumber}` : ''})`,
+        `Published event: ${eventType} (id: ${event.id}${sequenceNumber !== undefined ? `, seq: ${sequenceNumber}` : ''})`
       );
     } catch (error) {
       this.logger.error(`Failed to publish event ${eventType}: ${(error as Error).message}`);
@@ -228,7 +229,7 @@ export class EventBusService {
    */
   async subscribe<T = Record<string, unknown>>(
     eventType: string,
-    handler: EventHandler<T>,
+    handler: EventHandler<T>
   ): Promise<void> {
     if (!this.subscribers.has(eventType)) {
       this.subscribers.set(eventType, new Set());
@@ -292,7 +293,7 @@ export class EventBusService {
         if (check.outOfOrder) {
           this.logger.warn(
             `Out-of-order event ${eventType} for aggregate ${orderedEvent.aggregateId}: ` +
-              `expected seq ${check.expectedSequence}, got ${check.actualSequence}`,
+              `expected seq ${check.expectedSequence}, got ${check.actualSequence}`
           );
           // Store for later replay
           await this.aggregateOrdering.storeEvent(orderedEvent);
@@ -327,7 +328,7 @@ export class EventBusService {
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
         this.logger.warn(
-          `Handler failed for event ${event.type} (attempt ${attempt}/${this.maxRetries}): ${lastError.message}`,
+          `Handler failed for event ${event.type} (attempt ${attempt}/${this.maxRetries}): ${lastError.message}`
         );
 
         if (attempt < this.maxRetries && this.enableRetry) {
@@ -350,11 +351,11 @@ export class EventBusService {
         correlationId: event.metadata?.correlationId as string,
       });
       this.logger.error(
-        `Event ${event.type} (id: ${event.id}) enqueued to DLQ after ${this.maxRetries} failed attempts`,
+        `Event ${event.type} (id: ${event.id}) enqueued to DLQ after ${this.maxRetries} failed attempts`
       );
     } else {
       this.logger.error(
-        `Handler failed after ${this.maxRetries} attempts for event ${event.type}: ${lastError?.message}`,
+        `Handler failed after ${this.maxRetries} attempts for event ${event.type}: ${lastError?.message}`
       );
     }
   }
@@ -404,7 +405,7 @@ export class EventBusModule {
   static forRoot(
     config: EventBusConfig,
     serviceName: string,
-    options?: { enableEnhanced?: boolean },
+    options?: { enableEnhanced?: boolean }
   ): DynamicModule {
     const prefix = config.prefix || 'azeebo:events';
     const enableEnhanced = options?.enableEnhanced !== false; // default true
@@ -442,18 +443,24 @@ export class EventBusModule {
       useFactory: (
         schemaRegistry: EventSchemaRegistry,
         dlq: DeadLetterQueue,
-        aggregateOrdering: AggregateOrdering,
+        aggregateOrdering: AggregateOrdering
       ) =>
-        new EventBusService(config, serviceName, enableEnhanced
-          ? { schemaRegistry, deadLetterQueue: dlq, aggregateOrdering }
-          : undefined),
-      inject: enableEnhanced
-        ? [EVENT_SCHEMA_REGISTRY, DEAD_LETTER_QUEUE, AGGREGATE_ORDERING]
-        : [],
+        new EventBusService(
+          config,
+          serviceName,
+          enableEnhanced ? { schemaRegistry, deadLetterQueue: dlq, aggregateOrdering } : undefined
+        ),
+      inject: enableEnhanced ? [EVENT_SCHEMA_REGISTRY, DEAD_LETTER_QUEUE, AGGREGATE_ORDERING] : [],
     };
 
     const providers = enableEnhanced
-      ? [redisProvider, schemaRegistryProvider, dlqProvider, aggregateOrderingProvider, eventBusProvider]
+      ? [
+          redisProvider,
+          schemaRegistryProvider,
+          dlqProvider,
+          aggregateOrderingProvider,
+          eventBusProvider,
+        ]
       : [eventBusProvider];
 
     const exports_ = enableEnhanced
@@ -511,11 +518,13 @@ export class EventBusModule {
         config: EventBusConfig,
         schemaRegistry: EventSchemaRegistry,
         dlq: DeadLetterQueue,
-        aggregateOrdering: AggregateOrdering,
+        aggregateOrdering: AggregateOrdering
       ) =>
-        new EventBusService(config, options.serviceName, enableEnhanced
-          ? { schemaRegistry, deadLetterQueue: dlq, aggregateOrdering }
-          : undefined),
+        new EventBusService(
+          config,
+          options.serviceName,
+          enableEnhanced ? { schemaRegistry, deadLetterQueue: dlq, aggregateOrdering } : undefined
+        ),
       inject: enableEnhanced
         ? [
             ...(options.inject as (InjectionToken | OptionalFactoryDependency)[]),
@@ -523,11 +532,17 @@ export class EventBusModule {
             DEAD_LETTER_QUEUE,
             AGGREGATE_ORDERING,
           ]
-        : ((options.inject as (InjectionToken | OptionalFactoryDependency)[]) || []),
+        : (options.inject as (InjectionToken | OptionalFactoryDependency)[]) || [],
     };
 
     const providers = enableEnhanced
-      ? [redisProvider, schemaRegistryProvider, dlqProvider, aggregateOrderingProvider, eventBusProvider]
+      ? [
+          redisProvider,
+          schemaRegistryProvider,
+          dlqProvider,
+          aggregateOrderingProvider,
+          eventBusProvider,
+        ]
       : [eventBusProvider];
 
     const exports_ = enableEnhanced
