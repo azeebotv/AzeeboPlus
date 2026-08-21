@@ -115,7 +115,7 @@ export class OutboxService {
    */
   async publishEntry(entryId: string): Promise<OutboxPublishResult> {
     try {
-      const pendingEntries = await this.storage.findPending(1);
+      const pendingEntries = await this.storage.findPending(10000);
       const entry = pendingEntries.find((e) => e.id === entryId);
 
       if (!entry) {

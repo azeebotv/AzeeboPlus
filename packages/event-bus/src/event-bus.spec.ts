@@ -3,6 +3,9 @@ import {
   EventTypes,
   EventBusModule,
   EVENT_BUS_SERVICE,
+  EVENT_SCHEMA_REGISTRY,
+  DEAD_LETTER_QUEUE,
+  AGGREGATE_ORDERING,
   eventConsumeFlagKey,
 } from './index';
 
@@ -399,6 +402,33 @@ describe('EventBusModule', () => {
   it('should export EVENT_BUS_SERVICE token', () => {
     const mod = EventBusModule.forRoot({ redisUrl: 'redis://localhost:6379' }, 'test');
     expect(EVENT_BUS_SERVICE).toBe('EVENT_BUS_SERVICE');
-    expect(mod.providers?.[0]).toHaveProperty('provide', EVENT_BUS_SERVICE);
+    // Enhanced module: providers are [REDIS, SCHEMA_REGISTRY, DLQ, ORDERING, EVENT_BUS]
+    const eventBusProvider = mod.providers?.find(
+      (p) => (p as { provide?: string })?.provide === EVENT_BUS_SERVICE,
+    );
+    expect(eventBusProvider).toBeDefined();
+  });
+
+  it('should provide enhanced services when enableEnhanced is true (default)', () => {
+    const mod = EventBusModule.forRoot({ redisUrl: 'redis://localhost:6379' }, 'test');
+    const tokens = mod.providers?.map((p) => (p as { provide?: string })?.provide);
+    expect(tokens).toContain(EVENT_BUS_SERVICE);
+    expect(tokens).toContain('EVENT_BUS_REDIS');
+    expect(tokens).toContain(EVENT_SCHEMA_REGISTRY);
+    expect(tokens).toContain(DEAD_LETTER_QUEUE);
+    expect(tokens).toContain(AGGREGATE_ORDERING);
+  });
+
+  it('should not provide enhanced services when enableEnhanced is false', () => {
+    const mod = EventBusModule.forRoot(
+      { redisUrl: 'redis://localhost:6379' },
+      'test',
+      { enableEnhanced: false },
+    );
+    const tokens = mod.providers?.map((p) => (p as { provide?: string })?.provide);
+    expect(tokens).toContain(EVENT_BUS_SERVICE);
+    expect(tokens).not.toContain(EVENT_SCHEMA_REGISTRY);
+    expect(tokens).not.toContain(DEAD_LETTER_QUEUE);
+    expect(tokens).not.toContain(AGGREGATE_ORDERING);
   });
 });

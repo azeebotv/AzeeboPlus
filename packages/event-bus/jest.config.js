@@ -12,4 +12,7 @@ module.exports = {
   coverageDirectory: '../coverage',
   testEnvironment: 'node',
   passWithNoTests: true,
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+  },
 };

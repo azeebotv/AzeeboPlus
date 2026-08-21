@@ -390,8 +390,8 @@ export class DatabaseRolesService {
 
     // Check schema access
     if (targetSchema === roleDef.ownedSchema) {
-      // Accessing own schema - always allowed
-      return { valid: true, errors: [], warnings: [] };
+      // Accessing own schema - check permissions
+      return { valid: errors.length === 0, errors, warnings };
     }
 
     if (!roleDef.crossSchemaAccess) {
