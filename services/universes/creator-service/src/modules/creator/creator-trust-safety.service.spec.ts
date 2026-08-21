@@ -16,10 +16,7 @@ describe('CreatorTrustSafetyService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        CreatorTrustSafetyService,
-        { provide: PrismaService, useValue: mockPrisma },
-      ],
+      providers: [CreatorTrustSafetyService, { provide: PrismaService, useValue: mockPrisma }],
     }).compile();
 
     service = module.get<CreatorTrustSafetyService>(CreatorTrustSafetyService);

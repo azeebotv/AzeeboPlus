@@ -113,11 +113,19 @@ describe('Creators Controller Contract Tests', () => {
         },
         {
           provide: CreatorPayoutService,
-          useValue: { getCreatorEarnings: jest.fn(), requestPayout: jest.fn(), getPayoutHistory: jest.fn() },
+          useValue: {
+            getCreatorEarnings: jest.fn(),
+            requestPayout: jest.fn(),
+            getPayoutHistory: jest.fn(),
+          },
         },
         {
           provide: CreatorTrustSafetyService,
-          useValue: { getTrustScore: jest.fn(), recordViolation: jest.fn(), checkMonetizationEligibility: jest.fn() },
+          useValue: {
+            getTrustScore: jest.fn(),
+            recordViolation: jest.fn(),
+            checkMonetizationEligibility: jest.fn(),
+          },
         },
         Reflector,
         JwtStrategy,

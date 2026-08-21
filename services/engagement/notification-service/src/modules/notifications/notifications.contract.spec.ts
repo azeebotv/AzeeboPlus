@@ -78,7 +78,10 @@ describe('Notifications Controller Contract Tests', () => {
       controllers: [NotificationsController],
       providers: [
         { provide: NotificationsService, useValue: mockNotificationsService },
-        { provide: NotificationSLOService, useValue: { getCurrentSLOStatus: jest.fn(), measureSLO: jest.fn() } },
+        {
+          provide: NotificationSLOService,
+          useValue: { getCurrentSLOStatus: jest.fn(), measureSLO: jest.fn() },
+        },
         { provide: PrismaService, useValue: {} },
       ],
     })

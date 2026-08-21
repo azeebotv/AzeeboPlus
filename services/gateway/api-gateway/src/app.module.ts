@@ -13,6 +13,7 @@ import { CsrfMiddleware } from './common/csrf.middleware';
 import { LegacyRedirectMiddleware } from './common/legacy-redirect.middleware';
 import { ContentTypeValidationMiddleware } from './common/content-type-validation.middleware';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
+import { SecurityModule } from '@azeebo/security';
 import {
   FeatureFlagModule,
   gatewayFlags,
@@ -65,6 +66,7 @@ const universeSentinelDefaults = Object.fromEntries(
     }),
     HealthModule,
     ProxyModule,
+    SecurityModule,
     FlagMetricsModule.register({ service: 'api-gateway' }),
     // Gateway kill-switches: maintenance mode and new routes default OFF;
     // circuit breaker / CSRF / legacy redirects / caching default ON so ops can

@@ -18,16 +18,16 @@ describe('AccountMergeService', () => {
     });
 
     it('should reject merging account with itself', async () => {
-      await expect(
-        service.initiateMerge('user-1', 'user-1', 'admin-1'),
-      ).rejects.toThrow('Cannot merge an account with itself');
+      await expect(service.initiateMerge('user-1', 'user-1', 'admin-1')).rejects.toThrow(
+        'Cannot merge an account with itself'
+      );
     });
 
     it('should reject duplicate pending merge', async () => {
       await service.initiateMerge('user-1', 'user-2', 'admin-1');
-      await expect(
-        service.initiateMerge('user-1', 'user-3', 'admin-1'),
-      ).rejects.toThrow('already pending');
+      await expect(service.initiateMerge('user-1', 'user-3', 'admin-1')).rejects.toThrow(
+        'already pending'
+      );
     });
   });
 
@@ -38,7 +38,7 @@ describe('AccountMergeService', () => {
       const result = await service.executeMerge(
         req.id,
         async () => ['purchases', 'rewards'],
-        async () => ['displayName'],
+        async () => ['displayName']
       );
 
       expect(result.status).toBe('completed');
@@ -52,9 +52,11 @@ describe('AccountMergeService', () => {
       await expect(
         service.executeMerge(
           req.id,
-          async () => { throw new Error('DB connection failed'); },
-          async () => [],
-        ),
+          async () => {
+            throw new Error('DB connection failed');
+          },
+          async () => []
+        )
       ).rejects.toThrow('DB connection failed');
 
       const result = await service.getMergeRequest(req.id);
@@ -65,7 +67,11 @@ describe('AccountMergeService', () => {
   describe('rollbackMerge', () => {
     it('should rollback a completed merge', async () => {
       const req = await service.initiateMerge('user-1', 'user-2', 'admin-1');
-      await service.executeMerge(req.id, async () => ['data'], async () => []);
+      await service.executeMerge(
+        req.id,
+        async () => ['data'],
+        async () => []
+      );
 
       const rolledBack = await service.rollbackMerge(req.id);
       expect(rolledBack.status).toBe('rolled_back');

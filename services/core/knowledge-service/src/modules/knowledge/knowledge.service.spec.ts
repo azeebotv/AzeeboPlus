@@ -41,10 +41,7 @@ describe('KnowledgeService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        KnowledgeService,
-        { provide: PrismaService, useValue: mockPrisma },
-      ],
+      providers: [KnowledgeService, { provide: PrismaService, useValue: mockPrisma }],
     }).compile();
 
     service = module.get<KnowledgeService>(KnowledgeService);
@@ -85,14 +82,19 @@ describe('KnowledgeService', () => {
           title: 'Duplicate',
           universeId: 'u1',
           eventDate: new Date(),
-        }),
+        })
       ).rejects.toThrow(BadRequestException);
     });
   });
 
   describe('getCanonicalEvent', () => {
     it('should return a canonical event', async () => {
-      const event = { id: 'event-1', title: 'Test Event', knowledgeUnits: [], contentCheckpoints: [] };
+      const event = {
+        id: 'event-1',
+        title: 'Test Event',
+        knowledgeUnits: [],
+        contentCheckpoints: [],
+      };
       mockPrisma.canonicalEvent.findUnique.mockResolvedValue(event);
 
       const result = await service.getCanonicalEvent('event-1');
@@ -132,7 +134,7 @@ describe('KnowledgeService', () => {
           canonicalEventId: 'nonexistent',
           title: 'Test',
           knowledgeType: 'fact',
-        }),
+        })
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -254,9 +256,9 @@ describe('KnowledgeService', () => {
     it('should throw if unit not found', async () => {
       mockPrisma.knowledgeUnit.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.correctKnowledgeUnit('nonexistent', { title: 'Fixed' }),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.correctKnowledgeUnit('nonexistent', { title: 'Fixed' })).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 });

@@ -29,8 +29,7 @@ import { PrismaService } from '../database/prisma.service.js';
  */
 
 const RUN =
-  process.env.RUN_SEARCH_AVAILABILITY_E2E === '1' ||
-  !!process.env.SEARCH_TEST_DATABASE_URL;
+  process.env.RUN_SEARCH_AVAILABILITY_E2E === '1' || !!process.env.SEARCH_TEST_DATABASE_URL;
 
 const DB_URL =
   process.env.SEARCH_TEST_DATABASE_URL ??
@@ -52,7 +51,7 @@ if (!RUN) {
   console.log(
     `[search.availability.e2e] Skipping — opt-in. Boot docker infra with \`docker compose ` +
       `-f docker-compose.test.yml up -d --wait postgres-test\` then run \`pnpm ` +
-      `--filter @azeebo/search-service test:e2e:availability\`.`,
+      `--filter @azeebo/search-service test:e2e:availability\`.`
   );
 }
 
@@ -381,10 +380,7 @@ liveDescribe('search availability filtering (real Postgres)', () => {
     });
 
     it('should return empty for non-existent IDs', async () => {
-      const result = await service.filterAvailableContent(
-        ['nonexistent-1', 'nonexistent-2'],
-        {},
-      );
+      const result = await service.filterAvailableContent(['nonexistent-1', 'nonexistent-2'], {});
       expect(result).toHaveLength(0);
     });
   });
@@ -452,7 +448,7 @@ liveDescribe('search availability filtering (real Postgres)', () => {
           filters: { contentTypes: ['podcast'], universes: ['reality'] },
           resultCount: 0,
           suggestions: [],
-        }),
+        })
       ).resolves.toBeUndefined();
     });
   });

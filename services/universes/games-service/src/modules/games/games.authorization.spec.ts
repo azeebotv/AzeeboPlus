@@ -103,7 +103,13 @@ describe('Games Service Authorization Tests', () => {
         },
         {
           provide: GameRealtimeService,
-          useValue: { createSession: jest.fn(), joinSession: jest.fn(), startSession: jest.fn(), getPlayerSession: jest.fn(), getGameSessions: jest.fn() },
+          useValue: {
+            createSession: jest.fn(),
+            joinSession: jest.fn(),
+            startSession: jest.fn(),
+            getPlayerSession: jest.fn(),
+            getGameSessions: jest.fn(),
+          },
         },
         appGuardProvider,
       ],

@@ -9,17 +9,32 @@ const SENSITIVE_PATTERNS: Array<{ pattern: RegExp; replacement: string }> = [
   // Email addresses
   { pattern: /([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, replacement: '***@***.***' },
   // Phone numbers (international)
-  { pattern: /(\+\d{1,3})[-.\s]?\(?\d{1,4}\)?[-.\s]?\d{1,4}[-.\s]?\d{1,9}/g, replacement: '***PHONE***' },
+  {
+    pattern: /(\+\d{1,3})[-.\s]?\(?\d{1,4}\)?[-.\s]?\d{1,4}[-.\s]?\d{1,9}/g,
+    replacement: '***PHONE***',
+  },
   // Credit card numbers
   { pattern: /\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/g, replacement: '****-****-****-****' },
   // API keys and tokens
-  { pattern: /\b(sk|pk|api[_-]?key|token|secret|password|passwd|pwd)[-_]?[a-zA-Z0-9_]{20,}\b/gi, replacement: '$1_***REDACTED***' },
+  {
+    pattern: /\b(sk|pk|api[_-]?key|token|secret|password|passwd|pwd)[-_]?[a-zA-Z0-9_]{20,}\b/gi,
+    replacement: '$1_***REDACTED***',
+  },
   // JWT tokens
-  { pattern: /eyJ[a-zA-Z0-9_-]+\.eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+/g, replacement: 'eyJ***.eyJ***.***' },
+  {
+    pattern: /eyJ[a-zA-Z0-9_-]+\.eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+/g,
+    replacement: 'eyJ***.eyJ***.***',
+  },
   // UUIDs (sometimes sensitive in context)
-  { pattern: /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, replacement: '***UUID***' },
+  {
+    pattern: /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi,
+    replacement: '***UUID***',
+  },
   // IP addresses (internal)
-  { pattern: /\b(10\.\d{1,3}|172\.(1[6-9]|2\d|3[01])|192\.168)\.\d{1,3}\.\d{1,3}\b/g, replacement: '***INTERNAL_IP***' },
+  {
+    pattern: /\b(10\.\d{1,3}|172\.(1[6-9]|2\d|3[01])|192\.168)\.\d{1,3}\.\d{1,3}\b/g,
+    replacement: '***INTERNAL_IP***',
+  },
   // Social Security Numbers / National IDs
   { pattern: /\b\d{3}-\d{2}-\d{4}\b/g, replacement: '***-**-****' },
   // Bank account numbers
@@ -54,7 +69,6 @@ const SENSITIVE_FIELD_NAMES = new Set([
 
 @Injectable()
 export class LogRedactionService {
-
   /**
    * Redact sensitive fields from an object
    */

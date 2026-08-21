@@ -54,7 +54,7 @@ export class AccountMergeService {
   async initiateMerge(
     primaryUserId: string,
     secondaryUserId: string,
-    initiatedBy: string,
+    initiatedBy: string
   ): Promise<AccountMergeRequest> {
     if (primaryUserId === secondaryUserId) {
       throw new ForbiddenException('Cannot merge an account with itself');
@@ -64,12 +64,9 @@ export class AccountMergeService {
     for (const request of mergeRequests.values()) {
       if (
         request.status === 'pending' &&
-        (request.primaryUserId === primaryUserId ||
-          request.secondaryUserId === secondaryUserId)
+        (request.primaryUserId === primaryUserId || request.secondaryUserId === secondaryUserId)
       ) {
-        throw new ForbiddenException(
-          'A merge is already pending for one of these accounts',
-        );
+        throw new ForbiddenException('A merge is already pending for one of these accounts');
       }
     }
 
@@ -87,7 +84,7 @@ export class AccountMergeService {
     mergeRequests.set(request.id, request);
 
     this.logger.log(
-      `ACCOUNT MERGE INITIATED: ${secondaryUserId} → ${primaryUserId} by ${initiatedBy}`,
+      `ACCOUNT MERGE INITIATED: ${secondaryUserId} → ${primaryUserId} by ${initiatedBy}`
     );
 
     return request;
@@ -100,10 +97,7 @@ export class AccountMergeService {
   async executeMerge(
     requestId: string,
     transferData: (primaryId: string, secondaryId: string) => Promise<string[]>,
-    conflictResolver: (
-      primaryId: string,
-      secondaryId: string,
-    ) => Promise<string[]>,
+    conflictResolver: (primaryId: string, secondaryId: string) => Promise<string[]>
   ): Promise<AccountMergeRequest> {
     const request = mergeRequests.get(requestId);
     if (!request) {
@@ -118,17 +112,11 @@ export class AccountMergeService {
 
     try {
       // Transfer data from secondary to primary
-      const transferred = await transferData(
-        request.primaryUserId,
-        request.secondaryUserId,
-      );
+      const transferred = await transferData(request.primaryUserId, request.secondaryUserId);
       request.transferredData = transferred;
 
       // Handle conflicts (keep primary data)
-      const conflicts = await conflictResolver(
-        request.primaryUserId,
-        request.secondaryUserId,
-      );
+      const conflicts = await conflictResolver(request.primaryUserId, request.secondaryUserId);
       request.conflicts = conflicts;
 
       // Store rollback data before deleting secondary
@@ -143,7 +131,7 @@ export class AccountMergeService {
 
       this.logger.log(
         `ACCOUNT MERGE COMPLETED: ${request.secondaryUserId} → ${request.primaryUserId} ` +
-          `(${transferred.length} items transferred, ${conflicts.length} conflicts resolved)`,
+          `(${transferred.length} items transferred, ${conflicts.length} conflicts resolved)`
       );
 
       return request;
@@ -152,7 +140,7 @@ export class AccountMergeService {
       request.error = (error as Error).message;
 
       this.logger.error(
-        `ACCOUNT MERGE FAILED: ${request.secondaryUserId} → ${request.primaryUserId}: ${(error as Error).message}`,
+        `ACCOUNT MERGE FAILED: ${request.secondaryUserId} → ${request.primaryUserId}: ${(error as Error).message}`
       );
 
       throw error;
@@ -170,14 +158,14 @@ export class AccountMergeService {
 
     if (request.status !== 'completed') {
       throw new ForbiddenException(
-        `Can only rollback completed merges, current status: ${request.status}`,
+        `Can only rollback completed merges, current status: ${request.status}`
       );
     }
 
     request.status = 'rolled_back';
 
     this.logger.warn(
-      `ACCOUNT MERGE ROLLED BACK: ${request.secondaryUserId} → ${request.primaryUserId}`,
+      `ACCOUNT MERGE ROLLED BACK: ${request.secondaryUserId} → ${request.primaryUserId}`
     );
 
     return request;
@@ -199,7 +187,7 @@ export class AccountMergeService {
    */
   async getUserMerges(userId: string): Promise<AccountMergeRequest[]> {
     return Array.from(mergeRequests.values()).filter(
-      (r) => r.primaryUserId === userId || r.secondaryUserId === userId,
+      (r) => r.primaryUserId === userId || r.secondaryUserId === userId
     );
   }
 }

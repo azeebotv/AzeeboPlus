@@ -19,7 +19,7 @@ export class MediaLifecycleService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly cache: CacheService,
+    private readonly cache: CacheService
   ) {}
 
   async purgeCDN(request: CDNpurgeRequest): Promise<{ purged: number; errors: string[] }> {
@@ -60,7 +60,7 @@ export class MediaLifecycleService {
 
   async updateTranscodingStatus(
     transcodingJobId: string,
-    update: Partial<TranscodingJobStatus>,
+    update: Partial<TranscodingJobStatus>
   ): Promise<void> {
     const job = await this.prisma.transcodingJob.findUnique({
       where: { id: transcodingJobId },
@@ -90,7 +90,9 @@ export class MediaLifecycleService {
 
       for (const upload of orphanedUploads) {
         try {
-          const metadata = (upload as Record<string, unknown>).metadata as Record<string, unknown> | undefined;
+          const metadata = (upload as Record<string, unknown>).metadata as
+            | Record<string, unknown>
+            | undefined;
           if (metadata?.orphaned === true) {
             await this.prisma.mediaUpload.delete({ where: { id: upload.id } });
             await this.cache.delete(cacheKey('media', upload.id));
@@ -109,7 +111,7 @@ export class MediaLifecycleService {
 
   async generatePremiumUrl(
     mediaUploadId: string,
-    options: { expiresIn?: number } = {},
+    options: { expiresIn?: number } = {}
   ): Promise<{ url: string; expiresAt: Date }> {
     const upload = await this.prisma.mediaUpload.findUnique({
       where: { id: mediaUploadId },
@@ -122,7 +124,9 @@ export class MediaLifecycleService {
     const expiresIn = options.expiresIn || 3600;
     const expiresAt = new Date(Date.now() + expiresIn * 1000);
 
-    const url = upload.cdnUrl || `${process.env.MEDIA_CDN_URL || 'https://cdn.azeebo.com'}/${upload.fileName}`;
+    const url =
+      upload.cdnUrl ||
+      `${process.env.MEDIA_CDN_URL || 'https://cdn.azeebo.com'}/${upload.fileName}`;
 
     return { url, expiresAt };
   }

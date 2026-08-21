@@ -17,10 +17,7 @@ describe('RewardAbuseControlsService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        RewardAbuseControlsService,
-        { provide: PrismaService, useValue: mockPrisma },
-      ],
+      providers: [RewardAbuseControlsService, { provide: PrismaService, useValue: mockPrisma }],
     }).compile();
 
     service = module.get<RewardAbuseControlsService>(RewardAbuseControlsService);
@@ -104,12 +101,7 @@ describe('RewardAbuseControlsService', () => {
     it('should use debit type for negative amounts', async () => {
       mockPrisma.pointsLedger.create.mockResolvedValue({});
 
-      await service.recordAdminAdjustment(
-        'user-1',
-        -2000,
-        'Penalty',
-        'admin-1'
-      );
+      await service.recordAdminAdjustment('user-1', -2000, 'Penalty', 'admin-1');
 
       expect(mockPrisma.pointsLedger.create).toHaveBeenCalledWith(
         expect.objectContaining({

@@ -11,21 +11,21 @@ export interface SLOMeasurement {
   p50LatencyMs: number;
   p95LatencyMs: number;
   p99LatencyMs: number;
-  byChannel: Record<string, {
-    total: number;
-    deliveredWithin15Min: number;
-    deliveryRate: number;
-  }>;
+  byChannel: Record<
+    string,
+    {
+      total: number;
+      deliveredWithin15Min: number;
+      deliveryRate: number;
+    }
+  >;
 }
 
 @Injectable()
 export class NotificationSLOService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async measureSLO(
-    startDate: Date,
-    endDate: Date,
-  ): Promise<SLOMeasurement> {
+  async measureSLO(startDate: Date, endDate: Date): Promise<SLOMeasurement> {
     const totalNotifications = await this.prisma.notification.count({
       where: {
         createdAt: { gte: startDate, lte: endDate },

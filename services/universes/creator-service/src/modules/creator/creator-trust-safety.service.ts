@@ -49,10 +49,16 @@ export class CreatorTrustSafetyService {
     return { creatorId, score, level, strikes };
   }
 
-  async recordViolation(violation: Omit<PolicyViolation, 'id' | 'createdAt'>): Promise<PolicyViolation> {
+  async recordViolation(
+    violation: Omit<PolicyViolation, 'id' | 'createdAt'>
+  ): Promise<PolicyViolation> {
     const id = randomUUID();
 
-    if (violation.action === 'strike' || violation.action === 'suspension' || violation.action === 'termination') {
+    if (
+      violation.action === 'strike' ||
+      violation.action === 'suspension' ||
+      violation.action === 'termination'
+    ) {
       const creator = await this.prisma.creatorProfile.findUnique({
         where: { id: violation.creatorId },
         select: { settings: true },
@@ -76,7 +82,9 @@ export class CreatorTrustSafetyService {
       });
     }
 
-    this.logger.warn(`Creator violation: ${violation.creatorId} — ${violation.policy} (${violation.severity}) → ${violation.action}`);
+    this.logger.warn(
+      `Creator violation: ${violation.creatorId} — ${violation.policy} (${violation.severity}) → ${violation.action}`
+    );
     return { ...violation, id, createdAt: new Date() };
   }
 

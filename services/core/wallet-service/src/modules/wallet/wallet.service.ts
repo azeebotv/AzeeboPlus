@@ -1942,7 +1942,10 @@ export class WalletService {
     return { success: true, data: [] };
   }
 
-  async linkBankAccount(_userId: string, _body: { bankName: string; accountNumber: string; accountName: string }): Promise<WalletResponse> {
+  async linkBankAccount(
+    _userId: string,
+    _body: { bankName: string; accountNumber: string; accountName: string }
+  ): Promise<WalletResponse> {
     throw new BadRequestException('Bank account linking not yet available');
   }
 
@@ -1950,7 +1953,12 @@ export class WalletService {
     return {
       success: true,
       data: [
-        { id: 'bank_transfer', name: 'Bank Transfer', processingTime: '1-3 business days', fee: 50 },
+        {
+          id: 'bank_transfer',
+          name: 'Bank Transfer',
+          processingTime: '1-3 business days',
+          fee: 50,
+        },
         { id: 'mobile_money', name: 'Mobile Money', processingTime: 'Instant', fee: 25 },
       ],
     };

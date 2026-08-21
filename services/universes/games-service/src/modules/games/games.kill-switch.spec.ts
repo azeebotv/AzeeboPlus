@@ -65,7 +65,16 @@ describe('GamesController kill-switch (games_* flags)', () => {
       controllers: [GamesController],
       providers: [
         { provide: GamesService, useValue: mockGamesService },
-        { provide: GameRealtimeService, useValue: { createSession: jest.fn(), joinSession: jest.fn(), startSession: jest.fn(), getPlayerSession: jest.fn(), getGameSessions: jest.fn() } },
+        {
+          provide: GameRealtimeService,
+          useValue: {
+            createSession: jest.fn(),
+            joinSession: jest.fn(),
+            startSession: jest.fn(),
+            getPlayerSession: jest.fn(),
+            getGameSessions: jest.fn(),
+          },
+        },
         { provide: FeatureFlagService, useValue: mockFeatureFlagService },
         { provide: Reflector, useValue: new Reflector() },
         FeatureFlagGuard,

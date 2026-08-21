@@ -49,7 +49,7 @@ export class SearchAvailabilityService {
    */
   async filterAvailableContent(
     contentIds: string[],
-    filters: AvailabilityFilter,
+    filters: AvailabilityFilter
   ): Promise<string[]> {
     const availableIds: string[] = [];
 
@@ -68,7 +68,7 @@ export class SearchAvailabilityService {
    */
   async checkContentAvailability(
     contentId: string,
-    filters: AvailabilityFilter,
+    filters: AvailabilityFilter
   ): Promise<AvailabilityCheckResult> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
@@ -121,7 +121,7 @@ export class SearchAvailabilityService {
     // Check categories
     if (filters.categories && filters.categories.length > 0) {
       const hasMatchingCategory = content.categories.some((cat) =>
-        filters.categories!.includes(cat),
+        filters.categories!.includes(cat)
       );
       if (!hasMatchingCategory) {
         return {
@@ -145,7 +145,7 @@ export class SearchAvailabilityService {
    */
   async trackZeroResult(telemetry: ZeroResultTelemetry): Promise<void> {
     this.logger.log(
-      `Zero-result search: "${telemetry.query}" (userId: ${telemetry.userId || 'anonymous'})`,
+      `Zero-result search: "${telemetry.query}" (userId: ${telemetry.userId || 'anonymous'})`
     );
 
     const logEntry = {
@@ -207,7 +207,7 @@ export class SearchAvailabilityService {
    */
   async measureSearchLatency(
     query: string,
-    filters: AvailabilityFilter,
+    filters: AvailabilityFilter
   ): Promise<{ latencyMs: number; resultCount: number }> {
     const startTime = Date.now();
 
@@ -223,7 +223,7 @@ export class SearchAvailabilityService {
     // Apply availability filters
     const availableIds = await this.filterAvailableContent(
       results.map((r) => r.id),
-      filters,
+      filters
     );
 
     const latencyMs = Date.now() - startTime;

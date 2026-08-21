@@ -12,7 +12,10 @@ export class GrantKnowledgeDto {
   @IsNotEmpty()
   knowledgeUnitId!: string;
 
-  @ApiProperty({ description: 'Source of the grant', enum: ['checkpoint', 'purchase', 'admin', 'promo'] })
+  @ApiProperty({
+    description: 'Source of the grant',
+    enum: ['checkpoint', 'purchase', 'admin', 'promo'],
+  })
   @IsString()
   @IsNotEmpty()
   grantSource!: string;

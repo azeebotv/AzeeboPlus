@@ -38,9 +38,10 @@ export class ContentController {
   constructor(
     @Inject(ContentService) private readonly contentService: ContentService,
     @Inject(AccessControlService) private readonly accessControlService: AccessControlService,
-    @Inject(ContentReleaseSchedulerService) private readonly releaseScheduler: ContentReleaseSchedulerService,
+    @Inject(ContentReleaseSchedulerService)
+    private readonly releaseScheduler: ContentReleaseSchedulerService,
     @Inject(ContentVersioningService) private readonly versioningService: ContentVersioningService,
-    @Inject(ACDPValidationService) private readonly acdpValidation: ACDPValidationService,
+    @Inject(ACDPValidationService) private readonly acdpValidation: ACDPValidationService
   ) {}
 
   // ========================
@@ -878,10 +879,7 @@ export class ContentController {
   @Get(':id/versions/:versionNumber')
   @ApiOperation({ summary: 'Get specific content version' })
   @ApiResponse({ status: 200, description: 'Version detail' })
-  async getVersion(
-    @Param('id') id: string,
-    @Param('versionNumber') versionNumber: string
-  ) {
+  async getVersion(@Param('id') id: string, @Param('versionNumber') versionNumber: string) {
     const version = await this.versioningService.getVersion(id, Number(versionNumber));
     return ApiResponseWrapper.success(version);
   }
@@ -908,7 +906,11 @@ export class ContentController {
     @Param('id') id: string,
     @Param('versionNumber') versionNumber: string
   ) {
-    const result = await this.versioningService.rollbackToVersion(id, Number(versionNumber), req.user.id);
+    const result = await this.versioningService.rollbackToVersion(
+      id,
+      Number(versionNumber),
+      req.user.id
+    );
     return ApiResponseWrapper.success(result);
   }
 
@@ -920,7 +922,11 @@ export class ContentController {
     @Query('a') versionA: string,
     @Query('b') versionB: string
   ) {
-    const result = await this.versioningService.compareVersions(id, Number(versionA), Number(versionB));
+    const result = await this.versioningService.compareVersions(
+      id,
+      Number(versionA),
+      Number(versionB)
+    );
     return ApiResponseWrapper.success(result);
   }
 
@@ -932,7 +938,8 @@ export class ContentController {
   @ApiOperation({ summary: 'Validate release window constraints' })
   @ApiResponse({ status: 200, description: 'Validation result' })
   async validateReleaseWindow(
-    @Body() body: {
+    @Body()
+    body: {
       releaseDate?: string;
       theatricalReleaseDate?: string;
       streamingReleaseDate?: string;
@@ -942,8 +949,12 @@ export class ContentController {
   ) {
     const result = this.releaseScheduler.validateReleaseWindow({
       releaseDate: body.releaseDate ? new Date(body.releaseDate) : undefined,
-      theatricalReleaseDate: body.theatricalReleaseDate ? new Date(body.theatricalReleaseDate) : undefined,
-      streamingReleaseDate: body.streamingReleaseDate ? new Date(body.streamingReleaseDate) : undefined,
+      theatricalReleaseDate: body.theatricalReleaseDate
+        ? new Date(body.theatricalReleaseDate)
+        : undefined,
+      streamingReleaseDate: body.streamingReleaseDate
+        ? new Date(body.streamingReleaseDate)
+        : undefined,
       windowEndDate: body.windowEndDate ? new Date(body.windowEndDate) : undefined,
       windowType: body.windowType,
     });

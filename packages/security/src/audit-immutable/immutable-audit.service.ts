@@ -108,7 +108,7 @@ export class ImmutableAuditService {
     auditLog.push(newEntry);
 
     this.logger.log(
-      `AUDIT: [${newEntry.sequenceNumber}] ${newEntry.action} on ${newEntry.resourceType}/${newEntry.resourceId} by ${newEntry.actorId} (${newEntry.actorRole})`,
+      `AUDIT: [${newEntry.sequenceNumber}] ${newEntry.action} on ${newEntry.resourceType}/${newEntry.resourceId} by ${newEntry.actorId} (${newEntry.actorRole})`
     );
 
     return newEntry;
@@ -175,15 +175,13 @@ export class ImmutableAuditService {
 
       // Check sequence continuity
       if (entry.sequenceNumber !== i + 1) {
-        errors.push(
-          `Sequence gap at index ${i}: expected ${i + 1}, got ${entry.sequenceNumber}`,
-        );
+        errors.push(`Sequence gap at index ${i}: expected ${i + 1}, got ${entry.sequenceNumber}`);
       }
 
       // Check previous hash chain
       if (entry.previousHash !== previousHash) {
         errors.push(
-          `Hash chain broken at entry ${entry.sequenceNumber}: expected ${previousHash}, got ${entry.previousHash}`,
+          `Hash chain broken at entry ${entry.sequenceNumber}: expected ${previousHash}, got ${entry.previousHash}`
         );
       }
 
@@ -200,7 +198,7 @@ export class ImmutableAuditService {
       const expectedHash = createHash('sha256').update(contentToHash).digest('hex');
       if (entry.hash !== expectedHash) {
         errors.push(
-          `Hash mismatch at entry ${entry.sequenceNumber}: expected ${expectedHash}, got ${entry.hash}`,
+          `Hash mismatch at entry ${entry.sequenceNumber}: expected ${expectedHash}, got ${entry.hash}`
         );
       }
 

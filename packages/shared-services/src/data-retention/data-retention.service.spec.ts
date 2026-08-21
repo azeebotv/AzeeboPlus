@@ -98,9 +98,7 @@ describe('DataRetentionService', () => {
 
   describe('enforceWatchProgressRetention', () => {
     it('should anonymize old watch progress', async () => {
-      mockDb.watchHistory.findMany.mockResolvedValue([
-        { id: 'wh-1', userId: 'user-1' },
-      ]);
+      mockDb.watchHistory.findMany.mockResolvedValue([{ id: 'wh-1', userId: 'user-1' }]);
 
       const result = await service.enforceRetention('watchProgress');
 
@@ -145,7 +143,7 @@ describe('DataRetentionService', () => {
   describe('enforceRetention', () => {
     it('should throw for unknown data type', async () => {
       await expect(service.enforceRetention('unknown')).rejects.toThrow(
-        'Unknown data type: unknown',
+        'Unknown data type: unknown'
       );
     });
   });

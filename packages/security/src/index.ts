@@ -72,6 +72,9 @@ export {
   BreakGlassActivationRequest,
 } from './break-glass/break-glass.service';
 
+/** Redis-backed break-glass service for production/E2E use. */
+export { BreakGlassRedisService } from './break-glass/break-glass-redis.service';
+
 /** Dual-control approval for high-risk admin actions (TAA §55). */
 export {
   DualControlService,
@@ -79,6 +82,9 @@ export {
   DualControlApproval,
   DualControlAction,
 } from './dual-control/dual-control.service';
+
+/** Database-backed dual-control service for production/E2E use. */
+export { DualControlDbService } from './dual-control/dual-control-db.service';
 
 /** Sensitive log field redaction (TAA §52). */
 export { LogRedactionService } from './log-redaction/log-redaction.service';
@@ -104,12 +110,11 @@ export {
   ImmutableAuditEntry,
 } from './audit-immutable/immutable-audit.service';
 
+/** Database-backed immutable audit log for production/E2E use. */
+export { ImmutableAuditDbService } from './audit-immutable/immutable-audit-db.service';
+
 /** MFA enforcement guard for admin actions (TAA §49). */
-export {
-  MfaGuard,
-  RequiresMFA,
-  REQUIRES_MFA_KEY,
-} from './mfa/mfa-guard.service';
+export { MfaGuard, RequiresMFA, REQUIRES_MFA_KEY } from './mfa/mfa-guard.service';
 
 // ============================================================================
 // Security Module — Import this to get all security services

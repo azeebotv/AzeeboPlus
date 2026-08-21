@@ -66,10 +66,13 @@ export class CreatorPayoutService {
 
   async requestPayout(request: PayoutRequest): Promise<Payout> {
     const earnings = await this.getCreatorEarnings(request.creatorId);
-    const available = Number(earnings.totalEarnings) - Number(earnings.paidOut) - Number(earnings.pendingPayouts);
+    const available =
+      Number(earnings.totalEarnings) - Number(earnings.paidOut) - Number(earnings.pendingPayouts);
 
     if (request.amount > available) {
-      throw new BadRequestException(`Insufficient balance. Available: ${(available / 100).toFixed(2)}`);
+      throw new BadRequestException(
+        `Insufficient balance. Available: ${(available / 100).toFixed(2)}`
+      );
     }
 
     if (request.amount < MINIMUM_PAYOUT) {

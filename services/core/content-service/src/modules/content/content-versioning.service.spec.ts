@@ -80,7 +80,10 @@ describe('ContentVersioningService', () => {
       const content = {
         id: 'content-1',
         title: 'Title',
-        metadata: { _latestVersion: 3, _versions: [{ versionNumber: 3 }, { versionNumber: 2 }, { versionNumber: 1 }] },
+        metadata: {
+          _latestVersion: 3,
+          _versions: [{ versionNumber: 3 }, { versionNumber: 2 }, { versionNumber: 1 }],
+        },
       };
       mockPrisma.contentItem.findUnique.mockResolvedValue(content);
       mockPrisma.contentItem.update.mockResolvedValue({});

@@ -49,7 +49,11 @@ describe('Search Service Rate Limiting Tests', () => {
         },
         {
           provide: SearchIntelligenceService,
-          useValue: { filterByAvailability: jest.fn(), trackZeroResult: jest.fn(), getSearchQualityMetrics: jest.fn() },
+          useValue: {
+            filterByAvailability: jest.fn(),
+            trackZeroResult: jest.fn(),
+            getSearchQualityMetrics: jest.fn(),
+          },
         },
         Reflector,
       ],

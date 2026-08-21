@@ -20,13 +20,13 @@ export class ContentVersioningService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly cache: CacheService,
+    private readonly cache: CacheService
   ) {}
 
   async createSnapshot(
     contentId: string,
     createdBy?: string,
-    changeNote?: string,
+    changeNote?: string
   ): Promise<ContentVersion> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
@@ -108,7 +108,7 @@ export class ContentVersioningService {
   async rollbackToVersion(
     contentId: string,
     versionNumber: number,
-    performedBy?: string,
+    performedBy?: string
   ): Promise<{ success: boolean; data: Record<string, unknown> }> {
     const version = await this.getVersion(contentId, versionNumber);
     if (!version) {
@@ -119,7 +119,8 @@ export class ContentVersioningService {
 
     const snapshot = version.snapshot;
 
-    const newMetadata: Record<string, unknown> = snapshot.metadata as Record<string, unknown> || {};
+    const newMetadata: Record<string, unknown> =
+      (snapshot.metadata as Record<string, unknown>) || {};
 
     await this.prisma.contentItem.update({
       where: { id: contentId },
@@ -146,7 +147,7 @@ export class ContentVersioningService {
   async compareVersions(
     contentId: string,
     versionA: number,
-    versionB: number,
+    versionB: number
   ): Promise<{
     versionA: ContentVersion;
     versionB: ContentVersion;

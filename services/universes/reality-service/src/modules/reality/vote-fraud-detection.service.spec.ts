@@ -18,10 +18,7 @@ describe('VoteFraudDetectionService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        VoteFraudDetectionService,
-        { provide: PrismaService, useValue: mockPrisma },
-      ],
+      providers: [VoteFraudDetectionService, { provide: PrismaService, useValue: mockPrisma }],
     }).compile();
 
     service = module.get<VoteFraudDetectionService>(VoteFraudDetectionService);

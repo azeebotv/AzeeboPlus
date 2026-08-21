@@ -95,7 +95,10 @@ export class ACDPValidationService {
     }
 
     // Flag content with mature themes but no age rating
-    if (descriptors?.some((d) => ['violence', 'sexual-content', 'drug-use', 'nudity'].includes(d)) && !ageRating) {
+    if (
+      descriptors?.some((d) => ['violence', 'sexual-content', 'drug-use', 'nudity'].includes(d)) &&
+      !ageRating
+    ) {
       warnings.push('Content has mature descriptors but no age rating — will default to PG-13');
     }
 
@@ -104,8 +107,7 @@ export class ACDPValidationService {
       ? {
           ageRating,
           contentDescriptors: descriptors || [],
-          parentalAdvisory:
-            ageRating === 'R' || ageRating === 'NC-17' || ageRating === '18+',
+          parentalAdvisory: ageRating === 'R' || ageRating === 'NC-17' || ageRating === '18+',
         }
       : undefined;
 
@@ -122,7 +124,7 @@ export class ACDPValidationService {
    */
   validateUniverseFit(
     content: Record<string, unknown>,
-    universeName: string,
+    universeName: string
   ): ACDPValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
@@ -143,7 +145,7 @@ export class ACDPValidationService {
       const contentIndex = AGE_RATINGS.indexOf(ageRating);
       if (contentIndex < minIndex) {
         errors.push(
-          `Content rating ${ageRating} is below minimum ${minRating} for ${universeName} universe`,
+          `Content rating ${ageRating} is below minimum ${minRating} for ${universeName} universe`
         );
       }
     }

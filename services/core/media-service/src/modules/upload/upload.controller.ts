@@ -36,7 +36,7 @@ export class UploadController {
     @Inject(UploadService) private readonly uploadService: UploadService,
     @Inject(PremiumContentService) private readonly premiumContentService: PremiumContentService,
     @Inject(CdnPurgeService) private readonly cdnPurgeService: CdnPurgeService,
-    @Inject(MediaLifecycleService) private readonly mediaLifecycle: MediaLifecycleService,
+    @Inject(MediaLifecycleService) private readonly mediaLifecycle: MediaLifecycleService
   ) {}
 
   @Post('upload/image')

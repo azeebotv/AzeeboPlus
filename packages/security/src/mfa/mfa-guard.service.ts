@@ -70,7 +70,7 @@ export class MfaGuard implements CanActivate {
     if (user.role === 'admin' || user.role === 'superadmin') {
       if (!user.mfaVerified) {
         this.logger.warn(
-          `MFA REQUIRED: Admin user ${user.id} attempted access without MFA verification`,
+          `MFA REQUIRED: Admin user ${user.id} attempted access without MFA verification`
         );
         throw new ForbiddenException('MFA verification required');
       }
@@ -80,7 +80,7 @@ export class MfaGuard implements CanActivate {
         const timeSinceVerification = Date.now() - user.mfaVerifiedAt.getTime();
         if (timeSinceVerification > MFA_SESSION_TIMEOUT_MS) {
           this.logger.warn(
-            `MFA EXPIRED: Admin user ${user.id} MFA session expired (${Math.round(timeSinceVerification / 60000)} minutes)`,
+            `MFA EXPIRED: Admin user ${user.id} MFA session expired (${Math.round(timeSinceVerification / 60000)} minutes)`
           );
           throw new ForbiddenException('MFA session expired');
         }

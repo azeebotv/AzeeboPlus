@@ -16,7 +16,7 @@ import { StartSessionDto } from './dto/start-session.dto.js';
 export class GamesController {
   constructor(
     @Inject(GamesService) private readonly gamesService: GamesService,
-    @Inject(GameRealtimeService) private readonly realtimeService: GameRealtimeService,
+    @Inject(GameRealtimeService) private readonly realtimeService: GameRealtimeService
   ) {}
 
   @Get('home')
@@ -155,7 +155,11 @@ export class GamesController {
     @Request() req: { user: { id: string } },
     @Body() body: { gameId: string; maxPlayers?: number }
   ) {
-    const session = await this.realtimeService.createSession(body.gameId, req.user.id, body.maxPlayers);
+    const session = await this.realtimeService.createSession(
+      body.gameId,
+      req.user.id,
+      body.maxPlayers
+    );
     return { success: true, data: session };
   }
 
@@ -187,9 +191,7 @@ export class GamesController {
   @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get session state' })
   @ApiResponse({ status: 200, description: 'Session state' })
-  async getSessionState(
-    @Request() req: { user: { id: string } }
-  ) {
+  async getSessionState(@Request() req: { user: { id: string } }) {
     const session = this.realtimeService.getPlayerSession(req.user.id);
     return { success: true, data: session };
   }

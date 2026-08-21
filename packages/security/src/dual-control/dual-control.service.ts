@@ -77,7 +77,7 @@ export class DualControlService {
     initiatedBy: string,
     resourceType: string,
     resourceId: string,
-    details: Record<string, unknown>,
+    details: Record<string, unknown>
   ): Promise<DualControlRequest> {
     const requiredApprovals = ACTION_THRESHOLDS[action];
 
@@ -98,7 +98,7 @@ export class DualControlService {
     dualControlRequests.set(request.id, request);
 
     this.logger.log(
-      `DUAL-CONTROL REQUEST: ${action} by ${initiatedBy} on ${resourceType}/${resourceId} — requires ${requiredApprovals} approvals`,
+      `DUAL-CONTROL REQUEST: ${action} by ${initiatedBy} on ${resourceType}/${resourceId} — requires ${requiredApprovals} approvals`
     );
 
     return request;
@@ -111,7 +111,7 @@ export class DualControlService {
     requestId: string,
     approverId: string,
     approverRole: string,
-    notes?: string,
+    notes?: string
   ): Promise<DualControlRequest> {
     const request = dualControlRequests.get(requestId);
     if (!request) {
@@ -146,7 +146,7 @@ export class DualControlService {
 
     this.logger.log(
       `DUAL-CONTROL APPROVAL: ${approverId} (${approverRole}) approved ${request.action} — ` +
-        `${request.approvals.length}/${request.requiredApprovals} approvals`,
+        `${request.approvals.length}/${request.requiredApprovals} approvals`
     );
 
     // Check if threshold met
@@ -154,7 +154,7 @@ export class DualControlService {
       request.status = 'approved';
       this.logger.warn(
         `DUAL-CONTROL APPROVED: ${request.action} on ${request.resourceType}/${request.resourceId} ` +
-          `approved by ${request.approvals.map((a) => a.approverId).join(', ')}`,
+          `approved by ${request.approvals.map((a) => a.approverId).join(', ')}`
       );
     }
 
@@ -164,11 +164,7 @@ export class DualControlService {
   /**
    * Reject a dual-control request
    */
-  async reject(
-    requestId: string,
-    approverId: string,
-    reason: string,
-  ): Promise<DualControlRequest> {
+  async reject(requestId: string, approverId: string, reason: string): Promise<DualControlRequest> {
     const request = dualControlRequests.get(requestId);
     if (!request) {
       throw new NotFoundException('Dual-control request not found');
@@ -181,7 +177,7 @@ export class DualControlService {
     request.status = 'rejected';
 
     this.logger.log(
-      `DUAL-CONTROL REJECTED: ${approverId} rejected ${request.action} — reason: ${reason}`,
+      `DUAL-CONTROL REJECTED: ${approverId} rejected ${request.action} — reason: ${reason}`
     );
 
     return request;
@@ -190,10 +186,7 @@ export class DualControlService {
   /**
    * Execute an approved dual-control action
    */
-  async execute(
-    requestId: string,
-    executedBy: string,
-  ): Promise<DualControlRequest> {
+  async execute(requestId: string, executedBy: string): Promise<DualControlRequest> {
     const request = dualControlRequests.get(requestId);
     if (!request) {
       throw new NotFoundException('Dual-control request not found');
@@ -201,7 +194,7 @@ export class DualControlService {
 
     if (request.status !== 'approved') {
       throw new ForbiddenException(
-        `Request is ${request.status}, must be approved before execution`,
+        `Request is ${request.status}, must be approved before execution`
       );
     }
 
@@ -211,7 +204,7 @@ export class DualControlService {
 
     this.logger.warn(
       `DUAL-CONTROL EXECUTED: ${request.action} on ${request.resourceType}/${request.resourceId} ` +
-        `by ${executedBy} (approved by ${request.approvals.map((a) => a.approverId).join(', ')})`,
+        `by ${executedBy} (approved by ${request.approvals.map((a) => a.approverId).join(', ')})`
     );
 
     return request;
@@ -232,17 +225,13 @@ export class DualControlService {
    * Get all pending requests
    */
   async getPendingRequests(): Promise<DualControlRequest[]> {
-    return Array.from(dualControlRequests.values()).filter(
-      (r) => r.status === 'pending',
-    );
+    return Array.from(dualControlRequests.values()).filter((r) => r.status === 'pending');
   }
 
   /**
    * Get all requests for a specific action type
    */
   async getRequestsByAction(action: DualControlAction): Promise<DualControlRequest[]> {
-    return Array.from(dualControlRequests.values()).filter(
-      (r) => r.action === action,
-    );
+    return Array.from(dualControlRequests.values()).filter((r) => r.action === action);
   }
 }

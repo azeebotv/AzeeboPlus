@@ -17,12 +17,19 @@ export class CreateKnowledgeUnitDto {
   @IsOptional()
   description?: string;
 
-  @ApiProperty({ description: 'Knowledge type', enum: ['fact', 'character', 'plot_point', 'location', 'timeline'] })
+  @ApiProperty({
+    description: 'Knowledge type',
+    enum: ['fact', 'character', 'plot_point', 'location', 'timeline'],
+  })
   @IsString()
   @IsIn(['fact', 'character', 'plot_point', 'location', 'timeline'])
   knowledgeType!: string;
 
-  @ApiPropertyOptional({ description: 'Spoiler level', enum: ['none', 'mild', 'major', 'severe'], default: 'none' })
+  @ApiPropertyOptional({
+    description: 'Spoiler level',
+    enum: ['none', 'mild', 'major', 'severe'],
+    default: 'none',
+  })
   @IsString()
   @IsIn(['none', 'mild', 'major', 'severe'])
   @IsOptional()

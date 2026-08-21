@@ -101,17 +101,27 @@ describe('SupportAccessControlService', () => {
   describe('enforceAccess', () => {
     it('should not throw when access is allowed', () => {
       expect(() =>
-        service.enforceAccess('admin', 'admin-1', {
-          assignedTo: 'agent-1',
-        }, 'view')
+        service.enforceAccess(
+          'admin',
+          'admin-1',
+          {
+            assignedTo: 'agent-1',
+          },
+          'view'
+        )
       ).not.toThrow();
     });
 
     it('should throw ForbiddenException when access denied', () => {
       expect(() =>
-        service.enforceAccess('agent', 'agent-1', {
-          assignedTo: 'agent-2',
-        }, 'view')
+        service.enforceAccess(
+          'agent',
+          'agent-1',
+          {
+            assignedTo: 'agent-2',
+          },
+          'view'
+        )
       ).toThrow(ForbiddenException);
     });
   });

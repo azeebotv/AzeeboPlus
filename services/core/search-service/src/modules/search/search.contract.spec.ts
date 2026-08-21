@@ -30,7 +30,11 @@ describe('Search Controller Contract Tests', () => {
         },
         {
           provide: SearchIntelligenceService,
-          useValue: { filterByAvailability: jest.fn(), trackZeroResult: jest.fn(), getSearchQualityMetrics: jest.fn() },
+          useValue: {
+            filterByAvailability: jest.fn(),
+            trackZeroResult: jest.fn(),
+            getSearchQualityMetrics: jest.fn(),
+          },
         },
       ],
     })

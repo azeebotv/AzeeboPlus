@@ -90,17 +90,13 @@ export class BreakGlassService {
       'emergency-maintenance',
     ];
     if (!emergencyReasons.includes(request.reason)) {
-      throw new ForbiddenException(
-        'Break-glass reason must be a SEV-1/emergency incident',
-      );
+      throw new ForbiddenException('Break-glass reason must be a SEV-1/emergency incident');
     }
 
     // Check for existing active session
     for (const session of breakGlassSessions.values()) {
       if (session.userId === request.userId && session.status === 'active') {
-        throw new ForbiddenException(
-          'User already has an active break-glass session',
-        );
+        throw new ForbiddenException('User already has an active break-glass session');
       }
     }
 
@@ -123,7 +119,7 @@ export class BreakGlassService {
 
     this.logger.warn(
       `BREAK-GLASS ACTIVATED: User ${request.userId} elevated from ${request.originalRole} to ${request.elevatedRole} ` +
-        `for ${request.reason}. Session ${session.id} expires at ${session.expiresAt.toISOString()}`,
+        `for ${request.reason}. Session ${session.id} expires at ${session.expiresAt.toISOString()}`
     );
 
     return session;
@@ -164,7 +160,7 @@ export class BreakGlassService {
     session.reviewedBy = revokedBy;
 
     this.logger.warn(
-      `BREAK-GLASS REVOKED: Session ${sessionId} for user ${session.userId} revoked by ${revokedBy}`,
+      `BREAK-GLASS REVOKED: Session ${sessionId} for user ${session.userId} revoked by ${revokedBy}`
     );
 
     return session;
@@ -173,11 +169,7 @@ export class BreakGlassService {
   /**
    * Review a break-glass session (mandatory by next business day)
    */
-  async review(
-    sessionId: string,
-    reviewedBy: string,
-    notes: string,
-  ): Promise<BreakGlassSession> {
+  async review(sessionId: string, reviewedBy: string, notes: string): Promise<BreakGlassSession> {
     const session = breakGlassSessions.get(sessionId);
     if (!session) {
       throw new UnauthorizedException('Break-glass session not found');
@@ -187,9 +179,7 @@ export class BreakGlassService {
     session.reviewedBy = reviewedBy;
     session.reviewNotes = notes;
 
-    this.logger.log(
-      `BREAK-GLASS REVIEWED: Session ${sessionId} reviewed by ${reviewedBy}`,
-    );
+    this.logger.log(`BREAK-GLASS REVIEWED: Session ${sessionId} reviewed by ${reviewedBy}`);
 
     return session;
   }
@@ -205,9 +195,7 @@ export class BreakGlassService {
       }
     }
 
-    return Array.from(breakGlassSessions.values()).filter(
-      (s) => s.status === 'active',
-    );
+    return Array.from(breakGlassSessions.values()).filter((s) => s.status === 'active');
   }
 
   /**

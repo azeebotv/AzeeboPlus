@@ -9,13 +9,10 @@ describe('DualControlService', () => {
 
   describe('createRequest', () => {
     it('should create a dual-control request', async () => {
-      const result = await service.createRequest(
-        'large-refund',
-        'admin-1',
-        'payment',
-        'pay-123',
-        { amount: 50000, reason: 'Customer complaint' },
-      );
+      const result = await service.createRequest('large-refund', 'admin-1', 'payment', 'pay-123', {
+        amount: 50000,
+        reason: 'Customer complaint',
+      });
 
       expect(result.id).toBeDefined();
       expect(result.status).toBe('pending');
@@ -33,13 +30,9 @@ describe('DualControlService', () => {
 
   describe('approve', () => {
     it('should approve and track approvals', async () => {
-      const req = await service.createRequest(
-        'large-refund',
-        'admin-1',
-        'payment',
-        'pay-123',
-        { amount: 50000 },
-      );
+      const req = await service.createRequest('large-refund', 'admin-1', 'payment', 'pay-123', {
+        amount: 50000,
+      });
 
       const approved = await service.approve(req.id, 'admin-2', 'senior-admin');
       expect(approved.approvals.length).toBe(1);
@@ -47,13 +40,9 @@ describe('DualControlService', () => {
     });
 
     it('should mark approved when threshold met', async () => {
-      const req = await service.createRequest(
-        'large-refund',
-        'admin-1',
-        'payment',
-        'pay-123',
-        { amount: 50000 },
-      );
+      const req = await service.createRequest('large-refund', 'admin-1', 'payment', 'pay-123', {
+        amount: 50000,
+      });
 
       await service.approve(req.id, 'admin-2', 'senior-admin');
       await service.approve(req.id, 'admin-3', 'security-lead');
@@ -63,44 +52,32 @@ describe('DualControlService', () => {
     });
 
     it('should reject self-approval', async () => {
-      const req = await service.createRequest(
-        'large-refund',
-        'admin-1',
-        'payment',
-        'pay-123',
-        { amount: 50000 },
-      );
+      const req = await service.createRequest('large-refund', 'admin-1', 'payment', 'pay-123', {
+        amount: 50000,
+      });
 
-      await expect(
-        service.approve(req.id, 'admin-1', 'admin'),
-      ).rejects.toThrow('cannot approve their own');
+      await expect(service.approve(req.id, 'admin-1', 'admin')).rejects.toThrow(
+        'cannot approve their own'
+      );
     });
 
     it('should reject duplicate approval', async () => {
-      const req = await service.createRequest(
-        'large-refund',
-        'admin-1',
-        'payment',
-        'pay-123',
-        { amount: 50000 },
-      );
+      const req = await service.createRequest('large-refund', 'admin-1', 'payment', 'pay-123', {
+        amount: 50000,
+      });
 
       await service.approve(req.id, 'admin-2', 'senior-admin');
-      await expect(
-        service.approve(req.id, 'admin-2', 'senior-admin'),
-      ).rejects.toThrow('already approved');
+      await expect(service.approve(req.id, 'admin-2', 'senior-admin')).rejects.toThrow(
+        'already approved'
+      );
     });
   });
 
   describe('reject', () => {
     it('should reject a request', async () => {
-      const req = await service.createRequest(
-        'large-refund',
-        'admin-1',
-        'payment',
-        'pay-123',
-        { amount: 50000 },
-      );
+      const req = await service.createRequest('large-refund', 'admin-1', 'payment', 'pay-123', {
+        amount: 50000,
+      });
 
       const rejected = await service.reject(req.id, 'admin-2', 'Not justified');
       expect(rejected.status).toBe('rejected');
@@ -109,13 +86,9 @@ describe('DualControlService', () => {
 
   describe('execute', () => {
     it('should execute an approved request', async () => {
-      const req = await service.createRequest(
-        'large-refund',
-        'admin-1',
-        'payment',
-        'pay-123',
-        { amount: 50000 },
-      );
+      const req = await service.createRequest('large-refund', 'admin-1', 'payment', 'pay-123', {
+        amount: 50000,
+      });
 
       await service.approve(req.id, 'admin-2', 'senior-admin');
       await service.approve(req.id, 'admin-3', 'security-lead');
@@ -126,13 +99,9 @@ describe('DualControlService', () => {
     });
 
     it('should reject executing non-approved request', async () => {
-      const req = await service.createRequest(
-        'large-refund',
-        'admin-1',
-        'payment',
-        'pay-123',
-        { amount: 50000 },
-      );
+      const req = await service.createRequest('large-refund', 'admin-1', 'payment', 'pay-123', {
+        amount: 50000,
+      });
 
       await expect(service.execute(req.id, 'admin-2')).rejects.toThrow('must be approved');
     });

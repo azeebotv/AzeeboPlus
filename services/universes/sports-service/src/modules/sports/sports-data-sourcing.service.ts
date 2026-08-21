@@ -75,7 +75,7 @@ export class SportsDataSourcingService {
         if (scores) return scores;
       } catch (error) {
         this.logger.warn(
-          `Provider ${provider.name} failed for live scores: ${(error as Error).message}`,
+          `Provider ${provider.name} failed for live scores: ${(error as Error).message}`
         );
       }
     }
@@ -98,7 +98,7 @@ export class SportsDataSourcingService {
         if (fixtures) return fixtures;
       } catch (error) {
         this.logger.warn(
-          `Provider ${provider.name} failed for fixtures: ${(error as Error).message}`,
+          `Provider ${provider.name} failed for fixtures: ${(error as Error).message}`
         );
       }
     }
@@ -114,12 +114,12 @@ export class SportsDataSourcingService {
       try {
         const match = await this.fetchFromProvider<Record<string, unknown>>(
           provider,
-          `/matches/${matchId}`,
+          `/matches/${matchId}`
         );
         if (match) return match;
       } catch (error) {
         this.logger.warn(
-          `Provider ${provider.name} failed for match ${matchId}: ${(error as Error).message}`,
+          `Provider ${provider.name} failed for match ${matchId}: ${(error as Error).message}`
         );
       }
     }
@@ -130,7 +130,7 @@ export class SportsDataSourcingService {
   private async fetchFromProvider<T>(
     provider: SportsDataProvider,
     endpoint: string,
-    params?: Record<string, unknown>,
+    params?: Record<string, unknown>
   ): Promise<T | null> {
     const response = await axios.get(`${provider.baseUrl}${endpoint}`, {
       headers: {
