@@ -345,6 +345,60 @@ export function gatewayPath(endpoint: string): string {
   return `/api/v1${endpoint}`;
 }
 
+// ---------------------------------------------------------------------------
+// Request correlation & idempotency (TAA §9)
+// ---------------------------------------------------------------------------
+
+let correlationCounter = 0;
+
+/** Generate a unique correlation ID for request tracing */
+export function generateCorrelationId(): string {
+  const timestamp = Date.now().toString(36);
+  const counter = (++correlationCounter).toString(36);
+  const random = Math.random().toString(36).substring(2, 8);
+  return `req_${timestamp}-${counter}-${random}`;
+}
+
+/** Generate a UUID v4 idempotency key for mutations */
+export function generateIdempotencyKey(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+/** HTTP methods that should receive idempotency keys */
+const IDEMPOTENT_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+/** Build standard headers for a request */
+export function buildRequestHeaders(
+  options: RequestInit,
+  token: string | null,
+): Record<string, string> {
+  const isFormData = options.body instanceof FormData;
+  const headers: Record<string, string> = {
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+    ...(options.headers as Record<string, string>),
+  };
+
+  // Correlation ID for request tracing
+  headers['x-correlation-id'] = generateCorrelationId();
+
+  // Auth token
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  // Idempotency key for state-changing methods
+  const method = (options.method || 'GET').toUpperCase();
+  if (IDEMPOTENT_METHODS.has(method) && !headers['Idempotency-Key']) {
+    headers['Idempotency-Key'] = generateIdempotencyKey();
+  }
+
+  return headers;
+}
+
 const ACCESS_TOKEN_KEY = 'azeebo_access_token';
 const REFRESH_TOKEN_KEY = 'azeebo_refresh_token';
 const USER_KEY = 'azeebo_user';
@@ -373,6 +427,11 @@ export async function apiFetch<T>(
     ...(options.headers as Record<string, string>),
   };
 
+  // Correlation ID for request tracing
+  if (!headers['x-correlation-id']) {
+    headers['x-correlation-id'] = generateCorrelationId();
+  }
+
   if (storedToken) {
     headers['Authorization'] = `Bearer ${storedToken}`;
   }
@@ -382,6 +441,10 @@ export async function apiFetch<T>(
     const csrfToken = getCookie(CSRF_COOKIE);
     if (csrfToken) {
       headers[CSRF_HEADER] = csrfToken;
+    }
+    // Idempotency key for state-changing methods
+    if (!headers['Idempotency-Key']) {
+      headers['Idempotency-Key'] = generateIdempotencyKey();
     }
   }
 
@@ -449,12 +512,31 @@ export async function apiFetch<T>(
           } as ApiError;
         }
 
-        // Don't retry on client errors (4xx except 408, 429)
+        // Rate limit handling (429) — respect Retry-After header
+        if (response.status === 429) {
+          const retryAfter = response.headers.get('Retry-After');
+          if (retryAfter && attempt < maxRetries) {
+            const delay = Math.min(parseInt(retryAfter, 10) * 1000, 10000);
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            continue;
+          }
+          return {
+            success: false,
+            type: data.type,
+            title: data.title || 'Rate Limited',
+            status: 429,
+            detail: data.detail || 'Too many requests. Please try again later.',
+            code: 'RATE_LIMITED',
+            message: data.message || `Rate limited. Retry after ${retryAfter || '60'}s`,
+            statusCode: 429,
+          } as ApiError;
+        }
+
+        // Don't retry on other client errors (4xx except 408)
         if (
           response.status >= 400 &&
           response.status < 500 &&
-          response.status !== 408 &&
-          response.status !== 429
+          response.status !== 408
         ) {
           return {
             success: false,
