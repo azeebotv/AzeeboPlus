@@ -392,7 +392,9 @@ export class AlertingService {
 
   private sendToChannel(alert: Alert, channel: string): void {
     // Placeholder for actual notification implementation
-    console.log(`Alert ${alert.id} sent to ${channel}: ${alert.message}`);
+    // In production, this would send to Slack, PagerDuty, email, etc.
+    void alert;
+    void channel;
   }
 
   /**
