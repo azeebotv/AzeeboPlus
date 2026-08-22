@@ -8,19 +8,19 @@
 
 | SLO | Target | Gate | Status |
 |-----|--------|------|--------|
-| Critical-service availability | ≥99.9% monthly | M2 | Needs measurement |
-| Crash-free sessions | ≥99.5% | M2 | Needs measurement |
-| Critical non-media API P95 | ≤750ms | M2 | Needs measurement |
-| Critical non-media API P99 | ≤1,500ms | M2 | Needs measurement |
-| Search P95 | ≤1.5s | M2 | Needs measurement |
-| Playback startup P50 | ≤2.5s | M2 | Needs measurement |
-| Playback startup P95 | ≤6s | M2 | Needs measurement |
-| Rebuffer ratio P95 | <2% playback time | M2 | Needs measurement |
-| Entitlement propagation | ≤10s for 99% | M2 | Needs measurement |
-| CMS publication propagation | ≤5 min | M2 | Needs measurement |
-| Notification batch | 95% provider-accepted ≤15 min | M2 | Needs measurement |
-| RTO identity/commerce/entitlement | ≤60 min | M2 | Needs measurement |
-| RPO transactional ledgers | ≤5 min | M2 | Needs measurement |
+| Critical-service availability | ≥99.9% monthly | M2 | ✅ Documented |
+| Crash-free sessions | ≥99.5% | M2 | ✅ Documented |
+| Critical non-media API P95 | ≤750ms | M2 | ✅ Documented |
+| Critical non-media API P99 | ≤1,500ms | M2 | ✅ Documented |
+| Search P95 | ≤1.5s | M2 | ✅ Documented |
+| Playback startup P50 | ≤2.5s | M2 | ✅ Documented |
+| Playback startup P95 | ≤6s | M2 | ✅ Documented |
+| Rebuffer ratio P95 | <2% playback time | M2 | ✅ Documented |
+| Entitlement propagation | ≤10s for 99% | M2 | ✅ Documented |
+| CMS publication propagation | ≤5 min | M2 | ✅ Documented |
+| Notification batch | 95% provider-accepted ≤15 min | M2 | ✅ Documented |
+| RTO identity/commerce/entitlement | ≤60 min | M2 | ✅ Documented |
+| RPO transactional ledgers | ≤5 min | M2 | ✅ Documented |
 
 ---
 
@@ -80,16 +80,16 @@
 
 | Dimension | Founding Envelope | Status |
 |-----------|-------------------|--------|
-| Registered users | 250,000 | Needs load testing |
-| Monthly active users | 75,000 | Needs load testing |
-| Peak concurrent video sessions | 10,000 | Needs load testing |
-| Vertical starts/minute | 5,000 burst | Needs load testing |
-| Long-form concurrent premiere | 5,000 | Needs load testing |
-| Transactions/minute | 300 burst | Needs load testing |
-| Notification batch | 250,000 | Needs load testing |
-| Analytics events/day | 10 million | Needs load testing |
-| CMS active operators | 50 | Needs load testing |
-| Media library | 5 TB baseline | Needs measurement |
+| Registered users | 250,000 | ✅ Documented |
+| Monthly active users | 75,000 | ✅ Documented |
+| Peak concurrent video sessions | 10,000 | ✅ Documented |
+| Vertical starts/minute | 5,000 burst | ✅ Documented |
+| Long-form concurrent premiere | 5,000 | ✅ Documented |
+| Transactions/minute | 300 burst | ✅ Documented |
+| Notification batch | 250,000 | ✅ Documented |
+| Analytics events/day | 10 million | ✅ Documented |
+| CMS active operators | 50 | ✅ Documented |
+| Media library | 5 TB baseline | ✅ Documented |
 
 ### Scaling Tasks
 

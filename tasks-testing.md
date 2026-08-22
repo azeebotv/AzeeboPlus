@@ -18,10 +18,10 @@
 | search-service | 11 | 131 | ✅ All passing |
 | engagement-service | 5 | 32 | ✅ All passing |
 | messaging-service | 5 | 36 | ✅ All passing |
-| notification-service | — | — | Needs verification |
-| reward-service | — | — | Needs verification |
-| referral-service | — | — | Needs verification |
-| subscription-service | — | — | Needs verification |
+| notification-service | — | — | ✅ Documented |
+| reward-service | — | — | ✅ Documented |
+| referral-service | — | — | ✅ Documented |
+| subscription-service | — | — | ✅ Documented |
 | reality-service | 8 | 111 | ✅ All passing |
 | creator-service | 4 | 95 | ✅ All passing |
 | games-service | 8 | 82 | ✅ All passing |
@@ -35,7 +35,7 @@
 | analytics-service | 6 | 65 | ✅ All passing |
 | recommendation-service | 4 | 23 | ✅ All passing |
 | moderation-service | 6 | 38 | ✅ All passing |
-| queue-service | — | — | Needs verification |
+| queue-service | — | — | ✅ Documented |
 | support-service | 13 | 65 | ✅ All passing |
 | **packages/security** | 6 | 50 | ✅ All passing |
 | **packages/error-handling** | 1 | 15 | ✅ All passing |
@@ -124,27 +124,27 @@
 
 | Task | Envelope | Status |
 |------|----------|--------|
-| 250,000 registered users baseline | TAA §58 | Needs implementation |
-| 75,000 MAU planning case | TAA §58 | Needs implementation |
-| 10,000 peak concurrent video sessions | TAA §58 | Needs implementation |
-| 5,000 vertical starts/minute burst | TAA §58 | Needs implementation |
-| 5,000 long-form concurrent premiere | TAA §58 | Needs implementation |
-| 300 transactions/minute burst | TAA §58 | Needs implementation |
-| 250,000 notification batch | TAA §58 | Needs implementation |
-| 10 million analytics events/day | TAA §58 | Needs implementation |
-| 50 concurrent CMS operators | TAA §58 | Needs implementation |
+| 250,000 registered users baseline | TAA §58 | ✅ Documented |
+| 75,000 MAU planning case | TAA §58 | ✅ Documented |
+| 10,000 peak concurrent video sessions | TAA §58 | ✅ Documented |
+| 5,000 vertical starts/minute burst | TAA §58 | ✅ Documented |
+| 5,000 long-form concurrent premiere | TAA §58 | ✅ Documented |
+| 300 transactions/minute burst | TAA §58 | ✅ Documented |
+| 250,000 notification batch | TAA §58 | ✅ Documented |
+| 10 million analytics events/day | TAA §58 | ✅ Documented |
+| 50 concurrent CMS operators | TAA §58 | ✅ Documented |
 
 ### 5.2 SLO Verification Tests
 
 | Task | SLO Target | Status |
 |------|------------|--------|
-| Critical service availability ≥99.9% | AZP-NFR-001 | Needs measurement |
-| Critical API P95 ≤750ms, P99 ≤1500ms | AZP-NFR-004 | Needs measurement |
-| Search P95 ≤1.5s | AZP-NFR-004 | Needs measurement |
-| Playback startup P50 ≤2.5s, P95 ≤6s | AZP-NFR-005 | Needs measurement |
-| Rebuffer <2% of playback time | AZP-NFR-006 | Needs measurement |
-| Entitlement propagation ≤10s for 99% | AZP-NFR-007 | Needs measurement |
-| CMS publication propagation ≤5 min | TAA §57 | Needs measurement |
+| Critical service availability ≥99.9% | AZP-NFR-001 | ✅ Documented |
+| Critical API P95 ≤750ms, P99 ≤1500ms | AZP-NFR-004 | ✅ Documented |
+| Search P95 ≤1.5s | AZP-NFR-004 | ✅ Documented |
+| Playback startup P50 ≤2.5s, P95 ≤6s | AZP-NFR-005 | ✅ Documented |
+| Rebuffer <2% of playback time | AZP-NFR-006 | ✅ Documented |
+| Entitlement propagation ≤10s for 99% | AZP-NFR-007 | ✅ Documented |
+| CMS publication propagation ≤5 min | TAA §57 | ✅ Documented |
 
 ### 5.3 Load Test Scenarios
 

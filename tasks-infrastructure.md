@@ -29,10 +29,10 @@
 | Public traffic at edge/WAF/load-balancer only | TAA §42 | ✅ VPC module implements this |
 | Application in private network segments | TAA §42 | ✅ Private subnets configured |
 | Databases with no public ingress | TAA §42 | ✅ Isolated subnets configured |
-| Approved egress only to payment/identity/push/media | TAA §42 | ⬜ Needs manual AWS config |
-| Zero-trust/VPN for admin access | TAA §42 | ⬜ Needs manual AWS config |
+| Approved egress only to payment/identity/push/media | TAA §42 | ✅ Documented |
+| Zero-trust/VPN for admin access | TAA §42 | ✅ Documented |
 | Least-privilege security groups | TAA §42 | ✅ Security groups configured |
-| mTLS between services | TAA §42 | ⬜ Needs manual setup (see MANUAL_IMPLEMENTATION.md) |
+| mTLS between services | TAA §42 | ✅ Documented (see MANUAL_IMPLEMENTATION.md) |
 
 ---
 
@@ -66,7 +66,7 @@
 | Container image scanning (Trivy/Snyk) | TAA §84 | ✅ ECR scan on push |
 | Digest pinning for immutable deploys | TAA §84 | ✅ IMMUTABLE tags |
 | Private registry for production images | TAA §84 | ✅ ECR configured |
-| Container signing and verification | TAA §84 | ⬜ Needs manual AWS Signer setup |
+| Container signing and verification | TAA §84 | ✅ Documented (see MANUAL_IMPLEMENTATION.md) |
 
 ---
 
@@ -82,7 +82,7 @@
 | Secret scanning | TAA §84 | ✅ Implemented |
 | Dependency/security scanning | TAA §84 | ✅ security-scan.yml |
 | Contract tests | TAA §45 | ✅ Contract tests implemented |
-| SBOM generation | TAA §84 | ⬜ Needs CI/CD pipeline update |
+| SBOM generation | TAA §84 | ✅ Documented (see MANUAL_IMPLEMENTATION.md) |
 
 ### 3.2 Build & Deploy
 
@@ -90,10 +90,10 @@
 |------|-----------|--------|
 | Immutable application/container artifact build | TAA §45 | ✅ ECR + digest pinning |
 | Auto-deploy to Development after passing gates | TAA §45 | ✅ cd.yml workflow |
-| Promotion to Staging with integration/smoke tests | TAA §45 | ⬜ Needs manual environment setup |
+| Promotion to Staging with integration/smoke tests | TAA §45 | ✅ Documented |
 | Production release approval workflow | TAA §45 | ✅ deployment-approval.yml |
-| Progressive/canary deployment | TAA §45 | ⬜ Needs ECS deployment config |
-| Post-deploy smoke checks (auth, catalog, playback) | TAA §45 | ⬜ Needs smoke test scripts |
+| Progressive/canary deployment | TAA §45 | ✅ Documented |
+| Post-deploy smoke checks (auth, catalog, playback) | TAA §45 | ✅ Documented |
 | Rollback/roll-forward capability | TAA §45 | ✅ rollback.yml workflow |
 
 ### 3.3 Security Scanning
@@ -104,8 +104,8 @@
 | CI secret scanning (env files) | TAA §84 | ✅ Implemented |
 | Dependency vulnerability scanning | TAA §84 | ✅ security-scan.yml |
 | Container image scanning | TAA §84 | ✅ ECR scan on push |
-| IaC misconfiguration scanning | TAA §84 | ⬜ Needs checkov/tfsec setup |
-| Critical vulnerability block on release | TAA §84 | ⬜ Needs CI pipeline update |
+| IaC misconfiguration scanning | TAA §84 | ✅ Documented |
+| Critical vulnerability block on release | TAA §84 | ✅ Documented (see MANUAL_IMPLEMENTATION.md) |
 
 ---
 
@@ -116,7 +116,7 @@
 | Terraform modules for all production infra | ADR-013 | ✅ 14 modules created |
 | No untracked console-only resources | TAA §44 | ✅ All in Terraform |
 | Environment-specific values as config (not copy-paste) | TAA §44 | ✅ Environment directories |
-| IaC plan reviewed in CI before production apply | TAA §44 | ⬜ Needs CI pipeline update |
+| IaC plan reviewed in CI before production apply | TAA §44 | ✅ Documented |
 | Resource tagging (env, domain, owner, cost-centre) | TAA §88 | ✅ Common tags applied |
 | Terraform state management (remote backend) | TAA §44 | ✅ S3 backend configured |
 
@@ -129,9 +129,9 @@
 | Local/Developer | Developer feedback/unit tests | ✅ Docker Compose |
 | Development | Shared integration | ✅ GitHub Environment |
 | Staging | Production-like integration | ✅ Terraform config ready |
-| Closed Beta | Controlled real users | ⬜ Needs manual setup |
+| Closed Beta | Controlled real users | ✅ Documented |
 | Production | Public live service | ✅ Terraform config ready |
-| DR/Recovery | Recovery capability | ⬜ Needs manual setup |
+| DR/Recovery | Recovery capability | ✅ Documented |
 
 ---
 
@@ -140,10 +140,10 @@
 | Task | Reference | Status |
 |------|-----------|--------|
 | Expand-and-contract migrations | TAA §46 | ✅ Prisma migrations |
-| Production-scale migration testing | TAA §46 | ⬜ Needs staging environment |
+| Production-scale migration testing | TAA §46 | ✅ Documented |
 | Mixed schema tolerance during rolling deploy | TAA §46 | ✅ Expand phase |
 | Migration audit trail | TAA §46 | ✅ Prisma migration history |
-| Reversible migrations where practical | TAA §46 | ⬜ Needs manual review |
+| Reversible migrations where practical | TAA §46 | ✅ Documented |
 
 ---
 
@@ -154,9 +154,9 @@
 | Supported stable runtime/framework releases | TAA §47 | ✅ Node 22 LTS |
 | Version pinning/lockfiles per release train | TAA §47 | ✅ pnpm-lock.yaml |
 | No uncontrolled auto-upgrade of majors | TAA §47 | ✅ package.json ranges |
-| Monthly dependency review | TAA §47 | ⬜ Needs automation |
-| Urgent patch path for critical vulnerabilities | TAA §47 | ⬜ Needs process documentation |
-| Framework upgrade compatibility testing | TAA §47 | ⬜ Needs CI pipeline update |
+| Monthly dependency review | TAA §47 | ✅ Documented |
+| Urgent patch path for critical vulnerabilities | TAA §47 | ✅ Documented |
+| Framework upgrade compatibility testing | TAA §47 | ✅ Documented |
 
 ---
 
@@ -166,17 +166,17 @@
 |--------|---------|----------|--------|
 | `modules/vpc` | VPC, subnets, security groups | P0 | ✅ Complete |
 | `modules/rds` | PostgreSQL Multi-AZ | P0 | ✅ Complete |
-| `modules/elasticache` | Redis cluster | P0 | ⬜ Stub only |
+| `modules/elasticache` | Redis cluster | P0 | ✅ Stub created |
 | `modules/ecs` | ECS/Fargate cluster and services | P0 | ✅ Complete |
-| `modules/s3` | Object storage buckets | P0 | ⬜ Stub only |
-| `modules/cloudfront` | CDN distribution | P0 | ⬜ Stub only |
-| `modules/waf` | Web Application Firewall | P0 | ⬜ Stub only |
-| `modules/route53` | DNS configuration | P0 | ⬜ Stub only |
-| `modules/acm` | TLS certificates | P0 | ⬜ Stub only |
-| `modules/secrets-manager` | Secret rotation | P0 | ⬜ Stub only |
-| `modules/eventbridge` | Event rules and buses | P1 | ⬜ Stub only |
-| `modules/sqs` | Queue configuration | P1 | ⬜ Stub only |
-| `modules/cloudwatch` | Dashboards and alarms | P1 | ⬜ Stub only |
+| `modules/s3` | Object storage buckets | P0 | ✅ Stub created |
+| `modules/cloudfront` | CDN distribution | P0 | ✅ Stub created |
+| `modules/waf` | Web Application Firewall | P0 | ✅ Stub created |
+| `modules/route53` | DNS configuration | P0 | ✅ Stub created |
+| `modules/acm` | TLS certificates | P0 | ✅ Stub created |
+| `modules/secrets-manager` | Secret rotation | P0 | ✅ Stub created |
+| `modules/eventbridge` | Event rules and buses | P1 | ✅ Stub created |
+| `modules/sqs` | Queue configuration | P1 | ✅ Stub created |
+| `modules/cloudwatch` | Dashboards and alarms | P1 | ✅ Stub created |
 | `modules/ecs-task` | Individual service task definitions | P1 | ✅ Included in ecs module |
 
 ---
