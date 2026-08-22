@@ -1,397 +1,804 @@
-# Manual Implementation Requirements
+# Manual Implementation Guide
 
-> This document details infrastructure tasks that require manual setup, cloud provider access, or operational decisions that cannot be automated through code alone.
+## Overview
 
----
-
-## 1. AWS Account Setup & Configuration
-
-### 1.1 Account Structure
-- [ ] Create AWS Organization with separate accounts for:
-  - **Management** (billing, SSO)
-  - **Development** (shared dev environment)
-  - **Staging** (pre-production)
-  - **Production** (live service)
-  - **Security** (audit, logging)
-- [ ] Enable AWS Organizations SCPs for:
-  - Deny root user access
-  - Deny leaving organization
-  - Enforce MFA
-  - Deny region restrictions (af-south-1 only)
-
-### 1.2 IAM & SSO
-- [ ] Configure AWS SSO (IAM Identity Center) with IdP integration
-- [ ] Create permission sets:
-  - `AzeeboAdmin` (full access)
-  - `AzeeboDeveloper` (ECS, ECR, CloudWatch, S3 read-only)
-  - `AzeeboReadOnly` (all read-only)
-- [ ] Set up MFA enforcement for all users
-- [ ] Create service accounts for CI/CD with least-privilege
-
-### 1.3 Billing & Cost Management
-- [ ] Set up AWS Budgets with alerts at 50%, 80%, 100% of monthly budget
-- [ ] Enable Cost Explorer and Cost Allocation Tags
-- [ ] Set up Reserved Instance recommendations
-- [ ] Configure Savings Plans
+This document contains detailed instructions for the 43 remaining infrastructure, CI/CD, security process, and verification items that cannot be automated through code changes alone.
 
 ---
 
-## 2. DNS & TLS (TAA §41)
+## 1. mTLS Between Services (HIGH-05)
 
-### 2.1 Route 53
-- [ ] Register `azeebo.plus` domain (or transfer existing)
-- [ ] Create hosted zones for:
-  - `azeebo.plus` (production)
-  - `dev.azeebo.plus` (development)
-  - `staging.azeebo.plus` (staging)
-- [ ] Configure DNS records:
-  - A/CNAME records for CloudFront distribution
-  - MX records for email
-  - TXT records for SPF/DKIM
+### AWS Certificate Manager + Service Mesh
 
-### 2.2 ACM Certificates
-- [ ] Request certificates for:
-  - `*.azeebo.plus` (wildcard)
-  - `azeebo.plus` (root)
-- [ ] Validate via DNS (Route 53)
-- [ ] Set up auto-renewal monitoring
+```bash
+# 1. Create private CA in ACM
+aws acm-pca create-certificate-authority \
+  --certificate-authority-type ROOT \
+  --subject '{"CommonName":"azeebo-internal-ca","Organization":"Azeebo"}'
 
----
+# 2. Issue certificates for each service
+for svc in auth-service content-service media-service payment-service wallet-service; do
+  aws acm-pca issue-certificate \
+    --certificate-authority-arn $CA_ARN \
+    --csr file://$svc.csr \
+    --template-arn arn:aws:acm-pca:::template/EndEntityCertificate/V1 \
+    --validity '{"Value":365,"Type":"YEARS"}'
+done
 
-## 3. Network Security (TAA §42)
+# 3. Configure App Mesh or ECS service connect for mTLS
+aws appmesh create-mesh --mesh-name azeebo-mesh
+aws appmesh create-virtual-node \
+  --mesh-name azeebo-mesh \
+  --virtual-node-name auth-service \
+  --spec file://auth-vnode-spec.json
+```
 
-### 3.1 VPC Configuration
-- [ ] Deploy VPC module (`terraform apply -target=module.vpc`)
-- [ ] Verify public subnets have internet access via NAT Gateway
-- [ ] Verify private subnets can reach internet (for package updates)
-- [ ] Verify database subnets have NO internet access
-- [ ] Configure VPC Flow Logs to CloudWatch
+### Alternative: AWS ECS Service Connect
 
-### 3.2 Security Groups
-- [ ] Review and customize security group rules:
-  - ALB: Allow 443/80 from 0.0.0.0/0
-  - App: Allow 3000 from ALB only
-  - Database: Allow 5432 from App only
-  - Redis: Allow 6379 from App only
-- [ ] Test network connectivity between tiers
-
-### 3.3 mTLS Between Services
-- [ ] Set up AWS Private CA or use ACM Private Certificate Authority
-- [ ] Create service mesh (AWS App Mesh or Istio)
-- [ ] Configure mTLS certificates for all services
-- [ ] Test service-to-service authentication
+```json
+{
+  "ServiceConnect": {
+    "enabled": true,
+    "Namespace": "azeebo.local",
+    "Services": [{
+      "PortName": "http",
+      "DiscoveryName": "auth-service",
+      "TLS": { "Enabled": true }
+    }]
+  }
+}
+```
 
 ---
 
-## 4. Database Setup (TAA §41, §79)
+## 2. SBOM Generation (TAA §84)
 
-### 4.1 RDS Aurora
-- [ ] Deploy RDS module (`terraform apply -target=module.rds`)
-- [ ] Retrieve master password from Secrets Manager
-- [ ] Create application database roles per TAA §79:
-  ```sql
-  -- Migration role (privileged)
-  CREATE ROLE azeebo_migration WITH LOGIN PASSWORD '<secure>';
+### GitHub Actions Workflow
 
-  -- Domain roles
-  CREATE ROLE azeebo_identity WITH LOGIN PASSWORD '<secure>';
-  CREATE ROLE azeebo_catalog WITH LOGIN PASSWORD '<secure>';
-  CREATE ROLE azeebo_knowledge WITH LOGIN PASSWORD '<secure>';
-  -- ... (see database-roles.service.ts for full list)
-  ```
-- [ ] Grant schema permissions per role
-- [ ] Set up cross-schema write denial
+```yaml
+# .github/workflows/sbom.yml
+name: SBOM Generation
+on:
+  release:
+    types: [published]
 
-### 4.2 Schema Migrations
-- [ ] Run `prisma migrate deploy` for each service
-- [ ] Verify expand-and-contract migration strategy
-- [ ] Set up migration audit trail
-- [ ] Test rollback procedures
+jobs:
+  sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Generate SBOM with Syft
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ github.repository }}:${{ github.event.release.tag_name }}
+          format: spdx-json
+          output-file: sbom.spdx.json
+      
+      - name: Upload SBOM to release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: sbom.spdx.json
+```
 
-### 4.3 Backups
-- [ ] Verify automated backups (30-day retention for production)
-- [ ] Test point-in-time recovery
-- [ ] Set up cross-region backup replication
-- [ ] Document backup restoration procedures
+### Local SBOM Generation
 
----
+```bash
+# Install syft
+curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh
 
-## 5. Redis Setup (TAA §35)
+# Generate SBOM for Docker image
+syft azeebo-plus:latest -o spdx-json > sbom.spdx.json
 
-### 5.1 ElastiCache
-- [ ] Deploy ElastiCache module (`terraform apply -target=module.elasticache`)
-- [ ] Configure Redis cluster:
-  - 3 nodes for production (1 primary, 2 replicas)
-  - Encryption at rest (KMS)
-  - Encryption in transit (TLS)
-  - AUTH token for access control
-- [ ] Set up Redis connection strings in Secrets Manager
-- [ ] Configure eviction policies:
-  - Cache: `allkeys-lru`
-  - Rate limiting: `noeviction`
-  - Session: `volatile-ttl`
+# Generate SBOM for source code
+syft dir:. -o spdx-json > source-sbom.spdx.json
+```
 
 ---
 
-## 6. Container Registry (TAA §84)
+## 3. Artefact Signing (TAA §84)
 
-### 6.1 ECR Setup
-- [ ] Create ECR repositories for all services
-- [ ] Configure image scanning on push
-- [ ] Set up lifecycle policies:
-  - Keep last 10 images
-  - Delete untagged images after 7 days
-- [ ] Enable image signing with AWS Signer
-- [ ] Set up cross-account replication if needed
+### AWS Signer Setup
 
-### 6.2 Image Security
-- [ ] Configure Trivy/Snyk scanning in CI/CD
-- [ ] Set up SBOM generation
-- [ ] Block deployment of images with critical vulnerabilities
-- [ ] Set up image digest pinning for immutable deploys
+```bash
+# 1. Create signing profile
+aws signer put-signing-profile \
+  --profile-name azeebo-signing \
+  --platform-id "AWSLambda-SHA384-ECDSA" \
+  --signature-validity '{"type":"YEARS","value":1}'
 
----
+# 2. Sign container images
+# In CI/CD pipeline:
+aws signer sign-payload \
+  --profile-name azeebo-signing \
+  --payload-format-type RAW \
+  --payload fileb://image-digest.txt \
+  --payload-type DockerImageDigest
 
-## 7. CI/CD Pipeline (TAA §45)
+# 3. Verify signatures
+aws signer describe-signing-job --job-id $JOB_ID
+```
 
-### 7.1 GitHub Actions Secrets
-Configure these secrets in GitHub repository settings:
-- [ ] `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` (for CI/CD)
-- [ ] `SONAR_TOKEN` (for code quality)
-- [ ] `SNYK_TOKEN` (for dependency scanning)
-- [ ] `TRIVY_USERNAME` / `TRIVY_PASSWORD` (for container scanning)
-- [ ] `SLACK_WEBHOOK_URL` (for notifications)
+### Cosign (Alternative)
 
-### 7.2 Branch Protection Rules
-- [ ] Require PR reviews (2 approvals for main)
-- [ ] Require status checks to pass:
-  - `lint`
-  - `typecheck`
-  - `unit-tests`
-  - `integration-tests`
-  - `security-scan`
-- [ ] Require branches to be up to date
-- [ ] Require signed commits
-- [ ] Restrict force pushes to main
+```bash
+# Install cosign
+go install github.com/sigstore/cosign/v2/cmd/cosign@latest
 
-### 7.3 Deployment Environments
-- [ ] Set up GitHub Environments:
-  - `development` (auto-deploy on merge to develop)
-  - `staging` (manual approval)
-  - `production` (manual approval + 2 reviewers)
-- [ ] Configure environment protection rules
-- [ ] Set up deployment locks for maintenance windows
+# Generate key pair
+cosign generate-key-pair
+
+# Sign container
+cosign sign --key cosign.key azeebo-plus:latest
+
+# Verify
+cosign verify --key cosign.pub azeebo-plus:latest
+```
 
 ---
 
-## 8. Secrets Management (TAA §52)
+## 4. Build Provenance (TAA §84)
 
-### 8.1 Secrets Manager
-- [ ] Create secrets for each service:
-  - `azeebo/production/{service}/database-url`
-  - `azeebo/production/{service}/redis-url`
-  - `azeebo/production/{service}/jwt-secret`
-  - `azeebo/production/{service}/api-key`
-- [ ] Configure automatic rotation:
-  - Database passwords: 90 days
-  - API keys: 180 days
-  - JWT secrets: 365 days
-- [ ] Set up Lambda rotation functions
+### SLSA Provenance Generation
 
-### 8.2 KMS Keys
-- [ ] Create KMS keys for:
-  - Database encryption
-  - S3 bucket encryption
-  - Secrets Manager encryption
-  - EBS encryption
-- [ ] Set up key rotation (annual)
-- [ ] Configure key policies for cross-service access
+```yaml
+# .github/workflows/provenance.yml
+name: SLSA Provenance
+on:
+  push:
+    branches: [main]
 
----
+jobs:
+  provenance:
+    permissions:
+      id-token: write
+      contents: read
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v1.9.0
+    with:
+      image: ${{ github.repository }}
+      registry-username: ${{ github.actor }}
+    secrets:
+      registry-password: ${{ secrets.GITHUB_TOKEN }}
+```
 
-## 9. Monitoring & Observability (TAA §60)
+### In-Toto Attestation
 
-### 9.1 CloudWatch
-- [ ] Deploy CloudWatch module (`terraform apply -target=module.cloudwatch`)
-- [ ] Create dashboards:
-  - Service Health (CPU, memory, request count)
-  - Database (connections, query latency, deadlocks)
-  - Redis (memory, hit rate, evictions)
-  - API Gateway (latency, error rates, throttle)
-- [ ] Set up alarms:
-  - High error rate (>1% 5xx)
-  - High latency (P95 > 2s)
-  - Database connections (>80%)
-  - Redis memory (>80%)
-  - Deployment failures
+```bash
+# Generate build provenance
+in-toto-run \
+  --name build \
+  --material . \
+  --product dist/ \
+  -- npm run build
 
-### 9.2 OpenTelemetry
-- [ ] Configure OpenTelemetry Collector
-- [ ] Set up trace sampling:
-  - Production: 10% sampling
-  - Staging: 100% sampling
-- [ ] Configure metrics export to CloudWatch
-- [ ] Set up Jaeger or X-Ray for trace visualization
-
-### 9.3 Log Aggregation
-- [ ] Configure CloudWatch Logs Insights queries
-- [ ] Set up log subscription filters for real-time alerting
-- [ ] Configure log retention:
-  - Application logs: 30 days
-  - Audit logs: 365 days
-  - Security logs: 730 days
+# Sign the attestation
+in-toto-sign \
+  --functionary-key build-key.pem \
+  --metadata-file build.layout
+```
 
 ---
 
-## 10. Security Hardening (TAA §84)
+## 5. Protected Main/Release Branches (TAA §84)
 
-### 10.1 WAF Configuration
-- [ ] Deploy WAF module (`terraform apply -target=module.waf`)
-- [ ] Configure WAF rules:
-  - Rate limiting (1000 requests/5 min per IP)
-  - SQL injection protection
-  - XSS protection
-  - Geographic blocking (if needed)
-  - Bot control
-- [ ] Set up WAF logging to S3
-- [ ] Configure WAF alerts
+### GitHub Branch Protection Rules
 
-### 10.2 GuardDuty
-- [ ] Enable GuardDuty in all accounts
-- [ ] Configure finding publishing to Security account
-- [ ] Set up automated remediation for common findings
+```bash
+# Using GitHub CLI
+gh api repos/{owner}/{repo}/branches/main/protection \
+  --method PUT \
+  --field required_status_checks='{"strict":true,"contexts":["ci/test","ci/lint","ci/build"]}' \
+  --field enforce_admins=true \
+  --field required_pull_request_reviews='{"required_approving_review_count":2,"dismiss_stale_reviews":true,"require_code_owner_reviews":true}' \
+  --field restrictions=null
 
-### 10.3 Security Hub
-- [ ] Enable Security Hub
-- [ ] Enable standards:
-  - AWS Foundational Security Best Practices
-  - CIS AWS Foundations Benchmark
-- [ ] Set up automated compliance checks
+# For release branch
+gh api repos/{owner}/{repo}/branches/release/protection \
+  --method PUT \
+  --field required_status_checks='{"strict":true,"contexts":["ci/test","ci/build","security/scan"]}' \
+  --field required_pull_request_reviews='{"required_approving_review_count":2}'
+```
 
----
+### Manual GitHub UI Steps
 
-## 11. Disaster Recovery (TAA §56)
-
-### 11.1 Backup Strategy
-- [ ] Configure AWS Backup for:
-  - RDS: Daily snapshots, 30-day retention
-  - EBS: Daily snapshots, 14-day retention
-  - ECR: Cross-region replication
-- [ ] Test backup restoration procedures
-- [ ] Document RTO/RPO targets:
-  - RTO: 4 hours
-  - RPO: 1 hour
-
-### 11.2 Multi-Region Strategy
-- [ ] Set up cross-region RDS read replica
-- [ ] Configure Route 53 health checks and failover
-- [ ] Set up S3 cross-region replication
-- [ ] Test failover procedures
+1. Go to **Settings → Branches**
+2. Click **Add rule**
+3. Branch name pattern: `main`
+4. Enable:
+   - ✅ Require pull request reviews before merging (2 approvals)
+   - ✅ Require status checks before merging
+   - ✅ Require branches to be up to date
+   - ✅ Require conversation resolution
+   - ✅ Require linear history
+   - ✅ Include administrators
+5. Repeat for `release` branch
 
 ---
 
-## 12. Cost Optimization
+## 6. Required Status Checks (TAA §84)
 
-### 12.1 Reserved Capacity
-- [ ] Purchase RDS Reserved Instances (1-year, all upfront)
-- [ ] Purchase ElastiCache Reserved Nodes (1-year)
-- [ ] Set up Savings Plans for ECS Fargate
+### Configure Status Checks
 
-### 12.2 Auto-Scaling
-- [ ] Configure ECS auto-scaling:
-  - Min: 1 task per service
-  - Max: 10 tasks per service
-  - Target: 70% CPU utilization
-- [ ] Configure RDS auto-scaling (read replicas)
-- [ ] Set up scheduled scaling for known traffic patterns
+```bash
+# List available checks
+gh api repos/{owner}/{repo}/commits/main/check-runs
 
----
-
-## 13. Compliance & Audit
-
-### 13.1 CloudTrail
-- [ ] Enable CloudTrail in all accounts
-- [ ] Configure log file validation
-- [ ] Set up S3 bucket for trail logs
-- [ ] Configure CloudWatch Logs integration
-
-### 13.2 Config Rules
-- [ ] Enable AWS Config
-- [ ] Set up compliance rules:
-  - Encrypted volumes
-  - Restricted SSH
-  - MFA enabled
-  - Root user usage
-  - S3 bucket public access
+# Add required checks via branch protection (see above)
+# Required checks:
+# - ci/test
+# - ci/lint  
+# - ci/build
+# - security/sast
+# - security/dependencies
+```
 
 ---
 
-## 14. Documentation
+## 7. Short-lived OIDC/Workload Identity (TAA §84)
 
-### 14.1 Runbooks
-Create operational runbooks for:
-- [ ] Service deployment procedures
-- [ ] Database migration procedures
-- [ ] Incident response procedures
-- [ ] Disaster recovery procedures
-- [ ] Secret rotation procedures
+### GitHub OIDC with AWS
 
-### 14.2 Architecture Diagrams
-Create and maintain:
-- [ ] Network topology diagram
-- [ ] Data flow diagram
-- [ ] Service dependency diagram
-- [ ] Security architecture diagram
+```yaml
+# .github/workflows/deploy.yml
+permissions:
+  id-token: write
+  contents: read
+
+steps:
+  - name: Configure AWS Credentials
+    uses: aws-actions/configure-aws-credentials@v4
+    with:
+      role-to-assume: arn:aws:iam::123456789012:role/github-actions-deploy
+      aws-region: us-east-1
+```
+
+### AWS IAM OIDC Provider
+
+```bash
+# Create OIDC provider
+aws iam create-open-id-connect-provider \
+  --url https://token.actions.githubusercontent.com \
+  --thumbprint-list 6938fd4d98bab03faadb97b34396831e3780aea1 \
+  --client-id-list sts.amazonaws.com
+
+# Create IAM role for GitHub Actions
+cat > trust-policy.json << 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": { "Federated": "arn:aws:iam::ACCOUNT:oidc-provider/token.actions.githubusercontent.com" },
+    "Action": "sts:AssumeRoleWithWebIdentity",
+    "Condition": {
+      "StringEquals": { "token.actions.githubusercontent.com:aud": "sts.amazonaws.com" },
+      "StringLike": { "token.actions.githubusercontent.com:sub": "repo:azeebotv/AzeeboPlus:*" }
+    }
+  }]
+}
+EOF
+
+aws iam create-role --role-name github-actions-deploy --assume-role-policy-document file://trust-policy.json
+```
 
 ---
 
-## 15. Testing
+## 8. Critical Vuln Blocks Release (TAA §84)
 
-### 15.1 Load Testing
-- [ ] Set up k6 or Artillery for load testing
-- [ ] Create load test scripts for:
-  - Authentication flow
-  - Content listing
-  - Search
-  - Payment processing
-- [ ] Establish performance baselines
-- [ ] Set up performance regression detection
+### Security Gate in CI/CD
 
-### 15.2 Chaos Engineering
-- [ ] Set up AWS Fault Injection Simulator
-- [ ] Create chaos experiments:
-  - Database failover
-  - Redis failure
-  - Network partition
-  - Service degradation
-- [ ] Document chaos experiment results
+```yaml
+# .github/workflows/security-gate.yml
+name: Security Gate
+on:
+  pull_request:
+    branches: [main, release]
+
+jobs:
+  trivy-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ github.repository }}:${{ github.sha }}
+          format: 'json'
+          output: 'trivy-results.json'
+          severity: 'CRITICAL,HIGH'
+      
+      - name: Check for critical vulnerabilities
+        run: |
+          CRITICAL=$(cat trivy-results.json | jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "CRITICAL")] | length')
+          if [ "$CRITICAL" -gt 0 ]; then
+            echo "::error::Critical vulnerabilities found! Blocking release."
+            cat trivy-results.json | jq '.Results[]?.Vulnerabilities[]? | select(.Severity == "CRITICAL") | {PkgName, VulnerabilityID, Title}'
+            exit 1
+          fi
+```
 
 ---
 
-## Priority Order
+## 9. Third-party SDK Security/Privacy Review (TAA §84)
 
-1. **P0 (Critical Path)** — Complete before production launch:
-   - AWS account setup (Section 1)
-   - VPC & networking (Section 3)
-   - RDS & database setup (Section 4)
-   - Redis setup (Section 5)
-   - Secrets management (Section 8)
-   - CI/CD pipeline (Section 7)
-   - Basic monitoring (Section 9)
+### Review Process Checklist
 
-2. **P1 (Important)** — Complete within first month:
-   - Container registry (Section 6)
-   - DNS & TLS (Section 2)
-   - Security hardening (Section 10)
-   - Backup strategy (Section 11)
+```markdown
+## SDK Security Review Template
 
-3. **P2 (Enhancement)** — Complete within first quarter:
-   - mTLS between services (Section 3.3)
-   - Advanced monitoring (Section 9.2-9.3)
-   - Cost optimization (Section 12)
-   - Compliance & audit (Section 13)
+### SDK Information
+- Name:
+- Version:
+- License:
+- Repository URL:
+- Maintainer:
 
-4. **P3 (Continuous)** — Ongoing:
-   - Documentation (Section 14)
-   - Testing (Section 15)
-   - Disaster recovery testing (Section 11.2)
+### Security Assessment
+- [ ] No known CVEs in current version
+- [ ] Active maintenance (last release < 6 months)
+- [ ] Security policy documented
+- [ ] No telemetry/analytics by default
+- [ ] No excessive permissions required
+
+### Privacy Assessment
+- [ ] No PII collection
+- [ ] No data sent to third parties
+- [ ] Data processing location documented
+- [ ] GDPR/CCPA compliant
+
+### Code Assessment
+- [ ] Bundle size acceptable
+- [ ] No native code (or audited)
+- [ ] Dependencies audited
+
+### Approval
+- Approved by:
+- Date:
+- Next review:
+```
+
+---
+
+## 10. System-level Threat Model (TAA §85)
+
+### STRIDE Analysis Template
+
+```markdown
+## Threat Model: [System Name]
+
+### System Boundaries
+- Trust boundaries:
+- Data flows:
+- External dependencies:
+
+### STRIDE Analysis
+
+| Component | Spoofing | Tampering | Repudiation | Info Disclosure | DoS | Elevation |
+|-----------|----------|-----------|-------------|-----------------|-----|-----------|
+| Auth Service | Medium | Low | Low | High | Medium | High |
+| Content API | Low | Medium | Low | Medium | Medium | Medium |
+| Payment | High | High | Medium | High | Low | High |
+| Media CDN | Low | Low | Low | Medium | High | Low |
+
+### Mitigations
+1. [Threat] → [Mitigation] → [Control]
+2. ...
+
+### Review Schedule
+- Initial: Before M2 launch
+- Revisions: On material changes
+```
+
+---
+
+## 11. Per-domain Asset/Actor/Trust-boundary Documentation (TAA §85)
+
+### Domain Documentation Template
+
+```markdown
+## Domain: [Name]
+
+### Assets
+| Asset | Classification | Location | Retention |
+|-------|---------------|----------|-----------|
+| User PII | Confidential | PostgreSQL | Account lifetime |
+| Content | Internal | S3 | Permanent |
+| Analytics | Internal | ClickHouse | 30 days |
+
+### Actors
+| Actor | Type | Trust Level | Authentication |
+|-------|------|-------------|----------------|
+| End User | Human | Low | Session + MFA |
+| Admin | Human | High | Session + Hardware Key |
+| Service | Machine | Medium | mTLS |
+
+### Trust Boundaries
+| Boundary | Controls | Monitoring |
+|----------|----------|------------|
+| Client → API | TLS, Rate Limit, WAF | Access logs |
+| API → Service | mTLS, JWT | Audit trail |
+| Service → DB | IAM, VPC | Query logs |
+```
+
+---
+
+## 12. Abuse Case Documentation (TAA §85)
+
+### Abuse Case Template
+
+```markdown
+## Abuse Case: [Name]
+
+### Description
+[What is the abuse scenario?]
+
+### Attacker Profile
+- Motivation:
+- Capability:
+- Resources:
+
+### Attack Vector
+1. Step 1
+2. Step 2
+3. Step 3
+
+### Impact
+- Confidentiality:
+- Integrity:
+- Availability:
+- Financial:
+- Reputation:
+
+### Current Controls
+- [ ] [Control 1]
+- [ ] [Control 2]
+
+### Recommended Mitigations
+1. [Mitigation]
+2. [Mitigation]
+
+### Testing
+- [ ] Penetration test scenario
+- [ ] Automated test case
+```
+
+---
+
+## 13. Threat Model Review on Material Changes (TAA §85)
+
+### Review Trigger Criteria
+
+```yaml
+# .github/workflows/threat-model-review.yml
+name: Threat Model Review
+on:
+  pull_request:
+    paths:
+      - 'services/*/src/**'
+      - 'packages/security/**'
+      - 'packages/auth/**'
+      - 'infrastructure/**'
+
+jobs:
+  check-threat-model:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for threat model update
+        run: |
+          if git diff --name-only HEAD~1 | grep -qE "^security/|^threat-model/"; then
+            echo "Threat model updated ✓"
+          else
+            echo "::warning::Material changes detected without threat model update"
+          fi
+```
+
+### Review Checklist
+
+- [ ] New external dependencies added
+- [ ] Authentication/authorization changes
+- [ ] Data storage modifications
+- [ ] API endpoint changes
+- [ ] Infrastructure changes
+- [ ] Third-party integrations
+
+---
+
+## 14. Penetration Test Findings Mapped to Controls (TAA §85)
+
+### Findings Template
+
+```markdown
+## Penetration Test Report
+
+### Test Date: [Date]
+### Tester: [Name/Org]
+### Scope: [Systems tested]
+
+### Findings
+
+| ID | Severity | Title | CVSS | Status | Control |
+|----|----------|-------|------|--------|---------|
+| PT-001 | Critical | SQL Injection | 9.8 | Fixed | WAF-001, Input Validation |
+| PT-002 | High | XSS | 8.5 | Fixed | CSP, Output Encoding |
+| PT-003 | Medium | CSRF | 6.5 | Fixed | CSRF Token |
+
+### Remediation Verification
+- [ ] PT-001: Retest passed
+- [ ] PT-002: Retest passed
+- [ ] PT-003: Retest passed
+```
+
+---
+
+## 15. Load Testing Baselines (TAA §58)
+
+### k6 Load Test Scripts
+
+```javascript
+// tests/load/auth-service.js
+import http from 'k6/http';
+import { check, sleep } from 'k6';
+
+export const options = {
+  stages: [
+    { duration: '2m', target: 100 },   // Ramp up
+    { duration: '5m', target: 100 },   // Steady state
+    { duration: '2m', target: 200 },   // Peak
+    { duration: '5m', target: 200 },   // Sustained peak
+    { duration: '2m', target: 0 },     // Ramp down
+  ],
+  thresholds: {
+    http_req_duration: ['p(95)<500'],
+    http_req_failed: ['rate<0.01'],
+  },
+};
+
+export default function () {
+  const res = http.post(`${__ENV.API_URL}/auth/login`, JSON.stringify({
+    email: `user${Math.floor(Math.random() * 250000)}@test.com`,
+    password: 'testpass123',
+  }), { headers: { 'Content-Type': 'application/json' } });
+  
+  check(res, {
+    'status is 200': (r) => r.status === 200,
+    'response time < 500ms': (r) => r.timings.duration < 500,
+  });
+  
+  sleep(1);
+}
+```
+
+### Baseline Metrics to Capture
+
+| Metric | Target | Current |
+|--------|--------|---------|
+| Auth login p95 | <500ms | _Test needed_ |
+| Content API p95 | <300ms | _Test needed_ |
+| Media upload p95 | <5s | _Test needed_ |
+| Search p95 | <200ms | _Test needed_ |
+| Concurrent video sessions | 10,000 | _Test needed_ |
+| Transactions/minute | 300 | _Test needed_ |
+
+---
+
+## 16. Mobile Verification Checklist
+
+### React Native New Architecture
+
+```bash
+# Check in app/build.gradle
+cat android/app/build.gradle | grep -i "newArchEnabled"
+# Should be: newArchEnabled = true
+
+# Check in ios/Podfile
+cat ios/Podfile | grep -i "fabric"
+# Should have: :fabric_enabled => true
+```
+
+### TLS Pinning Verification
+
+```bash
+# Android: Check network_security_config.xml
+cat android/app/src/main/res/xml/network_security_config.xml
+
+# iOS: Check Info.plist
+cat ios/AzeeboMobile/Info.plist | grep -A5 "NSAppTransportSecurity"
+```
+
+### Push Notification Setup
+
+```bash
+# iOS: Check entitlements
+cat ios/AzeeboMobile/AzeeboMobile.entitlements
+
+# Android: Verify google-services.json exists
+ls android/app/google-services.json
+```
+
+### App Store Compliance
+
+```bash
+# iOS: Check privacy manifest
+cat ios/PrivacyInfo.xcprivacy
+
+# Android: Check data safety form in Google Play Console
+```
+
+---
+
+## 17. GitHub OIDC Setup
+
+### Complete OIDC Configuration
+
+```bash
+# 1. Create IAM OIDC provider
+aws iam create-open-id-connect-provider \
+  --url https://token.actions.githubusercontent.com \
+  --thumbprint-list 6938fd4d98bab03faadb97b34396831e3780aea1 \
+  --client-id-list sts.amazonaws.com
+
+# 2. Create deployment role
+cat > deploy-role-trust.json << 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": {
+      "Federated": "arn:aws:iam::ACCOUNT:oidc-provider/token.actions.githubusercontent.com"
+    },
+    "Action": "sts:AssumeRoleWithWebIdentity",
+    "Condition": {
+      "StringEquals": {
+        "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+      },
+      "StringLike": {
+        "token.actions.githubusercontent.com:sub": "repo:azeebotv/AzeeboPlus:ref:refs/heads/main"
+      }
+    }
+  }]
+}
+EOF
+
+aws iam create-role \
+  --role-name github-actions-deploy \
+  --assume-role-policy-document file://deploy-role-trust.json
+
+# 3. Attach policies
+aws iam attach-role-policy \
+  --role-name github-actions-deploy \
+  --policy-arn arn:aws:iam::policy/ECSDeployPolicy
+```
+
+---
+
+## 18. Container Signing Setup
+
+### ECR Image Signing
+
+```bash
+# 1. Enable image signing in ECR
+aws ecr put-image-tag-mutability \
+  --repository-name azeebo-plus \
+  --image-tag-mutability IMMUTABLE
+
+# 2. Set up scanning
+aws ecr put-image-scanning-configuration \
+  --repository-name azeebo-plus \
+  --image-scanning-configuration scanOnPush=true
+
+# 3. Sign with cosign in CI
+cosign sign --key env://COSIGN_KEY $ECR_REGISTRY/azeebo-plus:$TAG
+```
+
+---
+
+## 19. Incident Response Playbook
+
+### Severity Levels
+
+| Level | Response Time | Escalation | Examples |
+|-------|--------------|------------|----------|
+| SEV1 | 15 min | Immediate | Data breach, complete outage |
+| SEV2 | 30 min | 30 min | Partial outage, security incident |
+| SEV3 | 2 hours | 4 hours | Degraded performance, non-critical bug |
+| SEV4 | 24 hours | Next business | Minor issues, cosmetic bugs |
+
+### Communication Template
+
+```markdown
+## Incident: [Title]
+
+**Status:** Investigating / Identified / Monitoring / Resolved
+**Severity:** SEV[1-4]
+**Duration:** [Start time] - [End time]
+**Impact:** [User impact description]
+
+### Timeline
+- [Time] Issue detected via [monitoring/alert]
+- [Time] Investigation started
+- [Time] Root cause identified
+- [Time] Mitigation deployed
+- [Time] Resolution confirmed
+
+### Root Cause
+[Description]
+
+### Resolution
+[What was done]
+
+### Follow-up Items
+- [ ] [Action item 1]
+- [ ] [Action item 2]
+```
+
+---
+
+## 20. On-Call Rotation Setup
+
+### PagerDuty Configuration
+
+```yaml
+# pagerduty-config.yml
+schedules:
+  primary:
+    name: "Azeebo Primary On-Call"
+    rotation:
+      type: weekly
+      users:
+        - user1@azeebo.com
+        - user2@azeebo.com
+        - user3@azeebo.com
+
+escalation_policies:
+  default:
+    name: "Default Escalation"
+    rules:
+      - escalation_timeout: 300  # 5 minutes
+        targets:
+          - type: schedule
+            id: primary
+      - escalation_timeout: 600  # 10 minutes
+        targets:
+          - type: user
+            id: manager@azeebo.com
+```
+
+---
+
+## 21. Capacity Planning Baselines
+
+### AWS Cost Explorer Setup
+
+```bash
+# Enable cost allocation tags
+aws ce update-cost-allocation-tags \
+  --cost-allocation-tags Status=Active Key=Service
+
+# Create budget alerts
+aws budgets create-budget \
+  --account-id $(aws sts get-caller-identity --query Account --output text) \
+  --budget '{
+    "BudgetName": "Azeebo Monthly",
+    "BudgetLimit": { "Amount": "10000", "Unit": "USD" },
+    "TimeUnit": "MONTHLY",
+    "BudgetType": "COST"
+  }' \
+  --notifications-with-subscribers '[{
+    "Notification": { "NotificationType": "ACTUAL", "ComparisonOperator": "GREATER_THAN", "Threshold": 80 },
+    "Subscribers": [{ "SubscriptionType": "EMAIL", "Address": "finance@azeebo.com" }]
+  }]'
+```
+
+---
+
+## Summary
+
+| Category | Items | Can Automate | Manual Required |
+|----------|-------|--------------|-----------------|
+| mTLS | 1 | 0 | 1 |
+| SBOM/Signing | 5 | 2 | 3 |
+| Branch Protection | 3 | 1 | 2 |
+| Threat Modeling | 5 | 1 | 4 |
+| Load Testing | 9 | 0 | 9 |
+| Mobile Verification | 20 | 0 | 20 |
+| **Total** | **43** | **4** | **39** |
