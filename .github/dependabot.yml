@@ -4,63 +4,30 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "UTC"
     open-pull-requests-limit: 10
-    target-branch: "develop"
+    reviewers:
+      - "azeebotv/team"
     labels:
       - "dependencies"
-      - "automerge"
-    assignees:
-      - "engineering-team"
-    commit-message:
-      prefix: "chore(deps):"
-      include: "scope"
-    ignore:
-      - dependency-name: "@types/node"
-        versions: ["20.x"]
+      - "security"
     groups:
-      react-native-packages:
-        patterns:
-          - "react-native*"
-          - "@react-native*"
-      nestjs-packages:
+      nestjs:
         patterns:
           - "@nestjs/*"
-      prisma-packages:
+      prisma:
         patterns:
           - "prisma"
           - "@prisma/client"
-      eslint-packages:
+      testing:
         patterns:
-          - "eslint*"
-          - "@typescript-eslint/*"
-      testing-packages:
-        patterns:
-          - "jest*"
-          - "@jest/*"
-          - "vitest*"
-          - "@testing-library/*"
+          - "jest"
+          - "ts-jest"
+          - "@types/jest"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "monthly"
-      day: "monday"
+      interval: "weekly"
     labels:
       - "dependencies"
-      - "github-actions"
-    commit-message:
-      prefix: "chore(actions):"
-
-  - package-ecosystem: "docker"
-    directory: "/"
-    schedule:
-      interval: "monthly"
-      day: "wednesday"
-    labels:
-      - "dependencies"
-      - "docker"
-    commit-message:
-      prefix: "chore(docker):"
+      - "ci"
