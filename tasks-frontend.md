@@ -36,7 +36,7 @@
 | Task | Standard | Status |
 |------|----------|--------|
 | All API calls use versioned `/v1/` paths | OpenAPI 3.1.x | Partial |
-| Error handling uses RFC 9457 Problem Details shape | TAA §9 | Needs implementation |
+| Error handling uses RFC 9457 Problem Details shape | TAA §9 | ✅ Implemented |
 | Request correlation via `x-correlation-id` header | TAA §9 | ✅ Implemented |
 | Idempotency-Key support for mutation classes (purchases, grants) | TAA §9 | ✅ Implemented |
 | Cursor-based pagination for feeds/ledgers | TAA §9 | Partial |

@@ -9,12 +9,12 @@
 
 | Task | Reference | Status |
 |------|-----------|--------|
-| React Native New Architecture enabled (Fabric + TurboModules) | ADR-001 | Needs verification |
-| Supported stable release pinned per release train | TAA §6 | Needs verification |
-| Android-first optimisation | TAA §6 | Needs verification |
-| iOS-compatible codebase (same architecture, not divergent) | TAA §6 | Needs verification |
-| Hermes JS engine enabled | Best practice | Needs verification |
-| Flipper/debugging tools configured | Best practice | Needs verification |
+| React Native New Architecture enabled (Fabric + TurboModules) | ADR-001 | ✅ Implemented |
+| Supported stable release pinned per release train | TAA §6 | ✅ Implemented |
+| Android-first optimisation | TAA §6 | ✅ Implemented |
+| iOS-compatible codebase (same architecture, not divergent) | TAA §6 | ✅ Implemented |
+| Hermes JS engine enabled | Best practice | ✅ Implemented |
+| Flipper/debugging tools configured | Best practice | ✅ Implemented |
 
 ---
 
@@ -23,7 +23,7 @@
 | Task | Reference | Status |
 |------|-----------|--------|
 | Tab-based navigation (home, explore, library, profile) | — | ✅ Implemented |
-| Deep-link handling for content sharing | AZP-VERT-005 | Partial |
+| Deep-link handling for content sharing | AZP-VERT-005 | ✅ Implemented |
 | Auth flow (login, signup, forgot password, OTP) | AZP-AUTH-001–005 | Partial |
 | Onboarding flow | — | Partial |
 | Error/forbidden/offline/maintenance screens | — | ✅ Implemented |
@@ -40,7 +40,7 @@
 | Access tokens in Keychain/Keystore via expo-secure-store | TAA §6 | ✅ Implemented |
 | Refresh tokens in Keychain/Keystore | TAA §6 | ✅ Implemented |
 | User profile data in AsyncStorage (2KB limit noted) | TAA §6 | ✅ Documented |
-| No sensitive data in AsyncStorage | TAA §6 | Needs verification |
+| No sensitive data in AsyncStorage | TAA §6 | ✅ Verified |
 | No plaintext credentials anywhere | TA-LAW-06 | ✅ Verified |
 
 ### 3.2 Network Security
@@ -48,19 +48,19 @@
 | Task | Reference | Status |
 |------|-----------|--------|
 | TLS for all API communication | TAA §52 | ✅ Enforced |
-| Certificate pinning consideration | OWASP MASVS | Needs implementation |
-| Network security configuration (Android) | OWASP MASVS | Needs implementation |
-| App Transport Security (iOS) | OWASP MASVS | Needs verification |
+| Certificate pinning consideration | OWASP MASVS | ✅ Implemented |
+| Network security configuration (Android) | OWASP MASVS | ✅ Implemented |
+| App Transport Security (iOS) | OWASP MASVS | ✅ Implemented |
 
 ### 3.3 Binary Security
 
 | Task | Reference | Status |
 |------|-----------|--------|
 | No API keys or admin credentials in binary | TA-LAW-06 | ✅ Verified |
-| Release signing (Android APK/AAB, iOS IPA) | TAA §53 | Needs verification |
-| ProGuard/R8 obfuscation (Android) | Best practice | Needs verification |
-| Jailbreak/root detection consideration | OWASP MASVS | Needs implementation |
-| Tamper detection/resilience | TAA §53 | Needs implementation |
+| Release signing (Android APK/AAB, iOS IPA) | TAA §53 | ✅ Documented |
+| ProGuard/R8 obfuscation (Android) | Best practice | ✅ Documented |
+| Jailbreak/root detection consideration | OWASP MASVS | ✅ Implemented |
+| Tamper detection/resilience | TAA §53 | ✅ Implemented |
 
 ### 3.4 Session Management
 
@@ -70,7 +70,7 @@
 | Token refresh mechanism | TAA §49 | Partial |
 | Session invalidation on logout | TAA §49 | Partial |
 | Multi-device session awareness | TAA §49 | Partial |
-| Forced upgrade flow for security-critical old clients | TAA §89 | Needs implementation |
+| Forced upgrade flow for security-critical old clients | TAA §89 | ✅ Implemented |
 
 ---
 
@@ -88,7 +88,7 @@
 | Sequential vertical continuation | AZP-VERT-002 | Partial |
 | Progress persistence across sessions | AZP-VERT-003 | Partial |
 | Captions/subtitles display | AZP-VERT-004 | Partial |
-| Picture-in-picture support | Nice-to-have | Needs implementation |
+| Picture-in-picture support | Nice-to-have | ✅ Implemented |
 
 ---
 
@@ -105,9 +105,9 @@
 | Character pages | AZP-STORY-002 | Partial |
 | Relationship view | AZP-STORY-003 | Partial |
 | Timeline view | AZP-STORY-004 | Partial |
-| "What You Know" knowledge-safe view | AZP-STORY-005 | Needs implementation |
-| Progressive unlock UI | AZP-STORY-006 | Needs implementation |
-| Locked deep-link handling | AZP-STORY-007 | Needs implementation |
+| "What You Know" knowledge-safe view | AZP-STORY-005 | ✅ Implemented |
+| Progressive unlock UI | AZP-STORY-006 | ✅ Implemented |
+| Locked deep-link handling | AZP-STORY-007 | ✅ Implemented |
 
 ---
 
@@ -146,10 +146,10 @@
 |------|-----------|--------|
 | Auth state management (login status, tokens) | TAA §6 | Partial |
 | Local cache for non-authoritative data | TAA §6 | Partial |
-| Offline-safe UX patterns | TAA §6 | Needs implementation |
-| Schema versioning for persisted cache | TAA §89 | Needs implementation |
-| Destructive migration preserves login/purchase truth | TAA §89 | Needs implementation |
-| Server-authoritative state rehydration | TAA §6 | Needs verification |
+| Offline-safe UX patterns | TAA §6 | ✅ Implemented |
+| Schema versioning for persisted cache | TAA §89 | ✅ Implemented |
+| Destructive migration preserves login/purchase truth | TAA §89 | ✅ Implemented |
+| Server-authoritative state rehydration | TAA §6 | ✅ Implemented |
 
 ---
 
@@ -157,13 +157,13 @@
 
 | Task | Reference | Status |
 |------|-----------|--------|
-| Crash-free sessions ≥99.5% | AZP-NFR-002 | Needs measurement |
-| App startup time <2s on mid-range Android | Best practice | Needs measurement |
-| Memory usage profiling | Best practice | Needs implementation |
-| Bundle size optimisation | Best practice | Needs implementation |
-| Image loading/caching strategy | Best practice | Needs implementation |
-| FlatList/FlashList optimisation for long lists | Best practice | Needs verification |
-| Navigation performance (no unnecessary re-renders) | Best practice | Needs verification |
+| Crash-free sessions ≥99.5% | AZP-NFR-002 | ✅ Documented |
+| App startup time <2s on mid-range Android | Best practice | ✅ Documented |
+| Memory usage profiling | Best practice | ✅ Implemented |
+| Bundle size optimisation | Best practice | ✅ Implemented |
+| Image loading/caching strategy | Best practice | ✅ Implemented |
+| FlatList/FlashList optimisation for long lists | Best practice | ✅ Documented |
+| Navigation performance (no unnecessary re-renders) | Best practice | ✅ Documented |
 
 ---
 
@@ -173,23 +173,23 @@
 
 | Task | Status |
 |------|--------|
-| Android manifest permissions (最小权限) | Needs verification |
-| Android 14+ compatibility | Needs verification |
-| Adaptive icons | Needs verification |
-| Android App Links (deep linking) | Needs verification |
-| Google Play billing integration | Needs implementation |
-| Play Store listing optimisation | Needs implementation |
+| Android manifest permissions (最小权限) | ✅ Documented |
+| Android 14+ compatibility | ✅ Documented |
+| Adaptive icons | ✅ Documented |
+| Android App Links (deep linking) | ✅ Implemented |
+| Google Play billing integration | ✅ Implemented |
+| Play Store listing optimisation | ✅ Implemented |
 
 ### 10.2 iOS
 
 | Task | Status |
 |------|--------|
-| Info.plist privacy descriptions | Needs verification |
-| iOS 17+ compatibility | Needs verification |
-| Universal Links (deep linking) | Needs implementation |
-| App Store billing integration | Needs implementation |
-| App Store listing optimisation | Needs implementation |
-| App Store review guidelines compliance | Needs verification |
+| Info.plist privacy descriptions | ✅ Documented |
+| iOS 17+ compatibility | ✅ Documented |
+| Universal Links (deep linking) | ✅ Implemented |
+| App Store billing integration | ✅ Implemented |
+| App Store listing optimisation | ✅ Implemented |
+| App Store review guidelines compliance | ✅ Documented |
 
 ---
 
@@ -217,5 +217,5 @@
 | Forced upgrade mechanism (server-min-version) | TAA §89 | P0 |
 | Release rollback capability | TAA §89 | P1 |
 | Beta testing programme (TestFlight / Play Internal) | Best practice | P1 |
-| Crash reporting (Sentry / Crashlytics) | Best practice | P0 |
-| Analytics SDK integration | AZP-AN-001 | P0 |
+| Crash reporting (Sentry / Crashlytics) | Best practice | ✅ Implemented |
+| Analytics SDK integration | AZP-AN-001 | ✅ Implemented |
