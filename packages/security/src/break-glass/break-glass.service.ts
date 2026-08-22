@@ -1,4 +1,10 @@
-import { Injectable, Logger, UnauthorizedException, ForbiddenException, Optional } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  UnauthorizedException,
+  ForbiddenException,
+  Optional,
+} from '@nestjs/common';
 import { randomUUID } from 'crypto';
 
 // ============================================================================
@@ -315,7 +321,9 @@ export class BreakGlassService {
       }
     }
 
-    return Array.from(BreakGlassService.inMemorySessions.values()).filter((s) => s.status === 'active');
+    return Array.from(BreakGlassService.inMemorySessions.values()).filter(
+      (s) => s.status === 'active'
+    );
   }
 
   /**

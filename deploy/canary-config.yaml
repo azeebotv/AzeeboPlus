@@ -1,0 +1,44 @@
+# Canary Deployment Configuration
+# INF-003: Implement gradual rollout
+
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: azeebo-canary
+  namespace: azeebo
+spec:
+  hosts:
+    - api.azeeboplus.com
+  http:
+    - match:
+        - headers:
+            x-canary:
+              exact: "true"
+      route:
+        - destination:
+            host: api-gateway
+            subset: canary
+    - route:
+        - destination:
+            host: api-gateway
+            subset: stable
+          weight: 90
+        - destination:
+            host: api-gateway
+            subset: canary
+          weight: 10
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: azeebo-canary
+  namespace: azeebo
+spec:
+  host: api-gateway
+  subsets:
+    - name: stable
+      labels:
+        version: stable
+    - name: canary
+      labels:
+        version: canary

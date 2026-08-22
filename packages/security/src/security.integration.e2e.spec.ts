@@ -27,7 +27,7 @@ const REDIS_URL = process.env.REDIS_TEST_URL ?? 'redis://localhost:6380';
 jest.setTimeout(120_000);
 
 if (!RUN) {
-  console.log(
+  logger.log(
     `[security.e2e] Skipping — opt-in. Boot docker infra with \`docker compose ` +
       `-f docker-compose.test.yml up -d --wait redis-test postgres-test\` then run \`pnpm ` +
       `--filter @azeebo/security test:e2e:security\`.`

@@ -1,4 +1,10 @@
-import { Injectable, Logger, ForbiddenException, NotFoundException, Optional } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  ForbiddenException,
+  NotFoundException,
+  Optional,
+} from '@nestjs/common';
 import { randomUUID } from 'crypto';
 
 // ============================================================================
@@ -342,9 +348,7 @@ export class DualControlService {
       }
 
       if (row.status !== 'approved') {
-        throw new ForbiddenException(
-          `Request is ${row.status}, must be approved before execution`
-        );
+        throw new ForbiddenException(`Request is ${row.status}, must be approved before execution`);
       }
 
       await this.prisma.dualControlRequest.update({
@@ -430,7 +434,9 @@ export class DualControlService {
     }
 
     // In-memory fallback
-    return Array.from(DualControlService.inMemoryRequests.values()).filter((r) => r.status === 'pending');
+    return Array.from(DualControlService.inMemoryRequests.values()).filter(
+      (r) => r.status === 'pending'
+    );
   }
 
   /**
@@ -448,7 +454,9 @@ export class DualControlService {
     }
 
     // In-memory fallback
-    return Array.from(DualControlService.inMemoryRequests.values()).filter((r) => r.action === action);
+    return Array.from(DualControlService.inMemoryRequests.values()).filter(
+      (r) => r.action === action
+    );
   }
 
   /**
