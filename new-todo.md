@@ -133,11 +133,11 @@
 | # | Task | Description | Effort |
 |---|------|-------------|--------|
 | S-001 | Replace localStorage with HttpOnly cookies | Migrate auth tokens to HttpOnly secure cookies | 8h |
-| S-002 | Add Content-Security-Policy header | Configure CSP in Next.js middleware | 4h |
-| S-003 | Add X-Content-Type-Options header | Add nosniff header to all responses | 1h |
-| S-004 | Add X-Frame-Options header | Add DENY or SAMEORIGIN to prevent clickjacking | 1h |
-| S-005 | Add Referrer-Policy header | Add strict-origin-when-cross-origin | 1h |
-| S-006 | Add Permissions-Policy header | Restrict browser features (camera, mic, geolocation) | 1h |
+| S-002 | Add Content-Security-Policy header | ✅ Done | - |
+| S-003 | Add X-Content-Type-Options header | ✅ Done | - |
+| S-004 | Add X-Frame-Options header | ✅ Done | - |
+| S-005 | Add Referrer-Policy header | ✅ Done | - |
+| S-006 | Add Permissions-Policy header | ✅ Done | - |
 
 ### P1 — Important
 | # | Task | Description | Effort |
