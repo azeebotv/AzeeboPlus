@@ -27,7 +27,12 @@ export const SERVICE_SLOS: Record<string, SLODefinition[]> = {
     {
       name: 'Auth Availability',
       description: 'Login/signup endpoints must be available',
-      sli: { type: 'availability', metric: 'http_requests_total', goodEvents: 'http_requests_total{status!~"5.."}', totalEvents: 'http_requests_total' },
+      sli: {
+        type: 'availability',
+        metric: 'http_requests_total',
+        goodEvents: 'http_requests_total{status!~"5.."}',
+        totalEvents: 'http_requests_total',
+      },
       slo: { target: 0.999, window: '30d' },
       errorBudget: { remaining: 43.2, exhausted: false },
     },
@@ -43,7 +48,12 @@ export const SERVICE_SLOS: Record<string, SLODefinition[]> = {
     {
       name: 'Payment Availability',
       description: 'Payment processing must be available',
-      sli: { type: 'availability', metric: 'http_requests_total', goodEvents: 'http_requests_total{status!~"5.."}', totalEvents: 'http_requests_total' },
+      sli: {
+        type: 'availability',
+        metric: 'http_requests_total',
+        goodEvents: 'http_requests_total{status!~"5.."}',
+        totalEvents: 'http_requests_total',
+      },
       slo: { target: 0.9999, window: '30d' },
       errorBudget: { remaining: 4.32, exhausted: false },
     },
@@ -59,7 +69,12 @@ export const SERVICE_SLOS: Record<string, SLODefinition[]> = {
     {
       name: 'Wallet Availability',
       description: 'Wallet operations must be available',
-      sli: { type: 'availability', metric: 'http_requests_total', goodEvents: 'http_requests_total{status!~"5.."}', totalEvents: 'http_requests_total' },
+      sli: {
+        type: 'availability',
+        metric: 'http_requests_total',
+        goodEvents: 'http_requests_total{status!~"5.."}',
+        totalEvents: 'http_requests_total',
+      },
       slo: { target: 0.9999, window: '30d' },
       errorBudget: { remaining: 4.32, exhausted: false },
     },
@@ -68,7 +83,12 @@ export const SERVICE_SLOS: Record<string, SLODefinition[]> = {
     {
       name: 'Content Availability',
       description: 'Content API must be available',
-      sli: { type: 'availability', metric: 'http_requests_total', goodEvents: 'http_requests_total{status!~"5.."}', totalEvents: 'http_requests_total' },
+      sli: {
+        type: 'availability',
+        metric: 'http_requests_total',
+        goodEvents: 'http_requests_total{status!~"5.."}',
+        totalEvents: 'http_requests_total',
+      },
       slo: { target: 0.999, window: '30d' },
       errorBudget: { remaining: 43.2, exhausted: false },
     },
@@ -88,7 +108,11 @@ export function getSLOsForService(serviceName: string): SLODefinition[] {
   return SERVICE_SLOS[serviceName] || [];
 }
 
-export function calculateErrorBudget(target: number, windowHours: number, errorRate: number): number {
+export function calculateErrorBudget(
+  target: number,
+  windowHours: number,
+  errorRate: number
+): number {
   const allowedErrors = (1 - target) * windowHours * 60;
   const actualErrors = errorRate * windowHours * 60;
   return Math.max(0, allowedErrors - actualErrors);

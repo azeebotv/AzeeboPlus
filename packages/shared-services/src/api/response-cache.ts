@@ -23,7 +23,8 @@ export function buildCacheHeader(preset: keyof typeof CACHE_PRESETS): string {
   if (config.isPrivate) parts.push('private');
   else parts.push('public');
   parts.push(`max-age=${config.maxAge}`);
-  if (config.staleWhileRevalidate) parts.push(`stale-while-revalidate=${config.staleWhileRevalidate}`);
+  if (config.staleWhileRevalidate)
+    parts.push(`stale-while-revalidate=${config.staleWhileRevalidate}`);
   if (config.immutable) parts.push('immutable');
   return parts.join(', ');
 }

@@ -8,10 +8,6 @@ import {
   Param,
   ParseUUIDPipe,
   Query,
-  UseGuards,
-  Request,
-  HttpException,
-  HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { KnowledgeService } from './knowledge.service.js';

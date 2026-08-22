@@ -18,7 +18,6 @@ export const REQUIRES_MFA_KEY = 'requires_mfa';
  * Usage: @RequiresMFA() or @UseGuards(MfaGuard)
  */
 export const RequiresMFA = () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (target: object, _propertyKey?: string, descriptor?: PropertyDescriptor) => {
     if (descriptor) {
       Reflect.defineMetadata(REQUIRES_MFA_KEY, true, descriptor.value);

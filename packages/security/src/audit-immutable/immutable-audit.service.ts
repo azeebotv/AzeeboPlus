@@ -1,6 +1,7 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { createHash } from 'crypto';
+import type { AuditPrismaClient } from '../types';
 
 // ============================================================================
 // Immutable Audit Log (TAA §56)
@@ -55,21 +56,21 @@ export interface ImmutableAuditEntry {
 @Injectable()
 export class ImmutableAuditService {
   private readonly logger = new Logger(ImmutableAuditService.name);
-  private prisma: any; // PrismaClient — optional injection
+  private prisma: AuditPrismaClient | undefined;
 
   // In-memory fallback (used when no PrismaClient)
   private static inMemoryLog: ImmutableAuditEntry[] = [];
   private static sequenceCounter = 0;
   private static lastHash = '0'.repeat(64);
 
-  constructor(@Optional() prismaClient?: any) {
+  constructor(@Optional() prismaClient?: AuditPrismaClient) {
     this.prisma = prismaClient;
   }
 
   /**
    * Set the Prisma client (for dependency injection)
    */
-  setPrismaClient(client: any): void {
+  setPrismaClient(client: AuditPrismaClient): void {
     this.prisma = client;
   }
 
@@ -207,7 +208,7 @@ export class ImmutableAuditService {
     limit?: number;
   }): Promise<ImmutableAuditEntry[]> {
     if (this.isProduction) {
-      const where: any = {};
+      const where: Record<string, unknown> = {};
 
       if (filters?.actorId) where.actorId = filters.actorId;
       if (filters?.action) where.action = filters.action;
@@ -281,9 +282,7 @@ export class ImmutableAuditService {
         const entry = allEntries[i];
 
         if (entry.sequenceNumber !== i + 1) {
-          errors.push(
-            `Sequence gap at index ${i}: expected ${i + 1}, got ${entry.sequenceNumber}`
-          );
+          errors.push(`Sequence gap at index ${i}: expected ${i + 1}, got ${entry.sequenceNumber}`);
         }
 
         if (entry.previousHash !== previousHash) {
@@ -325,9 +324,7 @@ export class ImmutableAuditService {
       const entry = log[i];
 
       if (entry.sequenceNumber !== i + 1) {
-        errors.push(
-          `Sequence gap at index ${i}: expected ${i + 1}, got ${entry.sequenceNumber}`
-        );
+        errors.push(`Sequence gap at index ${i}: expected ${i + 1}, got ${entry.sequenceNumber}`);
       }
 
       if (entry.previousHash !== previousHash) {
@@ -388,7 +385,7 @@ export class ImmutableAuditService {
   /**
    * Map database row to entry interface
    */
-  private mapRowToEntry(row: any): ImmutableAuditEntry {
+  private mapRowToEntry(row: Record<string, unknown>): ImmutableAuditEntry {
     return {
       id: row.id,
       sequenceNumber: row.sequenceNumber,

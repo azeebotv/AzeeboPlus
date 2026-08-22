@@ -8,7 +8,15 @@ export function createSlowQueryMiddleware(config: Partial<SlowQueryConfig> = {})
   return async (params: { query: string; duration: number; params?: unknown[] }) => {
     if (params.duration < merged.thresholdMs) return;
     if (merged.logToConsole) {
-      console.warn('[SLOW QUERY]', JSON.stringify({ timestamp: new Date().toISOString(), query: params.query, duration: `${params.duration}ms` }));
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[SLOW QUERY]',
+        JSON.stringify({
+          timestamp: new Date().toISOString(),
+          query: params.query,
+          duration: `${params.duration}ms`,
+        })
+      );
     }
   };
 }

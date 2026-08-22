@@ -199,7 +199,8 @@ export const DEFAULT_ALERT_RULES: AlertRule[] = [
     name: 'High Error Rate',
     description: 'API error rate elevated above normal',
     severity: 'warning',
-    condition: 'rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05',
+    condition:
+      'rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05',
     duration: '10m',
     runbookUrl: 'https://runbooks.azeeboplus.com/high-error-rate',
     notifications: ['slack-warning'],
@@ -269,10 +270,7 @@ export class AlertingService {
   private readonly alerts: Alert[] = [];
   private readonly escalationPolicies: Map<string, EscalationPolicy> = new Map();
 
-  constructor(
-    rules?: AlertRule[],
-    escalationPolicies?: EscalationPolicy[]
-  ) {
+  constructor(rules?: AlertRule[], escalationPolicies?: EscalationPolicy[]) {
     const alertRules = rules || DEFAULT_ALERT_RULES;
     for (const rule of alertRules) {
       this.rules.set(rule.id, rule);
@@ -329,7 +327,11 @@ export class AlertingService {
       status: 'firing',
       message,
       labels: { ...labels, alertname: rule.name, severity: rule.severity },
-      annotations: { ...annotations, description: rule.description, runbook: rule.runbookUrl || '' },
+      annotations: {
+        ...annotations,
+        description: rule.description,
+        runbook: rule.runbookUrl || '',
+      },
       firedAt: new Date(),
     };
 

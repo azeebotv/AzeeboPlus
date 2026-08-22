@@ -24,7 +24,13 @@ export interface CostBudget {
 }
 
 export const COST_BUDGETS: CostBudget[] = [
-  { name: 'monthly-infrastructure', budgetType: 'COST', timeUnit: 'MONTHLY', limit: 5000, unit: 'USD' },
+  {
+    name: 'monthly-infrastructure',
+    budgetType: 'COST',
+    timeUnit: 'MONTHLY',
+    limit: 5000,
+    unit: 'USD',
+  },
   { name: 'monthly-compute', budgetType: 'COST', timeUnit: 'MONTHLY', limit: 3000, unit: 'USD' },
   { name: 'monthly-database', budgetType: 'COST', timeUnit: 'MONTHLY', limit: 2000, unit: 'USD' },
   { name: 'monthly-storage', budgetType: 'COST', timeUnit: 'MONTHLY', limit: 500, unit: 'USD' },
@@ -79,9 +85,25 @@ export const COST_ALLOCATION_TAGS = {
 
 // Cost optimization recommendations
 export const COST_OPTIMIZATION_RULES = [
-  { service: 'ECS', rule: 'Right-size CPU/memory based on 70th percentile utilization', savings: '20-40%' },
-  { service: 'RDS', rule: 'Enable auto-scaling and use reserved instances for baseline', savings: '30-50%' },
+  {
+    service: 'ECS',
+    rule: 'Right-size CPU/memory based on 70th percentile utilization',
+    savings: '20-40%',
+  },
+  {
+    service: 'RDS',
+    rule: 'Enable auto-scaling and use reserved instances for baseline',
+    savings: '30-50%',
+  },
   { service: 'ElastiCache', rule: 'Use reserved nodes for production caches', savings: '30-40%' },
-  { service: 'S3', rule: 'Enable lifecycle policies to move old data to Glacier', savings: '40-70%' },
-  { service: 'CloudFront', rule: 'Enable Origin Shield and optimize cache policies', savings: '15-25%' },
+  {
+    service: 'S3',
+    rule: 'Enable lifecycle policies to move old data to Glacier',
+    savings: '40-70%',
+  },
+  {
+    service: 'CloudFront',
+    rule: 'Enable Origin Shield and optimize cache policies',
+    savings: '15-25%',
+  },
 ] as const;

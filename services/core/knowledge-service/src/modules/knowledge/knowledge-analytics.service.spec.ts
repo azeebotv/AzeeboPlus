@@ -122,12 +122,7 @@ describe('KnowledgeAnalyticsService', () => {
       const spoiler = service.calculateSpoilerMetrics(100, 100, 0);
       const crossFormat = service.calculateCrossFormatMetrics(20, 15, 45);
 
-      const report = service.generateHealthReport(
-        coverage,
-        distribution,
-        spoiler,
-        crossFormat,
-      );
+      const report = service.generateHealthReport(coverage, distribution, spoiler, crossFormat);
 
       expect(report.healthScore).toBe(100);
       expect(report.recommendations).toHaveLength(0);
@@ -140,12 +135,7 @@ describe('KnowledgeAnalyticsService', () => {
       const spoiler = service.calculateSpoilerMetrics(100, 80, 20);
       const crossFormat = service.calculateCrossFormatMetrics(20, 2, 4);
 
-      const report = service.generateHealthReport(
-        coverage,
-        distribution,
-        spoiler,
-        crossFormat,
-      );
+      const report = service.generateHealthReport(coverage, distribution, spoiler, crossFormat);
 
       expect(report.healthScore).toBeLessThan(80);
       expect(report.recommendations.length).toBeGreaterThan(0);
@@ -157,12 +147,7 @@ describe('KnowledgeAnalyticsService', () => {
       const spoiler = service.calculateSpoilerMetrics(100, 95, 5);
       const crossFormat = service.calculateCrossFormatMetrics(10, 5, 15);
 
-      const report = service.generateHealthReport(
-        coverage,
-        distribution,
-        spoiler,
-        crossFormat,
-      );
+      const report = service.generateHealthReport(coverage, distribution, spoiler, crossFormat);
 
       expect(report.coverage).toEqual(coverage);
       expect(report.distribution).toEqual(distribution);
@@ -227,9 +212,9 @@ describe('KnowledgeAnalyticsService', () => {
 
       const result = service.analyzeKnowledgeGaps(grants, 100);
 
-      const high = result.filter(r => r.gapSeverity === 'high');
-      const medium = result.filter(r => r.gapSeverity === 'medium');
-      const low = result.filter(r => r.gapSeverity === 'low');
+      const high = result.filter((r) => r.gapSeverity === 'high');
+      const medium = result.filter((r) => r.gapSeverity === 'medium');
+      const low = result.filter((r) => r.gapSeverity === 'low');
 
       expect(high.length).toBe(1);
       expect(medium.length).toBe(2);

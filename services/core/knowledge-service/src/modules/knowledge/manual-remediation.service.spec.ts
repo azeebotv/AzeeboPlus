@@ -1,8 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  ManualRemediationService,
-  RemediationRequest,
-} from './manual-remediation.service';
+import { ManualRemediationService } from './manual-remediation.service';
 
 describe('ManualRemediationService', () => {
   let service: ManualRemediationService;
@@ -69,9 +66,9 @@ describe('ManualRemediationService', () => {
     });
 
     it('should throw for non-existent request', async () => {
-      await expect(
-        service.approveRequest('non-existent', 'approver-1'),
-      ).rejects.toThrow('Request not found');
+      await expect(service.approveRequest('non-existent', 'approver-1')).rejects.toThrow(
+        'Request not found'
+      );
     });
 
     it('should throw for already approved request', async () => {
@@ -86,9 +83,9 @@ describe('ManualRemediationService', () => {
 
       await service.approveRequest(created.id, 'approver-1');
 
-      await expect(
-        service.approveRequest(created.id, 'approver-2'),
-      ).rejects.toThrow('Cannot approve request in approved status');
+      await expect(service.approveRequest(created.id, 'approver-2')).rejects.toThrow(
+        'Cannot approve request in approved status'
+      );
     });
   });
 
@@ -113,9 +110,7 @@ describe('ManualRemediationService', () => {
     });
 
     it('should throw for non-existent request', async () => {
-      await expect(service.executeRequest('non-existent')).rejects.toThrow(
-        'Request not found',
-      );
+      await expect(service.executeRequest('non-existent')).rejects.toThrow('Request not found');
     });
 
     it('should throw for non-approved request', async () => {
@@ -129,7 +124,7 @@ describe('ManualRemediationService', () => {
       });
 
       await expect(service.executeRequest(created.id)).rejects.toThrow(
-        'Cannot execute request in pending status',
+        'Cannot execute request in pending status'
       );
     });
 
@@ -247,19 +242,15 @@ describe('ManualRemediationService', () => {
         justification: 'Test',
       });
 
-      const rejected = await service.rejectRequest(
-        created.id,
-        'reviewer-1',
-        'Not needed',
-      );
+      const rejected = await service.rejectRequest(created.id, 'reviewer-1', 'Not needed');
 
       expect(rejected.status).toBe('rejected');
     });
 
     it('should throw for non-existent request', async () => {
-      await expect(
-        service.rejectRequest('non-existent', 'reviewer-1', 'Reason'),
-      ).rejects.toThrow('Request not found');
+      await expect(service.rejectRequest('non-existent', 'reviewer-1', 'Reason')).rejects.toThrow(
+        'Request not found'
+      );
     });
 
     it('should throw for already approved request', async () => {
@@ -274,9 +265,9 @@ describe('ManualRemediationService', () => {
 
       await service.approveRequest(created.id, 'approver-1');
 
-      await expect(
-        service.rejectRequest(created.id, 'reviewer-1', 'Reason'),
-      ).rejects.toThrow('Cannot reject request in approved status');
+      await expect(service.rejectRequest(created.id, 'reviewer-1', 'Reason')).rejects.toThrow(
+        'Cannot reject request in approved status'
+      );
     });
   });
 
@@ -380,7 +371,7 @@ describe('ManualRemediationService', () => {
       });
 
       // Ensure second request has a later timestamp
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       const second = await service.createRequest({
         action: 'grant_knowledge',

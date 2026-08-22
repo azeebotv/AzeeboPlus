@@ -9,9 +9,9 @@ export interface CDNConfig {
   staticAssetDomains: string[];
   cacheHeaders: {
     staticAssets: string; // e.g., 'public, max-age=31536000, immutable'
-    htmlPages: string;   // e.g., 'no-cache, no-store, must-revalidate'
+    htmlPages: string; // e.g., 'no-cache, no-store, must-revalidate'
     apiResponses: string; // e.g., 'private, max-age=0'
-    images: string;       // e.g., 'public, max-age=86400'
+    images: string; // e.g., 'public, max-age=86400'
   };
 }
 
@@ -35,7 +35,10 @@ export const CDN_CONFIG: CDNConfig = {
  * Verify CDN configuration is correct
  * Run this in CI to catch misconfigurations
  */
-export function verifyCDNConfig(config: CDNConfig = CDN_CONFIG): { passed: boolean; errors: string[] } {
+export function verifyCDNConfig(config: CDNConfig = CDN_CONFIG): {
+  passed: boolean;
+  errors: string[];
+} {
   const errors: string[] = [];
 
   if (!config.baseUrl.startsWith('https://')) {
@@ -46,7 +49,10 @@ export function verifyCDNConfig(config: CDNConfig = CDN_CONFIG): { passed: boole
     errors.push('Static assets should have long cache TTL');
   }
 
-  if (config.cacheHeaders.htmlPages.includes('max-age=') && !config.cacheHeaders.htmlPages.includes('max-age=0')) {
+  if (
+    config.cacheHeaders.htmlPages.includes('max-age=') &&
+    !config.cacheHeaders.htmlPages.includes('max-age=0')
+  ) {
     errors.push('HTML pages should not be cached at CDN level');
   }
 

@@ -18,26 +18,26 @@ describe('Security Headers', () => {
   describe('API Gateway Headers', () => {
     it('should include all required security headers', () => {
       // Verify security headers are defined
-      expect(SECURITY_HEADERS.filter(h => h.required).length).toBeGreaterThan(0);
+      expect(SECURITY_HEADERS.filter((h) => h.required).length).toBeGreaterThan(0);
     });
 
     it('should set X-Content-Type-Options to nosniff', () => {
-      const header = SECURITY_HEADERS.find(h => h.header === 'X-Content-Type-Options');
+      const header = SECURITY_HEADERS.find((h) => h.header === 'X-Content-Type-Options');
       expect(header?.expectedValue).toBe('nosniff');
     });
 
     it('should set X-Frame-Options to DENY', () => {
-      const header = SECURITY_HEADERS.find(h => h.header === 'X-Frame-Options');
+      const header = SECURITY_HEADERS.find((h) => h.header === 'X-Frame-Options');
       expect(header?.expectedValue).toBe('DENY');
     });
 
     it('should include Content-Security-Policy', () => {
-      const header = SECURITY_HEADERS.find(h => h.header === 'Content-Security-Policy');
+      const header = SECURITY_HEADERS.find((h) => h.header === 'Content-Security-Policy');
       expect(header?.required).toBe(true);
     });
 
     it('should include HSTS header', () => {
-      const header = SECURITY_HEADERS.find(h => h.header === 'Strict-Transport-Security');
+      const header = SECURITY_HEADERS.find((h) => h.header === 'Strict-Transport-Security');
       expect(header?.required).toBe(true);
     });
   });

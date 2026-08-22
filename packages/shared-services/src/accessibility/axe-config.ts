@@ -13,11 +13,7 @@ export const AXE_CONFIG = {
   // Tags to check
   tags: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'],
   // Elements to exclude from scanning (e.g., third-party widgets)
-  exclude: [
-    '[data-axe-exclude]',
-    '.third-party-widget',
-    '[aria-hidden="true"]',
-  ],
+  exclude: ['[data-axe-exclude]', '.third-party-widget', '[aria-hidden="true"]'],
 };
 
 // Accessibility rules mapped to new-todo items

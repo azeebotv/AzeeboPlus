@@ -131,7 +131,9 @@ export default function AiProvenancePage() {
         ) : error ? (
           <div className="text-center py-12 text-destructive">{error}</div>
         ) : records.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">No AI provenance records found</div>
+          <div className="text-center py-12 text-muted-foreground">
+            No AI provenance records found
+          </div>
         ) : (
           <div className="grid gap-4">
             {records.map((record) => (
@@ -146,7 +148,9 @@ export default function AiProvenancePage() {
                       </p>
                     </div>
                   </div>
-                  <span className={`text-xs px-2 py-1 rounded-full ${statusColors[record.clearanceStatus]}`}>
+                  <span
+                    className={`text-xs px-2 py-1 rounded-full ${statusColors[record.clearanceStatus]}`}
+                  >
                     {record.clearanceStatus.replace('_', ' ')}
                   </span>
                 </div>
@@ -154,24 +158,35 @@ export default function AiProvenancePage() {
                 {/* Restrictions */}
                 <div className="flex flex-wrap gap-2 mb-4">
                   {record.attributionRequired && (
-                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Attribution Required</span>
+                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                      Attribution Required
+                    </span>
                   )}
                   {record.talentRestriction && (
-                    <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">Talent Restricted</span>
+                    <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                      Talent Restricted
+                    </span>
                   )}
                   {record.voiceRestriction && (
-                    <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">Voice Restricted</span>
+                    <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                      Voice Restricted
+                    </span>
                   )}
                   {record.likenessRestriction && (
-                    <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">Likeness Restricted</span>
+                    <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
+                      Likeness Restricted
+                    </span>
                   )}
                   {record.vendorIndependenceVerified && (
-                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Vendor Independent ✓</span>
+                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                      Vendor Independent ✓
+                    </span>
                   )}
                 </div>
 
                 {/* Actions */}
-                {record.clearanceStatus === 'pending' || record.clearanceStatus === 'needs_review' ? (
+                {record.clearanceStatus === 'pending' ||
+                record.clearanceStatus === 'needs_review' ? (
                   <div className="flex gap-3 mt-4 pt-4 border-t">
                     <button
                       onClick={() => handleClearance(record.id, 'approved', 'Approved by admin')}
@@ -180,7 +195,9 @@ export default function AiProvenancePage() {
                       Approve
                     </button>
                     <button
-                      onClick={() => handleClearance(record.id, 'rejected', 'Rejected - needs revision')}
+                      onClick={() =>
+                        handleClearance(record.id, 'rejected', 'Rejected - needs revision')
+                      }
                       className="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2 rounded-lg"
                     >
                       Reject

@@ -4,16 +4,16 @@
  */
 
 export interface WebVitalsThresholds {
-  LCP: { good: number; poor: number };   // Largest Contentful Paint
-  FID: { good: number; poor: number };   // First Input Delay
-  CLS: { good: number; poor: number };   // Cumulative Layout Shift
-  TTFB: { good: number; poor: number };  // Time to First Byte
-  FCP: { good: number; poor: number };   // First Contentful Paint
-  INP: { good: number; poor: number };   // Interaction to Next Paint
+  LCP: { good: number; poor: number }; // Largest Contentful Paint
+  FID: { good: number; poor: number }; // First Input Delay
+  CLS: { good: number; poor: number }; // Cumulative Layout Shift
+  TTFB: { good: number; poor: number }; // Time to First Byte
+  FCP: { good: number; poor: number }; // First Contentful Paint
+  INP: { good: number; poor: number }; // Interaction to Next Paint
 }
 
 export const WEB_VITALS_THRESHOLDS: WebVitalsThresholds = {
-  LCP: { good: 2500, poor: 4000 },  // milliseconds
+  LCP: { good: 2500, poor: 4000 }, // milliseconds
   FID: { good: 100, poor: 300 },
   CLS: { good: 0.1, poor: 0.25 },
   TTFB: { good: 800, poor: 1800 },

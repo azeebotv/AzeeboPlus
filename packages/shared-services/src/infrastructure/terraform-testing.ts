@@ -12,13 +12,55 @@ export interface TerraformTestConfig {
 }
 
 export const TERRAFORM_TEST_MATRIX: TerraformTestConfig[] = [
-  { directory: 'infrastructure/terraform/ecs-cluster', validate: true, plan: true, costEstimate: true, securityScan: true },
-  { directory: 'infrastructure/terraform/rds', validate: true, plan: true, costEstimate: true, securityScan: true },
-  { directory: 'infrastructure/terraform/vpc', validate: true, plan: true, costEstimate: false, securityScan: true },
-  { directory: 'infrastructure/terraform/elasticache', validate: true, plan: true, costEstimate: true, securityScan: true },
-  { directory: 'infrastructure/terraform/s3', validate: true, plan: true, costEstimate: false, securityScan: true },
-  { directory: 'infrastructure/terraform/cloudfront', validate: true, plan: true, costEstimate: true, securityScan: false },
-  { directory: 'infrastructure/terraform/ecs-services', validate: true, plan: true, costEstimate: true, securityScan: true },
+  {
+    directory: 'infrastructure/terraform/ecs-cluster',
+    validate: true,
+    plan: true,
+    costEstimate: true,
+    securityScan: true,
+  },
+  {
+    directory: 'infrastructure/terraform/rds',
+    validate: true,
+    plan: true,
+    costEstimate: true,
+    securityScan: true,
+  },
+  {
+    directory: 'infrastructure/terraform/vpc',
+    validate: true,
+    plan: true,
+    costEstimate: false,
+    securityScan: true,
+  },
+  {
+    directory: 'infrastructure/terraform/elasticache',
+    validate: true,
+    plan: true,
+    costEstimate: true,
+    securityScan: true,
+  },
+  {
+    directory: 'infrastructure/terraform/s3',
+    validate: true,
+    plan: true,
+    costEstimate: false,
+    securityScan: true,
+  },
+  {
+    directory: 'infrastructure/terraform/cloudfront',
+    validate: true,
+    plan: true,
+    costEstimate: true,
+    securityScan: false,
+  },
+  {
+    directory: 'infrastructure/terraform/ecs-services',
+    validate: true,
+    plan: true,
+    costEstimate: true,
+    securityScan: true,
+  },
 ];
 
 export const TERRAFORM_QUALITY_GATES = {
@@ -50,17 +92,10 @@ export const INFRA_CI_CONFIG = {
   on: { pull_request: { paths: ['infrastructure/**'] } },
   jobs: {
     validate: {
-      steps: [
-        'terraform init -backend=false',
-        'terraform validate',
-        'terraform fmt -check',
-      ],
+      steps: ['terraform init -backend=false', 'terraform validate', 'terraform fmt -check'],
     },
     securityScan: {
-      steps: [
-        'pip install checkov',
-        'checkov -d . --framework terraform',
-      ],
+      steps: ['pip install checkov', 'checkov -d . --framework terraform'],
     },
     costEstimate: {
       steps: [

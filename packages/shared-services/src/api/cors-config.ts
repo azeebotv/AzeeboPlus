@@ -4,7 +4,10 @@
  */
 
 export interface CorsConfig {
-  origin: string | string[] | ((origin: string, callback: (err: Error | null, allow?: boolean) => void) => void);
+  origin:
+    | string
+    | string[]
+    | ((origin: string, callback: (err: Error | null, allow?: boolean) => void) => void);
   credentials: boolean;
   methods: string[];
   allowedHeaders: string[];
@@ -23,11 +26,7 @@ const ALLOWED_ORIGINS = [
 
 // Allow localhost in development/staging only
 if (process.env.NODE_ENV !== 'production') {
-  ALLOWED_ORIGINS.push(
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://127.0.0.1:3000',
-  );
+  ALLOWED_ORIGINS.push('http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000');
 }
 
 export const CORS_CONFIG: CorsConfig = {

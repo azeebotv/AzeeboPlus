@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { createHash } from 'crypto';
+import type { AuditPrismaClient } from '../types';
 
 // ============================================================================
 // Immutable Audit Log — Database-Backed Implementation (TAA §56)
@@ -36,16 +37,16 @@ export interface ImmutableAuditEntry {
 @Injectable()
 export class ImmutableAuditDbService {
   private readonly logger = new Logger(ImmutableAuditDbService.name);
-  private prisma: any; // PrismaClient — injected or created dynamically
+  private prisma: AuditPrismaClient | undefined;
 
-  constructor(prismaClient?: any) {
+  constructor(prismaClient?: AuditPrismaClient) {
     this.prisma = prismaClient;
   }
 
   /**
    * Set the Prisma client (for dependency injection)
    */
-  setPrismaClient(client: any): void {
+  setPrismaClient(client: AuditPrismaClient): void {
     this.prisma = client;
   }
 
@@ -153,7 +154,7 @@ export class ImmutableAuditDbService {
     until?: Date;
     limit?: number;
   }): Promise<ImmutableAuditEntry[]> {
-    const where: any = {};
+    const where: Record<string, unknown> = {};
 
     if (filters?.actorId) where.actorId = filters.actorId;
     if (filters?.action) where.action = filters.action;
@@ -251,7 +252,7 @@ export class ImmutableAuditDbService {
   /**
    * Map database row to entry interface
    */
-  private mapRowToEntry(row: any): ImmutableAuditEntry {
+  private mapRowToEntry(row: Record<string, unknown>): ImmutableAuditEntry {
     return {
       id: row.id,
       sequenceNumber: row.sequenceNumber,

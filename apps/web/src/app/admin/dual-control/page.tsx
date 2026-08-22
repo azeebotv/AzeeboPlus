@@ -11,7 +11,12 @@ import { apiFetch } from '@/lib/api';
 
 interface DualControlAction {
   id: string;
-  actionType: 'large_refund' | 'manual_entitlement' | 'bulk_operation' | 'data_export' | 'account_modification';
+  actionType:
+    | 'large_refund'
+    | 'manual_entitlement'
+    | 'bulk_operation'
+    | 'data_export'
+    | 'account_modification';
   description: string;
   requestedBy: string;
   requestedByName: string;
@@ -165,7 +170,9 @@ export default function DualControlPage() {
         ) : error ? (
           <div className="text-center py-12 text-destructive">{error}</div>
         ) : actions.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">No dual-control actions found</div>
+          <div className="text-center py-12 text-muted-foreground">
+            No dual-control actions found
+          </div>
         ) : (
           <div className="grid gap-4">
             {actions.map((action) => (
@@ -174,13 +181,16 @@ export default function DualControlPage() {
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <span>{actionTypeLabels[action.actionType]}</span>
-                      <span className={`text-xs px-2 py-1 rounded-full ${statusColors[action.status]}`}>
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full ${statusColors[action.status]}`}
+                      >
                         {action.status.replace('_', ' ')}
                       </span>
                     </div>
                     <h3 className="font-semibold text-foreground">{action.description}</h3>
                     <p className="text-sm text-muted-foreground">
-                      Requested by {action.requestedByName} • {new Date(action.requestedAt).toLocaleString()}
+                      Requested by {action.requestedByName} •{' '}
+                      {new Date(action.requestedAt).toLocaleString()}
                     </p>
                   </div>
                   {action.amount && (
@@ -196,9 +206,11 @@ export default function DualControlPage() {
                 <div className="bg-muted/50 rounded-lg p-4 mb-4">
                   <div className="flex items-center gap-4 text-sm">
                     <div className="flex items-center gap-2">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                        action.firstApprover ? 'bg-green-600 text-white' : 'bg-gray-300'
-                      }`}>
+                      <div
+                        className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                          action.firstApprover ? 'bg-green-600 text-white' : 'bg-gray-300'
+                        }`}
+                      >
                         {action.firstApprover ? '✓' : '1'}
                       </div>
                       <span className="text-muted-foreground">First Approval</span>
@@ -208,10 +220,15 @@ export default function DualControlPage() {
                     </div>
                     <div className="flex-1 h-px bg-border" />
                     <div className="flex items-center gap-2">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                        action.secondApprover ? 'bg-green-600 text-white' :
-                        action.status === 'first_approved' ? 'bg-yellow-500 text-white' : 'bg-gray-300'
-                      }`}>
+                      <div
+                        className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                          action.secondApprover
+                            ? 'bg-green-600 text-white'
+                            : action.status === 'first_approved'
+                              ? 'bg-yellow-500 text-white'
+                              : 'bg-gray-300'
+                        }`}
+                      >
                         {action.secondApprover ? '✓' : '2'}
                       </div>
                       <span className="text-muted-foreground">Second Approval</span>
@@ -241,7 +258,9 @@ export default function DualControlPage() {
                 )}
 
                 {action.rejectionReason && (
-                  <p className="text-sm text-destructive mt-3">Rejection reason: {action.rejectionReason}</p>
+                  <p className="text-sm text-destructive mt-3">
+                    Rejection reason: {action.rejectionReason}
+                  </p>
                 )}
               </div>
             ))}

@@ -79,15 +79,15 @@ export class KnowledgeAnalyticsService {
     totalKnowledgeUnits: number,
     grantedKnowledgeUnits: number,
     usersWithKnowledge: number,
-    totalUsers: number,
+    _totalUsers: number
   ): KnowledgeCoverageMetrics {
-    const coveragePercent = totalKnowledgeUnits > 0
-      ? (grantedKnowledgeUnits / totalKnowledgeUnits) * 100
-      : 0;
+    const coveragePercent =
+      totalKnowledgeUnits > 0 ? (grantedKnowledgeUnits / totalKnowledgeUnits) * 100 : 0;
 
-    const avgKnowledgePerUser = usersWithKnowledge > 0
-      ? (grantedKnowledgeUnits * totalKnowledgeUnits) / usersWithKnowledge // Simplified
-      : 0;
+    const avgKnowledgePerUser =
+      usersWithKnowledge > 0
+        ? (grantedKnowledgeUnits * totalKnowledgeUnits) / usersWithKnowledge // Simplified
+        : 0;
 
     return {
       totalKnowledgeUnits,
@@ -101,9 +101,7 @@ export class KnowledgeAnalyticsService {
   /**
    * Calculate grant distribution metrics
    */
-  calculateDistributionMetrics(
-    userGrantCounts: number[],
-  ): GrantDistributionMetrics {
+  calculateDistributionMetrics(userGrantCounts: number[]): GrantDistributionMetrics {
     if (userGrantCounts.length === 0) {
       return {
         giniCoefficient: 0,
@@ -118,8 +116,8 @@ export class KnowledgeAnalyticsService {
     const median = sorted[Math.floor(n / 2)];
     const total = sorted.reduce((a, b) => a + b, 0);
 
-    const belowMedian = sorted.filter(c => c < median).length;
-    const aboveMedian = sorted.filter(c => c >= median).length;
+    const belowMedian = sorted.filter((c) => c < median).length;
+    const aboveMedian = sorted.filter((c) => c >= median).length;
 
     const topTenPercentIndex = Math.floor(n * 0.1);
     const topTenPercentSum = sorted.slice(topTenPercentIndex).reduce((a, b) => a + b, 0);
@@ -133,9 +131,7 @@ export class KnowledgeAnalyticsService {
       }
     }
     const mean = total / n;
-    const giniCoefficient = mean > 0
-      ? sumAbsoluteDifferences / (2 * n * n * mean)
-      : 0;
+    const giniCoefficient = mean > 0 ? sumAbsoluteDifferences / (2 * n * n * mean) : 0;
 
     return {
       giniCoefficient: Math.round(giniCoefficient * 1000) / 1000,
@@ -151,11 +147,10 @@ export class KnowledgeAnalyticsService {
   calculateSpoilerMetrics(
     totalSpoilerContent: number,
     correctlyFiltered: number,
-    spoilerLeaks: number,
+    spoilerLeaks: number
   ): SpoilerProtectionMetrics {
-    const effectivenessPercent = totalSpoilerContent > 0
-      ? (correctlyFiltered / totalSpoilerContent) * 100
-      : 100;
+    const effectivenessPercent =
+      totalSpoilerContent > 0 ? (correctlyFiltered / totalSpoilerContent) * 100 : 100;
 
     return {
       totalSpoilerContent,
@@ -171,15 +166,13 @@ export class KnowledgeAnalyticsService {
   calculateCrossFormatMetrics(
     totalEquivalenceSets: number,
     multiFormatSets: number,
-    totalFormatsInSets: number,
+    totalFormatsInSets: number
   ): CrossFormatMetrics {
-    const coveragePercent = totalEquivalenceSets > 0
-      ? (multiFormatSets / totalEquivalenceSets) * 100
-      : 0;
+    const coveragePercent =
+      totalEquivalenceSets > 0 ? (multiFormatSets / totalEquivalenceSets) * 100 : 0;
 
-    const avgFormatsPerSet = totalEquivalenceSets > 0
-      ? totalFormatsInSets / totalEquivalenceSets
-      : 0;
+    const avgFormatsPerSet =
+      totalEquivalenceSets > 0 ? totalFormatsInSets / totalEquivalenceSets : 0;
 
     return {
       totalEquivalenceSets,
@@ -196,7 +189,7 @@ export class KnowledgeAnalyticsService {
     coverage: KnowledgeCoverageMetrics,
     distribution: GrantDistributionMetrics,
     spoilerProtection: SpoilerProtectionMetrics,
-    crossFormat: CrossFormatMetrics,
+    crossFormat: CrossFormatMetrics
   ): KnowledgeHealthReport {
     const recommendations: string[] = [];
 
@@ -246,7 +239,7 @@ export class KnowledgeAnalyticsService {
    */
   analyzeKnowledgeGaps(
     knowledgeUnitGrants: Map<string, number>, // unitId → grant count
-    totalUsers: number,
+    totalUsers: number
   ): Array<{
     knowledgeUnitId: string;
     grantCount: number;
@@ -261,9 +254,7 @@ export class KnowledgeAnalyticsService {
     }> = [];
 
     for (const [unitId, grantCount] of knowledgeUnitGrants) {
-      const coveragePercent = totalUsers > 0
-        ? (grantCount / totalUsers) * 100
-        : 0;
+      const coveragePercent = totalUsers > 0 ? (grantCount / totalUsers) * 100 : 0;
 
       let gapSeverity: 'low' | 'medium' | 'high';
       if (coveragePercent < 10) gapSeverity = 'high';

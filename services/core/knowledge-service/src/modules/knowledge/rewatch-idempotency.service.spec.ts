@@ -95,7 +95,10 @@ describe('RewatchIdempotencyService', () => {
     });
 
     it('should reject when exceeding max watch count', () => {
-      const enabledService = new RewatchIdempotencyService({ grantKnowledgeOnRewatch: true, maxWatchCount: 10 });
+      const enabledService = new RewatchIdempotencyService({
+        grantKnowledgeOnRewatch: true,
+        maxWatchCount: 10,
+      });
 
       const result = enabledService.shouldGrantKnowledge('user-1', 'content-1', 11);
 

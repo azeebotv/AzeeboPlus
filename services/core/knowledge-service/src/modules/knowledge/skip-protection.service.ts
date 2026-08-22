@@ -55,18 +55,18 @@ export class SkipProtectionService {
   detectSkipping(
     userId: string,
     contentId: string,
-   viewingEvents: Array<{
+    viewingEvents: Array<{
       timestamp: Date;
       position: number;
       action: 'play' | 'pause' | 'seek' | 'skip';
       skipDistance?: number;
-    }>,
+    }>
   ): SkipDetectionResult {
     let skipPattern: SkipDetectionResult['skipPattern'] = 'none';
     let confidence = 0;
 
     // Analyze viewing events for skip patterns
-    const seekEvents = viewingEvents.filter(e => e.action === 'seek');
+    const seekEvents = viewingEvents.filter((e) => e.action === 'seek');
     const totalEvents = viewingEvents.length;
 
     if (totalEvents === 0) {
@@ -81,14 +81,14 @@ export class SkipProtectionService {
     }
 
     // Check for fast forward pattern
-    const fastForwards = seekEvents.filter(e => (e.skipDistance || 0) > 0);
+    const fastForwards = seekEvents.filter((e) => (e.skipDistance || 0) > 0);
     if (fastForwards.length > 2) {
       skipPattern = 'fast_forward';
       confidence = Math.min(fastForwards.length / totalEvents, 1);
     }
 
     // Check for jump ahead pattern
-    const largeJumps = seekEvents.filter(e => Math.abs(e.skipDistance || 0) > 60);
+    const largeJumps = seekEvents.filter((e) => Math.abs(e.skipDistance || 0) > 60);
     if (largeJumps.length > 1) {
       skipPattern = 'jump_ahead';
       confidence = Math.max(confidence, Math.min(largeJumps.length / totalEvents, 1));
@@ -138,7 +138,7 @@ export class SkipProtectionService {
   isValidConsumption(
     watchPercent: number,
     totalDuration: number,
-    watchedDuration: number,
+    watchedDuration: number
   ): boolean {
     // Must watch minimum percentage
     if (watchPercent < this.config.minWatchPercent) {
@@ -159,7 +159,7 @@ export class SkipProtectionService {
   canUnlockKnowledge(
     userId: string,
     contentId: string,
-    watchPercent: number,
+    watchPercent: number
   ): {
     allowed: boolean;
     reason?: string;

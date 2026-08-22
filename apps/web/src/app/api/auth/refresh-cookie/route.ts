@@ -45,6 +45,9 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch {
-    return NextResponse.json({ success: false, error: 'Failed to refresh cookie' }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: 'Failed to refresh cookie' },
+      { status: 500 }
+    );
   }
 }

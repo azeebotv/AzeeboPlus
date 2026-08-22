@@ -29,7 +29,9 @@ export default function CreatorMonetizationPage() {
   const fetchSettings = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await apiFetch<MonetizationSettings>('/api/v1/creator/monetization/settings');
+      const response = await apiFetch<MonetizationSettings>(
+        '/api/v1/creator/monetization/settings'
+      );
       if (response.success && response.data) {
         setSettings(response.data);
       }
@@ -78,9 +80,7 @@ export default function CreatorMonetizationPage() {
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground">Monetization Settings</h1>
-          <p className="text-muted-foreground mt-2">
-            Configure how you earn from your content
-          </p>
+          <p className="text-muted-foreground mt-2">Configure how you earn from your content</p>
         </div>
 
         {error && (
@@ -99,7 +99,11 @@ export default function CreatorMonetizationPage() {
                   <input
                     type="checkbox"
                     checked={settings.tipsEnabled}
-                    onChange={(e) => setSettings((prev) => prev ? { ...prev, tipsEnabled: e.target.checked } : prev)}
+                    onChange={(e) =>
+                      setSettings((prev) =>
+                        prev ? { ...prev, tipsEnabled: e.target.checked } : prev
+                      )
+                    }
                     className="sr-only peer"
                   />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -109,11 +113,17 @@ export default function CreatorMonetizationPage() {
               {settings.tipsEnabled && (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm text-muted-foreground mb-1">Minimum tip amount (NGN)</label>
+                    <label className="block text-sm text-muted-foreground mb-1">
+                      Minimum tip amount (NGN)
+                    </label>
                     <input
                       type="number"
                       value={settings.minimumTipAmount}
-                      onChange={(e) => setSettings((prev) => prev ? { ...prev, minimumTipAmount: Number(e.target.value) } : prev)}
+                      onChange={(e) =>
+                        setSettings((prev) =>
+                          prev ? { ...prev, minimumTipAmount: Number(e.target.value) } : prev
+                        )
+                      }
                       className="w-full px-4 py-2 bg-background border rounded-lg text-foreground"
                       min={100}
                     />
@@ -130,7 +140,11 @@ export default function CreatorMonetizationPage() {
                   <input
                     type="checkbox"
                     checked={settings.subscriptionsEnabled}
-                    onChange={(e) => setSettings((prev) => prev ? { ...prev, subscriptionsEnabled: e.target.checked } : prev)}
+                    onChange={(e) =>
+                      setSettings((prev) =>
+                        prev ? { ...prev, subscriptionsEnabled: e.target.checked } : prev
+                      )
+                    }
                     className="sr-only peer"
                   />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -140,20 +154,37 @@ export default function CreatorMonetizationPage() {
               {settings.subscriptionsEnabled && (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm text-muted-foreground mb-1">Monthly price (NGN)</label>
+                    <label className="block text-sm text-muted-foreground mb-1">
+                      Monthly price (NGN)
+                    </label>
                     <input
                       type="number"
                       value={settings.subscriptionPrice}
-                      onChange={(e) => setSettings((prev) => prev ? { ...prev, subscriptionPrice: Number(e.target.value) } : prev)}
+                      onChange={(e) =>
+                        setSettings((prev) =>
+                          prev ? { ...prev, subscriptionPrice: Number(e.target.value) } : prev
+                        )
+                      }
                       className="w-full px-4 py-2 bg-background border rounded-lg text-foreground"
                       min={500}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-muted-foreground mb-1">Benefits (one per line)</label>
+                    <label className="block text-sm text-muted-foreground mb-1">
+                      Benefits (one per line)
+                    </label>
                     <textarea
                       value={settings.subscriptionBenefits.join('\n')}
-                      onChange={(e) => setSettings((prev) => prev ? { ...prev, subscriptionBenefits: e.target.value.split('\n').filter(Boolean) } : prev)}
+                      onChange={(e) =>
+                        setSettings((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                subscriptionBenefits: e.target.value.split('\n').filter(Boolean),
+                              }
+                            : prev
+                        )
+                      }
                       className="w-full px-4 py-2 bg-background border rounded-lg text-foreground h-24 resize-none"
                       placeholder="Early access&#10;Exclusive content&#10;Behind the scenes"
                     />
@@ -170,7 +201,11 @@ export default function CreatorMonetizationPage() {
                   <input
                     type="checkbox"
                     checked={settings.sponsorshipEnabled}
-                    onChange={(e) => setSettings((prev) => prev ? { ...prev, sponsorshipEnabled: e.target.checked } : prev)}
+                    onChange={(e) =>
+                      setSettings((prev) =>
+                        prev ? { ...prev, sponsorshipEnabled: e.target.checked } : prev
+                      )
+                    }
                     className="sr-only peer"
                   />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -179,7 +214,8 @@ export default function CreatorMonetizationPage() {
 
               {settings.sponsorshipEnabled && (
                 <p className="text-sm text-muted-foreground">
-                  Sponsorship requests will be reviewed by our team. You&apos;ll be notified when brands want to work with you.
+                  Sponsorship requests will be reviewed by our team. You&apos;ll be notified when
+                  brands want to work with you.
                 </p>
               )}
             </div>

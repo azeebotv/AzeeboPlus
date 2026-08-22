@@ -82,5 +82,5 @@ export const ALERTING_RULES: AlertRule[] = [
 ];
 
 export function getAlertRulesBySeverity(severity: AlertRule['severity']): AlertRule[] {
-  return ALERTING_RULES.filter(rule => rule.severity === severity);
+  return ALERTING_RULES.filter((rule) => rule.severity === severity);
 }

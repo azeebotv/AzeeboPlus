@@ -6,6 +6,9 @@
  * when ALLOWED_ORIGINS is broadly configured.
  */
 
+import { Logger } from '@nestjs/common';
+
+const logger = new Logger('WebSocketOrigin');
 const WEBSOCKET_ORIGIN_ALLOWLIST_KEY = 'WEBSOCKET_ORIGIN_ALLOWLIST';
 
 /**
@@ -24,8 +27,8 @@ export function getWebSocketOrigins(): string[] {
   // Fall back to general ALLOWED_ORIGINS but log a warning
   const general = process.env.ALLOWED_ORIGINS;
   if (general) {
-    console.warn(
-      `[WebSocket] WEBSOCKET_ORIGIN_ALLOWLIST not set — falling back to ALLOWED_ORIGINS. ` +
+    logger.warn(
+      `WEBSOCKET_ORIGIN_ALLOWLIST not set — falling back to ALLOWED_ORIGINS. ` +
         `Consider setting a stricter allowlist for WebSocket connections.`
     );
     return general

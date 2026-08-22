@@ -6,6 +6,7 @@ import {
   Optional,
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
+import type { AuditRedisClient } from '../types';
 
 // ============================================================================
 // Break-Glass Access System (TAA §86)
@@ -70,19 +71,19 @@ const USER_SESSIONS_PREFIX = 'break_glass:user:';
 @Injectable()
 export class BreakGlassService {
   private readonly logger = new Logger(BreakGlassService.name);
-  private redis: any; // Redis client — optional injection
+  private redis: AuditRedisClient | undefined;
 
   // In-memory fallback (used when no Redis)
   private static inMemorySessions = new Map<string, BreakGlassSession>();
 
-  constructor(@Optional() redisClient?: any) {
+  constructor(@Optional() redisClient?: AuditRedisClient) {
     this.redis = redisClient;
   }
 
   /**
    * Set the Redis client (for dependency injection)
    */
-  setRedisClient(client: any): void {
+  setRedisClient(client: AuditRedisClient): void {
     this.redis = client;
   }
 
