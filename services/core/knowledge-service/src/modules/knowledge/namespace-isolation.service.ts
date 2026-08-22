@@ -72,7 +72,7 @@ export class NamespaceIsolationService {
    * Get namespace by name
    */
   async getNamespaceByName(name: string): Promise<Namespace | undefined> {
-    return Array.from(this.namespaceStore.values()).find(n => n.name === name);
+    return Array.from(this.namespaceStore.values()).find((n) => n.name === name);
   }
 
   /**
@@ -80,7 +80,7 @@ export class NamespaceIsolationService {
    */
   canAccessAcrossNamespaces(
     sourceNamespaceId: string,
-    targetNamespaceId: string,
+    targetNamespaceId: string
   ): {
     allowed: boolean;
     reason: string;
@@ -119,7 +119,9 @@ export class NamespaceIsolationService {
   /**
    * Create cross-namespace mapping
    */
-  async createCrossNamespaceMapping(mapping: Omit<CrossNamespaceMapping, 'id'>): Promise<CrossNamespaceMapping> {
+  async createCrossNamespaceMapping(
+    mapping: Omit<CrossNamespaceMapping, 'id'>
+  ): Promise<CrossNamespaceMapping> {
     const newMapping: CrossNamespaceMapping = {
       ...mapping,
       id: this.generateId(),
@@ -127,7 +129,9 @@ export class NamespaceIsolationService {
 
     this.mappingStore.set(newMapping.id, newMapping);
 
-    this.logger.log(`Cross-namespace mapping created: ${mapping.sourceNamespaceId} → ${mapping.targetNamespaceId}`);
+    this.logger.log(
+      `Cross-namespace mapping created: ${mapping.sourceNamespaceId} → ${mapping.targetNamespaceId}`
+    );
 
     return newMapping;
   }
@@ -137,7 +141,8 @@ export class NamespaceIsolationService {
    */
   async getMappingsForNamespace(namespaceId: string): Promise<CrossNamespaceMapping[]> {
     return Array.from(this.mappingStore.values()).filter(
-      m => (m.sourceNamespaceId === namespaceId || m.targetNamespaceId === namespaceId) && m.isActive,
+      (m) =>
+        (m.sourceNamespaceId === namespaceId || m.targetNamespaceId === namespaceId) && m.isActive
     );
   }
 
@@ -147,16 +152,16 @@ export class NamespaceIsolationService {
   async getMappedKnowledgeUnits(
     sourceNamespaceId: string,
     targetNamespaceId: string,
-    knowledgeUnitIds: string[],
+    knowledgeUnitIds: string[]
   ): Promise<{
     mapped: Array<{ sourceId: string; targetId: string }>;
     unmapped: string[];
   }> {
     const mapping = Array.from(this.mappingStore.values()).find(
-      m =>
+      (m) =>
         m.sourceNamespaceId === sourceNamespaceId &&
         m.targetNamespaceId === targetNamespaceId &&
-        m.isActive,
+        m.isActive
     );
 
     if (!mapping) {
@@ -164,10 +169,10 @@ export class NamespaceIsolationService {
     }
 
     const mapped = knowledgeUnitIds
-      .filter(id => mapping.knowledgeUnitIds.includes(id))
-      .map(id => ({ sourceId: id, targetId: id })); // In production, would have actual target IDs
+      .filter((id) => mapping.knowledgeUnitIds.includes(id))
+      .map((id) => ({ sourceId: id, targetId: id })); // In production, would have actual target IDs
 
-    const unmapped = knowledgeUnitIds.filter(id => !mapping.knowledgeUnitIds.includes(id));
+    const unmapped = knowledgeUnitIds.filter((id) => !mapping.knowledgeUnitIds.includes(id));
 
     return { mapped, unmapped };
   }
@@ -177,7 +182,7 @@ export class NamespaceIsolationService {
    */
   validateNamespaceBoundary(
     knowledgeUnitNamespaceId: string,
-    accessNamespaceId: string,
+    accessNamespaceId: string
   ): {
     valid: boolean;
     reason: string;
@@ -195,10 +200,10 @@ export class NamespaceIsolationService {
 
     // Check if mapping exists
     const mapping = Array.from(this.mappingStore.values()).find(
-      m =>
+      (m) =>
         m.sourceNamespaceId === knowledgeUnitNamespaceId &&
         m.targetNamespaceId === accessNamespaceId &&
-        m.isActive,
+        m.isActive
     );
 
     if (!mapping) {

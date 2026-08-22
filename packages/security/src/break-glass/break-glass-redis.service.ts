@@ -1,5 +1,6 @@
 import { Injectable, Logger, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
+import type { AuditRedisClient } from '../types';
 
 // ============================================================================
 // Break-Glass Access System — Redis-Backed Implementation (TAA §86)
@@ -55,16 +56,16 @@ const USER_SESSIONS_PREFIX = 'break_glass:user:';
 @Injectable()
 export class BreakGlassRedisService {
   private readonly logger = new Logger(BreakGlassRedisService.name);
-  private redis: any; // Redis client — injected
+  private redis: AuditRedisClient | undefined;
 
-  constructor(redisClient?: any) {
+  constructor(redisClient?: AuditRedisClient) {
     this.redis = redisClient;
   }
 
   /**
    * Set the Redis client (for dependency injection)
    */
-  setRedisClient(client: any): void {
+  setRedisClient(client: AuditRedisClient): void {
     this.redis = client;
   }
 

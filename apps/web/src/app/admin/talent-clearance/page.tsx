@@ -196,13 +196,27 @@ export default function TalentClearancePage() {
             <table className="w-full">
               <thead className="bg-muted/50">
                 <tr>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Type</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Talent</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Content</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Scope</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Status</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Expires</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Actions</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
+                    Type
+                  </th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
+                    Talent
+                  </th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
+                    Content
+                  </th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
+                    Scope
+                  </th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
+                    Status
+                  </th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
+                    Expires
+                  </th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -211,11 +225,19 @@ export default function TalentClearancePage() {
                     <td className="px-4 py-3">
                       <span title={clearance.type}>{typeIcons[clearance.type]}</span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-foreground font-medium">{clearance.talentName}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">{clearance.contentTitle}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground capitalize">{clearance.clearanceScope}</td>
+                    <td className="px-4 py-3 text-sm text-foreground font-medium">
+                      {clearance.talentName}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">
+                      {clearance.contentTitle}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground capitalize">
+                      {clearance.clearanceScope}
+                    </td>
                     <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-1 rounded-full ${statusColors[clearance.status]}`}>
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full ${statusColors[clearance.status]}`}
+                      >
                         {clearance.status}
                       </span>
                     </td>

@@ -1,7 +1,13 @@
 // ApiClient – assembled from domain-specific modules
 // Re-exports everything for backward compatibility with `import { api, apiFetch, ... } from '../lib/api'`
 
-import { resolvedApiUrl, RETRY_CONFIG, gatewayPath, generateCorrelationId, generateIdempotencyKey } from './base';
+import {
+  resolvedApiUrl,
+  RETRY_CONFIG,
+  gatewayPath,
+  generateCorrelationId,
+  generateIdempotencyKey,
+} from './base';
 import type { RetryOptions } from './base';
 import { createAuthMethods } from './auth';
 import { createUserMethods } from './user';

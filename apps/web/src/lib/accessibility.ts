@@ -77,10 +77,7 @@ export function restoreFocus(): void {
 /**
  * Announce a message to screen readers via a live region
  */
-export function announce(
-  message: string,
-  priority: 'polite' | 'assertive' = 'polite',
-): void {
+export function announce(message: string, priority: 'polite' | 'assertive' = 'polite'): void {
   if (typeof document === 'undefined') return;
 
   const existing = document.getElementById(`sr-announce-${priority}`);
@@ -128,7 +125,12 @@ export function registerKeyboardShortcuts(shortcuts: KeyboardShortcut[]): () => 
       const shiftMatch = shortcut.shift ? e.shiftKey : !e.shiftKey;
       const altMatch = shortcut.alt ? e.altKey : !e.altKey;
 
-      if (e.key.toLowerCase() === shortcut.key.toLowerCase() && ctrlMatch && shiftMatch && altMatch) {
+      if (
+        e.key.toLowerCase() === shortcut.key.toLowerCase() &&
+        ctrlMatch &&
+        shiftMatch &&
+        altMatch
+      ) {
         e.preventDefault();
         shortcut.action();
         return;
@@ -153,7 +155,7 @@ export function getRelativeLuminance(hex: string): number {
   if (!rgb) return 0;
 
   const [r, g, b] = [rgb.r / 255, rgb.g / 255, rgb.b / 255].map((c) =>
-    c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4),
+    c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
   );
 
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
@@ -179,7 +181,7 @@ export function getContrastRatio(color1: string, color2: string): number {
 export function meetsContrastAA(
   foreground: string,
   background: string,
-  isLargeText = false,
+  isLargeText = false
 ): boolean {
   const ratio = getContrastRatio(foreground, background);
   return isLargeText ? ratio >= 3 : ratio >= 4.5;
@@ -207,7 +209,7 @@ export function meetsTouchTargetSize(
   width: number,
   height: number,
   minWidth = 44,
-  minHeight = 44,
+  minHeight = 44
 ): boolean {
   return width >= minWidth && height >= minHeight;
 }

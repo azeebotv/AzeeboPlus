@@ -132,15 +132,19 @@ export interface ActionItem {
   status: 'pending' | 'in_progress' | 'completed';
 }
 
-export const SEVERITY_RESPONSE: Record<IncidentSeverity, {
-  response: string;
-  commanderRequired: boolean;
-  bridgeRequired: boolean;
-  executiveNotification: boolean;
-  postmortemRequired: boolean;
-}> = {
+export const SEVERITY_RESPONSE: Record<
+  IncidentSeverity,
+  {
+    response: string;
+    commanderRequired: boolean;
+    bridgeRequired: boolean;
+    executiveNotification: boolean;
+    postmortemRequired: boolean;
+  }
+> = {
   'SEV-1': {
-    response: 'Immediate commander, bridge, rollback/containment, executive notification, mandatory postmortem',
+    response:
+      'Immediate commander, bridge, rollback/containment, executive notification, mandatory postmortem',
     commanderRequired: true,
     bridgeRequired: true,
     executiveNotification: true,
@@ -290,7 +294,8 @@ export class IncidentService {
 
     return {
       totalIncidents: incidents.length,
-      activeIncidents: incidents.filter((i) => i.status === 'open' || i.status === 'mitigated').length,
+      activeIncidents: incidents.filter((i) => i.status === 'open' || i.status === 'mitigated')
+        .length,
       bySeverity: {
         'SEV-1': incidents.filter((i) => i.severity === 'SEV-1').length,
         'SEV-2': incidents.filter((i) => i.severity === 'SEV-2').length,
@@ -342,10 +347,7 @@ export class IncidentService {
    */
   getPendingPostmortems(): Incident[] {
     return Array.from(this.incidents.values()).filter(
-      (i) =>
-        i.status === 'resolved' &&
-        !i.postmortemCompleted &&
-        i.severity in ['SEV-1', 'SEV-2']
+      (i) => i.status === 'resolved' && !i.postmortemCompleted && i.severity in ['SEV-1', 'SEV-2']
     );
   }
 

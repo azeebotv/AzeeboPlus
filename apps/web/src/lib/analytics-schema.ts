@@ -51,7 +51,7 @@ export function createVersionedEvent(
   options: {
     userId?: string;
     sessionId?: string;
-  } = {},
+  } = {}
 ): VersionedEvent {
   return {
     schemaVersion: ANALYTICS_SCHEMA_VERSION,
@@ -112,32 +112,20 @@ export function minimizePii(properties: Record<string, unknown>): Record<string,
       // Hash emails
       sanitized = sanitized.replace(
         PII_PATTERNS[0].pattern,
-        (email) => `[email:${simpleHash(email)}]`,
+        (email) => `[email:${simpleHash(email)}]`
       );
 
       // Redact phone numbers
-      sanitized = sanitized.replace(
-        PII_PATTERNS[1].pattern,
-        '[phone:redacted]',
-      );
+      sanitized = sanitized.replace(PII_PATTERNS[1].pattern, '[phone:redacted]');
 
       // Redact SSN
-      sanitized = sanitized.replace(
-        PII_PATTERNS[2].pattern,
-        '[ssn:redacted]',
-      );
+      sanitized = sanitized.replace(PII_PATTERNS[2].pattern, '[ssn:redacted]');
 
       // Redact credit card numbers
-      sanitized = sanitized.replace(
-        PII_PATTERNS[3].pattern,
-        '[cc:redacted]',
-      );
+      sanitized = sanitized.replace(PII_PATTERNS[3].pattern, '[cc:redacted]');
 
       // Redact IP addresses
-      sanitized = sanitized.replace(
-        PII_PATTERNS[4].pattern,
-        '[ip:redacted]',
-      );
+      sanitized = sanitized.replace(PII_PATTERNS[4].pattern, '[ip:redacted]');
 
       minimized[key] = sanitized;
     } else if (typeof value === 'object' && value !== null) {
@@ -179,7 +167,7 @@ export interface ConsentState {
  */
 export function filterByConsent<T extends { name: string }>(
   event: T,
-  consent: ConsentState,
+  consent: ConsentState
 ): T | null {
   // Essential events are always sent
   if (event.name.startsWith('auth.') || event.name.startsWith('error.')) {

@@ -89,7 +89,10 @@ export default function CreatorUploadPage() {
           description: formData.description,
           universeId: formData.universeId,
           contentType: formData.contentType,
-          tags: formData.tags.split(',').map((t) => t.trim()).filter(Boolean),
+          tags: formData.tags
+            .split(',')
+            .map((t) => t.trim())
+            .filter(Boolean),
           status: 'draft',
           scheduledPublishAt: formData.scheduledPublishAt,
         }),
@@ -185,16 +188,24 @@ export default function CreatorUploadPage() {
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground">Upload Content</h1>
-          <p className="text-muted-foreground mt-2">
-            Share your content with the world
-          </p>
+          <p className="text-muted-foreground mt-2">Share your content with the world</p>
         </div>
 
         {uploadState.status === 'published' ? (
           <div className="bg-card rounded-xl border p-8 text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <svg
+                className="w-8 h-8 text-green-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
             </div>
             <h2 className="text-xl font-bold text-foreground mb-2">Published!</h2>
@@ -209,8 +220,18 @@ export default function CreatorUploadPage() {
         ) : uploadState.status === 'error' ? (
           <div className="bg-card rounded-xl border p-8 text-center">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-8 h-8 text-red-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </div>
             <h2 className="text-xl font-bold text-foreground mb-2">Upload Failed</h2>
@@ -240,7 +261,11 @@ export default function CreatorUploadPage() {
                   {previewUrl && (
                     <div className="w-24 h-24 rounded-lg overflow-hidden bg-muted">
                       {selectedFile.type.startsWith('image/') ? (
-                        <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                        <img
+                          src={previewUrl}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
                       ) : selectedFile.type.startsWith('video/') ? (
                         <video src={previewUrl} className="w-full h-full object-cover" />
                       ) : null}
@@ -258,8 +283,18 @@ export default function CreatorUploadPage() {
                   onClick={() => fileInputRef.current?.click()}
                   className="w-full border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-blue-500 transition-colors"
                 >
-                  <svg className="w-12 h-12 text-muted-foreground mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  <svg
+                    className="w-12 h-12 text-muted-foreground mx-auto mb-2"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                    />
                   </svg>
                   <p className="text-foreground font-medium">Click to select file</p>
                   <p className="text-sm text-muted-foreground mt-1">Video, audio, or image</p>
@@ -281,10 +316,14 @@ export default function CreatorUploadPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Description</label>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Description
+                </label>
                 <textarea
                   value={formData.description}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, description: e.target.value }))
+                  }
                   className="w-full px-4 py-2 bg-background border rounded-lg text-foreground h-24 resize-none"
                   placeholder="Describe your content"
                 />
@@ -351,7 +390,12 @@ export default function CreatorUploadPage() {
               ) : (
                 <button
                   onClick={handleUpload}
-                  disabled={!selectedFile || !formData.title || !formData.universeId || uploadState.status !== 'idle'}
+                  disabled={
+                    !selectedFile ||
+                    !formData.title ||
+                    !formData.universeId ||
+                    uploadState.status !== 'idle'
+                  }
                   className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-muted disabled:text-muted-foreground text-white py-3 px-6 rounded-xl font-medium transition-colors"
                 >
                   {uploadState.status === 'idle' ? 'Upload' : 'Uploading...'}

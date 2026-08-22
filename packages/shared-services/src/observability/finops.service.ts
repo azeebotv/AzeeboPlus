@@ -150,7 +150,8 @@ export class FinOpsService {
       forecastedAmount: Math.round(forecastedAmount * 100) / 100,
       actualAmount: Math.round(totalCost * 100) / 100,
       budgetAmount: budget.amount,
-      variancePercent: Math.round(((forecastedAmount - budget.amount) / budget.amount) * 100 * 100) / 100,
+      variancePercent:
+        Math.round(((forecastedAmount - budget.amount) / budget.amount) * 100 * 100) / 100,
     };
   }
 
@@ -165,9 +166,9 @@ export class FinOpsService {
       costPerMAU: Math.round((totalCost / 75000) * 100) / 100,
       costPerWEP: Math.round((totalCost / 50000) * 100) / 100,
       costPerViewingHour: Math.round((totalCost / 100000) * 100) / 100,
-      cdnCostPerViewingHour: Math.round((totalCost * 0.3 / 100000) * 100) / 100,
-      transcodeCostPerMinute: Math.round((totalCost * 0.1 / 50000) * 100) / 100,
-      storageCostPerContentHour: Math.round((totalCost * 0.2 / 10000) * 100) / 100,
+      cdnCostPerViewingHour: Math.round(((totalCost * 0.3) / 100000) * 100) / 100,
+      transcodeCostPerMinute: Math.round(((totalCost * 0.1) / 50000) * 100) / 100,
+      storageCostPerContentHour: Math.round(((totalCost * 0.2) / 10000) * 100) / 100,
       costPer1KAPIRequests: Math.round((totalCost / 10000000) * 1000 * 100) / 100,
     };
   }
@@ -178,14 +179,12 @@ export class FinOpsService {
   private checkForAnomaly(record: CostRecord): void {
     const recentRecords = this.records.filter(
       (r) =>
-        r.service === record.service &&
-        r.date >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        r.service === record.service && r.date >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
     );
 
     if (recentRecords.length < 3) return;
 
-    const avgCost =
-      recentRecords.reduce((sum, r) => sum + r.amount, 0) / recentRecords.length;
+    const avgCost = recentRecords.reduce((sum, r) => sum + r.amount, 0) / recentRecords.length;
     const variance = ((record.amount - avgCost) / avgCost) * 100;
 
     if (Math.abs(variance) > 50) {
@@ -229,7 +228,8 @@ export class FinOpsService {
 
     for (const record of this.records) {
       costByService[record.service] = (costByService[record.service] || 0) + record.amount;
-      costByEnvironment[record.environment] = (costByEnvironment[record.environment] || 0) + record.amount;
+      costByEnvironment[record.environment] =
+        (costByEnvironment[record.environment] || 0) + record.amount;
     }
 
     return {

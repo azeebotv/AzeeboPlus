@@ -188,12 +188,7 @@ export class SLOMetricsService {
   /**
    * Record a measurement for an SLO
    */
-  recordMeasurement(
-    sloId: string,
-    value: number,
-    totalSamples: number,
-    goodSamples: number
-  ): void {
+  recordMeasurement(sloId: string, value: number, totalSamples: number, goodSamples: number): void {
     const measurements = this.measurements.get(sloId) || [];
     measurements.push({
       sloId,
@@ -252,14 +247,13 @@ export class SLOMetricsService {
       currentValue = windowMeasurements[windowMeasurements.length - 1]?.value || 100;
     }
 
-    const isMet = slo.type === 'latency'
-      ? currentValue <= slo.target
-      : currentValue >= slo.target;
+    const isMet = slo.type === 'latency' ? currentValue <= slo.target : currentValue >= slo.target;
 
     // Calculate error budget
-    const errorBudgetConsumed = slo.type === 'latency'
-      ? Math.max(0, currentValue - slo.target) / slo.target * 100
-      : Math.max(0, slo.target - currentValue) / (100 - slo.target) * 100;
+    const errorBudgetConsumed =
+      slo.type === 'latency'
+        ? (Math.max(0, currentValue - slo.target) / slo.target) * 100
+        : (Math.max(0, slo.target - currentValue) / (100 - slo.target)) * 100;
     const errorBudgetRemaining = Math.max(0, 100 - errorBudgetConsumed);
 
     // Calculate burn rate
@@ -301,8 +295,10 @@ export class SLOMetricsService {
 
     if (recentMeasurements.length === 0) return 1;
 
-    const recentValue = recentMeasurements.reduce((sum, m) => sum + m.value, 0) / recentMeasurements.length;
-    const windowValue = windowMeasurements.reduce((sum, m) => sum + m.value, 0) / windowMeasurements.length;
+    const recentValue =
+      recentMeasurements.reduce((sum, m) => sum + m.value, 0) / recentMeasurements.length;
+    const windowValue =
+      windowMeasurements.reduce((sum, m) => sum + m.value, 0) / windowMeasurements.length;
 
     if (windowValue === 0) return 1;
 
@@ -322,7 +318,11 @@ export class SLOMetricsService {
     // Check burn rate thresholds
     if (status.burnRate > 14.4) {
       // 2% budget consumed in 1 hour
-      this.createAlert(sloId, 'critical', `SLO ${slo.name} burn rate critical: ${status.burnRate}x`);
+      this.createAlert(
+        sloId,
+        'critical',
+        `SLO ${slo.name} burn rate critical: ${status.burnRate}x`
+      );
     } else if (status.burnRate > 6) {
       // 5% budget consumed in 6 hours
       this.createAlert(sloId, 'warning', `SLO ${slo.name} burn rate warning: ${status.burnRate}x`);
@@ -332,18 +332,18 @@ export class SLOMetricsService {
     if (status.errorBudgetRemaining <= 0) {
       this.createAlert(sloId, 'critical', `SLO ${slo.name} error budget exhausted`);
     } else if (status.errorBudgetRemaining < 10) {
-      this.createAlert(sloId, 'warning', `SLO ${slo.name} error budget low: ${status.errorBudgetRemaining}% remaining`);
+      this.createAlert(
+        sloId,
+        'warning',
+        `SLO ${slo.name} error budget low: ${status.errorBudgetRemaining}% remaining`
+      );
     }
   }
 
   /**
    * Create an alert
    */
-  private createAlert(
-    sloId: string,
-    severity: SLOAlert['severity'],
-    message: string
-  ): void {
+  private createAlert(sloId: string, severity: SLOAlert['severity'], message: string): void {
     const status = this.getSLOStatus(sloId);
     if (!status) return;
 

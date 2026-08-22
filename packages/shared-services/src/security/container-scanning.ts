@@ -37,8 +37,5 @@ export const DOCKERFILE_SECURITY_RULES = {
 export const IMAGE_NAMING = {
   pattern: '{registry}/{service}:{version}-{sha}',
   example: 'ghcr.io/azeebo/{service}:v1.2.3-abc1234',
-  registries: [
-    'ghcr.io/azeebo',
-    'docker.io/azeebo',
-  ],
+  registries: ['ghcr.io/azeebo', 'docker.io/azeebo'],
 } as const;

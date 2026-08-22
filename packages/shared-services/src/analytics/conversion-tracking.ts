@@ -55,12 +55,7 @@ export const CONVERSION_FUNNELS = {
 export const BUSINESS_KPIS = {
   northStar: { name: 'Weekly Active Creators', metric: 'unique_creators_active_7d' },
   acquisition: {
-    metrics: [
-      'signups_daily',
-      'signup_to_verified_rate',
-      'app_installs_daily',
-      'referral_rate',
-    ],
+    metrics: ['signups_daily', 'signup_to_verified_rate', 'app_installs_daily', 'referral_rate'],
   },
   activation: {
     metrics: [

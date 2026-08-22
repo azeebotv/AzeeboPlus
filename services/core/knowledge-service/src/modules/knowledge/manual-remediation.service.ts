@@ -71,7 +71,9 @@ export class ManualRemediationService {
   /**
    * Create remediation request
    */
-  async createRequest(request: Omit<RemediationRequest, 'id' | 'status' | 'createdAt'>): Promise<RemediationRequest> {
+  async createRequest(
+    request: Omit<RemediationRequest, 'id' | 'status' | 'createdAt'>
+  ): Promise<RemediationRequest> {
     const newRequest: RemediationRequest = {
       ...request,
       id: this.generateId(),
@@ -81,7 +83,9 @@ export class ManualRemediationService {
 
     this.requestStore.set(newRequest.id, newRequest);
 
-    this.logger.log(`Remediation request created: ${newRequest.action} by ${newRequest.requestedBy}`);
+    this.logger.log(
+      `Remediation request created: ${newRequest.action} by ${newRequest.requestedBy}`
+    );
 
     return newRequest;
   }
@@ -134,7 +138,11 @@ export class ManualRemediationService {
   /**
    * Reject remediation request
    */
-  async rejectRequest(requestId: string, rejectedBy: string, reason: string): Promise<RemediationRequest> {
+  async rejectRequest(
+    requestId: string,
+    rejectedBy: string,
+    reason: string
+  ): Promise<RemediationRequest> {
     const request = this.requestStore.get(requestId);
     if (!request) {
       throw new Error(`Request not found: ${requestId}`);
@@ -206,7 +214,7 @@ export class ManualRemediationService {
    */
   private async executeGrantKnowledge(
     request: RemediationRequest,
-    result: RemediationResult,
+    result: RemediationResult
   ): Promise<void> {
     for (const userId of request.targetUserIds) {
       for (const unitId of request.targetKnowledgeUnitIds) {
@@ -227,7 +235,7 @@ export class ManualRemediationService {
    */
   private async executeRevokeKnowledge(
     request: RemediationRequest,
-    result: RemediationResult,
+    result: RemediationResult
   ): Promise<void> {
     for (const userId of request.targetUserIds) {
       for (const unitId of request.targetKnowledgeUnitIds) {
@@ -248,7 +256,7 @@ export class ManualRemediationService {
    */
   private async executeMergeUnits(
     request: RemediationRequest,
-    result: RemediationResult,
+    result: RemediationResult
   ): Promise<void> {
     const targetUnitId = request.parameters.targetUnitId as string;
     result.changes.push({
@@ -264,7 +272,7 @@ export class ManualRemediationService {
    */
   private async executeSplitUnit(
     request: RemediationRequest,
-    result: RemediationResult,
+    result: RemediationResult
   ): Promise<void> {
     const newUnitIds = request.parameters.newUnitIds as string[];
     result.changes.push({
@@ -280,7 +288,7 @@ export class ManualRemediationService {
    */
   private async executeCorrectMetadata(
     request: RemediationRequest,
-    result: RemediationResult,
+    result: RemediationResult
   ): Promise<void> {
     for (const unitId of request.targetKnowledgeUnitIds) {
       result.changes.push({
@@ -297,7 +305,7 @@ export class ManualRemediationService {
    */
   private async executeBulkGrant(
     request: RemediationRequest,
-    result: RemediationResult,
+    result: RemediationResult
   ): Promise<void> {
     const unitIds = request.parameters.unitIds as string[];
     for (const userId of request.targetUserIds) {
@@ -319,7 +327,7 @@ export class ManualRemediationService {
    */
   private async executeBulkRevoke(
     request: RemediationRequest,
-    result: RemediationResult,
+    result: RemediationResult
   ): Promise<void> {
     const unitIds = request.parameters.unitIds as string[];
     for (const userId of request.targetUserIds) {
@@ -341,7 +349,7 @@ export class ManualRemediationService {
    */
   private async executeRebuildProjection(
     request: RemediationRequest,
-    result: RemediationResult,
+    result: RemediationResult
   ): Promise<void> {
     for (const userId of request.targetUserIds) {
       result.changes.push({
@@ -364,7 +372,7 @@ export class ManualRemediationService {
    * Get all pending requests
    */
   async getPendingRequests(): Promise<RemediationRequest[]> {
-    return Array.from(this.requestStore.values()).filter(r => r.status === 'pending');
+    return Array.from(this.requestStore.values()).filter((r) => r.status === 'pending');
   }
 
   /**
@@ -372,7 +380,7 @@ export class ManualRemediationService {
    */
   async getUserRequestHistory(userId: string): Promise<RemediationRequest[]> {
     return Array.from(this.requestStore.values())
-      .filter(r => r.requestedBy === userId)
+      .filter((r) => r.requestedBy === userId)
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 

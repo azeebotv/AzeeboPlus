@@ -374,7 +374,7 @@ const IDEMPOTENT_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 /** Build standard headers for a request */
 export function buildRequestHeaders(
   options: RequestInit,
-  token: string | null,
+  token: string | null
 ): Record<string, string> {
   const isFormData = options.body instanceof FormData;
   const headers: Record<string, string> = {
@@ -533,11 +533,7 @@ export async function apiFetch<T>(
         }
 
         // Don't retry on other client errors (4xx except 408)
-        if (
-          response.status >= 400 &&
-          response.status < 500 &&
-          response.status !== 408
-        ) {
+        if (response.status >= 400 && response.status < 500 && response.status !== 408) {
           return {
             success: false,
             type: data.type,
@@ -755,14 +751,9 @@ function deriveProblemTitle(status: number): string {
  * Assert that a ProblemDetails response represents a specific problem type.
  * Throws if the problem type does not match.
  */
-export function assertProblemType(
-  problem: ProblemDetails,
-  expectedType: string,
-): void {
+export function assertProblemType(problem: ProblemDetails, expectedType: string): void {
   if (problem.type !== expectedType && !problem.type.endsWith(`/${expectedType}`)) {
-    throw new Error(
-      `Expected problem type "${expectedType}" but got "${problem.type}"`,
-    );
+    throw new Error(`Expected problem type "${expectedType}" but got "${problem.type}"`);
   }
 }
 

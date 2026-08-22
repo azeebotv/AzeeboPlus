@@ -92,7 +92,9 @@ export default function CreatorEarningsPage() {
       <div className="max-w-5xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground">Earnings Dashboard</h1>
-          <p className="text-muted-foreground mt-2">Track your earnings, payouts, and performance</p>
+          <p className="text-muted-foreground mt-2">
+            Track your earnings, payouts, and performance
+          </p>
         </div>
 
         {/* Summary cards */}
@@ -115,8 +117,11 @@ export default function CreatorEarningsPage() {
               <p className="text-2xl font-bold text-foreground">
                 {summary.currentMonth.toLocaleString()} {summary.currency}
               </p>
-              <p className={`text-xs ${summary.growthPercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {summary.growthPercent >= 0 ? '↑' : '↓'} {Math.abs(summary.growthPercent)}% vs last month
+              <p
+                className={`text-xs ${summary.growthPercent >= 0 ? 'text-green-600' : 'text-red-600'}`}
+              >
+                {summary.growthPercent >= 0 ? '↑' : '↓'} {Math.abs(summary.growthPercent)}% vs last
+                month
               </p>
             </div>
             <div className="bg-card rounded-xl p-4 border">
@@ -157,10 +162,18 @@ export default function CreatorEarningsPage() {
                 <table className="w-full">
                   <thead className="bg-muted/50">
                     <tr>
-                      <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Type</th>
-                      <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Description</th>
-                      <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Amount</th>
-                      <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Date</th>
+                      <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
+                        Type
+                      </th>
+                      <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
+                        Description
+                      </th>
+                      <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
+                        Amount
+                      </th>
+                      <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
+                        Date
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
@@ -172,7 +185,9 @@ export default function CreatorEarningsPage() {
                         <td className="px-4 py-3 text-sm text-foreground">
                           {entry.description}
                           {entry.contentTitle && (
-                            <span className="text-muted-foreground ml-1">• {entry.contentTitle}</span>
+                            <span className="text-muted-foreground ml-1">
+                              • {entry.contentTitle}
+                            </span>
                           )}
                         </td>
                         <td className="px-4 py-3 text-sm font-medium text-green-600">
@@ -202,10 +217,18 @@ export default function CreatorEarningsPage() {
                   <table className="w-full">
                     <thead className="bg-muted/50">
                       <tr>
-                        <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Amount</th>
-                        <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Status</th>
-                        <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Requested</th>
-                        <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Completed</th>
+                        <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
+                          Amount
+                        </th>
+                        <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
+                          Status
+                        </th>
+                        <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
+                          Requested
+                        </th>
+                        <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
+                          Completed
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
@@ -215,7 +238,9 @@ export default function CreatorEarningsPage() {
                             {payout.amount.toLocaleString()} {payout.currency}
                           </td>
                           <td className="px-4 py-3">
-                            <span className={`text-xs px-2 py-1 rounded-full ${statusColors[payout.status]}`}>
+                            <span
+                              className={`text-xs px-2 py-1 rounded-full ${statusColors[payout.status]}`}
+                            >
                               {payout.status}
                             </span>
                           </td>
@@ -223,7 +248,9 @@ export default function CreatorEarningsPage() {
                             {new Date(payout.requestedAt).toLocaleDateString()}
                           </td>
                           <td className="px-4 py-3 text-sm text-muted-foreground">
-                            {payout.completedAt ? new Date(payout.completedAt).toLocaleDateString() : '—'}
+                            {payout.completedAt
+                              ? new Date(payout.completedAt).toLocaleDateString()
+                              : '—'}
                           </td>
                         </tr>
                       ))}

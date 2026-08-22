@@ -5,7 +5,7 @@ import { Injectable, Logger } from '@nestjs/common';
 //
 // Tracks partial consumption of content to enable:
 // - Resume functionality
-   // - Knowledge unlock at specific checkpoints
+// - Knowledge unlock at specific checkpoints
 // - Progress-based recommendations
 // ============================================================================
 
@@ -58,14 +58,13 @@ export class PartialConsumptionService {
     userId: string,
     contentId: string,
     positionSeconds: number,
-    totalDurationSeconds: number,
+    totalDurationSeconds: number
   ): Promise<ConsumptionProgress> {
     const key = `${userId}:${contentId}`;
     const existing = this.progressStore.get(key);
 
-    const progressPercent = totalDurationSeconds > 0
-      ? Math.min(100, (positionSeconds / totalDurationSeconds) * 100)
-      : 0;
+    const progressPercent =
+      totalDurationSeconds > 0 ? Math.min(100, (positionSeconds / totalDurationSeconds) * 100) : 0;
 
     const progress: ConsumptionProgress = {
       userId,
@@ -110,14 +109,14 @@ export class PartialConsumptionService {
    * Get all progress for a user
    */
   async getUserProgress(userId: string): Promise<ConsumptionProgress[]> {
-    return Array.from(this.progressStore.values()).filter(p => p.userId === userId);
+    return Array.from(this.progressStore.values()).filter((p) => p.userId === userId);
   }
 
   /**
    * Get all progress for content
    */
   async getContentProgress(contentId: string): Promise<ConsumptionProgress[]> {
-    return Array.from(this.progressStore.values()).filter(p => p.contentId === contentId);
+    return Array.from(this.progressStore.values()).filter((p) => p.contentId === contentId);
   }
 
   /**
@@ -148,7 +147,10 @@ export class PartialConsumptionService {
   /**
    * Register checkpoints for content
    */
-  async registerCheckpoints(contentId: string, checkpoints: Omit<ConsumptionCheckpoint, 'id'>[]): Promise<ConsumptionCheckpoint[]> {
+  async registerCheckpoints(
+    contentId: string,
+    checkpoints: Omit<ConsumptionCheckpoint, 'id'>[]
+  ): Promise<ConsumptionCheckpoint[]> {
     const registered = checkpoints.map((cp, index) => ({
       ...cp,
       id: `${contentId}-checkpoint-${index}`,
@@ -174,7 +176,7 @@ export class PartialConsumptionService {
     if (!progress) return [];
 
     const allCheckpoints = await this.getCheckpoints(contentId);
-    return allCheckpoints.filter(cp => progress.checkpointsReached.includes(cp.id));
+    return allCheckpoints.filter((cp) => progress.checkpointsReached.includes(cp.id));
   }
 
   /**

@@ -230,7 +230,11 @@ describe('NamespaceIsolationService', () => {
         isActive: true,
       });
 
-      const result = await service.getMappedKnowledgeUnits(nsA.id, nsB.id, ['ku-1', 'ku-2', 'ku-3']);
+      const result = await service.getMappedKnowledgeUnits(nsA.id, nsB.id, [
+        'ku-1',
+        'ku-2',
+        'ku-3',
+      ]);
 
       expect(result.mapped.length).toBe(2);
       expect(result.unmapped).toEqual(['ku-3']);

@@ -42,7 +42,11 @@ const liveDescribe = RUN ? describe : describe.skip;
 
 liveDescribe('BreakGlassService — real Redis persistence', () => {
   let redis: Redis;
-  let service: any;
+  let service: {
+    activate: (req: unknown) => Promise<unknown>;
+    deactivate: (id: string) => Promise<void>;
+    getSession: (id: string) => Promise<unknown | null>;
+  };
 
   beforeAll(async () => {
     // Dynamic import to avoid module resolution issues
@@ -234,8 +238,12 @@ liveDescribe('BreakGlassService — real Redis persistence', () => {
 // ============================================================================
 
 liveDescribe('DualControlService — real PostgreSQL persistence', () => {
-  let prisma: any;
-  let service: any;
+  let prisma: unknown;
+  let service: {
+    createRequest: (action: string, by: string, type: string, id: string) => Promise<unknown>;
+    approveRequest: (id: string, by: string) => Promise<unknown>;
+    getPendingRequests: () => Promise<unknown[]>;
+  };
 
   beforeAll(async () => {
     process.env.DATABASE_URL = DB_URL;
@@ -434,8 +442,12 @@ liveDescribe('DualControlService — real PostgreSQL persistence', () => {
 // ============================================================================
 
 liveDescribe('ImmutableAuditService — real PostgreSQL persistence', () => {
-  let prisma: any;
-  let service: any;
+  let prisma: unknown;
+  let service: {
+    logEntry: (entry: unknown) => Promise<unknown>;
+    getEntries: () => Promise<unknown[]>;
+    verifyIntegrity: () => Promise<{ valid: boolean; errors: string[] }>;
+  };
 
   beforeAll(async () => {
     process.env.DATABASE_URL = DB_URL;
@@ -682,12 +694,12 @@ liveDescribe('ImmutableAuditService — real PostgreSQL persistence', () => {
 
     // All sequence numbers should be unique and sequential
     const sequenceNumbers = entries
-      .map((e: any) => e.sequenceNumber)
+      .map((e: unknown) => (e as { sequenceNumber: number }).sequenceNumber)
       .sort((a: number, b: number) => a - b);
     expect(sequenceNumbers).toEqual(Array.from({ length: writeCount }, (_, i) => i + 1));
 
     // All hashes should be unique
-    const hashes = new Set(entries.map((e: any) => e.hash));
+    const hashes = new Set(entries.map((e: unknown) => (e as { hash: string }).hash));
     expect(hashes.size).toBe(writeCount);
 
     // Chain should be valid

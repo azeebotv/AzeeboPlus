@@ -30,8 +30,10 @@ export class RetryBudget {
 
   canRetry(): boolean {
     this.resetCounters();
-    return this.retriesThisSecond < this.config.maxRetriesPerSecond &&
-           this.retriesThisMinute < this.config.maxRetriesPerMinute;
+    return (
+      this.retriesThisSecond < this.config.maxRetriesPerSecond &&
+      this.retriesThisMinute < this.config.maxRetriesPerMinute
+    );
   }
 
   recordRetry(): void {

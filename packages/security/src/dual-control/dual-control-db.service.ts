@@ -1,5 +1,6 @@
 import { Injectable, Logger, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
+import type { AuditPrismaClient } from '../types';
 
 // ============================================================================
 // Dual-Control Approval System — Database-Backed Implementation (TAA §55)
@@ -54,13 +55,13 @@ const ACTION_THRESHOLDS: Record<DualControlAction, number> = {
 @Injectable()
 export class DualControlDbService {
   private readonly logger = new Logger(DualControlDbService.name);
-  private prisma: any;
+  private prisma: AuditPrismaClient | undefined;
 
-  constructor(prismaClient?: any) {
+  constructor(prismaClient?: AuditPrismaClient) {
     this.prisma = prismaClient;
   }
 
-  setPrismaClient(client: any): void {
+  setPrismaClient(client: AuditPrismaClient): void {
     this.prisma = client;
   }
 
@@ -83,7 +84,7 @@ export class DualControlDbService {
         initiatedBy,
         resourceType,
         resourceId,
-        details: details as any,
+        details: details as Record<string, unknown>,
         requiredApprovals,
         status: 'pending',
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
@@ -128,7 +129,7 @@ export class DualControlDbService {
     }
 
     // Check if already approved by this user
-    if (row.approvals.some((a: any) => a.approverId === approverId)) {
+    if (row.approvals.some((a: { approverId: string }) => a.approverId === approverId)) {
       throw new ForbiddenException('User has already approved this request');
     }
 
@@ -268,7 +269,9 @@ export class DualControlDbService {
       orderBy: { createdAt: 'asc' },
     });
 
-    return rows.map((row: any) => this.mapRowToRequest(row, row.approvals));
+    return rows.map((row: Record<string, unknown>) =>
+      this.mapRowToRequest(row, row.approvals as Record<string, unknown>[])
+    );
   }
 
   /**
@@ -281,26 +284,31 @@ export class DualControlDbService {
       orderBy: { createdAt: 'asc' },
     });
 
-    return rows.map((row: any) => this.mapRowToRequest(row, row.approvals));
+    return rows.map((row: Record<string, unknown>) =>
+      this.mapRowToRequest(row, row.approvals as Record<string, unknown>[])
+    );
   }
 
   /**
    * Map database row to request interface
    */
-  private mapRowToRequest(row: any, approvals: any[]): DualControlRequest {
+  private mapRowToRequest(
+    row: Record<string, unknown>,
+    approvals: Record<string, unknown>[]
+  ): DualControlRequest {
     return {
-      id: row.id,
-      action: row.action,
-      initiatedBy: row.initiatedBy,
-      resourceType: row.resourceType,
-      resourceId: row.resourceId,
+      id: row.id as string,
+      action: row.action as DualControlAction,
+      initiatedBy: row.initiatedBy as string,
+      resourceType: row.resourceType as string,
+      resourceId: row.resourceId as string,
       details: (row.details as Record<string, unknown>) ?? {},
-      requiredApprovals: row.requiredApprovals,
-      approvals: approvals.map((a: any) => ({
-        approverId: a.approverId,
-        approverRole: a.approverRole,
-        approvedAt: a.approvedAt,
-        notes: a.notes ?? undefined,
+      requiredApprovals: row.requiredApprovals as number,
+      approvals: approvals.map((a) => ({
+        approverId: a.approverId as string,
+        approverRole: a.approverRole as string,
+        approvedAt: a.approvedAt as Date,
+        notes: (a.notes as string) ?? undefined,
       })),
       status: row.status,
       createdAt: row.createdAt,

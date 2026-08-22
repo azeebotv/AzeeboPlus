@@ -65,7 +65,7 @@ export class RewatchIdempotencyService {
     userId: string,
     contentId: string,
     watchDurationSeconds: number,
-    knowledgeUnitIds: string[] = [],
+    knowledgeUnitIds: string[] = []
   ): Promise<{
     isFirstWatch: boolean;
     watchCount: number;
@@ -88,7 +88,7 @@ export class RewatchIdempotencyService {
       if (watchCount <= this.config.maxWatchCount) {
         // Only grant knowledge not already granted
         const alreadyGranted = existing?.firstWatchKnowledgeGranted || [];
-        knowledgeGranted = knowledgeUnitIds.filter(id => !alreadyGranted.includes(id));
+        knowledgeGranted = knowledgeUnitIds.filter((id) => !alreadyGranted.includes(id));
       }
     }
 
@@ -96,10 +96,7 @@ export class RewatchIdempotencyService {
       userId,
       contentId,
       watchCount,
-      watchTimestamps: [
-        ...(existing?.watchTimestamps || []),
-        new Date(),
-      ],
+      watchTimestamps: [...(existing?.watchTimestamps || []), new Date()],
       totalWatchTimeSeconds: (existing?.totalWatchTimeSeconds || 0) + watchDurationSeconds,
       firstWatchKnowledgeGranted: isFirstWatch
         ? knowledgeUnitIds
@@ -111,7 +108,9 @@ export class RewatchIdempotencyService {
     this.rewatchStore.set(key, record);
 
     if (!isFirstWatch && this.config.trackRewatch) {
-      this.logger.log(`Rewatch recorded: user ${userId}, content ${contentId}, watch #${watchCount}`);
+      this.logger.log(
+        `Rewatch recorded: user ${userId}, content ${contentId}, watch #${watchCount}`
+      );
     }
 
     return {
@@ -132,7 +131,7 @@ export class RewatchIdempotencyService {
    * Get all rewatch records for a user
    */
   async getUserRewatchRecords(userId: string): Promise<RewatchRecord[]> {
-    return Array.from(this.rewatchStore.values()).filter(r => r.userId === userId);
+    return Array.from(this.rewatchStore.values()).filter((r) => r.userId === userId);
   }
 
   /**
@@ -157,7 +156,7 @@ export class RewatchIdempotencyService {
   shouldGrantKnowledge(
     userId: string,
     contentId: string,
-    watchCount: number,
+    watchCount: number
   ): {
     grant: boolean;
     reason: string;
