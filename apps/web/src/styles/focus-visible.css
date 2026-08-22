@@ -1,0 +1,83 @@
+/**
+ * Standardized Focus-Visible Styles
+ * U-005: Add focus-visible styles to all interactive elements
+ * A-005: Ensure all interactive elements have visible focus
+ */
+
+/* Global focus-visible reset */
+*:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Skip link */
+.skip-link:focus-visible {
+  outline: 3px solid #667eea;
+  outline-offset: 0;
+}
+
+/* Button focus styles */
+button:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.25);
+}
+
+/* Link focus styles */
+a:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+  text-decoration: underline;
+}
+
+/* Input focus styles */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 0;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+/* Checkbox and radio focus */
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* Tab navigation focus */
+[role="tab"]:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: -2px;
+}
+
+/* Menu items */
+[role="menuitem"]:focus-visible,
+[role="option"]:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: -2px;
+  background-color: rgba(102, 126, 234, 0.1);
+}
+
+/* Remove default outline for mouse users */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* High contrast mode support */
+@media (forced-colors: active) {
+  *:focus-visible {
+    outline: 2px solid LinkText;
+  }
+}
+
+/* Reduced motion: no animation on focus */
+@media (prefers-reduced-motion: reduce) {
+  *:focus-visible {
+    transition: none;
+  }
+}

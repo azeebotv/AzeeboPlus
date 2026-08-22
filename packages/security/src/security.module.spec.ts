@@ -176,7 +176,7 @@ describe('SecurityModule', () => {
         'test-admin',
         'payment',
         'pay-123',
-        { amount: 5000 },
+        { amount: 5000 }
       );
 
       expect(request.id).toBeDefined();
@@ -206,7 +206,7 @@ describe('SecurityModule', () => {
         'content-123',
         'single-title',
         'legal-takedown',
-        'legal-team',
+        'legal-team'
       );
       expect(order.id).toBeDefined();
       expect(order.status).toBe('pending');
