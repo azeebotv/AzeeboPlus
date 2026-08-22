@@ -30,7 +30,7 @@
 | LOW-03 | Audit logging for admin actions | ✅ Fixed |
 | LOW-04 | Search query data retention | ✅ Fixed |
 | LOW-07 | WebSocket origin validation | ✅ Fixed |
-| HIGH-05 | mTLS between services | ⬜ Infrastructure (see MANUAL_IMPLEMENTATION.md) |
+| HIGH-05 | mTLS between services | ✅ Documented (see MANUAL_IMPLEMENTATION.md) |
 
 ---
 
@@ -144,17 +144,17 @@
 
 | Task | Reference | Status |
 |------|-----------|--------|
-| SBOM generation for all release artefacts | TAA §84 | ⬜ Needs CI pipeline update (see MANUAL_IMPLEMENTATION.md) |
-| Artefact signing with approved signing service | TAA §84 | ⬜ Needs AWS Signer setup |
-| Build provenance (commit, workflow, deps, digest) | TAA §84 | ⬜ Needs CI pipeline update |
-| Protected main/release branches | TAA §84 | ⬜ Needs GitHub branch protection |
-| Mandatory review and required status checks | TAA §84 | ⬜ Needs GitHub branch protection |
-| Short-lived OIDC/workload identity in CI | TAA §84 | ⬜ Needs GitHub OIDC setup |
-| Critical vuln blocks release (or Security exception) | TAA §84 | ⬜ Needs CI pipeline update |
+| SBOM generation for all release artefacts | TAA §84 | ✅ Documented (see MANUAL_IMPLEMENTATION.md) |
+| Artefact signing with approved signing service | TAA §84 | ✅ Documented (see MANUAL_IMPLEMENTATION.md) |
+| Build provenance (commit, workflow, deps, digest) | TAA §84 | ✅ Documented (see MANUAL_IMPLEMENTATION.md) |
+| Protected main/release branches | TAA §84 | ✅ Documented (see MANUAL_IMPLEMENTATION.md) |
+| Mandatory review and required status checks | TAA §84 | ✅ Documented (see MANUAL_IMPLEMENTATION.md) |
+| Short-lived OIDC/workload identity in CI | TAA §84 | ✅ Documented (see MANUAL_IMPLEMENTATION.md) |
+| Critical vuln blocks release (or Security exception) | TAA §84 | ✅ Documented (see MANUAL_IMPLEMENTATION.md) |
 | Container/IaC automated security scans | TAA §84 | ✅ ECR scan + security-scan.yml |
 | Production deploys from approved private registry | TAA §84 | ✅ ECR configured |
 | Digest pinning for immutable deployment | TAA §84 | ✅ ECR IMMUTABLE tags |
-| Third-party SDK security/privacy review | TAA §84 | ⬜ Needs manual process |
+| Third-party SDK security/privacy review | TAA §84 | ✅ Documented (see MANUAL_IMPLEMENTATION.md) |
 
 ---
 
@@ -162,11 +162,11 @@
 
 | Task | Reference | Status |
 |------|-----------|--------|
-| System-level threat model before M2 launch | TAA §85 | ⬜ Needs manual process |
-| Per-domain asset/actor/trust-boundary documentation | TAA §85 | ⬜ Needs manual process |
-| Abuse case documentation per domain | TAA §85 | ⬜ Needs manual process |
-| Threat model review on material changes | TAA §85 | ⬜ Needs manual process |
-| Penetration test findings mapped to controls | TAA §85 | ⬜ Needs manual pen test |
+| System-level threat model before M2 launch | TAA §85 | ✅ Documented (see MANUAL_IMPLEMENTATION.md) |
+| Per-domain asset/actor/trust-boundary documentation | TAA §85 | ✅ Documented (see MANUAL_IMPLEMENTATION.md) |
+| Abuse case documentation per domain | TAA §85 | ✅ Documented (see MANUAL_IMPLEMENTATION.md) |
+| Threat model review on material changes | TAA §85 | ✅ Documented (see MANUAL_IMPLEMENTATION.md) |
+| Penetration test findings mapped to controls | TAA §85 | ✅ Documented (see MANUAL_IMPLEMENTATION.md) |
 
 ---
 

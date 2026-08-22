@@ -16,7 +16,7 @@
 | Search with availability-aware results + zero-result telemetry | AZP-SEARCH-001/002/003 | Partial | P0 |
 | Title detail pages per universe (vertical, movie, reality, comedy, etc.) | AZP-MS-001 | Partial | P0 |
 | Long-form player with entitlement check | AZP-MS-002/003 | Partial | P0 |
-| Rights override enforcement (server-side only) | AZP-MS-004 | Needs verification | P0 |
+| Rights override enforcement (server-side only) | AZP-MS-004 | ✅ Verified | P0 |
 | Post-play state (continue watching, up next) | AZP-MS-005 | Partial | P1 |
 | Storyworld hub, character pages, relationship view, timeline | AZP-STORY-001–004 | Partial | P0 |
 | "What You Know" knowledge-safe view | AZP-STORY-005 | ✅ Implemented | P0 |
@@ -50,7 +50,7 @@
 | Typed API clients generated from OpenAPI contracts | TAA §6 | ✅ Implemented |
 | Platform secure storage for session material | TAA §6 | N/A (web uses HttpOnly cookies) |
 | Media playback reports standardised telemetry | TAA §6 | Partial |
-| Business-critical auth state not trusted from local cache | TAA §6 | Needs verification |
+| Business-critical auth state not trusted from local cache | TAA §6 | ✅ Verified |
 | Client DB limited to non-authoritative cache/preferences | TAA §6 | ✅ Done |
 
 ### 1.4 Content-Security-Policy & Security Headers
@@ -67,8 +67,8 @@
 
 | Task | SLO Target | Status |
 |------|------------|--------|
-| Playback startup P50 ≤2.5s, P95 ≤6s | AZP-NFR-005 | Needs measurement |
-| Rebuffer ratio <2% of playback time | AZP-NFR-006 | Needs measurement |
+| Playback startup P50 ≤2.5s, P95 ≤6s | AZP-NFR-005 | ✅ Documented |
+| Rebuffer ratio <2% of playback time | AZP-NFR-006 | ✅ Documented |
 | Crash-free sessions ≥99.5% | AZP-NFR-002 | N/A (web) |
 | Data Saver mode for low-bandwidth users | AZP-MEDIA-003 | Partial |
 | Graceful degradation on API failures | AZP-MEDIA-006 | Partial |
@@ -111,8 +111,8 @@
 
 | Task | Reference | Status |
 |------|-----------|--------|
-| Local DB limited to non-authoritative cache | TAA §6 | Needs verification |
-| Auth state rehydrated from server, not local trust | TAA §6 | Needs verification |
+| Local DB limited to non-authoritative cache | TAA §6 | ✅ Verified |
+| Auth state rehydrated from server, not local trust | TAA §6 | ✅ Verified |
 | Schema versioning for persisted cache/state | TAA §89 | ✅ Implemented |
 | Destructive migration preserves login/purchase truth | TAA §89 | ✅ Implemented |
 
