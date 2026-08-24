@@ -201,12 +201,16 @@ export class SuspensionService {
       },
     });
 
-    for (const suspension of expired) {
-      await this.prisma.userSuspension.update({
-        where: { id: suspension.id },
+    // Batch update all expired suspensions in one query (fixes N+1)
+    if (expired.length > 0) {
+      await this.prisma.userSuspension.updateMany({
+        where: { id: { in: expired.map((s) => s.id) } },
         data: { status: 'EXPIRED' },
       });
+    }
 
+    // Send notifications and audit events (must be per-item due to audit trail)
+    for (const suspension of expired) {
       await Promise.all([
         this.sendReinstatementNotification(suspension.userId, { ...suspension, status: 'EXPIRED' }),
         this.createAuditEvent({

@@ -88,19 +88,22 @@ export class MediaLifecycleService {
 
       this.logger.log(`Found ${orphanedUploads.length} old media uploads to review`);
 
-      for (const upload of orphanedUploads) {
-        try {
+      // Batch delete orphaned uploads (fixes N+1)
+      const orphanIds = orphanedUploads
+        .filter((upload) => {
           const metadata = (upload as Record<string, unknown>).metadata as
             | Record<string, unknown>
             | undefined;
-          if (metadata?.orphaned === true) {
-            await this.prisma.mediaUpload.delete({ where: { id: upload.id } });
-            await this.cache.delete(cacheKey('media', upload.id));
-            cleaned++;
-          }
-        } catch (error) {
-          errors.push(`Failed to clean orphan ${upload.id}: ${(error as Error).message}`);
-        }
+          return metadata?.orphaned === true;
+        })
+        .map((upload) => upload.id);
+
+      if (orphanIds.length > 0) {
+        await this.prisma.mediaUpload.deleteMany({
+          where: { id: { in: orphanIds } },
+        });
+        await Promise.all(orphanIds.map((id) => this.cache.delete(cacheKey('media', id))));
+        cleaned = orphanIds.length;
       }
     } catch (error) {
       errors.push(`Orphan cleanup failed: ${(error as Error).message}`);

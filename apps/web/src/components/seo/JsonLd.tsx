@@ -3,7 +3,6 @@
  * SEO-001: Add structured data
  */
 
-
 interface OrganizationProps {
   name: string;
   url: string;

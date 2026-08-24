@@ -174,12 +174,15 @@ export class FixturesService {
     error?: { code: string; message: string };
   }> {
     try {
-      for (const team of teams) {
-        await this.prisma.eventTeam.update({
-          where: { id: team.teamId },
-          data: { score: team.score },
-        });
-      }
+      // Batch update team scores in a single transaction (fixes N+1)
+      await this.prisma.$transaction(
+        teams.map((team) =>
+          this.prisma.eventTeam.update({
+            where: { id: team.teamId },
+            data: { score: team.score },
+          })
+        )
+      );
 
       await this.prisma.sportsEvent.update({
         where: { id: eventId },

@@ -45,18 +45,21 @@ export class ContentReleaseSchedulerService {
 
       this.logger.log(`Publishing ${readyToPublish.length} scheduled content items`);
 
+      // Batch update all items to published status (fixes N+1)
+      await this.prisma.contentItem.updateMany({
+        where: {
+          id: { in: readyToPublish.map((item) => item.id) },
+        },
+        data: {
+          status: 'published',
+          publishedAt: now,
+          updatedAt: now,
+        },
+      });
+
+      // Cache invalidation and events (per-item due to event payload requirements)
       for (const item of readyToPublish) {
         try {
-          await this.prisma.contentItem.update({
-            where: { id: item.id },
-            data: {
-              status: 'published',
-              publishedAt: now,
-              updatedAt: now,
-            },
-            include: { universe: true },
-          });
-
           await this.cache.delete(cacheKey('content', item.id));
 
           if (this.eventBus) {
@@ -100,18 +103,16 @@ export class ContentReleaseSchedulerService {
 
       this.logger.log(`Archiving ${expiredContent.length} expired content items`);
 
+      // Batch update all expired items to archived status (fixes N+1)
+      await this.prisma.contentItem.updateMany({
+        where: { id: { in: expiredContent.map((item) => item.id) } },
+        data: { status: 'archived', updatedAt: now },
+      });
+
+      // Cache invalidation (per-item)
       for (const item of expiredContent) {
         try {
-          await this.prisma.contentItem.update({
-            where: { id: item.id },
-            data: {
-              status: 'archived',
-              updatedAt: now,
-            },
-          });
-
           await this.cache.delete(cacheKey('content', item.id));
-
           this.logger.log(`Auto-archived content: ${item.id} (window expired)`);
         } catch (err) {
           this.logger.error(`Failed to archive content ${item.id}: ${(err as Error).message}`);
