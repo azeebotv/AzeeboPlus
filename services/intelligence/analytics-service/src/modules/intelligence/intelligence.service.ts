@@ -546,20 +546,27 @@ export class IntelligenceService {
 
       const recommendedContent: Record<string, unknown[]> = {};
 
-      for (const universe of unexploredUniverses.slice(0, 3)) {
-        const content = await this.prisma.contentItem.findMany({
-          where: { universe: universe },
+      // Batch fetch content for all unexplored universes in one query (fixes N+1)
+      const unexploredSlice = unexploredUniverses.slice(0, 3);
+      if (unexploredSlice.length > 0) {
+        const batchContent = await this.prisma.contentItem.findMany({
+          where: { universe: { in: unexploredSlice } },
           orderBy: { viewCount: 'desc' },
-          take: 5,
-          // universe is a string field, not a relation
+          take: unexploredSlice.length * 5,
         });
-        if (content.length > 0) {
-          recommendedContent[universe] = content.map((c) => ({
-            id: c.id,
-            title: c.title,
-            universe: c.universe,
-            viewCount: c.viewCount,
-          }));
+        // Group by universe
+        for (const c of batchContent) {
+          if (!recommendedContent[c.universe]) {
+            recommendedContent[c.universe] = [];
+          }
+          if ((recommendedContent[c.universe] as unknown[]).length < 5) {
+            (recommendedContent[c.universe] as unknown[]).push({
+              id: c.id,
+              title: c.title,
+              universe: c.universe,
+              viewCount: c.viewCount,
+            });
+          }
         }
       }
 

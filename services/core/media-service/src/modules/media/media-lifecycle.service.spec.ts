@@ -15,6 +15,7 @@ describe('MediaLifecycleService', () => {
       findMany: jest.fn(),
       findUnique: jest.fn(),
       delete: jest.fn(),
+      deleteMany: jest.fn(),
     },
   };
 
@@ -107,13 +108,15 @@ describe('MediaLifecycleService', () => {
         { id: 'upload-1', metadata: { orphaned: true } },
         { id: 'upload-2', metadata: {} },
       ]);
-      mockPrisma.mediaUpload.delete.mockResolvedValue({});
+      mockPrisma.mediaUpload.deleteMany.mockResolvedValue({ count: 1 });
       mockCache.delete.mockResolvedValue(undefined);
 
       const result = await service.cleanupOrphanedMedia();
 
       expect(result.cleaned).toBe(1);
-      expect(mockPrisma.mediaUpload.delete).toHaveBeenCalledWith({ where: { id: 'upload-1' } });
+      expect(mockPrisma.mediaUpload.deleteMany).toHaveBeenCalledWith({
+        where: { id: { in: ['upload-1'] } },
+      });
     });
 
     it('should return 0 cleaned when no orphans', async () => {

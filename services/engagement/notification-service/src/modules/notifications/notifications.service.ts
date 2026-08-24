@@ -615,24 +615,46 @@ export class NotificationsService {
     let sent = 0;
     let skipped = 0;
 
+    // Batch-fetch all unread notifications for all target users in one query (fixes N+1)
+    const allNotifications = await this.prisma.notification.findMany({
+      where: {
+        userId: { in: targetUserIds },
+        readAt: null,
+        createdAt: { gte: cutoff },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: targetUserIds.length * 20,
+      select: {
+        id: true,
+        userId: true,
+        type: true,
+        title: true,
+        message: true,
+        createdAt: true,
+      },
+    });
+
+    // Group by userId
+    const notificationsByUser = new Map<string, typeof allNotifications>();
+    for (const n of allNotifications) {
+      const list = notificationsByUser.get(n.userId) || [];
+      list.push(n);
+      notificationsByUser.set(n.userId, list);
+    }
+
+    // Batch-fetch Redis markers
+    const markers = await Promise.all(
+      targetUserIds.map((id) => this.redisService.get(`notification:digest:last:${id}`))
+    );
+    const markerMap = new Map(targetUserIds.map((id, i) => [id, markers[i]]));
+
     for (const targetId of targetUserIds) {
       try {
-        const marker = `notification:digest:last:${targetId}`;
-        const lastSentRaw = await this.redisService.get(marker);
+        const lastSentRaw = markerMap.get(targetId);
         const since = lastSentRaw ? new Date(parseInt(lastSentRaw, 10)) : cutoff;
 
-        const items = await this.prisma.notification.findMany({
-          where: { userId: targetId, readAt: null, createdAt: { gte: since } },
-          orderBy: { createdAt: 'desc' },
-          take: 20,
-          select: {
-            id: true,
-            type: true,
-            title: true,
-            message: true,
-            createdAt: true,
-          },
-        });
+        // Filter from pre-fetched batch
+        const items = (notificationsByUser.get(targetId) || []).filter((n) => n.createdAt >= since);
 
         if (items.length === 0) {
           skipped++;
@@ -660,7 +682,11 @@ export class NotificationsService {
         );
         if (ok) {
           sent++;
-          await this.redisService.set(marker, String(Date.now()), 7 * 24 * 3600);
+          await this.redisService.set(
+            `notification:digest:last:${targetId}`,
+            String(Date.now()),
+            7 * 24 * 3600
+          );
           this.trackAnalyticsEvent('notification_digest_sent', targetId, {
             count: items.length,
           });

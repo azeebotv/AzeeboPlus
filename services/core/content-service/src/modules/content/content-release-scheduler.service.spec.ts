@@ -11,6 +11,7 @@ describe('ContentReleaseSchedulerService', () => {
     contentItem: {
       findMany: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
     },
   };
 
@@ -54,7 +55,7 @@ describe('ContentReleaseSchedulerService', () => {
         },
       ];
       mockPrisma.contentItem.findMany.mockResolvedValue(draftItems);
-      mockPrisma.contentItem.update.mockResolvedValue({});
+      mockPrisma.contentItem.updateMany.mockResolvedValue({ count: 1 });
       mockCache.delete.mockResolvedValue(undefined);
       mockEventBus.publish.mockResolvedValue(undefined);
 
@@ -68,14 +69,13 @@ describe('ContentReleaseSchedulerService', () => {
         include: { universe: true },
       });
 
-      expect(mockPrisma.contentItem.update).toHaveBeenCalledWith({
-        where: { id: 'item-1' },
+      expect(mockPrisma.contentItem.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: ['item-1'] } },
         data: {
           status: 'published',
           publishedAt: expect.any(Date),
           updatedAt: expect.any(Date),
         },
-        include: { universe: true },
       });
 
       expect(mockCache.delete).toHaveBeenCalled();
@@ -93,7 +93,7 @@ describe('ContentReleaseSchedulerService', () => {
 
       await service.handleScheduledPublishes();
 
-      expect(mockPrisma.contentItem.update).not.toHaveBeenCalled();
+      expect(mockPrisma.contentItem.updateMany).not.toHaveBeenCalled();
     });
 
     it('should handle errors gracefully without throwing', async () => {
@@ -113,7 +113,7 @@ describe('ContentReleaseSchedulerService', () => {
         },
       ];
       mockPrisma.contentItem.findMany.mockResolvedValue(expiredContent);
-      mockPrisma.contentItem.update.mockResolvedValue({});
+      mockPrisma.contentItem.updateMany.mockResolvedValue({ count: 1 });
 
       await service.handleWindowExpiry();
 
@@ -125,8 +125,8 @@ describe('ContentReleaseSchedulerService', () => {
         },
       });
 
-      expect(mockPrisma.contentItem.update).toHaveBeenCalledWith({
-        where: { id: 'item-1' },
+      expect(mockPrisma.contentItem.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: ['item-1'] } },
         data: {
           status: 'archived',
           updatedAt: expect.any(Date),

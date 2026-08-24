@@ -83,16 +83,14 @@ export class SearchIntelligenceService {
     this.zeroResultBuffer.length = 0;
 
     try {
-      for (const event of events) {
-        await this.prisma.searchQueryLog.create({
-          data: {
-            query: event.query,
-            userId: event.userId,
-            resultCount: event.resultCount,
-            createdAt: event.timestamp,
-          },
-        });
-      }
+      await this.prisma.searchQueryLog.createMany({
+        data: events.map((event) => ({
+          query: event.query,
+          userId: event.userId,
+          resultCount: event.resultCount,
+          createdAt: event.timestamp,
+        })),
+      });
     } catch {
       this.zeroResultBuffer.unshift(...events);
     }

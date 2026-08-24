@@ -3,7 +3,6 @@
  * SEO-002: Add canonical URLs
  */
 
-
 interface CanonicalUrlProps {
   path?: string;
 }

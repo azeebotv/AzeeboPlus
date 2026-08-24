@@ -51,13 +51,56 @@ export class SearchAvailabilityService {
     contentIds: string[],
     filters: AvailabilityFilter
   ): Promise<string[]> {
+    if (contentIds.length === 0) return [];
+
+    // Batch fetch all content items in a single query (fixes N+1)
+    const contents = await this.prisma.contentItem.findMany({
+      where: { id: { in: contentIds } },
+      select: {
+        id: true,
+        status: true,
+        contentType: true,
+        universe: true,
+        categories: true,
+      },
+    });
+
+    const contentMap = new Map(contents.map((c) => [c.id, c]));
     const availableIds: string[] = [];
 
     for (const id of contentIds) {
-      const availability = await this.checkContentAvailability(id, filters);
-      if (availability.available) {
-        availableIds.push(id);
+      const content = contentMap.get(id);
+      if (!content) continue;
+
+      // Check status
+      const defaultStatuses = ['published'];
+      const allowedStatuses = filters.statuses || defaultStatuses;
+      if (!allowedStatuses.includes(content.status)) continue;
+
+      // Check content type
+      if (
+        filters.contentTypes &&
+        filters.contentTypes.length > 0 &&
+        !filters.contentTypes.includes(content.contentType)
+      )
+        continue;
+
+      // Check universe
+      if (
+        filters.universes &&
+        filters.universes.length > 0 &&
+        content.universe &&
+        !filters.universes.includes(content.universe as string)
+      )
+        continue;
+
+      // Check categories
+      if (filters.categories && filters.categories.length > 0) {
+        const contentCategories = (content.categories as string[]) || [];
+        if (!filters.categories.some((c) => contentCategories.includes(c))) continue;
       }
+
+      availableIds.push(id);
     }
 
     return availableIds;
@@ -179,19 +222,20 @@ export class SearchAvailabilityService {
 
     suggestions.push(...partialMatches.map((m) => m.title));
 
-    // Try similar terms
+    // Try similar terms — batch all words in a single OR query (fixes N+1)
     const words = query.toLowerCase().split(' ');
-    for (const word of words) {
-      if (word.length > 3) {
-        const similar = await this.prisma.contentItem.findMany({
-          where: {
+    const longWords = words.filter((w) => w.length > 3);
+    if (longWords.length > 0) {
+      const similar = await this.prisma.contentItem.findMany({
+        where: {
+          OR: longWords.map((word) => ({
             title: { contains: word, mode: 'insensitive' },
-          },
-          select: { title: true },
-          take: 3,
-        });
-        suggestions.push(...similar.map((s) => s.title));
-      }
+          })),
+        },
+        select: { title: true },
+        take: 10,
+      });
+      suggestions.push(...similar.map((s) => s.title));
     }
 
     // Deduplicate

@@ -1,4 +1,3 @@
-
 interface EmptyStateProps {
   icon?: string;
   title: string;

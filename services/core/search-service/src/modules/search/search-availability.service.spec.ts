@@ -141,41 +141,32 @@ describe('SearchAvailabilityService', () => {
 
   describe('filterAvailableContent', () => {
     it('should return only available content IDs', async () => {
-      mockPrisma.contentItem.findUnique
-        .mockResolvedValueOnce({
+      mockPrisma.contentItem.findMany.mockResolvedValue([
+        {
           id: 'c1',
           status: 'published',
           contentType: 'video',
           universe: 'reality',
           categories: [],
-        })
-        .mockResolvedValueOnce({
-          id: 'c2',
-          status: 'draft',
-          contentType: 'video',
-          universe: 'reality',
-          categories: [],
-        })
-        .mockResolvedValueOnce({
+        },
+        { id: 'c2', status: 'draft', contentType: 'video', universe: 'reality', categories: [] },
+        {
           id: 'c3',
           status: 'published',
           contentType: 'video',
           universe: 'reality',
           categories: [],
-        });
+        },
+      ]);
 
       const result = await service.filterAvailableContent(['c1', 'c2', 'c3'], {});
       expect(result).toEqual(['c1', 'c3']);
     });
 
     it('should return empty array when no content available', async () => {
-      mockPrisma.contentItem.findUnique.mockResolvedValue({
-        id: 'c1',
-        status: 'draft',
-        contentType: 'video',
-        universe: 'reality',
-        categories: [],
-      });
+      mockPrisma.contentItem.findMany.mockResolvedValue([
+        { id: 'c1', status: 'draft', contentType: 'video', universe: 'reality', categories: [] },
+      ]);
 
       const result = await service.filterAvailableContent(['c1'], {});
       expect(result).toHaveLength(0);
@@ -203,22 +194,25 @@ describe('SearchAvailabilityService', () => {
 
   describe('measureSearchLatency', () => {
     it('should measure latency and return result count', async () => {
-      mockPrisma.contentItem.findMany.mockResolvedValue([{ id: 'c1' }, { id: 'c2' }]);
-      mockPrisma.contentItem.findUnique
-        .mockResolvedValueOnce({
-          id: 'c1',
-          status: 'published',
-          contentType: 'video',
-          universe: 'reality',
-          categories: [],
-        })
-        .mockResolvedValueOnce({
-          id: 'c2',
-          status: 'published',
-          contentType: 'video',
-          universe: 'reality',
-          categories: [],
-        });
+      // First call: initial search query. Second call: batch availability check.
+      mockPrisma.contentItem.findMany
+        .mockResolvedValueOnce([{ id: 'c1' }, { id: 'c2' }])
+        .mockResolvedValueOnce([
+          {
+            id: 'c1',
+            status: 'published',
+            contentType: 'video',
+            universe: 'reality',
+            categories: [],
+          },
+          {
+            id: 'c2',
+            status: 'published',
+            contentType: 'video',
+            universe: 'reality',
+            categories: [],
+          },
+        ]);
 
       const result = await service.measureSearchLatency('test', {});
       expect(result.latencyMs).toBeGreaterThanOrEqual(0);
