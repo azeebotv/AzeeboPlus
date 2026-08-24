@@ -58,8 +58,6 @@ export function ForcedUpgrade({ clientVersion, capabilities, storeUrls }: Forced
     }
   }, [clientVersion, capabilities]);
 
-
-
   if (!showUpgrade || !capabilities) return null;
 
   const storeUrl = storeUrls?.[platform] || storeUrls?.web;
@@ -69,7 +67,12 @@ export function ForcedUpgrade({ clientVersion, capabilities, storeUrls }: Forced
       <div className="max-w-md w-full bg-card rounded-2xl shadow-xl p-8 text-center">
         {/* Icon */}
         <div className="w-20 h-20 bg-blue-600/10 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg className="w-10 h-10 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg
+            className="w-10 h-10 text-blue-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -84,7 +87,8 @@ export function ForcedUpgrade({ clientVersion, capabilities, storeUrls }: Forced
           Your current version ({clientVersion}) is no longer supported.
         </p>
         <p className="text-muted-foreground text-sm mb-6">
-          Please update to version {capabilities.minSupportedVersion} or later to continue using Azeebo+.
+          Please update to version {capabilities.minSupportedVersion} or later to continue using
+          Azeebo+.
         </p>
 
         {/* Version info */}

@@ -246,7 +246,7 @@ export async function logAdminAction(
   action: string,
   resource: string,
   resourceId: string,
-  details: Record<string, unknown> = {},
+  details: Record<string, unknown> = {}
 ): Promise<void> {
   const entry: Omit<AuditEntry, 'id'> = {
     userId: '', // Will be filled by the API
@@ -267,6 +267,7 @@ export async function logAdminAction(
     });
   } catch {
     // Audit logging should never block the operation
+    // eslint-disable-next-line no-console
     console.error('Failed to log audit entry');
   }
 }

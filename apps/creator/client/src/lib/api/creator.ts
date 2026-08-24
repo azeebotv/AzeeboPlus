@@ -107,6 +107,12 @@ export const creatorApi = {
   getChallengeSubmissions: () =>
     apiFetch<ChallengeSubmission[]>(`${API}/creator/challenges/submissions`),
 
+  submitChallenge: (challengeId: string, title: string) =>
+    apiFetch<{ success: boolean; submissionId?: string }>(`${API}/creator/challenges/${challengeId}/submit`, {
+      method: 'POST',
+      body: JSON.stringify({ title }),
+    }),
+
   // Profile
   getProfile: () =>
     apiFetch<{

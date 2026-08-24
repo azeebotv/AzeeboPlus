@@ -94,7 +94,7 @@ export class PIIMinimizationService {
    */
   private isPIIField(fieldName: string): boolean {
     const lowerField = fieldName.toLowerCase();
-    return PII_FIELD_PATTERNS.some(pattern => lowerField.includes(pattern.toLowerCase()));
+    return PII_FIELD_PATTERNS.some((pattern) => lowerField.includes(pattern.toLowerCase()));
   }
 
   /**
@@ -151,7 +151,7 @@ export class PIIMinimizationService {
    * Minimize a batch of events
    */
   minimizeEvents(events: Record<string, unknown>[]): Record<string, unknown>[] {
-    return events.map(event => this.minimizeEvent(event));
+    return events.map((event) => this.minimizeEvent(event));
   }
 
   /**
@@ -182,16 +182,13 @@ export class PIIMinimizationService {
    * Apply k-anonymity to aggregated data
    * Ensures each group has at least k individuals
    */
-  applyKAnonymity<T extends Record<string, unknown>>(
-    data: T[],
-    groupByFields: string[],
-  ): T[] {
+  applyKAnonymity<T extends Record<string, unknown>>(data: T[], groupByFields: string[]): T[] {
     if (data.length === 0) return data;
 
     // Group data
     const groups = new Map<string, T[]>();
     for (const item of data) {
-      const key = groupByFields.map(f => String(item[f] ?? '')).join('|');
+      const key = groupByFields.map((f) => String(item[f] ?? '')).join('|');
       if (!groups.has(key)) {
         groups.set(key, []);
       }

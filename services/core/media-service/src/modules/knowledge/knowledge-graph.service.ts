@@ -139,8 +139,6 @@ export interface KnowledgeProjection {
 
 @Injectable()
 export class KnowledgeGraphService {
-
-
   /** In-memory stores (would be database in production) */
   private readonly events = new Map<string, CanonicalEvent>();
   private readonly units = new Map<string, KnowledgeUnit>();

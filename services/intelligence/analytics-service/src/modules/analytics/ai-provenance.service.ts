@@ -19,13 +19,7 @@ export type ClearanceState =
   | 'blocked'
   | 'needs_human_review';
 
-export type ContentType =
-  | 'image'
-  | 'video'
-  | 'audio'
-  | 'text'
-  | '3d_model'
-  | 'voice_clone';
+export type ContentType = 'image' | 'video' | 'audio' | 'text' | '3d_model' | 'voice_clone';
 
 export interface AIGeneratedContent {
   id: string;
@@ -136,7 +130,7 @@ export class AIProvenanceService {
   async bumpVersion(
     contentId: string,
     newContentHash: string,
-    performedBy: string,
+    performedBy: string
   ): Promise<AIGeneratedContent> {
     const content = this.contentStore.get(contentId);
     if (!content) {
@@ -168,7 +162,7 @@ export class AIProvenanceService {
     contentId: string,
     newState: ClearanceState,
     performedBy: string,
-    notes?: string,
+    notes?: string
   ): Promise<AIGeneratedContent> {
     const content = this.contentStore.get(contentId);
     if (!content) {
@@ -181,11 +175,16 @@ export class AIProvenanceService {
     content.clearanceNotes = notes;
     content.updatedAt = new Date();
 
-    await this.recordProvenance(contentId, newState === 'cleared' ? 'cleared' : 'restricted', performedBy, {
-      previousState,
-      newState,
-      notes,
-    });
+    await this.recordProvenance(
+      contentId,
+      newState === 'cleared' ? 'cleared' : 'restricted',
+      performedBy,
+      {
+        previousState,
+        newState,
+        notes,
+      }
+    );
 
     this.logger.log(`AI content clearance updated: ${contentId} → ${newState}`);
 
@@ -198,7 +197,7 @@ export class AIProvenanceService {
   async addRestriction(
     contentId: string,
     restriction: ContentRestriction,
-    performedBy: string,
+    performedBy: string
   ): Promise<AIGeneratedContent> {
     const content = this.contentStore.get(contentId);
     if (!content) {
@@ -228,7 +227,7 @@ export class AIProvenanceService {
     // Content is vendor-independent if it has been cleared
     // and doesn't have vendor-specific restrictions
     const hasVendorRestriction = content.restrictions.some(
-      r => r.type === 'usage' && r.description.toLowerCase().includes('vendor')
+      (r) => r.type === 'usage' && r.description.toLowerCase().includes('vendor')
     );
 
     return content.clearanceState === 'cleared' && !hasVendorRestriction;
@@ -276,14 +275,14 @@ export class AIProvenanceService {
    * Get all content by vendor
    */
   async getContentByVendor(vendor: string): Promise<AIGeneratedContent[]> {
-    return Array.from(this.contentStore.values()).filter(c => c.vendor === vendor);
+    return Array.from(this.contentStore.values()).filter((c) => c.vendor === vendor);
   }
 
   /**
    * Get all content by clearance state
    */
   async getContentByClearance(state: ClearanceState): Promise<AIGeneratedContent[]> {
-    return Array.from(this.contentStore.values()).filter(c => c.clearanceState === state);
+    return Array.from(this.contentStore.values()).filter((c) => c.clearanceState === state);
   }
 
   /**
@@ -293,7 +292,7 @@ export class AIProvenanceService {
     contentId: string,
     action: ProvenanceRecord['action'],
     performedBy: string,
-    details: Record<string, unknown>,
+    details: Record<string, unknown>
   ): Promise<void> {
     const content = this.contentStore.get(contentId);
     const record: ProvenanceRecord = {

@@ -93,13 +93,13 @@ export class KnowledgeUnlockService {
    */
   async evaluatePolicies(
     userId: string,
-    userState: UserKnowledgeState,
+    userState: UserKnowledgeState
   ): Promise<UnlockEvaluation[]> {
     const results: UnlockEvaluation[] = [];
 
     // Sort policies by priority (descending)
     const sortedPolicies = Array.from(this.policies.values())
-      .filter(p => p.enabled)
+      .filter((p) => p.enabled)
       .sort((a, b) => b.priority - a.priority);
 
     for (const policy of sortedPolicies) {
@@ -121,7 +121,7 @@ export class KnowledgeUnlockService {
   private evaluatePolicy(
     userId: string,
     policy: UnlockPolicy,
-    userState: UserKnowledgeState,
+    userState: UserKnowledgeState
   ): UnlockEvaluation {
     const conditionsMet: string[] = [];
     const conditionsFailed: string[] = [];
@@ -155,10 +155,7 @@ export class KnowledgeUnlockService {
   /**
    * Evaluate a single condition
    */
-  private evaluateCondition(
-    condition: UnlockCondition,
-    userState: UserKnowledgeState,
-  ): boolean {
+  private evaluateCondition(condition: UnlockCondition, userState: UserKnowledgeState): boolean {
     let fieldValue: unknown;
 
     // Get field value from user state
@@ -232,12 +229,12 @@ export class KnowledgeUnlockService {
       case 'days_since_first_consumption':
         const timestamps = Object.values(userState.consumptionTimestamps);
         if (timestamps.length === 0) return 0;
-        const earliest = new Date(Math.min(...timestamps.map(t => t.getTime())));
+        const earliest = new Date(Math.min(...timestamps.map((t) => t.getTime())));
         return Math.floor((Date.now() - earliest.getTime()) / (1000 * 60 * 60 * 24));
       case 'hours_since_last_consumption':
         const allTimestamps = Object.values(userState.consumptionTimestamps);
         if (allTimestamps.length === 0) return 0;
-        const latest = new Date(Math.max(...allTimestamps.map(t => t.getTime())));
+        const latest = new Date(Math.max(...allTimestamps.map((t) => t.getTime())));
         return Math.floor((Date.now() - latest.getTime()) / (1000 * 60 * 60));
       default:
         return undefined;

@@ -77,7 +77,7 @@ export class DualControlDbService {
   ): Promise<DualControlRequest> {
     const requiredApprovals = ACTION_THRESHOLDS[action];
 
-    const row = await this.prisma.dualControlRequest.create({
+    const row = await this.prisma!.dualControlRequest.create({
       data: {
         id: randomUUID(),
         action,
@@ -107,7 +107,7 @@ export class DualControlDbService {
     approverRole: string,
     notes?: string
   ): Promise<DualControlRequest> {
-    const row = await this.prisma.dualControlRequest.findUnique({
+    const row = await this.prisma!.dualControlRequest.findUnique({
       where: { id: requestId },
       include: { approvals: true },
     });
@@ -120,8 +120,8 @@ export class DualControlDbService {
       throw new ForbiddenException(`Request is ${row.status}, not pending`);
     }
 
-    if (new Date() > row.expiresAt) {
-      await this.prisma.dualControlRequest.update({
+    if (new Date() > (row.expiresAt as Date)) {
+      await this.prisma!.dualControlRequest.update({
         where: { id: requestId },
         data: { status: 'expired' },
       });
@@ -129,7 +129,7 @@ export class DualControlDbService {
     }
 
     // Check if already approved by this user
-    if (row.approvals.some((a: { approverId: string }) => a.approverId === approverId)) {
+    if ((row.approvals as Record<string, unknown>[]).some((a) => a.approverId === approverId)) {
       throw new ForbiddenException('User has already approved this request');
     }
 
@@ -139,7 +139,7 @@ export class DualControlDbService {
     }
 
     // Add approval
-    await this.prisma.dualControlApproval.create({
+    await this.prisma!.dualControlApproval.create({
       data: {
         id: randomUUID(),
         requestId,
@@ -155,12 +155,12 @@ export class DualControlDbService {
     );
 
     // Check if threshold met
-    const updatedApprovals = await this.prisma.dualControlApproval.findMany({
+    const updatedApprovals = await this.prisma!.dualControlApproval.findMany({
       where: { requestId },
     });
 
-    if (updatedApprovals.length >= row.requiredApprovals) {
-      await this.prisma.dualControlRequest.update({
+    if (updatedApprovals.length >= (row.requiredApprovals as number)) {
+      await this.prisma!.dualControlRequest.update({
         where: { id: requestId },
         data: { status: 'approved' },
       });
@@ -170,19 +170,19 @@ export class DualControlDbService {
     }
 
     // Re-fetch with updated approvals
-    const updated = await this.prisma.dualControlRequest.findUnique({
+    const updated = await this.prisma!.dualControlRequest.findUnique({
       where: { id: requestId },
       include: { approvals: true },
     });
 
-    return this.mapRowToRequest(updated, updated.approvals);
+    return this.mapRowToRequest(updated!, (updated!.approvals as Record<string, unknown>[]) ?? []);
   }
 
   /**
    * Reject a dual-control request
    */
   async reject(requestId: string, approverId: string, reason: string): Promise<DualControlRequest> {
-    const row = await this.prisma.dualControlRequest.findUnique({
+    const row = await this.prisma!.dualControlRequest.findUnique({
       where: { id: requestId },
       include: { approvals: true },
     });
@@ -195,7 +195,7 @@ export class DualControlDbService {
       throw new ForbiddenException(`Request is ${row.status}, not pending`);
     }
 
-    await this.prisma.dualControlRequest.update({
+    await this.prisma!.dualControlRequest.update({
       where: { id: requestId },
       data: { status: 'rejected' },
     });
@@ -204,14 +204,17 @@ export class DualControlDbService {
       `DUAL-CONTROL REJECTED: ${approverId} rejected ${row.action} — reason: ${reason}`
     );
 
-    return this.mapRowToRequest({ ...row, status: 'rejected' }, row.approvals);
+    return this.mapRowToRequest(
+      { ...row, status: 'rejected' },
+      (row.approvals as Record<string, unknown>[]) ?? []
+    );
   }
 
   /**
    * Execute an approved dual-control action
    */
   async execute(requestId: string, executedBy: string): Promise<DualControlRequest> {
-    const row = await this.prisma.dualControlRequest.findUnique({
+    const row = await this.prisma!.dualControlRequest.findUnique({
       where: { id: requestId },
       include: { approvals: true },
     });
@@ -224,7 +227,7 @@ export class DualControlDbService {
       throw new ForbiddenException(`Request is ${row.status}, must be approved before execution`);
     }
 
-    await this.prisma.dualControlRequest.update({
+    await this.prisma!.dualControlRequest.update({
       where: { id: requestId },
       data: {
         status: 'executed',
@@ -239,7 +242,7 @@ export class DualControlDbService {
 
     return this.mapRowToRequest(
       { ...row, status: 'executed', executedAt: new Date(), executedBy },
-      row.approvals
+      (row.approvals as Record<string, unknown>[]) ?? []
     );
   }
 
@@ -247,7 +250,7 @@ export class DualControlDbService {
    * Get a dual-control request by ID
    */
   async getRequest(requestId: string): Promise<DualControlRequest> {
-    const row = await this.prisma.dualControlRequest.findUnique({
+    const row = await this.prisma!.dualControlRequest.findUnique({
       where: { id: requestId },
       include: { approvals: true },
     });
@@ -256,14 +259,14 @@ export class DualControlDbService {
       throw new NotFoundException('Dual-control request not found');
     }
 
-    return this.mapRowToRequest(row, row.approvals);
+    return this.mapRowToRequest(row, (row.approvals as Record<string, unknown>[]) ?? []);
   }
 
   /**
    * Get all pending requests
    */
   async getPendingRequests(): Promise<DualControlRequest[]> {
-    const rows = await this.prisma.dualControlRequest.findMany({
+    const rows = await this.prisma!.dualControlRequest.findMany({
       where: { status: 'pending' },
       include: { approvals: true },
       orderBy: { createdAt: 'asc' },
@@ -278,7 +281,7 @@ export class DualControlDbService {
    * Get all requests for a specific action type
    */
   async getRequestsByAction(action: DualControlAction): Promise<DualControlRequest[]> {
-    const rows = await this.prisma.dualControlRequest.findMany({
+    const rows = await this.prisma!.dualControlRequest.findMany({
       where: { action },
       include: { approvals: true },
       orderBy: { createdAt: 'asc' },
@@ -310,11 +313,11 @@ export class DualControlDbService {
         approvedAt: a.approvedAt as Date,
         notes: (a.notes as string) ?? undefined,
       })),
-      status: row.status,
-      createdAt: row.createdAt,
-      expiresAt: row.expiresAt,
-      executedAt: row.executedAt ?? undefined,
-      executedBy: row.executedBy ?? undefined,
+      status: row.status as DualControlRequest['status'],
+      createdAt: row.createdAt as Date,
+      expiresAt: row.expiresAt as Date,
+      executedAt: (row.executedAt as Date) ?? undefined,
+      executedBy: (row.executedBy as string) ?? undefined,
     };
   }
 }

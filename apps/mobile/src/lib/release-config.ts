@@ -17,13 +17,16 @@ import Constants from 'expo-constants';
 
 export type BuildType = 'development' | 'preview' | 'production';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getExpoConfig = () => (Constants as any).expoConfig || (Constants as any).manifest || {};
+
 /**
  * Get the current build type
  */
 export function getBuildType(): BuildType {
   if (__DEV__) return 'development';
 
-  const releaseChannel = Constants.expoConfig?.extra?.eas?.projectId;
+  const releaseChannel = getExpoConfig()?.extra?.eas?.projectId;
   if (!releaseChannel) return 'development';
 
   // EAS Build uses release channels
@@ -70,31 +73,30 @@ export interface EnvironmentConfig {
  */
 export function getEnvironmentConfig(): EnvironmentConfig {
   const buildType = getBuildType();
-
   const configs: Record<BuildType, EnvironmentConfig> = {
     development: {
       apiUrl: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3013',
       analyticsUrl: process.env.EXPO_PUBLIC_ANALYTICS_URL || 'http://localhost:3013',
       debugMode: true,
-      appVersion: Constants.expoConfig?.version || '1.0.0',
-      buildNumber: Constants.expoConfig?.android?.versionCode?.toString() || '1',
-      bundleIdentifier: Constants.expoConfig?.android?.package || 'com.azeebo.plus.dev',
+      appVersion: getExpoConfig()?.version || '1.0.0',
+      buildNumber: getExpoConfig()?.android?.versionCode?.toString() || '1',
+      bundleIdentifier: getExpoConfig()?.android?.package || 'com.azeebo.plus.dev',
     },
     preview: {
       apiUrl: process.env.EXPO_PUBLIC_API_URL || 'https://staging-api.azeeboplus.com',
       analyticsUrl: process.env.EXPO_PUBLIC_ANALYTICS_URL || 'https://staging-api.azeeboplus.com',
       debugMode: false,
-      appVersion: Constants.expoConfig?.version || '1.0.0',
-      buildNumber: Constants.expoConfig?.android?.versionCode?.toString() || '1',
-      bundleIdentifier: Constants.expoConfig?.android?.package || 'com.azeebo.plus.staging',
+      appVersion: getExpoConfig()?.version || '1.0.0',
+      buildNumber: getExpoConfig()?.android?.versionCode?.toString() || '1',
+      bundleIdentifier: getExpoConfig()?.android?.package || 'com.azeebo.plus.staging',
     },
     production: {
       apiUrl: process.env.EXPO_PUBLIC_API_URL || 'https://api.azeeboplus.com',
       analyticsUrl: process.env.EXPO_PUBLIC_ANALYTICS_URL || 'https://api.azeeboplus.com',
       debugMode: false,
-      appVersion: Constants.expoConfig?.version || '1.0.0',
-      buildNumber: Constants.expoConfig?.android?.versionCode?.toString() || '1',
-      bundleIdentifier: Constants.expoConfig?.android?.package || 'com.azeebo.plus',
+      appVersion: getExpoConfig()?.version || '1.0.0',
+      buildNumber: getExpoConfig()?.android?.versionCode?.toString() || '1',
+      bundleIdentifier: getExpoConfig()?.android?.package || 'com.azeebo.plus',
     },
   };
 
@@ -108,34 +110,32 @@ export function getEnvironmentConfig(): EnvironmentConfig {
 /**
  * Verify that the app is running with expected configuration
  */
-export function verifyEnvironment(): { valid: boolean; errors: string[] } {
-  const errors: string[] = [];
-  const config = getEnvironmentConfig();
+export function verifyReleaseIntegrity(): {
+  valid: boolean;
+  issues: string[];
+} {
+  const issues: string[] = [];
 
-  // Check API URL is HTTPS in production
-  if (isProduction() && !config.apiUrl.startsWith('https://')) {
-    errors.push('Production API URL must use HTTPS');
-  }
+  if (isProduction()) {
+    // Production checks
+    const config = getEnvironmentConfig();
 
-  // Check bundle identifier matches
-  const expectedBundle = isProduction()
-    ? 'com.azeebo.plus'
-    : isDevelopment()
-      ? 'com.azeebo.plus.dev'
-      : 'com.azeebo.plus.staging';
+    if (config.debugMode) {
+      issues.push('Debug mode enabled in production');
+    }
 
-  if (config.bundleIdentifier !== expectedBundle) {
-    errors.push(`Bundle identifier mismatch: ${config.bundleIdentifier} !== ${expectedBundle}`);
-  }
+    if (!config.apiUrl.startsWith('https://')) {
+      issues.push('Non-HTTPS API URL in production');
+    }
 
-  // Check debug mode is off in production
-  if (isProduction() && config.debugMode) {
-    errors.push('Debug mode should be disabled in production');
+    if (config.bundleIdentifier.includes('dev') || config.bundleIdentifier.includes('staging')) {
+      issues.push(`Invalid bundle identifier for production: ${config.bundleIdentifier}`);
+    }
   }
 
   return {
-    valid: errors.length === 0,
-    errors,
+    valid: issues.length === 0,
+    issues,
   };
 }
 
@@ -156,7 +156,7 @@ export function detectCompromisedEnvironment(): {
   // Check for emulator (simplified - use react-native-device-info in production)
   if (Platform.OS === 'android') {
     // Basic emulator detection
-    const isEmulator = !Platform.isPad && !Platform.isTVOS && Platform.Version === 0;
+    const isEmulator = !Platform.isTV && Platform.Version === 0;
     if (isEmulator) {
       reasons.push('Running on emulator');
     }
@@ -187,7 +187,7 @@ export interface VersionInfo {
  * Get version information
  */
 export function getVersionInfo(): VersionInfo {
-  const config = Constants.expoConfig;
+  const config = getExpoConfig();
 
   return {
     version: config?.version || '1.0.0',
@@ -214,9 +214,6 @@ export function compareVersions(a: string, b: string): number {
 /**
  * Check if an update is available
  */
-export function isUpdateAvailable(
-  currentVersion: string,
-  latestVersion: string,
-): boolean {
+export function isUpdateAvailable(currentVersion: string, latestVersion: string): boolean {
   return compareVersions(latestVersion, currentVersion) > 0;
 }

@@ -19,8 +19,25 @@ interface AuthContextType {
   refreshToken: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; message?: string; code?: string; fieldErrors?: Record<string, string[]> }>;
-  register: (name: string, email: string, password: string) => Promise<{ success: boolean; message?: string; code?: string; fieldErrors?: Record<string, string[]> }>;
+  login: (
+    email: string,
+    password: string
+  ) => Promise<{
+    success: boolean;
+    message?: string;
+    code?: string;
+    fieldErrors?: Record<string, string[]>;
+  }>;
+  register: (
+    name: string,
+    email: string,
+    password: string
+  ) => Promise<{
+    success: boolean;
+    message?: string;
+    code?: string;
+    fieldErrors?: Record<string, string[]>;
+  }>;
   logout: () => Promise<void>;
   updateUser: (user: User) => void;
   refreshUser: () => Promise<void>;
@@ -73,14 +90,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setRefreshToken(newRefreshToken);
       setUser(userData);
       api.setToken(accessToken);
-      
+
       // Store refresh token in localStorage (not sensitive - can't access API directly)
       // Store user data for instant UI hydration
       if (typeof window !== 'undefined') {
         localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
         localStorage.setItem(USER_KEY, JSON.stringify(userData));
       }
-      
+
       // Set access token in HttpOnly cookie via server API
       await setAuthCookie(accessToken);
     },
@@ -125,8 +142,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Try to get access token from HttpOnly cookie first
         const cookieToken = getCookie('access_token');
         // Fallback to localStorage for migration period
-        const storedAccessToken = cookieToken || (typeof window !== 'undefined' ? localStorage.getItem('azeebo_access_token') : null);
-        const storedRefreshToken = typeof window !== 'undefined' ? localStorage.getItem(REFRESH_TOKEN_KEY) : null;
+        const storedAccessToken =
+          cookieToken ||
+          (typeof window !== 'undefined' ? localStorage.getItem('azeebo_access_token') : null);
+        const storedRefreshToken =
+          typeof window !== 'undefined' ? localStorage.getItem(REFRESH_TOKEN_KEY) : null;
         const storedUser = typeof window !== 'undefined' ? localStorage.getItem(USER_KEY) : null;
 
         if (storedUser && !cancelled) {
@@ -187,7 +207,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     loadSession();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [refreshAccessToken, clearSession]);
 
   // Periodic token refresh
@@ -199,7 +221,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       return;
     }
-    refreshTimerRef.current = setInterval(() => { refreshAccessToken(); }, TOKEN_REFRESH_INTERVAL);
+    refreshTimerRef.current = setInterval(() => {
+      refreshAccessToken();
+    }, TOKEN_REFRESH_INTERVAL);
     return (): void => {
       if (refreshTimerRef.current) {
         clearInterval(refreshTimerRef.current);
@@ -215,8 +239,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         await handleAuthResponse(response.data);
         return { success: true };
       }
-      const r = response as { message?: string; code?: string; details?: { fieldErrors?: Record<string, string[]> } };
-      return { success: false, message: r.message ?? response.message, code: r.code, fieldErrors: r.details?.fieldErrors };
+      const r = response as {
+        message?: string;
+        code?: string;
+        details?: { fieldErrors?: Record<string, string[]> };
+      };
+      return {
+        success: false,
+        message: r.message ?? response.message,
+        code: r.code,
+        fieldErrors: r.details?.fieldErrors,
+      };
     } catch {
       return { success: false, message: 'An error occurred during login' };
     }
@@ -224,13 +257,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (name: string, email: string, password: string) => {
     try {
-      const response = await api.auth.register({ displayName: name.trim(), email: email.trim(), password });
+      const response = await api.auth.register({
+        displayName: name.trim(),
+        email: email.trim(),
+        password,
+      });
       if (response.success && response.data) {
         await handleAuthResponse(response.data);
         return { success: true };
       }
-      const r = response as { message?: string; code?: string; details?: { fieldErrors?: Record<string, string[]> } };
-      return { success: false, message: r.message ?? response.message, code: r.code, fieldErrors: r.details?.fieldErrors };
+      const r = response as {
+        message?: string;
+        code?: string;
+        details?: { fieldErrors?: Record<string, string[]> };
+      };
+      return {
+        success: false,
+        message: r.message ?? response.message,
+        code: r.code,
+        fieldErrors: r.details?.fieldErrors,
+      };
     } catch {
       return { success: false, message: 'An error occurred during registration' };
     }
@@ -239,7 +285,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = async (): Promise<void> => {
     try {
       if (token) await api.auth.logout();
-    } catch { /* ignore */ } finally {
+    } catch {
+      /* ignore */
+    } finally {
       clearSession();
     }
   };
@@ -255,13 +303,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (response.success && response.data) {
         const userData = response.data;
         const userObj: User = {
-          id: userData.id, email: userData.email, name: userData.displayName || userData.name,
-          displayName: userData.displayName, role: userData.role, avatar: userData.avatar,
-          createdAt: userData.createdAt, updatedAt: userData.updatedAt,
+          id: userData.id,
+          email: userData.email,
+          name: userData.displayName || userData.name,
+          displayName: userData.displayName,
+          role: userData.role,
+          avatar: userData.avatar,
+          createdAt: userData.createdAt,
+          updatedAt: userData.updatedAt,
         };
         setUser(userObj);
         if (typeof window !== 'undefined') localStorage.setItem(USER_KEY, JSON.stringify(userObj));
-        const currentToken = typeof window !== 'undefined' ? localStorage.getItem('azeebo_access_token') : null;
+        const currentToken =
+          typeof window !== 'undefined' ? localStorage.getItem('azeebo_access_token') : null;
         if (currentToken) await setAuthCookie(currentToken);
       }
     } catch (error) {
@@ -270,9 +324,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const value: AuthContextType = {
-    user, token, refreshToken, isLoading,
+    user,
+    token,
+    refreshToken,
+    isLoading,
     isAuthenticated: !!token && !!user,
-    login, register, logout, updateUser, refreshUser,
+    login,
+    register,
+    logout,
+    updateUser,
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

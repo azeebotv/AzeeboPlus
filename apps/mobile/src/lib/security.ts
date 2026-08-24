@@ -38,11 +38,7 @@ export const TLS_CONFIG: TlsConfig = {
     // Backup pins for certificate rotation
     'sha256/BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=',
   ],
-  pinnedDomains: [
-    'api.azeeboplus.com',
-    'cdn.azeeboplus.com',
-    'media.azeeboplus.com',
-  ],
+  pinnedDomains: ['api.azeeboplus.com', 'cdn.azeeboplus.com', 'media.azeeboplus.com'],
 };
 
 /**
@@ -101,6 +97,7 @@ export async function verifyAppIntegrity(): Promise<boolean> {
 
     if (storedHash !== currentHash) {
       // Potential tampering detected
+      // eslint-disable-next-line no-console
       console.warn('App integrity check failed - possible tampering');
       await SecureStore.setItemAsync(APP_INTEGRITY_KEY, 'false');
       return false;

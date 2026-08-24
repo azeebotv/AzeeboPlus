@@ -54,7 +54,9 @@ model KnowledgeUnit {
   dependencies   KnowledgeDependency[] @relation("DependsOnUnit")
   dependents     KnowledgeDependency[] @relation("DependsOnKnowledgeUnit")
   grants         CheckpointGrant[]
-  equivalenceSet EquivalenceSet?
+  knowledgeGrants UserKnowledgeGrant[]
+  equivalenceSet EquivalenceSet? @relation(fields: [equivalenceSetId], references: [id])
+  equivalenceSetId String?
 
   @@index([canonicalEventId])
   @@index([knowledgeType])

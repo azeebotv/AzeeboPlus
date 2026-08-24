@@ -42,15 +42,23 @@ export function deferHeavyWork<T>(work: () => T): Promise<T> {
 export function createImageCache(maxSize: number = 50) {
   const cache = new Map<string, { uri: string; timestamp: number }>();
   return {
-    get(key: string) { return cache.get(key); },
+    get(key: string) {
+      return cache.get(key);
+    },
     set(key: string, uri: string) {
       if (cache.size >= maxSize) {
-        const oldest = Array.from(cache.entries()).sort(([, a], [, b]) => a.timestamp - b.timestamp)[0];
+        const oldest = Array.from(cache.entries()).sort(
+          ([, a], [, b]) => a.timestamp - b.timestamp
+        )[0];
         if (oldest) cache.delete(oldest[0]);
       }
       cache.set(key, { uri, timestamp: Date.now() });
     },
-    clear() { cache.clear(); },
-    get size() { return cache.size; },
+    clear() {
+      cache.clear();
+    },
+    get size() {
+      return cache.size;
+    },
   };
 }

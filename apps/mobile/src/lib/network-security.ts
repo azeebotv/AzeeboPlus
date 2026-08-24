@@ -91,9 +91,9 @@ export const DEFAULT_NETWORK_SECURITY: NetworkSecurityConfig = {
       domain: 'azeebo.com',
       includeSubdomains: true,
       trustUserCerts: false,
-      certificatePins: CERTIFICATE_PINS
-        .filter((p) => p.hostname.includes('azeebo.com'))
-        .map((p) => p.pin),
+      certificatePins: CERTIFICATE_PINS.filter((p) => p.hostname.includes('azeebo.com')).map(
+        (p) => p.pin
+      ),
     },
     {
       domain: 'localhost',
@@ -113,10 +113,10 @@ export const DEFAULT_NETWORK_SECURITY: NetworkSecurityConfig = {
  */
 export function verifyCertificatePin(
   hostname: string,
-  certificateChain: string[],
+  _certificateChain?: string[]
 ): CertificateVerification {
   const pinConfig = CERTIFICATE_PINS.find(
-    (p) => hostname === p.hostname || hostname.endsWith(`.${p.hostname}`),
+    (p) => hostname === p.hostname || hostname.endsWith(`.${p.hostname}`)
   );
 
   if (!pinConfig) {
@@ -173,8 +173,8 @@ export function generateAndroidNetworkSecurityConfig(): string {
   xml += '    <trust-anchors>\n';
   xml += '      <certificates src="system" />\n';
   if (config.baseConfig.trustUserCerts) {
-        xml += '      <certificates src="user" />\n';
-      }
+    xml += '      <certificates src="user" />\n';
+  }
   xml += '    </trust-anchors>\n';
   xml += '  </base-config>\n';
 
@@ -204,7 +204,7 @@ export function generateIOSNetworkSecurity(): Record<string, unknown> {
     NSAppTransportSecurity: {
       NSAllowsArbitraryLoads: __DEV__, // Only in debug
       NSExceptionDomains: {
-        'localhost': {
+        localhost: {
           NSExceptionAllowsInsecureHTTPLoads: true,
           NSIncludesSubdomains: true,
         },
@@ -227,7 +227,7 @@ export function requiresCertificatePinning(url: string): boolean {
   try {
     const { hostname } = new URL(url);
     return CERTIFICATE_PINS.some(
-      (pin) => hostname === pin.hostname || hostname.endsWith(`.${pin.hostname}`),
+      (pin) => hostname === pin.hostname || hostname.endsWith(`.${pin.hostname}`)
     );
   } catch {
     return false;

@@ -67,11 +67,14 @@ export interface ExperimentResults {
 export interface VariantResult {
   variantId: string;
   participants: number;
-  metrics: Record<string, {
-    value: number;
-    standardDeviation: number;
-    sampleSize: number;
-  }>;
+  metrics: Record<
+    string,
+    {
+      value: number;
+      standardDeviation: number;
+      sampleSize: number;
+    }
+  >;
 }
 
 @Injectable()
@@ -200,7 +203,7 @@ export class ABTestingService {
   private isEligible(userId: string, audience: ExperimentAudience): boolean {
     // Simple eligibility check based on percentage
     const hash = this.hashString(userId);
-    return (hash % 100) < audience.percentage;
+    return hash % 100 < audience.percentage;
   }
 
   /**
@@ -238,7 +241,7 @@ export class ABTestingService {
     experimentId: string,
     variantId: string,
     metricName: string,
-    value: number,
+    value: number
   ): Promise<void> {
     // In production, would store in database
     this.logger.debug(`Metric recorded: ${experimentId}/${variantId}/${metricName}=${value}`);
@@ -262,7 +265,7 @@ export class ABTestingService {
    * Get running experiments
    */
   async getRunningExperiments(): Promise<Experiment[]> {
-    return Array.from(this.experiments.values()).filter(e => e.status === 'running');
+    return Array.from(this.experiments.values()).filter((e) => e.status === 'running');
   }
 
   /**

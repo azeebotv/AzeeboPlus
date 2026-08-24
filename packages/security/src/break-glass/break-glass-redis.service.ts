@@ -94,9 +94,9 @@ export class BreakGlassRedisService {
     }
 
     // Check for existing active session (in Redis)
-    const userSessionIds = await this.redis.smembers(`${USER_SESSIONS_PREFIX}${request.userId}`);
+    const userSessionIds = await this.redis!.smembers(`${USER_SESSIONS_PREFIX}${request.userId}`);
     for (const sid of userSessionIds) {
-      const existing = await this.redis.get(`${KEY_PREFIX}${sid}`);
+      const existing = await this.redis!.get(`${KEY_PREFIX}${sid}`);
       if (existing) {
         const session = JSON.parse(existing) as BreakGlassSession;
         if (session.status === 'active') {
@@ -122,11 +122,11 @@ export class BreakGlassRedisService {
 
     // Store in Redis with TTL = session duration + 1 hour buffer
     const ttlSeconds = Math.ceil((MAX_DURATION_MS + 60 * 60 * 1000) / 1000);
-    await this.redis.setex(`${KEY_PREFIX}${session.id}`, ttlSeconds, JSON.stringify(session));
+    await this.redis!.setex(`${KEY_PREFIX}${session.id}`, ttlSeconds, JSON.stringify(session));
 
     // Add to indexes
-    await this.redis.sadd(SESSION_INDEX_KEY, session.id);
-    await this.redis.sadd(`${USER_SESSIONS_PREFIX}${request.userId}`, session.id);
+    await this.redis!.sadd(SESSION_INDEX_KEY, session.id);
+    await this.redis!.sadd(`${USER_SESSIONS_PREFIX}${request.userId}`, session.id);
 
     this.logger.warn(
       `BREAK-GLASS ACTIVATED: User ${request.userId} elevated from ${request.originalRole} to ${request.elevatedRole} ` +
@@ -140,7 +140,7 @@ export class BreakGlassRedisService {
    * Validate a break-glass session is still active
    */
   async validate(sessionId: string): Promise<BreakGlassSession> {
-    const data = await this.redis.get(`${KEY_PREFIX}${sessionId}`);
+    const data = await this.redis!.get(`${KEY_PREFIX}${sessionId}`);
     if (!data) {
       throw new UnauthorizedException('Break-glass session not found');
     }
@@ -153,7 +153,7 @@ export class BreakGlassRedisService {
 
     if (new Date() > new Date(session.expiresAt)) {
       session.status = 'expired';
-      await this.redis.set(`${KEY_PREFIX}${sessionId}`, JSON.stringify(session));
+      await this.redis!.set(`${KEY_PREFIX}${sessionId}`, JSON.stringify(session));
       this.logger.warn(`BREAK-GLASS EXPIRED: Session ${sessionId} for user ${session.userId}`);
       throw new UnauthorizedException('Break-glass session has expired');
     }
@@ -165,7 +165,7 @@ export class BreakGlassRedisService {
    * Revoke a break-glass session
    */
   async revoke(sessionId: string, revokedBy: string): Promise<BreakGlassSession> {
-    const data = await this.redis.get(`${KEY_PREFIX}${sessionId}`);
+    const data = await this.redis!.get(`${KEY_PREFIX}${sessionId}`);
     if (!data) {
       throw new UnauthorizedException('Break-glass session not found');
     }
@@ -174,7 +174,7 @@ export class BreakGlassRedisService {
     session.status = 'revoked';
     session.reviewedBy = revokedBy;
 
-    await this.redis.set(`${KEY_PREFIX}${sessionId}`, JSON.stringify(session));
+    await this.redis!.set(`${KEY_PREFIX}${sessionId}`, JSON.stringify(session));
 
     this.logger.warn(
       `BREAK-GLASS REVOKED: Session ${sessionId} for user ${session.userId} revoked by ${revokedBy}`
@@ -187,7 +187,7 @@ export class BreakGlassRedisService {
    * Review a break-glass session (mandatory by next business day)
    */
   async review(sessionId: string, reviewedBy: string, notes: string): Promise<BreakGlassSession> {
-    const data = await this.redis.get(`${KEY_PREFIX}${sessionId}`);
+    const data = await this.redis!.get(`${KEY_PREFIX}${sessionId}`);
     if (!data) {
       throw new UnauthorizedException('Break-glass session not found');
     }
@@ -197,7 +197,7 @@ export class BreakGlassRedisService {
     session.reviewedBy = reviewedBy;
     session.reviewNotes = notes;
 
-    await this.redis.set(`${KEY_PREFIX}${sessionId}`, JSON.stringify(session));
+    await this.redis!.set(`${KEY_PREFIX}${sessionId}`, JSON.stringify(session));
 
     this.logger.log(`BREAK-GLASS REVIEWED: Session ${sessionId} reviewed by ${reviewedBy}`);
 
@@ -208,11 +208,11 @@ export class BreakGlassRedisService {
    * Get all active sessions (for security monitoring)
    */
   async getActiveSessions(): Promise<BreakGlassSession[]> {
-    const sessionIds = await this.redis.smembers(SESSION_INDEX_KEY);
+    const sessionIds = await this.redis!.smembers(SESSION_INDEX_KEY);
     const activeSessions: BreakGlassSession[] = [];
 
     for (const sid of sessionIds) {
-      const data = await this.redis.get(`${KEY_PREFIX}${sid}`);
+      const data = await this.redis!.get(`${KEY_PREFIX}${sid}`);
       if (!data) continue;
 
       const session = JSON.parse(data) as BreakGlassSession;
@@ -220,7 +220,7 @@ export class BreakGlassRedisService {
       // Auto-expire old sessions
       if (session.status === 'active' && new Date() > new Date(session.expiresAt)) {
         session.status = 'expired';
-        await this.redis.set(`${KEY_PREFIX}${sid}`, JSON.stringify(session));
+        await this.redis!.set(`${KEY_PREFIX}${sid}`, JSON.stringify(session));
       }
 
       if (session.status === 'active') {
@@ -235,11 +235,11 @@ export class BreakGlassRedisService {
    * Get all sessions for audit (including expired/revoked)
    */
   async getAllSessions(): Promise<BreakGlassSession[]> {
-    const sessionIds = await this.redis.smembers(SESSION_INDEX_KEY);
+    const sessionIds = await this.redis!.smembers(SESSION_INDEX_KEY);
     const sessions: BreakGlassSession[] = [];
 
     for (const sid of sessionIds) {
-      const data = await this.redis.get(`${KEY_PREFIX}${sid}`);
+      const data = await this.redis!.get(`${KEY_PREFIX}${sid}`);
       if (data) {
         sessions.push(JSON.parse(data) as BreakGlassSession);
       }
@@ -252,14 +252,14 @@ export class BreakGlassRedisService {
    * Clean up expired sessions (can be called periodically)
    */
   async cleanupExpired(): Promise<number> {
-    const sessionIds = await this.redis.smembers(SESSION_INDEX_KEY);
+    const sessionIds = await this.redis!.smembers(SESSION_INDEX_KEY);
     let cleaned = 0;
 
     for (const sid of sessionIds) {
-      const data = await this.redis.get(`${KEY_PREFIX}${sid}`);
+      const data = await this.redis!.get(`${KEY_PREFIX}${sid}`);
       if (!data) {
         // Key expired, remove from index
-        await this.redis.srem(SESSION_INDEX_KEY, sid);
+        await this.redis!.srem(SESSION_INDEX_KEY, sid);
         cleaned++;
         continue;
       }
@@ -267,7 +267,7 @@ export class BreakGlassRedisService {
       const session = JSON.parse(data) as BreakGlassSession;
       if (new Date() > new Date(session.expiresAt) && session.status === 'active') {
         session.status = 'expired';
-        await this.redis.set(`${KEY_PREFIX}${sid}`, JSON.stringify(session));
+        await this.redis!.set(`${KEY_PREFIX}${sid}`, JSON.stringify(session));
         cleaned++;
       }
     }

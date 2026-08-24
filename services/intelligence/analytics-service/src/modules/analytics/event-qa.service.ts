@@ -94,7 +94,7 @@ export class EventQAService {
     completeness: number,
     timeliness: number,
     accuracy: number,
-    sampleSize: number,
+    sampleSize: number
   ): EventQualityScore {
     // Weighted average: completeness 40%, timeliness 30%, accuracy 30%
     const overall = completeness * 0.4 + timeliness * 0.3 + accuracy * 0.3;
@@ -115,7 +115,7 @@ export class EventQAService {
    */
   calculateCompleteness(
     eventName: string,
-    events: Array<Record<string, unknown>>,
+    events: Array<Record<string, unknown>>
   ): EventCompletenessMetrics {
     const requiredFields = this.REQUIRED_FIELDS[eventName] || this.REQUIRED_FIELDS.default;
     const totalEvents = events.length;
@@ -146,14 +146,14 @@ export class EventQAService {
 
     const totalMissing = Array.from(missingCounts.values()).reduce((a, b) => a + b, 0);
     const totalRequired = totalEvents * requiredFields.length;
-    const completenessScore = totalRequired > 0
-      ? ((totalRequired - totalMissing) / totalRequired) * 100
-      : 100;
+    const completenessScore =
+      totalRequired > 0 ? ((totalRequired - totalMissing) / totalRequired) * 100 : 100;
 
     return {
       eventName,
       totalEvents,
-      completeEvents: totalEvents - (missingCounts.size > 0 ? Math.max(...missingCounts.values()) : 0),
+      completeEvents:
+        totalEvents - (missingCounts.size > 0 ? Math.max(...missingCounts.values()) : 0),
       missingFields: Array.from(missingCounts.entries()).map(([field, count]) => ({
         field,
         missingCount: count,
@@ -168,7 +168,7 @@ export class EventQAService {
    */
   calculateLatency(
     eventName: string,
-    latencies: number[], // in milliseconds
+    latencies: number[] // in milliseconds
   ): EventLatencyMetrics {
     if (latencies.length === 0) {
       return {
@@ -207,7 +207,7 @@ export class EventQAService {
    */
   detectAnomalies(
     metrics: EventVolumeMetrics[],
-    standardDeviations: number = 2,
+    standardDeviations: number = 2
   ): AnomalyDetectionResult[] {
     const anomalies: AnomalyDetectionResult[] = [];
 
@@ -232,9 +232,10 @@ export class EventQAService {
           deviation: Math.round(deviation * 100) / 100,
           severity,
           detectedAt: new Date(),
-          description: deviation > 0
-            ? `${metric.eventName} volume is ${Math.round(deviation * 100)}% above average`
-            : `${metric.eventName} volume is ${Math.round(Math.abs(deviation) * 100)}% below average`,
+          description:
+            deviation > 0
+              ? `${metric.eventName} volume is ${Math.round(deviation * 100)}% above average`
+              : `${metric.eventName} volume is ${Math.round(Math.abs(deviation) * 100)}% below average`,
         });
       }
     }
@@ -263,7 +264,7 @@ export class EventQAService {
     if (latencies.length === 0) return 100;
 
     const threshold = this.getLatencyThreshold(eventName);
-    const withinThreshold = latencies.filter(l => l <= threshold).length;
+    const withinThreshold = latencies.filter((l) => l <= threshold).length;
     return (withinThreshold / latencies.length) * 100;
   }
 
@@ -273,7 +274,7 @@ export class EventQAService {
   generateQAReport(
     eventName: string,
     events: Array<Record<string, unknown>>,
-    latencies: number[],
+    latencies: number[]
   ): {
     qualityScore: EventQualityScore;
     completeness: EventCompletenessMetrics;
@@ -292,7 +293,7 @@ export class EventQAService {
       completeness.completenessScore,
       timelinessScore,
       accuracyScore,
-      events.length,
+      events.length
     );
 
     return {

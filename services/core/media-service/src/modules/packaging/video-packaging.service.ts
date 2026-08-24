@@ -73,8 +73,6 @@ export interface CaptionTrack {
 
 @Injectable()
 export class VideoPackagingService {
-
-
   /** Default adaptive bitrate ladder */
   private readonly DEFAULT_RENDITIONS: RenditionConfig[] = [
     {
@@ -244,10 +242,7 @@ export class VideoPackagingService {
   /**
    * Get optimal rendition for bandwidth
    */
-  getOptimalRendition(
-    bandwidthKbps: number,
-    dataSaverEnabled: boolean = false
-  ): RenditionConfig {
+  getOptimalRendition(bandwidthKbps: number, dataSaverEnabled: boolean = false): RenditionConfig {
     if (dataSaverEnabled) {
       return this.getDataSaverRendition();
     }

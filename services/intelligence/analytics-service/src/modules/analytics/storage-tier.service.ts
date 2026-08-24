@@ -54,7 +54,7 @@ export class StorageTierService {
       tier: 'hot',
       retentionDays: 30,
       description: 'Recent events for debugging and live dashboards',
-      costPerGB: 0.10, // PostgreSQL/Redis
+      costPerGB: 0.1, // PostgreSQL/Redis
       accessLatency: 'milliseconds',
       useCases: [
         'Real-time dashboards',
@@ -82,12 +82,7 @@ export class StorageTierService {
       description: 'Lower-cost long-term retention for compliance',
       costPerGB: 0.004, // S3 Glacier
       accessLatency: 'minutes-hours',
-      useCases: [
-        'Compliance retention',
-        'Legal holds',
-        'Historical research',
-        'Audit trails',
-      ],
+      useCases: ['Compliance retention', 'Legal holds', 'Historical research', 'Audit trails'],
     },
   };
 
@@ -121,9 +116,7 @@ export class StorageTierService {
    * Calculate which tier an event should be in based on age
    */
   getRecommendedTier(eventAge: Date): StorageTier {
-    const daysSinceCreation = Math.floor(
-      (Date.now() - eventAge.getTime()) / (1000 * 60 * 60 * 24)
-    );
+    const daysSinceCreation = Math.floor((Date.now() - eventAge.getTime()) / (1000 * 60 * 60 * 24));
 
     if (daysSinceCreation <= this.TIER_CONFIGS.hot.retentionDays) {
       return 'hot';
@@ -185,7 +178,8 @@ export class StorageTierService {
           optimizations.push({
             tier: 'warehouse',
             recommendation: 'Warehouse has data older than 1 year. Consider archiving.',
-            estimatedSavings: this.estimateMonthlyCost('warehouse', archiveableSize) -
+            estimatedSavings:
+              this.estimateMonthlyCost('warehouse', archiveableSize) -
               this.estimateMonthlyCost('archive', archiveableSize),
           });
         }
@@ -200,9 +194,9 @@ export class StorageTierService {
    */
   checkMovementNeeded(
     tier: StorageTier,
-    recordAge: Date,
+    recordAge: Date
   ): { needsMovement: boolean; destinationTier?: StorageTier } {
-    const policy = this.MOVEMENT_POLICIES.find(p => p.sourceTier === tier && p.enabled);
+    const policy = this.MOVEMENT_POLICIES.find((p) => p.sourceTier === tier && p.enabled);
     if (!policy) {
       return { needsMovement: false };
     }
@@ -238,7 +232,7 @@ export class StorageTierService {
     const totalSizeGB = metrics.reduce((sum, m) => sum + m.totalSizeGB, 0);
     const totalMonthlyCost = this.estimateTotalMonthlyCost(metrics);
 
-    const tierBreakdown = metrics.map(m => ({
+    const tierBreakdown = metrics.map((m) => ({
       tier: m.tier,
       percentage: totalRecords > 0 ? (m.totalRecords / totalRecords) * 100 : 0,
       cost: m.estimatedMonthlyCost,

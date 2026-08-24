@@ -83,7 +83,12 @@ function parseTimestamp(ts: string): number {
   return parseFloat(ts) || 0;
 }
 
-export function WebVttCaptions({ tracks, activeTrackId, videoRef, onTrackChange }: WebVttCaptionsProps) {
+export function WebVttCaptions({
+  tracks,
+  activeTrackId,
+  videoRef,
+  onTrackChange,
+}: WebVttCaptionsProps) {
   const [cues, setCues] = useState<Cue[]>([]);
   const [currentText, setCurrentText] = useState('');
   const [showMenu, setShowMenu] = useState(false);
@@ -103,6 +108,7 @@ export function WebVttCaptions({ tracks, activeTrackId, videoRef, onTrackChange 
       cueCacheRef.current.set(track.id, parsed);
       return parsed;
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error('Failed to load caption track:', err);
       return [];
     }
@@ -145,7 +151,7 @@ export function WebVttCaptions({ tracks, activeTrackId, videoRef, onTrackChange 
       onTrackChange?.(trackId);
       setShowMenu(false);
     },
-    [onTrackChange],
+    [onTrackChange]
   );
 
   return (

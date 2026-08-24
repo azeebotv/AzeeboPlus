@@ -873,7 +873,11 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'PUT', path: '/messages/:messageId', description: 'Edit message' },
       { method: 'DELETE', path: '/messages/:messageId', description: 'Delete message' },
       { method: 'PUT', path: '/messages/:messageId/pin', description: 'Pin/unpin message' },
-      { method: 'POST', path: '/conversations/:id/messages/:messageId/react', description: 'React to message' },
+      {
+        method: 'POST',
+        path: '/conversations/:id/messages/:messageId/react',
+        description: 'React to message',
+      },
     ],
   },
   {

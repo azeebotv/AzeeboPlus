@@ -406,10 +406,7 @@ export class IngestionValidatorService {
   /**
    * Validate checksums for all assets
    */
-  private async validateChecksums(
-    assets: AssetFile[],
-    errors: ValidationError[]
-  ): Promise<void> {
+  private async validateChecksums(assets: AssetFile[], errors: ValidationError[]): Promise<void> {
     for (const asset of assets) {
       if (asset.checksum && !/^[a-f0-9]{64}$/i.test(asset.checksum)) {
         errors.push({
@@ -451,9 +448,7 @@ export class IngestionValidatorService {
 
     // Check all package assets are in manifest
     for (const asset of pkg.masterAssets) {
-      const inManifest = manifestAssets.some(
-        (ma: Record<string, unknown>) => ma.key === asset.key
-      );
+      const inManifest = manifestAssets.some((ma: Record<string, unknown>) => ma.key === asset.key);
       if (!inManifest) {
         warnings.push({
           code: 'ASSET_NOT_IN_MANIFEST',

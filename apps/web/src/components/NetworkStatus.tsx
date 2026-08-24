@@ -48,7 +48,9 @@ export function NetworkStatusProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <NetworkStatusContext.Provider value={{ isOnline, isRateLimited, retryAfterSeconds, setRateLimited }}>
+    <NetworkStatusContext.Provider
+      value={{ isOnline, isRateLimited, retryAfterSeconds, setRateLimited }}
+    >
       {children}
     </NetworkStatusContext.Provider>
   );

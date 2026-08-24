@@ -84,7 +84,6 @@ export interface ContentRights {
 
 @Injectable()
 export class PlaybackAuthorizationService {
-
   private readonly tokenSecret: string;
   private readonly tokenLifetimeMinutes: number = 10;
 
@@ -151,10 +150,7 @@ export class PlaybackAuthorizationService {
     }
 
     // 5. Check entitlement
-    const entitlementCheck = this.checkEntitlement(
-      request.subscriptionTier,
-      contentRights
-    );
+    const entitlementCheck = this.checkEntitlement(request.subscriptionTier, contentRights);
     decisions.push(entitlementCheck);
 
     if (!entitlementCheck.passed) {
@@ -204,13 +200,14 @@ export class PlaybackAuthorizationService {
       };
     }
 
-    const allowed = rights.territories.includes(territory);      return {
-        policy: 'territory',
-        passed: allowed,
-        details: allowed
-          ? `Territory '${territory}' is allowed`
-          : `Territory '${territory}' is not in allowed list`,
-      };
+    const allowed = rights.territories.includes(territory);
+    return {
+      policy: 'territory',
+      passed: allowed,
+      details: allowed
+        ? `Territory '${territory}' is allowed`
+        : `Territory '${territory}' is not in allowed list`,
+    };
   }
 
   /**
@@ -277,10 +274,7 @@ export class PlaybackAuthorizationService {
   /**
    * Check entitlement
    */
-  private checkEntitlement(
-    userTier: string | undefined,
-    rights: ContentRights
-  ): PolicyDecision {
+  private checkEntitlement(userTier: string | undefined, rights: ContentRights): PolicyDecision {
     if (!rights.entitlementRequired) {
       return {
         policy: 'entitlement',
@@ -311,10 +305,7 @@ export class PlaybackAuthorizationService {
   /**
    * Generate a signed playback token
    */
-  private generatePlaybackToken(
-    request: PlaybackRequest,
-    _rights: ContentRights
-  ): PlaybackToken {
+  private generatePlaybackToken(request: PlaybackRequest, _rights: ContentRights): PlaybackToken {
     const expiresAt = new Date(Date.now() + this.tokenLifetimeMinutes * 60 * 1000);
 
     const payload = {

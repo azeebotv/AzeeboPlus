@@ -59,8 +59,8 @@ export interface VolumeAlert {
 export class AnalyticsEconomicsService {
   // Cost per million events (approximate)
   private readonly COST_PER_MILLION = {
-    ingestion: 0.50,
-    storage_hot: 0.10,
+    ingestion: 0.5,
+    storage_hot: 0.1,
     storage_warehouse: 0.02,
     storage_archive: 0.004,
     compute: 0.25,
@@ -82,7 +82,10 @@ export class AnalyticsEconomicsService {
   /**
    * Calculate cost per million events
    */
-  calculateCostPerMillion(_events: number, storageTier: 'hot' | 'warehouse' | 'archive' = 'hot'): number {
+  calculateCostPerMillion(
+    _events: number,
+    storageTier: 'hot' | 'warehouse' | 'archive' = 'hot'
+  ): number {
     const storageKey = `storage_${storageTier}` as keyof typeof this.COST_PER_MILLION;
     return (
       this.COST_PER_MILLION.ingestion +
@@ -98,7 +101,7 @@ export class AnalyticsEconomicsService {
   calculateTotalCost(
     events: number,
     storageDays: number,
-    storageTier: 'hot' | 'warehouse' | 'archive' = 'hot',
+    storageTier: 'hot' | 'warehouse' | 'archive' = 'hot'
   ): {
     ingestionCost: number;
     storageCost: number;
@@ -126,11 +129,7 @@ export class AnalyticsEconomicsService {
   /**
    * Track event volume per domain
    */
-  trackVolume(
-    domain: string,
-    eventName: string,
-    hourlyVolume: number,
-  ): EventVolumeMetrics {
+  trackVolume(domain: string, eventName: string, hourlyVolume: number): EventVolumeMetrics {
     const dailyVolume = hourlyVolume * 24;
     const weeklyVolume = dailyVolume * 7;
     const monthlyVolume = dailyVolume * 30;
@@ -157,7 +156,7 @@ export class AnalyticsEconomicsService {
   checkCardinality(
     eventName: string,
     field: string,
-    uniqueValues: Map<string, number>,
+    uniqueValues: Map<string, number>
   ): CardinalityMetrics {
     const cardinality = uniqueValues.size;
     const threshold = this.CARDINALITY_THRESHOLDS[field] || 10000;
@@ -184,7 +183,7 @@ export class AnalyticsEconomicsService {
   detectVolumeAnomalies(
     metrics: EventVolumeMetrics[],
     historicalAverage: Map<string, number>,
-    thresholdStandardDeviations: number = 2,
+    thresholdStandardDeviations: number = 2
   ): VolumeAlert[] {
     const alerts: VolumeAlert[] = [];
 
@@ -212,9 +211,10 @@ export class AnalyticsEconomicsService {
           deviation: Math.round(deviation * 100) / 100,
           severity,
           detectedAt: new Date(),
-          description: deviation > 0
-            ? `${metric.eventName} volume is ${Math.round(deviation * 100)}% above average`
-            : `${metric.eventName} volume is ${Math.round(Math.abs(deviation) * 100)}% below average`,
+          description:
+            deviation > 0
+              ? `${metric.eventName} volume is ${Math.round(deviation * 100)}% above average`
+              : `${metric.eventName} volume is ${Math.round(Math.abs(deviation) * 100)}% below average`,
         });
       }
     }
@@ -227,7 +227,7 @@ export class AnalyticsEconomicsService {
    */
   getCostOptimizations(
     volumes: EventVolumeMetrics[],
-    cardinalities: CardinalityMetrics[],
+    cardinalities: CardinalityMetrics[]
   ): Array<{
     type: 'volume' | 'cardinality' | 'storage';
     recommendation: string;
@@ -270,7 +270,7 @@ export class AnalyticsEconomicsService {
    */
   generateEconomicsReport(
     volumes: EventVolumeMetrics[],
-    cardinalities: CardinalityMetrics[],
+    cardinalities: CardinalityMetrics[]
   ): {
     totalMonthlyEvents: number;
     totalMonthlyCost: number;
@@ -285,15 +285,12 @@ export class AnalyticsEconomicsService {
   } {
     const totalMonthlyEvents = volumes.reduce((sum, v) => sum + v.monthlyVolume, 0);
     const totalMonthlyCost = volumes.reduce((sum, v) => sum + v.totalCost, 0);
-    const costPerMillion = totalMonthlyEvents > 0
-      ? (totalMonthlyCost / totalMonthlyEvents) * 1000000
-      : 0;
+    const costPerMillion =
+      totalMonthlyEvents > 0 ? (totalMonthlyCost / totalMonthlyEvents) * 1000000 : 0;
 
-    const topExpensiveEvents = [...volumes]
-      .sort((a, b) => b.totalCost - a.totalCost)
-      .slice(0, 10);
+    const topExpensiveEvents = [...volumes].sort((a, b) => b.totalCost - a.totalCost).slice(0, 10);
 
-    const cardinalityAlerts = cardinalities.filter(c => c.isExceeded);
+    const cardinalityAlerts = cardinalities.filter((c) => c.isExceeded);
 
     const recommendations = this.getCostOptimizations(volumes, cardinalities);
 

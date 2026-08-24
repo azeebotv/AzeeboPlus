@@ -37,7 +37,10 @@ export const REDUCED_MOTION_CLASSES = {
 /**
  * Animation durations that respect user preference
  */
-export function getAnimationDuration(prefersReducedMotion: boolean, normalMs: number = 300): number {
+export function getAnimationDuration(
+  prefersReducedMotion: boolean,
+  normalMs: number = 300
+): number {
   return prefersReducedMotion ? 0 : normalMs;
 }
 
@@ -46,7 +49,7 @@ export function getAnimationDuration(prefersReducedMotion: boolean, normalMs: nu
  */
 export function getReducedMotionStyle(
   prefersReducedMotion: boolean,
-  normalStyle: React.CSSProperties,
+  normalStyle: React.CSSProperties
 ): React.CSSProperties {
   if (prefersReducedMotion) {
     return {
@@ -63,7 +66,7 @@ export function getReducedMotionStyle(
  */
 export function getReducedMotionAnimation(
   prefersReducedMotion: boolean,
-  normalAnimation: Record<string, unknown>,
+  normalAnimation: Record<string, unknown>
 ): Record<string, unknown> {
   if (prefersReducedMotion) {
     return { duration: 0, ease: 'linear' };

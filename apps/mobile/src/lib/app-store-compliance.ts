@@ -48,16 +48,8 @@ export const IOS_COMPLIANCE: IosCompliance = {
   },
   privacyManifest: {
     trackingDomains: [], // No tracking without consent
-    dataPurposes: [
-      'Analytics',
-      'App Functionality',
-      'Personalization',
-    ],
-    thirdPartySdks: [
-      'expo-secure-store',
-      'react-native-video',
-      '@react-navigation/native',
-    ],
+    dataPurposes: ['Analytics', 'App Functionality', 'Personalization'],
+    thirdPartySdks: ['expo-secure-store', 'react-native-video', '@react-navigation/native'],
   },
   contentRating: '12+', // Suitable for ages 12+
   inAppPurchases: ['subscription', 'consumable'],
@@ -176,7 +168,10 @@ export function verifyAndroidCompliance(): { compliant: boolean; issues: string[
   }
 
   // Check data safety
-  if (ANDROID_COMPLIANCE.dataSafety.collectsData && !ANDROID_COMPLIANCE.dataSafety.securityPractices.length) {
+  if (
+    ANDROID_COMPLIANCE.dataSafety.collectsData &&
+    !ANDROID_COMPLIANCE.dataSafety.securityPractices.length
+  ) {
     issues.push('Data safety section requires security practices disclosure');
   }
 

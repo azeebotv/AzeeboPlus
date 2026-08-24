@@ -66,12 +66,24 @@ function KnowledgeCard({ unit, isUnlocked, progress, onReveal, onConsume }: Know
       <div className="border border-gray-700 rounded-xl p-4 bg-gray-900/50">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            <svg
+              className="w-5 h-5 text-gray-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
             </svg>
             <span className="text-sm font-medium text-gray-400">Locked</span>
           </div>
-          <span className={`text-xs px-2 py-1 rounded-full border ${spoilerColors[unit.spoilerLevel]} bg-gray-800`}>
+          <span
+            className={`text-xs px-2 py-1 rounded-full border ${spoilerColors[unit.spoilerLevel]} bg-gray-800`}
+          >
             {spoilerLabels[unit.spoilerLevel]}
           </span>
         </div>
@@ -116,12 +128,24 @@ function KnowledgeCard({ unit, isUnlocked, progress, onReveal, onConsume }: Know
     <div className={`border rounded-xl p-4 ${spoilerColors[unit.spoilerLevel]} bg-gray-900/30`}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg
+            className="w-5 h-5 text-green-500"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
           <span className="text-sm font-medium text-green-400">Unlocked</span>
         </div>
-        <span className={`text-xs px-2 py-1 rounded-full border ${spoilerColors[unit.spoilerLevel]}`}>
+        <span
+          className={`text-xs px-2 py-1 rounded-full border ${spoilerColors[unit.spoilerLevel]}`}
+        >
           {spoilerLabels[unit.spoilerLevel]}
         </span>
       </div>
@@ -129,7 +153,9 @@ function KnowledgeCard({ unit, isUnlocked, progress, onReveal, onConsume }: Know
       {!isRevealed && unit.spoilerLevel !== 'none' ? (
         <>
           <h3 className="text-white font-semibold mb-1">{unit.title}</h3>
-          <p className="text-gray-400 text-sm mb-3">Content contains {unit.spoilerLevel} spoilers</p>
+          <p className="text-gray-400 text-sm mb-3">
+            Content contains {unit.spoilerLevel} spoilers
+          </p>
           <button
             onClick={handleReveal}
             className="w-full border border-gray-600 hover:border-gray-500 text-gray-300 text-sm py-2 px-4 rounded-lg transition-colors"
@@ -161,7 +187,7 @@ export function ProgressiveUnlock({
       setRevealedIds((prev) => new Set([...prev, unitId]));
       onRevealRequest?.(unitId);
     },
-    [onRevealRequest],
+    [onRevealRequest]
   );
 
   // Sort: unlocked first, then by spoiler level (none first)

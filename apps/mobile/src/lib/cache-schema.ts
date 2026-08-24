@@ -190,10 +190,7 @@ export function runMigrations(storage: Storage = localStorage): boolean {
 /**
  * Check if a forced upgrade is needed based on minimum supported version
  */
-export function isUpgradeRequired(
-  clientVersion: string,
-  minSupportedVersion: string,
-): boolean {
+export function isUpgradeRequired(clientVersion: string, minSupportedVersion: string): boolean {
   const parse = (v: string) => v.split('.').map(Number);
   const [cMajor, cMinor, cPatch] = parse(clientVersion);
   const [mMajor, mMinor, mPatch] = parse(minSupportedVersion);

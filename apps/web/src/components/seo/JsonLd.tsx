@@ -3,7 +3,6 @@
  * SEO-001: Add structured data
  */
 
-import React from 'react';
 
 interface OrganizationProps {
   name: string;
