@@ -97,3 +97,13 @@ export {
   Gauge,
   Histogram,
 } from './observability/metrics.service';
+
+// Database query monitoring
+export {
+  SlowQueryLogger,
+  SlowQueryConfig,
+  QueryMetrics,
+  SLOW_QUERY_THRESHOLD,
+  createSlowQueryExtension,
+  createSlowQueryCallback,
+} from './database/slow-query-logger';

@@ -39,9 +39,28 @@ jest.mock('@azeebo/shared-services', () => {
   const MockCacheService = jest.fn().mockImplementation(() => mockCacheServiceInstance);
   const MockRedisService = jest.fn().mockImplementation(() => mockRedisServiceInstance);
 
+  const MockSlowQueryLogger = jest.fn().mockImplementation(() => ({
+    logQuery: jest.fn(),
+    getMetrics: jest
+      .fn()
+      .mockReturnValue({
+        totalQueries: 0,
+        slowQueries: 0,
+        criticalQueries: 0,
+        n1PatternsDetected: 0,
+        avgQueryDurationMs: 0,
+        p95QueryDurationMs: 0,
+        p99QueryDurationMs: 0,
+        queriesByModel: new Map(),
+      }),
+    resetMetrics: jest.fn(),
+    getRecentN1Patterns: jest.fn().mockReturnValue([]),
+  }));
+
   return {
     CacheService: MockCacheService,
     RedisService: MockRedisService,
+    SlowQueryLogger: MockSlowQueryLogger,
     cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
     CacheModule: {
       module: class {},
