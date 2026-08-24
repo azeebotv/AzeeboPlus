@@ -503,37 +503,38 @@ export class AccessControlService {
       const skip = (page - 1) * limit;
       const now = new Date();
 
-      const freeContent = await this.prisma.contentItem.findMany({
-        where: {
-          status: 'published',
-          windowType: 'basic',
-          ...(universeId ? { universeId } : {}),
-        },
-        include: { universe: true },
-        skip,
-        take: limit,
-      });
+      // Parallel fetch free content + user access data (fixes sequential queries)
+      const [freeContent, userRentals, userPasses] = await Promise.all([
+        this.prisma.contentItem.findMany({
+          where: {
+            status: 'published',
+            windowType: 'basic',
+            ...(universeId ? { universeId } : {}),
+          },
+          include: { universe: true },
+          skip,
+          take: limit,
+        }),
+        this.prisma.rental.findMany({
+          where: {
+            userId,
+            status: 'active',
+            endTime: { gt: now },
+          },
+          select: { contentId: true },
+        }),
+        this.prisma.pass.findMany({
+          where: {
+            userId,
+            status: 'active',
+            endTime: { gt: now },
+            ...(universeId ? { universeId } : {}),
+          },
+        }),
+      ]);
 
       const accessibleContentIds: string[] = [];
-
-      const userRentals = await this.prisma.rental.findMany({
-        where: {
-          userId,
-          status: 'active',
-          endTime: { gt: now },
-        },
-        select: { contentId: true },
-      });
       accessibleContentIds.push(...userRentals.map((r) => r.contentId));
-
-      const userPasses = await this.prisma.pass.findMany({
-        where: {
-          userId,
-          status: 'active',
-          endTime: { gt: now },
-          ...(universeId ? { universeId } : {}),
-        },
-      });
 
       if (userPasses.length > 0) {
         const universeIds = userPasses

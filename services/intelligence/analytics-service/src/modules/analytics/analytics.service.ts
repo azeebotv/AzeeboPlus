@@ -147,9 +147,12 @@ export class AnalyticsService {
         data: rows as Prisma.ProductEventCreateManyInput[],
       });
     } else {
-      for (const row of rows) {
-        await this.prisma.productEvent.create({ data: row as Prisma.ProductEventCreateInput });
-      }
+      // Batch with $transaction for atomicity (fixes N+1)
+      await this.prisma.$transaction(
+        rows.map((row) =>
+          this.prisma.productEvent.create({ data: row as Prisma.ProductEventCreateInput })
+        )
+      );
     }
   }
 
