@@ -402,17 +402,19 @@ export class WalletService {
 
       const wallet = await this.prisma.wallet.findUnique({
         where: { userId },
+        include: {
+          transactions: {
+            orderBy: { createdAt: 'desc' },
+            take: 5,
+          },
+        },
       });
 
       if (!wallet) {
         throw new NotFoundException(`Wallet not found for user ${userId}`);
       }
 
-      const recentTransactions = await this.prisma.walletTransaction.findMany({
-        where: { walletId: wallet.id },
-        orderBy: { createdAt: 'desc' },
-        take: 5,
-      });
+      const recentTransactions = wallet.transactions;
 
       const result: WalletResponse = {
         success: true,
@@ -812,6 +814,7 @@ export class WalletService {
    */
   async getTransaction(userId: string, transactionId: string): Promise<WalletResponse> {
     try {
+      // Single query: fetch wallet + specific transaction (fixes N+1)
       const wallet = await this.prisma.wallet.findUnique({
         where: { userId },
       });
