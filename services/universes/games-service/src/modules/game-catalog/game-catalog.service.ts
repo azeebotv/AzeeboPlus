@@ -133,12 +133,13 @@ export class GameCatalogService {
         throw new NotFoundException(`Game not found: ${slug}`);
       }
 
-      await this.prisma.game.update({
-        where: { id: game.id },
-        data: { playCount: { increment: 1 } },
-      });
-
-      const questionCount = await this.prisma.gameQuestion.count({ where: { gameId: game.id } });
+      const [, questionCount] = await Promise.all([
+        this.prisma.game.update({
+          where: { id: game.id },
+          data: { playCount: { increment: 1 } },
+        }),
+        this.prisma.gameQuestion.count({ where: { gameId: game.id } }),
+      ]);
       const result: GameResponse = {
         success: true,
         data: this.formatGame({ ...game, _count: { questions: questionCount } }),
@@ -191,18 +192,20 @@ export class GameCatalogService {
         throw new NotFoundException(`Game not found: ${gameId}`);
       }
 
-      const session = await this.prisma.gamePlaySession.create({
-        data: {
-          userId,
-          gameId,
-          status: 'active',
-        },
-      });
-
-      const gameQuestions = await this.prisma.gameQuestion.findMany({
-        where: { gameId },
-        orderBy: { order: 'asc' },
-      });
+      // Parallel: create session + fetch questions (fixes sequential queries)
+      const [session, gameQuestions] = await Promise.all([
+        this.prisma.gamePlaySession.create({
+          data: {
+            userId,
+            gameId,
+            status: 'active',
+          },
+        }),
+        this.prisma.gameQuestion.findMany({
+          where: { gameId },
+          orderBy: { order: 'asc' },
+        }),
+      ]);
 
       const questions = gameQuestions.map(
         (q: {
@@ -366,20 +369,17 @@ export class GameCatalogService {
 
   async getUserStats(userId: string): Promise<GameResponse> {
     try {
-      const scoreEntry = await this.prisma.scoreEntry.findUnique({
-        where: { userId },
-      });
-
-      const sessions = await this.prisma.gamePlaySession.findMany({
-        where: { userId, status: 'completed' },
-        select: { score: true, correctCount: true, gameId: true, completedAt: true },
-        orderBy: { completedAt: 'desc' },
-        take: 10,
-      });
-
-      const totalGames = await this.prisma.gamePlaySession.count({
-        where: { userId, status: 'completed' },
-      });
+      // Parallel fetch all independent stats (fixes sequential queries)
+      const [scoreEntry, sessions, totalGames] = await Promise.all([
+        this.prisma.scoreEntry.findUnique({ where: { userId } }),
+        this.prisma.gamePlaySession.findMany({
+          where: { userId, status: 'completed' },
+          select: { score: true, correctCount: true, gameId: true, completedAt: true },
+          orderBy: { completedAt: 'desc' },
+          take: 10,
+        }),
+        this.prisma.gamePlaySession.count({ where: { userId, status: 'completed' } }),
+      ]);
 
       return {
         success: true,
