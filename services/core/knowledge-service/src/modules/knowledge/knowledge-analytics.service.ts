@@ -70,6 +70,7 @@ export interface KnowledgeHealthReport {
 
 @Injectable()
 export class KnowledgeAnalyticsService {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private readonly logger = new Logger(KnowledgeAnalyticsService.name);
 
   /**

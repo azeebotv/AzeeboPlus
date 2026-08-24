@@ -164,9 +164,7 @@ function matchRoute(pattern: string, path: string): Record<string, string> | nul
  * Initialize deep link handling.
  * Call this once at app startup.
  */
-export function initializeDeepLinks(
-  onDeepLink: (result: DeepLinkResult) => void,
-): () => void {
+export function initializeDeepLinks(onDeepLink: (result: DeepLinkResult) => void): () => void {
   // Handle initial URL (app opened via deep link)
   Linking.getInitialURL().then((url) => {
     if (url) {
@@ -217,7 +215,10 @@ export function generateShareUrl(path: string): string {
 /**
  * Generate a shareable content URL.
  */
-export function generateContentShareUrl(contentId: string, title: string): {
+export function generateContentShareUrl(
+  contentId: string,
+  title: string
+): {
   url: string;
   message: string;
 } {

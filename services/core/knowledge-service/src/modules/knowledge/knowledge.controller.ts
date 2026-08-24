@@ -1,14 +1,4 @@
-import {
-  Inject,
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Body,
-  Param,
-  ParseUUIDPipe,
-  Query,
-} from '@nestjs/common';
+import { Inject, Controller, Get, Post, Patch, Body, Param, ParseUUIDPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { KnowledgeService } from './knowledge.service.js';
 import { CreateCanonicalEventDto } from './dto/create-canonical-event.dto.js';

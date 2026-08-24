@@ -54,9 +54,9 @@ export class ImmutableAuditDbService {
    * Get the next sequence number (from database)
    */
   private async getNextSequence(): Promise<number> {
-    const result = await this.prisma.$queryRaw`
+    const result = (await this.prisma!.$queryRaw`
       SELECT COALESCE(MAX("sequenceNumber"), 0) + 1 as next_seq FROM audit_log
-    `;
+    `) as { next_seq: bigint }[];
     return Number(result[0].next_seq);
   }
 
@@ -64,9 +64,9 @@ export class ImmutableAuditDbService {
    * Get the last hash (from database)
    */
   private async getLastHash(): Promise<string> {
-    const result = await this.prisma.$queryRaw`
+    const result = (await this.prisma!.$queryRaw`
       SELECT hash FROM audit_log ORDER BY "sequenceNumber" DESC LIMIT 1
-    `;
+    `) as { hash: string }[];
     return result.length > 0 ? result[0].hash : '0'.repeat(64);
   }
 
@@ -113,7 +113,7 @@ export class ImmutableAuditDbService {
     newEntry.hash = createHash('sha256').update(contentToHash).digest('hex');
 
     // Persist to database (append-only)
-    await this.prisma.auditLog.create({
+    await this.prisma!.auditLog.create({
       data: {
         id: newEntry.id,
         sequenceNumber: newEntry.sequenceNumber,
@@ -154,7 +154,8 @@ export class ImmutableAuditDbService {
     until?: Date;
     limit?: number;
   }): Promise<ImmutableAuditEntry[]> {
-    const where: Record<string, unknown> = {};
+    const where: Record<string, unknown> & { timestamp?: { gte?: Date; lte?: Date } } =
+      {} as Record<string, unknown> & { timestamp?: { gte?: Date; lte?: Date } };
 
     if (filters?.actorId) where.actorId = filters.actorId;
     if (filters?.action) where.action = filters.action;
@@ -162,11 +163,11 @@ export class ImmutableAuditDbService {
     if (filters?.resourceId) where.resourceId = filters.resourceId;
     if (filters?.since || filters?.until) {
       where.timestamp = {};
-      if (filters.since) where.timestamp.gte = filters.since;
-      if (filters.until) where.timestamp.lte = filters.until;
+      if (filters.since) where.timestamp!.gte = filters.since;
+      if (filters.until) where.timestamp!.lte = filters.until;
     }
 
-    const rows = await this.prisma.auditLog.findMany({
+    const rows = await this.prisma!.auditLog.findMany({
       where,
       orderBy: { sequenceNumber: 'asc' },
       take: filters?.limit,
@@ -186,12 +187,22 @@ export class ImmutableAuditDbService {
     const errors: string[] = [];
     let previousHash = '0'.repeat(64);
 
-    const allEntries = await this.prisma.auditLog.findMany({
+    const allEntries = await this.prisma!.auditLog.findMany({
       orderBy: { sequenceNumber: 'asc' },
     });
 
     for (let i = 0; i < allEntries.length; i++) {
-      const entry = allEntries[i];
+      const e = allEntries[i];
+      const entry = {
+        sequenceNumber: Number(e.sequenceNumber),
+        previousHash: e.previousHash as string,
+        timestamp: e.timestamp as Date,
+        actorId: e.actorId as string,
+        action: e.action as string,
+        resourceType: e.resourceType as string,
+        resourceId: e.resourceId as string,
+        hash: e.hash as string,
+      };
 
       // Check sequence continuity
       if (entry.sequenceNumber !== i + 1) {
@@ -236,7 +247,7 @@ export class ImmutableAuditDbService {
    * Get the last entry in the chain
    */
   async getLastEntry(): Promise<ImmutableAuditEntry | undefined> {
-    const row = await this.prisma.auditLog.findFirst({
+    const row = await this.prisma!.auditLog.findFirst({
       orderBy: { sequenceNumber: 'desc' },
     });
     return row ? this.mapRowToEntry(row) : undefined;
@@ -246,7 +257,7 @@ export class ImmutableAuditDbService {
    * Get total entry count
    */
   async getEntryCount(): Promise<number> {
-    return this.prisma.auditLog.count();
+    return this.prisma!.auditLog.count();
   }
 
   /**
@@ -254,23 +265,23 @@ export class ImmutableAuditDbService {
    */
   private mapRowToEntry(row: Record<string, unknown>): ImmutableAuditEntry {
     return {
-      id: row.id,
-      sequenceNumber: row.sequenceNumber,
-      hash: row.hash,
-      previousHash: row.previousHash,
-      actorId: row.actorId,
-      actorRole: row.actorRole,
-      action: row.action,
-      resourceType: row.resourceType,
-      resourceId: row.resourceId,
-      previousState: row.previousState ?? undefined,
-      newState: row.newState ?? undefined,
-      reason: row.reason ?? undefined,
-      correlationId: row.correlationId ?? undefined,
-      ipAddress: row.ipAddress ?? undefined,
-      userAgent: row.userAgent ?? undefined,
-      timestamp: row.timestamp,
-      status: row.status,
+      id: row.id as string,
+      sequenceNumber: Number(row.sequenceNumber),
+      hash: row.hash as string,
+      previousHash: row.previousHash as string,
+      actorId: row.actorId as string,
+      actorRole: row.actorRole as string,
+      action: row.action as string,
+      resourceType: row.resourceType as string,
+      resourceId: row.resourceId as string,
+      previousState: (row.previousState as string) ?? undefined,
+      newState: (row.newState as string) ?? undefined,
+      reason: (row.reason as string) ?? undefined,
+      correlationId: (row.correlationId as string) ?? undefined,
+      ipAddress: (row.ipAddress as string) ?? undefined,
+      userAgent: (row.userAgent as string) ?? undefined,
+      timestamp: row.timestamp as Date,
+      status: row.status as ImmutableAuditEntry['status'],
     };
   }
 }

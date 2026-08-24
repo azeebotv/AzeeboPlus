@@ -3,7 +3,6 @@
  * SEO-002: Add canonical URLs
  */
 
-import React from 'react';
 
 interface CanonicalUrlProps {
   path?: string;

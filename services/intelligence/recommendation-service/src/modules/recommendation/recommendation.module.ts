@@ -11,12 +11,7 @@ import { DatabaseModule } from '../database/database.module.js';
 @Module({
   imports: [DatabaseModule, CacheModule],
   controllers: [RecommendationController],
-  providers: [
-    RecommendationService,
-    ABTestingService,
-    DiversityService,
-    ColdStartService,
-  ],
+  providers: [RecommendationService, ABTestingService, DiversityService, ColdStartService],
   exports: [
     RecommendationService,
     ABTestingService,

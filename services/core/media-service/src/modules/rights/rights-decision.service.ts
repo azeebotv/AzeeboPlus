@@ -88,15 +88,10 @@ export interface PolicyEvaluation {
 
 @Injectable()
 export class RightsDecisionService {
-
-
   /**
    * Compute availability for content based on rights context and user context
    */
-  computeAvailability(
-    rights: RightsContext,
-    user: UserContext
-  ): RightsDecision {
+  computeAvailability(rights: RightsContext, user: UserContext): RightsDecision {
     const decisions: PolicyEvaluation[] = [];
 
     // 1. Content state check
@@ -367,9 +362,7 @@ export class RightsDecisionService {
   ): RightsDecision {
     const deniedPolicies = decisions.filter((d) => !d.passed);
     const denialReason =
-      deniedPolicies.length > 0
-        ? deniedPolicies.map((d) => d.details).join('; ')
-        : undefined;
+      deniedPolicies.length > 0 ? deniedPolicies.map((d) => d.details).join('; ') : undefined;
 
     return {
       contentId,

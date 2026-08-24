@@ -26,7 +26,10 @@ export async function enterPipMode(width = 400, height = 225): Promise<boolean> 
   const mod = getPipModule();
   if (!mod) return false;
   try {
-    await (mod as { enterPipMode: (w: number, h: number) => Promise<boolean> }).enterPipMode(width, height);
+    await (mod as { enterPipMode: (w: number, h: number) => Promise<boolean> }).enterPipMode(
+      width,
+      height
+    );
     return true;
   } catch {
     return false;
@@ -49,6 +52,7 @@ export function onPipStateChanged(callback: (state: PipState) => void): () => vo
   if (!mod || Platform.OS !== 'android') return () => {};
   if (!pipEmitter) pipEmitter = new NativeEventEmitter(NativeModules.PiPModule);
   const subscription = pipEmitter?.addListener('onPipStateChanged', callback);
-  return () => { subscription?.remove(); };
+  return () => {
+    subscription?.remove();
+  };
 }
-

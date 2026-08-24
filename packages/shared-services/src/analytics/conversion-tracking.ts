@@ -18,7 +18,7 @@ export type ConversionEvent =
   | { type: 'content_published'; userId: string; contentType: string }
   | { type: 'creator_applied'; userId: string; category: string }
   | { type: 'creator_approved'; userId: string }
-  | { type: 'vote_cast'; userId: string; contestId: string; type: 'regular' | 'super' }
+  | { type: 'vote_cast'; userId: string; contestId: string; voteType: 'regular' | 'super' }
   | { type: 'referral_sent'; userId: string; channel: string }
   | { type: 'referral_completed'; referrerId: string; referredId: string }
   | { type: 'app_installed'; platform: 'ios' | 'android'; source?: string }

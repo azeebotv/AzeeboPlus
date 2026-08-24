@@ -11,13 +11,7 @@ import { Injectable, Logger } from '@nestjs/common';
  * - Verification across API/search/explore/playback/CDN
  */
 
-export type PropagationTarget =
-  | 'api'
-  | 'search'
-  | 'explore'
-  | 'playback'
-  | 'cdn'
-  | 'notifications';
+export type PropagationTarget = 'api' | 'search' | 'explore' | 'playback' | 'cdn' | 'notifications';
 
 export interface PropagationTask {
   /** Task ID */
@@ -71,15 +65,10 @@ export class TakedownPropagationService {
   /** Maximum retries per task */
   private readonly maxRetries = 3;
 
-
-
   /**
    * Initiate propagation for a takedown
    */
-  async initiatePropagation(
-    takedownId: string,
-    contentId: string
-  ): Promise<PropagationTask[]> {
+  async initiatePropagation(takedownId: string, contentId: string): Promise<PropagationTask[]> {
     const targets: PropagationTarget[] = [
       'api',
       'search',
@@ -141,9 +130,7 @@ export class TakedownPropagationService {
         );
       } else {
         task.status = 'pending'; // Will be retried
-        this.logger.warn(
-          `Propagation retry ${task.retryCount}/${this.maxRetries}: ${task.target}`
-        );
+        this.logger.warn(`Propagation retry ${task.retryCount}/${this.maxRetries}: ${task.target}`);
       }
     }
 
@@ -153,10 +140,7 @@ export class TakedownPropagationService {
   /**
    * Propagate to a specific target
    */
-  private async propagateToTarget(
-    target: PropagationTarget,
-    contentId: string
-  ): Promise<void> {
+  private async propagateToTarget(target: PropagationTarget, contentId: string): Promise<void> {
     // In production, this would call the actual service
     switch (target) {
       case 'api':
@@ -186,10 +170,7 @@ export class TakedownPropagationService {
     }
   }
 
-  private async updateContentStatus(
-    contentId: string,
-    status: string
-  ): Promise<void> {
+  private async updateContentStatus(contentId: string, status: string): Promise<void> {
     this.logger.log(`Content ${contentId} status updated to ${status}`);
   }
 
@@ -217,9 +198,7 @@ export class TakedownPropagationService {
    * Get propagation report for a takedown
    */
   async getPropagationReport(takedownId: string): Promise<PropagationReport> {
-    const tasks = Array.from(this.tasks.values()).filter(
-      (t) => t.takedownId === takedownId
-    );
+    const tasks = Array.from(this.tasks.values()).filter((t) => t.takedownId === takedownId);
 
     const completed = tasks.filter((t) => t.status === 'completed');
     const failed = tasks.filter((t) => t.status === 'failed');
@@ -258,9 +237,7 @@ export class TakedownPropagationService {
 
     // Check overall 5-minute propagation SLA
     if (report.totalTimeMs > 300_000) {
-      breaches.push(
-        `Total propagation time ${report.totalTimeMs}ms exceeds 5-minute SLA`
-      );
+      breaches.push(`Total propagation time ${report.totalTimeMs}ms exceeds 5-minute SLA`);
     }
 
     // Check CDN 15-minute SLA

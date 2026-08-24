@@ -21,10 +21,7 @@ describe('WEPAnalyticsService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        WEPAnalyticsService,
-        { provide: PrismaService, useValue: mockPrisma },
-      ],
+      providers: [WEPAnalyticsService, { provide: PrismaService, useValue: mockPrisma }],
     }).compile();
 
     service = module.get<WEPAnalyticsService>(WEPAnalyticsService);
@@ -72,10 +69,7 @@ describe('WEPAnalyticsService', () => {
       // Simulate model not existing
       const badPrisma = { viewingHistory: undefined };
       const module = await Test.createTestingModule({
-        providers: [
-          WEPAnalyticsService,
-          { provide: PrismaService, useValue: badPrisma },
-        ],
+        providers: [WEPAnalyticsService, { provide: PrismaService, useValue: badPrisma }],
       }).compile();
 
       const svc = module.get<WEPAnalyticsService>(WEPAnalyticsService);

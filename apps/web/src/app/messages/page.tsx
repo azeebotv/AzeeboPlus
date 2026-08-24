@@ -280,7 +280,9 @@ export default function MessagesPage(): React.JSX.Element {
 
   const reactMutation = useMutation({
     mutationFn: async ({ messageId, emoji }: { messageId: string; emoji: string }) => {
-      return apiFetch(`/messaging/conversations/${conversationId}/messages/${messageId}/react`, {
+      const convId = selectedConversation?.id;
+      if (!convId) return;
+      return apiFetch(`/messaging/conversations/${convId}/messages/${messageId}/react`, {
         method: 'POST',
         body: JSON.stringify({ emoji }),
       });

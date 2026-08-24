@@ -3,7 +3,6 @@
  * SEO-003: Add og:title, og:description, og:image
  * SEO-004: Add twitter:card, twitter:title
  */
-import React from 'react';
 
 export interface OpenGraphProps {
   title: string;
@@ -23,7 +22,14 @@ export interface TwitterCardProps {
   creator?: string;
 }
 
-export function OpenGraphTags({ title, description, image, url, type = 'website', siteName = 'Azeebo+' }: OpenGraphProps) {
+export function OpenGraphTags({
+  title,
+  description,
+  image,
+  url,
+  type = 'website',
+  siteName = 'Azeebo+',
+}: OpenGraphProps) {
   const ogImage = image || 'https://cdn.azeeboplus.com/og-default.png';
   const ogUrl = url || 'https://azeeboplus.com';
 
@@ -40,7 +46,14 @@ export function OpenGraphTags({ title, description, image, url, type = 'website'
   );
 }
 
-export function TwitterCard({ title, description, image, cardType = 'summary_large_image', site = '@azeeboplus', creator }: TwitterCardProps) {
+export function TwitterCard({
+  title,
+  description,
+  image,
+  cardType = 'summary_large_image',
+  site = '@azeeboplus',
+  creator,
+}: TwitterCardProps) {
   const twitterImage = image || 'https://cdn.azeeboplus.com/og-default.png';
 
   return (
@@ -59,7 +72,8 @@ export function TwitterCard({ title, description, image, cardType = 'summary_lar
 export const OG_TEMPLATES = {
   homepage: {
     title: 'Azeebo+ — Premium African Streaming Platform',
-    description: 'Discover, stream, and share premium African content. Reality shows, music, documentaries, and more.',
+    description:
+      'Discover, stream, and share premium African content. Reality shows, music, documentaries, and more.',
     type: 'website' as const,
   },
   video: (title: string, thumbnail: string) => ({

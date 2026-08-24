@@ -45,7 +45,7 @@ export class SchemaVersionService {
   getVersionInfo(): SchemaVersionInfo {
     return {
       currentVersion: CURRENT_SCHEMA_VERSION,
-      supportedVersions: SCHEMA_VERSION_HISTORY.map(v => v.version),
+      supportedVersions: SCHEMA_VERSION_HISTORY.map((v) => v.version),
       deprecatedVersions: [], // No deprecated versions yet
       latestReleasedAt: SCHEMA_VERSION_HISTORY[SCHEMA_VERSION_HISTORY.length - 1].releasedAt,
     };
@@ -70,7 +70,7 @@ export class SchemaVersionService {
     }
 
     // Check if version is supported
-    const supportedVersions = SCHEMA_VERSION_HISTORY.map(v => v.version);
+    const supportedVersions = SCHEMA_VERSION_HISTORY.map((v) => v.version);
     if (!supportedVersions.includes(event.schemaVersion)) {
       return {
         valid: false,
@@ -79,13 +79,15 @@ export class SchemaVersionService {
     }
 
     // Check if version is deprecated
-    const versionInfo = SCHEMA_VERSION_HISTORY.find(v => v.version === event.schemaVersion);
+    const versionInfo = SCHEMA_VERSION_HISTORY.find((v) => v.version === event.schemaVersion);
     if (versionInfo) {
       // Add warnings for older versions
       const currentIndex = SCHEMA_VERSION_HISTORY.length - 1;
       const eventIndex = SCHEMA_VERSION_HISTORY.indexOf(versionInfo);
       if (eventIndex < currentIndex) {
-        warnings.push(`Schema version ${event.schemaVersion} is outdated. Current is ${CURRENT_SCHEMA_VERSION}`);
+        warnings.push(
+          `Schema version ${event.schemaVersion} is outdated. Current is ${CURRENT_SCHEMA_VERSION}`
+        );
       }
     }
 
@@ -116,7 +118,7 @@ export class SchemaVersionService {
    */
   getMigrationNotes(fromVersion: string, toVersion: string): string[] {
     const notes: string[] = [];
-    
+
     const fromMajor = parseInt(fromVersion.split('.')[0], 10);
     const toMajor = parseInt(toVersion.split('.')[0], 10);
 

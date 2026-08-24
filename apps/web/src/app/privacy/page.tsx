@@ -24,7 +24,12 @@ export default function PrivacyPolicyPage() {
           </Link>
           <h1 className="text-4xl font-bold text-foreground mb-4">Privacy Policy</h1>
           <p className="text-muted-foreground">
-            Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+            Last updated:{' '}
+            {new Date().toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })}
           </p>
         </div>
 
@@ -33,11 +38,14 @@ export default function PrivacyPolicyPage() {
           <section className="mb-8">
             <h2 className="text-2xl font-bold mb-4">1. Introduction</h2>
             <p className="text-muted-foreground mb-4">
-              Virtual Media Network Limited (&quot;Azeebo+&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) respects your privacy and is committed to protecting your personal data.
-              This privacy policy explains how we collect, use, disclose, and safeguard your information when you use our streaming platform and services.
+              Virtual Media Network Limited (&quot;Azeebo+&quot;, &quot;we&quot;, &quot;us&quot;, or
+              &quot;our&quot;) respects your privacy and is committed to protecting your personal
+              data. This privacy policy explains how we collect, use, disclose, and safeguard your
+              information when you use our streaming platform and services.
             </p>
             <p className="text-muted-foreground">
-              By using Azeebo+, you agree to the collection and use of information in accordance with this policy.
+              By using Azeebo+, you agree to the collection and use of information in accordance
+              with this policy.
             </p>
           </section>
 
@@ -47,27 +55,61 @@ export default function PrivacyPolicyPage() {
 
             <h3 className="text-xl font-semibold mb-3">2.1 Information You Provide</h3>
             <ul className="list-disc list-inside text-muted-foreground space-y-2 mb-4">
-              <li><strong>Account Information:</strong> Email address, display name, password (encrypted)</li>
-              <li><strong>Profile Data:</strong> Avatar, bio, interests, preferences</li>
-              <li><strong>Payment Information:</strong> Payment method details (processed securely by our payment partners)</li>
-              <li><strong>User Content:</strong> Comments, reviews, messages, and other content you create</li>
-              <li><strong>Communications:</strong> Customer support inquiries and feedback</li>
+              <li>
+                <strong>Account Information:</strong> Email address, display name, password
+                (encrypted)
+              </li>
+              <li>
+                <strong>Profile Data:</strong> Avatar, bio, interests, preferences
+              </li>
+              <li>
+                <strong>Payment Information:</strong> Payment method details (processed securely by
+                our payment partners)
+              </li>
+              <li>
+                <strong>User Content:</strong> Comments, reviews, messages, and other content you
+                create
+              </li>
+              <li>
+                <strong>Communications:</strong> Customer support inquiries and feedback
+              </li>
             </ul>
 
             <h3 className="text-xl font-semibold mb-3">2.2 Information Collected Automatically</h3>
             <ul className="list-disc list-inside text-muted-foreground space-y-2 mb-4">
-              <li><strong>Usage Data:</strong> Content viewed, watch history, search queries, interaction patterns</li>
-              <li><strong>Device Information:</strong> Device type, operating system, browser type, screen resolution</li>
-              <li><strong>Log Data:</strong> IP address, access times, pages viewed, error logs</li>
-              <li><strong>Location Data:</strong> Approximate location based on IP address (country/region level)</li>
-              <li><strong>Analytics Data:</strong> App performance, crash reports, feature usage</li>
+              <li>
+                <strong>Usage Data:</strong> Content viewed, watch history, search queries,
+                interaction patterns
+              </li>
+              <li>
+                <strong>Device Information:</strong> Device type, operating system, browser type,
+                screen resolution
+              </li>
+              <li>
+                <strong>Log Data:</strong> IP address, access times, pages viewed, error logs
+              </li>
+              <li>
+                <strong>Location Data:</strong> Approximate location based on IP address
+                (country/region level)
+              </li>
+              <li>
+                <strong>Analytics Data:</strong> App performance, crash reports, feature usage
+              </li>
             </ul>
 
             <h3 className="text-xl font-semibold mb-3">2.3 Information from Third Parties</h3>
             <ul className="list-disc list-inside text-muted-foreground space-y-2">
-              <li><strong>Social Login:</strong> Basic profile information from Google/Apple when you sign in</li>
-              <li><strong>Payment Partners:</strong> Transaction confirmations from Paystack/Flutterwave</li>
-              <li><strong>Analytics Partners:</strong> Aggregated usage statistics</li>
+              <li>
+                <strong>Social Login:</strong> Basic profile information from Google/Apple when you
+                sign in
+              </li>
+              <li>
+                <strong>Payment Partners:</strong> Transaction confirmations from
+                Paystack/Flutterwave
+              </li>
+              <li>
+                <strong>Analytics Partners:</strong> Aggregated usage statistics
+              </li>
             </ul>
           </section>
 
@@ -81,7 +123,9 @@ export default function PrivacyPolicyPage() {
               <li>Send technical notices, updates, and security alerts</li>
               <li>Respond to comments, questions, and customer service requests</li>
               <li>Monitor and analyze usage patterns and trends</li>
-              <li>Detect, investigate, and prevent fraudulent transactions and unauthorized access</li>
+              <li>
+                Detect, investigate, and prevent fraudulent transactions and unauthorized access
+              </li>
               <li>Comply with legal obligations</li>
             </ul>
           </section>
@@ -93,11 +137,23 @@ export default function PrivacyPolicyPage() {
               We do not sell your personal information. We may share your information with:
             </p>
             <ul className="list-disc list-inside text-muted-foreground space-y-2">
-              <li><strong>Service Providers:</strong> Third parties that help us operate our platform (hosting, payment processing, analytics)</li>
-              <li><strong>Content Creators:</strong> Anonymized analytics about content performance</li>
-              <li><strong>Legal Requirements:</strong> When required by law or to protect our rights</li>
-              <li><strong>Business Transfers:</strong> In connection with a merger, acquisition, or sale of assets</li>
-              <li><strong>With Your Consent:</strong> When you explicitly authorize sharing</li>
+              <li>
+                <strong>Service Providers:</strong> Third parties that help us operate our platform
+                (hosting, payment processing, analytics)
+              </li>
+              <li>
+                <strong>Content Creators:</strong> Anonymized analytics about content performance
+              </li>
+              <li>
+                <strong>Legal Requirements:</strong> When required by law or to protect our rights
+              </li>
+              <li>
+                <strong>Business Transfers:</strong> In connection with a merger, acquisition, or
+                sale of assets
+              </li>
+              <li>
+                <strong>With Your Consent:</strong> When you explicitly authorize sharing
+              </li>
             </ul>
           </section>
 
@@ -149,16 +205,34 @@ export default function PrivacyPolicyPage() {
               Depending on your location, you may have the following rights:
             </p>
             <ul className="list-disc list-inside text-muted-foreground space-y-2">
-              <li><strong>Access:</strong> Request a copy of your personal data</li>
-              <li><strong>Rectification:</strong> Request correction of inaccurate data</li>
-              <li><strong>Erasure:</strong> Request deletion of your personal data</li>
-              <li><strong>Portability:</strong> Request transfer of your data in a machine-readable format</li>
-              <li><strong>Objection:</strong> Object to processing of your personal data</li>
-              <li><strong>Restriction:</strong> Request restriction of processing</li>
-              <li><strong>Withdraw Consent:</strong> Withdraw consent at any time</li>
+              <li>
+                <strong>Access:</strong> Request a copy of your personal data
+              </li>
+              <li>
+                <strong>Rectification:</strong> Request correction of inaccurate data
+              </li>
+              <li>
+                <strong>Erasure:</strong> Request deletion of your personal data
+              </li>
+              <li>
+                <strong>Portability:</strong> Request transfer of your data in a machine-readable
+                format
+              </li>
+              <li>
+                <strong>Objection:</strong> Object to processing of your personal data
+              </li>
+              <li>
+                <strong>Restriction:</strong> Request restriction of processing
+              </li>
+              <li>
+                <strong>Withdraw Consent:</strong> Withdraw consent at any time
+              </li>
             </ul>
             <p className="text-muted-foreground mt-4">
-              To exercise these rights, contact us at <a href="mailto:privacy@azeeboplus.com" className="text-blue-600 hover:text-blue-700">privacy@azeeboplus.com</a>
+              To exercise these rights, contact us at{' '}
+              <a href="mailto:privacy@azeeboplus.com" className="text-blue-600 hover:text-blue-700">
+                privacy@azeeboplus.com
+              </a>
             </p>
           </section>
 
@@ -166,7 +240,8 @@ export default function PrivacyPolicyPage() {
           <section className="mb-8">
             <h2 className="text-2xl font-bold mb-4">7. Data Security</h2>
             <p className="text-muted-foreground">
-              We implement appropriate technical and organizational measures to protect your personal data, including:
+              We implement appropriate technical and organizational measures to protect your
+              personal data, including:
             </p>
             <ul className="list-disc list-inside text-muted-foreground space-y-2 mt-4">
               <li>Encryption of data in transit (TLS 1.3) and at rest (AES-256)</li>

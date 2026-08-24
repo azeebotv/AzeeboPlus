@@ -26,7 +26,7 @@ export class DataDeletionService {
 
   async requestDataDeletion(userId: string, reason?: string): Promise<DeletionRequest> {
     this.logger.log(`Data deletion requested for user: ${userId}`);
-    
+
     return {
       userId,
       reason,
@@ -36,9 +36,9 @@ export class DataDeletionService {
 
   async executeDeletion(userId: string): Promise<DeletionResult> {
     this.logger.warn(`Executing data deletion for user: ${userId}`);
-    
+
     const deletedData: string[] = [];
-    
+
     try {
       // Anonymize user data instead of hard delete
       await this.prisma.user.update({
@@ -72,7 +72,7 @@ export class DataDeletionService {
       deletedData.push('devices');
 
       this.logger.warn(`Data deletion completed for user: ${userId}`);
-      
+
       return {
         success: true,
         deletedAt: new Date(),

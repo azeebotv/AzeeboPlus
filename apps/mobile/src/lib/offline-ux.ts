@@ -46,7 +46,11 @@ export async function getCachedState<T>(key: string): Promise<T | null> {
   }
 }
 
-export async function setCachedState<T>(key: string, data: T, ttlMs: number = 300000): Promise<void> {
+export async function setCachedState<T>(
+  key: string,
+  data: T,
+  ttlMs: number = 300000
+): Promise<void> {
   const entry = { data, expiry: new Date(Date.now() + ttlMs).toISOString() };
   await AsyncStorage.setItem(`offline_cache_${key}`, JSON.stringify(entry));
 }
@@ -83,7 +87,9 @@ export async function getOfflineQueue(): Promise<OfflineAction[]> {
   }
 }
 
-export async function processOfflineQueue(processor: (action: OfflineAction) => Promise<boolean>): Promise<void> {
+export async function processOfflineQueue(
+  processor: (action: OfflineAction) => Promise<boolean>
+): Promise<void> {
   const queue = await getOfflineQueue();
   const remaining: OfflineAction[] = [];
   for (const action of queue) {

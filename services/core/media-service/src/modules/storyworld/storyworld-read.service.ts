@@ -83,8 +83,6 @@ export interface UserKnowledgeState {
 
 @Injectable()
 export class StoryworldReadService {
-
-
   /** In-memory cache (would be Redis in production) */
   private readonly readModels = new Map<string, StoryworldReadModel>();
   private readonly userStates = new Map<string, UserKnowledgeState>();
@@ -152,10 +150,7 @@ export class StoryworldReadService {
   /**
    * Get personalized read model for a user
    */
-  async getPersonalizedReadModel(
-    contentId: string,
-    userId?: string
-  ): Promise<StoryworldReadModel> {
+  async getPersonalizedReadModel(contentId: string, userId?: string): Promise<StoryworldReadModel> {
     const baseModel = this.readModels.get(contentId);
     if (!baseModel) {
       throw new Error(`Read model not found for content ${contentId}`);
@@ -199,13 +194,16 @@ export class StoryworldReadService {
         const visibility = this.calculateCheckpointVisibility(cp, userState);
         const grantedUnits = cp.grantedUnits.map((gu) => ({
           ...gu,
-          visibility: userState.knownUnitIds.has(gu.id) ? 'AVAILABLE' as VisibilityStatus : 'LOCKED' as VisibilityStatus,
+          visibility: userState.knownUnitIds.has(gu.id)
+            ? ('AVAILABLE' as VisibilityStatus)
+            : ('LOCKED' as VisibilityStatus),
         }));
 
         return {
           ...cp,
           visibility,
-          description: visibility === 'AVAILABLE' ? cp.description : 'Complete previous content to unlock',
+          description:
+            visibility === 'AVAILABLE' ? cp.description : 'Complete previous content to unlock',
           grantedUnits,
         };
       }),
@@ -276,15 +274,11 @@ export class StoryworldReadService {
     userState: UserKnowledgeState
   ): VisibilityStatus {
     // If user knows all granted units, checkpoint is available
-    const allKnown = checkpoint.grantedUnits.every((gu) =>
-      userState.knownUnitIds.has(gu.id)
-    );
+    const allKnown = checkpoint.grantedUnits.every((gu) => userState.knownUnitIds.has(gu.id));
     if (allKnown) return 'AVAILABLE';
 
     // If user knows some, show as teased
-    const someKnown = checkpoint.grantedUnits.some((gu) =>
-      userState.knownUnitIds.has(gu.id)
-    );
+    const someKnown = checkpoint.grantedUnits.some((gu) => userState.knownUnitIds.has(gu.id));
     if (someKnown) return 'TEASED';
 
     return 'LOCKED';
@@ -300,10 +294,7 @@ export class StoryworldReadService {
   /**
    * Update user knowledge state
    */
-  async updateUserKnowledge(
-    userId: string,
-    newKnowledgeUnitIds: string[]
-  ): Promise<void> {
+  async updateUserKnowledge(userId: string, newKnowledgeUnitIds: string[]): Promise<void> {
     const existing = this.userStates.get(userId) || {
       userId,
       knownUnitIds: new Set<string>(),

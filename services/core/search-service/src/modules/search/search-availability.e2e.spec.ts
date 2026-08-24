@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { execSync } from 'node:child_process';
-import Redis from 'ioredis';
-import { SearchAvailabilityService, AvailabilityFilter } from './search-availability.service.js';
+// import Redis from 'ioredis';
+import { SearchAvailabilityService } from './search-availability.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 
 /**

@@ -224,20 +224,14 @@ export class KnowledgeAuditService {
    * Get grant count for a user
    */
   async getGrantCount(userId: string): Promise<number> {
-    return this.auditLog.filter(
-      (e) => e.userId === userId && e.action === 'granted'
-    ).length;
+    return this.auditLog.filter((e) => e.userId === userId && e.action === 'granted').length;
   }
 
   /**
    * Get grant timeline for a user
    */
-  async getGrantTimeline(
-    userId: string
-  ): Promise<Array<{ date: string; count: number }>> {
-    const grants = this.auditLog.filter(
-      (e) => e.userId === userId && e.action === 'granted'
-    );
+  async getGrantTimeline(userId: string): Promise<Array<{ date: string; count: number }>> {
+    const grants = this.auditLog.filter((e) => e.userId === userId && e.action === 'granted');
 
     const timeline = new Map<string, number>();
 
@@ -254,9 +248,7 @@ export class KnowledgeAuditService {
   /**
    * Analyze correction impact
    */
-  async analyzeCorrectionImpact(
-    correctionId: string
-  ): Promise<{
+  async analyzeCorrectionImpact(correctionId: string): Promise<{
     affectedUsers: number;
     affectedUnits: number;
     corrections: KnowledgeAuditEntry[];
@@ -278,10 +270,7 @@ export class KnowledgeAuditService {
   /**
    * Export audit log for compliance
    */
-  async exportAuditLog(
-    startDate: Date,
-    endDate: Date
-  ): Promise<KnowledgeAuditEntry[]> {
+  async exportAuditLog(startDate: Date, endDate: Date): Promise<KnowledgeAuditEntry[]> {
     return this.queryEntries({ startDate, endDate, limit: 10000 });
   }
 

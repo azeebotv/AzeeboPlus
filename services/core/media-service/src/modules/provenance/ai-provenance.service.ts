@@ -113,7 +113,9 @@ export class AiProvenanceService {
   /**
    * Create a new provenance record
    */
-  async createRecord(data: Omit<ProvenanceRecord, 'id' | 'createdAt' | 'updatedAt'>): Promise<ProvenanceRecord> {
+  async createRecord(
+    data: Omit<ProvenanceRecord, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<ProvenanceRecord> {
     const record: ProvenanceRecord = {
       ...data,
       id: this.generateId(),

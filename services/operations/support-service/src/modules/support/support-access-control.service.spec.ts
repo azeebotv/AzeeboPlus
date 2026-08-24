@@ -48,6 +48,7 @@ describe('SupportAccessControlService', () => {
     });
 
     it('should default to agent for unknown role', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const scope = service.getScope('unknown' as any);
 
       expect(scope.role).toBe('agent');

@@ -156,6 +156,7 @@ export class SubscriptionAdminService {
       price: Number(data.price || 0),
       currency: String(data.currency || 'NGN'),
       durationDays: Number(data.durationDays || 30),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       tier: (data.tier as any) || 'basic',
       features: Array.isArray(data.features)
         ? data.features.map(String)
@@ -166,6 +167,7 @@ export class SubscriptionAdminService {
   }
 
   async updateSubscriptionPlan(id: string, data: Record<string, unknown>, actorId?: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return this.systemSettingsService.updateSubscriptionPlan(id, data as any, actorId);
   }
 
@@ -174,6 +176,7 @@ export class SubscriptionAdminService {
   }
 
   async toggleSubscriptionPlanStatus(id: string, status: string, actorId?: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return this.systemSettingsService.updateSubscriptionPlan(id, { status } as any, actorId);
   }
 }

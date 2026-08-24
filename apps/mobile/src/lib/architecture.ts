@@ -49,11 +49,14 @@ export const DEFAULT_ARCHITECTURE_CONFIG: ArchitectureConfig = {
  * Verify the runtime architecture matches expected configuration.
  * Call this at app startup to detect misconfiguration.
  */
-export function verifyArchitecture(config: ArchitectureConfig = DEFAULT_ARCHITECTURE_CONFIG): ArchitectureVerification {
+export function verifyArchitecture(
+  config: ArchitectureConfig = DEFAULT_ARCHITECTURE_CONFIG
+): ArchitectureVerification {
   const results: ArchitectureCheck[] = [];
 
   // Check Hermes engine
-  const hermesAvailable = typeof global.HermesInternal !== 'undefined';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const hermesAvailable = typeof (global as any).HermesInternal !== 'undefined';
   results.push({
     name: 'Hermes JS Engine',
     expected: config.hermesEnabled,

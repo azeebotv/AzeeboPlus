@@ -57,8 +57,8 @@ describe('ColdStartService', () => {
 
       const strategies = service.getStrategies(profile);
 
-      expect(strategies.some(s => s.type === 'trending')).toBe(true);
-      expect(strategies.some(s => s.type === 'popular')).toBe(true);
+      expect(strategies.some((s) => s.type === 'trending')).toBe(true);
+      expect(strategies.some((s) => s.type === 'popular')).toBe(true);
     });
 
     it('should return personalized for hot users', () => {
@@ -72,7 +72,7 @@ describe('ColdStartService', () => {
 
       const strategies = service.getStrategies(profile);
 
-      expect(strategies.some(s => s.type === 'personalized')).toBe(true);
+      expect(strategies.some((s) => s.type === 'personalized')).toBe(true);
     });
 
     it('should include demographic strategy when available', () => {
@@ -87,7 +87,7 @@ describe('ColdStartService', () => {
 
       const strategies = service.getStrategies(profile);
 
-      expect(strategies.some(s => s.type === 'demographic')).toBe(true);
+      expect(strategies.some((s) => s.type === 'demographic')).toBe(true);
     });
   });
 
@@ -180,9 +180,9 @@ describe('ColdStartService', () => {
       const preferences = service.getOnboardingPreferences();
 
       expect(preferences.length).toBe(3);
-      expect(preferences.some(p => p.id === 'genres')).toBe(true);
-      expect(preferences.some(p => p.id === 'universes')).toBe(true);
-      expect(preferences.some(p => p.id === 'contentTypes')).toBe(true);
+      expect(preferences.some((p) => p.id === 'genres')).toBe(true);
+      expect(preferences.some((p) => p.id === 'universes')).toBe(true);
+      expect(preferences.some((p) => p.id === 'contentTypes')).toBe(true);
     });
   });
 });

@@ -27,7 +27,7 @@ import { IngestEventsDto } from './dto/analytics.dto.js';
 export class AnalyticsController {
   constructor(
     @Inject(AnalyticsService) private readonly analyticsService: AnalyticsService,
-    @Inject(WEPAnalyticsService) private readonly wepAnalytics: WEPAnalyticsService,
+    @Inject(WEPAnalyticsService) private readonly wepAnalytics: WEPAnalyticsService
   ) {}
 
   @Get('bootstrap')
@@ -246,7 +246,9 @@ export class AnalyticsController {
     @Query('endDate') endDate: string
   ) {
     const result = await this.wepAnalytics.calculateUserWEP(
-      userId, new Date(startDate), new Date(endDate)
+      userId,
+      new Date(startDate),
+      new Date(endDate)
     );
     return { success: true, data: result };
   }
@@ -254,13 +256,8 @@ export class AnalyticsController {
   @Get('wep/platform')
   @ApiOperation({ summary: 'Get platform-wide WEP metrics' })
   @ApiResponse({ status: 200, description: 'Platform WEP' })
-  async getPlatformWEP(
-    @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string
-  ) {
-    const result = await this.wepAnalytics.getPlatformWEP(
-      new Date(startDate), new Date(endDate)
-    );
+  async getPlatformWEP(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
+    const result = await this.wepAnalytics.getPlatformWEP(new Date(startDate), new Date(endDate));
     return { success: true, data: result };
   }
 
@@ -272,7 +269,8 @@ export class AnalyticsController {
     @Query('endDate') endDate: string
   ) {
     const result = await this.wepAnalytics.getContributionPerWEP(
-      new Date(startDate), new Date(endDate)
+      new Date(startDate),
+      new Date(endDate)
     );
     return { success: true, data: result };
   }
@@ -285,7 +283,8 @@ export class AnalyticsController {
     @Query('endDate') endDate: string
   ) {
     const result = await this.wepAnalytics.getCampaignAttribution(
-      new Date(startDate), new Date(endDate)
+      new Date(startDate),
+      new Date(endDate)
     );
     return { success: true, data: result };
   }

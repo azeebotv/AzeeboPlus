@@ -79,7 +79,7 @@ export class DiversityService {
       contentType?: string;
       universe?: string;
       creatorId?: string;
-    }>,
+    }>
   ): DiversityMetrics {
     // Count by content type
     const contentTypeCounts = new Map<string, number>();
@@ -130,25 +130,21 @@ export class DiversityService {
       universe?: string;
       impressionCount?: number;
     }>,
-    creatorSizes?: Map<string, number>, // creatorId → follower count
+    creatorSizes?: Map<string, number> // creatorId → follower count
   ): FairnessMetrics {
     // Exposure fairness (Gini coefficient)
-    const impressions = recommendations.map(r => r.impressionCount || 1);
+    const impressions = recommendations.map((r) => r.impressionCount || 1);
     const exposureFairness = 1 - this.giniCoefficient(impressions);
 
     // Creator fairness (small creators get proportional exposure)
     let creatorFairness = 1;
     if (creatorSizes && creatorSizes.size > 0) {
-      const smallCreatorExposure = recommendations
-        .filter(r => {
-          const size = creatorSizes.get(r.creatorId || '') || 0;
-          return size < 10000; // Small creator threshold
-        })
-        .length;
+      const smallCreatorExposure = recommendations.filter((r) => {
+        const size = creatorSizes.get(r.creatorId || '') || 0;
+        return size < 10000; // Small creator threshold
+      }).length;
       const totalRecommendations = recommendations.length;
-      creatorFairness = totalRecommendations > 0
-        ? smallCreatorExposure / totalRecommendations
-        : 1;
+      creatorFairness = totalRecommendations > 0 ? smallCreatorExposure / totalRecommendations : 1;
     }
 
     // Universe fairness
@@ -158,9 +154,8 @@ export class DiversityService {
       universeCounts.set(universe, (universeCounts.get(universe) || 0) + 1);
     }
     const universeValues = Array.from(universeCounts.values());
-    const universeFairness = universeValues.length > 0
-      ? 1 - this.coefficientOfVariation(universeValues)
-      : 1;
+    const universeFairness =
+      universeValues.length > 0 ? 1 - this.coefficientOfVariation(universeValues) : 1;
 
     const overallFairness = (exposureFairness + creatorFairness + universeFairness) / 3;
 
@@ -208,9 +203,7 @@ export class DiversityService {
   /**
    * Generate diversity improvement recommendations
    */
-  getDiversityRecommendations(
-    metrics: DiversityMetrics,
-  ): DiversityRecommendation[] {
+  getDiversityRecommendations(metrics: DiversityMetrics): DiversityRecommendation[] {
     const recommendations: DiversityRecommendation[] = [];
 
     if (metrics.contentTypeDiversity < this.DIVERSITY_TARGETS.contentType) {
@@ -246,10 +239,9 @@ export class DiversityService {
   /**
    * Apply diversity re-ranking to recommendations
    */
-  applyDiversityReranking<T extends { contentType?: string; universe?: string; creatorId?: string }>(
-    recommendations: T[],
-    diversityWeight: number = 0.3,
-  ): T[] {
+  applyDiversityReranking<
+    T extends { contentType?: string; universe?: string; creatorId?: string },
+  >(recommendations: T[], diversityWeight: number = 0.3): T[] {
     // Simple MMR (Maximal Marginal Relevance) inspired re-ranking
     const reranked: T[] = [];
     const remaining = [...recommendations];
@@ -260,17 +252,18 @@ export class DiversityService {
 
       for (let i = 0; i < remaining.length; i++) {
         const candidate = remaining[i];
-        const relevance = 1 - (i / remaining.length); // Original rank as relevance
+        const relevance = 1 - i / remaining.length; // Original rank as relevance
 
         // Calculate diversity against already selected items
         let diversity = 1;
         if (reranked.length > 0) {
-          const similarCount = reranked.filter(r =>
-            r.contentType === candidate.contentType ||
-            r.universe === candidate.universe ||
-            r.creatorId === candidate.creatorId
+          const similarCount = reranked.filter(
+            (r) =>
+              r.contentType === candidate.contentType ||
+              r.universe === candidate.universe ||
+              r.creatorId === candidate.creatorId
           ).length;
-          diversity = 1 - (similarCount / reranked.length);
+          diversity = 1 - similarCount / reranked.length;
         }
 
         const score = (1 - diversityWeight) * relevance + diversityWeight * diversity;

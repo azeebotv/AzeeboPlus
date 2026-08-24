@@ -2,7 +2,6 @@
  * Hreflang Tags for International SEO
  * SEO-005: Add language tags for internationalization
  */
-import React from 'react';
 
 export interface HreflangConfig {
   lang: string;

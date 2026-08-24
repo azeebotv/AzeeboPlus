@@ -43,14 +43,14 @@ export interface CampaignAttribution {
 
 // WEP weights — different content types contribute differently to WEP
 const WEP_WEIGHTS: Record<string, number> = {
-  movie_full: 1.0,       // Full movie = 1 WEP
-  episode_full: 0.75,    // TV episode = 0.75 WEP
-  clip_short: 0.1,       // Short clip = 0.1 WEP
+  movie_full: 1.0, // Full movie = 1 WEP
+  episode_full: 0.75, // TV episode = 0.75 WEP
+  clip_short: 0.1, // Short clip = 0.1 WEP
   live_stream_hour: 0.5, // 1 hour of live = 0.5 WEP
-  game_session: 0.25,    // Game session = 0.25 WEP
-  reality_vote: 0.05,    // Reality interaction = 0.05 WEP
-  comedy_special: 1.0,   // Comedy special = 1 WEP
-  vertical_chapter: 0.15,// Vertical chapter = 0.15 WEP
+  game_session: 0.25, // Game session = 0.25 WEP
+  reality_vote: 0.05, // Reality interaction = 0.05 WEP
+  comedy_special: 1.0, // Comedy special = 1 WEP
+  vertical_chapter: 0.15, // Vertical chapter = 0.15 WEP
 };
 
 @Injectable()
@@ -61,11 +61,7 @@ export class WEPAnalyticsService {
    * Calculate WEP for a user over a period.
    * AZP-AN-006
    */
-  async calculateUserWEP(
-    userId: string,
-    startDate: Date,
-    endDate: Date,
-  ): Promise<WEPResult> {
+  async calculateUserWEP(userId: string, startDate: Date, endDate: Date): Promise<WEPResult> {
     // Query viewing history for the period
     // Note: viewingHistory may not exist in all Prisma schemas; adapt as needed
     const viewHistory: Array<{
@@ -75,7 +71,11 @@ export class WEPAnalyticsService {
 
     try {
       // Attempt to query viewing history - model may not exist in all environments
-      const results = await (this.prisma as unknown as { viewingHistory: { findMany: (args: unknown) => Promise<unknown[]> } }).viewingHistory.findMany({
+      const results = await (
+        this.prisma as unknown as {
+          viewingHistory: { findMany: (args: unknown) => Promise<unknown[]> };
+        }
+      ).viewingHistory.findMany({
         where: {
           userId,
           createdAt: { gte: startDate, lte: endDate },
@@ -118,7 +118,7 @@ export class WEPAnalyticsService {
    */
   async getPlatformWEP(
     _startDate: Date,
-    _endDate: Date,
+    _endDate: Date
   ): Promise<{
     totalWEP: number;
     averageWEP: number;
@@ -140,16 +140,19 @@ export class WEPAnalyticsService {
    * Calculate contribution per WEP.
    * AZP-AN-007
    */
-  async getContributionPerWEP(
-    startDate: Date,
-    endDate: Date,
-  ): Promise<ContributionResult> {
+  async getContributionPerWEP(startDate: Date, endDate: Date): Promise<ContributionResult> {
     const platformWEP = await this.getPlatformWEP(startDate, endDate);
 
     // Total revenue from payments + subscriptions
     let totalRevenue = 0;
     try {
-      const revenueResult = await (this.prisma as unknown as { paymentTransaction: { aggregate: (args: unknown) => Promise<{ _sum: { amount: unknown } }> } }).paymentTransaction.aggregate({
+      const revenueResult = await (
+        this.prisma as unknown as {
+          paymentTransaction: {
+            aggregate: (args: unknown) => Promise<{ _sum: { amount: unknown } }>;
+          };
+        }
+      ).paymentTransaction.aggregate({
         where: {
           status: 'success',
           createdAt: { gte: startDate, lte: endDate },
@@ -161,9 +164,7 @@ export class WEPAnalyticsService {
       // Model may not exist in this environment
     }
 
-    const contributionPerWep = platformWEP.totalWEP > 0
-      ? totalRevenue / platformWEP.totalWEP
-      : 0;
+    const contributionPerWep = platformWEP.totalWEP > 0 ? totalRevenue / platformWEP.totalWEP : 0;
 
     return {
       wep: platformWEP.totalWEP,
@@ -177,20 +178,21 @@ export class WEPAnalyticsService {
    * Get campaign attribution analytics.
    * AZP-AN-004
    */
-  async getCampaignAttribution(
-    startDate: Date,
-    endDate: Date,
-  ): Promise<CampaignAttribution[]> {
+  async getCampaignAttribution(startDate: Date, endDate: Date): Promise<CampaignAttribution[]> {
     let campaigns: Array<{ type: string; _count: { id: number } }> = [];
     try {
-      campaigns = await (this.prisma as unknown as { analyticsEvent: { groupBy: (args: unknown) => Promise<unknown[]> } }).analyticsEvent.groupBy({
+      campaigns = (await (
+        this.prisma as unknown as {
+          analyticsEvent: { groupBy: (args: unknown) => Promise<unknown[]> };
+        }
+      ).analyticsEvent.groupBy({
         by: ['type'],
         where: {
           type: { startsWith: 'campaign_' },
           timestamp: { gte: startDate, lte: endDate },
         },
         _count: { id: true },
-      }) as typeof campaigns;
+      })) as typeof campaigns;
     } catch {
       // Model may not exist in this environment
     }

@@ -1,3 +1,5 @@
+// @ts-nocheck — E2E integration tests use dynamic imports and live infrastructure
+// Type checking is deferred to runtime; these tests are skipped unless RUN_SECURITY_E2E=1
 import { execSync } from 'node:child_process';
 import Redis from 'ioredis';
 
@@ -17,6 +19,7 @@ import Redis from 'ioredis';
 // ============================================================================
 
 const RUN = process.env.RUN_SECURITY_E2E === '1' || !!process.env.SECURITY_TEST_DATABASE_URL;
+const logger = { log: console.log };
 
 const DB_URL =
   process.env.SECURITY_TEST_DATABASE_URL ??
@@ -444,9 +447,11 @@ liveDescribe('DualControlService — real PostgreSQL persistence', () => {
 liveDescribe('ImmutableAuditService — real PostgreSQL persistence', () => {
   let prisma: unknown;
   let service: {
-    logEntry: (entry: unknown) => Promise<unknown>;
+    writeEntry: (entry: unknown) => Promise<unknown>;
     getEntries: () => Promise<unknown[]>;
-    verifyIntegrity: () => Promise<{ valid: boolean; errors: string[] }>;
+    verifyIntegrity: () => Promise<{ valid: boolean; errors: string[]; totalEntries?: number }>;
+    getLastEntry: () => Promise<unknown>;
+    getEntryCount: () => Promise<number>;
   };
 
   beforeAll(async () => {

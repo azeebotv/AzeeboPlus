@@ -12,4 +12,3 @@ export const PLATFORM_CONFIG = {
 export function getPlatformValue<T>(android: T, ios: T): T {
   return IS_ANDROID ? android : ios;
 }
-

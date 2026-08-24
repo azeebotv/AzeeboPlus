@@ -93,7 +93,7 @@ describe('DiversityService', () => {
       const recommendations = service.getDiversityRecommendations(metrics);
 
       expect(recommendations.length).toBeGreaterThan(0);
-      expect(recommendations.some(r => r.type === 'content_type')).toBe(true);
+      expect(recommendations.some((r) => r.type === 'content_type')).toBe(true);
     });
 
     it('should return empty for high diversity', () => {
@@ -124,7 +124,7 @@ describe('DiversityService', () => {
 
       expect(reranked.length).toBe(4);
       // The diverse item (podcast) should appear in the top 2 positions
-      const types = reranked.slice(0, 2).map(r => r.contentType);
+      const types = reranked.slice(0, 2).map((r) => r.contentType);
       expect(types).toContain('podcast');
     });
   });

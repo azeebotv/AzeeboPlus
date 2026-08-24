@@ -336,9 +336,7 @@ export class ReleaseManifestService {
 
     const allowed = validTransitions[manifest.status];
     if (!allowed.includes(newStatus)) {
-      throw new BadRequestException(
-        `Invalid status transition: ${manifest.status} → ${newStatus}`
-      );
+      throw new BadRequestException(`Invalid status transition: ${manifest.status} → ${newStatus}`);
     }
 
     manifest.statusHistory.push({

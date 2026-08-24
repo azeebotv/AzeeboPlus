@@ -135,7 +135,9 @@ export class EmergencyTakedownService {
     };
 
     this.requests.set(request.id, request);
-    this.logger.warn(`EMERGENCY TAKEDOWN initiated: ${request.id} for content ${request.contentId}`);
+    this.logger.warn(
+      `EMERGENCY TAKEDOWN initiated: ${request.id} for content ${request.contentId}`
+    );
 
     return request;
   }
@@ -288,9 +290,7 @@ export class EmergencyTakedownService {
    * Get pending reversals requiring approval
    */
   async getPendingReversals(): Promise<TakedownRequest[]> {
-    return Array.from(this.requests.values()).filter(
-      (r) => r.status === 'reversal_pending'
-    );
+    return Array.from(this.requests.values()).filter((r) => r.status === 'reversal_pending');
   }
 
   /**

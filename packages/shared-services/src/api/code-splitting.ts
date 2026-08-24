@@ -59,14 +59,5 @@ export const CODE_SPLITTING_CONFIG = {
   },
 };
 
-// Dynamic import helpers for route-level code splitting
-export const LAZY_IMPORTS = {
-  // Heavy page components loaded on demand
-  admin: () => import('../../pages/admin'),
-  analytics: () => import('../../pages/analytics'),
-  settings: () => import('../../pages/settings'),
-  creatorDashboard: () => import('../../pages/creator/dashboard'),
-  videoPlayer: () => import('../../components/media/VideoPlayer'),
-  chatWidget: () => import('../../components/social/ChatWidget'),
-  paymentFlow: () => import('../../components/commerce/PaymentFlow'),
-} as const;
+// Dynamic import helpers are defined in the consuming app (e.g. apps/web)
+// since this shared package cannot reference app-specific page paths.

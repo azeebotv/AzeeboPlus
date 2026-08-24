@@ -94,18 +94,13 @@ export class MediaEncryptionService {
    */
   getActiveKey(): EncryptionKey | undefined {
     const now = new Date();
-    return Array.from(this.keys.values()).find(
-      (k) => k.active && k.expiresAt > now
-    );
+    return Array.from(this.keys.values()).find((k) => k.active && k.expiresAt > now);
   }
 
   /**
    * Encrypt a media asset
    */
-  async encryptAsset(
-    assetKey: string,
-    data: Buffer
-  ): Promise<EncryptedAsset> {
+  async encryptAsset(assetKey: string, data: Buffer): Promise<EncryptedAsset> {
     const key = this.getActiveKey();
     if (!key) {
       throw new Error('No active encryption key available');
@@ -142,10 +137,7 @@ export class MediaEncryptionService {
   /**
    * Decrypt a media asset
    */
-  async decryptAsset(
-    encryptedAsset: EncryptedAsset,
-    encryptedData: Buffer
-  ): Promise<Buffer> {
+  async decryptAsset(encryptedAsset: EncryptedAsset, encryptedData: Buffer): Promise<Buffer> {
     const key = this.keys.get(encryptedAsset.keyId);
     if (!key) {
       throw new Error(`Encryption key ${encryptedAsset.keyId} not found`);
@@ -172,10 +164,7 @@ export class MediaEncryptionService {
   /**
    * Generate encrypted playback URL
    */
-  generateEncryptedUrl(
-    asset: EncryptedAsset,
-    expiresIn: number = 600
-  ): string {
+  generateEncryptedUrl(asset: EncryptedAsset, expiresIn: number = 600): string {
     const payload = {
       key: asset.encryptedKey,
       kid: asset.keyId,

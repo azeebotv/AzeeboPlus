@@ -665,6 +665,18 @@ export async function parseProblemDetails(response: Response): Promise<ProblemDe
   const contentType = response.headers.get('content-type') || '';
   let body: Record<string, unknown>;
 
+  if (
+    !contentType.includes('application/json') &&
+    !contentType.includes('application/problem+json')
+  ) {
+    return {
+      type: 'about:blank',
+      title: 'Bad Response',
+      status: response.status,
+      detail: `Server returned ${response.status} with non-JSON content-type: ${contentType || 'unknown'}`,
+    };
+  }
+
   try {
     body = await response.json();
   } catch {

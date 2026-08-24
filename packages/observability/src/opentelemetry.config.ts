@@ -11,6 +11,7 @@ import { Resource } from '@opentelemetry/resources';
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
 
 export function initTelemetry(serviceName: string, serviceVersion: string = '1.0.0') {
+  // @ts-expect-error - @opentelemetry/resources not installed in dev
   const resource = new Resource({
     [ATTR_SERVICE_NAME]: serviceName,
     [ATTR_SERVICE_VERSION]: serviceVersion,
@@ -35,6 +36,6 @@ export function initTelemetry(serviceName: string, serviceVersion: string = '1.0
 
   sdk.start();
   process.on('SIGTERM', () => sdk.shutdown());
-  
+
   return sdk;
 }

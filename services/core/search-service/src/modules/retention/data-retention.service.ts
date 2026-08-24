@@ -100,7 +100,6 @@ export class DataRetentionService implements OnModuleInit, OnModuleDestroy, OnAp
 
     try {
       // Process in batches to avoid long-running transactions
-      // eslint-disable-next-line no-constant-condition
       while (true) {
         // Select a batch of non-anonymized old logs
         const batch = await this.prisma.searchQueryLog.findMany({
