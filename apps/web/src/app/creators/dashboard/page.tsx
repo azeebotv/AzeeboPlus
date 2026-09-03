@@ -17,15 +17,17 @@ interface DashboardData {
 
 const dashLinks = [
   {
-    href: '/creator/content-manager',
-    label: 'Content Manager',
-    desc: 'Manage your uploaded content',
+    href: '/creators/dashboard',
+    label: 'Dashboard',
+    desc: 'View your creator overview',
   },
-  { href: '/creator/analytics', label: 'Analytics', desc: 'View engagement and growth metrics' },
-  { href: '/creator/earnings', label: 'Earnings', desc: 'Track revenue and payouts' },
-  { href: '/creator/profile', label: 'Profile', desc: 'Edit your creator profile' },
-  { href: '/creator/drafts', label: 'Drafts', desc: 'Continue working on drafts' },
-  { href: '/creator/scheduled', label: 'Scheduled', desc: 'Manage scheduled content' },
+  { href: '/creators/upload', label: 'Upload', desc: 'Upload new content' },
+  { href: '/creators/earnings', label: 'Earnings', desc: 'Track revenue and payouts' },
+  {
+    href: '/creators/monetization',
+    label: 'Monetization',
+    desc: 'Manage tipping and subscriptions',
+  },
 ];
 
 function StatCard({ label, value, loading }: { label: string; value: string; loading: boolean }) {

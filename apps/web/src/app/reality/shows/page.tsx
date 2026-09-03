@@ -1,14 +1,6 @@
 'use client';
 import { useEffect } from 'react';
 
-export const metadata = {
-  title: 'Reality Shows | Azeebo',
-  description: 'Browse all reality shows, watch episodes, and vote for your favorites on Azeebo.',
-  openGraph: {
-    title: 'Reality Shows | Azeebo',
-    description: 'Browse all reality shows, watch episodes, and vote for your favorites on Azeebo.',
-  },
-};
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';

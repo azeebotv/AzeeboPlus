@@ -43,7 +43,7 @@ export default function SuperVoteScreen() {
 
   useEffect(() => {
     loadData();
-    getVotePackages('superVote').then((pkgs) => setVotePackages(pkgs)).catch(() => {});
+    getVotePackages('superVote').then((pkgs) => setVotePackages(pkgs)).catch(() => { /* non-critical: vote packages are optional UI enhancement */ });
   }, [episodeId]);
 
   const loadData = async () => {
@@ -116,14 +116,12 @@ export default function SuperVoteScreen() {
         voteCount: package_.votes,
       });
 
-      try {
-        analytics.realitySupervoteCreated(
+              analytics.realitySupervoteCreated(
           episodeId,
           selectedContestant!,
           package_.votes,
           package_.price
         );
-      } catch {}
 
       Alert.alert(
         'Success!',

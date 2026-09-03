@@ -392,3 +392,372 @@ model SessionSummary {
   @@index([universe])
   @@index([startedAt])
 }
+
+// ============================================================
+// AOS-MA-001 — Enterprise Agentic Operating System
+// ============================================================
+
+// Agent Registry — tracks every agent in the system
+model AgentRegistry {
+  id              String   @id @default(uuid())
+  agentId         String   @unique // e.g. CP-01, EA-01
+  name            String
+  version         String   @default("1.0.0")
+  purpose         String
+  description     String?
+  humanOwner      String   // Named role, not "AI team"
+  category        String   // control-plane, shared-enterprise, domain-skill-pack
+  status          String   @default("active") // active, suspended, retired
+  executionTier   String   @default("T2") // T0-T4
+  riskLevel       String   @default("R1") // R0-R4
+  autonomyLevel   String   @default("A1") // A0-A5
+  killSwitchLevel String   @default("K0") // K0-K4
+  allowedTools    Json     @default("[]")
+  deniedActions   Json     @default("[]")
+  approvalActions Json     @default("[]")
+  dataClasses     Json     @default("[]")
+  costBudgetDaily Decimal? @db.Decimal(18, 4)
+  costBudgetMonthly Decimal? @db.Decimal(18, 4)
+  modelTierDefault String?
+  modelTierFallback String?
+  qualityThreshold Json?
+  valueKpis       Json?
+  slaTarget       Json?
+  metadata        Json?
+  // AOS-MA-001 extended fields
+  workflowIds     Json     @default("[]") // Which queue/workflow IDs this agent serves
+  authorityRefs   Json     @default("[]") // Current governing authority documents
+  killSwitchPath  String?  // Path to kill switch config or manual process
+  fallbackProcess String?  // Manual process when agent is suspended
+  evaluationSuite Json     @default("[]") // Golden/regression/security/authority test names
+  lastHealthCheck DateTime?
+  healthStatus    String   @default("unknown") // healthy, degraded, unhealthy, unknown
+  totalExecutions Int      @default(0)
+  totalErrors     Int      @default(0)
+  lastExecutedAt  DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  evaluations AgentEvaluation[]
+
+  @@map("agent_registry")
+  @@index([category])
+  @@index([status])
+  @@index([humanOwner])
+  @@index([healthStatus])
+}
+
+// Agent Evaluation — tracks evaluation results per agent per period
+model AgentEvaluation {
+  id              String   @id @default(uuid())
+  agentId         String
+  evaluationType  String   // golden, regression, security, authority, performance
+  testSuite       String   // Name of the test suite run
+  totalTests      Int      @default(0)
+  passed          Int      @default(0)
+  failed          Int      @default(0)
+  skipped         Int      @default(0)
+  durationMs      Int?
+  score           Decimal? @db.Decimal(5, 2) // 0-100
+  passedThreshold Boolean  @default(false)
+  failureDetails  Json?    // Array of failure details
+  environment     String?  // ci, staging, production
+  triggeredBy     String?  // human or system
+  metadata        Json?
+  evaluatedAt     DateTime @default(now())
+
+  agent AgentRegistry @relation(fields: [agentId], references: [agentId], onDelete: Cascade)
+
+  @@map("agent_evaluations")
+  @@index([agentId])
+  @@index([evaluationType])
+  @@index([evaluatedAt])
+  @@index([passedThreshold])
+}
+
+// Model Cost Tracking — per-request AI cost telemetry
+model ModelCostEvent {
+  id              String   @id @default(uuid())
+  agentId         String?
+  requestId       String?
+  model           String   // e.g. claude-sonnet-4-20250514, gpt-4o, gemini-pro
+  modelTier       String?  // T0-T4
+  taskType        String?  // classification, extraction, drafting, reasoning
+  inputTokens     Int      @default(0)
+  outputTokens    Int      @default(0)
+  totalTokens     Int      @default(0)
+  costUsd         Decimal  @db.Decimal(18, 8)
+  latencyMs       Int?
+  userId          String?
+  sessionId       String?
+  domain          String?  // finance, commercial, rights, customer, etc.
+  success         Boolean  @default(true)
+  errorMessage    String?
+  metadata        Json?
+  recordedAt      DateTime @default(now())
+
+  @@map("model_cost_events")
+  @@index([agentId])
+  @@index([model])
+  @@index([modelTier])
+  @@index([recordedAt])
+  @@index([domain])
+}
+
+// Agent Kill Switch — suspension and recovery tracking
+model AgentKillSwitch {
+  id              String   @id @default(uuid())
+  agentId         String
+  action          String   // suspend, resume, rollback
+  reason          String
+  triggeredBy     String   // human user ID or system
+  previousStatus  String?
+  newStatus       String
+  rollbackData    Json?    // State snapshot for rollback
+  evidence        String?  // Link to evidence or description
+  createdAt       DateTime @default(now())
+
+  @@map("agent_kill_switches")
+  @@index([agentId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+// Risk Scoring — risk and autonomy classification for actions
+model RiskClassification {
+  id              String   @id @default(uuid())
+  actionType      String   @unique // e.g. payment_initiate, content_publish, rights_grant
+  domain          String
+  riskLevel       String   // R0-R4
+  autonomyLevel   String   // A0-A5
+  reversibility   String   // reversible, bounded-reversible, irreversible
+  approvalRequired Boolean @default(false)
+  approverRole    String?
+  makerChecker    Boolean  @default(false)
+  dataSensitivity String   @default("internal") // public, internal, confidential, restricted
+  financialExposure String? // none, low, medium, high
+  description     String?
+  policyRef       String?
+  // Extended fields
+  maxAutoApproveUsd Decimal? @db.Decimal(18, 2) // Max USD amount for auto-approval
+  escalationThreshold String? // risk level that triggers escalation
+  requiredApproverCount Int @default(1) // Number of approvers needed
+  cooldownMinutes Int? // Minimum time between approvals for same user
+  keywords        Json     @default("[]") // Keywords for auto-classification
+  metadata        Json?
+  assessments     RiskAssessmentLog[]
+  approvals       ApprovalRequest[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("risk_classifications")
+  @@index([domain])
+  @@index([riskLevel])
+  @@index([autonomyLevel])
+}
+
+// Approval Request — tracks every approval gate interaction
+model ApprovalRequest {
+  id              String   @id @default(uuid())
+  actionType      String
+  domain          String
+  riskLevel       String
+  autonomyLevel   String
+  correlationId   String?  // External correlation ID
+  requestedBy     String   // Who requested the action
+  requestContext  Json?    // Context about what is being approved
+  status          String   @default("pending") // pending, approved, rejected, expired, revoked
+  decision        String?  // approved, rejected
+  decidedBy       String?  // Who made the decision
+  decidedAt       DateTime?
+  reason          String?  // Reason for decision
+  expiresAt       DateTime? // Auto-expire after this time
+  revocationReason String?
+  revokedBy       String?
+  revokedAt       DateTime?
+  metadata        Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  classification RiskClassification @relation(fields: [actionType], references: [actionType])
+
+  @@map("approval_requests")
+  @@index([actionType])
+  @@index([status])
+  @@index([requestedBy])
+  @@index([decidedBy])
+  @@index([createdAt])
+}
+
+// Risk Assessment Log — audit trail for every risk assessment
+model RiskAssessmentLog {
+  id              String   @id @default(uuid())
+  actionType      String
+  domain          String
+  assessedBy      String   // agentId or 'system'
+  correlationId   String?
+  inputContext    Json?    // What was being assessed
+  riskLevel       String
+  autonomyLevel   String
+  reversibility   String
+  decision        String   // ALLOW, ASK, DENY
+  decisionReason  String
+  approvalRequired Boolean
+  approverRole    String?
+  makerChecker    Boolean
+  dataSensitivity String
+  financialExposure String?
+  estimatedCostUsd Decimal? @db.Decimal(18, 6)
+  approvalRequestId String? // Link to approval if ASK decision
+  overridden      Boolean  @default(false)
+  overrideBy      String?
+  overrideReason  String?
+  outcome         String?  // completed, failed, escalated
+  metadata        Json?
+  assessedAt      DateTime @default(now())
+
+  classification RiskClassification @relation(fields: [actionType], references: [actionType])
+
+  @@map("risk_assessment_logs")
+  @@index([actionType])
+  @@index([domain])
+  @@index([decision])
+  @@index([assessedBy])
+  @@index([assessedAt])
+}
+
+// Task Router — work classification and routing decisions
+model TaskClassification {
+  id              String   @id @default(uuid())
+  taskType        String   @unique // e.g. invoice_generation, contract_review, support_ticket
+  workClass       String   // H0, H1, A1, A2, S, X
+  domain          String
+  priority        String   @default("normal") // low, normal, high, urgent
+  complexityTier  String   // T0-T4
+  requiredAgents  Json     @default("[]")
+  requiredApprovals Json   @default("[]")
+  slaHours        Int?
+  estimatedCostUsd Decimal? @db.Decimal(18, 4)
+  processStep     String?  // P0-P7 from process mining
+  processOwner    String?
+  volumePerWeek   Int?
+  baselineMinutes Int?
+  description     String?
+  // Extended fields
+  keywords        Json     @default("[]") // Keywords for auto-classification
+  inputPatterns   Json     @default("[]") // Expected input patterns
+  outputPatterns  Json     @default("[]") // Expected output patterns
+  dependencies    Json     @default("[]") // Task types this depends on
+  triggersEvents  Json     @default("[]") // Events this task produces
+  reversible      String   @default("reversible") // reversible, bounded-reversible, irreversible
+  dataSensitivity String   @default("internal") // public, internal, confidential, restricted
+  automationCandidate Boolean @default(false) // Has been validated for automation
+  eliminationCandidate Boolean @default(false) // Candidate for elimination
+  lastRoutedAt    DateTime?
+  totalRouted     Int      @default(0)
+  avgCostUsd      Decimal? @db.Decimal(18, 6)
+  avgDurationMs   Int?
+  successRate     Decimal? @db.Decimal(5, 2)
+  metadata        Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  executions TaskExecution[]
+
+  @@map("task_classifications")
+  @@index([workClass])
+  @@index([domain])
+  @@index([complexityTier])
+  @@index([automationCandidate])
+  @@index([eliminationCandidate])
+}
+
+// Task Execution — tracks every routing decision and its outcome
+model TaskExecution {
+  id              String   @id @default(uuid())
+  taskType        String
+  correlationId   String?  // External correlation ID
+  workClass       String   // H0, H1, A1, A2, S, X
+  executionChoice String   // ELIMINATE, DETERMINISTIC SOFTWARE, LOW-COST AI, etc.
+  domain          String
+  priority        String?
+  complexityTier  String?
+  assignedAgent   String?  // Which agent handled this
+  assignedModel   String?  // Which model was used
+  modelTier       String?  // T0-T4
+  requiredApprovals Json?
+  approvalStatus  String?  // pending, approved, rejected
+  approvedBy      String?
+  startedAt       DateTime @default(now())
+  completedAt     DateTime?
+  durationMs      Int?
+  status          String   @default("routed") // routed, in-progress, completed, failed, eliminated
+  success         Boolean?
+  costUsd         Decimal? @db.Decimal(18, 6)
+  tokensUsed      Int?
+  errorType       String?
+  errorMessage    String?
+  humanEscalated  Boolean  @default(false)
+  escalationReason String?
+  outputReference String?  // Reference to output artifact
+  metadata        Json?
+  createdAt       DateTime @default(now())
+
+  classification TaskClassification @relation(fields: [taskType], references: [taskType])
+
+  @@map("task_executions")
+  @@index([taskType])
+  @@index([correlationId])
+  @@index([workClass])
+  @@index([status])
+  @@index([assignedAgent])
+  @@index([startedAt])
+}
+
+// Human Capacity Ledger — tracks hours released and redeployment
+model CapacityLedger {
+  id              String   @id @default(uuid())
+  workflowId      String?
+  taskType        String
+  domain          String
+  baselineHours   Decimal @db.Decimal(10, 2)
+  postAgentHours  Decimal @db.Decimal(10, 2)
+  hoursReleased   Decimal @db.Decimal(10, 2)
+  redeploymentTarget String? // revenue, creative, product, control, eliminated
+  headcountAvoided Boolean @default(false)
+  vendorAvoided   Boolean @default(false)
+  roleDescription String?
+  validatedBy     String?  // CFO/People validated
+  validatedAt     DateTime?
+  period          String   // e.g. 2026-Q3
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("capacity_ledger")
+  @@index([domain])
+  @@index([period])
+  @@index([taskType])
+}
+
+// Agent Portfolio Review — monthly review records
+model AgentPortfolioReview {
+  id              String   @id @default(uuid())
+  agentId         String
+  reviewPeriod    String   // e.g. 2026-08
+  totalTasks      Int      @default(0)
+  successRate     Decimal? @db.Decimal(5, 2)
+  correctionRate  Decimal? @db.Decimal(5, 2)
+  escalationRate  Decimal? @db.Decimal(5, 2)
+  totalCostUsd    Decimal  @db.Decimal(18, 4)
+  valueScore      Decimal? @db.Decimal(5, 2)
+  humanSupervisionHours Decimal? @db.Decimal(10, 2)
+  recommendation  String?  // keep, merge, retire, downskill, upgrade
+  reviewNotes     String?
+  reviewedBy      String?
+  reviewedAt      DateTime @default(now())
+
+  @@map("agent_portfolio_reviews")
+  @@index([agentId])
+  @@index([reviewPeriod])
+}

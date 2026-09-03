@@ -108,7 +108,7 @@ function BundleDetailContent(): React.JSX.Element {
         >
           <div className="flex items-center gap-3 mb-4">
             <span className="text-xs font-semibold px-2 py-1 rounded-full text-white bg-cyan-600">
-              {bundle.tier.toUpperCase()}
+              {(bundle.tier ?? 'standard').toUpperCase()}
             </span>
           </div>
 

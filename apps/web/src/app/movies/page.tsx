@@ -1,14 +1,6 @@
 'use client';
 import { useEffect } from 'react';
 
-export const metadata = {
-  title: 'Movies | Azeebo',
-  description: 'Stream premium movies, Nollywood films, and exclusive content on Azeebo.',
-  openGraph: {
-    title: 'Movies | Azeebo',
-    description: 'Stream premium movies, Nollywood films, and exclusive content on Azeebo.',
-  },
-};
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -95,7 +87,7 @@ function MoviesPageContent(): React.JSX.Element {
               alt={movies[0].title}
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/50 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-[var(--brand-near-black)]/50 to-transparent" />
             <AmbientGlow color="rgba(245,158,11,0.25)" size={500} className="bottom-0 right-0" />
 
             <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 max-w-7xl mx-auto">
@@ -256,7 +248,7 @@ function MoviesPageContent(): React.JSX.Element {
                     >
                       Premium
                     </span>
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
                     <div className="absolute bottom-4 left-4 right-4">
                       <span
                         className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"

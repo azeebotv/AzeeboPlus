@@ -9,6 +9,7 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import analytics from '@/lib/analytics';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 interface LiveEventSummary {
   id: string;
@@ -76,7 +77,7 @@ function LiveEventsPageContent(): React.JSX.Element {
       case 'scheduled':
         return 'var(--brand-orange)';
       case 'ended':
-        return '#6b7280';
+        return 'var(--brand-grey)';
       case 'cancelled':
         return 'var(--color-error-500)';
       default:
@@ -122,7 +123,7 @@ function LiveEventsPageContent(): React.JSX.Element {
               className="px-4 py-2 rounded-full text-sm font-medium transition-all"
               style={{
                 backgroundColor: filter === f ? 'var(--brand-orange)' : 'rgba(255,255,255,0.05)',
-                color: filter === f ? '#fff' : 'var(--text-secondary)',
+                color: filter === f ? 'white' : 'var(--text-secondary)',
               }}
             >
               {f === 'upcoming'
@@ -174,7 +175,7 @@ function LiveEventsPageContent(): React.JSX.Element {
                         height={200}
                         className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
                       <div className="absolute top-3 left-3 flex gap-2">
                         <span
                           className="px-3 py-1 rounded-full text-xs font-semibold"
@@ -184,7 +185,7 @@ function LiveEventsPageContent(): React.JSX.Element {
                           }}
                         >
                           {event.status === 'live'
-                            ? '🔴 LIVE'
+                            ? 'Circle LIVE'
                             : event.status === 'scheduled'
                               ? 'Upcoming'
                               : event.status}
@@ -221,11 +222,12 @@ function LiveEventsPageContent(): React.JSX.Element {
             ))}
           </div>
         ) : (
-          <div className="text-center py-20">
-            <p className="text-4xl mb-4">🎥</p>
-            <h2 className="text-xl font-bold text-white mb-2">No events found</h2>
-            <p className="text-white/50">Check back later for upcoming live events</p>
-          </div>
+          <EmptyState
+            icon="Video"
+            title="No events found"
+            description="Check back later for upcoming live events"
+            dark
+          />
         )}
       </section>
 

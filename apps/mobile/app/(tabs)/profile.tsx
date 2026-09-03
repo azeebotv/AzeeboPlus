@@ -92,11 +92,15 @@ export default function ProfileScreen() {
     if (item.id === 'subscriptions') {
       router.push('/subscription/current');
     } else if (item.id === 'notifications') {
-      Alert.alert('Coming Soon', 'Notification settings will be available soon');
+      router.push('/notifications');
     } else if (item.id === 'privacy') {
-      Alert.alert('Coming Soon', 'Privacy settings will be available soon');
-    } else {
-      Alert.alert(item.label, 'This feature is coming soon');
+      router.push('/settings/privacy');
+    } else if (item.id === 'parental') {
+      router.push('/settings/parental');
+    } else if (item.id === 'help') {
+      router.push('/support');
+    } else if (item.id === 'about') {
+      router.push('/settings/about');
     }
   };
 

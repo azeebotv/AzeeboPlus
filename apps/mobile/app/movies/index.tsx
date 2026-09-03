@@ -87,9 +87,7 @@ export default function MoviesUniverseHome() {
 
   useEffect(() => {
     if (!isLoading && featuredMovie) {
-      try {
-        analytics.movieViewed(featuredMovie.id);
-      } catch {}
+              analytics.movieViewed(featuredMovie.id);
     }
   }, [isLoading, featuredMovie]);
 

@@ -16,6 +16,7 @@ import { ObservabilityModule } from '@azeebo/observability';
 import { FeatureFlagModule } from '@azeebo/feature-flags';
 import { authFlags, subscriptionFlags } from '@azeebo/feature-flags';
 import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
+import { SocialAuthModule } from './modules/social-auth/social-auth.module.js';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
         [subscriptionFlags.deviceLimits]: false,
       },
     }),
+    SocialAuthModule,
   ],
   providers: [
     {

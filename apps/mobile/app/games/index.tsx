@@ -69,9 +69,7 @@ export default function GamesUniverseHome() {
       setTournaments(Array.isArray(tournamentsRes) ? tournamentsRes : (tournamentsRes?.data ?? []));
       setCategories(Array.isArray(catsRes) ? catsRes : (catsRes?.data ?? []));
       setTopPlayers(Array.isArray(playersRes) ? playersRes : (playersRes?.data ?? []));
-      try {
-        analytics.gameStarted(featured?.id ?? '', Date.now().toString());
-      } catch {}
+              analytics.gameStarted(featured?.id ?? '', Date.now().toString());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load');
     } finally {

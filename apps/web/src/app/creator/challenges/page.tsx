@@ -6,6 +6,7 @@ import type { Challenge, ChallengeSubmission } from '@/lib/api/creator';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 type FilterTab = 'all' | 'active' | 'upcoming' | 'completed';
 type ViewTab = 'challenges' | 'submissions';
@@ -97,7 +98,7 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                 borderRadius: 8,
                 border: '1px solid var(--border-default)',
                 background: view === v ? 'var(--brand-orange)' : 'transparent',
-                color: view === v ? '#fff' : 'var(--text-secondary)',
+                color: view === v ? 'white' : 'var(--text-secondary)',
                 cursor: 'pointer',
                 fontSize: 13,
                 fontWeight: view === v ? 600 : 400,
@@ -161,9 +162,11 @@ export default function CreatorChallengesPage(): React.JSX.Element {
               onButtonPress={() => challengesQuery.refetch()}
             />
           ) : filtered.length === 0 ? (
-            <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>
-              No challenges found
-            </p>
+            <EmptyState
+              icon="Trophy"
+              title="No challenges found"
+              description="No challenges match your current filter"
+            />
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {filtered.map((challenge) => (
@@ -297,9 +300,12 @@ export default function CreatorChallengesPage(): React.JSX.Element {
             ))}
           </div>
         ) : submissions.length === 0 ? (
-          <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>
-            No submissions yet
-          </p>
+          <EmptyState
+            icon="trophy"
+            title="No submissions yet"
+            description="Participate in challenges to see your submissions here"
+            dark
+          />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {submissions.map((sub) => (

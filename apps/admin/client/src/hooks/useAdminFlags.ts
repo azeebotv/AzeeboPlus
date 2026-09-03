@@ -18,10 +18,7 @@ export const ADMIN_FLAG_DEFAULTS: Record<string, boolean> = {
  * Pure resolution: an explicit server value wins; otherwise fall back to the
  * registered default (conservatively off when unregistered). Exported for tests.
  */
-export function resolveAdminFlag(
-  flags: GlobalFeatureFlag[],
-  key: string,
-): boolean {
+export function resolveAdminFlag(flags: GlobalFeatureFlag[], key: string): boolean {
   for (const flag of flags) {
     if (flag.key === key) return flag.enabled === true;
   }

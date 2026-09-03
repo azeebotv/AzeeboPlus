@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  CREATOR_FLAG_KEYS,
-  CREATOR_FLAG_DEFAULTS,
-  resolveCreatorFlag,
-} from './useCreatorFlags';
+import { CREATOR_FLAG_KEYS, CREATOR_FLAG_DEFAULTS, resolveCreatorFlag } from './useCreatorFlags';
 
 const flag = (key: string, enabled: boolean) => ({ key, enabled });
 

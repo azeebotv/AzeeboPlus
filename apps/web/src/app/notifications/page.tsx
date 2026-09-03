@@ -1,20 +1,13 @@
 'use client';
 import { useState, useCallback } from 'react';
 
-export const metadata = {
-  title: 'Notifications | Azeebo',
-  description: 'Stay updated with likes, comments, follows, and system notifications on Azeebo.',
-  openGraph: {
-    title: 'Notifications | Azeebo',
-    description: 'Stay updated with likes, comments, follows, and system notifications on Azeebo.',
-  },
-};
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../lib/api';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
+import { useNotificationsSocket } from '@/hooks/useNotificationsSocket';
 
 interface Notification {
   id: string;
@@ -49,6 +42,56 @@ export default function NotificationsPage(): React.JSX.Element {
   useAuth();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'mentions'>('all');
+
+  // Real-time WebSocket connection for instant notifications
+
+  const { isConnected: _isConnected } = useNotificationsSocket({
+    onNewNotification: useCallback(
+      (notification: {
+        id: string;
+        type: string;
+        title: string;
+        message?: string;
+        body?: string;
+        timestamp?: string;
+        createdAt?: string;
+        readAt: string | null;
+        metadata?: Record<string, unknown>;
+      }) => {
+        // Prepend new notification to the cache
+        queryClient.setQueryData<Notification[]>(['notifications'], (old) => {
+          const exists = old?.some((n) => n.id === notification.id);
+          if (exists) return old;
+          return [
+            {
+              id: String(notification.id),
+              type: String(notification.type || 'system'),
+              title: String(notification.title || ''),
+              message: String(notification.message || notification.body || ''),
+              timestamp: String(notification.timestamp || notification.createdAt || ''),
+              readAt: notification.readAt ?? null,
+              metadata: notification.metadata,
+            },
+            ...(old || []),
+          ];
+        });
+      },
+      [queryClient]
+    ),
+    onUnreadCount: useCallback(
+      (count: number) => {
+        // Update unread count query if it exists
+        queryClient.setQueryData(['notifications', 'unread-count'], { count });
+      },
+      [queryClient]
+    ),
+    onAllRead: useCallback(() => {
+      // Mark all as read in cache
+      queryClient.setQueryData<Notification[]>(['notifications'], (old) =>
+        old?.map((n) => ({ ...n, readAt: n.readAt || new Date().toISOString() }))
+      );
+    }, [queryClient]),
+  });
 
   const {
     data: notifications = [],
@@ -110,17 +153,17 @@ export default function NotificationsPage(): React.JSX.Element {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'like':
-        return { icon: '👍', color: '#4CAF50' };
+        return { icon: 'ThumbsUp', color: 'var(--brand-green)' };
       case 'comment':
-        return { icon: '💬', color: '#2196F3' };
+        return { icon: 'MessageCircle', color: 'var(--brand-blue)' };
       case 'follow':
-        return { icon: '👤', color: '#FF9800' };
+        return { icon: 'User', color: 'var(--brand-amber)' };
       case 'mention':
-        return { icon: '…', color: '#9C27B0' };
+        return { icon: '…', color: 'var(--brand-purple)' };
       case 'system':
-        return { icon: '⚙️', color: '#607D8B' };
+        return { icon: 'Settings', color: 'var(--brand-grey)' };
       default:
-        return { icon: '🔔', color: '#757575' };
+        return { icon: 'Bell', color: 'var(--brand-grey)' };
     }
   };
 

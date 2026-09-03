@@ -159,7 +159,7 @@ export default function ResultsPage(): React.JSX.Element {
                   className="text-lg font-bold mb-4"
                   style={{ color: 'var(--color-warning-400)' }}
                 >
-                  🏆 Winner
+                  TrophyWinner
                 </h3>
                 <div className="flex items-center gap-4">
                   <OptimizedImage
@@ -187,7 +187,7 @@ export default function ResultsPage(): React.JSX.Element {
                 className="az-glass p-6 mb-6"
                 style={{ border: '2px solid rgba(239,68,68,0.5)' }}
               >
-                <h3 className="text-lg font-bold text-red-500 mb-4">🚪 Evicted</h3>
+                <h3 className="text-lg font-bold text-red-500 mb-4">DoorOpenEvicted</h3>
                 <div className="flex items-center gap-4 opacity-70">
                   <OptimizedImage
                     src={selectedResult.evicted.avatar}
@@ -244,8 +244,8 @@ export default function ResultsPage(): React.JSX.Element {
                           {contestant.votes.toLocaleString()} votes ({contestant.percentage}%)
                         </p>
                       </div>
-                      {contestant.isWinner && <span className="text-3xl">🏆</span>}
-                      {contestant.isEvicted && <span className="text-3xl">🚪</span>}
+                      {contestant.isWinner && <span className="text-3xl"></span>}
+                      {contestant.isEvicted && <span className="text-3xl"></span>}
                     </div>
                   ))}
               </div>

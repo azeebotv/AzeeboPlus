@@ -9,6 +9,7 @@ import AppFooter from '@/components/layout/AppFooter';
 import { Skeleton } from '@azeebo/ui/web';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 interface DraftContent {
   id: string;
@@ -136,28 +137,13 @@ export default function DraftsPage(): React.JSX.Element {
             ))}
           </div>
         ) : drafts.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>📝</div>
-            <h3 style={{ fontSize: 18, marginBottom: 8 }}>No drafts yet</h3>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>
-              Start creating content to see your drafts here
-            </p>
-            <a
-              href="/creator/content-manager"
-              style={{
-                display: 'inline-block',
-                padding: '12px 32px',
-                background:
-                  'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
-                borderRadius: 999,
-                color: 'var(--brand-white)',
-                fontWeight: 600,
-                textDecoration: 'none',
-              }}
-            >
-              Create Content
-            </a>
-          </div>
+          <EmptyState
+            icon="file"
+            title="No drafts yet"
+            description="Start creating content to see your drafts here"
+            action={{ label: 'Create Content', onClick: () => router.push('/creators/upload') }}
+            dark
+          />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {drafts.map((draft: DraftContent) => (
@@ -190,7 +176,7 @@ export default function DraftsPage(): React.JSX.Element {
                 </div>
                 <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                   <a
-                    href={`/creator/upload?edit=${draft.id}`}
+                    href={`/creators/upload?edit=${draft.id}`}
                     style={{
                       padding: '8px 20px',
                       borderRadius: 999,

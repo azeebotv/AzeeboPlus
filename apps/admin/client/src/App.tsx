@@ -29,6 +29,16 @@ import AgbalaPage from './routes/agbala';
 import LiveEventsPage from './routes/live-events';
 import BundlePassesPage from './routes/bundle-passes';
 import TippingPage from './routes/tipping';
+import AgentsPage from './routes/agents';
+import CostDashboardPage from './routes/cost-dashboard';
+import TaskRouterPage from './routes/task-router';
+import RiskEnginePage from './routes/risk-engine';
+import CapacityLedgerPage from './routes/capacity-ledger';
+import SystemHealthPage from './routes/system-health';
+import ServiceHealthPage from './routes/service-health';
+import PerformanceMonitorPage from './routes/performance-monitor';
+import RateLimitsPage from './routes/rate-limits';
+import AutomationsPage from './routes/automations';
 import LoginPage from './routes/login';
 import { FlagGate } from './components/FlagGate';
 import { useAdminFlags, ADMIN_FLAG_KEYS } from './hooks/useAdminFlags';
@@ -103,6 +113,16 @@ export default function App() {
               <Route path="live-events" element={<LiveEventsPage />} />
               <Route path="bundle-passes" element={<BundlePassesPage />} />
               <Route path="tipping" element={<TippingPage />} />
+              <Route path="agents" element={<AgentsPage />} />
+              <Route path="cost-dashboard" element={<CostDashboardPage />} />
+              <Route path="task-router" element={<TaskRouterPage />} />
+              <Route path="risk-engine" element={<RiskEnginePage />} />
+              <Route path="capacity-ledger" element={<CapacityLedgerPage />} />
+              <Route path="system-health" element={<SystemHealthPage />} />
+              <Route path="service-health" element={<ServiceHealthPage />} />
+              <Route path="performance" element={<PerformanceMonitorPage />} />
+              <Route path="rate-limits" element={<RateLimitsPage />} />
+              <Route path="automations" element={<AutomationsPage />} />
             </Route>
           </Routes>
         </BrowserRouter>

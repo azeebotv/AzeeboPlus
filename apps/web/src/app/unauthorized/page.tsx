@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Unauthorized  - Azeebo+',
+  description: 'Unauthorized  on Azeebo+',
+};
+
 'use client';
 import Link from 'next/link';
 import AppHeader from '@/components/layout/AppHeader';
@@ -37,7 +44,7 @@ export default function UnauthorizedPage(): React.JSX.Element {
               fontSize: 36,
             }}
           >
-            🔒
+            Lock
           </div>
           <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 12 }}>Unauthorized</h1>
           <p style={{ color: 'var(--text-secondary)', marginBottom: 32, lineHeight: 1.6 }}>

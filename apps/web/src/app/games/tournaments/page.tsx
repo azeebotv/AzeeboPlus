@@ -36,7 +36,7 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }>
     text: 'var(--color-success-400)',
     label: 'In Progress',
   },
-  completed: { bg: 'rgba(156,163,175,0.2)', text: '#9CA3AF', label: 'Completed' },
+  completed: { bg: 'rgba(156,163,175,0.2)', text: 'var(--brand-grey)', label: 'Completed' },
   upcoming: { bg: 'rgba(245,158,11,0.2)', text: 'var(--color-warning-500)', label: 'Upcoming' },
 };
 
@@ -146,7 +146,7 @@ function TournamentsPageContent(): React.JSX.Element {
                       }}
                     >
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-6xl opacity-20">🏆</span>
+                        <span className="text-6xl opacity-20"></span>
                       </div>
                       <div className="absolute top-3 right-3">
                         <span
@@ -238,7 +238,7 @@ export default function TournamentsPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

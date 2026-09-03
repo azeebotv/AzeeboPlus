@@ -1,4 +1,5 @@
 'use client';
+'use client';
 
 export default function PredictionsError({
   error: _error,
@@ -13,7 +14,7 @@ export default function PredictionsError({
       style={{ backgroundColor: 'var(--brand-near-black)' }}
     >
       <div className="text-center max-w-md mx-auto">
-        <div className="text-5xl mb-4">🎯</div>
+        <div className="text-5xl mb-4"></div>
         <h2 className="text-2xl font-bold text-white mb-2">Predictions Unavailable</h2>
         <p className="text-white/60 mb-6 text-sm">
           Failed to load prediction markets. Please try again in a few moments.

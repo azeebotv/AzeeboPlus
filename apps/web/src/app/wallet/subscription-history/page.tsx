@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Wallet Subscription-history  - Azeebo+',
+  description: 'Wallet Subscription-history  on Azeebo+',
+};
+
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
@@ -21,7 +28,7 @@ const PAGE_SIZE = 10;
 const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
   active: { bg: 'rgba(34,197,94,0.15)', text: 'var(--color-success-500)' },
   cancelled: { bg: 'rgba(239,68,68,0.15)', text: 'var(--color-error-500)' },
-  expired: { bg: 'rgba(156,163,175,0.15)', text: '#9CA3AF' },
+  expired: { bg: 'rgba(156,163,175,0.15)', text: 'var(--brand-grey)' },
 };
 
 function getStatusStyle(status: string) {
@@ -35,15 +42,6 @@ function formatDate(iso: string): string {
     day: 'numeric',
   });
 }
-
-export const metadata = {
-  title: 'Subscription History | Azeebo',
-  description: 'View your past and current subscriptions and billing history.',
-  openGraph: {
-    title: 'Subscription History | Azeebo',
-    description: 'View your past and current subscriptions and billing history.',
-  },
-};
 
 export default function SubscriptionHistoryPage(): React.JSX.Element {
   const [items, setItems] = useState<SubscriptionHistoryItem[]>([]);
@@ -136,7 +134,7 @@ export default function SubscriptionHistoryPage(): React.JSX.Element {
           </div>
         ) : items.length === 0 ? (
           <div className="az-glass p-12 text-center rounded-2xl">
-            <p className="text-4xl mb-4">📋</p>
+            <p className="text-4xl mb-4"></p>
             <p className="text-white font-semibold mb-1">No subscriptions yet</p>
             <p className="text-white/50 text-sm">
               Your subscription history will appear here once you subscribe.

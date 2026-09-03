@@ -5,23 +5,26 @@ import { useRouter, usePathname } from 'next/navigation';
 import AppHeader from './AppHeader';
 
 const ADMIN_NAV = [
-  { href: '/admin', label: 'Dashboard', icon: '📊' },
-  { href: '/admin/overview', label: 'Overview', icon: '📈' },
-  { href: '/admin/users', label: 'Users', icon: '👥' },
-  { href: '/admin/content', label: 'Content', icon: '🎬' },
-  { href: '/admin/content-review', label: 'Review Queue', icon: '✅' },
-  { href: '/admin/creators', label: 'Creators', icon: '✨' },
-  { href: '/admin/reality', label: 'Reality Shows', icon: '🎭' },
-  { href: '/admin/universes', label: 'Universes', icon: '🌍' },
-  { href: '/admin/wallets', label: 'Wallets', icon: '👛' },
-  { href: '/admin/financial', label: 'Financial', icon: '💰' },
-  { href: '/admin/payment-gateways', label: 'Payments', icon: '💳' },
-  { href: '/admin/engagement', label: 'Engagement', icon: '🔥' },
-  { href: '/admin/notifications', label: 'Notifications', icon: '🔔' },
-  { href: '/admin/announcements', label: 'Announcements', icon: '📢' },
-  { href: '/admin/audit-logs', label: 'Audit Logs', icon: '📋' },
-  { href: '/admin/reports', label: 'Reports', icon: '📊' },
-  { href: '/admin/settings', label: 'Settings', icon: '⚙️' },
+  { href: '/admin', label: 'Dashboard', icon: 'BarChart3' },
+  { href: '/admin/overview', label: 'Overview', icon: 'TrendingUp' },
+  { href: '/admin/users', label: 'Users', icon: 'Users' },
+  { href: '/admin/content', label: 'Content', icon: 'Film' },
+  { href: '/admin/content-review', label: 'Review Queue', icon: 'CheckCircle' },
+  { href: '/admin/creators', label: 'Creators', icon: 'Sparkles' },
+  { href: '/admin/reality', label: 'Reality Shows', icon: 'Drama' },
+  { href: '/admin/universes', label: 'Universes', icon: 'Globe' },
+  { href: '/admin/wallets', label: 'Wallets', icon: 'Wallet' },
+  { href: '/admin/financial', label: 'Financial', icon: 'DollarSign' },
+  { href: '/admin/payment-gateways', label: 'Payments', icon: 'CreditCard' },
+  { href: '/admin/engagement', label: 'Engagement', icon: 'Flame' },
+  { href: '/admin/notifications', label: 'Notifications', icon: 'Bell' },
+  { href: '/admin/announcements', label: 'Announcements', icon: 'Volume2' },
+  { href: '/admin/audit-logs', label: 'Audit Logs', icon: 'ClipboardList' },
+  { href: '/admin/reports', label: 'Reports', icon: 'BarChart3' },
+  { href: '/admin/settings', label: 'Settings', icon: 'Settings' },
+  { href: '/admin/ai-provenance', label: 'AI Provenance', icon: 'Bot' },
+  { href: '/admin/dual-control', label: 'Dual Control', icon: 'Lock' },
+  { href: '/admin/talent-clearance', label: 'Talent Clearance', icon: 'Star' },
 ];
 
 export default function AdminLayout({
@@ -115,7 +118,7 @@ export default function AdminLayout({
             boxShadow: '0 4px 20px rgba(232,66,10,0.4)',
           }}
         >
-          {sidebarOpen ? '✕' : '☰'}
+          {sidebarOpen ? 'X' : 'Menu'}
         </button>
 
         {/* Sidebar */}

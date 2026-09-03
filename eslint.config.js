@@ -163,6 +163,13 @@ module.exports = [
             '#CD7F32', '#D1D5DB', '#D97706', '#EC4899',
             '#FF6B35', '#FFD700', '#ec4899', '#f97316',
             '#fbbf24',
+            // Dashboard/analytics colors
+            '#10B981', '#F59E0B', '#3B82F6', '#EF4444',
+            '#10B98120', '#F59E0B20', '#3B82F620',
+            '#6B7280',
+            // Creator app theme colors
+            '#140808', '#0D0505', '#FFB37E', '#6A5A4A', '#6B5A4A',
+            '#0D3B2E', '#FF8A80', '#4ECB8D', '#D8C9B8', '#5A4A4A',
           ],
           allowTransparent: true,
         },

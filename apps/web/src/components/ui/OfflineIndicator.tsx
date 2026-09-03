@@ -113,7 +113,7 @@ export function OfflineBanner() {
         role="alert"
         className="fixed top-0 left-0 right-0 z-50 bg-yellow-600 text-white px-4 py-2 text-center text-sm font-medium"
       >
-        <span className="mr-2">📡</span>
+        <span className="mr-2"></span>
         You are offline. Some features may be unavailable.
       </div>
     );

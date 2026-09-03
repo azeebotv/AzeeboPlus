@@ -13,13 +13,13 @@ const statusColor: Record<string, string> = {
   rejected: 'rgba(204,28,28,0.2)',
 };
 const statusText: Record<string, string> = {
-  active: '#0D3B2E',
-  upcoming: '#3B82F6',
-  ended: '#9A8A7A',
-  submitted: '#3B82F6',
-  under_review: '#F59E0B',
-  winner: '#0D3B2E',
-  rejected: '#CC1C1C',
+  active: 'var(--creator-green)',
+  upcoming: 'var(--creator-blue, #3b82f6)',
+  ended: 'var(--creator-text-muted)',
+  submitted: 'var(--creator-blue, #3b82f6)',
+  under_review: 'var(--creator-amber, #f59e0b)',
+  winner: 'var(--creator-green)',
+  rejected: 'var(--creator-red)',
 };
 
 export default function ChallengesPage() {
@@ -56,7 +56,7 @@ export default function ChallengesPage() {
   return (
     <div>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Challenges</h1>
-      <p style={{ color: '#9A8A7A', marginBottom: 24 }}>
+      <p style={{ color: 'var(--creator-text-muted)', marginBottom: 24 }}>
         Participate in community challenges and win prizes
       </p>
 
@@ -68,10 +68,10 @@ export default function ChallengesPage() {
             style={{
               padding: '8px 16px',
               borderRadius: 999,
-              border: tab === t ? 'none' : '1px solid #2A1A1A',
+              border: tab === t ? 'none' : '1px solid var(--creator-border)',
               background:
                 tab === t ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)' : 'transparent',
-              color: tab === t ? '#fff' : '#9A8A7A',
+              color: tab === t ? 'white' : 'var(--creator-text-muted)',
               fontWeight: 500,
               fontSize: 13,
               cursor: 'pointer',
@@ -86,7 +86,7 @@ export default function ChallengesPage() {
       {tab === 'active' && (
         <>
           {challengesLoading ? (
-            <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>Loading...</p>
+            <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
           ) : challenges && challenges.length > 0 ? (
             <div
               style={{
@@ -103,7 +103,7 @@ export default function ChallengesPage() {
                     style={{
                       padding: 20,
                       borderRadius: 12,
-                      border: '1px solid #2A1A1A',
+                      border: '1px solid var(--creator-border)',
                       backgroundColor: 'rgba(26,10,10,0.5)',
                     }}
                   >
@@ -131,7 +131,7 @@ export default function ChallengesPage() {
                       </span>
                     </div>
                     <p
-                      style={{ fontSize: 13, color: '#9A8A7A', marginBottom: 12, lineHeight: 1.5 }}
+                      style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 12, lineHeight: 1.5 }}
                     >
                       {challenge.description}
                     </p>
@@ -140,12 +140,12 @@ export default function ChallengesPage() {
                         display: 'flex',
                         gap: 16,
                         fontSize: 12,
-                        color: '#9A8A7A',
+                        color: 'var(--creator-text-muted)',
                         marginBottom: 12,
                       }}
                     >
                       <span>
-                        Prize: <strong style={{ color: '#E8420A' }}>${challenge.prize}</strong>
+                        Prize: <strong style={{ color: 'var(--creator-orange)' }}>${challenge.prize}</strong>
                       </span>
                       <span>Submissions: {challenge.submissionsCount}</span>
                       <span>Ends: {new Date(challenge.deadline).toLocaleDateString()}</span>
@@ -155,9 +155,9 @@ export default function ChallengesPage() {
                       style={{
                         padding: '8px 16px',
                         borderRadius: 8,
-                        border: '1px solid #E8420A',
+                        border: '1px solid var(--creator-orange)',
                         background: 'transparent',
-                        color: '#E8420A',
+                        color: 'var(--creator-orange)',
                         fontWeight: 500,
                         fontSize: 13,
                         cursor: 'pointer',
@@ -170,7 +170,7 @@ export default function ChallengesPage() {
                 ))}
             </div>
           ) : (
-            <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>
+            <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>
               No active challenges right now
             </p>
           )}
@@ -180,26 +180,26 @@ export default function ChallengesPage() {
       {tab === 'submissions' && (
         <>
           {submissionsLoading ? (
-            <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>Loading...</p>
+            <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
           ) : submissions && submissions.length > 0 ? (
             <div
               style={{
                 borderRadius: 12,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--creator-border)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
                 overflow: 'hidden',
               }}
             >
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid #2A1A1A' }}>
+                  <tr style={{ borderBottom: '1px solid var(--creator-border)' }}>
                     {['Title', 'Status', 'Submitted'].map((h) => (
                       <th
                         key={h}
                         style={{
                           padding: '12px 16px',
                           textAlign: 'left',
-                          color: '#9A8A7A',
+                          color: 'var(--creator-text-muted)',
                           fontWeight: 600,
                           fontSize: 12,
                           textTransform: 'uppercase',
@@ -212,7 +212,7 @@ export default function ChallengesPage() {
                 </thead>
                 <tbody>
                   {submissions.map((s) => (
-                    <tr key={s.id} style={{ borderBottom: '1px solid #1A0A0A' }}>
+                    <tr key={s.id} style={{ borderBottom: '1px solid var(--creator-border-light)' }}>
                       <td style={{ padding: '12px 16px', fontWeight: 500 }}>{s.title}</td>
                       <td style={{ padding: '12px 16px' }}>
                         <span
@@ -230,7 +230,7 @@ export default function ChallengesPage() {
                           {s.status.replace(/_/g, ' ')}
                         </span>
                       </td>
-                      <td style={{ padding: '12px 16px', color: '#9A8A7A', fontSize: 13 }}>
+                      <td style={{ padding: '12px 16px', color: 'var(--creator-text-muted)', fontSize: 13 }}>
                         {new Date(s.submittedAt).toLocaleDateString()}
                       </td>
                     </tr>
@@ -239,7 +239,7 @@ export default function ChallengesPage() {
               </table>
             </div>
           ) : (
-            <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>No submissions yet</p>
+            <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>No submissions yet</p>
           )}
         </>
       )}
@@ -264,8 +264,8 @@ export default function ChallengesPage() {
             style={{
               width: 480,
               maxWidth: '90%',
-              backgroundColor: '#1A0A0A',
-              border: '1px solid #2A1A1A',
+              backgroundColor: 'var(--creator-bg)',
+              border: '1px solid var(--creator-border)',
               borderRadius: 16,
               padding: 24,
             }}
@@ -274,11 +274,11 @@ export default function ChallengesPage() {
             <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 4 }}>
               Submit to: {selectedChallenge.title}
             </h3>
-            <p style={{ fontSize: 13, color: '#9A8A7A', marginBottom: 16 }}>
+            <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 16 }}>
               Prize: ${selectedChallenge.prize}
             </p>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}>
                 Entry Title
               </label>
               <input
@@ -289,9 +289,9 @@ export default function ChallengesPage() {
                   width: '100%',
                   padding: '10px 14px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
-                  backgroundColor: '#0D0505',
-                  color: '#F5F0EB',
+                  border: '1px solid var(--creator-border)',
+                  backgroundColor: 'var(--creator-dark)',
+                  color: 'var(--creator-text)',
                   fontSize: 14,
                 }}
               />
@@ -305,7 +305,7 @@ export default function ChallengesPage() {
                   borderRadius: 8,
                   border: 'none',
                   background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                  color: '#fff',
+                  color: 'white',
                   fontWeight: 600,
                   cursor: 'pointer',
                 }}
@@ -317,9 +317,9 @@ export default function ChallengesPage() {
                 style={{
                   padding: '10px 20px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--creator-border)',
                   background: 'transparent',
-                  color: '#9A8A7A',
+                  color: 'var(--creator-text-muted)',
                   cursor: 'pointer',
                 }}
               >
@@ -327,10 +327,10 @@ export default function ChallengesPage() {
               </button>
             </div>
             {submitMutation.isSuccess && (
-              <p style={{ color: '#0D3B2E', fontSize: 13, marginTop: 8 }}>Submission successful!</p>
+              <p style={{ color: 'var(--creator-green)', fontSize: 13, marginTop: 8 }}>Submission successful!</p>
             )}
             {submitMutation.isError && (
-              <p style={{ color: '#CC1C1C', fontSize: 13, marginTop: 8 }}>Submission failed</p>
+              <p style={{ color: 'var(--creator-red)', fontSize: 13, marginTop: 8 }}>Submission failed</p>
             )}
           </div>
         </div>

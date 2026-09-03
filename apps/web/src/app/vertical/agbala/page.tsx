@@ -13,40 +13,31 @@ const PATHS = [
     id: 'warrior',
     name: 'Warrior',
     description: 'Strength, honor, and combat mastery',
-    color: '#C41E3A',
-    icon: '⚔️',
+    color: 'var(--brand-crimson)',
+    icon: 'Swords',
   },
   {
     id: 'sage',
     name: 'Sage',
     description: 'Wisdom, knowledge, and ancient truths',
-    color: '#1E90FF',
-    icon: '📚',
+    color: 'var(--brand-sky)',
+    icon: 'BookOpen',
   },
   {
     id: 'trickster',
     name: 'Trickster',
     description: 'Cunning, deception, and survival',
-    color: '#FFD700',
-    icon: '🎭',
+    color: 'var(--brand-gold)',
+    icon: 'Drama',
   },
   {
     id: 'healer',
     name: 'Healer',
     description: 'Compassion, restoration, and balance',
-    color: '#32CD32',
-    icon: '✨',
+    color: 'var(--brand-light-green)',
+    icon: 'Sparkles',
   },
 ];
-
-export const metadata = {
-  title: 'Agbala | Azeebo',
-  description: 'Choose your path and shape your destiny through interactive storytelling.',
-  openGraph: {
-    title: 'Agbala | Azeebo',
-    description: 'Choose your path and shape your destiny through interactive storytelling.',
-  },
-};
 
 export default function AgbalaPage(): React.JSX.Element {
   useEffect(() => {
@@ -86,7 +77,7 @@ export default function AgbalaPage(): React.JSX.Element {
               fontSize: 32,
             }}
           >
-            📖
+            BookOpen
           </div>
           <h1 style={{ fontSize: 36, fontWeight: 700, marginBottom: 8 }}>Agbala</h1>
           <p
@@ -211,7 +202,7 @@ export default function AgbalaPage(): React.JSX.Element {
               display: 'inline-block',
               padding: '14px 28px',
               background: 'linear-gradient(135deg, #E8420A, #FFD700)',
-              color: '#1A0A0A',
+              color: 'var(--brand-near-black)',
               textDecoration: 'none',
               borderRadius: 999,
               fontWeight: 700,

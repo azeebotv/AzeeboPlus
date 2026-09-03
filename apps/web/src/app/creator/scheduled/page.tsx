@@ -145,7 +145,7 @@ export default function ScheduledPage(): React.JSX.Element {
           />
         ) : scheduled.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>⏰</div>
+            <div style={{ fontSize: 48, marginBottom: 16 }}></div>
             <h3 style={{ fontSize: 18, marginBottom: 8 }}>No scheduled content</h3>
             <p style={{ color: 'var(--text-secondary)' }}>
               Schedule content to have it go live automatically

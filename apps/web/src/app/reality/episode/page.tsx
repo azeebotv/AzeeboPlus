@@ -200,7 +200,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
                   className="mt-4 w-20 h-20 rounded-full text-white text-4xl flex items-center justify-center transition-colors"
                   style={{ backgroundColor: 'rgba(232,66,10,0.8)' }}
                 >
-                  ▶
+                  Play
                 </button>
               )}
             </div>
@@ -234,14 +234,14 @@ export default function EpisodePlayerPage(): React.JSX.Element {
                 color: 'var(--brand-white)',
               }}
             >
-              ⏪
+              Rewind
             </button>
             <button
               onClick={handlePlayPause}
               className="w-16 h-16 rounded-full text-white text-2xl flex items-center justify-center transition-colors"
               style={{ backgroundColor: 'var(--brand-orange)' }}
             >
-              {isPlaying ? '⏸' : '▶'}
+              {isPlaying ? 'Pause' : 'Play'}
             </button>
             <button
               onClick={() => handleSeek(10)}
@@ -252,7 +252,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
                 color: 'var(--brand-white)',
               }}
             >
-              ⏩
+              FastForward
             </button>
           </div>
 
@@ -266,13 +266,13 @@ export default function EpisodePlayerPage(): React.JSX.Element {
                 color: 'var(--brand-white)',
               }}
             >
-              💬 Subtitles
+              MessageCircleSubtitles
             </button>
             <button
               onClick={() => setShowVoteModal(true)}
               className="flex-1 py-3 px-4 rounded-full font-medium transition-colors az-btn-primary"
             >
-              🗳 Vote
+              VoteVote
             </button>
           </div>
 
@@ -297,7 +297,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
                 onClick={() => setShowSubtitles(false)}
                 className="text-white/50 hover:text-white text-2xl"
               >
-                ✕
+                X
               </button>
             </div>
             <div className="space-y-2">
@@ -323,7 +323,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
                       : undefined
                   }
                 >
-                  {sub === 'Off' ? '🚫 Subtitles Off' : sub}
+                  {sub === 'Off' ? 'Ban Subtitles Off' : sub}
                 </button>
               ))}
             </div>

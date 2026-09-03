@@ -520,6 +520,13 @@ RUN echo "==> Installing per-service Prisma clients from builder stage..." && \
       fi; \
     done && \
     echo "==> Prisma clients installation complete" && \
+    echo "==> Pruning unused Prisma query engine binaries (keeping linux-glibc only)..." && \
+    find /app -path '*/node_modules/.prisma/client' -type d 2>/dev/null | while read d; do \
+      find "$d" -maxdepth 1 -name 'libquery_engine-*' ! -name '*linux-glibc*' -exec rm -f {} + 2>/dev/null; \
+    done && \
+    find /app -path '*/node_modules/@prisma/client' -type d 2>/dev/null | while read d; do \
+      find "$d" -maxdepth 1 -name 'libquery_engine-*' ! -name '*linux-glibc*' -exec rm -f {} + 2>/dev/null; \
+    done && \
     rm -rf /root/.npm /root/.cache /root/.local 2>/dev/null; \
     find /app/node_modules -name "*.md" -o -name "*.txt" -o -name "*.map" -o -name "LICENSE*" -o -name "CHANGELOG*" | xargs rm -f 2>/dev/null; \
     find /app/node_modules -name "__tests__" -type d -exec rm -rf {} + 2>/dev/null; \

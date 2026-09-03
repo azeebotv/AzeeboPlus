@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Auth Forgot-password  - Azeebo+',
+  description: 'Auth Forgot-password  on Azeebo+',
+};
+
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -76,7 +83,7 @@ export default function ForgotPasswordPage(): React.JSX.Element {
               height: 110,
               borderRadius: '55px 55px 0 0',
               border: '18px solid',
-              borderColor: '#E8420A transparent transparent transparent',
+              borderColor: 'var(--brand-orange) transparent transparent transparent',
               boxShadow: '0 0 25px rgba(232,66,10,0.6)',
             }}
           />

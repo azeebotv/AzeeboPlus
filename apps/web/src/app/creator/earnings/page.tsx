@@ -5,6 +5,7 @@ import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 interface EarningsData {
   totalEarnings: number;
@@ -286,9 +287,12 @@ export default function CreatorEarningsPage(): React.JSX.Element {
             </div>
           </>
         ) : (
-          <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>
-            No earnings data available yet.
-          </p>
+          <EmptyState
+            icon="dollar"
+            title="No earnings data available yet"
+            description="Start creating content to earn money"
+            dark
+          />
         )}
       </main>
       <AppFooter />

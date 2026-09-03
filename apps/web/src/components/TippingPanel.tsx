@@ -4,10 +4,10 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
 const TIER_CONFIG: Record<string, { label: string; color: string; bg: string; min: number }> = {
-  bronze: { label: 'Bronze', color: '#CD7F32', bg: 'rgba(205,127,50,0.15)', min: 1000 },
-  silver: { label: 'Silver', color: '#C0C0C0', bg: 'rgba(192,192,192,0.15)', min: 10000 },
-  gold: { label: 'Gold', color: '#FFD700', bg: 'rgba(255,215,0,0.15)', min: 50000 },
-  platinum: { label: 'Platinum', color: '#E5E4E2', bg: 'rgba(229,228,226,0.15)', min: 100000 },
+  bronze: { label: 'Bronze', color: 'var(--brand-copper)', bg: 'rgba(205,127,50,0.15)', min: 1000 },
+  silver: { label: 'Silver', color: 'var(--brand-silver)', bg: 'rgba(192,192,192,0.15)', min: 10000 },
+  gold: { label: 'Gold', color: 'var(--brand-gold)', bg: 'rgba(255,215,0,0.15)', min: 50000 },
+  platinum: { label: 'Platinum', color: 'var(--brand-silver)', bg: 'rgba(229,228,226,0.15)', min: 100000 },
 };
 
 const PRESET_AMOUNTS = [100, 500, 1000, 5000, 10000];
@@ -83,11 +83,11 @@ export default function TippingPanel({
                   fontSize: 11,
                   fontWeight: 600,
                   backgroundColor: unlocked ? cfg.bg : 'rgba(255,255,255,0.05)',
-                  color: unlocked ? cfg.color : '#555',
+                  color: unlocked ? cfg.color : 'var(--brand-grey)',
                   opacity: unlocked ? 1 : 0.4,
                 }}
               >
-                {unlocked ? '✓ ' : ''}
+                {unlocked ? 'Check ' : ''}
                 {cfg.label}
               </div>
             );
@@ -204,7 +204,7 @@ export default function TippingPanel({
           padding: '12px',
           borderRadius: 10,
           border: 'none',
-          backgroundColor: tipMutation.isPending ? '#666' : 'var(--brand-orange, #E8420A)',
+          backgroundColor: tipMutation.isPending ? 'var(--brand-grey)' : 'var(--brand-orange, #E8420A)',
           color: 'var(--brand-white)',
           fontSize: 15,
           fontWeight: 600,
@@ -216,7 +216,7 @@ export default function TippingPanel({
         {tipMutation.isPending
           ? 'Sending...'
           : tipMutation.isSuccess
-            ? '✓ Tip Sent!'
+            ? 'Check Tip Sent!'
             : `Send ₦${selectedAmount.toLocaleString()}`}
       </button>
 
@@ -245,7 +245,7 @@ export default function TippingPanel({
           Top Supporters
         </p>
         {leaderboardQuery.isLoading ? (
-          <p style={{ color: '#555', fontSize: 12 }}>Loading...</p>
+          <p style={{ color: 'var(--brand-grey)', fontSize: 12 }}>Loading...</p>
         ) : leaderboardQuery.data && leaderboardQuery.data.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {leaderboardQuery.data.slice(0, 5).map((entry, i) => {
@@ -256,7 +256,7 @@ export default function TippingPanel({
                   style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ color: '#555', fontSize: 12, width: 16 }}>#{i + 1}</span>
+                    <span style={{ color: 'var(--brand-grey)', fontSize: 12, width: 16 }}>#{i + 1}</span>
                     {tier && (
                       <span
                         style={{
@@ -282,7 +282,7 @@ export default function TippingPanel({
             })}
           </div>
         ) : (
-          <p style={{ color: '#555', fontSize: 12 }}>Be the first to tip!</p>
+          <p style={{ color: 'var(--brand-grey)', fontSize: 12 }}>Be the first to tip!</p>
         )}
       </div>
     </div>

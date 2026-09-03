@@ -29,10 +29,10 @@ export default function FinancialPage() {
   return (
     <div>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Financial Overview</h1>
-      <p style={{ color: '#9A8A7A', marginBottom: 32 }}>Revenue, payouts, and financial metrics</p>
+      <p style={{ color: 'var(--admin-text-muted)', marginBottom: 32 }}>Revenue, payouts, and financial metrics</p>
 
       {isLoading ? (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
       ) : (
         <>
           <div
@@ -47,12 +47,12 @@ export default function FinancialPage() {
               style={{
                 padding: 20,
                 borderRadius: 16,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--admin-surface)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
               }}
             >
-              <p style={{ fontSize: 12, color: '#9A8A7A', marginBottom: 8 }}>Total Revenue</p>
-              <p style={{ fontSize: 22, fontWeight: 700, color: '#0D3B2E' }}>
+              <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 8 }}>Total Revenue</p>
+              <p style={{ fontSize: 22, fontWeight: 700, color: 'var(--admin-green)' }}>
                 ₦{fin.totalRevenue.toLocaleString()}
               </p>
             </div>
@@ -63,7 +63,7 @@ export default function FinancialPage() {
               style={{
                 padding: 24,
                 borderRadius: 20,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--admin-surface)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
               }}
             >
@@ -79,18 +79,18 @@ export default function FinancialPage() {
                       justifyContent: 'space-between',
                       alignItems: 'center',
                       padding: '10px 0',
-                      borderBottom: '1px solid #2A1A1A',
+                      borderBottom: '1px solid var(--admin-surface)',
                     }}
                   >
                     <div>
                       <p style={{ fontWeight: 600, fontSize: 14 }}>
                         {tx.description || 'Transaction'}
                       </p>
-                      <p style={{ color: '#9A8A7A', fontSize: 12 }}>
+                      <p style={{ color: 'var(--admin-text-muted)', fontSize: 12 }}>
                         {tx.createdAt ? new Date(tx.createdAt).toLocaleDateString() : ''}
                       </p>
                     </div>
-                    <span style={{ fontWeight: 700, color: '#0D3B2E' }}>
+                    <span style={{ fontWeight: 700, color: 'var(--admin-green)' }}>
                       ₦{(tx.amount || 0).toLocaleString()}
                     </span>
                   </div>

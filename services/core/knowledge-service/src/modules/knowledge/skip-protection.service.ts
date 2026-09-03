@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 // ============================================================================
 // Skip Protection (AZP-KNOW-008)
@@ -38,8 +38,6 @@ const DEFAULT_CONFIG: SkipProtectionConfig = {
 
 @Injectable()
 export class SkipProtectionService {
-  private readonly logger = new Logger(SkipProtectionService.name);
-
   private readonly config: SkipProtectionConfig;
 
   // In-memory store (would be database in production)
@@ -137,7 +135,7 @@ export class SkipProtectionService {
    */
   isValidConsumption(
     watchPercent: number,
-    totalDuration: number,
+    _totalDuration: number,
     watchedDuration: number
   ): boolean {
     // Must watch minimum percentage

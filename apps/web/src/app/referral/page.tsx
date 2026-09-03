@@ -1,14 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 
-export const metadata = {
-  title: 'Refer & Earn | Azeebo',
-  description: 'Invite friends to Azeebo and earn rewards for every successful referral.',
-  openGraph: {
-    title: 'Refer & Earn | Azeebo',
-    description: 'Invite friends to Azeebo and earn rewards for every successful referral.',
-  },
-};
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
@@ -207,7 +199,7 @@ export default function ReferralPage(): React.JSX.Element {
                     cursor: 'pointer',
                   }}
                 >
-                  {copied ? '✓ Copied!' : 'Copy Link'}
+                  {copied ? 'Check Copied!' : 'Copy Link'}
                 </button>
                 <button
                   onClick={() => {

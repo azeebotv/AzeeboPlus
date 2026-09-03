@@ -33,9 +33,9 @@ const TIME_FRAME_LABELS: Record<TimeFrame, string> = {
 };
 
 const RANK_STYLES: Record<number, { bg: string; text: string; icon: string }> = {
-  1: { bg: 'rgba(234,179,8,0.2)', text: 'var(--color-warning-400)', icon: '🥇' },
-  2: { bg: 'rgba(156,163,175,0.2)', text: '#9CA3AF', icon: '🥈' },
-  3: { bg: 'rgba(180,83,9,0.2)', text: '#B45309', icon: '🥉' },
+  1: { bg: 'rgba(234,179,8,0.2)', text: 'var(--color-warning-400)', icon: 'Award' },
+  2: { bg: 'rgba(156,163,175,0.2)', text: 'var(--brand-grey)', icon: 'Medal' },
+  3: { bg: 'rgba(180,83,9,0.2)', text: 'var(--brand-amber)', icon: 'Medal' },
 };
 
 function LeaderboardPageContent(): React.JSX.Element {
@@ -78,7 +78,7 @@ function LeaderboardPageContent(): React.JSX.Element {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            🏆 Leaderboard
+            TrophyLeaderboard
           </motion.h1>
           <motion.p
             className="text-xl text-white/80 max-w-2xl mx-auto"
@@ -103,7 +103,7 @@ function LeaderboardPageContent(): React.JSX.Element {
               style={{
                 backgroundColor:
                   timeFrame === tf ? 'var(--brand-orange)' : 'rgba(255,255,255,0.05)',
-                color: timeFrame === tf ? '#fff' : 'rgba(255,255,255,0.6)',
+                color: timeFrame === tf ? 'white' : 'rgba(255,255,255,0.6)',
                 border: `1px solid ${timeFrame === tf ? 'var(--brand-orange)' : 'rgba(255,255,255,0.1)'}`,
               }}
               whileHover={{ scale: 1.05 }}
@@ -291,7 +291,7 @@ export default function LeaderboardPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

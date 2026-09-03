@@ -13,6 +13,18 @@
   --brand-white: #ffffff; /* White — primary text */
   --brand-surface: #2a2a2a; /* Surface Dark — card backgrounds, inputs */
   --brand-surface-input: #1e1e1e; /* Input field fill */
+  --brand-mid-brown: #9a8a7a; /* Mid Brown — secondary text */
+  --brand-gold: #ffd700; /* Gold — rewards, badges */
+  --brand-purple: #8b5cf6; /* Purple — premium, highlights */
+  --brand-blue: #3b82f6; /* Blue — links, info */
+  --brand-sky: #1e90ff; /* Sky Blue — secondary links */
+  --brand-emerald: #10b981; /* Emerald — success, online */
+  --brand-amber: #f59e0b; /* Amber — warnings, ratings */
+  --brand-crimson: #c41e3a; /* Crimson — alerts, live */
+  --brand-silver: #c0c0c0; /* Silver — inactive, disabled */
+  --brand-grey: #757575; /* Grey — muted text */
+  --brand-copper: #cd7f32; /* Copper — metallic accents */
+  --brand-light-green: #32cd32; /* Light Green — online, active */
 
   /* Glass panel */
   --glass-bg: rgba(15, 5, 5, 0.85);
@@ -624,6 +636,38 @@ body::after {
 :focus-visible {
   outline: 2px solid var(--brand-orange);
   outline-offset: 2px;
+}
+
+/* Enhanced focus states for interactive elements */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--brand-orange);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+  border-color: var(--brand-orange);
+  box-shadow: 0 0 0 2px rgba(232, 66, 10, 0.3);
+}
+
+/* Skip link appears on focus */
+.skip-link:focus {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 10000;
+  background: var(--brand-orange);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(232, 66, 10, 0.4);
 }
 
 /* ============================================================

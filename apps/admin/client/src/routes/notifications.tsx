@@ -37,7 +37,7 @@ export default function NotificationsPage() {
       >
         <div>
           <h1 style={{ fontSize: 28, fontWeight: 700 }}>Notifications</h1>
-          <p style={{ color: '#9A8A7A', marginTop: 4 }}>{templates.length} templates</p>
+          <p style={{ color: 'var(--admin-text-muted)', marginTop: 4 }}>{templates.length} templates</p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
@@ -46,7 +46,7 @@ export default function NotificationsPage() {
             borderRadius: 12,
             border: 'none',
             background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-            color: '#fff',
+            color: 'white',
             fontWeight: 600,
             fontSize: 14,
             cursor: 'pointer',
@@ -61,7 +61,7 @@ export default function NotificationsPage() {
           style={{
             padding: 24,
             borderRadius: 16,
-            border: '1px solid #2A1A1A',
+            border: '1px solid var(--admin-surface)',
             backgroundColor: 'rgba(26,10,10,0.8)',
             marginBottom: 24,
           }}
@@ -75,9 +75,9 @@ export default function NotificationsPage() {
               style={{
                 padding: '10px 16px',
                 borderRadius: 8,
-                border: '1px solid #2A1A1A',
-                backgroundColor: '#0D0505',
-                color: '#F5F0EB',
+                border: '1px solid var(--admin-surface)',
+                backgroundColor: 'var(--admin-dark)',
+                color: 'var(--admin-text)',
                 fontSize: 14,
               }}
             />
@@ -87,9 +87,9 @@ export default function NotificationsPage() {
               style={{
                 padding: '10px 16px',
                 borderRadius: 8,
-                border: '1px solid #2A1A1A',
-                backgroundColor: '#0D0505',
-                color: '#F5F0EB',
+                border: '1px solid var(--admin-surface)',
+                backgroundColor: 'var(--admin-dark)',
+                color: 'var(--admin-text)',
                 fontSize: 14,
               }}
             >
@@ -105,9 +105,9 @@ export default function NotificationsPage() {
               style={{
                 padding: '10px 16px',
                 borderRadius: 8,
-                border: '1px solid #2A1A1A',
-                backgroundColor: '#0D0505',
-                color: '#F5F0EB',
+                border: '1px solid var(--admin-surface)',
+                backgroundColor: 'var(--admin-dark)',
+                color: 'var(--admin-text)',
                 fontSize: 14,
               }}
             />
@@ -119,9 +119,9 @@ export default function NotificationsPage() {
               style={{
                 padding: '10px 16px',
                 borderRadius: 8,
-                border: '1px solid #2A1A1A',
-                backgroundColor: '#0D0505',
-                color: '#F5F0EB',
+                border: '1px solid var(--admin-surface)',
+                backgroundColor: 'var(--admin-dark)',
+                color: 'var(--admin-text)',
                 fontSize: 14,
                 resize: 'vertical',
               }}
@@ -135,7 +135,7 @@ export default function NotificationsPage() {
                   borderRadius: 8,
                   border: 'none',
                   background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                  color: '#fff',
+                  color: 'white',
                   fontWeight: 600,
                   cursor: 'pointer',
                 }}
@@ -147,9 +147,9 @@ export default function NotificationsPage() {
                 style={{
                   padding: '10px 20px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--admin-surface)',
                   background: 'transparent',
-                  color: '#9A8A7A',
+                  color: 'var(--admin-text-muted)',
                   cursor: 'pointer',
                 }}
               >
@@ -161,7 +161,7 @@ export default function NotificationsPage() {
       )}
 
       {isLoading ? (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {templates.map((t) => (
@@ -173,13 +173,13 @@ export default function NotificationsPage() {
                 gap: 16,
                 padding: 16,
                 borderRadius: 16,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--admin-surface)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
               }}
             >
               <div style={{ flex: 1 }}>
                 <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>{t.name}</h3>
-                <p style={{ color: '#9A8A7A', fontSize: 13 }}>{t.subject}</p>
+                <p style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>{t.subject}</p>
               </div>
               <span
                 style={{
@@ -188,7 +188,7 @@ export default function NotificationsPage() {
                   fontSize: 11,
                   fontWeight: 600,
                   backgroundColor: 'rgba(232,66,10,0.2)',
-                  color: '#E8420A',
+                  color: 'var(--admin-orange)',
                   textTransform: 'capitalize',
                 }}
               >
@@ -197,7 +197,7 @@ export default function NotificationsPage() {
             </div>
           ))}
           {templates.length === 0 && (
-            <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A' }}>No templates found</p>
+            <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>No templates found</p>
           )}
         </div>
       )}

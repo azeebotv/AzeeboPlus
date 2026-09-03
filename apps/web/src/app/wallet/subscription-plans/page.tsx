@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Wallet Subscription-plans  - Azeebo+',
+  description: 'Wallet Subscription-plans  on Azeebo+',
+};
+
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -230,7 +237,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                           color: 'var(--text-secondary)',
                         }}
                       >
-                        <span style={{ color: 'var(--brand-forest)' }}>✓</span> {feature}
+                        <span style={{ color: 'var(--brand-forest)' }}></span> {feature}
                       </div>
                     ))}
                   </div>
@@ -261,7 +268,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                         background: plan.isPopular
                           ? 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)'
                           : 'transparent',
-                        color: plan.isPopular ? '#fff' : 'var(--text-secondary)',
+                        color: plan.isPopular ? 'white' : 'var(--text-secondary)',
                         fontWeight: 600,
                         fontSize: 14,
                         cursor: 'pointer',
@@ -326,7 +333,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                         background: canAffordWallet
                           ? 'linear-gradient(135deg, #0D3B2E 0%, #0A5C36 100%)'
                           : 'var(--bg-secondary)',
-                        color: canAffordWallet ? '#fff' : '#666',
+                        color: canAffordWallet ? 'white' : 'var(--brand-grey)',
                         border: 'none',
                         cursor: canAffordWallet ? 'pointer' : 'not-allowed',
                         fontWeight: 600,

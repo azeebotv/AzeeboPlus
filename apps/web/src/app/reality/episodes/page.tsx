@@ -1,14 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
 
-export const metadata = {
-  title: 'Episodes | Azeebo',
-  description: 'Browse and watch episodes from your favorite reality shows on Azeebo.',
-  openGraph: {
-    title: 'Episodes | Azeebo',
-    description: 'Browse and watch episodes from your favorite reality shows on Azeebo.',
-  },
-};
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '../../../lib/api';
 import { webLogger } from '../../../lib/logger';
@@ -175,7 +167,7 @@ export default function EpisodesPage(): React.JSX.Element {
                 />
                 {episode.isLocked && (
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                    <span className="text-3xl">🔒</span>
+                    <span className="text-3xl"></span>
                   </div>
                 )}
               </div>

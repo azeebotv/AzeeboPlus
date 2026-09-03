@@ -5,21 +5,13 @@ import { apiFetch, Transaction } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 interface TransactionFilters {
   type: 'all' | 'credit' | 'debit';
   status: 'all' | 'completed' | 'pending' | 'failed';
   dateRange: 'all' | '7d' | '30d' | '90d';
 }
-
-export const metadata = {
-  title: 'Transaction History | Azeebo',
-  description: 'View all your deposits, withdrawals, and payment transactions.',
-  openGraph: {
-    title: 'Transaction History | Azeebo',
-    description: 'View all your deposits, withdrawals, and payment transactions.',
-  },
-};
 
 export default function TransactionsPage(): React.JSX.Element {
   const router = useRouter();
@@ -178,7 +170,7 @@ export default function TransactionsPage(): React.JSX.Element {
                     tx.type === 'credit' ? 'rgba(34,197,94,0.2)' : 'rgba(232,66,10,0.2)',
                 }}
               >
-                <span className="text-xl">{tx.type === 'credit' ? '⬆️' : '⬇️'}</span>
+                <span className="text-xl">{tx.type === 'credit' ? 'ArrowUp' : 'ArrowDown'}</span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-white truncate">{tx.description || 'Transaction'}</p>
@@ -187,7 +179,7 @@ export default function TransactionsPage(): React.JSX.Element {
               <div className="text-right">
                 <p
                   className="font-bold text-lg"
-                  style={{ color: tx.type === 'credit' ? 'var(--color-success-500)' : '#fff' }}
+                  style={{ color: tx.type === 'credit' ? 'var(--color-success-500)' : 'white' }}
                 >
                   {tx.type === 'credit' ? '+' : '-'}₦{(tx.amount ?? 0).toLocaleString()}
                 </p>
@@ -201,16 +193,14 @@ export default function TransactionsPage(): React.JSX.Element {
             </div>
           ))}
           {transactions.length === 0 && (
-            <div className="az-glass p-8 text-center">
-              <p className="text-white/50 text-lg">No transactions found</p>
-              <button
-                onClick={() => router.push('/wallet/add-funds')}
-                className="mt-4 az-btn-primary"
-                style={{ width: 'auto', paddingInline: '1.5rem' }}
-              >
-                Add Funds
-              </button>
-            </div>
+            <EmptyState
+              icon="DollarSign"
+              title="No transactions found"
+              description="Your transaction history will appear here"
+              action={{ label: 'Add Funds', onClick: () => router.push('/wallet/add-funds') }}
+              dark
+              className="az-glass p-8"
+            />
           )}
         </div>
       </div>

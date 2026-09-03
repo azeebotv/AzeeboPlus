@@ -7,15 +7,6 @@ import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
-export const metadata = {
-  title: 'Wallet | Azeebo',
-  description: 'View your wallet balance, make deposits, and manage transactions.',
-  openGraph: {
-    title: 'Wallet | Azeebo',
-    description: 'View your wallet balance, make deposits, and manage transactions.',
-  },
-};
-
 export default function WalletPage(): React.JSX.Element {
   const { isAuthenticated, isLoading: authIsLoading } = useAuth();
 
@@ -23,7 +14,7 @@ export default function WalletPage(): React.JSX.Element {
     queryKey: ['wallet-balance'],
     queryFn: async () => {
       const res = await api.wallet.getBalance();
-      if (res.success && res.data) return res.data.balance;
+      if (res.success && res.data) return res.data.balance ?? 0;
       throw new Error(res.message || 'Failed to load wallet balance');
     },
     enabled: !authIsLoading && isAuthenticated,
@@ -112,7 +103,7 @@ export default function WalletPage(): React.JSX.Element {
             </div>
             <Link
               href="/wallet/transactions"
-              className="text-sm font-medium text-[#E8420A] hover:text-[#CC1C1C] transition-colors"
+              className="text-sm font-medium text-[var(--brand-orange)] hover:text-[var(--brand-red)] transition-colors"
             >
               View All
             </Link>
@@ -144,7 +135,7 @@ export default function WalletPage(): React.JSX.Element {
                         }}
                       >
                         <span className="text-2xl">
-                          {transaction.type === 'credit' ? '⬆️' : '⬇️'}
+                          {transaction.type === 'credit' ? 'ArrowUp' : 'ArrowDown'}
                         </span>
                       </div>
                       <div>
@@ -161,7 +152,7 @@ export default function WalletPage(): React.JSX.Element {
                         className="font-bold text-lg"
                         style={{
                           color:
-                            transaction.type === 'credit' ? 'var(--color-success-500)' : '#fff',
+                            transaction.type === 'credit' ? 'var(--color-success-500)' : 'white',
                         }}
                       >
                         {transaction.type === 'credit' ? '+' : '-'} ₦

@@ -1,0 +1,45 @@
+/* Design tokens for creator app */
+:root {
+  --creator-bg: #1a0a0a;
+  --creator-text: #f5f0eb;
+  --creator-text-muted: #9a8a7a;
+  --creator-surface: #2a1a1a;
+  --creator-surface-light: #f5f0eb;
+  --creator-orange: #e8420a;
+  --creator-red: #cc1c1c;
+  --creator-green: #0d3b2e;
+  --creator-dark: #0d0505;
+  --creator-darker: #140808;
+  --creator-border: #2a1a1a;
+  --creator-border-light: #1a0a0a;
+}
+
+/* Global reset — ensures dark background even if React crashes */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  min-height: 100vh;
+  background-color: var(--creator-bg);
+  color: var(--creator-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+}

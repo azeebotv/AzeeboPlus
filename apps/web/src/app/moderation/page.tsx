@@ -1,14 +1,13 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Moderation  - Azeebo+',
+  description: 'Moderation  on Azeebo+',
+};
+
 'use client';
 import { useRouter } from 'next/navigation';
 
-export const metadata = {
-  title: 'Moderation Center | Azeebo',
-  description: 'Help keep the community safe by reporting and reviewing content on Azeebo.',
-  openGraph: {
-    title: 'Moderation Center | Azeebo',
-    description: 'Help keep the community safe by reporting and reviewing content on Azeebo.',
-  },
-};
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
@@ -17,25 +16,25 @@ const modLinks = [
     href: '/moderation/report',
     label: 'Report Content',
     desc: 'Submit a report for inappropriate or violating content',
-    icon: '🚩',
+    icon: 'Flag',
   },
   {
     href: '/moderation/status',
     label: 'Report Status',
     desc: 'Check the status of your submitted reports',
-    icon: '📋',
+    icon: 'ClipboardList',
   },
   {
     href: '/moderation/mobile-report',
     label: 'Mobile Report (Web)',
     desc: 'Desktop version of the mobile reporting flow',
-    icon: '📱',
+    icon: 'Smartphone',
   },
   {
     href: '/moderation/mobile-status',
     label: 'Mobile Status (Web)',
     desc: 'Desktop version of the mobile status checker',
-    icon: '🔍',
+    icon: 'Search',
   },
 ];
 
@@ -66,7 +65,7 @@ export default function ModerationPage(): React.JSX.Element {
               fontSize: 28,
             }}
           >
-            🛡️
+            Shield
           </div>
           <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8 }}>Moderation Center</h1>
           <p

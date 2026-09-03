@@ -5,6 +5,7 @@ import { CreateCanonicalEventDto } from './dto/create-canonical-event.dto.js';
 import { CreateKnowledgeUnitDto } from './dto/create-knowledge-unit.dto.js';
 import { GrantKnowledgeDto } from './dto/grant-knowledge.dto.js';
 import { CorrectKnowledgeUnitDto } from './dto/correct-knowledge-unit.dto.js';
+import { SupersedeEventDto, CreateEquivalenceSetDto } from './dto/knowledge-ops.dto.js';
 
 @ApiTags('Knowledge')
 @Controller('knowledge')
@@ -43,9 +44,9 @@ export class KnowledgeController {
   @ApiResponse({ status: 200, description: 'Event superseded' })
   async supersedeCanonicalEvent(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: { metadata?: Record<string, unknown> }
+    @Body() dto: SupersedeEventDto
   ) {
-    const event = await this.knowledgeService.updateCanonicalEventVersion(id, body.metadata);
+    const event = await this.knowledgeService.updateCanonicalEventVersion(id, dto.metadata);
     return { success: true, data: event };
   }
 
@@ -154,12 +155,12 @@ export class KnowledgeController {
   @ApiOperation({ summary: 'Create an equivalence set linking knowledge units across formats' })
   @ApiResponse({ status: 201, description: 'Equivalence set created' })
   async createEquivalenceSet(
-    @Body() body: { setCode: string; name: string; knowledgeUnitIds: string[] }
+    @Body() dto: CreateEquivalenceSetDto
   ) {
     const set = await this.knowledgeService.createEquivalenceSet(
-      body.setCode,
-      body.name,
-      body.knowledgeUnitIds
+      dto.setCode,
+      dto.name,
+      dto.knowledgeUnitIds
     );
     return { success: true, data: set };
   }

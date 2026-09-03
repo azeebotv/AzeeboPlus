@@ -46,9 +46,7 @@ export default function ComedyClipPlayer() {
       if (featured.success && featured.data?.[0]) {
         const clipData = featured.data[0];
         setClip(clipData);
-        try {
-          analytics.comedyClipViewed(clipData.id);
-        } catch {}
+                  analytics.comedyClipViewed(clipData.id);
         const relatedRes = await contentApi.getTrendingContent(5);
         if (relatedRes.success && relatedRes.data) {
           setRelated(relatedRes.data.filter((item) => item.id !== clipData.id));

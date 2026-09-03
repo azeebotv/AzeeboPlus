@@ -229,7 +229,7 @@ function VotingPageContent(): React.JSX.Element {
                               background: isSelected
                                 ? 'linear-gradient(135deg, #22C55E, #16A34A)'
                                 : 'rgba(255,255,255,0.1)',
-                              color: isSelected ? '#fff' : 'rgba(255,255,255,0.7)',
+                              color: isSelected ? 'white' : 'rgba(255,255,255,0.7)',
                             }}
                             whileHover={{ scale: isEliminated ? 1 : 1.05 }}
                             whileTap={{ scale: isEliminated ? 1 : 0.95 }}
@@ -372,7 +372,7 @@ export default function VotingPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

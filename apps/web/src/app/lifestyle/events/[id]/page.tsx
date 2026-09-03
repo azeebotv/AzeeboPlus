@@ -1,14 +1,6 @@
 'use client';
 import { Suspense, lazy, useEffect, useState, useCallback } from 'react';
 
-export const metadata = {
-  title: 'Event Details | Azeebo',
-  description: 'View event details, RSVP, and get tickets for lifestyle events on Azeebo.',
-  openGraph: {
-    title: 'Event Details | Azeebo',
-    description: 'View event details, RSVP, and get tickets for lifestyle events on Azeebo.',
-  },
-};
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams } from 'next/navigation';
@@ -20,6 +12,7 @@ import AppFooter from '@/components/layout/AppFooter';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import analytics from '@/lib/analytics';
 
 interface Event {
@@ -143,6 +136,17 @@ function EventDetailPageContent(): React.JSX.Element {
     <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Lifestyle" />
 
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+        <Breadcrumbs
+          items={[
+            { label: 'Home', href: '/home' },
+            { label: 'Lifestyle', href: '/lifestyle' },
+            { label: 'Events', href: '/lifestyle/events' },
+            { label: event?.title || 'Event Details' },
+          ]}
+        />
+      </div>
+
       {isLoading ? (
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <Skeleton height="400px" borderRadius="0" className="mb-6" />
@@ -167,7 +171,7 @@ function EventDetailPageContent(): React.JSX.Element {
                 alt={event.title}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/30 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-[var(--brand-near-black)]/30 to-transparent" />
               <div className="absolute top-4 left-4 flex gap-2">
                 {event.isVirtual && (
                   <span
@@ -301,7 +305,7 @@ function EventDetailPageContent(): React.JSX.Element {
                       href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.venue)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[#E8420A] hover:underline ml-2"
+                      className="text-[var(--brand-orange)] hover:underline ml-2"
                     >
                       View on Map
                     </a>
@@ -365,7 +369,11 @@ function EventDetailPageContent(): React.JSX.Element {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      {rsvpMutation.isPending ? 'Processing...' : rsvped ? 'Going ✓' : 'RSVP Now'}
+                      {rsvpMutation.isPending
+                        ? 'Processing...'
+                        : rsvped
+                          ? 'Going Check'
+                          : 'RSVP Now'}
                     </motion.button>
                     {event.isVirtual && event.virtualLink && (
                       <motion.a
@@ -504,7 +512,7 @@ function EventDetailPageContent(): React.JSX.Element {
                             alt={attendee.name}
                             width={32}
                             height={32}
-                            className="w-8 h-8 rounded-full border-2 border-[#1A0A0A]"
+                            className="w-8 h-8 rounded-full border-2 border-[var(--brand-near-black)]"
                           />
                         ))}
                         {attendees.length > 5 && (
@@ -554,7 +562,7 @@ export default function EventDetailPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

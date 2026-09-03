@@ -20,10 +20,10 @@ export default function EarningsPage() {
   return (
     <div>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Earnings</h1>
-      <p style={{ color: '#9A8A7A', marginBottom: 24 }}>Track your revenue and payouts</p>
+      <p style={{ color: 'var(--creator-text-muted)', marginBottom: 24 }}>Track your revenue and payouts</p>
 
       {isLoading ? (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
       ) : data ? (
         <>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 32 }}>
@@ -31,26 +31,26 @@ export default function EarningsPage() {
               style={{
                 padding: 20,
                 borderRadius: 12,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--creator-border)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
                 flex: 1,
                 minWidth: 180,
               }}
             >
-              <p style={{ fontSize: 13, color: '#9A8A7A', marginBottom: 4 }}>Total Earnings</p>
+              <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 4 }}>Total Earnings</p>
               <p style={{ fontSize: 28, fontWeight: 700 }}>${data.total.toLocaleString()}</p>
             </div>
             <div
               style={{
                 padding: 20,
                 borderRadius: 12,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--creator-border)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
                 flex: 1,
                 minWidth: 180,
               }}
             >
-              <p style={{ fontSize: 13, color: '#9A8A7A', marginBottom: 4 }}>Pending Payout</p>
+              <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 4 }}>Pending Payout</p>
               <p style={{ fontSize: 28, fontWeight: 700 }}>
                 ${data.pendingPayout.toLocaleString()}
               </p>
@@ -59,13 +59,13 @@ export default function EarningsPage() {
               style={{
                 padding: 20,
                 borderRadius: 12,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--creator-border)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
                 flex: 1,
                 minWidth: 180,
               }}
             >
-              <p style={{ fontSize: 13, color: '#9A8A7A', marginBottom: 4 }}>Lifetime Earnings</p>
+              <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 4 }}>Lifetime Earnings</p>
               <p style={{ fontSize: 28, fontWeight: 700 }}>
                 ${data.lifetimeEarnings.toLocaleString()}
               </p>
@@ -76,13 +76,13 @@ export default function EarningsPage() {
             style={{
               padding: 20,
               borderRadius: 12,
-              border: '1px solid #2A1A1A',
+              border: '1px solid var(--creator-border)',
               backgroundColor: 'rgba(26,10,10,0.5)',
               marginBottom: 24,
             }}
           >
             <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Request Payout</h3>
-            <p style={{ color: '#9A8A7A', fontSize: 13, marginBottom: 16 }}>
+            <p style={{ color: 'var(--creator-text-muted)', fontSize: 13, marginBottom: 16 }}>
               Request a payout of your available balance. Payouts are processed within 3-5 business
               days.
             </p>
@@ -94,7 +94,7 @@ export default function EarningsPage() {
                 borderRadius: 8,
                 border: 'none',
                 background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                color: '#fff',
+                color: 'white',
                 fontWeight: 600,
                 cursor:
                   payoutMutation.isPending || data.pendingPayout > 0 ? 'not-allowed' : 'pointer',
@@ -108,19 +108,19 @@ export default function EarningsPage() {
                   : 'Request Payout'}
             </button>
             {payoutMutation.isSuccess && (
-              <p style={{ color: '#0D3B2E', fontSize: 13, marginTop: 8 }}>
+              <p style={{ color: 'var(--creator-green)', fontSize: 13, marginTop: 8 }}>
                 Payout request submitted successfully
               </p>
             )}
             {payoutMutation.isError && (
-              <p style={{ color: '#CC1C1C', fontSize: 13, marginTop: 8 }}>
+              <p style={{ color: 'var(--creator-red)', fontSize: 13, marginTop: 8 }}>
                 Failed to request payout
               </p>
             )}
           </div>
         </>
       ) : (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>
+        <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>
           No earnings data available
         </p>
       )}

@@ -1,14 +1,6 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
 
-export const metadata = {
-  title: 'Missions | Azeebo',
-  description: 'Complete missions to earn points and level up your Azeebo rewards.',
-  openGraph: {
-    title: 'Missions | Azeebo',
-    description: 'Complete missions to earn points and level up your Azeebo rewards.',
-  },
-};
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
@@ -128,7 +120,7 @@ export default function MissionsPage(): React.JSX.Element {
                   className="az-glass"
                   style={{ padding: 48, borderRadius: 20, textAlign: 'center' }}
                 >
-                  <p style={{ fontSize: 32, marginBottom: 12 }}>🎯</p>
+                  <p style={{ fontSize: 32, marginBottom: 12 }}></p>
                   <p style={{ color: 'var(--text-secondary)' }}>No active missions right now</p>
                 </div>
               ) : (
@@ -264,7 +256,7 @@ export default function MissionsPage(): React.JSX.Element {
                               color: 'var(--color-success-500)',
                             }}
                           >
-                            ✓ Done
+                            CheckDone
                           </span>
                           <p
                             style={{

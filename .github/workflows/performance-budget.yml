@@ -1,0 +1,90 @@
+name: Performance Budget
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  performance-budget:
+    name: Check Performance Budgets
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build web app
+        run: pnpm --dir apps/web build
+
+      - name: Start web app
+        run: |
+          cd apps/web
+          pnpm start &
+          sleep 10
+
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: |
+            http://localhost:3000
+            http://localhost:3000/home
+            http://localhost:3000/browse
+          configPath: ./lighthouserc.json
+          uploadArtifacts: true
+
+      - name: Check Bundle Size
+        run: |
+          echo "=== Bundle Size Report ==="
+          du -sh apps/web/.next/static/chunks/*.js | sort -hr | head -20
+          echo ""
+          echo "=== Total Bundle Size ==="
+          du -sh apps/web/.next/static/
+
+      - name: Validate Performance Budgets
+        run: |
+          # Check if any single JS bundle exceeds 300KB
+          MAX_BUNDLE_SIZE=300720  # 300KB in bytes
+          VIOLATIONS=0
+          
+          for file in apps/web/.next/static/chunks/*.js; do
+            if [ -f "$file" ]; then
+              SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null)
+              if [ "$SIZE" -gt "$MAX_BUNDLE_SIZE" ]; then
+                echo "❌ BUDGET VIOLATION: $file is $(($SIZE / 1024))KB (max: 300KB)"
+                VIOLATIONS=$((VIOLATIONS + 1))
+              fi
+            fi
+          done
+          
+          # Check total bundle size
+          TOTAL_SIZE=$(du -sb apps/web/.next/static/ | cut -f1)
+          MAX_TOTAL=1572864  # 1.5MB in bytes
+          
+          if [ "$TOTAL_SIZE" -gt "$MAX_TOTAL" ]; then
+            echo "❌ TOTAL BUDGET VIOLATION: Total bundle is $(($TOTAL_SIZE / 1048576))MB (max: 1.5MB)"
+            VIOLATIONS=$((VIOLATIONS + 1))
+          fi
+          
+          if [ "$VIOLATIONS" -gt 0 ]; then
+            echo ""
+            echo "❌ Performance budget check failed with $VIOLATIONS violation(s)"
+            exit 1
+          else
+            echo "✅ All performance budgets passed"
+          fi

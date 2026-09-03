@@ -1,18 +1,12 @@
 'use client';
+'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-export const metadata = {
-  title: 'Messages | Azeebo',
-  description: 'Connect with creators and other users through direct messages on Azeebo.',
-  openGraph: {
-    title: 'Messages | Azeebo',
-    description: 'Connect with creators and other users through direct messages on Azeebo.',
-  },
-};
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../lib/api';
 import AppHeader from '../../components/layout/AppHeader';
+import { EmptyState } from '../../components/ui/EmptyState';
 import AppFooter from '../../components/layout/AppFooter';
 import { Skeleton } from '@azeebo/ui/web';
 import { OptimizedImage } from '@/components/OptimizedImage';
@@ -410,9 +404,12 @@ export default function MessagesPage(): React.JSX.Element {
                     ))}
                   </div>
                 ) : filteredConversations.length === 0 ? (
-                  <div className="p-6 text-center">
-                    <p className="text-white/50 text-sm">No conversations found</p>
-                  </div>
+                  <EmptyState
+                    icon="MessageCircle"
+                    title="No conversations found"
+                    description="Start a conversation with a creator or friend"
+                    dark
+                  />
                 ) : (
                   filteredConversations.map((conversation, index) => (
                     <div
@@ -685,9 +682,9 @@ export default function MessagesPage(): React.JSX.Element {
                             </div>
                             <div className="flex gap-1 mt-1">
                               {[
-                                { emoji: '👍', label: 'Thumbs up' },
-                                { emoji: '❤️', label: 'Heart' },
-                                { emoji: '😂', label: 'Laughing face' },
+                                { emoji: 'ThumbsUp', label: 'Thumbs up' },
+                                { emoji: 'Heart', label: 'Heart' },
+                                { emoji: 'Laugh', label: 'Laughing face' },
                               ].map((reaction) => (
                                 <button
                                   key={reaction.emoji}
@@ -720,7 +717,7 @@ export default function MessagesPage(): React.JSX.Element {
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyDown={handleKeyPress}
                         placeholder="Type a message..."
-                        className="flex-1 bg-white/5 text-white placeholder-white/30 rounded-xl px-4 py-3 text-sm resize-none border outline-none focus:border-[#E8420A]"
+                        className="flex-1 bg-white/5 text-white placeholder-white/30 rounded-xl px-4 py-3 text-sm resize-none border outline-none focus:border-[var(--brand-orange)]"
                         style={{ borderColor: 'rgba(255,255,255,0.1)' }}
                         rows={1}
                         aria-label="Type a message"

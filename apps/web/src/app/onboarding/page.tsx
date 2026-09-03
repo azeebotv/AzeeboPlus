@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Onboarding  - Azeebo+',
+  description: 'Onboarding  on Azeebo+',
+};
+
 'use client';
 
 import { useState } from 'react';
@@ -17,18 +24,42 @@ type CategoryCard = {
 };
 
 const CATEGORY_CARDS: CategoryCard[] = [
-  { category: 'Music', sub: 'Afrobeats', descriptor: 'Wande Coal', emoji: '🎤', side: 'left' },
-  { category: 'Movies', sub: 'Nollywood', descriptor: 'Jenevive Nnaji', emoji: '🎬', side: 'left' },
+  { category: 'Music', sub: 'Afrobeats', descriptor: 'Wande Coal', emoji: 'Mic', side: 'left' },
+  {
+    category: 'Movies',
+    sub: 'Nollywood',
+    descriptor: 'Jenevive Nnaji',
+    emoji: 'Film',
+    side: 'left',
+  },
   {
     category: 'Sports',
     sub: 'Super Eagles',
     descriptor: 'Live Matches',
-    emoji: '⚽',
+    emoji: 'Circle',
     side: 'left',
   },
-  { category: 'Culture', sub: 'Heritage', descriptor: 'Osun Osogbo', emoji: '🪕', side: 'right' },
-  { category: 'Comedy', sub: 'Taooma', descriptor: 'Laugh Out Loud', emoji: '😂', side: 'right' },
-  { category: 'Creators', sub: 'Vloggers', descriptor: 'Live Stream', emoji: '📡', side: 'right' },
+  {
+    category: 'Culture',
+    sub: 'Heritage',
+    descriptor: 'Osun Osogbo',
+    emoji: 'Music',
+    side: 'right',
+  },
+  {
+    category: 'Comedy',
+    sub: 'Taooma',
+    descriptor: 'Laugh Out Loud',
+    emoji: 'Laugh',
+    side: 'right',
+  },
+  {
+    category: 'Creators',
+    sub: 'Vloggers',
+    descriptor: 'Live Stream',
+    emoji: 'Signal',
+    side: 'right',
+  },
 ];
 
 export default function OnboardingPage(): React.JSX.Element {
@@ -143,7 +174,7 @@ export default function OnboardingPage(): React.JSX.Element {
             {/* Phone notch */}
             <div
               className="absolute top-2 left-1/2 -translate-x-1/2 rounded-full"
-              style={{ width: 90, height: 18, background: '#000' }}
+              style={{ width: 90, height: 18, background: 'black' }}
             />
             {/* Phone screen */}
             <div
@@ -155,7 +186,7 @@ export default function OnboardingPage(): React.JSX.Element {
             >
               {/* Content collage emoji grid */}
               <div className="grid grid-cols-3 gap-1.5 mb-6 opacity-90">
-                {['🎬', '🎤', '⚽', '🎭', '🏆', '🎵'].map((e, i) => (
+                {['Film', 'Mic', 'Circle', 'Drama', 'Trophy', 'Music'].map((e, i) => (
                   <div
                     key={i}
                     className="rounded-md flex items-center justify-center text-lg"
@@ -249,7 +280,7 @@ export default function OnboardingPage(): React.JSX.Element {
                     boxShadow: active ? '0 0 20px rgba(204,28,28,0.4)' : 'none',
                   }}
                 >
-                  <span className="text-3xl">{universe.icon || '🎬'}</span>
+                  <span className="text-3xl">{universe.icon || 'Film'}</span>
                   <span className="font-semibold text-white text-sm">{universe.displayName}</span>
                 </button>
               );

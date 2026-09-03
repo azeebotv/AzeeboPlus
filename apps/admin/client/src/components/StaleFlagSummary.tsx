@@ -45,9 +45,7 @@ export default function StaleFlagSummary({
   const ref = useRef<HTMLDivElement | null>(null);
 
   const staleTotal = staleGlobal.length + staleUniverse.length;
-  const autoDisabledCount = staleGlobal.filter((f) =>
-    autoDisabledKeys.has(f.key)
-  ).length;
+  const autoDisabledCount = staleGlobal.filter((f) => autoDisabledKeys.has(f.key)).length;
 
   // Close on outside click / Escape while the menu is open.
   useEffect(() => {
@@ -95,7 +93,7 @@ export default function StaleFlagSummary({
           borderRadius: 999,
           border: '1px solid #7A2A0A',
           background: 'rgba(122,42,10,0.25)',
-          color: '#F5F0EB',
+          color: 'var(--admin-text)',
           fontSize: 12,
           fontWeight: 600,
           cursor: 'pointer',
@@ -108,7 +106,7 @@ export default function StaleFlagSummary({
         {autoDisabledCount > 0 && (
           <span
             style={{
-              color: '#FFB37E',
+              color: 'var(--admin-orange)',
               background: 'rgba(232,66,10,0.25)',
               borderRadius: 999,
               padding: '1px 7px',
@@ -133,20 +131,28 @@ export default function StaleFlagSummary({
             maxHeight: '70vh',
             overflowY: 'auto',
             borderRadius: 12,
-            border: '1px solid #2A1A1A',
-            background: '#1A0A0A',
+            border: '1px solid var(--admin-surface)',
+            background: 'var(--admin-bg)',
             boxShadow: '0 12px 32px rgba(0,0,0,0.5)',
             zIndex: 60,
             padding: '8px 0',
             fontSize: 13,
           }}
         >
-          <div style={{ padding: '8px 16px 6px', fontWeight: 700, color: '#E8420A' }}>
+          <div style={{ padding: '8px 16px 6px', fontWeight: 700, color: 'var(--admin-orange)' }}>
             Stale flags — removal candidates
           </div>
 
           {staleGlobal.length > 0 && (
-            <div style={{ padding: '6px 16px 2px', color: '#9A8A7A', fontSize: 11, fontWeight: 600, textTransform: 'uppercase' }}>
+            <div
+              style={{
+                padding: '6px 16px 2px',
+                color: 'var(--admin-text-muted)',
+                fontSize: 11,
+                fontWeight: 600,
+                textTransform: 'uppercase',
+              }}
+            >
               Global ({staleGlobal.length})
             </div>
           )}
@@ -168,18 +174,24 @@ export default function StaleFlagSummary({
                   padding: '7px 16px',
                   border: 'none',
                   background: 'transparent',
-                  color: '#F5F0EB',
+                  color: 'var(--admin-text)',
                   textAlign: 'left',
                   cursor: 'pointer',
                   fontSize: 13,
                 }}
               >
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.key}</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
+                <span
+                  style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                >
+                  {f.key}
+                </span>
+                <span
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}
+                >
                   {autoOff && (
                     <span
                       style={{
-                        color: '#FFB37E',
+                        color: 'var(--admin-orange)',
                         fontSize: 10,
                         fontWeight: 600,
                         border: '1px solid rgba(232,66,10,0.5)',
@@ -191,14 +203,22 @@ export default function StaleFlagSummary({
                       auto-off
                     </span>
                   )}
-                  <span style={{ color: '#E8420A' }}>{formatExpiry(f.staleAfter)}</span>
+                  <span style={{ color: 'var(--admin-orange)' }}>{formatExpiry(f.staleAfter)}</span>
                 </span>
               </button>
             );
           })}
 
           {staleUniverse.length > 0 && (
-            <div style={{ padding: '8px 16px 2px', color: '#9A8A7A', fontSize: 11, fontWeight: 600, textTransform: 'uppercase' }}>
+            <div
+              style={{
+                padding: '8px 16px 2px',
+                color: 'var(--admin-text-muted)',
+                fontSize: 11,
+                fontWeight: 600,
+                textTransform: 'uppercase',
+              }}
+            >
               Universe ({staleUniverse.length})
             </div>
           )}
@@ -220,7 +240,7 @@ export default function StaleFlagSummary({
                 padding: '7px 16px',
                 border: 'none',
                 background: 'transparent',
-                color: '#F5F0EB',
+                color: 'var(--admin-text)',
                 textAlign: 'left',
                 cursor: 'pointer',
                 fontSize: 13,
@@ -229,7 +249,9 @@ export default function StaleFlagSummary({
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {f.universe}.{f.key}
               </span>
-              <span style={{ color: '#E8420A', whiteSpace: 'nowrap' }}>{formatExpiry(f.staleAfter)}</span>
+              <span style={{ color: 'var(--admin-orange)', whiteSpace: 'nowrap' }}>
+                {formatExpiry(f.staleAfter)}
+              </span>
             </button>
           ))}
 
@@ -239,19 +261,35 @@ export default function StaleFlagSummary({
               justifyContent: 'space-between',
               gap: 8,
               padding: '10px 16px 4px',
-              borderTop: '1px solid #2A1A1A',
+              borderTop: '1px solid var(--admin-surface)',
               marginTop: 8,
             }}
           >
             <button
               onClick={() => go('/feature-flags/global?stale=1#stale')}
-              style={{ background: 'none', border: 'none', color: '#E8420A', cursor: 'pointer', fontSize: 12, fontWeight: 600, padding: 0 }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--admin-orange)',
+                cursor: 'pointer',
+                fontSize: 12,
+                fontWeight: 600,
+                padding: 0,
+              }}
             >
               Global candidates →
             </button>
             <button
               onClick={() => go('/feature-flags?stale=1#stale')}
-              style={{ background: 'none', border: 'none', color: '#E8420A', cursor: 'pointer', fontSize: 12, fontWeight: 600, padding: 0 }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--admin-orange)',
+                cursor: 'pointer',
+                fontSize: 12,
+                fontWeight: 600,
+                padding: 0,
+              }}
             >
               Universe backlog →
             </button>

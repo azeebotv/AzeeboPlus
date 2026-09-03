@@ -13,10 +13,7 @@ import type { AuditLogEntry } from '@/lib/api/admin';
  * Wallet maps to a targetType nothing writes today, so it truthfully returns
  * empty (wallet-management logs no audit entries yet).
  */
-const FILTERS: Record<
-  string,
-  { label: string; targetType?: string; action?: string }
-> = {
+const FILTERS: Record<string, { label: string; targetType?: string; action?: string }> = {
   all: { label: 'All' },
   // Removals = every feature_flag.deleted entry (global + universe scopes) —
   // what the admin nav badge counts; deep-linked via ?action=feature_flag.deleted.
@@ -42,22 +39,22 @@ const FLAG_ACTION_STYLES: Record<string, { label: string; bg: string; color: str
   'feature_flag.deleted': {
     label: 'Flag removed',
     bg: 'rgba(204,28,28,0.25)',
-    color: '#FF8A80',
+    color: 'var(--admin-red)',
   },
   'feature_flag.restored': {
     label: 'Flag restored',
     bg: 'rgba(31,138,76,0.25)',
-    color: '#4ECB8D',
+    color: 'var(--admin-emerald)',
   },
   'feature_flag.stale_notified': {
     label: 'Flag stale · notified',
     bg: 'rgba(232,66,10,0.2)',
-    color: '#E8420A',
+    color: 'var(--admin-orange)',
   },
   'feature_flag.updated': {
     label: 'Flag updated',
     bg: 'rgba(232,66,10,0.2)',
-    color: '#E8420A',
+    color: 'var(--admin-orange)',
   },
 };
 
@@ -65,7 +62,7 @@ const actionStyle = (action: string) =>
   FLAG_ACTION_STYLES[action] ?? {
     label: action,
     bg: 'rgba(232,66,10,0.2)',
-    color: '#E8420A',
+    color: 'var(--admin-orange)',
   };
 
 /**
@@ -75,7 +72,9 @@ const actionStyle = (action: string) =>
  * writes several into one entry. Global snapshots don't carry the key (it
  * lives on `targetId`); universe snapshots carry `featureKey` + `universeName`.
  */
-export const archivedFromDetails = (log: AuditLogEntry): {
+export const archivedFromDetails = (
+  log: AuditLogEntry
+): {
   count: number;
   keys: string[];
 } => {
@@ -89,8 +88,7 @@ export const archivedFromDetails = (log: AuditLogEntry): {
     if (log.targetType === 'universe_feature_flag') {
       const featureKey = (s.featureKey as string | undefined) ?? log.targetId;
       const universeName =
-        (s.universeName as string | undefined) ??
-        (s.universeDisplayName as string | undefined);
+        (s.universeName as string | undefined) ?? (s.universeDisplayName as string | undefined);
       return universeName ? `${universeName}.${featureKey}` : (featureKey ?? 'unknown');
     }
     // Global flags store the key on targetId; the snapshot holds the rest.
@@ -118,19 +116,19 @@ function FlagDeletedDetails({ log }: { log: AuditLogEntry }) {
               fontSize: 11,
               fontWeight: 600,
               background: 'rgba(31,138,76,0.2)',
-              color: '#4ECB8D',
+              color: 'var(--admin-emerald)',
             }}
             title="Flag state archived to this entry before removal — restorable from the audit archive"
           >
             🗂 {count} archived flag{count === 1 ? '' : 's'}
           </span>
           {shown.map((k) => (
-            <code key={k} style={{ color: '#D8C9B8', fontSize: 11 }}>
+            <code key={k} style={{ color: 'var(--admin-text-muted)', fontSize: 11 }}>
               {k}
             </code>
           ))}
           {keys.length > shown.length && (
-            <span style={{ color: '#9A8A7A', fontSize: 11 }}>
+            <span style={{ color: 'var(--admin-text-muted)', fontSize: 11 }}>
               +{keys.length - shown.length} more
             </span>
           )}
@@ -151,15 +149,14 @@ export default function AuditLogsPage() {
   const initialFilterId =
     urlAction === 'feature_flag.deleted'
       ? 'removals'
-      : Object.entries(FILTERS).find(([, f]) => f.targetType === searchParams.get('targetType'))?.[0] ??
-        'all';
+      : (Object.entries(FILTERS).find(
+          ([, f]) => f.targetType === searchParams.get('targetType')
+        )?.[0] ?? 'all');
   const [filterId, setFilterId] = useState(initialFilterId);
   const filter = FILTERS[filterId] ?? { label: 'All' };
   // Quick time-range scope (24h / 7d / 30d) — pairs with the target-type
   // chips so ops can e.g. see only the last 24h of universe-flag prunes.
-  const [range, setRange] = useState(
-    urlRange && urlRange in RANGES ? urlRange : 'all'
-  );
+  const [range, setRange] = useState(urlRange && urlRange in RANGES ? urlRange : 'all');
   const rangeDays = RANGES[range]?.days;
   const startDate = rangeDays
     ? new Date(Date.now() - rangeDays * 24 * 60 * 60 * 1000).toISOString()
@@ -198,7 +195,7 @@ export default function AuditLogsPage() {
   return (
     <div>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Audit Logs</h1>
-      <p style={{ color: '#9A8A7A', marginBottom: 24 }}>{data?.total || 0} total entries</p>
+      <p style={{ color: 'var(--admin-text-muted)', marginBottom: 24 }}>{data?.total || 0} total entries</p>
 
       <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
         {Object.entries(FILTERS).map(([id, f]) => (
@@ -208,12 +205,12 @@ export default function AuditLogsPage() {
             style={{
               padding: '8px 16px',
               borderRadius: 999,
-              border: filterId === id ? 'none' : '1px solid #2A1A1A',
+              border: filterId === id ? 'none' : '1px solid var(--admin-surface)',
               background:
                 filterId === id
                   ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)'
                   : 'transparent',
-              color: filterId === id ? '#fff' : '#9A8A7A',
+              color: filterId === id ? 'white' : 'var(--admin-text-muted)',
               fontWeight: 500,
               fontSize: 13,
               cursor: 'pointer',
@@ -234,9 +231,7 @@ export default function AuditLogsPage() {
           flexWrap: 'wrap',
         }}
       >
-        <span style={{ color: '#9A8A7A', fontSize: 12, fontWeight: 600 }}>
-          Time range
-        </span>
+        <span style={{ color: 'var(--admin-text-muted)', fontSize: 12, fontWeight: 600 }}>Time range</span>
         {Object.entries(RANGES).map(([id, r]) => (
           <button
             key={id}
@@ -244,9 +239,9 @@ export default function AuditLogsPage() {
             style={{
               padding: '6px 14px',
               borderRadius: 999,
-              border: range === id ? 'none' : '1px solid #2A1A1A',
-              background: range === id ? '#E8420A' : 'transparent',
-              color: range === id ? '#fff' : '#9A8A7A',
+              border: range === id ? 'none' : '1px solid var(--admin-surface)',
+              background: range === id ? 'var(--admin-orange)' : 'transparent',
+              color: range === id ? 'white' : 'var(--admin-text-muted)',
               fontWeight: 500,
               fontSize: 12,
               cursor: 'pointer',
@@ -263,12 +258,12 @@ export default function AuditLogsPage() {
       </div>
 
       {isLoading ? (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
       ) : (
         <div
           style={{
             borderRadius: 16,
-            border: '1px solid #2A1A1A',
+            border: '1px solid var(--admin-surface)',
             backgroundColor: 'rgba(26,10,10,0.5)',
             overflow: 'hidden',
           }}
@@ -276,14 +271,14 @@ export default function AuditLogsPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid #2A1A1A' }}>
+                <tr style={{ borderBottom: '1px solid var(--admin-surface)' }}>
                   {['Timestamp', 'User', 'Action', 'Details', 'IP'].map((h) => (
                     <th
                       key={h}
                       style={{
                         padding: '12px 16px',
                         textAlign: 'left',
-                        color: '#9A8A7A',
+                        color: 'var(--admin-text-muted)',
                         fontWeight: 600,
                         fontSize: 12,
                         textTransform: 'uppercase',
@@ -296,11 +291,11 @@ export default function AuditLogsPage() {
               </thead>
               <tbody>
                 {logs.map((log) => (
-                  <tr key={log.id} style={{ borderBottom: '1px solid #1A0A0A' }}>
+                  <tr key={log.id} style={{ borderBottom: '1px solid var(--admin-bg)' }}>
                     <td
                       style={{
                         padding: '12px 16px',
-                        color: '#9A8A7A',
+                        color: 'var(--admin-text-muted)',
                         fontSize: 13,
                         whiteSpace: 'nowrap',
                       }}
@@ -326,7 +321,7 @@ export default function AuditLogsPage() {
                     <td
                       style={{
                         padding: '12px 16px',
-                        color: '#9A8A7A',
+                        color: 'var(--admin-text-muted)',
                         fontSize: 13,
                         maxWidth: 220,
                         ...(log.action === 'feature_flag.deleted'
@@ -347,7 +342,7 @@ export default function AuditLogsPage() {
                         </>
                       )}
                     </td>
-                    <td style={{ padding: '12px 16px', color: '#9A8A7A', fontSize: 13 }}>
+                    <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)', fontSize: 13 }}>
                       {log.ipAddress || '-'}
                     </td>
                   </tr>
@@ -356,7 +351,7 @@ export default function AuditLogsPage() {
             </table>
           </div>
           {logs.length === 0 && (
-            <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A' }}>
+            <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>
               No audit logs found
             </p>
           )}

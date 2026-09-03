@@ -40,20 +40,20 @@ export default function UserDetailPage() {
     if (id) fetchUser();
   }, [id]);
 
-  if (isLoading) return <div style={{ padding: 32, color: '#9A8A7A' }}>Loading...</div>;
+  if (isLoading) return <div style={{ padding: 32, color: 'var(--admin-text-muted)' }}>Loading...</div>;
   if (error) {
     return (
       <div style={{ padding: 32 }}>
-        <p style={{ color: '#CC1C1C' }}>{error}</p>
+        <p style={{ color: 'var(--admin-red)' }}>{error}</p>
         <button
           onClick={() => navigate(-1)}
           style={{
             marginTop: 12,
             padding: '8px 16px',
             borderRadius: 8,
-            border: '1px solid #2A1A1A',
+            border: '1px solid var(--admin-surface)',
             background: 'transparent',
-            color: '#E8420A',
+            color: 'var(--admin-orange)',
             cursor: 'pointer',
           }}
         >
@@ -62,7 +62,7 @@ export default function UserDetailPage() {
       </div>
     );
   }
-  if (!user) return <div style={{ padding: 32, color: '#9A8A7A' }}>User not found</div>;
+  if (!user) return <div style={{ padding: 32, color: 'var(--admin-text-muted)' }}>User not found</div>;
 
   const fields = [
     { label: 'Email', value: user.email },
@@ -71,12 +71,12 @@ export default function UserDetailPage() {
     {
       label: 'Status',
       value: user.isActive ? 'Active' : 'Inactive',
-      color: user.isActive ? '#22C55E' : '#CC1C1C',
+      color: user.isActive ? 'var(--admin-emerald)' : 'var(--admin-red)',
     },
     {
       label: 'Email Verified',
       value: user.emailVerified ? 'Yes' : 'No',
-      color: user.emailVerified ? '#22C55E' : '#F59E0B',
+      color: user.emailVerified ? 'var(--admin-emerald)' : 'var(--admin-amber)',
     },
     { label: 'Created', value: new Date(user.createdAt).toLocaleDateString() },
     user.lastLoginAt
@@ -92,21 +92,21 @@ export default function UserDetailPage() {
           marginBottom: 24,
           padding: '8px 16px',
           borderRadius: 8,
-          border: '1px solid #2A1A1A',
+          border: '1px solid var(--admin-surface)',
           background: 'transparent',
-          color: '#E8420A',
+          color: 'var(--admin-orange)',
           cursor: 'pointer',
         }}
       >
         &larr; Back to Users
       </button>
-      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24, color: '#fff' }}>
+      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24, color: 'white' }}>
         {user.displayName || user.username}
       </h1>
       <div
         style={{
-          background: '#1A0A0A',
-          border: '1px solid #2A1A1A',
+          background: 'var(--admin-bg)',
+          border: '1px solid var(--admin-surface)',
           borderRadius: 12,
           padding: 24,
         }}
@@ -114,10 +114,10 @@ export default function UserDetailPage() {
         <div style={{ display: 'grid', gap: 16 }}>
           {fields.map((f) => (
             <div key={f.label}>
-              <label style={{ fontSize: 12, color: '#9A8A7A', textTransform: 'uppercase' }}>
+              <label style={{ fontSize: 12, color: 'var(--admin-text-muted)', textTransform: 'uppercase' }}>
                 {f.label}
               </label>
-              <p style={{ color: f.color || '#fff', marginTop: 4 }}>{f.value}</p>
+              <p style={{ color: f.color || 'white', marginTop: 4 }}>{f.value}</p>
             </div>
           ))}
         </div>

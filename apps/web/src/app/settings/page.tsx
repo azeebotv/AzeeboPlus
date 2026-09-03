@@ -7,6 +7,8 @@ import { api } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { Skeleton, ErrorState, Spinner } from '@azeebo/ui/web';
+import ThemeToggle from '@/components/ThemeToggle';
+import { LanguageSelector } from '@/components/LanguageSelector';
 
 interface UserSettings {
   language: string;
@@ -24,15 +26,6 @@ const DEFAULT_SETTINGS: UserSettings = {
   darkMode: true,
   dataSaver: false,
   downloadQuality: 'hd',
-};
-
-export const metadata = {
-  title: 'Settings | Azeebo',
-  description: 'Manage your account preferences, download quality, and notification settings.',
-  openGraph: {
-    title: 'Settings | Azeebo',
-    description: 'Manage your account preferences, download quality, and notification settings.',
-  },
 };
 
 export default function SettingsPage(): React.JSX.Element {
@@ -75,7 +68,6 @@ export default function SettingsPage(): React.JSX.Element {
   const toggleItems = [
     { key: 'autoplay', label: 'Autoplay', desc: 'Automatically play next video' },
     { key: 'notifications', label: 'Notifications', desc: 'Receive push notifications' },
-    { key: 'darkMode', label: 'Dark Mode', desc: 'Use dark theme' },
     { key: 'dataSaver', label: 'Data Saver', desc: 'Reduce streaming quality on mobile' },
   ];
 
@@ -169,7 +161,7 @@ export default function SettingsPage(): React.JSX.Element {
                         width: 22,
                         height: 22,
                         borderRadius: '50%',
-                        backgroundColor: '#fff',
+                        backgroundColor: 'white',
                         transition: 'left 0.2s',
                       }}
                     />
@@ -178,6 +170,22 @@ export default function SettingsPage(): React.JSX.Element {
               ))
             )}
           </div>
+        </div>
+
+        <div className="az-glass" style={{ padding: 24, borderRadius: 20, marginBottom: 20 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Appearance</h2>
+          <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 13, marginBottom: 16 }}>
+            Choose your preferred theme
+          </p>
+          <ThemeToggle />
+        </div>
+
+        <div className="az-glass" style={{ padding: 24, borderRadius: 20, marginBottom: 20 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Language</h2>
+          <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 13, marginBottom: 16 }}>
+            Select your preferred language
+          </p>
+          <LanguageSelector />
         </div>
 
         <div className="az-glass" style={{ padding: 24, borderRadius: 20, marginBottom: 20 }}>
@@ -197,7 +205,7 @@ export default function SettingsPage(): React.JSX.Element {
                     settings.downloadQuality === q
                       ? 'linear-gradient(135deg, var(--brand-orange, #E8420A) 0%, var(--brand-red, #CC1C1C) 100%)'
                       : 'transparent',
-                  color: settings.downloadQuality === q ? '#fff' : 'var(--text-muted, #9A8A7A)',
+                  color: settings.downloadQuality === q ? 'white' : 'var(--text-muted, #9A8A7A)',
                   fontWeight: 600,
                   fontSize: 13,
                   cursor: 'pointer',

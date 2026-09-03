@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import { AppModule } from './app.module.js';
 import { createHelmetConfig, configureCors } from '@azeebo/security';
 
@@ -48,6 +49,7 @@ async function bootstrap(): Promise<void> {
 
   // Versioning disabled: controllers already prefix routes with 'v1/' manually
 
+  app.useWebSocketAdapter(new IoAdapter(app));
   app.enableShutdownHooks();
 
   const port = process.env.PORT || 3006;

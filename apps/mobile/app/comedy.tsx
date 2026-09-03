@@ -93,9 +93,7 @@ export default function ComedyUniverseHome() {
 
   useEffect(() => {
     if (clipsQuery.data && clipsQuery.data.length > 0) {
-      try {
-        analytics.comedyClipViewed(clipsQuery.data[0].id);
-      } catch {}
+              analytics.comedyClipViewed(clipsQuery.data[0].id);
     }
   }, [clipsQuery.data]);
 

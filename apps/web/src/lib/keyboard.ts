@@ -161,7 +161,7 @@ export const DEFAULT_SHORTCUTS: KeyboardShortcut[] = [
       closeBtn.className =
         'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200';
       closeBtn.setAttribute('aria-label', 'Close');
-      closeBtn.textContent = '✕';
+      closeBtn.textContent = 'X';
 
       header.appendChild(title);
       header.appendChild(closeBtn);

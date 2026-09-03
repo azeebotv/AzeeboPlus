@@ -86,7 +86,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['creator', 'content'] });
-      router.push(data?.id ? '/creator/content-manager' : '/creator');
+      router.push(data?.id ? '/creators/dashboard' : '/creators');
     },
   });
 
@@ -101,7 +101,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['creator', 'content'] });
-      router.push(data?.id ? '/creator/content-manager' : '/creator');
+      router.push(data?.id ? '/creators/dashboard' : '/creators');
     },
   });
 
@@ -205,7 +205,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
               Title
             </label>
             <input
-              id="content-title"
+              id="content-title" aria-label="Content title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -305,7 +305,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
               Tags (comma separated)
             </label>
             <input
-              id="content-tags"
+              id="content-tags" aria-label="Content tags"
               type="text"
               value={tags}
               onChange={(e) => setTags(e.target.value)}
@@ -381,7 +381,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
         <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
           <button
             aria-label="Cancel upload"
-            onClick={() => router.push('/creator')}
+            onClick={() => router.push('/creators')}
             style={{
               padding: '10px 20px',
               borderRadius: 8,
@@ -401,7 +401,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
             style={{
               padding: '10px 24px',
               borderRadius: 8,
-              background: editContent ? 'var(--brand-orange, #E8420A)' : '#FF6B35',
+              background: editContent ? 'var(--brand-orange, #E8420A)' : 'var(--brand-orange)',
               border: 'none',
               color: 'var(--brand-white)',
               fontSize: 14,

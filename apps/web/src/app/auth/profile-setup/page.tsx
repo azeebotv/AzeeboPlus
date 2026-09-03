@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Auth Profile-setup  - Azeebo+',
+  description: 'Auth Profile-setup  on Azeebo+',
+};
+
 'use client';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -256,7 +263,7 @@ export default function ProfileSetupPage(): React.JSX.Element {
                 )}
               </div>
               <input
-                ref={fileInputRef}
+                ref={fileInputRef} aria-label="Upload profile picture"
                 type="file"
                 accept="image/*"
                 className="hidden"
@@ -373,11 +380,11 @@ export default function ProfileSetupPage(): React.JSX.Element {
                   className="az-input"
                   value={gender}
                   onChange={(e) => setGender(e.target.value)}
-                  style={{ color: gender ? '#fff' : 'rgba(255,255,255,0.4)' }}
+                  style={{ color: gender ? 'white' : 'rgba(255,255,255,0.4)' }}
                 >
                   <option value="">Select gender</option>
                   {genders.map((g) => (
-                    <option key={g} value={g} style={{ color: '#000' }}>
+                    <option key={g} value={g} style={{ color: 'var(--brand-near-black)' }}>
                       {g}
                     </option>
                   ))}
@@ -416,7 +423,7 @@ export default function ProfileSetupPage(): React.JSX.Element {
                       style={{
                         background: selected ? 'rgba(204,28,28,0.25)' : 'rgba(255,255,255,0.06)',
                         border: selected ? '1px solid #CC1C1C' : '1px solid rgba(255,255,255,0.12)',
-                        color: selected ? '#fff' : 'rgba(255,255,255,0.75)',
+                        color: selected ? 'white' : 'rgba(255,255,255,0.75)',
                       }}
                     >
                       {interest}

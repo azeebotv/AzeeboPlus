@@ -12,7 +12,7 @@ export default function BrandLogo({
   variant = 'light',
   className = '',
 }: BrandLogoProps): React.JSX.Element {
-  const wordmarkColor = variant === 'orange' ? 'var(--brand-orange)' : '#FFFFFF';
+  const wordmarkColor = variant === 'orange' ? 'var(--brand-orange)' : 'white';
 
   return (
     <span

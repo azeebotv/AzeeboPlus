@@ -70,7 +70,7 @@ function VerticalPageContent(): React.JSX.Element {
               className="object-cover"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/50 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-[var(--brand-near-black)]/50 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">
               <div className="flex items-center gap-2 mb-4">
                 <span
@@ -164,7 +164,7 @@ function VerticalPageContent(): React.JSX.Element {
                     >
                       Premium
                     </span>
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
                     <div className="absolute bottom-4 left-4 right-4">
                       <span
                         className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
@@ -202,20 +202,11 @@ function VerticalPageContent(): React.JSX.Element {
 
 const LazyVerticalPage = lazy(() => Promise.resolve({ default: VerticalPageContent }));
 
-export const metadata = {
-  title: 'Vertical | Azeebo',
-  description: 'Premium African storytelling — short-form vertical series and content.',
-  openGraph: {
-    title: 'Vertical | Azeebo',
-    description: 'Premium African storytelling — short-form vertical series and content.',
-  },
-};
-
 export default function VerticalPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

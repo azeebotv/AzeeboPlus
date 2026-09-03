@@ -1,19 +1,12 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
 
-export const metadata = {
-  title: 'Referral History | Azeebo',
-  description: 'Track your referrals, earnings, and referral history on Azeebo.',
-  openGraph: {
-    title: 'Referral History | Azeebo',
-    description: 'Track your referrals, earnings, and referral history on Azeebo.',
-  },
-};
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { Spinner, ErrorState } from '@azeebo/ui/web';
+import { EmptyState } from '@/components/ui/EmptyState';
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 
@@ -242,7 +235,7 @@ export default function ReferralHistoryPage(): React.JSX.Element {
                     cursor: 'pointer',
                   }}
                 >
-                  {copied ? '✓ Copied!' : 'Copy Link'}
+                  {copied ? 'Check Copied!' : 'Copy Link'}
                 </button>
                 <button
                   onClick={() => {
@@ -269,13 +262,12 @@ export default function ReferralHistoryPage(): React.JSX.Element {
             <div className="az-glass" style={{ padding: 24, borderRadius: 20 }}>
               <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>All Referrals</h2>
               {referrals.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: 40 }}>
-                  <p style={{ fontSize: 32, marginBottom: 12 }}>👥</p>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>No referrals yet</p>
-                  <p style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>
-                    Share your code to start earning
-                  </p>
-                </div>
+                <EmptyState
+                  icon="users"
+                  title="No referrals yet"
+                  description="Share your code to start earning"
+                  dark
+                />
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {referrals.map((ref: ReferralEntry, i: number) => (

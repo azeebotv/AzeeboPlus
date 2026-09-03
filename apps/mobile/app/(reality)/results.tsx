@@ -47,9 +47,7 @@ export default function ResultsScreen() {
 
   useEffect(() => {
     loadResults();
-    try {
-      analytics.realityLeaderboardViewed(contentId);
-    } catch {}
+          analytics.realityLeaderboardViewed(contentId);
   }, [contentId]);
 
   const loadResults = async () => {

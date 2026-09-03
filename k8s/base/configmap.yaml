@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: azeebo-config
+  namespace: azeebo
+  labels:
+    app.kubernetes.io/part-of: azeebo
+data:
+  NODE_ENV: "production"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  DATABASE_HOST: "postgres"
+  DATABASE_PORT: "5432"
+  JWT_SECRET: "CHANGE_ME_IN_PRODUCTION"
+  API_GATEWAY_URL: "http://api-gateway:3013"
+  CORS_ORIGINS: "https://azeebo.com,https://www.azeebo.com,https://admin.azeebo.com,https://creator.azeebo.com"
+  LOG_LEVEL: "info"
+  RATE_LIMIT_TTL: "60000"
+  RATE_LIMIT_LIMIT: "100"

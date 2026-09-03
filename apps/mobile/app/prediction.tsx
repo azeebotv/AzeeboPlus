@@ -107,9 +107,7 @@ export default function PredictionScreen() {
       }
       setUserPoints((prev) => prev - betAmount);
       setBetSuccess(true);
-      try {
-        analytics.realityPredictionSubmitted(showName, selectedOption || '');
-      } catch {}
+              analytics.realityPredictionSubmitted(showName, selectedOption || '');
       setTimeout(() => {
         setShowConfirmation(false);
         setBetSuccess(false);

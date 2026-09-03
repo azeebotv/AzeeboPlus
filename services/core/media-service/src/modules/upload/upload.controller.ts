@@ -25,6 +25,7 @@ import { PremiumContentService } from './premium-content.service';
 import { CdnPurgeService } from './cdn-purge.service';
 import { MediaLifecycleService } from '../media/media-lifecycle.service';
 import { InitChunkedUploadDto } from './dto/chunked-upload.dto.js';
+import { GeneratePremiumUrlDto, ValidatePremiumUrlDto, CdnPurgeDto, LifecycleCdnPurgeDto } from './dto/premium-url.dto.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 import { FeatureFlag, FeatureFlagGuard, mediaFlags } from '@azeebo/feature-flags';
 
@@ -415,17 +416,16 @@ export class UploadController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async generatePremiumUrl(
     @Request() req: { user: { sub: string; id: string } },
-    @Body() body: { contentId: string; expiresInSeconds?: number }
+    @Body() dto: GeneratePremiumUrlDto
   ): Promise<unknown> {
-    const { contentId, expiresInSeconds } = body;
-    if (!contentId) {
+    if (!dto.contentId) {
       throw new BadRequestException('contentId is required');
     }
 
     const result = await this.premiumContentService.generatePremiumUrl(
-      contentId,
+      dto.contentId,
       req.user.id,
-      expiresInSeconds
+      dto.expiresInSeconds
     );
 
     return ApiResponseWrapper.success(result);
@@ -439,17 +439,16 @@ export class UploadController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async generateCdnPremiumUrl(
     @Request() req: { user: { sub: string; id: string } },
-    @Body() body: { contentId: string; expiresInSeconds?: number }
+    @Body() dto: GeneratePremiumUrlDto
   ): Promise<unknown> {
-    const { contentId, expiresInSeconds } = body;
-    if (!contentId) {
+    if (!dto.contentId) {
       throw new BadRequestException('contentId is required');
     }
 
     const result = await this.premiumContentService.generateCdnPremiumUrl(
-      contentId,
+      dto.contentId,
       req.user.id,
-      expiresInSeconds
+      dto.expiresInSeconds
     );
 
     return ApiResponseWrapper.success(result);
@@ -461,13 +460,12 @@ export class UploadController {
   @ApiResponse({ status: 200, description: 'Token validation result' })
   @ApiResponse({ status: 400, description: 'token is required' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async validatePremiumUrl(@Body() body: { token: string }): Promise<unknown> {
-    const { token } = body;
-    if (!token) {
+  async validatePremiumUrl(@Body() dto: ValidatePremiumUrlDto): Promise<unknown> {
+    if (!dto.token) {
       throw new BadRequestException('token is required');
     }
 
-    const result = await this.premiumContentService.validatePremiumUrl(token);
+    const result = await this.premiumContentService.validatePremiumUrl(dto.token);
     if (result.valid) {
       return ApiResponseWrapper.success(result);
     }
@@ -513,13 +511,13 @@ export class UploadController {
   @ApiOperation({ summary: 'Purge cached media from the CDN (admin)' })
   @ApiResponse({ status: 200, description: 'CDN purge initiated' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async purgeCdn(@Body() body: { keys?: string[]; prefix?: string }): Promise<unknown> {
-    if (body.keys?.length) {
-      const result = await this.cdnPurgeService.purgeKeys(body.keys);
+  async purgeCdn(@Body() dto: CdnPurgeDto): Promise<unknown> {
+    if (dto.keys?.length) {
+      const result = await this.cdnPurgeService.purgeKeys(dto.keys);
       return ApiResponseWrapper.success(result);
     }
-    if (body.prefix) {
-      const result = await this.cdnPurgeService.purgePrefix(body.prefix);
+    if (dto.prefix) {
+      const result = await this.cdnPurgeService.purgePrefix(dto.prefix);
       return ApiResponseWrapper.success(result);
     }
     return ApiResponseWrapper.success({ purged: 0, message: 'Provide keys or prefix to purge' });
@@ -535,8 +533,8 @@ export class UploadController {
   @RateLimit(5, 60000)
   @ApiOperation({ summary: 'Purge CDN by URLs and patterns' })
   @ApiResponse({ status: 200, description: 'CDN purge completed' })
-  async lifecycleCDNPurge(@Body() body: { urls: string[]; patterns?: string[]; region?: string }) {
-    const result = await this.mediaLifecycle.purgeCDN(body);
+  async lifecycleCDNPurge(@Body() dto: LifecycleCdnPurgeDto) {
+    const result = await this.mediaLifecycle.purgeCDN(dto);
     return ApiResponseWrapper.success(result);
   }
 

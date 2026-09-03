@@ -8,9 +8,9 @@ const inputStyle = {
   width: '100%',
   padding: '10px 14px',
   borderRadius: 8,
-  border: '1px solid #2A1A1A',
-  backgroundColor: '#0D0505',
-  color: '#F5F0EB',
+  border: '1px solid var(--creator-border)',
+  backgroundColor: 'var(--creator-dark)',
+  color: 'var(--creator-text)',
   fontSize: 14,
 };
 
@@ -21,10 +21,10 @@ const statusColor: Record<string, string> = {
   failed: 'rgba(204,28,28,0.2)',
 };
 const statusText: Record<string, string> = {
-  uploading: '#3B82F6',
-  processing: '#F59E0B',
-  completed: '#0D3B2E',
-  failed: '#CC1C1C',
+  uploading: 'var(--creator-blue, #3b82f6)',
+  processing: 'var(--creator-amber, #f59e0b)',
+  completed: 'var(--creator-green)',
+  failed: 'var(--creator-red)',
 };
 
 export default function UploadPage() {
@@ -79,7 +79,7 @@ export default function UploadPage() {
   return (
     <div>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Upload</h1>
-      <p style={{ color: '#9A8A7A', marginBottom: 24 }}>
+      <p style={{ color: 'var(--creator-text-muted)', marginBottom: 24 }}>
         Upload new content and track processing status
       </p>
 
@@ -89,14 +89,14 @@ export default function UploadPage() {
             style={{
               padding: 20,
               borderRadius: 12,
-              border: '1px solid #2A1A1A',
+              border: '1px solid var(--creator-border)',
               backgroundColor: 'rgba(26,10,10,0.5)',
               marginBottom: 24,
             }}
           >
             <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>New Upload</h3>
             <div style={{ marginBottom: 12 }}>
-              <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}>
                 Title
               </label>
               <input
@@ -107,7 +107,7 @@ export default function UploadPage() {
               />
             </div>
             <div style={{ marginBottom: 12 }}>
-              <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}>
                 Description
               </label>
               <textarea
@@ -119,7 +119,7 @@ export default function UploadPage() {
               />
             </div>
             <div style={{ marginBottom: 12 }}>
-              <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}>
                 Type
               </label>
               <select value={type} onChange={(e) => setType(e.target.value)} style={inputStyle}>
@@ -129,7 +129,7 @@ export default function UploadPage() {
               </select>
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}>
                 Universe
               </label>
               <input
@@ -157,7 +157,7 @@ export default function UploadPage() {
                   ? {
                       padding: 32,
                       borderRadius: 12,
-                      border: `2px dashed ${dragActive ? '#E8420A' : '#2A1A1A'}`,
+                      border: `2px dashed ${dragActive ? 'var(--creator-orange)' : 'var(--creator-surface)'}`,
                       backgroundColor: dragActive ? 'rgba(232,66,10,0.05)' : 'rgba(13,5,5,0.3)',
                       textAlign: 'center',
                       cursor: 'pointer',
@@ -167,10 +167,14 @@ export default function UploadPage() {
                   : { marginBottom: 16 }
               }
             >
-              <p style={{ fontSize: 14, color: '#9A8A7A', marginBottom: 8 }}>
-                {selectedFile ? selectedFile.name : uploadV2 ? 'Drag & drop or click to select' : 'Select a file'}
+              <p style={{ fontSize: 14, color: 'var(--creator-text-muted)', marginBottom: 8 }}>
+                {selectedFile
+                  ? selectedFile.name
+                  : uploadV2
+                    ? 'Drag & drop or click to select'
+                    : 'Select a file'}
               </p>
-              {uploadV2 && <p style={{ fontSize: 12, color: '#5A4A4A' }}>Max 500MB</p>}
+              {uploadV2 && <p style={{ fontSize: 12, color: 'var(--creator-text-muted)' }}>Max 500MB</p>}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -186,9 +190,9 @@ export default function UploadPage() {
                     marginTop: 8,
                     padding: '8px 16px',
                     borderRadius: 8,
-                    border: '1px solid #2A1A1A',
+                    border: '1px solid var(--creator-border)',
                     background: 'transparent',
-                    color: '#F5F0EB',
+                    color: 'var(--creator-text)',
                     fontSize: 13,
                     cursor: 'pointer',
                   }}
@@ -206,7 +210,7 @@ export default function UploadPage() {
                 borderRadius: 8,
                 border: 'none',
                 background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                color: '#fff',
+                color: 'white',
                 fontWeight: 600,
                 cursor: uploadMutation.isPending ? 'not-allowed' : 'pointer',
                 opacity: uploadMutation.isPending ? 0.6 : 1,
@@ -216,12 +220,12 @@ export default function UploadPage() {
               {uploadMutation.isPending ? 'Uploading...' : 'Upload'}
             </button>
             {uploadMutation.isSuccess && (
-              <p style={{ color: '#0D3B2E', fontSize: 13, marginTop: 8 }}>
+              <p style={{ color: 'var(--creator-green)', fontSize: 13, marginTop: 8 }}>
                 Upload started successfully
               </p>
             )}
             {uploadMutation.isError && (
-              <p style={{ color: '#CC1C1C', fontSize: 13, marginTop: 8 }}>Upload failed</p>
+              <p style={{ color: 'var(--creator-red)', fontSize: 13, marginTop: 8 }}>Upload failed</p>
             )}
           </div>
         </div>
@@ -231,7 +235,7 @@ export default function UploadPage() {
             style={{
               padding: 20,
               borderRadius: 12,
-              border: '1px solid #2A1A1A',
+              border: '1px solid var(--creator-border)',
               backgroundColor: 'rgba(26,10,10,0.5)',
             }}
           >
@@ -239,10 +243,10 @@ export default function UploadPage() {
               {uploadV2 ? 'Processing Status' : 'Your Uploads'}
             </h3>
             {isLoading ? (
-              <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 20 }}>Loading...</p>
+              <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 20 }}>Loading...</p>
             ) : uploads && uploads.length > 0 ? (
               uploads.map((u) => (
-                <div key={u.id} style={{ padding: '12px 0', borderBottom: '1px solid #1A0A0A' }}>
+                <div key={u.id} style={{ padding: '12px 0', borderBottom: '1px solid var(--creator-border-light)' }}>
                   <div
                     style={{
                       display: 'flex',
@@ -271,7 +275,7 @@ export default function UploadPage() {
                       width: '100%',
                       height: 6,
                       borderRadius: 3,
-                      backgroundColor: '#2A1A1A',
+                      backgroundColor: 'var(--creator-surface)',
                     }}
                   >
                     <div
@@ -284,13 +288,13 @@ export default function UploadPage() {
                       }}
                     />
                   </div>
-                  <p style={{ fontSize: 12, color: '#9A8A7A', marginTop: 4 }}>
+                  <p style={{ fontSize: 12, color: 'var(--creator-text-muted)', marginTop: 4 }}>
                     {u.progress}% complete
                   </p>
                 </div>
               ))
             ) : (
-              <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 20 }}>
+              <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 20 }}>
                 No uploads in progress
               </p>
             )}

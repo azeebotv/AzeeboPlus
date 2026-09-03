@@ -85,9 +85,7 @@ export default function GameplayScreen() {
 
   useEffect(() => {
     if (isGameOver) {
-      try {
-        analytics.gameCompleted('trivia', score, 60 - timeLeft);
-      } catch {}
+              analytics.gameCompleted('trivia', score, 60 - timeLeft);
     }
   }, [isGameOver]);
 

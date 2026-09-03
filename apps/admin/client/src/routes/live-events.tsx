@@ -4,10 +4,10 @@ import { adminApi } from '@/lib/api/admin';
 import type { LiveEventAdmin } from '@/lib/admin-types';
 
 const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
-  scheduled: { bg: 'rgba(232,66,10,0.15)', color: '#E8420A' },
-  live: { bg: 'rgba(34,197,94,0.15)', color: '#22c55e' },
-  ended: { bg: 'rgba(107,114,128,0.15)', color: '#6b7280' },
-  cancelled: { bg: 'rgba(239,68,68,0.15)', color: '#ef4444' },
+  scheduled: { bg: 'rgba(232,66,10,0.15)', color: 'var(--admin-orange)' },
+  live: { bg: 'rgba(34,197,94,0.15)', color: 'var(--admin-emerald)' },
+  ended: { bg: 'rgba(107,114,128,0.15)', color: 'var(--admin-grey)' },
+  cancelled: { bg: 'rgba(239,68,68,0.15)', color: 'var(--admin-red)' },
 };
 
 function formatCurrency(amount: number, currency = 'NGN') {
@@ -156,7 +156,7 @@ export default function LiveEventsPage() {
       >
         <div>
           <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Live Events</h1>
-          <p style={{ color: '#9A8A7A' }}>{data?.total ?? 0} events</p>
+          <p style={{ color: 'var(--admin-text-muted)' }}>{data?.total ?? 0} events</p>
         </div>
         <button
           onClick={openCreate}
@@ -165,7 +165,7 @@ export default function LiveEventsPage() {
             borderRadius: 10,
             border: 'none',
             background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-            color: '#fff',
+            color: 'white',
             fontWeight: 600,
             fontSize: 14,
             cursor: 'pointer',
@@ -186,8 +186,8 @@ export default function LiveEventsPage() {
               fontSize: 13,
               fontWeight: 500,
               border: 'none',
-              backgroundColor: statusFilter === s ? '#E8420A' : 'rgba(255,255,255,0.05)',
-              color: statusFilter === s ? '#fff' : '#9A8A7A',
+              backgroundColor: statusFilter === s ? 'var(--admin-orange)' : 'rgba(255,255,255,0.05)',
+              color: statusFilter === s ? 'white' : 'var(--admin-text-muted)',
               cursor: 'pointer',
             }}
           >
@@ -197,25 +197,25 @@ export default function LiveEventsPage() {
       </div>
 
       {isLoading && (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
       )}
       {error && (
-        <p style={{ color: '#ef4444', textAlign: 'center', padding: 40 }}>Failed to load events</p>
+        <p style={{ color: 'var(--admin-red)', textAlign: 'center', padding: 40 }}>Failed to load events</p>
       )}
 
       {!isLoading && !error && (
-        <div style={{ borderRadius: 16, border: '1px solid #2A1A1A', overflow: 'hidden' }}>
+        <div style={{ borderRadius: 16, border: '1px solid var(--admin-surface)', overflow: 'hidden' }}>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid #2A1A1A' }}>
+                <tr style={{ borderBottom: '1px solid var(--admin-surface)' }}>
                   {['Title', 'Status', 'Price', 'Scheduled', 'Tickets', 'Actions'].map((h) => (
                     <th
                       key={h}
                       style={{
                         padding: '12px 16px',
                         textAlign: 'left',
-                        color: '#9A8A7A',
+                        color: 'var(--admin-text-muted)',
                         fontWeight: 600,
                         fontSize: 12,
                         textTransform: 'uppercase',
@@ -230,13 +230,13 @@ export default function LiveEventsPage() {
                 {events.map((event) => {
                   const statusStyle = STATUS_STYLES[event.status] || {
                     bg: 'rgba(107,114,128,0.15)',
-                    color: '#6b7280',
+                    color: 'var(--admin-grey)',
                   };
                   return (
                     <tr
                       key={event.id}
                       style={{
-                        borderBottom: '1px solid #1A0A0A',
+                        borderBottom: '1px solid var(--admin-bg)',
                         backgroundColor: 'rgba(255,255,255,0.02)',
                       }}
                     >
@@ -257,13 +257,13 @@ export default function LiveEventsPage() {
                           {event.status}
                         </span>
                       </td>
-                      <td style={{ padding: '12px 16px', fontWeight: 700, color: '#E8420A' }}>
+                      <td style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--admin-orange)' }}>
                         {formatCurrency(Number(event.ticketPrice), event.currency)}
                       </td>
-                      <td style={{ padding: '12px 16px', color: '#9A8A7A', fontSize: 13 }}>
+                      <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)', fontSize: 13 }}>
                         {formatDate(event.scheduledAt)}
                       </td>
-                      <td style={{ padding: '12px 16px', color: '#9A8A7A', fontSize: 13 }}>
+                      <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)', fontSize: 13 }}>
                         {event._count?.tickets ?? 0}
                         {event.maxViewers ? ` / ${event.maxViewers}` : ''}
                       </td>
@@ -274,9 +274,9 @@ export default function LiveEventsPage() {
                             style={{
                               padding: '4px 10px',
                               borderRadius: 6,
-                              border: '1px solid #2A1A1A',
+                              border: '1px solid var(--admin-surface)',
                               background: 'transparent',
-                              color: '#9A8A7A',
+                              color: 'var(--admin-text-muted)',
                               fontSize: 11,
                               cursor: 'pointer',
                             }}
@@ -297,7 +297,7 @@ export default function LiveEventsPage() {
                                 borderRadius: 6,
                                 border: '1px solid rgba(239,68,68,0.3)',
                                 background: 'transparent',
-                                color: '#ef4444',
+                                color: 'var(--admin-red)',
                                 fontSize: 11,
                                 cursor: 'pointer',
                               }}
@@ -312,7 +312,7 @@ export default function LiveEventsPage() {
                 })}
                 {events.length === 0 && (
                   <tr>
-                    <td colSpan={6} style={{ textAlign: 'center', padding: 40, color: '#9A8A7A' }}>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>
                       No live events found
                     </td>
                   </tr>
@@ -339,9 +339,9 @@ export default function LiveEventsPage() {
         >
           <div
             style={{
-              backgroundColor: '#1A0A0A',
+              backgroundColor: 'var(--admin-bg)',
               borderRadius: 16,
-              border: '1px solid #2A1A1A',
+              border: '1px solid var(--admin-surface)',
               padding: 24,
               maxWidth: 560,
               width: '100%',
@@ -355,7 +355,7 @@ export default function LiveEventsPage() {
             </h2>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
                 Title
               </label>
               <input
@@ -365,9 +365,9 @@ export default function LiveEventsPage() {
                   width: '100%',
                   padding: '10px 12px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
-                  backgroundColor: '#0D0505',
-                  color: '#F5F0EB',
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
                   fontSize: 14,
                   outline: 'none',
                 }}
@@ -375,7 +375,7 @@ export default function LiveEventsPage() {
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
                 Description
               </label>
               <textarea
@@ -386,9 +386,9 @@ export default function LiveEventsPage() {
                   width: '100%',
                   padding: '10px 12px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
-                  backgroundColor: '#0D0505',
-                  color: '#F5F0EB',
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
                   fontSize: 14,
                   outline: 'none',
                   resize: 'vertical',
@@ -397,7 +397,7 @@ export default function LiveEventsPage() {
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
                 Thumbnail URL
               </label>
               <input
@@ -407,9 +407,9 @@ export default function LiveEventsPage() {
                   width: '100%',
                   padding: '10px 12px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
-                  backgroundColor: '#0D0505',
-                  color: '#F5F0EB',
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
                   fontSize: 14,
                   outline: 'none',
                 }}
@@ -421,7 +421,7 @@ export default function LiveEventsPage() {
             >
               <div>
                 <label
-                  style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}
+                  style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}
                 >
                   Ticket Price
                 </label>
@@ -434,9 +434,9 @@ export default function LiveEventsPage() {
                     width: '100%',
                     padding: '10px 12px',
                     borderRadius: 8,
-                    border: '1px solid #2A1A1A',
-                    backgroundColor: '#0D0505',
-                    color: '#F5F0EB',
+                    border: '1px solid var(--admin-surface)',
+                    backgroundColor: 'var(--admin-dark)',
+                    color: 'var(--admin-text)',
                     fontSize: 14,
                     outline: 'none',
                   }}
@@ -444,7 +444,7 @@ export default function LiveEventsPage() {
               </div>
               <div>
                 <label
-                  style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}
+                  style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}
                 >
                   Currency
                 </label>
@@ -455,9 +455,9 @@ export default function LiveEventsPage() {
                     width: '100%',
                     padding: '10px 12px',
                     borderRadius: 8,
-                    border: '1px solid #2A1A1A',
-                    backgroundColor: '#0D0505',
-                    color: '#F5F0EB',
+                    border: '1px solid var(--admin-surface)',
+                    backgroundColor: 'var(--admin-dark)',
+                    color: 'var(--admin-text)',
                     fontSize: 14,
                     outline: 'none',
                   }}
@@ -473,7 +473,7 @@ export default function LiveEventsPage() {
             >
               <div>
                 <label
-                  style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}
+                  style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}
                 >
                   Duration (min)
                 </label>
@@ -486,9 +486,9 @@ export default function LiveEventsPage() {
                     width: '100%',
                     padding: '10px 12px',
                     borderRadius: 8,
-                    border: '1px solid #2A1A1A',
-                    backgroundColor: '#0D0505',
-                    color: '#F5F0EB',
+                    border: '1px solid var(--admin-surface)',
+                    backgroundColor: 'var(--admin-dark)',
+                    color: 'var(--admin-text)',
                     fontSize: 14,
                     outline: 'none',
                   }}
@@ -496,7 +496,7 @@ export default function LiveEventsPage() {
               </div>
               <div>
                 <label
-                  style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}
+                  style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}
                 >
                   Max Viewers
                 </label>
@@ -509,9 +509,9 @@ export default function LiveEventsPage() {
                     width: '100%',
                     padding: '10px 12px',
                     borderRadius: 8,
-                    border: '1px solid #2A1A1A',
-                    backgroundColor: '#0D0505',
-                    color: '#F5F0EB',
+                    border: '1px solid var(--admin-surface)',
+                    backgroundColor: 'var(--admin-dark)',
+                    color: 'var(--admin-text)',
                     fontSize: 14,
                     outline: 'none',
                   }}
@@ -520,7 +520,7 @@ export default function LiveEventsPage() {
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
                 Scheduled Date & Time
               </label>
               <input
@@ -531,9 +531,9 @@ export default function LiveEventsPage() {
                   width: '100%',
                   padding: '10px 12px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
-                  backgroundColor: '#0D0505',
-                  color: '#F5F0EB',
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
                   fontSize: 14,
                   outline: 'none',
                 }}
@@ -546,9 +546,9 @@ export default function LiveEventsPage() {
                   type="checkbox"
                   checked={form.chatEnabled}
                   onChange={(e) => setForm({ ...form, chatEnabled: e.target.checked })}
-                  style={{ width: 16, height: 16, accentColor: '#E8420A' }}
+                  style={{ width: 16, height: 16, accentColor: 'var(--admin-orange)' }}
                 />
-                <span style={{ fontSize: 13, color: '#9A8A7A' }}>Enable Chat</span>
+                <span style={{ fontSize: 13, color: 'var(--admin-text-muted)' }}>Enable Chat</span>
               </label>
             </div>
 
@@ -563,9 +563,9 @@ export default function LiveEventsPage() {
                   border: 'none',
                   background:
                     !form.title || !form.scheduledAt
-                      ? '#2A1A1A'
+                      ? 'var(--admin-surface)'
                       : 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                  color: !form.title || !form.scheduledAt ? '#666' : '#fff',
+                  color: !form.title || !form.scheduledAt ? 'var(--admin-grey)' : 'white',
                   fontWeight: 600,
                   fontSize: 14,
                   cursor: !form.title || !form.scheduledAt ? 'not-allowed' : 'pointer',
@@ -578,9 +578,9 @@ export default function LiveEventsPage() {
                 style={{
                   padding: '12px 20px',
                   borderRadius: 10,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--admin-surface)',
                   background: 'transparent',
-                  color: '#9A8A7A',
+                  color: 'var(--admin-text-muted)',
                   fontWeight: 600,
                   fontSize: 14,
                   cursor: 'pointer',

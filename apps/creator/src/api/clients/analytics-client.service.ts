@@ -55,8 +55,11 @@ export class AnalyticsClientService {
   private readonly analyticsServiceUrl: string;
 
   constructor(@Inject(ConfigService) private readonly configService: ConfigService) {
-    this.analyticsServiceUrl =
-      this.configService.get<string>('API_GATEWAY_URL') || 'http://localhost:3013';
+    const url = this.configService.get<string>('API_GATEWAY_URL');
+    if (!url && process.env.NODE_ENV === 'production') {
+      throw new Error('API_GATEWAY_URL environment variable must be set in production');
+    }
+    this.analyticsServiceUrl = url || 'http://localhost:3013';
   }
 
   private async request<T>(

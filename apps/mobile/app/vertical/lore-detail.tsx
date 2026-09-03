@@ -37,9 +37,7 @@ export default function LoreDetailScreen() {
     try {
       const res = await apiClient.get<LoreDetail>(`/v1/vertical/lore/${id}`);
       setData(res);
-      try {
-        analytics.verticalLoreExplored(res.id);
-      } catch {}
+              analytics.verticalLoreExplored(res.id);
     } catch {
       setError('Failed to load lore');
     } finally {

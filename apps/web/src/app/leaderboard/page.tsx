@@ -41,9 +41,9 @@ export default function LeaderboardPage(): React.JSX.Element {
 
   const getRankStyle = (rank: number): { bg: string; color: string } => {
     if (rank === 1)
-      return { bg: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)', color: '#1A0A0A' };
+      return { bg: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)', color: 'var(--brand-near-black)' };
     if (rank === 2)
-      return { bg: 'linear-gradient(135deg, #C0C0C0 0%, #A0A0A0 100%)', color: '#1A0A0A' };
+      return { bg: 'linear-gradient(135deg, #C0C0C0 0%, #A0A0A0 100%)', color: 'var(--brand-near-black)' };
     if (rank === 3)
       return {
         bg: 'linear-gradient(135deg, #CD7F32 0%, #A0522D 100%)',
@@ -97,7 +97,7 @@ export default function LeaderboardPage(): React.JSX.Element {
                   timeframe === key
                     ? 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)'
                     : 'transparent',
-                color: timeframe === key ? '#fff' : 'var(--text-secondary)',
+                color: timeframe === key ? 'white' : 'var(--text-secondary)',
                 fontWeight: 600,
                 fontSize: 14,
                 cursor: 'pointer',
@@ -121,7 +121,7 @@ export default function LeaderboardPage(): React.JSX.Element {
           />
         ) : entries.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>🏆</div>
+            <div style={{ fontSize: 48, marginBottom: 16 }}></div>
             <h3 style={{ fontSize: 18 }}>No leaderboard data yet</h3>
             <p style={{ color: 'var(--text-secondary)', marginTop: 8 }}>
               Start engaging to climb the ranks!

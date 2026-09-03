@@ -10,22 +10,13 @@ import { OptimizedImage } from '@/components/OptimizedImage';
 import analytics from '@/lib/analytics';
 
 const categories = [
-  { name: 'Reality', href: '/reality', icon: '🎭', color: 'var(--brand-orange)' },
-  { name: 'Comedy', href: '/comedy', icon: '😂', color: '#FF6B35' },
-  { name: 'Movies', href: '/movies', icon: '🎬', color: 'var(--color-success-400)' },
-  { name: 'Vertical', href: '/vertical', icon: '📱', color: 'var(--color-secondary-400)' },
-  { name: 'Sports', href: '/sports', icon: '⚽', color: 'var(--color-warning-500)' },
-  { name: 'Lifestyle', href: '/lifestyle', icon: '🌟', color: '#EC4899' },
+  { name: 'Reality', href: '/reality', icon: 'Drama', color: 'var(--brand-orange)' },
+  { name: 'Comedy', href: '/comedy', icon: 'Laugh', color: 'var(--brand-orange)' },
+  { name: 'Movies', href: '/movies', icon: 'Film', color: 'var(--color-success-400)' },
+  { name: 'Vertical', href: '/vertical', icon: 'Smartphone', color: 'var(--color-secondary-400)' },
+  { name: 'Sports', href: '/sports', icon: 'CircleDot', color: 'var(--color-warning-500)' },
+  { name: 'Lifestyle', href: '/lifestyle', icon: 'Star', color: 'var(--brand-pink)' },
 ];
-
-export const metadata = {
-  title: 'Watch | Azeebo',
-  description: 'Discover and stream content across all Azeebo+ universes.',
-  openGraph: {
-    title: 'Watch | Azeebo',
-    description: 'Discover and stream content across all Azeebo+ universes.',
-  },
-};
 
 export default function WatchPage(): React.JSX.Element {
   useEffect(() => {

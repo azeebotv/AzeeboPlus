@@ -212,7 +212,7 @@ function LiveChatPageContent(): React.JSX.Element {
                             color: 'rgba(255,255,255,0.8)',
                           }}
                         >
-                          {msg.type === 'vote' ? '🗳️ ' : ''}
+                          {msg.type === 'vote' ? 'Vote ' : ''}
                           {msg.content}
                         </p>
                       </div>
@@ -286,8 +286,8 @@ function LiveChatPageContent(): React.JSX.Element {
                           style={{
                             backgroundColor: participant.isOnline
                               ? 'var(--color-success-500)'
-                              : '#6B7280',
-                            borderColor: '#1A0A0A',
+                              : 'var(--brand-grey)',
+                            borderColor: 'var(--brand-near-black)',
                           }}
                         />
                       </div>

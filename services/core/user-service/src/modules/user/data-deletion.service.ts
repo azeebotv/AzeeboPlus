@@ -47,29 +47,33 @@ export class DataDeletionService {
           email: `deleted_${userId}@anonymized.local`,
           displayName: 'Deleted User',
           avatar: null,
-          preferences: null,
-          password: '',
-          mfaSecret: null,
-          mfaBackupCodes: null,
         },
       });
       deletedData.push('user_profile');
 
-      // Delete sessions
-      await this.prisma.session.deleteMany({ where: { userId } });
-      deletedData.push('sessions');
+      // Delete preferences
+      await this.prisma.userPreferences.deleteMany({ where: { userId } });
+      deletedData.push('preferences');
 
-      // Delete OTPs
-      await this.prisma.otp.deleteMany({ where: { userId } });
-      deletedData.push('otps');
+      // Delete watch history
+      await this.prisma.watchHistory.deleteMany({ where: { userId } });
+      deletedData.push('watch_history');
 
-      // Delete social accounts
-      await this.prisma.socialAccount.deleteMany({ where: { userId } });
-      deletedData.push('social_accounts');
+      // Delete saved items
+      await this.prisma.savedItem.deleteMany({ where: { userId } });
+      deletedData.push('saved_items');
 
-      // Delete devices
-      await this.prisma.registeredDevice.deleteMany({ where: { userId } });
-      deletedData.push('devices');
+      // Delete following relationships
+      await this.prisma.following.deleteMany({ where: { followerId: userId } });
+      deletedData.push('following');
+
+      // Delete universe affinities
+      await this.prisma.userUniverseAffinity.deleteMany({ where: { userId } });
+      deletedData.push('universe_affinities');
+
+      // Delete audit logs for this user
+      await this.prisma.auditLog.deleteMany({ where: { actorId: userId } });
+      deletedData.push('audit_logs');
 
       this.logger.warn(`Data deletion completed for user: ${userId}`);
 
@@ -78,8 +82,9 @@ export class DataDeletionService {
         deletedAt: new Date(),
         deletedData,
       };
-    } catch (error) {
-      this.logger.error(`Data deletion failed for user: ${userId}`, error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Data deletion failed for user ${userId}: ${message}`);
       throw error;
     }
   }

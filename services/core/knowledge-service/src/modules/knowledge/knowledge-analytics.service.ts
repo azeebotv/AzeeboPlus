@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 // ============================================================================
 // Knowledge Parity Analytics (AZP-KNOW-012)
@@ -70,9 +70,6 @@ export interface KnowledgeHealthReport {
 
 @Injectable()
 export class KnowledgeAnalyticsService {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private readonly logger = new Logger(KnowledgeAnalyticsService.name);
-
   /**
    * Calculate knowledge coverage metrics
    */

@@ -15,7 +15,7 @@ export default function GlobalError({
           style={{ backgroundColor: 'var(--brand-near-black)' }}
         >
           <div className="text-center max-w-md mx-auto px-6">
-            <div className="text-6xl mb-6">💥</div>
+            <div className="text-6xl mb-6">Zap</div>
             <h1 className="text-2xl font-bold mb-4" style={{ color: 'var(--brand-white)' }}>
               Critical Error
             </h1>

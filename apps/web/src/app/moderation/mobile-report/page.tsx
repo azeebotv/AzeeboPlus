@@ -1,14 +1,6 @@
 'use client';
 import { Suspense, lazy, useEffect, useState } from 'react';
 
-export const metadata = {
-  title: 'Report Content | Azeebo',
-  description: 'Submit a report for inappropriate or violating content on Azeebo.',
-  openGraph: {
-    title: 'Report Content | Azeebo',
-    description: 'Submit a report for inappropriate or violating content on Azeebo.',
-  },
-};
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
@@ -22,58 +14,58 @@ const REASONS = [
   {
     id: 'spam',
     label: 'Spam or misleading',
-    icon: '🚫',
+    icon: 'Ban',
     description: 'Repetitive, unwanted, or deceptive content',
   },
   {
     id: 'harassment',
     label: 'Harassment or hate speech',
-    icon: '⚠️',
+    icon: 'AlertTriangle',
     description: 'Targeting individuals with harmful language',
   },
   {
     id: 'violence',
     label: 'Violence or graphic content',
-    icon: '🔒',
+    icon: 'Lock',
     description: 'Promoting or depicting violence',
   },
   {
     id: 'inappropriate',
     label: 'Sexually explicit content',
-    icon: '🔞',
+    icon: 'ShieldAlert',
     description: 'Adult content not suitable for all ages',
   },
   {
     id: 'copyright',
     label: 'Copyright infringement',
-    icon: '©️',
+    icon: 'Copyright',
     description: 'Using content without proper authorization',
   },
   {
     id: 'misinformation',
     label: 'Misinformation',
-    icon: '📰',
+    icon: 'Newspaper',
     description: 'False or misleading information',
   },
   {
     id: 'bullying',
     label: 'Bullying',
-    icon: '😢',
+    icon: 'Frown',
     description: 'Repeated targeting to cause harm',
   },
   {
     id: 'self-harm',
     label: 'Self-harm',
-    icon: '💔',
+    icon: 'Heart',
     description: 'Content promoting self-harm or suicide',
   },
   {
     id: 'illegal',
     label: 'Illegal activities',
-    icon: '⚖️',
+    icon: 'Scale',
     description: 'Content depicting illegal activities',
   },
-  { id: 'other', label: 'Other', icon: '📝', description: 'Reason not listed above' },
+  { id: 'other', label: 'Other', icon: 'FileText', description: 'Reason not listed above' },
 ];
 
 function MobileReportPageContent(): React.JSX.Element {
@@ -291,7 +283,7 @@ export default function MobileReportPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

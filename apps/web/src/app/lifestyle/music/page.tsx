@@ -1,14 +1,13 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Lifestyle Music  - Azeebo+',
+  description: 'Lifestyle Music  on Azeebo+',
+};
+
 'use client';
 import { Suspense, lazy, useEffect } from 'react';
 
-export const metadata = {
-  title: 'Music | Azeebo',
-  description: 'Discover the latest hits, trending tracks, and exclusive music on Azeebo.',
-  openGraph: {
-    title: 'Music | Azeebo',
-    description: 'Discover the latest hits, trending tracks, and exclusive music on Azeebo.',
-  },
-};
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { api } from '@/lib/api';
@@ -80,7 +79,7 @@ export default function MusicPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

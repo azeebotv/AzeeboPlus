@@ -110,13 +110,15 @@ function TimelinePageContent(): React.JSX.Element {
                     className="absolute left-2 sm:left-6 top-6 w-4 h-4 rounded-full border-2"
                     style={{
                       backgroundColor: 'var(--brand-orange)',
-                      borderColor: '#1A0A0A',
+                      borderColor: 'var(--brand-near-black)',
                       boxShadow: '0 0 10px rgba(232,66,10,0.5)',
                     }}
                   />
                   <GlowCard universe="vertical">
                     <div className="p-5">
-                      <span className="text-xs text-[#E8420A] font-semibold">{event.date}</span>
+                      <span className="text-xs text-[var(--brand-orange)] font-semibold">
+                        {event.date}
+                      </span>
                       {event.universe && (
                         <span className="text-xs text-white/40 ml-2">· {event.universe}</span>
                       )}
@@ -124,7 +126,7 @@ function TimelinePageContent(): React.JSX.Element {
                       <p className="text-sm text-white/50 mt-2">{event.description}</p>
                       <Link
                         href={`/vertical/lore/${event.slug}`}
-                        className="inline-block mt-3 text-sm text-[#E8420A] hover:underline"
+                        className="inline-block mt-3 text-sm text-[var(--brand-orange)] hover:underline"
                       >
                         Read more →
                       </Link>
@@ -148,20 +150,11 @@ function TimelinePageContent(): React.JSX.Element {
 
 const LazyTimelinePage = lazy(() => Promise.resolve({ default: TimelinePageContent }));
 
-export const metadata = {
-  title: 'Timeline | Azeebo',
-  description: 'Trace the chronology of your favorite universes and characters.',
-  openGraph: {
-    title: 'Timeline | Azeebo',
-    description: 'Trace the chronology of your favorite universes and characters.',
-  },
-};
-
 export default function TimelinePage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

@@ -255,7 +255,7 @@ export class S3Service {
       );
       return 0;
     } finally {
-      await unlink(tmpFile).catch(() => {});
+      await unlink(tmpFile).catch(() => { /* temp file may already be deleted */ });
     }
   }
 

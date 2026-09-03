@@ -38,9 +38,7 @@ export default function SpecialDetailScreen() {
       try {
         const res = await apiClient.get<SpecialDetail>(`/comedy/specials/${id}`);
         setSpecial(res);
-        try {
-          analytics.comedyClipViewed(String(id));
-        } catch {}
+                  analytics.comedyClipViewed(String(id));
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load special');
       } finally {

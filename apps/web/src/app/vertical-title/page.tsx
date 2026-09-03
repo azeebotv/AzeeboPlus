@@ -160,7 +160,7 @@ export default function VerticalTitlePage(): React.JSX.Element {
                       background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
                     }}
                   >
-                    <span>▶</span> Play Episode 1
+                    <span></span> Play Episode 1
                   </Link>
                   <button
                     onClick={() => setIsFollowing((f) => !f)}
@@ -170,7 +170,7 @@ export default function VerticalTitlePage(): React.JSX.Element {
                         : 'bg-white/10 text-white/90 hover:bg-white/15'
                     }`}
                   >
-                    {isFollowing ? '✓ In Watchlist' : '+ Add to Watchlist'}
+                    {isFollowing ? 'Check In Watchlist' : '+ Add to Watchlist'}
                   </button>
                 </div>
               </div>

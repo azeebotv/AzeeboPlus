@@ -84,11 +84,11 @@ export default function TippingPage() {
     <div>
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Tipping Dashboard</h1>
-        <p style={{ color: '#9A8A7A' }}>Creator tipping overview and leaderboard</p>
+        <p style={{ color: 'var(--admin-text-muted)' }}>Creator tipping overview and leaderboard</p>
       </div>
 
       {loadingCreators ? (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
           Loading tipping data...
         </p>
       ) : (
@@ -102,23 +102,23 @@ export default function TippingPage() {
             }}
           >
             {[
-              { label: 'Total Tips', value: totalTips.toLocaleString(), color: '#E8420A' },
+              { label: 'Total Tips', value: totalTips.toLocaleString(), color: 'var(--admin-orange)' },
               {
                 label: 'Total Amount',
                 value: `₦${totalAmount.toLocaleString()}`,
-                color: '#0D3B2E',
+                color: 'var(--admin-green)',
               },
               {
                 label: 'Active Tippers',
                 value: creators.length.toLocaleString(),
-                color: '#F59E0B',
+                color: 'var(--admin-amber)',
               },
               {
                 label: 'Tiers Unlocked',
                 value: Object.keys(tierDistribution)
                   .filter((t) => t !== 'none')
                   .length.toString(),
-                color: '#3884FF',
+                color: 'var(--admin-blue)',
               },
             ].map((c, i) => (
               <div
@@ -126,14 +126,14 @@ export default function TippingPage() {
                 style={{
                   padding: 16,
                   borderRadius: 12,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--admin-surface)',
                   backgroundColor: 'rgba(26,10,10,0.5)',
                 }}
               >
                 <p
                   style={{
                     fontSize: 11,
-                    color: '#9A8A7A',
+                    color: 'var(--admin-text-muted)',
                     marginBottom: 6,
                     textTransform: 'uppercase',
                     letterSpacing: 0.5,
@@ -152,24 +152,24 @@ export default function TippingPage() {
             <div
               style={{
                 borderRadius: 16,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--admin-surface)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
                 padding: 20,
               }}
             >
               <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 12 }}>Tier Distribution</h3>
               {Object.entries(tierDistribution).length === 0 ? (
-                <p style={{ color: '#9A8A7A', fontSize: 13 }}>No tier data available</p>
+                <p style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>No tier data available</p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {Object.entries(tierDistribution)
                     .sort(([, a], [, b]) => b - a)
                     .map(([tier, count]) => {
                       const colors: Record<string, string> = {
-                        bronze: '#B87333',
-                        silver: '#C0C0C0',
-                        gold: '#FFD700',
-                        platinum: '#E5E4E2',
+                        bronze: 'var(--admin-orange)',
+                        silver: 'var(--admin-silver)',
+                        gold: 'var(--admin-amber)',
+                        platinum: 'var(--admin-silver)',
                       };
                       return (
                         <div key={tier} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -178,7 +178,7 @@ export default function TippingPage() {
                               width: 10,
                               height: 10,
                               borderRadius: '50%',
-                              backgroundColor: colors[tier] || '#6B7280',
+                              backgroundColor: colors[tier] || 'var(--admin-grey)',
                             }}
                           />
                           <span
@@ -186,12 +186,12 @@ export default function TippingPage() {
                               flex: 1,
                               fontSize: 14,
                               textTransform: 'capitalize',
-                              color: '#F5F0EB',
+                              color: 'var(--admin-text)',
                             }}
                           >
                             {tier === 'none' ? 'No Tier' : tier}
                           </span>
-                          <span style={{ fontSize: 14, fontWeight: 600, color: '#9A8A7A' }}>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--admin-text-muted)' }}>
                             {count}
                           </span>
                         </div>
@@ -204,7 +204,7 @@ export default function TippingPage() {
             <div
               style={{
                 borderRadius: 16,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--admin-surface)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
                 padding: 20,
               }}
@@ -213,7 +213,7 @@ export default function TippingPage() {
                 Top Creators by Tips
               </h3>
               {creators.length === 0 ? (
-                <p style={{ color: '#9A8A7A', fontSize: 13 }}>No tipping activity yet</p>
+                <p style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>No tipping activity yet</p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {creators.slice(0, 10).map((c, i) => (
@@ -221,16 +221,16 @@ export default function TippingPage() {
                       key={c.creatorId}
                       style={{ display: 'flex', alignItems: 'center', gap: 10 }}
                     >
-                      <span style={{ fontSize: 12, fontWeight: 700, color: '#9A8A7A', width: 20 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--admin-text-muted)', width: 20 }}>
                         #{i + 1}
                       </span>
-                      <span style={{ flex: 1, fontSize: 13, color: '#F5F0EB' }}>
+                      <span style={{ flex: 1, fontSize: 13, color: 'var(--admin-text)' }}>
                         {c.creatorName}
                       </span>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: '#E8420A' }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--admin-orange)' }}>
                         ₦{c.totalAmount.toLocaleString()}
                       </span>
-                      <span style={{ fontSize: 11, color: '#9A8A7A' }}>{c.totalTips} tips</span>
+                      <span style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>{c.totalTips} tips</span>
                       {c.topTier && (
                         <span
                           style={{
@@ -238,16 +238,16 @@ export default function TippingPage() {
                             borderRadius: 4,
                             fontSize: 10,
                             fontWeight: 600,
-                            color: '#fff',
+                            color: 'white',
                             textTransform: 'uppercase',
                             backgroundColor:
                               c.topTier === 'platinum'
-                                ? '#E5E4E2'
+                                ? 'var(--admin-silver)'
                                 : c.topTier === 'gold'
-                                  ? '#FFD700'
+                                  ? 'var(--admin-amber)'
                                   : c.topTier === 'silver'
-                                    ? '#C0C0C0'
-                                    : '#B87333',
+                                    ? 'var(--admin-silver)'
+                                    : 'var(--admin-orange)',
                           }}
                         >
                           {c.topTier}

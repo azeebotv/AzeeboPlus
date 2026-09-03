@@ -187,7 +187,7 @@ export default function MusicTrackList({
                     onClick={(e) => {
                       e.stopPropagation();
                     }}
-                    className="text-white/30 hover:text-[#E8420A] transition-colors"
+                    className="text-white/30 hover:text-[var(--brand-orange)] transition-colors"
                   >
                     <svg
                       width="16"

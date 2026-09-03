@@ -25,46 +25,39 @@ export class GatewayAuthGuard implements CanActivate {
 
   /**
    * Path patterns that do not require authentication.
-   * These are auth endpoints where the user doesn't have a token yet.
+   * Only truly public endpoints are listed here — health, auth, docs,
+   * public settings, and read-only content listings.
+   *
+   * Creator profiles, engagement data, subscription plans, and
+   * universe-specific trending require authentication for
+   * personalized behavior and access control.
    */
   private static readonly PUBLIC_PATH_PATTERNS: RegExp[] = [
-    // Auth endpoints (pre-login)
+    // Auth endpoints (pre-login — user has no token yet)
     /^\/(api\/)?(v\d+\/)?auth\/(login|signup|register|refresh|forgot-password|reset-password|verify-email|resend-verification|social\/(google|apple)(\/authorize)?|social\/callback|otp\/(send|verify))$/,
     /^\/(api\/)?(v\d+\/)?auth\/health$/,
-    // Gateway health
+    // Gateway health checks
     /^\/(health|ready|live)$/,
     // Client feature-flag bootstrap (public, per-user evaluation)
     /^\/feature-flags\/bootstrap$/,
     // Swagger UI
     /^\/docs(\/.*)?$/,
-    // Public settings/universes (content-service)
+    // Public settings/universes (no user context needed)
     /^\/api\/v\d+\/public\//,
-    // Public content browsing — explicit routes only, no catch-all
-    /^\/api\/v\d+\/content\/(home|watch|featured|trending|new-releases|featured-slides|popular-region|search|categories|tags)$/,
-    // Content detail (read-only, @Public on controller)
+    // Public content browsing — read-only listings (no personalization)
+    /^\/api\/v\d+\/content\/(home|watch|featured|trending|new-releases|featured-slides|popular-region|categories|tags)$/,
+    // Content detail (read-only)
     /^\/api\/v\d+\/content\/[^/]+$/,
     // Content comments and related
     /^\/api\/v\d+\/content\/[^/]+\/(comments|related)$/,
-    // Universe-specific content by slug (read-only)
+    // Universe-specific content by slug
     /^\/api\/v\d+\/content\/universe\/[^/]+$/,
     /^\/api\/v\d+\/content\/category\/[^/]+$/,
     // Universe detail
     /^\/api\/v\d+\/universe\/[^/]+$/,
-    // Creator discovery and public profiles — explicit sub-routes
-    /^\/api\/v\d+\/creators\/discover$/,
-    /^\/api\/v\d+\/creators\/[^/]+\/content$/,
-    /^\/api\/v\d+\/creators\/[^/]+$/,
-    // Universe-specific trending and listing (read-only) — explicit sub-routes
-    /^\/api\/v\d+\/(comedy|games|reality|movies|sports|lifestyle|vertical)\/(trending|featured|popular|new|list)$/,
-    /^\/api\/v\d+\/(comedy|games|reality|movies|sports|lifestyle|vertical)\/[^/]+$/,
-    /^\/api\/v\d+\/(comedy|games|reality|movies|sports|lifestyle|vertical)$/,
     // Search suggestions and trending searches
     /^\/api\/v\d+\/search\/(trending|suggestions)$/,
-    // Engagement public data (leaderboard, rankings, prediction results)
-    /^\/api\/v\d+\/engagement\/(leaderboard|rankings|predictions\/[^/]+\/results)$/,
-    // Subscription plans (public, for upsell)
-    /^\/api\/v\d+\/subscription\/plans(\/[^/]+)?$/,
-    // Moderation report types
+    // Moderation report types (needed for report forms before login)
     /^\/api\/v\d+\/moderation\/report-types$/,
   ];
 

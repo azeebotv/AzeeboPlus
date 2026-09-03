@@ -18,15 +18,6 @@ interface Character {
   story?: string;
 }
 
-export const metadata = {
-  title: 'Characters | Azeebo',
-  description: 'Explore characters from the Azeebo+ vertical universe and their stories.',
-  openGraph: {
-    title: 'Characters | Azeebo',
-    description: 'Explore characters from the Azeebo+ vertical universe and their stories.',
-  },
-};
-
 export default function VerticalCharactersPage(): React.JSX.Element {
   useEffect(() => {
     analytics.pageView('vertical-characters');

@@ -24,6 +24,22 @@ const DEFAULT_CONFIG: SentryConfig = {
 
 let initialized = false;
 
+// Typed wrapper for optional @sentry/nextjs dynamic import
+
+let sentryModule: any = null;
+
+async function getSentry(): Promise<any> {
+  if (sentryModule) return sentryModule;
+  try {
+    // Use variable to prevent TypeScript from resolving the module at compile time
+    const mod = '@sentry/nextjs';
+    sentryModule = await import(/* webpackIgnore: true */ mod);
+    return sentryModule;
+  } catch {
+    return null;
+  }
+}
+
 export function initSentry(config: Partial<SentryConfig> = {}): void {
   if (initialized || typeof window === 'undefined') return;
 
@@ -35,46 +51,40 @@ export function initSentry(config: Partial<SentryConfig> = {}): void {
   }
 
   // Dynamic import to avoid bundling Sentry in client if not needed
-  // @ts-expect-error - optional dependency
-  import('@sentry/nextjs')
-    .then((Sentry: any) => {
-      Sentry.init({
-        dsn: mergedConfig.dsn,
-        environment: mergedConfig.environment,
-        release: mergedConfig.release,
-        tracesSampleRate: mergedConfig.tracesSampleRate,
-        replaysSessionSampleRate: mergedConfig.replaysSessionSampleRate,
-        replaysOnErrorSampleRate: mergedConfig.replaysOnErrorSampleRate,
+  getSentry()?.then((Sentry) => {
+    Sentry.init({
+      dsn: mergedConfig.dsn,
+      environment: mergedConfig.environment,
+      release: mergedConfig.release,
+      tracesSampleRate: mergedConfig.tracesSampleRate,
+      replaysSessionSampleRate: mergedConfig.replaysSessionSampleRate,
+      replaysOnErrorSampleRate: mergedConfig.replaysOnErrorSampleRate,
 
-        // Don't send errors in development
-        enabled: mergedConfig.environment !== 'development',
+      // Don't send errors in development
+      enabled: mergedConfig.environment !== 'development',
 
-        // Attach context
-        beforeSend(event: any) {
-          // Don't send password or token data
-          if (event.request?.data) {
-            const data = event.request.data as Record<string, unknown>;
-            delete data.password;
-            delete data.token;
-            delete data.refreshToken;
-          }
-          return event;
-        },
-      });
-
-      initialized = true;
-    })
-    .catch(() => {
-      // Sentry not installed, silently ignore
+      // Attach context
+      beforeSend(event: any) {
+        // Don't send password or token data
+        if (event.request?.data) {
+          const data = event.request.data as Record<string, unknown>;
+          delete data.password;
+          delete data.token;
+          delete data.refreshToken;
+        }
+        return event;
+      },
     });
+
+    initialized = true;
+  });
 }
 
 export function captureException(error: Error, context?: Record<string, unknown>): void {
   if (!initialized) return;
 
-  // @ts-expect-error - optional dependency
-  import('@sentry/nextjs')
-    .then((Sentry: any) => {
+  getSentry()
+    ?.then((Sentry: any) => {
       Sentry.withScope((scope: any) => {
         if (context) {
           Object.entries(context).forEach(([key, value]) => {
@@ -84,7 +94,9 @@ export function captureException(error: Error, context?: Record<string, unknown>
         Sentry.captureException(error);
       });
     })
-    .catch(() => {});
+    .catch(() => {
+      /* Sentry not available - error tracking disabled */
+    });
 }
 
 export function captureMessage(
@@ -93,32 +105,23 @@ export function captureMessage(
 ): void {
   if (!initialized) return;
 
-  // @ts-expect-error - optional dependency
-  import('@sentry/nextjs')
-    .then((Sentry: any) => {
-      Sentry.captureMessage(message, level);
-    })
-    .catch(() => {});
+  getSentry()?.then((Sentry: any) => {
+    Sentry.captureMessage(message, level);
+  });
 }
 
 export function setUser(user: { id: string; email?: string; username?: string }): void {
   if (!initialized) return;
 
-  // @ts-expect-error - optional dependency
-  import('@sentry/nextjs')
-    .then((Sentry: any) => {
-      Sentry.setUser(user);
-    })
-    .catch(() => {});
+  getSentry()?.then((Sentry) => {
+    Sentry.setUser(user);
+  });
 }
 
 export function clearUser(): void {
   if (!initialized) return;
 
-  // @ts-expect-error - optional dependency
-  import('@sentry/nextjs')
-    .then((Sentry: any) => {
-      Sentry.setUser(null);
-    })
-    .catch(() => {});
+  getSentry()?.then((Sentry) => {
+    Sentry.setUser(null);
+  });
 }

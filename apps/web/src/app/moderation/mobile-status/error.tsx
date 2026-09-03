@@ -1,4 +1,5 @@
 'use client';
+'use client';
 
 export default function MobileStatusError({
   error: _error,
@@ -13,7 +14,7 @@ export default function MobileStatusError({
       style={{ backgroundColor: 'var(--brand-near-black)' }}
     >
       <div className="text-center max-w-sm mx-auto">
-        <div className="text-4xl mb-3">📋</div>
+        <div className="text-4xl mb-3"></div>
         <h2 className="text-xl font-bold text-white mb-2">Error</h2>
         <p className="text-white/60 mb-4 text-xs">Failed to load status.</p>
         <button

@@ -112,7 +112,7 @@ function LorePageContent(): React.JSX.Element {
                         height={160}
                         className="w-full h-40 object-cover"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
                       {entry.category && (
                         <span
                           className="absolute top-2 right-2 px-2.5 py-0.5 rounded-full text-xs font-semibold"
@@ -130,7 +130,7 @@ function LorePageContent(): React.JSX.Element {
                     </div>
                     <div className="p-4">
                       <p className="text-sm text-white/50 line-clamp-3">{entry.description}</p>
-                      <span className="inline-block mt-3 text-sm text-[#E8420A] font-medium">
+                      <span className="inline-block mt-3 text-sm text-[var(--brand-orange)] font-medium">
                         Explore →
                       </span>
                     </div>
@@ -153,20 +153,11 @@ function LorePageContent(): React.JSX.Element {
 
 const LazyLorePage = lazy(() => Promise.resolve({ default: LorePageContent }));
 
-export const metadata = {
-  title: 'Lore Explorer | Azeebo',
-  description: 'Discover the rich backstories, lore, and mythology behind your favorite shows.',
-  openGraph: {
-    title: 'Lore Explorer | Azeebo',
-    description: 'Discover the rich backstories, lore, and mythology behind your favorite shows.',
-  },
-};
-
 export default function LorePage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

@@ -8,13 +8,13 @@ import AppFooter from '@/components/layout/AppFooter';
 import analytics from '@/lib/analytics';
 
 const REASONS = [
-  { id: 'spam', label: 'Spam or misleading', icon: '🚫' },
-  { id: 'harassment', label: 'Harassment or hate speech', icon: '⚠️' },
-  { id: 'violence', label: 'Violence or graphic content', icon: '🔒' },
-  { id: 'inappropriate', label: 'Sexually explicit content', icon: '🔞' },
-  { id: 'copyright', label: 'Copyright infringement', icon: '©️' },
-  { id: 'misinformation', label: 'Misinformation', icon: '📰' },
-  { id: 'other', label: 'Other', icon: '📝' },
+  { id: 'spam', label: 'Spam or misleading', icon: 'Ban' },
+  { id: 'harassment', label: 'Harassment or hate speech', icon: 'AlertTriangle' },
+  { id: 'violence', label: 'Violence or graphic content', icon: 'Lock' },
+  { id: 'inappropriate', label: 'Sexually explicit content', icon: 'ShieldAlert' },
+  { id: 'copyright', label: 'Copyright infringement', icon: 'Copyright' },
+  { id: 'misinformation', label: 'Misinformation', icon: 'Newspaper' },
+  { id: 'other', label: 'Other', icon: 'FileText' },
 ];
 
 function ReportPageContent(): React.JSX.Element {
@@ -197,7 +197,7 @@ export default function ReportPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

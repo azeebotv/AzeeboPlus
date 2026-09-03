@@ -1,0 +1,90 @@
+---
+# API Gateway — always keep at least 2 running during drains
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: api-gateway-pdb
+  namespace: azeebo
+  labels:
+    app.kubernetes.io/name: api-gateway
+    app.kubernetes.io/part-of: azeebo
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: api-gateway
+---
+# Auth Service — always keep at least 1 running
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: auth-service-pdb
+  namespace: azeebo
+  labels:
+    app.kubernetes.io/name: auth-service
+    app.kubernetes.io/part-of: azeebo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: auth-service
+---
+# Payment Service — always keep at least 1 running
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: payment-service-pdb
+  namespace: azeebo
+  labels:
+    app.kubernetes.io/name: payment-service
+    app.kubernetes.io/part-of: azeebo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: payment-service
+---
+# Wallet Service — always keep at least 1 running
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: wallet-service-pdb
+  namespace: azeebo
+  labels:
+    app.kubernetes.io/name: wallet-service
+    app.kubernetes.io/part-of: azeebo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: wallet-service
+---
+# Content Service — always keep at least 1 running
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: content-service-pdb
+  namespace: azeebo
+  labels:
+    app.kubernetes.io/name: content-service
+    app.kubernetes.io/part-of: azeebo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: content-service
+---
+# Messaging Service — always keep at least 1 running (WebSocket connections)
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: messaging-service-pdb
+  namespace: azeebo
+  labels:
+    app.kubernetes.io/name: messaging-service
+    app.kubernetes.io/part-of: azeebo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: messaging-service

@@ -263,7 +263,7 @@ describe('Response Schema — Universe', () => {
         id: 'u1',
         name: 'nollywood',
         description: 'Nigerian cinema',
-        icon: '🎬',
+        icon: 'Film',
         contentCount: 150,
       },
     ];

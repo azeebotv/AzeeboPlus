@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 type Tab = 'list' | 'demographics';
 
@@ -62,7 +63,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
                 borderRadius: 8,
                 border: '1px solid var(--border-default)',
                 background: tab === t ? 'var(--brand-orange)' : 'transparent',
-                color: tab === t ? '#fff' : 'var(--text-secondary)',
+                color: tab === t ? 'white' : 'var(--text-secondary)',
                 cursor: 'pointer',
                 fontSize: 13,
                 fontWeight: tab === t ? 600 : 400,
@@ -200,9 +201,12 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
               onButtonPress={() => subscribersQuery.refetch()}
             />
           ) : subscribers.length === 0 ? (
-            <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>
-              No subscribers yet
-            </p>
+            <EmptyState
+              icon="users"
+              title="No subscribers yet"
+              description="Share your content to attract subscribers"
+              dark
+            />
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {subscribers.map((sub) => (

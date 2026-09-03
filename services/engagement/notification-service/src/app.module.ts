@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { NotificationsModule } from './modules/notifications/notifications.module.js';
+import { PushNotificationModule } from './modules/push/push-notification.module.js';
 import { AdminModule } from './modules/admin/admin.module.js';
 import { DatabaseModule } from './modules/database/database.module.js';
 import { HealthModule } from './modules/health/health.module.js';
@@ -20,6 +21,7 @@ import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
     SecurityModule,
     DatabaseModule,
     NotificationsModule,
+    PushNotificationModule,
     AdminModule,
     HealthModule,
     // Notification channel kill-switches: disable a channel globally without

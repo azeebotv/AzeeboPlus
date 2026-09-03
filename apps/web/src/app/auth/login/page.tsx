@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Auth Login  - Azeebo+',
+  description: 'Auth Login  on Azeebo+',
+};
+
 'use client';
 
 import { useState } from 'react';
@@ -211,7 +218,7 @@ export default function LoginPage(): React.JSX.Element {
           Don&apos;t have an account.{' '}
           <a
             href="/auth/register"
-            className="font-bold text-white hover:text-[#E8420A] transition-colors"
+            className="font-bold text-white hover:text-[var(--brand-orange)] transition-colors"
           >
             Sign up!
           </a>

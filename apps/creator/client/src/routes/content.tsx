@@ -57,7 +57,7 @@ export default function ContentPage() {
       >
         <div>
           <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Content</h1>
-          <p style={{ color: '#9A8A7A', fontSize: 14 }}>{total} items</p>
+          <p style={{ color: 'var(--creator-text-muted)', fontSize: 14 }}>{total} items</p>
         </div>
         <button
           onClick={() => setShowCreate(true)}
@@ -66,7 +66,7 @@ export default function ContentPage() {
             borderRadius: 8,
             border: 'none',
             background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-            color: '#fff',
+            color: 'white',
             fontWeight: 600,
             cursor: 'pointer',
             fontSize: 14,
@@ -87,12 +87,12 @@ export default function ContentPage() {
             style={{
               padding: '8px 16px',
               borderRadius: 999,
-              border: statusFilter === s ? 'none' : '1px solid #2A1A1A',
+              border: statusFilter === s ? 'none' : '1px solid var(--creator-border)',
               background:
                 statusFilter === s
                   ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)'
                   : 'transparent',
-              color: statusFilter === s ? '#fff' : '#9A8A7A',
+              color: statusFilter === s ? 'white' : 'var(--creator-text-muted)',
               fontWeight: 500,
               fontSize: 13,
               cursor: 'pointer',
@@ -105,14 +105,14 @@ export default function ContentPage() {
       </div>
 
       {isLoading ? (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
       ) : items.length === 0 ? (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>No content found</p>
+        <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>No content found</p>
       ) : (
         <div
           style={{
             borderRadius: 16,
-            border: '1px solid #2A1A1A',
+            border: '1px solid var(--creator-border)',
             backgroundColor: 'rgba(26,10,10,0.5)',
             overflow: 'hidden',
           }}
@@ -120,14 +120,14 @@ export default function ContentPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid #2A1A1A' }}>
+                <tr style={{ borderBottom: '1px solid var(--creator-border)' }}>
                   {['Title', 'Type', 'Status', 'Views', 'Actions'].map((h) => (
                     <th
                       key={h}
                       style={{
                         padding: '12px 16px',
                         textAlign: 'left',
-                        color: '#9A8A7A',
+                        color: 'var(--creator-text-muted)',
                         fontWeight: 600,
                         fontSize: 12,
                         textTransform: 'uppercase',
@@ -140,12 +140,12 @@ export default function ContentPage() {
               </thead>
               <tbody>
                 {items.map((item) => (
-                  <tr key={item.id} style={{ borderBottom: '1px solid #1A0A0A' }}>
+                  <tr key={item.id} style={{ borderBottom: '1px solid var(--creator-border-light)' }}>
                     <td style={{ padding: '12px 16px', fontWeight: 600 }}>{item.title}</td>
                     <td
                       style={{
                         padding: '12px 16px',
-                        color: '#9A8A7A',
+                        color: 'var(--creator-text-muted)',
                         textTransform: 'capitalize',
                       }}
                     >
@@ -166,17 +166,17 @@ export default function ContentPage() {
                                 : 'rgba(154,138,122,0.2)',
                           color:
                             item.status === 'published'
-                              ? '#0D3B2E'
+                              ? 'var(--creator-green)'
                               : item.status === 'draft'
-                                ? '#F59E0B'
-                                : '#9A8A7A',
+                                ? 'var(--creator-amber, #f59e0b)'
+                                : 'var(--creator-text-muted)',
                           textTransform: 'capitalize',
                         }}
                       >
                         {item.status}
                       </span>
                     </td>
-                    <td style={{ padding: '12px 16px', color: '#9A8A7A' }}>
+                    <td style={{ padding: '12px 16px', color: 'var(--creator-text-muted)' }}>
                       {(item.viewCount || 0).toLocaleString()}
                     </td>
                     <td style={{ padding: '12px 16px' }}>
@@ -193,9 +193,9 @@ export default function ContentPage() {
                           style={{
                             padding: '4px 10px',
                             borderRadius: 6,
-                            border: '1px solid #2A1A1A',
+                            border: '1px solid var(--creator-border)',
                             background: 'transparent',
-                            color: '#9A8A7A',
+                            color: 'var(--creator-text-muted)',
                             fontSize: 12,
                             cursor: 'pointer',
                           }}
@@ -209,9 +209,9 @@ export default function ContentPage() {
                           style={{
                             padding: '4px 10px',
                             borderRadius: 6,
-                            border: '1px solid #CC1C1C',
+                            border: '1px solid var(--creator-red)',
                             background: 'transparent',
-                            color: '#CC1C1C',
+                            color: 'var(--creator-red)',
                             fontSize: 12,
                             cursor: 'pointer',
                           }}
@@ -232,15 +232,15 @@ export default function ContentPage() {
               style={{
                 padding: '8px 16px',
                 borderRadius: 8,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--creator-border)',
                 background: 'transparent',
-                color: page === 1 ? '#4A3A3A' : '#E8420A',
+                color: page === 1 ? 'var(--creator-text-muted)' : 'var(--creator-orange)',
                 cursor: page === 1 ? 'not-allowed' : 'pointer',
               }}
             >
               Prev
             </button>
-            <span style={{ padding: '8px 16px', color: '#9A8A7A', fontSize: 13 }}>
+            <span style={{ padding: '8px 16px', color: 'var(--creator-text-muted)', fontSize: 13 }}>
               Page {page} of {Math.ceil(total / 20) || 1}
             </span>
             <button
@@ -249,9 +249,9 @@ export default function ContentPage() {
               style={{
                 padding: '8px 16px',
                 borderRadius: 8,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--creator-border)',
                 background: 'transparent',
-                color: page >= Math.ceil(total / 20) ? '#4A3A3A' : '#E8420A',
+                color: page >= Math.ceil(total / 20) ? 'var(--creator-text-muted)' : 'var(--creator-orange)',
                 cursor: page >= Math.ceil(total / 20) ? 'not-allowed' : 'pointer',
               }}
             >
@@ -281,8 +281,8 @@ export default function ContentPage() {
             style={{
               width: 500,
               maxWidth: '90%',
-              backgroundColor: '#1A0A0A',
-              border: '1px solid #2A1A1A',
+              backgroundColor: 'var(--creator-bg)',
+              border: '1px solid var(--creator-border)',
               borderRadius: 16,
               padding: 24,
             }}
@@ -297,9 +297,9 @@ export default function ContentPage() {
                 style={{
                   padding: '10px 16px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
-                  backgroundColor: '#0D0505',
-                  color: '#F5F0EB',
+                  border: '1px solid var(--creator-border)',
+                  backgroundColor: 'var(--creator-dark)',
+                  color: 'var(--creator-text)',
                   fontSize: 14,
                 }}
               />
@@ -311,9 +311,9 @@ export default function ContentPage() {
                 style={{
                   padding: '10px 16px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
-                  backgroundColor: '#0D0505',
-                  color: '#F5F0EB',
+                  border: '1px solid var(--creator-border)',
+                  backgroundColor: 'var(--creator-dark)',
+                  color: 'var(--creator-text)',
                   fontSize: 14,
                   resize: 'vertical',
                 }}
@@ -324,9 +324,9 @@ export default function ContentPage() {
                 style={{
                   padding: '10px 16px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
-                  backgroundColor: '#0D0505',
-                  color: '#F5F0EB',
+                  border: '1px solid var(--creator-border)',
+                  backgroundColor: 'var(--creator-dark)',
+                  color: 'var(--creator-text)',
                   fontSize: 14,
                 }}
               >
@@ -343,7 +343,7 @@ export default function ContentPage() {
                     borderRadius: 8,
                     border: 'none',
                     background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                    color: '#fff',
+                    color: 'white',
                     fontWeight: 600,
                     cursor: 'pointer',
                   }}
@@ -355,9 +355,9 @@ export default function ContentPage() {
                   style={{
                     padding: '10px 20px',
                     borderRadius: 8,
-                    border: '1px solid #2A1A1A',
+                    border: '1px solid var(--creator-border)',
                     background: 'transparent',
-                    color: '#9A8A7A',
+                    color: 'var(--creator-text-muted)',
                     cursor: 'pointer',
                   }}
                 >
@@ -389,8 +389,8 @@ export default function ContentPage() {
             style={{
               width: 500,
               maxWidth: '90%',
-              backgroundColor: '#1A0A0A',
-              border: '1px solid #2A1A1A',
+              backgroundColor: 'var(--creator-bg)',
+              border: '1px solid var(--creator-border)',
               borderRadius: 16,
               padding: 24,
             }}
@@ -405,9 +405,9 @@ export default function ContentPage() {
                 style={{
                   padding: '10px 16px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
-                  backgroundColor: '#0D0505',
-                  color: '#F5F0EB',
+                  border: '1px solid var(--creator-border)',
+                  backgroundColor: 'var(--creator-dark)',
+                  color: 'var(--creator-text)',
                   fontSize: 14,
                 }}
               />
@@ -419,9 +419,9 @@ export default function ContentPage() {
                 style={{
                   padding: '10px 16px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
-                  backgroundColor: '#0D0505',
-                  color: '#F5F0EB',
+                  border: '1px solid var(--creator-border)',
+                  backgroundColor: 'var(--creator-dark)',
+                  color: 'var(--creator-text)',
                   fontSize: 14,
                   resize: 'vertical',
                 }}
@@ -440,7 +440,7 @@ export default function ContentPage() {
                     borderRadius: 8,
                     border: 'none',
                     background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                    color: '#fff',
+                    color: 'white',
                     fontWeight: 600,
                     cursor: 'pointer',
                   }}
@@ -452,9 +452,9 @@ export default function ContentPage() {
                   style={{
                     padding: '10px 20px',
                     borderRadius: 8,
-                    border: '1px solid #2A1A1A',
+                    border: '1px solid var(--creator-border)',
                     background: 'transparent',
-                    color: '#9A8A7A',
+                    color: 'var(--creator-text-muted)',
                     cursor: 'pointer',
                   }}
                 >

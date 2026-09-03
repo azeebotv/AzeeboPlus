@@ -216,7 +216,7 @@ function CharacterLorePageContent(): React.JSX.Element {
                   />
                   <div>
                     <h2 className="text-2xl sm:text-3xl font-bold text-white">{character.name}</h2>
-                    <p className="text-[#E8420A]">{character.title}</p>
+                    <p className="text-[var(--brand-orange)]">{character.title}</p>
                   </div>
                 </div>
 
@@ -310,7 +310,7 @@ function CharacterLorePageContent(): React.JSX.Element {
                               />
                               <div className="flex-1 min-w-0">
                                 <p className="font-semibold text-white">{rel.characterName}</p>
-                                <p className="text-xs text-[#E8420A]">{rel.type}</p>
+                                <p className="text-xs text-[var(--brand-orange)]">{rel.type}</p>
                               </div>
                             </div>
                           ))}
@@ -347,7 +347,7 @@ function CharacterLorePageContent(): React.JSX.Element {
                               />
                               <div className="pl-4">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <span className="text-xs text-[#E8420A] font-semibold">
+                                  <span className="text-xs text-[var(--brand-orange)] font-semibold">
                                     {event.date}
                                   </span>
                                   {event.era && (
@@ -389,7 +389,7 @@ export default function CharacterLorePage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

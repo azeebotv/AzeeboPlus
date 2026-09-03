@@ -46,11 +46,9 @@ export default function EpisodePlayerScreen() {
 
   useEffect(() => {
     loadEpisode();
-    try {
-      if (showId && episodeId) {
-        analytics.realityEpisodeViewed(showId, episodeId);
-      }
-    } catch {}
+    if (showId && episodeId) {
+      analytics.realityEpisodeViewed(showId, episodeId);
+    }
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);

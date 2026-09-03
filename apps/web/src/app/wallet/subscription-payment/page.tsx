@@ -185,15 +185,15 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                       : isActive
                         ? 'var(--brand-orange)'
                         : 'rgba(255,255,255,0.1)',
-                    color: isCompleted || isActive ? '#fff' : 'rgba(255,255,255,0.4)',
+                    color: isCompleted || isActive ? 'white' : 'rgba(255,255,255,0.4)',
                   }}
                 >
-                  {isCompleted ? '✓' : stepNumber}
+                  {isCompleted ? 'Check' : stepNumber}
                 </div>
                 <span
                   className="text-sm hidden sm:block"
                   style={{
-                    color: isActive ? '#fff' : 'rgba(255,255,255,0.4)',
+                    color: isActive ? 'white' : 'rgba(255,255,255,0.4)',
                   }}
                 >
                   {label}
@@ -278,7 +278,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                     <ul className="space-y-2">
                       {plan.features.slice(0, 3).map((feature, i) => (
                         <li key={i} className="flex items-center gap-2 text-xs text-white/60">
-                          <span style={{ color: 'var(--color-success-500)' }}>✓</span>
+                          <span style={{ color: 'var(--color-success-500)' }}></span>
                           {feature}
                         </li>
                       ))}
@@ -349,7 +349,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">💰</span>
+                    <span className="text-2xl"></span>
                     <div>
                       <p className="text-white font-semibold">Pay from Wallet</p>
                       <p className="text-xs text-white/40">
@@ -385,7 +385,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                 whileTap={{ scale: 0.99 }}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">💳</span>
+                  <span className="text-2xl"></span>
                   <div>
                     <p className="text-white font-semibold">Card / Bank Transfer</p>
                     <p className="text-xs text-white/40">Pay with card or bank transfer</p>
@@ -442,7 +442,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                 transition={{ type: 'spring', stiffness: 200, damping: 15 }}
                 className="text-6xl mb-6"
               >
-                🎉
+                PartyPopper
               </motion.div>
               <h2 className="text-2xl font-bold text-white mb-2">Subscription Active!</h2>
               <p className="text-white/50 mb-8">
@@ -483,7 +483,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
         {step === 'error' && (
           <ScrollReveal>
             <div className="text-center py-20">
-              <p className="text-6xl mb-6">😞</p>
+              <p className="text-6xl mb-6">Frown</p>
               <h2 className="text-2xl font-bold text-white mb-2">Payment Failed</h2>
               <p className="text-white/50 mb-8">Something went wrong. Please try again.</p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -540,20 +540,11 @@ const LazySubscriptionPaymentPage = lazy(() =>
   Promise.resolve({ default: SubscriptionPaymentPageContent })
 );
 
-export const metadata = {
-  title: 'Subscribe | Azeebo',
-  description: 'Complete your subscription setup and unlock premium content.',
-  openGraph: {
-    title: 'Subscribe | Azeebo',
-    description: 'Complete your subscription setup and unlock premium content.',
-  },
-};
-
 export default function SubscriptionPaymentPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

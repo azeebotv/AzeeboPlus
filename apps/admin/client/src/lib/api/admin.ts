@@ -344,8 +344,7 @@ export const adminApi = {
     }),
 
   // ─── Global Feature Flags (Redis store, merged with registered defaults) ─
-  listGlobalFeatureFlags: () =>
-    apiFetch<GlobalFeatureFlag[]>('/api/v1/admin/feature-flags'),
+  listGlobalFeatureFlags: () => apiFetch<GlobalFeatureFlag[]>('/api/v1/admin/feature-flags'),
   updateGlobalFeatureFlag: (key: string, data: Partial<GlobalFeatureFlag>) =>
     apiFetch<GlobalFeatureFlag>(`/api/v1/admin/feature-flags/${key}`, {
       method: 'PUT',
@@ -389,7 +388,6 @@ export const adminApi = {
       restoredCount: number;
       restored: Array<{ key: string; enabled?: boolean }>;
       skipped: Array<{ key: string; reason: string }>;
-
     }>('/api/v1/admin/feature-flags/restore', {
       method: 'POST',
       body: JSON.stringify({ keys }),
@@ -397,13 +395,10 @@ export const adminApi = {
 
   // ─── CDN (media-service admin purge) ────────────────────────────────────
   purgeCdn: (data: { keys?: string[]; prefix?: string } = { prefix: 'uploads' }) =>
-    apiFetch<{ invalidationId?: string; purged: number }>(
-      '/api/v1/media/admin/cdn/purge',
-      {
-        method: 'POST',
-        body: JSON.stringify(data),
-      }
-    ),
+    apiFetch<{ invalidationId?: string; purged: number }>('/api/v1/media/admin/cdn/purge', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 
   getUniverseStats: () => apiFetch<unknown>('/api/v1/admin/universes/stats'),
   cloneUniverse: (id: string, data: Record<string, unknown>) =>
@@ -615,8 +610,12 @@ export const adminApi = {
     if (params.targetType) q.set('targetType', params.targetType);
     if (params.startDate) q.set('startDate', params.startDate);
     if (params.endDate) q.set('endDate', params.endDate);
-    return apiFetch<{ logs: AuditLogEntry[]; total: number; page: number; limit: number; totalPages: number }>(
-      `/api/v1/admin/audit?${q}`
-    );
+    return apiFetch<{
+      logs: AuditLogEntry[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }>(`/api/v1/admin/audit?${q}`);
   },
 };

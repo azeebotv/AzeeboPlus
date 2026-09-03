@@ -29,7 +29,7 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }>
     label: 'Reviewing',
   },
   resolved: { bg: 'rgba(34,197,94,0.15)', text: 'var(--color-success-500)', label: 'Resolved' },
-  dismissed: { bg: 'rgba(156,163,175,0.15)', text: '#9CA3AF', label: 'Dismissed' },
+  dismissed: { bg: 'rgba(156,163,175,0.15)', text: 'var(--brand-grey)', label: 'Dismissed' },
 };
 
 function ModerationStatusPageContent(): React.JSX.Element {
@@ -78,7 +78,7 @@ function ModerationStatusPageContent(): React.JSX.Element {
             <p className="text-xs text-white/50 mt-1">Reviewing</p>
           </div>
           <div className="az-glass p-4 rounded-xl text-center">
-            <p className="text-2xl font-bold text-[#22C55E]">{resolvedCount}</p>
+            <p className="text-2xl font-bold text-[var(--brand-green)]">{resolvedCount}</p>
             <p className="text-xs text-white/50 mt-1">Resolved</p>
           </div>
         </div>
@@ -159,7 +159,7 @@ function ModerationStatusPageContent(): React.JSX.Element {
                         border: '1px solid rgba(34,197,94,0.15)',
                       }}
                     >
-                      <p className="font-medium text-[#22C55E] mb-1">Resolution:</p>
+                      <p className="font-medium text-[var(--brand-green)] mb-1">Resolution:</p>
                       <p className="text-white/60">{report.resolution}</p>
                     </div>
                   )}
@@ -180,7 +180,7 @@ function ModerationStatusPageContent(): React.JSX.Element {
           </div>
         ) : (
           <div className="text-center py-16">
-            <p className="text-4xl mb-4">📋</p>
+            <p className="text-4xl mb-4"></p>
             <h2 className="text-xl font-bold text-white mb-2">No reports yet</h2>
             <p className="text-white/50">
               When you report content, you&apos;ll be able to track the status here.
@@ -202,7 +202,7 @@ export default function ModerationStatusPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

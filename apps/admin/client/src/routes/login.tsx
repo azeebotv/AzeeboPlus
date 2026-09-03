@@ -27,7 +27,7 @@ export default function LoginPage() {
     <div
       style={{
         minHeight: '100vh',
-        backgroundColor: '#1A0A0A',
+        backgroundColor: 'var(--admin-bg)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -38,14 +38,14 @@ export default function LoginPage() {
           style={{
             fontSize: 28,
             fontWeight: 700,
-            color: '#E8420A',
+            color: 'var(--admin-orange)',
             textAlign: 'center',
             marginBottom: 8,
           }}
         >
           Azeebo+ Admin
         </h1>
-        <p style={{ color: '#9A8A7A', textAlign: 'center', marginBottom: 32 }}>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', marginBottom: 32 }}>
           Sign in to the admin panel
         </p>
 
@@ -57,7 +57,7 @@ export default function LoginPage() {
               border: '1px solid #CC1C1C',
               backgroundColor: 'rgba(204,28,28,0.1)',
               marginBottom: 16,
-              color: '#CC1C1C',
+              color: 'var(--admin-red)',
               fontSize: 14,
             }}
           >
@@ -67,7 +67,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+            <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
               Email
             </label>
             <input
@@ -79,16 +79,16 @@ export default function LoginPage() {
                 width: '100%',
                 padding: '12px 16px',
                 borderRadius: 12,
-                border: '1px solid #2A1A1A',
-                backgroundColor: '#0D0505',
-                color: '#F5F0EB',
+                border: '1px solid var(--admin-surface)',
+                backgroundColor: 'var(--admin-dark)',
+                color: 'var(--admin-text)',
                 fontSize: 14,
                 boxSizing: 'border-box',
               }}
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+            <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
               Password
             </label>
             <input
@@ -100,9 +100,9 @@ export default function LoginPage() {
                 width: '100%',
                 padding: '12px 16px',
                 borderRadius: 12,
-                border: '1px solid #2A1A1A',
-                backgroundColor: '#0D0505',
-                color: '#F5F0EB',
+                border: '1px solid var(--admin-surface)',
+                backgroundColor: 'var(--admin-dark)',
+                color: 'var(--admin-text)',
                 fontSize: 14,
                 boxSizing: 'border-box',
               }}
@@ -117,7 +117,7 @@ export default function LoginPage() {
               borderRadius: 12,
               border: 'none',
               background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-              color: '#fff',
+              color: 'white',
               fontWeight: 600,
               fontSize: 15,
               cursor: loading ? 'not-allowed' : 'pointer',

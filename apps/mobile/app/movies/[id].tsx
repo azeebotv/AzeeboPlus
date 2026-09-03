@@ -62,9 +62,7 @@ export default function MovieDetailPage() {
         apiClient.get<Movie[]>(`/movies/${id}/similar`),
       ]);
       setMovie(movieRes);
-      try {
-        analytics.movieViewed(String(id));
-      } catch {}
+              analytics.movieViewed(String(id));
       setCast(castRes || []);
       setSimilarMovies(similarRes || []);
     } catch (err: unknown) {

@@ -72,7 +72,7 @@ function SportsPageContent(): React.JSX.Element {
                   className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4"
                   style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
                 >
-                  <span className="text-white text-3xl font-bold">⚽</span>
+                  <span className="text-white text-3xl font-bold"></span>
                 </div>
                 <h2 className="text-4xl font-bold text-white mb-2">{matches[0].title}</h2>
                 <p className="text-white/80 text-lg mb-6 max-w-2xl">{matches[0].description}</p>
@@ -93,7 +93,7 @@ function SportsPageContent(): React.JSX.Element {
                   <Link
                     href={`/sports/predictions`}
                     className="px-6 py-3 rounded-full text-sm font-semibold transition-all inline-block"
-                    style={{ backgroundColor: '#fff', color: 'var(--brand-forest)' }}
+                    style={{ backgroundColor: 'white', color: 'var(--brand-forest)' }}
                   >
                     Make Prediction
                   </Link>
@@ -145,7 +145,7 @@ function SportsPageContent(): React.JSX.Element {
                       height={192}
                       className="w-full h-48 object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
                     <div className="absolute bottom-4 left-4 right-4">
                       <span
                         className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
@@ -184,14 +184,5 @@ function SportsPageContent(): React.JSX.Element {
     </div>
   );
 }
-
-export const metadata = {
-  title: 'Sports | Azeebo',
-  description: 'Watch live sports, make predictions, and follow your favorite teams and leagues.',
-  openGraph: {
-    title: 'Sports | Azeebo',
-    description: 'Watch live sports, make predictions, and follow your favorite teams and leagues.',
-  },
-};
 
 export default SportsPageContent;

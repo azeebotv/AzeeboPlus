@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Privacy  - Azeebo+',
+  description: 'Privacy  on Azeebo+',
+};
+
 'use client';
 
 import Link from 'next/link';

@@ -11,6 +11,7 @@ import { apiFetch } from '@/lib/api';
 import { Skeleton } from '@azeebo/ui/web';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { useToast } from '@/components/ToastProvider';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 interface RealityContestant {
   id: string;
@@ -151,7 +152,7 @@ export default function VotePage(): React.JSX.Element {
 
         {isSuccess ? (
           <div className="az-glass p-8 sm:p-12 rounded-3xl text-center max-w-lg mx-auto my-8 animate-fadeIn">
-            <div className="text-6xl mb-4">🎉</div>
+            <div className="text-6xl mb-4"></div>
             <h2 className="text-2xl font-bold text-white mb-2">Vote Submitted!</h2>
             <p className="text-white/70 mb-6">
               You cast <strong className="text-[var(--brand-orange)]">{totalVotes} votes</strong>{' '}
@@ -217,9 +218,12 @@ export default function VotePage(): React.JSX.Element {
                     ))}
                   </div>
                 ) : contestants.length === 0 ? (
-                  <div className="text-center py-12 text-white/40">
-                    No contestants available for this show.
-                  </div>
+                  <EmptyState
+                    icon="users"
+                    title="No contestants available for this show"
+                    description="Check back later for contestants"
+                    dark
+                  />
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     {contestants.map((c) => {

@@ -50,7 +50,7 @@ export default function SettingsPage() {
   return (
     <div>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Settings</h1>
-      <p style={{ color: '#9A8A7A', marginBottom: 24 }}>
+      <p style={{ color: 'var(--admin-text-muted)', marginBottom: 24 }}>
         Platform configuration and system settings
       </p>
 
@@ -62,10 +62,10 @@ export default function SettingsPage() {
             style={{
               padding: '8px 16px',
               borderRadius: 999,
-              border: tab === t ? 'none' : '1px solid #2A1A1A',
+              border: tab === t ? 'none' : '1px solid var(--admin-surface)',
               background:
                 tab === t ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)' : 'transparent',
-              color: tab === t ? '#fff' : '#9A8A7A',
+              color: tab === t ? 'white' : 'var(--admin-text-muted)',
               fontWeight: 500,
               fontSize: 13,
               cursor: 'pointer',
@@ -78,7 +78,7 @@ export default function SettingsPage() {
       </div>
 
       {isLoading ? (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {filteredSettings.map((s) => (
@@ -90,13 +90,13 @@ export default function SettingsPage() {
                 alignItems: 'center',
                 padding: '14px 16px',
                 borderRadius: 12,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--admin-surface)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
               }}
             >
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontWeight: 500, fontSize: 14, marginBottom: 2 }}>{s.key}</p>
-                {s.description && <p style={{ color: '#9A8A7A', fontSize: 12 }}>{s.description}</p>}
+                {s.description && <p style={{ color: 'var(--admin-text-muted)', fontSize: 12 }}>{s.description}</p>}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                 {editKey === s.key ? (
@@ -107,9 +107,9 @@ export default function SettingsPage() {
                       style={{
                         padding: '6px 12px',
                         borderRadius: 6,
-                        border: '1px solid #2A1A1A',
-                        backgroundColor: '#0D0505',
-                        color: '#F5F0EB',
+                        border: '1px solid var(--admin-surface)',
+                        backgroundColor: 'var(--admin-dark)',
+                        color: 'var(--admin-text)',
                         fontSize: 13,
                         width: 200,
                       }}
@@ -120,8 +120,8 @@ export default function SettingsPage() {
                         padding: '4px 12px',
                         borderRadius: 6,
                         border: 'none',
-                        background: '#0D3B2E',
-                        color: '#fff',
+                        background: 'var(--admin-green)',
+                        color: 'white',
                         fontSize: 12,
                         cursor: 'pointer',
                       }}
@@ -133,9 +133,9 @@ export default function SettingsPage() {
                       style={{
                         padding: '4px 12px',
                         borderRadius: 6,
-                        border: '1px solid #2A1A1A',
+                        border: '1px solid var(--admin-surface)',
                         background: 'transparent',
-                        color: '#9A8A7A',
+                        color: 'var(--admin-text-muted)',
                         fontSize: 12,
                         cursor: 'pointer',
                       }}
@@ -147,7 +147,7 @@ export default function SettingsPage() {
                   <>
                     <span
                       style={{
-                        color: '#9A8A7A',
+                        color: 'var(--admin-text-muted)',
                         fontSize: 13,
                         maxWidth: 200,
                         overflow: 'hidden',
@@ -165,9 +165,9 @@ export default function SettingsPage() {
                       style={{
                         padding: '4px 12px',
                         borderRadius: 6,
-                        border: '1px solid #2A1A1A',
+                        border: '1px solid var(--admin-surface)',
                         background: 'transparent',
-                        color: '#E8420A',
+                        color: 'var(--admin-orange)',
                         fontSize: 12,
                         cursor: 'pointer',
                       }}
@@ -180,7 +180,7 @@ export default function SettingsPage() {
             </div>
           ))}
           {filteredSettings.length === 0 && (
-            <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A' }}>
+            <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>
               No settings in this category
             </p>
           )}

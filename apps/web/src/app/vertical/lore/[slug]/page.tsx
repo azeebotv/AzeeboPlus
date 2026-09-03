@@ -73,7 +73,7 @@ function LoreDetailContent(): React.JSX.Element {
               className="object-cover"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/60 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-[var(--brand-near-black)]/60 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -81,7 +81,10 @@ function LoreDetailContent(): React.JSX.Element {
                 transition={{ duration: 0.5 }}
               >
                 <div className="flex items-center gap-2 mb-4">
-                  <Link href="/vertical/lore" className="text-sm text-[#E8420A] hover:underline">
+                  <Link
+                    href="/vertical/lore"
+                    className="text-sm text-[var(--brand-orange)] hover:underline"
+                  >
                     Lore Explorer
                   </Link>
                   {lore.category && (
@@ -149,7 +152,7 @@ export default function LoreDetailPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

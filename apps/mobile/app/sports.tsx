@@ -98,9 +98,7 @@ export default function SportsUniverseHome() {
 
   useEffect(() => {
     if (liveQuery.data && liveQuery.data.length > 0) {
-      try {
-        analytics.sportsFixtureViewed(liveQuery.data[0].id);
-      } catch {}
+              analytics.sportsFixtureViewed(liveQuery.data[0].id);
     }
   }, [liveQuery.data]);
 

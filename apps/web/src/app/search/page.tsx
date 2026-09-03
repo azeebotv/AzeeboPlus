@@ -1,4 +1,5 @@
 'use client';
+'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@azeebo/ui/web';
@@ -7,6 +8,7 @@ import { OptimizedImage } from '@/components/OptimizedImage';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
 import analytics from '@/lib/analytics';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 interface SearchResult {
   id: string;
@@ -527,7 +529,7 @@ export default function SearchPage(): React.JSX.Element {
                       </p>
                       <button
                         onClick={clearHistory}
-                        className="text-xs text-[#E8420A] hover:text-[#CC1C1C] transition-colors"
+                        className="text-xs text-[var(--brand-orange)] hover:text-[var(--brand-red)] transition-colors"
                       >
                         Clear
                       </button>
@@ -670,7 +672,7 @@ export default function SearchPage(): React.JSX.Element {
                 setQuery(suggestedQuery);
                 handleSearch(suggestedQuery);
               }}
-              className="font-bold text-[#E8420A] hover:underline cursor-pointer"
+              className="font-bold text-[var(--brand-orange)] hover:underline cursor-pointer"
             >
               {suggestedQuery}
             </button>
@@ -741,7 +743,7 @@ export default function SearchPage(): React.JSX.Element {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-white text-sm group-hover:text-[#E8420A] transition-colors">
+                      <h3 className="font-bold text-white text-sm group-hover:text-[var(--brand-orange)] transition-colors">
                         {result.title}
                       </h3>
                       {typeof result.score === 'number' && (
@@ -835,15 +837,18 @@ export default function SearchPage(): React.JSX.Element {
             </div>
           ) : hasSearched ? (
             <div className="text-center py-12">
-              <span className="text-5xl mb-4 block">&#x1F50D;</span>
-              <h3 className="text-xl font-bold text-white mb-2">
-                {results.length > 0 ? 'No results match your filters yet' : 'No results found'}
-              </h3>
-              <p className="text-white/50 text-sm">
-                {results.length > 0
-                  ? 'Load more results or adjust your filters'
-                  : 'Try different keywords or adjust your filters'}
-              </p>
+              <EmptyState
+                icon="Search"
+                title={
+                  results.length > 0 ? 'No results match your filters yet' : 'No results found'
+                }
+                description={
+                  results.length > 0
+                    ? 'Load more results or adjust your filters'
+                    : 'Try different keywords or adjust your filters'
+                }
+                dark
+              />
               {hasNextPage && (
                 <div ref={loadMoreRef} className="mt-6 flex justify-center">
                   <button
@@ -858,13 +863,12 @@ export default function SearchPage(): React.JSX.Element {
               )}
             </div>
           ) : (
-            <div className="text-center py-12">
-              <span className="text-5xl mb-4 block">&#x1F3AC;</span>
-              <h3 className="text-xl font-bold text-white mb-2">Start exploring</h3>
-              <p className="text-white/50 text-sm">
-                Search for your favorite content, creators, or genres
-              </p>
-            </div>
+            <EmptyState
+              icon="Film"
+              title="Start exploring"
+              description="Search for your favorite content, creators, or genres"
+              dark
+            />
           )}
         </div>
       </main>

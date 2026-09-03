@@ -59,7 +59,7 @@ async function bootstrap() {
     SwaggerModule.setup('api/docs', app, document);
   }
 
-  const port = process.env.PORT || 3020;
+  const port = process.env.PORT || 3028;
   await app.listen(port);
   Logger.log(`Support service running on port ${port}`);
 }

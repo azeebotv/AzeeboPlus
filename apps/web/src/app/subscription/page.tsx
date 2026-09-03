@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Subscription  - Azeebo+',
+  description: 'Subscription  on Azeebo+',
+};
+
 'use client';
 
 import { useEffect } from 'react';

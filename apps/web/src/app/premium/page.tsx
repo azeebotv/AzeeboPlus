@@ -1,15 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
 
-export const metadata = {
-  title: 'Premium Access | Azeebo',
-  description: 'Unlock exclusive content, movies, and features with Azeebo Premium subscriptions.',
-  openGraph: {
-    title: 'Premium Access | Azeebo',
-    description:
-      'Unlock exclusive content, movies, and features with Azeebo Premium subscriptions.',
-  },
-};
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
@@ -97,9 +88,15 @@ export default function PremiumAccessPage(): React.JSX.Element {
   const walletQuery = useQuery({
     queryKey: ['wallet', 'balance'],
     queryFn: async () => {
-      const res = await apiFetch<{ balance: number }>('/wallet');
+      const res = await apiFetch<{
+        balance: number;
+        bonusBalance?: number;
+        promoBalance?: number;
+        totalBalance?: number;
+        currency?: string;
+      }>('/wallet');
       if (res.success && res.data) {
-        return res.data.balance;
+        return res.data.balance ?? 0;
       }
       return 0;
     },
@@ -225,7 +222,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
         {status?.isPremium && (
           <div className="az-glass p-6 mb-8" style={{ border: '2px solid rgba(234,179,8,0.5)' }}>
             <div className="flex items-center gap-4 mb-4">
-              <span className="text-4xl">👑</span>
+              <span className="text-4xl">Crown</span>
               <div>
                 <h2 className="text-xl font-bold" style={{ color: 'var(--color-warning-400)' }}>
                   Premium Active
@@ -282,7 +279,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className={`az-glass p-6 relative ${plan.isPopular ? 'ring-2 ring-[#E8420A]' : ''}`}
+              className={`az-glass p-6 relative ${plan.isPopular ? 'ring-2 ring-[var(--brand-orange)]' : ''}`}
               style={plan.isPopular ? { boxShadow: '0 0 30px rgba(232,66,10,0.2)' } : undefined}
             >
               {plan.isPopular && (
@@ -308,7 +305,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex items-center gap-2">
                     <span className="font-bold" style={{ color: 'var(--color-success-500)' }}>
-                      ✓
+                      Check
                     </span>
                     <span className="text-white text-sm">{feature}</span>
                   </li>
@@ -371,7 +368,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
                     walletBalance >= confirmPlan?.price
                       ? 'linear-gradient(135deg, #0D3B2E 0%, #0A5C36 100%)'
                       : 'var(--bg-surface, #2A1A1A)',
-                  color: walletBalance >= confirmPlan?.price ? '#fff' : '#666',
+                  color: walletBalance >= confirmPlan?.price ? 'white' : 'var(--brand-grey)',
                   cursor: walletBalance >= confirmPlan?.price ? 'pointer' : 'not-allowed',
                 }}
               >

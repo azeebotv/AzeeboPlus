@@ -25,64 +25,76 @@ interface CreatorStats {
 
 const creatorLinks = [
   {
+    href: '/creators/dashboard',
+    label: 'Dashboard',
+    desc: 'View your creator overview',
+    icon: 'BarChart3',
+  },
+  {
+    href: '/creators/upload',
+    label: 'Upload',
+    desc: 'Upload new content',
+    icon: 'Film',
+  },
+  {
+    href: '/creators/earnings',
+    label: 'Earnings',
+    desc: 'Revenue, payouts, and transaction history',
+    icon: 'DollarSign',
+  },
+  {
+    href: '/creators/monetization',
+    label: 'Monetization',
+    desc: 'Configure tips, subscriptions, and ads',
+    icon: 'Zap',
+  },
+  {
+    href: '/creators/signup',
+    label: 'Creator Signup',
+    desc: 'Apply to become a creator',
+    icon: 'PenTool',
+  },
+  {
     href: '/creator/analytics',
-    label: 'Analytics',
+    label: 'Analytics (Legacy)',
     desc: 'Engagement, views, and growth metrics',
-    icon: '📊',
+    icon: 'TrendingUp',
   },
   {
     href: '/creator/content-manager',
-    label: 'Content Manager',
+    label: 'Content Manager (Legacy)',
     desc: 'Upload, edit, and organize your content',
-    icon: '🎬',
-  },
-  {
-    href: '/creator/earnings',
-    label: 'Earnings',
-    desc: 'Revenue, payouts, and transaction history',
-    icon: '💰',
-  },
-  {
-    href: '/creator/profile',
-    label: 'Profile',
-    desc: 'Edit your bio, avatar, and social links',
-    icon: '👤',
+    icon: 'ClipboardList',
   },
   {
     href: '/creator/drafts',
     label: 'Drafts',
     desc: 'Continue working on unpublished content',
-    icon: '📝',
+    icon: 'FileText',
   },
   {
     href: '/creator/scheduled',
     label: 'Scheduled',
     desc: 'Manage content release schedule',
-    icon: '📅',
+    icon: 'Calendar',
   },
   {
     href: '/creator/published',
     label: 'Published',
     desc: 'View your live content and performance',
-    icon: '✅',
-  },
-  {
-    href: '/creator/monetization',
-    label: 'Monetization',
-    desc: 'Configure tips, subscriptions, and ads',
-    icon: '⚡',
+    icon: 'CheckCircle',
   },
   {
     href: '/creator/subscribers',
     label: 'Subscribers',
     desc: 'Manage your subscriber list',
-    icon: '👥',
+    icon: 'Users',
   },
   {
     href: '/creator/challenges',
     label: 'Challenges',
     desc: 'View and participate in creator challenges',
-    icon: '🏆',
+    icon: 'Trophy',
   },
 ];
 

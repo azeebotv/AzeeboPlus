@@ -11,7 +11,7 @@ const statCard = (label: string, value: string | number, change: string, icon: s
     style={{
       padding: 20,
       borderRadius: 12,
-      border: '1px solid #2A1A1A',
+      border: '1px solid var(--creator-border)',
       backgroundColor: 'rgba(26,10,10,0.5)',
       flex: 1,
       minWidth: 200,
@@ -25,13 +25,13 @@ const statCard = (label: string, value: string | number, change: string, icon: s
         marginBottom: 12,
       }}
     >
-      <span style={{ fontSize: 13, color: '#9A8A7A' }}>{label}</span>
+      <span style={{ fontSize: 13, color: 'var(--creator-text-muted)' }}>{label}</span>
       <span style={{ fontSize: 20 }}>{icon}</span>
     </div>
     <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>
       {typeof value === 'number' ? value.toLocaleString() : value}
     </div>
-    <span style={{ fontSize: 12, color: change.startsWith('+') ? '#0D3B2E' : '#CC1C1C' }}>
+    <span style={{ fontSize: 12, color: change.startsWith('+') ? 'var(--creator-green)' : 'var(--creator-red)' }}>
       {change}
     </span>
   </div>
@@ -53,14 +53,14 @@ export default function DashboardPage() {
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>
         Welcome back{user?.name ? `, ${user.name}` : ''}
       </h1>
-      <p style={{ color: '#9A8A7A', marginBottom: 24 }}>Here's your creator dashboard</p>
+      <p style={{ color: 'var(--creator-text-muted)', marginBottom: 24 }}>Here's your creator dashboard</p>
 
       {isFlagEnabled(CREATOR_FLAG_KEYS.onboardingWizard) && data && (
         <OnboardingWizard contentCount={data.contentCount} />
       )}
 
       {isLoading ? (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
       ) : data ? (
         <>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 32 }}>
@@ -76,7 +76,7 @@ export default function DashboardPage() {
           </div>
         </>
       ) : (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>No data available</p>
+        <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>No data available</p>
       )}
     </div>
   );

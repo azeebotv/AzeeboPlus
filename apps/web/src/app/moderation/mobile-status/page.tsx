@@ -28,21 +28,21 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string; i
     bg: 'rgba(245,158,11,0.2)',
     text: 'var(--color-warning-500)',
     label: 'Pending',
-    icon: '⏳',
+    icon: 'Hourglass',
   },
   reviewing: {
     bg: 'rgba(59,130,246,0.2)',
     text: 'var(--color-secondary-400)',
     label: 'Under Review',
-    icon: '🔍',
+    icon: 'Search',
   },
   resolved: {
     bg: 'rgba(34,197,94,0.2)',
     text: 'var(--color-success-500)',
     label: 'Resolved',
-    icon: '✓',
+    icon: 'Check',
   },
-  dismissed: { bg: 'rgba(156,163,175,0.2)', text: '#9CA3AF', label: 'Dismissed', icon: '✕' },
+  dismissed: { bg: 'rgba(156,163,175,0.2)', text: 'var(--brand-grey)', label: 'Dismissed', icon: 'X' },
 };
 
 function MobileStatusPageContent(): React.JSX.Element {
@@ -287,7 +287,7 @@ export default function MobileStatusPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

@@ -50,7 +50,7 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }>
     text: 'var(--color-success-400)',
     label: 'In Progress',
   },
-  completed: { bg: 'rgba(156,163,175,0.2)', text: '#9CA3AF', label: 'Completed' },
+  completed: { bg: 'rgba(156,163,175,0.2)', text: 'var(--brand-grey)', label: 'Completed' },
   upcoming: { bg: 'rgba(245,158,11,0.2)', text: 'var(--color-warning-500)', label: 'Upcoming' },
 };
 
@@ -125,11 +125,11 @@ function TournamentDetailPageContent(): React.JSX.Element {
   const getRankStyle = (rank: number) => {
     switch (rank) {
       case 1:
-        return { bg: 'rgba(255,215,0,0.2)', color: '#FFD700' };
+        return { bg: 'rgba(255,215,0,0.2)', color: 'var(--brand-gold)' };
       case 2:
-        return { bg: 'rgba(192,192,192,0.2)', color: '#C0C0C0' };
+        return { bg: 'rgba(192,192,192,0.2)', color: 'var(--brand-silver)' };
       case 3:
-        return { bg: 'rgba(205,127,50,0.2)', color: '#CD7F32' };
+        return { bg: 'rgba(205,127,50,0.2)', color: 'var(--brand-copper)' };
       default:
         return { bg: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)' };
     }
@@ -172,11 +172,11 @@ function TournamentDetailPageContent(): React.JSX.Element {
                   }}
                 >
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-8xl opacity-20">🏆</span>
+                    <span className="text-8xl opacity-20"></span>
                   </div>
                 </div>
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/30 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-[var(--brand-near-black)]/30 to-transparent" />
               <div className="absolute top-4 left-4">
                 <span
                   className="px-3 py-1 rounded-full text-xs font-semibold"
@@ -200,7 +200,7 @@ function TournamentDetailPageContent(): React.JSX.Element {
           <ScrollReveal delay={0.1}>
             <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">{tournament.name}</h1>
             {tournament.gameTitle && (
-              <p className="text-lg text-[#E8420A] mb-4">{tournament.gameTitle}</p>
+              <p className="text-lg text-[var(--brand-orange)] mb-4">{tournament.gameTitle}</p>
             )}
           </ScrollReveal>
 
@@ -271,7 +271,7 @@ function TournamentDetailPageContent(): React.JSX.Element {
                   {registerMutation.isPending
                     ? 'Processing...'
                     : registered
-                      ? 'Registered ✓'
+                      ? 'Registered Check'
                       : 'Register Now'}
                 </motion.button>
               </div>
@@ -373,31 +373,31 @@ function TournamentDetailPageContent(): React.JSX.Element {
                 ) : (
                   <div className="space-y-4">
                     <div className="flex items-start gap-3">
-                      <span className="text-[#E8420A]">•</span>
+                      <span className="text-[var(--brand-orange)]">•</span>
                       <p className="text-white/70">
                         All participants must register before the tournament starts
                       </p>
                     </div>
                     <div className="flex items-start gap-3">
-                      <span className="text-[#E8420A]">•</span>
+                      <span className="text-[var(--brand-orange)]">•</span>
                       <p className="text-white/70">
                         Fair play is mandatory - any cheating will result in disqualification
                       </p>
                     </div>
                     <div className="flex items-start gap-3">
-                      <span className="text-[#E8420A]">•</span>
+                      <span className="text-[var(--brand-orange)]">•</span>
                       <p className="text-white/70">
                         Matches will be played according to the standard game rules
                       </p>
                     </div>
                     <div className="flex items-start gap-3">
-                      <span className="text-[#E8420A]">•</span>
+                      <span className="text-[var(--brand-orange)]">•</span>
                       <p className="text-white/70">
                         Prizes will be distributed within 48 hours of tournament completion
                       </p>
                     </div>
                     <div className="flex items-start gap-3">
-                      <span className="text-[#E8420A]">•</span>
+                      <span className="text-[var(--brand-orange)]">•</span>
                       <p className="text-white/70">Organizer decisions are final</p>
                     </div>
                   </div>
@@ -435,7 +435,7 @@ export default function TournamentDetailPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

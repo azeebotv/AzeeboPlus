@@ -219,7 +219,7 @@ export default function MonetizationPage(): React.JSX.Element {
                   : 'rgba(204,28,28,0.2)',
               }}
             >
-              {monetization.eligibility.isEligible ? '✅' : '⏳'}
+              {monetization.eligibility.isEligible ? 'CheckCircle' : 'Hourglass'}
             </div>
             <div>
               <h3 style={{ fontWeight: 600 }}>
@@ -354,7 +354,7 @@ export default function MonetizationPage(): React.JSX.Element {
                       width: 22,
                       height: 22,
                       borderRadius: '50%',
-                      backgroundColor: '#fff',
+                      backgroundColor: 'white',
                       transition: 'left 0.2s',
                     }}
                   />

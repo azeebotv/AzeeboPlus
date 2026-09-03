@@ -8,6 +8,7 @@ import { apiFetch } from '../../lib/api';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
 import { OptimizedImage } from '../../components/OptimizedImage';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 interface ContentItem {
   id: string;
@@ -259,33 +260,36 @@ export default function LibraryPage(): React.JSX.Element {
           ) : currentSection?.items.length === 0 ? (
             <motion.div
               key="empty"
-              className="az-glass p-10 sm:p-12 text-center"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.4 }}
             >
-              <span className="text-4xl sm:text-5xl mb-4 block">
-                {activeSection === 'watchlist'
-                  ? '\u{1F4E6}'
-                  : activeSection === 'history'
-                    ? '\u{1F552}'
-                    : '\u2764\uFE0F'}
-              </span>
-              <h3 className="text-lg sm:text-xl font-bold text-white mb-2">
-                {activeSection === 'watchlist'
-                  ? 'Your watchlist is empty'
-                  : activeSection === 'history'
-                    ? 'No watch history'
-                    : 'No favorites yet'}
-              </h3>
-              <p className="text-white/50 text-xs sm:text-sm">
-                {activeSection === 'watchlist'
-                  ? 'Add content to watch later'
-                  : activeSection === 'history'
-                    ? 'Start watching content to build your history'
-                    : 'Save your favorite content here'}
-              </p>
+              <EmptyState
+                icon={
+                  activeSection === 'watchlist'
+                    ? 'Package'
+                    : activeSection === 'history'
+                      ? 'Clock'
+                      : 'Heart'
+                }
+                title={
+                  activeSection === 'watchlist'
+                    ? 'Your watchlist is empty'
+                    : activeSection === 'history'
+                      ? 'No watch history'
+                      : 'No favorites yet'
+                }
+                description={
+                  activeSection === 'watchlist'
+                    ? 'Add content to watch later'
+                    : activeSection === 'history'
+                      ? 'Start watching content to build your history'
+                      : 'Save your favorite content here'
+                }
+                dark
+                className="az-glass p-10 sm:p-12"
+              />
             </motion.div>
           ) : (
             <motion.div
@@ -350,7 +354,7 @@ export default function LibraryPage(): React.JSX.Element {
                   </a>
                   <div className="p-4">
                     <a href={`/watch/${item.id}`}>
-                      <h3 className="font-bold text-white text-sm mb-1 group-hover:text-[#E8420A] transition-colors line-clamp-1">
+                      <h3 className="font-bold text-white text-sm mb-1 group-hover:text-[var(--brand-orange)] transition-colors line-clamp-1">
                         {item.title}
                       </h3>
                     </a>
@@ -385,7 +389,7 @@ export default function LibraryPage(): React.JSX.Element {
                             : `Add ${item.title} to favorites`
                         }
                         onClick={() => toggleFavorite(item.id)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${favorites.some((f) => f.id === item.id) ? 'text-[#E8420A]' : 'text-white/60 hover:text-white'}`}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${favorites.some((f) => f.id === item.id) ? 'text-[var(--brand-orange)]' : 'text-white/60 hover:text-white'}`}
                         style={{ border: '1px solid rgba(255,255,255,0.15)' }}
                       >
                         {favorites.some((f) => f.id === item.id) ? '\u2764\uFE0F' : '\u2661'}

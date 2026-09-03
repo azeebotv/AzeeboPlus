@@ -604,12 +604,13 @@ export type { PricingPlan, WalletPricing, ContentPricing } from './pricing';
 export { validateStartup, isPlaceholderSecret, validateNoPlaceholders } from './secret-validation';
 
 // Data Classification types
-export { DataClassification, PiiCategory, ConsentType, AuditLogEntry } from './data-classification';
+export { DataClassification, PiiCategory, ConsentType } from './data-classification';
 export type {
   DataClassificationMetadata,
   UserDataExport,
   UserDataDeletionRequest,
   RetentionPolicy,
+  AuditLogEntry,
 } from './data-classification';
 
 // Privacy Policy types

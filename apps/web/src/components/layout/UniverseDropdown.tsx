@@ -216,7 +216,7 @@ export default function UniverseDropdown({
                 e.stopPropagation();
                 refetch();
               }}
-              className="text-xs text-[#E8420A] hover:text-[#E8420A]/80 font-medium"
+              className="text-xs text-[var(--brand-orange)] hover:text-[var(--brand-orange)]/80 font-medium"
             >
               Retry
             </button>
@@ -282,7 +282,7 @@ export default function UniverseDropdown({
         className={`
           flex items-center gap-2 rounded-lg text-white/80 hover:text-white
           hover:bg-white/10 transition-colors duration-200
-          focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E8420A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D3B2E]
+          focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--brand-forest)]
           ${compact ? 'px-2 py-1.5 text-xs' : 'px-3 py-2 text-sm'}
         `}
         role="combobox"

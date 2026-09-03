@@ -7,6 +7,7 @@ import { api, ContentItem } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import { EmptyState } from '@/components/ui/EmptyState';
 import analytics from '@/lib/analytics';
 
 function CelebritiesPageContent(): React.JSX.Element {
@@ -95,7 +96,7 @@ function CelebritiesPageContent(): React.JSX.Element {
                       height={300}
                       className="w-full h-64 object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
                     <div className="absolute bottom-4 left-4 right-4">
                       <h3 className="text-xl font-bold text-white">{celeb.title}</h3>
                     </div>
@@ -108,10 +109,12 @@ function CelebritiesPageContent(): React.JSX.Element {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-4xl mb-4">🌟</p>
-            <p className="text-lg text-white/50">No celebrity profiles available yet</p>
-          </div>
+          <EmptyState
+            icon="star"
+            title="No celebrity profiles available yet"
+            description="Follow celebrities to see their profiles here"
+            dark
+          />
         )}
       </section>
 
@@ -126,7 +129,7 @@ export default function CelebritiesPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

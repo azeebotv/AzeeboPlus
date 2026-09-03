@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Auth Otp-verification  - Azeebo+',
+  description: 'Auth Otp-verification  on Azeebo+',
+};
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -161,7 +168,7 @@ export default function OTPVerificationPage(): React.JSX.Element {
               <button
                 type="button"
                 onClick={handleResend}
-                className="font-bold text-white hover:text-[#E8420A] underline"
+                className="font-bold text-white hover:text-[var(--brand-orange)] underline"
               >
                 Resend
               </button>

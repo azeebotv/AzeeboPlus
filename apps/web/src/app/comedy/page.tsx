@@ -85,9 +85,9 @@ function ComedyPageContent(): React.JSX.Element {
                 Browse Comedy
               </Link>
               <Link
-                href="/creator/upload"
-                className="px-6 py-3 rounded-full text-sm font-semibold text-[#E8420A] transition-all inline-block"
-                style={{ backgroundColor: '#fff' }}
+                href="/creators/upload"
+                className="px-6 py-3 rounded-full text-sm font-semibold text-[var(--brand-orange)] transition-all inline-block"
+                style={{ backgroundColor: 'white' }}
               >
                 Submit Your Clip
               </Link>
@@ -105,7 +105,7 @@ function ComedyPageContent(): React.JSX.Element {
           </div>
           <Link
             href="/browse"
-            className="text-sm font-medium text-[#E8420A] hover:text-[#CC1C1C] transition-colors"
+            className="text-sm font-medium text-[var(--brand-orange)] hover:text-[var(--brand-red)] transition-colors"
           >
             View All
           </Link>
@@ -145,7 +145,7 @@ function ComedyPageContent(): React.JSX.Element {
                       height={160}
                       className="w-full h-40 object-cover group-hover:scale-105 transition-transform"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 via-transparent to-transparent" />
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <div
                         className="w-14 h-14 rounded-full flex items-center justify-center"
@@ -194,7 +194,7 @@ function ComedyPageContent(): React.JSX.Element {
               className="az-glass text-center cursor-pointer transition-all hover:scale-[1.02]"
             >
               <div className="p-4">
-                <span className="text-3xl mb-2 block">{category.icon || '🎭'}</span>
+                <span className="text-3xl mb-2 block">{category.icon || 'Drama'}</span>
                 <h4 className="font-medium text-sm text-white">{category.name}</h4>
               </div>
             </button>

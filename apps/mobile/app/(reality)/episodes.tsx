@@ -63,9 +63,7 @@ export default function EpisodesScreen() {
 
   useEffect(() => {
     loadEpisodes();
-    try {
-      analytics.realityShowViewed(showId);
-    } catch {}
+          analytics.realityShowViewed(showId);
   }, [showId]);
 
   const loadEpisodes = async () => {

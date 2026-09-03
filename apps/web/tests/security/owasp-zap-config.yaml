@@ -1,0 +1,81 @@
+---
+# OWASP ZAP Scan Configuration for Azeebo+
+# Run with: zap-cli quick-scan -s all -r tests/security/owasp-zap-report
+
+env:
+  contexts:
+    - name: "Azeebo+ Production"
+      urls:
+        - "https://azeebo.com"
+        - "https://api.azeebo.com"
+        - "https://admin.azeebo.com"
+        - "https://creator.azeebo.com"
+      includePaths:
+        - "https://azeebo.com/*"
+        - "https://api.azeebo.com/*"
+      excludePaths:
+        - "*/logout"
+        - "*/static/*"
+        - "*.png"
+        - "*.jpg"
+        - "*.gif"
+      authentication:
+        method: "form"
+        parameters:
+          loginUrl: "https://azeebo.com/login"
+          loginRequestData: "email={%username%}&password={%password%}"
+          logoutUrl: "https://azeebo.com/logout"
+
+  parameters:
+    failOnError: true
+    progressToStdout: true
+
+  policies:
+    - name: "Default Policy"
+      rules:
+        # SQL Injection
+        - id: 40018
+          strength: "high"
+          threshold: "low"
+        # Cross Site Scripting (Reflected)
+        - id: 40012
+          strength: "high"
+          threshold: "low"
+        # Cross Site Scripting (Persistent)
+        - id: 40014
+          strength: "high"
+          threshold: "low"
+        # Path Traversal
+        - id: 6
+          strength: "high"
+          threshold: "low"
+        # Remote OS Command Injection
+        - id: 90020
+          strength: "high"
+          threshold: "low"
+        # Server Side Code Injection
+        - id: 90021
+          strength: "high"
+          threshold: "low"
+        # Cross Domain Misconfiguration
+        - id: 10098
+          strength: "medium"
+          threshold: "medium"
+        # Weak Authentication Method
+        - id: 10105
+          strength: "medium"
+          threshold: "medium"
+        # Absence of Anti-CSRF Tokens
+        - id: 40014
+          strength: "medium"
+          threshold: "medium"
+        # Cookie Without SameSite Attribute
+        - id: 10054
+          strength: "low"
+          threshold: "low"
+
+  scripts:
+    - name: "Authentication Script"
+      type: "authentication"
+      engine: "ECMAScript"
+      enabled: true
