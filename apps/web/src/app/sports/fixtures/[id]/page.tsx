@@ -77,7 +77,7 @@ function FixtureDetailContent(): React.JSX.Element {
               className="object-cover"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/60 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-[var(--brand-near-black)]/60 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -96,13 +96,15 @@ function FixtureDetailContent(): React.JSX.Element {
                             : 'rgba(232,66,10,0.2)',
                       color:
                         fixture.status === 'live'
-                          ? '#fff'
+                          ? 'white'
                           : fixture.status === 'completed'
-                            ? '#fff'
+                            ? 'white'
                             : 'var(--brand-orange)',
                     }}
                   >
-                    {fixture.status === 'live' ? '● LIVE' : fixture.status.toUpperCase()}
+                    {fixture.status === 'live'
+                      ? '● LIVE'
+                      : (fixture.status ?? 'unknown').toUpperCase()}
                   </span>
                   <span className="text-sm text-white/60">{fixture.sport}</span>
                 </div>
@@ -153,7 +155,7 @@ function FixtureDetailContent(): React.JSX.Element {
                 <Link href={`/predictions?fixtureId=${fixture.id}`}>
                   <motion.button
                     type="button"
-                    className="px-6 py-3 rounded-full text-sm font-semibold text-[#1A0A0A] transition-all"
+                    className="px-6 py-3 rounded-full text-sm font-semibold text-[var(--brand-near-black)] transition-all"
                     style={{ backgroundColor: 'var(--color-success-400)' }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -213,20 +215,11 @@ function FixtureDetailContent(): React.JSX.Element {
 
 const LazyFixtureDetail = lazy(() => Promise.resolve({ default: FixtureDetailContent }));
 
-export const metadata = {
-  title: 'Fixture Details | Azeebo',
-  description: 'View match details, scores, and predictions for this fixture.',
-  openGraph: {
-    title: 'Fixture Details | Azeebo',
-    description: 'View match details, scores, and predictions for this fixture.',
-  },
-};
-
 export default function FixtureDetailPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

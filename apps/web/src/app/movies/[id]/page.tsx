@@ -1,14 +1,6 @@
 'use client';
 import { Suspense, lazy, useEffect, useState } from 'react';
 
-export const metadata = {
-  title: 'Movie Details | Azeebo',
-  description: 'Watch movie details, trailers, cast info, and stream on Azeebo.',
-  openGraph: {
-    title: 'Movie Details | Azeebo',
-    description: 'Watch movie details, trailers, cast info, and stream on Azeebo.',
-  },
-};
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -21,6 +13,7 @@ import { OptimizedImage } from '@/components/OptimizedImage';
 import { AmbientGlow } from '@/components/motion/AmbientGlow';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import analytics from '@/lib/analytics';
 
 interface MovieDetail {
@@ -98,6 +91,16 @@ function MovieDetailPageContent(): React.JSX.Element {
     <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Movies" />
 
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+        <Breadcrumbs
+          items={[
+            { label: 'Home', href: '/home' },
+            { label: 'Movies', href: '/movies' },
+            { label: movie?.title || 'Movie Details' },
+          ]}
+        />
+      </div>
+
       {isLoading ? (
         <>
           <Skeleton height="500px" borderRadius="0" />
@@ -139,7 +142,7 @@ function MovieDetailPageContent(): React.JSX.Element {
                 className="object-cover"
                 priority
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/50 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-[var(--brand-near-black)]/50 to-transparent" />
               <AmbientGlow color="rgba(232,66,10,0.25)" size={500} className="bottom-0 right-0" />
 
               <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 max-w-7xl mx-auto">
@@ -173,7 +176,7 @@ function MovieDetailPageContent(): React.JSX.Element {
                   <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">{movie.title}</h1>
                   <div className="flex items-center gap-4 text-sm text-white/60 mb-4">
                     <span>
-                      ⭐ {movie.rating.toFixed(1)} ({movie.totalRatings})
+                      {movie.rating.toFixed(1)} ({movie.totalRatings})
                     </span>
                     <span>·</span>
                     <span>{movie.year}</span>
@@ -416,7 +419,7 @@ export default function MovieDetailPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

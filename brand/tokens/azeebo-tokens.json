@@ -1,0 +1,56 @@
+{
+  "name": "Azeebo+ Vanta Black Design Tokens",
+  "version": "3.0.0",
+  "extractedFrom": "Azeebo Brand Logo (Crimson-Flame-Amber)",
+  "color": {
+    "brand": {
+      "crimson": { "value": "#E5251C", "type": "color", "comment": "Logo base stop 1 / Active CTA" },
+      "scarlet": { "value": "#F3501A", "type": "color", "comment": "Logo gradient stop 2 / Primary Brand CTA" },
+      "flame": { "value": "#FF6B00", "type": "color", "comment": "Logo gradient stop 3 / Accent Highlights" },
+      "amber": { "value": "#FFA02E", "type": "color", "comment": "Logo gradient stop 4 / Glowing Terminals" },
+      "coral": { "value": "#FA8128", "type": "color", "comment": "Warm Accent Pill" }
+    },
+    "vanta": {
+      "black": { "value": "#050505", "type": "color", "comment": "True OLED Vanta Base Canvas" },
+      "surface0": { "value": "#09090C", "type": "color", "comment": "Deep background underlay" },
+      "surface1": { "value": "#0F0F14", "type": "color", "comment": "Standard dark surface / container" },
+      "surface2": { "value": "#15151C", "type": "color", "comment": "Elevated card / dialog surface" },
+      "surface3": { "value": "#1C1C26", "type": "color", "comment": "Hover state / active surface" },
+      "glass": { "value": "rgba(15, 15, 20, 0.75)", "type": "color", "comment": "Frosted glass panel background" },
+      "glassBorder": { "value": "rgba(255, 255, 255, 0.08)", "type": "color", "comment": "Hairline luxury border" },
+      "glassBorderActive": { "value": "rgba(243, 80, 26, 0.4)", "type": "color", "comment": "Active flame border" }
+    },
+    "text": {
+      "primary": { "value": "#FFFFFF", "type": "color" },
+      "secondary": { "value": "#CBD5E1", "type": "color" },
+      "tertiary": { "value": "#94A3B8", "type": "color" },
+      "muted": { "value": "#64748B", "type": "color" },
+      "accent": { "value": "#FF6B00", "type": "color" }
+    },
+    "universes": {
+      "reality": { "primary": "#FF3366", "glow": "rgba(255, 51, 102, 0.35)", "name": "Reality Universe" },
+      "creators": { "primary": "#00E5FF", "glow": "rgba(0, 229, 255, 0.35)", "name": "Creator Studio" },
+      "movies": { "primary": "#FFA02E", "glow": "rgba(255, 160, 46, 0.35)", "name": "Azeebo Cinema" },
+      "comedy": { "primary": "#FFD600", "glow": "rgba(255, 214, 0, 0.35)", "name": "Comedy Lounge" },
+      "sports": { "primary": "#00E676", "glow": "rgba(0, 230, 118, 0.35)", "name": "Sports Live" },
+      "games": { "primary": "#B388FF", "glow": "rgba(179, 136, 255, 0.35)", "name": "Play & Win" }
+    },
+    "semantic": {
+      "success": { "value": "#10B981", "type": "color" },
+      "warning": { "value": "#F59E0B", "type": "color" },
+      "error": { "value": "#EF4444", "type": "color" },
+      "info": { "value": "#3B82F6", "type": "color" }
+    }
+  },
+  "gradient": {
+    "primaryFlame": "linear-gradient(135deg, #E5251C 0%, #F3501A 40%, #FF6B00 75%, #FFA02E 100%)",
+    "flameGlow": "radial-gradient(ellipse at top, rgba(243, 80, 26, 0.22) 0%, rgba(229, 37, 28, 0.04) 55%, transparent 80%)",
+    "vantaGlass": "linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%)",
+    "heroScrim": "linear-gradient(180deg, rgba(5, 5, 5, 0) 0%, rgba(5, 5, 5, 0.8) 70%, #050505 100%)"
+  },
+  "shadow": {
+    "vantaCard": "0 8px 32px 0 rgba(0, 0, 0, 0.65)",
+    "flameGlow": "0 0 28px rgba(243, 80, 26, 0.38)",
+    "subtleGlass": "0 4px 20px 0 rgba(0, 0, 0, 0.45)"
+  }
+}

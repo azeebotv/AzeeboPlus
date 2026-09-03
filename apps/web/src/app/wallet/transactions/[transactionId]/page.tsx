@@ -101,7 +101,7 @@ export default function TransactionDetailPage(): React.JSX.Element {
           </div>
         ) : !transaction ? (
           <div className="az-glass" style={{ padding: 40, borderRadius: 20, textAlign: 'center' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
+            <div style={{ fontSize: 48, marginBottom: 16 }}></div>
             <h3 style={{ fontSize: 18, marginBottom: 8 }}>Transaction not found</h3>
             <a
               href="/wallet/transactions"

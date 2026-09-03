@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Support  - Azeebo+',
+  description: 'Support  on Azeebo+',
+};
+
 'use client';
 import { useState } from 'react';
 import AppHeader from '@/components/layout/AppHeader';

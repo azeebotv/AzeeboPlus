@@ -19,15 +19,15 @@ export const CREATOR_NAV = [
 ];
 
 const styles = {
-  root: { backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' } as React.CSSProperties,
+  root: { backgroundColor: 'var(--creator-bg)', minHeight: '100vh', color: 'var(--creator-text)' } as React.CSSProperties,
   topBar: {
     position: 'fixed' as const,
     top: 0,
     left: 0,
     right: 0,
     height: 64,
-    backgroundColor: '#140808',
-    borderBottom: '1px solid #2A1A1A',
+    backgroundColor: 'var(--creator-darker)',
+    borderBottom: '1px solid var(--creator-border)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -37,20 +37,20 @@ const styles = {
   logo: {
     fontSize: 20,
     fontWeight: 700,
-    color: '#E8420A',
+    color: 'var(--creator-orange)',
     textDecoration: 'none',
   } as React.CSSProperties,
   userBadge: {
     fontSize: 13,
-    color: '#9A8A7A',
+    color: 'var(--creator-text-muted)',
     display: 'flex',
     alignItems: 'center',
     gap: 8,
   } as React.CSSProperties,
   logoutBtn: {
     background: 'none',
-    border: '1px solid #2A1A1A',
-    color: '#9A8A7A',
+    border: '1px solid var(--creator-border)',
+    color: 'var(--creator-text-muted)',
     padding: '6px 12px',
     borderRadius: 6,
     cursor: 'pointer',
@@ -60,8 +60,8 @@ const styles = {
   sidebar: {
     width: 260,
     flexShrink: 0,
-    backgroundColor: '#140808',
-    borderRight: '1px solid #2A1A1A',
+    backgroundColor: 'var(--creator-darker)',
+    borderRight: '1px solid var(--creator-border)',
     position: 'sticky' as const,
     top: 64,
     height: 'calc(100vh - 64px)',
@@ -78,7 +78,7 @@ const styles = {
     height: 48,
     borderRadius: '50%',
     background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-    color: '#fff',
+    color: 'white',
     border: 'none',
     fontSize: 20,
     cursor: 'pointer',
@@ -123,8 +123,8 @@ export default function CreatorLayout({ children }: { children: React.ReactNode 
             style={{
               width: 40,
               height: 40,
-              border: '3px solid #2A1A1A',
-              borderTopColor: '#E8420A',
+              border: '3px solid var(--creator-border)',
+              borderTopColor: 'var(--creator-orange)',
               borderRadius: '50%',
               animation: 'spin 0.8s linear infinite',
             }}
@@ -155,8 +155,8 @@ export default function CreatorLayout({ children }: { children: React.ReactNode 
             style={{
               padding: '2px 8px',
               borderRadius: 4,
-              backgroundColor: '#E8420A',
-              color: '#fff',
+              backgroundColor: 'var(--creator-orange)',
+              color: 'white',
               fontSize: 11,
               fontWeight: 600,
             }}
@@ -213,7 +213,7 @@ export default function CreatorLayout({ children }: { children: React.ReactNode 
                   textDecoration: 'none',
                   fontSize: 14,
                   fontWeight: 500,
-                  color: isActive(item.href) ? '#E8420A' : '#9A8A7A',
+                  color: isActive(item.href) ? 'var(--creator-orange)' : 'var(--creator-text-muted)',
                   backgroundColor: isActive(item.href) ? 'rgba(232,66,10,0.1)' : 'transparent',
                   transition: 'all 0.2s ease',
                 }}

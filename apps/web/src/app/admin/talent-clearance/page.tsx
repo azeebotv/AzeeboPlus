@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 /**
  * Talent/Music Clearance Management (AZP-RIGHTS-003/004)
@@ -106,10 +107,10 @@ export default function TalentClearancePage() {
   };
 
   const typeIcons = {
-    talent: '👤',
-    music: '🎵',
-    likeness: '📷',
-    voice: '🎙️',
+    talent: 'User',
+    music: 'Music',
+    likeness: 'Camera',
+    voice: 'Mic',
   };
 
   return (
@@ -190,7 +191,11 @@ export default function TalentClearancePage() {
         ) : error ? (
           <div className="text-center py-12 text-destructive">{error}</div>
         ) : clearances.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">No clearances found</div>
+          <EmptyState
+            icon="ClipboardList"
+            title="No clearances found"
+            description="No talent or music clearances have been submitted"
+          />
         ) : (
           <div className="bg-card rounded-xl border overflow-hidden">
             <table className="w-full">

@@ -85,11 +85,11 @@ function LiveEventDetailContent(): React.JSX.Element {
   };
 
   const getTimeStatus = (scheduledAt: string, status: string): string => {
-    if (status === 'live') return '🔴 Live Now';
+    if (status === 'live') return 'Circle Live Now';
     if (status === 'ended') return 'Ended';
     if (status === 'cancelled') return 'Cancelled';
     const diff = new Date(scheduledAt).getTime() - Date.now();
-    if (diff <= 0) return '🔴 Live Now';
+    if (diff <= 0) return 'Circle Live Now';
     const days = Math.floor(diff / 86400000);
     const hours = Math.floor((diff % 86400000) / 3600000);
     const minutes = Math.floor((diff % 3600000) / 60000);
@@ -145,7 +145,7 @@ function LiveEventDetailContent(): React.JSX.Element {
               height={400}
               className="w-full h-64 sm:h-96 object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/30 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-[var(--brand-near-black)]/30 to-transparent" />
             <div className="absolute bottom-4 left-4 right-4">
               <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">{event.title}</h1>
               <p className="text-lg" style={{ color: 'var(--brand-orange)' }}>
@@ -217,13 +217,13 @@ function LiveEventDetailContent(): React.JSX.Element {
                 disabled={purchaseMutation.isPending}
                 className="w-full py-3 rounded-xl font-semibold text-white transition-all"
                 style={{
-                  backgroundColor: purchaseMutation.isPending ? '#666' : 'var(--brand-orange)',
+                  backgroundColor: purchaseMutation.isPending ? 'var(--brand-grey)' : 'var(--brand-orange)',
                 }}
               >
                 {purchaseMutation.isPending
                   ? 'Processing...'
                   : purchaseMutation.isSuccess
-                    ? '✅ Ticket Purchased!'
+                    ? 'CheckCircle Ticket Purchased!'
                     : event.status === 'live'
                       ? 'Purchase & Watch'
                       : 'Get Ticket'}
@@ -273,7 +273,7 @@ export default function LiveEventDetailPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50">Loading...</p>
         </div>
       }

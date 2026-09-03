@@ -109,7 +109,7 @@ export default function MovieDetailPage(): React.JSX.Element {
                       background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
                     }}
                   >
-                    <span>▶</span> Watch Movie
+                    <span></span> Watch Movie
                   </Link>
                   <Link
                     href={`/movies/${movie.id}`}

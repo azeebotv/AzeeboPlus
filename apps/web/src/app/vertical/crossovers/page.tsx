@@ -117,7 +117,7 @@ function CrossoversPageContent(): React.JSX.Element {
                         height={160}
                         className="w-full h-40 object-cover"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
                       <div className="absolute top-2 left-2">
                         <span
                           className="px-2.5 py-1 rounded-full text-[10px] font-bold"
@@ -157,7 +157,7 @@ function CrossoversPageContent(): React.JSX.Element {
                         {crossover.episodeCount != null && (
                           <span>{crossover.episodeCount} episodes</span>
                         )}
-                        <span className="text-[#E8420A] font-medium">Watch Now →</span>
+                        <span className="text-[var(--brand-orange)] font-medium">Watch Now →</span>
                       </div>
                     </div>
                   </GlowCard>
@@ -179,22 +179,11 @@ function CrossoversPageContent(): React.JSX.Element {
 
 const LazyCrossoversPage = lazy(() => Promise.resolve({ default: CrossoversPageContent }));
 
-export const metadata = {
-  title: 'Crossovers | Azeebo',
-  description:
-    'When storyworlds collide — characters and narratives from different universes meet.',
-  openGraph: {
-    title: 'Crossovers | Azeebo',
-    description:
-      'When storyworlds collide — characters and narratives from different universes meet.',
-  },
-};
-
 export default function CrossoversPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

@@ -93,3 +93,59 @@ model MessageReaction {
   @@index([userId])
   @@map("message_reactions")
 }
+
+model WatchParty {
+  id              String   @id @default(uuid())
+  contentId       String
+  hostId          String
+  title           String
+  inviteCode      String   @unique
+  status          String   @default("waiting") // waiting, playing, paused, ended
+  currentTime     Decimal  @default(0) @db.Decimal(10, 2)
+  isSyncing       Boolean  @default(false)
+  maxParticipants Int      @default(20)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  participants PartyParticipant[]
+  messages     PartyChat[]
+
+  @@map("watch_parties")
+  @@index([hostId])
+  @@index([inviteCode])
+  @@index([status])
+  @@index([contentId])
+}
+
+model PartyParticipant {
+  id          String   @id @default(uuid())
+  partyId     String
+  userId      String
+  displayName String
+  role        String   @default("member") // host, co-host, member
+  isMuted     Boolean  @default(false)
+  joinedAt    DateTime @default(now())
+
+  party WatchParty @relation(fields: [partyId], references: [id], onDelete: Cascade)
+
+  @@map("party_participants")
+  @@unique([partyId, userId])
+  @@index([partyId])
+  @@index([userId])
+}
+
+model PartyChat {
+  id        String   @id @default(uuid())
+  partyId   String
+  userId    String
+  userName  String
+  content   String
+  type      String   @default("text") // text, system, reaction
+  createdAt DateTime @default(now())
+
+  party WatchParty @relation(fields: [partyId], references: [id], onDelete: Cascade)
+
+  @@map("party_chat")
+  @@index([partyId])
+  @@index([createdAt])
+}

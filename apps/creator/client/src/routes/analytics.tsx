@@ -25,7 +25,7 @@ export default function AnalyticsPage() {
   return (
     <div>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Analytics</h1>
-      <p style={{ color: '#9A8A7A', marginBottom: 24 }}>Track your content performance</p>
+      <p style={{ color: 'var(--creator-text-muted)', marginBottom: 24 }}>Track your content performance</p>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
         {['7days', '30days', '90days'].map((p) => (
@@ -35,10 +35,10 @@ export default function AnalyticsPage() {
             style={{
               padding: '8px 16px',
               borderRadius: 999,
-              border: period === p ? 'none' : '1px solid #2A1A1A',
+              border: period === p ? 'none' : '1px solid var(--creator-border)',
               background:
                 period === p ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)' : 'transparent',
-              color: period === p ? '#fff' : '#9A8A7A',
+              color: period === p ? 'white' : 'var(--creator-text-muted)',
               fontWeight: 500,
               fontSize: 13,
               cursor: 'pointer',
@@ -50,7 +50,7 @@ export default function AnalyticsPage() {
       </div>
 
       {isLoading ? (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
       ) : data ? (
         <>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 32 }}>
@@ -58,39 +58,39 @@ export default function AnalyticsPage() {
               style={{
                 padding: 20,
                 borderRadius: 12,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--creator-border)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
                 flex: 1,
                 minWidth: 150,
               }}
             >
-              <p style={{ fontSize: 13, color: '#9A8A7A', marginBottom: 4 }}>Total Views</p>
+              <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 4 }}>Total Views</p>
               <p style={{ fontSize: 24, fontWeight: 700 }}>{data.totalViews.toLocaleString()}</p>
             </div>
             <div
               style={{
                 padding: 20,
                 borderRadius: 12,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--creator-border)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
                 flex: 1,
                 minWidth: 150,
               }}
             >
-              <p style={{ fontSize: 13, color: '#9A8A7A', marginBottom: 4 }}>Engagement Rate</p>
+              <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 4 }}>Engagement Rate</p>
               <p style={{ fontSize: 24, fontWeight: 700 }}>{data.engagementRate}%</p>
             </div>
             <div
               style={{
                 padding: 20,
                 borderRadius: 12,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--creator-border)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
                 flex: 1,
                 minWidth: 150,
               }}
             >
-              <p style={{ fontSize: 13, color: '#9A8A7A', marginBottom: 4 }}>Avg Watch Time</p>
+              <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 4 }}>Avg Watch Time</p>
               <p style={{ fontSize: 24, fontWeight: 700 }}>{data.avgWatchTime}</p>
             </div>
           </div>
@@ -100,7 +100,7 @@ export default function AnalyticsPage() {
               style={{
                 padding: 20,
                 borderRadius: 12,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--creator-border)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
                 marginBottom: 32,
               }}
@@ -113,10 +113,10 @@ export default function AnalyticsPage() {
                   <YAxis stroke="#9A8A7A" fontSize={12} />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#140808',
-                      border: '1px solid #2A1A1A',
+                      backgroundColor: 'var(--creator-darker)',
+                      border: '1px solid var(--creator-border)',
                       borderRadius: 8,
-                      color: '#F5F0EB',
+                      color: 'var(--creator-text)',
                     }}
                   />
                   <Line
@@ -136,7 +136,7 @@ export default function AnalyticsPage() {
               style={{
                 padding: 20,
                 borderRadius: 12,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--creator-border)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
               }}
             >
@@ -149,11 +149,11 @@ export default function AnalyticsPage() {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '10px 0',
-                    borderBottom: i < data.topContent.length - 1 ? '1px solid #1A0A0A' : 'none',
+                    borderBottom: i < data.topContent.length - 1 ? '1px solid var(--creator-border-light)' : 'none',
                   }}
                 >
                   <span style={{ fontWeight: 500 }}>{item.title}</span>
-                  <div style={{ display: 'flex', gap: 16, color: '#9A8A7A', fontSize: 13 }}>
+                  <div style={{ display: 'flex', gap: 16, color: 'var(--creator-text-muted)', fontSize: 13 }}>
                     <span>{item.views.toLocaleString()} views</span>
                     <span>{item.engagement}</span>
                   </div>
@@ -163,7 +163,7 @@ export default function AnalyticsPage() {
           )}
         </>
       ) : (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>
+        <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>
           No analytics data available
         </p>
       )}

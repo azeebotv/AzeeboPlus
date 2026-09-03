@@ -6,6 +6,7 @@ import { useAdminFlags, ADMIN_FLAG_KEYS } from '@/hooks/useAdminFlags';
 import { adminApi } from '@/lib/api/admin';
 import type { StaleFlagMetrics } from '@/lib/admin-types';
 import StaleFlagSummary from './StaleFlagSummary';
+import { Icon } from './Icons';
 
 /** Minimal shape of the universe-feature-flag rows used for the stale list. */
 interface StaleUniverseFlagRow {
@@ -19,43 +20,83 @@ const isStaleDate = (iso: unknown): iso is string =>
   typeof iso === 'string' && !Number.isNaN(Date.parse(iso)) && Date.parse(iso) <= Date.now();
 
 export const ADMIN_NAV = [
-  { href: '/', label: 'Dashboard', icon: '📊' },
-  { href: '/overview', label: 'Overview', icon: '📈', flag: ADMIN_FLAG_KEYS.newDashboard },
-  { href: '/users', label: 'Users', icon: '👥' },
-  { href: '/content', label: 'Content', icon: '🎬' },
-  { href: '/content-review', label: 'Review Queue', icon: '✅' },
-  { href: '/creators', label: 'Creators', icon: '✨' },
-  { href: '/agbala', label: 'Agbala', icon: '📖' },
-  { href: '/reality', label: 'Reality Shows', icon: '🎭' },
-  { href: '/live-events', label: 'Live Events', icon: 'u{1F534}' },
-  { href: '/universes', label: 'Universes', icon: '🌍' },
-  { href: '/wallets', label: 'Wallets', icon: '👛' },
-  { href: '/financial', label: 'Financial', icon: '💰' },
-  { href: '/payment-gateways', label: 'Payments', icon: '💳' },
-  { href: '/subscriptions', label: 'Subscriptions', icon: '🔄' },
-  { href: '/bundle-passes', label: 'Bundle Passes', icon: '🎁' },
-  { href: '/engagement', label: 'Engagement', icon: '🔥' },
-  { href: '/search', label: 'Search', icon: '🔍' },
-  { href: '/notifications', label: 'Notifications', icon: '🔔' },
-  { href: '/announcements', label: 'Announcements', icon: '📢' },
-  { href: '/tipping', label: 'Tipping', icon: '💎' },
-  { href: '/audit-logs', label: 'Audit Logs', icon: '📋' },
-  { href: '/reports', label: 'Reports', icon: '📊' },
-  { href: '/feature-flags', label: 'Feature Flags', icon: '🚩' },
-  { href: '/feature-flags/global', label: 'Global Flags', icon: '🎛️' },
-  { href: '/settings', label: 'Settings', icon: '⚙️' },
+  { href: '/', label: 'Dashboard', icon: 'dashboard' },
+  { href: '/overview', label: 'Overview', icon: 'trending', flag: ADMIN_FLAG_KEYS.newDashboard },
+  { href: '/users', label: 'Users', icon: 'users' },
+  { href: '/content', label: 'Content', icon: 'film' },
+  { href: '/content-review', label: 'Review Queue', icon: 'checkCircle' },
+  { href: '/creators', label: 'Creators', icon: 'sparkles' },
+  { href: '/agbala', label: 'Agbala', icon: 'book' },
+  { href: '/reality', label: 'Reality Shows', icon: 'theater' },
+  { href: '/live-events', label: 'Live Events', icon: 'alertTriangle' },
+  { href: '/universes', label: 'Universes', icon: 'globe' },
+  { href: '/wallets', label: 'Wallets', icon: 'wallet' },
+  { href: '/financial', label: 'Financial', icon: 'dollarSign' },
+  { href: '/payment-gateways', label: 'Payments', icon: 'creditCard' },
+  { href: '/subscriptions', label: 'Subscriptions', icon: 'refresh' },
+  { href: '/bundle-passes', label: 'Bundle Passes', icon: 'gift' },
+  { href: '/engagement', label: 'Engagement', icon: 'flame' },
+  { href: '/search', label: 'Search', icon: 'search' },
+  { href: '/notifications', label: 'Notifications', icon: 'bell' },
+  { href: '/announcements', label: 'Announcements', icon: 'megaphone' },
+  { href: '/tipping', label: 'Tipping', icon: 'gem' },
+  {
+    href: '/agents',
+    label: 'Agent Registry',
+    icon: 'bot',
+    flag: ADMIN_FLAG_KEYS.governanceDashboard,
+  },
+  {
+    href: '/cost-dashboard',
+    label: 'Cost Dashboard',
+    icon: 'dollarSign',
+    flag: ADMIN_FLAG_KEYS.governanceDashboard,
+  },
+  {
+    href: '/task-router',
+    label: 'Task Router',
+    icon: 'clipboardList',
+    flag: ADMIN_FLAG_KEYS.governanceDashboard,
+  },
+  {
+    href: '/risk-engine',
+    label: 'Risk Engine',
+    icon: 'shield',
+    flag: ADMIN_FLAG_KEYS.governanceDashboard,
+  },
+  {
+    href: '/capacity-ledger',
+    label: 'Capacity Ledger',
+    icon: 'clock',
+    flag: ADMIN_FLAG_KEYS.governanceDashboard,
+  },
+  {
+    href: '/system-health',
+    label: 'System Health',
+    icon: 'activity',
+    flag: ADMIN_FLAG_KEYS.governanceDashboard,
+  },
+  { href: '/service-health', label: 'Service Health', icon: 'activity' },
+  { href: '/performance', label: 'Performance', icon: 'barChart' },
+  { href: '/rate-limits', label: 'Rate Limits', icon: 'shield' },
+  { href: '/automations', label: 'Automations', icon: 'clock' },
+  { href: '/audit-logs', label: 'Audit Logs', icon: 'clipboardList' },
+  { href: '/reports', label: 'Reports', icon: 'barChart' },
+  { href: '/feature-flags', label: 'Feature Flags', icon: 'flag' },
+  { href: '/feature-flags/global', label: 'Global Flags', icon: 'sliders' },
+  { href: '/settings', label: 'Settings', icon: 'settings' },
 ];
 
 const styles = {
-  root: { backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' } as React.CSSProperties,
+  root: { backgroundColor: 'var(--admin-bg)', minHeight: '100vh', color: 'var(--admin-text)' } as React.CSSProperties,
   topBar: {
     position: 'fixed' as const,
     top: 0,
     left: 0,
     right: 0,
     height: 64,
-    backgroundColor: '#140808',
-    borderBottom: '1px solid #2A1A1A',
+    backgroundColor: 'var(--admin-darker)',
+    borderBottom: '1px solid var(--admin-surface)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -65,20 +106,20 @@ const styles = {
   logo: {
     fontSize: 20,
     fontWeight: 700,
-    color: '#E8420A',
+    color: 'var(--admin-orange)',
     textDecoration: 'none',
   } as React.CSSProperties,
   userBadge: {
     fontSize: 13,
-    color: '#9A8A7A',
+    color: 'var(--admin-text-muted)',
     display: 'flex',
     alignItems: 'center',
     gap: 8,
   } as React.CSSProperties,
   logoutBtn: {
     background: 'none',
-    border: '1px solid #2A1A1A',
-    color: '#9A8A7A',
+    border: '1px solid var(--admin-surface)',
+    color: 'var(--admin-text-muted)',
     padding: '6px 12px',
     borderRadius: 6,
     cursor: 'pointer',
@@ -88,8 +129,8 @@ const styles = {
   sidebar: {
     width: 260,
     flexShrink: 0,
-    backgroundColor: '#140808',
-    borderRight: '1px solid #2A1A1A',
+    backgroundColor: 'var(--admin-darker)',
+    borderRight: '1px solid var(--admin-surface)',
     position: 'sticky' as const,
     top: 64,
     height: 'calc(100vh - 64px)',
@@ -106,7 +147,7 @@ const styles = {
     height: 48,
     borderRadius: '50%',
     background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-    color: '#fff',
+    color: 'white',
     border: 'none',
     fontSize: 20,
     cursor: 'pointer',
@@ -135,9 +176,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     queryKey: ['admin', 'feature-flags'],
     queryFn: async () => {
       const res = await adminApi.listFeatureFlags();
-      return res.success && Array.isArray(res.data)
-        ? (res.data as StaleUniverseFlagRow[])
-        : [];
+      return res.success && Array.isArray(res.data) ? (res.data as StaleUniverseFlagRow[]) : [];
     },
   });
   const staleUniverse = universeFlags
@@ -207,8 +246,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         : `${recentPrunes} universe-flag prune(s) in the last 24h — click to view the removal activity`;
   // Removal activity (audit badge) is blue so it's visually separable from
   // the orange stale-removal-candidate badges.
-  const badgeColorFor = (href: string): string =>
-    href === '/audit-logs' ? '#3B82F6' : '#E8420A';
+  const badgeColorFor = (href: string): string => (href === '/audit-logs' ? 'var(--admin-blue)' : 'var(--admin-orange)');
   const badgeHrefFor = (href: string): string | null =>
     href === '/feature-flags/global'
       ? // #stale is the hash-fragment shortcut: the Global Flags page ALSO
@@ -251,8 +289,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             style={{
               width: 40,
               height: 40,
-              border: '3px solid #2A1A1A',
-              borderTopColor: '#E8420A',
+              border: '3px solid var(--admin-surface)',
+              borderTopColor: 'var(--admin-orange)',
               borderRadius: '50%',
               animation: 'spin 0.8s linear infinite',
             }}
@@ -290,8 +328,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             style={{
               padding: '2px 8px',
               borderRadius: 4,
-              backgroundColor: '#E8420A',
-              color: '#fff',
+              backgroundColor: 'var(--admin-orange)',
+              color: 'white',
               fontSize: 11,
               fontWeight: 600,
             }}
@@ -350,12 +388,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     textDecoration: 'none',
                     fontSize: 14,
                     fontWeight: 500,
-                    color: isActive(item.href) ? '#E8420A' : '#9A8A7A',
+                    color: isActive(item.href) ? 'var(--admin-orange)' : 'var(--admin-text-muted)',
                     backgroundColor: isActive(item.href) ? 'rgba(232,66,10,0.1)' : 'transparent',
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  <span style={{ fontSize: 18 }}>{item.icon}</span>
+                  <Icon name={item.icon} size={18} />
                   {item.label}
                   {badgeCount > 0 && (
                     <span
@@ -390,7 +428,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         padding: '2px 8px',
                         borderRadius: 999,
                         background: badgeColorFor(item.href),
-                        color: '#fff',
+                        color: 'white',
                         fontSize: 11,
                         fontWeight: 600,
                         cursor: 'pointer',

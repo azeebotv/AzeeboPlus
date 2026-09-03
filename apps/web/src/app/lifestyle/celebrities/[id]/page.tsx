@@ -75,7 +75,7 @@ function CelebrityDetailContent(): React.JSX.Element {
                 className="object-cover rounded-lg"
                 priority
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-transparent to-transparent rounded-lg" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-transparent to-transparent rounded-lg" />
             </div>
             <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4">{celebrity.title}</h1>
             <span
@@ -128,7 +128,7 @@ export default function CelebrityDetailPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

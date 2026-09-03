@@ -28,7 +28,7 @@ export class SubscriptionAdminService {
   async getSubscriptionStats() {
     const plansResult = await this.systemSettingsService.getSubscriptionPlans().catch(() => []);
     const plans = Array.isArray(plansResult) ? plansResult : [];
-    const activePlans = plans.filter((p: { status?: string }) => p.status === 'active').length;
+    const activePlans = plans.filter((p: any) => p.status === 'active').length;
 
     // Fetch intent count for subscriptions
     const totalRevenueResult = await this.prisma.paymentIntent
@@ -150,14 +150,15 @@ export class SubscriptionAdminService {
   }
 
   async createSubscriptionPlan(data: Record<string, unknown>) {
+    const name = String(data.name || 'New Plan');
+    const slug = String(data.slug || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''));
     return this.systemSettingsService.createSubscriptionPlan({
-      name: String(data.name || 'New Plan'),
+      name,
+      slug,
       description: String(data.description || ''),
       price: Number(data.price || 0),
       currency: String(data.currency || 'NGN'),
-      durationDays: Number(data.durationDays || 30),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      tier: (data.tier as any) || 'basic',
+      interval: String(data.interval || 'monthly'),
       features: Array.isArray(data.features)
         ? data.features.map(String)
         : typeof data.features === 'string'

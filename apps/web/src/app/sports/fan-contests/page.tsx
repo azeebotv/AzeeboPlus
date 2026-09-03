@@ -120,7 +120,7 @@ function FanContestsPageContent(): React.JSX.Element {
                         fill
                         className="w-full h-full object-cover"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
                     </div>
                   )}
                   <div className="p-5">
@@ -251,20 +251,11 @@ function FanContestsPageContent(): React.JSX.Element {
 
 const LazyFanContestsPage = lazy(() => Promise.resolve({ default: FanContestsPageContent }));
 
-export const metadata = {
-  title: 'Fan Contests | Azeebo',
-  description: 'Compete with fellow fans and win exclusive prizes in sports fan contests.',
-  openGraph: {
-    title: 'Fan Contests | Azeebo',
-    description: 'Compete with fellow fans and win exclusive prizes in sports fan contests.',
-  },
-};
-
 export default function FanContestsPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

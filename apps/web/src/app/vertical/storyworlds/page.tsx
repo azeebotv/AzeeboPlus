@@ -118,7 +118,7 @@ function StoryworldsPageContent(): React.JSX.Element {
                         height={160}
                         className="w-full h-40 object-cover"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
                       <div className="absolute top-2 right-2 flex gap-2">
                         {world.isComplete && (
                           <span
@@ -151,7 +151,7 @@ function StoryworldsPageContent(): React.JSX.Element {
                       <p className="text-sm text-white/50 mb-3 line-clamp-3">{world.description}</p>
                       <div className="flex items-center justify-between text-xs text-white/40">
                         {world.episodeCount != null && <span>{world.episodeCount} episodes</span>}
-                        <span className="text-[#E8420A] font-medium">Explore →</span>
+                        <span className="text-[var(--brand-orange)] font-medium">Explore →</span>
                       </div>
                     </div>
                   </GlowCard>
@@ -173,21 +173,11 @@ function StoryworldsPageContent(): React.JSX.Element {
 
 const LazyStoryworldsPage = lazy(() => Promise.resolve({ default: StoryworldsPageContent }));
 
-export const metadata = {
-  title: 'Storyworlds | Azeebo',
-  description: 'Dive into immersive story universes with interconnected characters and plotlines.',
-  openGraph: {
-    title: 'Storyworlds | Azeebo',
-    description:
-      'Dive into immersive story universes with interconnected characters and plotlines.',
-  },
-};
-
 export default function StoryworldsPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

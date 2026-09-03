@@ -131,7 +131,7 @@ export default function PublishedPage(): React.JSX.Element {
           />
         ) : content.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>🎬</div>
+            <div style={{ fontSize: 48, marginBottom: 16 }}></div>
             <h3 style={{ fontSize: 18, marginBottom: 8 }}>No published content</h3>
             <p style={{ color: 'var(--text-secondary)' }}>Your published videos will appear here</p>
           </div>

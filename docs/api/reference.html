@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Azeebo+ API Reference</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+    header { background: #1a1a2e; color: white; padding: 40px 0; }
+    header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+    header p { font-size: 1.2rem; opacity: 0.8; }
+    nav { background: #16213e; padding: 20px 0; position: sticky; top: 0; z-index: 100; }
+    nav ul { display: flex; gap: 20px; list-style: none; }
+    nav a { color: white; text-decoration: none; padding: 10px 15px; border-radius: 5px; }
+    nav a:hover { background: rgba(255,255,255,0.1); }
+    main { padding: 40px 0; }
+    .endpoint { background: white; border: 1px solid #e0e0e0; border-radius: 8px; margin-bottom: 20px; padding: 20px; }
+    .endpoint-header { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
+    .method { padding: 5px 12px; border-radius: 4px; font-weight: bold; color: white; font-size: 0.85rem; }
+    .get { background: #22c55e; }
+    .post { background: #3b82f6; }
+    .put { background: #f59e0b; }
+    .delete { background: #ef4444; }
+    .path { font-family: monospace; font-size: 1.1rem; }
+    .description { color: #666; margin-bottom: 15px; }
+    pre { background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto; font-size: 0.9rem; }
+    code { font-family: 'Monaco', 'Menlo', monospace; }
+    .params { margin-top: 15px; }
+    .params h4 { margin-bottom: 10px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+    th { background: #f5f5f5; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
+    .required { background: #fef2f2; color: #dc2626; }
+    .optional { background: #f0fdf4; color: #16a34a; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>Azeebo+ API Reference</h1>
+      <p>REST API v1 — Base URL: https://api.azeebo.com</p>
+    </div>
+  </header>
+
+  <nav>
+    <div class="container">
+      <ul>
+        <li><a href="#auth">Auth</a></li>
+        <li><a href="#users">Users</a></li>
+        <li><a href="#content">Content</a></li>
+        <li><a href="#wallet">Wallet</a></li>
+        <li><a href="#payments">Payments</a></li>
+        <li><a href="#creators">Creators</a></li>
+        <li><a href="#search">Search</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main>
+    <div class="container">
+      <section id="auth">
+        <h2>Authentication</h2>
+        <p>All authenticated endpoints require a Bearer token in the Authorization header.</p>
+
+        <div class="endpoint">
+          <div class="endpoint-header">
+            <span class="method post">POST</span>
+            <span class="path">/v1/auth/register</span>
+          </div>
+          <p class="description">Register a new user account.</p>
+          <pre><code>{
+  "email": "user@example.com",
+  "password": "securepassword",
+  "username": "johndoe"
+}</code></pre>
+          <div class="params">
+            <h4>Parameters</h4>
+            <table>
+              <tr><th>Name</th><th>Type</th><th>Required</th><th>Description</th></tr>
+              <tr><td>email</td><td>string</td><td><span class="badge required">Required</span></td><td>Valid email address</td></tr>
+              <tr><td>password</td><td>string</td><td><span class="badge required">Required</span></td><td>Min 8 characters</td></tr>
+              <tr><td>username</td><td>string</td><td><span class="badge required">Required</span></td><td>3-30 characters, alphanumeric</td></tr>
+            </table>
+          </div>
+        </div>
+
+        <div class="endpoint">
+          <div class="endpoint-header">
+            <span class="method post">POST</span>
+            <span class="path">/v1/auth/login</span>
+          </div>
+          <p class="description">Login with email and password.</p>
+          <pre><code>{
+  "email": "user@example.com",
+  "password": "securepassword"
+}</code></pre>
+        </div>
+
+        <div class="endpoint">
+          <div class="endpoint-header">
+            <span class="method post">POST</span>
+            <span class="path">/v1/auth/refresh</span>
+          </div>
+          <p class="description">Refresh an expired access token.</p>
+          <pre><code>{
+  "refreshToken": "eyJhbGciOiJIUzI1NiIs..."
+}</code></pre>
+        </div>
+      </section>
+
+      <section id="content">
+        <h2>Content</h2>
+
+        <div class="endpoint">
+          <div class="endpoint-header">
+            <span class="method get">GET</span>
+            <span class="path">/v1/content/trending</span>
+          </div>
+          <p class="description">Get trending content by universe.</p>
+          <div class="params">
+            <h4>Query Parameters</h4>
+            <table>
+              <tr><th>Name</th><th>Type</th><th>Default</th><th>Description</th></tr>
+              <tr><td>universe</td><td>string</td><td>—</td><td>movies, music, comedy, reality, sports</td></tr>
+              <tr><td>limit</td><td>integer</td><td>20</td><td>Max results (1-100)</td></tr>
+            </table>
+          </div>
+        </div>
+
+        <div class="endpoint">
+          <div class="endpoint-header">
+            <span class="method get">GET</span>
+            <span class="path">/v1/content/{id}</span>
+          </div>
+          <p class="description">Get content details by ID.</p>
+        </div>
+      </section>
+
+      <section id="wallet">
+        <h2>Wallet</h2>
+
+        <div class="endpoint">
+          <div class="endpoint-header">
+            <span class="method get">GET</span>
+            <span class="path">/v1/wallet</span>
+          </div>
+          <p class="description">Get current wallet balance and recent transactions.</p>
+        </div>
+
+        <div class="endpoint">
+          <div class="endpoint-header">
+            <span class="method post">POST</span>
+            <span class="path">/v1/wallet/fund</span>
+          </div>
+          <p class="description">Initialize a wallet funding payment.</p>
+          <pre><code>{
+  "amount": 5000,
+  "provider": "paystack",
+  "currency": "NGN"
+}</code></pre>
+        </div>
+      </section>
+
+      <section id="search">
+        <h2>Search</h2>
+
+        <div class="endpoint">
+          <div class="endpoint-header">
+            <span class="method get">GET</span>
+            <span class="path">/v1/search?q={query}</span>
+          </div>
+          <p class="description">Full-text search across content and creators.</p>
+          <div class="params">
+            <h4>Query Parameters</h4>
+            <table>
+              <tr><th>Name</th><th>Type</th><th>Description</th></tr>
+              <tr><td>q</td><td>string</td><td>Search query (required)</td></tr>
+              <tr><td>type</td><td>string</td><td>content, creator, or all</td></tr>
+              <tr><td>limit</td><td>integer</td><td>Max results (default: 20)</td></tr>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer style="background: #1a1a2e; color: white; padding: 40px 0; text-align: center;">
+    <div class="container">
+      <p>Azeebo+ API Reference — Generated from OpenAPI spec</p>
+      <p style="opacity: 0.6; margin-top: 10px;">© 2024 Virtual Media Network Limited</p>
+    </div>
+  </footer>
+</body>
+</html>

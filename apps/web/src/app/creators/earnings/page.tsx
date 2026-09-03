@@ -73,11 +73,11 @@ export default function CreatorEarningsPage() {
   }, [fetchData]);
 
   const typeIcons: Record<string, string> = {
-    views: '👁️',
-    tips: '💝',
-    subscriptions: '⭐',
-    bonus: '🎁',
-    payout: '💸',
+    views: 'Eye',
+    tips: 'Heart',
+    subscriptions: 'Star',
+    bonus: 'Gift',
+    payout: 'DollarSign',
   };
 
   const statusColors = {

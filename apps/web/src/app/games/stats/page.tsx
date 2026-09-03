@@ -43,13 +43,13 @@ interface RecentGame {
 }
 
 const RARITY_STYLES: Record<string, { bg: string; text: string; border: string }> = {
-  common: { bg: 'rgba(156,163,175,0.15)', text: '#9CA3AF', border: 'rgba(156,163,175,0.3)' },
+  common: { bg: 'rgba(156,163,175,0.15)', text: 'var(--brand-grey)', border: 'rgba(156,163,175,0.3)' },
   rare: {
     bg: 'rgba(59,130,246,0.15)',
     text: 'var(--color-secondary-400)',
     border: 'rgba(59,130,246,0.3)',
   },
-  epic: { bg: 'rgba(168,85,247,0.15)', text: '#C084FC', border: 'rgba(168,85,247,0.3)' },
+  epic: { bg: 'rgba(168,85,247,0.15)', text: 'var(--brand-purple-light)', border: 'rgba(168,85,247,0.3)' },
   legendary: {
     bg: 'rgba(234,179,8,0.15)',
     text: 'var(--color-warning-400)',
@@ -60,7 +60,7 @@ const RARITY_STYLES: Record<string, { bg: string; text: string; border: string }
 const RESULT_STYLES: Record<string, { bg: string; text: string }> = {
   win: { bg: 'rgba(34,197,94,0.15)', text: 'var(--color-success-500)' },
   loss: { bg: 'rgba(239,68,68,0.15)', text: 'var(--color-error-500)' },
-  draw: { bg: 'rgba(156,163,175,0.15)', text: '#9CA3AF' },
+  draw: { bg: 'rgba(156,163,175,0.15)', text: 'var(--brand-grey)' },
 };
 
 function StatsPageContent(): React.JSX.Element {
@@ -84,16 +84,16 @@ function StatsPageContent(): React.JSX.Element {
 
   const statCards = stats
     ? [
-        { label: 'Total Games', value: stats.totalGamesPlayed, icon: '🎮' },
-        { label: 'Total Score', value: stats.totalScore.toLocaleString(), icon: '⭐' },
-        { label: 'Win Rate', value: `${stats.winRate}%`, icon: '🏆' },
-        { label: 'Current Streak', value: stats.currentStreak, icon: '🔥' },
-        { label: 'Best Streak', value: stats.longestStreak, icon: '💎' },
+        { label: 'Total Games', value: stats.totalGamesPlayed, icon: 'Gamepad2' },
+        { label: 'Total Score', value: stats.totalScore.toLocaleString(), icon: 'Star' },
+        { label: 'Win Rate', value: `${stats.winRate}%`, icon: 'Trophy' },
+        { label: 'Current Streak', value: stats.currentStreak, icon: 'Flame' },
+        { label: 'Best Streak', value: stats.longestStreak, icon: 'Gem' },
         {
           label: 'Global Rank',
           value: `#${stats.rank}`,
           subtext: `of ${stats.totalPlayers.toLocaleString()}`,
-          icon: '📊',
+          icon: 'BarChart3',
         },
       ]
     : [];
@@ -113,7 +113,7 @@ function StatsPageContent(): React.JSX.Element {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            📊 Player Stats
+            BarChart3Player Stats
           </motion.h1>
           <motion.p
             className="text-xl text-white/80 max-w-2xl mx-auto"
@@ -264,7 +264,7 @@ function StatsPageContent(): React.JSX.Element {
           </>
         ) : (
           <div className="text-center py-20">
-            <p className="text-4xl mb-4">🎮</p>
+            <p className="text-4xl mb-4"></p>
             <h2 className="text-xl font-bold text-white mb-2">No stats yet</h2>
             <p className="text-white/50 mb-6">Play some games to see your stats</p>
             <Link href="/games/trivia">
@@ -292,7 +292,7 @@ export default function StatsPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

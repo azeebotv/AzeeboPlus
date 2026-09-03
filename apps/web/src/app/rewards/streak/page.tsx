@@ -1,14 +1,6 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
 
-export const metadata = {
-  title: 'Daily Streak | Azeebo',
-  description: 'Keep your daily streak alive and earn bonus rewards on Azeebo.',
-  openGraph: {
-    title: 'Daily Streak | Azeebo',
-    description: 'Keep your daily streak alive and earn bonus rewards on Azeebo.',
-  },
-};
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
@@ -143,7 +135,7 @@ export default function StreakPage(): React.JSX.Element {
                 marginBottom: 24,
               }}
             >
-              <div style={{ fontSize: 48, marginBottom: 8 }}>🔥</div>
+              <div style={{ fontSize: 48, marginBottom: 8 }}></div>
               <p style={{ fontSize: 48, fontWeight: 700, color: 'var(--brand-orange)' }}>
                 {currentStreak}
               </p>
@@ -161,7 +153,7 @@ export default function StreakPage(): React.JSX.Element {
                     color: 'var(--color-success-500)',
                   }}
                 >
-                  ✓ Today&apos;s check-in done
+                  CheckToday&apos;s check-in done
                 </span>
               )}
               {!todayActive && (
@@ -298,7 +290,7 @@ export default function StreakPage(): React.JSX.Element {
                             : 'rgba(255,255,255,0.05)',
                         }}
                       >
-                        {milestone.unlocked ? '✓' : '🔒'}
+                        {milestone.unlocked ? 'Check' : 'Lock'}
                       </div>
                       <div>
                         <p style={{ fontWeight: 600, fontSize: 14 }}>{milestone.label}</p>

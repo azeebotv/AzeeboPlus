@@ -33,23 +33,23 @@ export default function ContentReviewPage() {
   return (
     <div>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Content Review Queue</h1>
-      <p style={{ color: '#9A8A7A', marginBottom: 24 }}>{queue.length} items pending review</p>
+      <p style={{ color: 'var(--admin-text-muted)', marginBottom: 24 }}>{queue.length} items pending review</p>
 
       {isLoading ? (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
       ) : queue.length === 0 ? (
         <div
           style={{
             padding: 40,
             borderRadius: 20,
             textAlign: 'center',
-            border: '1px solid #2A1A1A',
+            border: '1px solid var(--admin-surface)',
             backgroundColor: 'rgba(26,10,10,0.5)',
           }}
         >
           <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
           <h3 style={{ fontSize: 18 }}>All caught up!</h3>
-          <p style={{ color: '#9A8A7A', marginTop: 8 }}>No content pending review</p>
+          <p style={{ color: 'var(--admin-text-muted)', marginTop: 8 }}>No content pending review</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -59,14 +59,14 @@ export default function ContentReviewPage() {
               style={{
                 padding: 16,
                 borderRadius: 16,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--admin-surface)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>{item.title}</h3>
-                  <p style={{ color: '#9A8A7A', fontSize: 13 }}>
+                  <p style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>
                     by {item.creatorName || 'Unknown'} ·{' '}
                     {new Date(item.submittedAt || '').toLocaleDateString()}
                   </p>
@@ -79,7 +79,7 @@ export default function ContentReviewPage() {
                       padding: '8px 20px',
                       borderRadius: 999,
                       background: 'linear-gradient(135deg, #0D3B2E 0%, #1A5E45 100%)',
-                      color: '#fff',
+                      color: 'white',
                       fontWeight: 600,
                       fontSize: 13,
                       cursor: 'pointer',
@@ -100,7 +100,7 @@ export default function ContentReviewPage() {
                       borderRadius: 999,
                       border: '1px solid #CC1C1C',
                       background: 'transparent',
-                      color: '#CC1C1C',
+                      color: 'var(--admin-red)',
                       fontWeight: 500,
                       fontSize: 13,
                       cursor: 'pointer',
@@ -122,9 +122,9 @@ export default function ContentReviewPage() {
                   marginTop: 8,
                   padding: '8px 12px',
                   borderRadius: 12,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--admin-surface)',
                   backgroundColor: 'rgba(26,10,10,0.5)',
-                  color: '#E8D5C4',
+                  color: 'var(--admin-text-muted)',
                   fontSize: 13,
                   outline: 'none',
                 }}

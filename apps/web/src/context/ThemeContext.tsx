@@ -1,7 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useRef } from 'react';
-import { useFlags } from './FlagsContext';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -9,113 +8,57 @@ interface ThemeContextType {
   theme: Theme;
   resolvedTheme: 'light' | 'dark';
   setTheme: (theme: Theme) => void;
-  toggleTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-function resolveTheme(t: Theme): 'light' | 'dark' {
-  if (typeof window === 'undefined') return 'dark';
-  if (t === 'system') {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  }
-  return t;
-}
-
-function getInitialTheme(): Theme {
-  if (typeof window === 'undefined') return 'system';
-  try {
-    const stored = localStorage.getItem('theme') as Theme | null;
-    return stored || 'system';
-  } catch {
-    return 'system';
-  }
-}
-
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const { isEnabled } = useFlags();
-  // web_dark_mode (on by default): when disabled, dark mode is unavailable and
-  // the app is forced to light regardless of stored/system preference.
-  const darkModeEnabled = isEnabled('web_dark_mode');
-
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (darkModeEnabled) return getInitialTheme();
-    return 'light';
-  });
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() =>
-    darkModeEnabled ? resolveTheme(getInitialTheme()) : 'light'
-  );
-  const themeRef = useRef<Theme>(darkModeEnabled ? getInitialTheme() : 'light');
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [theme, setThemeState] = useState<Theme>('system');
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');
 
   useEffect(() => {
-    const stored = localStorage.getItem('theme') as Theme | null;
-    const initialTheme = stored || 'system';
-    setThemeState(initialTheme);
-    themeRef.current = initialTheme;
-
-    setResolvedTheme(resolveTheme(initialTheme));
-
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleSystemChange = () => {
-      if (themeRef.current === 'system') {
-        setResolvedTheme(mediaQuery.matches ? 'dark' : 'light');
-      }
-    };
-
-    mediaQuery.addEventListener('change', handleSystemChange);
-
-    return () => {
-      mediaQuery.removeEventListener('change', handleSystemChange);
-    };
+    // Load saved theme
+    const saved = localStorage.getItem('azeebo-theme') as Theme | null;
+    if (saved) {
+      setThemeState(saved);
+    }
   }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    const resolveTheme = () => {
+      let resolved: 'light' | 'dark';
+      if (theme === 'system') {
+        resolved = mediaQuery.matches ? 'dark' : 'light';
+      } else {
+        resolved = theme;
+      }
+      setResolvedTheme(resolved);
+      document.documentElement.classList.toggle('dark', resolved === 'dark');
+      document.documentElement.classList.toggle('light', resolved === 'light');
+    };
 
-    // Keep light-only when the dark-mode flag is off, even mid-session.
-    if (!darkModeEnabled) {
-      themeRef.current = 'light';
-      setThemeState('light');
-      setResolvedTheme('light');
-      document.documentElement.classList.remove('dark');
-      return;
-    }
-
-    const newResolved = resolveTheme(theme);
-    setResolvedTheme(newResolved);
-
-    if (newResolved === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-
-    localStorage.setItem('theme', theme);
-  }, [theme, darkModeEnabled]);
+    resolveTheme();
+    mediaQuery.addEventListener('change', resolveTheme);
+    return () => mediaQuery.removeEventListener('change', resolveTheme);
+  }, [theme]);
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
-  };
-
-  const toggleTheme = () => {
-    setThemeState((prev) => {
-      if (prev === 'system') {
-        return resolvedTheme === 'dark' ? 'light' : 'dark';
-      }
-      return prev === 'dark' ? 'light' : 'dark';
-    });
+    localStorage.setItem('azeebo-theme', newTheme);
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );
 }
 
-export function useTheme(): ThemeContextType {
+export function useTheme() {
   const context = useContext(ThemeContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;

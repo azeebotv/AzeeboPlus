@@ -16,22 +16,22 @@ export default function EngagementPage() {
         {
           label: 'Daily Active Users',
           value: metrics.dailyActiveUsers?.toLocaleString() || '0',
-          color: '#E8420A',
+          color: 'var(--admin-orange)',
         },
         {
           label: 'Monthly Active Users',
           value: metrics.monthlyActiveUsers?.toLocaleString() || '0',
-          color: '#0D3B2E',
+          color: 'var(--admin-green)',
         },
         {
           label: 'Avg Session Duration',
           value: `${Math.round((metrics.averageSessionDuration || 0) / 60)}m`,
-          color: '#F59E0B',
+          color: 'var(--admin-amber)',
         },
         {
           label: 'Retention Rate',
           value: `${(metrics.retentionRate || 0).toFixed(1)}%`,
-          color: '#CC1C1C',
+          color: 'var(--admin-red)',
         },
       ]
     : [];
@@ -39,10 +39,10 @@ export default function EngagementPage() {
   return (
     <div>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Engagement</h1>
-      <p style={{ color: '#9A8A7A', marginBottom: 32 }}>User engagement metrics and trends</p>
+      <p style={{ color: 'var(--admin-text-muted)', marginBottom: 32 }}>User engagement metrics and trends</p>
 
       {isLoading ? (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
       ) : (
         <div
           style={{
@@ -57,11 +57,11 @@ export default function EngagementPage() {
               style={{
                 padding: 20,
                 borderRadius: 16,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--admin-surface)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
               }}
             >
-              <p style={{ fontSize: 12, color: '#9A8A7A', marginBottom: 8 }}>{c.label}</p>
+              <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 8 }}>{c.label}</p>
               <p style={{ fontSize: 22, fontWeight: 700, color: c.color }}>{c.value}</p>
             </div>
           ))}

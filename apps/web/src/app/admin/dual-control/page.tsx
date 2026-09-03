@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 /**
  * Dual-Control Candidate Actions (AZP-ADMIN-004, TAA §55)
@@ -102,11 +103,11 @@ export default function DualControlPage() {
   };
 
   const actionTypeLabels = {
-    large_refund: '💰 Large Refund',
-    manual_entitlement: '🎁 Manual Entitlement',
-    bulk_operation: '📦 Bulk Operation',
-    data_export: '📤 Data Export',
-    account_modification: '👤 Account Modification',
+    large_refund: 'DollarSign Large Refund',
+    manual_entitlement: 'Gift Manual Entitlement',
+    bulk_operation: 'Package Bulk Operation',
+    data_export: 'Upload Data Export',
+    account_modification: 'User Account Modification',
   };
 
   const statusColors = {
@@ -170,9 +171,11 @@ export default function DualControlPage() {
         ) : error ? (
           <div className="text-center py-12 text-destructive">{error}</div>
         ) : actions.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            No dual-control actions found
-          </div>
+          <EmptyState
+            icon="Lock"
+            title="No dual-control actions found"
+            description="No dual-control actions are pending review"
+          />
         ) : (
           <div className="grid gap-4">
             {actions.map((action) => (
@@ -211,7 +214,7 @@ export default function DualControlPage() {
                           action.firstApprover ? 'bg-green-600 text-white' : 'bg-gray-300'
                         }`}
                       >
-                        {action.firstApprover ? '✓' : '1'}
+                        {action.firstApprover ? 'Check' : '1'}
                       </div>
                       <span className="text-muted-foreground">First Approval</span>
                       {action.firstApproverName && (
@@ -229,7 +232,7 @@ export default function DualControlPage() {
                               : 'bg-gray-300'
                         }`}
                       >
-                        {action.secondApprover ? '✓' : '2'}
+                        {action.secondApprover ? 'Check' : '2'}
                       </div>
                       <span className="text-muted-foreground">Second Approval</span>
                       {action.secondApproverName && (

@@ -7,9 +7,9 @@ const inputStyle = {
   width: '100%',
   padding: '10px 14px',
   borderRadius: 8,
-  border: '1px solid #2A1A1A',
-  backgroundColor: '#0D0505',
-  color: '#F5F0EB',
+  border: '1px solid var(--creator-border)',
+  backgroundColor: 'var(--creator-dark)',
+  color: 'var(--creator-text)',
   fontSize: 14,
 };
 
@@ -50,12 +50,12 @@ export default function MonetizationPage() {
   return (
     <div>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Monetization</h1>
-      <p style={{ color: '#9A8A7A', marginBottom: 24 }}>
+      <p style={{ color: 'var(--creator-text-muted)', marginBottom: 24 }}>
         Configure subscriptions, tips, and payout settings
       </p>
 
       {isLoading ? (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
       ) : (
         <div style={{ maxWidth: 700 }}>
           {/* Subscription Tiers */}
@@ -63,7 +63,7 @@ export default function MonetizationPage() {
             style={{
               padding: 20,
               borderRadius: 12,
-              border: '1px solid #2A1A1A',
+              border: '1px solid var(--creator-border)',
               backgroundColor: 'rgba(26,10,10,0.5)',
               marginBottom: 16,
             }}
@@ -83,8 +83,8 @@ export default function MonetizationPage() {
                     style={{
                       padding: 16,
                       borderRadius: 10,
-                      border: '1px solid #2A1A1A',
-                      backgroundColor: '#0D0505',
+                      border: '1px solid var(--creator-border)',
+                      backgroundColor: 'var(--creator-dark)',
                     }}
                   >
                     <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>
@@ -92,15 +92,15 @@ export default function MonetizationPage() {
                     </div>
                     <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>
                       ${tier.price}
-                      <span style={{ fontSize: 13, color: '#9A8A7A', fontWeight: 400 }}>/mo</span>
+                      <span style={{ fontSize: 13, color: 'var(--creator-text-muted)', fontWeight: 400 }}>/mo</span>
                     </div>
-                    <div style={{ fontSize: 12, color: '#9A8A7A', marginBottom: 8 }}>
+                    <div style={{ fontSize: 12, color: 'var(--creator-text-muted)', marginBottom: 8 }}>
                       {tier.subscriberCount} subscribers
                     </div>
                     {tier.perks.length > 0 && (
                       <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
                         {tier.perks.map((perk, i) => (
-                          <li key={i} style={{ fontSize: 12, color: '#9A8A7A', padding: '2px 0' }}>
+                          <li key={i} style={{ fontSize: 12, color: 'var(--creator-text-muted)', padding: '2px 0' }}>
                             + {perk}
                           </li>
                         ))}
@@ -110,7 +110,7 @@ export default function MonetizationPage() {
                 ))}
               </div>
             ) : (
-              <p style={{ color: '#9A8A7A', fontSize: 13 }}>
+              <p style={{ color: 'var(--creator-text-muted)', fontSize: 13 }}>
                 No subscription tiers configured. Set up tiers in your creator settings.
               </p>
             )}
@@ -121,7 +121,7 @@ export default function MonetizationPage() {
             style={{
               padding: 20,
               borderRadius: 12,
-              border: '1px solid #2A1A1A',
+              border: '1px solid var(--creator-border)',
               backgroundColor: 'rgba(26,10,10,0.5)',
               marginBottom: 16,
             }}
@@ -137,7 +137,7 @@ export default function MonetizationPage() {
             >
               <div>
                 <div style={{ fontSize: 14 }}>Enable Tips</div>
-                <div style={{ fontSize: 12, color: '#9A8A7A' }}>
+                <div style={{ fontSize: 12, color: 'var(--creator-text-muted)' }}>
                   Allow fans to send one-time tips
                 </div>
               </div>
@@ -149,7 +149,7 @@ export default function MonetizationPage() {
                   borderRadius: 12,
                   border: 'none',
                   cursor: 'pointer',
-                  backgroundColor: tipEnabled ? '#E8420A' : '#2A1A1A',
+                  backgroundColor: tipEnabled ? 'var(--creator-orange)' : 'var(--creator-surface)',
                   position: 'relative',
                   transition: 'background-color 0.2s',
                 }}
@@ -159,7 +159,7 @@ export default function MonetizationPage() {
                     width: 18,
                     height: 18,
                     borderRadius: '50%',
-                    backgroundColor: '#F5F0EB',
+                    backgroundColor: 'var(--creator-surface-light)',
                     position: 'absolute',
                     top: 3,
                     left: tipEnabled ? 23 : 3,
@@ -172,7 +172,7 @@ export default function MonetizationPage() {
               <div style={{ display: 'flex', gap: 12 }}>
                 <div style={{ flex: 1 }}>
                   <label
-                    style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}
+                    style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}
                   >
                     Min Tip ($)
                   </label>
@@ -186,7 +186,7 @@ export default function MonetizationPage() {
                 </div>
                 <div style={{ flex: 1 }}>
                   <label
-                    style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}
+                    style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}
                   >
                     Max Tip ($)
                   </label>
@@ -207,14 +207,14 @@ export default function MonetizationPage() {
             style={{
               padding: 20,
               borderRadius: 12,
-              border: '1px solid #2A1A1A',
+              border: '1px solid var(--creator-border)',
               backgroundColor: 'rgba(26,10,10,0.5)',
               marginBottom: 16,
             }}
           >
             <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Payout Method</h3>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}>
                 Method
               </label>
               <select
@@ -232,11 +232,11 @@ export default function MonetizationPage() {
                 style={{
                   padding: 12,
                   borderRadius: 8,
-                  backgroundColor: '#0D0505',
-                  border: '1px solid #2A1A1A',
+                  backgroundColor: 'var(--creator-dark)',
+                  border: '1px solid var(--creator-border)',
                 }}
               >
-                <p style={{ fontSize: 12, color: '#9A8A7A', marginBottom: 8 }}>Current Details</p>
+                <p style={{ fontSize: 12, color: 'var(--creator-text-muted)', marginBottom: 8 }}>Current Details</p>
                 {Object.entries(data.payoutDetails).map(([key, val]) => (
                   <div
                     key={key}
@@ -247,7 +247,7 @@ export default function MonetizationPage() {
                       padding: '3px 0',
                     }}
                   >
-                    <span style={{ color: '#9A8A7A', textTransform: 'capitalize' }}>
+                    <span style={{ color: 'var(--creator-text-muted)', textTransform: 'capitalize' }}>
                       {key.replace(/_/g, ' ')}
                     </span>
                     <span>{val}</span>
@@ -262,7 +262,7 @@ export default function MonetizationPage() {
             style={{
               padding: 20,
               borderRadius: 12,
-              border: '1px solid #2A1A1A',
+              border: '1px solid var(--creator-border)',
               backgroundColor: 'rgba(26,10,10,0.5)',
               marginBottom: 24,
             }}
@@ -273,10 +273,10 @@ export default function MonetizationPage() {
                 display: 'flex',
                 justifyContent: 'space-between',
                 padding: '6px 0',
-                borderBottom: '1px solid #1A0A0A',
+                borderBottom: '1px solid var(--creator-border-light)',
               }}
             >
-              <span style={{ fontSize: 14, color: '#9A8A7A' }}>Subscription Tiers</span>
+              <span style={{ fontSize: 14, color: 'var(--creator-text-muted)' }}>Subscription Tiers</span>
               <span style={{ fontSize: 14 }}>{data?.tiers?.length || 0} active</span>
             </div>
             <div
@@ -284,16 +284,16 @@ export default function MonetizationPage() {
                 display: 'flex',
                 justifyContent: 'space-between',
                 padding: '6px 0',
-                borderBottom: '1px solid #1A0A0A',
+                borderBottom: '1px solid var(--creator-border-light)',
               }}
             >
-              <span style={{ fontSize: 14, color: '#9A8A7A' }}>Tips</span>
-              <span style={{ fontSize: 14, color: tipEnabled ? '#0D3B2E' : '#9A8A7A' }}>
+              <span style={{ fontSize: 14, color: 'var(--creator-text-muted)' }}>Tips</span>
+              <span style={{ fontSize: 14, color: tipEnabled ? 'var(--creator-green)' : 'var(--creator-text-muted)' }}>
                 {tipEnabled ? 'Enabled' : 'Disabled'}
               </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
-              <span style={{ fontSize: 14, color: '#9A8A7A' }}>Platform Fee</span>
+              <span style={{ fontSize: 14, color: 'var(--creator-text-muted)' }}>Platform Fee</span>
               <span style={{ fontSize: 14 }}>15%</span>
             </div>
           </div>
@@ -306,7 +306,7 @@ export default function MonetizationPage() {
               borderRadius: 8,
               border: 'none',
               background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-              color: '#fff',
+              color: 'white',
               fontWeight: 600,
               cursor: 'pointer',
             }}
@@ -314,12 +314,12 @@ export default function MonetizationPage() {
             {saveMutation.isPending ? 'Saving...' : 'Save Monetization Settings'}
           </button>
           {saveMutation.isSuccess && (
-            <p style={{ color: '#0D3B2E', fontSize: 13, marginTop: 8 }}>
+            <p style={{ color: 'var(--creator-green)', fontSize: 13, marginTop: 8 }}>
               Settings saved successfully
             </p>
           )}
           {saveMutation.isError && (
-            <p style={{ color: '#CC1C1C', fontSize: 13, marginTop: 8 }}>Failed to save settings</p>
+            <p style={{ color: 'var(--creator-red)', fontSize: 13, marginTop: 8 }}>Failed to save settings</p>
           )}
         </div>
       )}

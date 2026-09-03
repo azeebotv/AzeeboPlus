@@ -6,13 +6,13 @@ import type { NotificationTemplate } from '@/lib/admin-types';
 function getTypeStyle(type: string): { bg: string; color: string } {
   switch (type) {
     case 'email':
-      return { bg: 'rgba(13,59,46,0.2)', color: '#0D3B2E' };
+      return { bg: 'rgba(13,59,46,0.2)', color: 'var(--admin-green)' };
     case 'push':
-      return { bg: 'rgba(232,66,10,0.2)', color: '#E8420A' };
+      return { bg: 'rgba(232,66,10,0.2)', color: 'var(--admin-orange)' };
     case 'sms':
-      return { bg: 'rgba(245,158,11,0.2)', color: '#F59E0B' };
+      return { bg: 'rgba(245,158,11,0.2)', color: 'var(--admin-amber)' };
     default:
-      return { bg: 'rgba(154,138,122,0.2)', color: '#9A8A7A' };
+      return { bg: 'rgba(154,138,122,0.2)', color: 'var(--admin-text-muted)' };
   }
 }
 
@@ -110,7 +110,7 @@ export default function AnnouncementsPage() {
       >
         <div>
           <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Announcements</h1>
-          <p style={{ color: '#9A8A7A' }}>{announcements.length} announcements</p>
+          <p style={{ color: 'var(--admin-text-muted)' }}>{announcements.length} announcements</p>
         </div>
         <button
           onClick={openCreate}
@@ -119,7 +119,7 @@ export default function AnnouncementsPage() {
             borderRadius: 10,
             border: 'none',
             background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-            color: '#fff',
+            color: 'white',
             fontWeight: 600,
             fontSize: 14,
             cursor: 'pointer',
@@ -130,7 +130,7 @@ export default function AnnouncementsPage() {
       </div>
 
       {isLoading ? (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {announcements.map((a) => {
@@ -142,7 +142,7 @@ export default function AnnouncementsPage() {
                 style={{
                   padding: 16,
                   borderRadius: 16,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--admin-surface)',
                   backgroundColor: 'rgba(26,10,10,0.5)',
                 }}
               >
@@ -170,7 +170,7 @@ export default function AnnouncementsPage() {
                         {a.type}
                       </span>
                     </div>
-                    <p style={{ color: '#9A8A7A', fontSize: 13 }}>{a.subject}</p>
+                    <p style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>{a.subject}</p>
                   </div>
                   <div style={{ display: 'flex', gap: 6, marginLeft: 12 }}>
                     <button
@@ -178,9 +178,9 @@ export default function AnnouncementsPage() {
                       style={{
                         padding: '6px 12px',
                         borderRadius: 8,
-                        border: '1px solid #2A1A1A',
+                        border: '1px solid var(--admin-surface)',
                         background: 'transparent',
-                        color: '#9A8A7A',
+                        color: 'var(--admin-text-muted)',
                         fontSize: 12,
                         cursor: 'pointer',
                       }}
@@ -195,8 +195,8 @@ export default function AnnouncementsPage() {
                             padding: '6px 12px',
                             borderRadius: 8,
                             border: 'none',
-                            background: '#CC1C1C',
-                            color: '#fff',
+                            background: 'var(--admin-red)',
+                            color: 'white',
                             fontSize: 12,
                             cursor: 'pointer',
                           }}
@@ -208,9 +208,9 @@ export default function AnnouncementsPage() {
                           style={{
                             padding: '6px 12px',
                             borderRadius: 8,
-                            border: '1px solid #2A1A1A',
+                            border: '1px solid var(--admin-surface)',
                             background: 'transparent',
-                            color: '#9A8A7A',
+                            color: 'var(--admin-text-muted)',
                             fontSize: 12,
                             cursor: 'pointer',
                           }}
@@ -226,7 +226,7 @@ export default function AnnouncementsPage() {
                           borderRadius: 8,
                           border: '1px solid rgba(204,28,28,0.3)',
                           background: 'transparent',
-                          color: '#CC1C1C',
+                          color: 'var(--admin-red)',
                           fontSize: 12,
                           cursor: 'pointer',
                         }}
@@ -236,14 +236,14 @@ export default function AnnouncementsPage() {
                     )}
                   </div>
                 </div>
-                <p style={{ color: '#9A8A7A', fontSize: 12 }}>
+                <p style={{ color: 'var(--admin-text-muted)', fontSize: 12 }}>
                   Created: {new Date(a.createdAt).toLocaleDateString()}
                 </p>
               </div>
             );
           })}
           {announcements.length === 0 && (
-            <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A' }}>
+            <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>
               No announcements found
             </p>
           )}
@@ -266,9 +266,9 @@ export default function AnnouncementsPage() {
         >
           <div
             style={{
-              backgroundColor: '#1A0A0A',
+              backgroundColor: 'var(--admin-bg)',
               borderRadius: 16,
-              border: '1px solid #2A1A1A',
+              border: '1px solid var(--admin-surface)',
               padding: 24,
               maxWidth: 520,
               width: '100%',
@@ -282,7 +282,7 @@ export default function AnnouncementsPage() {
             </h2>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
                 Name
               </label>
               <input
@@ -292,9 +292,9 @@ export default function AnnouncementsPage() {
                   width: '100%',
                   padding: '10px 12px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
-                  backgroundColor: '#0D0505',
-                  color: '#F5F0EB',
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
                   fontSize: 14,
                   outline: 'none',
                 }}
@@ -303,7 +303,7 @@ export default function AnnouncementsPage() {
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
                 Type
               </label>
               <select
@@ -315,9 +315,9 @@ export default function AnnouncementsPage() {
                   width: '100%',
                   padding: '10px 12px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
-                  backgroundColor: '#0D0505',
-                  color: '#F5F0EB',
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
                   fontSize: 14,
                   outline: 'none',
                 }}
@@ -331,7 +331,7 @@ export default function AnnouncementsPage() {
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
                 Subject
               </label>
               <input
@@ -341,9 +341,9 @@ export default function AnnouncementsPage() {
                   width: '100%',
                   padding: '10px 12px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
-                  backgroundColor: '#0D0505',
-                  color: '#F5F0EB',
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
                   fontSize: 14,
                   outline: 'none',
                 }}
@@ -352,7 +352,7 @@ export default function AnnouncementsPage() {
             </div>
 
             <div style={{ marginBottom: 24 }}>
-              <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
                 Content
               </label>
               <textarea
@@ -363,9 +363,9 @@ export default function AnnouncementsPage() {
                   width: '100%',
                   padding: '10px 12px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
-                  backgroundColor: '#0D0505',
-                  color: '#F5F0EB',
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
                   fontSize: 14,
                   outline: 'none',
                   resize: 'vertical',
@@ -384,9 +384,9 @@ export default function AnnouncementsPage() {
                   borderRadius: 10,
                   border: 'none',
                   background: !form.name
-                    ? '#2A1A1A'
+                    ? 'var(--admin-surface)'
                     : 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                  color: !form.name ? '#666' : '#fff',
+                  color: !form.name ? 'var(--admin-grey)' : 'white',
                   fontWeight: 600,
                   fontSize: 14,
                   cursor: !form.name ? 'not-allowed' : 'pointer',
@@ -399,9 +399,9 @@ export default function AnnouncementsPage() {
                 style={{
                   padding: '12px 20px',
                   borderRadius: 10,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--admin-surface)',
                   background: 'transparent',
-                  color: '#9A8A7A',
+                  color: 'var(--admin-text-muted)',
                   fontWeight: 600,
                   fontSize: 14,
                   cursor: 'pointer',

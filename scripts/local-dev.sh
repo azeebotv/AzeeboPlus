@@ -339,7 +339,8 @@ load_env() {
   # Operations
   export MODERATION_SERVICE_URL="${MODERATION_SERVICE_URL:-http://localhost:3022}"
   export QUEUE_SERVICE_URL="${QUEUE_SERVICE_URL:-http://localhost:3015}"
-  export SUPPORT_SERVICE_URL="${SUPPORT_SERVICE_URL:-http://localhost:3020}"
+  export SUPPORT_SERVICE_URL="${SUPPORT_SERVICE_URL:-http://localhost:3028}"
+  export KNOWLEDGE_SERVICE_URL="${KNOWLEDGE_SERVICE_URL:-http://localhost:3020}"
   # Universes
   export REALITY_SERVICE_URL="${REALITY_SERVICE_URL:-http://localhost:3010}"
   export MOVIE_SERVICE_URL="${MOVIE_SERVICE_URL:-http://localhost:3011}"
@@ -348,6 +349,7 @@ load_env() {
   export LIFESTYLE_SERVICE_URL="${LIFESTYLE_SERVICE_URL:-http://localhost:3016}"
   export VERTICAL_SERVICE_URL="${VERTICAL_SERVICE_URL:-http://localhost:3017}"
   export CREATOR_SERVICE_URL="${CREATOR_SERVICE_URL:-http://localhost:3018}"
+  export LIVE_EVENT_SERVICE_URL="${LIVE_EVENT_SERVICE_URL:-http://localhost:3027}"
   export CREATOR_APP_URL="${CREATOR_APP_URL:-http://localhost:4014}"
   export SPORTS_SERVICE_URL="${SPORTS_SERVICE_URL:-http://localhost:3021}"
 }
@@ -394,6 +396,7 @@ DB_SERVICES=(
   "content-service|services/core/content-service|azeebo_content|3004"
   "search-service|services/core/search-service|azeebo_search|3005"
   "media-service|services/core/media-service|azeebo_media|3019"
+  "knowledge-service|services/core/knowledge-service|azeebo_knowledge|3020"
   "notification-service|services/engagement/notification-service|azeebo_notification|3006"
   "reward-service|services/engagement/reward-service|azeebo_reward|3007"
   "engagement-service|services/engagement/engagement-service|azeebo_engagement|3023"
@@ -410,8 +413,9 @@ DB_SERVICES=(
   "lifestyle-service|services/universes/lifestyle-service|azeebo_lifestyle|3016"
   "vertical-service|services/universes/vertical-service|azeebo_vertical|3017"
   "creator-service|services/universes/creator-service|azeebo_creator|3018"
+  "live-event-service|services/universes/live-event-service|azeebo_live_event|3027"
   "queue-service|services/operations/queue-service|azeebo_queue|3015"
-  "support-service|services/operations/support-service|azeebo_support|3020"
+  "support-service|services/operations/support-service|azeebo_support|3028"
   "moderation-service|services/operations/moderation-service|azeebo_moderation|3022"
   "auth-service|services/core/auth-service|azeebo_auth|3000"
   "admin|apps/admin|azeebo_admin|4016"
@@ -624,6 +628,7 @@ CORE_SERVICES=(
   "@azeebo/content-service|services/core/content-service|3004"
   "@azeebo/search-service|services/core/search-service|3005"
   "@azeebo/media-service|services/core/media-service|3019"
+  "@azeebo/knowledge-service|services/core/knowledge-service|3020"
 )
 
 ENGAGEMENT_SERVICES=(
@@ -649,11 +654,12 @@ UNIVERSE_SERVICES=(
   "@azeebo/lifestyle-service|services/universes/lifestyle-service|3016"
   "@azeebo/vertical-service|services/universes/vertical-service|3017"
   "@azeebo/creator-service|services/universes/creator-service|3018"
+  "@azeebo/live-event-service|services/universes/live-event-service|3027"
 )
 
 OPERATIONS_SERVICES=(
   "@azeebo/queue-service|services/operations/queue-service|3015"
-  "@azeebo/support-service|services/operations/support-service|3020"
+  "@azeebo/support-service|services/operations/support-service|3028"
   "@azeebo/moderation-service|services/operations/moderation-service|3022"
 )
 
@@ -934,7 +940,7 @@ cmd_start() {
   local all_ports=(
     3000 3001 3002 3003 3004 3005 3006 3007 3008 3009
     3010 3011 3012 3013 3014 3015 3016 3017 3018 3019
-    3020 3021 3022 3023 3024 3025 3026 4000 4014 4016
+    3020 3021 3022 3023 3024 3025 3026 3027 3028 4000 4014 4016
   )
   local cleaned=0
   for port in "${all_ports[@]}"; do
@@ -1086,7 +1092,7 @@ cmd_stop() {
   local all_ports=(
     3000 3001 3002 3003 3004 3005 3006 3007 3008 3009
     3010 3011 3012 3013 3014 3015 3016 3017 3018 3019
-    3020 3021 3022 3023 3024 3025 3026 4000 4014 4016
+    3020 3021 3022 3023 3024 3025 3026 3027 3028 4000 4014 4016
   )
   for port in "${all_ports[@]}"; do
     local pids

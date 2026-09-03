@@ -24,6 +24,7 @@ import { FeatureFlagsModule } from './modules/feature-flags/feature-flags.module
 import { PaymentGatewaysModule } from './modules/payment-gateways/payment-gateways.module';
 import { RealityShowsModule } from './modules/reality-shows/reality-shows.module';
 import { SubscriptionAdminModule } from './modules/subscription-admin/subscription-admin.module';
+import { AnalyticsProxyModule } from './modules/analytics-proxy/analytics-proxy.module';
 import { ServiceAuthGuard, RateLimiterModule, SecurityModule } from '@azeebo/security';
 import { FeatureFlagModule, queueFlags, adminFlags } from '@azeebo/feature-flags';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
@@ -53,12 +54,14 @@ import { CsrfMiddleware } from './common/csrf.middleware';
         [adminFlags.featureFlagEditorV2]: false,
         [adminFlags.reportBuilder]: false,
         [adminFlags.bulkActions]: false,
+        [adminFlags.governanceDashboard]: false,
       },
     }),
     FeatureFlagsModule,
     PaymentGatewaysModule,
     RealityShowsModule,
     SubscriptionAdminModule,
+    AnalyticsProxyModule,
     AuthModule,
     DatabaseModule,
     UserManagementModule,

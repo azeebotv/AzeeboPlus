@@ -57,7 +57,7 @@ export default function EventDetailScreen() {
         message: `Check out ${event.title} at ${event.venue} on ${event.date}!`,
         title: event.title,
       });
-    } catch {}
+    } catch { /* User cancelled share */ }
   }, [event]);
 
   const handleOpenMap = useCallback(() => {

@@ -140,7 +140,7 @@ export default function RealityShowViewerPage(): React.JSX.Element {
                   </span>
                   {show.viewerCount !== undefined && (
                     <span className="text-xs text-white/70 font-semibold">
-                      👁️ {show.viewerCount.toLocaleString()} watching
+                      {show.viewerCount.toLocaleString()} watching
                     </span>
                   )}
                 </div>
@@ -160,7 +160,7 @@ export default function RealityShowViewerPage(): React.JSX.Element {
                       background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
                     }}
                   >
-                    <span>▶</span> Stream Episode
+                    <span></span> Stream Episode
                   </Link>
                   <Link
                     href={`/vote?showId=${show.id}`}

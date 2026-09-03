@@ -114,7 +114,7 @@ function TitleDetailPageContent(): React.JSX.Element {
       case 'ongoing':
         return { bg: 'rgba(74,222,128,0.2)', text: 'var(--color-success-400)', label: 'Ongoing' };
       case 'completed':
-        return { bg: 'rgba(156,163,175,0.2)', text: '#9CA3AF', label: 'Completed' };
+        return { bg: 'rgba(156,163,175,0.2)', text: 'var(--brand-grey)', label: 'Completed' };
       case 'upcoming':
         return { bg: 'rgba(245,158,11,0.2)', text: 'var(--color-warning-500)', label: 'Upcoming' };
       default:
@@ -158,7 +158,7 @@ function TitleDetailPageContent(): React.JSX.Element {
                   className="w-full h-full object-cover"
                 />
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/30 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-[var(--brand-near-black)]/30 to-transparent" />
               <div className="absolute top-4 left-4 flex gap-2">
                 {title.genre && (
                   <span
@@ -268,7 +268,7 @@ function TitleDetailPageContent(): React.JSX.Element {
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs text-[#E8420A] mb-1">
+                          <p className="text-xs text-[var(--brand-orange)] mb-1">
                             Episode {episode.episodeNumber}
                           </p>
                           <h3 className="font-semibold text-white truncate">{episode.title}</h3>
@@ -418,7 +418,7 @@ export default function TitleDetailPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

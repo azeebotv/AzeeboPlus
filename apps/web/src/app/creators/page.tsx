@@ -107,7 +107,7 @@ export default function CreatorsPage(): React.JSX.Element {
           </div>
         ) : creators.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-6xl mb-4">🎬</p>
+            <p className="text-6xl mb-4"></p>
             <h3 className="text-xl font-bold text-white mb-2">No Creators Yet</h3>
             <p className="text-white/50">Check back later for amazing content creators.</p>
           </div>

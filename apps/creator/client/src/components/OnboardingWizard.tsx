@@ -28,7 +28,7 @@ export function OnboardingWizard({ contentCount }: OnboardingWizardProps) {
         marginBottom: 24,
         padding: 20,
         borderRadius: 16,
-        border: '1px solid #E8420A',
+        border: '1px solid var(--creator-orange)',
         background: 'linear-gradient(135deg, rgba(232,66,10,0.12), rgba(204,28,28,0.08))',
       }}
     >
@@ -44,7 +44,7 @@ export function OnboardingWizard({ contentCount }: OnboardingWizardProps) {
           <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>
             Welcome to your creator studio 🎬
           </h2>
-          <p style={{ fontSize: 13, color: '#9A8A7A' }}>
+          <p style={{ fontSize: 13, color: 'var(--creator-text-muted)' }}>
             Complete these steps to start growing your audience:
           </p>
         </div>
@@ -53,9 +53,9 @@ export function OnboardingWizard({ contentCount }: OnboardingWizardProps) {
           style={{
             padding: '4px 10px',
             borderRadius: 6,
-            border: '1px solid #2A1A1A',
+            border: '1px solid var(--creator-border)',
             background: 'transparent',
-            color: '#9A8A7A',
+            color: 'var(--creator-text-muted)',
             fontSize: 12,
             cursor: 'pointer',
           }}
@@ -74,9 +74,9 @@ export function OnboardingWizard({ contentCount }: OnboardingWizardProps) {
               gap: 10,
               padding: '10px 14px',
               borderRadius: 10,
-              border: '1px solid #2A1A1A',
+              border: '1px solid var(--creator-border)',
               background: 'rgba(13,5,5,0.4)',
-              color: '#F5F0EB',
+              color: 'var(--creator-text)',
               fontSize: 13,
               cursor: 'pointer',
               textAlign: 'left',
@@ -91,7 +91,7 @@ export function OnboardingWizard({ contentCount }: OnboardingWizardProps) {
                 height: 22,
                 borderRadius: '50%',
                 background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                color: '#fff',
+                color: 'white',
                 fontSize: 12,
                 fontWeight: 700,
               }}
@@ -99,7 +99,7 @@ export function OnboardingWizard({ contentCount }: OnboardingWizardProps) {
               {i + 1}
             </span>
             {step.label}
-            <span style={{ marginLeft: 'auto', color: '#E8420A', fontSize: 12 }}>Start →</span>
+            <span style={{ marginLeft: 'auto', color: 'var(--creator-orange)', fontSize: 12 }}>Start →</span>
           </button>
         ))}
       </div>

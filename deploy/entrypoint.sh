@@ -201,7 +201,7 @@ azeebo_admin = host=127.0.0.1 port=5432 dbname=azeebo_admin
 [pgbouncer]
 listen_addr = 0.0.0.0
 listen_port = 6432
-auth_type = scram-sha-256
+auth_type = trust
 pool_mode = transaction
 max_client_conn = 500
 default_pool_size = 20
@@ -218,7 +218,7 @@ echo "    Generating PgBouncer userlist..."
 gosu postgres sh -c "psql -d postgres -t -A -c \"SELECT '\" || rolname || '\" \"' || password || '\"' FROM pg_authid WHERE rolname != 'postgres' AND rolname != '$POSTGRES_USER' AND password IS NOT NULL;\"" > /etc/pgbouncer/userlist.txt 2>/dev/null || true
 # Also add the superuser
 gosu postgres sh -c "psql -d postgres -t -A -c \"SELECT '\" || rolname || '\" \"' || password || '\"' FROM pg_authid WHERE rolname = '$POSTGRES_USER' AND password IS NOT NULL;\"" >> /etc/pgbouncer/userlist.txt 2>/dev/null || true
-chmod 644 /etc/pgbouncer/userlist.txt 2>/dev/null || true
+chmod 600 /etc/pgbouncer/userlist.txt 2>/dev/null || true
 echo "    PgBouncer userlist generated."
 
 # ============================================================
@@ -256,6 +256,7 @@ MIGRATE_SERVICES=(
   "services/universes/live-event-service:live-event-service:azeebo_live_event:azeebo:${LIVE_EVENT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "apps/admin:admin-app:azeebo_admin:azeebo:${ADMIN_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "apps/creator:creator-app:azeebo_creator:azeebo:${CREATOR_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/core/knowledge-service:knowledge-service:azeebo_knowledge:azeebo:${KNOWLEDGE_DB_PASSWORD:-$POSTGRES_PASSWORD}"
 )
 
 # First: resolve any stuck/failed Prisma migrations (P3009) before deploying
@@ -329,7 +330,16 @@ for entry in "${MIGRATE_SERVICES[@]}"; do
             prisma migrate resolve --rolled-back "$stuck_name" --schema="$svc_dir/prisma/schema.prisma" 2>&1 || true
         done <<< "$stuck_migrations"
       fi
-      echo "    Dropping partially-applied migration objects for $svc_name (P3018 recovery)..."
+      # SAFETY: Only allow schema drop in non-production environments.
+      # In production, P3018 should be resolved manually to prevent data loss.
+      if [ "$NODE_ENV" = "production" ] && [ "$ALL_IN_ONE" != "true" ]; then
+        echo "    FATAL: P3018 recovery with schema drop is NOT allowed in production."
+        echo "    Resolve the stuck migration manually:"
+        echo "      prisma migrate resolve --rolled-back <migration_name> --schema=$svc_dir/prisma/schema.prisma"
+        echo "    Then re-run the deployment."
+        exit 1
+      fi
+      echo "    WARNING: Dropping partially-applied migration objects for $svc_name (P3018 recovery, non-production only)..."
       PGPASSWORD="$db_pass" psql -h 127.0.0.1 -U "$db_user" -d "$db_name" -c \
         "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" >/dev/null 2>&1 || true
       echo "    Re-running migration for $svc_name..."
@@ -497,6 +507,7 @@ SERVICES=(
   "referral-service:azeebo:${REFERRAL_DB_PASSWORD}:azeebo_referral:3025"
   "subscription-service:azeebo:${SUBSCRIPTION_DB_PASSWORD}:azeebo_subscription:3026"
   "live-event-service:azeebo:${LIVE_EVENT_DB_PASSWORD}:azeebo_live_event:3027"
+  "knowledge-service:azeebo:${KNOWLEDGE_DB_PASSWORD:-$POSTGRES_PASSWORD}:azeebo_knowledge:3028"
 )
 
 # Map service names to their monorepo paths
@@ -529,6 +540,7 @@ SVC_PATHS[queue-service]="services/operations/queue-service"
 SVC_PATHS[support-service]="services/operations/support-service"
 SVC_PATHS[moderation-service]="services/operations/moderation-service"
 SVC_PATHS[api-gateway]="services/gateway/api-gateway"
+SVC_PATHS[knowledge-service]="services/core/knowledge-service"
 
 JWT_ACCESS_SECRET="${JWT_ACCESS_SECRET:-$(openssl rand -hex 64)}"
 JWT_REFRESH_SECRET="${JWT_REFRESH_SECRET:-$(openssl rand -hex 64)}"

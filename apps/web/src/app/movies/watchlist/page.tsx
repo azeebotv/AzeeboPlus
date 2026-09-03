@@ -1,14 +1,6 @@
 'use client';
 import { Suspense, lazy, useState, useCallback, useEffect, useRef } from 'react';
 
-export const metadata = {
-  title: 'My Watchlist | Azeebo',
-  description: 'Manage your saved movies and watch them later on Azeebo.',
-  openGraph: {
-    title: 'My Watchlist | Azeebo',
-    description: 'Manage your saved movies and watch them later on Azeebo.',
-  },
-};
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -19,6 +11,7 @@ import AppFooter from '@/components/layout/AppFooter';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import analytics from '@/lib/analytics';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 const WATCHLIST_KEY = 'azeebo_watchlist';
 
@@ -142,21 +135,13 @@ function WatchlistPageContent(): React.JSX.Element {
         </ScrollReveal>
 
         {allIds.length === 0 && !savedQuery.isLoading ? (
-          <div className="text-center py-20">
-            <p className="text-4xl mb-4">🎬</p>
-            <h2 className="text-xl font-bold text-white mb-2">Your watchlist is empty</h2>
-            <p className="text-white/50 mb-6">Save movies to watch later</p>
-            <Link href="/movies">
-              <motion.button
-                type="button"
-                className="az-btn-primary"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Browse Movies
-              </motion.button>
-            </Link>
-          </div>
+          <EmptyState
+            icon="Film"
+            title="Your watchlist is empty"
+            description="Save movies to watch later"
+            action={{ label: 'Browse Movies', onClick: () => (window.location.href = '/movies') }}
+            dark
+          />
         ) : isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -220,7 +205,7 @@ function WatchlistPageContent(): React.JSX.Element {
                           <path d="M18 6L6 18M6 6l12 12" />
                         </svg>
                       </button>
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
                       <div className="absolute bottom-4 left-4 right-4">
                         <span
                           className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
@@ -266,7 +251,7 @@ export default function WatchlistPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

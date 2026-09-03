@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 /**
  * AI Provenance Reference Management (AZP-RIGHTS-005)
@@ -82,11 +83,11 @@ export default function AiProvenancePage() {
   };
 
   const typeIcons: Record<string, string> = {
-    image: '🖼️',
-    video: '🎬',
-    audio: '🔊',
-    text: '📝',
-    music: '🎵',
+    image: 'Image',
+    video: 'Film',
+    audio: 'Volume2',
+    text: 'FileText',
+    music: 'Music',
   };
 
   return (
@@ -131,9 +132,11 @@ export default function AiProvenancePage() {
         ) : error ? (
           <div className="text-center py-12 text-destructive">{error}</div>
         ) : records.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            No AI provenance records found
-          </div>
+          <EmptyState
+            icon="Bot"
+            title="No AI provenance records found"
+            description="No AI-generated content provenance records yet"
+          />
         ) : (
           <div className="grid gap-4">
             {records.map((record) => (
@@ -179,7 +182,7 @@ export default function AiProvenancePage() {
                   )}
                   {record.vendorIndependenceVerified && (
                     <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                      Vendor Independent ✓
+                      Vendor Independent Check
                     </span>
                   )}
                 </div>

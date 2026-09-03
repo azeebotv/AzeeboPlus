@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Reality Contestant  - Azeebo+',
+  description: 'Reality Contestant  on Azeebo+',
+};
+
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -126,7 +133,7 @@ export default function ContestantProfilePage(): React.JSX.Element {
               fill
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/50 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/50 to-transparent" />
           </div>
           <button
             onClick={() => router.back()}
@@ -144,12 +151,12 @@ export default function ContestantProfilePage(): React.JSX.Element {
             width={128}
             height={128}
             className="w-32 h-32 rounded-full border-4"
-            style={{ borderColor: '#1A0A0A' }}
+            style={{ borderColor: 'var(--brand-near-black)' }}
           />
           <div className="mt-4">
             <h1 className="text-3xl font-bold text-white">{contestant.name}</h1>
             <p className="text-white/50 mt-1">
-              📍 {contestant.location} • Age {contestant.age}
+              {contestant.location} • Age {contestant.age}
             </p>
           </div>
 
@@ -173,7 +180,7 @@ export default function ContestantProfilePage(): React.JSX.Element {
             disabled={isVoting}
             className="w-full mt-6 py-4 rounded-full font-semibold text-lg transition-all az-btn-primary disabled:opacity-50"
           >
-            {isVoting ? 'Processing...' : `🗳 Vote for ${contestant.name}`}
+            {isVoting ? 'Processing...' : `Vote Vote for ${contestant.name}`}
           </button>
 
           <div className="mt-8">
@@ -191,7 +198,7 @@ export default function ContestantProfilePage(): React.JSX.Element {
                   rel="noopener noreferrer"
                   className="block az-glass p-4 transition-colors hover:scale-[1.01]"
                 >
-                  <span className="text-white font-medium">📷 Instagram</span>
+                  <span className="text-white font-medium">CameraInstagram</span>
                 </a>
               )}
               {contestant.socialLinks.twitter && (
@@ -201,7 +208,7 @@ export default function ContestantProfilePage(): React.JSX.Element {
                   rel="noopener noreferrer"
                   className="block az-glass p-4 transition-colors hover:scale-[1.01]"
                 >
-                  <span className="text-white font-medium">🐦 Twitter</span>
+                  <span className="text-white font-medium">BirdTwitter</span>
                 </a>
               )}
               {contestant.socialLinks.tiktok && (
@@ -211,7 +218,7 @@ export default function ContestantProfilePage(): React.JSX.Element {
                   rel="noopener noreferrer"
                   className="block az-glass p-4 transition-colors hover:scale-[1.01]"
                 >
-                  <span className="text-white font-medium">🎵 TikTok</span>
+                  <span className="text-white font-medium">Music2TikTok</span>
                 </a>
               )}
             </div>

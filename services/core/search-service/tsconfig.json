@@ -8,14 +8,23 @@
       "supertest"
     ],
     "paths": {
-      "@azeebo/*": ["../../../packages/*/dist"],
+      "@azeebo/*": [
+        "../../../packages/*/dist"
+      ],
       "@prisma/client": [
         "./src/prisma/client"
       ],
       "@search/*": [
         "./*"
       ]
-    }
+    },
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "noImplicitThis": true,
+    "strictPropertyInitialization": true,
+    "noFallthroughCasesInSwitch": true
   },
   "include": [
     "src/**/*"

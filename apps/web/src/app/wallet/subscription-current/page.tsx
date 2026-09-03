@@ -109,11 +109,11 @@ function SubscriptionCurrentPageContent(): React.JSX.Element {
       case 'cancelled':
         return { bg: 'rgba(239,68,68,0.15)', text: 'var(--color-error-500)', label: 'Cancelled' };
       case 'expired':
-        return { bg: 'rgba(156,163,175,0.15)', text: '#9CA3AF', label: 'Expired' };
+        return { bg: 'rgba(156,163,175,0.15)', text: 'var(--brand-grey)', label: 'Expired' };
       case 'past_due':
         return { bg: 'rgba(245,158,11,0.15)', text: 'var(--color-warning-500)', label: 'Past Due' };
       default:
-        return { bg: 'rgba(156,163,175,0.15)', text: '#9CA3AF', label: status };
+        return { bg: 'rgba(156,163,175,0.15)', text: 'var(--brand-grey)', label: status };
     }
   };
 
@@ -161,7 +161,7 @@ function SubscriptionCurrentPageContent(): React.JSX.Element {
             {/* Status Header */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <span className="text-3xl">👑</span>
+                <span className="text-3xl">Crown</span>
                 <div>
                   <h2 className="text-xl font-bold text-white">{subscription.planName}</h2>
                   <p className="text-white/50 text-sm">{subscription.planDuration} plan</p>
@@ -315,7 +315,7 @@ function SubscriptionCurrentPageContent(): React.JSX.Element {
           </GlowCard>
         ) : (
           <div className="text-center py-20">
-            <p className="text-4xl mb-4">📋</p>
+            <p className="text-4xl mb-4"></p>
             <h2 className="text-xl font-bold text-white mb-2">No Active Subscription</h2>
             <p className="text-white/50 mb-6">Subscribe to unlock premium content</p>
             <Link href="/wallet/subscription-plans">
@@ -355,21 +355,11 @@ const LazySubscriptionCurrentPage = lazy(() =>
   Promise.resolve({ default: SubscriptionCurrentPageContent })
 );
 
-export const metadata = {
-  title: 'Current Subscription | Azeebo',
-  description: 'View and manage your active subscription plan, billing, and auto-renewal settings.',
-  openGraph: {
-    title: 'Current Subscription | Azeebo',
-    description:
-      'View and manage your active subscription plan, billing, and auto-renewal settings.',
-  },
-};
-
 export default function SubscriptionCurrentPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

@@ -185,7 +185,7 @@ export default function GuestHomepage(): React.JSX.Element {
       {!isOnline && (
         <motion.div
           className="text-center py-2 px-4 text-sm font-medium sticky top-0 z-50"
-          style={{ background: '#fbbf24', color: '#000' }}
+          style={{ background: 'var(--brand-gold)', color: 'var(--brand-near-black)' }}
           initial={{ y: -40 }}
           animate={{ y: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
@@ -274,7 +274,7 @@ export default function GuestHomepage(): React.JSX.Element {
           >
             <div
               className="absolute top-2 left-1/2 -translate-x-1/2 rounded-full"
-              style={{ width: 86, height: 18, background: '#000' }}
+              style={{ width: 86, height: 18, background: 'black' }}
             />
             <div
               className="relative w-full h-full rounded-[2.1rem] overflow-hidden flex flex-col items-center justify-center px-4 sm:px-5"
@@ -465,19 +465,19 @@ export default function GuestHomepage(): React.JSX.Element {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {[
                 { name: 'Movie', icon: '\u{1F3AC}', href: '/movies', color: 'var(--brand-orange)' },
-                { name: 'Comedy', icon: '\u{1F602}', href: '/comedy', color: '#fbbf24' },
+                { name: 'Comedy', icon: '\u{1F602}', href: '/comedy', color: 'var(--brand-gold)' },
                 {
                   name: 'Sports',
                   icon: '\u26BD',
                   href: '/sports',
                   color: 'var(--color-success-500)',
                 },
-                { name: 'Reality', icon: '\u{1F4FA}', href: '/reality', color: '#8b5cf6' },
-                { name: 'Lifestyle', icon: '\u{1F3A8}', href: '/lifestyle', color: '#ec4899' },
-                { name: 'Vertical', icon: '\u{1F4F1}', href: '/vertical', color: '#3b82f6' },
-                { name: 'Games', icon: '\u{1F3AE}', href: '/games', color: '#06b6d4' },
-                { name: 'Creator', icon: '\u{1F4E1}', href: '/creators', color: '#f97316' },
-                { name: 'Cinemaxis', icon: '\u{1F3A6}', href: '/cinemaxis', color: '#a855f7' },
+                { name: 'Reality', icon: '\u{1F4FA}', href: '/reality', color: 'var(--brand-purple)' },
+                { name: 'Lifestyle', icon: '\u{1F3A8}', href: '/lifestyle', color: 'var(--brand-pink)' },
+                { name: 'Vertical', icon: '\u{1F4F1}', href: '/vertical', color: 'var(--brand-blue)' },
+                { name: 'Games', icon: '\u{1F3AE}', href: '/games', color: 'var(--brand-cyan, #06b6d4)' },
+                { name: 'Creator', icon: '\u{1F4E1}', href: '/creators', color: 'var(--brand-orange)' },
+                { name: 'Cinemaxis', icon: '\u{1F3A6}', href: '/cinemaxis', color: 'var(--brand-purple-light)' },
               ].map((u) => (
                 <Link
                   key={u.name}

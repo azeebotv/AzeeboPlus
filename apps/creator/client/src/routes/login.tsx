@@ -26,12 +26,12 @@ export default function LoginPage() {
   return (
     <div
       style={{
-        backgroundColor: '#1A0A0A',
+        backgroundColor: 'var(--creator-bg)',
         minHeight: '100vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: '#F5F0EB',
+        color: 'var(--creator-text)',
       }}
     >
       <div
@@ -40,14 +40,14 @@ export default function LoginPage() {
           maxWidth: '90%',
           padding: 32,
           borderRadius: 16,
-          border: '1px solid #2A1A1A',
-          backgroundColor: '#140808',
+          border: '1px solid var(--creator-border)',
+          backgroundColor: 'var(--creator-darker)',
         }}
       >
-        <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8, color: '#E8420A' }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8, color: 'var(--creator-orange)' }}>
           Creator Portal
         </h1>
-        <p style={{ color: '#9A8A7A', marginBottom: 24, fontSize: 14 }}>
+        <p style={{ color: 'var(--creator-text-muted)', marginBottom: 24, fontSize: 14 }}>
           Sign in to manage your content
         </p>
 
@@ -57,7 +57,7 @@ export default function LoginPage() {
               padding: '10px 14px',
               borderRadius: 8,
               backgroundColor: 'rgba(204,28,28,0.15)',
-              color: '#CC1C1C',
+              color: 'var(--creator-red)',
               fontSize: 13,
               marginBottom: 16,
             }}
@@ -68,7 +68,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+            <label style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}>
               Email
             </label>
             <input
@@ -80,16 +80,16 @@ export default function LoginPage() {
                 width: '100%',
                 padding: '10px 14px',
                 borderRadius: 8,
-                border: '1px solid #2A1A1A',
-                backgroundColor: '#0D0505',
-                color: '#F5F0EB',
+                border: '1px solid var(--creator-border)',
+                backgroundColor: 'var(--creator-dark)',
+                color: 'var(--creator-text)',
                 fontSize: 14,
                 outline: 'none',
               }}
             />
           </div>
           <div style={{ marginBottom: 24 }}>
-            <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+            <label style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}>
               Password
             </label>
             <input
@@ -101,9 +101,9 @@ export default function LoginPage() {
                 width: '100%',
                 padding: '10px 14px',
                 borderRadius: 8,
-                border: '1px solid #2A1A1A',
-                backgroundColor: '#0D0505',
-                color: '#F5F0EB',
+                border: '1px solid var(--creator-border)',
+                backgroundColor: 'var(--creator-dark)',
+                color: 'var(--creator-text)',
                 fontSize: 14,
                 outline: 'none',
               }}
@@ -118,7 +118,7 @@ export default function LoginPage() {
               borderRadius: 8,
               border: 'none',
               background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-              color: '#fff',
+              color: 'white',
               fontWeight: 600,
               fontSize: 14,
               cursor: loading ? 'not-allowed' : 'pointer',

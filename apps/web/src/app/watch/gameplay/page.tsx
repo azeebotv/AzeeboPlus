@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Watch Gameplay  - Azeebo+',
+  description: 'Watch Gameplay  on Azeebo+',
+};
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -125,7 +132,7 @@ export default function GameplayPage(): React.JSX.Element {
           </div>
         ) : gameOver ? (
           <div className="az-glass p-10 rounded-3xl w-full max-w-lg text-center animate-fadeIn">
-            <div className="text-6xl mb-4">🏆</div>
+            <div className="text-6xl mb-4"></div>
             <h2 className="text-3xl font-extrabold text-white mb-2">Game Over!</h2>
             <p className="text-white/60 mb-6">You earned</p>
             <div className="text-5xl font-black text-[var(--brand-orange)] mb-6">
@@ -205,9 +212,9 @@ export default function GameplayPage(): React.JSX.Element {
                   >
                     <span>{opt}</span>
                     {selectedAnswer !== null && opt === q.correct && (
-                      <span className="text-emerald-400 font-bold">✓</span>
+                      <span className="text-emerald-400 font-bold"></span>
                     )}
-                    {isChosen && !isCorrect && <span className="text-red-400 font-bold">✗</span>}
+                    {isChosen && !isCorrect && <span className="text-red-400 font-bold"></span>}
                   </button>
                 );
               })}

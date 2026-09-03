@@ -51,7 +51,7 @@ export default function SocialScreen() {
         message: `Check out ${item.title} on Azeebo+`,
         title: item.title,
       });
-    } catch {}
+    } catch { /* User cancelled share */ }
   }, []);
 
   const handleRemove = useCallback(

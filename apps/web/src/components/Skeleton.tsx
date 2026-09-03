@@ -38,7 +38,7 @@ export function Skeleton({
 export function CardSkeleton(): React.ReactElement {
   return (
     <div
-      style={{ backgroundColor: '#1A1A1A', borderRadius: 12, overflow: 'hidden' }}
+      style={{ backgroundColor: 'var(--brand-near-black)', borderRadius: 12, overflow: 'hidden' }}
       role="status"
       aria-busy="true"
       aria-label="Loading content"
@@ -131,7 +131,7 @@ export function ListItemSkeleton(): React.ReactElement {
 export function VideoPlayerSkeleton(): React.ReactElement {
   return (
     <div
-      style={{ backgroundColor: '#000', borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}
+      style={{ backgroundColor: 'black', borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}
       role="status"
       aria-busy="true"
       aria-label="Loading content"

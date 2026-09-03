@@ -109,4 +109,46 @@ export const authApi = {
   selectRole: async (role: 'user' | 'creator' | 'both'): Promise<ApiResponse<{ role: string }>> => {
     return apiClient.post<ApiResponse<{ role: string }>>('/auth/select-role', { role });
   },
+
+  // ─── Social OAuth ──────────────────────────────────────────────────
+
+  getGoogleAuthorizeUrl: async (redirectUri?: string): Promise<ApiResponse<{ state: string; authorizeUrl: string }>> => {
+    const query = redirectUri ? `?redirectUri=${encodeURIComponent(redirectUri)}` : '';
+    return apiClient.get<ApiResponse<{ state: string; authorizeUrl: string }>>(
+      `/auth/social/google/authorize${query}`
+    );
+  },
+
+  getAppleAuthorizeUrl: async (redirectUri?: string): Promise<ApiResponse<{ state: string; authorizeUrl: string }>> => {
+    const query = redirectUri ? `?redirectUri=${encodeURIComponent(redirectUri)}` : '';
+    return apiClient.get<ApiResponse<{ state: string; authorizeUrl: string }>>(
+      `/auth/social/apple/authorize${query}`
+    );
+  },
+
+  socialCallback: async (data: {
+    code: string;
+    state: string;
+    displayName?: string;
+    error?: string;
+  }): Promise<ApiResponse<AuthResponse>> => {
+    return apiClient.post<ApiResponse<AuthResponse>>('/auth/social/callback', data);
+  },
+
+  // Legacy direct login endpoints (fallback)
+  googleLogin: async (data: {
+    idToken: string;
+    email: string;
+    displayName?: string;
+  }): Promise<ApiResponse<AuthResponse>> => {
+    return apiClient.post<ApiResponse<AuthResponse>>('/auth/social/google', data);
+  },
+
+  appleLogin: async (data: {
+    identityToken: string;
+    email: string;
+    displayName?: string;
+  }): Promise<ApiResponse<AuthResponse>> => {
+    return apiClient.post<ApiResponse<AuthResponse>>('/auth/social/apple', data);
+  },
 };

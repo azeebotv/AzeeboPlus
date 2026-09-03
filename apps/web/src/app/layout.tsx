@@ -11,6 +11,11 @@ import { QueryProvider } from '../providers/QueryProvider';
 import { ToastProvider } from '@/components/ToastProvider';
 import I18nProvider from '@/components/I18nProvider';
 import { KeyboardNavigationProvider } from '../components/KeyboardNavigationProvider';
+import { CookieConsent } from '../components/privacy/CookieConsent';
+import { OfflineBanner, NetworkProvider } from '../components/ui/OfflineIndicator';
+import { OfflineProvider } from '../context/OfflineContext';
+import { ServiceWorkerRegistration } from '../components/ServiceWorkerRegistration';
+import { WebVitalsInit } from '../components/WebVitalsInit';
 
 import { Inter, Montserrat } from 'next/font/google';
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
@@ -24,7 +29,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
-  themeColor: '#09090F',
+  themeColor: 'var(--brand-near-black)',
 };
 
 export const metadata: Metadata = {
@@ -98,16 +103,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }):
                 <ThemeProvider>
                   <WalletProvider>
                     <I18nProvider>
-                      <ToastProvider>
-                        <KeyboardNavigationProvider>
-                          <AnnouncementBanner />
-                          <MaintenanceGate>
-                            <main id="main-content" role="main">
-                              {children}
-                            </main>
-                          </MaintenanceGate>
-                        </KeyboardNavigationProvider>
-                      </ToastProvider>
+                      <NetworkProvider>
+                        <OfflineProvider>
+                          <ToastProvider>
+                            <KeyboardNavigationProvider>
+                              <ServiceWorkerRegistration />
+                              <WebVitalsInit />
+                              <OfflineBanner />
+                              <AnnouncementBanner />
+                              <CookieConsent />
+                              <MaintenanceGate>
+                                <main id="main-content" role="main">
+                                  {children}
+                                </main>
+                              </MaintenanceGate>
+                            </KeyboardNavigationProvider>
+                          </ToastProvider>
+                        </OfflineProvider>
+                      </NetworkProvider>
                     </I18nProvider>
                   </WalletProvider>
                 </ThemeProvider>

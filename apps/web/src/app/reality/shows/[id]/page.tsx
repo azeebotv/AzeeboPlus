@@ -1,14 +1,6 @@
 'use client';
 import { Suspense, lazy, useEffect } from 'react';
 
-export const metadata = {
-  title: 'Show Details | Azeebo',
-  description: 'View show details, episodes, contestants, and vote on Azeebo.',
-  openGraph: {
-    title: 'Show Details | Azeebo',
-    description: 'View show details, episodes, contestants, and vote on Azeebo.',
-  },
-};
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -117,7 +109,7 @@ function ShowDetailContent(): React.JSX.Element {
               className="object-cover"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/60 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-[var(--brand-near-black)]/60 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -209,7 +201,7 @@ function ShowDetailContent(): React.JSX.Element {
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs text-[#E8420A] font-semibold">
+                      <span className="text-xs text-[var(--brand-orange)] font-semibold">
                         E{episode.episodeNumber}
                       </span>
                       {episode.duration && (
@@ -256,7 +248,7 @@ function ShowDetailContent(): React.JSX.Element {
                 </div>
                 <Link
                   href={`/reality/results?showId=${showId}`}
-                  className="text-sm font-medium text-[#E8420A] hover:text-[#CC1C1C] transition-colors"
+                  className="text-sm font-medium text-[var(--brand-orange)] hover:text-[var(--brand-red)] transition-colors"
                 >
                   View Leaderboard
                 </Link>
@@ -352,7 +344,7 @@ function ShowDetailContent(): React.JSX.Element {
             <motion.button
               type="button"
               className="px-8 py-3 rounded-full text-sm font-semibold transition-all"
-              style={{ backgroundColor: '#fff', color: 'var(--brand-orange)' }}
+              style={{ backgroundColor: 'white', color: 'var(--brand-orange)' }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -373,7 +365,7 @@ export default function ShowDetailPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

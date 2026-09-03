@@ -19,7 +19,7 @@ export default function OverviewPage() {
   return (
     <div>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Platform Overview</h1>
-      <p style={{ color: '#9A8A7A', marginBottom: 32 }}>Detailed platform statistics and metrics</p>
+      <p style={{ color: 'var(--admin-text-muted)', marginBottom: 32 }}>Detailed platform statistics and metrics</p>
 
       {isLoading ? (
         <div
@@ -35,7 +35,7 @@ export default function OverviewPage() {
               style={{
                 padding: 20,
                 borderRadius: 16,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--admin-surface)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
               }}
             >
@@ -43,13 +43,13 @@ export default function OverviewPage() {
                 style={{
                   width: '60%',
                   height: 12,
-                  backgroundColor: '#2A1A1A',
+                  backgroundColor: 'var(--admin-surface)',
                   borderRadius: 4,
                   marginBottom: 8,
                 }}
               />
               <div
-                style={{ width: '40%', height: 22, backgroundColor: '#2A1A1A', borderRadius: 4 }}
+                style={{ width: '40%', height: 22, backgroundColor: 'var(--admin-surface)', borderRadius: 4 }}
               />
             </div>
           ))}
@@ -63,16 +63,16 @@ export default function OverviewPage() {
             backgroundColor: 'rgba(204,28,28,0.1)',
           }}
         >
-          <p style={{ color: '#CC1C1C', fontWeight: 600 }}>Failed to load overview</p>
+          <p style={{ color: 'var(--admin-red)', fontWeight: 600 }}>Failed to load overview</p>
           <button
             onClick={() => navigate(0)}
             style={{
               marginTop: 8,
               padding: '8px 16px',
               borderRadius: 8,
-              border: '1px solid #2A1A1A',
+              border: '1px solid var(--admin-surface)',
               background: 'transparent',
-              color: '#E8420A',
+              color: 'var(--admin-orange)',
               cursor: 'pointer',
             }}
           >
@@ -93,21 +93,21 @@ export default function OverviewPage() {
               style={{
                 padding: 20,
                 borderRadius: 16,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--admin-surface)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
               }}
             >
               <p
                 style={{
                   fontSize: 12,
-                  color: '#9A8A7A',
+                  color: 'var(--admin-text-muted)',
                   marginBottom: 8,
                   textTransform: 'capitalize',
                 }}
               >
                 {key.replace(/([A-Z])/g, ' $1').trim()}
               </p>
-              <p style={{ fontSize: 22, fontWeight: 700, color: '#E8420A' }}>
+              <p style={{ fontSize: 22, fontWeight: 700, color: 'var(--admin-orange)' }}>
                 {typeof value === 'number' ? value.toLocaleString() : String(value)}
               </p>
             </div>

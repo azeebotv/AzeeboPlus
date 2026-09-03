@@ -189,7 +189,7 @@ function PredictionsPageContent(): React.JSX.Element {
                               color:
                                 selectedBet === `${market.id}-home`
                                   ? 'var(--brand-forest)'
-                                  : '#fff',
+                                  : 'white',
                             }}
                           >
                             {market.homeTeam}
@@ -207,7 +207,7 @@ function PredictionsPageContent(): React.JSX.Element {
                                 color:
                                   selectedBet === `${market.id}-draw`
                                     ? 'var(--brand-forest)'
-                                    : '#fff',
+                                    : 'white',
                               }}
                             >
                               Draw
@@ -225,7 +225,7 @@ function PredictionsPageContent(): React.JSX.Element {
                               color:
                                 selectedBet === `${market.id}-away`
                                   ? 'var(--brand-forest)'
-                                  : '#fff',
+                                  : 'white',
                             }}
                           >
                             {market.awayTeam}
@@ -267,20 +267,11 @@ function PredictionsPageContent(): React.JSX.Element {
 
 const LazyPredictionsPage = lazy(() => Promise.resolve({ default: PredictionsPageContent }));
 
-export const metadata = {
-  title: 'Predictions | Azeebo',
-  description: 'Predict match outcomes and win rewards on active prediction markets.',
-  openGraph: {
-    title: 'Predictions | Azeebo',
-    description: 'Predict match outcomes and win rewards on active prediction markets.',
-  },
-};
-
 export default function PredictionsPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

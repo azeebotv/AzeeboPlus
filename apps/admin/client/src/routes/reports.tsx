@@ -27,7 +27,7 @@ export default function ReportsPage() {
       >
         <div>
           <h1 style={{ fontSize: 28, fontWeight: 700 }}>Reports</h1>
-          <p style={{ color: '#9A8A7A', marginTop: 4 }}>{reports.length} reports</p>
+          <p style={{ color: 'var(--admin-text-muted)', marginTop: 4 }}>{reports.length} reports</p>
         </div>
         {isEnabled(ADMIN_FLAG_KEYS.reportBuilder) && (
           <button
@@ -37,7 +37,7 @@ export default function ReportsPage() {
               borderRadius: 12,
               border: 'none',
               background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-              color: '#fff',
+              color: 'white',
               fontWeight: 600,
               fontSize: 14,
               cursor: 'pointer',
@@ -49,7 +49,7 @@ export default function ReportsPage() {
       </div>
 
       {isLoading ? (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {reports.map((r) => (
@@ -58,7 +58,7 @@ export default function ReportsPage() {
               style={{
                 padding: 16,
                 borderRadius: 16,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--admin-surface)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
               }}
             >
@@ -71,7 +71,7 @@ export default function ReportsPage() {
               >
                 <div>
                   <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>{r.name}</h3>
-                  <p style={{ color: '#9A8A7A', fontSize: 13 }}>
+                  <p style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>
                     {r.category} · {r.dateRange}
                   </p>
                 </div>
@@ -82,7 +82,7 @@ export default function ReportsPage() {
                     fontSize: 11,
                     fontWeight: 600,
                     backgroundColor: 'rgba(13,59,46,0.2)',
-                    color: '#0D3B2E',
+                    color: 'var(--admin-green)',
                   }}
                 >
                   {r.metrics?.length || 0} metrics
@@ -91,7 +91,7 @@ export default function ReportsPage() {
             </div>
           ))}
           {reports.length === 0 && (
-            <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A' }}>
+            <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>
               No reports yet. Build your first report!
             </p>
           )}

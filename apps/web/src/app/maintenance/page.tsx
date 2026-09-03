@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Maintenance  - Azeebo+',
+  description: 'Maintenance  on Azeebo+',
+};
+
 'use client';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
@@ -36,7 +43,7 @@ export default function MaintenancePage(): React.JSX.Element {
               fontSize: 36,
             }}
           >
-            🔧
+            Wrench
           </div>
           <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 12 }}>Under Maintenance</h1>
           <p style={{ color: 'var(--text-secondary)', marginBottom: 16, lineHeight: 1.6 }}>

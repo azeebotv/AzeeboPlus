@@ -26,37 +26,37 @@ const DEFAULT_CATEGORIES: CategoryOption[] = [
   {
     id: 'entertainment',
     label: 'Entertainment & Comedy',
-    emoji: '🎭',
+    emoji: 'Drama',
     description: 'Skits, stand-up specials, and comedic shorts',
   },
   {
     id: 'lifestyle',
     label: 'Lifestyle & Culture',
-    emoji: '✨',
+    emoji: 'Sparkles',
     description: 'Fashion, food, travel, and cultural stories',
   },
   {
     id: 'film',
     label: 'Film & Cinema',
-    emoji: '🎬',
+    emoji: 'Film',
     description: 'Short films, web series, and documentaries',
   },
   {
     id: 'reality',
     label: 'Reality & Unscripted',
-    emoji: '🏆',
+    emoji: 'Trophy',
     description: 'Talent shows, social experiments, and competitions',
   },
   {
     id: 'music',
     label: 'Music & Performance',
-    emoji: '🎵',
+    emoji: 'Music',
     description: 'Music videos, live sessions, and podcasts',
   },
   {
     id: 'gaming',
     label: 'Gaming & Tech',
-    emoji: '🎮',
+    emoji: 'Gamepad2',
     description: 'Let’s plays, esports commentary, and reviews',
   },
 ];
@@ -207,7 +207,7 @@ export default function CreatorSignupPage(): React.JSX.Element {
                       : 'bg-white/10 text-white/40'
                 }`}
               >
-                {step > s.num ? '✓' : s.num}
+                {step > s.num ? 'Check' : s.num}
               </div>
               <span
                 className={`text-xs font-medium hidden sm:inline ${step >= s.num ? 'text-white' : 'text-white/40'}`}
@@ -410,7 +410,7 @@ export default function CreatorSignupPage(): React.JSX.Element {
                 >
                   {isSubmitting
                     ? 'Submitting Application...'
-                    : 'Complete & Launch Creator Studio 🚀'}
+                    : 'Complete & Launch Creator Studio Rocket'}
                 </button>
               </div>
             </form>

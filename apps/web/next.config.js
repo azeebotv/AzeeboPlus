@@ -102,6 +102,14 @@ const nextConfig = {
         source: '/auth/:path*',
         destination: `${apiGatewayUrl}/api/v1/auth/:path*`,
       },
+      {
+        source: '/feature-flags/:path*',
+        destination: `${apiGatewayUrl}/feature-flags/:path*`,
+      },
+      {
+        source: '/metrics',
+        destination: `${apiGatewayUrl}/metrics`,
+      },
     ]
   },
 }

@@ -8,9 +8,11 @@ import { PrismaService } from '../database/prisma.service.js';
 
 export interface UserDataExport {
   profile: unknown;
-  sessions: unknown[];
-  socialAccounts: unknown[];
-  devices: unknown[];
+  preferences: unknown;
+  watchHistory: unknown[];
+  savedItems: unknown[];
+  following: unknown[];
+  universeAffinities: unknown[];
   exportedAt: string;
 }
 
@@ -22,25 +24,41 @@ export class DataExportService {
   async exportUserData(userId: string): Promise<UserDataExport> {
     this.logger.log(`Data export requested for user: ${userId}`);
 
-    const [profile, sessions, socialAccounts, devices] = await Promise.all([
-      this.prisma.user.findUnique({
-        where: { id: userId },
-        select: { id: true, email: true, displayName: true, createdAt: true },
-      }),
-      this.prisma.session.findMany({
-        where: { userId },
-        select: { deviceName: true, createdAt: true },
-      }),
-      this.prisma.socialAccount.findMany({
-        where: { userId },
-        select: { provider: true, createdAt: true },
-      }),
-      this.prisma.registeredDevice.findMany({
-        where: { userId },
-        select: { deviceName: true, deviceType: true, registeredAt: true },
-      }),
-    ]);
+    const [profile, preferences, watchHistory, savedItems, following, universeAffinities] =
+      await Promise.all([
+        this.prisma.user.findUnique({
+          where: { id: userId },
+          select: { id: true, email: true, displayName: true, createdAt: true },
+        }),
+        this.prisma.userPreferences.findUnique({
+          where: { userId },
+        }),
+        this.prisma.watchHistory.findMany({
+          where: { userId },
+          select: { contentId: true, contentType: true, universe: true, watchedAt: true },
+        }),
+        this.prisma.savedItem.findMany({
+          where: { userId },
+          select: { contentId: true, createdAt: true },
+        }),
+        this.prisma.following.findMany({
+          where: { followerId: userId },
+          select: { followingId: true, createdAt: true },
+        }),
+        this.prisma.userUniverseAffinity.findMany({
+          where: { userId },
+          select: { universeId: true, affinityScore: true, lastEngaged: true },
+        }),
+      ]);
 
-    return { profile, sessions, socialAccounts, devices, exportedAt: new Date().toISOString() };
+    return {
+      profile,
+      preferences,
+      watchHistory,
+      savedItems,
+      following,
+      universeAffinities,
+      exportedAt: new Date().toISOString(),
+    };
   }
 }

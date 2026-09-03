@@ -12,11 +12,20 @@
     "outDir": "./dist",
     "incremental": true,
     "paths": {
-      "@azeebo/*": ["../../../packages/*/dist"],
+      "@azeebo/*": [
+        "../../../packages/*/dist"
+      ],
       "@queue/*": [
         "./*"
       ]
-    }
+    },
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "noImplicitThis": true,
+    "strictPropertyInitialization": true,
+    "noFallthroughCasesInSwitch": true
   },
   "include": [
     "src/**/*"

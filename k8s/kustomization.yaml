@@ -1,0 +1,75 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: azeebo
+
+resources:
+  # Base
+  - base/namespace.yaml
+  - base/configmap.yaml
+  - base/secrets.yaml
+  - base/network-policy.yaml
+  - base/pdb.yaml
+
+  # Infrastructure
+  - infra/postgres.yaml
+  - infra/redis.yaml
+
+  # Gateway
+  - gateway/api-gateway.yaml
+
+  # Core services
+  - services/core/auth-service.yaml
+  - services/core/user-service.yaml
+  - services/core/wallet-service.yaml
+  - services/core/payment-service.yaml
+  - services/core/content-service.yaml
+  - services/core/search-service.yaml
+  - services/core/media-service.yaml
+  - services/core/knowledge-service.yaml
+
+  # Intelligence services
+  - services/intelligence/analytics-service.yaml
+  - services/intelligence/recommendation-service.yaml
+
+  # Operations services
+  - services/operations/support-service.yaml
+  - services/operations/moderation-service.yaml
+  - services/operations/queue-service.yaml
+
+  # Engagement services
+  - services/engagement/notification-service.yaml
+  - services/engagement/reward-service.yaml
+  - services/engagement/subscription-service.yaml
+  - services/engagement/referral-service.yaml
+  - services/engagement/engagement-service.yaml
+  - services/engagement/messaging-service.yaml
+
+  # Universe services
+  - services/universes/creator-service.yaml
+  - services/universes/comedy-service.yaml
+  - services/universes/live-event-service.yaml
+  - services/universes/reality-service.yaml
+  - services/universes/games-service.yaml
+  - services/universes/lifestyle-service.yaml
+  - services/universes/movie-service.yaml
+  - services/universes/vertical-service.yaml
+  - services/universes/sports-service.yaml
+
+  # Frontend apps
+  - apps/web.yaml
+  - apps/admin.yaml
+  - apps/creator.yaml
+
+  # Ingress
+  - ingress/ingress.yaml
+  - ingress/ingress-websocket.yaml
+
+  # Autoscaling
+  - hpa/api-gateway.yaml
+  - hpa/auth-service.yaml
+  - hpa/content-service.yaml
+  - hpa/messaging-service.yaml
+  - hpa/notification-service.yaml
+  - hpa/payment-service.yaml
+  - hpa/search-service.yaml

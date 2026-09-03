@@ -188,7 +188,7 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
                   className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm"
                   style={{
                     background: 'rgba(34,197,94,0.1)',
-                    color: '#4ade80',
+                    color: 'var(--brand-green)',
                     border: '1px solid rgba(34,197,94,0.2)',
                   }}
                   role="status"
@@ -224,7 +224,7 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
                         className={`w-full px-4 py-2.5 rounded-xl text-sm text-white placeholder-white/25 bg-white/5 border transition-all outline-none ${
                           emailError
                             ? 'border-red-500/50 focus:border-red-500'
-                            : 'border-white/8 focus:border-[#E8420A]/50 focus:bg-white/10'
+                            : 'border-white/8 focus:border-[var(--brand-orange)]/50 focus:bg-white/10'
                         }`}
                         aria-invalid={!!emailError}
                         aria-describedby={emailError ? 'newsletter-error' : undefined}
@@ -311,7 +311,7 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-sm text-white/50 hover:text-[#E8420A] transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)] focus-visible:rounded"
+                      className="text-sm text-white/50 hover:text-[var(--brand-orange)] transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)] focus-visible:rounded"
                     >
                       {link.label}
                     </Link>

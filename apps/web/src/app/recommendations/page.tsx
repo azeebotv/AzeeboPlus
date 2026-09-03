@@ -32,12 +32,12 @@ export default function RecommendationsPage(): React.JSX.Element {
   const lastItemRef = useRef<HTMLDivElement | null>(null);
 
   const filters = [
-    { id: 'all', name: 'All', icon: '🎬' },
-    { id: 'movies', name: 'Movies', icon: '🎬' },
-    { id: 'series', name: 'Series', icon: '📺' },
-    { id: 'reality', name: 'Reality', icon: '🎭' },
-    { id: 'comedy', name: 'Comedy', icon: '😂' },
-    { id: 'sports', name: 'Sports', icon: '⚽' },
+    { id: 'all', name: 'All', icon: 'Film' },
+    { id: 'movies', name: 'Movies', icon: 'Film' },
+    { id: 'series', name: 'Series', icon: 'Tv' },
+    { id: 'reality', name: 'Reality', icon: 'Drama' },
+    { id: 'comedy', name: 'Comedy', icon: 'Laugh' },
+    { id: 'sports', name: 'Sports', icon: 'CircleDot' },
   ];
 
   const fetchRecommendations = useCallback(async (pageNum: number, filter: string) => {
@@ -213,13 +213,13 @@ export default function RecommendationsPage(): React.JSX.Element {
                     )}
                   </div>
                   <div className="p-4">
-                    <h3 className="font-bold text-white text-sm mb-1 group-hover:text-[#E8420A] transition-colors line-clamp-1">
+                    <h3 className="font-bold text-white text-sm mb-1 group-hover:text-[var(--brand-orange)] transition-colors line-clamp-1">
                       {item.title}
                     </h3>
                     <p className="text-xs text-white/45 line-clamp-2 mb-2">{item.description}</p>
                     <div className="flex items-center gap-2">
                       {item.universe && (
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#E8420A]">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--brand-orange)]">
                           {item.universe.name}
                         </span>
                       )}
@@ -242,7 +242,7 @@ export default function RecommendationsPage(): React.JSX.Element {
         {/* Loading More */}
         {isLoading && recommendations.length > 0 && (
           <div className="flex justify-center py-8">
-            <div className="w-8 h-8 border-4 border-white/10 border-t-[#E8420A] rounded-full animate-spin" />
+            <div className="w-8 h-8 border-4 border-white/10 border-t-[var(--brand-orange)] rounded-full animate-spin" />
           </div>
         )}
 

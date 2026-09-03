@@ -1,16 +1,6 @@
 'use client';
 import { Suspense, lazy, useEffect, useState } from 'react';
 
-export const metadata = {
-  title: 'Lifestyle Events | Azeebo',
-  description:
-    'Find and RSVP to exciting lifestyle events, experiences, and happenings across Africa.',
-  openGraph: {
-    title: 'Lifestyle Events | Azeebo',
-    description:
-      'Find and RSVP to exciting lifestyle events, experiences, and happenings across Africa.',
-  },
-};
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { api } from '@/lib/api';
@@ -146,7 +136,7 @@ function EventsPageContent(): React.JSX.Element {
                       height={160}
                       className="w-full h-40 object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
                     <div className="absolute top-2 right-2 flex gap-2">
                       {event.isVirtual && (
                         <span
@@ -233,12 +223,12 @@ function EventsPageContent(): React.JSX.Element {
                           backgroundColor: rsvped.has(event.id)
                             ? 'var(--color-success-400)'
                             : 'var(--brand-orange)',
-                          color: rsvped.has(event.id) ? 'var(--brand-forest)' : '#fff',
+                          color: rsvped.has(event.id) ? 'var(--brand-forest)' : 'white',
                         }}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                       >
-                        {rsvped.has(event.id) ? 'Going ✓' : 'RSVP'}
+                        {rsvped.has(event.id) ? 'Going Check' : 'RSVP'}
                       </motion.button>
                     </div>
                   </div>
@@ -264,7 +254,7 @@ export default function EventsPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

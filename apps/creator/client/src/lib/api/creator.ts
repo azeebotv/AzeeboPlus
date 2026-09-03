@@ -80,7 +80,8 @@ export const creatorApi = {
   getSubscribers: () => apiFetch<SubscribersData>(`${API}/creator/subscribers`),
 
   // Studio UI flags (gates v2 surfaces: new analytics, upload v2, payouts UI, onboarding)
-  getStudioFlags: () => apiFetch<Array<{ key: string; enabled: boolean; value?: unknown }>>(`${API}/creator/flags`),
+  getStudioFlags: () =>
+    apiFetch<Array<{ key: string; enabled: boolean; value?: unknown }>>(`${API}/creator/flags`),
 
   // Upload
   getUploads: () => apiFetch<UploadProgress[]>(`${API}/creator/uploads`),
@@ -108,10 +109,13 @@ export const creatorApi = {
     apiFetch<ChallengeSubmission[]>(`${API}/creator/challenges/submissions`),
 
   submitChallenge: (challengeId: string, title: string) =>
-    apiFetch<{ success: boolean; submissionId?: string }>(`${API}/creator/challenges/${challengeId}/submit`, {
-      method: 'POST',
-      body: JSON.stringify({ title }),
-    }),
+    apiFetch<{ success: boolean; submissionId?: string }>(
+      `${API}/creator/challenges/${challengeId}/submit`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ title }),
+      }
+    ),
 
   // Profile
   getProfile: () =>

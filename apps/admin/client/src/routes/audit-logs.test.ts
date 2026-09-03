@@ -72,10 +72,7 @@ describe('archivedFromDetails', () => {
     const result = archivedFromDetails(log);
 
     expect(result.count).toBe(2);
-    expect(result.keys).toEqual([
-      'reality.voting_enabled',
-      'reality.predictions_enabled',
-    ]);
+    expect(result.keys).toEqual(['reality.voting_enabled', 'reality.predictions_enabled']);
   });
 
   it('reports zero when no snapshot was archived', () => {

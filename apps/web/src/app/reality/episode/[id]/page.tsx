@@ -142,7 +142,7 @@ export default function RealityDynamicEpisodePlayerPage(): React.JSX.Element {
               className="w-20 h-20 rounded-full bg-[var(--brand-orange)]/90 hover:bg-[var(--brand-orange)] text-white text-3xl font-bold flex items-center justify-center shadow-2xl transition-transform hover:scale-110"
               aria-label={isPlaying ? 'Pause' : 'Play'}
             >
-              {isPlaying ? '⏸' : '▶'}
+              {isPlaying ? 'Pause' : '▶'}
             </button>
           </div>
 

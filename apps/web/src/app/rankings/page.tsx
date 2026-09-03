@@ -86,11 +86,11 @@ export default function RankingsPage(): React.JSX.Element {
   const getRankBadge = (rank: number): { emoji: string; color: string } => {
     switch (rank) {
       case 1:
-        return { emoji: '🥇', color: 'var(--color-warning-400)' };
+        return { emoji: 'Award', color: 'var(--color-warning-400)' };
       case 2:
-        return { emoji: '🥈', color: '#D1D5DB' };
+        return { emoji: 'Medal', color: 'var(--brand-silver)' };
       case 3:
-        return { emoji: '🥉', color: '#D97706' };
+        return { emoji: 'Medal', color: 'var(--brand-amber)' };
       default:
         return { emoji: '', color: 'rgba(255,255,255,0.4)' };
     }
@@ -125,7 +125,7 @@ export default function RankingsPage(): React.JSX.Element {
                 : undefined
             }
           >
-            📊 Overall
+            BarChart3Overall
           </button>
           {categories.map((cat) => (
             <button

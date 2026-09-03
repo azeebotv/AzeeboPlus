@@ -1,16 +1,6 @@
 'use client';
 import { useEffect } from 'react';
 
-export const metadata = {
-  title: 'Lifestyle | Azeebo',
-  description:
-    'Explore lifestyle events, celebrities, influencers, nightlife, and city guides across Africa.',
-  openGraph: {
-    title: 'Lifestyle | Azeebo',
-    description:
-      'Explore lifestyle events, celebrities, influencers, nightlife, and city guides across Africa.',
-  },
-};
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import Link from 'next/link';
@@ -81,7 +71,7 @@ function LifestylePageContent(): React.JSX.Element {
               className="object-cover"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/50 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-[var(--brand-near-black)]/50 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">
               <span
                 className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mb-4"
@@ -130,11 +120,11 @@ function LifestylePageContent(): React.JSX.Element {
         <h2 className="text-xl font-bold text-white mb-4">Explore Lifestyle</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           {[
-            { label: 'Celebrities', href: '/lifestyle/celebrities', icon: '🌟' },
-            { label: 'Influencers', href: '/lifestyle/influencers', icon: '📱' },
-            { label: 'Nightlife', href: '/lifestyle/nightlife', icon: '🌃' },
-            { label: 'Social', href: '/lifestyle/social', icon: '💬' },
-            { label: 'City Guide', href: '/lifestyle/city-guide', icon: '🏙️' },
+            { label: 'Celebrities', href: '/lifestyle/celebrities', icon: 'Star' },
+            { label: 'Influencers', href: '/lifestyle/influencers', icon: 'Smartphone' },
+            { label: 'Nightlife', href: '/lifestyle/nightlife', icon: 'Moon' },
+            { label: 'Social', href: '/lifestyle/social', icon: 'MessageCircle' },
+            { label: 'City Guide', href: '/lifestyle/city-guide', icon: 'Building2' },
           ].map((item) => (
             <Link key={item.href} href={item.href}>
               <div
@@ -188,7 +178,7 @@ function LifestylePageContent(): React.JSX.Element {
                       height={192}
                       className="w-full h-48 object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
                     <div className="absolute bottom-4 left-4 right-4">
                       <span
                         className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"

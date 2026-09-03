@@ -294,7 +294,7 @@ export default function SuperVotePage(): React.JSX.Element {
           disabled={!selectedContestant || !selectedPackage || isVoting}
           className="w-full py-4 rounded-full font-semibold text-lg transition-all az-btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isVoting ? 'Processing...' : '🗳 Submit Super Vote'}
+          {isVoting ? 'Processing...' : 'Vote Submit Super Vote'}
         </button>
       </div>
       <ConfirmDialog

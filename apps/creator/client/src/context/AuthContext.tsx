@@ -58,7 +58,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const response = await apiFetch<AuthResponse>('/api/v1/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
-      });
+        skipAuthRetry: true,
+      } as RequestInit & { skipAuthRetry?: boolean });
 
       if (response.success && response.data) {
         const { access_token, refresh_token, user: userData } = response.data;

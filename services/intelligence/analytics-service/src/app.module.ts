@@ -7,6 +7,11 @@ import { IntelligenceModule } from './modules/intelligence/intelligence.module.j
 import { HealthModule } from './modules/health/health.module.js';
 import { MetricsModule } from './modules/metrics/metrics.module.js';
 import { ReportBuilderModule } from './modules/report-builder/report-builder.module.js';
+import { AgentRegistryModule } from './modules/agent-registry/agent-registry.module.js';
+import { ModelCostTrackerModule } from './modules/model-cost-tracker/model-cost-tracker.module.js';
+import { RiskEngineModule } from './modules/risk-engine/risk-engine.module.js';
+import { TaskRouterModule } from './modules/task-router/task-router.module.js';
+import { CapacityLedgerModule } from './modules/capacity-ledger/capacity-ledger.module.js';
 import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { CacheModule, JwtConfigModule } from '@azeebo/shared-services';
@@ -51,6 +56,12 @@ import { ConfigModule } from '@nestjs/config';
     HealthModule,
     MetricsModule,
     ReportBuilderModule,
+    // AOS-MA-001 — Enterprise Agentic Operating System
+    AgentRegistryModule,
+    ModelCostTrackerModule,
+    RiskEngineModule,
+    TaskRouterModule,
+    CapacityLedgerModule,
   ],
   providers: [
     {

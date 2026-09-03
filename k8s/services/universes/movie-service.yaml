@@ -1,0 +1,88 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: movie-service
+  namespace: azeebo
+  labels:
+    app.kubernetes.io/name: movie-service
+    app.kubernetes.io/part-of: azeebo
+    app.kubernetes.io/component: universes
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: movie-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: movie-service
+        app.kubernetes.io/part-of: azeebo
+        app.kubernetes.io/component: universes
+    spec:
+      containers:
+        - name: movie-service
+          image: ghcr.io/vmnl/movie-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3011
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: azeebo-config
+            - secretRef:
+                name: azeebo-secrets
+                optional: true
+          env:
+            - name: PORT
+              value: "3011"
+            - name: SERVICE_NAME
+              value: "movie-service"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3011
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3011
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 3011
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: movie-service
+  namespace: azeebo
+  labels:
+    app.kubernetes.io/name: movie-service
+    app.kubernetes.io/part-of: azeebo
+spec:
+  selector:
+    app.kubernetes.io/name: movie-service
+  ports:
+    - port: 3011
+      targetPort: 3011
+      protocol: TCP
+      name: http
+  type: ClusterIP

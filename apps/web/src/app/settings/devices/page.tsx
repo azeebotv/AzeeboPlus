@@ -6,6 +6,7 @@ import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 interface Device {
   id: string;
@@ -84,13 +85,13 @@ export default function DevicesPage(): React.JSX.Element {
   const getDeviceIcon = (type: string) => {
     switch (type?.toLowerCase()) {
       case 'mobile':
-        return '📱';
+        return 'Smartphone';
       case 'tablet':
-        return '📱';
+        return 'Smartphone';
       case 'tv':
-        return '📺';
+        return 'Tv';
       default:
-        return '💻';
+        return 'Laptop';
     }
   };
 
@@ -149,10 +150,11 @@ export default function DevicesPage(): React.JSX.Element {
             />
           </div>
         ) : devices.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>📱</div>
-            <h3 style={{ fontSize: 18 }}>No devices found</h3>
-          </div>
+          <EmptyState
+            icon="Smartphone"
+            title="No devices found"
+            description="No devices are linked to your account"
+          />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {devices.map((device) => (

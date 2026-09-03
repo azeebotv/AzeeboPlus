@@ -1,14 +1,6 @@
 'use client';
 import { Suspense, lazy, useEffect, useState, useCallback } from 'react';
 
-export const metadata = {
-  title: 'Social | Azeebo',
-  description: 'Save and share your favorite lifestyle moments with friends on Azeebo.',
-  openGraph: {
-    title: 'Social | Azeebo',
-    description: 'Save and share your favorite lifestyle moments with friends on Azeebo.',
-  },
-};
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import AppHeader from '@/components/layout/AppHeader';
@@ -72,7 +64,7 @@ function SocialPageContent(): React.JSX.Element {
 
         {savedItems.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-4xl mb-4">💬</p>
+            <p className="text-4xl mb-4"></p>
             <h2 className="text-xl font-bold text-white mb-2">No saved items yet</h2>
             <p className="text-white/50 mb-6">Save lifestyle content to share with friends</p>
             <Link href="/lifestyle">
@@ -162,7 +154,7 @@ export default function SocialPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

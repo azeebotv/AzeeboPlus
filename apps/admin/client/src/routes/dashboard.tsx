@@ -22,37 +22,37 @@ export default function DashboardPage() {
           label: 'Total Users',
           value: stats.totalUsers?.toLocaleString() || '0',
           icon: '👥',
-          color: '#E8420A',
+          color: 'var(--admin-orange)',
         },
         {
           label: 'Daily Active',
           value: stats.dailyActiveUsers?.toLocaleString() || '0',
           icon: '📈',
-          color: '#0D3B2E',
+          color: 'var(--admin-green)',
         },
         {
           label: 'Content',
           value: stats.totalContent?.toLocaleString() || '0',
           icon: '🎬',
-          color: '#CC1C1C',
+          color: 'var(--admin-red)',
         },
         {
           label: 'Total Views',
           value: stats.totalViews?.toLocaleString() || '0',
           icon: '👁️',
-          color: '#F59E0B',
+          color: 'var(--admin-amber)',
         },
         {
           label: 'Revenue',
           value: `₦${stats.totalRevenue?.toLocaleString() || '0'}`,
           icon: '💰',
-          color: '#0D3B2E',
+          color: 'var(--admin-green)',
         },
         {
           label: 'New Users',
           value: stats.newUsers?.toLocaleString() || '0',
           icon: '🆕',
-          color: '#E8420A',
+          color: 'var(--admin-orange)',
         },
       ]
     : [];
@@ -69,7 +69,7 @@ export default function DashboardPage() {
   return (
     <div>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Admin Dashboard</h1>
-      <p style={{ color: '#9A8A7A', marginBottom: 32 }}>Platform overview and quick actions</p>
+      <p style={{ color: 'var(--admin-text-muted)', marginBottom: 32 }}>Platform overview and quick actions</p>
 
       {isLoading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
@@ -77,8 +77,8 @@ export default function DashboardPage() {
             style={{
               width: 40,
               height: 40,
-              border: '3px solid #2A1A1A',
-              borderTopColor: '#E8420A',
+              border: '3px solid var(--admin-surface)',
+              borderTopColor: 'var(--admin-orange)',
               borderRadius: '50%',
               animation: 'spin 0.8s linear infinite',
             }}
@@ -93,7 +93,7 @@ export default function DashboardPage() {
             backgroundColor: 'rgba(204,28,28,0.1)',
           }}
         >
-          <p style={{ color: '#CC1C1C', fontWeight: 600 }}>Failed to load dashboard</p>
+          <p style={{ color: 'var(--admin-red)', fontWeight: 600 }}>Failed to load dashboard</p>
         </div>
       ) : (
         <>
@@ -111,13 +111,13 @@ export default function DashboardPage() {
                 style={{
                   padding: 20,
                   borderRadius: 16,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--admin-surface)',
                   backgroundColor: 'rgba(26,10,10,0.5)',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                   <span style={{ fontSize: 20 }}>{stat.icon}</span>
-                  <span style={{ fontSize: 12, color: '#9A8A7A' }}>{stat.label}</span>
+                  <span style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>{stat.label}</span>
                 </div>
                 <p style={{ fontSize: 22, fontWeight: 700, color: stat.color }}>{stat.value}</p>
               </div>
@@ -128,7 +128,7 @@ export default function DashboardPage() {
             style={{
               padding: 24,
               borderRadius: 20,
-              border: '1px solid #2A1A1A',
+              border: '1px solid var(--admin-surface)',
               backgroundColor: 'rgba(26,10,10,0.5)',
             }}
           >
@@ -154,9 +154,9 @@ export default function DashboardPage() {
                     gap: 10,
                     padding: '14px 16px',
                     borderRadius: 12,
-                    border: '1px solid #2A1A1A',
+                    border: '1px solid var(--admin-surface)',
                     textDecoration: 'none',
-                    color: '#F5F0EB',
+                    color: 'var(--admin-text)',
                     fontSize: 14,
                     fontWeight: 500,
                     transition: 'border-color 0.2s',

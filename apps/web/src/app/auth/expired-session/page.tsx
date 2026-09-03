@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Auth Expired-session  - Azeebo+',
+  description: 'Auth Expired-session  on Azeebo+',
+};
+
 'use client';
 
 import Link from 'next/link';
@@ -15,7 +22,7 @@ export default function ExpiredSessionPage(): React.JSX.Element {
       <main className="flex-1 flex items-center justify-center p-6">
         <div className="az-glass max-w-md w-full p-8 rounded-3xl text-center border border-white/10 shadow-2xl">
           <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[var(--brand-orange)]/10 border border-[var(--brand-orange)]/30 flex items-center justify-center text-3xl animate-pulse">
-            ⌛
+            Hourglass
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-3">Session Expired</h1>

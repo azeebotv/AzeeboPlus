@@ -111,7 +111,7 @@ function LeaderboardPageContent(): React.JSX.Element {
                               : index === 2
                                 ? 'linear-gradient(135deg, #CD7F32, #A0522D)'
                                 : 'rgba(255,255,255,0.1)',
-                        color: index < 3 ? '#1A0A0A' : '#fff',
+                        color: index < 3 ? 'var(--brand-near-black)' : 'white',
                       }}
                     >
                       {entry.rank}
@@ -160,20 +160,11 @@ function LeaderboardPageContent(): React.JSX.Element {
 
 const LazyLeaderboardPage = lazy(() => Promise.resolve({ default: LeaderboardPageContent }));
 
-export const metadata = {
-  title: 'Leaderboard | Azeebo',
-  description: 'See who is leading the sports predictions game this season.',
-  openGraph: {
-    title: 'Leaderboard | Azeebo',
-    description: 'See who is leading the sports predictions game this season.',
-  },
-};
-
 export default function LeaderboardPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

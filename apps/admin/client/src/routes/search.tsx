@@ -1,17 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
-import type {
-  SearchCorrectionsData,
-  SearchCorrectionDay,
-  SearchStats,
-} from '@/lib/admin-types';
+import type { SearchCorrectionsData, SearchCorrectionDay, SearchStats } from '@/lib/admin-types';
 
 const RANGES = [7, 14, 30, 90] as const;
 
-const BRAND_ORANGE = '#E8420A';
-const RATE_GREEN = '#22C55E';
-const MUTED = '#9A8A7A';
+const BRAND_ORANGE = 'var(--admin-orange)';
+const RATE_GREEN = 'var(--admin-emerald)';
+const MUTED = 'var(--admin-text-muted)';
 
 const fmtPct = (rate: number): string => `${(rate * 100).toFixed(1)}%`;
 
@@ -28,8 +24,8 @@ const fmtDateLong = (iso: string): string => {
 const cardStyle: React.CSSProperties = {
   padding: 20,
   borderRadius: 16,
-  border: '1px solid #2A1A1A',
-  background: '#140808',
+  border: '1px solid var(--admin-surface)',
+  background: 'var(--admin-darker)',
 };
 
 /**
@@ -192,16 +188,38 @@ function CorrectionChart({ series }: { series: SearchCorrectionDay[] }): React.J
                 fill="#241212"
                 stroke="#3A2626"
               />
-              <text x={Math.min(Math.max(center(hover) - 70, PAD_L + 8), W - PAD_R - 148)} y={PAD_T + 12} fontSize={10} fontWeight={700} fill="#F5F0EB">
+              <text
+                x={Math.min(Math.max(center(hover) - 70, PAD_L + 8), W - PAD_R - 148)}
+                y={PAD_T + 12}
+                fontSize={10}
+                fontWeight={700}
+                fill="#F5F0EB"
+              >
                 {fmtDateLong(series[hover]!.date)}
               </text>
-              <text x={Math.min(Math.max(center(hover) - 70, PAD_L + 8), W - PAD_R - 148)} y={PAD_T + 28} fontSize={10} fill={MUTED}>
+              <text
+                x={Math.min(Math.max(center(hover) - 70, PAD_L + 8), W - PAD_R - 148)}
+                y={PAD_T + 28}
+                fontSize={10}
+                fill={MUTED}
+              >
                 Shown: {series[hover]!.shown}
               </text>
-              <text x={Math.min(Math.max(center(hover) - 70, PAD_L + 8), W - PAD_R - 148)} y={PAD_T + 43} fontSize={10} fill={MUTED}>
+              <text
+                x={Math.min(Math.max(center(hover) - 70, PAD_L + 8), W - PAD_R - 148)}
+                y={PAD_T + 43}
+                fontSize={10}
+                fill={MUTED}
+              >
                 Accepted: {series[hover]!.accepted}
               </text>
-              <text x={Math.min(Math.max(center(hover) - 70, PAD_L + 8), W - PAD_R - 148)} y={PAD_T + 56} fontSize={10} fontWeight={700} fill={RATE_GREEN}>
+              <text
+                x={Math.min(Math.max(center(hover) - 70, PAD_L + 8), W - PAD_R - 148)}
+                y={PAD_T + 56}
+                fontSize={10}
+                fontWeight={700}
+                fill={RATE_GREEN}
+              >
                 Rate: {fmtPct(series[hover]!.rate)}
               </text>
             </g>
@@ -221,17 +239,44 @@ function CorrectionChart({ series }: { series: SearchCorrectionDay[] }): React.J
       </svg>
 
       {/* Legend */}
-      <div style={{ display: 'flex', gap: 24, justifyContent: 'center', marginTop: 8, fontSize: 12 }}>
+      <div
+        style={{ display: 'flex', gap: 24, justifyContent: 'center', marginTop: 8, fontSize: 12 }}
+      >
         <span style={{ color: MUTED, display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 12, height: 8, background: BRAND_ORANGE, opacity: 0.35, borderRadius: 2, display: 'inline-block' }} />
+          <span
+            style={{
+              width: 12,
+              height: 8,
+              background: BRAND_ORANGE,
+              opacity: 0.35,
+              borderRadius: 2,
+              display: 'inline-block',
+            }}
+          />
           Suggestions shown
         </span>
         <span style={{ color: MUTED, display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 12, height: 8, background: BRAND_ORANGE, borderRadius: 2, display: 'inline-block' }} />
+          <span
+            style={{
+              width: 12,
+              height: 8,
+              background: BRAND_ORANGE,
+              borderRadius: 2,
+              display: 'inline-block',
+            }}
+          />
           Accepted
         </span>
         <span style={{ color: MUTED, display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 14, height: 3, background: RATE_GREEN, borderRadius: 2, display: 'inline-block' }} />
+          <span
+            style={{
+              width: 14,
+              height: 3,
+              background: RATE_GREEN,
+              borderRadius: 2,
+              display: 'inline-block',
+            }}
+          />
           Acceptance rate (%)
         </span>
       </div>
@@ -240,14 +285,18 @@ function CorrectionChart({ series }: { series: SearchCorrectionDay[] }): React.J
 }
 
 const stateColor = (state: 'available' | 'missing' | 'unknown' | 'present'): string =>
-  state === 'available' || state === 'present' ? RATE_GREEN : state === 'missing' ? '#EF4444' : '#F59E0B';
+  state === 'available' || state === 'present'
+    ? RATE_GREEN
+    : state === 'missing'
+      ? 'var(--admin-red)'
+      : 'var(--admin-amber)';
 
 const stateLabel = (state: string): string => state.charAt(0).toUpperCase() + state.slice(1);
 
 function StatusChip({
   label,
   value,
-  color = '#F5F0EB',
+  color = 'var(--admin-text)',
 }: {
   label: string;
   value: string;
@@ -319,9 +368,9 @@ export default function SearchAnalyticsPage(): React.JSX.Element {
             style={{
               padding: '8px 16px',
               borderRadius: 8,
-              border: `1px solid ${days === r ? BRAND_ORANGE : '#3A2626'}`,
+              border: `1px solid ${days === r ? BRAND_ORANGE : 'var(--admin-surface)'}`,
               background: days === r ? 'rgba(232,66,10,0.15)' : 'transparent',
-              color: days === r ? '#F5F0EB' : MUTED,
+              color: days === r ? 'var(--admin-text)' : MUTED,
               fontWeight: days === r ? 700 : 400,
               cursor: 'pointer',
             }}
@@ -349,10 +398,10 @@ export default function SearchAnalyticsPage(): React.JSX.Element {
               width: 10,
               height: 10,
               borderRadius: '50%',
-              background: stats?.fuzzy.degraded ? '#EF4444' : RATE_GREEN,
+              background: stats?.fuzzy.degraded ? 'var(--admin-red)' : RATE_GREEN,
             }}
           />
-          <strong style={{ color: '#F5F0EB', fontSize: 14 }}>
+          <strong style={{ color: 'var(--admin-text)', fontSize: 14 }}>
             Fuzzy search: {stats?.fuzzy.degraded ? 'DEGRADED' : 'healthy'}
           </strong>
         </div>
@@ -370,27 +419,39 @@ export default function SearchAnalyticsPage(): React.JSX.Element {
         <StatusChip label="Mode" value={stats?.fuzzy.mode ?? '…'} />
         <StatusChip
           label="Searches today"
-          value={
-            stats ? String(stats.totalSearchesToday.toLocaleString()) : '…'
-          }
+          value={stats ? String(stats.totalSearchesToday.toLocaleString()) : '…'}
         />
         <StatusChip
           label="Unique searchers"
           value={stats ? String(stats.uniqueSearchers.toLocaleString()) : '…'}
         />
         {stats?.fuzzy.warning && (
-          <span style={{ color: '#F59E0B', fontSize: 12, flexBasis: '100%' }}>
+          <span style={{ color: 'var(--admin-amber)', fontSize: 12, flexBasis: '100%' }}>
             ⚠ {stats.fuzzy.warning}
           </span>
         )}
       </div>
 
       {isLoading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+            gap: 16,
+          }}
+        >
           {[1, 2, 3, 4].map((i) => (
             <div key={i} style={{ ...cardStyle, height: 96 }}>
-              <div style={{ height: 12, width: '55%', background: '#2A1A1A', borderRadius: 6, marginBottom: 16 }} />
-              <div style={{ height: 26, width: '35%', background: '#2A1A1A', borderRadius: 6 }} />
+              <div
+                style={{
+                  height: 12,
+                  width: '55%',
+                  background: 'var(--admin-surface)',
+                  borderRadius: 6,
+                  marginBottom: 16,
+                }}
+              />
+              <div style={{ height: 26, width: '35%', background: 'var(--admin-surface)', borderRadius: 6 }} />
             </div>
           ))}
         </div>
@@ -405,7 +466,7 @@ export default function SearchAnalyticsPage(): React.JSX.Element {
               borderRadius: 8,
               border: '1px solid #3A2626',
               background: 'transparent',
-              color: '#F5F0EB',
+              color: 'var(--admin-text)',
               cursor: 'pointer',
             }}
           >
@@ -425,50 +486,65 @@ export default function SearchAnalyticsPage(): React.JSX.Element {
           >
             <div style={cardStyle}>
               <div style={{ color: MUTED, fontSize: 13, marginBottom: 8 }}>Suggestions shown</div>
-              <div style={{ fontSize: 30, fontWeight: 700, color: '#F5F0EB' }}>
+              <div style={{ fontSize: 30, fontWeight: 700, color: 'var(--admin-text)' }}>
                 {totalShown.toLocaleString()}
               </div>
             </div>
             <div style={cardStyle}>
-              <div style={{ color: MUTED, fontSize: 13, marginBottom: 8 }}>Corrections accepted</div>
+              <div style={{ color: MUTED, fontSize: 13, marginBottom: 8 }}>
+                Corrections accepted
+              </div>
               <div style={{ fontSize: 30, fontWeight: 700, color: BRAND_ORANGE }}>
                 {totalAccepted.toLocaleString()}
               </div>
             </div>
             <div style={cardStyle}>
-              <div style={{ color: MUTED, fontSize: 13, marginBottom: 8 }}>Acceptance rate (all)</div>
-              <div style={{ fontSize: 30, fontWeight: 700, color: RATE_GREEN }}>{fmtPct(overallRate)}</div>
+              <div style={{ color: MUTED, fontSize: 13, marginBottom: 8 }}>
+                Acceptance rate (all)
+              </div>
+              <div style={{ fontSize: 30, fontWeight: 700, color: RATE_GREEN }}>
+                {fmtPct(overallRate)}
+              </div>
             </div>
             <div style={cardStyle}>
-              <div style={{ color: MUTED, fontSize: 13, marginBottom: 8 }}>Acceptance rate (last 7d)</div>
-              <div style={{ fontSize: 30, fontWeight: 700, color: RATE_GREEN }}>{fmtPct(recentRate)}</div>
+              <div style={{ color: MUTED, fontSize: 13, marginBottom: 8 }}>
+                Acceptance rate (last 7d)
+              </div>
+              <div style={{ fontSize: 30, fontWeight: 700, color: RATE_GREEN }}>
+                {fmtPct(recentRate)}
+              </div>
             </div>
           </div>
 
           {/* Chart */}
           <div style={cardStyle}>
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: '#F5F0EB', marginBottom: 4 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--admin-text)', marginBottom: 4 }}>
               Acceptance rate over time
             </h2>
             <p style={{ color: MUTED, fontSize: 12, marginBottom: 16 }}>
-              Bars: suggestions shown (light) and accepted (solid) per day · Line: acceptance rate (%)
+              Bars: suggestions shown (light) and accepted (solid) per day · Line: acceptance rate
+              (%)
             </p>
             <CorrectionChart series={data.series} />
           </div>
 
           {/* Accessible data table */}
           <div style={{ ...cardStyle, marginTop: 24 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: '#F5F0EB', marginBottom: 16 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--admin-text)', marginBottom: 16 }}>
               Daily breakdown
             </h2>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr style={{ color: MUTED, textAlign: 'left' }}>
-                    <th style={{ padding: '8px 12px', borderBottom: '1px solid #2A1A1A' }}>Date</th>
-                    <th style={{ padding: '8px 12px', borderBottom: '1px solid #2A1A1A' }}>Shown</th>
-                    <th style={{ padding: '8px 12px', borderBottom: '1px solid #2A1A1A' }}>Accepted</th>
-                    <th style={{ padding: '8px 12px', borderBottom: '1px solid #2A1A1A' }}>Rate</th>
+                    <th style={{ padding: '8px 12px', borderBottom: '1px solid var(--admin-surface)' }}>Date</th>
+                    <th style={{ padding: '8px 12px', borderBottom: '1px solid var(--admin-surface)' }}>
+                      Shown
+                    </th>
+                    <th style={{ padding: '8px 12px', borderBottom: '1px solid var(--admin-surface)' }}>
+                      Accepted
+                    </th>
+                    <th style={{ padding: '8px 12px', borderBottom: '1px solid var(--admin-surface)' }}>Rate</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -476,7 +552,7 @@ export default function SearchAnalyticsPage(): React.JSX.Element {
                     .slice()
                     .reverse()
                     .map((d) => (
-                      <tr key={d.date} style={{ color: '#F5F0EB' }}>
+                      <tr key={d.date} style={{ color: 'var(--admin-text)' }}>
                         <td style={{ padding: '8px 12px', borderBottom: '1px solid #1E1010' }}>
                           {fmtDateLong(d.date)}
                         </td>
@@ -486,7 +562,13 @@ export default function SearchAnalyticsPage(): React.JSX.Element {
                         <td style={{ padding: '8px 12px', borderBottom: '1px solid #1E1010' }}>
                           {d.accepted.toLocaleString()}
                         </td>
-                        <td style={{ padding: '8px 12px', borderBottom: '1px solid #1E1010', color: RATE_GREEN }}>
+                        <td
+                          style={{
+                            padding: '8px 12px',
+                            borderBottom: '1px solid #1E1010',
+                            color: RATE_GREEN,
+                          }}
+                        >
                           {fmtPct(d.rate)}
                         </td>
                       </tr>

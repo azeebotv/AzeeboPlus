@@ -1,38 +1,122 @@
 'use client';
 
 import { useEffect, useCallback } from 'react';
-import { registerKeyboardShortcut, KeyboardShortcut, DEFAULT_SHORTCUTS } from '../lib/keyboard';
 
-export function useKeyboardNavigation(shortcuts: KeyboardShortcut[] = []) {
-  const registerDefaults = useCallback(() => {
-    const cleanups: Array<() => void> = [];
+interface KeyboardNavigationOptions {
+  onEscape?: () => void;
+  onEnter?: () => void;
+  onArrowUp?: () => void;
+  onArrowDown?: () => void;
+  onArrowLeft?: () => void;
+  onArrowRight?: () => void;
+  onTab?: (event: KeyboardEvent) => void;
+  enabled?: boolean;
+}
 
-    DEFAULT_SHORTCUTS.forEach((shortcut) => {
-      const cleanup = registerKeyboardShortcut(shortcut);
-      cleanups.push(cleanup);
-    });
+export function useKeyboardNavigation(options: KeyboardNavigationOptions) {
+  const {
+    onEscape,
+    onEnter,
+    onArrowUp,
+    onArrowDown,
+    onArrowLeft,
+    onArrowRight,
+    onTab,
+    enabled = true,
+  } = options;
 
-    return () => cleanups.forEach((cleanup) => cleanup());
-  }, []);
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      if (!enabled) return;
 
-  const registerCustom = useCallback((customShortcuts: KeyboardShortcut[]) => {
-    const cleanups: Array<() => void> = [];
+      // Don't handle keyboard events when typing in inputs
+      const target = event.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable
+      ) {
+        return;
+      }
 
-    customShortcuts.forEach((shortcut) => {
-      const cleanup = registerKeyboardShortcut(shortcut);
-      cleanups.push(cleanup);
-    });
-
-    return () => cleanups.forEach((cleanup) => cleanup());
-  }, []);
+      switch (event.key) {
+        case 'Escape':
+          onEscape?.();
+          break;
+        case 'Enter':
+          onEnter?.();
+          break;
+        case 'ArrowUp':
+          event.preventDefault();
+          onArrowUp?.();
+          break;
+        case 'ArrowDown':
+          event.preventDefault();
+          onArrowDown?.();
+          break;
+        case 'ArrowLeft':
+          onArrowLeft?.();
+          break;
+        case 'ArrowRight':
+          onArrowRight?.();
+          break;
+        case 'Tab':
+          onTab?.(event);
+          break;
+      }
+    },
+    [enabled, onEscape, onEnter, onArrowUp, onArrowDown, onArrowLeft, onArrowRight, onTab]
+  );
 
   useEffect(() => {
-    const defaultCleanup = registerDefaults();
-    const customCleanup = registerCustom(shortcuts);
+    if (!enabled) return;
 
+    document.addEventListener('keydown', handleKeyDown);
     return () => {
-      defaultCleanup();
-      customCleanup();
+      document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [registerDefaults, registerCustom, shortcuts]);
+  }, [enabled, handleKeyDown]);
+}
+
+// Hook for managing focus within a list
+export function useListNavigation(_itemCount: number, onSelect: (index: number) => void) {
+  const getFocusableElements = useCallback(() => {
+    return document.querySelectorAll('[data-list-item]');
+  }, []);
+
+  const handleArrowUp = useCallback(() => {
+    const elements = getFocusableElements();
+    const currentIndex = Array.from(elements).findIndex((el) => el === document.activeElement);
+    const newIndex = currentIndex <= 0 ? elements.length - 1 : currentIndex - 1;
+    (elements[newIndex] as HTMLElement)?.focus();
+  }, [getFocusableElements]);
+
+  const handleArrowDown = useCallback(() => {
+    const elements = getFocusableElements();
+    const currentIndex = Array.from(elements).findIndex((el) => el === document.activeElement);
+    const newIndex = currentIndex >= elements.length - 1 ? 0 : currentIndex + 1;
+    (elements[newIndex] as HTMLElement)?.focus();
+  }, [getFocusableElements]);
+
+  const handleEnter = useCallback(() => {
+    const elements = getFocusableElements();
+    const currentIndex = Array.from(elements).findIndex((el) => el === document.activeElement);
+    if (currentIndex >= 0) {
+      onSelect(currentIndex);
+    }
+  }, [getFocusableElements, onSelect]);
+
+  useKeyboardNavigation({
+    onArrowUp: handleArrowUp,
+    onArrowDown: handleArrowDown,
+    onEnter: handleEnter,
+  });
+
+  return {
+    getItemProps: (index: number) => ({
+      'data-list-item': true,
+      tabIndex: index === 0 ? 0 : -1,
+    }),
+  };
 }

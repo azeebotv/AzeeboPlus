@@ -6,13 +6,13 @@ import type { AdminWallet } from '@/lib/admin-types';
 function getStatusStyle(status: string): { bg: string; color: string } {
   switch (status) {
     case 'active':
-      return { bg: 'rgba(13,59,46,0.2)', color: '#0D3B2E' };
+      return { bg: 'rgba(13,59,46,0.2)', color: 'var(--admin-green)' };
     case 'frozen':
-      return { bg: 'rgba(56,132,255,0.2)', color: '#3884FF' };
+      return { bg: 'rgba(56,132,255,0.2)', color: 'var(--admin-blue)' };
     case 'suspended':
-      return { bg: 'rgba(204,28,28,0.2)', color: '#CC1C1C' };
+      return { bg: 'rgba(204,28,28,0.2)', color: 'var(--admin-red)' };
     default:
-      return { bg: 'rgba(13,59,46,0.2)', color: '#0D3B2E' };
+      return { bg: 'rgba(13,59,46,0.2)', color: 'var(--admin-green)' };
   }
 }
 
@@ -90,25 +90,25 @@ export default function WalletsPage() {
   }
 
   function nextStatus(current: string): { next: string; label: string; color: string } {
-    if (current === 'active') return { next: 'frozen', label: 'Freeze', color: '#3884FF' };
-    if (current === 'frozen') return { next: 'active', label: 'Activate', color: '#0D3B2E' };
-    return { next: 'active', label: 'Reactivate', color: '#0D3B2E' };
+    if (current === 'active') return { next: 'frozen', label: 'Freeze', color: 'var(--admin-blue)' };
+    if (current === 'frozen') return { next: 'active', label: 'Activate', color: 'var(--admin-green)' };
+    return { next: 'active', label: 'Reactivate', color: 'var(--admin-green)' };
   }
 
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>User Wallets</h1>
-        <p style={{ color: '#9A8A7A' }}>{total} wallets</p>
+        <p style={{ color: 'var(--admin-text-muted)' }}>{total} wallets</p>
       </div>
 
       {isLoading ? (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
       ) : (
         <div
           style={{
             borderRadius: 16,
-            border: '1px solid #2A1A1A',
+            border: '1px solid var(--admin-surface)',
             backgroundColor: 'rgba(26,10,10,0.5)',
             overflow: 'hidden',
           }}
@@ -116,14 +116,14 @@ export default function WalletsPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid #2A1A1A' }}>
+                <tr style={{ borderBottom: '1px solid var(--admin-surface)' }}>
                   {['User', 'Balance', 'Currency', 'Status', 'Created', 'Actions'].map((h) => (
                     <th
                       key={h}
                       style={{
                         padding: '12px 16px',
                         textAlign: 'left',
-                        color: '#9A8A7A',
+                        color: 'var(--admin-text-muted)',
                         fontWeight: 600,
                         fontSize: 12,
                         textTransform: 'uppercase',
@@ -139,14 +139,14 @@ export default function WalletsPage() {
                   const statusStyle = getStatusStyle(w.status);
                   const { next, label, color: btnColor } = nextStatus(w.status);
                   return (
-                    <tr key={w.id} style={{ borderBottom: '1px solid #1A0A0A' }}>
+                    <tr key={w.id} style={{ borderBottom: '1px solid var(--admin-bg)' }}>
                       <td style={{ padding: '12px 16px' }}>
                         <p style={{ fontWeight: 600, fontSize: 13 }}>{w.userId}</p>
                       </td>
-                      <td style={{ padding: '12px 16px', fontWeight: 700, color: '#E8420A' }}>
+                      <td style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--admin-orange)' }}>
                         ₦{w.balance.toLocaleString()}
                       </td>
-                      <td style={{ padding: '12px 16px', color: '#9A8A7A' }}>{w.currency}</td>
+                      <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>{w.currency}</td>
                       <td style={{ padding: '12px 16px' }}>
                         <span
                           style={{
@@ -162,7 +162,7 @@ export default function WalletsPage() {
                           {w.status}
                         </span>
                       </td>
-                      <td style={{ padding: '12px 16px', color: '#9A8A7A', fontSize: 13 }}>
+                      <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)', fontSize: 13 }}>
                         {new Date(w.createdAt).toLocaleDateString()}
                       </td>
                       <td style={{ padding: '12px 16px' }}>
@@ -174,7 +174,7 @@ export default function WalletsPage() {
                               borderRadius: 6,
                               border: '1px solid rgba(13,59,46,0.3)',
                               background: 'transparent',
-                              color: '#0D3B2E',
+                              color: 'var(--admin-green)',
                               fontSize: 11,
                               cursor: 'pointer',
                             }}
@@ -188,7 +188,7 @@ export default function WalletsPage() {
                               borderRadius: 6,
                               border: '1px solid rgba(232,66,10,0.3)',
                               background: 'transparent',
-                              color: '#E8420A',
+                              color: 'var(--admin-orange)',
                               fontSize: 11,
                               cursor: 'pointer',
                             }}
@@ -218,7 +218,7 @@ export default function WalletsPage() {
             </table>
           </div>
           {wallets.length === 0 && (
-            <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A' }}>No wallets found</p>
+            <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>No wallets found</p>
           )}
           {totalPages > 1 && (
             <div
@@ -227,7 +227,7 @@ export default function WalletsPage() {
                 justifyContent: 'center',
                 gap: 8,
                 padding: '12px 16px',
-                borderTop: '1px solid #1A0A0A',
+                borderTop: '1px solid var(--admin-bg)',
               }}
             >
               <button
@@ -236,16 +236,16 @@ export default function WalletsPage() {
                 style={{
                   padding: '6px 14px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
-                  backgroundColor: page <= 1 ? '#1A0A0A' : 'transparent',
-                  color: page <= 1 ? '#555' : '#9A8A7A',
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: page <= 1 ? 'var(--admin-bg)' : 'transparent',
+                  color: page <= 1 ? 'var(--admin-grey)' : 'var(--admin-text-muted)',
                   fontSize: 13,
                   cursor: page <= 1 ? 'not-allowed' : 'pointer',
                 }}
               >
                 Prev
               </button>
-              <span style={{ color: '#9A8A7A', fontSize: 13, alignSelf: 'center' }}>
+              <span style={{ color: 'var(--admin-text-muted)', fontSize: 13, alignSelf: 'center' }}>
                 Page {page} of {totalPages}
               </span>
               <button
@@ -254,9 +254,9 @@ export default function WalletsPage() {
                 style={{
                   padding: '6px 14px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
-                  backgroundColor: page >= totalPages ? '#1A0A0A' : 'transparent',
-                  color: page >= totalPages ? '#555' : '#9A8A7A',
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: page >= totalPages ? 'var(--admin-bg)' : 'transparent',
+                  color: page >= totalPages ? 'var(--admin-grey)' : 'var(--admin-text-muted)',
                   fontSize: 13,
                   cursor: page >= totalPages ? 'not-allowed' : 'pointer',
                 }}
@@ -284,9 +284,9 @@ export default function WalletsPage() {
         >
           <div
             style={{
-              backgroundColor: '#1A0A0A',
+              backgroundColor: 'var(--admin-bg)',
               borderRadius: 16,
-              border: '1px solid #2A1A1A',
+              border: '1px solid var(--admin-surface)',
               padding: 24,
               maxWidth: 400,
               width: '100%',
@@ -296,13 +296,13 @@ export default function WalletsPage() {
             <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>
               {actionType === 'credit' ? 'Credit Wallet' : 'Debit Wallet'}
             </h2>
-            <p style={{ color: '#9A8A7A', fontSize: 13, marginBottom: 20 }}>
+            <p style={{ color: 'var(--admin-text-muted)', fontSize: 13, marginBottom: 20 }}>
               User: {actionTarget.userId} &mdash; Current balance: ₦
               {actionTarget.balance.toLocaleString()}
             </p>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
                 Amount (NGN)
               </label>
               <input
@@ -314,9 +314,9 @@ export default function WalletsPage() {
                   width: '100%',
                   padding: '10px 12px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
-                  backgroundColor: '#0D0505',
-                  color: '#F5F0EB',
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
                   fontSize: 14,
                   outline: 'none',
                 }}
@@ -325,7 +325,7 @@ export default function WalletsPage() {
             </div>
 
             <div style={{ marginBottom: 24 }}>
-              <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
                 Reason
               </label>
               <input
@@ -335,9 +335,9 @@ export default function WalletsPage() {
                   width: '100%',
                   padding: '10px 12px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
-                  backgroundColor: '#0D0505',
-                  color: '#F5F0EB',
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
                   fontSize: 14,
                   outline: 'none',
                 }}
@@ -356,11 +356,11 @@ export default function WalletsPage() {
                   border: 'none',
                   background:
                     !actionAmount || parseFloat(actionAmount) <= 0
-                      ? '#2A1A1A'
+                      ? 'var(--admin-surface)'
                       : actionType === 'credit'
                         ? 'linear-gradient(135deg, #0D3B2E 0%, #1A5E45 100%)'
                         : 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                  color: !actionAmount || parseFloat(actionAmount) <= 0 ? '#666' : '#fff',
+                  color: !actionAmount || parseFloat(actionAmount) <= 0 ? 'var(--admin-grey)' : 'white',
                   fontWeight: 600,
                   fontSize: 14,
                   cursor:
@@ -374,9 +374,9 @@ export default function WalletsPage() {
                 style={{
                   padding: '12px 20px',
                   borderRadius: 10,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--admin-surface)',
                   background: 'transparent',
-                  color: '#9A8A7A',
+                  color: 'var(--admin-text-muted)',
                   fontWeight: 600,
                   fontSize: 14,
                   cursor: 'pointer',

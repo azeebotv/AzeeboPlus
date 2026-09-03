@@ -306,6 +306,7 @@ export const adminFlags = {
   featureFlagEditorV2: 'admin_feature_flag_editor_v2',
   reportBuilder: 'admin_report_builder',
   bulkActions: 'admin_bulk_actions',
+  governanceDashboard: 'admin_governance_dashboard',
 } as const;
 
 // The universe sentinel builder is re-exported from @azeebo/shared-types — the

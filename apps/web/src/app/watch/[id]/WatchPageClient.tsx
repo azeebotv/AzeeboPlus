@@ -501,7 +501,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
         <AppHeader />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
-            <div className="w-12 h-12 border-4 border-white/10 border-t-[#E8420A] rounded-full animate-spin mx-auto mb-4"></div>
+            <div className="w-12 h-12 border-4 border-white/10 border-t-[var(--brand-orange)] rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-white/60">Loading content...</p>
           </div>
         </div>
@@ -602,7 +602,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                           href={mediaInfo.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[#E8420A] hover:text-[#FF6B35] underline text-lg"
+                          className="text-[var(--brand-orange)] hover:text-[#FF6B35] underline text-lg"
                         >
                           Download via FTP
                         </a>
@@ -646,7 +646,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                         e.stopPropagation();
                         togglePlay();
                       }}
-                      className="absolute inset-0 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#E8420A] focus:ring-offset-2 focus:ring-offset-black"
+                      className="absolute inset-0 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[var(--brand-orange)] focus:ring-offset-2 focus:ring-offset-black"
                       aria-label="Play video"
                     >
                       <div
@@ -669,7 +669,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
               {/* Buffering Indicator */}
               {playerState.isLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                  <div className="w-16 h-16 border-4 border-white/20 border-t-[#E8420A] rounded-full animate-spin"></div>
+                  <div className="w-16 h-16 border-4 border-white/20 border-t-[var(--brand-orange)] rounded-full animate-spin"></div>
                 </div>
               )}
 
@@ -685,7 +685,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                         max={playerState.duration || 100}
                         value={playerState.currentTime}
                         onChange={handleProgressChange}
-                        className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#E8420A]"
+                        className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[var(--brand-orange)]"
                         aria-label="Video progress"
                       />
                       <div className="flex justify-between text-xs text-white/60 mt-1">
@@ -702,7 +702,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                             e.stopPropagation();
                             togglePlay();
                           }}
-                          className="text-white hover:text-[#E8420A] transition-colors"
+                          className="text-white hover:text-[var(--brand-orange)] transition-colors"
                           aria-label={playerState.isPlaying ? 'Pause' : 'Play'}
                         >
                           {playerState.isPlaying ? (
@@ -721,7 +721,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                               e.stopPropagation();
                               toggleMute();
                             }}
-                            className="text-white hover:text-[#E8420A] transition-colors"
+                            className="text-white hover:text-[var(--brand-orange)] transition-colors"
                             aria-label={playerState.isMuted ? 'Unmute' : 'Mute'}
                           >
                             {playerState.isMuted || playerState.volume === 0 ? (
@@ -741,7 +741,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                             step="0.01"
                             value={playerState.isMuted ? 0 : playerState.volume}
                             onChange={handleVolumeChange}
-                            className="w-20 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#E8420A]"
+                            className="w-20 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[var(--brand-orange)]"
                             aria-label="Volume"
                           />
                         </div>
@@ -754,7 +754,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                               playbackRate === 1 ? 1.5 : playbackRate === 1.5 ? 2 : 1
                             );
                           }}
-                          className="text-white text-sm font-medium hover:text-[#E8420A] transition-colors px-2 py-1 rounded"
+                          className="text-white text-sm font-medium hover:text-[var(--brand-orange)] transition-colors px-2 py-1 rounded"
                           aria-label={`Playback speed: ${playbackRate}x`}
                         >
                           {playbackRate}x
@@ -764,7 +764,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                             e.stopPropagation();
                             togglePiP();
                           }}
-                          className="text-white hover:text-[#E8420A] transition-colors"
+                          className="text-white hover:text-[var(--brand-orange)] transition-colors"
                           aria-label="Picture in Picture"
                         >
                           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -776,7 +776,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                             e.stopPropagation();
                             toggleFullscreen();
                           }}
-                          className="text-white hover:text-[#E8420A] transition-colors"
+                          className="text-white hover:text-[var(--brand-orange)] transition-colors"
                           aria-label="Toggle fullscreen"
                         >
                           {isFullscreen ? (
@@ -795,7 +795,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                               e.stopPropagation();
                               setShowSettings(!showSettings);
                             }}
-                            className="text-white hover:text-[#E8420A] transition-colors"
+                            className="text-white hover:text-[var(--brand-orange)] transition-colors"
                             aria-label="Settings"
                           >
                             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -815,7 +815,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                                     e.stopPropagation();
                                     changePlaybackRate(rate);
                                   }}
-                                  className={`block w-full text-left px-3 py-1.5 text-sm rounded transition-colors ${playbackRate === rate ? 'text-[#E8420A]' : 'text-white/70 hover:text-white hover:bg-white/5'}`}
+                                  className={`block w-full text-left px-3 py-1.5 text-sm rounded transition-colors ${playbackRate === rate ? 'text-[var(--brand-orange)]' : 'text-white/70 hover:text-white hover:bg-white/5'}`}
                                 >
                                   {rate}x
                                 </button>
@@ -1202,7 +1202,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                       type="radio"
                       name="report-reason"
                       value={reason}
-                      className="w-4 h-4 accent-[#E8420A]"
+                      className="w-4 h-4 accent-[var(--brand-orange)]"
                       required
                     />
                     <span className="text-sm text-white">{reason}</span>

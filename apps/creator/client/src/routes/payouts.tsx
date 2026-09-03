@@ -7,9 +7,9 @@ const inputStyle = {
   width: '100%',
   padding: '10px 14px',
   borderRadius: 8,
-  border: '1px solid #2A1A1A',
-  backgroundColor: '#0D0505',
-  color: '#F5F0EB',
+  border: '1px solid var(--creator-border)',
+  backgroundColor: 'var(--creator-dark)',
+  color: 'var(--creator-text)',
   fontSize: 14,
 };
 
@@ -20,10 +20,10 @@ const statusColor: Record<string, string> = {
   failed: 'rgba(204,28,28,0.2)',
 };
 const statusText: Record<string, string> = {
-  pending: '#F59E0B',
-  processing: '#3B82F6',
-  completed: '#0D3B2E',
-  failed: '#CC1C1C',
+  pending: 'var(--creator-amber, #f59e0b)',
+  processing: 'var(--creator-blue, #3b82f6)',
+  completed: 'var(--creator-green)',
+  failed: 'var(--creator-red)',
 };
 
 export default function PayoutsPage() {
@@ -50,12 +50,12 @@ export default function PayoutsPage() {
   return (
     <div>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Payouts</h1>
-      <p style={{ color: '#9A8A7A', marginBottom: 24 }}>
+      <p style={{ color: 'var(--creator-text-muted)', marginBottom: 24 }}>
         Request withdrawals and track payout history
       </p>
 
       {isLoading ? (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
       ) : data ? (
         <>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 32 }}>
@@ -63,14 +63,14 @@ export default function PayoutsPage() {
               style={{
                 padding: 20,
                 borderRadius: 12,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--creator-border)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
                 flex: 1,
                 minWidth: 180,
               }}
             >
-              <p style={{ fontSize: 13, color: '#9A8A7A', marginBottom: 4 }}>Available Balance</p>
-              <p style={{ fontSize: 28, fontWeight: 700, color: '#0D3B2E' }}>
+              <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 4 }}>Available Balance</p>
+              <p style={{ fontSize: 28, fontWeight: 700, color: 'var(--creator-green)' }}>
                 ${data.availableBalance.toLocaleString()}
               </p>
             </div>
@@ -78,13 +78,13 @@ export default function PayoutsPage() {
               style={{
                 padding: 20,
                 borderRadius: 12,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--creator-border)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
                 flex: 1,
                 minWidth: 180,
               }}
             >
-              <p style={{ fontSize: 13, color: '#9A8A7A', marginBottom: 4 }}>Pending Payout</p>
+              <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 4 }}>Pending Payout</p>
               <p style={{ fontSize: 28, fontWeight: 700 }}>
                 ${data.pendingPayout.toLocaleString()}
               </p>
@@ -93,13 +93,13 @@ export default function PayoutsPage() {
               style={{
                 padding: 20,
                 borderRadius: 12,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--creator-border)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
                 flex: 1,
                 minWidth: 180,
               }}
             >
-              <p style={{ fontSize: 13, color: '#9A8A7A', marginBottom: 4 }}>Total Paid Out</p>
+              <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 4 }}>Total Paid Out</p>
               <p style={{ fontSize: 28, fontWeight: 700 }}>${data.totalPaidOut.toLocaleString()}</p>
             </div>
           </div>
@@ -108,7 +108,7 @@ export default function PayoutsPage() {
             style={{
               padding: 20,
               borderRadius: 12,
-              border: '1px solid #2A1A1A',
+              border: '1px solid var(--creator-border)',
               backgroundColor: 'rgba(26,10,10,0.5)',
               marginBottom: 24,
               maxWidth: 500,
@@ -116,7 +116,7 @@ export default function PayoutsPage() {
           >
             <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Request Payout</h3>
             <div style={{ marginBottom: 12 }}>
-              <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}>
                 Amount ($)
               </label>
               <input
@@ -130,7 +130,7 @@ export default function PayoutsPage() {
               />
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}>
                 Method
               </label>
               <select value={method} onChange={(e) => setMethod(e.target.value)} style={inputStyle}>
@@ -152,7 +152,7 @@ export default function PayoutsPage() {
                 borderRadius: 8,
                 border: 'none',
                 background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                color: '#fff',
+                color: 'white',
                 fontWeight: 600,
                 cursor: requestMutation.isPending ? 'not-allowed' : 'pointer',
                 opacity: requestMutation.isPending ? 0.6 : 1,
@@ -161,12 +161,12 @@ export default function PayoutsPage() {
               {requestMutation.isPending ? 'Requesting...' : 'Request Payout'}
             </button>
             {requestMutation.isSuccess && (
-              <p style={{ color: '#0D3B2E', fontSize: 13, marginTop: 8 }}>
+              <p style={{ color: 'var(--creator-green)', fontSize: 13, marginTop: 8 }}>
                 Payout request submitted
               </p>
             )}
             {requestMutation.isError && (
-              <p style={{ color: '#CC1C1C', fontSize: 13, marginTop: 8 }}>
+              <p style={{ color: 'var(--creator-red)', fontSize: 13, marginTop: 8 }}>
                 Failed to request payout
               </p>
             )}
@@ -177,7 +177,7 @@ export default function PayoutsPage() {
               style={{
                 padding: 20,
                 borderRadius: 12,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--creator-border)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
               }}
             >
@@ -185,14 +185,14 @@ export default function PayoutsPage() {
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                   <thead>
-                    <tr style={{ borderBottom: '1px solid #2A1A1A' }}>
+                    <tr style={{ borderBottom: '1px solid var(--creator-border)' }}>
                       {['Amount', 'Method', 'Status', 'Requested', 'Processed'].map((h) => (
                         <th
                           key={h}
                           style={{
                             padding: '10px 12px',
                             textAlign: 'left',
-                            color: '#9A8A7A',
+                            color: 'var(--creator-text-muted)',
                             fontWeight: 600,
                             fontSize: 12,
                             textTransform: 'uppercase',
@@ -205,14 +205,14 @@ export default function PayoutsPage() {
                   </thead>
                   <tbody>
                     {data.history.map((p) => (
-                      <tr key={p.id} style={{ borderBottom: '1px solid #1A0A0A' }}>
+                      <tr key={p.id} style={{ borderBottom: '1px solid var(--creator-border-light)' }}>
                         <td style={{ padding: '10px 12px', fontWeight: 600 }}>
                           ${p.amount.toLocaleString()}
                         </td>
                         <td
                           style={{
                             padding: '10px 12px',
-                            color: '#9A8A7A',
+                            color: 'var(--creator-text-muted)',
                             textTransform: 'capitalize',
                           }}
                         >
@@ -233,10 +233,10 @@ export default function PayoutsPage() {
                             {p.status}
                           </span>
                         </td>
-                        <td style={{ padding: '10px 12px', color: '#9A8A7A', fontSize: 13 }}>
+                        <td style={{ padding: '10px 12px', color: 'var(--creator-text-muted)', fontSize: 13 }}>
                           {new Date(p.requestedAt).toLocaleDateString()}
                         </td>
-                        <td style={{ padding: '10px 12px', color: '#9A8A7A', fontSize: 13 }}>
+                        <td style={{ padding: '10px 12px', color: 'var(--creator-text-muted)', fontSize: 13 }}>
                           {p.processedAt ? new Date(p.processedAt).toLocaleDateString() : '—'}
                         </td>
                       </tr>
@@ -248,7 +248,7 @@ export default function PayoutsPage() {
           )}
         </>
       ) : (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>
+        <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>
           No payout data available
         </p>
       )}

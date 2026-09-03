@@ -1,14 +1,6 @@
 'use client';
 import { Suspense, lazy, useEffect } from 'react';
 
-export const metadata = {
-  title: 'Influencers | Azeebo',
-  description: 'Explore top digital creators, content makers, and social media influencers.',
-  openGraph: {
-    title: 'Influencers | Azeebo',
-    description: 'Explore top digital creators, content makers, and social media influencers.',
-  },
-};
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import Link from 'next/link';
@@ -104,7 +96,7 @@ function InfluencersPageContent(): React.JSX.Element {
                       height={300}
                       className="w-full h-64 object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
                     <div className="absolute bottom-4 left-4 right-4">
                       <h3 className="text-xl font-bold text-white">{influencer.title}</h3>
                     </div>
@@ -118,7 +110,7 @@ function InfluencersPageContent(): React.JSX.Element {
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-4xl mb-4">📱</p>
+            <p className="text-4xl mb-4"></p>
             <p className="text-lg text-white/50">No influencers available yet</p>
           </div>
         )}
@@ -135,7 +127,7 @@ export default function InfluencersPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

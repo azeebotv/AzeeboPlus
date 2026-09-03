@@ -1,14 +1,6 @@
 'use client';
 import { useEffect } from 'react';
 
-export const metadata = {
-  title: 'Reality | Azeebo',
-  description: 'Watch reality shows, vote for contestants, and earn rewards on Azeebo.',
-  openGraph: {
-    title: 'Reality | Azeebo',
-    description: 'Watch reality shows, vote for contestants, and earn rewards on Azeebo.',
-  },
-};
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -115,7 +107,7 @@ function RealityPageContent(): React.JSX.Element {
               alt={selectedShow.title}
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/50 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-[var(--brand-near-black)]/50 to-transparent" />
             <AmbientGlow color="rgba(204,28,28,0.3)" size={500} className="bottom-0 right-0" />
 
             <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 max-w-7xl mx-auto">
@@ -193,7 +185,7 @@ function RealityPageContent(): React.JSX.Element {
                     alt={show.title}
                     className="w-full h-44 sm:h-48 object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
                   <div className="absolute bottom-4 left-4 right-4">
                     <span
                       className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
@@ -242,7 +234,7 @@ function RealityPageContent(): React.JSX.Element {
                 </div>
                 <Link
                   href="/reality/results"
-                  className="text-sm font-medium text-[#E8420A] hover:text-[#CC1C1C] transition-colors"
+                  className="text-sm font-medium text-[var(--brand-orange)] hover:text-[var(--brand-red)] transition-colors"
                 >
                   View All
                 </Link>

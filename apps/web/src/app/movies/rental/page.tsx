@@ -1,14 +1,6 @@
 'use client';
 import { Suspense, lazy, useEffect, useState } from 'react';
 
-export const metadata = {
-  title: 'Rent Movies | Azeebo',
-  description: 'Rent or buy premium movies on demand. Watch anytime, anywhere on Azeebo.',
-  openGraph: {
-    title: 'Rent Movies | Azeebo',
-    description: 'Rent or buy premium movies on demand. Watch anytime, anywhere on Azeebo.',
-  },
-};
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { apiFetch } from '@/lib/api';
@@ -125,7 +117,7 @@ function RentalPageContent(): React.JSX.Element {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            🎬 Rent Movies
+            FilmRent Movies
           </motion.h1>
           <motion.p
             className="text-xl text-white/80 max-w-2xl mx-auto"
@@ -184,7 +176,7 @@ function RentalPageContent(): React.JSX.Element {
                       height={240}
                       className="w-full h-48 sm:h-56 object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
                     <div className="absolute top-2 right-2">
                       <span
                         className="px-2.5 py-1 rounded-full text-xs font-semibold"
@@ -211,7 +203,7 @@ function RentalPageContent(): React.JSX.Element {
                   </div>
                   <div className="p-4">
                     <div className="flex items-center gap-2 text-xs text-white/40 mb-3">
-                      <span>⭐ {movie.rating}</span>
+                      <span>{movie.rating}</span>
                       <span>·</span>
                       <span>{movie.year}</span>
                       <span>·</span>
@@ -363,7 +355,7 @@ export default function RentalPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

@@ -24,6 +24,11 @@ interface AuthContextType {
     name: string,
     phone?: string
   ) => Promise<{ success: boolean; message?: string }>;
+  socialLogin: (data: {
+    code: string;
+    state: string;
+    displayName?: string;
+  }) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   verifyOTP: (code: string) => Promise<{ success: boolean; message?: string; user?: User }>;
@@ -218,6 +223,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const socialLogin = async (data: {
+    code: string;
+    state: string;
+    displayName?: string;
+  }) => {
+    try {
+      const response = await authApi.socialCallback(data);
+      if (response.success && response.data) {
+        await handleAuthResponse(
+          response as ApiResponse<{ access_token: string; refresh_token: string; user: User }>
+        );
+        return { success: true };
+      }
+      return { success: false, message: response.message || 'Social login failed' };
+    } catch (error: unknown) {
+      logger.error('Social login error', error);
+      const message =
+        error instanceof Error ? error.message : 'An error occurred during social login';
+      return { success: false, message };
+    }
+  };
+
   const resendOTP = async () => {
     await authApi.resendOTP();
   };
@@ -253,6 +280,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         login,
         register,
+        socialLogin,
         logout,
         forgotPassword,
         verifyOTP,

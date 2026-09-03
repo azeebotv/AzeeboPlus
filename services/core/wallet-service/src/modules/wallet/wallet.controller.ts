@@ -26,6 +26,7 @@ import { ChargeWalletDto } from './dto/charge-wallet.dto.js';
 import { CreditReverseDto } from './dto/credit-reverse.dto.js';
 import { DebitWalletDto, CreditWalletDto } from './dto/wallet-operation.dto.js';
 import { WithdrawWalletDto, TransferWalletDto } from './dto/withdraw-transfer.dto.js';
+import { LinkBankAccountDto } from './dto/link-bank-account.dto.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
 interface AuthenticatedRequest {
@@ -315,9 +316,9 @@ export class WalletController {
   @ApiOperation({ summary: 'Link a bank account' })
   async linkBankAccount(
     @Request() req: AuthenticatedRequest,
-    @Body() body: { bankName: string; accountNumber: string; accountName: string }
+    @Body() dto: LinkBankAccountDto
   ) {
-    const result = await this.walletService.linkBankAccount(req.user.id, body);
+    const result = await this.walletService.linkBankAccount(req.user.id, dto);
     return ApiResponseWrapper.success((result as { data: unknown }).data);
   }
 

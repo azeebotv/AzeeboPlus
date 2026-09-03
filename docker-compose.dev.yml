@@ -1,0 +1,52 @@
+# ============================================================
+# Azeebo+ Local Development Infrastructure
+# ============================================================
+# Lightweight compose for local development — runs only
+# PostgreSQL and Redis with persistent volumes.
+#
+# Usage:
+#   docker compose -f docker-compose.dev.yml up -d
+#   pnpm dev   # starts all services with hot-reload via nest start --watch
+#
+# To reset data:
+#   docker compose -f docker-compose.dev.yml down -v
+# ============================================================
+
+services:
+  postgres-dev:
+    image: postgres:16-alpine
+    container_name: azeebo-dev-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-azeebo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-azeebo_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-azeebo_dev}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-dev-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-azeebo}"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  redis-dev:
+    image: redis:7-alpine
+    container_name: azeebo-dev-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-dev-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+volumes:
+  postgres-dev-data:
+    driver: local
+  redis-dev-data:
+    driver: local

@@ -105,7 +105,7 @@ function HighlightsPageContent(): React.JSX.Element {
                         height={200}
                         className="w-full h-48 object-cover group-hover:scale-105 transition-transform"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 via-transparent to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 via-transparent to-transparent" />
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <div
                           className="w-14 h-14 rounded-full flex items-center justify-center"
@@ -154,20 +154,11 @@ function HighlightsPageContent(): React.JSX.Element {
 
 const LazyHighlightsPage = lazy(() => Promise.resolve({ default: HighlightsPageContent }));
 
-export const metadata = {
-  title: 'Sports Highlights | Azeebo',
-  description: 'Watch the best moments and highlights from recent matches and events.',
-  openGraph: {
-    title: 'Sports Highlights | Azeebo',
-    description: 'Watch the best moments and highlights from recent matches and events.',
-  },
-};
-
 export default function HighlightsPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

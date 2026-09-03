@@ -203,7 +203,7 @@ export class KnowledgeService {
       where: { userId },
       select: { knowledgeUnitId: true },
     });
-    return grants.map((g) => g.knowledgeUnitId);
+    return grants.map((g: { knowledgeUnitId: string }) => g.knowledgeUnitId);
   }
 
   // ==========================================================================
@@ -359,7 +359,7 @@ export class KnowledgeService {
       checkpointId,
       userId,
       grantsAwarded: grants.length,
-      knowledgeUnitIds: checkpoint.grants.map((g) => g.knowledgeUnitId),
+      knowledgeUnitIds: checkpoint.grants.map((g: { knowledgeUnitId: string }) => g.knowledgeUnitId),
     };
   }
 
@@ -377,11 +377,11 @@ export class KnowledgeService {
     });
 
     return units
-      .filter((u) => {
+      .filter((u: { id: string; spoilerLevel: string }) => {
         const level = spoilerOrder[u.spoilerLevel as keyof typeof spoilerOrder] ?? 0;
         return level <= maxLevel;
       })
-      .map((u) => u.id);
+      .map((u: { id: string }) => u.id);
   }
 
   // ==========================================================================

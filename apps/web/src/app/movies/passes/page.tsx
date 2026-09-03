@@ -1,14 +1,6 @@
 'use client';
 import { Suspense, lazy, useEffect, useState } from 'react';
 
-export const metadata = {
-  title: 'Cinema Passes | Azeebo',
-  description: 'Get unlimited access to premium movies with affordable cinema passes on Azeebo.',
-  openGraph: {
-    title: 'Cinema Passes | Azeebo',
-    description: 'Get unlimited access to premium movies with affordable cinema passes on Azeebo.',
-  },
-};
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -118,7 +110,7 @@ function PassesPageContent(): React.JSX.Element {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            🎬 Cinema Passes
+            FilmCinema Passes
           </motion.h1>
           <motion.p
             className="text-xl text-white/80 max-w-2xl mx-auto"
@@ -140,7 +132,7 @@ function PassesPageContent(): React.JSX.Element {
               style={{ border: '2px solid rgba(234,179,8,0.5)' }}
             >
               <div className="flex items-center gap-4 mb-4">
-                <span className="text-4xl">🎫</span>
+                <span className="text-4xl"></span>
                 <div>
                   <h2 className="text-xl font-bold" style={{ color: 'var(--color-warning-400)' }}>
                     {userPass.passName}
@@ -260,7 +252,7 @@ function PassesPageContent(): React.JSX.Element {
                   <ul className="space-y-3 mb-6 flex-1">
                     {pass.features.map((feature, i) => (
                       <li key={i} className="flex items-center gap-2">
-                        <span style={{ color: 'var(--color-success-500)' }}>✓</span>
+                        <span style={{ color: 'var(--color-success-500)' }}></span>
                         <span className="text-white text-sm">{feature}</span>
                       </li>
                     ))}
@@ -361,7 +353,7 @@ export default function PassesPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

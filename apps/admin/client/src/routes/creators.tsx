@@ -25,10 +25,10 @@ export default function CreatorsPage() {
   return (
     <div>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Creators</h1>
-      <p style={{ color: '#9A8A7A', marginBottom: 24 }}>{creators.length} registered creators</p>
+      <p style={{ color: 'var(--admin-text-muted)', marginBottom: 24 }}>{creators.length} registered creators</p>
 
       {isLoading ? (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
       ) : (
         <div
           style={{
@@ -43,7 +43,7 @@ export default function CreatorsPage() {
               style={{
                 padding: 20,
                 borderRadius: 16,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--admin-surface)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
               }}
             >
@@ -53,23 +53,23 @@ export default function CreatorsPage() {
                     width: 48,
                     height: 48,
                     borderRadius: '50%',
-                    backgroundColor: '#2A1A1A',
+                    backgroundColor: 'var(--admin-surface)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: 18,
                     fontWeight: 700,
-                    color: '#E8420A',
+                    color: 'var(--admin-orange)',
                   }}
                 >
                   {c.name?.charAt(0).toUpperCase()}
                 </div>
                 <div>
                   <p style={{ fontWeight: 600, fontSize: 15 }}>{c.name}</p>
-                  <p style={{ color: '#9A8A7A', fontSize: 12 }}>{c.status}</p>
+                  <p style={{ color: 'var(--admin-text-muted)', fontSize: 12 }}>{c.status}</p>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 16, fontSize: 13, color: '#9A8A7A' }}>
+              <div style={{ display: 'flex', gap: 16, fontSize: 13, color: 'var(--admin-text-muted)' }}>
                 <span>{c.contentCount || 0} videos</span>
                 <span>{c.subscriberCount || 0} subs</span>
               </div>
@@ -81,7 +81,7 @@ export default function CreatorsPage() {
                     fontSize: 11,
                     fontWeight: 600,
                     backgroundColor: c.isVerified ? 'rgba(13,59,46,0.2)' : 'rgba(245,158,11,0.2)',
-                    color: c.isVerified ? '#0D3B2E' : '#F59E0B',
+                    color: c.isVerified ? 'var(--admin-green)' : 'var(--admin-amber)',
                   }}
                 >
                   {c.isVerified ? 'Verified' : 'Pending'}
@@ -91,9 +91,9 @@ export default function CreatorsPage() {
                   style={{
                     padding: '4px 10px',
                     borderRadius: 6,
-                    border: '1px solid #2A1A1A',
+                    border: '1px solid var(--admin-surface)',
                     background: 'transparent',
-                    color: c.isVerified ? '#F87171' : '#4ADE80',
+                    color: c.isVerified ? 'var(--admin-red)' : 'var(--admin-emerald)',
                     fontSize: 11,
                     cursor: 'pointer',
                   }}
@@ -104,7 +104,7 @@ export default function CreatorsPage() {
             </div>
           ))}
           {creators.length === 0 && (
-            <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A', gridColumn: '1/-1' }}>
+            <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)', gridColumn: '1/-1' }}>
               No creators found
             </p>
           )}

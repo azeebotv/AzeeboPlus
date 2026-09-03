@@ -104,7 +104,7 @@ export default function ContentPage() {
 
   const toggleAll = () => {
     setSelected((prev) =>
-      prev.size === items.length ? new Set() : new Set(items.map((i) => i.id)),
+      prev.size === items.length ? new Set() : new Set(items.map((i) => i.id))
     );
   };
 
@@ -114,7 +114,7 @@ export default function ContentPage() {
   return (
     <div>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Content Management</h1>
-      <p style={{ color: '#9A8A7A', marginBottom: 24 }}>{total} items</p>
+      <p style={{ color: 'var(--admin-text-muted)', marginBottom: 24 }}>{total} items</p>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
         {(['content', 'categories', 'tags'] as const).map((t) => (
@@ -124,10 +124,10 @@ export default function ContentPage() {
             style={{
               padding: '8px 16px',
               borderRadius: 999,
-              border: tab === t ? 'none' : '1px solid #2A1A1A',
+              border: tab === t ? 'none' : '1px solid var(--admin-surface)',
               background:
                 tab === t ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)' : 'transparent',
-              color: tab === t ? '#fff' : '#9A8A7A',
+              color: tab === t ? 'white' : 'var(--admin-text-muted)',
               fontWeight: 500,
               fontSize: 13,
               cursor: 'pointer',
@@ -152,9 +152,9 @@ export default function ContentPage() {
                 minWidth: 200,
                 padding: '10px 16px',
                 borderRadius: 12,
-                border: '1px solid #2A1A1A',
-                backgroundColor: '#0D0505',
-                color: '#F5F0EB',
+                border: '1px solid var(--admin-surface)',
+                backgroundColor: 'var(--admin-dark)',
+                color: 'var(--admin-text)',
                 fontSize: 14,
               }}
             />
@@ -169,12 +169,12 @@ export default function ContentPage() {
                   style={{
                     padding: '8px 16px',
                     borderRadius: 999,
-                    border: statusFilter === s ? 'none' : '1px solid #2A1A1A',
+                    border: statusFilter === s ? 'none' : '1px solid var(--admin-surface)',
                     background:
                       statusFilter === s
                         ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)'
                         : 'transparent',
-                    color: statusFilter === s ? '#fff' : '#9A8A7A',
+                    color: statusFilter === s ? 'white' : 'var(--admin-text-muted)',
                     fontWeight: 500,
                     fontSize: 13,
                     cursor: 'pointer',
@@ -188,12 +188,12 @@ export default function ContentPage() {
           </div>
 
           {isLoading ? (
-            <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>Loading...</p>
+            <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
           ) : (
             <div
               style={{
                 borderRadius: 16,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--admin-surface)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
                 overflow: 'hidden',
               }}
@@ -201,7 +201,7 @@ export default function ContentPage() {
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                   <thead>
-                    <tr style={{ borderBottom: '1px solid #2A1A1A' }}>
+                    <tr style={{ borderBottom: '1px solid var(--admin-surface)' }}>
                       {bulkEnabled && (
                         <th style={{ padding: '12px 16px', width: 40 }}>
                           <input
@@ -218,7 +218,7 @@ export default function ContentPage() {
                           style={{
                             padding: '12px 16px',
                             textAlign: 'left',
-                            color: '#9A8A7A',
+                            color: 'var(--admin-text-muted)',
                             fontWeight: 600,
                             fontSize: 12,
                             textTransform: 'uppercase',
@@ -231,7 +231,7 @@ export default function ContentPage() {
                   </thead>
                   <tbody>
                     {items.map((item) => (
-                      <tr key={item.id} style={{ borderBottom: '1px solid #1A0A0A' }}>
+                      <tr key={item.id} style={{ borderBottom: '1px solid var(--admin-bg)' }}>
                         {bulkEnabled && (
                           <td style={{ padding: '12px 16px' }}>
                             <input
@@ -254,10 +254,10 @@ export default function ContentPage() {
                         >
                           {item.title}
                         </td>
-                        <td style={{ padding: '12px 16px', color: '#9A8A7A', fontSize: 13 }}>
+                        <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)', fontSize: 13 }}>
                           {item.creator?.name || '-'}
                         </td>
-                        <td style={{ padding: '12px 16px', color: '#9A8A7A', fontSize: 13 }}>
+                        <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)', fontSize: 13 }}>
                           {item.universe?.name || '-'}
                         </td>
                         <td style={{ padding: '12px 16px' }}>
@@ -275,17 +275,17 @@ export default function ContentPage() {
                                     : 'rgba(154,138,122,0.2)',
                               color:
                                 item.status === 'published'
-                                  ? '#0D3B2E'
+                                  ? 'var(--admin-green)'
                                   : item.status === 'draft'
-                                    ? '#F59E0B'
-                                    : '#9A8A7A',
+                                    ? 'var(--admin-amber)'
+                                    : 'var(--admin-text-muted)',
                               textTransform: 'capitalize',
                             }}
                           >
                             {item.status}
                           </span>
                         </td>
-                        <td style={{ padding: '12px 16px', color: '#9A8A7A', fontSize: 13 }}>
+                        <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)', fontSize: 13 }}>
                           {(item.views || 0).toLocaleString()}
                         </td>
                         <td style={{ padding: '12px 16px' }}>
@@ -298,9 +298,9 @@ export default function ContentPage() {
                               style={{
                                 padding: '4px 10px',
                                 borderRadius: 6,
-                                border: '1px solid #2A1A1A',
+                                border: '1px solid var(--admin-surface)',
                                 background: 'transparent',
-                                color: '#9A8A7A',
+                                color: 'var(--admin-text-muted)',
                                 fontSize: 12,
                                 cursor: 'pointer',
                               }}
@@ -315,7 +315,7 @@ export default function ContentPage() {
                                   borderRadius: 6,
                                   border: 'none',
                                   background: 'linear-gradient(135deg, #0D3B2E 0%, #1A5E45 100%)',
-                                  color: '#fff',
+                                  color: 'white',
                                   fontSize: 12,
                                   cursor: 'pointer',
                                 }}
@@ -332,7 +332,7 @@ export default function ContentPage() {
                                 borderRadius: 6,
                                 border: '1px solid #CC1C1C',
                                 background: 'transparent',
-                                color: '#CC1C1C',
+                                color: 'var(--admin-red)',
                                 fontSize: 12,
                                 cursor: 'pointer',
                               }}
@@ -347,7 +347,7 @@ export default function ContentPage() {
                 </table>
               </div>
               {items.length === 0 && (
-                <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A' }}>
+                <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>
                   No content found
                 </p>
               )}
@@ -359,13 +359,11 @@ export default function ContentPage() {
                     justifyContent: 'space-between',
                     gap: 12,
                     padding: '12px 16px',
-                    borderTop: '1px solid #2A1A1A',
+                    borderTop: '1px solid var(--admin-surface)',
                     backgroundColor: 'rgba(13,5,5,0.6)',
                   }}
                 >
-                  <span style={{ color: '#9A8A7A', fontSize: 13 }}>
-                    {selected.size} selected
-                  </span>
+                  <span style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>{selected.size} selected</span>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button
                       onClick={() =>
@@ -380,7 +378,7 @@ export default function ContentPage() {
                         borderRadius: 8,
                         border: 'none',
                         background: 'linear-gradient(135deg, #0D3B2E 0%, #1A5E45 100%)',
-                        color: '#fff',
+                        color: 'white',
                         fontSize: 12,
                         fontWeight: 600,
                         cursor: 'pointer',
@@ -399,9 +397,9 @@ export default function ContentPage() {
                       style={{
                         padding: '6px 14px',
                         borderRadius: 8,
-                        border: '1px solid #2A1A1A',
+                        border: '1px solid var(--admin-surface)',
                         background: 'transparent',
-                        color: '#9A8A7A',
+                        color: 'var(--admin-text-muted)',
                         fontSize: 12,
                         fontWeight: 600,
                         cursor: 'pointer',
@@ -420,7 +418,7 @@ export default function ContentPage() {
                         borderRadius: 8,
                         border: '1px solid #CC1C1C',
                         background: 'transparent',
-                        color: '#CC1C1C',
+                        color: 'var(--admin-red)',
                         fontSize: 12,
                         fontWeight: 600,
                         cursor: 'pointer',
@@ -438,15 +436,15 @@ export default function ContentPage() {
                   style={{
                     padding: '8px 16px',
                     borderRadius: 8,
-                    border: '1px solid #2A1A1A',
+                    border: '1px solid var(--admin-surface)',
                     background: 'transparent',
-                    color: page === 1 ? '#4A3A3A' : '#E8420A',
+                    color: page === 1 ? 'var(--admin-text-muted)' : 'var(--admin-orange)',
                     cursor: page === 1 ? 'not-allowed' : 'pointer',
                   }}
                 >
                   Prev
                 </button>
-                <span style={{ padding: '8px 16px', color: '#9A8A7A', fontSize: 13 }}>
+                <span style={{ padding: '8px 16px', color: 'var(--admin-text-muted)', fontSize: 13 }}>
                   Page {page} of {Math.ceil(total / 20) || 1}
                 </span>
                 <button
@@ -455,9 +453,9 @@ export default function ContentPage() {
                   style={{
                     padding: '8px 16px',
                     borderRadius: 8,
-                    border: '1px solid #2A1A1A',
+                    border: '1px solid var(--admin-surface)',
                     background: 'transparent',
-                    color: page >= Math.ceil(total / 20) ? '#4A3A3A' : '#E8420A',
+                    color: page >= Math.ceil(total / 20) ? 'var(--admin-text-muted)' : 'var(--admin-orange)',
                     cursor: page >= Math.ceil(total / 20) ? 'not-allowed' : 'pointer',
                   }}
                 >
@@ -480,7 +478,7 @@ export default function ContentPage() {
                 alignItems: 'center',
                 padding: '12px 16px',
                 borderRadius: 12,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--admin-surface)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
               }}
             >
@@ -488,7 +486,7 @@ export default function ContentPage() {
             </div>
           ))}
           {categories.length === 0 && (
-            <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A' }}>No categories</p>
+            <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>No categories</p>
           )}
         </div>
       )}
@@ -501,9 +499,9 @@ export default function ContentPage() {
               style={{
                 padding: '6px 14px',
                 borderRadius: 999,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--admin-surface)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
-                color: '#F5F0EB',
+                color: 'var(--admin-text)',
                 fontSize: 13,
               }}
             >
@@ -511,7 +509,7 @@ export default function ContentPage() {
             </span>
           ))}
           {tags.length === 0 && (
-            <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A', width: '100%' }}>
+            <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)', width: '100%' }}>
               No tags
             </p>
           )}
@@ -538,8 +536,8 @@ export default function ContentPage() {
             style={{
               width: 500,
               maxWidth: '90%',
-              backgroundColor: '#1A0A0A',
-              border: '1px solid #2A1A1A',
+              backgroundColor: 'var(--admin-bg)',
+              border: '1px solid var(--admin-surface)',
               borderRadius: 16,
               padding: 24,
             }}
@@ -554,9 +552,9 @@ export default function ContentPage() {
                 style={{
                   padding: '10px 16px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
-                  backgroundColor: '#0D0505',
-                  color: '#F5F0EB',
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
                   fontSize: 14,
                 }}
               />
@@ -568,9 +566,9 @@ export default function ContentPage() {
                 style={{
                   padding: '10px 16px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
-                  backgroundColor: '#0D0505',
-                  color: '#F5F0EB',
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
                   fontSize: 14,
                   resize: 'vertical',
                 }}
@@ -584,7 +582,7 @@ export default function ContentPage() {
                     borderRadius: 8,
                     border: 'none',
                     background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                    color: '#fff',
+                    color: 'white',
                     fontWeight: 600,
                     cursor: 'pointer',
                   }}
@@ -596,9 +594,9 @@ export default function ContentPage() {
                   style={{
                     padding: '10px 20px',
                     borderRadius: 8,
-                    border: '1px solid #2A1A1A',
+                    border: '1px solid var(--admin-surface)',
                     background: 'transparent',
-                    color: '#9A8A7A',
+                    color: 'var(--admin-text-muted)',
                     cursor: 'pointer',
                   }}
                 >

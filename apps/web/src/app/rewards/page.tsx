@@ -1,14 +1,6 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
 
-export const metadata = {
-  title: 'Rewards Center | Azeebo',
-  description: 'Earn points, complete missions, and unlock amazing rewards on Azeebo.',
-  openGraph: {
-    title: 'Rewards Center | Azeebo',
-    description: 'Earn points, complete missions, and unlock amazing rewards on Azeebo.',
-  },
-};
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '@/lib/api';
 
@@ -17,6 +9,7 @@ import AppFooter from '@/components/layout/AppFooter';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { useToast } from '@/components/ToastProvider';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 interface Mission {
   id: string;
@@ -85,7 +78,7 @@ export default function RewardsPage(): React.JSX.Element {
           name: String(b.name || ''),
           description: String(b.description || ''),
           unlocked: true,
-          icon: String(b.icon || '🏅'),
+          icon: String(b.icon || 'Medal'),
           progress: Number(b.points || 0),
           target: Number(b.points || 1),
         }));
@@ -237,9 +230,12 @@ export default function RewardsPage(): React.JSX.Element {
               ))}
             </div>
           ) : (
-            <div className="az-glass p-12 text-center">
-              <p className="text-white/50 text-lg">No rewards available yet</p>
-            </div>
+            <EmptyState
+              icon="gift"
+              title="No rewards available yet"
+              description="Complete missions to earn rewards"
+              dark
+            />
           )}
         </section>
 
@@ -288,7 +284,7 @@ export default function RewardsPage(): React.JSX.Element {
                       className="text-xs font-medium"
                       style={{ color: 'var(--color-success-500)' }}
                     >
-                      ✓ Unlocked
+                      CheckUnlocked
                     </span>
                   )}
                 </div>

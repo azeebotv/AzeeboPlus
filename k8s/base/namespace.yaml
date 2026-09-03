@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: azeebo
+  labels:
+    app.kubernetes.io/part-of: azeebo
+    app.kubernetes.io/managed-by: kubectl
+  annotations:
+    description: "Azeebo+ Entertainment Platform — All Services"

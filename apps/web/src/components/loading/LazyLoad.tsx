@@ -1,9 +1,11 @@
 'use client';
 import React, { Suspense, lazy, ComponentType } from 'react';
+
 interface LazyLoadProps {
   fallback?: React.ReactNode;
   children: React.ReactNode;
 }
+
 export function LazyLoad({ fallback, children }: LazyLoadProps) {
   const defaultFallback = (
     <div className="flex items-center justify-center min-h-[200px]">
@@ -12,8 +14,8 @@ export function LazyLoad({ fallback, children }: LazyLoadProps) {
   );
   return <Suspense fallback={fallback || defaultFallback}>{children}</Suspense>;
 }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function lazyLoad<T extends ComponentType<any>>(
+
+export function lazyLoad<T extends ComponentType<Record<string, unknown>>>(
   factory: () => Promise<{ default: T }>,
   fallback?: React.ReactNode
 ) {

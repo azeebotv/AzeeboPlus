@@ -8,6 +8,7 @@ import AppFooter from '@/components/layout/AppFooter';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { EmptyState } from '@/components/ui/EmptyState';
 import type { ContentItem as BaseContentItem } from '@/lib/api';
 
 interface ContentItem extends BaseContentItem {
@@ -90,13 +91,13 @@ export default function ContentManagerPage(): React.JSX.Element {
   const getTypeIcon = (type: string): string => {
     switch (type) {
       case 'video':
-        return '🎥';
+        return 'Video';
       case 'image':
-        return '📷';
+        return 'Camera';
       case 'audio':
-        return '🎵';
+        return 'Music';
       default:
-        return '📄';
+        return 'FileText';
     }
   };
 
@@ -175,7 +176,7 @@ export default function ContentManagerPage(): React.JSX.Element {
             <h1 className="text-3xl font-bold text-white">Content Manager</h1>
           </div>
           <button
-            onClick={() => router.push('/creator/drafts')}
+            onClick={() => router.push('/creators/upload')}
             className="az-btn-primary"
             style={{ width: 'auto', paddingInline: '1.5rem' }}
           >
@@ -211,7 +212,7 @@ export default function ContentManagerPage(): React.JSX.Element {
               className={`px-3 py-1 rounded text-sm transition-colors ${viewMode === 'list' ? 'text-white' : 'text-white/50'}`}
               style={viewMode === 'list' ? { backgroundColor: 'rgba(255,255,255,0.1)' } : undefined}
             >
-              ☰
+              Menu
             </button>
             <button
               onClick={() => setViewMode('grid')}
@@ -224,24 +225,19 @@ export default function ContentManagerPage(): React.JSX.Element {
         </div>
 
         {filteredContent.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="text-6xl mb-4">📝</div>
-            <h2 className="text-2xl font-bold text-white mb-2">No content yet</h2>
-            <p className="text-white/50 mb-6">Start creating amazing content for your audience</p>
-            <button
-              onClick={() => router.push('/creator/drafts')}
-              className="az-btn-primary"
-              style={{ width: 'auto', paddingInline: '1.5rem' }}
-            >
-              Create Content
-            </button>
-          </div>
+          <EmptyState
+            icon="film"
+            title="No content yet"
+            description="Start creating amazing content for your audience"
+            action={{ label: 'Create Content', onClick: () => router.push('/creators/upload') }}
+            dark
+          />
         ) : viewMode === 'grid' ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredContent.map((item: ContentItem) => (
               <div
                 key={item.id}
-                onClick={() => router.push('/creator/content-manager')}
+                onClick={() => router.push('/creators/dashboard')}
                 className="az-glass overflow-hidden cursor-pointer transition-all hover:scale-[1.02]"
               >
                 <div className="relative">
@@ -313,7 +309,7 @@ export default function ContentManagerPage(): React.JSX.Element {
                         </button>
                       )}
                       <button
-                        onClick={() => router.push('/creator/content-manager')}
+                        onClick={() => router.push('/creators/dashboard')}
                         className="px-4 py-2 rounded-full text-sm font-medium transition-colors"
                         style={{
                           border: '1px solid rgba(255,255,255,0.2)',
@@ -342,7 +338,7 @@ export default function ContentManagerPage(): React.JSX.Element {
                           color: 'var(--color-error-500)',
                         }}
                       >
-                        🗑
+                        Trash2
                       </button>
                     </div>
                   </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, type ReactNode } from 'react';
+import { webLogger } from '@/lib/logger';
 
 /**
  * RBAC with Least-Privilege Per Role (TAA §50)
@@ -267,7 +268,6 @@ export async function logAdminAction(
     });
   } catch {
     // Audit logging should never block the operation
-    // eslint-disable-next-line no-console
-    console.error('Failed to log audit entry');
+    webLogger.error('[RbacGuard] Failed to log audit entry');
   }
 }

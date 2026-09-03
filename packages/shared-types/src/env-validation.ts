@@ -83,6 +83,8 @@ export const environmentSchema = z.object({
 
   // Security
   ADMIN_EMAIL: z.string().email().optional(),
+  GATEWAY_SECRET: z.string().min(32, 'GATEWAY_SECRET must be at least 32 characters'),
+  INTERNAL_API_KEY: z.string().min(32, 'INTERNAL_API_KEY must be at least 32 characters'),
 
   // All-in-one mode (disables localhost restrictions for single-container deployments)
   ALL_IN_ONE: z.string().optional(),

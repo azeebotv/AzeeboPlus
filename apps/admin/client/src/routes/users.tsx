@@ -57,7 +57,7 @@ export default function UsersPage() {
       >
         <div>
           <h1 style={{ fontSize: 28, fontWeight: 700 }}>Users</h1>
-          <p style={{ color: '#9A8A7A', marginTop: 4 }}>{users.length} total users</p>
+          <p style={{ color: 'var(--admin-text-muted)', marginTop: 4 }}>{users.length} total users</p>
         </div>
       </div>
 
@@ -72,9 +72,9 @@ export default function UsersPage() {
             minWidth: 200,
             padding: '10px 16px',
             borderRadius: 12,
-            border: '1px solid #2A1A1A',
-            backgroundColor: '#0D0505',
-            color: '#F5F0EB',
+            border: '1px solid var(--admin-surface)',
+            backgroundColor: 'var(--admin-dark)',
+            color: 'var(--admin-text)',
             fontSize: 14,
           }}
         />
@@ -86,12 +86,12 @@ export default function UsersPage() {
               style={{
                 padding: '8px 16px',
                 borderRadius: 999,
-                border: roleFilter === role ? 'none' : '1px solid #2A1A1A',
+                border: roleFilter === role ? 'none' : '1px solid var(--admin-surface)',
                 background:
                   roleFilter === role
                     ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)'
                     : 'transparent',
-                color: roleFilter === role ? '#fff' : '#9A8A7A',
+                color: roleFilter === role ? 'white' : 'var(--admin-text-muted)',
                 fontWeight: 500,
                 fontSize: 13,
                 cursor: 'pointer',
@@ -105,7 +105,7 @@ export default function UsersPage() {
       </div>
 
       {isLoading ? (
-        <div style={{ padding: 40, textAlign: 'center', color: '#9A8A7A' }}>Loading...</div>
+        <div style={{ padding: 40, textAlign: 'center', color: 'var(--admin-text-muted)' }}>Loading...</div>
       ) : error ? (
         <div
           style={{
@@ -115,13 +115,13 @@ export default function UsersPage() {
             backgroundColor: 'rgba(204,28,28,0.1)',
           }}
         >
-          <p style={{ color: '#CC1C1C', fontWeight: 600 }}>Failed to load users</p>
+          <p style={{ color: 'var(--admin-red)', fontWeight: 600 }}>Failed to load users</p>
         </div>
       ) : (
         <div
           style={{
             borderRadius: 16,
-            border: '1px solid #2A1A1A',
+            border: '1px solid var(--admin-surface)',
             backgroundColor: 'rgba(26,10,10,0.5)',
             overflow: 'hidden',
           }}
@@ -129,14 +129,14 @@ export default function UsersPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid #2A1A1A' }}>
+                <tr style={{ borderBottom: '1px solid var(--admin-surface)' }}>
                   {['User', 'Role', 'Joined', 'Status', 'Actions'].map((h) => (
                     <th
                       key={h}
                       style={{
                         padding: '12px 16px',
                         textAlign: 'left',
-                        color: '#9A8A7A',
+                        color: 'var(--admin-text-muted)',
                         fontWeight: 600,
                         fontSize: 12,
                         textTransform: 'uppercase',
@@ -149,10 +149,10 @@ export default function UsersPage() {
               </thead>
               <tbody>
                 {filtered.map((u) => (
-                  <tr key={u.id} style={{ borderBottom: '1px solid #1A0A0A' }}>
+                  <tr key={u.id} style={{ borderBottom: '1px solid var(--admin-bg)' }}>
                     <td style={{ padding: '12px 16px' }}>
                       <p style={{ fontWeight: 600 }}>{u.username}</p>
-                      <p style={{ color: '#9A8A7A', fontSize: 12 }}>{u.email}</p>
+                      <p style={{ color: 'var(--admin-text-muted)', fontSize: 12 }}>{u.email}</p>
                     </td>
                     <td style={{ padding: '12px 16px' }}>
                       <span
@@ -170,16 +170,16 @@ export default function UsersPage() {
                                 : 'rgba(154,138,122,0.2)',
                           color:
                             u.role === 'admin'
-                              ? '#E8420A'
+                              ? 'var(--admin-orange)'
                               : u.role === 'creator'
-                                ? '#0D3B2E'
-                                : '#9A8A7A',
+                                ? 'var(--admin-green)'
+                                : 'var(--admin-text-muted)',
                         }}
                       >
                         {u.role}
                       </span>
                     </td>
-                    <td style={{ padding: '12px 16px', color: '#9A8A7A', fontSize: 13 }}>
+                    <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)', fontSize: 13 }}>
                       {new Date(u.createdAt).toLocaleDateString()}
                     </td>
                     <td style={{ padding: '12px 16px' }}>
@@ -189,11 +189,11 @@ export default function UsersPage() {
                           height: 8,
                           borderRadius: '50%',
                           display: 'inline-block',
-                          backgroundColor: u.isActive ? '#0D3B2E' : '#CC1C1C',
+                          backgroundColor: u.isActive ? 'var(--admin-green)' : 'var(--admin-red)',
                           marginRight: 6,
                         }}
                       />
-                      <span style={{ fontSize: 13, color: '#9A8A7A' }}>
+                      <span style={{ fontSize: 13, color: 'var(--admin-text-muted)' }}>
                         {u.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
@@ -203,9 +203,9 @@ export default function UsersPage() {
                         style={{
                           padding: '6px 14px',
                           borderRadius: 999,
-                          border: '1px solid #2A1A1A',
+                          border: '1px solid var(--admin-surface)',
                           background: 'transparent',
-                          color: '#9A8A7A',
+                          color: 'var(--admin-text-muted)',
                           fontSize: 12,
                           cursor: 'pointer',
                         }}
@@ -219,7 +219,7 @@ export default function UsersPage() {
             </table>
           </div>
           {filtered.length === 0 && (
-            <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A' }}>No users found</p>
+            <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>No users found</p>
           )}
         </div>
       )}

@@ -1,4 +1,5 @@
 'use client';
+'use client';
 
 import { useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
@@ -10,6 +11,7 @@ import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
 import { OptimizedImage } from '../../components/OptimizedImage';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 interface ContentResponse {
   items?: ContentItem[];
@@ -299,7 +301,7 @@ export default function BrowsePage(): React.JSX.Element {
                     step="0.5"
                     value={minRating}
                     onChange={(e) => setMinRating(parseFloat(e.target.value))}
-                    className="w-full accent-[#E8420A]"
+                    className="w-full accent-[var(--brand-orange)]"
                   />
                 </div>
                 <div>
@@ -314,7 +316,7 @@ export default function BrowsePage(): React.JSX.Element {
                     step="5"
                     value={maxDuration}
                     onChange={(e) => setMaxDuration(parseInt(e.target.value))}
-                    className="w-full accent-[#E8420A]"
+                    className="w-full accent-[var(--brand-orange)]"
                   />
                 </div>
                 <div>
@@ -532,7 +534,7 @@ export default function BrowsePage(): React.JSX.Element {
                     role="article"
                     tabIndex={0}
                     onKeyDown={(e) => handleContentKeyDown(e, index)}
-                    className="az-glass overflow-hidden group cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E8420A]"
+                    className="az-glass overflow-hidden group cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--brand-orange)]"
                   >
                     <div className="relative h-48 flex items-center justify-center overflow-hidden">
                       {item.thumbnail ? (
@@ -559,7 +561,7 @@ export default function BrowsePage(): React.JSX.Element {
                       <p className="text-[11px] font-bold uppercase tracking-wider text-white/50 mb-1">
                         {item.universe?.name}
                       </p>
-                      <h4 className="font-bold text-white text-sm mb-1 group-hover:text-[#E8420A] transition-colors line-clamp-1">
+                      <h4 className="font-bold text-white text-sm mb-1 group-hover:text-[var(--brand-orange)] transition-colors line-clamp-1">
                         {item.title}
                       </h4>
                       <p className="text-white/45 text-xs line-clamp-2 mb-3">{item.description}</p>
@@ -580,13 +582,13 @@ export default function BrowsePage(): React.JSX.Element {
                 ))}
               </div>
             ) : (
-              <div className="az-glass p-12 text-center">
-                <span className="text-5xl mb-4 block">&#x1F50D;</span>
-                <h3 className="text-lg font-bold text-white mb-2">No content found</h3>
-                <p className="text-white/50 text-sm">
-                  Try selecting a different category or universe
-                </p>
-              </div>
+              <EmptyState
+                icon="Search"
+                title="No content found"
+                description="Try selecting a different category or universe"
+                dark
+                className="az-glass p-12"
+              />
             )}
           </motion.div>
         </div>

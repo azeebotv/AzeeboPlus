@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Predictions  - Azeebo+',
+  description: 'Predictions  on Azeebo+',
+};
+
 'use client';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';

@@ -78,9 +78,7 @@ export default function RealityUniverseHome() {
 
   useEffect(() => {
     if (liveShows.length > 0 && liveShows[0].id) {
-      try {
-        analytics.realityShowViewed(liveShows[0].id);
-      } catch {}
+              analytics.realityShowViewed(liveShows[0].id);
     }
   }, [liveShows]);
 

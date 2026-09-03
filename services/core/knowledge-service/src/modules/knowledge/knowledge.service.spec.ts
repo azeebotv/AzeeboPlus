@@ -92,8 +92,8 @@ describe('KnowledgeService', () => {
       const event = {
         id: 'event-1',
         title: 'Test Event',
-        knowledgeUnits: [],
-        contentCheckpoints: [],
+        knowledgeUnits: [] as Array<{ id: string; title: string }>,
+        contentCheckpoints: [] as Array<{ id: string; title: string }>,
       };
       mockPrisma.canonicalEvent.findUnique.mockResolvedValue(event);
 

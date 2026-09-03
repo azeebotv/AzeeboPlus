@@ -30,6 +30,12 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
   private lastCleanupTime = 0;
   private redisClient: Redis | null = null;
   private readonly useRedis: boolean;
+  /**
+   * When true, requests are rejected when Redis is down (fail-closed).
+   * Defaults to false (fail-open) for backward compatibility.
+   * Set RATE_LIMIT_FAIL_CLOSED=true in production for auth endpoints.
+   */
+  private readonly failClosed: boolean;
 
   private static readonly AUTH_PATH_PATTERNS = [
     /\/auth\/(login|signup|register)/,
@@ -46,6 +52,7 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
     private readonly featureFlagService: FeatureFlagService
   ) {
     super(options, storageService, reflector);
+    this.failClosed = process.env.RATE_LIMIT_FAIL_CLOSED === 'true';
     if (process.env.REDIS_URL) {
       try {
         const Redis = require('ioredis');
@@ -56,13 +63,17 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
         });
         this.redisClient!.on('error', (err: Error) => {
           this.logger.error(
-            `[CRITICAL] Redis throttler connection lost — falling back to in-memory rate limiting. Rate limits are NOT enforced across instances! Error: ${err.message}`
+            `[CRITICAL] Redis throttler connection lost — falling back to in-memory rate limiting. Rate limits are NOT enforced across instances!` +
+            (this.failClosed ? ' FAIL_CLOSED is enabled: auth requests will be rejected.' : '') +
+            ` Error: ${err.message}`
           );
           this.redisClient = null;
         });
         this.redisClient!.connect().catch((err) => {
           this.logger.error(
-            `[CRITICAL] Redis throttler connect failed — falling back to in-memory rate limiting. Rate limits are NOT enforced across instances! Error: ${(err as Error).message}`
+            `[CRITICAL] Redis throttler connect failed — falling back to in-memory rate limiting. Rate limits are NOT enforced across instances!` +
+            (this.failClosed ? ' FAIL_CLOSED is enabled: auth requests will be rejected.' : '') +
+            ` Error: ${(err as Error).message}`
           );
           this.redisClient = null;
         });
@@ -102,17 +113,26 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
       return super.canActivate(context);
     }
 
+    // Fail-closed: reject auth requests when Redis is unavailable
+    if (this.failClosed && (!this.useRedis || !this.redisClient)) {
+      this.logger.error(
+        `[CRITICAL] Auth request rejected — Redis unavailable and RATE_LIMIT_FAIL_CLOSED=true. IP: ${request.ip || request.socket?.remoteAddress || 'unknown'}`
+      );
+      throw new ThrottlerException(
+        'Service temporarily unavailable. Please try again later.'
+      );
+    }
+
     const authLimit = await this.getEffectiveAuthLimit();
     const clientIp = request.ip || request.socket?.remoteAddress || 'unknown';
-    const window = Math.floor(Date.now() / (this.AUTH_TTL * 1000));
-
-    // Per-IP + endpoint rate limit
+    const window = Math.floor(Date.now() / (this.AUTH_TTL * 1000));    // Per-IP + endpoint rate limit
     const endpoint = path.replace(/^\/+|\/+$/g, '').replace(/\//g, ':');
     const ipKey = `${this.KEY_PREFIX}${clientIp}:${endpoint}:${window}`;
+    let remaining = authLimit;
     if (this.useRedis && this.redisClient) {
-      await this.checkWithRedis(ipKey, clientIp, authLimit);
+      remaining = await this.checkWithRedis(ipKey, clientIp, authLimit);
     } else {
-      this.checkInMemory(`${clientIp}:${endpoint}`, window, authLimit);
+      remaining = this.checkInMemory(`${clientIp}:${endpoint}`, window, authLimit);
     }
 
     // Per-account + endpoint rate limit (extract email/phone from body if available)
@@ -120,10 +140,21 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
     if (account_id) {
       const accountKey = `${this.KEY_PREFIX}acct:${account_id}:${endpoint}:${window}`;
       if (this.useRedis && this.redisClient) {
-        await this.checkWithRedis(accountKey, `account:${account_id}`, authLimit);
+        const acctRemaining = await this.checkWithRedis(accountKey, `account:${account_id}`, authLimit);
+        remaining = Math.min(remaining, acctRemaining);
       } else {
-        this.checkInMemory(`acct:${account_id}:${endpoint}`, window, authLimit);
+        const acctRemaining = this.checkInMemory(`acct:${account_id}:${endpoint}`, window, authLimit);
+        remaining = Math.min(remaining, acctRemaining);
       }
+    }
+
+    // Set rate-limit response headers
+    const response = context.switchToHttp().getResponse();
+    if (response && typeof response.setHeader === 'function') {
+      response.setHeader('X-RateLimit-Limit', String(authLimit));
+      response.setHeader('X-RateLimit-Remaining', String(Math.max(0, remaining)));
+      response.setHeader('X-RateLimit-Reset', String(window * this.AUTH_TTL));
+      response.setHeader('X-RateLimit-Policy', `${authLimit};w=${this.AUTH_TTL}`);
     }
 
     return true;
@@ -133,7 +164,7 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
     key: string,
     clientIp: string,
     limit: number = this.AUTH_LIMIT
-  ): Promise<boolean> {
+  ): Promise<number> {
     try {
       const count = await this.redisClient!.incr(key);
       if (count === 1) {
@@ -145,7 +176,7 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
         throw new ThrottlerException('Too many authentication attempts. Please try again later.');
       }
 
-      return true;
+      return Math.max(0, limit - count);
     } catch (error) {
       if (error instanceof ThrottlerException) throw error;
       this.logger.warn(
@@ -160,7 +191,7 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
     clientIp: string,
     window: number,
     limit: number = this.AUTH_LIMIT
-  ): boolean {
+  ): number {
     const now = Date.now();
     const key = `${this.KEY_PREFIX}${clientIp}:${window}`;
     const entry = this.inMemoryRequests.get(key);
@@ -184,6 +215,6 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
       keysToDelete.forEach((k) => this.inMemoryRequests.delete(k));
     }
 
-    return true;
+    return Math.max(0, limit - (entry?.count || 0));
   }
 }

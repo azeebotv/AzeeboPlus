@@ -49,9 +49,7 @@ export default function StoryworldScreen() {
     try {
       const res = await apiClient.get<StoryworldDetail>(`/v1/vertical/storyworlds/${id}`);
       setData(res);
-      try {
-        analytics.verticalTitleViewed(res.id);
-      } catch {}
+              analytics.verticalTitleViewed(res.id);
     } catch {
       setError('Failed to load storyworld');
     } finally {
@@ -71,9 +69,7 @@ export default function StoryworldScreen() {
         title: theoryTitle.trim(),
         description: theoryDesc.trim(),
       });
-      try {
-        analytics.verticalTheorySubmitted(id);
-      } catch {}
+              analytics.verticalTheorySubmitted(id);
       setTheoryTitle('');
       setTheoryDesc('');
       fetchData();

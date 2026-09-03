@@ -4,17 +4,17 @@ import { adminApi } from '@/lib/api/admin';
 import type { SubscriptionPlan, SubscriptionStats } from '@/lib/admin-types';
 
 const TIER_COLORS: Record<string, string> = {
-  free: '#9A8A7A',
-  basic: '#E8420A',
-  standard: '#F59E0B',
-  premium: '#CC1C1C',
-  enterprise: '#0D3B2E',
+  free: 'var(--admin-text-muted)',
+  basic: 'var(--admin-orange)',
+  standard: 'var(--admin-amber)',
+  premium: 'var(--admin-red)',
+  enterprise: 'var(--admin-green)',
 };
 
 const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
-  active: { bg: 'rgba(13,59,46,0.3)', color: '#34D399' },
-  inactive: { bg: 'rgba(154,138,122,0.15)', color: '#9A8A7A' },
-  archived: { bg: 'rgba(204,28,28,0.15)', color: '#CC1C1C' },
+  active: { bg: 'rgba(13,59,46,0.3)', color: 'var(--admin-emerald)' },
+  inactive: { bg: 'rgba(154,138,122,0.15)', color: 'var(--admin-text-muted)' },
+  archived: { bg: 'rgba(204,28,28,0.15)', color: 'var(--admin-red)' },
 };
 
 function formatCurrency(amount: number, currency = 'USD') {
@@ -183,21 +183,21 @@ export default function SubscriptionsPage() {
         {
           label: 'Active Subscriptions',
           value: stats.totalActiveSubscriptions.toLocaleString(),
-          color: '#E8420A',
+          color: 'var(--admin-orange)',
         },
         {
           label: 'Monthly Revenue',
           value: formatCurrency(stats.monthlyRecurringRevenue),
-          color: '#0D3B2E',
+          color: 'var(--admin-green)',
         },
-        { label: 'Total Revenue', value: formatCurrency(stats.totalRevenue), color: '#F59E0B' },
-        { label: 'Churn Rate', value: `${stats.churnRate.toFixed(1)}%`, color: '#CC1C1C' },
+        { label: 'Total Revenue', value: formatCurrency(stats.totalRevenue), color: 'var(--admin-amber)' },
+        { label: 'Churn Rate', value: `${stats.churnRate.toFixed(1)}%`, color: 'var(--admin-red)' },
         {
           label: 'Avg Revenue / User',
           value: formatCurrency(stats.averageRevenuePerUser),
-          color: '#9A8A7A',
+          color: 'var(--admin-text-muted)',
         },
-        { label: 'Active Plans', value: String(stats.activePlans), color: '#E8420A' },
+        { label: 'Active Plans', value: String(stats.activePlans), color: 'var(--admin-orange)' },
       ]
     : [];
 
@@ -216,7 +216,7 @@ export default function SubscriptionsPage() {
       >
         <div>
           <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Subscriptions</h1>
-          <p style={{ color: '#9A8A7A' }}>Manage subscription plans, pricing, and tiers</p>
+          <p style={{ color: 'var(--admin-text-muted)' }}>Manage subscription plans, pricing, and tiers</p>
         </div>
         <button
           onClick={openCreate}
@@ -225,7 +225,7 @@ export default function SubscriptionsPage() {
             borderRadius: 10,
             border: 'none',
             background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-            color: '#fff',
+            color: 'white',
             fontWeight: 600,
             fontSize: 14,
             cursor: 'pointer',
@@ -237,7 +237,7 @@ export default function SubscriptionsPage() {
 
       {/* Stats Cards */}
       {statsLoading ? (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 20 }}>Loading stats...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 20 }}>Loading stats...</p>
       ) : (
         <div
           style={{
@@ -253,14 +253,14 @@ export default function SubscriptionsPage() {
               style={{
                 padding: 16,
                 borderRadius: 12,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--admin-surface)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
               }}
             >
               <p
                 style={{
                   fontSize: 11,
-                  color: '#9A8A7A',
+                  color: 'var(--admin-text-muted)',
                   marginBottom: 6,
                   textTransform: 'uppercase',
                   letterSpacing: 0.5,
@@ -285,9 +285,9 @@ export default function SubscriptionsPage() {
           style={{
             padding: '8px 12px',
             borderRadius: 8,
-            border: '1px solid #2A1A1A',
-            backgroundColor: '#0D0505',
-            color: '#F5F0EB',
+            border: '1px solid var(--admin-surface)',
+            backgroundColor: 'var(--admin-dark)',
+            color: 'var(--admin-text)',
             fontSize: 13,
           }}
         >
@@ -307,9 +307,9 @@ export default function SubscriptionsPage() {
           style={{
             padding: '8px 12px',
             borderRadius: 8,
-            border: '1px solid #2A1A1A',
-            backgroundColor: '#0D0505',
-            color: '#F5F0EB',
+            border: '1px solid var(--admin-surface)',
+            backgroundColor: 'var(--admin-dark)',
+            color: 'var(--admin-text)',
             fontSize: 13,
           }}
         >
@@ -324,7 +324,7 @@ export default function SubscriptionsPage() {
 
       {/* Plans Table */}
       {isLoading ? (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>Loading plans...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading plans...</p>
       ) : plans.length === 0 ? (
         <div
           style={{
@@ -334,7 +334,7 @@ export default function SubscriptionsPage() {
             borderRadius: 16,
           }}
         >
-          <p style={{ color: '#9A8A7A', fontSize: 14, marginBottom: 12 }}>
+          <p style={{ color: 'var(--admin-text-muted)', fontSize: 14, marginBottom: 12 }}>
             No subscription plans found
           </p>
           <button
@@ -342,9 +342,9 @@ export default function SubscriptionsPage() {
             style={{
               padding: '8px 16px',
               borderRadius: 8,
-              border: '1px solid #E8420A',
+              border: '1px solid var(--admin-orange)',
               background: 'transparent',
-              color: '#E8420A',
+              color: 'var(--admin-orange)',
               fontSize: 13,
               cursor: 'pointer',
             }}
@@ -357,12 +357,12 @@ export default function SubscriptionsPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid #2A1A1A' }}>
+                <tr style={{ borderBottom: '1px solid var(--admin-surface)' }}>
                   <th
                     style={{
                       textAlign: 'left',
                       padding: '12px 16px',
-                      color: '#9A8A7A',
+                      color: 'var(--admin-text-muted)',
                       fontWeight: 500,
                     }}
                   >
@@ -372,7 +372,7 @@ export default function SubscriptionsPage() {
                     style={{
                       textAlign: 'left',
                       padding: '12px 16px',
-                      color: '#9A8A7A',
+                      color: 'var(--admin-text-muted)',
                       fontWeight: 500,
                     }}
                   >
@@ -382,7 +382,7 @@ export default function SubscriptionsPage() {
                     style={{
                       textAlign: 'left',
                       padding: '12px 16px',
-                      color: '#9A8A7A',
+                      color: 'var(--admin-text-muted)',
                       fontWeight: 500,
                     }}
                   >
@@ -392,7 +392,7 @@ export default function SubscriptionsPage() {
                     style={{
                       textAlign: 'left',
                       padding: '12px 16px',
-                      color: '#9A8A7A',
+                      color: 'var(--admin-text-muted)',
                       fontWeight: 500,
                     }}
                   >
@@ -402,7 +402,7 @@ export default function SubscriptionsPage() {
                     style={{
                       textAlign: 'left',
                       padding: '12px 16px',
-                      color: '#9A8A7A',
+                      color: 'var(--admin-text-muted)',
                       fontWeight: 500,
                     }}
                   >
@@ -412,7 +412,7 @@ export default function SubscriptionsPage() {
                     style={{
                       textAlign: 'left',
                       padding: '12px 16px',
-                      color: '#9A8A7A',
+                      color: 'var(--admin-text-muted)',
                       fontWeight: 500,
                     }}
                   >
@@ -422,7 +422,7 @@ export default function SubscriptionsPage() {
                     style={{
                       textAlign: 'left',
                       padding: '12px 16px',
-                      color: '#9A8A7A',
+                      color: 'var(--admin-text-muted)',
                       fontWeight: 500,
                     }}
                   >
@@ -432,7 +432,7 @@ export default function SubscriptionsPage() {
                     style={{
                       textAlign: 'right',
                       padding: '12px 16px',
-                      color: '#9A8A7A',
+                      color: 'var(--admin-text-muted)',
                       fontWeight: 500,
                     }}
                   >
@@ -453,7 +453,7 @@ export default function SubscriptionsPage() {
                         {plan.description && (
                           <p
                             style={{
-                              color: '#9A8A7A',
+                              color: 'var(--admin-text-muted)',
                               fontSize: 11,
                               maxWidth: 200,
                               overflow: 'hidden',
@@ -465,10 +465,10 @@ export default function SubscriptionsPage() {
                           </p>
                         )}
                       </td>
-                      <td style={{ padding: '12px 16px', fontWeight: 600, color: '#E8420A' }}>
+                      <td style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--admin-orange)' }}>
                         {formatCurrency(plan.price, plan.currency)}
                       </td>
-                      <td style={{ padding: '12px 16px', color: '#9A8A7A' }}>
+                      <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>
                         {plan.durationDays}d
                       </td>
                       <td style={{ padding: '12px 16px' }}>
@@ -479,8 +479,8 @@ export default function SubscriptionsPage() {
                             fontSize: 11,
                             fontWeight: 600,
                             textTransform: 'uppercase',
-                            color: TIER_COLORS[plan.tier] || '#9A8A7A',
-                            backgroundColor: `${TIER_COLORS[plan.tier] || '#9A8A7A'}20`,
+                            color: TIER_COLORS[plan.tier] || 'var(--admin-text-muted)',
+                            backgroundColor: `${TIER_COLORS[plan.tier] || 'var(--admin-text-muted)'}20`,
                           }}
                         >
                           {plan.tier}
@@ -500,10 +500,10 @@ export default function SubscriptionsPage() {
                           {plan.status}
                         </span>
                       </td>
-                      <td style={{ padding: '12px 16px', color: '#9A8A7A' }}>
+                      <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>
                         {plan.subscriberCount.toLocaleString()}
                       </td>
-                      <td style={{ padding: '12px 16px', color: '#9A8A7A', fontSize: 12 }}>
+                      <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)', fontSize: 12 }}>
                         {formatDate(plan.createdAt)}
                       </td>
                       <td style={{ padding: '12px 16px', textAlign: 'right' }}>
@@ -518,9 +518,9 @@ export default function SubscriptionsPage() {
                             style={{
                               padding: '4px 10px',
                               borderRadius: 6,
-                              border: '1px solid #2A1A1A',
+                              border: '1px solid var(--admin-surface)',
                               background: 'transparent',
-                              color: '#9A8A7A',
+                              color: 'var(--admin-text-muted)',
                               fontSize: 11,
                               cursor: 'pointer',
                             }}
@@ -532,9 +532,9 @@ export default function SubscriptionsPage() {
                             style={{
                               padding: '4px 10px',
                               borderRadius: 6,
-                              border: '1px solid #2A1A1A',
+                              border: '1px solid var(--admin-surface)',
                               background: 'transparent',
-                              color: '#E8420A',
+                              color: 'var(--admin-orange)',
                               fontSize: 11,
                               cursor: 'pointer',
                             }}
@@ -549,8 +549,8 @@ export default function SubscriptionsPage() {
                                   padding: '4px 10px',
                                   borderRadius: 6,
                                   border: 'none',
-                                  background: '#CC1C1C',
-                                  color: '#fff',
+                                  background: 'var(--admin-red)',
+                                  color: 'white',
                                   fontSize: 11,
                                   cursor: 'pointer',
                                 }}
@@ -562,9 +562,9 @@ export default function SubscriptionsPage() {
                                 style={{
                                   padding: '4px 10px',
                                   borderRadius: 6,
-                                  border: '1px solid #2A1A1A',
+                                  border: '1px solid var(--admin-surface)',
                                   background: 'transparent',
-                                  color: '#9A8A7A',
+                                  color: 'var(--admin-text-muted)',
                                   fontSize: 11,
                                   cursor: 'pointer',
                                 }}
@@ -580,7 +580,7 @@ export default function SubscriptionsPage() {
                                 borderRadius: 6,
                                 border: '1px solid #CC1C1C',
                                 background: 'transparent',
-                                color: '#CC1C1C',
+                                color: 'var(--admin-red)',
                                 fontSize: 11,
                                 cursor: 'pointer',
                               }}
@@ -606,16 +606,16 @@ export default function SubscriptionsPage() {
                 style={{
                   padding: '6px 14px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--admin-surface)',
                   background: page <= 1 ? 'transparent' : 'rgba(232,66,10,0.1)',
-                  color: page <= 1 ? '#4A3A3A' : '#E8420A',
+                  color: page <= 1 ? 'var(--admin-text-muted)' : 'var(--admin-orange)',
                   fontSize: 13,
                   cursor: page <= 1 ? 'default' : 'pointer',
                 }}
               >
                 Prev
               </button>
-              <span style={{ padding: '6px 14px', color: '#9A8A7A', fontSize: 13 }}>
+              <span style={{ padding: '6px 14px', color: 'var(--admin-text-muted)', fontSize: 13 }}>
                 Page {page} of {Math.ceil(total / 15)}
               </span>
               <button
@@ -624,9 +624,9 @@ export default function SubscriptionsPage() {
                 style={{
                   padding: '6px 14px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--admin-surface)',
                   background: page >= Math.ceil(total / 15) ? 'transparent' : 'rgba(232,66,10,0.1)',
-                  color: page >= Math.ceil(total / 15) ? '#4A3A3A' : '#E8420A',
+                  color: page >= Math.ceil(total / 15) ? 'var(--admin-text-muted)' : 'var(--admin-orange)',
                   fontSize: 13,
                   cursor: page >= Math.ceil(total / 15) ? 'default' : 'pointer',
                 }}
@@ -658,8 +658,8 @@ export default function SubscriptionsPage() {
         >
           <div
             style={{
-              backgroundColor: '#1A0A0A',
-              border: '1px solid #2A1A1A',
+              backgroundColor: 'var(--admin-bg)',
+              border: '1px solid var(--admin-surface)',
               borderRadius: 16,
               padding: 28,
               width: '100%',
@@ -676,7 +676,7 @@ export default function SubscriptionsPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
                 <label
-                  style={{ display: 'block', fontSize: 12, color: '#9A8A7A', marginBottom: 4 }}
+                  style={{ display: 'block', fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 4 }}
                 >
                   Name *
                 </label>
@@ -688,9 +688,9 @@ export default function SubscriptionsPage() {
                     width: '100%',
                     padding: '10px 12px',
                     borderRadius: 8,
-                    border: '1px solid #2A1A1A',
-                    backgroundColor: '#0D0505',
-                    color: '#F5F0EB',
+                    border: '1px solid var(--admin-surface)',
+                    backgroundColor: 'var(--admin-dark)',
+                    color: 'var(--admin-text)',
                     fontSize: 13,
                   }}
                 />
@@ -698,7 +698,7 @@ export default function SubscriptionsPage() {
 
               <div>
                 <label
-                  style={{ display: 'block', fontSize: 12, color: '#9A8A7A', marginBottom: 4 }}
+                  style={{ display: 'block', fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 4 }}
                 >
                   Description
                 </label>
@@ -711,9 +711,9 @@ export default function SubscriptionsPage() {
                     width: '100%',
                     padding: '10px 12px',
                     borderRadius: 8,
-                    border: '1px solid #2A1A1A',
-                    backgroundColor: '#0D0505',
-                    color: '#F5F0EB',
+                    border: '1px solid var(--admin-surface)',
+                    backgroundColor: 'var(--admin-dark)',
+                    color: 'var(--admin-text)',
                     fontSize: 13,
                     resize: 'vertical',
                   }}
@@ -723,7 +723,7 @@ export default function SubscriptionsPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
                   <label
-                    style={{ display: 'block', fontSize: 12, color: '#9A8A7A', marginBottom: 4 }}
+                    style={{ display: 'block', fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 4 }}
                   >
                     Price *
                   </label>
@@ -737,16 +737,16 @@ export default function SubscriptionsPage() {
                       width: '100%',
                       padding: '10px 12px',
                       borderRadius: 8,
-                      border: '1px solid #2A1A1A',
-                      backgroundColor: '#0D0505',
-                      color: '#F5F0EB',
+                      border: '1px solid var(--admin-surface)',
+                      backgroundColor: 'var(--admin-dark)',
+                      color: 'var(--admin-text)',
                       fontSize: 13,
                     }}
                   />
                 </div>
                 <div>
                   <label
-                    style={{ display: 'block', fontSize: 12, color: '#9A8A7A', marginBottom: 4 }}
+                    style={{ display: 'block', fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 4 }}
                   >
                     Currency
                   </label>
@@ -757,9 +757,9 @@ export default function SubscriptionsPage() {
                       width: '100%',
                       padding: '10px 12px',
                       borderRadius: 8,
-                      border: '1px solid #2A1A1A',
-                      backgroundColor: '#0D0505',
-                      color: '#F5F0EB',
+                      border: '1px solid var(--admin-surface)',
+                      backgroundColor: 'var(--admin-dark)',
+                      color: 'var(--admin-text)',
                       fontSize: 13,
                     }}
                   >
@@ -775,7 +775,7 @@ export default function SubscriptionsPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
                   <label
-                    style={{ display: 'block', fontSize: 12, color: '#9A8A7A', marginBottom: 4 }}
+                    style={{ display: 'block', fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 4 }}
                   >
                     Duration (days) *
                   </label>
@@ -787,16 +787,16 @@ export default function SubscriptionsPage() {
                       width: '100%',
                       padding: '10px 12px',
                       borderRadius: 8,
-                      border: '1px solid #2A1A1A',
-                      backgroundColor: '#0D0505',
-                      color: '#F5F0EB',
+                      border: '1px solid var(--admin-surface)',
+                      backgroundColor: 'var(--admin-dark)',
+                      color: 'var(--admin-text)',
                       fontSize: 13,
                     }}
                   />
                 </div>
                 <div>
                   <label
-                    style={{ display: 'block', fontSize: 12, color: '#9A8A7A', marginBottom: 4 }}
+                    style={{ display: 'block', fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 4 }}
                   >
                     Tier
                   </label>
@@ -809,9 +809,9 @@ export default function SubscriptionsPage() {
                       width: '100%',
                       padding: '10px 12px',
                       borderRadius: 8,
-                      border: '1px solid #2A1A1A',
-                      backgroundColor: '#0D0505',
-                      color: '#F5F0EB',
+                      border: '1px solid var(--admin-surface)',
+                      backgroundColor: 'var(--admin-dark)',
+                      color: 'var(--admin-text)',
                       fontSize: 13,
                     }}
                   >
@@ -826,7 +826,7 @@ export default function SubscriptionsPage() {
 
               <div>
                 <label
-                  style={{ display: 'block', fontSize: 12, color: '#9A8A7A', marginBottom: 4 }}
+                  style={{ display: 'block', fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 4 }}
                 >
                   Features (comma-separated)
                 </label>
@@ -838,9 +838,9 @@ export default function SubscriptionsPage() {
                     width: '100%',
                     padding: '10px 12px',
                     borderRadius: 8,
-                    border: '1px solid #2A1A1A',
-                    backgroundColor: '#0D0505',
-                    color: '#F5F0EB',
+                    border: '1px solid var(--admin-surface)',
+                    backgroundColor: 'var(--admin-dark)',
+                    color: 'var(--admin-text)',
                     fontSize: 13,
                   }}
                 />
@@ -849,7 +849,7 @@ export default function SubscriptionsPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
                   <label
-                    style={{ display: 'block', fontSize: 12, color: '#9A8A7A', marginBottom: 4 }}
+                    style={{ display: 'block', fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 4 }}
                   >
                     Max Content Access
                   </label>
@@ -862,16 +862,16 @@ export default function SubscriptionsPage() {
                       width: '100%',
                       padding: '10px 12px',
                       borderRadius: 8,
-                      border: '1px solid #2A1A1A',
-                      backgroundColor: '#0D0505',
-                      color: '#F5F0EB',
+                      border: '1px solid var(--admin-surface)',
+                      backgroundColor: 'var(--admin-dark)',
+                      color: 'var(--admin-text)',
                       fontSize: 13,
                     }}
                   />
                 </div>
                 <div>
                   <label
-                    style={{ display: 'block', fontSize: 12, color: '#9A8A7A', marginBottom: 4 }}
+                    style={{ display: 'block', fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 4 }}
                   >
                     Max Users
                   </label>
@@ -884,9 +884,9 @@ export default function SubscriptionsPage() {
                       width: '100%',
                       padding: '10px 12px',
                       borderRadius: 8,
-                      border: '1px solid #2A1A1A',
-                      backgroundColor: '#0D0505',
-                      color: '#F5F0EB',
+                      border: '1px solid var(--admin-surface)',
+                      backgroundColor: 'var(--admin-dark)',
+                      color: 'var(--admin-text)',
                       fontSize: 13,
                     }}
                   />
@@ -895,7 +895,7 @@ export default function SubscriptionsPage() {
 
               <div>
                 <label
-                  style={{ display: 'block', fontSize: 12, color: '#9A8A7A', marginBottom: 4 }}
+                  style={{ display: 'block', fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 4 }}
                 >
                   Status
                 </label>
@@ -908,9 +908,9 @@ export default function SubscriptionsPage() {
                     width: '100%',
                     padding: '10px 12px',
                     borderRadius: 8,
-                    border: '1px solid #2A1A1A',
-                    backgroundColor: '#0D0505',
-                    color: '#F5F0EB',
+                    border: '1px solid var(--admin-surface)',
+                    backgroundColor: 'var(--admin-dark)',
+                    color: 'var(--admin-text)',
                     fontSize: 13,
                   }}
                 >
@@ -932,9 +932,9 @@ export default function SubscriptionsPage() {
                 style={{
                   padding: '10px 20px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--admin-surface)',
                   background: 'transparent',
-                  color: '#9A8A7A',
+                  color: 'var(--admin-text-muted)',
                   fontSize: 13,
                   cursor: 'pointer',
                 }}
@@ -951,7 +951,7 @@ export default function SubscriptionsPage() {
                   borderRadius: 8,
                   border: 'none',
                   background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                  color: '#fff',
+                  color: 'white',
                   fontWeight: 600,
                   fontSize: 13,
                   cursor: !form.name || !form.price ? 'not-allowed' : 'pointer',

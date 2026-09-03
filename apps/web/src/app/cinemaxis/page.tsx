@@ -110,7 +110,7 @@ function CinemaxisPageContent(): React.JSX.Element {
                   type="button"
                   aria-label="View premieres"
                   className="px-6 py-3 rounded-full text-sm font-semibold text-[#1A0A3B] transition-all"
-                  style={{ backgroundColor: '#a855f7' }}
+                  style={{ backgroundColor: 'var(--brand-purple-light)' }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -133,7 +133,7 @@ function CinemaxisPageContent(): React.JSX.Element {
             <Link
               href="/browse"
               className="text-sm font-medium transition-colors"
-              style={{ color: '#a855f7' }}
+              style={{ color: 'var(--brand-purple-light)' }}
             >
               View All
             </Link>

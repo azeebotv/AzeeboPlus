@@ -26,8 +26,12 @@
       "@/*": [
         "./src/*"
       ],
-      "@azeebo/feature-flags/registries": ["../../packages/feature-flags/dist/registries"],
-      "@azeebo/*": ["../../packages/*/dist"],
+      "@azeebo/feature-flags/registries": [
+        "../../packages/feature-flags/dist/registries"
+      ],
+      "@azeebo/*": [
+        "../../packages/*/dist"
+      ],
       "@azeebo/ui": [
         "../../packages/ui/src"
       ],
@@ -47,7 +51,14 @@
         "../../packages/design-tokens/src/*"
       ]
     },
-    "types": []
+    "types": [],
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "noImplicitThis": true,
+    "strictPropertyInitialization": true,
+    "noFallthroughCasesInSwitch": true
   },
   "typeAcquisition": {
     "enable": true,

@@ -13,10 +13,16 @@ import {
   ParseUUIDPipe,
   Query,
   UnauthorizedException,
+  UseInterceptors,
+  UploadedFile,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 
 import { UsersService } from './users.service.js';
+import { AvatarService } from './avatar.service.js';
 import { UpdateUniverseAffinityDto } from './dto/update-universe-affinity.dto.js';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto.js';
 import { CompleteProfileSetupDto } from './dto/complete-profile-setup.dto.js';
@@ -37,7 +43,10 @@ interface AuthenticatedRequest {
 @ApiBearerAuth()
 @Controller('users')
 export class UsersController {
-  constructor(@Inject(UsersService) private readonly usersService: UsersService) {}
+  constructor(
+    @Inject(UsersService) private readonly usersService: UsersService,
+    private readonly avatarService: AvatarService,
+  ) {}
 
   private getUserId(req: AuthenticatedRequest): string {
     const userId = req.user?.sub;
@@ -46,6 +55,56 @@ export class UsersController {
     }
     return userId;
   }
+  @Post('me/avatar')
+  @UseInterceptors(FileInterceptor('avatar'))
+  @UseGuards(RateLimitGuard)
+  @RateLimit(5, 3600000)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Upload avatar image' })
+  @ApiResponse({ status: 200, description: 'Avatar uploaded' })
+  @ApiResponse({ status: 400, description: 'Invalid file' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async uploadAvatar(
+    @Request() req: AuthenticatedRequest,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new UnauthorizedException('No file provided');
+    }
+    const result = await this.avatarService.uploadAvatar(this.getUserId(req), {
+      buffer: file.buffer,
+      mimetype: file.mimetype,
+      size: file.size,
+      originalname: file.originalname,
+    });
+    return { success: true, data: result };
+  }
+
+  @Delete('me/avatar')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(5, 3600000)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Delete avatar image' })
+  @ApiResponse({ status: 200, description: 'Avatar deleted' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async deleteAvatar(@Request() req: AuthenticatedRequest) {
+    await this.avatarService.deleteAvatar(this.getUserId(req));
+    return { success: true };
+  }
+
+  @Get('me/avatar/upload-url')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 3600000)
+  @ApiOperation({ summary: 'Get pre-signed upload URL for avatar' })
+  @ApiResponse({ status: 200, description: 'Upload URL generated' })
+  async getAvatarUploadUrl(
+    @Request() req: AuthenticatedRequest,
+    @Query('format') format: string = 'image/jpeg',
+  ) {
+    const result = await this.avatarService.getUploadUrl(this.getUserId(req), format);
+    return { success: true, data: result };
+  }
+
   @Get('me')
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({ status: 200, description: 'User profile' })

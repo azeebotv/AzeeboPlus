@@ -7,7 +7,7 @@ export default function NotFound(): React.JSX.Element {
       style={{ backgroundColor: 'var(--brand-near-black)' }}
     >
       <div className="text-center max-w-md mx-auto px-6">
-        <div className="text-6xl mb-6">🔍</div>
+        <div className="text-6xl mb-6"></div>
         <h1 className="text-2xl font-bold mb-4" style={{ color: 'var(--brand-white)' }}>
           Page Not Found
         </h1>

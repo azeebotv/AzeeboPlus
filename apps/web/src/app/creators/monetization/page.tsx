@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Creators Monetization  - Azeebo+',
+  description: 'Creators Monetization  on Azeebo+',
+};
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -94,7 +101,7 @@ export default function CreatorMonetizationPage() {
             {/* Tips */}
             <div className="bg-card rounded-xl border p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold text-foreground">💡 Tips</h2>
+                <h2 className="font-semibold text-foreground">LightbulbTips</h2>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
@@ -135,7 +142,7 @@ export default function CreatorMonetizationPage() {
             {/* Subscriptions */}
             <div className="bg-card rounded-xl border p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold text-foreground">⭐ Subscriptions</h2>
+                <h2 className="font-semibold text-foreground">StarSubscriptions</h2>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
@@ -196,7 +203,7 @@ export default function CreatorMonetizationPage() {
             {/* Sponsorship */}
             <div className="bg-card rounded-xl border p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold text-foreground">🤝 Sponsorships</h2>
+                <h2 className="font-semibold text-foreground">HandshakeSponsorships</h2>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
@@ -226,7 +233,7 @@ export default function CreatorMonetizationPage() {
               disabled={saving}
               className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-muted text-white py-3 px-6 rounded-xl font-medium transition-colors"
             >
-              {saving ? 'Saving...' : success ? '✓ Saved!' : 'Save Settings'}
+              {saving ? 'Saving...' : success ? 'Check Saved!' : 'Save Settings'}
             </button>
           </div>
         )}

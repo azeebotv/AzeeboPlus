@@ -69,9 +69,7 @@ export default function VerticalUniverseHome() {
 
   useEffect(() => {
     if (featuredQuery.isSuccess && !featuredQuery.isFetching) {
-      try {
-        analytics.verticalUniverseViewed('home');
-      } catch {}
+              analytics.verticalUniverseViewed('home');
     }
   }, [featuredQuery.isSuccess]);
 

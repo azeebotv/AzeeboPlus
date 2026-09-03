@@ -35,29 +35,29 @@ const PATH_CONFIG: Record<
     name: 'Warrior',
     description:
       'Strength, honor, and combat mastery. Warriors are the backbone of any storyworld, wielding strength and strategy to overcome challenges.',
-    color: '#C41E3A',
-    icon: '⚔️',
+    color: 'var(--brand-crimson)',
+    icon: 'Swords',
   },
   sage: {
     name: 'Sage',
     description:
       'Wisdom, knowledge, and ancient truths. Sages hold the secrets of the past and guide others through understanding.',
-    color: '#1E90FF',
-    icon: '📚',
+    color: 'var(--brand-sky)',
+    icon: 'BookOpen',
   },
   trickster: {
     name: 'Trickster',
     description:
       'Cunning, deception, and survival. Tricksters navigate the world through wit and cleverness, finding unconventional solutions.',
-    color: '#FFD700',
-    icon: '🎭',
+    color: 'var(--brand-gold)',
+    icon: 'Drama',
   },
   healer: {
     name: 'Healer',
     description:
       'Compassion, restoration, and balance. Healers mend what is broken and restore harmony to those around them.',
-    color: '#32CD32',
-    icon: '✨',
+    color: 'var(--brand-light-green)',
+    icon: 'Sparkles',
   },
 };
 

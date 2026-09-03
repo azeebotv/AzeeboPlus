@@ -1,0 +1,176 @@
+---
+# Default deny all ingress
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: azeebo
+  labels:
+    app.kubernetes.io/part-of: azeebo
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# Allow ingress from nginx ingress controller to gateway
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-gateway
+  namespace: azeebo
+  labels:
+    app.kubernetes.io/part-of: azeebo
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: api-gateway
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - port: 3013
+          protocol: TCP
+---
+# Allow ingress to frontend apps
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-apps
+  namespace: azeebo
+  labels:
+    app.kubernetes.io/part-of: azeebo
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: frontend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - port: 4000
+          protocol: TCP
+        - port: 4014
+          protocol: TCP
+        - port: 4016
+          protocol: TCP
+---
+# Allow gateway to talk to all backend services
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-gateway-to-services
+  namespace: azeebo
+  labels:
+    app.kubernetes.io/part-of: azeebo
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: azeebo
+      app.kubernetes.io/component: ""  # all backend services
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: api-gateway
+      ports:
+        - protocol: TCP
+---
+# Allow inter-service communication within azeebo namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-internal-communication
+  namespace: azeebo
+  labels:
+    app.kubernetes.io/part-of: azeebo
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: azeebo
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: azeebo
+---
+# Allow Prometheus scraping
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-prometheus-scrape
+  namespace: azeebo
+  labels:
+    app.kubernetes.io/part-of: azeebo
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: azeebo
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - port: 3000
+          protocol: TCP
+        - port: 9090
+          protocol: TCP
+---
+# Allow external PostgreSQL and Redis access from within cluster
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-db-access
+  namespace: azeebo
+  labels:
+    app.kubernetes.io/part-of: azeebo
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: azeebo
+      ports:
+        - port: 5432
+          protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-redis-access
+  namespace: azeebo
+  labels:
+    app.kubernetes.io/part-of: azeebo
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: azeebo
+      ports:
+        - port: 6379
+          protocol: TCP

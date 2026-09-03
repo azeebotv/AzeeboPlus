@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Profile Privacy-security  - Azeebo+',
+  description: 'Profile Privacy-security  on Azeebo+',
+};
+
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -5,15 +12,6 @@ import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
-
-export const metadata = {
-  title: 'Privacy & Security | Azeebo',
-  description: 'Manage your privacy settings, direct messages, and two-factor authentication.',
-  openGraph: {
-    title: 'Privacy & Security | Azeebo',
-    description: 'Manage your privacy settings, direct messages, and two-factor authentication.',
-  },
-};
 
 export default function PrivacySecurityPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
@@ -169,7 +167,7 @@ export default function PrivacySecurityPage(): React.JSX.Element {
                       width: 22,
                       height: 22,
                       borderRadius: '50%',
-                      backgroundColor: '#fff',
+                      backgroundColor: 'white',
                       transition: 'left 0.2s',
                     }}
                   />
@@ -196,7 +194,7 @@ export default function PrivacySecurityPage(): React.JSX.Element {
             opacity: isSaving ? 0.6 : 1,
           }}
         >
-          {saved ? '✓ Saved!' : isSaving ? 'Saving...' : 'Save Settings'}
+          {saved ? 'Check Saved!' : isSaving ? 'Saving...' : 'Save Settings'}
         </button>
 
         {/* Danger zone */}

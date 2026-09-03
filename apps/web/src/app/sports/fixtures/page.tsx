@@ -218,22 +218,11 @@ function FixturesPageContent(): React.JSX.Element {
 
 const LazyFixturesPage = lazy(() => Promise.resolve({ default: FixturesPageContent }));
 
-export const metadata = {
-  title: 'Fixtures & Results | Azeebo',
-  description:
-    'Track upcoming matches and recent results across football, basketball, tennis, and more.',
-  openGraph: {
-    title: 'Fixtures & Results | Azeebo',
-    description:
-      'Track upcoming matches and recent results across football, basketball, tennis, and more.',
-  },
-};
-
 export default function FixturesPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

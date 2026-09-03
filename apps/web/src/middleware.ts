@@ -35,8 +35,8 @@ const adminRoutes = ['/admin'];
 const creatorRoutes = ['/creator', '/creators/dashboard'];
 
 // Standalone app hosts (set via env vars in production)
-const ADMIN_HOST = process.env.ADMIN_APP_URL || 'http://localhost:4016';
-const CREATOR_HOST = process.env.CREATOR_APP_URL || 'http://localhost:4014';
+const ADMIN_HOST = process.env.ADMIN_APP_URL || 'http://localhost:4100';
+const CREATOR_HOST = process.env.CREATOR_APP_URL || 'http://localhost:4104';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -59,7 +59,7 @@ export function middleware(request: NextRequest) {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: blob: https://*.azeeboplus.com https://*.cloudflare.com",
     "font-src 'self' https://fonts.gstatic.com",
-    "connect-src 'self' https://*.azeeboplus.com https://api.stripe.com",
+    "connect-src 'self' http://localhost:* ws://localhost:* https://*.azeeboplus.com https://api.stripe.com",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",

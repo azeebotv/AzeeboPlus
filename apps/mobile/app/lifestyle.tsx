@@ -91,9 +91,7 @@ export default function LifestyleUniverseHome() {
 
   useEffect(() => {
     if (featuredQuery.isSuccess && !featuredQuery.isFetching) {
-      try {
-        analytics.lifestyleFeedViewed();
-      } catch {}
+              analytics.lifestyleFeedViewed();
     }
   }, [featuredQuery.isSuccess]);
 

@@ -5,6 +5,9 @@ import { ContentModule } from './modules/content/content.module.js';
 import { DatabaseModule } from './modules/database/database.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { PublicModule } from './modules/public/public.module.js';
+import { DownloadModule } from './modules/downloads/download.module.js';
+import { ShareModule } from './modules/sharing/share.module.js';
+import { ReviewModule } from './modules/reviews/review.module.js';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
 import { RateLimiterModule, ServiceAuthGuard, SecurityModule } from '@azeebo/security';
 import { CacheModule } from './cache/cache.module.js';
@@ -23,6 +26,9 @@ import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
     DatabaseModule,
     CacheModule,
     ContentModule,
+    DownloadModule,
+    ShareModule,
+    ReviewModule,
     HealthModule,
     PublicModule,
     FlagMetricsModule.register({ service: 'content-service' }),

@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  ADMIN_FLAG_KEYS,
-  ADMIN_FLAG_DEFAULTS,
-  resolveAdminFlag,
-} from './useAdminFlags';
+import { ADMIN_FLAG_KEYS, ADMIN_FLAG_DEFAULTS, resolveAdminFlag } from './useAdminFlags';
 import type { GlobalFeatureFlag } from '@/lib/admin-types';
 
 const flag = (key: string, enabled: boolean): GlobalFeatureFlag => ({

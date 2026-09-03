@@ -154,8 +154,8 @@ export class RewatchIdempotencyService {
    * Check if knowledge should be granted
    */
   shouldGrantKnowledge(
-    userId: string,
-    contentId: string,
+    _userId: string,
+    _contentId: string,
     watchCount: number
   ): {
     grant: boolean;

@@ -101,7 +101,7 @@ function GameDetailPageContent(): React.JSX.Element {
                 className="object-cover"
                 priority
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/50 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-[var(--brand-near-black)]/50 to-transparent" />
               <AmbientGlow color="rgba(139,92,246,0.25)" size={500} className="bottom-0 right-0" />
 
               <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 max-w-7xl mx-auto">
@@ -113,7 +113,7 @@ function GameDetailPageContent(): React.JSX.Element {
                   <div className="flex items-center gap-2 mb-3">
                     <span
                       className="px-3 py-1 rounded-full text-xs font-semibold"
-                      style={{ backgroundColor: 'rgba(139,92,246,0.2)', color: '#A78BFA' }}
+                      style={{ backgroundColor: 'rgba(139,92,246,0.2)', color: 'var(--brand-purple)' }}
                     >
                       {game.category}
                     </span>
@@ -130,7 +130,7 @@ function GameDetailPageContent(): React.JSX.Element {
                   <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">{game.title}</h1>
                   <div className="flex items-center gap-4 text-sm text-white/60 mb-4">
                     <span>
-                      ⭐ {game.rating.toFixed(1)} ({game.totalRatings} ratings)
+                      {game.rating.toFixed(1)} ({game.totalRatings} ratings)
                     </span>
                     <span>·</span>
                     <span>{game.estimatedTime}</span>
@@ -186,7 +186,7 @@ function GameDetailPageContent(): React.JSX.Element {
                     <ul className="space-y-3 mb-8">
                       {game.features.map((feature, index) => (
                         <li key={index} className="flex items-start gap-3">
-                          <span style={{ color: 'var(--color-success-500)' }}>✓</span>
+                          <span style={{ color: 'var(--color-success-500)' }}></span>
                           <span className="text-white/70">{feature}</span>
                         </li>
                       ))}
@@ -242,7 +242,7 @@ function GameDetailPageContent(): React.JSX.Element {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-white/50">Rating</span>
-                      <span className="text-white font-medium">⭐ {game.rating.toFixed(1)}</span>
+                      <span className="text-white font-medium">{game.rating.toFixed(1)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-white/50">Now Playing</span>
@@ -311,7 +311,7 @@ export default function GameDetailPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

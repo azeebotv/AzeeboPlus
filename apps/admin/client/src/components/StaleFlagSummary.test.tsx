@@ -1,10 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
-import StaleFlagSummary, {
-  type StaleGlobalRow,
-  type StaleUniverseRow,
-} from './StaleFlagSummary';
+import StaleFlagSummary, { type StaleGlobalRow, type StaleUniverseRow } from './StaleFlagSummary';
 
 const { navigateMock } = vi.hoisted(() => ({ navigateMock: vi.fn() }));
 
@@ -28,8 +25,7 @@ const universeRows: StaleUniverseRow[] = [
 
 // Matches both the singular and plural chip label ("1 stale flag" vs
 // "3 stale flags").
-const openMenu = () =>
-  fireEvent.click(screen.getByRole('button', { name: /stale flag/i }));
+const openMenu = () => fireEvent.click(screen.getByRole('button', { name: /stale flag/i }));
 
 describe('StaleFlagSummary', () => {
   beforeEach(() => navigateMock.mockReset());
@@ -38,9 +34,7 @@ describe('StaleFlagSummary', () => {
   afterEach(cleanup);
 
   it('renders nothing when there are no stale flags', () => {
-    const { container } = render(
-      <StaleFlagSummary staleGlobal={[]} staleUniverse={[]} />
-    );
+    const { container } = render(<StaleFlagSummary staleGlobal={[]} staleUniverse={[]} />);
     expect(container.firstChild).toBeNull();
     expect(screen.queryByText(/stale flag/i)).toBeNull();
   });
@@ -58,17 +52,13 @@ describe('StaleFlagSummary', () => {
   });
 
   it('uses the singular form for a single stale flag', () => {
-    render(
-      <StaleFlagSummary staleGlobal={[globalRows[0]!]} staleUniverse={[]} />
-    );
+    render(<StaleFlagSummary staleGlobal={[globalRows[0]!]} staleUniverse={[]} />);
     expect(screen.getByText('1 stale flag')).toBeTruthy();
     expect(screen.queryByText('auto-off')).toBeNull();
   });
 
   it('builds the full list: both sections, rows, and footer links', () => {
-    render(
-      <StaleFlagSummary staleGlobal={globalRows} staleUniverse={universeRows} />
-    );
+    render(<StaleFlagSummary staleGlobal={globalRows} staleUniverse={universeRows} />);
     // Menu is closed by default.
     expect(screen.queryByText('Stale flags — removal candidates')).toBeNull();
 
@@ -143,9 +133,7 @@ describe('StaleFlagSummary', () => {
   });
 
   it('footer links navigate to the stale-filtered lists', () => {
-    render(
-      <StaleFlagSummary staleGlobal={globalRows} staleUniverse={universeRows} />
-    );
+    render(<StaleFlagSummary staleGlobal={globalRows} staleUniverse={universeRows} />);
     openMenu();
     fireEvent.click(screen.getByText('Global candidates →'));
     expect(navigateMock).toHaveBeenCalledWith('/feature-flags/global?stale=1#stale');
@@ -167,9 +155,7 @@ describe('StaleFlagSummary', () => {
 
     expect(screen.getAllByText('auto-off')).toHaveLength(1);
     const autoRow = screen.getByText('search_typo_tolerance').closest('button');
-    const cleanRow = screen
-      .getByText('payment_failover_enabled')
-      .closest('button');
+    const cleanRow = screen.getByText('payment_failover_enabled').closest('button');
     expect(autoRow?.textContent).toContain('auto-off');
     expect(cleanRow?.textContent).not.toContain('auto-off');
   });

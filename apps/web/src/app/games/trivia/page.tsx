@@ -42,14 +42,14 @@ interface TriviaSession {
 }
 
 const categoryIcons: Record<string, string> = {
-  movies: '🎬',
-  music: '🎵',
-  sports: '⚽',
-  history: '📜',
-  science: '🔬',
-  geography: '🌍',
-  general: '🧠',
-  nollywood: '🎥',
+  movies: 'Film',
+  music: 'Music',
+  sports: 'Circle',
+  history: 'Scroll',
+  science: 'FlaskConical',
+  geography: 'Globe',
+  general: 'Brain',
+  nollywood: 'Film',
 };
 
 function TriviaPageContent(): React.JSX.Element {
@@ -338,7 +338,7 @@ function TriviaPageContent(): React.JSX.Element {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
               >
-                🧠 Trivia
+                BrainTrivia
               </motion.h1>
               <motion.p
                 className="text-xl text-white/80 max-w-2xl mx-auto"
@@ -395,7 +395,7 @@ function TriviaPageContent(): React.JSX.Element {
                         }}
                       >
                         <span className="text-6xl">
-                          {categoryIcons[category.name?.toLowerCase()] || '🧠'}
+                          {categoryIcons[category.name?.toLowerCase()] || 'Brain'}
                         </span>
                       </div>
                       <div className="p-5">
@@ -477,7 +477,7 @@ export default function TriviaPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

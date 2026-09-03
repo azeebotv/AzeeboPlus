@@ -56,7 +56,7 @@ export default function UniversesPage() {
       >
         <div>
           <h1 style={{ fontSize: 28, fontWeight: 700 }}>Universes</h1>
-          <p style={{ color: '#9A8A7A', marginTop: 4 }}>{universes.length} universes</p>
+          <p style={{ color: 'var(--admin-text-muted)', marginTop: 4 }}>{universes.length} universes</p>
         </div>
         <button
           onClick={() => setShowCreate(true)}
@@ -65,7 +65,7 @@ export default function UniversesPage() {
             borderRadius: 12,
             border: 'none',
             background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-            color: '#fff',
+            color: 'white',
             fontWeight: 600,
             fontSize: 14,
             cursor: 'pointer',
@@ -83,9 +83,9 @@ export default function UniversesPage() {
           width: '100%',
           padding: '10px 16px',
           borderRadius: 12,
-          border: '1px solid #2A1A1A',
-          backgroundColor: '#0D0505',
-          color: '#F5F0EB',
+          border: '1px solid var(--admin-surface)',
+          backgroundColor: 'var(--admin-dark)',
+          color: 'var(--admin-text)',
           fontSize: 14,
           marginBottom: 24,
           boxSizing: 'border-box',
@@ -97,7 +97,7 @@ export default function UniversesPage() {
           style={{
             padding: 24,
             borderRadius: 16,
-            border: '1px solid #2A1A1A',
+            border: '1px solid var(--admin-surface)',
             backgroundColor: 'rgba(26,10,10,0.8)',
             marginBottom: 24,
           }}
@@ -111,9 +111,9 @@ export default function UniversesPage() {
               style={{
                 padding: '10px 16px',
                 borderRadius: 8,
-                border: '1px solid #2A1A1A',
-                backgroundColor: '#0D0505',
-                color: '#F5F0EB',
+                border: '1px solid var(--admin-surface)',
+                backgroundColor: 'var(--admin-dark)',
+                color: 'var(--admin-text)',
                 fontSize: 14,
               }}
             />
@@ -124,9 +124,9 @@ export default function UniversesPage() {
               style={{
                 padding: '10px 16px',
                 borderRadius: 8,
-                border: '1px solid #2A1A1A',
-                backgroundColor: '#0D0505',
-                color: '#F5F0EB',
+                border: '1px solid var(--admin-surface)',
+                backgroundColor: 'var(--admin-dark)',
+                color: 'var(--admin-text)',
                 fontSize: 14,
               }}
             />
@@ -137,9 +137,9 @@ export default function UniversesPage() {
               style={{
                 padding: '10px 16px',
                 borderRadius: 8,
-                border: '1px solid #2A1A1A',
-                backgroundColor: '#0D0505',
-                color: '#F5F0EB',
+                border: '1px solid var(--admin-surface)',
+                backgroundColor: 'var(--admin-dark)',
+                color: 'var(--admin-text)',
                 fontSize: 14,
               }}
             />
@@ -152,7 +152,7 @@ export default function UniversesPage() {
                   borderRadius: 8,
                   border: 'none',
                   background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                  color: '#fff',
+                  color: 'white',
                   fontWeight: 600,
                   cursor: 'pointer',
                 }}
@@ -164,9 +164,9 @@ export default function UniversesPage() {
                 style={{
                   padding: '10px 20px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--admin-surface)',
                   background: 'transparent',
-                  color: '#9A8A7A',
+                  color: 'var(--admin-text-muted)',
                   cursor: 'pointer',
                 }}
               >
@@ -178,7 +178,7 @@ export default function UniversesPage() {
       )}
 
       {isLoading ? (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
       ) : (
         <div
           style={{
@@ -193,7 +193,7 @@ export default function UniversesPage() {
               style={{
                 padding: 20,
                 borderRadius: 16,
-                border: '1px solid #2A1A1A',
+                border: '1px solid var(--admin-surface)',
                 backgroundColor: 'rgba(26,10,10,0.5)',
               }}
             >
@@ -207,7 +207,7 @@ export default function UniversesPage() {
               >
                 <div>
                   <h3 style={{ fontWeight: 600, fontSize: 16 }}>{u.displayName || u.name}</h3>
-                  <p style={{ color: '#9A8A7A', fontSize: 13 }}>{u.name}</p>
+                  <p style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>{u.name}</p>
                 </div>
                 <button
                   onClick={() => toggleMutation.mutate({ id: u.id, isEnabled: !u.isEnabled })}
@@ -216,7 +216,7 @@ export default function UniversesPage() {
                     borderRadius: 999,
                     border: 'none',
                     backgroundColor: u.isEnabled ? 'rgba(13,59,46,0.2)' : 'rgba(154,138,122,0.2)',
-                    color: u.isEnabled ? '#0D3B2E' : '#9A8A7A',
+                    color: u.isEnabled ? 'var(--admin-green)' : 'var(--admin-text-muted)',
                     fontSize: 12,
                     fontWeight: 600,
                     cursor: 'pointer',
@@ -226,12 +226,12 @@ export default function UniversesPage() {
                 </button>
               </div>
               {u.description && (
-                <p style={{ color: '#9A8A7A', fontSize: 13, marginBottom: 12 }}>{u.description}</p>
+                <p style={{ color: 'var(--admin-text-muted)', fontSize: 13, marginBottom: 12 }}>{u.description}</p>
               )}
               <div
                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
               >
-                <span style={{ fontSize: 12, color: '#9A8A7A' }}>{u.contentCount || 0} items</span>
+                <span style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>{u.contentCount || 0} items</span>
                 <button
                   onClick={() => {
                     if (confirm('Delete this universe?')) deleteMutation.mutate(u.id);
@@ -241,7 +241,7 @@ export default function UniversesPage() {
                     borderRadius: 8,
                     border: '1px solid #CC1C1C',
                     background: 'transparent',
-                    color: '#CC1C1C',
+                    color: 'var(--admin-red)',
                     fontSize: 12,
                     cursor: 'pointer',
                   }}

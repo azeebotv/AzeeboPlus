@@ -1,19 +1,12 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
 
-export const metadata = {
-  title: 'Badges | Azeebo',
-  description: 'View your earned badges and track progress toward new achievements on Azeebo.',
-  openGraph: {
-    title: 'Badges | Azeebo',
-    description: 'View your earned badges and track progress toward new achievements on Azeebo.',
-  },
-};
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { ErrorState, Skeleton } from '@azeebo/ui/web';
+import { EmptyState } from '@/components/ui/EmptyState';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -45,7 +38,7 @@ export default function BadgesPage(): React.JSX.Element {
           id: String(b.id),
           name: String(b.name || ''),
           description: String(b.description || ''),
-          icon: String(b.icon || '🏅'),
+          icon: String(b.icon || 'Medal'),
           points: Number(b.points || 0),
           unlocked: Boolean(b.unlocked ?? true),
           progress: Number(b.progress ?? 0),
@@ -156,7 +149,7 @@ export default function BadgesPage(): React.JSX.Element {
                       <p
                         style={{ fontSize: 11, color: 'var(--color-success-500)', fontWeight: 600 }}
                       >
-                        ✓ Earned
+                        CheckEarned
                       </p>
                     </div>
                   ))}
@@ -240,13 +233,12 @@ export default function BadgesPage(): React.JSX.Element {
             )}
 
             {badges.length === 0 && (
-              <div
-                className="az-glass"
-                style={{ padding: 48, borderRadius: 20, textAlign: 'center' }}
-              >
-                <p style={{ fontSize: 32, marginBottom: 12 }}>🏅</p>
-                <p style={{ color: 'var(--text-secondary)' }}>No badges available yet</p>
-              </div>
+              <EmptyState
+                icon="star"
+                title="No badges available yet"
+                description="Earn badges by completing achievements"
+                dark
+              />
             )}
           </>
         )}

@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Reality Contestant [id]  - Azeebo+',
+  description: 'Reality Contestant [id]  on Azeebo+',
+};
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -138,7 +145,7 @@ export default function ContestantDynamicProfilePage(): React.JSX.Element {
                 className="w-full h-full object-cover"
               />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/50 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/50 to-transparent" />
           </div>
           <button
             onClick={() => router.back()}
@@ -150,7 +157,7 @@ export default function ContestantDynamicProfilePage(): React.JSX.Element {
         </div>
 
         <div className="px-6 -mt-20 relative">
-          <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-[#1A0A0A] relative bg-white/10">
+          <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-[var(--brand-near-black)] relative bg-white/10">
             {contestant.avatar ? (
               <OptimizedImage
                 src={contestant.avatar}
@@ -167,7 +174,7 @@ export default function ContestantDynamicProfilePage(): React.JSX.Element {
           <div className="mt-4">
             <h1 className="text-3xl font-bold text-white">{contestant.name}</h1>
             <p className="text-white/50 mt-1">
-              📍 {contestant.location || 'Lagos, Nigeria'}{' '}
+              {contestant.location || 'Lagos, Nigeria'}{' '}
               {contestant.age ? `• Age ${contestant.age}` : ''}
             </p>
           </div>
@@ -193,7 +200,7 @@ export default function ContestantDynamicProfilePage(): React.JSX.Element {
               disabled={isVoting}
               className="flex-1 py-4 rounded-full font-semibold text-lg transition-all az-btn-primary disabled:opacity-50"
             >
-              {isVoting ? 'Processing...' : `🗳 Vote for ${contestant.name}`}
+              {isVoting ? 'Processing...' : `Vote Vote for ${contestant.name}`}
             </button>
             <Link
               href={`/vote?contestantId=${contestant.id}`}
@@ -221,7 +228,7 @@ export default function ContestantDynamicProfilePage(): React.JSX.Element {
                     rel="noopener noreferrer"
                     className="block az-glass p-4 rounded-xl transition-colors hover:scale-[1.01]"
                   >
-                    <span className="text-white font-medium">📷 Instagram</span>
+                    <span className="text-white font-medium">CameraInstagram</span>
                   </a>
                 )}
                 {contestant.socialLinks.twitter && (
@@ -231,7 +238,7 @@ export default function ContestantDynamicProfilePage(): React.JSX.Element {
                     rel="noopener noreferrer"
                     className="block az-glass p-4 rounded-xl transition-colors hover:scale-[1.01]"
                   >
-                    <span className="text-white font-medium">🐦 Twitter</span>
+                    <span className="text-white font-medium">BirdTwitter</span>
                   </a>
                 )}
                 {contestant.socialLinks.tiktok && (
@@ -241,7 +248,7 @@ export default function ContestantDynamicProfilePage(): React.JSX.Element {
                     rel="noopener noreferrer"
                     className="block az-glass p-4 rounded-xl transition-colors hover:scale-[1.01]"
                   >
-                    <span className="text-white font-medium">🎵 TikTok</span>
+                    <span className="text-white font-medium">Music2TikTok</span>
                   </a>
                 )}
               </div>

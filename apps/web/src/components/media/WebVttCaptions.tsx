@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { webLogger } from '@/lib/logger';
 
 export interface CaptionTrack {
   id: string;
@@ -108,8 +109,7 @@ export function WebVttCaptions({
       cueCacheRef.current.set(track.id, parsed);
       return parsed;
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to load caption track:', err);
+      webLogger.error('[WebVttCaptions] Failed to load caption track:', err);
       return [];
     }
   }, []);

@@ -6,6 +6,7 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 interface AnalyticsData {
   totalViews: number;
@@ -369,9 +370,12 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
             </div>
           </>
         ) : (
-          <p style={{ color: 'var(--text-muted, #9A8A7A)', textAlign: 'center', padding: 40 }}>
-            No analytics data available yet.
-          </p>
+          <EmptyState
+            icon="barChart"
+            title="No analytics data available yet"
+            description="Analytics will appear once your content gets views"
+            dark
+          />
         )}
       </main>
       <AppFooter />

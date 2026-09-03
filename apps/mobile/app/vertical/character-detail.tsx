@@ -51,9 +51,7 @@ export default function CharacterDetailScreen() {
     try {
       const res = await apiClient.get<CharacterDetail>(`/v1/vertical/characters/${id}`);
       setData(res);
-      try {
-        analytics.verticalCharacterViewed(res.id);
-      } catch {}
+              analytics.verticalCharacterViewed(res.id);
     } catch {
       setError('Failed to load character');
     } finally {

@@ -274,6 +274,139 @@ export async function mockApiForSubscription(page: Page) {
   );
 }
 
+/** Seed mocks for tipping flow. */
+export async function mockApiForTipping(page: Page) {
+  await mockApiForAuth(page);
+
+  await page.route('**/api/v1/tipping/stats', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: { totalTips: 24, totalAmount: 48500, topTier: 'gold' },
+      }),
+    }),
+  );
+
+  await page.route('**/api/v1/tipping/history*', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          items: [
+            { id: 'tip-1', creatorId: 'creator-1', creatorName: 'Comedy King', amount: 1000, tier: 'gold', message: 'Love your content!', createdAt: '2026-08-20T10:00:00Z' },
+            { id: 'tip-2', creatorId: 'creator-2', creatorName: 'DJ Master', amount: 500, tier: 'silver', message: null, createdAt: '2026-08-18T15:30:00Z' },
+            { id: 'tip-3', creatorId: 'creator-3', creatorName: 'Sports Analyst', amount: 2500, tier: 'platinum', message: 'Great analysis', createdAt: '2026-08-15T08:00:00Z' },
+          ],
+          total: 24,
+          totalPages: 3,
+        },
+      }),
+    }),
+  );
+
+  await page.route('**/api/v1/tipping/send', (route) => {
+    if (route.request().method() === 'POST') {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, message: 'Tip sent successfully' }),
+      });
+    }
+    route.fallback();
+  });
+}
+
+/** Seed mocks for games flow. */
+export async function mockApiForGames(page: Page) {
+  await mockApiForAuth(page);
+
+  await page.route('**/api/v1/universes', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: [
+          { id: 'universe-games', name: 'games', slug: 'games', enabled: true },
+          { id: 'universe-movies', name: 'movie', slug: 'movies', enabled: true },
+          { id: 'universe-reality', name: 'reality', slug: 'reality', enabled: true },
+        ],
+      }),
+    }),
+  );
+
+  await page.route('**/api/v1/content/universe/**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: [
+          { id: 'game-1', title: 'Trivia Master', description: 'Test your knowledge across categories', thumbnail: '/images/game1.jpg', contentType: 'trivia', views: 15000 },
+          { id: 'game-2', title: 'Word Puzzle', description: 'Unscramble words to score points', thumbnail: '/images/game2.jpg', contentType: 'puzzle', views: 8500 },
+          { id: 'game-3', title: 'Speed Challenge', description: 'Race against the clock in rapid-fire rounds', thumbnail: '/images/game3.jpg', contentType: 'arcade', views: 22000 },
+          { id: 'game-4', title: 'Brain Buster', description: 'Logic puzzles that challenge your mind', thumbnail: '/images/game4.jpg', contentType: 'strategy', views: 5200 },
+          { id: 'game-5', title: 'Lucky Spin', description: 'Spin the wheel and win rewards', thumbnail: '/images/game5.jpg', contentType: 'casual', views: 31000 },
+          { id: 'game-6', title: 'Card Royale', description: 'Strategic card battles with real prizes', thumbnail: '/images/game6.jpg', contentType: 'card', views: 9800 },
+        ],
+      }),
+    }),
+  );
+}
+
+/** Seed mocks for notifications flow. */
+export async function mockApiForNotifications(page: Page) {
+  await mockApiForAuth(page);
+
+  await page.route('**/api/v1/notifications', (route) => {
+    if (route.request().method() === 'GET') {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            notifications: [
+              { id: 'n1', type: 'like', title: 'New Like', message: 'Comedy King liked your comment', timestamp: '2026-08-29T10:00:00Z', readAt: null },
+              { id: 'n2', type: 'follow', title: 'New Follower', message: 'DJ Master started following you', timestamp: '2026-08-29T09:30:00Z', readAt: null },
+              { id: 'n3', type: 'comment', title: 'New Comment', message: 'Sports Analyst replied: "Great take!"', timestamp: '2026-08-28T18:00:00Z', readAt: '2026-08-28T19:00:00Z' },
+              { id: 'n4', type: 'mention', title: 'You were mentioned', message: '@testuser check this out', timestamp: '2026-08-27T12:00:00Z', readAt: null },
+              { id: 'n5', type: 'system', title: 'System Update', message: 'Your subscription has been renewed', timestamp: '2026-08-25T08:00:00Z', readAt: '2026-08-25T08:30:00Z' },
+            ],
+          },
+        }),
+      });
+    }
+    route.fallback();
+  });
+
+  await page.route('**/api/v1/notifications/*/read', (route) => {
+    if (route.request().method() === 'PATCH') {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      });
+    }
+    route.fallback();
+  });
+
+  await page.route('**/api/v1/notifications/read-all', (route) => {
+    if (route.request().method() === 'PATCH') {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      });
+    }
+    route.fallback();
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Assertion helpers
 // ---------------------------------------------------------------------------

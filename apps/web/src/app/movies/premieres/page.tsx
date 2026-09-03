@@ -1,14 +1,6 @@
 'use client';
 import { Suspense, lazy, useEffect } from 'react';
 
-export const metadata = {
-  title: 'Movie Premieres | Azeebo',
-  description: 'Discover upcoming movie premieres, set reminders, and get notified on Azeebo.',
-  openGraph: {
-    title: 'Movie Premieres | Azeebo',
-    description: 'Discover upcoming movie premieres, set reminders, and get notified on Azeebo.',
-  },
-};
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { api } from '@/lib/api';
@@ -70,7 +62,7 @@ function PremieresPageContent(): React.JSX.Element {
               className="object-cover"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/60 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-[var(--brand-near-black)]/60 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -80,7 +72,7 @@ function PremieresPageContent(): React.JSX.Element {
                 <div className="flex items-center gap-2 mb-4">
                   <span
                     className="px-3 py-1 rounded-full text-xs font-semibold"
-                    style={{ backgroundColor: 'var(--color-warning-500)', color: '#000' }}
+                    style={{ backgroundColor: 'var(--color-warning-500)', color: 'var(--brand-near-black)' }}
                   >
                     Coming Soon
                   </span>
@@ -175,12 +167,12 @@ function PremieresPageContent(): React.JSX.Element {
                         height={192}
                         className="w-full h-48 object-cover"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
                       {daysUntil > 0 && (
                         <div className="absolute top-2 right-2">
                           <span
                             className="px-2.5 py-1 rounded-full text-xs font-semibold"
-                            style={{ backgroundColor: 'rgba(245,158,11,0.9)', color: '#000' }}
+                            style={{ backgroundColor: 'rgba(245,158,11,0.9)', color: 'var(--brand-near-black)' }}
                           >
                             {daysUntil} days
                           </span>
@@ -249,7 +241,7 @@ export default function PremieresPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
           <p className="text-white/50 text-lg">Loading...</p>
         </div>
       }

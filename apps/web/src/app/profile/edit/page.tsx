@@ -1,20 +1,18 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Profile Edit  - Azeebo+',
+  description: 'Profile Edit  on Azeebo+',
+};
+
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { api, type User } from '@/lib/api';
-import { OptimizedImage } from '@/components/OptimizedImage';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
-
-export const metadata = {
-  title: 'Edit Profile | Azeebo',
-  description: 'Update your display name, username, email, bio, and profile photo.',
-  openGraph: {
-    title: 'Edit Profile | Azeebo',
-    description: 'Update your display name, username, email, bio, and profile photo.',
-  },
-};
+import { AvatarUpload } from '@/components/ui/AvatarUpload';
 
 export default function ProfileEditPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
@@ -114,56 +112,12 @@ export default function ProfileEditPage(): React.JSX.Element {
 
         {/* Avatar */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <div
-            style={{
-              width: 96,
-              height: 96,
-              borderRadius: '50%',
-              overflow: 'hidden',
-              margin: '0 auto 12px',
-              border: '3px solid #E8420A',
-            }}
-          >
-            {profile.avatar ? (
-              <OptimizedImage
-                src={profile.avatar}
-                alt="Avatar"
-                width={96}
-                height={96}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  backgroundColor: 'var(--bg-secondary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 36,
-                  fontWeight: 700,
-                  color: 'var(--brand-orange)',
-                }}
-              >
-                {profile.username.charAt(0).toUpperCase()}
-              </div>
-            )}
-          </div>
-          <button
-            style={{
-              padding: '8px 20px',
-              borderRadius: 999,
-              border: '1px solid var(--border-default)',
-              background: 'transparent',
-              color: 'var(--text-secondary)',
-              fontWeight: 500,
-              fontSize: 13,
-              cursor: 'pointer',
-            }}
-          >
-            Change Photo
-          </button>
+          <AvatarUpload
+            currentAvatar={profile.avatar}
+            displayName={profile.displayName || profile.username}
+            onAvatarUpdate={(url) => setProfile((prev) => ({ ...prev, avatar: url }))}
+            size={96}
+          />
         </div>
 
         <div className="az-glass" style={{ padding: 24, borderRadius: 20 }}>
@@ -247,7 +201,7 @@ export default function ProfileEditPage(): React.JSX.Element {
                 opacity: isSaving ? 0.6 : 1,
               }}
             >
-              {saved ? '✓ Saved!' : isSaving ? 'Saving...' : 'Save Changes'}
+              {saved ? 'Check Saved!' : isSaving ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </div>

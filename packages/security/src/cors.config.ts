@@ -4,10 +4,12 @@ export interface CorsOptions {
   allowedOrigins: string[];
   credentials?: boolean;
   maxAge?: number;
+  /** If true, allow requests without an Origin header (server-to-server). Default: true */
+  allowMissingOrigin?: boolean;
 }
 
 export function configureCors(app: INestApplication, options: CorsOptions): void {
-  const { allowedOrigins, credentials = true, maxAge = 3600 } = options;
+  const { allowedOrigins, credentials = true, maxAge = 3600, allowMissingOrigin = true } = options;
 
   const validatedOrigins = allowedOrigins.map((origin) => {
     if (origin === '*') {
@@ -29,7 +31,13 @@ export function configureCors(app: INestApplication, options: CorsOptions): void
     ) => {
       if (!origin) {
         // Allow requests without origin (server-to-server, curl, etc.)
-        callback(null, true);
+        // when allowMissingOrigin is true (default). Set to false for
+        // user-facing endpoints to prevent CORS bypass.
+        if (allowMissingOrigin) {
+          callback(null, true);
+        } else {
+          callback(new Error('CORS: Missing Origin header — not allowed for this endpoint'));
+        }
         return;
       }
 

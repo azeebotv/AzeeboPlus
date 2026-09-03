@@ -1,4 +1,6 @@
 'use client';
+import { useState, useEffect } from 'react';
+
 const CONSENT_KEY = 'azeebo_cookie_consent';
 const CONSENT_VERSION = '1.0';
 interface ConsentState {
@@ -24,7 +26,9 @@ export function CookieConsent() {
       try {
         const p = JSON.parse(s) as ConsentState;
         if (p.version === CONSENT_VERSION) return;
-      } catch {}
+      } catch {
+        /* Corrupted localStorage — show consent banner */
+      }
     }
     setShow(true);
   }, []);
@@ -46,7 +50,9 @@ export function CookieConsent() {
         {!details ? (
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">🍪 We value your privacy</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                CookieWe value your privacy
+              </h3>
               <p className="text-sm text-gray-600">
                 We use cookies to enhance your experience, analyze site traffic, and personalize
                 content.

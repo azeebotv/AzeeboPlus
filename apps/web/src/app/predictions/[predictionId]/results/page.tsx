@@ -86,7 +86,7 @@ export default function PredictionResultsPage(): React.JSX.Element {
           </div>
         ) : !results ? (
           <div className="az-glass" style={{ padding: 40, borderRadius: 20, textAlign: 'center' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>📊</div>
+            <div style={{ fontSize: 48, marginBottom: 16 }}></div>
             <h3 style={{ fontSize: 18 }}>Results not available yet</h3>
             <p style={{ color: 'var(--text-secondary)', marginTop: 8 }}>
               Check back after the prediction closes
@@ -146,10 +146,10 @@ export default function PredictionResultsPage(): React.JSX.Element {
                             style={{
                               fontWeight: 600,
                               fontSize: 14,
-                              color: isCorrect ? 'var(--brand-forest)' : '#F5F0EB',
+                              color: isCorrect ? 'var(--brand-forest)' : 'var(--brand-surface-light, #f5f0eb)',
                             }}
                           >
-                            {opt.text} {isCorrect && '✓'}
+                            {opt.text} {isCorrect && 'Check'}
                           </span>
                           <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
                             {pct}% ({opt.votes} votes)

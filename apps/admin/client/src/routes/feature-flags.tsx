@@ -24,14 +24,14 @@ const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '10px 16px',
   borderRadius: 8,
-  border: '1px solid #2A1A1A',
-  backgroundColor: '#0D0505',
-  color: '#F5F0EB',
+  border: '1px solid var(--admin-surface)',
+  backgroundColor: 'var(--admin-dark)',
+  color: 'var(--admin-text)',
   fontSize: 14,
   boxSizing: 'border-box',
 };
 
-const labelStyle: React.CSSProperties = { color: '#9A8A7A', fontSize: 13 };
+const labelStyle: React.CSSProperties = { color: 'var(--admin-text-muted)', fontSize: 13 };
 
 // Per-tab persistence key for the stale-filter choice (sessionStorage): once
 // the user arrives via the badge (?stale=1), the choice sticks for the tab
@@ -137,7 +137,14 @@ export default function FeatureFlagsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'feature-flags'] });
       setShowCreate(false);
-      setForm({ universeId: '', key: '', description: '', rolloutPercentage: '100', userIds: '', staleAfter: '' });
+      setForm({
+        universeId: '',
+        key: '',
+        description: '',
+        rolloutPercentage: '100',
+        userIds: '',
+        staleAfter: '',
+      });
     },
   });
 
@@ -285,7 +292,8 @@ export default function FeatureFlagsPage() {
     const metadata: Record<string, unknown> = {};
     if (form.description.trim()) metadata.description = form.description.trim();
     const rollout = Number(form.rolloutPercentage);
-    if (!Number.isNaN(rollout) && rollout >= 0 && rollout <= 100) metadata.rolloutPercentage = rollout;
+    if (!Number.isNaN(rollout) && rollout >= 0 && rollout <= 100)
+      metadata.rolloutPercentage = rollout;
     const userIds = form.userIds
       .split(',')
       .map((u) => u.trim())
@@ -315,7 +323,11 @@ export default function FeatureFlagsPage() {
   const enabledCount = flags.filter((f) => f.isEnabled).length;
   const staleFlags = flags.filter((f) => {
     const staleAfter = f.metadata?.staleAfter;
-    return typeof staleAfter === 'string' && !Number.isNaN(Date.parse(staleAfter)) && new Date(staleAfter) < new Date();
+    return (
+      typeof staleAfter === 'string' &&
+      !Number.isNaN(Date.parse(staleAfter)) &&
+      new Date(staleAfter) < new Date()
+    );
   });
 
   // Focus target: a specific ?flag=+?universe= deep-link wins; otherwise the
@@ -381,10 +393,10 @@ export default function FeatureFlagsPage() {
       >
         <div>
           <h1 style={{ fontSize: 28, fontWeight: 700 }}>Feature Flags</h1>
-          <p style={{ color: '#9A8A7A', marginTop: 4 }}>
+          <p style={{ color: 'var(--admin-text-muted)', marginTop: 4 }}>
             {flags.length} flags ({enabledCount} enabled)
             {staleFlags.length > 0 && (
-              <span style={{ color: '#E8420A', marginLeft: 8 }}>· {staleFlags.length} stale</span>
+              <span style={{ color: 'var(--admin-orange)', marginLeft: 8 }}>· {staleFlags.length} stale</span>
             )}
           </p>
         </div>
@@ -395,9 +407,9 @@ export default function FeatureFlagsPage() {
             style={{
               padding: '10px 20px',
               borderRadius: 12,
-              border: '1px solid #2A1A1A',
-              background: staleFlags.length > 0 ? '#E8420A' : '#1A1A1A',
-              color: staleFlags.length > 0 ? '#fff' : '#6B5B4B',
+              border: '1px solid var(--admin-surface)',
+              background: staleFlags.length > 0 ? 'var(--admin-orange)' : 'var(--admin-bg)',
+              color: staleFlags.length > 0 ? 'white' : 'var(--admin-text-muted)',
               cursor: staleFlags.length > 0 ? 'pointer' : 'not-allowed',
               fontWeight: 600,
               fontSize: 14,
@@ -408,9 +420,7 @@ export default function FeatureFlagsPage() {
                 : 'Archive + remove every universe flag past its staleAfter date'
             }
           >
-            {pruneMutation.isPending
-              ? 'Removing…'
-              : `Remove stale flags (${staleFlags.length})`}
+            {pruneMutation.isPending ? 'Removing…' : `Remove stale flags (${staleFlags.length})`}
           </button>
           <button
             onClick={() => setShowCreate(true)}
@@ -419,7 +429,7 @@ export default function FeatureFlagsPage() {
               borderRadius: 12,
               border: 'none',
               background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-              color: '#fff',
+              color: 'white',
               fontWeight: 600,
               fontSize: 14,
               cursor: 'pointer',
@@ -435,7 +445,7 @@ export default function FeatureFlagsPage() {
           <p
             style={{
               fontSize: 12,
-              color: pruneFeedback.error ? '#E8420A' : '#1F8A4C',
+              color: pruneFeedback.error ? 'var(--admin-orange)' : 'var(--admin-green)',
               whiteSpace: 'pre-wrap',
               margin: '0 0 6px',
             }}
@@ -449,9 +459,9 @@ export default function FeatureFlagsPage() {
               style={{
                 padding: '5px 12px',
                 borderRadius: 6,
-                border: '1px solid #2A1A1A',
-                background: '#1F8A4C',
-                color: '#fff',
+                border: '1px solid var(--admin-surface)',
+                background: 'var(--admin-green)',
+                color: 'white',
                 cursor: 'pointer',
                 fontWeight: 600,
                 fontSize: 12,
@@ -468,7 +478,7 @@ export default function FeatureFlagsPage() {
       {recentlyDeleted.length > 0 && (
         <div
           style={{
-            border: '1px solid #2A1A1A',
+            border: '1px solid var(--admin-surface)',
             borderRadius: 10,
             marginBottom: 16,
             background: 'rgba(31,138,76,0.05)',
@@ -484,15 +494,15 @@ export default function FeatureFlagsPage() {
               padding: '12px 18px',
               background: 'transparent',
               border: 'none',
-              color: '#D8C9B8',
+              color: 'var(--admin-text-muted)',
               cursor: 'pointer',
               fontWeight: 600,
               fontSize: 13,
             }}
           >
             <span>
-              Recently removed universe flags ({recentlyDeleted.length}) — restorable from
-              the audit archive
+              Recently removed universe flags ({recentlyDeleted.length}) — restorable from the audit
+              archive
             </span>
             <span>{showDeleted ? '▾' : '▸'}</span>
           </button>
@@ -503,8 +513,7 @@ export default function FeatureFlagsPage() {
                 // (universeId + featureKey); without an archive there is
                 // nothing to replay, so the row renders as not-restorable.
                 const restorable = f.archived && !!f.universeId && !!f.featureKey;
-                const label =
-                  [f.universeName, f.featureKey].filter(Boolean).join('.') || f.key;
+                const label = [f.universeName, f.featureKey].filter(Boolean).join('.') || f.key;
                 return (
                   <div
                     key={`${f.universeId ?? ''}:${f.featureKey ?? ''}:${f.deletedAt}`}
@@ -518,10 +527,9 @@ export default function FeatureFlagsPage() {
                     }}
                   >
                     <div>
-                      <code style={{ color: '#D8C9B8' }}>{label}</code>
-                      <span style={{ color: '#9A8A7A', marginLeft: 8, fontSize: 12 }}>
-                        removed{' '}
-                        {f.deletedAt ? new Date(f.deletedAt).toLocaleString() : ''}
+                      <code style={{ color: 'var(--admin-text-muted)' }}>{label}</code>
+                      <span style={{ color: 'var(--admin-text-muted)', marginLeft: 8, fontSize: 12 }}>
+                        removed {f.deletedAt ? new Date(f.deletedAt).toLocaleString() : ''}
                         {f.deletedBy ? ` by ${f.deletedBy}` : ''}
                         {!f.archived ? ' · no archive' : ''}
                       </span>
@@ -529,8 +537,7 @@ export default function FeatureFlagsPage() {
                     {restorable && (
                       <button
                         onClick={() => {
-                          if (!window.confirm(`Restore "${label}" from the audit archive?`))
-                            return;
+                          if (!window.confirm(`Restore "${label}" from the audit archive?`)) return;
                           restoreUniverseMutation.mutate([
                             { universeId: f.universeId!, featureKey: f.featureKey! },
                           ]);
@@ -539,9 +546,9 @@ export default function FeatureFlagsPage() {
                         style={{
                           padding: '4px 10px',
                           borderRadius: 6,
-                          border: '1px solid #2A1A1A',
-                          background: '#1F8A4C',
-                          color: '#fff',
+                          border: '1px solid var(--admin-surface)',
+                          background: 'var(--admin-green)',
+                          color: 'white',
                           cursor: 'pointer',
                           fontWeight: 600,
                           fontSize: 12,
@@ -572,17 +579,18 @@ export default function FeatureFlagsPage() {
             fontSize: 13,
           }}
         >
-          <span style={{ color: '#F5F0EB', fontWeight: 600 }}>
+          <span style={{ color: 'var(--admin-text)', fontWeight: 600 }}>
             Showing {staleFlags.length} stale universe flag(s) — expiry backlog
           </span>
-          <button onClick={exitStaleMode}
+          <button
+            onClick={exitStaleMode}
             style={{
               marginLeft: 'auto',
               padding: '4px 12px',
               borderRadius: 6,
-              border: '1px solid #2A1A1A',
+              border: '1px solid var(--admin-surface)',
               background: 'transparent',
-              color: '#9A8A7A',
+              color: 'var(--admin-text-muted)',
               cursor: 'pointer',
               fontSize: 12,
             }}
@@ -592,7 +600,15 @@ export default function FeatureFlagsPage() {
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 24, alignItems: 'center', flexWrap: 'wrap' }}>
+      <div
+        style={{
+          display: 'flex',
+          gap: 8,
+          marginBottom: 24,
+          alignItems: 'center',
+          flexWrap: 'wrap',
+        }}
+      >
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -610,9 +626,9 @@ export default function FeatureFlagsPage() {
           style={{
             padding: '6px 14px',
             borderRadius: 999,
-            border: staleOnly ? '1px solid #FF9E6B' : '1px solid #2A1A1A',
-            background: staleOnly ? '#7A2A0A' : 'transparent',
-            color: staleOnly ? '#FFD9C2' : '#9A8A7A',
+            border: staleOnly ? '1px solid #FF9E6B' : '1px solid var(--admin-surface)',
+            background: staleOnly ? 'var(--admin-orange)' : 'transparent',
+            color: staleOnly ? 'var(--admin-text-muted)' : 'var(--admin-text-muted)',
             cursor: 'pointer',
             fontWeight: 600,
             fontSize: 13,
@@ -627,7 +643,7 @@ export default function FeatureFlagsPage() {
           style={{
             padding: 24,
             borderRadius: 16,
-            border: '1px solid #2A1A1A',
+            border: '1px solid var(--admin-surface)',
             backgroundColor: 'rgba(26,10,10,0.8)',
             marginBottom: 24,
           }}
@@ -704,7 +720,7 @@ export default function FeatureFlagsPage() {
                   borderRadius: 8,
                   border: 'none',
                   background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                  color: '#fff',
+                  color: 'white',
                   fontWeight: 600,
                   cursor: 'pointer',
                   opacity: !form.key.trim() || !form.universeId ? 0.5 : 1,
@@ -717,9 +733,9 @@ export default function FeatureFlagsPage() {
                 style={{
                   padding: '10px 20px',
                   borderRadius: 8,
-                  border: '1px solid #2A1A1A',
+                  border: '1px solid var(--admin-surface)',
                   background: 'transparent',
-                  color: '#9A8A7A',
+                  color: 'var(--admin-text-muted)',
                   cursor: 'pointer',
                 }}
               >
@@ -731,7 +747,7 @@ export default function FeatureFlagsPage() {
       )}
 
       {isLoading ? (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {filtered.map((flag) => {
@@ -755,8 +771,8 @@ export default function FeatureFlagsPage() {
                   padding: '14px 16px',
                   borderRadius: 12,
                   border: isFocused
-                    ? '2px solid #E8420A'
-                    : `1px solid ${isStale ? '#7A2A0A' : '#2A1A1A'}`,
+                    ? '2px solid var(--admin-orange)'
+                    : `1px solid ${isStale ? 'var(--admin-orange)' : 'var(--admin-surface)'}`,
                   backgroundColor: isFocused ? 'rgba(232,66,10,0.12)' : 'rgba(26,10,10,0.5)',
                   boxShadow: isFocused ? '0 0 0 3px rgba(232,66,10,0.25)' : undefined,
                   animation: isFocused ? 'flagFlash 1.8s ease-out' : undefined,
@@ -771,8 +787,8 @@ export default function FeatureFlagsPage() {
                         borderRadius: 999,
                         fontSize: 11,
                         fontWeight: 500,
-                        backgroundColor: flag.isEnabled ? '#0D3B2E' : '#3B0D0D',
-                        color: flag.isEnabled ? '#4ADE80' : '#F87171',
+                        backgroundColor: flag.isEnabled ? 'var(--admin-green)' : 'var(--admin-dark)',
+                        color: flag.isEnabled ? 'var(--admin-emerald)' : 'var(--admin-red)',
                       }}
                     >
                       {flag.isEnabled ? 'ON' : 'OFF'}
@@ -783,7 +799,7 @@ export default function FeatureFlagsPage() {
                         borderRadius: 999,
                         fontSize: 11,
                         backgroundColor: 'rgba(255,255,255,0.05)',
-                        color: '#9A8A7A',
+                        color: 'var(--admin-text-muted)',
                       }}
                     >
                       {flag.universe?.displayName || flag.universe?.name || 'unknown'}
@@ -794,7 +810,7 @@ export default function FeatureFlagsPage() {
                           padding: '2px 8px',
                           borderRadius: 999,
                           background: 'rgba(232,66,10,0.25)',
-                          color: '#FF9E6B',
+                          color: 'var(--admin-orange)',
                           fontSize: 11,
                           fontWeight: 600,
                         }}
@@ -812,16 +828,16 @@ export default function FeatureFlagsPage() {
                     )}
                   </div>
                   {flag.metadata?.description != null && (
-                    <p style={{ color: '#9A8A7A', fontSize: 12, marginTop: 4 }}>
+                    <p style={{ color: 'var(--admin-text-muted)', fontSize: 12, marginTop: 4 }}>
                       {String(flag.metadata.description)}
                     </p>
                   )}
                   <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
                     {rollout !== undefined && rollout < 100 && (
-                      <span style={{ color: '#E8420A', fontSize: 11 }}>Rollout: {rollout}%</span>
+                      <span style={{ color: 'var(--admin-orange)', fontSize: 11 }}>Rollout: {rollout}%</span>
                     )}
                     {userIds.length > 0 && (
-                      <span style={{ color: '#9A8A7A', fontSize: 11 }}>
+                      <span style={{ color: 'var(--admin-text-muted)', fontSize: 11 }}>
                         Allowlist: {userIds.length} user{userIds.length === 1 ? '' : 's'}
                       </span>
                     )}
@@ -835,7 +851,7 @@ export default function FeatureFlagsPage() {
                       flexWrap: 'wrap',
                     }}
                   >
-                    <span style={{ color: '#9A8A7A', fontSize: 11 }}>stale after</span>
+                    <span style={{ color: 'var(--admin-text-muted)', fontSize: 11 }}>stale after</span>
                     <input
                       type="date"
                       value={
@@ -859,11 +875,11 @@ export default function FeatureFlagsPage() {
                         borderRadius: 8,
                         border: 'none',
                         background: staleDrafts[`${flag.universeId}:${flag.featureKey}`]
-                          ? '#E8420A'
-                          : '#3A2A2A',
+                          ? 'var(--admin-orange)'
+                          : 'var(--admin-surface)',
                         color: staleDrafts[`${flag.universeId}:${flag.featureKey}`]
-                          ? '#fff'
-                          : '#9A8A7A',
+                          ? 'white'
+                          : 'var(--admin-text-muted)',
                         fontWeight: 600,
                         fontSize: 11,
                         cursor: staleDrafts[`${flag.universeId}:${flag.featureKey}`]
@@ -886,9 +902,9 @@ export default function FeatureFlagsPage() {
                       style={{
                         padding: '4px 12px',
                         borderRadius: 8,
-                        border: '1px solid #2A1A1A',
+                        border: '1px solid var(--admin-surface)',
                         background: 'transparent',
-                        color: staleAfter ? '#9A8A7A' : '#5A4A4A',
+                        color: staleAfter ? 'var(--admin-text-muted)' : 'var(--admin-text-muted)',
                         fontWeight: 600,
                         fontSize: 11,
                         cursor: staleAfter ? 'pointer' : 'not-allowed',
@@ -898,7 +914,7 @@ export default function FeatureFlagsPage() {
                       Clear expiry
                     </button>
                     {staleAfter && (
-                      <span style={{ color: '#9A8A7A', fontSize: 11 }}>
+                      <span style={{ color: 'var(--admin-text-muted)', fontSize: 11 }}>
                         expires {new Date(staleAfter).toLocaleDateString()}
                       </span>
                     )}
@@ -906,16 +922,14 @@ export default function FeatureFlagsPage() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                   <button
-                    onClick={() =>
-                      toggleMutation.mutate({ universeId: flag.universeId, flag })
-                    }
+                    onClick={() => toggleMutation.mutate({ universeId: flag.universeId, flag })}
                     disabled={toggleMutation.isPending}
                     style={{
                       padding: '6px 14px',
                       borderRadius: 8,
-                      border: flag.isEnabled ? '1px solid #3B0D0D' : '1px solid #0D3B2E',
+                      border: flag.isEnabled ? '1px solid #3B0D0D' : '1px solid var(--admin-green)',
                       background: flag.isEnabled ? 'rgba(59,13,13,0.5)' : 'rgba(13,59,46,0.5)',
-                      color: flag.isEnabled ? '#F87171' : '#4ADE80',
+                      color: flag.isEnabled ? 'var(--admin-red)' : 'var(--admin-emerald)',
                       fontSize: 12,
                       fontWeight: 500,
                       cursor: 'pointer',
@@ -925,7 +939,9 @@ export default function FeatureFlagsPage() {
                   </button>
                   <button
                     onClick={() => {
-                      if (confirm(`Delete flag "${flag.featureKey}" from ${flag.universe?.name}?`)) {
+                      if (
+                        confirm(`Delete flag "${flag.featureKey}" from ${flag.universe?.name}?`)
+                      ) {
                         deleteMutation.mutate({
                           universeId: flag.universeId,
                           featureKey: flag.featureKey,
@@ -935,9 +951,9 @@ export default function FeatureFlagsPage() {
                     style={{
                       padding: '6px 14px',
                       borderRadius: 8,
-                      border: '1px solid #2A1A1A',
+                      border: '1px solid var(--admin-surface)',
                       background: 'transparent',
-                      color: '#9A8A7A',
+                      color: 'var(--admin-text-muted)',
                       fontSize: 12,
                       cursor: 'pointer',
                     }}
@@ -949,7 +965,7 @@ export default function FeatureFlagsPage() {
             );
           })}
           {filtered.length === 0 && (
-            <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A' }}>
+            <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>
               {search ? 'No flags match your search' : 'No feature flags yet'}
             </p>
           )}
