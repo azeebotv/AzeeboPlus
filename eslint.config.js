@@ -147,7 +147,7 @@ module.exports = [
         'error',
         {
           allowList: [
-            '#000000', '#FFFFFF', '#ffffff', '#00000000',
+            '#000000', '#FFFFFF', '#00000000',
             // Brand colors
             '#E8420A', '#1A0A0A', '#F5F0EB', '#9A8A7A',
             '#E5E4E2', '#555', '#000', '#fff',
@@ -158,11 +158,13 @@ module.exports = [
             '#4CAF50', '#FF9800', '#9C27B0', '#00BCD4',
             // Additional design system colors
             '#06b6d4', '#1A1A1A', '#1E90FF', '#32CD32',
-            '#3b82f6', '#4ade80', '#607D8B', '#8b5cf6',
+            '#4ade80', '#607D8B', '#8b5cf6',
             '#A78BFA', '#C0C0C0', '#C41E3A', '#CC1C1C',
             '#CD7F32', '#D1D5DB', '#D97706', '#EC4899',
-            '#FF6B35', '#FFD700', '#ec4899', '#f97316',
+            '#FF6B35', '#FFD700', '#f97316',
             '#fbbf24',
+            // Third-party social brand colors
+            '#1DA1F2', '#1877F2', '#25D366',
             // Dashboard/analytics colors
             '#10B981', '#F59E0B', '#3B82F6', '#EF4444',
             '#10B98120', '#F59E0B20', '#3B82F620',
