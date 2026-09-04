@@ -39,6 +39,7 @@ export function ServiceWorkerRegistration() {
       })
       .catch((err) => {
         if (process.env.NODE_ENV === 'development') {
+          // eslint-disable-next-line no-console
           console.warn('[SW] Registration failed:', err);
         }
       });
