@@ -16,8 +16,8 @@ export function useServiceWorker(): ServiceWorkerState & {
   clearCache: () => void;
   processQueue: () => void;
 } {
-  const [isSupported] = useState(() =>
-    typeof window !== 'undefined' && 'serviceWorker' in navigator
+  const [isSupported] = useState(
+    () => typeof window !== 'undefined' && 'serviceWorker' in navigator
   );
   const [isRegistered, setIsRegistered] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
@@ -76,6 +76,7 @@ export function useServiceWorker(): ServiceWorkerState & {
         }
       });
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.warn('[SW] Registration failed:', err);
     }
   }, [isSupported]);
@@ -93,7 +94,8 @@ export function useServiceWorker(): ServiceWorkerState & {
     if (!registration?.active) return;
     registration.active.postMessage({ type: 'PROCESS_QUEUE' });
     // Trigger background sync if available
-    const sync = (registration as unknown as { sync?: { register(tag: string): Promise<void> } }).sync;
+    const sync = (registration as unknown as { sync?: { register(tag: string): Promise<void> } })
+      .sync;
     if (sync) {
       sync.register('process-mutations').catch(() => {});
     }
