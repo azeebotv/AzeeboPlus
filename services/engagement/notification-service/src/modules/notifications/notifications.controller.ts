@@ -10,7 +10,6 @@ import {
   Request,
   Body,
   Param,
-  ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
@@ -71,7 +70,7 @@ export class NotificationsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async markAsRead(
     @Request() req: { user: { sub: string; id: string } },
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id') id: string
   ): Promise<NotificationResponse> {
     return this.notificationsService.markAsRead(req.user.id, id);
   }
@@ -174,7 +173,7 @@ export class NotificationsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async deletePushToken(
     @Request() req: { user: { sub: string; id: string } },
-    @Param('tokenId', ParseUUIDPipe) tokenId: string
+    @Param('tokenId') tokenId: string
   ): Promise<NotificationResponse> {
     return this.notificationsService.deletePushTokenById(req.user.id, tokenId);
   }

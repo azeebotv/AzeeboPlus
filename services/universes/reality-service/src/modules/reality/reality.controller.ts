@@ -10,7 +10,6 @@ import {
   Request,
   Param,
   Query,
-  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
@@ -180,7 +179,7 @@ export class RealityController {
   @ApiOperation({ summary: 'Get episode detail' })
   @ApiResponse({ status: 200, description: 'Episode detail' })
   @ApiResponse({ status: 404, description: 'Episode not found' })
-  async getEpisode(@Param('episodeId', ParseUUIDPipe) episodeId: string): Promise<RealityResponse> {
+  async getEpisode(@Param('episodeId') episodeId: string): Promise<RealityResponse> {
     return this.realityService.getEpisode(episodeId);
   }
 
@@ -243,9 +242,7 @@ export class RealityController {
   @ApiOperation({ summary: 'Get contestant detail' })
   @ApiResponse({ status: 200, description: 'Contestant detail' })
   @ApiResponse({ status: 404, description: 'Contestant not found' })
-  async getContestant(
-    @Param('contestantId', ParseUUIDPipe) contestantId: string
-  ): Promise<RealityResponse> {
+  async getContestant(@Param('contestantId') contestantId: string): Promise<RealityResponse> {
     return this.realityService.getContestant(contestantId);
   }
 
@@ -264,7 +261,7 @@ export class RealityController {
   @ApiOperation({ summary: 'List votes for a show' })
   @ApiResponse({ status: 200, description: 'Paginated vote list' })
   async listVotesForShow(
-    @Param('showId', ParseUUIDPipe) showId: string,
+    @Param('showId') showId: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string
   ): Promise<RealityResponse> {
@@ -277,7 +274,7 @@ export class RealityController {
   @ApiOperation({ summary: 'List predictions for a show' })
   @ApiResponse({ status: 200, description: 'Paginated prediction list' })
   async listPredictionsForShow(
-    @Param('showId', ParseUUIDPipe) showId: string,
+    @Param('showId') showId: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string
   ): Promise<RealityResponse> {
