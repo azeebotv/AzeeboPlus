@@ -2,7 +2,7 @@
 // Azeebo+ Service Worker v1.0
 // Provides offline caching, background sync, and stale-while-revalidate strategies
 
-const CACHE_VERSION = 'azeebo-v1';
+const CACHE_VERSION = 'azeebo-v2';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
 const API_CACHE = `${CACHE_VERSION}-api`;

@@ -53,72 +53,79 @@ export function useComments(contentId: string) {
   useEffect(() => {
     if (!contentId) return;
 
-    const wsUrl = `ws://localhost:3006/comments?contentId=${contentId}`;
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
+    const wsBase = process.env.NEXT_PUBLIC_COMMENTS_WS_URL;
+    if (!wsBase) return;
 
-    ws.onopen = () => {
-      setIsConnected(true);
-      // WebSocket connected
-    };
+    try {
+      const wsUrl = `${wsBase}?contentId=${contentId}`;
+      const ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
 
-    ws.onmessage = (event) => {
-      try {
-        const payload: CommentPayload = JSON.parse(event.data);
+      ws.onopen = () => {
+        setIsConnected(true);
+      };
 
-        switch (payload.event) {
-          case 'new_comment':
-            queryClient.setQueryData<Comment[]>(['comments', contentId], (old) => {
-              const exists = old?.some((c) => c.id === (payload.data as Comment).id);
-              if (exists) return old;
-              return [payload.data as Comment, ...(old || [])];
-            });
-            break;
-          case 'delete_comment':
-            queryClient.setQueryData<Comment[]>(
-              ['comments', contentId],
-              (old) =>
-                old?.filter((c) => c.id !== (payload.data as { commentId: string }).commentId) || []
-            );
-            break;
-          case 'reaction_update':
-            queryClient.setQueryData<Comment[]>(
-              ['comments', contentId],
-              (old) =>
-                old?.map((c) => {
-                  if (c.id === (payload.data as { commentId: string }).commentId) {
-                    return {
-                      ...c,
-                      reactions: {
-                        ...c.reactions,
-                        [(payload.data as { reaction: string }).reaction]: (
-                          payload.data as { count: number }
-                        ).count,
-                      },
-                    };
-                  }
-                  return c;
-                }) || []
-            );
-            break;
+      ws.onmessage = (event) => {
+        try {
+          const payload: CommentPayload = JSON.parse(event.data);
+
+          switch (payload.event) {
+            case 'new_comment':
+              queryClient.setQueryData<Comment[]>(['comments', contentId], (old) => {
+                const exists = old?.some((c) => c.id === (payload.data as Comment).id);
+                if (exists) return old;
+                return [payload.data as Comment, ...(old || [])];
+              });
+              break;
+            case 'delete_comment':
+              queryClient.setQueryData<Comment[]>(
+                ['comments', contentId],
+                (old) =>
+                  old?.filter((c) => c.id !== (payload.data as { commentId: string }).commentId) ||
+                  []
+              );
+              break;
+            case 'reaction_update':
+              queryClient.setQueryData<Comment[]>(
+                ['comments', contentId],
+                (old) =>
+                  old?.map((c) => {
+                    if (c.id === (payload.data as { commentId: string }).commentId) {
+                      return {
+                        ...c,
+                        reactions: {
+                          ...c.reactions,
+                          [(payload.data as { reaction: string }).reaction]: (
+                            payload.data as { count: number }
+                          ).count,
+                        },
+                      };
+                    }
+                    return c;
+                  }) || []
+              );
+              break;
+          }
+        } catch (err) {
+          webLogger.error('[Comments] Failed to parse message:', err);
         }
-      } catch (err) {
-        webLogger.error('[Comments] Failed to parse message:', err);
-      }
-    };
+      };
 
-    ws.onclose = () => {
-      setIsConnected(false);
-      // WebSocket disconnected
-    };
+      ws.onclose = () => {
+        setIsConnected(false);
+      };
 
-    ws.onerror = (error) => {
-      webLogger.error('[Comments] WebSocket error:', error);
-    };
+      ws.onerror = (error) => {
+        webLogger.error('[Comments] WebSocket error:', error);
+      };
 
-    return () => {
-      ws.close();
-    };
+      return () => {
+        ws.close();
+      };
+    } catch (err) {
+      webLogger.error('[Comments] Failed to initialize WebSocket:', err);
+      return undefined;
+    }
   }, [contentId, queryClient]);
 
   // Add comment with optimistic update
