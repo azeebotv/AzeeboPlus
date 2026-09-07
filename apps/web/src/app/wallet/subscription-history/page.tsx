@@ -62,11 +62,11 @@ export default function SubscriptionHistoryPage(): React.JSX.Element {
         totalPages: number;
       }>(`/v1/subscription/history?page=${pageNum}&limit=${PAGE_SIZE}`);
 
-      if (res.success && res.data) {
+      if (res.success && res.data && Array.isArray(res.data.items)) {
         const data = res.data;
         setItems((prev) => (append ? [...prev, ...data.items] : data.items));
-        setTotal(data.total);
-        setTotalPages(data.totalPages);
+        setTotal(data.total ?? 0);
+        setTotalPages(data.totalPages ?? 1);
       } else {
         setError('Failed to load subscription history.');
       }

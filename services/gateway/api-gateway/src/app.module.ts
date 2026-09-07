@@ -75,7 +75,7 @@ const universeSentinelDefaults = Object.fromEntries(
       global: true,
       defaultFlags: {
         [gatewayFlags.maintenanceMode]: false,
-        [gatewayFlags.newRoutes]: false,
+        [gatewayFlags.newRoutes]: true,
         [gatewayFlags.circuitBreaker]: true,
         [gatewayFlags.responseCache]: true,
         [gatewayFlags.strictRateLimits]: false,
