@@ -7,7 +7,6 @@ import {
   Delete,
   Body,
   Param,
-  ParseUUIDPipe,
   UseGuards,
   Request,
   Query,
@@ -545,7 +544,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async addCommentToContent(
     @Request() req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() body: { text?: string; content?: string; parentId?: string }
   ): Promise<ContentResponse> {
     return this.contentService.addCommentToContent(
@@ -565,7 +564,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async createMediaAsset(
     @Request() req: { user: { id: string; role?: string } },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() createMediaAssetDto: CreateMediaAssetDto
   ): Promise<ContentResponse> {
     return this.contentService.createMediaAsset(
@@ -585,7 +584,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async generateThumbnail(
     @Request() _req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() body: { width?: number; height?: number; quality?: number }
   ): Promise<ContentResponse> {
     return this.contentService.generateThumbnail(id, body);
@@ -598,7 +597,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async publishContent(
     @Request() req: { user: { id: string; role?: string } },
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id') id: string
   ): Promise<ContentResponse> {
     return this.contentService.publishContent(req.user.id, id, req.user.role);
   }
@@ -610,7 +609,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async unpublishContent(
     @Request() req: { user: { id: string; role?: string } },
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id') id: string
   ): Promise<ContentResponse> {
     return this.contentService.unpublishContent(req.user.id, id, req.user.role);
   }
@@ -622,7 +621,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async reportContent(
     @Request() req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() body: { type: string; reason: string }
   ): Promise<ContentResponse> {
     return this.contentService.reportContent(req.user.id, id, body);
@@ -635,7 +634,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async startTranscoding(
     @Request() _req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() body: { formats?: string[]; resolutions?: string[]; bitrates?: number[] }
   ): Promise<ContentResponse> {
     return this.contentService.startTranscoding(id, body);
@@ -646,10 +645,7 @@ export class ContentController {
   @ApiResponse({ status: 200, description: 'Scan result' })
   @ApiResponse({ status: 404, description: 'Content not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async scanContentForSafety(
-    @Request() _req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string
-  ) {
+  async scanContentForSafety(@Request() _req: { user: { id: string } }, @Param('id') id: string) {
     const result = await this.contentService.scanContentForSafety(id);
     return ApiResponseWrapper.success(result);
   }
@@ -661,8 +657,8 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async addCategoryToContent(
     @Request() req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string,
-    @Param('categoryId', ParseUUIDPipe) categoryId: string
+    @Param('id') id: string,
+    @Param('categoryId') categoryId: string
   ): Promise<ContentResponse> {
     return this.contentService.addCategoryToContent(req.user.id, id, categoryId);
   }
@@ -674,8 +670,8 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async addTagToContent(
     @Request() req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string,
-    @Param('tagId', ParseUUIDPipe) tagId: string
+    @Param('id') id: string,
+    @Param('tagId') tagId: string
   ): Promise<ContentResponse> {
     return this.contentService.addTagToContent(req.user.id, id, tagId);
   }
@@ -687,7 +683,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async addContentRelationship(
     @Request() req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() body: { relatedContentId: string; type: string }
   ): Promise<ContentResponse> {
     return this.contentService.addContentRelationship(
@@ -709,7 +705,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateContent(
     @Request() req: { user: { id: string; role?: string } },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() updateContentDto: UpdateContentDto
   ): Promise<ContentResponse> {
     return this.contentService.updateContent(req.user.id, id, updateContentDto, req.user.role);
@@ -722,7 +718,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateMediaAsset(
     @Request() req: { user: { id: string; role?: string } },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() updateMediaAssetDto: UpdateMediaAssetDto
   ): Promise<ContentResponse> {
     return this.contentService.updateMediaAsset(
@@ -741,7 +737,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateCategory(
     @Request() _req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body()
     body: { name?: string; slug?: string; description?: string; icon?: string; color?: string }
   ): Promise<ContentResponse> {
@@ -763,7 +759,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateTag(
     @Request() _req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() body: { name?: string; description?: string }
   ): Promise<ContentResponse> {
     return this.contentService.updateTag(id, body.name, body.description);
@@ -780,7 +776,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async deleteContent(
     @Request() req: { user: { id: string; role?: string } },
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id') id: string
   ): Promise<ContentResponse> {
     return this.contentService.deleteContent(req.user.id, id, req.user.role);
   }
@@ -792,7 +788,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async deleteMediaAsset(
     @Request() req: { user: { id: string; role?: string } },
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id') id: string
   ): Promise<ContentResponse> {
     return this.contentService.deleteMediaAsset(req.user.id, id, req.user.role);
   }
@@ -804,8 +800,8 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async removeCategoryFromContent(
     @Request() req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string,
-    @Param('categoryId', ParseUUIDPipe) categoryId: string
+    @Param('id') id: string,
+    @Param('categoryId') categoryId: string
   ): Promise<ContentResponse> {
     return this.contentService.removeCategoryFromContent(req.user.id, id, categoryId);
   }
@@ -817,8 +813,8 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async removeTagFromContent(
     @Request() req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string,
-    @Param('tagId', ParseUUIDPipe) tagId: string
+    @Param('id') id: string,
+    @Param('tagId') tagId: string
   ): Promise<ContentResponse> {
     return this.contentService.removeTagFromContent(req.user.id, id, tagId);
   }
@@ -830,8 +826,8 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async removeContentRelationship(
     @Request() req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string,
-    @Param('relatedContentId', ParseUUIDPipe) relatedContentId: string
+    @Param('id') id: string,
+    @Param('relatedContentId') relatedContentId: string
   ): Promise<ContentResponse> {
     return this.contentService.removeContentRelationship(req.user.id, id, relatedContentId);
   }
@@ -845,7 +841,7 @@ export class ContentController {
   @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
   async deleteCategory(
     @Request() _req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id') id: string
   ): Promise<ContentResponse> {
     return this.contentService.deleteCategory(id);
   }
@@ -859,7 +855,7 @@ export class ContentController {
   @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
   async deleteTag(
     @Request() _req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id') id: string
   ): Promise<ContentResponse> {
     return this.contentService.deleteTag(id);
   }

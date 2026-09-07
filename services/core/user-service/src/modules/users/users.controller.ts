@@ -10,7 +10,6 @@ import {
   Post,
   Delete,
   Param,
-  ParseUUIDPipe,
   Query,
   UnauthorizedException,
   UseInterceptors,
@@ -143,7 +142,7 @@ export class UsersController {
   @ApiResponse({ status: 201, description: 'User followed' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async followUser(@Request() req: AuthenticatedRequest, @Param('id', ParseUUIDPipe) id: string) {
+  async followUser(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.usersService.followUser(this.getUserId(req), id);
   }
 
@@ -154,7 +153,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Unfollow a user' })
   @ApiResponse({ status: 200, description: 'User unfollowed' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async unfollowUser(@Request() req: AuthenticatedRequest, @Param('id', ParseUUIDPipe) id: string) {
+  async unfollowUser(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.usersService.unfollowUser(this.getUserId(req), id);
   }
 
@@ -261,7 +260,7 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async unsaveItem(
     @Request() req: AuthenticatedRequest,
-    @Param('contentId', ParseUUIDPipe) contentId: string
+    @Param('contentId') contentId: string
   ): Promise<{ message: string }> {
     return this.usersService.unsaveItem(this.getUserId(req), contentId);
   }

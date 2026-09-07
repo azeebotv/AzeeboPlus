@@ -10,7 +10,6 @@ import {
   Request,
   Param,
   Query,
-  ParseUUIDPipe,
   ParseIntPipe,
   DefaultValuePipe,
 } from '@nestjs/common';
@@ -56,7 +55,7 @@ export class LiveEventController {
   @RateLimit(120, 60000)
   @ApiOperation({ summary: 'Get event details' })
   @ApiResponse({ status: 200, description: 'Event details' })
-  async getEvent(@Param('id', ParseUUIDPipe) id: string) {
+  async getEvent(@Param('id') id: string) {
     return this.liveEventService.getEvent(id);
   }
 
@@ -65,10 +64,7 @@ export class LiveEventController {
   @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get stream URL for a purchased event' })
   @ApiResponse({ status: 200, description: 'Stream URL' })
-  async getStream(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Request() req: { user: { id: string } }
-  ) {
+  async getStream(@Param('id') id: string, @Request() req: { user: { id: string } }) {
     return this.liveEventService.getStreamUrl(id, req.user.id);
   }
 
@@ -90,7 +86,7 @@ export class LiveEventController {
   @ApiOperation({ summary: 'Purchase a ticket for an event' })
   @ApiResponse({ status: 200, description: 'Ticket purchased' })
   async purchaseTicket(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() _dto: PurchaseTicketDto,
     @Request() req: { user: { id: string } }
   ) {
@@ -102,7 +98,7 @@ export class LiveEventController {
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Update event (admin/organizer)' })
   @ApiResponse({ status: 200, description: 'Event updated' })
-  async updateEvent(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateEventDto) {
+  async updateEvent(@Param('id') id: string, @Body() dto: UpdateEventDto) {
     return this.liveEventService.updateEvent(id, dto);
   }
 
@@ -111,7 +107,7 @@ export class LiveEventController {
   @RateLimit(5, 60000)
   @ApiOperation({ summary: 'Cancel an event and refund tickets' })
   @ApiResponse({ status: 200, description: 'Event cancelled' })
-  async cancelEvent(@Param('id', ParseUUIDPipe) id: string) {
+  async cancelEvent(@Param('id') id: string) {
     return this.liveEventService.cancelEvent(id);
   }
 }

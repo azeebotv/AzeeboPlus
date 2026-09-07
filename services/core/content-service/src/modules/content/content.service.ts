@@ -1180,6 +1180,11 @@ export class ContentService {
         parentId
       );
 
+      // Invalidate comments cache
+      await this.cache.delete(`content:${contentId}:comments`).catch(() => {});
+      await this.cache.delete(cacheKey('content', `${contentId}:comments`)).catch(() => {});
+      await this.cache.deleteByPattern(`*${contentId}*comments*`).catch(() => {});
+
       return {
         success: true,
         data: comment,
