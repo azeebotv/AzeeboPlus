@@ -179,6 +179,12 @@ export class AppModule implements NestModule {
         { path: 'api/users/*path', method: RequestMethod.GET },
         { path: 'api/users/*path', method: RequestMethod.HEAD },
         { path: 'api/users/*path', method: RequestMethod.OPTIONS },
+        { path: 'api/v1/analytics/web-vitals', method: RequestMethod.POST },
+        { path: 'api/analytics/web-vitals', method: RequestMethod.POST },
+        { path: 'api/v1/analytics/events', method: RequestMethod.POST },
+        { path: 'api/analytics/events', method: RequestMethod.POST },
+        { path: 'api/v1/analytics/events/batch', method: RequestMethod.POST },
+        { path: 'api/analytics/events/batch', method: RequestMethod.POST },
         { path: 'api/health', method: RequestMethod.ALL },
         { path: 'api/routes', method: RequestMethod.ALL }
       )

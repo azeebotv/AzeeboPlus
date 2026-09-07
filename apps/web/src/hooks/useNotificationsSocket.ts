@@ -60,11 +60,7 @@ export function useNotificationsSocket(options?: {
   }, [token, options]);
 
   const getWsUrl = useCallback(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host =
-      process.env.NEXT_PUBLIC_NOTIFICATION_WS_URL ||
-      `${protocol}//${window.location.hostname}:${process.env.NEXT_PUBLIC_NOTIFICATION_WS_PORT || '3006'}`;
-    return host;
+    return process.env.NEXT_PUBLIC_NOTIFICATION_WS_URL || null;
   }, []);
 
   const connect = useCallback(() => {
@@ -72,8 +68,17 @@ export function useNotificationsSocket(options?: {
     if (!token) return; // Only connect if authenticated
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
+    const url = getWsUrl();
+    if (!url) {
+      // WS endpoint not explicitly configured — fall back directly to REST polling
+      fetchUnreadCountRest();
+      if (!pollingIntervalRef.current) {
+        pollingIntervalRef.current = setInterval(fetchUnreadCountRest, POLLING_INTERVAL_MS);
+      }
+      return;
+    }
+
     try {
-      const url = getWsUrl();
       const ws = new WebSocket(url);
       wsRef.current = ws;
 
