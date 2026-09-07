@@ -2,7 +2,7 @@
 // Azeebo+ Service Worker v1.0
 // Provides offline caching, background sync, and stale-while-revalidate strategies
 
-const CACHE_VERSION = 'azeebo-v3';
+const CACHE_VERSION = 'azeebo-v4';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
 const API_CACHE = `${CACHE_VERSION}-api`;
@@ -28,33 +28,54 @@ const IMAGE_CACHE_MAX_ENTRIES = 200;
 // ─── Install ────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(STATIC_CACHE).then(async (cache) => {
-      // Use allSettled so one missing URL does not break the entire precache
-      await Promise.allSettled(
-        PRECACHE_URLS.map((url) =>
-          cache.add(url).catch((err) => {
-            // Optional precache fail - non-fatal
-            console.debug('[SW] Optional precache skipped for', url, err);
-          })
-        )
-      );
-    })
+    (async () => {
+      try {
+        const cache = await caches.open(STATIC_CACHE);
+        // Use allSettled so one missing URL does not break the entire precache
+        await Promise.allSettled(
+          PRECACHE_URLS.map((url) =>
+            cache.add(url).catch((err) => {
+              // Optional precache fail - non-fatal
+              console.debug('[SW] Optional precache skipped for', url, err);
+            })
+          )
+        );
+      } catch (err) {
+        console.debug('[SW] Cache open failed during install', err);
+      }
+      try {
+        await self.skipWaiting();
+      } catch {
+        // Non-fatal if skipWaiting cannot execute
+      }
+    })()
   );
-  self.skipWaiting();
 });
 
 // ─── Activate ───────────────────────────────────────────────────────────────
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((name) => name !== STATIC_CACHE && name !== DYNAMIC_CACHE && name !== API_CACHE && name !== IMAGE_CACHE)
-          .map((name) => caches.delete(name))
-      );
-    })
+    (async () => {
+      try {
+        const cacheNames = await caches.keys();
+        await Promise.all(
+          cacheNames
+            .filter((name) => name !== STATIC_CACHE && name !== DYNAMIC_CACHE && name !== API_CACHE && name !== IMAGE_CACHE)
+            .map((name) => caches.delete(name))
+        );
+      } catch (err) {
+        console.debug('[SW] Cache cleanup failed during activate', err);
+      }
+
+      try {
+        if (self.clients && typeof self.clients.claim === 'function') {
+          await self.clients.claim();
+        }
+      } catch {
+        // Non-fatal: prevents "InvalidStateError: Only the active worker can claim clients"
+      }
+    })()
   );
-  self.clients.claim();
 });
 
 // ─── Fetch Strategies ──────────────────────────────────────────────────────
@@ -349,8 +370,12 @@ self.addEventListener('fetch', (event) => {
 // ─── Message Handler ────────────────────────────────────────────────────────
 
 self.addEventListener('message', (event) => {
-  if (event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    try {
+      self.skipWaiting();
+    } catch {
+      // Ignore if skipWaiting cannot execute
+    }
   }
   if (event.data.type === 'PROCESS_QUEUE') {
     processQueue();
