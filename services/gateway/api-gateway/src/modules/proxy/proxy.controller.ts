@@ -1902,7 +1902,10 @@ export class ProxyController {
     // any endpoint returned an empty body (or hung) and only cached repeats
     // within the 5-minute TTL succeeded.
     if (method === 'GET' && response && typeof response === 'object' && !res.headersSent) {
-      if (responseCacheEnabled) {
+      const isSuccess =
+        !('success' in (response as Record<string, unknown>)) ||
+        (response as { success?: boolean }).success !== false;
+      if (responseCacheEnabled && isSuccess) {
         await this.cacheManager.set(cacheKey, response, CACHE_TTL_MS);
       }
       res.json(response);
