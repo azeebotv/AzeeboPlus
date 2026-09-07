@@ -40,6 +40,8 @@ const CREATOR_HOST = process.env.CREATOR_APP_URL || 'http://localhost:4104';
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  const isProd = process.env.NODE_ENV === 'production';
+
   // Security headers applied to all responses
   const securityHeaders: Record<string, string> = {
     'X-Content-Type-Options': 'nosniff',
@@ -47,22 +49,27 @@ export function middleware(request: NextRequest) {
     'X-XSS-Protection': '1; mode=block',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(self)',
-    'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
     'X-DNS-Prefetch-Control': 'on',
   };
 
-  // Content-Security-Policy (report-only initially, then enforce)
+  if (isProd) {
+    securityHeaders['Strict-Transport-Security'] = 'max-age=63072000; includeSubDomains; preload';
+  }
+
+  // Content-Security-Policy
   const cspDirectives = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com",
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.youtube.com https://www.youtube-nocookie.com https://www.googletagmanager.com https://www.google-analytics.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "img-src 'self' data: blob: https://*.azeeboplus.com https://*.cloudflare.com",
-    "font-src 'self' https://fonts.gstatic.com",
-    "connect-src 'self' http://localhost:* ws://localhost:* https://*.azeeboplus.com https://api.stripe.com",
+    "img-src 'self' data: blob: https: http://localhost:*",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    "connect-src 'self' http://localhost:* ws://localhost:* ws: wss: https: https://*.azeeboplus.com https://api.stripe.com",
+    "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
+    "media-src 'self' https: blob: data:",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    'upgrade-insecure-requests',
+    ...(isProd ? ['upgrade-insecure-requests'] : []),
   ].join('; ');
 
   securityHeaders['Content-Security-Policy'] = cspDirectives;
