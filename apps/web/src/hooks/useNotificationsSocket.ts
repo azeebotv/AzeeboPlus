@@ -135,6 +135,17 @@ export function useNotificationsSocket(options?: {
         // Don't reconnect if closed intentionally (code 1000) or auth failed (4001/4002)
         if (event.code === 1000 || event.code === 4001 || event.code === 4002) return;
 
+        // Code 1006 = abnormal closure (e.g. server running Socket.IO instead of raw WS, or offline)
+        // If aborted immediately on attempt 0 or 1, back off quickly to REST polling
+        if (event.code === 1006 && reconnectAttemptsRef.current >= 1) {
+          reconnectAttemptsRef.current = MAX_RECONNECT_ATTEMPTS;
+          fetchUnreadCountRest();
+          if (!pollingIntervalRef.current) {
+            pollingIntervalRef.current = setInterval(fetchUnreadCountRest, POLLING_INTERVAL_MS);
+          }
+          return;
+        }
+
         // Exponential backoff reconnection
         if (reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
           reconnectAttemptsRef.current += 1;
@@ -157,7 +168,7 @@ export function useNotificationsSocket(options?: {
       };
 
       ws.onerror = () => {
-        // onclose will handle reconnection
+        // onclose will handle reconnection or polling fallback
       };
     } catch {
       // Connection failed, fallback to polling
