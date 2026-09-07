@@ -1,13 +1,11 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable, tap, catchError } from 'rxjs';
-import { TRACK_COST_OPTIONS, type TrackCostOptions, extractAICostData } from './track-cost.decorator';
+import {
+  TRACK_COST_OPTIONS,
+  type TrackCostOptions,
+  extractAICostData,
+} from './track-cost.decorator';
 import { calculateCost, formatCost, formatTokens, type CostBreakdown } from './cost-calculator';
 import { CostTrackerClient } from './cost-tracker.client';
 
@@ -36,13 +34,13 @@ export class CostTrackingInterceptor implements NestInterceptor {
 
   constructor(
     private readonly reflector: Reflector,
-    private readonly costClient: CostTrackerClient,
+    private readonly costClient: CostTrackerClient
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const options = this.reflector.getAllAndOverride<TrackCostOptions | undefined>(
       TRACK_COST_OPTIONS,
-      [context.getHandler(), context.getClass()],
+      [context.getHandler(), context.getClass()]
     );
 
     // Skip if not decorated or explicitly skipped
@@ -102,11 +100,13 @@ export class CostTrackingInterceptor implements NestInterceptor {
           },
           options,
           latencyMs,
-          error instanceof Error ? error.message : String(error),
-        ).catch(() => { /* metrics logging should not block request */ });
+          error instanceof Error ? error.message : String(error)
+        ).catch(() => {
+          /* metrics logging should not block request */
+        });
 
         throw error;
-      }),
+      })
     );
   }
 
@@ -114,18 +114,18 @@ export class CostTrackingInterceptor implements NestInterceptor {
     className: string,
     methodName: string,
     breakdown: CostBreakdown,
-    options: TrackCostOptions,
+    options: TrackCostOptions
   ): void {
     const prefix = options.agentId ? `[${options.agentId}]` : '';
     const domain = options.domain ? `(${options.domain})` : '';
 
     this.logger.log(
       `${prefix} ${className}.${methodName} ${domain} ` +
-      `model=${breakdown.model} ` +
-      `tokens=${formatTokens(breakdown.inputTokens)}→${formatTokens(breakdown.outputTokens)} ` +
-      `cost=${formatCost(breakdown.totalCostUsd)} ` +
-      `latency=${breakdown.latencyMs ?? 'N/A'}ms` +
-      `${!breakdown.knownModel ? ' ⚠️ UNKNOWN MODEL' : ''}`,
+        `model=${breakdown.model} ` +
+        `tokens=${formatTokens(breakdown.inputTokens)}→${formatTokens(breakdown.outputTokens)} ` +
+        `cost=${formatCost(breakdown.totalCostUsd)} ` +
+        `latency=${breakdown.latencyMs ?? 'N/A'}ms` +
+        `${!breakdown.knownModel ? ' ⚠️ UNKNOWN MODEL' : ''}`
     );
   }
 
@@ -133,7 +133,7 @@ export class CostTrackingInterceptor implements NestInterceptor {
     breakdown: CostBreakdown,
     options: TrackCostOptions,
     latencyMs: number,
-    errorMessage?: string,
+    errorMessage?: string
   ): Promise<void> {
     await this.costClient.recordEvent({
       agentId: options.agentId,

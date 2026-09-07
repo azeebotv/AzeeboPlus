@@ -13,7 +13,7 @@ export class RealityShowsService {
 
   async getShows() {
     // Find the reality universe
-    const realityUniverse = await this.prisma.universe.findFirst({
+    const realityUniverse = await this.prisma.universe.findUnique({
       where: { name: 'reality' },
     });
 

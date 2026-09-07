@@ -5,8 +5,6 @@ export const metadata: Metadata = {
   description: 'Privacy  on Azeebo+',
 };
 
-'use client';
-
 import Link from 'next/link';
 
 /**

@@ -82,12 +82,8 @@ export function extractAICostData(response: unknown): {
   const usageAlt = r.token_usage as Record<string, unknown> | undefined;
   const u = usage ?? usageAlt;
 
-  const inputTokens = Number(
-    u?.input_tokens ?? u?.prompt_tokens ?? u?.inputTokens ?? 0,
-  );
-  const outputTokens = Number(
-    u?.output_tokens ?? u?.completion_tokens ?? u?.outputTokens ?? 0,
-  );
+  const inputTokens = Number(u?.input_tokens ?? u?.prompt_tokens ?? u?.inputTokens ?? 0);
+  const outputTokens = Number(u?.output_tokens ?? u?.completion_tokens ?? u?.outputTokens ?? 0);
 
   // Latency
   const latencyMs = Number(r.latencyMs ?? r.latency_ms ?? r.duration_ms ?? undefined);
@@ -114,7 +110,8 @@ export function extractStreamingChunk(chunk: unknown): {
   return {
     model: (c.model ?? d.model) as string | undefined,
     inputTokens: Number(d.input_tokens ?? d.prompt_tokens ?? undefined) || undefined,
-    outputTokens: Number(d.output_tokens ?? d.completion_tokens ?? d.delta_tokens ?? undefined) || undefined,
+    outputTokens:
+      Number(d.output_tokens ?? d.completion_tokens ?? d.delta_tokens ?? undefined) || undefined,
     finished: c.finished === true || c.done === true || c.stop_reason !== undefined,
   };
 }

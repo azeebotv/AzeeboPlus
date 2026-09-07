@@ -101,33 +101,30 @@ export default function RiskEnginePage() {
   const [assessAction, setAssessAction] = useState('');
   const [assessResult, setAssessResult] = useState<any>(null);
 
-  const classificationsQuery = useQuery<{ data: RiskClassification[] }>({
+  const classificationsQuery = useQuery({
     queryKey: ['admin', 'risk-classifications', { domainFilter, riskFilter }],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (domainFilter) params.set('domain', domainFilter);
       if (riskFilter) params.set('riskLevel', riskFilter);
-      const res = await apiFetch<RiskClassification[]>(
+      return apiFetch<RiskClassification[]>(
         `/api/v1/analytics/risk/classifications?${params}`
       );
-      return res as ApiResponse<RiskData>;
     },
     refetchInterval: 30000,
   });
 
-  const statsQuery = useQuery<{ data: RiskStats }>({
+  const statsQuery = useQuery({
     queryKey: ['admin', 'risk-stats'],
     queryFn: async () => {
-      const res = await apiFetch<RiskStats>('/api/v1/analytics/risk/stats');
-      return res as ApiResponse<RiskData>;
+      return apiFetch<RiskStats>('/api/v1/analytics/risk/stats');
     },
   });
 
-  const approvalsQuery = useQuery<{ data: ApprovalRequest[] }>({
+  const approvalsQuery = useQuery({
     queryKey: ['admin', 'risk-approvals'],
     queryFn: async () => {
-      const res = await apiFetch<ApprovalRequest[]>('/api/v1/analytics/risk/approvals?limit=20');
-      return res as ApiResponse<RiskData>;
+      return apiFetch<ApprovalRequest[]>('/api/v1/analytics/risk/approvals?limit=20');
     },
   });
 
@@ -162,9 +159,9 @@ export default function RiskEnginePage() {
     },
   });
 
-  const classifications = (classificationsQuery.data as ApiResponse<RiskClassification[]>)?.data ?? [];
-  const stats = (statsQuery.data as ApiResponse<RiskStats>)?.data ?? {} as RiskStats;
-  const approvals = (approvalsQuery.data as ApiResponse<RiskApproval[]>)?.data ?? [];
+  const classifications = classificationsQuery.data?.data ?? [];
+  const stats = statsQuery.data?.data ?? ({} as RiskStats);
+  const approvals = approvalsQuery.data?.data ?? [];
 
   const domains = [...new Set(classifications.map((c: RiskClassification) => c.domain))].sort();
 

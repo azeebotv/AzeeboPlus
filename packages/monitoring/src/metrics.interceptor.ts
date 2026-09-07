@@ -119,7 +119,7 @@ export class MetricsInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest();
     const response = context.switchToHttp().getResponse();
-    const { method, url } = request;
+    const { method } = request;
     const serviceName = process.env.SERVICE_NAME || 'unknown';
 
     const startTime = Date.now();

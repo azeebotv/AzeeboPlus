@@ -24,7 +24,9 @@ export function ReviewForm({
   const [rating, setRating] = useState(existingReview?.rating || 0);
   const [title, setTitle] = useState(existingReview?.title || '');
   const [body, setBody] = useState(existingReview?.body || '');
-  const [containsSpoilers, setContainsSpoilers] = useState(existingReview?.containsSpoilers || false);
+  const [containsSpoilers, setContainsSpoilers] = useState(
+    existingReview?.containsSpoilers || false
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -81,12 +83,7 @@ export function ReviewForm({
       <div className="mb-4">
         <label className="text-sm text-white/60 mb-2 block">Your Rating</label>
         <div className="flex items-center gap-3">
-          <StarRating
-            rating={rating}
-            interactive
-            onRate={setRating}
-            size={28}
-          />
+          <StarRating rating={rating} interactive onRate={setRating} size={28} />
           {rating > 0 && (
             <span className="text-sm font-medium" style={{ color: 'var(--brand-orange)' }}>
               {ratingLabels[rating]}
@@ -141,7 +138,10 @@ export function ReviewForm({
 
       {/* Error */}
       {error && (
-        <div className="mb-4 p-3 rounded-xl text-sm" style={{ background: 'rgba(239,68,68,0.1)', color: '#EF4444' }}>
+        <div
+          className="mb-4 p-3 rounded-xl text-sm"
+          style={{ background: 'rgba(239,68,68,0.1)', color: '#EF4444' }}
+        >
           {error}
         </div>
       )}

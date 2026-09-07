@@ -1,10 +1,3 @@
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Admin Process-mining  - Azeebo+',
-  description: 'Admin Process-mining  on Azeebo+',
-};
-
 'use client';
 
 import { useState } from 'react';
@@ -309,7 +302,14 @@ export default function ProcessMiningPage(): React.JSX.Element {
                 backgroundColor: 'rgba(16, 185, 129, 0.1)',
               }}
             >
-              <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--brand-emerald)', marginBottom: 8 }}>
+              <h3
+                style={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: 'var(--brand-emerald)',
+                  marginBottom: 8,
+                }}
+              >
                 Ready Now
               </h3>
               <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
@@ -325,7 +325,14 @@ export default function ProcessMiningPage(): React.JSX.Element {
                 backgroundColor: 'rgba(245, 158, 11, 0.1)',
               }}
             >
-              <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--brand-amber)', marginBottom: 8 }}>
+              <h3
+                style={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: 'var(--brand-amber)',
+                  marginBottom: 8,
+                }}
+              >
                 Partial Automation
               </h3>
               <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
@@ -341,7 +348,14 @@ export default function ProcessMiningPage(): React.JSX.Element {
                 backgroundColor: 'rgba(107, 114, 128, 0.1)',
               }}
             >
-              <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--brand-grey)', marginBottom: 8 }}>
+              <h3
+                style={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: 'var(--brand-grey)',
+                  marginBottom: 8,
+                }}
+              >
                 Not Ready
               </h3>
               <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>

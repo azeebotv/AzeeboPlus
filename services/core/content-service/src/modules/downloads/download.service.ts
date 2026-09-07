@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
 
 export interface DownloadRequest {
   contentId: string;
@@ -37,10 +36,13 @@ export class DownloadService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {
     // Default 2GB storage limit per user
-    this.maxStorageBytes = this.configService.get<number>('DOWNLOAD_MAX_STORAGE', 2 * 1024 * 1024 * 1024);
+    this.maxStorageBytes = this.configService.get<number>(
+      'DOWNLOAD_MAX_STORAGE',
+      2 * 1024 * 1024 * 1024
+    );
   }
 
   /**

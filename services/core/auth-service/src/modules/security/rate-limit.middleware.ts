@@ -1,4 +1,11 @@
-import { Injectable, NestMiddleware, Logger, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Injectable,
+  NestMiddleware,
+  Logger,
+  HttpException,
+  HttpStatus,
+  Optional,
+} from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { ConfigService } from '@nestjs/config';
 
@@ -20,9 +27,9 @@ interface RateLimitConfig {
 export class RateLimitMiddleware implements NestMiddleware {
   private readonly logger = new Logger(RateLimitMiddleware.name);
   private readonly store = new Map<string, RateLimitEntry>();
-  private readonly cleanupInterval: NodeJS.Timeout;
+  private readonly cleanupInterval: ReturnType<typeof setInterval>;
 
-  constructor(private configService: ConfigService) {
+  constructor(@Optional() _configService?: ConfigService) {
     // Cleanup expired entries every minute
     this.cleanupInterval = setInterval(() => this.cleanup(), 60 * 1000);
   }
@@ -61,7 +68,8 @@ export class RateLimitMiddleware implements NestMiddleware {
   static readonly payment = RateLimitMiddleware.create({
     windowMs: 60 * 60 * 1000, // 1 hour
     maxRequests: 10,
-    keyGenerator: (req) => `payment:${req.ip}:${(req as any).user?.id}`,
+    keyGenerator: (req) =>
+      `payment:${req.ip}:${(req as Request & { user?: { id?: string } }).user?.id}`,
   });
 
   use(req: Request, res: Response, next: NextFunction, config?: RateLimitConfig): void {
@@ -120,7 +128,7 @@ export class RateLimitMiddleware implements NestMiddleware {
             message: 'Too many requests',
             retryAfter,
           },
-          HttpStatus.TOO_MANY_REQUESTS,
+          HttpStatus.TOO_MANY_REQUESTS
         );
       }
       return;
@@ -132,7 +140,7 @@ export class RateLimitMiddleware implements NestMiddleware {
     // Track successful requests if configured
     if (cfg.skipSuccessfulRequests) {
       const originalSend = res.send.bind(res);
-      res.send = (body: any) => {
+      res.send = (body: unknown) => {
         if (res.statusCode < 400) {
           entry!.count--;
         }
@@ -146,12 +154,7 @@ export class RateLimitMiddleware implements NestMiddleware {
   /**
    * Set rate limit headers
    */
-  private setHeaders(
-    res: Response,
-    limit: number,
-    remaining: number,
-    resetTime: number,
-  ): void {
+  private setHeaders(res: Response, limit: number, remaining: number, resetTime: number): void {
     res.setHeader('X-RateLimit-Limit', limit.toString());
     res.setHeader('X-RateLimit-Remaining', Math.max(0, remaining).toString());
     res.setHeader('X-RateLimit-Reset', Math.ceil(resetTime / 1000).toString());

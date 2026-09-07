@@ -97,24 +97,22 @@ export default function AgentsPage() {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
-  const agentsQuery = useQuery<{ data: AgentRegistry[] }>({
+  const agentsQuery = useQuery({
     queryKey: ['admin', 'agents', { search, categoryFilter, statusFilter }],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (search) params.set('search', search);
       if (categoryFilter) params.set('category', categoryFilter);
       if (statusFilter) params.set('status', statusFilter);
-      const res = await apiFetch<AgentRegistry[]>(`/api/v1/analytics/agents?${params}`);
-      return res as ApiResponse<AgentRegistry[]>;
+      return apiFetch<AgentRegistry[]>(`/api/v1/analytics/agents?${params}`);
     },
     refetchInterval: 30000,
   });
 
-  const statsQuery = useQuery<{ data: AgentStats }>({
+  const statsQuery = useQuery({
     queryKey: ['admin', 'agents-stats'],
     queryFn: async () => {
-      const res = await apiFetch<AgentStats>('/api/v1/analytics/agents/stats');
-      return res as ApiResponse<AgentRegistry[]>;
+      return apiFetch<AgentStats>('/api/v1/analytics/agents/stats');
     },
   });
 
@@ -148,8 +146,8 @@ export default function AgentsPage() {
     },
   });
 
-  const agents = (agentsQuery.data as AgentListResponse)?.data ?? [];
-  const stats = (statsQuery.data as AgentStatsResponse)?.data ?? {} as AgentStats;
+  const agents = agentsQuery.data?.data ?? [];
+  const stats = statsQuery.data?.data ?? ({} as AgentStats);
 
   return (
     <div>

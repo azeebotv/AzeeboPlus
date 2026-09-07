@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { StyleSheet, TextInput, View, Text, type KeyboardTypeOptions } from 'react-native';
 import { colors, radius, typography, spacing } from '../../theme';
 
@@ -11,6 +12,7 @@ interface BrandInputProps {
   secureTextEntry?: boolean;
   testID?: string;
   editable?: boolean;
+  error?: string;
 }
 
 export function BrandInput({
@@ -23,12 +25,21 @@ export function BrandInput({
   secureTextEntry = false,
   testID,
   editable = true,
+  error,
 }: BrandInputProps) {
+  const [focused, setFocused] = useState(false);
+
+  const borderColor = error
+    ? colors.error[500]
+    : focused
+      ? colors.border.focus
+      : colors.border.default;
+
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, { borderColor }]}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
@@ -39,7 +50,16 @@ export function BrandInput({
         testID={testID}
         editable={editable}
         autoCorrect={false}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        accessibilityLabel={label}
+        aria-invalid={!!error}
       />
+      {error ? (
+        <Text style={styles.errorText} accessibilityRole="alert">
+          {error}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -64,5 +84,11 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.base,
     color: colors.text.primary,
     minHeight: 52,
+  },
+  errorText: {
+    fontSize: typography.fontSize.xs,
+    color: colors.error[500],
+    marginTop: spacing.xs,
+    fontWeight: typography.fontWeight.medium,
   },
 });

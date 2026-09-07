@@ -1,10 +1,3 @@
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Commerce Counterparty  - Azeebo+',
-  description: 'Commerce Counterparty  on Azeebo+',
-};
-
 'use client';
 
 import { useState } from 'react';

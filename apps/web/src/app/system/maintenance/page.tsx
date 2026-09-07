@@ -1,10 +1,3 @@
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'System Maintenance  - Azeebo+',
-  description: 'System Maintenance  on Azeebo+',
-};
-
 'use client';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';

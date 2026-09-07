@@ -5,7 +5,8 @@
     "types": [
       "jest",
       "node",
-      "supertest"
+      "supertest",
+      "multer"
     ],
     "paths": {
       "@azeebo/*": [

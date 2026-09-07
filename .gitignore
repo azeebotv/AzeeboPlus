@@ -85,3 +85,9 @@ buildpush.txt
 
 .freebuff
 .claude
+
+# Test artifacts
+test-results/
+**/test-results/
+playwright-report/
+**/playwright-report/

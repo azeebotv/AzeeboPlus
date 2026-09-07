@@ -28,12 +28,7 @@ export function SharePreviewCard({
     >
       {/* Thumbnail */}
       <div className="relative aspect-video">
-        <OptimizedImage
-          src={thumbnail}
-          alt={title}
-          className="w-full h-full object-cover"
-          fill
-        />
+        <OptimizedImage src={thumbnail} alt={title} className="w-full h-full object-cover" fill />
         <div
           className="absolute inset-0"
           style={{

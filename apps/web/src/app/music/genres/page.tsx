@@ -103,7 +103,8 @@ export default function MusicGenresPage(): React.JSX.Element {
           <ScrollReveal>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {genres.map((genre, index) => {
-                const color = GENRE_COLORS[genre.name?.toLowerCase()] || genre.color || 'var(--brand-orange)';
+                const color =
+                  GENRE_COLORS[genre.name?.toLowerCase()] || genre.color || 'var(--brand-orange)';
                 return (
                   <motion.div
                     key={genre.id}

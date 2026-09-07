@@ -34,7 +34,7 @@ export function useDownloads() {
     queryKey: ['downloads'],
     queryFn: async () => {
       const response = await apiFetch<DownloadItem[]>('/content/downloads');
-      return response.success ? (response.data || []) : [];
+      return response.success ? response.data || [] : [];
     },
     enabled: isAuthenticated,
     staleTime: 10000,

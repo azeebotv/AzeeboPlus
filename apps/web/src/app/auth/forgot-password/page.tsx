@@ -1,10 +1,3 @@
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Auth Forgot-password  - Azeebo+',
-  description: 'Auth Forgot-password  on Azeebo+',
-};
-
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';

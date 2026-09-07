@@ -43,7 +43,8 @@ export default function OfflinePage(): React.JSX.Element {
 
         <h1 className="text-2xl font-bold text-white mb-3">You&apos;re offline</h1>
         <p className="text-white/60 mb-8">
-          It looks like you&apos;ve lost your internet connection. Some features may not be available right now.
+          It looks like you&apos;ve lost your internet connection. Some features may not be
+          available right now.
         </p>
 
         <div className="space-y-3">

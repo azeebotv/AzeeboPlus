@@ -1,10 +1,3 @@
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Wallet Subscription-plans  - Azeebo+',
-  description: 'Wallet Subscription-plans  on Azeebo+',
-};
-
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';

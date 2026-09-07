@@ -1,8 +1,11 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 
-interface KeyboardNavigationOptions {
+export interface KeyboardNavigationOptions {
+  itemCount?: number;
+  initialIndex?: number;
+  onSelect?: (index: number) => void;
   onEscape?: () => void;
   onEnter?: () => void;
   onArrowUp?: () => void;
@@ -13,8 +16,11 @@ interface KeyboardNavigationOptions {
   enabled?: boolean;
 }
 
-export function useKeyboardNavigation(options: KeyboardNavigationOptions) {
+export function useKeyboardNavigation(options: KeyboardNavigationOptions = {}) {
   const {
+    itemCount,
+    initialIndex = 0,
+    onSelect,
     onEscape,
     onEnter,
     onArrowUp,
@@ -25,6 +31,9 @@ export function useKeyboardNavigation(options: KeyboardNavigationOptions) {
     enabled = true,
   } = options;
 
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [isNavigating, setIsNavigating] = useState(false);
+
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       if (!enabled) return;
@@ -32,10 +41,10 @@ export function useKeyboardNavigation(options: KeyboardNavigationOptions) {
       // Don't handle keyboard events when typing in inputs
       const target = event.target as HTMLElement;
       if (
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.tagName === 'SELECT' ||
-        target.isContentEditable
+        target?.tagName === 'INPUT' ||
+        target?.tagName === 'TEXTAREA' ||
+        target?.tagName === 'SELECT' ||
+        target?.isContentEditable
       ) {
         return;
       }
@@ -46,27 +55,56 @@ export function useKeyboardNavigation(options: KeyboardNavigationOptions) {
           break;
         case 'Enter':
           onEnter?.();
+          onSelect?.(currentIndex);
           break;
         case 'ArrowUp':
           event.preventDefault();
+          setIsNavigating(true);
           onArrowUp?.();
+          if (itemCount !== undefined) {
+            setCurrentIndex((prev) => Math.max(prev - 1, 0));
+          }
           break;
         case 'ArrowDown':
           event.preventDefault();
+          setIsNavigating(true);
           onArrowDown?.();
+          if (itemCount !== undefined) {
+            setCurrentIndex((prev) => Math.min(prev + 1, itemCount - 1));
+          }
           break;
         case 'ArrowLeft':
+          setIsNavigating(true);
           onArrowLeft?.();
+          if (itemCount !== undefined) {
+            setCurrentIndex((prev) => Math.max(prev - 1, 0));
+          }
           break;
         case 'ArrowRight':
+          setIsNavigating(true);
           onArrowRight?.();
+          if (itemCount !== undefined) {
+            setCurrentIndex((prev) => Math.min(prev + 1, itemCount - 1));
+          }
           break;
         case 'Tab':
           onTab?.(event);
           break;
       }
     },
-    [enabled, onEscape, onEnter, onArrowUp, onArrowDown, onArrowLeft, onArrowRight, onTab]
+    [
+      enabled,
+      currentIndex,
+      itemCount,
+      onEscape,
+      onEnter,
+      onSelect,
+      onArrowUp,
+      onArrowDown,
+      onArrowLeft,
+      onArrowRight,
+      onTab,
+    ]
   );
 
   useEffect(() => {
@@ -77,6 +115,13 @@ export function useKeyboardNavigation(options: KeyboardNavigationOptions) {
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [enabled, handleKeyDown]);
+
+  return {
+    currentIndex,
+    isNavigating,
+    handleKeyDown,
+    setIndex: setCurrentIndex,
+  };
 }
 
 // Hook for managing focus within a list

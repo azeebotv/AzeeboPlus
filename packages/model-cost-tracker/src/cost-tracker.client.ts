@@ -90,8 +90,8 @@ export class CostTrackerClient {
     if (this.config.logEvents) {
       this.logger.debug(
         `[${this.config.serviceName}] ${event.model} ` +
-        `tokens=${event.inputTokens + event.outputTokens} ` +
-        `cost=$${event.costUsd}`,
+          `tokens=${event.inputTokens + event.outputTokens} ` +
+          `cost=$${event.costUsd}`
       );
     }
 
@@ -131,15 +131,12 @@ export class CostTrackerClient {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), this.config.timeoutMs);
 
-      const response = await fetch(
-        `${this.config.analyticsServiceUrl}/cost/events/batch`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ events }),
-          signal: controller.signal,
-        },
-      );
+      const response = await fetch(`${this.config.analyticsServiceUrl}/cost/events/batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ events }),
+        signal: controller.signal,
+      });
 
       clearTimeout(timeout);
 

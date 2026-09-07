@@ -37,7 +37,10 @@ export default function ShareRedirectPage(): React.JSX.Element {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}
+      >
         <div className="az-glass p-8 text-center">
           <h1 className="text-2xl font-bold text-white mb-2">Link not found</h1>
           <p className="text-white/50">This share link may have expired or been removed.</p>
@@ -47,9 +50,15 @@ export default function ShareRedirectPage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
+    <div
+      className="min-h-screen flex items-center justify-center"
+      style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}
+    >
       <div className="text-center">
-        <Loader className="w-8 h-8 mx-auto mb-4 animate-spin" style={{ color: 'var(--brand-orange)' }} />
+        <Loader
+          className="w-8 h-8 mx-auto mb-4 animate-spin"
+          style={{ color: 'var(--brand-orange)' }}
+        />
         <p className="text-white/60">Redirecting...</p>
       </div>
     </div>

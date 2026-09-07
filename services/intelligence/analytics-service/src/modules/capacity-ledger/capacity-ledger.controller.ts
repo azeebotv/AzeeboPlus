@@ -38,7 +38,11 @@ export class CapacityLedgerController {
   @Post('seed')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Seed capacity ledger with sample AOS-MA-001 workflow data' })
-  @ApiQuery({ name: 'period', required: false, description: 'Period to seed (default: current quarter)' })
+  @ApiQuery({
+    name: 'period',
+    required: false,
+    description: 'Period to seed (default: current quarter)',
+  })
   seedEntries(@Query('period') period?: string) {
     return this.ledgerService.seedEntries(period);
   }

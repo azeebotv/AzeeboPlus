@@ -154,9 +154,7 @@ export class KnowledgeController {
   @Post('equivalence-sets')
   @ApiOperation({ summary: 'Create an equivalence set linking knowledge units across formats' })
   @ApiResponse({ status: 201, description: 'Equivalence set created' })
-  async createEquivalenceSet(
-    @Body() dto: CreateEquivalenceSetDto
-  ) {
+  async createEquivalenceSet(@Body() dto: CreateEquivalenceSetDto) {
     const set = await this.knowledgeService.createEquivalenceSet(
       dto.setCode,
       dto.name,

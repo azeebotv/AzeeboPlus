@@ -1,10 +1,3 @@
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Auth Otp-verification  - Azeebo+',
-  description: 'Auth Otp-verification  on Azeebo+',
-};
-
 'use client';
 
 import { useState, useRef, useEffect } from 'react';

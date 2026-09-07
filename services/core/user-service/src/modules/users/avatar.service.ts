@@ -28,7 +28,7 @@ export class AvatarService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {
     this.cdnBaseUrl = this.configService.get<string>('CDN_BASE_URL', 'https://cdn.azeebo.com');
     this.maxFileSize = this.configService.get<number>('AVATAR_MAX_SIZE', 5 * 1024 * 1024); // 5MB
@@ -40,7 +40,7 @@ export class AvatarService {
    */
   async uploadAvatar(
     userId: string,
-    file: { buffer: Buffer; mimetype: string; size: number; originalname: string },
+    file: { buffer: Buffer; mimetype: string; size: number; originalname: string }
   ): Promise<AvatarUploadResult> {
     // Validate file
     this.validateFile(file);
@@ -70,7 +70,11 @@ export class AvatarService {
 
     // Upload to CDN/S3 (in production, this would use AWS SDK)
     const url = await this.uploadToStorage(filename, processed.buffer, file.mimetype);
-    const thumbnailUrl = await this.uploadToStorage(thumbnailFilename, thumbnail.buffer, file.mimetype);
+    const thumbnailUrl = await this.uploadToStorage(
+      thumbnailFilename,
+      thumbnail.buffer,
+      file.mimetype
+    );
 
     // Update user avatar in database
     await this.prisma.user.update({
@@ -141,9 +145,7 @@ export class AvatarService {
    */
   private validateFile(file: { mimetype: string; size: number }): void {
     if (!this.allowedFormats.includes(file.mimetype)) {
-      throw new BadRequestException(
-        `Invalid format. Allowed: ${this.allowedFormats.join(', ')}`
-      );
+      throw new BadRequestException(`Invalid format. Allowed: ${this.allowedFormats.join(', ')}`);
     }
 
     if (file.size > this.maxFileSize) {
@@ -158,7 +160,7 @@ export class AvatarService {
    */
   private async processImage(
     buffer: Buffer,
-    options: { width: number; height: number; format: string; quality: number },
+    options: { width: number; height: number; format: string; quality: number }
   ): Promise<{ buffer: Buffer; width: number; height: number }> {
     // In production, use sharp for image processing
     // For now, return the original buffer with dimensions
@@ -182,8 +184,8 @@ export class AvatarService {
    */
   private async uploadToStorage(
     filename: string,
-    buffer: Buffer,
-    contentType: string,
+    _buffer: Buffer,
+    _contentType: string
   ): Promise<string> {
     // In production, use AWS S3 SDK:
     // import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';

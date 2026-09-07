@@ -95,7 +95,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          {data.viewsOverTime.length > 0 && (
+          {data.viewsOverTime && data.viewsOverTime.length > 0 && (
             <div
               style={{
                 padding: 20,
@@ -131,7 +131,7 @@ export default function AnalyticsPage() {
             </div>
           )}
 
-          {data.topContent.length > 0 && (
+          {data.topContent && data.topContent.length > 0 && (
             <div
               style={{
                 padding: 20,

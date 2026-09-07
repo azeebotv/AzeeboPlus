@@ -5,7 +5,6 @@ import { SocialAuthController } from './social-auth.controller.js';
 import { SocialAuthService } from './social-auth.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { SecurityModule } from '@azeebo/security';
-import { FeatureFlagModule } from '@azeebo/feature-flags';
 
 @Module({
   imports: [
@@ -18,7 +17,6 @@ import { FeatureFlagModule } from '@azeebo/feature-flags';
       inject: [ConfigService],
     }),
     SecurityModule,
-    FeatureFlagModule,
   ],
   controllers: [SocialAuthController],
   providers: [SocialAuthService, PrismaService],

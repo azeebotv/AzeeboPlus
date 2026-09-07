@@ -63,7 +63,15 @@ export class PushNotificationService {
         notification: { title: payload.title, body: payload.body, imageUrl: payload.imageUrl },
         data: payload.data || {},
         android: { priority: 'high', notification: { channelId: 'azeebo-notifications' } },
-        apns: { payload: { aps: { alert: { title: payload.title, body: payload.body }, badge: 1, sound: 'default' } } },
+        apns: {
+          payload: {
+            aps: {
+              alert: { title: payload.title, body: payload.body },
+              badge: 1,
+              sound: 'default',
+            },
+          },
+        },
       });
       this.logger.log('Push notification sent');
       return true;
@@ -73,7 +81,10 @@ export class PushNotificationService {
     }
   }
 
-  async sendToMultipleTokens(tokens: string[], payload: PushNotificationPayload): Promise<{ success: number; failure: number }> {
+  async sendToMultipleTokens(
+    tokens: string[],
+    payload: PushNotificationPayload
+  ): Promise<{ success: number; failure: number }> {
     if (!this.messaging || tokens.length === 0) return { success: 0, failure: tokens.length };
     try {
       const response = await this.messaging.sendEachForMulticast({

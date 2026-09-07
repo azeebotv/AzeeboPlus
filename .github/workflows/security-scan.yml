@@ -24,7 +24,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Run pnpm audit
         run: pnpm audit --audit-level=high
-        continue-on-error: true
 
   codeql:
     name: CodeQL Analysis

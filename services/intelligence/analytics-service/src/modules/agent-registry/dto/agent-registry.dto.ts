@@ -3,23 +3,33 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 // ─── Valid Enums ──────────────────────────────────────────────
 
-export const AGENT_CATEGORIES = ['control-plane', 'shared-enterprise', 'domain-skill-pack'] as const;
+export const AGENT_CATEGORIES = [
+  'control-plane',
+  'shared-enterprise',
+  'domain-skill-pack',
+] as const;
 export const AGENT_STATUSES = ['active', 'suspended', 'retired', 'degraded'] as const;
 export const EXECUTION_TIERS = ['T0', 'T1', 'T2', 'T3', 'T4'] as const;
 export const RISK_LEVELS = ['R0', 'R1', 'R2', 'R3', 'R4'] as const;
 export const AUTONOMY_LEVELS = ['A0', 'A1', 'A2', 'A3', 'A4', 'A5'] as const;
 export const KILL_SWITCH_LEVELS = ['K0', 'K1', 'K2', 'K3', 'K4'] as const;
 export const HEALTH_STATUSES = ['healthy', 'degraded', 'unhealthy', 'unknown'] as const;
-export const EVALUATION_TYPES = ['golden', 'regression', 'security', 'authority', 'performance'] as const;
+export const EVALUATION_TYPES = [
+  'golden',
+  'regression',
+  'security',
+  'authority',
+  'performance',
+] as const;
 
-export type AgentCategory = typeof AGENT_CATEGORIES[number];
-export type AgentStatus = typeof AGENT_STATUSES[number];
-export type ExecutionTier = typeof EXECUTION_TIERS[number];
-export type RiskLevel = typeof RISK_LEVELS[number];
-export type AutonomyLevel = typeof AUTONOMY_LEVELS[number];
-export type KillSwitchLevel = typeof KILL_SWITCH_LEVELS[number];
-export type HealthStatus = typeof HEALTH_STATUSES[number];
-export type EvaluationType = typeof EVALUATION_TYPES[number];
+export type AgentCategory = (typeof AGENT_CATEGORIES)[number];
+export type AgentStatus = (typeof AGENT_STATUSES)[number];
+export type ExecutionTier = (typeof EXECUTION_TIERS)[number];
+export type RiskLevel = (typeof RISK_LEVELS)[number];
+export type AutonomyLevel = (typeof AUTONOMY_LEVELS)[number];
+export type KillSwitchLevel = (typeof KILL_SWITCH_LEVELS)[number];
+export type HealthStatus = (typeof HEALTH_STATUSES)[number];
+export type EvaluationType = (typeof EVALUATION_TYPES)[number];
 
 // ─── Create Agent DTO ────────────────────────────────────────
 
@@ -111,7 +121,9 @@ export class CreateAgentDto {
   @Min(0)
   costBudgetMonthly?: number;
 
-  @ApiPropertyOptional({ description: 'Default model tier (e.g. claude-sonnet-4-20250514, gpt-4o-mini)' })
+  @ApiPropertyOptional({
+    description: 'Default model tier (e.g. claude-sonnet-4-20250514, gpt-4o-mini)',
+  })
   @IsOptional()
   @IsString()
   modelTierDefault?: string;

@@ -14,7 +14,19 @@ import { CreatorTrustSafetyService } from '../creator/creator-trust-safety.servi
 @Module({
   imports: [DatabaseModule, PassportModule, RateLimiterModule, CacheModule, JwtConfigModule],
   controllers: [CreatorsController, TippingController],
-  providers: [CreatorsService, JwtStrategy, CreatorPayoutService, CreatorTrustSafetyService, TippingService],
-  exports: [CreatorsService, CreatorPayoutService, CreatorTrustSafetyService, TippingService, DatabaseModule],
+  providers: [
+    CreatorsService,
+    JwtStrategy,
+    CreatorPayoutService,
+    CreatorTrustSafetyService,
+    TippingService,
+  ],
+  exports: [
+    CreatorsService,
+    CreatorPayoutService,
+    CreatorTrustSafetyService,
+    TippingService,
+    DatabaseModule,
+  ],
 })
 export class CreatorsModule {}

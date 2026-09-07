@@ -59,6 +59,21 @@ export class AnalyticsController {
     );
   }
 
+  @Post('web-vitals')
+  @RateLimit(200, 60000)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Ingest client web-vitals RUM metric' })
+  @ApiResponse({ status: 200, description: 'Web-vital recorded' })
+  async ingestWebVital(@Body() body: Record<string, unknown>): Promise<{ success: boolean }> {
+    const metricName = typeof body.name === 'string' ? body.name : 'VITAL';
+    await this.analyticsService.trackEvent(
+      `web_vital_${metricName.toLowerCase()}`,
+      undefined,
+      body
+    );
+    return { success: true };
+  }
+
   @Get('me/summary')
   @ApiOperation({ summary: 'Get user analytics summary' })
   @ApiResponse({ status: 200, description: 'User analytics' })

@@ -108,7 +108,7 @@ export default function AuthShell({
         {/* Glass card with entrance animation */}
         <motion.div
           className="az-glass az-glass--glow az-glass--breathing relative z-10 w-full max-w-md p-6 sm:p-8"
-          initial={{ opacity: 0, y: 30, scale: 0.96 }}
+          initial={{ opacity: 1, y: 0, scale: 1 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{
             delay: 0.2,

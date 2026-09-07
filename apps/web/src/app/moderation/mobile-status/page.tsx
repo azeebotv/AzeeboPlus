@@ -42,7 +42,12 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string; i
     label: 'Resolved',
     icon: 'Check',
   },
-  dismissed: { bg: 'rgba(156,163,175,0.2)', text: 'var(--brand-grey)', label: 'Dismissed', icon: 'X' },
+  dismissed: {
+    bg: 'rgba(156,163,175,0.2)',
+    text: 'var(--brand-grey)',
+    label: 'Dismissed',
+    icon: 'X',
+  },
 };
 
 function MobileStatusPageContent(): React.JSX.Element {

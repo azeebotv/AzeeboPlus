@@ -236,7 +236,13 @@ export default function CreatorAnalyticsDashboard(): React.JSX.Element {
                       <td style={{ padding: '12px 16px', textAlign: 'right' }}>
                         {content.comments.toLocaleString()}
                       </td>
-                      <td style={{ padding: '12px 16px', textAlign: 'right', color: 'var(--brand-emerald)' }}>
+                      <td
+                        style={{
+                          padding: '12px 16px',
+                          textAlign: 'right',
+                          color: 'var(--brand-emerald)',
+                        }}
+                      >
                         ₦{content.revenue.toLocaleString()}
                       </td>
                     </tr>

@@ -1,8 +1,18 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards, Request, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ShareService } from './share.service.js';
 import { RateLimitGuard, RateLimit, Public } from '@azeebo/security';
-import { IsString, IsOptional } from 'class-validator';
+import { IsString } from 'class-validator';
 
 class GenerateShareLinkDto {
   @IsString()
@@ -25,12 +35,12 @@ export class ShareController {
   @ApiResponse({ status: 201, description: 'Share link created' })
   async generateShareLink(
     @Request() req: { user?: { id: string } },
-    @Body() dto: GenerateShareLinkDto,
+    @Body() dto: GenerateShareLinkDto
   ) {
     const result = await this.shareService.generateShareLink(
       dto.contentId,
       dto.platform,
-      req.user?.id,
+      req.user?.id
     );
     return { success: true, data: result };
   }

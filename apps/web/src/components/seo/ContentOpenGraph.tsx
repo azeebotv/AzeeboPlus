@@ -41,7 +41,9 @@ export function ContentOpenGraph({
       if (!key) return;
 
       // Check if meta tag already exists
-      let existing = document.querySelector(`meta[property="${tag.property}"], meta[name="${tag.name}"]`) as HTMLMetaElement;
+      let existing = document.querySelector(
+        `meta[property="${tag.property}"], meta[name="${tag.name}"]`
+      ) as HTMLMetaElement;
 
       if (existing) {
         existing.setAttribute('content', tag.content);

@@ -1,4 +1,15 @@
-import { Controller, Post, Get, Delete, Body, Param, Request, HttpCode, HttpStatus, Logger } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Delete,
+  Body,
+  Param,
+  Request,
+  HttpCode,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PushNotificationService, PushNotificationPayload } from './push-notification.service.js';
 import { IsString, IsOptional, IsEnum, IsObject, IsArray } from 'class-validator';
@@ -81,7 +92,7 @@ export class PushNotificationController {
   @ApiResponse({ status: 200, description: 'Device token registered' })
   async registerDevice(
     @Request() req: { user: { id: string } },
-    @Body() dto: RegisterDeviceDto,
+    @Body() dto: RegisterDeviceDto
   ): Promise<{ success: boolean }> {
     this.logger.log(`Device registered for user ${req.user.id}: ${dto.platform}`);
     return { success: true };
@@ -93,7 +104,7 @@ export class PushNotificationController {
   @ApiResponse({ status: 200, description: 'Device token unregistered' })
   async unregisterDevice(
     @Request() req: { user: { id: string } },
-    @Param('token') _token: string,
+    @Param('token') _token: string
   ): Promise<{ success: boolean }> {
     this.logger.log(`Device unregistered for user ${req.user.id}`);
     return { success: true };
@@ -138,7 +149,7 @@ export class PushNotificationController {
   @ApiResponse({ status: 200, description: 'Subscribed to topic' })
   async subscribeToTopic(
     @Request() req: { user: { id: string } },
-    @Param('topic') topic: string,
+    @Param('topic') topic: string
   ): Promise<{ success: boolean }> {
     this.logger.log(`User ${req.user.id} subscribed to topic: ${topic}`);
     return { success: true };
@@ -150,7 +161,7 @@ export class PushNotificationController {
   @ApiResponse({ status: 200, description: 'Unsubscribed from topic' })
   async unsubscribeFromTopic(
     @Request() req: { user: { id: string } },
-    @Param('topic') topic: string,
+    @Param('topic') topic: string
   ): Promise<{ success: boolean }> {
     this.logger.log(`User ${req.user.id} unsubscribed from topic: ${topic}`);
     return { success: true };

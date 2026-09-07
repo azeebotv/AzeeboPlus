@@ -110,7 +110,7 @@ export function ShareButton({
 
       setIsOpen(false);
     },
-    [getShareUrl, contentId, title],
+    [getShareUrl, contentId, title]
   );
 
   return (
@@ -143,11 +143,7 @@ export function ShareButton({
             {/* Content Preview */}
             {thumbnail && (
               <div className="mb-4 rounded-lg overflow-hidden">
-                <img
-                  src={thumbnail}
-                  alt={title}
-                  className="w-full h-32 object-cover"
-                />
+                <img src={thumbnail} alt={title} className="w-full h-32 object-cover" />
               </div>
             )}
             <p className="text-sm text-white/80 mb-4 line-clamp-2">{title}</p>

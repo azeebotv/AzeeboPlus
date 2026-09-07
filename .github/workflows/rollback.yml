@@ -1,5 +1,9 @@
 name: Rollback Deployment
 
+# Rolls back to a specific Docker image tag.
+# The deployment method (Coolify webhook or SSH) mirrors cd.yml exactly.
+# Both the staging and production environments require GitHub Environment approvals.
+
 on:
   workflow_dispatch:
     inputs:
@@ -11,114 +15,146 @@ on:
         options:
           - staging
           - production
-      service:
-        description: 'Service to rollback (leave empty for all)'
-        required: false
-        default: ''
       target_tag:
-        description: 'Docker tag to rollback to (previous working version)'
+        description: 'Docker image tag to rollback to (e.g. staging-abc1234 or a previous SHA)'
         required: true
-
-env:
-  REGISTRY: ghcr.io
-  OWNER: ${{ github.repository_owner }}
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   rollback:
-    name: Rollback ${{ inputs.service || 'all services' }} to ${{ inputs.target_tag }}
+    name: Rollback to ${{ inputs.target_tag }} on ${{ inputs.environment }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     environment:
       name: ${{ inputs.environment }}
       url: ${{ inputs.environment == 'staging' && 'https://staging.azeeboplus.com' || 'https://azeeboplus.com' }}
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@v4
 
-      - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
-        with:
-          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
-
-      - name: Configure kubectl
-        uses: azure/k8s-set-context@086689ee9e37b40b50fd1f75838e3e294e14dbf8 # v4.0.2
-        with:
-          kubeconfig: ${{ inputs.environment == 'staging' && secrets.STAGING_KUBE_CONFIG || secrets.PRODUCTION_KUBE_CONFIG }}
-
-      - name: Set namespace
+      - name: Verify target image exists in GHCR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ "${{ inputs.environment }}" = "staging" ]; then
-            echo "NAMESPACE=azeebo-staging" >> $GITHUB_ENV
+          TAG="${{ inputs.target_tag }}"
+          echo "🔍 Verifying tag: $TAG"
+          if ! gh api "repos/${{ github.repository }}/packages/container/azeebo-all-in-one/versions" \
+              --jq '.[].metadata.container.tags[]' 2>/dev/null | grep -qx "$TAG"; then
+            echo "::warning::Tag $TAG not found in GHCR package list — attempting rollback anyway (tag may be in a different package)"
           else
-            echo "NAMESPACE=azeebo-production" >> $GITHUB_ENV
+            echo "✅ Tag $TAG confirmed in GHCR"
           fi
 
-      - name: Rollback single service
-        if: inputs.service != ''
+      - name: Rollback via Coolify (Staging)
+        if: inputs.environment == 'staging' && secrets.COOLIFY_STAGING_WEBHOOK != ''
         run: |
-          echo "Rolling back ${{ inputs.service }} to ${{ inputs.target_tag }}..."
-          
-          kubectl set image deployment/${{ inputs.service }} \
-            ${{ inputs.service }}=${{ env.REGISTRY }}/${{ env.OWNER }}/${{ inputs.service }}:${{ inputs.target_tag }} \
-            -n ${{ env.NAMESPACE }}
-          
-          echo "Waiting for rollout..."
-          kubectl rollout status deployment/${{ inputs.service }} -n ${{ env.NAMESPACE }} --timeout=10m
-          
-          echo "Rollback complete!"
+          echo "🔄 Triggering Coolify staging rollback to ${{ inputs.target_tag }}..."
+          curl -fsSL -X POST "${{ secrets.COOLIFY_STAGING_WEBHOOK }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"tag\": \"${{ inputs.target_tag }}\"}"
+          echo "✅ Coolify staging rollback triggered"
 
-      - name: Rollback all services
-        if: inputs.service == ''
+      - name: Rollback via Coolify (Production)
+        if: inputs.environment == 'production' && secrets.COOLIFY_PRODUCTION_WEBHOOK != ''
         run: |
-          SERVICES="analytics-service api-gateway auth-service comedy-service content-service creator-service engagement-service games-service lifestyle-service live-event-service media-service messaging-service moderation-service movie-service notification-service payment-service queue-service reality-service recommendation-service referral-service reward-service search-service sports-service subscription-service support-service user-service vertical-service wallet-service"
-          
-          for service in $SERVICES; do
-            echo "Rolling back $service to ${{ inputs.target_tag }}..."
-            
-            kubectl set image deployment/$service \
-              $service=${{ env.REGISTRY }}/${{ env.OWNER }}/$service:${{ inputs.target_tag }} \
-              -n ${{ env.NAMESPACE }}
-            
-            echo "Waiting for $service rollout..."
-            kubectl rollout status deployment/$service -n ${{ env.NAMESPACE }} --timeout=10m
+          echo "🔄 Triggering Coolify production rollback to ${{ inputs.target_tag }}..."
+          curl -fsSL -X POST "${{ secrets.COOLIFY_PRODUCTION_WEBHOOK }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"tag\": \"${{ inputs.target_tag }}\"}"
+          echo "✅ Coolify production rollback triggered"
+
+      - name: Rollback via SSH (Fallback — Staging)
+        if: inputs.environment == 'staging' && secrets.COOLIFY_STAGING_WEBHOOK == '' && secrets.DEPLOY_SSH_KEY != ''
+        uses: appleboy/ssh-action@029f5b4aeefc5ef18188244d3a88aaae867b0a8a # v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            echo "🔄 Rolling back staging to ghcr.io/${{ github.repository }}:${{ inputs.target_tag }}"
+            docker pull ghcr.io/${{ github.repository }}:${{ inputs.target_tag }}
+            docker stop azeebo-staging || true
+            docker rm azeebo-staging || true
+            docker run -d \
+              --name azeebo-staging \
+              -p 3013:3013 \
+              -p 4000:4000 \
+              -p 4014:4014 \
+              -p 4016:4016 \
+              --env-file /opt/azeebo/.env.staging \
+              --restart unless-stopped \
+              ghcr.io/${{ github.repository }}:${{ inputs.target_tag }}
+            echo "✅ Staging rollback complete"
+
+      - name: Rollback via SSH (Fallback — Production)
+        if: inputs.environment == 'production' && secrets.COOLIFY_PRODUCTION_WEBHOOK == '' && secrets.DEPLOY_SSH_KEY != ''
+        uses: appleboy/ssh-action@029f5b4aeefc5ef18188244d3a88aaae867b0a8a # v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            echo "🔄 Rolling back production to ghcr.io/${{ github.repository }}:${{ inputs.target_tag }}"
+            docker pull ghcr.io/${{ github.repository }}:${{ inputs.target_tag }}
+            docker stop azeebo || true
+            docker rm azeebo || true
+            docker run -d \
+              --name azeebo \
+              -p 3013:3013 \
+              -p 4000:4000 \
+              -p 4014:4014 \
+              -p 4016:4016 \
+              --env-file /opt/azeebo/.env.production \
+              --restart unless-stopped \
+              ghcr.io/${{ github.repository }}:${{ inputs.target_tag }}
+            echo "✅ Production rollback complete"
+
+      - name: Verify rollback health
+        run: |
+          if [ "${{ inputs.environment }}" = "staging" ]; then
+            HEALTH_URL="${{ vars.STAGING_HEALTH_URL }}"
+          else
+            HEALTH_URL="${{ vars.PRODUCTION_HEALTH_URL }}"
+          fi
+
+          if [ -z "$HEALTH_URL" ]; then
+            echo "::warning::Health URL variable not set — skipping rollback verification"
+            exit 0
+          fi
+
+          echo "⏳ Waiting 30s for container restart..."
+          sleep 30
+
+          echo "🔍 Verifying health at ${HEALTH_URL}..."
+          for i in {1..10}; do
+            if curl -sf --max-time 10 "${HEALTH_URL}/health" > /dev/null 2>&1; then
+              echo "✅ Health check passed after rollback"
+              exit 0
+            fi
+            echo "  Attempt $i/10 — retrying in 10s..."
+            sleep 10
           done
-          
-          echo "All services rolled back!"
+          echo "❌ Health check failed after rollback — manual investigation needed"
+          exit 1
 
-      - name: Verify rollback
-        run: |
-          echo "Verifying rollback..."
-          
-          if [ "${{ inputs.environment }}" = "staging" ]; then
-            BASE_URL="https://staging.azeeboplus.com"
-          else
-            BASE_URL="https://azeeboplus.com"
-          fi
-          
-          echo "Testing health endpoint..."
-          curl -sf "${BASE_URL}/api/v1/health" || { echo "Health check failed after rollback"; exit 1; }
-          
-          echo "Rollback verification successful!"
-
-      - name: Notify Slack - Rollback Success
+      - name: Notify Slack — Rollback Success
         if: success()
         uses: slackapi/slack-github-action@485a9d42d3a49605f4898a3e6526e5a02eab28e0 # v1.27.1
         with:
           channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
-          slack-message: "🔄 *Rollback Complete*\n\nEnvironment: `${{ inputs.environment }}`\nService: ${{ inputs.service || 'All Services' }}\nTarget Tag: `${{ inputs.target_tag }}`\nURL: ${{ inputs.environment == 'staging' && 'https://staging.azeeboplus.com' || 'https://azeeboplus.com' }}"
+          slack-message: "🔄 *Rollback Complete*\n\nEnvironment: `${{ inputs.environment }}`\nTarget Tag: `${{ inputs.target_tag }}`\nTriggered by: ${{ github.actor }}\nRun: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
-      - name: Notify Slack - Rollback Failed
+      - name: Notify Slack — Rollback Failed
         if: failure()
         uses: slackapi/slack-github-action@485a9d42d3a49605f4898a3e6526e5a02eab28e0 # v1.27.1
         with:
           channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
-          slack-message: "🚨 *Rollback Failed*\n\nEnvironment: `${{ inputs.environment }}`\nService: ${{ inputs.service || 'All Services' }}\nTarget Tag: `${{ inputs.target_tag }}`\nCheck logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          slack-message: "🚨 *Rollback Failed*\n\nEnvironment: `${{ inputs.environment }}`\nTarget Tag: `${{ inputs.target_tag }}`\nTriggered by: ${{ github.actor }}\nCheck logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+

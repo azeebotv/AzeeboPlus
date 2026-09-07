@@ -6,37 +6,45 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  NODE_VERSION: '22.16.0'
+  PNPM_VERSION: '10.33.2'
+
 jobs:
   performance-budget:
     name: Check Performance Budgets
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Build web app
-        run: pnpm --dir apps/web build
+        run: pnpm --filter @azeebo/web build
 
       - name: Start web app
         run: |
-          cd apps/web
-          pnpm start &
-          sleep 10
+          # Next.js dev server starts on port 3000 by default.
+          # For production bundle checks, use `next start` which also defaults to 3000.
+          pnpm --filter @azeebo/web start &
+          # Wait for the server to be ready
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3000 > /dev/null 2>&1 && break || sleep 2
+          done
 
       - name: Run Lighthouse CI
         uses: treosh/lighthouse-ci-action@v12
@@ -59,9 +67,9 @@ jobs:
       - name: Validate Performance Budgets
         run: |
           # Check if any single JS bundle exceeds 300KB
-          MAX_BUNDLE_SIZE=300720  # 300KB in bytes
+          MAX_BUNDLE_SIZE=307200  # 300KB in bytes
           VIOLATIONS=0
-          
+
           for file in apps/web/.next/static/chunks/*.js; do
             if [ -f "$file" ]; then
               SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null)
@@ -71,16 +79,16 @@ jobs:
               fi
             fi
           done
-          
+
           # Check total bundle size
           TOTAL_SIZE=$(du -sb apps/web/.next/static/ | cut -f1)
           MAX_TOTAL=1572864  # 1.5MB in bytes
-          
+
           if [ "$TOTAL_SIZE" -gt "$MAX_TOTAL" ]; then
             echo "❌ TOTAL BUDGET VIOLATION: Total bundle is $(($TOTAL_SIZE / 1048576))MB (max: 1.5MB)"
             VIOLATIONS=$((VIOLATIONS + 1))
           fi
-          
+
           if [ "$VIOLATIONS" -gt 0 ]; then
             echo ""
             echo "❌ Performance budget check failed with $VIOLATIONS violation(s)"
@@ -88,3 +96,4 @@ jobs:
           else
             echo "✅ All performance budgets passed"
           fi
+

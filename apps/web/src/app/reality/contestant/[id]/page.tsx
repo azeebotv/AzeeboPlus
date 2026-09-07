@@ -1,10 +1,3 @@
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Reality Contestant [id]  - Azeebo+',
-  description: 'Reality Contestant [id]  on Azeebo+',
-};
-
 'use client';
 
 import { useEffect, useState } from 'react';

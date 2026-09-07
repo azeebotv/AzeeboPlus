@@ -21,21 +21,9 @@ type EventCallback = (data: unknown) => void;
 
 const RECONNECT_BASE_DELAY = 1000;
 const RECONNECT_MAX_DELAY = 30000;
-const MAX_RECONNECT_ATTEMPTS = 20;
+const MAX_RECONNECT_ATTEMPTS = 3;
+const POLLING_INTERVAL_MS = 60000; // 1 minute fallback
 
-/**
- * Lightweight WebSocket hook for real-time notifications.
- *
- * Uses native WebSocket API with JSON-based event protocol:
- * - Server sends `{ event: string, data: unknown }` messages
- * - Client sends `{ event: string, data: unknown }` messages
- *
- * Features:
- * - Automatic reconnection with exponential backoff
- * - Auth token passed via first message after connect
- * - Connection state tracking
- * - Event listener management
- */
 export function useNotificationsSocket(options?: {
   onNewNotification?: (notification: NotificationPayload) => void;
   onUnreadCount?: (count: number) => void;
@@ -47,10 +35,29 @@ export function useNotificationsSocket(options?: {
   const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const reconnectDelayRef = useRef(RECONNECT_BASE_DELAY);
   const mountedRef = useRef(true);
   const eventListenersRef = useRef<Map<string, Set<EventCallback>>>(new Map());
+
+  const fetchUnreadCountRest = useCallback(async () => {
+    if (!token || !mountedRef.current) return;
+    try {
+      const res = await fetch('/api/v1/notifications/unread-count', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const count = typeof data?.count === 'number' ? data.count : data?.data?.count;
+        if (typeof count === 'number') {
+          options?.onUnreadCount?.(count);
+        }
+      }
+    } catch {
+      // Best-effort REST poll
+    }
+  }, [token, options]);
 
   const getWsUrl = useCallback(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -62,6 +69,7 @@ export function useNotificationsSocket(options?: {
 
   const connect = useCallback(() => {
     if (!mountedRef.current) return;
+    if (!token) return; // Only connect if authenticated
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
     try {
@@ -139,6 +147,12 @@ export function useNotificationsSocket(options?: {
           reconnectTimeoutRef.current = setTimeout(() => {
             connect();
           }, delay);
+        } else {
+          // Reconnect attempts exhausted — fallback to polling
+          fetchUnreadCountRest();
+          if (!pollingIntervalRef.current) {
+            pollingIntervalRef.current = setInterval(fetchUnreadCountRest, POLLING_INTERVAL_MS);
+          }
         }
       };
 
@@ -146,14 +160,22 @@ export function useNotificationsSocket(options?: {
         // onclose will handle reconnection
       };
     } catch {
-      // Connection failed, onclose will handle retry
+      // Connection failed, fallback to polling
+      fetchUnreadCountRest();
+      if (!pollingIntervalRef.current) {
+        pollingIntervalRef.current = setInterval(fetchUnreadCountRest, POLLING_INTERVAL_MS);
+      }
     }
-  }, [getWsUrl, token, options]);
+  }, [getWsUrl, token, options, fetchUnreadCountRest]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
+    }
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
     }
     reconnectAttemptsRef.current = MAX_RECONNECT_ATTEMPTS; // Prevent reconnection
     if (wsRef.current) {
@@ -174,18 +196,19 @@ export function useNotificationsSocket(options?: {
     };
   }, []);
 
-  // Connect when user is authenticated
+  // Connect when user is authenticated with a token
   useEffect(() => {
     mountedRef.current = true;
-    if (user) {
+    if (user && token) {
       connect();
+      fetchUnreadCountRest();
     }
 
     return () => {
       mountedRef.current = false;
       disconnect();
     };
-  }, [user, connect, disconnect]);
+  }, [user, token, connect, disconnect, fetchUnreadCountRest]);
 
   return {
     isConnected,

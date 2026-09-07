@@ -1,11 +1,16 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 // Accessibility utility functions
 function checkColorContrast(foreground: string, background: string): number {
   // Simplified contrast ratio calculation
   const getLuminance = (hex: string): number => {
-    const rgb = hex.replace('#', '').match(/.{2}/g)?.map((h) => parseInt(h, 16) / 255) || [0, 0, 0];
-    const [r, g, b] = rgb.map((v) => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)));
+    const rgb = hex
+      .replace('#', '')
+      .match(/.{2}/g)
+      ?.map((h) => parseInt(h, 16) / 255) || [0, 0, 0];
+    const [r, g, b] = rgb.map((v) =>
+      v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)
+    );
     return 0.2126 * r + 0.7152 * g + 0.0722 * b;
   };
 
@@ -32,9 +37,10 @@ function generateAltText(filename: string): string {
 }
 
 function checkHeadingOrder(headings: string[]): boolean {
-  let lastLevel = 0;
-  for (const heading of headings) {
-    const level = parseInt(heading.replace('h', ''));
+  if (headings.length === 0) return true;
+  let lastLevel = parseInt(headings[0].replace('h', ''));
+  for (let i = 1; i < headings.length; i++) {
+    const level = parseInt(headings[i].replace('h', ''));
     if (level - lastLevel > 1) return false;
     lastLevel = level;
   }
@@ -128,7 +134,7 @@ describe('Tab Index', () => {
       checkTabIndex([
         { tabIndex: 0, isVisible: true },
         { tabIndex: -1, isVisible: true },
-      ]),
+      ])
     ).toBe(true);
   });
 
@@ -137,7 +143,7 @@ describe('Tab Index', () => {
       checkTabIndex([
         { tabIndex: -1, isVisible: true },
         { tabIndex: -1, isVisible: true },
-      ]),
+      ])
     ).toBe(false);
   });
 });

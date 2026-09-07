@@ -198,7 +198,9 @@ export function AvatarUpload({
                 max="3"
                 step="0.1"
                 value={cropSettings.scale}
-                onChange={(e) => setCropSettings((prev) => ({ ...prev, scale: parseFloat(e.target.value) }))}
+                onChange={(e) =>
+                  setCropSettings((prev) => ({ ...prev, scale: parseFloat(e.target.value) }))
+                }
                 className="w-full"
               />
             </div>

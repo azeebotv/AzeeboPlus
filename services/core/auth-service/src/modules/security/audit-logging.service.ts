@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 export enum AuditEventType {
@@ -59,7 +59,7 @@ export interface AuditLogEntry {
   resource?: string;
   resourceId?: string;
   action?: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   severity: 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL';
   success: boolean;
   errorMessage?: string;
@@ -69,7 +69,7 @@ export interface AuditLogEntry {
 export class AuditLoggingService {
   private readonly logger = new Logger(AuditLoggingService.name);
 
-  constructor(private configService: ConfigService) {}
+  constructor(@Optional() _configService?: ConfigService) {}
 
   /**
    * Log an audit event
@@ -83,7 +83,7 @@ export class AuditLoggingService {
     resource?: string;
     resourceId?: string;
     action?: string;
-    details?: Record<string, any>;
+    details?: Record<string, unknown>;
     severity?: 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL';
     success?: boolean;
     errorMessage?: string;
@@ -127,9 +127,9 @@ export class AuditLoggingService {
       ipAddress: string;
       userAgent: string;
       success: boolean;
-      details?: Record<string, any>;
+      details?: Record<string, unknown>;
       errorMessage?: string;
-    },
+    }
   ): Promise<void> {
     const severity = params.success ? 'INFO' : 'WARNING';
     if (eventType === AuditEventType.LOGIN_FAILED) {
@@ -164,9 +164,9 @@ export class AuditLoggingService {
       provider: string;
       transactionId?: string;
       success: boolean;
-      details?: Record<string, any>;
+      details?: Record<string, unknown>;
       errorMessage?: string;
-    },
+    }
   ): Promise<void> {
     const severity = params.success ? 'INFO' : 'ERROR';
 
@@ -200,9 +200,9 @@ export class AuditLoggingService {
       ipAddress: string;
       userAgent: string;
       userId?: string;
-      details?: Record<string, any>;
+      details?: Record<string, unknown>;
       severity?: 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL';
-    },
+    }
   ): Promise<void> {
     await this.logEvent({
       eventType,
@@ -221,12 +221,12 @@ export class AuditLoggingService {
    */
   async getUserAuditLogs(
     userId: string,
-    options?: {
+    _options?: {
       startDate?: Date;
       endDate?: Date;
       eventTypes?: AuditEventType[];
       limit?: number;
-    },
+    }
   ): Promise<AuditLogEntry[]> {
     // In production, this would query the database
     this.logger.log(`Fetching audit logs for user ${userId}`);
@@ -239,11 +239,11 @@ export class AuditLoggingService {
   async getResourceAuditLogs(
     resource: string,
     resourceId: string,
-    options?: {
+    _options?: {
       startDate?: Date;
       endDate?: Date;
       limit?: number;
-    },
+    }
   ): Promise<AuditLogEntry[]> {
     // In production, this would query the database
     this.logger.log(`Fetching audit logs for ${resource}/${resourceId}`);
@@ -258,14 +258,14 @@ export class AuditLoggingService {
     if (entry.eventType === AuditEventType.LOGIN_FAILED) {
       // In production, check Redis for recent failed attempts
       this.logger.warn(
-        `Failed login attempt from ${entry.ipAddress} for user ${entry.userId || 'unknown'}`,
+        `Failed login attempt from ${entry.ipAddress} for user ${entry.userId || 'unknown'}`
       );
     }
 
     // Check for unauthorized access attempts
     if (entry.eventType === AuditEventType.UNAUTHORIZED_ACCESS) {
       this.logger.warn(
-        `Unauthorized access attempt from ${entry.ipAddress}: ${entry.resource}/${entry.resourceId}`,
+        `Unauthorized access attempt from ${entry.ipAddress}: ${entry.resource}/${entry.resourceId}`
       );
     }
 

@@ -28,8 +28,9 @@ export class SocialAuthController {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const scope = 'openid email profile';
     const state = Buffer.from(JSON.stringify({ redirectUri })).toString('base64');
-    
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+
+    const authUrl =
+      `https://accounts.google.com/o/oauth2/v2/auth?` +
       `client_id=${clientId}&` +
       `redirect_uri=${encodeURIComponent(redirectUri)}&` +
       `response_type=code&` +
@@ -48,8 +49,9 @@ export class SocialAuthController {
     const clientId = process.env.APPLE_CLIENT_ID;
     const scope = 'name email';
     const state = Buffer.from(JSON.stringify({ redirectUri })).toString('base64');
-    
-    const authUrl = `https://appleid.apple.com/auth/authorize?` +
+
+    const authUrl =
+      `https://appleid.apple.com/auth/authorize?` +
       `client_id=${clientId}&` +
       `redirect_uri=${encodeURIComponent(redirectUri)}&` +
       `response_type=code id_token&` +
@@ -78,7 +80,7 @@ export class SocialAuthController {
   @ApiResponse({ status: 200, description: 'Account unlinked' })
   async unlinkAccount(
     @Request() req: { user: { id: string } },
-    @Body('provider') provider: SocialProvider,
+    @Body('provider') provider: SocialProvider
   ) {
     await this.socialAuthService.unlinkAccount(req.user.id, provider);
     return { success: true };

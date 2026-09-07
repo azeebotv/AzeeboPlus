@@ -146,7 +146,9 @@ export default function PredictionResultsPage(): React.JSX.Element {
                             style={{
                               fontWeight: 600,
                               fontSize: 14,
-                              color: isCorrect ? 'var(--brand-forest)' : 'var(--brand-surface-light, #f5f0eb)',
+                              color: isCorrect
+                                ? 'var(--brand-forest)'
+                                : 'var(--brand-surface-light, #f5f0eb)',
                             }}
                           >
                             {opt.text} {isCorrect && 'Check'}

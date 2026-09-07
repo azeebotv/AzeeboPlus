@@ -123,7 +123,9 @@ function DboContent() {
                   </div>
                   <p
                     className="text-sm font-bold"
-                    style={{ color: t.type === 'sale' ? 'var(--brand-green)' : 'var(--brand-amber)' }}
+                    style={{
+                      color: t.type === 'sale' ? 'var(--brand-green)' : 'var(--brand-amber)',
+                    }}
                   >
                     {t.type === 'refund' ? '-' : '+'}₦{t.amount.toLocaleString()}
                   </p>

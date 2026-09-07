@@ -1,10 +1,3 @@
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Wallet Subscription-history  - Azeebo+',
-  description: 'Wallet Subscription-history  on Azeebo+',
-};
-
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';

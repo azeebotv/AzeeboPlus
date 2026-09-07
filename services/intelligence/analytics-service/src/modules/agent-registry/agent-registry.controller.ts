@@ -1,6 +1,14 @@
 import {
-  Controller, Get, Post, Put, Delete, Param, Body, Query,
-  HttpCode, HttpStatus,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Body,
+  Query,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { AgentRegistryService } from './agent-registry.service';
@@ -32,13 +40,21 @@ export class AgentRegistryController {
 
   @Get()
   @ApiOperation({ summary: 'List all registered agents with optional filters' })
-  @ApiQuery({ name: 'category', required: false, enum: ['control-plane', 'shared-enterprise', 'domain-skill-pack'] })
-  @ApiQuery({ name: 'status', required: false, enum: ['active', 'suspended', 'retired', 'degraded'] })
+  @ApiQuery({
+    name: 'category',
+    required: false,
+    enum: ['control-plane', 'shared-enterprise', 'domain-skill-pack'],
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['active', 'suspended', 'retired', 'degraded'],
+  })
   @ApiQuery({ name: 'search', required: false, description: 'Search by name, ID, or purpose' })
   findAll(
     @Query('category') category?: AgentCategory,
     @Query('status') status?: AgentStatus,
-    @Query('search') search?: string,
+    @Query('search') search?: string
   ) {
     return this.registryService.findAll({ category, status, search });
   }
@@ -128,12 +144,16 @@ export class AgentRegistryController {
 
   @Get(':agentId/evaluations')
   @ApiOperation({ summary: 'Get evaluation history for an agent' })
-  @ApiQuery({ name: 'type', required: false, enum: ['golden', 'regression', 'security', 'authority', 'performance'] })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    enum: ['golden', 'regression', 'security', 'authority', 'performance'],
+  })
   @ApiQuery({ name: 'limit', required: false })
   getEvaluations(
     @Param('agentId') agentId: string,
     @Query('type') type?: string,
-    @Query('limit') limit?: string,
+    @Query('limit') limit?: string
   ) {
     return this.registryService.getEvaluations(agentId, type, limit ? parseInt(limit) : 20);
   }

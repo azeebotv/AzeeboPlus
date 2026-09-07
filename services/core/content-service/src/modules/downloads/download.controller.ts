@@ -1,8 +1,17 @@
 import {
-  Controller, Get, Post, Delete, Body, Param, UseGuards, Request, HttpCode, HttpStatus,
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { DownloadService, DownloadRequest } from './download.service.js';
+import { DownloadService } from './download.service.js';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import { IsString, IsIn } from 'class-validator';
 
@@ -28,10 +37,7 @@ export class DownloadController {
   @ApiOperation({ summary: 'Request a content download for offline viewing' })
   @ApiResponse({ status: 201, description: 'Download initiated' })
   @ApiResponse({ status: 400, description: 'Storage quota exceeded or content not downloadable' })
-  async requestDownload(
-    @Request() req: { user: { id: string } },
-    @Body() dto: RequestDownloadDto,
-  ) {
+  async requestDownload(@Request() req: { user: { id: string } }, @Body() dto: RequestDownloadDto) {
     const result = await this.downloadService.requestDownload({
       contentId: dto.contentId,
       quality: dto.quality,
@@ -64,7 +70,7 @@ export class DownloadController {
   @ApiResponse({ status: 200, description: 'Download details' })
   async getDownload(
     @Request() req: { user: { id: string } },
-    @Param('downloadId') downloadId: string,
+    @Param('downloadId') downloadId: string
   ) {
     const download = await this.downloadService.getDownload(downloadId, req.user.id);
     return { success: true, data: download };
@@ -76,7 +82,7 @@ export class DownloadController {
   @ApiResponse({ status: 200, description: 'Progress updated' })
   async updateProgress(
     @Param('downloadId') downloadId: string,
-    @Body() body: { progress: number },
+    @Body() body: { progress: number }
   ) {
     await this.downloadService.updateProgress(downloadId, body.progress);
     return { success: true };
@@ -89,7 +95,7 @@ export class DownloadController {
   @ApiResponse({ status: 200, description: 'Download deleted' })
   async deleteDownload(
     @Request() req: { user: { id: string } },
-    @Param('downloadId') downloadId: string,
+    @Param('downloadId') downloadId: string
   ) {
     await this.downloadService.deleteDownload(downloadId, req.user.id);
     return { success: true };

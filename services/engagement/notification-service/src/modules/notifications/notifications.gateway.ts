@@ -105,8 +105,8 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
 
   private extractToken(client: Socket): string | null {
     const authHeader = client.handshake.auth?.token || client.handshake.headers?.authorization;
-    if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
-      return authHeader.substring(7);
+    if (typeof authHeader === 'string') {
+      return authHeader.startsWith('Bearer ') ? authHeader.substring(7) : authHeader;
     }
     return null;
   }

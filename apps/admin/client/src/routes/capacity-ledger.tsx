@@ -41,26 +41,24 @@ export default function CapacityLedgerPage() {
     period: new Date().toISOString().slice(0, 7),
   });
 
-  const entriesQuery = useQuery<{ data: CapacityEntry[] }>({
+  const entriesQuery = useQuery({
     queryKey: ['admin', 'capacity-entries', { periodFilter, domainFilter }],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (periodFilter) params.set('period', periodFilter);
       if (domainFilter) params.set('domain', domainFilter);
-      const res = await apiFetch<CapacityEntry[]>(`/api/v1/analytics/capacity/entries?${params}`);
-      return res as ApiResponse<CapacityEntry[]>;
+      return apiFetch<CapacityEntry[]>(`/api/v1/analytics/capacity/entries?${params}`);
     },
     refetchInterval: 30000,
   });
 
-  const summaryQuery = useQuery<{ data: CapacitySummary }>({
+  const summaryQuery = useQuery({
     queryKey: ['admin', 'capacity-summary', periodFilter],
     queryFn: async () => {
       const period =
         periodFilter ||
         `${new Date().getFullYear()}-Q${Math.ceil((new Date().getMonth() + 1) / 3)}`;
-      const res = await apiFetch<CapacitySummary>(`/api/v1/analytics/capacity/summary/${period}`);
-      return res as ApiResponse<CapacityEntry[]>;
+      return apiFetch<CapacitySummary>(`/api/v1/analytics/capacity/summary/${period}`);
     },
   });
 
@@ -103,8 +101,8 @@ export default function CapacityLedgerPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'capacity-entries'] }),
   });
 
-  const entries = (entriesQuery.data as ApiResponse<CapacityEntry[]>)?.data ?? [];
-  const summary = (summaryQuery.data as ApiResponse<CapacitySummary>)?.data ?? {
+  const entries = entriesQuery.data?.data ?? [];
+  const summary = summaryQuery.data?.data ?? {
     totalEntries: 0,
     totalHoursReleased: 0,
     headcountAvoided: 0,

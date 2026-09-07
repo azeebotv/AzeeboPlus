@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Icon } from '@/components/Icons';
 
@@ -286,7 +286,6 @@ export default function PerformanceMonitorPage() {
 
   const {
     data: performanceData,
-    isLoading,
     refetch,
   } = useQuery({
     queryKey: ['admin', 'performance'],

@@ -74,25 +74,23 @@ export default function TaskRouterPage() {
   const [domainFilter, setDomainFilter] = useState('');
   const [classFilter, setClassFilter] = useState('');
 
-  const tasksQuery = useQuery<{ data: TaskClassification[] }>({
+  const tasksQuery = useQuery({
     queryKey: ['admin', 'tasks', { domainFilter, classFilter }],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (domainFilter) params.set('domain', domainFilter);
       if (classFilter) params.set('workClass', classFilter);
-      const res = await apiFetch<TaskClassification[]>(
+      return apiFetch<TaskClassification[]>(
         `/api/v1/analytics/tasks/classifications?${params}`
       );
-      return res as ApiResponse<TaskData>;
     },
     refetchInterval: 30000,
   });
 
-  const statsQuery = useQuery<{ data: TaskStats }>({
+  const statsQuery = useQuery({
     queryKey: ['admin', 'tasks-stats'],
     queryFn: async () => {
-      const res = await apiFetch<TaskStats>('/api/v1/analytics/tasks/classifications/stats');
-      return res as ApiResponse<TaskData>;
+      return apiFetch<TaskStats>('/api/v1/analytics/tasks/classifications/stats');
     },
   });
 
@@ -109,8 +107,8 @@ export default function TaskRouterPage() {
     },
   });
 
-  const tasks = (tasksQuery.data as ApiResponse<TaskClassification[]>)?.data ?? [];
-  const stats = (statsQuery.data as ApiResponse<TaskStats>)?.data ?? {} as TaskStats;
+  const tasks = tasksQuery.data?.data ?? [];
+  const stats = statsQuery.data?.data ?? ({} as TaskStats);
 
   const domains = [...new Set(tasks.map((t: TaskClassification) => t.domain))].sort();
   const classes = ['X', 'S', 'A2', 'A1', 'H1', 'H0'];

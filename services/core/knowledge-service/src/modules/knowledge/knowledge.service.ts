@@ -359,7 +359,9 @@ export class KnowledgeService {
       checkpointId,
       userId,
       grantsAwarded: grants.length,
-      knowledgeUnitIds: checkpoint.grants.map((g: { knowledgeUnitId: string }) => g.knowledgeUnitId),
+      knowledgeUnitIds: checkpoint.grants.map(
+        (g: { knowledgeUnitId: string }) => g.knowledgeUnitId
+      ),
     };
   }
 

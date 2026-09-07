@@ -102,21 +102,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Generate SLSA provenance attestation
+      # Generate SLSA provenance attestation for source artifacts
+      # subject-path should point to a built artifact, not the entire workspace.
+      # TODO: chain this job to `needs: [build]` and point at the build output.
       - name: Generate Provenance
         uses: actions/attest-build-provenance@v2
         with:
-          subject-path: '${{ github.workspace }}/*'
+          subject-path: '${{ github.workspace }}/dist'
 
-      # Generate SLSA provenance for Docker images (if applicable)
+      # Generate SLSA provenance for Docker images
+      # subject-digest must be the image digest (sha256:<image-hash>), NOT the git commit SHA.
+      # This step is skipped unless CONTAINER_DIGEST is provided by a preceding build step.
       - name: Generate Container Provenance
         uses: actions/attest-build-provenance@v2
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' && env.CONTAINER_DIGEST != ''
         with:
           subject-name: 'ghcr.io/${{ github.repository }}'
-          subject-digest: 'sha256:${{ github.sha }}'
+          subject-digest: '${{ env.CONTAINER_DIGEST }}'
           push-to-registry: true
-        continue-on-error: true
 
   # License compliance check
   license-compliance:
@@ -148,4 +151,4 @@ jobs:
             exit 1
           fi
           echo "No blocked licenses found."
-        continue-on-error: true
+

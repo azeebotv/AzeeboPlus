@@ -962,7 +962,8 @@ const resources = {
         topPicksForYou: 'The Best Things For You',
         earnWhileWatching: 'MAKE MONEY Wey You Watch',
         unlockRewards: 'Open Reward',
-        rewardsDescription: 'Join {{siteName}} and you go dey get money for watching, chatting, and calling your friends',
+        rewardsDescription:
+          'Join {{siteName}} and you go dey get money for watching, chatting, and calling your friends',
         startEarning: 'Start Make Money',
         inviteFriends: 'Call Your Friends, Collect Reward',
         shareYourLink: 'Share Your Link',

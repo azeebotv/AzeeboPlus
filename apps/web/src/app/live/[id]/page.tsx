@@ -217,7 +217,9 @@ function LiveEventDetailContent(): React.JSX.Element {
                 disabled={purchaseMutation.isPending}
                 className="w-full py-3 rounded-xl font-semibold text-white transition-all"
                 style={{
-                  backgroundColor: purchaseMutation.isPending ? 'var(--brand-grey)' : 'var(--brand-orange)',
+                  backgroundColor: purchaseMutation.isPending
+                    ? 'var(--brand-grey)'
+                    : 'var(--brand-orange)',
                 }}
               >
                 {purchaseMutation.isPending

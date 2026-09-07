@@ -43,13 +43,21 @@ interface RecentGame {
 }
 
 const RARITY_STYLES: Record<string, { bg: string; text: string; border: string }> = {
-  common: { bg: 'rgba(156,163,175,0.15)', text: 'var(--brand-grey)', border: 'rgba(156,163,175,0.3)' },
+  common: {
+    bg: 'rgba(156,163,175,0.15)',
+    text: 'var(--brand-grey)',
+    border: 'rgba(156,163,175,0.3)',
+  },
   rare: {
     bg: 'rgba(59,130,246,0.15)',
     text: 'var(--color-secondary-400)',
     border: 'rgba(59,130,246,0.3)',
   },
-  epic: { bg: 'rgba(168,85,247,0.15)', text: 'var(--brand-purple-light)', border: 'rgba(168,85,247,0.3)' },
+  epic: {
+    bg: 'rgba(168,85,247,0.15)',
+    text: 'var(--brand-purple-light)',
+    border: 'rgba(168,85,247,0.3)',
+  },
   legendary: {
     bg: 'rgba(234,179,8,0.15)',
     text: 'var(--color-warning-400)',

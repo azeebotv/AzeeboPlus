@@ -140,72 +140,67 @@ export default function SystemHealthPage() {
   const totalCount = services.length || BACKEND_SERVICES.length;
 
   // Fetch all governance system stats in parallel
-  const agentsQuery = useQuery<{ data: AgentStats }>({
+  const agentsQuery = useQuery({
     queryKey: ['admin', 'health-agents'],
     queryFn: async () => {
-      const res = await apiFetch<AgentStats>('/api/v1/analytics/agents/stats');
-      return res as ApiResponse<SystemHealth>;
+      return apiFetch<AgentStats>('/api/v1/analytics/agents/stats');
     },
     refetchInterval: 30_000,
   });
 
-  const costQuery = useQuery<{ data: CostSummary }>({
+  const costQuery = useQuery({
     queryKey: ['admin', 'health-cost'],
     queryFn: async () => {
-      const res = await apiFetch<CostSummary>('/api/v1/analytics/cost/summary');
-      return res as ApiResponse<SystemHealth>;
+      return apiFetch<CostSummary>('/api/v1/analytics/cost/summary');
     },
     refetchInterval: 30_000,
   });
 
-  const tasksQuery = useQuery<{ data: TaskStats }>({
+  const tasksQuery = useQuery({
     queryKey: ['admin', 'health-tasks'],
     queryFn: async () => {
-      const res = await apiFetch<TaskStats>('/api/v1/analytics/tasks/classifications/stats');
-      return res as ApiResponse<SystemHealth>;
+      return apiFetch<TaskStats>('/api/v1/analytics/tasks/classifications/stats');
     },
     refetchInterval: 30_000,
   });
 
-  const riskQuery = useQuery<{ data: RiskStats }>({
+  const riskQuery = useQuery({
     queryKey: ['admin', 'health-risk'],
     queryFn: async () => {
-      const res = await apiFetch<RiskStats>('/api/v1/analytics/risk/stats');
-      return res as ApiResponse<SystemHealth>;
+      return apiFetch<RiskStats>('/api/v1/analytics/risk/stats');
     },
     refetchInterval: 30_000,
   });
 
-  const capacityQuery = useQuery<{ data: CapacitySummary }>({
+  const capacityQuery = useQuery({
     queryKey: ['admin', 'health-capacity'],
     queryFn: async () => {
-      const res = await apiFetch<CapacitySummary>('/api/v1/analytics/capacity/summary/current');
-      return res as ApiResponse<SystemHealth>;
+      return apiFetch<CapacitySummary>('/api/v1/analytics/capacity/summary/current');
     },
     refetchInterval: 30_000,
   });
 
-  const agents = (agentsQuery.data as ApiResponse<AgentHealth[]>)?.data ?? {
+  const agents = agentsQuery.data?.data ?? {
     total: 0,
     active: 0,
     suspended: 0,
     retired: 0,
     killSwitchActive: 0,
   };
-  const cost = (costQuery.data as ApiResponse<CostHealth>)?.data ?? { totalEvents: 0, totalCostUsd: 0, byModel: {} };
-  const tasks = (tasksQuery.data as ApiResponse<TaskHealth>)?.data ?? {
+  const cost = costQuery.data?.data ?? { totalEvents: 0, totalCostUsd: 0, byModel: {} };
+  const tasks = tasksQuery.data?.data ?? {
     total: 0,
     byWorkClass: {},
     automationCandidates: 0,
     eliminationCandidates: 0,
   };
-  const risk = (riskQuery.data as ApiResponse<RiskHealth>)?.data ?? {
+  const risk = riskQuery.data?.data ?? {
     total: 0,
     byRiskLevel: {},
     approvalRequiredCount: 0,
     irreversibleCount: 0,
   };
-  const capacity = (capacityQuery.data as ApiResponse<CapacityHealth>)?.data ?? {
+  const capacity = capacityQuery.data?.data ?? {
     totalEntries: 0,
     totalHoursReleased: 0,
     headcountAvoided: 0,

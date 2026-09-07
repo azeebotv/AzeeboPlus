@@ -29,42 +29,40 @@ interface CostEvent {
 /* ── Component ─────────────────────────────────────────────────────────────── */
 
 export default function CostDashboardPage() {
-  const summaryQuery = useQuery<{ data: CostSummary }>({
+  const summaryQuery = useQuery({
     queryKey: ['admin', 'cost-summary'],
     queryFn: async () => {
-      const res = await apiFetch<CostSummary>('/api/v1/analytics/cost/summary');
-      return res as ApiResponse<CostData>;
+      return apiFetch<CostSummary>('/api/v1/analytics/cost/summary');
     },
     refetchInterval: 30000,
   });
 
-  const eventsQuery = useQuery<{ data: CostEvent[] }>({
+  const eventsQuery = useQuery({
     queryKey: ['admin', 'cost-events'],
     queryFn: async () => {
-      const res = await apiFetch<CostEvent[]>('/api/v1/analytics/cost/events?limit=50');
-      return res as ApiResponse<CostData>;
+      return apiFetch<CostEvent[]>('/api/v1/analytics/cost/events?limit=50');
     },
   });
 
-  const summary = (summaryQuery.data as ApiResponse<CostSummary>)?.data ?? {
+  const summary = summaryQuery.data?.data ?? {
     totalEvents: 0,
     totalCostUsd: 0,
     byModel: {},
     byAgent: {},
     byDomain: {},
   };
-  const events = (eventsQuery.data as ApiResponse<CostEvent[]>)?.data ?? [];
+  const events = eventsQuery.data?.data ?? [];
 
   const topModels = Object.entries(summary.byModel)
-    .sort(([, a], [, b]) => (b as CostEvent).costUsd - (a as CostEvent).costUsd)
+    .sort(([, a], [, b]) => b.costUsd - a.costUsd)
     .slice(0, 10);
 
   const topAgents = Object.entries(summary.byAgent)
-    .sort(([, a], [, b]) => (b as CostEvent).costUsd - (a as CostEvent).costUsd)
+    .sort(([, a], [, b]) => b.costUsd - a.costUsd)
     .slice(0, 10);
 
   const topDomains = Object.entries(summary.byDomain)
-    .sort(([, a], [, b]) => (b as CostEvent).costUsd - (a as CostEvent).costUsd)
+    .sort(([, a], [, b]) => b.costUsd - a.costUsd)
     .slice(0, 10);
 
   return (
@@ -124,8 +122,7 @@ export default function CostDashboardPage() {
             <p style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>No cost data yet</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {topModels.map(([model, data]) => {
-                const d = data as CostEvent;
+              {topModels.map(([model, d]) => {
                 const pct = summary.totalCostUsd > 0 ? (d.costUsd / summary.totalCostUsd) * 100 : 0;
                 return (
                   <div key={model}>

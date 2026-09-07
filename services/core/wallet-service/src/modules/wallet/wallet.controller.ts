@@ -314,10 +314,7 @@ export class WalletController {
 
   @Post('bank-accounts')
   @ApiOperation({ summary: 'Link a bank account' })
-  async linkBankAccount(
-    @Request() req: AuthenticatedRequest,
-    @Body() dto: LinkBankAccountDto
-  ) {
+  async linkBankAccount(@Request() req: AuthenticatedRequest, @Body() dto: LinkBankAccountDto) {
     const result = await this.walletService.linkBankAccount(req.user.id, dto);
     return ApiResponseWrapper.success((result as { data: unknown }).data);
   }

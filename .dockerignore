@@ -53,9 +53,12 @@ docker-compose*.yml
 Dockerfile*
 .dockerignore
 
-# Prisma migrations (applied at runtime, not baked in)
-**/migrations/
+# Prisma migrations (included so entrypoint can run `prisma migrate deploy` at runtime)
+# **/migrations/
 
-# Scripts that aren't needed in production
-scripts/
+# Scripts that aren't needed in production (whitelist scripts required by Docker build and entrypoint)
+scripts/*
+!scripts/generate-prisma-clients.sh
+!scripts/patch-prisma-client.sh
+!scripts/demo-content
 test/

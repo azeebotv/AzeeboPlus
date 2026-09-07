@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
-import { api } from '../../src/api';
+import { apiClient } from '../../src/api';
 import { colors, typography, spacing, radius } from '../../src/theme';
 import { GlassCard, BrandButton } from '../../src/components/ui';
 import { PageTransition } from '../../src/components/motion';
@@ -66,8 +66,8 @@ export default function WatchPartyScreen() {
 
   const loadParty = async () => {
     try {
-      const response = await api.get(`/v1/watch-parties/${id}`);
-      setParty(response.data);
+      const response = await apiClient.get<{ data?: WatchParty }>(`/v1/watch-parties/${id}`);
+      setParty(response.data || null);
     } catch (error) {
       console.error('Failed to load party:', error);
     } finally {
@@ -80,12 +80,12 @@ export default function WatchPartyScreen() {
 
     try {
       setSending(true);
-      await api.post(`/v1/watch-parties/${id}/chat`, {
+      await apiClient.post(`/v1/watch-parties/${id}/chat`, {
         message: chatMessage.trim(),
       });
       setChatMessage('');
       loadParty();
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to send message');
     } finally {
       setSending(false);
@@ -96,21 +96,21 @@ export default function WatchPartyScreen() {
     if (!party) return;
 
     try {
-      await api.post(`/v1/watch-parties/${id}/playback`, {
+      await apiClient.post(`/v1/watch-parties/${id}/playback`, {
         isPlaying: !party.isPlaying,
         currentTime: party.currentTime,
       });
       loadParty();
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to update playback');
     }
   };
 
   const handleSyncAll = async () => {
     try {
-      await api.post(`/v1/watch-parties/${id}/sync`);
+      await apiClient.post(`/v1/watch-parties/${id}/sync`);
       Alert.alert('Success', 'All participants synced');
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to sync');
     }
   };
@@ -135,9 +135,9 @@ export default function WatchPartyScreen() {
         style: 'destructive',
         onPress: async () => {
           try {
-            await api.post(`/v1/watch-parties/${id}/leave`);
+            await apiClient.post(`/v1/watch-parties/${id}/leave`);
             router.back();
-          } catch (error) {
+          } catch {
             Alert.alert('Error', 'Failed to leave party');
           }
         },
@@ -153,9 +153,9 @@ export default function WatchPartyScreen() {
         style: 'destructive',
         onPress: async () => {
           try {
-            await api.delete(`/v1/watch-parties/${id}`);
+            await apiClient.delete(`/v1/watch-parties/${id}`);
             router.back();
-          } catch (error) {
+          } catch {
             Alert.alert('Error', 'Failed to end party');
           }
         },
@@ -176,7 +176,7 @@ export default function WatchPartyScreen() {
   if (!party) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Party not found</Text>
+        <Text style={styles.errorText}>Watch party not found</Text>
         <BrandButton title="Go Back" onPress={() => router.back()} variant="primary" />
       </View>
     );
@@ -207,10 +207,9 @@ export default function WatchPartyScreen() {
                 title={party.isPlaying ? '⏸ Pause' : '▶ Play'}
                 onPress={handleTogglePlayback}
                 variant="primary"
-                size="sm"
               />
-              <BrandButton title="🔄 Sync All" onPress={handleSyncAll} variant="secondary" size="sm" />
-              <BrandButton title="End Party" onPress={handleEndParty} variant="danger" size="sm" />
+              <BrandButton title="🔄 Sync All" onPress={handleSyncAll} variant="secondary" />
+              <BrandButton title="End Party" onPress={handleEndParty} variant="secondary" />
             </View>
           )}
         </GlassCard>

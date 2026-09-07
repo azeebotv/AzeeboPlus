@@ -2,7 +2,7 @@ name: Test Report
 
 on:
   workflow_run:
-    workflows: ["CI"]
+    workflows: ["CI", "PR Checks"]
     types:
       - completed
 
@@ -19,8 +19,9 @@ jobs:
     steps:
       - name: Download test results
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
-          name: test-results
+          name: test-sweep-artifacts
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
 
@@ -37,3 +38,4 @@ jobs:
         if: always()
         with:
           working-directory: apps/web
+

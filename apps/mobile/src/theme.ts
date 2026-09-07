@@ -32,8 +32,8 @@ export const colors = {
   text: {
     primary: '#FFFFFF', // White — primary text
     secondary: '#9A8A7A', // Warm grey — secondary text
-    tertiary: '#6B5B4B', // Muted grey — hints, captions
-    muted: '#6B5B4B', // Alias for tertiary
+    tertiary: '#9A8A7A', // Warm grey — hints, captions (meets WCAG AA contrast >= 4.5:1)
+    muted: '#9A8A7A', // Alias for tertiary
     inverse: '#0A0A0A', // Dark text on light backgrounds
     accent: '#E8420A', // Orange accent text
     link: '#E8420A', // Link color

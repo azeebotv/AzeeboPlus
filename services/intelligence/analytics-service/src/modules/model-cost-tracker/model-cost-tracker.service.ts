@@ -37,7 +37,9 @@ export class ModelCostTrackerService {
   constructor(private readonly prisma: PrismaService) {}
 
   async recordEvent(dto: RecordCostDto) {
-    this.logger.debug(`Recording cost: ${dto.model} $${dto.costUsd} for ${dto.taskType ?? 'unknown'}`);
+    this.logger.debug(
+      `Recording cost: ${dto.model} $${dto.costUsd} for ${dto.taskType ?? 'unknown'}`
+    );
     return this.prisma.modelCostEvent.create({
       data: {
         agentId: dto.agentId,
@@ -63,7 +65,7 @@ export class ModelCostTrackerService {
   async getCostSummary(
     startDate: Date,
     endDate: Date,
-    filters?: { agentId?: string; domain?: string; model?: string },
+    filters?: { agentId?: string; domain?: string; model?: string }
   ): Promise<CostSummary> {
     const where: Record<string, unknown> = {
       recordedAt: { gte: startDate, lte: endDate },
@@ -140,7 +142,10 @@ export class ModelCostTrackerService {
     });
   }
 
-  async checkBudget(agentId: string): Promise<{ daily: { spent: number; budget: number; ok: boolean }; monthly: { spent: number; budget: number; ok: boolean } }> {
+  async checkBudget(agentId: string): Promise<{
+    daily: { spent: number; budget: number; ok: boolean };
+    monthly: { spent: number; budget: number; ok: boolean };
+  }> {
     const agent = await this.prisma.agentRegistry.findUnique({ where: { agentId } });
     if (!agent) throw new Error(`Agent ${agentId} not found`);
 

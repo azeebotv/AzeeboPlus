@@ -14,7 +14,6 @@ export function initTelemetry(serviceName: string, serviceVersion: string = '1.0
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let resource: any = {};
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { Resource } = require('@opentelemetry/resources');
     resource = new Resource({
       [ATTR_SERVICE_NAME]: serviceName,

@@ -223,11 +223,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const socialLogin = async (data: {
-    code: string;
-    state: string;
-    displayName?: string;
-  }) => {
+  const socialLogin = async (data: { code: string; state: string; displayName?: string }) => {
     try {
       const response = await authApi.socialCallback(data);
       if (response.success && response.data) {

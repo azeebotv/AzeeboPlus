@@ -13,6 +13,7 @@ import { UsersService } from './users.service.js';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
+import { AvatarService } from './avatar.service.js';
 import { RateLimitGuard, ServiceAuthGuard } from '@azeebo/security';
 import { CacheService } from '@azeebo/shared-services';
 import { FeatureFlagGuard, FeatureFlagService, userFlags } from '@azeebo/feature-flags';
@@ -74,6 +75,7 @@ describe('Users Controller Contract Tests', () => {
       controllers: [UsersController, InteractionsController, UserDeletionController],
       providers: [
         UsersService,
+        { provide: AvatarService, useValue: { uploadAvatar: jest.fn(), deleteAvatar: jest.fn() } },
         { provide: PrismaService, useValue: mockPrismaService },
         {
           provide: JwtService,

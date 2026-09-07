@@ -19,13 +19,17 @@ export class SocialAuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {}
 
   /**
    * Verify social login and create/login user
    */
-  async socialLogin(dto: SocialLoginDto): Promise<{ accessToken: string; refreshToken: string; user: any }> {
+  async socialLogin(dto: SocialLoginDto): Promise<{
+    accessToken: string;
+    refreshToken: string;
+    user: { id: string; email: string; displayName: string | null; avatar: string | null };
+  }> {
     try {
       // Verify the social token and get user info
       const userInfo = await this.verifySocialToken(dto);
@@ -91,7 +95,7 @@ export class SocialAuthService {
     // In production, verify with Google's token info endpoint
     // https://oauth2.googleapis.com/tokeninfo?access_token=ACCESS_TOKEN
     const response = await fetch(
-      `https://oauth2.googleapis.com/tokeninfo?access_token=${accessToken}`,
+      `https://oauth2.googleapis.com/tokeninfo?access_token=${accessToken}`
     );
 
     if (!response.ok) {
@@ -160,7 +164,11 @@ export class SocialAuthService {
   /**
    * Generate JWT tokens
    */
-  private async generateTokens(user: any): Promise<{ accessToken: string; refreshToken: string }> {
+  private async generateTokens(user: {
+    id: string;
+    email: string;
+    role?: string;
+  }): Promise<{ accessToken: string; refreshToken: string }> {
     const payload = {
       sub: user.id,
       email: user.email,
@@ -181,7 +189,9 @@ export class SocialAuthService {
   /**
    * Get connected social accounts for a user
    */
-  async getConnectedAccounts(userId: string): Promise<any[]> {
+  async getConnectedAccounts(
+    userId: string
+  ): Promise<Array<{ id: string; provider: string; createdAt: Date }>> {
     return this.prisma.socialAccount.findMany({
       where: { userId },
       select: {

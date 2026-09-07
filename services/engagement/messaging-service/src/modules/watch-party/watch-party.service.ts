@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 
 export interface CreatePartyDto {
@@ -109,7 +115,7 @@ export class WatchPartyService {
    * Join a watch party
    */
   async joinParty(userId: string, inviteCode: string): Promise<PartyState> {
-    const party = await this.prisma.watchParty.findFirst({
+    const party = await this.prisma.watchParty.findUnique({
       where: { inviteCode },
       include: { participants: true },
     });
@@ -158,8 +164,10 @@ export class WatchPartyService {
    * Leave a watch party
    */
   async leaveParty(userId: string, partyId: string): Promise<void> {
-    const participant = await this.prisma.partyParticipant.findFirst({
-      where: { partyId, userId },
+    const participant = await this.prisma.partyParticipant.findUnique({
+      where: {
+        partyId_userId: { partyId, userId },
+      },
     });
 
     if (!participant) throw new NotFoundException('Not in this party');
@@ -197,13 +205,15 @@ export class WatchPartyService {
   async updatePlayback(
     userId: string,
     partyId: string,
-    state: Partial<PlaybackState>,
+    state: Partial<PlaybackState>
   ): Promise<PlaybackState> {
     const party = await this.prisma.watchParty.findUnique({ where: { id: partyId } });
     if (!party) throw new NotFoundException('Party not found');
 
-    const participant = await this.prisma.partyParticipant.findFirst({
-      where: { partyId, userId },
+    const participant = await this.prisma.partyParticipant.findUnique({
+      where: {
+        partyId_userId: { partyId, userId },
+      },
     });
     if (!participant) throw new ForbiddenException('Not in this party');
     if (participant.role !== 'host' && participant.role !== 'co-host') {
@@ -260,13 +270,11 @@ export class WatchPartyService {
   /**
    * Send chat message in party
    */
-  async sendChatMessage(
-    userId: string,
-    partyId: string,
-    content: string,
-  ): Promise<ChatMessage> {
-    const participant = await this.prisma.partyParticipant.findFirst({
-      where: { partyId, userId },
+  async sendChatMessage(userId: string, partyId: string, content: string): Promise<ChatMessage> {
+    const participant = await this.prisma.partyParticipant.findUnique({
+      where: {
+        partyId_userId: { partyId, userId },
+      },
     });
     if (!participant) throw new ForbiddenException('Not in this party');
 
@@ -376,7 +384,14 @@ export class WatchPartyService {
     currentTime: number | unknown;
     isSyncing: boolean;
     maxParticipants: number;
-    participants: { id: string; userId: string; displayName: string; role: string; isMuted: boolean; joinedAt: Date }[];
+    participants: {
+      id: string;
+      userId: string;
+      displayName: string;
+      role: string;
+      isMuted: boolean;
+      joinedAt: Date;
+    }[];
     createdAt: Date;
   }): PartyState {
     return {

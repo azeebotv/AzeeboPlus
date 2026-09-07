@@ -1,6 +1,19 @@
-import { Controller, Get, Post, Delete, Patch, Body, Param, Query, UseGuards, Request, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Patch,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Request,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { ReviewService, CreateReviewDto } from './review.service.js';
+import { ReviewService } from './review.service.js';
 import { RateLimitGuard, RateLimit, Public, AdminGuard } from '@azeebo/security';
 import { IsString, IsNumber, IsOptional, IsBoolean, Min, Max } from 'class-validator';
 
@@ -38,10 +51,7 @@ export class ReviewController {
   @ApiOperation({ summary: 'Create or update a review' })
   @ApiResponse({ status: 201, description: 'Review created' })
   @ApiResponse({ status: 400, description: 'Invalid rating' })
-  async createReview(
-    @Request() req: { user: { id: string } },
-    @Body() dto: CreateReviewBodyDto,
-  ) {
+  async createReview(@Request() req: { user: { id: string } }, @Body() dto: CreateReviewBodyDto) {
     const review = await this.reviewService.createOrUpdateReview(req.user.id, dto);
     return { success: true, data: review };
   }
@@ -55,7 +65,7 @@ export class ReviewController {
     @Param('contentId') contentId: string,
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 20,
-    @Query('sortBy') sortBy: 'recent' | 'helpful' | 'rating' = 'recent',
+    @Query('sortBy') sortBy: 'recent' | 'helpful' | 'rating' = 'recent'
   ) {
     const result = await this.reviewService.getReviews(contentId, page, limit, sortBy);
     return { success: true, data: result };
@@ -76,7 +86,7 @@ export class ReviewController {
   @ApiResponse({ status: 200, description: 'User review' })
   async getUserReview(
     @Request() req: { user: { id: string } },
-    @Param('contentId') contentId: string,
+    @Param('contentId') contentId: string
   ) {
     const review = await this.reviewService.getUserReview(req.user.id, contentId);
     return { success: true, data: review };
@@ -89,7 +99,7 @@ export class ReviewController {
   @ApiResponse({ status: 200, description: 'Review deleted' })
   async deleteReview(
     @Request() req: { user: { id: string } },
-    @Param('reviewId') reviewId: string,
+    @Param('reviewId') reviewId: string
   ) {
     await this.reviewService.deleteReview(req.user.id, reviewId);
     return { success: true };
@@ -102,7 +112,7 @@ export class ReviewController {
   @ApiResponse({ status: 200, description: 'Helpful toggled' })
   async toggleHelpful(
     @Request() req: { user: { id: string } },
-    @Param('reviewId') reviewId: string,
+    @Param('reviewId') reviewId: string
   ) {
     const result = await this.reviewService.toggleHelpful(req.user.id, reviewId);
     return { success: true, data: result };
@@ -116,7 +126,7 @@ export class ReviewController {
   async reportReview(
     @Request() req: { user: { id: string } },
     @Param('reviewId') reviewId: string,
-    @Body() body: { reason: string },
+    @Body() body: { reason: string }
   ) {
     await this.reviewService.reportReview(req.user.id, reviewId, body.reason);
     return { success: true };
@@ -128,10 +138,7 @@ export class ReviewController {
   @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get pending reviews for moderation' })
   @ApiResponse({ status: 200, description: 'Pending reviews' })
-  async getPendingReviews(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 50,
-  ) {
+  async getPendingReviews(@Query('page') page: number = 1, @Query('limit') limit: number = 50) {
     const result = await this.reviewService.getPendingReviews(page, limit);
     return { success: true, data: result };
   }
@@ -143,7 +150,7 @@ export class ReviewController {
   @ApiResponse({ status: 200, description: 'Review moderated' })
   async moderateReview(
     @Param('reviewId') reviewId: string,
-    @Body() body: { status: 'published' | 'rejected' },
+    @Body() body: { status: 'published' | 'rejected' }
   ) {
     await this.reviewService.moderateReview(reviewId, body.status);
     return { success: true };

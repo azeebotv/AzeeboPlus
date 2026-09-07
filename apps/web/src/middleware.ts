@@ -32,7 +32,6 @@ const protectedRoutes = [
   '/payment',
 ];
 const adminRoutes = ['/admin'];
-const creatorRoutes = ['/creator', '/creators/dashboard'];
 
 // Standalone app hosts (set via env vars in production)
 const ADMIN_HOST = process.env.ADMIN_APP_URL || 'http://localhost:4100';
@@ -123,8 +122,13 @@ export function middleware(request: NextRequest) {
   }
 
   // --- Creator portal redirect to standalone app ---
-  // Redirect creator pages to the standalone creator portal
-  if (creatorRoutes.some((route) => pathname.startsWith(route))) {
+  // Redirect creator portal pages (/creator or /creators/dashboard) to standalone app,
+  // while preserving public /creators discovery directory in web app.
+  if (
+    pathname === '/creator' ||
+    pathname.startsWith('/creator/') ||
+    pathname.startsWith('/creators/dashboard')
+  ) {
     // Preserve the path when redirecting to the standalone creator app
     const creatorUrl = new URL(pathname, CREATOR_HOST);
     return addSecurityHeaders(NextResponse.redirect(creatorUrl));
