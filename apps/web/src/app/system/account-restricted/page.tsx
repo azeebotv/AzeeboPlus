@@ -5,7 +5,6 @@ export const metadata: Metadata = {
   description: 'System Account-restricted  on Azeebo+',
 };
 
-'use client';
 import Link from 'next/link';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';

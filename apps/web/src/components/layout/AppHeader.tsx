@@ -609,7 +609,7 @@ export default function AppHeader({ active: _active }: { active?: string }) {
                     className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
                     style={{
                       color: universesOpen ? 'var(--brand-white)' : 'rgba(255,255,255,0.55)',
-                      background: universesOpen ? 'rgba(232,74,95,0.14)' : 'transparent',
+                      background: universesOpen ? 'rgba(232,66,10,0.14)' : 'transparent',
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.color = 'rgba(255,255,255,0.85)';
@@ -652,7 +652,7 @@ export default function AppHeader({ active: _active }: { active?: string }) {
                             className="flex items-center gap-2.5 px-4 py-2 text-sm transition-colors"
                             style={{
                               color: active ? 'var(--brand-orange)' : 'rgba(255,255,255,0.6)',
-                              background: active ? 'rgba(232,74,95,0.1)' : 'transparent',
+                              background: active ? 'rgba(232,66,10,0.1)' : 'transparent',
                             }}
                             onMouseEnter={(e) => {
                               if (!active) {

@@ -65,8 +65,10 @@ export class ReviewService {
     }
 
     // Check for existing review
-    const existing = await this.prisma.review.findFirst({
-      where: { contentId: dto.contentId, userId },
+    const existing = await this.prisma.review.findUnique({
+      where: {
+        contentId_userId: { contentId: dto.contentId, userId },
+      },
     });
 
     let review;
@@ -111,15 +113,16 @@ export class ReviewService {
     contentId: string,
     page: number = 1,
     limit: number = 20,
-    sortBy: 'recent' | 'helpful' | 'rating' = 'recent',
+    sortBy: 'recent' | 'helpful' | 'rating' = 'recent'
   ): Promise<ReviewList> {
     const skip = (page - 1) * limit;
 
-    const orderBy = sortBy === 'helpful'
-      ? { helpfulCount: 'desc' as const }
-      : sortBy === 'rating'
-        ? { rating: 'desc' as const }
-        : { createdAt: 'desc' as const };
+    const orderBy =
+      sortBy === 'helpful'
+        ? { helpfulCount: 'desc' as const }
+        : sortBy === 'rating'
+          ? { rating: 'desc' as const }
+          : { createdAt: 'desc' as const };
 
     const [reviews, total] = await Promise.all([
       this.prisma.review.findMany({
@@ -154,9 +157,8 @@ export class ReviewService {
     });
 
     const totalRatings = reviews.length;
-    const averageRating = totalRatings > 0
-      ? reviews.reduce((sum, r) => sum + r.rating, 0) / totalRatings
-      : 0;
+    const averageRating =
+      totalRatings > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / totalRatings : 0;
 
     const distribution = [5, 4, 3, 2, 1].map((stars) => {
       const count = reviews.filter((r) => r.rating === stars).length;
@@ -196,12 +198,17 @@ export class ReviewService {
   /**
    * Mark review as helpful
    */
-  async toggleHelpful(userId: string, reviewId: string): Promise<{ helpful: boolean; count: number }> {
+  async toggleHelpful(
+    userId: string,
+    reviewId: string
+  ): Promise<{ helpful: boolean; count: number }> {
     const review = await this.prisma.review.findUnique({ where: { id: reviewId } });
     if (!review) throw new NotFoundException('Review not found');
 
-    const existing = await this.prisma.reviewHelpful.findFirst({
-      where: { reviewId, userId },
+    const existing = await this.prisma.reviewHelpful.findUnique({
+      where: {
+        reviewId_userId: { reviewId, userId },
+      },
     });
 
     if (existing) {
@@ -241,8 +248,10 @@ export class ReviewService {
    * Get user's review for content
    */
   async getUserReview(userId: string, contentId: string): Promise<Review | null> {
-    const review = await this.prisma.review.findFirst({
-      where: { contentId, userId },
+    const review = await this.prisma.review.findUnique({
+      where: {
+        contentId_userId: { contentId, userId },
+      },
     });
 
     return review ? this.formatReview(review) : null;
@@ -251,7 +260,10 @@ export class ReviewService {
   /**
    * Admin: Get pending reviews for moderation
    */
-  async getPendingReviews(page: number = 1, limit: number = 50): Promise<{ reviews: Review[]; total: number }> {
+  async getPendingReviews(
+    page: number = 1,
+    limit: number = 50
+  ): Promise<{ reviews: Review[]; total: number }> {
     const skip = (page - 1) * limit;
 
     const [reviews, total] = await Promise.all([

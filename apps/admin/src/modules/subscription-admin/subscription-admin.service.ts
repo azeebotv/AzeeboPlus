@@ -27,8 +27,10 @@ export class SubscriptionAdminService {
 
   async getSubscriptionStats() {
     const plansResult = await this.systemSettingsService.getSubscriptionPlans().catch(() => []);
-    const plans = Array.isArray(plansResult) ? plansResult : [];
-    const activePlans = plans.filter((p: any) => p.status === 'active').length;
+    const plans: SubscriptionPlanItem[] = Array.isArray(plansResult)
+      ? (plansResult as unknown as SubscriptionPlanItem[])
+      : [];
+    const activePlans = plans.filter((p) => p.status === 'active').length;
 
     // Fetch intent count for subscriptions
     const totalRevenueResult = await this.prisma.paymentIntent
@@ -151,7 +153,13 @@ export class SubscriptionAdminService {
 
   async createSubscriptionPlan(data: Record<string, unknown>) {
     const name = String(data.name || 'New Plan');
-    const slug = String(data.slug || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''));
+    const slug = String(
+      data.slug ||
+        name
+          .toLowerCase()
+          .replace(/\s+/g, '-')
+          .replace(/[^a-z0-9-]/g, '')
+    );
     return this.systemSettingsService.createSubscriptionPlan({
       name,
       slug,

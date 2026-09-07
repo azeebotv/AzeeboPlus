@@ -146,17 +146,15 @@ export default function GuestHomepage(): React.JSX.Element {
   const leftCards = CATEGORY_CARDS.filter((c) => c.side === 'left');
   const rightCards = CATEGORY_CARDS.filter((c) => c.side === 'right');
 
-  const renderOrbitCard = (c: CategoryCard, index: number): React.JSX.Element => (
+  const renderOrbitCard = (c: CategoryCard): React.JSX.Element => (
     <motion.div
       key={c.category}
       className="az-glass flex items-center gap-3 px-3 py-3"
       style={{ width: 220 }}
-      initial={{ opacity: 0, x: c.side === 'left' ? -30 : 30 }}
+      initial={{ opacity: 1, x: 0 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{
-        delay: 0.5 + index * 0.12,
-        duration: 0.6,
-        ease: [0.25, 0.46, 0.45, 0.94],
+        duration: 0.3,
       }}
     >
       <div
@@ -172,9 +170,9 @@ export default function GuestHomepage(): React.JSX.Element {
       </div>
       <div className="min-w-0">
         <p className="font-bold text-white text-sm leading-tight">
-          {c.category} <span className="text-white/60">/ {c.sub}</span>
+          {c.category} <span className="text-white/80">/ {c.sub}</span>
         </p>
-        <p className="text-white/50 italic text-xs leading-tight mt-0.5">{c.descriptor}</p>
+        <p className="text-white/80 italic text-xs leading-tight mt-0.5">{c.descriptor}</p>
       </div>
     </motion.div>
   );
@@ -268,9 +266,9 @@ export default function GuestHomepage(): React.JSX.Element {
               border: '2px solid rgba(255,255,255,0.15)',
               boxShadow: '0 0 50px rgba(232,66,10,0.25), 0 30px 60px rgba(0,0,0,0.6)',
             }}
-            initial={{ opacity: 0, y: 40, scale: 0.9 }}
+            initial={{ opacity: 1, y: 0, scale: 1 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+            transition={{ duration: 0.3 }}
           >
             <div
               className="absolute top-2 left-1/2 -translate-x-1/2 rounded-full"
@@ -295,9 +293,9 @@ export default function GuestHomepage(): React.JSX.Element {
                         background: 'rgba(255,255,255,0.08)',
                         border: '1px solid rgba(255,255,255,0.12)',
                       }}
-                      initial={{ opacity: 0, scale: 0.5 }}
+                      initial={{ opacity: 1, scale: 1 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.6 + i * 0.08, duration: 0.35 }}
+                      transition={{ duration: 0.2 }}
                     >
                       {e}
                     </motion.div>
@@ -313,7 +311,12 @@ export default function GuestHomepage(): React.JSX.Element {
                 <motion.button
                   type="button"
                   className="az-btn-primary"
-                  style={{ width: 'auto', paddingInline: '1.5rem', fontSize: '0.75rem' }}
+                  style={{
+                    width: 'auto',
+                    paddingInline: '1.5rem',
+                    fontSize: '0.875rem',
+                    color: '#ffffff',
+                  }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -329,9 +332,8 @@ export default function GuestHomepage(): React.JSX.Element {
               <AnimatePresence mode="wait">
                 <motion.span
                   key={greetingIndex}
-                  className="block"
-                  style={{ color: 'var(--brand-orange)' }}
-                  initial={{ opacity: 0, y: 24 }}
+                  className="block text-white"
+                  initial={{ opacity: 1, y: 0 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -24 }}
                   transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
@@ -341,8 +343,8 @@ export default function GuestHomepage(): React.JSX.Element {
               </AnimatePresence>
             </h1>
             <motion.p
-              className="text-white/70 text-sm sm:text-base lg:text-lg mb-6 sm:mb-8 leading-relaxed"
-              initial={{ opacity: 0, y: 15 }}
+              className="text-white/95 text-sm sm:text-base lg:text-lg mb-6 sm:mb-8 leading-relaxed"
+              initial={{ opacity: 1, y: 0 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.55, duration: 0.5 }}
             >
@@ -350,9 +352,9 @@ export default function GuestHomepage(): React.JSX.Element {
             </motion.p>
             <motion.div
               className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 justify-center lg:justify-start"
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 1, y: 0 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.65, duration: 0.5 }}
+              transition={{ duration: 0.3 }}
             >
               <Link href="/auth/register">
                 <motion.button
@@ -472,12 +474,42 @@ export default function GuestHomepage(): React.JSX.Element {
                   href: '/sports',
                   color: 'var(--color-success-500)',
                 },
-                { name: 'Reality', icon: '\u{1F4FA}', href: '/reality', color: 'var(--brand-purple)' },
-                { name: 'Lifestyle', icon: '\u{1F3A8}', href: '/lifestyle', color: 'var(--brand-pink)' },
-                { name: 'Vertical', icon: '\u{1F4F1}', href: '/vertical', color: 'var(--brand-blue)' },
-                { name: 'Games', icon: '\u{1F3AE}', href: '/games', color: 'var(--brand-cyan, #06b6d4)' },
-                { name: 'Creator', icon: '\u{1F4E1}', href: '/creators', color: 'var(--brand-orange)' },
-                { name: 'Cinemaxis', icon: '\u{1F3A6}', href: '/cinemaxis', color: 'var(--brand-purple-light)' },
+                {
+                  name: 'Reality',
+                  icon: '\u{1F4FA}',
+                  href: '/reality',
+                  color: 'var(--brand-purple)',
+                },
+                {
+                  name: 'Lifestyle',
+                  icon: '\u{1F3A8}',
+                  href: '/lifestyle',
+                  color: 'var(--brand-pink)',
+                },
+                {
+                  name: 'Vertical',
+                  icon: '\u{1F4F1}',
+                  href: '/vertical',
+                  color: 'var(--brand-blue)',
+                },
+                {
+                  name: 'Games',
+                  icon: '\u{1F3AE}',
+                  href: '/games',
+                  color: 'var(--brand-cyan, #06b6d4)',
+                },
+                {
+                  name: 'Creator',
+                  icon: '\u{1F4E1}',
+                  href: '/creators',
+                  color: 'var(--brand-orange)',
+                },
+                {
+                  name: 'Cinemaxis',
+                  icon: '\u{1F3A6}',
+                  href: '/cinemaxis',
+                  color: 'var(--brand-purple-light)',
+                },
               ].map((u) => (
                 <Link
                   key={u.name}

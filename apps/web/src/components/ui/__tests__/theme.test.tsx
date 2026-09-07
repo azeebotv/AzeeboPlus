@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock localStorage
@@ -6,9 +6,15 @@ const localStorageMock = (() => {
   let store: Record<string, string> = {};
   return {
     getItem: (key: string) => store[key] || null,
-    setItem: (key: string, value: string) => { store[key] = value; },
-    removeItem: (key: string) => { delete store[key]; },
-    clear: () => { store = {}; },
+    setItem: (key: string, value: string) => {
+      store[key] = value;
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
   };
 })();
 Object.defineProperty(window, 'localStorage', { value: localStorageMock });
@@ -136,9 +142,7 @@ describe('Theme Accessibility', () => {
   });
 
   it('theme toggle has accessible label', () => {
-    const { container } = render(
-      <button aria-label="Toggle dark mode">🌙</button>
-    );
+    const { container } = render(<button aria-label="Toggle dark mode">🌙</button>);
 
     const button = container.querySelector('button');
     expect(button).toHaveAttribute('aria-label', 'Toggle dark mode');

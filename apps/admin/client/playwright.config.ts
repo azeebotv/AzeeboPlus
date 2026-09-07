@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import path from 'path';
 
 export default defineConfig({
   testDir: './e2e',
@@ -38,5 +39,6 @@ export default defineConfig({
     command: 'pnpm run dev',
     url: 'http://localhost:4100',
     reuseExistingServer: !process.env.CI,
+    cwd: path.resolve(__dirname, '..'),
   },
 });

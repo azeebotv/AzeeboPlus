@@ -45,7 +45,7 @@ interface AuthenticatedRequest {
 export class UsersController {
   constructor(
     @Inject(UsersService) private readonly usersService: UsersService,
-    private readonly avatarService: AvatarService,
+    @Inject(AvatarService) private readonly avatarService: AvatarService
   ) {}
 
   private getUserId(req: AuthenticatedRequest): string {
@@ -66,7 +66,7 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async uploadAvatar(
     @Request() req: AuthenticatedRequest,
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: Express.Multer.File
   ) {
     if (!file) {
       throw new UnauthorizedException('No file provided');
@@ -99,7 +99,7 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Upload URL generated' })
   async getAvatarUploadUrl(
     @Request() req: AuthenticatedRequest,
-    @Query('format') format: string = 'image/jpeg',
+    @Query('format') format: string = 'image/jpeg'
   ) {
     const result = await this.avatarService.getUploadUrl(this.getUserId(req), format);
     return { success: true, data: result };

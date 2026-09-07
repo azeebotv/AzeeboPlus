@@ -9,9 +9,9 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
-import { api } from '../../src/api';
+import { apiClient } from '../../src/api';
 import { colors, typography, spacing, radius } from '../../src/theme';
 import { GlassCard, BrandButton } from '../../src/components/ui';
 import { PageTransition } from '../../src/components/motion';
@@ -37,7 +37,6 @@ interface RatingSummary {
 
 export default function ReviewsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
   const { user } = useAuth();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [summary, setSummary] = useState<RatingSummary | null>(null);
@@ -58,11 +57,11 @@ export default function ReviewsScreen() {
     try {
       setLoading(true);
       const [reviewsRes, summaryRes] = await Promise.all([
-        api.get(`/v1/content/reviews/content/${id}?sort=${sortBy}`),
-        api.get(`/v1/content/reviews/content/${id}/summary`),
+        apiClient.get<{ data?: { items?: Review[] } }>(`/v1/content/reviews/content/${id}?sort=${sortBy}`),
+        apiClient.get<{ data?: RatingSummary }>(`/v1/content/reviews/content/${id}/summary`),
       ]);
       setReviews(reviewsRes.data?.items || []);
-      setSummary(summaryRes.data);
+      setSummary(summaryRes.data || null);
     } catch (error) {
       console.error('Failed to load reviews:', error);
     } finally {
@@ -78,7 +77,7 @@ export default function ReviewsScreen() {
 
     try {
       setSubmitting(true);
-      await api.post('/v1/content/reviews', {
+      await apiClient.post('/v1/content/reviews', {
         contentId: id,
         rating: myRating,
         title: myTitle || undefined,
@@ -92,7 +91,7 @@ export default function ReviewsScreen() {
       setHasSpoilers(false);
       loadReviews();
       Alert.alert('Success', 'Your review has been submitted');
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to submit review');
     } finally {
       setSubmitting(false);
@@ -101,7 +100,7 @@ export default function ReviewsScreen() {
 
   const handleHelpful = async (reviewId: string) => {
     try {
-      await api.post(`/v1/content/reviews/${reviewId}/helpful`);
+      await apiClient.post(`/v1/content/reviews/${reviewId}/helpful`);
       loadReviews();
     } catch (error) {
       console.error('Failed to mark helpful:', error);
@@ -114,14 +113,14 @@ export default function ReviewsScreen() {
       {
         text: 'Spam',
         onPress: async () => {
-          await api.post(`/v1/content/reviews/${reviewId}/report`, { reason: 'spam' });
+          await apiClient.post(`/v1/content/reviews/${reviewId}/report`, { reason: 'spam' });
           Alert.alert('Thank you', 'Review reported');
         },
       },
       {
         text: 'Inappropriate',
         onPress: async () => {
-          await api.post(`/v1/content/reviews/${reviewId}/report`, { reason: 'inappropriate' });
+          await apiClient.post(`/v1/content/reviews/${reviewId}/report`, { reason: 'inappropriate' });
           Alert.alert('Thank you', 'Review reported');
         },
       },
@@ -134,12 +133,10 @@ export default function ReviewsScreen() {
         {[1, 2, 3, 4, 5].map((star) => (
           <TouchableOpacity
             key={star}
-            onPress={() => interactive && setMyRating(star)}
             disabled={!interactive}
+            onPress={() => interactive && setMyRating(star)}
           >
-            <Text style={[styles.star, star <= rating && styles.starFilled]}>
-              {star <= rating ? '★' : '☆'}
-            </Text>
+            <Text style={[styles.star, star <= rating && styles.starFilled]}>★</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -164,7 +161,6 @@ export default function ReviewsScreen() {
               title="Write a Review"
               onPress={() => setShowForm(!showForm)}
               variant="primary"
-              size="sm"
             />
           )}
         </View>
@@ -441,7 +437,7 @@ const styles = StyleSheet.create({
   sortOption: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: radius.full,
+    borderRadius: radius.pill,
     backgroundColor: colors.bg.tertiary,
   },
   sortOptionActive: {

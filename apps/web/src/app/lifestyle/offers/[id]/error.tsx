@@ -1,6 +1,5 @@
 'use client';
 import { webLogger } from '@/lib/logger';
-'use client';
 
 import { useEffect } from 'react';
 
@@ -25,7 +24,7 @@ export default function Error({
       </p>
       <button
         onClick={reset}
-        className="rounded-lg bg-[var(--brand-orange)] px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+        className="min-h-[44px] rounded-lg bg-[var(--brand-orange)] px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--brand-orange)]"
       >
         Try again
       </button>

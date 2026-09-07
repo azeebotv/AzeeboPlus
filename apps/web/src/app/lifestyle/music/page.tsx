@@ -1,10 +1,3 @@
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Lifestyle Music  - Azeebo+',
-  description: 'Lifestyle Music  on Azeebo+',
-};
-
 'use client';
 import { Suspense, lazy, useEffect } from 'react';
 

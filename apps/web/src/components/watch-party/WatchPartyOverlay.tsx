@@ -69,7 +69,7 @@ export function WatchPartyOverlay({
     queryKey: ['watch-parties'],
     queryFn: async () => {
       const result = await apiFetch<PartyState[]>('/watch-parties/my');
-      return result.success ? (result.data || []) : [];
+      return result.success ? result.data || [] : [];
     },
   });
 
@@ -91,7 +91,7 @@ export function WatchPartyOverlay({
     queryFn: async () => {
       if (!activeParty?.id) return [];
       const result = await apiFetch<ChatMessage[]>(`/watch-parties/${activeParty.id}/chat`);
-      return result.success ? (result.data || []) : [];
+      return result.success ? result.data || [] : [];
     },
     enabled: !!activeParty?.id && showChat,
     refetchInterval: 1000,
@@ -189,9 +189,9 @@ export function WatchPartyOverlay({
     }
   }, [partyQuery.data, user, isPlaying, currentTime, onPlayPause, onSeek]);
 
-// handlePlayPause moved to inline onClick
+  // handlePlayPause moved to inline onClick
 
-// handleSeek moved to inline
+  // handleSeek moved to inline
 
   const copyInviteCode = useCallback(() => {
     if (activeParty) {
@@ -300,7 +300,10 @@ export function WatchPartyOverlay({
                     </div>
                   ))}
                 </div>
-                <div className="flex gap-2 p-2" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                <div
+                  className="flex gap-2 p-2"
+                  style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
+                >
                   <input
                     type="text"
                     value={chatInput}
@@ -383,7 +386,10 @@ export function WatchPartyOverlay({
                 {joinMutation.isPending ? 'Joining...' : 'Join'}
               </button>
               <button
-                onClick={() => { setShowJoin(false); setInviteCode(''); }}
+                onClick={() => {
+                  setShowJoin(false);
+                  setInviteCode('');
+                }}
                 className="py-2 px-4 rounded-xl text-sm font-medium text-white/60 border hover:text-white transition-colors"
                 style={{ borderColor: 'rgba(255,255,255,0.2)' }}
               >

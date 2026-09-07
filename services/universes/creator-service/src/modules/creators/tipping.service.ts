@@ -23,7 +23,7 @@ interface TipStats {
 export class TippingService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
-    @Inject(CreatorsService) private readonly creatorsService: CreatorsService,
+    @Inject(CreatorsService) private readonly creatorsService: CreatorsService
   ) {}
 
   /**
@@ -55,11 +55,7 @@ export class TippingService {
   /**
    * Get the current user's tipping history with pagination.
    */
-  async getUserTipHistory(
-    userId: string,
-    page = 1,
-    limit = 10,
-  ): Promise<CreatorResponse> {
+  async getUserTipHistory(userId: string, page = 1, limit = 10): Promise<CreatorResponse> {
     const skip = (page - 1) * limit;
 
     const [tips, total] = await Promise.all([
@@ -86,15 +82,11 @@ export class TippingService {
               select: { creatorId: true, tier: true },
             }),
           ]
-        : [[], []],
+        : [[], []]
     );
 
-    const nameMap = new Map(
-      creatorProfiles.map((p) => [p.userId, p.displayName ?? 'Creator']),
-    );
-    const tierMap = new Map(
-      leaderboardEntries.map((e) => [e.creatorId, e.tier]),
-    );
+    const nameMap = new Map(creatorProfiles.map((p) => [p.userId, p.displayName ?? 'Creator']));
+    const tierMap = new Map(leaderboardEntries.map((e) => [e.creatorId, e.tier]));
 
     const items: TipEntry[] = tips.map((tip) => ({
       id: tip.id,
@@ -121,7 +113,7 @@ export class TippingService {
     userId: string,
     creatorId: string,
     amount: number,
-    message?: string,
+    message?: string
   ): Promise<CreatorResponse> {
     return this.creatorsService.sendTip(userId, creatorId, amount, message);
   }

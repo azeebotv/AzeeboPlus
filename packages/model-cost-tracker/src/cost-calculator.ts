@@ -54,8 +54,8 @@ export function calculateCost(params: {
   }
 
   // Unknown model — estimate based on average T2 pricing
-  const estimatedInputCost = (params.inputTokens / 1_000_000) * 2.50;
-  const estimatedOutputCost = (params.outputTokens / 1_000_000) * 10.00;
+  const estimatedInputCost = (params.inputTokens / 1_000_000) * 2.5;
+  const estimatedOutputCost = (params.outputTokens / 1_000_000) * 10.0;
   const estimatedTotal = estimatedInputCost + estimatedOutputCost;
 
   return {
@@ -107,9 +107,7 @@ export function calculateSavings(params: {
   const alternative = calculateCost({ ...params, model: params.alternativeModel });
 
   const savings = current.totalCostUsd - alternative.totalCostUsd;
-  const savingsPercent = current.totalCostUsd > 0
-    ? (savings / current.totalCostUsd) * 100
-    : 0;
+  const savingsPercent = current.totalCostUsd > 0 ? (savings / current.totalCostUsd) * 100 : 0;
 
   return {
     currentCost: current.totalCostUsd,
@@ -124,7 +122,7 @@ export function calculateSavings(params: {
  */
 export function getCheapestForTier(
   tier: string,
-  options?: { provider?: string; maxContext?: number },
+  options?: { provider?: string; maxContext?: number }
 ): ModelPricing | undefined {
   const candidates = Object.values(ALL_MODELS).filter((m) => {
     if (m.tier !== tier) return false;
@@ -133,8 +131,8 @@ export function getCheapestForTier(
     return true;
   });
 
-  return candidates.sort((a, b) =>
-    (a.inputCostPer1M + a.outputCostPer1M) - (b.inputCostPer1M + b.outputCostPer1M),
+  return candidates.sort(
+    (a, b) => a.inputCostPer1M + a.outputCostPer1M - (b.inputCostPer1M + b.outputCostPer1M)
   )[0];
 }
 

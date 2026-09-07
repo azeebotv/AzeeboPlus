@@ -1,10 +1,3 @@
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Moderation  - Azeebo+',
-  description: 'Moderation  on Azeebo+',
-};
-
 'use client';
 import { useRouter } from 'next/navigation';
 

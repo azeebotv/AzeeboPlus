@@ -117,7 +117,10 @@ function FilmsContent() {
                     <div className="absolute top-2 right-2">
                       <span
                         className="px-2 py-0.5 rounded text-[10px] font-bold"
-                        style={{ backgroundColor: 'var(--brand-orange)', color: 'var(--brand-white)' }}
+                        style={{
+                          backgroundColor: 'var(--brand-orange)',
+                          color: 'var(--brand-white)',
+                        }}
                       >
                         EXCLUSIVE
                       </span>

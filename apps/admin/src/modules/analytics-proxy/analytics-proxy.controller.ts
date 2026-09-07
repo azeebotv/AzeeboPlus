@@ -1,11 +1,4 @@
-import {
-  Controller,
-  All,
-  Req,
-  Res,
-  UseGuards,
-  Logger,
-} from '@nestjs/common';
+import { Controller, All, Req, Res, UseGuards, Logger } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { ServiceAuthGuard } from '@azeebo/security';
 

@@ -37,9 +37,7 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
           className="fixed bottom-4 right-4 z-50 az-glass p-4 rounded-xl shadow-lg max-w-sm"
           style={{ border: '1px solid rgba(232,66,10,0.3)' }}
         >
-          <p className="text-sm text-white mb-3">
-            A new version of Azeebo+ is available.
-          </p>
+          <p className="text-sm text-white mb-3">A new version of Azeebo+ is available.</p>
           <div className="flex gap-2">
             <button
               onClick={sw.skipWaiting}
@@ -68,9 +66,7 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
       )}
       {/* Queue indicator */}
       {sw.offlineQueueCount > 0 && sw.isOnline && (
-        <div
-          className="fixed bottom-4 left-4 z-50 az-glass p-3 rounded-xl shadow-lg text-xs text-white/80"
-        >
+        <div className="fixed bottom-4 left-4 z-50 az-glass p-3 rounded-xl shadow-lg text-xs text-white/80">
           <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 mr-2 animate-pulse" />
           Syncing {sw.offlineQueueCount} queued action{sw.offlineQueueCount > 1 ? 's' : ''}...
         </div>

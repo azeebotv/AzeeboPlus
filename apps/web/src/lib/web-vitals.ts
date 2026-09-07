@@ -1,6 +1,7 @@
 'use client';
 
 import { onCLS, onINP, onLCP, onFCP, onTTFB, type Metric } from 'web-vitals';
+import { webLogger } from './logger';
 
 type VitalName = 'CLS' | 'INP' | 'LCP' | 'FCP' | 'TTFB';
 
@@ -22,12 +23,14 @@ let flushTimer: ReturnType<typeof setTimeout> | null = null;
  */
 async function sendMetric(metric: VitalMetric): Promise<void> {
   try {
+    const payload = JSON.stringify(metric);
     if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
-      navigator.sendBeacon('/api/v1/analytics/web-vitals', JSON.stringify(metric));
+      const blob = new Blob([payload], { type: 'application/json' });
+      navigator.sendBeacon('/api/v1/analytics/web-vitals', blob);
     } else {
       await fetch('/api/v1/analytics/web-vitals', {
         method: 'POST',
-        body: JSON.stringify(metric),
+        body: payload,
         headers: { 'Content-Type': 'application/json' },
         keepalive: true,
       });
@@ -67,13 +70,9 @@ function handleMetric(metric: Metric): void {
 
   vitalBuffer.push(vitalMetric);
 
-  // Log to console in development
+  // Log in development
   if (process.env.NODE_ENV === 'development') {
-    const color = metric.rating === 'good' ? 'green' : metric.rating === 'needs-improvement' ? 'orange' : 'red';
-    console.log(
-      `%c[Web Vitals] ${metric.name}: ${metric.value.toFixed(2)} (${metric.rating})`,
-      `color: ${color}; font-weight: bold`
-    );
+    webLogger.debug(`[Web Vitals] ${metric.name}: ${metric.value.toFixed(2)} (${metric.rating})`);
   }
 
   // Buffer and flush periodically
@@ -115,7 +114,13 @@ export function initWebVitals(): void {
 /**
  * Get current Web Vitals scores
  */
-export function getVitalsScore(): { cls: number; fid: number; lcp: number; fcp: number; ttfb: number } {
+export function getVitalsScore(): {
+  cls: number;
+  fid: number;
+  lcp: number;
+  fcp: number;
+  ttfb: number;
+} {
   return {
     cls: 0,
     fid: 0,

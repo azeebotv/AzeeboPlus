@@ -31,3 +31,26 @@ updates:
     labels:
       - "dependencies"
       - "ci"
+
+  # Docker base image updates (Dockerfile.all-in-one and any Dockerfile.*)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "docker"
+    reviewers:
+      - "azeebotv/devops-team"
+
+  # Terraform provider + module updates
+  - package-ecosystem: "terraform"
+    directory: "/terraform"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "infrastructure"
+    reviewers:
+      - "azeebotv/devops-team"
+

@@ -5,7 +5,7 @@ interface SecretData {
   [key: string]: string;
 }
 
-interface SecretVersion {
+export interface SecretVersion {
   versionId: string;
   secretString?: string;
   secretBinary?: Buffer;
@@ -125,7 +125,14 @@ export class SecretsManagerService {
   private getSecretFromEnvironment(secretName: string): SecretData | null {
     // Map secret names to environment variable prefixes
     const envPrefixes: Record<string, string[]> = {
-      'azeebo/database': ['DATABASE_URL', 'DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'],
+      'azeebo/database': [
+        'DATABASE_URL',
+        'DB_HOST',
+        'DB_PORT',
+        'DB_NAME',
+        'DB_USER',
+        'DB_PASSWORD',
+      ],
       'azeebo/redis': ['REDIS_URL', 'REDIS_HOST', 'REDIS_PORT'],
       'azeebo/jwt': ['JWT_SECRET', 'JWT_REFRESH_SECRET'],
       'azeebo/smtp': ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS'],

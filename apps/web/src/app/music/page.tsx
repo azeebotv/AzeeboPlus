@@ -1,10 +1,3 @@
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Music  - Azeebo+',
-  description: 'Music  on Azeebo+',
-};
-
 'use client';
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';

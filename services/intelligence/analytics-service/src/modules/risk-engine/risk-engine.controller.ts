@@ -1,6 +1,14 @@
 import {
-  Controller, Get, Post, Put, Delete, Param, Body, Query,
-  HttpCode, HttpStatus,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Body,
+  Query,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { RiskEngineService } from './risk-engine.service';
@@ -42,7 +50,7 @@ export class RiskEngineController {
   findAll(
     @Query('domain') domain?: string,
     @Query('riskLevel') riskLevel?: string,
-    @Query('search') search?: string,
+    @Query('search') search?: string
   ) {
     return this.riskService.findAll({ domain, riskLevel, search });
   }
@@ -131,7 +139,7 @@ export class RiskEngineController {
     @Query('actionType') actionType?: string,
     @Query('domain') domain?: string,
     @Query('decision') decision?: string,
-    @Query('limit') limit?: string,
+    @Query('limit') limit?: string
   ) {
     return this.riskService.getAssessmentLog({
       actionType,

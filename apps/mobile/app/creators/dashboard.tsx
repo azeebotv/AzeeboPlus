@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { creatorApi, CreatorDashboard, CreatorAnalytics } from '../../src/api/creator';
+import { creatorApi, type CreatorDashboard, type CreatorAnalytics } from '../../src/api/creator';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 
 const { width } = Dimensions.get('window');
@@ -14,7 +14,7 @@ function formatNumber(num: number): string {
   return String(num);
 }
 
-export default function CreatorDashboard() {
+export default function CreatorDashboardScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const isDark = colorScheme === 'dark';

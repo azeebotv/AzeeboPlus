@@ -79,28 +79,32 @@ function parseServiceConfigs() {
   );
   const content = readFileSync(configPath, 'utf8');
 
-  // Extract path and endpoints from each service config block
-  const routes = new Map();
-  const configBlocks = content.split(/path:\s*'/);
+  const serviceEndpoints = new Map();
+  const serviceConfigsMatch = content.match(/export const SERVICE_CONFIGS[^=]*=\s*\[([\s\S]*?)\];/);
+  if (!serviceConfigsMatch) return serviceEndpoints;
 
-  for (const block of configBlocks) {
-    const pathMatch = block.match(/^([^']+)'/);
+  const arrayContent = serviceConfigsMatch[1];
+  const serviceBlocks = arrayContent.split(/\n  \{/);
+
+  for (let i = 1; i < serviceBlocks.length; i++) {
+    const block = serviceBlocks[i];
+    const pathMatch = block.match(/path:\s*'([^']+)'/);
     if (!pathMatch) continue;
-    const servicePath = pathMatch[1]; // e.g. 'auth', 'content', etc.
+    const servicePath = pathMatch[1].replace(/^\//, '');
+    if (!serviceEndpoints.has(servicePath)) serviceEndpoints.set(servicePath, []);
 
-    // Extract endpoint paths from this block
+    const endpointsMatch = block.match(/endpoints:\s*\[([\s\S]*?)\]/);
+    if (!endpointsMatch) continue;
+
+    const endpointsContent = endpointsMatch[1];
     const endpointRe = /path:\s*'([^']+)'/g;
     let endpointMatch;
-    while ((endpointMatch = endpointRe.exec(block)) !== null) {
-      const ep = endpointMatch[1];
-      const normalizedEp = ep.replace(/:[a-zA-Z]+/g, ':param');
-      const key = `${servicePath}:${normalizedEp}`;
-      if (!routes.has(key)) routes.set(key, []);
-      routes.get(key).push(`${servicePath}${ep}`);
+    while ((endpointMatch = endpointRe.exec(endpointsContent)) !== null) {
+      serviceEndpoints.get(servicePath).push(endpointMatch[1]);
     }
   }
 
-  return routes;
+  return serviceEndpoints;
 }
 
 // ── 3. Compare and report ────────────────────────────────────────────────
@@ -111,25 +115,33 @@ function normalizePath(path) {
     .replace(/\/$/, '') || '/';
 }
 
-function matchRoute(service, clientPath, gatewayRoutes) {
-  // Check exact match first
-  const normalizedPath = normalizePath(clientPath);
-  const exactKey = `${service}:${normalizedPath}`;
-  if (gatewayRoutes.has(exactKey)) return true;
+function pathMatches(pattern, actual) {
+  const pNorm = normalizePath(pattern);
+  const aNorm = normalizePath(actual);
+  if (pNorm === aNorm) return true;
 
-  // Check with param normalization
-  const paramPath = normalizedPath.replace(/:[a-zA-Z]+/g, ':param');
-  const paramKey = `${service}:${paramPath}`;
-  if (gatewayRoutes.has(paramKey)) return true;
+  const pSegs = pNorm.split('/').filter(Boolean);
+  const aSegs = aNorm.split('/').filter(Boolean);
 
-  // Check parent paths (e.g., /content/universe matches /content/:id)
-  const segments = normalizedPath.split('/').filter(Boolean);
-  for (let i = segments.length; i > 0; i--) {
-    const parentPath = '/' + segments.slice(0, i).join('/');
-    const parentParamPath = parentPath.replace(/:[a-zA-Z]+/g, ':param');
-    if (gatewayRoutes.has(`${service}:${parentParamPath}`)) return true;
+  if (pSegs.length !== aSegs.length) return false;
+
+  for (let i = 0; i < pSegs.length; i++) {
+    const ps = pSegs[i];
+    const as = aSegs[i];
+    if (ps.startsWith(':') || ps.startsWith('{') || as.startsWith(':') || as.startsWith('{')) {
+      continue;
+    }
+    if (ps !== as) return false;
   }
+  return true;
+}
 
+function matchRoute(service, clientPath, serviceEndpoints) {
+  const endpoints = serviceEndpoints.get(service);
+  if (!endpoints) return false;
+  for (const ep of endpoints) {
+    if (pathMatches(ep, clientPath)) return true;
+  }
   return false;
 }
 

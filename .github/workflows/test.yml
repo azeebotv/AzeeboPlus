@@ -6,18 +6,23 @@ on:
   pull_request:
     branches: [main, develop]
 
+env:
+  NODE_VERSION: '22.16.0'
+  PNPM_VERSION: '10.33.2'
+
 jobs:
   test-web:
     name: Web App Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @azeebo/web test
@@ -27,14 +32,15 @@ jobs:
   test-admin:
     name: Admin App Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @azeebo/admin test
@@ -44,42 +50,87 @@ jobs:
   test-creator:
     name: Creator App Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @azeebo/creator test
         env:
           CI: true
 
-  test-backend:
-    name: Backend Service Tests
+  test-mobile:
+    name: Mobile App Tests
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        service:
-          - auth-service
-          - user-service
-          - wallet-service
-          - payment-service
-          - content-service
-          - search-service
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @azeebo/mobile test --if-present
+        env:
+          CI: true
+
+  test-backend:
+    name: Backend Service Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        service:
+          - analytics-service
+          - api-gateway
+          - auth-service
+          - comedy-service
+          - content-service
+          - creator-service
+          - engagement-service
+          - games-service
+          - knowledge-service
+          - lifestyle-service
+          - live-event-service
+          - media-service
+          - messaging-service
+          - moderation-service
+          - movie-service
+          - notification-service
+          - payment-service
+          - queue-service
+          - reality-service
+          - recommendation-service
+          - referral-service
+          - reward-service
+          - search-service
+          - sports-service
+          - subscription-service
+          - support-service
+          - user-service
+          - vertical-service
+          - wallet-service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run prisma:generate --if-present
       - run: pnpm --filter @azeebo/${{ matrix.service }} test
         env:
           CI: true
+

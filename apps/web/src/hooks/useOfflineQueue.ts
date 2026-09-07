@@ -46,7 +46,9 @@ export function useOfflineQueue() {
   const queueMutation = useCallback(
     async <T = unknown>(
       url: string,
-      options: { method: string; body?: string | object; headers?: Record<string, string> } = { method: 'POST' }
+      options: { method: string; body?: string | object; headers?: Record<string, string> } = {
+        method: 'POST',
+      }
     ): Promise<{ success: boolean; data?: T; queued: boolean }> => {
       // If online, try to send immediately
       if (isOnline) {

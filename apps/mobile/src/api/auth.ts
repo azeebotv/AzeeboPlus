@@ -112,14 +112,18 @@ export const authApi = {
 
   // ─── Social OAuth ──────────────────────────────────────────────────
 
-  getGoogleAuthorizeUrl: async (redirectUri?: string): Promise<ApiResponse<{ state: string; authorizeUrl: string }>> => {
+  getGoogleAuthorizeUrl: async (
+    redirectUri?: string
+  ): Promise<ApiResponse<{ state: string; authorizeUrl: string }>> => {
     const query = redirectUri ? `?redirectUri=${encodeURIComponent(redirectUri)}` : '';
     return apiClient.get<ApiResponse<{ state: string; authorizeUrl: string }>>(
       `/auth/social/google/authorize${query}`
     );
   },
 
-  getAppleAuthorizeUrl: async (redirectUri?: string): Promise<ApiResponse<{ state: string; authorizeUrl: string }>> => {
+  getAppleAuthorizeUrl: async (
+    redirectUri?: string
+  ): Promise<ApiResponse<{ state: string; authorizeUrl: string }>> => {
     const query = redirectUri ? `?redirectUri=${encodeURIComponent(redirectUri)}` : '';
     return apiClient.get<ApiResponse<{ state: string; authorizeUrl: string }>>(
       `/auth/social/apple/authorize${query}`

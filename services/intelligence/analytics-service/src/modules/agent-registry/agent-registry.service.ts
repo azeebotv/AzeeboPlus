@@ -17,11 +17,18 @@ import { Prisma } from '../../prisma/client';
 const AOS_AGENTS: CreateAgentDto[] = [
   // ── Control Plane (CP-01 through CP-06) ──
   {
-    agentId: 'CP-01', name: 'Executive Orchestrator', version: '1.0.0',
-    purpose: 'Decompose enterprise work, coordinate specialists, assemble executive output, track dependencies.',
+    agentId: 'CP-01',
+    name: 'Executive Orchestrator',
+    version: '1.0.0',
+    purpose:
+      'Decompose enterprise work, coordinate specialists, assemble executive output, track dependencies.',
     humanOwner: 'COO / Executive Leadership',
-    category: 'control-plane', executionTier: 'T3', riskLevel: 'R2', autonomyLevel: 'A2',
-    killSwitchLevel: 'K1', allowedTools: ['work-queue', 'task-router', 'knowledge-agent', 'pmo-tools'],
+    category: 'control-plane',
+    executionTier: 'T3',
+    riskLevel: 'R2',
+    autonomyLevel: 'A2',
+    killSwitchLevel: 'K1',
+    allowedTools: ['work-queue', 'task-router', 'knowledge-agent', 'pmo-tools'],
     deniedActions: ['approve-material-decisions', 'modify-source-truth', 'financial-transactions'],
     approvalActions: ['delegate-to-specialists', 'escalate-to-human'],
     dataClasses: ['internal', 'confidential'],
@@ -31,11 +38,18 @@ const AOS_AGENTS: CreateAgentDto[] = [
     evaluationSuite: ['orchestration-golden', 'dependency-resolution', 'executive-output-quality'],
   },
   {
-    agentId: 'CP-02', name: 'Authority & Policy Guardian', version: '1.0.0',
-    purpose: 'Resolve controlling authority, revision, permissions, prohibited actions and supersession.',
+    agentId: 'CP-02',
+    name: 'Authority & Policy Guardian',
+    version: '1.0.0',
+    purpose:
+      'Resolve controlling authority, revision, permissions, prohibited actions and supersession.',
     humanOwner: 'Legal / Compliance',
-    category: 'control-plane', executionTier: 'T2', riskLevel: 'R3', autonomyLevel: 'A1',
-    killSwitchLevel: 'K2', allowedTools: ['authority-index', 'policy-engine', 'revision-tracker'],
+    category: 'control-plane',
+    executionTier: 'T2',
+    riskLevel: 'R3',
+    autonomyLevel: 'A1',
+    killSwitchLevel: 'K2',
+    allowedTools: ['authority-index', 'policy-engine', 'revision-tracker'],
     deniedActions: ['create-new-authority', 'waive-controls', 'modify-authority-documents'],
     approvalActions: ['resolve-conflict', 'apply-supersession'],
     dataClasses: ['confidential', 'restricted'],
@@ -44,11 +58,17 @@ const AOS_AGENTS: CreateAgentDto[] = [
     evaluationSuite: ['authority-golden', 'policy-compliance', 'conflict-resolution'],
   },
   {
-    agentId: 'CP-03', name: 'Intake & Work Router', version: '1.0.0',
+    agentId: 'CP-03',
+    name: 'Intake & Work Router',
+    version: '1.0.0',
     purpose: 'Classify request, priority, workflow, complexity tier and required agents/humans.',
     humanOwner: 'COO / PMO',
-    category: 'control-plane', executionTier: 'T1', riskLevel: 'R1', autonomyLevel: 'A3',
-    killSwitchLevel: 'K1', allowedTools: ['work-queue', 'classification-engine', 'routing-table'],
+    category: 'control-plane',
+    executionTier: 'T1',
+    riskLevel: 'R1',
+    autonomyLevel: 'A3',
+    killSwitchLevel: 'K1',
+    allowedTools: ['work-queue', 'classification-engine', 'routing-table'],
     deniedActions: ['domain-approval', 'material-decisions'],
     approvalActions: ['reclassify-task', 'override-priority'],
     dataClasses: ['internal'],
@@ -57,11 +77,17 @@ const AOS_AGENTS: CreateAgentDto[] = [
     evaluationSuite: ['routing-golden', 'classification-accuracy'],
   },
   {
-    agentId: 'CP-04', name: 'Enterprise Knowledge Agent', version: '1.0.0',
+    agentId: 'CP-04',
+    name: 'Enterprise Knowledge Agent',
+    version: '1.0.0',
     purpose: 'Retrieve approved institutional knowledge and cite sources.',
     humanOwner: 'Knowledge / Product',
-    category: 'control-plane', executionTier: 'T2', riskLevel: 'R1', autonomyLevel: 'A2',
-    killSwitchLevel: 'K0', allowedTools: ['knowledge-graph', 'search', 'document-retrieval'],
+    category: 'control-plane',
+    executionTier: 'T2',
+    riskLevel: 'R1',
+    autonomyLevel: 'A2',
+    killSwitchLevel: 'K0',
+    allowedTools: ['knowledge-graph', 'search', 'document-retrieval'],
     deniedActions: ['invent-memory', 'become-system-of-record', 'modify-knowledge'],
     approvalActions: [],
     dataClasses: ['internal', 'confidential'],
@@ -70,11 +96,18 @@ const AOS_AGENTS: CreateAgentDto[] = [
     evaluationSuite: ['knowledge-golden', 'source-citation', 'accuracy'],
   },
   {
-    agentId: 'CP-05', name: 'Risk / Approval Agent', version: '1.0.0',
-    purpose: 'Score risk, reversibility, data sensitivity, financial exposure and required approval.',
+    agentId: 'CP-05',
+    name: 'Risk / Approval Agent',
+    version: '1.0.0',
+    purpose:
+      'Score risk, reversibility, data sensitivity, financial exposure and required approval.',
     humanOwner: 'Risk / Compliance',
-    category: 'control-plane', executionTier: 'T2', riskLevel: 'R3', autonomyLevel: 'A1',
-    killSwitchLevel: 'K2', allowedTools: ['risk-engine', 'approval-gate', 'threshold-checker'],
+    category: 'control-plane',
+    executionTier: 'T2',
+    riskLevel: 'R3',
+    autonomyLevel: 'A1',
+    killSwitchLevel: 'K2',
+    allowedTools: ['risk-engine', 'approval-gate', 'threshold-checker'],
     deniedActions: ['final-approval', 'override-risk-score'],
     approvalActions: ['escalate-to-human', 'flag-high-risk'],
     dataClasses: ['confidential', 'restricted'],
@@ -83,11 +116,18 @@ const AOS_AGENTS: CreateAgentDto[] = [
     evaluationSuite: ['risk-golden', 'approval-accuracy', 'threshold-calibration'],
   },
   {
-    agentId: 'CP-06', name: 'Audit / Evidence Agent', version: '1.0.0',
-    purpose: 'Independently verify authority, source traceability, calculations, completion and exception status.',
+    agentId: 'CP-06',
+    name: 'Audit / Evidence Agent',
+    version: '1.0.0',
+    purpose:
+      'Independently verify authority, source traceability, calculations, completion and exception status.',
     humanOwner: 'Audit / Internal Controls',
-    category: 'control-plane', executionTier: 'T2', riskLevel: 'R2', autonomyLevel: 'A1',
-    killSwitchLevel: 'K2', allowedTools: ['audit-log', 'evidence-store', 'calculation-verifier'],
+    category: 'control-plane',
+    executionTier: 'T2',
+    riskLevel: 'R2',
+    autonomyLevel: 'A1',
+    killSwitchLevel: 'K2',
+    allowedTools: ['audit-log', 'evidence-store', 'calculation-verifier'],
     deniedActions: ['review-own-output', 'modify-audit-trail', 'self-approve'],
     approvalActions: ['flag-non-conformance', 'escalate-audit-finding'],
     dataClasses: ['confidential', 'restricted'],
@@ -98,169 +138,260 @@ const AOS_AGENTS: CreateAgentDto[] = [
 
   // ── Shared Enterprise (EA-01 through EA-12) ──
   {
-    agentId: 'EA-01', name: 'Finance & Close', version: '1.0.0',
+    agentId: 'EA-01',
+    name: 'Finance & Close',
+    version: '1.0.0',
     purpose: 'Close preparation, reconciliations, budget variance, management-report schedules.',
     humanOwner: 'CFO / Financial Controller',
-    category: 'shared-enterprise', executionTier: 'T2', riskLevel: 'R3', autonomyLevel: 'A1',
-    killSwitchLevel: 'K2', allowedTools: ['ledger', 'reconciliation-engine', 'report-builder'],
+    category: 'shared-enterprise',
+    executionTier: 'T2',
+    riskLevel: 'R3',
+    autonomyLevel: 'A1',
+    killSwitchLevel: 'K2',
+    allowedTools: ['ledger', 'reconciliation-engine', 'report-builder'],
     deniedActions: ['journal-approval', 'close-signoff', 'material-reclassification'],
     approvalActions: ['reconcile-variance', 'prepare-close-pack'],
     dataClasses: ['confidential', 'restricted'],
-    costBudgetDaily: 50, costBudgetMonthly: 1500,
+    costBudgetDaily: 50,
+    costBudgetMonthly: 1500,
     workflowIds: ['month-end-close', 'reconciliation', 'budget-variance'],
     authorityRefs: ['VMNL-AZP-AOS-MA-001', 'AZP-BRD-PRD-001'],
     evaluationSuite: ['finance-golden', 'reconciliation-accuracy', 'close-timeliness'],
   },
   {
-    agentId: 'EA-02', name: 'Treasury & Liquidity', version: '1.0.0',
+    agentId: 'EA-02',
+    name: 'Treasury & Liquidity',
+    version: '1.0.0',
     purpose: 'Cash position, 13-week forecast, payment calendar, covenant/headroom monitoring.',
     humanOwner: 'CFO / Treasury',
-    category: 'shared-enterprise', executionTier: 'T2', riskLevel: 'R3', autonomyLevel: 'A1',
-    killSwitchLevel: 'K2', allowedTools: ['cash-position', 'forecast-engine', 'payment-calendar'],
+    category: 'shared-enterprise',
+    executionTier: 'T2',
+    riskLevel: 'R3',
+    autonomyLevel: 'A1',
+    killSwitchLevel: 'K2',
+    allowedTools: ['cash-position', 'forecast-engine', 'payment-calendar'],
     deniedActions: ['payment-release', 'covenant-waiver', 'material-transfer'],
     approvalActions: ['forecast-adjustment', 'alert-escalation'],
     dataClasses: ['confidential', 'restricted'],
-    costBudgetDaily: 40, costBudgetMonthly: 1200,
+    costBudgetDaily: 40,
+    costBudgetMonthly: 1200,
     workflowIds: ['cash-forecast', 'payment-scheduling', 'covenant-monitoring'],
     authorityRefs: ['VMNL-AZP-AOS-MA-001', 'AZP-BRD-PRD-001'],
     evaluationSuite: ['treasury-golden', 'forecast-accuracy', 'liquidity-monitoring'],
   },
   {
-    agentId: 'EA-03', name: 'Revenue Assurance & Collections', version: '1.0.0',
+    agentId: 'EA-03',
+    name: 'Revenue Assurance & Collections',
+    version: '1.0.0',
     purpose: 'Invoice status, AR ageing, collections prioritisation, disputes and credit alerts.',
     humanOwner: 'CFO / Commercial',
-    category: 'shared-enterprise', executionTier: 'T2', riskLevel: 'R2', autonomyLevel: 'A2',
-    killSwitchLevel: 'K1', allowedTools: ['invoice-tracker', 'ar-ageing', 'collections-prioritiser'],
+    category: 'shared-enterprise',
+    executionTier: 'T2',
+    riskLevel: 'R2',
+    autonomyLevel: 'A2',
+    killSwitchLevel: 'K1',
+    allowedTools: ['invoice-tracker', 'ar-ageing', 'collections-prioritiser'],
     deniedActions: ['write-off-approval', 'credit-limit-change', 'settlement-approval'],
     approvalActions: ['collections-priority', 'dispute-escalation'],
     dataClasses: ['confidential'],
-    costBudgetDaily: 30, costBudgetMonthly: 900,
+    costBudgetDaily: 30,
+    costBudgetMonthly: 900,
     workflowIds: ['collections', 'dispute-resolution', 'ar-ageing'],
     authorityRefs: ['VMNL-AZP-AOS-MA-001', 'AZP-BRD-PRD-001'],
     evaluationSuite: ['collections-golden', 'ar-accuracy', 'dispute-resolution'],
   },
   {
-    agentId: 'EA-04', name: 'Commercial & Proposal', version: '1.0.0',
-    purpose: 'Opportunity research, proposal assembly, CRM, sponsor/partner inventory and follow-up.',
+    agentId: 'EA-04',
+    name: 'Commercial & Proposal',
+    version: '1.0.0',
+    purpose:
+      'Opportunity research, proposal assembly, CRM, sponsor/partner inventory and follow-up.',
     humanOwner: 'Commercial Lead',
-    category: 'shared-enterprise', executionTier: 'T2', riskLevel: 'R2', autonomyLevel: 'A2',
-    killSwitchLevel: 'K1', allowedTools: ['crm', 'proposal-builder', 'research-engine'],
+    category: 'shared-enterprise',
+    executionTier: 'T2',
+    riskLevel: 'R2',
+    autonomyLevel: 'A2',
+    killSwitchLevel: 'K1',
+    allowedTools: ['crm', 'proposal-builder', 'research-engine'],
     deniedActions: ['contract-signing', 'material-price-concessions', 'partnership-commitment'],
     approvalActions: ['proposal-approval', 'pricing-exception'],
     dataClasses: ['internal', 'confidential'],
-    costBudgetDaily: 30, costBudgetMonthly: 900,
+    costBudgetDaily: 30,
+    costBudgetMonthly: 900,
     workflowIds: ['proposal-assembly', 'opportunity-research', 'sponsor-tracking'],
     authorityRefs: ['VMNL-AZP-AOS-MA-001', 'AZP-BRD-PRD-001'],
     evaluationSuite: ['commercial-golden', 'proposal-quality', 'pipeline-accuracy'],
   },
   {
-    agentId: 'EA-05', name: 'Contract & Rights', version: '1.0.0',
-    purpose: 'Contract intake, obligation extraction, renewals, chain-of-title, rights/windows/territories alerts.',
+    agentId: 'EA-05',
+    name: 'Contract & Rights',
+    version: '1.0.0',
+    purpose:
+      'Contract intake, obligation extraction, renewals, chain-of-title, rights/windows/territories alerts.',
     humanOwner: 'Legal / Rights',
-    category: 'shared-enterprise', executionTier: 'T2', riskLevel: 'R3', autonomyLevel: 'A1',
-    killSwitchLevel: 'K2', allowedTools: ['contract-engine', 'rights-graph', 'obligation-tracker'],
+    category: 'shared-enterprise',
+    executionTier: 'T2',
+    riskLevel: 'R3',
+    autonomyLevel: 'A1',
+    killSwitchLevel: 'K2',
+    allowedTools: ['contract-engine', 'rights-graph', 'obligation-tracker'],
     deniedActions: ['contract-signing', 'rights-transfer', 'licence-grant', 'settlement-approval'],
     approvalActions: ['obligation-extraction', 'renewal-alert', 'rights-conflict-flag'],
     dataClasses: ['confidential', 'restricted'],
-    costBudgetDaily: 40, costBudgetMonthly: 1200,
+    costBudgetDaily: 40,
+    costBudgetMonthly: 1200,
     workflowIds: ['contract-management', 'rights-tracking', 'obligation-extraction'],
     authorityRefs: ['VMNL-AZP-AOS-MA-001', 'AZP-BRD-PRD-001'],
     evaluationSuite: ['rights-golden', 'obligation-accuracy', 'renewal-detection'],
   },
   {
-    agentId: 'EA-06', name: 'Procurement & Vendor', version: '1.0.0',
-    purpose: 'Quote comparison, renewals, duplicate tools, unused subscriptions and vendor performance.',
+    agentId: 'EA-06',
+    name: 'Procurement & Vendor',
+    version: '1.0.0',
+    purpose:
+      'Quote comparison, renewals, duplicate tools, unused subscriptions and vendor performance.',
     humanOwner: 'Finance / Procurement',
-    category: 'shared-enterprise', executionTier: 'T2', riskLevel: 'R1', autonomyLevel: 'A2',
-    killSwitchLevel: 'K1', allowedTools: ['vendor-tracker', 'quote-comparator', 'subscription-monitor'],
+    category: 'shared-enterprise',
+    executionTier: 'T2',
+    riskLevel: 'R1',
+    autonomyLevel: 'A2',
+    killSwitchLevel: 'K1',
+    allowedTools: ['vendor-tracker', 'quote-comparator', 'subscription-monitor'],
     deniedActions: ['contract-signing', 'vendor-termination', 'budget-approval'],
     approvalActions: ['renewal-recommendation', 'cost-saving-flag'],
     dataClasses: ['internal', 'confidential'],
-    costBudgetDaily: 20, costBudgetMonthly: 600,
+    costBudgetDaily: 20,
+    costBudgetMonthly: 600,
     workflowIds: ['vendor-rationalisation', 'quote-comparison', 'subscription-monitoring'],
     authorityRefs: ['VMNL-AZP-AOS-MA-001'],
     evaluationSuite: ['procurement-golden', 'cost-saving-accuracy'],
   },
   {
-    agentId: 'EA-07', name: 'People & Workforce', version: '1.0.0',
-    purpose: 'Role business cases, onboarding, performance-cycle prep, skills/capacity mapping and headcount challenge.',
+    agentId: 'EA-07',
+    name: 'People & Workforce',
+    version: '1.0.0',
+    purpose:
+      'Role business cases, onboarding, performance-cycle prep, skills/capacity mapping and headcount challenge.',
     humanOwner: 'People / CEO',
-    category: 'shared-enterprise', executionTier: 'T2', riskLevel: 'R2', autonomyLevel: 'A1',
-    killSwitchLevel: 'K2', allowedTools: ['hr-system', 'capacity-mapper', 'business-case-builder'],
+    category: 'shared-enterprise',
+    executionTier: 'T2',
+    riskLevel: 'R2',
+    autonomyLevel: 'A1',
+    killSwitchLevel: 'K2',
+    allowedTools: ['hr-system', 'capacity-mapper', 'business-case-builder'],
     deniedActions: ['hiring-decision', 'firing-decision', 'compensation-approval'],
     approvalActions: ['business-case-preparation', 'capacity-analysis', 'headcount-challenge'],
     dataClasses: ['confidential', 'restricted'],
-    costBudgetDaily: 25, costBudgetMonthly: 750,
+    costBudgetDaily: 25,
+    costBudgetMonthly: 750,
     workflowIds: ['hiring-pipeline', 'performance-cycle', 'capacity-mapping'],
     authorityRefs: ['VMNL-AZP-AOS-MA-001', 'AZP-BRD-PRD-001'],
     evaluationSuite: ['people-golden', 'business-case-quality', 'capacity-accuracy'],
   },
   {
-    agentId: 'EA-08', name: 'PMO & Operating Review', version: '1.0.0',
+    agentId: 'EA-08',
+    name: 'PMO & Operating Review',
+    version: '1.0.0',
     purpose: 'Action/decision logs, scorecards, dependencies, weekly operating reviews.',
     humanOwner: 'COO / PMO',
-    category: 'shared-enterprise', executionTier: 'T2', riskLevel: 'R1', autonomyLevel: 'A2',
-    killSwitchLevel: 'K1', allowedTools: ['action-log', 'scorecard-engine', 'dependency-tracker'],
+    category: 'shared-enterprise',
+    executionTier: 'T2',
+    riskLevel: 'R1',
+    autonomyLevel: 'A2',
+    killSwitchLevel: 'K1',
+    allowedTools: ['action-log', 'scorecard-engine', 'dependency-tracker'],
     deniedActions: ['decision-making', 'priority-override'],
     approvalActions: ['scorecard-escalation', 'dependency-flag'],
     dataClasses: ['internal'],
-    costBudgetDaily: 20, costBudgetMonthly: 600,
+    costBudgetDaily: 20,
+    costBudgetMonthly: 600,
     workflowIds: ['operating-review', 'action-tracking', 'scorecard-generation'],
     authorityRefs: ['VMNL-AZP-AOS-MA-001'],
     evaluationSuite: ['pmo-golden', 'scorecard-accuracy', 'dependency-tracking'],
   },
   {
-    agentId: 'EA-09', name: 'Data, BI & Experimentation', version: '1.0.0',
-    purpose: 'Controlled analytics, cohort/funnel analysis, experiment readouts and data-quality checks.',
+    agentId: 'EA-09',
+    name: 'Data, BI & Experimentation',
+    version: '1.0.0',
+    purpose:
+      'Controlled analytics, cohort/funnel analysis, experiment readouts and data-quality checks.',
     humanOwner: 'Data / Product',
-    category: 'shared-enterprise', executionTier: 'T2', riskLevel: 'R1', autonomyLevel: 'A2',
-    killSwitchLevel: 'K1', allowedTools: ['analytics-engine', 'experiment-tracker', 'data-quality-checker'],
+    category: 'shared-enterprise',
+    executionTier: 'T2',
+    riskLevel: 'R1',
+    autonomyLevel: 'A2',
+    killSwitchLevel: 'K1',
+    allowedTools: ['analytics-engine', 'experiment-tracker', 'data-quality-checker'],
     deniedActions: ['data-modification', 'experiment-design-override'],
     approvalActions: ['experiment-readout', 'data-quality-flag'],
     dataClasses: ['internal', 'confidential'],
-    costBudgetDaily: 30, costBudgetMonthly: 900,
+    costBudgetDaily: 30,
+    costBudgetMonthly: 900,
     workflowIds: ['analytics-reporting', 'experiment-analysis', 'data-quality'],
     authorityRefs: ['VMNL-AZP-AOS-MA-001', 'AZP-BRD-PRD-001'],
     evaluationSuite: ['data-golden', 'experiment-accuracy', 'data-quality'],
   },
   {
-    agentId: 'EA-10', name: 'Customer Operations & CRM', version: '1.0.0',
+    agentId: 'EA-10',
+    name: 'Customer Operations & CRM',
+    version: '1.0.0',
     purpose: 'Tier-1 support, lifecycle messaging, retention/reactivation, escalation.',
     humanOwner: 'Customer / Growth',
-    category: 'shared-enterprise', executionTier: 'T1', riskLevel: 'R1', autonomyLevel: 'A3',
-    killSwitchLevel: 'K1', allowedTools: ['crm', 'support-tickets', 'messaging-engine', 'retention-tracker'],
+    category: 'shared-enterprise',
+    executionTier: 'T1',
+    riskLevel: 'R1',
+    autonomyLevel: 'A3',
+    killSwitchLevel: 'K1',
+    allowedTools: ['crm', 'support-tickets', 'messaging-engine', 'retention-tracker'],
     deniedActions: ['refund-approval', 'account-deletion', 'legal-escalation'],
     approvalActions: ['support-escalation', 'retention-offer'],
     dataClasses: ['internal', 'confidential'],
-    costBudgetDaily: 25, costBudgetMonthly: 750,
+    costBudgetDaily: 25,
+    costBudgetMonthly: 750,
     workflowIds: ['support-tickets', 'retention-campaigns', 'lifecycle-messaging'],
     authorityRefs: ['VMNL-AZP-AOS-MA-001', 'AZP-BRD-PRD-001'],
     evaluationSuite: ['customer-golden', 'support-quality', 'retention-accuracy'],
   },
   {
-    agentId: 'EA-11', name: 'Product & Delivery', version: '1.0.0',
-    purpose: 'Backlog/PRD support and orchestration into the existing Claude Code engineering system.',
+    agentId: 'EA-11',
+    name: 'Product & Delivery',
+    version: '1.0.0',
+    purpose:
+      'Backlog/PRD support and orchestration into the existing Claude Code engineering system.',
     humanOwner: 'Product / Technology',
-    category: 'shared-enterprise', executionTier: 'T2', riskLevel: 'R2', autonomyLevel: 'A2',
-    killSwitchLevel: 'K1', allowedTools: ['backlog', 'prd-tracker', 'claude-code-orchestrator'],
+    category: 'shared-enterprise',
+    executionTier: 'T2',
+    riskLevel: 'R2',
+    autonomyLevel: 'A2',
+    killSwitchLevel: 'K1',
+    allowedTools: ['backlog', 'prd-tracker', 'claude-code-orchestrator'],
     deniedActions: ['architecture-change', 'production-deployment', 'database-migration'],
     approvalActions: ['backlog-prioritisation', 'release-readiness'],
     dataClasses: ['internal'],
-    costBudgetDaily: 40, costBudgetMonthly: 1200,
+    costBudgetDaily: 40,
+    costBudgetMonthly: 1200,
     workflowIds: ['product-delivery', 'engineering-orchestration'],
     authorityRefs: ['VMNL-AZP-AOS-MA-001', 'AZP-CCPOS-001', 'AZP-TAA-001'],
     evaluationSuite: ['product-golden', 'delivery-quality', 'engineering-compliance'],
   },
   {
-    agentId: 'EA-12', name: 'Security, Privacy & SRE', version: '1.0.0',
-    purpose: 'Alert triage, access review, privacy checks, incident classification, uptime/DR evidence.',
+    agentId: 'EA-12',
+    name: 'Security, Privacy & SRE',
+    version: '1.0.0',
+    purpose:
+      'Alert triage, access review, privacy checks, incident classification, uptime/DR evidence.',
     humanOwner: 'Technology / Security',
-    category: 'shared-enterprise', executionTier: 'T2', riskLevel: 'R3', autonomyLevel: 'A1',
-    killSwitchLevel: 'K3', allowedTools: ['security-scanner', 'access-reviewer', 'incident-classifier', 'sre-monitor'],
+    category: 'shared-enterprise',
+    executionTier: 'T2',
+    riskLevel: 'R3',
+    autonomyLevel: 'A1',
+    killSwitchLevel: 'K3',
+    allowedTools: ['security-scanner', 'access-reviewer', 'incident-classifier', 'sre-monitor'],
     deniedActions: ['incident-resolution', 'access-provisioning', 'production-deployment'],
     approvalActions: ['alert-triage', 'privacy-check', 'incident-classification'],
     dataClasses: ['confidential', 'restricted'],
-    costBudgetDaily: 35, costBudgetMonthly: 1050,
+    costBudgetDaily: 35,
+    costBudgetMonthly: 1050,
     workflowIds: ['security-monitoring', 'access-review', 'incident-response', 'dr-testing'],
     authorityRefs: ['VMNL-AZP-AOS-MA-001', 'AZP-TAA-001'],
     evaluationSuite: ['security-golden', 'incident-detection', 'access-compliance', 'sre-slo'],
@@ -278,7 +409,9 @@ export class AgentRegistryService {
   // ── CRUD ─────────────────────────────────────────────────
 
   async create(dto: CreateAgentDto) {
-    const existing = await this.prisma.agentRegistry.findUnique({ where: { agentId: dto.agentId } });
+    const existing = await this.prisma.agentRegistry.findUnique({
+      where: { agentId: dto.agentId },
+    });
     if (existing) {
       throw new ConflictException(`Agent ${dto.agentId} already registered. Use PUT to update.`);
     }
@@ -306,10 +439,10 @@ export class AgentRegistryService {
         costBudgetMonthly: dto.costBudgetMonthly,
         modelTierDefault: dto.modelTierDefault,
         modelTierFallback: dto.modelTierFallback,
-        qualityThreshold: dto.qualityThreshold as Prisma.InputJsonValue ?? Prisma.JsonNull,
-        valueKpis: dto.valueKpis as Prisma.InputJsonValue ?? Prisma.JsonNull,
-        slaTarget: dto.slaTarget as Prisma.InputJsonValue ?? Prisma.JsonNull,
-        metadata: dto.metadata as Prisma.InputJsonValue ?? Prisma.JsonNull,
+        qualityThreshold: (dto.qualityThreshold as Prisma.InputJsonValue) ?? Prisma.JsonNull,
+        valueKpis: (dto.valueKpis as Prisma.InputJsonValue) ?? Prisma.JsonNull,
+        slaTarget: (dto.slaTarget as Prisma.InputJsonValue) ?? Prisma.JsonNull,
+        metadata: (dto.metadata as Prisma.InputJsonValue) ?? Prisma.JsonNull,
         workflowIds: dto.workflowIds ?? [],
         authorityRefs: dto.authorityRefs ?? [],
         killSwitchPath: dto.killSwitchPath,
@@ -348,11 +481,15 @@ export class AgentRegistryService {
 
     this.logger.log(`Updating agent: ${agentId}`);
     const data: Record<string, unknown> = { ...dto };
-    if (dto.qualityThreshold !== undefined) data.qualityThreshold = dto.qualityThreshold as Prisma.InputJsonValue;
+    if (dto.qualityThreshold !== undefined)
+      data.qualityThreshold = dto.qualityThreshold as Prisma.InputJsonValue;
     if (dto.valueKpis !== undefined) data.valueKpis = dto.valueKpis as Prisma.InputJsonValue;
     if (dto.slaTarget !== undefined) data.slaTarget = dto.slaTarget as Prisma.InputJsonValue;
     if (dto.metadata !== undefined) data.metadata = dto.metadata as Prisma.InputJsonValue;
-    return this.prisma.agentRegistry.update({ where: { agentId }, data: data as Prisma.AgentRegistryUpdateInput });
+    return this.prisma.agentRegistry.update({
+      where: { agentId },
+      data: data as Prisma.AgentRegistryUpdateInput,
+    });
   }
 
   async delete(agentId: string) {
@@ -370,7 +507,9 @@ export class AgentRegistryService {
     const agent = await this.prisma.agentRegistry.findUnique({ where: { agentId } });
     if (!agent) throw new NotFoundException(`Agent ${agentId} not found`);
 
-    this.logger.warn(`🔴 KILL SWITCH ACTIVATED for ${agentId} by ${dto.triggeredBy}: ${dto.reason}`);
+    this.logger.warn(
+      `🔴 KILL SWITCH ACTIVATED for ${agentId} by ${dto.triggeredBy}: ${dto.reason}`
+    );
 
     await this.prisma.$transaction([
       this.prisma.agentRegistry.update({
@@ -385,7 +524,7 @@ export class AgentRegistryService {
           triggeredBy: dto.triggeredBy,
           previousStatus: agent.status,
           newStatus: 'suspended',
-          rollbackData: dto.rollbackData as Prisma.InputJsonValue ?? Prisma.JsonNull,
+          rollbackData: (dto.rollbackData as Prisma.InputJsonValue) ?? Prisma.JsonNull,
           evidence: dto.evidence,
         },
       }),
@@ -485,11 +624,10 @@ export class AgentRegistryService {
     const agent = await this.prisma.agentRegistry.findUnique({ where: { agentId } });
     if (!agent) throw new NotFoundException(`Agent ${agentId} not found`);
 
-    const errorRate = agent.totalExecutions > 0
-      ? (agent.totalErrors / agent.totalExecutions) * 100
-      : 0;
+    const errorRate =
+      agent.totalExecutions > 0 ? (agent.totalErrors / agent.totalExecutions) * 100 : 0;
 
-    let healthStatus: typeof HEALTH_STATUSES[number] = 'healthy';
+    let healthStatus: (typeof HEALTH_STATUSES)[number] = 'healthy';
     if (agent.status === 'suspended') healthStatus = 'unhealthy';
     else if (errorRate > 20) healthStatus = 'unhealthy';
     else if (errorRate > 5) healthStatus = 'degraded';
@@ -546,13 +684,11 @@ export class AgentRegistryService {
     const agent = await this.prisma.agentRegistry.findUnique({ where: { agentId } });
     if (!agent) throw new NotFoundException(`Agent ${agentId} not found`);
 
-    const passedThreshold = dto.totalTests > 0
-      ? (dto.passed / dto.totalTests) >= 0.95
-      : false;
+    const passedThreshold = dto.totalTests > 0 ? dto.passed / dto.totalTests >= 0.95 : false;
 
     this.logger.log(
       `Evaluation [${dto.evaluationType}] for ${agentId}: ${dto.passed}/${dto.totalTests} passed` +
-      ` (score: ${dto.score ?? 'N/A'}) — ${passedThreshold ? '✅ PASSED' : '❌ FAILED'}`,
+        ` (score: ${dto.score ?? 'N/A'}) — ${passedThreshold ? '✅ PASSED' : '❌ FAILED'}`
     );
 
     const evaluation = await this.prisma.agentEvaluation.create({
@@ -567,10 +703,10 @@ export class AgentRegistryService {
         durationMs: dto.durationMs,
         score: dto.score,
         passedThreshold,
-        failureDetails: dto.failureDetails as Prisma.InputJsonValue ?? Prisma.JsonNull,
+        failureDetails: (dto.failureDetails as Prisma.InputJsonValue) ?? Prisma.JsonNull,
         environment: dto.environment,
         triggeredBy: dto.triggeredBy,
-        metadata: dto.metadata as Prisma.InputJsonValue ?? Prisma.JsonNull,
+        metadata: (dto.metadata as Prisma.InputJsonValue) ?? Prisma.JsonNull,
       },
     });
 
@@ -603,9 +739,13 @@ export class AgentRegistryService {
       take: 50,
     });
 
-    const byType: Record<string, { total: number; passed: number; failed: number; avgScore: number }> = {};
+    const byType: Record<
+      string,
+      { total: number; passed: number; failed: number; avgScore: number }
+    > = {};
     for (const e of evaluations) {
-      if (!byType[e.evaluationType]) byType[e.evaluationType] = { total: 0, passed: 0, failed: 0, avgScore: 0 };
+      if (!byType[e.evaluationType])
+        byType[e.evaluationType] = { total: 0, passed: 0, failed: 0, avgScore: 0 };
       byType[e.evaluationType].total++;
       if (e.passedThreshold) byType[e.evaluationType].passed++;
       else byType[e.evaluationType].failed++;
@@ -622,8 +762,20 @@ export class AgentRegistryService {
       agentId,
       totalEvaluations: evaluations.length,
       byType,
-      latestPassed: latestPassed ? { type: latestPassed.evaluationType, date: latestPassed.evaluatedAt, score: latestPassed.score } : null,
-      latestFailed: latestFailed ? { type: latestFailed.evaluationType, date: latestFailed.evaluatedAt, score: latestFailed.score } : null,
+      latestPassed: latestPassed
+        ? {
+            type: latestPassed.evaluationType,
+            date: latestPassed.evaluatedAt,
+            score: latestPassed.score,
+          }
+        : null,
+      latestFailed: latestFailed
+        ? {
+            type: latestFailed.evaluationType,
+            date: latestFailed.evaluatedAt,
+            score: latestFailed.score,
+          }
+        : null,
     };
   }
 
@@ -642,18 +794,24 @@ export class AgentRegistryService {
 
     for (const agentDto of agentsToSeed) {
       try {
-        const existing = await this.prisma.agentRegistry.findUnique({ where: { agentId: agentDto.agentId } });
+        const existing = await this.prisma.agentRegistry.findUnique({
+          where: { agentId: agentDto.agentId },
+        });
         if (existing && !dto.force) {
           results.skipped.push(agentDto.agentId);
           continue;
         }
         if (existing && dto.force) {
           const seedData: Record<string, unknown> = { ...agentDto };
-          if (agentDto.qualityThreshold) seedData.qualityThreshold = agentDto.qualityThreshold as Prisma.InputJsonValue;
+          if (agentDto.qualityThreshold)
+            seedData.qualityThreshold = agentDto.qualityThreshold as Prisma.InputJsonValue;
           if (agentDto.valueKpis) seedData.valueKpis = agentDto.valueKpis as Prisma.InputJsonValue;
           if (agentDto.slaTarget) seedData.slaTarget = agentDto.slaTarget as Prisma.InputJsonValue;
           if (agentDto.metadata) seedData.metadata = agentDto.metadata as Prisma.InputJsonValue;
-          await this.prisma.agentRegistry.update({ where: { agentId: agentDto.agentId }, data: seedData as Prisma.AgentRegistryUpdateInput });
+          await this.prisma.agentRegistry.update({
+            where: { agentId: agentDto.agentId },
+            data: seedData as Prisma.AgentRegistryUpdateInput,
+          });
           results.created.push(agentDto.agentId);
         } else {
           await this.create(agentDto);
@@ -666,7 +824,9 @@ export class AgentRegistryService {
       }
     }
 
-    this.logger.log(`Seed complete: ${results.created.length} created, ${results.skipped.length} skipped, ${results.errors.length} errors`);
+    this.logger.log(
+      `Seed complete: ${results.created.length} created, ${results.skipped.length} skipped, ${results.errors.length} errors`
+    );
     return results;
   }
 

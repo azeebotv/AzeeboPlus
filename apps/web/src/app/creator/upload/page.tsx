@@ -205,7 +205,8 @@ export default function CreatorUploadPage(): React.JSX.Element {
               Title
             </label>
             <input
-              id="content-title" aria-label="Content title"
+              id="content-title"
+              aria-label="Content title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -305,7 +306,8 @@ export default function CreatorUploadPage(): React.JSX.Element {
               Tags (comma separated)
             </label>
             <input
-              id="content-tags" aria-label="Content tags"
+              id="content-tags"
+              aria-label="Content tags"
               type="text"
               value={tags}
               onChange={(e) => setTags(e.target.value)}

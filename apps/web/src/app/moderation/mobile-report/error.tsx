@@ -1,5 +1,4 @@
 'use client';
-'use client';
 
 export default function MobileReportError({
   error: _error,
@@ -19,7 +18,7 @@ export default function MobileReportError({
         <p className="text-white/60 mb-4 text-xs">Failed to load report form.</p>
         <button
           onClick={reset}
-          className="px-5 py-2 rounded-full font-semibold text-xs text-white"
+          className="min-h-[44px] px-5 py-2.5 rounded-full font-semibold text-xs text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--brand-orange)]"
           style={{
             background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
           }}

@@ -37,9 +37,6 @@ export const DeepNesting: Story = {
 
 export const SingleLevel: Story = {
   args: {
-    items: [
-      { label: 'Home', href: '/' },
-      { label: 'Profile' },
-    ],
+    items: [{ label: 'Home', href: '/' }, { label: 'Profile' }],
   },
 };

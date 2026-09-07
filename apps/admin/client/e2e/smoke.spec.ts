@@ -28,10 +28,75 @@ const ADMIN_NAV_ITEMS = [
   { href: '/settings', label: 'Settings' },
 ];
 
-async function mockAuth(page: import('@playwright/test').Page) {
+async function mockAuth(
+  page: import('@playwright/test').Page,
+  flags: Array<{ key: string; enabled: boolean }> = [{ key: 'admin_new_dashboard', enabled: true }]
+) {
   await page.addInitScript((user) => {
     localStorage.setItem('azeebo_admin_user', JSON.stringify(user));
+    localStorage.setItem('azeebo_admin_user_token', 'test-admin-token');
   }, MOCK_ADMIN_USER);
+
+  await page.route('**/api/v1/admin/dashboard/stats', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          totalUsers: 1250,
+          dailyActiveUsers: 340,
+          totalContent: 88,
+          totalViews: 45000,
+          totalRevenue: 1200000,
+          newUsers: 45,
+        },
+      }),
+    });
+  });
+
+  await page.route('**/api/v1/admin/feature-flags', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: flags,
+      }),
+    });
+  });
+
+  await page.route('**/api/v1/admin/universes/feature-flags**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: [] }),
+    });
+  });
+
+  await page.route('**/api/v1/admin/audit**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: { items: [], total: 0 } }),
+    });
+  });
+
+  await page.route('**/api/v1/admin/users**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: { users: [], total: 0, page: 1, limit: 20, hasMore: false } }),
+    });
+  });
+
+  await page.route('**/api/v1/admin/settings**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: [] }),
+    });
+  });
 }
 
 test.describe('Admin App Smoke Tests', () => {
@@ -88,7 +153,7 @@ test.describe('Admin App Smoke Tests', () => {
 
   test.describe('Authenticated Dashboard', () => {
     test.beforeEach(async ({ page }) => {
-      await mockAuth(page);
+      await mockAuth(page, [{ key: 'admin_new_dashboard', enabled: false }]);
     });
 
     test('should load dashboard after authentication', async ({ page }) => {
@@ -100,9 +165,9 @@ test.describe('Admin App Smoke Tests', () => {
     test('should display quick action links on dashboard', async ({ page }) => {
       await page.goto('/');
 
-      await expect(page.getByText('Manage Users')).toBeVisible();
-      await expect(page.getByText('Review Queue')).toBeVisible();
-      await expect(page.getByText('Manage Creators')).toBeVisible();
+      await expect(page.getByRole('link', { name: 'Manage Users' })).toBeVisible();
+      await expect(page.getByRole('link', { name: 'Review Queue', exact: true })).toBeVisible();
+      await expect(page.getByRole('link', { name: 'Manage Creators' })).toBeVisible();
     });
 
     test('should display top bar with logo', async ({ page }) => {

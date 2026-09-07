@@ -5,7 +5,6 @@ export const metadata: Metadata = {
   description: 'Guidelines  on Azeebo+',
 };
 
-'use client';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 

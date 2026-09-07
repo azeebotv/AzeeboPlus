@@ -64,16 +64,16 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
         this.redisClient!.on('error', (err: Error) => {
           this.logger.error(
             `[CRITICAL] Redis throttler connection lost — falling back to in-memory rate limiting. Rate limits are NOT enforced across instances!` +
-            (this.failClosed ? ' FAIL_CLOSED is enabled: auth requests will be rejected.' : '') +
-            ` Error: ${err.message}`
+              (this.failClosed ? ' FAIL_CLOSED is enabled: auth requests will be rejected.' : '') +
+              ` Error: ${err.message}`
           );
           this.redisClient = null;
         });
         this.redisClient!.connect().catch((err) => {
           this.logger.error(
             `[CRITICAL] Redis throttler connect failed — falling back to in-memory rate limiting. Rate limits are NOT enforced across instances!` +
-            (this.failClosed ? ' FAIL_CLOSED is enabled: auth requests will be rejected.' : '') +
-            ` Error: ${(err as Error).message}`
+              (this.failClosed ? ' FAIL_CLOSED is enabled: auth requests will be rejected.' : '') +
+              ` Error: ${(err as Error).message}`
           );
           this.redisClient = null;
         });
@@ -118,19 +118,17 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
       this.logger.error(
         `[CRITICAL] Auth request rejected — Redis unavailable and RATE_LIMIT_FAIL_CLOSED=true. IP: ${request.ip || request.socket?.remoteAddress || 'unknown'}`
       );
-      throw new ThrottlerException(
-        'Service temporarily unavailable. Please try again later.'
-      );
+      throw new ThrottlerException('Service temporarily unavailable. Please try again later.');
     }
 
     const authLimit = await this.getEffectiveAuthLimit();
     const clientIp = request.ip || request.socket?.remoteAddress || 'unknown';
-    const window = Math.floor(Date.now() / (this.AUTH_TTL * 1000));    // Per-IP + endpoint rate limit
+    const window = Math.floor(Date.now() / (this.AUTH_TTL * 1000)); // Per-IP + endpoint rate limit
     const endpoint = path.replace(/^\/+|\/+$/g, '').replace(/\//g, ':');
     const ipKey = `${this.KEY_PREFIX}${clientIp}:${endpoint}:${window}`;
     let remaining = authLimit;
     if (this.useRedis && this.redisClient) {
-      remaining = await this.checkWithRedis(ipKey, clientIp, authLimit);
+      remaining = await this.checkWithRedis(ipKey, `${clientIp}:${endpoint}`, authLimit);
     } else {
       remaining = this.checkInMemory(`${clientIp}:${endpoint}`, window, authLimit);
     }
@@ -140,10 +138,18 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
     if (account_id) {
       const accountKey = `${this.KEY_PREFIX}acct:${account_id}:${endpoint}:${window}`;
       if (this.useRedis && this.redisClient) {
-        const acctRemaining = await this.checkWithRedis(accountKey, `account:${account_id}`, authLimit);
+        const acctRemaining = await this.checkWithRedis(
+          accountKey,
+          `acct:${account_id}:${endpoint}`,
+          authLimit
+        );
         remaining = Math.min(remaining, acctRemaining);
       } else {
-        const acctRemaining = this.checkInMemory(`acct:${account_id}:${endpoint}`, window, authLimit);
+        const acctRemaining = this.checkInMemory(
+          `acct:${account_id}:${endpoint}`,
+          window,
+          authLimit
+        );
         remaining = Math.min(remaining, acctRemaining);
       }
     }
@@ -162,7 +168,7 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
 
   private async checkWithRedis(
     key: string,
-    clientIp: string,
+    identifier: string,
     limit: number = this.AUTH_LIMIT
   ): Promise<number> {
     try {
@@ -172,7 +178,7 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
       }
 
       if (count > limit) {
-        this.logger.warn(`Auth rate limit exceeded for IP: ${clientIp}`);
+        this.logger.warn(`Auth rate limit exceeded for: ${identifier}`);
         throw new ThrottlerException('Too many authentication attempts. Please try again later.');
       }
 
@@ -183,22 +189,22 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
         `Redis throttler error, falling back to in-memory: ${(error as Error).message}`
       );
       this.redisClient = null;
-      return this.checkInMemory(clientIp, Math.floor(Date.now() / (this.AUTH_TTL * 1000)), limit);
+      return this.checkInMemory(identifier, Math.floor(Date.now() / (this.AUTH_TTL * 1000)), limit);
     }
   }
 
   private checkInMemory(
-    clientIp: string,
+    identifier: string,
     window: number,
     limit: number = this.AUTH_LIMIT
   ): number {
     const now = Date.now();
-    const key = `${this.KEY_PREFIX}${clientIp}:${window}`;
+    const key = `${this.KEY_PREFIX}${identifier}:${window}`;
     const entry = this.inMemoryRequests.get(key);
 
     if (entry && entry.resetTime > now) {
       if (entry.count >= limit) {
-        this.logger.warn(`Auth rate limit exceeded for IP: ${clientIp}`);
+        this.logger.warn(`Auth rate limit exceeded for: ${identifier}`);
         throw new ThrottlerException('Too many authentication attempts. Please try again later.');
       }
       entry.count++;

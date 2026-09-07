@@ -113,7 +113,10 @@ function GameDetailPageContent(): React.JSX.Element {
                   <div className="flex items-center gap-2 mb-3">
                     <span
                       className="px-3 py-1 rounded-full text-xs font-semibold"
-                      style={{ backgroundColor: 'rgba(139,92,246,0.2)', color: 'var(--brand-purple)' }}
+                      style={{
+                        backgroundColor: 'rgba(139,92,246,0.2)',
+                        color: 'var(--brand-purple)',
+                      }}
                     >
                       {game.category}
                     </span>

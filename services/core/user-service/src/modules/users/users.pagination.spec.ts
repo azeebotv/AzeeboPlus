@@ -4,6 +4,7 @@ import request from 'supertest';
 import { RateLimitGuard, ServiceAuthGuard } from '@azeebo/security';
 import { UsersController } from './users.controller.js';
 import { UsersService } from './users.service.js';
+import { AvatarService } from './avatar.service.js';
 import { CacheService } from '@azeebo/shared-services';
 import { FeatureFlagGuard, FeatureFlagService } from '@azeebo/feature-flags';
 
@@ -57,6 +58,10 @@ describe('User Service Pagination Tests', () => {
         {
           provide: UsersService,
           useValue: mockUsersService,
+        },
+        {
+          provide: AvatarService,
+          useValue: { uploadAvatar: jest.fn(), deleteAvatar: jest.fn() },
         },
         {
           provide: CacheService,

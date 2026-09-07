@@ -72,7 +72,10 @@ function PremieresPageContent(): React.JSX.Element {
                 <div className="flex items-center gap-2 mb-4">
                   <span
                     className="px-3 py-1 rounded-full text-xs font-semibold"
-                    style={{ backgroundColor: 'var(--color-warning-500)', color: 'var(--brand-near-black)' }}
+                    style={{
+                      backgroundColor: 'var(--color-warning-500)',
+                      color: 'var(--brand-near-black)',
+                    }}
                   >
                     Coming Soon
                   </span>
@@ -172,7 +175,10 @@ function PremieresPageContent(): React.JSX.Element {
                         <div className="absolute top-2 right-2">
                           <span
                             className="px-2.5 py-1 rounded-full text-xs font-semibold"
-                            style={{ backgroundColor: 'rgba(245,158,11,0.9)', color: 'var(--brand-near-black)' }}
+                            style={{
+                              backgroundColor: 'rgba(245,158,11,0.9)',
+                              color: 'var(--brand-near-black)',
+                            }}
                           >
                             {daysUntil} days
                           </span>

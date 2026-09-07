@@ -4,7 +4,7 @@ import { CacheService } from './cache.service';
 
 export interface WarmupConfig {
   key: string;
-  fetchFn: () => Promise<any>;
+  fetchFn: () => Promise<unknown>;
   ttl: number;
   tags?: string[];
 }
@@ -114,14 +114,16 @@ export class CacheWarmerService implements OnModuleInit {
     const startTime = Date.now();
 
     const results = await Promise.allSettled(
-      this.warmupConfigs.map((config) => this.warmSingle(config)),
+      this.warmupConfigs.map((config) => this.warmSingle(config))
     );
 
     const succeeded = results.filter((r) => r.status === 'fulfilled').length;
     const failed = results.filter((r) => r.status === 'rejected').length;
     const duration = Date.now() - startTime;
 
-    this.logger.log(`Cache warmup completed: ${succeeded} succeeded, ${failed} failed in ${duration}ms`);
+    this.logger.log(
+      `Cache warmup completed: ${succeeded} succeeded, ${failed} failed in ${duration}ms`
+    );
   }
 
   /**
@@ -171,28 +173,28 @@ export class CacheWarmerService implements OnModuleInit {
 
   // --- Data fetching functions (stubs) ---
 
-  private async fetchTrending(universe: string): Promise<any> {
+  private async fetchTrending(universe: string): Promise<unknown> {
     // In production, query database
     return { universe, items: [], updatedAt: new Date() };
   }
 
-  private async fetchPopularByRegion(region: string): Promise<any> {
+  private async fetchPopularByRegion(region: string): Promise<unknown> {
     return { region, items: [], updatedAt: new Date() };
   }
 
-  private async fetchNewReleases(): Promise<any> {
+  private async fetchNewReleases(): Promise<unknown> {
     return { items: [], updatedAt: new Date() };
   }
 
-  private async fetchAllCategories(): Promise<any> {
+  private async fetchAllCategories(): Promise<unknown> {
     return { categories: [], updatedAt: new Date() };
   }
 
-  private async fetchFeaturedCreators(): Promise<any> {
+  private async fetchFeaturedCreators(): Promise<unknown> {
     return { creators: [], updatedAt: new Date() };
   }
 
-  private async fetchFeatureFlags(): Promise<any> {
+  private async fetchFeatureFlags(): Promise<unknown> {
     return { flags: {}, updatedAt: new Date() };
   }
 }

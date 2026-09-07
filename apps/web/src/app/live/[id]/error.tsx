@@ -1,5 +1,4 @@
 'use client';
-'use client';
 
 import Link from 'next/link';
 
@@ -24,7 +23,7 @@ export default function LiveDetailError({
         <div className="flex gap-4 justify-center">
           <button
             onClick={reset}
-            className="px-6 py-2.5 rounded-full font-semibold text-white"
+            className="min-h-[44px] px-6 py-2.5 rounded-full font-semibold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--brand-orange)]"
             style={{
               background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
             }}

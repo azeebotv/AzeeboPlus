@@ -12,30 +12,86 @@ export const DECISIONS = ['ALLOW', 'ASK', 'DENY'] as const;
 export const APPROVAL_STATUSES = ['pending', 'approved', 'rejected', 'expired', 'revoked'] as const;
 export const ASSESSMENT_OUTCOMES = ['completed', 'failed', 'escalated'] as const;
 
-export type RiskLevel = typeof RISK_LEVELS[number];
-export type AutonomyLevel = typeof AUTONOMY_LEVELS[number];
-export type Decision = typeof DECISIONS[number];
-export type ApprovalStatus = typeof APPROVAL_STATUSES[number];
+export type RiskLevel = (typeof RISK_LEVELS)[number];
+export type AutonomyLevel = (typeof AUTONOMY_LEVELS)[number];
+export type Decision = (typeof DECISIONS)[number];
+export type ApprovalStatus = (typeof APPROVAL_STATUSES)[number];
 
 // ─── Risk Level Definitions (AOS-MA-001 §20) ─────────────────
 
-export const RISK_DEFINITIONS: Record<string, { name: string; description: string; example: string }> = {
-  R0: { name: 'Negligible', description: 'No material risk — read/analyse actions', example: 'View dashboard, run report' },
-  R1: { name: 'Low', description: 'Low risk — draft/propose actions with audit trail', example: 'Draft proposal, prepare report' },
-  R2: { name: 'Medium', description: 'Moderate risk — internal metadata writes', example: 'Update CRM, modify schedule' },
-  R3: { name: 'High', description: 'High risk — external/financial/rights actions', example: 'Send payment, grant rights, publish content' },
-  R4: { name: 'Critical', description: 'Critical risk — irreversible/regulated actions', example: 'Delete data, transfer ownership, litigate' },
+export const RISK_DEFINITIONS: Record<
+  string,
+  { name: string; description: string; example: string }
+> = {
+  R0: {
+    name: 'Negligible',
+    description: 'No material risk — read/analyse actions',
+    example: 'View dashboard, run report',
+  },
+  R1: {
+    name: 'Low',
+    description: 'Low risk — draft/propose actions with audit trail',
+    example: 'Draft proposal, prepare report',
+  },
+  R2: {
+    name: 'Medium',
+    description: 'Moderate risk — internal metadata writes',
+    example: 'Update CRM, modify schedule',
+  },
+  R3: {
+    name: 'High',
+    description: 'High risk — external/financial/rights actions',
+    example: 'Send payment, grant rights, publish content',
+  },
+  R4: {
+    name: 'Critical',
+    description: 'Critical risk — irreversible/regulated actions',
+    example: 'Delete data, transfer ownership, litigate',
+  },
 };
 
 // ─── Autonomy Level Definitions (AOS-MA-001 §1) ─────────────
 
-export const AUTONOMY_DEFINITIONS: Record<string, { name: string; description: string; agentMayDo: string; cannotDo: string }> = {
-  A0: { name: 'Human Only', description: 'Agent may analyse/draft only', agentMayDo: 'Analyse, draft, retrieve', cannotDo: 'Execute any action' },
-  A1: { name: 'Human Approval', description: 'Agent prepares; human approves material step', agentMayDo: 'Prepare, draft, propose', cannotDo: 'Execute without approval' },
-  A2: { name: 'Rule-Bound', description: 'Agent may act inside explicit policy and thresholds', agentMayDo: 'Execute within policy', cannotDo: 'Exceed thresholds' },
-  A3: { name: 'Broad Autonomy', description: 'Agent may act with standard oversight', agentMayDo: 'Execute, notify, escalate', cannotDo: 'Modify policy' },
-  A4: { name: 'High Autonomy', description: 'Agent may act with minimal oversight', agentMayDo: 'Execute, modify, optimise', cannotDo: 'Delete, transfer, legal' },
-  A5: { name: 'Full Autonomy', description: 'Agent may act freely within domain', agentMayDo: 'Full domain control', cannotDo: 'Cross-domain, financial' },
+export const AUTONOMY_DEFINITIONS: Record<
+  string,
+  { name: string; description: string; agentMayDo: string; cannotDo: string }
+> = {
+  A0: {
+    name: 'Human Only',
+    description: 'Agent may analyse/draft only',
+    agentMayDo: 'Analyse, draft, retrieve',
+    cannotDo: 'Execute any action',
+  },
+  A1: {
+    name: 'Human Approval',
+    description: 'Agent prepares; human approves material step',
+    agentMayDo: 'Prepare, draft, propose',
+    cannotDo: 'Execute without approval',
+  },
+  A2: {
+    name: 'Rule-Bound',
+    description: 'Agent may act inside explicit policy and thresholds',
+    agentMayDo: 'Execute within policy',
+    cannotDo: 'Exceed thresholds',
+  },
+  A3: {
+    name: 'Broad Autonomy',
+    description: 'Agent may act with standard oversight',
+    agentMayDo: 'Execute, notify, escalate',
+    cannotDo: 'Modify policy',
+  },
+  A4: {
+    name: 'High Autonomy',
+    description: 'Agent may act with minimal oversight',
+    agentMayDo: 'Execute, modify, optimise',
+    cannotDo: 'Delete, transfer, legal',
+  },
+  A5: {
+    name: 'Full Autonomy',
+    description: 'Agent may act freely within domain',
+    agentMayDo: 'Full domain control',
+    cannotDo: 'Cross-domain, financial',
+  },
 };
 
 // ─── Create Classification DTO ───────────────────────────────
@@ -326,7 +382,12 @@ export class RevokeApprovalDto {
 export class BatchAssessDto {
   @ApiProperty({ type: [AssessActionDto] })
   @IsArray()
-  assessments!: { actionType: string; domain?: string; context?: Record<string, unknown>; correlationId?: string }[];
+  assessments!: {
+    actionType: string;
+    domain?: string;
+    context?: Record<string, unknown>;
+    correlationId?: string;
+  }[];
 }
 
 // ─── Seed DTO ────────────────────────────────────────────────

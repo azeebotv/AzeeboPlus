@@ -140,7 +140,6 @@ export default function RateLimitsPage() {
 
   const {
     data: rateLimitData,
-    isLoading,
     refetch,
   } = useQuery({
     queryKey: ['admin', 'rate-limits'],

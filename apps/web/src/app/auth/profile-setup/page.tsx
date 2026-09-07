@@ -1,10 +1,3 @@
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Auth Profile-setup  - Azeebo+',
-  description: 'Auth Profile-setup  on Azeebo+',
-};
-
 'use client';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -263,7 +256,8 @@ export default function ProfileSetupPage(): React.JSX.Element {
                 )}
               </div>
               <input
-                ref={fileInputRef} aria-label="Upload profile picture"
+                ref={fileInputRef}
+                aria-label="Upload profile picture"
                 type="file"
                 accept="image/*"
                 className="hidden"

@@ -45,9 +45,11 @@ export function ReviewsSection({ contentId }: ReviewsSectionProps): React.JSX.El
   const reviewsQuery = useQuery({
     queryKey: ['reviews', contentId, sortBy, page],
     queryFn: async () => {
-      const result = await apiFetch<{ reviews: Review[]; total: number; ratingSummary: RatingSummary }>(
-        `/content/reviews/content/${contentId}?page=${page}&limit=10&sortBy=${sortBy}`
-      );
+      const result = await apiFetch<{
+        reviews: Review[];
+        total: number;
+        ratingSummary: RatingSummary;
+      }>(`/content/reviews/content/${contentId}?page=${page}&limit=10&sortBy=${sortBy}`);
       return result.success ? result.data : null;
     },
   });
@@ -109,7 +111,10 @@ export function ReviewsSection({ contentId }: ReviewsSectionProps): React.JSX.El
               {summary.distribution.map((d) => (
                 <div key={d.stars} className="flex items-center gap-2">
                   <span className="text-xs text-white/60 w-8">{d.stars} ★</span>
-                  <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                  <div
+                    className="flex-1 h-2 rounded-full overflow-hidden"
+                    style={{ background: 'rgba(255,255,255,0.1)' }}
+                  >
                     <div
                       className="h-full rounded-full transition-all"
                       style={{
@@ -142,12 +147,16 @@ export function ReviewsSection({ contentId }: ReviewsSectionProps): React.JSX.El
           {(showForm || userReview) && (
             <ReviewForm
               contentId={contentId}
-              existingReview={userReview ? {
-                rating: userReview.rating,
-                title: userReview.title,
-                body: userReview.body,
-                containsSpoilers: userReview.containsSpoilers,
-              } : null}
+              existingReview={
+                userReview
+                  ? {
+                      rating: userReview.rating,
+                      title: userReview.title,
+                      body: userReview.body,
+                      containsSpoilers: userReview.containsSpoilers,
+                    }
+                  : null
+              }
               onSuccess={() => {
                 setShowForm(false);
                 queryClient.invalidateQueries({ queryKey: ['reviews', contentId] });
@@ -164,7 +173,10 @@ export function ReviewsSection({ contentId }: ReviewsSectionProps): React.JSX.El
         {(['recent', 'helpful', 'rating'] as const).map((sort) => (
           <button
             key={sort}
-            onClick={() => { setSortBy(sort); setPage(1); }}
+            onClick={() => {
+              setSortBy(sort);
+              setPage(1);
+            }}
             className={`text-sm font-medium transition-colors ${
               sortBy === sort ? 'text-white' : 'text-white/40 hover:text-white/60'
             }`}
@@ -181,13 +193,25 @@ export function ReviewsSection({ contentId }: ReviewsSectionProps): React.JSX.El
             {[1, 2, 3].map((i) => (
               <div key={i} className="az-glass p-4 animate-pulse">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full" style={{ background: 'rgba(255,255,255,0.05)' }} />
+                  <div
+                    className="w-10 h-10 rounded-full"
+                    style={{ background: 'rgba(255,255,255,0.05)' }}
+                  />
                   <div className="space-y-2">
-                    <div className="h-3 rounded w-24" style={{ background: 'rgba(255,255,255,0.05)' }} />
-                    <div className="h-2 rounded w-16" style={{ background: 'rgba(255,255,255,0.05)' }} />
+                    <div
+                      className="h-3 rounded w-24"
+                      style={{ background: 'rgba(255,255,255,0.05)' }}
+                    />
+                    <div
+                      className="h-2 rounded w-16"
+                      style={{ background: 'rgba(255,255,255,0.05)' }}
+                    />
                   </div>
                 </div>
-                <div className="h-3 rounded w-3/4" style={{ background: 'rgba(255,255,255,0.05)' }} />
+                <div
+                  className="h-3 rounded w-3/4"
+                  style={{ background: 'rgba(255,255,255,0.05)' }}
+                />
               </div>
             ))}
           </div>
@@ -203,7 +227,11 @@ export function ReviewsSection({ contentId }: ReviewsSectionProps): React.JSX.El
                 {/* Avatar */}
                 <div
                   className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-bold"
-                  style={{ background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red, #CC1C1C))', color: 'white' }}
+                  style={{
+                    background:
+                      'linear-gradient(135deg, var(--brand-orange), var(--brand-red, #CC1C1C))',
+                    color: 'white',
+                  }}
                 >
                   {review.userName?.charAt(0) || '?'}
                 </div>
@@ -225,7 +253,9 @@ export function ReviewsSection({ contentId }: ReviewsSectionProps): React.JSX.El
 
                   {/* Body */}
                   {review.body && (
-                    <p className={`text-sm text-white/60 ${review.containsSpoilers ? 'blur-sm hover:blur-none transition-all cursor-pointer' : ''}`}>
+                    <p
+                      className={`text-sm text-white/60 ${review.containsSpoilers ? 'blur-sm hover:blur-none transition-all cursor-pointer' : ''}`}
+                    >
                       {review.body}
                     </p>
                   )}

@@ -9,35 +9,82 @@ export const PRIORITIES = ['low', 'normal', 'high', 'urgent'] as const;
 export const PROCESS_STEPS = ['P0', 'P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7'] as const;
 export const REVERSIBILITY = ['reversible', 'bounded-reversible', 'irreversible'] as const;
 export const DATA_SENSITIVITY = ['public', 'internal', 'confidential', 'restricted'] as const;
-export const EXECUTION_STATUSES = ['routed', 'in-progress', 'completed', 'failed', 'eliminated'] as const;
+export const EXECUTION_STATUSES = [
+  'routed',
+  'in-progress',
+  'completed',
+  'failed',
+  'eliminated',
+] as const;
 export const APPROVAL_STATUSES = ['pending', 'approved', 'rejected'] as const;
 
-export type WorkClass = typeof WORK_CLASSES[number];
-export type ComplexityTier = typeof COMPLEXITY_TIERS[number];
-export type Priority = typeof PRIORITIES[number];
-export type ProcessStep = typeof PROCESS_STEPS[number];
+export type WorkClass = (typeof WORK_CLASSES)[number];
+export type ComplexityTier = (typeof COMPLEXITY_TIERS)[number];
+export type Priority = (typeof PRIORITIES)[number];
+export type ProcessStep = (typeof PROCESS_STEPS)[number];
 
 // ─── Core Optimisation Hierarchy (AOS-MA-001 §5) ─────────────
 
 export const HIERARCHY: Record<string, { choice: string; useWhen: string; costTier: number }> = {
   X: { choice: 'ELIMINATE', useWhen: 'The work has no continuing enterprise value', costTier: 0 },
-  S: { choice: 'DETERMINISTIC SOFTWARE', useWhen: 'Rules can produce the right result without language reasoning', costTier: 1 },
-  A2: { choice: 'LOW-COST AI', useWhen: 'Classification, extraction, routing, drafting or summarisation benefits from language intelligence', costTier: 2 },
-  A1: { choice: 'SPECIALIST REASONING', useWhen: 'Complex financial, legal, technical, strategic or creative synthesis earns stronger reasoning cost', costTier: 3 },
-  H1: { choice: 'HUMAN LED + AGENT', useWhen: 'Human owns outcome; agent prepares evidence/work', costTier: 4 },
-  H0: { choice: 'HUMAN JUDGEMENT', useWhen: 'Authority, ambiguity, relationships, ethics, material risk require accountable humans', costTier: 5 },
+  S: {
+    choice: 'DETERMINISTIC SOFTWARE',
+    useWhen: 'Rules can produce the right result without language reasoning',
+    costTier: 1,
+  },
+  A2: {
+    choice: 'LOW-COST AI',
+    useWhen:
+      'Classification, extraction, routing, drafting or summarisation benefits from language intelligence',
+    costTier: 2,
+  },
+  A1: {
+    choice: 'SPECIALIST REASONING',
+    useWhen:
+      'Complex financial, legal, technical, strategic or creative synthesis earns stronger reasoning cost',
+    costTier: 3,
+  },
+  H1: {
+    choice: 'HUMAN LED + AGENT',
+    useWhen: 'Human owns outcome; agent prepares evidence/work',
+    costTier: 4,
+  },
+  H0: {
+    choice: 'HUMAN JUDGEMENT',
+    useWhen:
+      'Authority, ambiguity, relationships, ethics, material risk require accountable humans',
+    costTier: 5,
+  },
 };
 
 // ─── Process Mining Steps (AOS-MA-001 §4) ───────────────────
 
 export const PROCESS_MINING_STEPS: Record<string, { question: string; output: string }> = {
-  P0: { question: 'What actually happens today, including handoffs and workarounds?', output: 'Measured current-state workflow' },
-  P1: { question: 'Which steps have no customer, control, revenue or decision value?', output: 'Elimination list' },
-  P2: { question: 'Which approvals, forms or handoffs can be removed?', output: 'Simplified target workflow' },
-  P3: { question: 'Can one template/rule replace variations?', output: 'Standard operating pattern' },
+  P0: {
+    question: 'What actually happens today, including handoffs and workarounds?',
+    output: 'Measured current-state workflow',
+  },
+  P1: {
+    question: 'Which steps have no customer, control, revenue or decision value?',
+    output: 'Elimination list',
+  },
+  P2: {
+    question: 'Which approvals, forms or handoffs can be removed?',
+    output: 'Simplified target workflow',
+  },
+  P3: {
+    question: 'Can one template/rule replace variations?',
+    output: 'Standard operating pattern',
+  },
   P4: { question: 'Can deterministic rules execute it reliably?', output: 'Automation candidate' },
-  P5: { question: 'Does language/reasoning materially improve execution?', output: 'Agent candidate' },
-  P6: { question: 'Where must accountable judgement remain?', output: 'Approval/exception boundary' },
+  P5: {
+    question: 'Does language/reasoning materially improve execution?',
+    output: 'Agent candidate',
+  },
+  P6: {
+    question: 'Where must accountable judgement remain?',
+    output: 'Approval/exception boundary',
+  },
   P7: { question: 'Did time, cost, quality or risk improve?', output: 'Before/after evidence' },
 };
 

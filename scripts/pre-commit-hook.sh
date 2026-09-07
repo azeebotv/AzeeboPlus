@@ -1,6 +1,6 @@
 #!/bin/bash
 # Pre-commit hook: detect ACTUAL hardcoded secrets in staged files
-# Install: cp scripts/pre-commit-hook.sh .git/hooks/pre-commit && chmod +x .git/hooks/post-commit
+# Install: cp scripts/pre-commit-hook.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
 #
 # This hook catches REAL secrets (actual random strings), not:
 # - Env var references: $VAR, ${VAR}, ${VAR:-default}
@@ -8,6 +8,36 @@
 # - Command substitutions: $(openssl rand ...)
 
 set -euo pipefail
+
+# Ensure standard and user binary paths are available (Git hooks often run with a minimal PATH)
+for p in \
+  "/opt/homebrew/bin" \
+  "/opt/homebrew/sbin" \
+  "/usr/local/bin" \
+  "/usr/local/sbin" \
+  "$HOME/.local/bin" \
+  "$HOME/Library/FlyEnv/env/node/bin" \
+  "$HOME/Library/FlyEnv/alias" \
+  "$HOME/Library/pnpm" \
+  "$HOME/.local/share/pnpm" \
+  "$HOME/.pnpm"; do
+  if [ -d "$p" ] && [[ ":$PATH:" != *":$p:"* ]]; then
+    export PATH="$p:$PATH"
+  fi
+done
+
+# Check NVM / FNM / Volta if node or pnpm are still not in PATH
+if ! command -v pnpm >/dev/null 2>&1 || ! command -v node >/dev/null 2>&1; then
+  if [ -s "$HOME/.nvm/nvm.sh" ]; then
+    export NVM_DIR="$HOME/.nvm"
+    # shellcheck disable=SC1090
+    \. "$NVM_DIR/nvm.sh" 2>/dev/null || true
+  elif [ -d "$HOME/.fnm/current/bin" ]; then
+    export PATH="$HOME/.fnm/current/bin:$PATH"
+  elif [ -d "$HOME/.volta/bin" ]; then
+    export PATH="$HOME/.volta/bin:$PATH"
+  fi
+fi
 
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
@@ -119,20 +149,25 @@ echo "No hardcoded secrets detected."
 # --- Lint + typecheck (read-only) ---
 # Only run when staged files include source code so doc-only commits stay fast.
 CODE_STAGED=$(echo "$STAGED_FILES" | grep -E '\.(ts|tsx|js|jsx|mjs|prisma)$' || true)
-if [ -n "$CODE_STAGED" ]; then
+if [ -n "$CODE_STAGED" ] && [ -f "package.json" ]; then
   echo ""
   echo "Running lint + typecheck (read-only)..."
-  if ! pnpm lint; then
-    echo -e "${RED}Lint failed! Commit blocked.${NC}"
-    echo "Fix lint errors, or use: git commit --no-verify"
-    exit 1
+  if ! command -v pnpm >/dev/null 2>&1; then
+    echo -e "${YELLOW}Warning: 'pnpm' command not found in PATH. Skipping pre-commit lint and typecheck.${NC}"
+    echo "To enable lint/typecheck in pre-commit, ensure pnpm is accessible in your environment."
+  else
+    if ! pnpm lint; then
+      echo -e "${RED}Lint failed! Commit blocked.${NC}"
+      echo "Fix lint errors, or use: git commit --no-verify"
+      exit 1
+    fi
+    if ! pnpm typecheck; then
+      echo -e "${RED}Typecheck failed! Commit blocked.${NC}"
+      echo "Fix type errors, or use: git commit --no-verify"
+      exit 1
+    fi
+    echo "Lint + typecheck passed."
   fi
-  if ! pnpm typecheck; then
-    echo -e "${RED}Typecheck failed! Commit blocked.${NC}"
-    echo "Fix type errors, or use: git commit --no-verify"
-    exit 1
-  fi
-  echo "Lint + typecheck passed."
 fi
 
 exit 0

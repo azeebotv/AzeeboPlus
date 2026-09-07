@@ -34,7 +34,7 @@ export class ShareService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {
     this.baseUrl = this.configService.get<string>('BASE_URL', 'https://azeeboplus.com');
   }
@@ -45,7 +45,7 @@ export class ShareService {
   async generateShareLink(
     contentId: string,
     platform: string,
-    userId?: string,
+    userId?: string
   ): Promise<ShareLink> {
     // Generate short code
     const shortCode = crypto.randomBytes(4).toString('hex');
@@ -56,14 +56,21 @@ export class ShareService {
       where: { contentId, platform },
     });
 
-    let share: { id: string; contentId: string; shortUrl: string; platform: string; shareCount: number; createdAt: Date };
+    let share: {
+      id: string;
+      contentId: string;
+      shortUrl: string;
+      platform: string;
+      shareCount: number;
+      createdAt: Date;
+    };
     if (existing) {
-      share = await this.prisma.shareLink.update({
+      share = (await this.prisma.shareLink.update({
         where: { id: existing.id },
         data: { shareCount: { increment: 1 }, shortUrl },
-      }) as typeof share;
+      })) as typeof share;
     } else {
-      share = await this.prisma.shareLink.create({
+      share = (await this.prisma.shareLink.create({
         data: {
           contentId,
           shortUrl,
@@ -71,7 +78,7 @@ export class ShareService {
           shareCount: 1,
           shortCode,
         },
-      }) as typeof share;
+      })) as typeof share;
     }
 
     // Track analytics event
@@ -92,8 +99,10 @@ export class ShareService {
   /**
    * Resolve a short URL to content ID
    */
-  async resolveShareLink(shortCode: string): Promise<{ contentId: string; redirectUrl: string } | null> {
-    const share = await this.prisma.shareLink.findFirst({
+  async resolveShareLink(
+    shortCode: string
+  ): Promise<{ contentId: string; redirectUrl: string } | null> {
+    const share = await this.prisma.shareLink.findUnique({
       where: { shortCode },
     });
 
@@ -165,11 +174,7 @@ export class ShareService {
   /**
    * Track share event for analytics
    */
-  private async trackShare(
-    contentId: string,
-    platform: string,
-    userId?: string,
-  ): Promise<void> {
+  private async trackShare(contentId: string, platform: string, userId?: string): Promise<void> {
     try {
       await this.prisma.shareEvent.create({
         data: {

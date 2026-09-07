@@ -1,10 +1,3 @@
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Wallet Withdraw  - Azeebo+',
-  description: 'Wallet Withdraw  on Azeebo+',
-};
-
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -245,7 +238,8 @@ export default function WithdrawPage(): React.JSX.Element {
                 ₦
               </span>
               <input
-                type="number" aria-label="Withdrawal amount"
+                type="number"
+                aria-label="Withdrawal amount"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0.00"

@@ -22,7 +22,7 @@
   --brand-amber: #f59e0b; /* Amber — warnings, ratings */
   --brand-crimson: #c41e3a; /* Crimson — alerts, live */
   --brand-silver: #c0c0c0; /* Silver — inactive, disabled */
-  --brand-grey: #757575; /* Grey — muted text */
+  --brand-grey: #9ca3af; /* Grey — muted text (WCAG 2.2 AA compliant >= 4.5:1) */
   --brand-copper: #cd7f32; /* Copper — metallic accents */
   --brand-light-green: #32cd32; /* Light Green — online, active */
 
@@ -128,10 +128,17 @@
   --color-light-800: #525252;
   --color-light-900: #262626;
 
+  /* Semantic Tokens for Tailwind v4 / standard utilities */
+  --color-primary: var(--brand-orange);
+  --color-primary-foreground: #ffffff;
+  --color-muted-foreground: var(--text-secondary);
+  --color-background: var(--bg-primary);
+  --color-foreground: var(--text-primary);
+
   /* Text Colors */
   --text-primary: #f3f4f6;
   --text-secondary: #9ca3af;
-  --text-tertiary: #6b7280;
+  --text-tertiary: #9ca3af; /* Upgraded from #6b7280 for WCAG 2.2 AA (>= 4.5:1 on dark) */
   --text-inverse: #1a0a0a;
 
   /* Backgrounds */
@@ -632,7 +639,7 @@ body::after {
   }
 }
 
-/* Focus Visible - Accessibility */
+/* Focus Visible - Accessibility (WCAG 2.2 AA) */
 :focus-visible {
   outline: 2px solid var(--brand-orange);
   outline-offset: 2px;
@@ -641,7 +648,9 @@ body::after {
 /* Enhanced focus states for interactive elements */
 button:focus-visible,
 a:focus-visible,
-[role="button"]:focus-visible {
+[role="button"]:focus-visible,
+[role="tab"]:focus-visible,
+[role="menuitem"]:focus-visible {
   outline: 2px solid var(--brand-orange);
   outline-offset: 2px;
   border-radius: 4px;
@@ -650,24 +659,39 @@ a:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: none;
+  outline: 2px solid var(--brand-orange);
+  outline-offset: 0;
   border-color: var(--brand-orange);
-  box-shadow: 0 0 0 2px rgba(232, 66, 10, 0.3);
+  box-shadow: 0 0 0 3px rgba(232, 66, 10, 0.25);
 }
 
-/* Skip link appears on focus */
-.skip-link:focus {
+/* Ensure mouse clicks do not retain harsh outlines */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Skip link - Accessibility */
+.skip-link {
   position: fixed;
-  top: 8px;
-  left: 8px;
+  top: -100px;
+  left: 16px;
   z-index: 10000;
   background: var(--brand-orange);
-  color: white;
+  color: #ffffff;
   padding: 12px 24px;
   border-radius: 8px;
   font-weight: 600;
+  font-size: 14px;
   text-decoration: none;
-  box-shadow: 0 4px 12px rgba(232, 66, 10, 0.4);
+  box-shadow: 0 4px 16px rgba(232, 66, 10, 0.5);
+  transition: top var(--transition-fast);
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  top: 16px;
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
 }
 
 /* ============================================================
@@ -787,7 +811,7 @@ select:focus-visible {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.7);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.12em;
@@ -829,22 +853,6 @@ select:focus-visible {
   font-weight: 800;
   line-height: 1.05;
   letter-spacing: -0.02em;
-}
-
-/* Skip Link - Accessibility */
-.skip-link {
-  position: absolute;
-  top: -40px;
-  left: 0;
-  background: var(--color-primary-500);
-  color: white;
-  padding: 8px 16px;
-  z-index: var(--z-tooltip);
-  transition: top var(--transition-fast);
-}
-
-.skip-link:focus {
-  top: 0;
 }
 
 /* Light Theme (overrides when .dark class is not present) */

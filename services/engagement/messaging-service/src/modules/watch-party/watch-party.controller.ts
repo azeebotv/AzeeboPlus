@@ -1,6 +1,17 @@
-import { Controller, Get, Post, Delete, Body, Param, UseGuards, Request, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { WatchPartyService, CreatePartyDto, PlaybackState } from './watch-party.service.js';
+import { WatchPartyService } from './watch-party.service.js';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import { IsString, IsOptional, IsNumber, Min, Max } from 'class-validator';
 
@@ -56,10 +67,7 @@ export class WatchPartyController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a watch party' })
   @ApiResponse({ status: 201, description: 'Party created' })
-  async createParty(
-    @Request() req: { user: { id: string } },
-    @Body() dto: CreatePartyBodyDto,
-  ) {
+  async createParty(@Request() req: { user: { id: string } }, @Body() dto: CreatePartyBodyDto) {
     const party = await this.partyService.createParty(req.user.id, dto);
     return { success: true, data: party };
   }
@@ -70,10 +78,7 @@ export class WatchPartyController {
   @ApiOperation({ summary: 'Join a watch party' })
   @ApiResponse({ status: 200, description: 'Joined party' })
   @ApiResponse({ status: 404, description: 'Party not found' })
-  async joinParty(
-    @Request() req: { user: { id: string } },
-    @Body() dto: JoinPartyBodyDto,
-  ) {
+  async joinParty(@Request() req: { user: { id: string } }, @Body() dto: JoinPartyBodyDto) {
     const party = await this.partyService.joinParty(req.user.id, dto.inviteCode);
     return { success: true, data: party };
   }
@@ -104,7 +109,7 @@ export class WatchPartyController {
   async updatePlayback(
     @Request() req: { user: { id: string } },
     @Param('partyId') partyId: string,
-    @Body() dto: UpdatePlaybackBodyDto,
+    @Body() dto: UpdatePlaybackBodyDto
   ) {
     const state = await this.partyService.updatePlayback(req.user.id, partyId, dto);
     return { success: true, data: state };
@@ -117,7 +122,7 @@ export class WatchPartyController {
   @ApiResponse({ status: 200, description: 'Sync triggered' })
   async syncParticipants(
     @Request() req: { user: { id: string } },
-    @Param('partyId') partyId: string,
+    @Param('partyId') partyId: string
   ) {
     await this.partyService.syncParticipants(req.user.id, partyId);
     return { success: true };
@@ -131,7 +136,7 @@ export class WatchPartyController {
   async sendChatMessage(
     @Request() req: { user: { id: string } },
     @Param('partyId') partyId: string,
-    @Body() dto: ChatMessageBodyDto,
+    @Body() dto: ChatMessageBodyDto
   ) {
     const message = await this.partyService.sendChatMessage(req.user.id, partyId, dto.content);
     return { success: true, data: message };
@@ -151,10 +156,7 @@ export class WatchPartyController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Leave a watch party' })
   @ApiResponse({ status: 200, description: 'Left party' })
-  async leaveParty(
-    @Request() req: { user: { id: string } },
-    @Param('partyId') partyId: string,
-  ) {
+  async leaveParty(@Request() req: { user: { id: string } }, @Param('partyId') partyId: string) {
     await this.partyService.leaveParty(req.user.id, partyId);
     return { success: true };
   }
@@ -164,10 +166,7 @@ export class WatchPartyController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'End a watch party (host only)' })
   @ApiResponse({ status: 200, description: 'Party ended' })
-  async endParty(
-    @Request() req: { user: { id: string } },
-    @Param('partyId') partyId: string,
-  ) {
+  async endParty(@Request() req: { user: { id: string } }, @Param('partyId') partyId: string) {
     await this.partyService.endParty(req.user.id, partyId);
     return { success: true };
   }

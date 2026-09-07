@@ -1,10 +1,3 @@
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Commerce Provider-handoff  - Azeebo+',
-  description: 'Commerce Provider-handoff  on Azeebo+',
-};
-
 'use client';
 import { Suspense, lazy, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';

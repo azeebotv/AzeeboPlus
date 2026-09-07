@@ -270,7 +270,13 @@ export default function TelcoReconciliationPage(): React.JSX.Element {
                       <td style={{ padding: '12px 16px', textAlign: 'right' }}>
                         ₦{rec.billing.toLocaleString()}
                       </td>
-                      <td style={{ padding: '12px 16px', textAlign: 'right', color: 'var(--brand-emerald)' }}>
+                      <td
+                        style={{
+                          padding: '12px 16px',
+                          textAlign: 'right',
+                          color: 'var(--brand-emerald)',
+                        }}
+                      >
                         ₦{rec.settled.toLocaleString()}
                       </td>
                       <td

@@ -1,10 +1,19 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import React from 'react';
 import { Breadcrumbs } from '../Breadcrumbs';
 
 // Mock Next.js Link
 vi.mock('next/link', () => ({
-  default: ({ children, href, ...props }: any) => (
+  default: ({
+    children,
+    href,
+    ...props
+  }: {
+    children: React.ReactNode;
+    href: string;
+    [key: string]: unknown;
+  }) => (
     <a href={href} {...props}>
       {children}
     </a>
@@ -28,25 +37,14 @@ describe('Breadcrumbs', () => {
   });
 
   it('renders navigation landmark', () => {
-    render(
-      <Breadcrumbs
-        items={[
-          { label: 'Home', href: '/' },
-          { label: 'Page' },
-        ]}
-      />
-    );
+    render(<Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Page' }]} />);
     expect(screen.getByRole('navigation', { name: /breadcrumb/i })).toBeInTheDocument();
   });
 
   it('renders correct number of items', () => {
     const { container } = render(
       <Breadcrumbs
-        items={[
-          { label: 'A', href: '/' },
-          { label: 'B', href: '/b' },
-          { label: 'C' },
-        ]}
+        items={[{ label: 'A', href: '/' }, { label: 'B', href: '/b' }, { label: 'C' }]}
       />
     );
     const listItems = container.querySelectorAll('li');
@@ -67,14 +65,7 @@ describe('Breadcrumbs', () => {
   });
 
   it('renders last item without link', () => {
-    render(
-      <Breadcrumbs
-        items={[
-          { label: 'Home', href: '/' },
-          { label: 'Current Page' },
-        ]}
-      />
-    );
+    render(<Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Current Page' }]} />);
     // Last item should be a span, not a link
     const currentText = screen.getByText('Current Page');
     expect(currentText.tagName).toBe('SPAN');

@@ -40,5 +40,5 @@
 /Dockerfile.all-in-one @azeebotv/devops-team
 
 # Documentation
-/doc/ @azeebotv/product-team
+/docs/ @azeebotv/product-team
 /CLAUDE.md @azeebotv/engineering-leads

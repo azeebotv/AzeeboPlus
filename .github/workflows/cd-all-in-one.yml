@@ -1,8 +1,13 @@
 name: Build & Push All-in-One Image
 
+# This workflow builds and pushes the all-in-one Docker image.
+# It triggers on Dev-Branch which is the integration branch used for
+# building the consolidated all-in-one image used in smoke tests and
+# staging pre-validation. This is intentional — it does NOT replace
+# the main CI/CD pipeline triggered from main/develop branches.
 on:
   push:
-    branches: [Dev-Branch]
+    branches: [Dev-Branch, Major-Upgrade]
   workflow_dispatch:
     inputs:
       no_cache:
@@ -127,22 +132,19 @@ jobs:
             -p 3013:3013 \
             "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev"
 
-          echo "==> Waiting for container to initialize (300s — migrations for 26+ services)..."
-          sleep 300
-
-          echo "==> Testing health endpoint..."
+          echo "==> Waiting for container to initialize (polling up to 300s)..."
           HEALTH_OK=""
           for i in $(seq 1 30); do
             if curl -sf http://localhost:3013/health > /dev/null 2>&1; then
-              echo "✅ Health endpoint OK"
+              echo "✅ Health endpoint OK after ~$((i * 10))s"
               HEALTH_OK=1
               break
             fi
-            echo "⏳ Attempt $i/30 — retrying in 10s..."
+            echo "⏳ Attempt $i/30 — waiting for migrations + service startup... (${i}0s elapsed)"
             sleep 10
           done
           if [ -z "$HEALTH_OK" ]; then
-            echo "❌ Health check failed after 30 attempts"
+            echo "❌ Health check failed after 300s"
             docker logs smoke-test 2>&1 | tail -50
             docker stop smoke-test
             docker rm smoke-test

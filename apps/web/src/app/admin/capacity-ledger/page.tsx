@@ -1,10 +1,3 @@
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Admin Capacity-ledger  - Azeebo+',
-  description: 'Admin Capacity-ledger  on Azeebo+',
-};
-
 'use client';
 
 import { useState } from 'react';

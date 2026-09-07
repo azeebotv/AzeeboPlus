@@ -1,10 +1,3 @@
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Onboarding  - Azeebo+',
-  description: 'Onboarding  on Azeebo+',
-};
-
 'use client';
 
 import { useState } from 'react';

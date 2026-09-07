@@ -1,6 +1,14 @@
 import {
-  Controller, Get, Post, Put, Delete, Param, Body, Query,
-  HttpCode, HttpStatus,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Body,
+  Query,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { TaskRouterService } from './task-router.service';
@@ -43,14 +51,20 @@ export class TaskRouterController {
     @Query('workClass') workClass?: WorkClass,
     @Query('search') search?: string,
     @Query('automationCandidate') automationCandidate?: string,
-    @Query('eliminationCandidate') eliminationCandidate?: string,
+    @Query('eliminationCandidate') eliminationCandidate?: string
   ) {
     return this.routerService.findAll({
       domain,
       workClass,
       search,
-      automationCandidate: automationCandidate === 'true' ? true : automationCandidate === 'false' ? false : undefined,
-      eliminationCandidate: eliminationCandidate === 'true' ? true : eliminationCandidate === 'false' ? false : undefined,
+      automationCandidate:
+        automationCandidate === 'true' ? true : automationCandidate === 'false' ? false : undefined,
+      eliminationCandidate:
+        eliminationCandidate === 'true'
+          ? true
+          : eliminationCandidate === 'false'
+            ? false
+            : undefined,
     });
   }
 
@@ -92,7 +106,12 @@ export class TaskRouterController {
   @Post('route/batch')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Route multiple tasks in batch' })
-  routeBatch(@Body() body: { tasks: { taskType: string; correlationId?: string; overrideWorkClass?: WorkClass }[] }) {
+  routeBatch(
+    @Body()
+    body: {
+      tasks: { taskType: string; correlationId?: string; overrideWorkClass?: WorkClass }[];
+    }
+  ) {
     return this.routerService.routeBatch(body.tasks);
   }
 

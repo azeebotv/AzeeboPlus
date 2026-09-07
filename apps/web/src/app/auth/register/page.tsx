@@ -1,10 +1,3 @@
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Auth Register  - Azeebo+',
-  description: 'Auth Register  on Azeebo+',
-};
-
 'use client';
 
 import { useState } from 'react';

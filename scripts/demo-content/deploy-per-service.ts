@@ -246,3 +246,16 @@ async function main(): Promise<void> {
         ]);
         console.log(`  tags: ${n}`); total += n;
       }
+    }
+
+    await client.end();
+    console.log(`  -> Total seeded for ${dbName}: ${total}`);
+  }
+
+  console.log('\nSeeding completed.');
+}
+
+main().catch((err) => {
+  console.error('Fatal error during seeding:', err);
+  process.exit(1);
+});

@@ -1,10 +1,3 @@
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Profile Privacy-security  - Azeebo+',
-  description: 'Profile Privacy-security  on Azeebo+',
-};
-
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';

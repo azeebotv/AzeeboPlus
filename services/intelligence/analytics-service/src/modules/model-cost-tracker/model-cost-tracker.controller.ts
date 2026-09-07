@@ -27,9 +27,13 @@ export class ModelCostTrackerController {
     @Query('endDate') endDate: string,
     @Query('agentId') agentId?: string,
     @Query('domain') domain?: string,
-    @Query('model') model?: string,
+    @Query('model') model?: string
   ) {
-    return this.costService.getCostSummary(new Date(startDate), new Date(endDate), { agentId, domain, model });
+    return this.costService.getCostSummary(new Date(startDate), new Date(endDate), {
+      agentId,
+      domain,
+      model,
+    });
   }
 
   @Get('events')

@@ -41,9 +41,15 @@ export default function LeaderboardPage(): React.JSX.Element {
 
   const getRankStyle = (rank: number): { bg: string; color: string } => {
     if (rank === 1)
-      return { bg: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)', color: 'var(--brand-near-black)' };
+      return {
+        bg: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+        color: 'var(--brand-near-black)',
+      };
     if (rank === 2)
-      return { bg: 'linear-gradient(135deg, #C0C0C0 0%, #A0A0A0 100%)', color: 'var(--brand-near-black)' };
+      return {
+        bg: 'linear-gradient(135deg, #C0C0C0 0%, #A0A0A0 100%)',
+        color: 'var(--brand-near-black)',
+      };
     if (rank === 3)
       return {
         bg: 'linear-gradient(135deg, #CD7F32 0%, #A0522D 100%)',

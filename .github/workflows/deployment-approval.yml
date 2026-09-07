@@ -36,15 +36,16 @@ jobs:
 
       - name: Validate approver
         run: |
-          APPROVERS=("admin-user" "devops-lead" "tech-lead")
-          APPROVER="${{ github.actor }}"
-          
-          if [[ ! " ${APPROVERS[@]} " =~ " ${APPROVER} " ]]; then
-            echo "❌ $APPROVER is not authorized to approve deployments"
-            exit 1
-          fi
-          
-          echo "✅ $APPROVER is authorized"
+          # NOTE: The actual deployment approval gate is enforced by GitHub's
+          # Environment Protection Rules (Settings → Environments → production/staging).
+          # Only team members listed as "Required reviewers" in those settings can
+          # approve. This step just logs who triggered the approval for audit purposes.
+          #
+          # To configure who can approve deployments:
+          # Settings → Environments → [environment] → Required reviewers → Add teams/people
+          echo "✅ Deployment approval triggered by: ${{ github.actor }}"
+          echo "   Environment: ${{ github.event.inputs.environment }}"
+          echo "   Approver was already validated by GitHub Environment protection rules."
 
       - name: Get workflow run details
         run: |

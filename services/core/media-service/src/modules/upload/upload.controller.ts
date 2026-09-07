@@ -25,7 +25,12 @@ import { PremiumContentService } from './premium-content.service';
 import { CdnPurgeService } from './cdn-purge.service';
 import { MediaLifecycleService } from '../media/media-lifecycle.service';
 import { InitChunkedUploadDto } from './dto/chunked-upload.dto.js';
-import { GeneratePremiumUrlDto, ValidatePremiumUrlDto, CdnPurgeDto, LifecycleCdnPurgeDto } from './dto/premium-url.dto.js';
+import {
+  GeneratePremiumUrlDto,
+  ValidatePremiumUrlDto,
+  CdnPurgeDto,
+  LifecycleCdnPurgeDto,
+} from './dto/premium-url.dto.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 import { FeatureFlag, FeatureFlagGuard, mediaFlags } from '@azeebo/feature-flags';
 

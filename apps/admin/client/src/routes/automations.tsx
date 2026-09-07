@@ -16,7 +16,7 @@ interface ScheduledTask {
   type: 'content' | 'moderation' | 'analytics' | 'notification' | 'maintenance';
 }
 
-interface TaskRun {
+export interface TaskRun {
   id: string;
   taskId: string;
   startTime: string;
@@ -106,7 +106,7 @@ export default function AutomationsPage() {
   const queryClient = useQueryClient();
   const [selectedTask, setSelectedTask] = useState<ScheduledTask | null>(null);
 
-  const { data: tasks = MOCK_TASKS, isLoading } = useQuery({
+  const { data: tasks = MOCK_TASKS } = useQuery({
     queryKey: ['admin', 'automations'],
     queryFn: async () => {
       // In production, fetch from API
@@ -115,7 +115,7 @@ export default function AutomationsPage() {
   });
 
   const toggleTaskMutation = useMutation({
-    mutationFn: async (taskId: string) => {
+    mutationFn: async (_taskId: string) => {
       // In production, call API to toggle task status
       return { success: true };
     },
@@ -125,7 +125,7 @@ export default function AutomationsPage() {
   });
 
   const runTaskMutation = useMutation({
-    mutationFn: async (taskId: string) => {
+    mutationFn: async (_taskId: string) => {
       // In production, call API to run task immediately
       return { success: true };
     },

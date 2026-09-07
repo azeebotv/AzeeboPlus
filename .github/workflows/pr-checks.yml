@@ -14,14 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
       - name: Validate PR title
         uses: amannn/action-semantic-pull-request@v5
         env:
@@ -43,9 +35,14 @@ jobs:
       - name: Check for secrets
         run: |
           echo "Checking for accidentally committed secrets..."
-          if grep -r "password\|secret\|token\|key" --include="*.env" . 2>/dev/null; then
-            echo "WARNING: Potential secrets found in .env files"
+          FOUND=$(grep -r "password\|secret\|token\|key" --include="*.env" . 2>/dev/null | grep -v ".env.example" | grep -v ".env.prod.example" || true)
+          if [ -n "$FOUND" ]; then
+            echo "::error::Potential secrets found in committed .env files:"
+            echo "$FOUND"
+            exit 1
           fi
+          echo "✅ No secrets found in .env files"
+
 
   lint-pr:
     name: Lint PR
@@ -107,7 +104,7 @@ jobs:
         image: postgres:15
         env:
           POSTGRES_USER: azeebo
-          POSTGRES_PASSWORD: azeebo_test_2024
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}
           POSTGRES_DB: azeebo_test
         ports:
           - 5432:5432
@@ -172,7 +169,7 @@ jobs:
         image: postgres:15
         env:
           POSTGRES_USER: azeebo
-          POSTGRES_PASSWORD: azeebo_test_2024
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}
           POSTGRES_DB: azeebo_test
         ports:
           - 5432:5432
@@ -203,12 +200,14 @@ jobs:
       - run: pnpm run prisma:generate --if-present
       - name: Run integration tests
         run: |
-          pnpm run test -- --testPathPattern="integration" --forceExit || true
+          pnpm run test -- --testPathPattern="integration" --forceExit
 
   build-pr:
     name: Build PR
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: [pr-validation, lint-pr, typecheck-pr, test-pr, integration-test-pr]
+
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

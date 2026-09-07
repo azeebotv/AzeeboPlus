@@ -1,10 +1,3 @@
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'System Network-degraded  - Azeebo+',
-  description: 'System Network-degraded  on Azeebo+',
-};
-
 'use client';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';

@@ -43,9 +43,7 @@ describe('EmptyState', () => {
   });
 
   it('renders with custom title and description', () => {
-    render(
-      <EmptyState title="No results" description="Try a different search" />,
-    );
+    render(<EmptyState title="No results" description="Try a different search" />);
     expect(screen.getByText('No results')).toBeTruthy();
     expect(screen.getByText('Try a different search')).toBeTruthy();
   });
@@ -95,9 +93,7 @@ describe('ErrorState', () => {
   });
 
   it('uses custom buttonText', () => {
-    render(
-      <ErrorState buttonText="Try Again" onButtonPress={() => {}} />,
-    );
+    render(<ErrorState buttonText="Try Again" onButtonPress={() => {}} />);
     expect(screen.getByText('Try Again')).toBeTruthy();
   });
 
@@ -123,9 +119,7 @@ describe('SuccessState', () => {
   it('renders with default title and description', () => {
     render(<SuccessState />);
     expect(screen.getByText('Success!')).toBeTruthy();
-    expect(
-      screen.getByText('Your action was completed successfully'),
-    ).toBeTruthy();
+    expect(screen.getByText('Your action was completed successfully')).toBeTruthy();
   });
 
   it('renders with custom title and description', () => {
@@ -161,15 +155,11 @@ describe('NoInternetState', () => {
   it('renders with default title and description', () => {
     render(<NoInternetState />);
     expect(screen.getByText('No Internet Connection')).toBeTruthy();
-    expect(
-      screen.getByText('Please check your network and try again'),
-    ).toBeTruthy();
+    expect(screen.getByText('Please check your network and try again')).toBeTruthy();
   });
 
   it('renders with custom title and description', () => {
-    render(
-      <NoInternetState title="Offline" description="Connect to WiFi" />,
-    );
+    render(<NoInternetState title="Offline" description="Connect to WiFi" />);
     expect(screen.getByText('Offline')).toBeTruthy();
     expect(screen.getByText('Connect to WiFi')).toBeTruthy();
   });
@@ -196,15 +186,11 @@ describe('PaymentFailureState', () => {
   it('renders with default title and description', () => {
     render(<PaymentFailureState />);
     expect(screen.getByText('Payment Failed')).toBeTruthy();
-    expect(
-      screen.getByText('Your payment could not be processed'),
-    ).toBeTruthy();
+    expect(screen.getByText('Your payment could not be processed')).toBeTruthy();
   });
 
   it('renders with custom title and description', () => {
-    render(
-      <PaymentFailureState title="Card declined" description="Try another card" />,
-    );
+    render(<PaymentFailureState title="Card declined" description="Try another card" />);
     expect(screen.getByText('Card declined')).toBeTruthy();
     expect(screen.getByText('Try another card')).toBeTruthy();
   });
@@ -231,18 +217,11 @@ describe('ContentUnavailableState', () => {
   it('renders with default title and description', () => {
     render(<ContentUnavailableState />);
     expect(screen.getByText('Content Unavailable')).toBeTruthy();
-    expect(
-      screen.getByText('This content is no longer available'),
-    ).toBeTruthy();
+    expect(screen.getByText('This content is no longer available')).toBeTruthy();
   });
 
   it('renders with custom title and description', () => {
-    render(
-      <ContentUnavailableState
-        title="Removed"
-        description="Taken down by owner"
-      />,
-    );
+    render(<ContentUnavailableState title="Removed" description="Taken down by owner" />);
     expect(screen.getByText('Removed')).toBeTruthy();
     expect(screen.getByText('Taken down by owner')).toBeTruthy();
   });
@@ -270,19 +249,12 @@ describe('ModerationRemovedState', () => {
     render(<ModerationRemovedState />);
     expect(screen.getByText('Content Removed')).toBeTruthy();
     expect(
-      screen.getByText(
-        'This content has been removed due to community guidelines',
-      ),
+      screen.getByText('This content has been removed due to community guidelines')
     ).toBeTruthy();
   });
 
   it('renders with custom title and description', () => {
-    render(
-      <ModerationRemovedState
-        title="Taken Down"
-        description="Violates policy"
-      />,
-    );
+    render(<ModerationRemovedState title="Taken Down" description="Violates policy" />);
     expect(screen.getByText('Taken Down')).toBeTruthy();
     expect(screen.getByText('Violates policy')).toBeTruthy();
   });
@@ -298,18 +270,11 @@ describe('LockedPremiumState', () => {
   it('renders with default title and description', () => {
     render(<LockedPremiumState />);
     expect(screen.getByText('Premium Content')).toBeTruthy();
-    expect(
-      screen.getByText('Upgrade to premium to access this content'),
-    ).toBeTruthy();
+    expect(screen.getByText('Upgrade to premium to access this content')).toBeTruthy();
   });
 
   it('renders with custom title and description', () => {
-    render(
-      <LockedPremiumState
-        title="Locked"
-        description="Subscribe to unlock"
-      />,
-    );
+    render(<LockedPremiumState title="Locked" description="Subscribe to unlock" />);
     expect(screen.getByText('Locked')).toBeTruthy();
     expect(screen.getByText('Subscribe to unlock')).toBeTruthy();
   });
@@ -325,9 +290,7 @@ describe('LockedPremiumState', () => {
   });
 
   it('uses custom buttonText', () => {
-    render(
-      <LockedPremiumState buttonText="Unlock Now" onButtonPress={() => {}} />,
-    );
+    render(<LockedPremiumState buttonText="Unlock Now" onButtonPress={() => {}} />);
     expect(screen.getByText('Unlock Now')).toBeTruthy();
   });
 
@@ -343,15 +306,11 @@ describe('FirstTimeState', () => {
   it('renders with default title and description', () => {
     render(<FirstTimeState />);
     expect(screen.getByText('Welcome!')).toBeTruthy();
-    expect(
-      screen.getByText('Get started by exploring our content'),
-    ).toBeTruthy();
+    expect(screen.getByText('Get started by exploring our content')).toBeTruthy();
   });
 
   it('renders with custom title and description', () => {
-    render(
-      <FirstTimeState title="Hey there" description="Let's get started" />,
-    );
+    render(<FirstTimeState title="Hey there" description="Let's get started" />);
     expect(screen.getByText('Hey there')).toBeTruthy();
     expect(screen.getByText("Let's get started")).toBeTruthy();
   });
@@ -367,9 +326,7 @@ describe('FirstTimeState', () => {
   });
 
   it('uses custom buttonText', () => {
-    render(
-      <FirstTimeState buttonText="Get Started" onButtonPress={() => {}} />,
-    );
+    render(<FirstTimeState buttonText="Get Started" onButtonPress={() => {}} />);
     expect(screen.getByText('Get Started')).toBeTruthy();
   });
 

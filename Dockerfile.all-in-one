@@ -29,6 +29,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web/package.json apps/web/
 COPY apps/admin/package.json apps/admin/
 COPY apps/creator/package.json apps/creator/
+COPY apps/mobile/package.json apps/mobile/
 COPY packages/api-client/package.json packages/api-client/
 COPY packages/error-handling/package.json packages/error-handling/
 COPY packages/logger/package.json packages/logger/
@@ -41,6 +42,9 @@ COPY packages/shared-services/package.json packages/shared-services/
 COPY packages/auth/package.json packages/auth/
 COPY packages/observability/package.json packages/observability/
 COPY packages/feature-flags/package.json packages/feature-flags/
+COPY packages/flag-metrics/package.json packages/flag-metrics/
+COPY packages/model-cost-tracker/package.json packages/model-cost-tracker/
+COPY packages/queue-policy/package.json packages/queue-policy/
 COPY packages/analytics-sdk/package.json packages/analytics-sdk/
 COPY packages/internal-clients/package.json packages/internal-clients/
 COPY packages/test-utils/package.json packages/test-utils/
@@ -56,6 +60,7 @@ COPY services/core/payment-service/package.json services/core/payment-service/
 COPY services/core/content-service/package.json services/core/content-service/
 COPY services/core/search-service/package.json services/core/search-service/
 COPY services/core/media-service/package.json services/core/media-service/
+COPY services/core/knowledge-service/package.json services/core/knowledge-service/
 COPY services/engagement/notification-service/package.json services/engagement/notification-service/
 COPY services/engagement/reward-service/package.json services/engagement/reward-service/
 COPY services/engagement/engagement-service/package.json services/engagement/engagement-service/
@@ -171,6 +176,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     echo "==> [T2] Building core business services..." && \
     pnpm --filter @azeebo/media-service run build && \
     pnpm --filter @azeebo/content-service run build && \
+    pnpm --filter @azeebo/knowledge-service run build && \
     pnpm --filter @azeebo/wallet-service run build && \
     pnpm --filter @azeebo/payment-service run build && \
     pnpm --filter @azeebo/search-service run build && \

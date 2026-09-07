@@ -19,27 +19,29 @@ const mockRegisterState = { featureFlag: 0, rateLimiter: 0 };
 
 jest.mock('@azeebo/feature-flags', () => {
   const actual = jest.requireActual('@azeebo/feature-flags');
+  class MockFeatureFlagModule extends actual.FeatureFlagModule {
+    static register(config: unknown) {
+      mockRegisterState.featureFlag += 1;
+      return actual.FeatureFlagModule.register(config);
+    }
+  }
   return {
     ...actual,
-    FeatureFlagModule: {
-      register: (config: unknown) => {
-        mockRegisterState.featureFlag += 1;
-        return actual.FeatureFlagModule.register(config);
-      },
-    },
+    FeatureFlagModule: MockFeatureFlagModule,
   };
 });
 
 jest.mock('@azeebo/security', () => {
   const actual = jest.requireActual('@azeebo/security');
+  class MockRateLimiterModule extends actual.RateLimiterModule {
+    static forRoot(config?: unknown) {
+      mockRegisterState.rateLimiter += 1;
+      return actual.RateLimiterModule.forRoot(config);
+    }
+  }
   return {
     ...actual,
-    RateLimiterModule: {
-      forRoot: (config?: unknown) => {
-        mockRegisterState.rateLimiter += 1;
-        return actual.RateLimiterModule.forRoot(config);
-      },
-    },
+    RateLimiterModule: MockRateLimiterModule,
   };
 });
 

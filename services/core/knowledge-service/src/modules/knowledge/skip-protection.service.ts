@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 
 // ============================================================================
 // Skip Protection (AZP-KNOW-008)
@@ -43,7 +43,7 @@ export class SkipProtectionService {
   // In-memory store (would be database in production)
   private readonly skipHistory = new Map<string, number>(); // userId:contentId → skip count
 
-  constructor(config?: Partial<SkipProtectionConfig>) {
+  constructor(@Optional() config?: Partial<SkipProtectionConfig>) {
     this.config = { ...DEFAULT_CONFIG, ...config };
   }
 

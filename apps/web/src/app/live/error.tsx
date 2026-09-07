@@ -1,5 +1,4 @@
 'use client';
-'use client';
 
 export default function LiveError({
   error: _error,
@@ -21,7 +20,7 @@ export default function LiveError({
         </p>
         <button
           onClick={reset}
-          className="px-6 py-2.5 rounded-full font-semibold text-white transition-transform hover:scale-105"
+          className="min-h-[44px] px-6 py-2.5 rounded-full font-semibold text-white transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--brand-orange)]"
           style={{
             background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
           }}

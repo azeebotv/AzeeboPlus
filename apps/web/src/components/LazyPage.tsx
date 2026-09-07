@@ -19,17 +19,11 @@ function PageLoader() {
 }
 
 export function LazyPage({ children }: LazyPageProps) {
-  return (
-    <Suspense fallback={<PageLoader />}>
-      {children}
-    </Suspense>
-  );
+  return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
 }
 
 // Dynamic import wrapper for heavy pages
-export function withLazyLoading<P extends object>(
-  Component: React.ComponentType<P>
-) {
+export function withLazyLoading<P extends object>(Component: React.ComponentType<P>) {
   return dynamic<P>(() => Promise.resolve(Component), {
     loading: () => <PageLoader />,
     ssr: false,

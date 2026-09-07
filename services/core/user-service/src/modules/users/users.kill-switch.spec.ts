@@ -6,6 +6,7 @@ import request from 'supertest';
 import { UsersController } from './users.controller.js';
 import { UserDeletionController } from '../user/user-deletion.controller.js';
 import { UsersService } from './users.service.js';
+import { AvatarService } from './avatar.service.js';
 import { FeatureFlagGuard, FeatureFlagService } from '@azeebo/feature-flags';
 
 jest.mock('@azeebo/security', () => ({
@@ -74,6 +75,7 @@ describe('Users kill-switch (user_* flags)', () => {
       controllers: [UsersController, UserDeletionController],
       providers: [
         { provide: UsersService, useValue: mockUsersService },
+        { provide: AvatarService, useValue: { uploadAvatar: jest.fn(), deleteAvatar: jest.fn() } },
         { provide: FeatureFlagService, useValue: mockFeatureFlagService },
         { provide: Reflector, useValue: new Reflector() },
         FeatureFlagGuard,

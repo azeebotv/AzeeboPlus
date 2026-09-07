@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { createHash } from 'crypto';
 
 // ============================================================================
@@ -78,7 +78,7 @@ export class PIIMinimizationService {
   private readonly logger = new Logger(PIIMinimizationService.name);
   private readonly config: PIIMinimizationConfig;
 
-  constructor(config?: Partial<PIIMinimizationConfig>) {
+  constructor(@Optional() config?: Partial<PIIMinimizationConfig>) {
     this.config = { ...DEFAULT_CONFIG, ...config };
   }
 

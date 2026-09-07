@@ -28,7 +28,7 @@ function KnowledgeLockedContent() {
   const query = useQuery({
     queryKey: ['aou', 'knowledge-locked'],
     queryFn: async () => {
-      const res = await api.request<KnowledgeItem[]>('/api/v1/aou/knowledge/locked');
+      const res = await api.request<KnowledgeItem[]>('/api/v1/knowledge/locked');
       if (res.success && res.data) return res.data;
       throw new Error(res.message || 'Failed to load locked knowledge');
     },

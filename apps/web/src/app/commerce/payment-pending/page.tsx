@@ -1,10 +1,3 @@
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Commerce Payment-pending  - Azeebo+',
-  description: 'Commerce Payment-pending  on Azeebo+',
-};
-
 'use client';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';

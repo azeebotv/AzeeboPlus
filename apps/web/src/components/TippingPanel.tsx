@@ -5,9 +5,19 @@ import { api } from '@/lib/api';
 
 const TIER_CONFIG: Record<string, { label: string; color: string; bg: string; min: number }> = {
   bronze: { label: 'Bronze', color: 'var(--brand-copper)', bg: 'rgba(205,127,50,0.15)', min: 1000 },
-  silver: { label: 'Silver', color: 'var(--brand-silver)', bg: 'rgba(192,192,192,0.15)', min: 10000 },
+  silver: {
+    label: 'Silver',
+    color: 'var(--brand-silver)',
+    bg: 'rgba(192,192,192,0.15)',
+    min: 10000,
+  },
   gold: { label: 'Gold', color: 'var(--brand-gold)', bg: 'rgba(255,215,0,0.15)', min: 50000 },
-  platinum: { label: 'Platinum', color: 'var(--brand-silver)', bg: 'rgba(229,228,226,0.15)', min: 100000 },
+  platinum: {
+    label: 'Platinum',
+    color: 'var(--brand-silver)',
+    bg: 'rgba(229,228,226,0.15)',
+    min: 100000,
+  },
 };
 
 const PRESET_AMOUNTS = [100, 500, 1000, 5000, 10000];
@@ -204,7 +214,9 @@ export default function TippingPanel({
           padding: '12px',
           borderRadius: 10,
           border: 'none',
-          backgroundColor: tipMutation.isPending ? 'var(--brand-grey)' : 'var(--brand-orange, #E8420A)',
+          backgroundColor: tipMutation.isPending
+            ? 'var(--brand-grey)'
+            : 'var(--brand-orange, #E8420A)',
           color: 'var(--brand-white)',
           fontSize: 15,
           fontWeight: 600,
@@ -256,7 +268,9 @@ export default function TippingPanel({
                   style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ color: 'var(--brand-grey)', fontSize: 12, width: 16 }}>#{i + 1}</span>
+                    <span style={{ color: 'var(--brand-grey)', fontSize: 12, width: 16 }}>
+                      #{i + 1}
+                    </span>
                     {tier && (
                       <span
                         style={{

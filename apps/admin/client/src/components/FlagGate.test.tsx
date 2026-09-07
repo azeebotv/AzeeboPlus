@@ -18,8 +18,7 @@ describe('FlagGate', () => {
     vi.mocked(adminFlags.useAdminFlags).mockReturnValue({
       isEnabled: (key: string) => key === 'test-flag',
       isLoading: false,
-      flags: {},
-      allFlags: [],
+      flags: [],
     });
 
     renderWithRouter(
@@ -35,8 +34,7 @@ describe('FlagGate', () => {
     vi.mocked(adminFlags.useAdminFlags).mockReturnValue({
       isEnabled: () => false,
       isLoading: false,
-      flags: {},
-      allFlags: [],
+      flags: [],
     });
 
     renderWithRouter(
@@ -52,8 +50,7 @@ describe('FlagGate', () => {
     vi.mocked(adminFlags.useAdminFlags).mockReturnValue({
       isEnabled: () => true,
       isLoading: true,
-      flags: {},
-      allFlags: [],
+      flags: [],
     });
 
     const { container } = renderWithRouter(
@@ -69,8 +66,7 @@ describe('FlagGate', () => {
     vi.mocked(adminFlags.useAdminFlags).mockReturnValue({
       isEnabled: (key: string) => key === 'other-flag',
       isLoading: false,
-      flags: {},
-      allFlags: [],
+      flags: [],
     });
 
     renderWithRouter(

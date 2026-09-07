@@ -14,7 +14,7 @@
   --admin-emerald: #10b981;
   --admin-blue: #3b82f6;
   --admin-purple: #8b5cf6;
-  --admin-grey: #6b7280;
+  --admin-grey: #9ca3af;
   --admin-silver: #c0c0c0;
 }
 
@@ -46,4 +46,28 @@ a {
 
 button {
   cursor: pointer;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+:focus-visible {
+  outline: 2px solid var(--admin-orange);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

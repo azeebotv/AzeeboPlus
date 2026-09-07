@@ -16,7 +16,6 @@ const PRECACHE_URLS = [
   '/auth/login',
   '/auth/register',
   '/offline',
-  '/manifest.json',
   '/icon-192x192.png',
   '/apple-touch-icon.png',
 ];
@@ -29,10 +28,16 @@ const IMAGE_CACHE_MAX_ENTRIES = 200;
 // ─── Install ────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => {
-      return cache.addAll(PRECACHE_URLS).catch((err) => {
-        console.warn('[SW] Precache partially failed:', err);
-      });
+    caches.open(STATIC_CACHE).then(async (cache) => {
+      // Use allSettled so one missing URL does not break the entire precache
+      await Promise.allSettled(
+        PRECACHE_URLS.map((url) =>
+          cache.add(url).catch((err) => {
+            // Optional precache fail - non-fatal
+            console.debug('[SW] Optional precache skipped for', url, err);
+          })
+        )
+      );
     })
   );
   self.skipWaiting();
@@ -58,14 +63,16 @@ self.addEventListener('activate', (event) => {
 async function networkFirstWithCache(request) {
   try {
     const response = await fetch(request);
-    if (response.ok) {
+    if (response.ok && request.method === 'GET') {
       const cache = await caches.open(API_CACHE);
       cache.put(request, response.clone());
     }
     return response;
   } catch {
-    const cached = await caches.match(request);
-    if (cached) return cached;
+    if (request.method === 'GET') {
+      const cached = await caches.match(request);
+      if (cached) return cached;
+    }
     return new Response(JSON.stringify({ error: 'Offline', offline: true }), {
       status: 503,
       headers: { 'Content-Type': 'application/json' },
@@ -75,12 +82,14 @@ async function networkFirstWithCache(request) {
 
 // Cache-first for static assets
 async function cacheFirstWithNetwork(request) {
-  const cached = await caches.match(request);
-  if (cached) return cached;
+  if (request.method === 'GET') {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+  }
 
   try {
     const response = await fetch(request);
-    if (response.ok) {
+    if (response.ok && request.method === 'GET') {
       const cache = await caches.open(STATIC_CACHE);
       cache.put(request, response.clone());
     }
@@ -92,12 +101,15 @@ async function cacheFirstWithNetwork(request) {
 
 // Stale-while-revalidate for images
 async function staleWhileRevalidate(request) {
+  if (request.method !== 'GET') {
+    return fetch(request);
+  }
   const cache = await caches.open(IMAGE_CACHE);
   const cached = await cache.match(request);
 
   const fetchPromise = fetch(request)
     .then((response) => {
-      if (response.ok) {
+      if (response.ok && request.method === 'GET') {
         cache.put(request, response.clone());
       }
       return response;
@@ -262,8 +274,19 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET for caching (except mutations handled by networkOnly)
-  if (request.method !== 'GET' && !['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method)) {
+  // Only handle HTTP/HTTPS schemes (ignore chrome-extension:, ws:, etc.)
+  if (!url.protocol.startsWith('http')) {
+    return;
+  }
+
+  // Mutations (POST, PUT, DELETE, PATCH) → network only (with offline queue)
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method)) {
+    event.respondWith(networkOnly(request));
+    return;
+  }
+
+  // Skip any other non-GET methods
+  if (request.method !== 'GET') {
     return;
   }
 
@@ -291,19 +314,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Mutations → network with offline queue
-  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method)) {
-    event.respondWith(networkOnly(request));
-    return;
-  }
-
   // Navigation → network-first with cache fallback
   if (request.mode === 'navigate') {
     event.respondWith(
       (async () => {
         try {
           const response = await fetch(request);
-          if (response.ok) {
+          if (response.ok && request.method === 'GET') {
             const cache = await caches.open(DYNAMIC_CACHE);
             cache.put(request, response.clone());
           }

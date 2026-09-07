@@ -1,7 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { Download, Trash2, HardDrive, Wifi, WifiOff, Clock, CheckCircle, AlertCircle, Loader } from 'lucide-react';
+import {
+  Download,
+  Trash2,
+  HardDrive,
+  Wifi,
+  WifiOff,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Loader,
+} from 'lucide-react';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -125,12 +135,16 @@ export default function DownloadsPage(): React.JSX.Element {
               {formatBytes(storageUsed)} / {formatBytes(storageTotal)}
             </span>
           </div>
-          <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
+          <div
+            className="w-full h-2 rounded-full overflow-hidden"
+            style={{ background: 'rgba(255,255,255,0.1)' }}
+          >
             <div
               className="h-full rounded-full transition-all duration-300"
               style={{
                 width: `${storagePercent}%`,
-                background: storagePercent > 80 ? 'var(--color-error-500, #EF4444)' : 'var(--brand-orange)',
+                background:
+                  storagePercent > 80 ? 'var(--color-error-500, #EF4444)' : 'var(--brand-orange)',
               }}
             />
           </div>
@@ -147,9 +161,7 @@ export default function DownloadsPage(): React.JSX.Element {
               key={f}
               onClick={() => setFilter(f)}
               className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors whitespace-nowrap ${
-                filter === f
-                  ? 'text-white'
-                  : 'text-white/60 hover:text-white'
+                filter === f ? 'text-white' : 'text-white/60 hover:text-white'
               }`}
               style={{
                 background: filter === f ? 'var(--brand-orange)' : 'rgba(255,255,255,0.05)',
@@ -171,11 +183,23 @@ export default function DownloadsPage(): React.JSX.Element {
             {[1, 2, 3].map((i) => (
               <div key={i} className="az-glass p-4 animate-pulse">
                 <div className="flex items-center gap-4">
-                  <div className="w-20 h-28 rounded-lg" style={{ background: 'rgba(255,255,255,0.05)' }} />
+                  <div
+                    className="w-20 h-28 rounded-lg"
+                    style={{ background: 'rgba(255,255,255,0.05)' }}
+                  />
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 rounded w-1/3" style={{ background: 'rgba(255,255,255,0.05)' }} />
-                    <div className="h-3 rounded w-1/4" style={{ background: 'rgba(255,255,255,0.05)' }} />
-                    <div className="h-3 rounded w-1/2" style={{ background: 'rgba(255,255,255,0.05)' }} />
+                    <div
+                      className="h-4 rounded w-1/3"
+                      style={{ background: 'rgba(255,255,255,0.05)' }}
+                    />
+                    <div
+                      className="h-3 rounded w-1/4"
+                      style={{ background: 'rgba(255,255,255,0.05)' }}
+                    />
+                    <div
+                      className="h-3 rounded w-1/2"
+                      style={{ background: 'rgba(255,255,255,0.05)' }}
+                    />
                   </div>
                 </div>
               </div>
@@ -220,7 +244,10 @@ export default function DownloadsPage(): React.JSX.Element {
                       </h3>
                     </div>
                     <div className="flex items-center gap-3 text-xs text-white/50">
-                      <span className="uppercase font-medium" style={{ color: 'var(--brand-orange)' }}>
+                      <span
+                        className="uppercase font-medium"
+                        style={{ color: 'var(--brand-orange)' }}
+                      >
                         {download.quality}
                       </span>
                       <span>{formatBytes(download.fileSize)}</span>
@@ -230,7 +257,10 @@ export default function DownloadsPage(): React.JSX.Element {
                     {/* Progress bar for downloading */}
                     {download.status === 'downloading' && (
                       <div className="mt-2">
-                        <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                        <div
+                          className="w-full h-1.5 rounded-full overflow-hidden"
+                          style={{ background: 'rgba(255,255,255,0.1)' }}
+                        >
                           <div
                             className="h-full rounded-full transition-all duration-300"
                             style={{
@@ -300,7 +330,8 @@ export default function DownloadsPage(): React.JSX.Element {
           <div className="az-glass p-6 max-w-sm w-full mx-4">
             <h3 className="text-lg font-bold text-white mb-2">Delete all downloads?</h3>
             <p className="text-sm text-white/60 mb-6">
-              This will remove all {downloads.length} downloaded items. You can re-download them later.
+              This will remove all {downloads.length} downloaded items. You can re-download them
+              later.
             </p>
             <div className="flex gap-3">
               <button

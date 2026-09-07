@@ -39,7 +39,7 @@ export function Button({
     sm: 'px-3 py-1.5 text-sm gap-1.5',
     md: 'px-4 py-2.5 text-sm gap-2',
     lg: 'px-6 py-3 text-base gap-2',
-    icon: 'p-2.5',
+    icon: 'p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center',
   };
 
   const variantStyles = {
@@ -142,13 +142,22 @@ export function Card({
 
   return (
     <Component
-      className={`rounded-xl overflow-hidden transition-all duration-200 ${paddingStyles[padding]} ${variantStyles[variant]} ${className} ${onClick ? 'cursor-pointer' : ''}`}
+      className={`rounded-xl overflow-hidden transition-all duration-200 ${paddingStyles[padding]} ${variantStyles[variant]} ${className} ${onClick ? 'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2' : ''}`}
       onClick={onClick}
-      role={role}
+      role={role || (onClick ? 'button' : undefined)}
       aria-label={ariaLabel}
       aria-describedby={ariaDescribedby}
       tabIndex={onClick ? 0 : undefined}
-      onKeyDown={onClick ? (e: React.KeyboardEvent) => e.key === 'Enter' && onClick() : undefined}
+      onKeyDown={
+        onClick
+          ? (e: React.KeyboardEvent) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
     >
       {children}
     </Component>

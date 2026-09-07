@@ -1,10 +1,3 @@
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Auth Login  - Azeebo+',
-  description: 'Auth Login  on Azeebo+',
-};
-
 'use client';
 
 import { useState } from 'react';
@@ -127,7 +120,7 @@ export default function LoginPage(): React.JSX.Element {
             <motion.button
               type="button"
               onClick={() => setShowPassword((s) => !s)}
-              className="absolute inset-y-0 right-0 px-3 flex items-center text-white/50 hover:text-white"
+              className="absolute inset-y-0 right-0 px-3 flex items-center text-white/85 hover:text-white"
               aria-label={showPassword ? 'Hide password' : 'Show password'}
               whileTap={{ scale: 0.9 }}
             >
@@ -139,7 +132,7 @@ export default function LoginPage(): React.JSX.Element {
         <motion.div variants={fieldVariants} className="text-center">
           <a
             href="/auth/forgot-password"
-            className="text-white/50 hover:text-white text-xs transition-colors"
+            className="text-white/80 hover:text-white text-xs transition-colors"
           >
             Forgot your password?
           </a>
@@ -214,7 +207,7 @@ export default function LoginPage(): React.JSX.Element {
           </motion.button>
         </motion.div>
 
-        <motion.p variants={fieldVariants} className="text-center text-white/50 text-sm pt-2">
+        <motion.p variants={fieldVariants} className="text-center text-white/80 text-sm pt-2">
           Don&apos;t have an account.{' '}
           <a
             href="/auth/register"

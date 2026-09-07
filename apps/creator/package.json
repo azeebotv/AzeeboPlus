@@ -9,6 +9,7 @@
     "prebuild": "prisma generate",
     "build:client": "vite build --config client/vite.config.ts",
     "build": "pnpm build:client && prisma generate && tsc -p tsconfig.build.json",
+    "dev": "pnpm run dev:client",
     "dev:client": "vite --config client/vite.config.ts",
     "start": "node dist/main.js",
     "start:dev": "tsx watch src/main.ts",
@@ -16,7 +17,9 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "test:client": "vitest run --root client"
+    "test:client": "vitest run --root client",
+    "test:e2e": "playwright test --config client/playwright.config.ts",
+    "test:e2e:ui": "playwright test --config client/playwright.config.ts --ui"
   },
   "dependencies": {
     "@azeebo/auth": "workspace:*",

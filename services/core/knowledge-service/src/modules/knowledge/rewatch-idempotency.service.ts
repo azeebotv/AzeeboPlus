@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 
 // ============================================================================
 // Rewatch Idempotency (AZP-KNOW-009)
@@ -54,7 +54,7 @@ export class RewatchIdempotencyService {
   // In-memory store (would be database in production)
   private readonly rewatchStore = new Map<string, RewatchRecord>();
 
-  constructor(config?: Partial<RewatchConfig>) {
+  constructor(@Optional() config?: Partial<RewatchConfig>) {
     this.config = { ...DEFAULT_REWATCH_CONFIG, ...config };
   }
 

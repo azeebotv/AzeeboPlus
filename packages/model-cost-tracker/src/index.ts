@@ -40,4 +40,8 @@ export { CostTrackingInterceptor } from './cost-tracking.interceptor';
 export { CostTrackerModule, COST_TRACKER_CONFIG } from './cost-tracker.module';
 
 // ─── Client ─────────────────────────────────────────────────
-export { CostTrackerClient, type CostTrackerClientConfig, type CostTrackerEvent } from './cost-tracker.client';
+export {
+  CostTrackerClient,
+  type CostTrackerClientConfig,
+  type CostTrackerEvent,
+} from './cost-tracker.client';

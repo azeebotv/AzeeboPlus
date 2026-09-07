@@ -128,7 +128,7 @@ export function useFeatureFlags(): UseFeatureFlagsResult {
     (key: string): boolean => {
       return flags[key]?.enabled === true;
     },
-    [flags],
+    [flags]
   );
 
   const getValue = useCallback(
@@ -136,7 +136,7 @@ export function useFeatureFlags(): UseFeatureFlagsResult {
       if (flags[key]?.enabled !== true) return null;
       return flags[key]?.value ?? null;
     },
-    [flags],
+    [flags]
   );
 
   return {

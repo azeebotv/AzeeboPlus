@@ -18,8 +18,7 @@ describe('FlagGate', () => {
     vi.mocked(creatorFlags.useCreatorFlags).mockReturnValue({
       isEnabled: (key: string) => key === 'test-flag',
       isLoading: false,
-      flags: {},
-      allFlags: [],
+      flags: [],
     });
 
     renderWithRouter(
@@ -35,8 +34,7 @@ describe('FlagGate', () => {
     vi.mocked(creatorFlags.useCreatorFlags).mockReturnValue({
       isEnabled: () => false,
       isLoading: false,
-      flags: {},
-      allFlags: [],
+      flags: [],
     });
 
     renderWithRouter(
@@ -52,8 +50,7 @@ describe('FlagGate', () => {
     vi.mocked(creatorFlags.useCreatorFlags).mockReturnValue({
       isEnabled: () => true,
       isLoading: true,
-      flags: {},
-      allFlags: [],
+      flags: [],
     });
 
     const { container } = renderWithRouter(
