@@ -45,6 +45,19 @@ export function useServiceWorker(): ServiceWorkerState & {
   const register = useCallback(async () => {
     if (!isSupported) return;
 
+    if (process.env.NODE_ENV !== 'production') {
+      // In development mode, unregister any active service worker to prevent HMR chunk caching desync
+      try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const reg of registrations) {
+          await reg.unregister();
+        }
+      } catch {
+        // Ignore unregister errors in development
+      }
+      return;
+    }
+
     try {
       const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
       setRegistration(reg);

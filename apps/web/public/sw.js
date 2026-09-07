@@ -2,7 +2,7 @@
 // Azeebo+ Service Worker v1.0
 // Provides offline caching, background sync, and stale-while-revalidate strategies
 
-const CACHE_VERSION = 'azeebo-v2';
+const CACHE_VERSION = 'azeebo-v3';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
 const API_CACHE = `${CACHE_VERSION}-api`;
@@ -276,6 +276,11 @@ self.addEventListener('fetch', (event) => {
 
   // Only handle HTTP/HTTPS schemes (ignore chrome-extension:, ws:, etc.)
   if (!url.protocol.startsWith('http')) {
+    return;
+  }
+
+  // Bypass service worker completely for Next.js internal assets, chunks, and HMR
+  if (url.pathname.startsWith('/_next/')) {
     return;
   }
 
