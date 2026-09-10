@@ -12,6 +12,117 @@ jobs:
   # Fast PR gate jobs are in pr-checks.yml (lint, typecheck, test, integration-test)
   # This workflow runs the FULL merge pipeline: build, e2e, security
 
+  prisma-migrations:
+    name: Prisma Migrations Drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: azeebo
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      # installs each service's own pinned prisma CLI; the checker resolves
+      # the binary from each service's node_modules so diffs are made with
+      # the exact prisma version that service ships with
+      - run: pnpm install --frozen-lockfile
+      # The checker replays each service's prisma/migrations into a throwaway
+      # shadow database and diffs the result against schema.prisma. It fails
+      # when migrations were hand-edited, can't replay from empty, or were
+      # never written for schema changes — the exact failures that break
+      # `prisma migrate deploy` on a fresh environment.
+      - name: Replay migrations into shadow DB and diff against schema
+        run: node scripts/check-prisma-migrations.mjs
+        env:
+          SHADOW_DB_URL: postgresql://azeebo:${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}@localhost:5432/postgres
+      # Fails when .env.example omits a boot-required key (getOrThrow or a
+      # required validator rule) — onboarding with .env.example would crash.
+      - name: Env example / code / validator consistency
+        run: node scripts/check-env-consistency.mjs
+      # Schema lock: migrate deploy into a throwaway DB per service, then diff
+      # the DEPLOYED database against schema.prisma. Fails on ANY diff —
+      # catches resolve-marked/rolled-back ledger rows and edited migrations
+      # that the folder-shape replay above cannot see.
+      - name: Deploy migrations and diff deployed DB against schema (schema lock)
+        run: node scripts/check-deployed-schema.mjs
+        env:
+          SHADOW_DB_URL: postgresql://azeebo:${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}@localhost:5432/postgres
+      - name: Upload drift artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prisma-drift-diffs
+          path: |
+            .check-prisma-drift-out/
+            .check-prisma-deploy-diff-out/
+          retention-days: 7
+
+  # The other direction: provision each service's database from its own
+  # migrations (CREATE DATABASE + prisma migrate deploy), then diff the
+  # provisioned database against schema.prisma — the same check the local
+  # scripts/drift-live-db.mjs sweep runs against dev databases. Advisory:
+  # reports drift without failing the build; diffs are uploaded as artifacts
+  # for review. The blocking form (--seed --strict) is still available for
+  # manual/local use when a gate is wanted.
+  prisma-live-drift:
+    name: Prisma Live Drift (provision + diff)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: azeebo
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      # --seed provisions azeebo_<service> databases by deploying each
+      # service's prisma/migrations; the diff then should be EMPTY. Any drift
+      # is reported (non-blocking, --advisory) and written to .drift-live-out/.
+      - name: Provision DBs from migrations and diff against schema (advisory)
+        run: node scripts/drift-live-db.mjs --seed --advisory
+        env:
+          LIVE_DB_URL_BASE: postgresql://azeebo:${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}@localhost:5432
+      - name: Upload drift report artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: prisma-live-drift-diffs
+          path: .drift-live-out/
+          retention-days: 7
+
   build:
     name: Build
     runs-on: ubuntu-latest
