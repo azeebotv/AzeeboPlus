@@ -57,6 +57,13 @@ name: Dockerized E2E (flag chain + failover + pg_trgm + security + cache-thrash)
 # compose file's dev ports (6380/5433) are not needed in CI. The flag-chain
 # containers reach the same service containers via host.docker.internal.
 
+permissions:
+  contents: read
+  # dorny/paths-filter resolves PR changed files via the GitHub API; without
+  # pull-requests: read it dies with "Resource not accessible by integration"
+  # and the whole workflow skips its suites.
+  pull-requests: read
+
 on:
   pull_request:
     branches: [main, develop]

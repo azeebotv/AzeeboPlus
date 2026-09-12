@@ -25,6 +25,13 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Workspace packages ship from dist/ (feature-flags/registries,
+      # analytics-sdk, shared-types, ...) — without building them first the app
+      # bundles/tests cannot resolve them outside a developer's warmed-up tree.
+      # Clients are generated first because packages/security and
+      # packages/shared-services compile against generated Prisma clients.
+      - run: pnpm run prisma:generate
+      - run: pnpm --filter './packages/**' run build
       - run: pnpm --filter @azeebo/web test
         env:
           CI: true
@@ -43,6 +50,9 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # See test-web: dist-exporting packages must be built before app tests.
+      - run: pnpm run prisma:generate
+      - run: pnpm --filter './packages/**' run build
       - run: pnpm --filter @azeebo/admin test
         env:
           CI: true
@@ -61,6 +71,9 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # See test-web: dist-exporting packages must be built before app tests.
+      - run: pnpm run prisma:generate
+      - run: pnpm --filter './packages/**' run build
       - run: pnpm --filter @azeebo/creator test
         env:
           CI: true
@@ -79,7 +92,9 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @azeebo/mobile test --if-present
+      # NOTE: no `--if-present` on the script call below — pnpm forwards it to
+      # jest, which rejects it as an unknown CLI flag. The script exists.
+      - run: pnpm --filter @azeebo/mobile test
         env:
           CI: true
 
@@ -130,6 +145,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run prisma:generate --if-present
+      # Services import dist-exporting packages (shared-services, event-bus,
+      # ...) — jest's ts-jest compilation needs their type entries to exist.
+      - run: pnpm --filter './packages/**' run build
       - run: pnpm --filter @azeebo/${{ matrix.service }} test
         env:
           CI: true

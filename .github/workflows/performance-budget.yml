@@ -33,6 +33,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Workspace packages ship from dist/ — `next build` cannot resolve them
+      # (analytics-sdk, feature-flags/registries, ...) until they are built.
+      # Clients come first: packages/security and shared-services compile
+      # against generated Prisma clients.
+      - name: Generate Prisma clients
+        run: pnpm run prisma:generate
+
+      - name: Build workspace packages
+        run: pnpm --filter './packages/**' run build
+
       - name: Build web app
         run: pnpm --filter @azeebo/web build
 

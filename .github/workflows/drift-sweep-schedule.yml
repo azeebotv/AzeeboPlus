@@ -51,9 +51,16 @@ on:
         default: 'staging'
         type: choice
         options:
-          - ''
           - staging
           - production
+      # The empty-string option previously here was rejected by GitHub's
+      # schema (actionlint: "string should not be empty"). Baseline-only
+      # dispatches now uncheck this boolean instead.
+      run_live:
+        description: 'Run the live-environment leg (uncheck for baseline only)'
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   contents: read
@@ -157,7 +164,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: [drift-baseline]
-    if: ${{ github.event.inputs.environment != '' }}
+    if: github.event_name == 'workflow_dispatch' && inputs.run_live
     steps:
       - uses: actions/checkout@v4
         with:

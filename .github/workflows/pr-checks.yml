@@ -172,9 +172,19 @@ jobs:
       # live section entirely.
       # always() so a failed gate run still mints a token and still posts —
       # red runs are the whole point of the comment bot.
+      # secrets.* is FORBIDDEN in if: conditionals (GitHub rejects the whole
+      # workflow file — zero jobs, run named by file path), so the guard runs
+      # as a step whose output gates the token step.
+      - name: Check drift bot configured
+        id: drift-bot-config
+        if: always()
+        env:
+          DRIFT_BOT_APP_ID_SET: ${{ vars.DRIFT_BOT_APP_ID != '' }}
+          DRIFT_BOT_KEY_SET: ${{ secrets.DRIFT_BOT_APP_PRIVATE_KEY != '' }}
+        run: echo "configured=${{ env.DRIFT_BOT_APP_ID_SET == 'true' && env.DRIFT_BOT_KEY_SET == 'true' }}" >> "$GITHUB_OUTPUT"
       - name: Mint azeebo-drift-bot App token
         id: app-token
-        if: ${{ always() && vars.DRIFT_BOT_APP_ID != '' && secrets.DRIFT_BOT_APP_PRIVATE_KEY != '' }}
+        if: always() && steps.drift-bot-config.outputs.configured == 'true'
         uses: actions/create-github-app-token@v1
         with:
           app-id: ${{ vars.DRIFT_BOT_APP_ID }}

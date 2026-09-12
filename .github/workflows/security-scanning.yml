@@ -28,7 +28,9 @@ jobs:
         run: pnpm audit --audit-level=high
       - name: Run Snyk vulnerability scan
         # Pinned to v1.2.0 — update intentionally
-        uses: snyk/actions/node@9854ad53f6dbe10d7e8a24697aad9ac09cfe7985 # v1.4.0
+        # Repinned: the previously pinned SHA does not exist in snyk/actions
+        # (job failed with "unable to find version"). Pinning to main tip as of 2026-09-12.
+        uses: snyk/actions/node@86b1cee1b8e110a78d528b3e1328a80e218111d2
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
@@ -41,8 +43,10 @@ jobs:
         with:
           fetch-depth: 0
       - name: Run gitleaks
-        # Pinned to v2.3.4
-        uses: gitleaks/gitleaks-action@ff98106e4c7b4f214a41ea0ea5eaedc78be9ab64 # v2.3.4
+        # Repinned: the old SHA was a corrupted v2 commit (first 11 chars
+        # matched, rest diverged — job failed "unable to find version").
+        # This is the real commit the v2 tag points to.
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2 tag
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
