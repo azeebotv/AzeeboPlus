@@ -101,6 +101,12 @@ jobs:
       # or the shared env validator requires — i.e. a service that cannot
       # boot when someone follows .env.example verbatim.
       - run: node scripts/check-env-consistency.mjs
+      # Every seeder media URL must route through the shared host registry
+      # (scripts/seeders/seed-image-hosts.ts) and every registered host must
+      # be allowlisted in apps/web/next.config.js — a seed host missing from
+      # the allowlist crashes next/image at render time (the
+      # cdn.azeebo.test incident).
+      - run: node scripts/check-seed-image-hosts.mjs
       - run: node --test scripts/__tests__/*.test.mjs
       - run: node scripts/check-swagger-consistency.mjs
       - run: node scripts/sweep-flag-usage.mjs
