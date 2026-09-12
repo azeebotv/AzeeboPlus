@@ -223,6 +223,45 @@ pnpm -r test
 cd services/core/wallet-service && pnpm test
 ```
 
+## Git Hooks
+
+The repo ships a pre-commit hook that blocks commits when a generated
+Prisma client is stale relative to its `prisma/schema.prisma` — a failure mode
+CI structurally cannot catch, because CI regenerates clients fresh and would
+silently trust the stale one sitting in your working tree.
+
+**Installed automatically:** the root `prepare` script runs
+`scripts/install-git-hooks.sh` on every `pnpm install`, pointing
+`core.hooksPath` at `scripts/hooks`. Verify with:
+
+```bash
+# Should print: scripts/hooks
+git config --get core.hooksPath
+```
+
+The installer is a no-op outside a git checkout (Docker builds, tarballs) and
+never touches a `core.hooksPath` you have already set yourself.
+
+To uninstall (opt out):
+
+```bash
+git config --unset core.hooksPath
+```
+
+What it does:
+
+- Runs `scripts/check-prisma-client-stale.mjs` before every commit (~100ms)
+- Blocks the commit when any workspace's generated client is stale
+- Fix when blocked: `pnpm run prisma:generate`, then re-stage and commit
+
+Skip once (not recommended): `git commit --no-verify`.
+
+The hook itself is guarded by CI: `scripts/check-git-hooks.mjs` (wired as
+`pnpm run check:git-hooks` in the Flag & Swagger Conventions job) fails the PR
+when the hook file is missing, not executable, untracked by git or committed
+without mode 100755 (so fresh clones would materialize a dead hook), or
+rewritten without the stale-client check.
+
 ## Engineering Guidelines
 
 - [CLAUDE.md](./CLAUDE.md) - AI-assisted development guidelines and engineering rules

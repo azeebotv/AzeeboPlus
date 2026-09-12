@@ -77,6 +77,7 @@ jobs:
       # Fails when .env.example omits a key the code reads via getOrThrow,
       # or the shared env validator requires — i.e. a service that cannot
       # boot when someone follows .env.example verbatim.
+      - run: node scripts/check-git-hooks.mjs
       - run: node scripts/check-env-consistency.mjs
       - run: node --test scripts/__tests__/*.test.mjs
       - run: node scripts/check-swagger-consistency.mjs
@@ -195,6 +196,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run prisma:generate --if-present
       - run: pnpm run typecheck
+      - run: node scripts/check-prisma-client-stale.mjs
 
   test-pr:
     name: Test PR
