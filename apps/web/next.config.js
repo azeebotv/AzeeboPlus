@@ -52,6 +52,17 @@ const nextConfig = {
         hostname: 'storage.azeebo.com',
       },
       {
+        // Platform CDN wildcards: any subdomain of the production and TV
+        // properties (media/api/tenant hosts) may serve next/image sources.
+        // '*' matches one subdomain level; use '**' if deeper nesting lands.
+        protocol: 'https',
+        hostname: '*.azeeboplus.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.azeeboplus.tv',
+      },
+      {
         protocol: 'https',
         hostname: 'ui-avatars.com',
       },
