@@ -49,25 +49,32 @@ jobs:
           fi
 
       - name: Rollback via Coolify (Staging)
-        if: inputs.environment == 'staging' && secrets.COOLIFY_STAGING_WEBHOOK != ''
+        env:
+          COOLIFY_WEBHOOK: ${{ secrets.COOLIFY_STAGING_WEBHOOK }}
+        if: inputs.environment == 'staging' && env.COOLIFY_WEBHOOK != ''
         run: |
           echo "🔄 Triggering Coolify staging rollback to ${{ inputs.target_tag }}..."
-          curl -fsSL -X POST "${{ secrets.COOLIFY_STAGING_WEBHOOK }}" \
+          curl -fsSL -X POST "$COOLIFY_WEBHOOK" \
             -H "Content-Type: application/json" \
             -d "{\"tag\": \"${{ inputs.target_tag }}\"}"
           echo "✅ Coolify staging rollback triggered"
 
       - name: Rollback via Coolify (Production)
-        if: inputs.environment == 'production' && secrets.COOLIFY_PRODUCTION_WEBHOOK != ''
+        env:
+          COOLIFY_WEBHOOK: ${{ secrets.COOLIFY_PRODUCTION_WEBHOOK }}
+        if: inputs.environment == 'production' && env.COOLIFY_WEBHOOK != ''
         run: |
           echo "🔄 Triggering Coolify production rollback to ${{ inputs.target_tag }}..."
-          curl -fsSL -X POST "${{ secrets.COOLIFY_PRODUCTION_WEBHOOK }}" \
+          curl -fsSL -X POST "$COOLIFY_WEBHOOK" \
             -H "Content-Type: application/json" \
             -d "{\"tag\": \"${{ inputs.target_tag }}\"}"
           echo "✅ Coolify production rollback triggered"
 
       - name: Rollback via SSH (Fallback — Staging)
-        if: inputs.environment == 'staging' && secrets.COOLIFY_STAGING_WEBHOOK == '' && secrets.DEPLOY_SSH_KEY != ''
+        env:
+          COOLIFY_WEBHOOK: ${{ secrets.COOLIFY_STAGING_WEBHOOK }}
+          DEPLOY_SSH_KEY_SET: ${{ secrets.DEPLOY_SSH_KEY != '' }}
+        if: inputs.environment == 'staging' && env.COOLIFY_WEBHOOK == '' && env.DEPLOY_SSH_KEY_SET == 'true'
         uses: appleboy/ssh-action@029f5b4aeefc5ef18188244d3a88aaae867b0a8a # v1.2.0
         with:
           host: ${{ secrets.DEPLOY_HOST }}
@@ -90,7 +97,10 @@ jobs:
             echo "✅ Staging rollback complete"
 
       - name: Rollback via SSH (Fallback — Production)
-        if: inputs.environment == 'production' && secrets.COOLIFY_PRODUCTION_WEBHOOK == '' && secrets.DEPLOY_SSH_KEY != ''
+        env:
+          COOLIFY_WEBHOOK: ${{ secrets.COOLIFY_PRODUCTION_WEBHOOK }}
+          DEPLOY_SSH_KEY_SET: ${{ secrets.DEPLOY_SSH_KEY != '' }}
+        if: inputs.environment == 'production' && env.COOLIFY_WEBHOOK == '' && env.DEPLOY_SSH_KEY_SET == 'true'
         uses: appleboy/ssh-action@029f5b4aeefc5ef18188244d3a88aaae867b0a8a # v1.2.0
         with:
           host: ${{ secrets.DEPLOY_HOST }}

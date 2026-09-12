@@ -100,6 +100,29 @@ jobs:
           fi
           echo "have-creds=$([ $missing -eq 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
+      # Identity for the tracking-issue bot (production leg only): mint a
+      # short-lived azeebo-drift-bot App token. Skipped when the App isn't
+      # configured — the tracker then skip-loudly's and the report still
+      # ships. always() so a drift-failed leg still updates the tracker —
+      # drift present is exactly when the tracker must act.
+      # secrets.* is FORBIDDEN in if: conditionals (GitHub rejects the whole
+      # workflow file — zero jobs), so the key guard evaluates into an env
+      # var here and the token step branches on it.
+      - name: Check drift bot configured
+        id: drift-bot-config
+        if: always() && matrix.environment == 'production' && steps.creds.outputs.have-creds == 'true' && vars.DRIFT_BOT_APP_ID != ''
+        env:
+          DRIFT_BOT_KEY_SET: ${{ secrets.DRIFT_BOT_APP_PRIVATE_KEY != '' }}
+        run: echo "configured=${{ env.DRIFT_BOT_KEY_SET == 'true' }}" >> "$GITHUB_OUTPUT"
+      - name: Mint azeebo-drift-bot App token
+        id: app-token
+        if: ${{ always() && steps.drift-bot-config.outputs.configured == 'true' }}
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.DRIFT_BOT_APP_ID }}
+          private-key: ${{ secrets.DRIFT_BOT_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
       - uses: actions/checkout@v4
         if: steps.creds.outputs.have-creds == 'true'
 

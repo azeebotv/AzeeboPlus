@@ -31,6 +31,14 @@ fi
 
 PKG_NAME="$(basename "$PKG_DIR")"
 
+# Incremental tsc keeps its build-info NEXT to tsconfig.json (not in dist/),
+# so `pnpm run clean` (rm -rf dist) leaves it behind — and the next build then
+# trusts that the deleted outputs still exist and silently emits NOTHING
+# (dependents then fail with TS2307 on a package whose dist is gone). The
+# packages are small enough that a full compile costs seconds; correctness
+# beats the caching.
+rm -f "$PKG_DIR/tsconfig.tsbuildinfo"
+
 echo "[$PKG_NAME] build: tsc -p tsconfig.json..."
 if ! tsc_output="$(pnpm exec tsc -p tsconfig.json 2>&1)"; then
   printf '%s\n' "$tsc_output" | sed 's/^/  | /'

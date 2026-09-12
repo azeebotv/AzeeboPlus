@@ -1,2 +1,6 @@
-*.js
+# Build output only. The previous `*.js` rule also swallowed SOURCE files
+# (packages/eslint-rules/*.js) — they exist locally but were never committed,
+# so every CI lint/build failed with:
+#   Cannot find module './packages/eslint-rules/no-hex-colors'
+# Compiled dist/ output is already ignored by the root .gitignore (dist/).
 *.js.map
