@@ -1,11 +1,12 @@
 /**
  * Seed Content Script
  * Generates 200 content items across all universes
- * 
+ *
  * Run: npx tsx scripts/seed-content.ts
  */
 
 import { PrismaClient } from '@prisma/client';
+import { seedImages } from './seeders/seed-image-hosts.js';
 
 const prisma = new PrismaClient();
 
@@ -109,9 +110,9 @@ const lifestyleContent = [
 
 async function seedContent() {
   console.log('Seeding content...');
-  
+
   let count = 0;
-  
+
   // Seed movies
   for (const movie of movies) {
     await prisma.contentItem.create({
@@ -122,14 +123,14 @@ async function seedContent() {
         description: `${movie.title} - A ${movie.genre.toLowerCase()} movie released in ${movie.year}`,
         year: movie.year,
         rating: movie.rating,
-        thumbnailUrl: `https://picsum.photos/seed/${encodeURIComponent(movie.title)}/400/600`,
-        videoUrl: 'https://example.com/video.mp4',
+        thumbnailUrl: seedImages.picsum(movie.title, 400, 600),
+        videoUrl: seedImages.storageMedia('video', 'sample.mp4'),
       },
     });
     count++;
   }
   console.log(`Seeded ${movies.length} movies`);
-  
+
   // Seed music tracks
   for (const track of musicTracks) {
     await prisma.contentItem.create({
@@ -139,14 +140,14 @@ async function seedContent() {
         genre: track.genre,
         description: `${track.title} by ${track.artist}`,
         year: track.year,
-        thumbnailUrl: `https://picsum.photos/seed/${encodeURIComponent(track.title)}/400/400`,
-        audioUrl: 'https://example.com/audio.mp3',
+        thumbnailUrl: seedImages.picsum(track.title, 400, 400),
+        audioUrl: seedImages.storageMedia('audio', 'sample.mp3'),
       },
     });
     count++;
   }
   console.log(`Seeded ${musicTracks.length} music tracks`);
-  
+
   // Seed comedy specials
   for (const comedy of comedySpecials) {
     await prisma.contentItem.create({
@@ -156,14 +157,14 @@ async function seedContent() {
         genre: 'Comedy',
         description: `${comedy.title} by ${comedian}`,
         year: comedy.year,
-        thumbnailUrl: `https://picsum.photos/seed/${encodeURIComponent(comedy.title)}/400/600`,
-        videoUrl: 'https://example.com/video.mp4',
+        thumbnailUrl: seedImages.picsum(comedy.title, 400, 600),
+        videoUrl: seedImages.storageMedia('video', 'sample.mp4'),
       },
     });
     count++;
   }
   console.log(`Seeded ${comedySpecials.length} comedy specials`);
-  
+
   // Seed reality shows
   for (const show of realityShows) {
     await prisma.contentItem.create({
@@ -173,14 +174,14 @@ async function seedContent() {
         genre: 'Reality',
         description: `${show.title} Season ${show.season}`,
         year: show.year,
-        thumbnailUrl: `https://picsum.photos/seed/${encodeURIComponent(show.title)}/400/600`,
-        videoUrl: 'https://example.com/video.mp4',
+        thumbnailUrl: seedImages.picsum(show.title, 400, 600),
+        videoUrl: seedImages.storageMedia('video', 'sample.mp4'),
       },
     });
     count++;
   }
   console.log(`Seeded ${realityShows.length} reality shows`);
-  
+
   // Seed games
   for (const game of games) {
     await prisma.contentItem.create({
@@ -189,13 +190,13 @@ async function seedContent() {
         type: 'game',
         genre: 'Game',
         description: `${game.title} - A ${game.type} game for ${game.players} players`,
-        thumbnailUrl: `https://picsum.photos/seed/${encodeURIComponent(game.title)}/400/400`,
+        thumbnailUrl: seedImages.picsum(game.title, 400, 400),
       },
     });
     count++;
   }
   console.log(`Seeded ${games.length} games`);
-  
+
   // Seed lifestyle content
   for (const item of lifestyleContent) {
     await prisma.contentItem.create({
@@ -205,13 +206,13 @@ async function seedContent() {
         genre: item.category,
         description: `${item.title} - ${item.category} content`,
         year: 2022,
-        thumbnailUrl: `https://picsum.photos/seed/${encodeURIComponent(item.title)}/400/300`,
+        thumbnailUrl: seedImages.picsum(item.title, 400, 300),
       },
     });
     count++;
   }
   console.log(`Seeded ${lifestyleContent.length} lifestyle items`);
-  
+
   console.log(`Total content seeded: ${count}`);
 }
 

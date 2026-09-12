@@ -2,6 +2,8 @@
  * Shared utilities for seed scripts
  */
 
+import { seedImages } from './seed-image-hosts.js';
+
 // ─── Random Helpers ─────────────────────────────────────────────────────────
 
 export function randomItem<T>(arr: T[]): T {
@@ -56,60 +58,128 @@ export function generateUUID(): string {
 // ─── Name Generators ────────────────────────────────────────────────────────
 
 const NIGERIAN_FIRST_NAMES = [
-  'Adaeze', 'Chukwuemeka', 'Ngozi', 'Oluwaseun', 'Amina', 'Emeka', 'Fatima',
-  'Tunde', 'Chioma', 'Yusuf', 'Blessing', 'Chidi', 'Halima', 'Kayode', 'Ifeoma',
-  'Abubakar', 'Nneka', 'Oladipo', 'Zainab', 'Chinedu', 'Aisha', 'Babatunde',
-  'Chiamaka', 'Damilare', 'Ezinne', 'Folake', 'Gbadamosi', 'Hauwa', 'Ibrahim',
-  'Jumoke', 'Kemi', 'Lawal', 'Maryam', 'Nkem', 'Obinna', 'Petra', 'Quadri',
-  'Rashidat', 'Suleiman', 'Titilayo',
+  'Adaeze',
+  'Chukwuemeka',
+  'Ngozi',
+  'Oluwaseun',
+  'Amina',
+  'Emeka',
+  'Fatima',
+  'Tunde',
+  'Chioma',
+  'Yusuf',
+  'Blessing',
+  'Chidi',
+  'Halima',
+  'Kayode',
+  'Ifeoma',
+  'Abubakar',
+  'Nneka',
+  'Oladipo',
+  'Zainab',
+  'Chinedu',
+  'Aisha',
+  'Babatunde',
+  'Chiamaka',
+  'Damilare',
+  'Ezinne',
+  'Folake',
+  'Gbadamosi',
+  'Hauwa',
+  'Ibrahim',
+  'Jumoke',
+  'Kemi',
+  'Lawal',
+  'Maryam',
+  'Nkem',
+  'Obinna',
+  'Petra',
+  'Quadri',
+  'Rashidat',
+  'Suleiman',
+  'Titilayo',
 ];
 
 const NIGERIAN_LAST_NAMES = [
-  'Okafor', 'Adeyemi', 'Ibrahim', 'Nnamdi', 'Bello', 'Okonkwo', 'Adekunle',
-  'Mohammed', 'Eze', 'Olawale', 'Chukwu', 'Abdullahi', 'Obi', 'Lawal',
-  'Ogundimu', 'Danjuma', 'Azikiwe', 'Olumide', 'Akinwale', 'Ifeanyi',
+  'Okafor',
+  'Adeyemi',
+  'Ibrahim',
+  'Nnamdi',
+  'Bello',
+  'Okonkwo',
+  'Adekunle',
+  'Mohammed',
+  'Eze',
+  'Olawale',
+  'Chukwu',
+  'Abdullahi',
+  'Obi',
+  'Lawal',
+  'Ogundimu',
+  'Danjuma',
+  'Azikiwe',
+  'Olumide',
+  'Akinwale',
+  'Ifeanyi',
 ];
 
 const USERNAMES = [
-  'movieBuff42', 'comedyKing', 'musicLover99', 'naijaPride', 'streamQueen',
-  'afrobeatsFan', 'nollywoodHead', 'gamingPro', 'lifestyleGuru', 'foodieLagos',
-  'techNaija', 'fashionIcon', 'fitnessFreak', 'bookWorm', 'travelAddict',
-  'artCollector', 'photography101', 'danceVibes', 'podcastFan', 'sportsFanatic',
-  'chefSpecial', 'dancehallKing', 'rapNaija', 'soulSister', 'jazzMan',
-  'rockStar', 'popPrincess', 'rnbVibes', 'highlifeKing', 'fujiMaster',
+  'movieBuff42',
+  'comedyKing',
+  'musicLover99',
+  'naijaPride',
+  'streamQueen',
+  'afrobeatsFan',
+  'nollywoodHead',
+  'gamingPro',
+  'lifestyleGuru',
+  'foodieLagos',
+  'techNaija',
+  'fashionIcon',
+  'fitnessFreak',
+  'bookWorm',
+  'travelAddict',
+  'artCollector',
+  'photography101',
+  'danceVibes',
+  'podcastFan',
+  'sportsFanatic',
+  'chefSpecial',
+  'dancehallKing',
+  'rapNaija',
+  'soulSister',
+  'jazzMan',
+  'rockStar',
+  'popPrincess',
+  'rnbVibes',
+  'highlifeKing',
+  'fujiMaster',
 ];
 
 const CITIES = [
-  'Lagos', 'Abuja', 'Port Harcourt', 'Ibadan', 'Kano', 'Benin City',
-  'Kaduna', 'Enugu', 'Aba', 'Ilorin', 'Warri', 'Calabar', 'Jos', 'Owerri',
+  'Lagos',
+  'Abuja',
+  'Port Harcourt',
+  'Ibadan',
+  'Kano',
+  'Benin City',
+  'Kaduna',
+  'Enugu',
+  'Aba',
+  'Ilorin',
+  'Warri',
+  'Calabar',
+  'Jos',
+  'Owerri',
 ];
 
-const AVATARS = [
-  'https://picsum.photos/seed/avatar1/200/200',
-  'https://picsum.photos/seed/avatar2/200/200',
-  'https://picsum.photos/seed/avatar3/200/200',
-  'https://picsum.photos/seed/avatar4/200/200',
-  'https://picsum.photos/seed/avatar5/200/200',
-  'https://picsum.photos/seed/avatar6/200/200',
-  'https://picsum.photos/seed/avatar7/200/200',
-  'https://picsum.photos/seed/avatar8/200/200',
-  'https://picsum.photos/seed/avatar9/200/200',
-  'https://picsum.photos/seed/avatar10/200/200',
-];
+const AVATARS = Array.from({ length: 10 }, (_, i) => seedImages.picsum(`avatar${i + 1}`, 200, 200));
 
-const BANNERS = [
-  'https://picsum.photos/seed/banner1/1200/400',
-  'https://picsum.photos/seed/banner2/1200/400',
-  'https://picsum.photos/seed/banner3/1200/400',
-];
+const BANNERS = Array.from({ length: 3 }, (_, i) => seedImages.picsum(`banner${i + 1}`, 1200, 400));
 
-const THUMBNAILS = [
-  'https://picsum.photos/seed/thumb1/400/600',
-  'https://picsum.photos/seed/thumb2/400/600',
-  'https://picsum.photos/seed/thumb3/400/600',
-  'https://picsum.photos/seed/thumb4/400/600',
-  'https://picsum.photos/seed/thumb5/400/600',
-];
+const THUMBNAILS = Array.from({ length: 5 }, (_, i) =>
+  seedImages.picsum(`thumb${i + 1}`, 400, 600)
+);
 
 export function generateUser(index: number) {
   const firstName = NIGERIAN_FIRST_NAMES[index % NIGERIAN_FIRST_NAMES.length];
@@ -141,12 +211,35 @@ export function generateAvatar(index: number): string {
 // ─── Content Data ───────────────────────────────────────────────────────────
 
 const NIGERIAN_MOVIES = [
-  'The Wedding Party', 'Lionheart', 'October 1', 'King of Boys', 'Gbomo Gbomo Express',
-  'The Figurine', 'Ije', 'Two Brides and a Baby', 'Telephone', 'Tango with Me',
-  'Half of a Yellow Sun', 'Dry', 'The Smart Money Woman', 'Your Excellency',
-  'Love Is Yellow', 'Cold Feet', 'Elevator Baby', 'Okafor\'s Law', 'Wives on Strike',
-  'Mummy G.O', 'Brother Jekwu', 'The Setup', 'Collision Course', 'Kambili',
-  'Living in Bondage', 'Rattlesnake', 'The Ghost and the Twin', 'Sista', 'Afamefuna',
+  'The Wedding Party',
+  'Lionheart',
+  'October 1',
+  'King of Boys',
+  'Gbomo Gbomo Express',
+  'The Figurine',
+  'Ije',
+  'Two Brides and a Baby',
+  'Telephone',
+  'Tango with Me',
+  'Half of a Yellow Sun',
+  'Dry',
+  'The Smart Money Woman',
+  'Your Excellency',
+  'Love Is Yellow',
+  'Cold Feet',
+  'Elevator Baby',
+  "Okafor's Law",
+  'Wives on Strike',
+  'Mummy G.O',
+  'Brother Jekwu',
+  'The Setup',
+  'Collision Course',
+  'Kambili',
+  'Living in Bondage',
+  'Rattlesnake',
+  'The Ghost and the Twin',
+  'Sista',
+  'Afamefuna',
 ];
 
 const AFROBEATS_SONGS = [
@@ -184,9 +277,15 @@ const COMEDY_SPECIALS = [
 ];
 
 const REALITY_SHOWS = [
-  'Big Brother Naija', 'The Voice Nigeria', 'Nigerian Idol',
-  'Project Fame', 'Gulder Ultimate Search', 'The Bachelor Nigeria',
-  'Drag Queen Nigeria', 'Naija Movie Star', 'Cooking with the Stars',
+  'Big Brother Naija',
+  'The Voice Nigeria',
+  'Nigerian Idol',
+  'Project Fame',
+  'Gulder Ultimate Search',
+  'The Bachelor Nigeria',
+  'Drag Queen Nigeria',
+  'Naija Movie Star',
+  'Cooking with the Stars',
 ];
 
 const UNIVERSES = [
@@ -202,19 +301,62 @@ const UNIVERSES = [
 ];
 
 const CATEGORIES = [
-  'Action', 'Romance', 'Drama', 'Comedy', 'Thriller', 'Horror', 'Sci-Fi',
-  'Afrobeats', 'Hip-Hop', 'R&B', 'Highlife', 'Fuji', 'Gospel', 'Pop',
-  'Stand-up', 'Sketch', 'Improv', 'Roast', 'Observational',
-  'Dance', 'Cooking', 'Fashion', 'Travel', 'Fitness', 'Beauty',
+  'Action',
+  'Romance',
+  'Drama',
+  'Comedy',
+  'Thriller',
+  'Horror',
+  'Sci-Fi',
+  'Afrobeats',
+  'Hip-Hop',
+  'R&B',
+  'Highlife',
+  'Fuji',
+  'Gospel',
+  'Pop',
+  'Stand-up',
+  'Sketch',
+  'Improv',
+  'Roast',
+  'Observational',
+  'Dance',
+  'Cooking',
+  'Fashion',
+  'Travel',
+  'Fitness',
+  'Beauty',
 ];
 
 const TAGS = [
-  'trending', 'new-release', 'exclusive', 'premium', 'free', 'live',
-  'nollywood', 'afrobeats', 'naija', 'lagos', 'abuja', 'viral',
-  'award-winning', 'blockbuster', 'classic', 'original', 'premiere',
+  'trending',
+  'new-release',
+  'exclusive',
+  'premium',
+  'free',
+  'live',
+  'nollywood',
+  'afrobeats',
+  'naija',
+  'lagos',
+  'abuja',
+  'viral',
+  'award-winning',
+  'blockbuster',
+  'classic',
+  'original',
+  'premiere',
 ];
 
-export { NIGERIAN_MOVIES, AFROBEATS_SONGS, COMEDY_SPECIALS, REALITY_SHOWS, UNIVERSES, CATEGORIES, TAGS };
+export {
+  NIGERIAN_MOVIES,
+  AFROBEATS_SONGS,
+  COMEDY_SPECIALS,
+  REALITY_SHOWS,
+  UNIVERSES,
+  CATEGORIES,
+  TAGS,
+};
 
 // ─── Print Helpers ──────────────────────────────────────────────────────────
 

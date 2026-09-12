@@ -30,10 +30,6 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'api.azeeboplus.com',
-      },
-      {
-        protocol: 'https',
         hostname: 'placehold.co',
       },
       {

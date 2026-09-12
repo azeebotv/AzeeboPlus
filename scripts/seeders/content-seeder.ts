@@ -4,23 +4,37 @@
  */
 
 import {
-  randomItem, randomInt, randomDate, generateThumbnail,
-  NIGERIAN_MOVIES, AFROBEATS_SONGS, COMEDY_SPECIALS, REALITY_SHOWS,
-  UNIVERSES, CATEGORIES, TAGS, printCount,
+  randomItem,
+  randomInt,
+  randomDate,
+  generateThumbnail,
+  NIGERIAN_MOVIES,
+  AFROBEATS_SONGS,
+  COMEDY_SPECIALS,
+  REALITY_SHOWS,
+  UNIVERSES,
+  CATEGORIES,
+  TAGS,
+  printCount,
 } from './utils.js';
+import { seedImages } from './seed-image-hosts.js';
 
 let PrismaClient: new (args?: unknown) => unknown;
 
 async function getClient() {
   try {
-    const mod = await import('../../services/core/content-service/node_modules/@prisma/client/index.js');
+    const mod =
+      await import('../../services/core/content-service/node_modules/@prisma/client/index.js');
     PrismaClient = mod.PrismaClient;
   } catch {
     const mod = await import('@prisma/client');
     PrismaClient = mod.PrismaClient;
   }
   return new (PrismaClient as new () => {
-    universe: { upsert: (args: unknown) => Promise<unknown>; findUnique: (args: unknown) => Promise<{ id: string } | null> };
+    universe: {
+      upsert: (args: unknown) => Promise<unknown>;
+      findUnique: (args: unknown) => Promise<{ id: string } | null>;
+    };
     category: { upsert: (args: unknown) => Promise<unknown> };
     tag: { upsert: (args: unknown) => Promise<unknown> };
     contentItem: { upsert: (args: unknown) => Promise<unknown> };
@@ -33,7 +47,12 @@ export async function seedContentService(dryRun = false): Promise<number> {
   let count = 0;
 
   if (dryRun) {
-    const total = UNIVERSES.length + NIGERIAN_MOVIES.length + AFROBEATS_SONGS.length + COMEDY_SPECIALS.length + REALITY_SHOWS.length;
+    const total =
+      UNIVERSES.length +
+      NIGERIAN_MOVIES.length +
+      AFROBEATS_SONGS.length +
+      COMEDY_SPECIALS.length +
+      REALITY_SHOWS.length;
     console.log(`  [DRY RUN] Would create ${total} content records`);
     return total;
   }
@@ -46,7 +65,14 @@ export async function seedContentService(dryRun = false): Promise<number> {
     for (const universe of UNIVERSES) {
       await prisma.universe.upsert({
         where: { name: universe.name },
-        create: { name: universe.name, displayName: universe.displayName, icon: universe.icon, color: universe.color, isEnabled: true, sortOrder: UNIVERSES.indexOf(universe) },
+        create: {
+          name: universe.name,
+          displayName: universe.displayName,
+          icon: universe.icon,
+          color: universe.color,
+          isEnabled: true,
+          sortOrder: UNIVERSES.indexOf(universe),
+        },
         update: {},
       });
       count++;
@@ -76,11 +102,42 @@ export async function seedContentService(dryRun = false): Promise<number> {
     const comedyUniverse = await prisma.universe.findUnique({ where: { name: 'comedy' } });
     const realityUniverse = await prisma.universe.findUnique({ where: { name: 'reality' } });
 
-    const allContent: { items: { title: string; desc: string; universe: string }[]; type: string }[] = [
-      { items: NIGERIAN_MOVIES.map((m) => ({ title: m, desc: `${m} — A blockbuster Nollywood film`, universe: movieUniverse?.id || '' })), type: 'movie' },
-      { items: AFROBEATS_SONGS.map((s) => ({ title: `${s.title} — ${s.artist}`, desc: `${s.title} by ${s.artist}`, universe: musicUniverse?.id || '' })), type: 'music' },
-      { items: COMEDY_SPECIALS.map((s) => ({ title: s.title, desc: `${s.title} by ${s.comedian}`, universe: comedyUniverse?.id || '' })), type: 'comedy' },
-      { items: REALITY_SHOWS.map((r) => ({ title: r, desc: `${r} — The hottest reality show`, universe: realityUniverse?.id || '' })), type: 'reality' },
+    const allContent: {
+      items: { title: string; desc: string; universe: string }[];
+      type: string;
+    }[] = [
+      {
+        items: NIGERIAN_MOVIES.map((m) => ({
+          title: m,
+          desc: `${m} — A blockbuster Nollywood film`,
+          universe: movieUniverse?.id || '',
+        })),
+        type: 'movie',
+      },
+      {
+        items: AFROBEATS_SONGS.map((s) => ({
+          title: `${s.title} — ${s.artist}`,
+          desc: `${s.title} by ${s.artist}`,
+          universe: musicUniverse?.id || '',
+        })),
+        type: 'music',
+      },
+      {
+        items: COMEDY_SPECIALS.map((s) => ({
+          title: s.title,
+          desc: `${s.title} by ${s.comedian}`,
+          universe: comedyUniverse?.id || '',
+        })),
+        type: 'comedy',
+      },
+      {
+        items: REALITY_SHOWS.map((r) => ({
+          title: r,
+          desc: `${r} — The hottest reality show`,
+          universe: realityUniverse?.id || '',
+        })),
+        type: 'reality',
+      },
     ];
 
     let contentIdx = 0;
@@ -95,7 +152,7 @@ export async function seedContentService(dryRun = false): Promise<number> {
             title: item.title,
             description: item.desc,
             thumbnail: generateThumbnail(i),
-            mediaUrl: `https://storage.azeebo.com/${group.type}/${i}.mp4`,
+            mediaUrl: seedImages.storageMedia(group.type, `${i}.mp4`),
             universeId: item.universe,
             creatorId: `creator-${i % 10}`,
             status: 'published',
@@ -119,10 +176,18 @@ export async function seedContentService(dryRun = false): Promise<number> {
           contentId: `content-movie-${i % NIGERIAN_MOVIES.length}`,
           userId: `usr${String((i % 50) + 1).padStart(4, '0')}`,
           text: randomItem([
-            'Amazing content!', 'Love this!', 'Best Nollywood ever!',
-            'Can\'t stop watching', 'A masterpiece', 'So entertaining',
-            'Naija to the world!', 'Fire!', 'Incredible performance',
-            'This is why I love Azeebo+', 'Must watch!', 'Classic!',
+            'Amazing content!',
+            'Love this!',
+            'Best Nollywood ever!',
+            "Can't stop watching",
+            'A masterpiece',
+            'So entertaining',
+            'Naija to the world!',
+            'Fire!',
+            'Incredible performance',
+            'This is why I love Azeebo+',
+            'Must watch!',
+            'Classic!',
           ]),
           createdAt: randomDate(60),
         },

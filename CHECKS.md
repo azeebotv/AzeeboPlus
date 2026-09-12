@@ -29,6 +29,7 @@ Two conventions hold across all of them:
 | `check:build-chain` | Flag & Swagger Conventions | — |
 | `check:git-hooks` | Flag & Swagger Conventions | — |
 | `check:env` | Flag & Swagger Conventions | — |
+| `check:seed-image-hosts` | Flag & Swagger Conventions | — |
 | swagger-consistency | Flag & Swagger Conventions (invoked directly) | — |
 | `check:prisma-client` | Type Check PR (runs first, right before `pnpm run typecheck`) | Docker build T8 stage; opt-in pre-commit hook |
 | `check:prisma-migrations` | Prisma Migrations Drift | posts drift comment + artifacts on failure |
@@ -83,6 +84,37 @@ in the improvement (otherwise a later PR could grow back to the old count).
 reduced warnings, `node scripts/check-lint-warning-ratchet.mjs --update` to
 lower the floor. Fully-converted services move to the `error` block in
 `eslint.config.js` and can be deleted from the baseline.
+
+### `check:seed-image-hosts` — seeder media hosts ↔ web image allowlist
+
+**Invariant:** every seeder media URL is built through the shared registry
+(`scripts/seeders/seed-image-hosts.ts` → `seedImageUrl()`/`seedImages`), and
+every host registered in `SEED_IMAGE_HOSTS` is allowlisted in
+`apps/web/next.config.js` → `images.remotePatterns`.
+
+**Fails when:**
+- a registered seed host is missing from the web allowlist
+  (`HOST_NOT_ALLOWLISTED`) — seeded records using it crash `next/image` at
+  render time (the `cdn.azeebo.test` music-cover incident);
+- a TS seeder emits a raw URL literal instead of routing through the module
+  (`HARDCODED_MEDIA_URL`) — flagged even when the host is already registered,
+  so emission cannot drift out of the single source;
+- **any** seed-data source emits a URL the web allowlist doesn't cover
+  (`EMISSION_NOT_ALLOWLISTED`) — scans `scripts/demo-content` and
+  `scripts/database` recursively (SQL/CSV/backups/TS), the raw-SQL layer that
+  can't route through the TS module. Matching models Next.js remotePatterns
+  semantics exactly: `*.suffix` covers exactly one label (never the apex,
+  never two), `**.suffix` covers one-or-more (never the apex).
+
+**Exemptions (links, never optimizer input):** instagram.com / youtube.com
+hosts, and link-shaped URLs (`/terms`, `/privacy`, `/live/...`) such as the
+apex-domain terms-of-service settings rows.
+
+**Fix:** register the host in `SEED_IMAGE_HOSTS` **and** the web allowlist,
+then build the URL with a `seedImages` builder — or use an existing builder.
+For non-TS seed data: allowlist the host, or add the URL's path shape to
+`LINK_URL_EXEMPTIONS` (scripts/lib/seed-image-hosts-core.mjs) when it is a
+page/stream link rather than media.
 
 ### `check:prisma` — unique-key lookups
 
