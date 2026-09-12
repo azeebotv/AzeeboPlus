@@ -105,7 +105,7 @@ export function Dropdown({ trigger, items, onSelect, align = 'left' }: DropdownP
           role="menu"
           aria-orientation="vertical"
           onKeyDown={handleKeyDown}
-          className={`absolute z-50 mt-1 w-48 bg-white dark:bg-[#1a0a0a] border border-gray-200 dark:border-white/10 rounded-xl shadow-2xl py-1 backdrop-blur-md ${align === 'right' ? 'right-0' : 'left-0'}`}
+          className={`absolute z-50 mt-1 w-48 bg-white dark:bg-[#18151e] border border-gray-200 dark:border-white/10 rounded-xl shadow-2xl py-1 backdrop-blur-md ${align === 'right' ? 'right-0' : 'left-0'}`}
         >
           {items.map((item, i) => {
             if (item.divider)

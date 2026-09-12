@@ -15,7 +15,7 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "bash ../../scripts/build-package.sh",
     "clean": "rm -rf dist",
     "test": "jest",
     "test:watch": "jest --watch",

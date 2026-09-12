@@ -30,6 +30,11 @@ export { AdminGuard, AdminGuardOptions } from './guards/admin.guard';
 /** Guard that validates internal service-to-service API keys. */
 export { ServiceAuthGuard } from './guards/service-auth.guard';
 
+/** Guard for internal service-to-service routes that carry no user identity:
+ * authenticates the caller via the shared secret (GATEWAY_SECRET, falling
+ * back to INTERNAL_API_KEY) sent in the x-internal-api-key header. */
+export { InternalSecretGuard } from './guards/internal-secret.guard';
+
 /** Guard that checks user permissions against required permission set. */
 export { PermissionsGuard } from './guards/permissions.guard';
 
@@ -124,4 +129,5 @@ export { MfaGuard, RequiresMFA, REQUIRES_MFA_KEY } from './mfa/mfa-guard.service
  * Global NestJS module providing all security services.
  * Import once in your root module or feature modules.
  */
+export { mapErrorToHttpException, mapAndThrow } from './error-mapping/error-mapping';
 export { SecurityModule } from './security.module';

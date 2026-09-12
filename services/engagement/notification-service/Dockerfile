@@ -38,8 +38,12 @@ RUN for i in 1 2 3 4 5; do pnpm install --prod --frozen-lockfile && break || (ec
 
 COPY --from=builder /app/services/engagement/notification-service/dist ./services/engagement/notification-service/dist
 COPY --from=builder /app/services/engagement/notification-service/prisma ./services/engagement/notification-service/prisma
-# Copy the generated Prisma client (schema output = "../generated/prisma/client").
-COPY --from=builder /app/services/engagement/notification-service/generated ./services/engagement/notification-service/generated
+# The compiled prisma.service.js resolves the generated client from
+# dist/prisma/client. The workspace build script emits it there (schema
+# output = "../src/prisma/client"); this COPY backstops it with the builder
+# stage's fresh client so the image can never ship a stale or missing one
+# even if the dist copy step were skipped.
+COPY --from=builder /app/services/engagement/notification-service/src/prisma/client ./services/engagement/notification-service/dist/prisma/client
 
 RUN chown -R nodejs:nodejs /app
 

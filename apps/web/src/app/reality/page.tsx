@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { api, ContentItem } from '../../lib/api';
+import { useUniversesQuery } from '@/hooks/useUniverses';
 import { Skeleton } from '@azeebo/ui/web';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
@@ -42,15 +43,7 @@ function RealityPageContent(): React.JSX.Element {
     analytics.pageView('reality');
   }, []);
 
-  const universesQuery = useQuery({
-    queryKey: ['universes'],
-    queryFn: async () => {
-      const res = await api.universe.getUniverses();
-      if (res.data) return res.data;
-      throw new Error(res.message || 'Failed to load universes');
-    },
-    staleTime: 300000,
-  });
+  const universesQuery = useUniversesQuery();
 
   const realityUniverse = universesQuery.data?.find((u) => u.name?.toLowerCase() === 'reality');
 
@@ -93,8 +86,11 @@ function RealityPageContent(): React.JSX.Element {
   const isLoading = universesQuery.isLoading || showsQuery.isLoading;
 
   return (
-    <div className="min-h-screen az-nollywood-bg">
-      <AppHeader active="Reality" />
+    <div
+      className="min-h-screen relative overflow-x-hidden"
+      style={{ background: 'var(--hp-bg)', color: 'var(--text-primary)' }}
+    >
+      <AppHeader active="Reality" logoVariant="light" />
 
       {/* Hero Section */}
       <section className="relative">
@@ -103,12 +99,18 @@ function RealityPageContent(): React.JSX.Element {
         ) : selectedShow ? (
           <div className="relative h-[400px] sm:h-[500px]">
             <OptimizedImage
-              src={selectedShow.thumbnail}
+              src={selectedShow.thumbnail || '/images/posters/poster_34.jpg'}
               alt={selectedShow.title}
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-[var(--brand-near-black)]/50 to-transparent" />
-            <AmbientGlow color="rgba(204,28,28,0.3)" size={500} className="bottom-0 right-0" />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  'linear-gradient(to top, rgba(11,9,14,1) 0%, rgba(11,9,14,0.6) 40%, rgba(11,9,14,0.2) 100%)',
+              }}
+            />
+            <AmbientGlow color="rgba(232,66,10,0.25)" size={550} className="bottom-0 right-0" />
 
             <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 max-w-7xl mx-auto">
               <motion.h2
@@ -386,23 +388,35 @@ function RealityPageContent(): React.JSX.Element {
                     <div className="p-4 space-y-3">
                       {[
                         {
-                          icon: '\u{1F4A1}',
                           title: 'Supervote Power',
                           desc: 'Use supervotes to multiply your impact',
+                          icon: (
+                            <svg className="w-5 h-5 text-[var(--brand-orange)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                            </svg>
+                          ),
                         },
                         {
-                          icon: '\u{1F381}',
                           title: 'Daily Rewards',
                           desc: 'Vote daily to earn bonus points',
+                          icon: (
+                            <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H4.5a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                            </svg>
+                          ),
                         },
                         {
-                          icon: '\u{1F3C6}',
                           title: 'Leaderboard Bonus',
                           desc: 'Top voters get exclusive perks',
+                          icon: (
+                            <svg className="w-5 h-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.504-1.125-1.125-1.125h-.871a3.375 3.375 0 00-3.375-3.375H12m4.5 7.875H12M9 18.75V15.375c0-.621.504-1.125 1.125-1.125h.871M12 7.5A3.75 3.75 0 008.25 3.75h7.5A3.75 3.75 0 0012 7.5z" />
+                            </svg>
+                          ),
                         },
                       ].map((tip) => (
                         <div key={tip.title} className="flex items-start gap-3">
-                          <span className="text-base sm:text-lg">{tip.icon}</span>
+                          <span className="flex-shrink-0 mt-0.5">{tip.icon}</span>
                           <div>
                             <p className="font-medium text-xs sm:text-sm text-white">{tip.title}</p>
                             <p className="text-[10px] sm:text-xs text-white/50">{tip.desc}</p>
@@ -418,7 +432,7 @@ function RealityPageContent(): React.JSX.Element {
         </section>
       )}
 
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

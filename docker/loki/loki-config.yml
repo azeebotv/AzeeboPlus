@@ -1,0 +1,38 @@
+# Loki — single-binary filesystem mode for the Azeebo+ monitoring stack.
+# Receives container logs from promtail (docker-compose.staging-jobs.yml) and
+# serves queries to Grafana (provisioned datasource: docker/grafana/
+# provisioning/datasources/loki.yml).
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 0
+
+common:
+  path_prefix: /loki
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks
+      rules_directory: /loki/rules
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+schema_config:
+  configs:
+    - from: 2024-01-01
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+limits_config:
+  retention_period: 30d
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h
+
+ruler:
+  alertmanager_url: http://alertmanager:9093

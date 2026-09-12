@@ -51,10 +51,10 @@ export default function AuthenticatedHomePage(): React.JSX.Element {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen az-nollywood-bg">
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--hp-bg)' }}>
         <div
-          className="w-full"
-          style={{ minHeight: 'min(70vh, 600px)', background: 'var(--brand-forest)' }}
+          className="w-full flex items-center justify-center"
+          style={{ minHeight: 'min(70vh, 600px)', background: 'linear-gradient(180deg, #100e14 0%, #0b090e 100%)' }}
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-center">
             <Spinner size="lg" color="var(--brand-orange)" className="opacity-60" />

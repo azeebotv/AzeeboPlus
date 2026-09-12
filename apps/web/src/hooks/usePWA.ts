@@ -33,16 +33,22 @@ export function usePWA() {
 
     // Register service worker
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
+      const register = () => {
         navigator.serviceWorker
-          .register('/sw.js')
+          .register('/sw.js', { scope: '/' })
           .then((registration) => {
             webLogger.log('SW registered', registration.scope);
           })
           .catch((error) => {
             webLogger.log('SW registration failed', error);
           });
-      });
+      };
+
+      if (document.readyState === 'complete') {
+        register();
+      } else {
+        window.addEventListener('load', register, { once: true });
+      }
     }
 
     // Listen for online/offline events

@@ -73,7 +73,7 @@ export default function RegisterPage(): React.JSX.Element {
   return (
     <AuthShell
       headlineLines={['Empowering', "Nigeria's Creative", 'Renaissance']}
-      backgroundFallback="#1A0A0A"
+      backgroundFallback="#0b090e"
     >
       <motion.form
         className="space-y-5"

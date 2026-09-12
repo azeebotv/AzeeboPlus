@@ -243,7 +243,7 @@ export default function ProfileSetupPage(): React.JSX.Element {
                   fontSize: 48,
                   background: avatarUrl
                     ? 'transparent'
-                    : 'linear-gradient(135deg, #0D3B2E, #1A0A0A)',
+                    : 'linear-gradient(135deg, #E8420A, #CC1C1C)',
                   border: '2px solid rgba(255,255,255,0.2)',
                 }}
               >

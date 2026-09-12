@@ -1,4 +1,5 @@
 import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '../../prisma/client/index.js';
@@ -7,6 +8,15 @@ import axios from 'axios';
 import { randomUUID } from 'crypto';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 import { sanitizeFields } from '@azeebo/validation';
+import {
+  tipDebitPayload,
+  tipCreditPayload,
+  tipCompensationPayload,
+  subscriptionDebitPayload,
+  subscriptionCreditPayload,
+  subscriptionCompensationPayload,
+  tipIdempotencyKey,
+} from './wallet-payloads.js';
 
 interface UpdateProfileData {
   displayName?: string;
@@ -51,6 +61,7 @@ export class CreatorsService {
   private readonly analyticsServiceBaseUrl: string;
   private readonly notificationServiceBaseUrl: string;
   private readonly minimumPayout: number;
+  private readonly internalApiKey: string;
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
@@ -65,6 +76,11 @@ export class CreatorsService {
       'http://notification-service:3006'
     );
     this.minimumPayout = parseInt(this.configService.get<string>('MINIMUM_PAYOUT', '5000'), 10);
+    // Secret for internal wallet-service calls — same resolution order the
+    // wallet-service InternalSecretGuard uses to validate it.
+    this.internalApiKey =
+      this.configService.get<string>('GATEWAY_SECRET') ??
+      this.configService.getOrThrow<string>('INTERNAL_API_KEY');
   }
 
   private async trackAnalyticsEvent(
@@ -319,7 +335,7 @@ export class CreatorsService {
         where: { id: upload.id },
         data: { status: 'failed' },
       });
-      throw new BadRequestException('Failed to initiate media upload');
+      mapAndThrow(error, 'initiating media upload');
     }
   }
 
@@ -660,11 +676,12 @@ export class CreatorsService {
     let senderWallet: { id: string; balance: number | string } | undefined;
     try {
       const response = await axios.get<{ data?: { id: string; balance: number | string } }>(
-        `${this.walletServiceBaseUrl}/wallets/user/${userId}`
+        `${this.walletServiceBaseUrl}/v1/internal/wallets/user/${userId}`,
+        { headers: this.walletInternalHeaders(), timeout: 10000 }
       );
       senderWallet = response.data?.data;
     } catch (error) {
-      throw new NotFoundException('Sender wallet not found');
+      mapAndThrow(error, 'fetching sender wallet');
     }
     if (!senderWallet) {
       throw new NotFoundException('Sender wallet not found');
@@ -673,17 +690,18 @@ export class CreatorsService {
     let creatorWallet: { id: string; balance: number | string } | undefined;
     try {
       const response = await axios.get<{ data?: { id: string; balance: number | string } }>(
-        `${this.walletServiceBaseUrl}/wallets/user/${creatorId}`
+        `${this.walletServiceBaseUrl}/v1/internal/wallets/user/${creatorId}`,
+        { headers: this.walletInternalHeaders(), timeout: 10000 }
       );
       creatorWallet = response.data?.data;
     } catch (error) {
-      throw new NotFoundException('Creator wallet not found');
+      mapAndThrow(error, 'fetching creator wallet');
     }
     if (!creatorWallet) {
       throw new NotFoundException('Creator wallet not found');
     }
 
-    const idempotencyKey = `tip:${userId}:${creatorId}:${amount}`;
+    const idempotencyKey = tipIdempotencyKey(userId, creatorId, amount);
 
     const existingTip = await this.prisma.tip.findFirst({
       where: {
@@ -715,14 +733,9 @@ export class CreatorsService {
     try {
       const debitResult = await axios
         .post(
-          `${this.walletServiceBaseUrl}/wallet/debit`,
-          {
-            walletId: senderWallet.id,
-            amount,
-            description: `Tip to creator ${creatorId}`,
-            idempotencyKey,
-          },
-          { timeout: 10000 }
+          `${this.walletServiceBaseUrl}/v1/internal/wallets/user/${userId}/debit`,
+          tipDebitPayload(userId, creatorId, amount),
+          { headers: this.walletInternalHeaders(), timeout: 10000 }
         )
         .catch((err) => {
           if (err.response?.data?.idempotent === true) {
@@ -757,26 +770,16 @@ export class CreatorsService {
 
       try {
         await axios.post(
-          `${this.walletServiceBaseUrl}/wallet/credit`,
-          {
-            walletId: creatorWallet.id,
-            amount,
-            description: `Tip from user ${userId}`,
-            idempotencyKey: `${idempotencyKey}:credit`,
-          },
-          { timeout: 10000 }
+          `${this.walletServiceBaseUrl}/v1/internal/wallets/user/${creatorId}/credit`,
+          tipCreditPayload(userId, creatorId, amount),
+          { headers: this.walletInternalHeaders(), timeout: 10000 }
         );
       } catch (creditError: unknown) {
         await axios
           .post(
-            `${this.walletServiceBaseUrl}/wallet/credit`,
-            {
-              walletId: senderWallet.id,
-              amount,
-              description: `Compensation for failed tip credit: ${idempotencyKey}`,
-              reference: `compensate:${idempotencyKey}`,
-            },
-            { timeout: 10000 }
+            `${this.walletServiceBaseUrl}/v1/internal/wallets/user/${userId}/credit`,
+            tipCompensationPayload(userId, creatorId, amount),
+            { headers: this.walletInternalHeaders(), timeout: 10000 }
           )
           .catch((compensateError: unknown) => {
             this.logger.error('Failed to compensate sender after credit failure:', compensateError);
@@ -862,9 +865,17 @@ export class CreatorsService {
         },
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to send tip';
-      throw new BadRequestException(errorMessage);
+      mapAndThrow(error, 'sending tip');
     }
+  }
+
+  /**
+   * Headers for internal wallet-service calls (tip / premium-subscription
+   * flows). Those routes carry no user identity — the shared secret
+   * authenticates the service itself (wallet-service InternalSecretGuard).
+   */
+  private walletInternalHeaders(): Record<string, string> {
+    return { 'x-internal-api-key': this.internalApiKey };
   }
 
   private calculateTipTier(totalAmount: number): string {
@@ -1025,7 +1036,10 @@ export class CreatorsService {
     }
 
     const senderWalletResponse = await axios
-      .get(`${this.walletServiceBaseUrl}/wallets/user/${userId}`, { timeout: 10000 })
+      .get(`${this.walletServiceBaseUrl}/v1/internal/wallets/user/${userId}`, {
+        headers: this.walletInternalHeaders(),
+        timeout: 10000,
+      })
       .catch(() => null);
     const senderWallet = senderWalletResponse?.data?.wallet || senderWalletResponse?.data;
     if (!senderWallet) {
@@ -1033,26 +1047,22 @@ export class CreatorsService {
     }
 
     const creatorWalletResponse = await axios
-      .get(`${this.walletServiceBaseUrl}/wallets/user/${creatorId}`, { timeout: 10000 })
+      .get(`${this.walletServiceBaseUrl}/v1/internal/wallets/user/${creatorId}`, {
+        headers: this.walletInternalHeaders(),
+        timeout: 10000,
+      })
       .catch(() => null);
     const creatorWallet = creatorWalletResponse?.data?.wallet || creatorWalletResponse?.data;
     if (!creatorWallet) {
       throw new NotFoundException('Creator wallet not found');
     }
 
-    const idempotencyKey = `subscribe:${userId}:${creatorId}:${tier}`;
-
     try {
       const debitResult = await axios
         .post(
-          `${this.walletServiceBaseUrl}/wallet/debit`,
-          {
-            walletId: senderWallet.id,
-            amount,
-            description: `Subscription to creator ${creatorId} - ${tier}`,
-            idempotencyKey,
-          },
-          { timeout: 10000 }
+          `${this.walletServiceBaseUrl}/v1/internal/wallets/user/${userId}/debit`,
+          subscriptionDebitPayload(userId, creatorId, amount, tier),
+          { headers: this.walletInternalHeaders(), timeout: 10000 }
         )
         .catch((err) => {
           if (err.response?.data?.idempotent === true) {
@@ -1078,26 +1088,16 @@ export class CreatorsService {
 
       try {
         await axios.post(
-          `${this.walletServiceBaseUrl}/wallet/credit`,
-          {
-            walletId: creatorWallet.id,
-            amount,
-            description: `Subscription from user ${userId} - ${tier}`,
-            idempotencyKey: `${idempotencyKey}:credit`,
-          },
-          { timeout: 10000 }
+          `${this.walletServiceBaseUrl}/v1/internal/wallets/user/${creatorId}/credit`,
+          subscriptionCreditPayload(userId, creatorId, amount, tier),
+          { headers: this.walletInternalHeaders(), timeout: 10000 }
         );
       } catch (creditError: unknown) {
         await axios
           .post(
-            `${this.walletServiceBaseUrl}/wallet/credit`,
-            {
-              walletId: senderWallet.id,
-              amount,
-              description: `Compensation for failed subscription credit: ${idempotencyKey}`,
-              reference: `compensate:${idempotencyKey}`,
-            },
-            { timeout: 10000 }
+            `${this.walletServiceBaseUrl}/v1/internal/wallets/user/${userId}/credit`,
+            subscriptionCompensationPayload(userId, creatorId, amount, tier),
+            { headers: this.walletInternalHeaders(), timeout: 10000 }
           )
           .catch((compensateError: unknown) => {
             this.logger.error(
@@ -1151,9 +1151,7 @@ export class CreatorsService {
         },
       };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? (error as Error).message : 'Failed to create subscription';
-      throw new BadRequestException(errorMessage);
+      mapAndThrow(error, 'creating premium subscription');
     }
   }
 

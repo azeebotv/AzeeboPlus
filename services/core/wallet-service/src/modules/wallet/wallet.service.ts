@@ -1048,6 +1048,14 @@ export class WalletService {
             amount,
             description,
           });
+
+          // Downstream read-models (e.g. creator-service wallet snapshots)
+          // key off this event; userId must always be present.
+          await this.eventBus.publish(
+            EventTypes.WALLET_FUNDED,
+            { userId: walletOwner.userId, walletId, amount, description },
+            { userId: walletOwner.userId }
+          );
         }
 
         return {
@@ -1183,6 +1191,14 @@ export class WalletService {
           description,
           reference,
         });
+
+        // Downstream read-models (e.g. creator-service wallet snapshots)
+        // key off this event; userId must always be present.
+        await this.eventBus.publish(
+          EventTypes.WALLET_DEBITED,
+          { userId: wallet.userId, walletId, amount, description, reference },
+          { userId: wallet.userId }
+        );
 
         return {
           success: true,
@@ -1741,6 +1757,14 @@ export class WalletService {
         description,
         idempotencyKey,
       });
+
+      // Downstream read-models (e.g. creator-service wallet snapshots) key
+      // off this event for charge-style debits (premium subscriptions, etc.).
+      await this.eventBus.publish(
+        EventTypes.WALLET_DEBITED,
+        { userId, walletId: result.walletId, amount, description },
+        { userId }
+      );
 
       const updatedWallet = await this.prisma.wallet.findUnique({
         where: { userId },

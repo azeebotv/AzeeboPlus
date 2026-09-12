@@ -18,14 +18,14 @@ export const colors = {
 
   // Backgrounds
   bg: {
-    primary: '#1A0A0A', // Warm near-black — main background
-    secondary: '#0A0A0A', // Cool near-black
-    tertiary: '#2A1A1A', // Elevated surface
-    surface: '#2A2A2A', // Card backgrounds, input fields
-    surfaceInput: '#1E1E1E', // Input field backgrounds
-    glass: 'rgba(255,255,255,0.08)', // Frosted glass panels
-    glassBorder: 'rgba(255,255,255,0.2)', // Glass panel borders
-    green: '#0D3B2E', // Forest green — marketing/hero backgrounds
+    primary: '#0B090E', // Page root: near-black with warm purple tint (matching web --hp-bg)
+    secondary: '#100E14', // Alternating section background (--hp-bg-alt)
+    tertiary: '#201C28', // Elevated surface
+    surface: '#18151E', // Card backgrounds, input fields (--hp-card-bg)
+    surfaceInput: '#18151E', // Input field backgrounds
+    glass: 'rgba(255,255,255,0.06)', // Frosted glass panels
+    glassBorder: 'rgba(255,255,255,0.12)', // Glass panel borders
+    green: '#0D3B2E', // Forest green — legacy compatibility
   },
 
   // Text

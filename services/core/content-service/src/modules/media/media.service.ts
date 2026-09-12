@@ -1,4 +1,5 @@
 import { Inject, Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -39,7 +40,7 @@ export class MediaService {
       return signedUrl;
     } catch (error) {
       this.logger.error(`Error generating signed URL: ${(error as Error).message}`);
-      throw new NotFoundException('Failed to generate signed URL');
+      mapAndThrow(error, 'generating signed URL');
     }
   }
 

@@ -8,7 +8,23 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { Skeleton } from '@azeebo/ui/web';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import { Swords, BookOpen, Drama, Sparkles, ArrowLeft } from 'lucide-react';
 import analytics from '@/lib/analytics';
+
+function getPathIcon(name: string): React.JSX.Element {
+  switch (name) {
+    case 'Swords':
+      return <Swords className="w-8 h-8 text-white" />;
+    case 'BookOpen':
+      return <BookOpen className="w-8 h-8 text-white" />;
+    case 'Drama':
+      return <Drama className="w-8 h-8 text-white" />;
+    case 'Sparkles':
+      return <Sparkles className="w-8 h-8 text-white" />;
+    default:
+      return <Sparkles className="w-8 h-8 text-white" />;
+  }
+}
 
 interface Character {
   id: string;
@@ -35,28 +51,28 @@ const PATH_CONFIG: Record<
     name: 'Warrior',
     description:
       'Strength, honor, and combat mastery. Warriors are the backbone of any storyworld, wielding strength and strategy to overcome challenges.',
-    color: 'var(--brand-crimson)',
+    color: '#EF4444',
     icon: 'Swords',
   },
   sage: {
     name: 'Sage',
     description:
       'Wisdom, knowledge, and ancient truths. Sages hold the secrets of the past and guide others through understanding.',
-    color: 'var(--brand-sky)',
+    color: '#38BDF8',
     icon: 'BookOpen',
   },
   trickster: {
     name: 'Trickster',
     description:
       'Cunning, deception, and survival. Tricksters navigate the world through wit and cleverness, finding unconventional solutions.',
-    color: 'var(--brand-gold)',
+    color: '#FBBF24',
     icon: 'Drama',
   },
   healer: {
     name: 'Healer',
     description:
       'Compassion, restoration, and balance. Healers mend what is broken and restore harmony to those around them.',
-    color: 'var(--brand-light-green)',
+    color: '#34D399',
     icon: 'Sparkles',
   },
 };
@@ -94,32 +110,32 @@ export default function AgbalaPathPage() {
       className="min-h-screen"
       style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
     >
-      <AppHeader active="Vertical" />
+      <AppHeader active="Vertical" logoVariant="light" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div
             style={{
-              width: 80,
-              height: 80,
+              width: 72,
+              height: 72,
               borderRadius: 20,
               background: `linear-gradient(135deg, ${pathConfig.color}, ${pathConfig.color}CC)`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 16px',
-              fontSize: 32,
+              boxShadow: `0 8px 32px ${pathConfig.color}40`,
             }}
           >
-            {pathConfig.icon}
+            {getPathIcon(pathConfig.icon)}
           </div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>{pathConfig.name}</h1>
-          <p style={{ color: 'var(--text-secondary)', maxWidth: 500, margin: '0 auto' }}>
+          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, color: '#ffffff' }}>{pathConfig.name}</h1>
+          <p style={{ color: 'rgba(255,255,255,0.7)', maxWidth: 500, margin: '0 auto' }}>
             {pathConfig.description}
           </p>
         </div>
 
         <section style={{ marginBottom: 32 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>
+          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16, color: '#ffffff' }}>
             Characters on this Path
           </h2>
           {isLoading ? (
@@ -135,7 +151,7 @@ export default function AgbalaPathPage() {
               ))}
             </div>
           ) : characters.length === 0 ? (
-            <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>
+            <p style={{ color: 'rgba(255,255,255,0.5)', textAlign: 'center', padding: 40 }}>
               No characters on this path yet.
             </p>
           ) : (
@@ -154,16 +170,19 @@ export default function AgbalaPathPage() {
                     display: 'block',
                     padding: 20,
                     borderRadius: 16,
-                    border: '1px solid var(--border-default)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    backgroundColor: '#18151e',
                     textDecoration: 'none',
                     color: 'var(--text-primary)',
-                    transition: 'border-color 0.2s',
+                    transition: 'border-color 0.2s, transform 0.2s',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = pathConfig.color;
+                    e.currentTarget.style.transform = 'translateY(-2px)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--bg-secondary)';
+                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+                    e.currentTarget.style.transform = 'translateY(0)';
                   }}
                 >
                   {char.imageUrl && (
@@ -171,7 +190,9 @@ export default function AgbalaPathPage() {
                       style={{
                         position: 'relative',
                         aspectRatio: '1',
-                        backgroundColor: 'var(--bg-tertiary)',
+                        backgroundColor: 'rgba(255,255,255,0.04)',
+                        borderRadius: 12,
+                        overflow: 'hidden',
                         marginBottom: 12,
                       }}
                     >
@@ -182,9 +203,9 @@ export default function AgbalaPathPage() {
                       />
                     </div>
                   )}
-                  <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>{char.name}</h3>
+                  <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 4, color: '#ffffff' }}>{char.name}</h3>
                   {char.description && (
-                    <p style={{ color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1.4 }}>
+                    <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, lineHeight: 1.4 }}>
                       {char.description}
                     </p>
                   )}
@@ -198,7 +219,10 @@ export default function AgbalaPathPage() {
           <Link
             href="/vertical/agbala"
             style={{
-              display: 'inline-block',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
               padding: '10px 20px',
               background: 'rgba(232,66,10,0.15)',
               border: '1px solid #E8420A',
@@ -207,13 +231,15 @@ export default function AgbalaPathPage() {
               textDecoration: 'none',
               fontSize: 14,
               fontWeight: 600,
+              transition: 'background-color 0.2s',
             }}
           >
-            ← Back to All Paths
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to All Paths</span>
           </Link>
         </div>
       </main>
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

@@ -25,8 +25,11 @@ import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
     SecurityModule,
     DatabaseModule,
     CacheModule,
-    ContentModule,
+    // DownloadModule must register before ContentModule so its static routes
+    // (/v1/content/downloads, /v1/content/downloads/storage) are matched before
+    // ContentModule's /v1/content/:id wildcard swallows them.
     DownloadModule,
+    ContentModule,
     ShareModule,
     ReviewModule,
     HealthModule,

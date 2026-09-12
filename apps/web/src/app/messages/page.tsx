@@ -336,7 +336,7 @@ export default function MessagesPage(): React.JSX.Element {
   if (authLoading) return <></>;
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
         <AppHeader />
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="az-glass p-8 text-center">
@@ -350,7 +350,7 @@ export default function MessagesPage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
       <AppHeader />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="az-glass overflow-hidden" style={{ height: 'calc(100vh - 200px)' }}>
@@ -569,8 +569,22 @@ export default function MessagesPage(): React.JSX.Element {
                         ))}
                       </div>
                     ) : messages.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center h-full text-center">
-                        <span className="text-4xl mb-4 block">&#x1F4AC;</span>
+                      <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                        <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40">
+                          <svg
+                            className="w-7 h-7"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={1.5}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a.75.75 0 01-1.074-.865 5.247 5.247 0 00.998-2.604A8.204 8.204 0 013 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"
+                            />
+                          </svg>
+                        </div>
                         <h3 className="text-lg font-bold text-white mb-2">Start a conversation</h3>
                         <p className="text-white/50 text-sm">
                           Send a message to {selectedConversation.user.name}
@@ -641,7 +655,15 @@ export default function MessagesPage(): React.JSX.Element {
                                   minute: '2-digit',
                                 })}
                                 {message.isEdited && <span className="ml-1">(edited)</span>}
-                                {message.isPinned && <span className="ml-1">&#x1F4CC;</span>}
+                                {message.isPinned && (
+                                  <svg
+                                    className="w-3 h-3 ml-1 inline text-amber-400"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path d="M9.828.722a.5.5 0 01.354 0l4.5 1.5a.5.5 0 01.332.474v4.304l2.128 3.548A.5.5 0 0116.71 11.25H10.5v7.25a.5.5 0 01-1 0V11.25H3.29a.5.5 0 01-.432-.702l2.128-3.548V2.696a.5.5 0 01.332-.474l4.5-1.5z" />
+                                  </svg>
+                                )}
                               </p>
                               <div className="flex gap-1 ml-2">
                                 <button
@@ -752,9 +774,23 @@ export default function MessagesPage(): React.JSX.Element {
                   </div>
                 </>
               ) : (
-                <div className="flex-1 flex items-center justify-center">
+                <div className="flex-1 flex items-center justify-center p-8">
                   <div className="text-center">
-                    <span className="text-5xl mb-4 block">&#x1F4AC;</span>
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40">
+                      <svg
+                        className="w-8 h-8"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={1.5}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"
+                        />
+                      </svg>
+                    </div>
                     <h3 className="text-xl font-bold text-white mb-2">Select a conversation</h3>
                     <p className="text-white/50 text-sm">
                       Choose a conversation from the left to start messaging

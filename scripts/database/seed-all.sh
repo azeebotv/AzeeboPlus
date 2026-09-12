@@ -392,6 +392,176 @@ seed_analytics_db() {
 # ============================================================
 # Seeds a small set of dev-friendly feature flags into Redis so local runs
 # exercise flag-gated paths out of the box. Idempotent: existing keys are
+# ============================================================
+# Seed: Admin Database
+# ============================================================
+# The admin panel (apps/admin, port 4016) reads its OWN database
+# (azeebo_admin) — it does not join across the per-service databases.
+# Without this seed, every admin page shows 0s even though users,
+# content, and wallets exist in azeebo_auth / azeebo_content /
+# azeebo_wallet.
+#
+# Strategy: mirror the rows the admin panel displays from the service
+# databases via psql \copy (client-side, no superuser/extensions needed):
+#   users            ← azeebo_auth.users
+#   universes        ← azeebo_content.universes
+#   content_items    ← azeebo_content.content_items (+ universe FK)
+#   wallets          ← azeebo_wallet.wallets
+#   wallet_transactions ← azeebo_wallet.wallet_transactions (via wallet FK)
+#
+# Rows are keyed by the same IDs as the source services, so the mirror
+# is idempotent (ON CONFLICT DO UPDATE) and re-runs refresh counts.
+seed_admin_db() {
+  info "Seeding azeebo_admin (mirror of auth/content/wallet data the panel reads)..."
+
+  # Staging CSV tables for the \copy pipe. Recreated each run so schema
+  # changes in the source DBs can't desync the column lists; dropped after.
+  local psql_admin
+  psql_admin=(psql "${DB_URL}/azeebo_admin" -X -q -v ON_ERROR_STOP=1)
+  "${psql_admin[@]}" <<'SQL'
+DROP TABLE IF EXISTS tmp_admin_users, tmp_admin_universes, tmp_admin_content, tmp_admin_wallets, tmp_admin_txs CASCADE;
+CREATE TABLE tmp_admin_users (
+  id text PRIMARY KEY, email text, password text, "displayName" text,
+  avatar text, role text, preferences jsonb, "createdAt" timestamptz, "updatedAt" timestamptz
+);
+CREATE TABLE tmp_admin_universes (
+  id text PRIMARY KEY, name text, "displayName" text, description text,
+  icon text, color text, "isEnabled" boolean, "sortOrder" integer, metadata jsonb,
+  "createdAt" timestamptz, "updatedAt" timestamptz
+);
+CREATE TABLE tmp_admin_content (
+  id text PRIMARY KEY, title text, description text, thumbnail text,
+  "mediaUrl" text, "universeId" text, "creatorId" text, status text,
+  "viewCount" integer, metadata jsonb, "publishedAt" timestamptz, "createdAt" timestamptz, "updatedAt" timestamptz
+);
+CREATE TABLE tmp_admin_wallets (
+  id text PRIMARY KEY, "userId" text, balance numeric(18,2), currency text,
+  "createdAt" timestamptz, "updatedAt" timestamptz
+);
+CREATE TABLE tmp_admin_txs (
+  id text PRIMARY KEY, "walletId" text, type text, amount numeric(18,2),
+  status text, description text, reference text, metadata jsonb, "createdAt" timestamptz
+);
+SQL
+
+  local psql_auth
+  psql_auth=(psql "${DB_URL}/azeebo_auth" -X -q -v ON_ERROR_STOP=1)
+  local psql_content
+  psql_content=(psql "${DB_URL}/azeebo_content" -X -q -v ON_ERROR_STOP=1)
+  local psql_wallet
+  psql_wallet=(psql "${DB_URL}/azeebo_wallet" -X -q -v ON_ERROR_STOP=1)
+
+  # users (password column carries the same bcrypt hashes as the auth DB —
+  # the admin app never authenticates against it, but keeping the column
+  # NOT NULL constraint satisfied matters)
+  info "  users ← azeebo_auth.users"
+  "${psql_auth[@]}" -c "\copy (SELECT id, email, password, \"displayName\", avatar, role::text, preferences FROM users ORDER BY id) TO STDOUT WITH (FORMAT csv)" \
+    | "${psql_admin[@]}" -c "\copy tmp_admin_users (id, email, password, \"displayName\", avatar, role, preferences) FROM STDIN WITH (FORMAT csv)"
+  "${psql_admin[@]}" -c "
+    INSERT INTO users (id, email, password, \"displayName\", avatar, role, preferences, \"createdAt\", \"updatedAt\")
+    SELECT id, email, password, \"displayName\", avatar, role, preferences, COALESCE(\"createdAt\", NOW()), NOW() FROM tmp_admin_users
+    ON CONFLICT (id) DO UPDATE SET
+      email = EXCLUDED.email,
+      password = EXCLUDED.password,
+      \"displayName\" = EXCLUDED.\"displayName\",
+      avatar = EXCLUDED.avatar,
+      role = EXCLUDED.role,
+      preferences = EXCLUDED.preferences,
+      \"updatedAt\" = NOW();
+  "
+
+  # universes
+  info "  universes ← azeebo_content.universes"
+  "${psql_content[@]}" -c "\copy (SELECT id, name, \"displayName\", description, icon, color, \"isEnabled\", \"sortOrder\", metadata FROM universes ORDER BY id) TO STDOUT WITH (FORMAT csv)" \
+    | "${psql_admin[@]}" -c "\copy tmp_admin_universes (id, name, \"displayName\", description, icon, color, \"isEnabled\", \"sortOrder\", metadata) FROM STDIN WITH (FORMAT csv)"
+  "${psql_admin[@]}" -c "
+    INSERT INTO universes (id, name, \"displayName\", description, icon, color, \"isEnabled\", \"sortOrder\", metadata, \"createdAt\", \"updatedAt\")
+    SELECT id, name, \"displayName\", description, icon, color, \"isEnabled\", \"sortOrder\", metadata, COALESCE(\"createdAt\", NOW()), NOW() FROM tmp_admin_universes
+    ON CONFLICT (id) DO UPDATE SET
+      name = EXCLUDED.name,
+      \"displayName\" = EXCLUDED.\"displayName\",
+      description = EXCLUDED.description,
+      icon = EXCLUDED.icon,
+      color = EXCLUDED.color,
+      \"isEnabled\" = EXCLUDED.\"isEnabled\",
+      \"sortOrder\" = EXCLUDED.\"sortOrder\",
+      metadata = EXCLUDED.metadata,
+      \"updatedAt\" = NOW();
+  "
+
+  # content items (needs a universe FK — seeded above)
+  info "  content_items ← azeebo_content.content_items"
+  "${psql_content[@]}" -c "\copy (SELECT id, title, description, thumbnail, \"mediaUrl\", \"universeId\", \"creatorId\", status, \"viewCount\", metadata, \"publishedAt\" FROM content_items ORDER BY id) TO STDOUT WITH (FORMAT csv)" \
+    | "${psql_admin[@]}" -c "\copy tmp_admin_content (id, title, description, thumbnail, \"mediaUrl\", \"universeId\", \"creatorId\", status, \"viewCount\", metadata, \"publishedAt\") FROM STDIN WITH (FORMAT csv)"
+  "${psql_admin[@]}" -c "
+    INSERT INTO content_items (id, title, description, thumbnail, \"mediaUrl\", \"universeId\", \"creatorId\", status, \"viewCount\", metadata, \"publishedAt\", \"createdAt\", \"updatedAt\")
+    SELECT id, title, description, thumbnail, \"mediaUrl\", \"universeId\", \"creatorId\", status, \"viewCount\", metadata, \"publishedAt\", COALESCE(\"createdAt\", NOW()), NOW() FROM tmp_admin_content
+    ON CONFLICT (id) DO UPDATE SET
+      title = EXCLUDED.title,
+      description = EXCLUDED.description,
+      thumbnail = EXCLUDED.thumbnail,
+      \"mediaUrl\" = EXCLUDED.\"mediaUrl\",
+      \"universeId\" = EXCLUDED.\"universeId\",
+      \"creatorId\" = EXCLUDED.\"creatorId\",
+      status = EXCLUDED.status,
+      \"viewCount\" = EXCLUDED.\"viewCount\",
+      metadata = EXCLUDED.metadata,
+      \"publishedAt\" = EXCLUDED.\"publishedAt\",
+      \"updatedAt\" = NOW();
+  "
+
+  # wallets (skip rows whose owner wasn't mirrored into azeebo_admin.users —
+  # test leftovers etc. — the FK would reject them). The wallet DB has no
+  # users table, so filter against the mirrored user IDs explicitly.
+  info "  wallets ← azeebo_wallet.wallets"
+  local user_id_list
+  # chr(39) = single quote, chr(44) = comma — builds 'id1','id2',… without
+  # nested-quote hell; COALESCE to NULL so an empty user set matches nothing.
+  user_id_list=$("${psql_admin[@]}" -t -A -c $'SELECT COALESCE(string_agg(chr(39) || id || chr(39), chr(44)), \'NULL\') FROM users')
+  "${psql_wallet[@]}" -c "\copy (SELECT id, \"userId\", balance, currency FROM wallets WHERE \"userId\" IN (${user_id_list:-''}) ORDER BY id) TO STDOUT WITH (FORMAT csv)" \
+    | "${psql_admin[@]}" -c "\copy tmp_admin_wallets (id, \"userId\", balance, currency) FROM STDIN WITH (FORMAT csv)"
+  "${psql_admin[@]}" -c "
+    INSERT INTO wallets (id, \"userId\", balance, currency, \"createdAt\", \"updatedAt\")
+    SELECT id, \"userId\", balance, currency, COALESCE(\"createdAt\", NOW()), NOW() FROM tmp_admin_wallets
+    ON CONFLICT (id) DO UPDATE SET
+      \"userId\" = EXCLUDED.\"userId\",
+      balance = EXCLUDED.balance,
+      currency = EXCLUDED.currency,
+      \"updatedAt\" = NOW();
+  "
+
+  # wallet transactions (FK: walletId → wallets.id, seeded above; same
+  # orphan-row filter as wallets)
+  info "  wallet_transactions ← azeebo_wallet.wallet_transactions"
+  "${psql_wallet[@]}" -c "\copy (SELECT t.id, t.\"walletId\", t.type, t.amount, t.status, t.description, t.reference, t.metadata FROM wallet_transactions t JOIN wallets w ON w.id = t.\"walletId\" AND w.\"userId\" IN (${user_id_list:-''}) ORDER BY t.id) TO STDOUT WITH (FORMAT csv)" \
+    | "${psql_admin[@]}" -c "\copy tmp_admin_txs (id, \"walletId\", type, amount, status, description, reference, metadata) FROM STDIN WITH (FORMAT csv)"
+  "${psql_admin[@]}" -c "
+    INSERT INTO wallet_transactions (id, \"walletId\", type, amount, status, description, reference, metadata, \"createdAt\")
+    SELECT id, \"walletId\", type, amount, status, description, reference, metadata, COALESCE(\"createdAt\", NOW()) FROM tmp_admin_txs
+    ON CONFLICT (id) DO UPDATE SET
+      \"walletId\" = EXCLUDED.\"walletId\",
+      type = EXCLUDED.type,
+      amount = EXCLUDED.amount,
+      status = EXCLUDED.status,
+      description = EXCLUDED.description,
+      reference = EXCLUDED.reference,
+      metadata = EXCLUDED.metadata;
+  "
+
+  # Tally what the panel will now show
+  local total_users total_content total_revenue
+  total_users=$("${psql_admin[@]}" -t -A -c 'SELECT COUNT(*) FROM users')
+  total_content=$("${psql_admin[@]}" -t -A -c 'SELECT COUNT(*) FROM content_items')
+  total_revenue=$("${psql_admin[@]}" -t -A -c "SELECT COALESCE(SUM(amount),0) FROM wallet_transactions WHERE type='credit' AND status='completed'")
+  ok "  azeebo_admin seeded: ${total_users} users, ${total_content} content items, ₦${total_revenue} revenue"
+
+  "${psql_admin[@]}" -c 'DROP TABLE IF EXISTS tmp_admin_users, tmp_admin_universes, tmp_admin_content, tmp_admin_wallets, tmp_admin_txs CASCADE'
+}
+
+# ============================================================
+# Feature Flags (Redis)
+# ============================================================
+# Seeds the DEV default feature flags into Redis. Existing values are
 # never overwritten (defaults are code-registered per service anyway — these
 # rows only pin the values for local experimentation).
 # Redis key convention: feature_flags:{key} → JSON.
@@ -450,6 +620,7 @@ main() {
     search)       seed_search_db ;;
     notification) seed_notification_db ;;
     analytics)    seed_analytics_db ;;
+    admin)        seed_admin_db ;;
     all)
       seed_auth_db
       seed_user_db
@@ -461,6 +632,7 @@ main() {
       seed_search_db
       seed_notification_db
       seed_analytics_db
+      seed_admin_db
       seed_flags
       ;;
     flags)
@@ -468,7 +640,7 @@ main() {
       ;;
     *)
       err "Unknown database: $target_db"
-      echo "Available: auth, user, content, wallet, media, creator, reward, search, notification, analytics, flags, all"
+      echo "Available: auth, user, content, wallet, media, creator, reward, search, notification, analytics, admin, flags, all"
       exit 1
       ;;
   esac

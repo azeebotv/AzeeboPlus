@@ -73,10 +73,10 @@ export default function RoleSelectionPage(): React.JSX.Element {
     >
       {/* Lagos-at-night blurred ambient background */}
       <div
-        className="absolute inset-0 opacity-20"
+        className="absolute inset-0 opacity-25 pointer-events-none"
         style={{
           backgroundImage:
-            'radial-gradient(circle at 20% 30%, rgba(232,66,10,0.3), transparent 40%), radial-gradient(circle at 80% 70%, rgba(13,59,46,0.5), transparent 50%), linear-gradient(180deg, #0a0a0a, #1A0A0A)',
+            'radial-gradient(circle at 20% 30%, rgba(232,66,10,0.25), transparent 40%), radial-gradient(circle at 80% 70%, rgba(168,85,247,0.18), transparent 50%), linear-gradient(180deg, #100e14, #0b090e)',
         }}
       />
 

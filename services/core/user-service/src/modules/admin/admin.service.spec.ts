@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AdminService } from './admin.service.js';
 import { PrismaService } from '../database/prisma.service.js';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 describe('AdminService', () => {
@@ -227,30 +227,32 @@ describe('AdminService', () => {
 
   describe('Content Moderation', () => {
     describe('moderateContent', () => {
-      it('should throw NotFoundException (handled by content-service)', async () => {
+      it('should map upstream failure to ServiceUnavailableException (not a client error)', async () => {
         await expect(
           service.moderateContent('content-1', 'approve', 'Looks good', 'admin-1', 'super_admin')
-        ).rejects.toThrow(NotFoundException);
+        ).rejects.toThrow(ServiceUnavailableException);
       });
     });
 
     describe('getModerationReports', () => {
-      it('should throw NotFoundException (handled by moderation-service)', async () => {
-        await expect(service.getModerationReports(1, 20)).rejects.toThrow(NotFoundException);
+      it('should map upstream failure to ServiceUnavailableException', async () => {
+        await expect(service.getModerationReports(1, 20)).rejects.toThrow(
+          ServiceUnavailableException
+        );
       });
 
-      it('should throw NotFoundException with status filter', async () => {
+      it('should map upstream failure to ServiceUnavailableException with status filter', async () => {
         await expect(service.getModerationReports(1, 20, 'pending')).rejects.toThrow(
-          NotFoundException
+          ServiceUnavailableException
         );
       });
     });
 
     describe('resolveReport', () => {
-      it('should throw NotFoundException (handled by moderation-service)', async () => {
+      it('should map upstream failure to ServiceUnavailableException', async () => {
         await expect(
           service.resolveReport('report-1', 'Content removed', 'admin-1', 'super_admin')
-        ).rejects.toThrow(NotFoundException);
+        ).rejects.toThrow(ServiceUnavailableException);
       });
     });
   });
@@ -282,16 +284,18 @@ describe('AdminService', () => {
 
   describe('Creator Verification', () => {
     describe('getVerificationRequests', () => {
-      it('should throw NotFoundException (handled by creator-service)', async () => {
-        await expect(service.getVerificationRequests(1, 20)).rejects.toThrow(NotFoundException);
+      it('should map upstream failure to ServiceUnavailableException', async () => {
+        await expect(service.getVerificationRequests(1, 20)).rejects.toThrow(
+          ServiceUnavailableException
+        );
       });
     });
 
     describe('verifyCreator', () => {
-      it('should throw NotFoundException (handled by creator-service)', async () => {
+      it('should map upstream failure to ServiceUnavailableException', async () => {
         await expect(
           service.verifyCreator('req-1', 'approved', 'Verified', 'admin-1', 'super_admin')
-        ).rejects.toThrow(NotFoundException);
+        ).rejects.toThrow(ServiceUnavailableException);
       });
     });
   });

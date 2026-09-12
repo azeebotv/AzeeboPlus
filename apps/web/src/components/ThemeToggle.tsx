@@ -2,14 +2,15 @@
 
 import { useTheme } from '@/context/ThemeContext';
 import { motion } from 'framer-motion';
+import { Sun, Moon, Laptop } from 'lucide-react';
 
 export default function ThemeToggle() {
   const { theme, setTheme } = useTheme();
 
   const options = [
-    { value: 'light' as const, label: 'Light', icon: '☀️' },
-    { value: 'dark' as const, label: 'Dark', icon: '🌙' },
-    { value: 'system' as const, label: 'System', icon: '💻' },
+    { value: 'light' as const, label: 'Light', icon: <Sun className="w-4 h-4" /> },
+    { value: 'dark' as const, label: 'Dark', icon: <Moon className="w-4 h-4" /> },
+    { value: 'system' as const, label: 'System', icon: <Laptop className="w-4 h-4" /> },
   ];
 
   return (
@@ -29,7 +30,7 @@ export default function ThemeToggle() {
           aria-label={`Switch to ${option.label} theme`}
           aria-pressed={theme === option.value}
         >
-          <span>{option.icon}</span>
+          {option.icon}
           <span>{option.label}</span>
         </motion.button>
       ))}

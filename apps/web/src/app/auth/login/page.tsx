@@ -60,7 +60,7 @@ export default function LoginPage(): React.JSX.Element {
   return (
     <AuthShell
       headlineLines={['Explore Nigerian', 'Entertainment', 'Like Never Before']}
-      backgroundFallback="#1A0A0A"
+      backgroundFallback="#0b090e"
     >
       <motion.form
         className="space-y-5"

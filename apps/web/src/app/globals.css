@@ -4,15 +4,15 @@
    Azeebo+ Brand Design System (v2 — Nigerian Entertainment)
    ============================================================ */
 :root {
-  /* Brand Core */
+  /* Brand Core — Luxury Cinema Dark Theme */
   --brand-orange: #e8420a; /* Azeebo Orange — primary CTA, logo accent, highlights */
   --brand-red: #cc1c1c; /* Deep Red — buttons, active states, glow */
-  --brand-near-black: #1a0a0a; /* Near-Black — auth/utility backgrounds */
-  --brand-forest: #0d3b2e; /* Forest Dark Green — marketing/hero background */
+  --brand-near-black: #0b090e; /* Near-Black — page root & auth surfaces (matching --hp-bg) */
+  --brand-forest: #0d3b2e; /* Forest Dark Green — legacy compatibility */
   --brand-green: #22c55e; /* Green — success states */
   --brand-white: #ffffff; /* White — primary text */
-  --brand-surface: #2a2a2a; /* Surface Dark — card backgrounds, inputs */
-  --brand-surface-input: #1e1e1e; /* Input field fill */
+  --brand-surface: #18151e; /* Surface Dark — card backgrounds, inputs (--hp-card-bg) */
+  --brand-surface-input: #14121a; /* Input field fill */
   --brand-mid-brown: #9a8a7a; /* Mid Brown — secondary text */
   --brand-gold: #ffd700; /* Gold — rewards, badges */
   --brand-purple: #8b5cf6; /* Purple — premium, highlights */
@@ -26,16 +26,16 @@
   --brand-copper: #cd7f32; /* Copper — metallic accents */
   --brand-light-green: #32cd32; /* Light Green — online, active */
 
-  /* Glass panel */
-  --glass-bg: rgba(15, 5, 5, 0.85);
-  --glass-border: rgba(255, 255, 255, 0.2);
+  /* Glass panel — Frosted luxury dark panels */
+  --glass-bg: rgba(24, 21, 30, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.08);
   --glass-blur: 18px;
-  --glass-glow: 0 0 30px rgba(255, 255, 255, 0.15), 0 0 60px rgba(200, 20, 20, 0.1);
-  --glass-glow-strong: 0 0 20px rgba(255, 255, 255, 0.3);
+  --glass-glow: 0 4px 24px rgba(0, 0, 0, 0.35);
+  --glass-glow-strong: 0 0 25px rgba(232, 66, 10, 0.25);
 
   /* Ambient glow */
-  --glow-red: 0 4px 20px rgba(204, 28, 28, 0.5);
-  --glow-red-ambient: radial-gradient(circle at 50% 100%, rgba(204, 28, 28, 0.35), transparent 70%);
+  --glow-red: 0 4px 20px rgba(232, 66, 10, 0.4);
+  --glow-red-ambient: radial-gradient(circle at 50% 100%, rgba(232, 66, 10, 0.25), transparent 70%);
 
   /* Typography */
   --font-display: var(--font-display-base), 'Montserrat', var(--font-sans), sans-serif;
@@ -142,10 +142,10 @@
   --text-inverse: #1a0a0a;
 
   /* Backgrounds */
-  --bg-primary: #1a0a0a;
-  --bg-secondary: #2a1a1a;
-  --bg-tertiary: #3a2a2a;
-  --bg-hover: #4b5563;
+  --bg-primary: #0b090e;
+  --bg-secondary: #100e14;
+  --bg-tertiary: #18151e;
+  --bg-hover: #262130;
 
   /* Borders & Dividers */
   --border-default: #4b5563;
@@ -230,7 +230,142 @@
   --gradient-gold: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
   --gradient-success: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
   --gradient-dark: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
+
+  /* ============================================================
+     Homepage (Guest Landing) — Section Design Tokens
+     Extracted from the Azeebo+ UI/UX mockup. All values are
+     derived from the visual design; no raw hex in components.
+     ============================================================ */
+
+  /* ── Backgrounds ── */
+  --hp-bg:              #0b090e; /* Page root: near-black with warm purple tint */
+  --hp-bg-alt:          #100e14; /* Alternating section bg (slightly lighter) */
+  --hp-card-bg:         #18151e; /* Default card/panel background */
+  --hp-card-border:     rgba(255, 255, 255, 0.07); /* Subtle card border */
+  --hp-divider:         rgba(255, 255, 255, 0.05); /* Section divider lines */
+
+  /* ── Hero ── */
+  --hp-hero-bg-start:   #0b0910; /* Hero gradient start (top-left) */
+  --hp-hero-bg-mid:     #130a1a; /* Hero gradient mid */
+  --hp-hero-bg-end:     #0e0c08; /* Hero gradient end (bottom-right, warm) */
+  --hp-hero-badge-bg:   rgba(232, 66, 10, 0.15); /* Orange badge background */
+  --hp-hero-badge-text: var(--brand-orange);
+  --hp-hero-badge-border: rgba(232, 66, 10, 0.30);
+  --hp-hero-overlay:    rgba(11, 9, 14, 0.55); /* Grid overlay fade */
+  --hp-stat-divider:    rgba(255, 255, 255, 0.10);
+
+  /* ── Thumbnail grid — universe preview tiles ── */
+  --hp-tile-reality:    linear-gradient(150deg, #5b21b6 0%, #1e1040 100%);
+  --hp-tile-comedy:     linear-gradient(150deg, #c2410c 0%, #7c1d0a 100%);
+  --hp-tile-sports:     linear-gradient(150deg, #166534 0%, #052e16 100%);
+  --hp-tile-movies:     linear-gradient(150deg, #92400e 0%, #451a01 100%);
+  --hp-tile-lifestyle:  linear-gradient(150deg, #9d174d 0%, #500727 100%);
+  --hp-tile-creator:    linear-gradient(150deg, #c2410c 0%, #7c1d0a 100%);
+  --hp-tile-vertical:   linear-gradient(150deg, #1e40af 0%, #0f1f5c 100%);
+  --hp-tile-games:      linear-gradient(150deg, #6d28d9 0%, #2e1065 100%);
+  --hp-tile-live:       linear-gradient(150deg, #991b1b 0%, #450a0a 100%);
+  --hp-tile-music:      linear-gradient(150deg, #854d0e 0%, #3b1f00 100%);
+  --hp-tile-drama:      linear-gradient(150deg, #1e3a8a 0%, #0c1445 100%);
+  --hp-tile-culture:    linear-gradient(150deg, #065f46 0%, #022c22 100%);
+
+  /* ── Devices section ── */
+  --hp-devices-icon-bg:     rgba(232, 66, 10, 0.12);
+  --hp-devices-icon-border: rgba(232, 66, 10, 0.22);
+  --hp-devices-card-bg:     rgba(255, 255, 255, 0.03);
+  --hp-devices-card-border: rgba(255, 255, 255, 0.06);
+
+  /* ── Why Azeebo+ — orange app mockup panel ── */
+  --hp-why-panel-bg:    linear-gradient(160deg, var(--brand-orange) 0%, var(--brand-red) 100%);
+  --hp-why-panel-glow:  0 0 60px rgba(232, 66, 10, 0.35), 0 30px 60px rgba(0, 0, 0, 0.6);
+  --hp-why-bar-bg:      rgba(255, 255, 255, 0.25);
+  --hp-why-bar-fill:    rgba(255, 255, 255, 0.85);
+  --hp-why-row-bg:      rgba(255, 255, 255, 0.10);
+  --hp-why-icon-bg:     rgba(232, 66, 10, 0.15);
+  --hp-why-icon-border: rgba(232, 66, 10, 0.25);
+  --hp-why-badge-bg:    linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(232, 66, 10, 0.2));
+  --hp-why-badge-border: rgba(251, 191, 36, 0.30);
+
+  /* ── Categories / Universes grid ── */
+  --hp-cat-card-bg-alpha: 0.12;   /* Opacity of category tile tint */
+  --hp-cat-hover-bg:    rgba(255, 255, 255, 0.05);
+  --hp-cat-browse-btn:  var(--brand-orange);
+
+  /* ── Featured carousel cards ── */
+  /* Card 1 — dark purple/blue (person under dramatic light) */
+  --hp-card1-start:     #1a0e2e;
+  --hp-card1-end:       #0b0918;
+  --hp-card1-accent:    #6d28d9;
+  /* Card 2 — deep orange/red (car) */
+  --hp-card2-start:     #2a0f00;
+  --hp-card2-end:       #0d0600;
+  --hp-card2-accent:    var(--brand-orange);
+  /* Card 3 — magenta/pink (woman portrait) */
+  --hp-card3-start:     #35001e;
+  --hp-card3-end:       #0d0008;
+  --hp-card3-accent:    #be185d;
+  /* Card 4 — teal/cyan (sport) */
+  --hp-card4-start:     #064e3b;
+  --hp-card4-end:       #022c22;
+  --hp-card4-accent:    #10b981;
+  /* Card 5 — amber/gold (lifestyle) */
+  --hp-card5-start:     #451a00;
+  --hp-card5-end:       #1c0a00;
+  --hp-card5-accent:    #f59e0b;
+  --hp-card-badge-bg:   rgba(0, 0, 0, 0.55);
+  --hp-card-scrim:      linear-gradient(to top, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0) 55%);
+
+  /* ── FAQ ── */
+  --hp-faq-item-bg:     rgba(255, 255, 255, 0.04);
+  --hp-faq-item-border: rgba(255, 255, 255, 0.08);
+  --hp-faq-open-icon:   var(--brand-orange);
+  --hp-faq-closed-icon: rgba(255, 255, 255, 0.45);
+  --hp-faq-support-link: var(--brand-orange);
+  --hp-faq-stat-bg:     rgba(255, 255, 255, 0.04);
+  --hp-faq-stat-border: rgba(255, 255, 255, 0.07);
+
+  /* ── Phone CTA ── */
+  --hp-cta-phone-body:    linear-gradient(160deg, #1a0a0a 0%, #000000 100%);
+  --hp-cta-phone-border:  rgba(255, 255, 255, 0.12);
+  --hp-cta-phone-glow:    0 0 60px rgba(109, 40, 217, 0.30), 0 40px 80px rgba(0, 0, 0, 0.70);
+  --hp-cta-screen-bg:     linear-gradient(160deg, rgba(109, 40, 217, 0.45) 0%, rgba(13, 59, 46, 0.40) 60%, rgba(26, 10, 10, 0.95) 100%);
+  --hp-cta-notch:         #000000;
+  --hp-cta-nav-bg:        rgba(0, 0, 0, 0.50);
+  --hp-cta-nav-border:    rgba(255, 255, 255, 0.07);
+  --hp-cta-store-bg:      rgba(255, 255, 255, 0.05);
+  --hp-cta-store-border:  rgba(255, 255, 255, 0.11);
+  --hp-cta-badge-bg:      var(--brand-purple);
+  --hp-cta-badge-glow:    0 8px 24px rgba(139, 92, 246, 0.40);
+  --hp-ambient-purple:    rgba(109, 40, 217, 0.18);
+  --hp-ambient-orange:    rgba(232, 66, 10, 0.13);
+
+  /* ── Testimonials ── */
+  --hp-testi-card-bg:     rgba(255, 255, 255, 0.04);
+  --hp-testi-card-border: rgba(255, 255, 255, 0.07);
+  --hp-testi-star-filled: #fbbf24;
+  --hp-testi-star-empty:  #374151;
+  --hp-testi-avatar-bg:   rgba(255, 255, 255, 0.07);
+  --hp-testi-partner-col: rgba(255, 255, 255, 0.30);
+
+  /* ── Newsletter ── */
+  --hp-nl-bg-start:       #100e14;  /* Section background */
+  --hp-nl-blob-color:     rgba(204, 28, 28, 0.55); /* Red-orange blob */
+  --hp-nl-badge-bg:       rgba(232, 66, 10, 0.18);
+  --hp-nl-badge-text:     var(--brand-orange);
+  --hp-nl-input-bg:       rgba(255, 255, 255, 0.07);
+  --hp-nl-input-border:   rgba(255, 255, 255, 0.11);
+  --hp-nl-input-invalid:  rgba(239, 68, 68, 0.70);
+  --hp-nl-success-bg:     rgba(34, 197, 94, 0.14);
+  --hp-nl-success-border: rgba(34, 197, 94, 0.28);
+  --hp-nl-fine-print:     rgba(255, 255, 255, 0.35);
+
+  /* ── PWA / Install Toast ── */
+  --hp-toast-later-col:   rgba(255, 255, 255, 0.55);
+
+  /* ── Offline Banner ── */
+  --hp-offline-bg:        var(--brand-gold);
+  --hp-offline-text:      var(--brand-near-black);
 }
+
 
 /* Base Reset & Dark Theme */
 
@@ -253,6 +388,25 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+@keyframes marqueeScroll {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.az-marquee {
+  display: flex;
+  width: max-content;
+  animation: marqueeScroll 25s linear infinite;
+}
+
+.az-marquee:hover {
+  animation-play-state: paused;
 }
 
 /* Animations */
@@ -434,11 +588,11 @@ body {
 .az-nollywood-bg {
   background: linear-gradient(
     135deg,
-    #0a0a0a 0%,
-    #1a0a0a 25%,
-    #2a1a1a 50%,
-    #1a0a0a 75%,
-    #0a0a0a 100%
+    #0b090e 0%,
+    #100e14 25%,
+    #18151e 50%,
+    #100e14 75%,
+    #0b090e 100%
   );
   background-size: 400% 400%;
   animation: nollywoodShift 20s ease infinite;

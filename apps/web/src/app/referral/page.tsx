@@ -186,7 +186,7 @@ export default function ReferralPage(): React.JSX.Element {
               <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
                 <button
                   onClick={copyToClipboard}
-                  className="az-btn-primary"
+                  className="az-btn-primary flex items-center justify-center gap-2"
                   style={{
                     padding: '12px 32px',
                     borderRadius: 999,
@@ -199,7 +199,26 @@ export default function ReferralPage(): React.JSX.Element {
                     cursor: 'pointer',
                   }}
                 >
-                  {copied ? 'Check Copied!' : 'Copy Link'}
+                  {copied ? (
+                    <>
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2.5}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M4.5 12.75l6 6 9-13.5"
+                        />
+                      </svg>
+                      Copied!
+                    </>
+                  ) : (
+                    'Copy Link'
+                  )}
                 </button>
                 <button
                   onClick={() => {
@@ -307,7 +326,7 @@ export default function ReferralPage(): React.JSX.Element {
                         justifyContent: 'space-between',
                         alignItems: 'center',
                         padding: '10px 0',
-                        borderBottom: '1px solid #2A1A1A',
+                        borderBottom: '1px solid #18151e',
                       }}
                     >
                       <div>

@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import axios from 'axios';
@@ -173,9 +174,7 @@ export class CinemaPassService {
             throw new BadRequestException('Insufficient balance');
           }
         } catch (error) {
-          if (error instanceof NotFoundException || error instanceof BadRequestException)
-            throw error;
-          throw new NotFoundException('Wallet not found');
+          mapAndThrow(error, 'looking up wallet for cinema pass');
         }
 
         try {
@@ -190,8 +189,7 @@ export class CinemaPassService {
             { timeout: 10000 }
           );
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Failed to process payment';
-          throw new BadRequestException(errorMessage);
+          mapAndThrow(error, 'charging cinema pass');
         }
       }
 

@@ -105,7 +105,10 @@ export default function PredictionsPage() {
               <div
                 key={i}
                 className="p-4 rounded-xl"
-                style={{ border: '1px solid rgba(255,255,255,0.1)' }}
+                style={{
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  backgroundColor: 'var(--brand-surface, #18151e)',
+                }}
               >
                 <Skeleton width="60%" height="16px" />
                 <Skeleton width="40%" height="12px" className="mt-2" />
@@ -113,8 +116,22 @@ export default function PredictionsPage() {
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-12">
-            <span className="text-4xl block mb-4">&#x1F52E;</span>
+          <div className="text-center py-16 az-glass rounded-2xl">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-[var(--brand-orange)]">
+              <svg
+                className="w-7 h-7"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.8}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
+                />
+              </svg>
+            </div>
             <h3 className="text-lg font-bold text-white mb-2">No predictions yet</h3>
             <p className="text-white/50 text-sm">Start predicting to earn points!</p>
           </div>
@@ -124,10 +141,10 @@ export default function PredictionsPage() {
               {filtered.map((pred) => (
                 <div
                   key={pred.id}
-                  className="p-4 rounded-xl flex items-center justify-between"
+                  className="p-4 rounded-xl flex items-center justify-between transition-all hover:border-white/20"
                   style={{
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    backgroundColor: 'rgba(26,10,10,0.5)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    backgroundColor: 'var(--brand-surface, #18151e)',
                   }}
                 >
                   <div className="flex-1">

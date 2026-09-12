@@ -10,6 +10,7 @@ import AppFooter from '@/components/layout/AppFooter';
 import MusicTrackList from '@/components/music/MusicTrackList';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
+import { extractTracks } from '@/lib/music';
 import analytics from '@/lib/analytics';
 
 interface Artist {
@@ -21,16 +22,6 @@ interface Artist {
   trackCount?: number;
   followerCount?: number;
   socialLinks?: { platform: string; url: string }[];
-}
-
-interface Track {
-  id: string;
-  title: string;
-  artist: string;
-  thumbnail: string;
-  duration?: number;
-  genre?: string;
-  isExplicit?: boolean;
 }
 
 export default function ArtistDetailPage(): React.JSX.Element {
@@ -55,8 +46,8 @@ export default function ArtistDetailPage(): React.JSX.Element {
   const tracksQuery = useQuery({
     queryKey: ['music', 'artist', id, 'tracks'],
     queryFn: async () => {
-      const res = await api.request<Track[]>(`/api/v1/lifestyle/music?artistId=${id}`);
-      if (res.success && res.data) return res.data;
+      const res = await api.request<unknown>(`/api/v1/lifestyle/music?artistId=${id}`);
+      if (res.success && res.data) return extractTracks(res.data);
       return [];
     },
     staleTime: 60000,
@@ -73,7 +64,7 @@ export default function ArtistDetailPage(): React.JSX.Element {
       {/* Artist Hero */}
       <section
         className="relative py-16 sm:py-20"
-        style={{ background: 'linear-gradient(135deg, #4C0A5E 0%, #1A0A0A 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #4C0A5E 0%, #0b090e 100%)' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Link

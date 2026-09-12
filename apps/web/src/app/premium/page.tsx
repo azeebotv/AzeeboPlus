@@ -171,7 +171,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
         <AppHeader />
         <div
           className="flex items-center justify-center"
@@ -188,7 +188,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
 
   if (error) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
         <AppHeader />
         <div
           className="flex items-center justify-center"
@@ -210,7 +210,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
       <AppHeader />
 
       <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
@@ -220,9 +220,19 @@ export default function PremiumAccessPage(): React.JSX.Element {
         </div>
 
         {status?.isPremium && (
-          <div className="az-glass p-6 mb-8" style={{ border: '2px solid rgba(234,179,8,0.5)' }}>
+          <div
+            className="az-glass p-6 mb-8 rounded-2xl"
+            style={{
+              border: '1px solid rgba(234,179,8,0.4)',
+              boxShadow: '0 0 30px rgba(234,179,8,0.1)',
+            }}
+          >
             <div className="flex items-center gap-4 mb-4">
-              <span className="text-4xl">Crown</span>
+              <div className="w-12 h-12 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                </svg>
+              </div>
               <div>
                 <h2 className="text-xl font-bold" style={{ color: 'var(--color-warning-400)' }}>
                   Premium Active
@@ -258,15 +268,22 @@ export default function PremiumAccessPage(): React.JSX.Element {
           </div>
         )}
 
-        <div className="mb-6 p-4 rounded-xl border border-cyan-500/30 bg-cyan-500/5">
-          <div className="flex items-center justify-between">
+        <div className="mb-8 p-5 rounded-2xl border border-orange-500/20 bg-orange-500/5 az-glass">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-[var(--brand-orange)] block mb-1">
+                Value Pack
+              </span>
               <h3 className="text-lg font-bold text-white">Bundle Passes</h3>
               <p className="text-white/50 text-sm">Save up to 40% with multi-universe bundles</p>
             </div>
             <Link
               href="/bundles"
-              className="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-black font-semibold rounded-lg text-sm transition-colors"
+              className="px-6 py-2.5 rounded-full text-sm font-semibold transition-all hover:scale-105 active:scale-95 text-center"
+              style={{
+                background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+                color: '#ffffff',
+              }}
             >
               View Bundles
             </Link>
@@ -366,8 +383,8 @@ export default function PremiumAccessPage(): React.JSX.Element {
                 style={{
                   background:
                     walletBalance >= confirmPlan?.price
-                      ? 'linear-gradient(135deg, #0D3B2E 0%, #0A5C36 100%)'
-                      : 'var(--bg-surface, #2A1A1A)',
+                      ? 'linear-gradient(135deg, #059669 0%, #10B981 100%)'
+                      : 'var(--bg-surface, #18151e)',
                   color: walletBalance >= confirmPlan?.price ? 'white' : 'var(--brand-grey)',
                   cursor: walletBalance >= confirmPlan?.price ? 'pointer' : 'not-allowed',
                 }}

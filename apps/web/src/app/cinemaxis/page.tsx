@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { api, ContentItem } from '@/lib/api';
+import { useUniversesQuery } from '@/hooks/useUniverses';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
@@ -19,15 +20,7 @@ function CinemaxisPageContent(): React.JSX.Element {
     analytics.pageView('cinemaxis');
   }, []);
 
-  const universesQuery = useQuery({
-    queryKey: ['universes'],
-    queryFn: async () => {
-      const res = await api.universe.getUniverses();
-      if (!res.success || !res.data) throw new Error(res.message || 'Failed to load universes');
-      return res.data;
-    },
-    staleTime: 300000,
-  });
+  const universesQuery = useUniversesQuery();
 
   const cinemaxisUniverse = universesQuery.data?.find(
     (u) => u.name?.toLowerCase() === 'cinema' || u.name?.toLowerCase() === 'cinemaxis'
@@ -58,12 +51,17 @@ function CinemaxisPageContent(): React.JSX.Element {
       {/* Hero */}
       <section
         className="relative py-20 overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #0A1A3B 0%, #1A0A3B 50%, #2D1B69 100%)' }}
+        style={{ background: 'linear-gradient(180deg, #100e14 0%, #0b090e 100%)' }}
       >
         <AmbientGlow
-          color="rgba(168,85,247,0.2)"
+          color="rgba(232, 66, 10, 0.15)"
           size={600}
           className="top-[-100px] right-[-100px]"
+        />
+        <AmbientGlow
+          color="rgba(168, 85, 247, 0.12)"
+          size={500}
+          className="bottom-[-100px] left-[-100px]"
         />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center">
@@ -109,7 +107,7 @@ function CinemaxisPageContent(): React.JSX.Element {
                 <motion.button
                   type="button"
                   aria-label="View premieres"
-                  className="px-6 py-3 rounded-full text-sm font-semibold text-[#1A0A3B] transition-all"
+                  className="px-6 py-3 rounded-full text-sm font-semibold text-[#100e14] transition-all"
                   style={{ backgroundColor: 'var(--brand-purple-light)' }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -170,7 +168,7 @@ function CinemaxisPageContent(): React.JSX.Element {
                       alt={item.title}
                       className="w-full h-40 object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A1A]/80 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0b090e]/80 to-transparent" />
                     <div className="absolute bottom-3 left-3 right-3">
                       <h3 className="text-base font-bold text-white">{item.title}</h3>
                     </div>

@@ -25,7 +25,11 @@ RUN corepack enable && corepack prepare pnpm@10.33.2 --activate && \
 
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# .npmrc MUST be present: shamefully-hoist=true puts @prisma/client and
+# transitive deps at the root node_modules — scripts/generate-prisma-clients.sh
+# verifies `require('@prisma/client')` from the root, and services rely on
+# hoisted transitive deps. Without it the install is isolated and T-1 fails.
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY apps/web/package.json apps/web/
 COPY apps/admin/package.json apps/admin/
 COPY apps/creator/package.json apps/creator/
@@ -131,7 +135,8 @@ SHELL ["/bin/bash", "-eo", "pipefail", "-c"]
 # be repeated in every tier below. patch-prisma-client.sh is repo-wide and
 # idempotent, so running it once right after generation is equivalent to
 # running it after every service.
-RUN echo "==> [T-1] Generating Prisma clients for all schemas..." && \
+RUN --mount=type=cache,target=/root/.cache/prisma \
+    echo "==> [T-1] Generating Prisma clients for all schemas..." && \
     bash scripts/generate-prisma-clients.sh && \
     bash scripts/patch-prisma-client.sh && \
     echo "==> [T-1] Complete"
@@ -148,13 +153,15 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/api-client run build && \
     pnpm --filter @azeebo/design-tokens run build && \
     pnpm --filter @azeebo/analytics-sdk run build && \
+    pnpm --filter @azeebo/feature-flags run build && \
     pnpm --filter @azeebo/shared-services run build && \
     pnpm --filter @azeebo/security run build && \
+    pnpm --filter @azeebo/flag-metrics run build && \
+    pnpm --filter @azeebo/queue-policy run build && \
     pnpm --filter @azeebo/ui run build && \
     pnpm --filter @azeebo/observability run build && \
     pnpm --filter @azeebo/opentelemetry run build && \
     pnpm --filter @azeebo/event-bus run build && \
-    pnpm --filter @azeebo/feature-flags run build && \
     pnpm --filter @azeebo/internal-clients run build && \
     echo "==> [T0] Complete"
 
@@ -274,6 +281,8 @@ SHELL ["/bin/sh", "-c"]
 # ---- Verify ALL outputs exist — crash if anything is missing ----
 RUN echo "==> Verifying build outputs..." && \
     set -e && \
+    echo "==> [T8] Asserting generated Prisma clients are fresh (schema vs embedded copy)..." && \
+    node scripts/check-prisma-client-stale.mjs && \
     MISSING=0 && \
     for svc_dir in $(find services -maxdepth 2 -mindepth 2 -type d -not -path "*/node_modules/*" | sort); do \
       name=$(basename "$svc_dir"); \

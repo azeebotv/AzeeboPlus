@@ -102,7 +102,7 @@ function PassesPageContent(): React.JSX.Element {
       {/* Hero */}
       <section
         className="relative py-16 sm:py-20"
-        style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #1A0A0A 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #0b090e 100%)' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.h1

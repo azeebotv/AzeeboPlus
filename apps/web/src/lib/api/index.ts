@@ -303,10 +303,24 @@ class ApiClient {
         return this.buildErrorResponse(data, response.status);
       }
 
+      // T-FIX: Some upstream controllers return HTTP 200 with an error
+      // envelope ({ success: false, ... }). Honor that instead of treating
+      // the whole envelope as payload data (which broke pages calling
+      // .find()/.map() on the result).
+      if (
+        data &&
+        typeof data === 'object' &&
+        'success' in data &&
+        (data as Record<string, unknown>).success === false
+      ) {
+        return this.buildErrorResponse(data as Record<string, unknown>, response.status);
+      }
+
+      const body = data as Record<string, unknown>;
       return {
         success: true,
-        data: data.data || data,
-        message: data.message,
+        data: body.data !== undefined ? body.data : data,
+        message: body.message as string | undefined,
       };
     } catch (error) {
       clearTimeout(timeoutId);

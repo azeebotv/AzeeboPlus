@@ -37,6 +37,22 @@ services:
       - azeebo-network
     restart: unless-stopped
 
+  # Loki — log aggregation target for container logs shipped by promtail
+  # (staging job stack: docker-compose.staging-jobs.yml). Single-binary
+  # filesystem mode; 30d retention via limits_config.
+  loki:
+    image: grafana/loki:3.1.1
+    container_name: azeebo-loki
+    ports:
+      - '3100:3100'
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - azeebo-network
+    restart: unless-stopped
+
   # Alertmanager
   alertmanager:
     image: prom/alertmanager:latest
@@ -53,6 +69,7 @@ volumes:
   prometheus_data:
   grafana_data:
   alertmanager_data:
+  loki_data:
 
 networks:
   azeebo-network:

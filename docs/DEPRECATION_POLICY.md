@@ -154,6 +154,92 @@ In these cases, we will:
 
 ---
 
+## Data Retention — Archived Tables
+
+When a destructive migration removes columns, their contents are first copied
+into the dedicated `archive` schema (outside `public`, so Prisma introspection
+and the CI drift gates never see it). Every archive table carries its cutover
+date in its name and is destroyed on a fixed schedule.
+
+### `archive.users_legacy_auth_20260908` (user-service DB)
+
+| Property | Value |
+|----------|-------|
+| Created by | `services/core/user-service/prisma/migrations/20260908113000_user_schema_sync/migration.sql` |
+| Archived | 2026-09-08 (auth cutover: `users.password`, `mfa*`, `isVerified`, `preferences` dropped) |
+| Rows | 18 |
+| Contents | **Credential-grade**: password hashes, MFA TOTP secrets, MFA backup codes, emails, preferences JSON |
+| Sensitivity | Highest class — treat access to this table like access to a password store |
+| Retention | **90 days** — destroy on **2026-12-07** |
+
+**Why 90 days:** covers a full quarter of auth telemetry after the cutover —
+enough for incident response or a rollback decision if the new auth flow
+misbehaves. The data has no long-term value: passwords are recoverable via
+reset, MFA is re-enrollable, and `preferences` was backfilled into
+`user_profiles` by the same migration.
+
+#### Pre-drop verification checklist (all must hold)
+
+1. New auth path healthy for 60+ days (login success rate, no open incidents
+   referencing the legacy columns or needing recovery from this backup).
+2. `user_profiles` backfill spot-checked (displayName/avatar continuity).
+3. No ticket, dispute, or legal hold requires the backup.
+4. Sign-off recorded in this document's log below.
+
+#### How to drop it safely
+
+```sql
+-- 0. Record final state for the audit note (run OUTSIDE the transaction):
+--    SELECT count(*), count(DISTINCT "userId") FROM archive.users_legacy_auth_20260908;
+
+-- 1. Confirm nothing depends on the table:
+--    SELECT DISTINCT viewname FROM pg_views WHERE definition LIKE '%users_legacy_auth_20260908%';
+--    (expect zero rows; there are no FKs to archive tables by design)
+
+-- 2. Drop inside one transaction with an explicit lock:
+BEGIN;
+LOCK TABLE archive.users_legacy_auth_20260908 IN ACCESS EXCLUSIVE MODE;
+DROP TABLE archive.users_legacy_auth_20260908;
+COMMIT;
+-- Storage is returned to the filesystem immediately (no VACUUM needed).
+
+-- 3. Only if the archive schema is now empty AND no future archives are planned:
+--    DROP SCHEMA archive;   -- fresh replays recreate it (see note below)
+```
+
+**Fresh-environment note:** the `CREATE TABLE` lives inside an already-shipped
+(immutable) migration, so a replay on a new database recreates the archive
+table — **empty** (0 rows). That is acceptable and self-documenting: the drop
+procedure above only needs to run on environments that predate the cutover,
+and on fresh environments it is a zero-risk no-op whenever someone notices it.
+
+**Backups/WAL caveat:** PITR archives and base backups taken *before* the drop
+still contain the table until they age out of backup retention (~30–35 days).
+Erasure completes only when those backups expire; record the drop date
+so the erasure completion date is known (drop date + backup retention).
+
+#### Retention log
+
+| Table | Archived | Verified | Dropped | Erasure complete (incl. backups) | Approved by |
+|-------|----------|----------|---------|----------------------------------|-------------|
+| `archive.users_legacy_auth_20260908` | 2026-09-08 | — | — | — | — |
+
+#### Automated cleanup
+
+`scripts/archive-cleanup.mjs` enforces this policy mechanically: it scans
+every `azeebo_*` database, computes each archive table's age from its
+`_YYYYMMDD` cutover suffix (or the `archivedAt` entry in
+`scripts/archive-cleanup.state.json`), and classifies it as KEEP (inside the
+retention window), HOLD (expired but not signed off), or DROP (expired and
+signed off). Plan mode is the default; nothing is dropped without `--apply`,
+and every drop is recorded in the state file's audit log. Operational
+details (scheduling, sign-off format, emergency override, recovery SQL) are
+in `RUNBOOK.md` — "Archive Schema Retention Cleanup". Tables without any
+known cutover date are always KEEP — they must be dated (renamed with a
+drop-then-rename, or added to the state file) before they can ever expire.
+
+---
+
 ## Contact
 
 For questions about deprecations:

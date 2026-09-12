@@ -32,7 +32,7 @@ export default function SupportPage(): React.JSX.Element {
   return (
     <div
       style={{
-        backgroundColor: 'var(--bg-primary, #1A0A0A)',
+        backgroundColor: 'var(--bg-primary)',
         minHeight: '100vh',
         color: 'var(--text-primary, #F5F0EB)',
       }}

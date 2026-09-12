@@ -28,6 +28,7 @@ const SERVICE_CONTEXTS: Record<string, ServiceContext> = {
   user: { label: 'user-service', description: 'Profiles, follow system & deletion' },
   recommendation: { label: 'recommendation-service', description: 'Personalized feed' },
   analytics: { label: 'analytics-service', description: 'Analytics pipeline' },
+  reward: { label: 'reward-service', description: 'Points, streaks, badges & missions' },
 };
 
 /** Flag whose off-flip stops CDN edge caching — carries the purge action. */

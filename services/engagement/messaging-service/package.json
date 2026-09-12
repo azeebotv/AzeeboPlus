@@ -4,9 +4,9 @@
   "description": "Azeebo+ Messaging Service",
   "private": true,
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "bash ../../../scripts/build-service.sh",
     "start": "nest start",
-    "start:dev": "bash start-dev.sh",
+    "start:dev": "bash ../../../scripts/start-dev-service.sh",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint src",

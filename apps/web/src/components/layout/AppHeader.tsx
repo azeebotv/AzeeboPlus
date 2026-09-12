@@ -323,7 +323,15 @@ function MenuIcon({
 
 /* ─── AppHeader ─── */
 
-export default function AppHeader({ active: _active }: { active?: string }) {
+export default function AppHeader({
+  active: _active,
+  logoVariant = 'light',
+  logoHeight,
+}: {
+  active?: string;
+  logoVariant?: 'light' | 'orange';
+  logoHeight?: number;
+}) {
   const { t } = useTranslation();
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -559,7 +567,7 @@ export default function AppHeader({ active: _active }: { active?: string }) {
               className="flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--brand-near-black)] rounded-lg transition-transform hover:scale-105"
               aria-label="Azeebo+ home"
             >
-              <BrandLogo variant="orange" />
+              <BrandLogo variant={logoVariant} height={logoHeight} />
             </Link>
           </div>
 

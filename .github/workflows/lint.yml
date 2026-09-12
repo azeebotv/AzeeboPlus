@@ -85,4 +85,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm -r lint
+      # Ratchet: azeebo-custom/require-map-and-throw warnings may only
+      # decrease over time (per-workspace baseline, see
+      # scripts/lint-warning-baseline.json).
+      - run: pnpm run check:lint-ratchet
 

@@ -31,7 +31,7 @@ export default function OfflinePage(): React.JSX.Element {
   return (
     <div
       className="min-h-screen flex items-center justify-center px-4"
-      style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}
+      style={{ backgroundColor: 'var(--bg-primary)' }}
     >
       <div className="az-glass p-8 sm:p-12 max-w-md w-full text-center">
         <div

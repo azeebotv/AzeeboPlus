@@ -43,7 +43,7 @@ function FilmsContent() {
       <AppHeader active="Cinemaxis" />
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">FilmBrowse Films</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Browse Films</h1>
           <p className="text-white/50 mb-8">
             Explore our collection of movies available on Cinemaxis
           </p>

@@ -7,6 +7,7 @@ import { api } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import MusicTrackList, { Track } from '@/components/music/MusicTrackList';
+import { extractGenres, extractTracks } from '@/lib/music';
 import analytics from '@/lib/analytics';
 
 interface Genre {
@@ -24,8 +25,8 @@ function MusicPageContent(): React.JSX.Element {
   const musicQuery = useQuery({
     queryKey: ['music-tracks'],
     queryFn: async () => {
-      const res = await api.request<Track[]>('/api/v1/lifestyle/music');
-      if (res.success && res.data) return res.data;
+      const res = await api.request<unknown>('/api/v1/lifestyle/music');
+      if (res.success && res.data) return extractTracks(res.data);
       throw new Error(res.message || 'Failed to load music');
     },
     staleTime: 60000,
@@ -34,8 +35,8 @@ function MusicPageContent(): React.JSX.Element {
   const genresQuery = useQuery({
     queryKey: ['music', 'genres'],
     queryFn: async () => {
-      const res = await api.request<Genre[]>('/api/v1/lifestyle/music/genres');
-      if (res.success && res.data) return res.data;
+      const res = await api.request<unknown>('/api/v1/lifestyle/music/genres');
+      if (res.success && res.data) return extractGenres(res.data);
       return [];
     },
     staleTime: 300000,
@@ -77,17 +78,52 @@ function MusicPageContent(): React.JSX.Element {
           >
             <Link
               href="/music/trending"
-              className="px-5 py-2.5 rounded-full text-sm font-medium transition-all"
+              className="px-5 py-2.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 hover:scale-105 active:scale-95 shadow-lg"
               style={{ background: 'var(--brand-orange)', color: 'var(--brand-white)' }}
             >
-              FlameTrending
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1.001A3.75 3.75 0 0012 18z"
+                />
+              </svg>
+              Trending
             </Link>
             <Link
               href="/music/genres"
-              className="px-5 py-2.5 rounded-full text-sm font-medium transition-all"
-              style={{ border: '1px solid rgba(255,255,255,0.3)', color: 'var(--brand-white)' }}
+              className="px-5 py-2.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 hover:bg-white/10 active:scale-95"
+              style={{
+                border: '1px solid rgba(255,255,255,0.2)',
+                backgroundColor: 'rgba(255,255,255,0.05)',
+                color: 'var(--brand-white)',
+              }}
             >
-              Music2Genres
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a.75.75 0 00.532-.72v-1.443m0-6.553V3.627a.75.75 0 00-.943-.726L8.5 5.5m0 0v10.803a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a.75.75 0 00.532-.72V5.5"
+                />
+              </svg>
+              Genres
             </Link>
           </motion.div>
         </div>

@@ -133,7 +133,7 @@ export default function ResetPasswordPage(): React.JSX.Element {
   }
 
   return (
-    <AuthShell headlineLines={['Password', 'Reset']} backgroundFallback="#1A0A0A">
+    <AuthShell headlineLines={['Password', 'Reset']} backgroundFallback="#0b090e">
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div>
           <h2 className="az-headline text-white text-3xl">Reset your password</h2>

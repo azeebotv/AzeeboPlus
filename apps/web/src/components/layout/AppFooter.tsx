@@ -6,9 +6,15 @@ import BrandLogo from '../auth/BrandLogo';
 
 interface AppFooterProps {
   siteName?: string;
+  logoVariant?: 'light' | 'orange';
+  logoHeight?: number;
 }
 
-export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): React.JSX.Element {
+export default function AppFooter({
+  siteName = 'Azeebo+',
+  logoVariant = 'light',
+  logoHeight,
+}: AppFooterProps): React.JSX.Element {
   const { t } = useTranslation();
   const FOOTER_LINKS = {
     platform: {
@@ -151,7 +157,7 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
   return (
     <footer
       className="relative"
-      style={{ backgroundColor: 'var(--brand-near-black)' }}
+      style={{ backgroundColor: 'var(--hp-bg)' }}
       role="contentinfo"
     >
       {/* Ambient glow */}
@@ -172,7 +178,7 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
               className="inline-block focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--brand-near-black)] rounded-lg"
               aria-label={t('footer.homeAria', { siteName })}
             >
-              <BrandLogo variant="orange" />
+              <BrandLogo variant={logoVariant} height={logoHeight} />
             </Link>
             <p className="text-white/40 text-sm mt-4 max-w-xs leading-relaxed">
               {t('footer.description')}

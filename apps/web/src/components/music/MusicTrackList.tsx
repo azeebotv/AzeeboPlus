@@ -13,6 +13,13 @@ export interface Track {
   duration?: number;
   genre?: string;
   isExplicit?: boolean;
+  album?: string;
+  releaseDate?: string;
+  playCount?: number;
+  likeCount?: number;
+  lyrics?: string;
+  audioUrl?: string;
+  artistId?: string;
 }
 
 interface MusicTrackListProps {

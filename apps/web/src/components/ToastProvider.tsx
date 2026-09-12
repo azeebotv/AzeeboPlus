@@ -55,10 +55,11 @@ export function ToastProvider({ children }: { children: ReactNode }): React.JSX.
                 toast.type === 'error'
                   ? 'var(--brand-red, #CC1C1C)'
                   : toast.type === 'success'
-                    ? 'var(--brand-forest, #0D3B2E)'
-                    : 'var(--brand-near-black, #1A0A0A)',
-              border: '1px solid var(--brand-surface, #2A1A1A)',
-              color: 'var(--brand-white, #F5F0EB)',
+                    ? '#059669'
+                    : 'var(--brand-near-black, #0b090e)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              color: '#FFFFFF',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
               fontSize: 14,
               fontWeight: 500,
               cursor: 'pointer',

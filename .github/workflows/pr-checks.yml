@@ -58,6 +58,10 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm run lint
+      # Ratchet: azeebo-custom/require-map-and-throw warnings may only
+      # decrease over time (per-workspace baseline). A new fabricated-4xx
+      # catch block fails here even though the rule itself is still 'warn'.
+      - run: pnpm run check:lint-ratchet
 
   conventions-pr:
     name: Flag & Swagger Conventions
@@ -74,10 +78,28 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: node scripts/check-flag-conventions.mjs
       - run: node scripts/check-prisma-find-first.mjs
+      # Every service's start:dev must route through the shared dev runner
+      # (scripts/start-dev-service.sh) and every service's build through the
+      # shared build runner (scripts/build-service.sh) — exact-string wiring,
+      # no per-service wrappers or inline chains. The start:dev drift caused
+      # the live-event phantom-dir guard and the knowledge-service bypass;
+      # 28 identical inline build chains were the same drift class. The check
+      # also self-tests that each expected wiring's relative path actually
+      # resolves to its runner from services/<group>/<svc>.
+      - run: node scripts/check-dev-wiring.mjs
+      # The Dockerfile.all-in-one build chain must topologically match the real
+      # workspace dependency graph (dist-exporting deps built before their
+      # consumers; nothing missing). Wrong order/missing entries only surfaced
+      # as ~15-minute container build failures before this check existed.
+      - run: node scripts/check-build-chain.mjs
+      # The pre-commit hook (scripts/hooks/pre-commit) only runs on clones
+      # that opted in via core.hooksPath, so CI is the only place that can
+      # catch it being deleted, left untracked, committed without its
+      # executable bit, or rewritten without the stale-client check.
+      - run: node scripts/check-git-hooks.mjs
       # Fails when .env.example omits a key the code reads via getOrThrow,
       # or the shared env validator requires — i.e. a service that cannot
       # boot when someone follows .env.example verbatim.
-      - run: node scripts/check-git-hooks.mjs
       - run: node scripts/check-env-consistency.mjs
       - run: node --test scripts/__tests__/*.test.mjs
       - run: node scripts/check-swagger-consistency.mjs
@@ -88,6 +110,19 @@ jobs:
     name: Prisma Migrations Drift
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Identity: PR comments come from the azeebo-drift-bot GitHub App, not
+    # the workflow's own identity — workflow-created comments stop enforcing
+    # branch protection / retriggering CI loops; App comments don't (App
+    # comments are exempt from those triggers). create-github-app-token mints
+    # a short-lived installation token for the App (Actions: read to fetch the
+    # nightly live-report artifacts, Pull requests: write to upsert its
+    # comment). This JOB's own github.token keeps only contents: read — it
+    # never calls the API.
+    # When vars.DRIFT_BOT_APP_ID / secrets.DRIFT_BOT_APP_PRIVATE_KEY are not
+    # configured yet, the token step is skipped and the bot skip-loudly's —
+    # gates still run and still fail the PR; only the comment is missing.
+    permissions:
+      contents: read
     services:
       postgres:
         image: postgres:15
@@ -127,6 +162,29 @@ jobs:
         run: node scripts/check-deployed-schema.mjs
         env:
           SHADOW_DB_URL: postgresql://azeebo:${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}@localhost:5432/postgres
+      # PR comment bot: upserts a per-service drift table (matched by a stable
+      # marker) so reviewers see which service broke without opening
+      # artifacts. Each gate writes report.json next to its diff artifacts;
+      # the bot renders whatever reports exist, adds the nightly
+      # live-environment section when it can fetch it (App token has
+      # actions: read), and no-ops silently on non-PR triggers. Comments post
+      # under the azeebo-drift-bot App identity. --no-live would skip the
+      # live section entirely.
+      # always() so a failed gate run still mints a token and still posts —
+      # red runs are the whole point of the comment bot.
+      - name: Mint azeebo-drift-bot App token
+        id: app-token
+        if: ${{ always() && vars.DRIFT_BOT_APP_ID != '' && secrets.DRIFT_BOT_APP_PRIVATE_KEY != '' }}
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.DRIFT_BOT_APP_ID }}
+          private-key: ${{ secrets.DRIFT_BOT_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+      - name: Post drift report comment on the PR
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: node scripts/post-drift-pr-comment.mjs
       - name: Upload drift artifacts on failure
         if: failure()
         uses: actions/upload-artifact@v4
@@ -195,8 +253,12 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm run prisma:generate --if-present
-      - run: pnpm run typecheck
+      # Post-generate assertion: every schema's embedded client copy must
+      # match the schema. Catches silent generation drift (generate writing
+      # somewhere the schema does not declare, or a skipped rewrite) that
+      # would otherwise only surface as confusing type errors below.
       - run: node scripts/check-prisma-client-stale.mjs
+      - run: pnpm run typecheck
 
   test-pr:
     name: Test PR

@@ -1,8 +1,23 @@
 'use client';
 import { useRouter } from 'next/navigation';
-
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { Shield, Flag, ClipboardList, Smartphone, Search, ArrowRight } from 'lucide-react';
+
+function getModLinkIcon(iconName: string): React.JSX.Element {
+  switch (iconName) {
+    case 'Flag':
+      return <Flag className="w-6 h-6 text-orange-400" />;
+    case 'ClipboardList':
+      return <ClipboardList className="w-6 h-6 text-blue-400" />;
+    case 'Smartphone':
+      return <Smartphone className="w-6 h-6 text-purple-400" />;
+    case 'Search':
+      return <Search className="w-6 h-6 text-emerald-400" />;
+    default:
+      return <Shield className="w-6 h-6 text-orange-400" />;
+  }
+}
 
 const modLinks = [
   {
@@ -38,11 +53,11 @@ export default function ModerationPage(): React.JSX.Element {
     <div
       className="min-h-screen"
       style={{
-        backgroundColor: 'var(--bg-primary, #1A0A0A)',
-        color: 'var(--text-primary, #F5F0EB)',
+        backgroundColor: '#0b090e',
+        color: '#F5F0EB',
       }}
     >
-      <AppHeader />
+      <AppHeader logoVariant="light" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 960, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <div
@@ -55,15 +70,15 @@ export default function ModerationPage(): React.JSX.Element {
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 16px',
-              fontSize: 28,
+              boxShadow: '0 8px 32px rgba(232, 66, 10, 0.3)',
             }}
           >
-            Shield
+            <Shield className="w-8 h-8 text-white" />
           </div>
-          <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8 }}>Moderation Center</h1>
+          <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8, color: '#ffffff' }}>Moderation Center</h1>
           <p
             style={{
-              color: 'var(--text-muted, #9A8A7A)',
+              color: 'rgba(255, 255, 255, 0.6)',
               fontSize: 16,
               maxWidth: 500,
               margin: '0 auto',
@@ -87,31 +102,46 @@ export default function ModerationPage(): React.JSX.Element {
                 borderRadius: 16,
                 cursor: 'pointer',
                 textAlign: 'left',
-                border: '1px solid var(--border-default)',
-                backgroundColor: 'rgba(26,10,10,0.5)',
-                color: 'var(--text-primary, #F5F0EB)',
-                transition: 'border-color 0.2s',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                backgroundColor: '#18151e',
+                color: '#F5F0EB',
+                transition: 'border-color 0.2s, transform 0.2s',
               }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.borderColor = 'var(--brand-orange, #E8420A)')
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.borderColor = 'var(--bg-surface, #2A1A1A)')
-              }
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--brand-orange, #E8420A)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
             >
-              <span style={{ fontSize: 28 }}>{link.icon}</span>
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                {getModLinkIcon(link.icon)}
+              </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 2 }}>{link.label}</h3>
-                <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 13, margin: 0 }}>
+                <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 2, color: '#ffffff' }}>{link.label}</h3>
+                <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 13, margin: 0 }}>
                   {link.desc}
                 </p>
               </div>
-              <span style={{ color: 'var(--brand-orange, #E8420A)', fontSize: 18 }}>→</span>
+              <ArrowRight className="w-5 h-5 text-orange-500 flex-shrink-0" />
             </button>
           ))}
         </div>
       </main>
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

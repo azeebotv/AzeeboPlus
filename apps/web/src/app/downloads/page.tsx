@@ -77,7 +77,7 @@ export default function DownloadsPage(): React.JSX.Element {
   if (authLoading) return <></>;
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
         <AppHeader />
         <main className="max-w-4xl mx-auto px-4 py-12">
           <div className="az-glass p-8 text-center">
@@ -102,7 +102,7 @@ export default function DownloadsPage(): React.JSX.Element {
   const storagePercent = Math.round((storageUsed / storageTotal) * 100);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
       <AppHeader />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}

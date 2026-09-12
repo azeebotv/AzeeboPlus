@@ -36,6 +36,11 @@ coverage/
 **/dist/
 **/build/
 **/.next/
+**/*.tsbuildinfo
+
+# Cache directories
+.cache/
+**/.cache/
 
 # IDE and editor files
 .vscode/
@@ -60,5 +65,10 @@ Dockerfile*
 scripts/*
 !scripts/generate-prisma-clients.sh
 !scripts/patch-prisma-client.sh
+!scripts/check-prisma-client-stale.mjs
+!scripts/build-service.sh
+!scripts/build-package.sh
+!scripts/install-git-hooks.sh
+!scripts/lib
 !scripts/demo-content
 test/

@@ -273,17 +273,29 @@ export default function AuthenticatedHomepage({
   }, []);
 
   return (
-    <div className="min-h-screen az-nollywood-bg">
-      <AppHeader active="Home" />
+    <div
+      className="min-h-screen relative overflow-x-hidden"
+      style={{ background: 'var(--hp-bg)', color: 'var(--text-primary)' }}
+    >
+      <AppHeader active="Home" logoVariant="light" />
 
-      <main>
+      {/* Top Ambient glow */}
+      <div
+        className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[500px] rounded-full blur-[140px] -z-0"
+        style={{
+          background: 'radial-gradient(circle, rgba(232,66,10,0.18) 0%, rgba(204,28,28,0.06) 50%, transparent 80%)',
+        }}
+        aria-hidden="true"
+      />
+
+      <main className="relative z-10">
         {/* ===== Section 1: Hero Slides Carousel ===== */}
         <HeroSlides slides={featuredSlides} />
 
         {/* Personalized greeting */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-2">
           <motion.h1
-            className="az-headline text-white text-2xl sm:text-3xl"
+            className="az-headline font-extrabold text-white text-2xl sm:text-3xl tracking-tight"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
@@ -430,7 +442,7 @@ export default function AuthenticatedHomepage({
         </ScrollReveal>
       </main>
 
-      <AppFooter siteName={siteName} />
+      <AppFooter siteName={siteName} logoVariant="light" />
     </div>
   );
 }

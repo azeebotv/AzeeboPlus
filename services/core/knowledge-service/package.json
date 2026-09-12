@@ -5,9 +5,9 @@
   "description": "Azeebo+ Knowledge Graph Service",
   "main": "dist/main.js",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "bash ../../../scripts/build-service.sh",
     "start": "node dist/main.js",
-    "start:dev": "nest start --watch",
+    "start:dev": "bash ../../../scripts/start-dev-service.sh",
     "lint": "eslint src",
     "test": "jest",
     "test:watch": "jest --watch",

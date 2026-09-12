@@ -157,6 +157,51 @@ docker compose -f docker-compose.all-in-one.yml up -d
 | Startup time | ~30s (quick) / ~3min (all) | ~2min |
 | Best for | Development, debugging | Staging, production |
 
+## Shared Dev & Build Runners
+
+Every service, schema-owning app, and package routes its `start:dev` and/or
+`build` script through a single shared runner — no per-workspace copies, no
+inline command chains. This replaced 28 drifted copies of the same start-dev
+script (each with its own bugs) and 4 textual variants of the same package
+build line.
+
+| Workspace class | Script | Runner | What the runner does |
+|-----------|--------|--------|----------------------|
+| `services/<group>/<svc>` | `pnpm start:dev` | `scripts/start-dev-service.sh` | First-run `prisma generate` → mirror client into `dist/prisma/client` → `nest start --watch` |
+| `services/<group>/<svc>` | `pnpm run build` | `scripts/build-service.sh` | `prisma generate` (always) → `tsc -p tsconfig.build.json` → mirror client into `dist/prisma/client` |
+| `apps/admin`, `apps/creator` | `pnpm start:dev` | `scripts/start-dev-app.sh` | First-run `prisma generate` (client at `src/generated/prisma`) → `tsx watch src/main.ts` |
+| `packages/<name>` | `pnpm run build` | `scripts/build-package.sh` | `tsc -p tsconfig.json` (compile-only) |
+
+The runners' shared contract:
+
+- **Run from the workspace directory** (`pnpm run` guarantees this); direct
+  invocation from elsewhere exits 2 with guidance.
+- **Fail loud, fail early.** A failed `prisma generate` or `tsc` aborts before
+  anything boots or continues, echoes the full error output with a `|` prefix,
+  and prints a fix hint. A build never completes against a stale or missing
+  client, and a dev server never starts into a cryptic runtime crash.
+- **Arg passthrough** (dev runners): extra CLI args reach the underlying
+  process, e.g. `pnpm start:dev --entryFile main2`.
+- **Packages are compile-only by design** — they never run `prisma generate`.
+  Package clients are generated repo-wide by `scripts/generate-prisma-clients.sh`
+  (CI and the Docker build's T-1 step).
+- **The app runner is deliberately its own contract** (not a services variant):
+  apps/admin and apps/creator generate on first run only, into their own
+  `src/generated/prisma` layout, then `exec tsx watch src/main.ts` — no dist
+  mirror, because tsx imports the client by relative path and nothing compiles
+  before boot. Schema-less apps like `apps/web` keep their own dev model and
+  must not wire through it.
+
+This wiring is not convention-on-paper; CI enforces it (full catalog of every
+check and its invariants: [CHECKS.md](CHECKS.md)). `check-dev-wiring`
+(the `pnpm run check:dev-wiring` step in the Flag & Swagger Conventions job)
+fails the PR when any workspace's `start:dev`/`build` script drifts from the
+exact runner invocation, when a legacy per-service `start-dev.sh` reappears,
+or when a shared runner file itself is missing. Docker's all-in-one build runs
+the same runners inside the image, and the Docker build chain's topological
+ordering against real package dependencies is separately guarded by
+`check:build-chain`.
+
 ## Per-Service Database Architecture
 
 Each service gets its own PostgreSQL database, avoiding cross-service coupling:

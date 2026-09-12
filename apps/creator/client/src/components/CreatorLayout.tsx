@@ -2,20 +2,21 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useCreatorFlags, CREATOR_FLAG_KEYS } from '@/hooks/useCreatorFlags';
+import { Icon } from './Icons';
 
 export const CREATOR_NAV = [
-  { href: '/', label: 'Dashboard', icon: '📊' },
-  { href: '/overview', label: 'Overview', icon: '📈' },
-  { href: '/analytics', label: 'Analytics', icon: '📉', flag: CREATOR_FLAG_KEYS.newAnalytics },
-  { href: '/content', label: 'Content', icon: '🎬' },
-  { href: '/upload', label: 'Upload', icon: '⬆️' },
-  { href: '/earnings', label: 'Earnings', icon: '💰' },
-  { href: '/payouts', label: 'Payouts', icon: '💳', flag: CREATOR_FLAG_KEYS.payoutsUi },
-  { href: '/subscribers', label: 'Subscribers', icon: '👥' },
-  { href: '/monetization', label: 'Monetization', icon: '🏷️' },
-  { href: '/challenges', label: 'Challenges', icon: '🏆' },
-  { href: '/profile', label: 'Profile', icon: '👤' },
-  { href: '/settings', label: 'Settings', icon: '⚙️' },
+  { href: '/', label: 'Dashboard', icon: 'dashboard' },
+  { href: '/overview', label: 'Overview', icon: 'trending' },
+  { href: '/analytics', label: 'Analytics', icon: 'trending', flag: CREATOR_FLAG_KEYS.newAnalytics },
+  { href: '/content', label: 'Content', icon: 'film' },
+  { href: '/upload', label: 'Upload', icon: 'upload' },
+  { href: '/earnings', label: 'Earnings', icon: 'dollarSign' },
+  { href: '/payouts', label: 'Payouts', icon: 'creditCard', flag: CREATOR_FLAG_KEYS.payoutsUi },
+  { href: '/subscribers', label: 'Subscribers', icon: 'users' },
+  { href: '/monetization', label: 'Monetization', icon: 'tag' },
+  { href: '/challenges', label: 'Challenges', icon: 'trophy' },
+  { href: '/profile', label: 'Profile', icon: 'user' },
+  { href: '/settings', label: 'Settings', icon: 'settings' },
 ];
 
 const styles = {
@@ -146,8 +147,27 @@ export default function CreatorLayout({ children }: { children: React.ReactNode 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
       <header style={styles.topBar}>
-        <a href="/" style={styles.logo}>
-          Azeebo+ Creator
+        <a href="/" style={{ ...styles.logo, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <img
+            src="/logo-white.png"
+            alt="Azeebo+"
+            style={{ height: 26, width: 'auto', objectFit: 'contain' }}
+          />
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: 1.5,
+              textTransform: 'uppercase',
+              padding: '2px 8px',
+              borderRadius: 6,
+              background: 'rgba(232,66,10,0.15)',
+              color: 'var(--creator-orange)',
+              border: '1px solid rgba(232,66,10,0.3)',
+            }}
+          >
+            Creator
+          </span>
         </a>
         <div style={styles.userBadge}>
           <span>{user.email}</span>
@@ -218,7 +238,7 @@ export default function CreatorLayout({ children }: { children: React.ReactNode 
                   transition: 'all 0.2s ease',
                 }}
               >
-                <span style={{ fontSize: 18 }}>{item.icon}</span>
+                <Icon name={item.icon} size={18} />
                 {item.label}
               </a>
             ))}

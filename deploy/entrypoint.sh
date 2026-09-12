@@ -75,11 +75,22 @@ done
 # ============================================================
 echo "==> Configuring PostgreSQL user and database..."
 export PGPASSWORD="$POSTGRES_PASSWORD"
-# MED-09: Use positional parameters instead of shell interpolation for
-# passwords to prevent command injection via special characters.
-gosu postgres sh -c 'psql -v ON_ERROR_STOP=0 -c "ALTER USER postgres WITH PASSWORD '"$1"'"' -- "$POSTGRES_PASSWORD" || true
-gosu postgres sh -c "psql -v ON_ERROR_STOP=0 -t -A -c \"SELECT 1 FROM pg_roles WHERE rolname='${POSTGRES_USER}'\" | grep -q 1" || \
-  gosu postgres sh -c "psql -c \"CREATE USER ${POSTGRES_USER} WITH SUPERUSER PASSWORD '"$1"'\"" -- "$POSTGRES_PASSWORD"
+# MED-09: passwords never pass through a shell string. psql bind variables
+# (:'pw') are single-quoted and escaped by psql itself — immune to command
+# injection AND to the quoting bug this replaces (the previous sh -c form
+# expanded the entrypoint's own $1 instead of the password, storing an empty
+# password and leaving postgres with initdb's null password, which made every
+# host/md5 auth — migrations, services — fail with P1000 while local trust
+# connections kept working).
+# POSTGRES_USER is repo-controlled infra config (not a secret), so identifier
+# interpolation for the role/database names is acceptable.
+gosu postgres psql -v ON_ERROR_STOP=0 -v pw="$POSTGRES_PASSWORD" -f - <<'SQL' || true
+ALTER USER postgres WITH PASSWORD :'pw';
+SQL
+gosu postgres psql -v ON_ERROR_STOP=0 -t -A -c "SELECT 1 FROM pg_roles WHERE rolname='${POSTGRES_USER}'" | grep -q 1 || \
+  gosu postgres psql -v ON_ERROR_STOP=0 -v pw="$POSTGRES_PASSWORD" -f - <<SQL
+CREATE USER ${POSTGRES_USER} WITH SUPERUSER PASSWORD :'pw';
+SQL
 gosu postgres sh -c "psql -v ON_ERROR_STOP=0 -t -A -c \"SELECT 1 FROM pg_database WHERE datname='${POSTGRES_DB}'\" | grep -q 1" || \
   gosu postgres sh -c "psql -c \"CREATE DATABASE ${POSTGRES_DB} OWNER ${POSTGRES_USER}\""
 

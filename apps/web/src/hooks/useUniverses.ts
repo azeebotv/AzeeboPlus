@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
+import type { Universe } from '../lib/api/base';
 
 const STORAGE_KEY = 'azeebo:selected_universe';
 const CACHE_KEY = 'azeebo:universes_cache';
@@ -62,6 +64,31 @@ function writeCache(data: UniverseOption[]): void {
   } catch {
     // ignore
   }
+}
+
+/**
+ * React Query wrapper for the enabled-universes list, shared by universe
+ * landing pages (`/sports`, `/comedy`, `/reality`, …).
+ *
+ * Guards against non-array payloads so a malformed API response surfaces as
+ * a query error instead of crashing `.find()` callers.
+ *
+ * Uses a distinct cache key from the legacy `['universes']` key, which older
+ * builds may have poisoned with a non-array payload (staleTime of 5 minutes
+ * kept the bad value cached across navigations).
+ */
+export function useUniversesQuery(staleTime = 5 * 60 * 1000) {
+  return useQuery<Universe[]>({
+    queryKey: ['universes', 'enabled'],
+    queryFn: async () => {
+      const res = await api.universe.getUniverses();
+      if (!res.success || !Array.isArray(res.data)) {
+        throw new Error(res.message || 'Failed to load universes');
+      }
+      return res.data;
+    },
+    staleTime,
+  });
 }
 
 export interface UseUniversesReturn {

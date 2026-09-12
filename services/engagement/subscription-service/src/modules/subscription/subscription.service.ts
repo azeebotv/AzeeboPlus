@@ -1,4 +1,5 @@
 import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
@@ -6,9 +7,15 @@ import { FeatureFlagService, subscriptionFlags } from '@azeebo/feature-flags';
 import { CreateSubscriptionPlanDto } from './dto/create-subscription-plan.dto.js';
 import { SubscribeToPlanDto } from './dto/subscribe-to-plan.dto.js';
 import type { SubscriptionPlan, Subscription } from '../../prisma/client/index.js';
-import { CircuitBreaker, CircuitBreakerOpenError } from '@azeebo/shared-types';
+import { CircuitBreaker } from '@azeebo/shared-types';
 import { randomUUID } from 'crypto';
 import axios from 'axios';
+import {
+  walletLookupUrl,
+  walletDebitUrl,
+  walletDebitPayload,
+  walletInternalHeaders as buildWalletInternalHeaders,
+} from '../../wallet-payloads.js';
 
 @Injectable()
 export class SubscriptionService {
@@ -16,6 +23,9 @@ export class SubscriptionService {
   private readonly paymentServiceBaseUrl: string;
   private readonly walletServiceBaseUrl: string;
   private readonly analyticsServiceBaseUrl: string;
+  // Secret for internal wallet-service calls — same resolution order the
+  // wallet-service InternalSecretGuard uses to validate it.
+  private readonly internalApiKey: string;
   private readonly circuitBreaker = new CircuitBreaker({
     failureThreshold: 5,
     resetTimeout: 60000,
@@ -36,6 +46,18 @@ export class SubscriptionService {
       'ANALYTICS_SERVICE_URL',
       'http://analytics-service:3040'
     );
+    this.internalApiKey =
+      this.configService.get<string>('GATEWAY_SECRET') ??
+      this.configService.getOrThrow<string>('INTERNAL_API_KEY');
+  }
+
+  /**
+   * Headers for internal wallet-service calls (subscription + renewal debits).
+   * Those routes carry no user identity — the shared secret authenticates
+   * the service itself (wallet-service InternalSecretGuard).
+   */
+  private walletInternalHeaders(): Record<string, string> {
+    return buildWalletInternalHeaders(this.internalApiKey);
   }
 
   async getPlans(): Promise<SubscriptionPlan[]> {
@@ -408,12 +430,11 @@ export class SubscriptionService {
   private async debitWallet(userId: string, amount: number, description: string): Promise<void> {
     try {
       const walletResponse = await axios.get(
-        `${this.walletServiceBaseUrl}/wallets/user/${userId}`,
-        {
-          timeout: 10000,
-        }
+        walletLookupUrl(this.walletServiceBaseUrl, userId),
+        { headers: this.walletInternalHeaders(), timeout: 10000 }
       );
-      const wallet = walletResponse.data?.wallet || walletResponse.data;
+      // Internal lookup responds enveloped: { success, data: { balance, … } }.
+      const wallet = walletResponse.data?.data;
       if (!wallet) {
         throw new BadRequestException('Wallet not found. Please fund your wallet first.');
       }
@@ -425,26 +446,12 @@ export class SubscriptionService {
       const idempotencyKey = randomUUID();
 
       await axios.post(
-        `${this.walletServiceBaseUrl}/wallet/debit`,
-        {
-          walletId: wallet.id,
-          amount,
-          description,
-          idempotencyKey,
-        },
-        { timeout: 10000 }
+        walletDebitUrl(this.walletServiceBaseUrl, userId),
+        walletDebitPayload(amount, description, idempotencyKey),
+        { headers: this.walletInternalHeaders(), timeout: 10000 }
       );
     } catch (error) {
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
-      if (error instanceof CircuitBreakerOpenError) {
-        throw new BadRequestException(
-          'Wallet service is temporarily unavailable. Please try again later.'
-        );
-      }
-      this.logger.error(`Failed to debit wallet: ${(error as Error).message}`);
-      throw new BadRequestException('Unable to process wallet payment. Please try again.');
+      mapAndThrow(error, 'debiting wallet');
     }
   }
 
@@ -461,13 +468,7 @@ export class SubscriptionService {
         })
       );
     } catch (error) {
-      if (error instanceof CircuitBreakerOpenError) {
-        throw new BadRequestException(
-          'Payment service is temporarily unavailable. Please try again later.'
-        );
-      }
-      this.logger.error(`Failed to verify payment reference: ${(error as Error).message}`);
-      throw new BadRequestException('Unable to verify payment. Please try again.');
+      mapAndThrow(error, 'verifying payment');
     }
 
     if (paymentVerification.data?.status !== 'completed') {

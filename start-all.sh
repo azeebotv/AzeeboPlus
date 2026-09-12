@@ -68,6 +68,91 @@ export LIVE_EVENT_SERVICE_URL="http://localhost:3027"
 export SUPPORT_SERVICE_URL="http://localhost:3028"
 export API_GATEWAY_URL="http://localhost:3013"
 
+# ── Secret Consistency Preflight ────────────────────────────
+# Do this before clearing ports or starting any process. Every checked env file
+# must use the same local-development signing and gateway secrets as the root
+# env; otherwise a service can boot successfully but reject tokens from the
+# gateway/auth service (or create a different trust domain).
+read_env_value() {
+  local file="$1" key="$2" value
+  value=$(sed -n -E "s/^[[:space:]]*${key}[[:space:]]*=[[:space:]]*//p" "$file" | head -1)
+  value="${value%$'\r'}"
+  case "$value" in
+    \"*\") value="${value#\"}"; value="${value%\"}" ;;
+    \'*\') value="${value#\'}"; value="${value%\'}" ;;
+  esac
+  printf '%s' "$value"
+}
+
+check_secret_preflight() {
+  local key canonical file value issue idx
+  local failed=0
+  local -a secret_keys=(JWT_ACCESS_SECRET JWT_REFRESH_SECRET GATEWAY_SECRET)
+  local -a env_files=() issue_files=() issue_values=()
+
+  while IFS= read -r file; do
+    [ -n "$file" ] && env_files+=("$file")
+  done < <(find services -type f -name .env -print | sort)
+  # The admin backend is an independently booted NestJS service and must share
+  # the same JWT trust domain even though it lives under apps/.
+  [ -f apps/admin/.env ] && env_files+=("apps/admin/.env")
+
+  for key in "${secret_keys[@]}"; do
+    canonical=$(printenv "$key" 2>/dev/null || true)
+    if [ -z "$canonical" ]; then
+      fail "root environment is missing $key"
+      failed=1
+      continue
+    fi
+    case "$canonical" in
+      change-me*|changeme*|placeholder*|replace-me*|your-*|dummy*|example*|test-*)
+        fail "root environment contains a placeholder for $key"
+        failed=1
+        ;;
+    esac
+
+    for file in "${env_files[@]}"; do
+      value=$(read_env_value "$file" "$key")
+      issue=""
+      if [ -z "$value" ]; then
+        issue="missing $key"
+      elif [ "$value" != "$canonical" ]; then
+        issue="mismatched $key"
+      fi
+      [ -z "$issue" ] && continue
+
+      failed=1
+      idx=0
+      while [ "$idx" -lt "${#issue_files[@]}" ] && [ "${issue_files[$idx]}" != "$file" ]; do
+        idx=$((idx + 1))
+      done
+      if [ "$idx" -eq "${#issue_files[@]}" ]; then
+        issue_files+=("$file")
+        issue_values+=("$issue")
+      else
+        issue_values[$idx]="${issue_values[$idx]}, $issue"
+      fi
+    done
+  done
+
+  if [ "$failed" -ne 0 ]; then
+    idx=0
+    while [ "$idx" -lt "${#issue_files[@]}" ]; do
+      fail "${issue_files[$idx]}: ${issue_values[$idx]}"
+      idx=$((idx + 1))
+    done
+    fail "secret preflight failed; no services were started"
+    echo "  Update the listed env files from the local root secret values, then rerun ./start-all.sh."
+    return 1
+  fi
+
+  ok "JWT and gateway secrets match root environment across ${#env_files[@]} env files"
+}
+
+if ! check_secret_preflight; then
+  exit 1
+fi
+
 # ── Clean Up ────────────────────────────────────────────────
 echo -e "\n${BOLD}=== Cleaning Up ===${RESET}"
 for port in $(seq 3000 3028) 4000 4014 4016 4100 4104; do
@@ -151,6 +236,18 @@ nohup bash -c "cd '$ROOT/apps/web' && node_modules/.bin/next dev --port 4000" < 
 WEB_PID=$!
 disown
 ok "Web App started (PID $WEB_PID) -> http://localhost:4000"
+
+# Admin Backend (NestJS on port 4016) — serves /api/v1/admin/* via the gateway
+info "Starting Admin Backend (NestJS)..."
+# --env-file loads apps/admin/.env (DATABASE_URL, JWT secrets, INTERNAL_API_KEY, ...) —
+# the backend requires them at boot (getOrThrow in JwtStrategy); without this it
+# dies silently and the gateway 502s every /admin route. PORT stays explicit so
+# an inherited stray PORT can't override it.
+PORT=4016 \
+node --env-file="$ROOT/apps/admin/.env" "$ROOT/apps/admin/dist/main.js" < /dev/null > /tmp/azeebo-admin-backend.log 2>&1 &
+ADMIN_BACKEND_PID=$!
+disown
+ok "Admin Backend started (PID $ADMIN_BACKEND_PID) -> http://localhost:4016"
 
 # Admin Client (Vite on port 4100)
 info "Starting Admin Panel (Vite)..."

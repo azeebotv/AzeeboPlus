@@ -9,6 +9,7 @@ import { ErrorState, Skeleton } from '@azeebo/ui/web';
 import { EmptyState } from '@/components/ui/EmptyState';
 import Link from 'next/link';
 import { useState } from 'react';
+import { Award, Check, ArrowLeft } from 'lucide-react';
 
 interface Badge {
   id: string;
@@ -38,7 +39,7 @@ export default function BadgesPage(): React.JSX.Element {
           id: String(b.id),
           name: String(b.name || ''),
           description: String(b.description || ''),
-          icon: String(b.icon || 'Medal'),
+          icon: String(b.icon || ''),
           points: Number(b.points || 0),
           unlocked: Boolean(b.unlocked ?? true),
           progress: Number(b.progress ?? 0),
@@ -63,12 +64,12 @@ export default function BadgesPage(): React.JSX.Element {
   return (
     <div
       style={{
-        backgroundColor: 'var(--brand-near-black)',
+        backgroundColor: 'var(--brand-near-black, #0b090e)',
         minHeight: '100vh',
         color: 'var(--text-primary)',
       }}
     >
-      <AppHeader />
+      <AppHeader logoVariant="light" />
       <main
         style={{
           maxWidth: 900,
@@ -79,9 +80,16 @@ export default function BadgesPage(): React.JSX.Element {
         <div style={{ marginBottom: 24 }}>
           <Link
             href="/rewards"
-            style={{ color: 'var(--text-secondary)', fontSize: 14, textDecoration: 'none' }}
+            style={{
+              color: 'rgba(255,255,255,0.6)',
+              fontSize: 14,
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
           >
-            &larr; Back to Rewards
+            <ArrowLeft size={16} /> Back to Rewards
           </Link>
         </div>
 
@@ -140,16 +148,23 @@ export default function BadgesPage(): React.JSX.Element {
                           alignItems: 'center',
                           justifyContent: 'center',
                           margin: '0 auto 12px',
-                          fontSize: 32,
+                          color: 'var(--brand-orange, #E8420A)',
                         }}
                       >
-                        {badge.icon}
+                        <Award size={30} />
                       </div>
-                      <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{badge.name}</p>
+                      <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 4, color: 'white' }}>{badge.name}</p>
                       <p
-                        style={{ fontSize: 11, color: 'var(--color-success-500)', fontWeight: 600 }}
+                        style={{
+                          fontSize: 12,
+                          color: '#34D399',
+                          fontWeight: 600,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                        }}
                       >
-                        CheckEarned
+                        <Check size={13} /> Earned
                       </p>
                     </div>
                   ))}
@@ -188,11 +203,10 @@ export default function BadgesPage(): React.JSX.Element {
                           alignItems: 'center',
                           justifyContent: 'center',
                           margin: '0 auto 12px',
-                          fontSize: 32,
-                          filter: 'grayscale(100%)',
+                          color: 'rgba(255,255,255,0.3)',
                         }}
                       >
-                        {badge.icon}
+                        <Award size={30} />
                       </div>
                       <p
                         style={{
@@ -267,6 +281,7 @@ export default function BadgesPage(): React.JSX.Element {
               padding: 32,
               borderRadius: 24,
               textAlign: 'center',
+              border: '1px solid rgba(255,255,255,0.1)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -282,13 +297,12 @@ export default function BadgesPage(): React.JSX.Element {
                 alignItems: 'center',
                 justifyContent: 'center',
                 margin: '0 auto 16px',
-                fontSize: 40,
-                filter: selectedBadge.unlocked ? 'none' : 'grayscale(100%)',
+                color: selectedBadge.unlocked ? 'var(--brand-orange, #E8420A)' : 'rgba(255,255,255,0.3)',
               }}
             >
-              {selectedBadge.icon}
+              <Award size={40} />
             </div>
-            <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>{selectedBadge.name}</h2>
+            <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8, color: 'white' }}>{selectedBadge.name}</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 16 }}>
               {selectedBadge.description}
             </p>
@@ -302,7 +316,7 @@ export default function BadgesPage(): React.JSX.Element {
               {selectedBadge.unlocked && selectedBadge.earnedAt && (
                 <div>
                   <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Earned</p>
-                  <p style={{ fontSize: 14, color: 'var(--color-success-500)' }}>
+                  <p style={{ fontSize: 14, color: '#34D399', fontWeight: 600 }}>
                     {new Date(selectedBadge.earnedAt).toLocaleDateString()}
                   </p>
                 </div>
@@ -313,9 +327,9 @@ export default function BadgesPage(): React.JSX.Element {
               style={{
                 padding: '10px 32px',
                 borderRadius: 999,
-                border: '1px solid var(--border-default)',
-                background: 'transparent',
-                color: 'var(--text-secondary)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                background: 'rgba(255,255,255,0.08)',
+                color: 'white',
                 fontWeight: 600,
                 fontSize: 14,
                 cursor: 'pointer',
@@ -327,7 +341,7 @@ export default function BadgesPage(): React.JSX.Element {
         </div>
       )}
 
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

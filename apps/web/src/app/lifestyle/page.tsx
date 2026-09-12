@@ -5,25 +5,19 @@ import { useQuery } from '@tanstack/react-query';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import Link from 'next/link';
 import { api, ContentItem } from '@/lib/api';
+import { useUniversesQuery } from '@/hooks/useUniverses';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import analytics from '@/lib/analytics';
+import { Star, Smartphone, Moon, MessageCircle, Building2 } from 'lucide-react';
 
 function LifestylePageContent(): React.JSX.Element {
   useEffect(() => {
     analytics.pageView('lifestyle');
   }, []);
 
-  const universesQuery = useQuery({
-    queryKey: ['universes'],
-    queryFn: async () => {
-      const res = await api.universe.getUniverses();
-      if (!res.success || !res.data) throw new Error(res.message || 'Failed to load universes');
-      return res.data;
-    },
-    staleTime: 300000,
-  });
+  const universesQuery = useUniversesQuery();
 
   const lifestyleUniverse = universesQuery.data?.find((u) => u.name?.toLowerCase() === 'lifestyle');
 
@@ -47,8 +41,8 @@ function LifestylePageContent(): React.JSX.Element {
   });
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Lifestyle" />
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black, #0b090e)' }}>
+      <AppHeader active="Lifestyle" logoVariant="light" />
 
       {/* Hero Section */}
       <section className="relative">
@@ -71,7 +65,7 @@ function LifestylePageContent(): React.JSX.Element {
               className="object-cover"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-[var(--brand-near-black)]/50 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0b090e] via-[#0b090e]/60 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">
               <span
                 className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mb-4"
@@ -120,22 +114,27 @@ function LifestylePageContent(): React.JSX.Element {
         <h2 className="text-xl font-bold text-white mb-4">Explore Lifestyle</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           {[
-            { label: 'Celebrities', href: '/lifestyle/celebrities', icon: 'Star' },
-            { label: 'Influencers', href: '/lifestyle/influencers', icon: 'Smartphone' },
-            { label: 'Nightlife', href: '/lifestyle/nightlife', icon: 'Moon' },
-            { label: 'Social', href: '/lifestyle/social', icon: 'MessageCircle' },
-            { label: 'City Guide', href: '/lifestyle/city-guide', icon: 'Building2' },
-          ].map((item) => (
-            <Link key={item.href} href={item.href}>
-              <div
-                className="az-glass p-4 text-center cursor-pointer transition-all hover:scale-[1.03]"
-                style={{ boxShadow: '0 0 15px rgba(232,66,10,0.08)' }}
-              >
-                <span className="text-2xl mb-2 block">{item.icon}</span>
-                <span className="text-sm font-semibold text-white">{item.label}</span>
-              </div>
-            </Link>
-          ))}
+            { label: 'Celebrities', href: '/lifestyle/celebrities', icon: Star },
+            { label: 'Influencers', href: '/lifestyle/influencers', icon: Smartphone },
+            { label: 'Nightlife', href: '/lifestyle/nightlife', icon: Moon },
+            { label: 'Social', href: '/lifestyle/social', icon: MessageCircle },
+            { label: 'City Guide', href: '/lifestyle/city-guide', icon: Building2 },
+          ].map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link key={item.href} href={item.href}>
+                <div
+                  className="az-glass p-5 text-center cursor-pointer transition-all hover:scale-[1.03] hover:border-orange-500/40"
+                  style={{ boxShadow: '0 0 15px rgba(232,66,10,0.08)' }}
+                >
+                  <div className="w-10 h-10 rounded-full bg-orange-500/10 text-[var(--brand-orange)] flex items-center justify-center mx-auto mb-3">
+                    <Icon size={20} />
+                  </div>
+                  <span className="text-sm font-semibold text-white">{item.label}</span>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </section>
 
@@ -213,7 +212,7 @@ function LifestylePageContent(): React.JSX.Element {
         )}
       </section>
 
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

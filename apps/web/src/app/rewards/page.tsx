@@ -129,11 +129,28 @@ export default function RewardsPage(): React.JSX.Element {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-12">
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">Rewards Center</h1>
+          <span
+            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wider uppercase mb-3"
+            style={{
+              backgroundColor: 'rgba(232, 66, 10, 0.15)',
+              color: 'var(--brand-orange)',
+              border: '1px solid rgba(232, 66, 10, 0.3)',
+            }}
+          >
+            Loyalty & Perks
+          </span>
+          <h1 className="az-headline text-3xl sm:text-4xl font-bold text-white mb-3">
+            Rewards Center
+          </h1>
           <p className="text-white/50 text-lg mb-6">Earn points and unlock amazing rewards</p>
-          <div className="az-glass inline-block px-8 py-4">
-            <p className="text-sm text-white/50 mb-1">Your Points</p>
-            <p className="text-4xl font-bold" style={{ color: 'var(--brand-orange)' }}>
+          <div className="az-glass inline-block px-10 py-5 rounded-2xl border border-orange-500/20 shadow-lg shadow-orange-500/5">
+            <p className="text-xs text-white/50 mb-1 uppercase tracking-wider font-semibold">
+              Your Points Balance
+            </p>
+            <p
+              className="text-4xl sm:text-5xl font-extrabold"
+              style={{ color: 'var(--brand-orange)' }}
+            >
               {userPoints.toLocaleString()}
             </p>
           </div>
@@ -157,8 +174,8 @@ export default function RewardsPage(): React.JSX.Element {
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="az-glass h-64">
-                  <Skeleton height="100%" borderRadius="0" />
+                <div key={i} className="az-glass h-64 rounded-2xl">
+                  <Skeleton height="100%" borderRadius="16px" />
                 </div>
               ))}
             </div>
@@ -167,7 +184,7 @@ export default function RewardsPage(): React.JSX.Element {
               {rewards.map((reward) => (
                 <div
                   key={reward.id}
-                  className="az-glass overflow-hidden transition-all hover:scale-[1.02]"
+                  className="az-glass rounded-2xl overflow-hidden transition-all hover:scale-[1.02] border border-white/10 hover:border-white/20"
                   style={
                     !reward.isAvailable
                       ? { opacity: 0.5 }
@@ -183,7 +200,7 @@ export default function RewardsPage(): React.JSX.Element {
                   )}
                   <div className="p-6">
                     <span
-                      className="text-xs font-medium px-2 py-1 rounded-full mb-2 inline-block"
+                      className="text-xs font-medium px-2.5 py-1 rounded-full mb-3 inline-block"
                       style={{
                         backgroundColor: 'rgba(232,66,10,0.2)',
                         color: 'var(--brand-orange)',
@@ -192,7 +209,7 @@ export default function RewardsPage(): React.JSX.Element {
                       {reward.category}
                     </span>
                     <h3 className="text-lg font-bold text-white mb-2">{reward.title}</h3>
-                    <p className="text-white/50 text-sm mb-4">{reward.description}</p>
+                    <p className="text-white/50 text-sm mb-4 line-clamp-2">{reward.description}</p>
                     <div className="flex items-center justify-between">
                       <span className="text-xl font-bold" style={{ color: 'var(--brand-orange)' }}>
                         {reward.points.toLocaleString()} pts
@@ -207,11 +224,11 @@ export default function RewardsPage(): React.JSX.Element {
                         }
                         onClick={() => handleClaimReward(reward.id)}
                         disabled={!reward.isAvailable || userPoints < reward.points}
-                        className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${reward.isAvailable && userPoints >= reward.points ? 'az-btn-primary' : ''}`}
+                        className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${reward.isAvailable && userPoints >= reward.points ? 'az-btn-primary' : ''}`}
                         style={
                           !reward.isAvailable || userPoints < reward.points
                             ? {
-                                backgroundColor: 'rgba(255,255,255,0.1)',
+                                backgroundColor: 'rgba(255,255,255,0.08)',
                                 color: 'rgba(255,255,255,0.3)',
                                 cursor: 'not-allowed',
                               }
@@ -250,24 +267,27 @@ export default function RewardsPage(): React.JSX.Element {
               <div
                 key={achievement.id}
                 role="listitem"
-                className={`az-glass p-4 flex items-center gap-4 transition-all ${achievement.unlocked ? '' : 'opacity-60'}`}
+                className={`az-glass rounded-2xl p-5 flex items-center gap-4 transition-all border border-white/10 ${achievement.unlocked ? '' : 'opacity-60'}`}
               >
                 <div
-                  className="w-14 h-14 rounded-full flex items-center justify-center text-2xl"
+                  className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
                   style={{
                     backgroundColor: achievement.unlocked
-                      ? 'rgba(232,66,10,0.2)'
+                      ? 'rgba(232,66,10,0.15)'
                       : 'rgba(255,255,255,0.05)',
+                    color: achievement.unlocked ? 'var(--brand-orange)' : 'rgba(255,255,255,0.4)',
                   }}
                 >
-                  {achievement.icon}
+                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                  </svg>
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-white text-sm">{achievement.name}</h3>
-                  <p className="text-xs text-white/40 mb-2">{achievement.description}</p>
+                  <p className="text-xs text-white/40 mb-2 truncate">{achievement.description}</p>
                   {!achievement.unlocked && (
                     <div
-                      className="h-1.5 rounded-full"
+                      className="h-1.5 rounded-full overflow-hidden"
                       style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
                     >
                       <div
@@ -281,10 +301,23 @@ export default function RewardsPage(): React.JSX.Element {
                   )}
                   {achievement.unlocked && (
                     <span
-                      className="text-xs font-medium"
-                      style={{ color: 'var(--color-success-500)' }}
+                      className="inline-flex items-center gap-1 text-xs font-semibold"
+                      style={{ color: 'var(--color-success-500, #22c55e)' }}
                     >
-                      CheckUnlocked
+                      <svg
+                        className="w-3.5 h-3.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2.5}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M4.5 12.75l6 6 9-13.5"
+                        />
+                      </svg>
+                      Unlocked
                     </span>
                   )}
                 </div>

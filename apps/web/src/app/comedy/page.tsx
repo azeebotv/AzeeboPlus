@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import Link from 'next/link';
 import { api, ContentItem, Category } from '@/lib/api';
+import { useUniversesQuery } from '@/hooks/useUniverses';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { OptimizedImage } from '@/components/OptimizedImage';
@@ -14,15 +15,7 @@ function ComedyPageContent(): React.JSX.Element {
     analytics.pageView('comedy');
   }, []);
 
-  const universesQuery = useQuery({
-    queryKey: ['universes'],
-    queryFn: async () => {
-      const res = await api.universe.getUniverses();
-      if (!res.success || !res.data) throw new Error(res.message || 'Failed to load universes');
-      return res.data;
-    },
-    staleTime: 300000,
-  });
+  const universesQuery = useUniversesQuery();
 
   const comedyUniverse = universesQuery.data?.find((u) => u.name?.toLowerCase() === 'comedy');
 
@@ -56,8 +49,11 @@ function ComedyPageContent(): React.JSX.Element {
   });
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader />
+    <div
+      className="min-h-screen relative overflow-x-hidden"
+      style={{ background: 'var(--hp-bg)', color: 'var(--text-primary)' }}
+    >
+      <AppHeader active="Comedy" logoVariant="light" />
 
       {/* Hero Section */}
       <section
@@ -151,7 +147,7 @@ function ComedyPageContent(): React.JSX.Element {
                         className="w-14 h-14 rounded-full flex items-center justify-center"
                         style={{ backgroundColor: 'rgba(255,255,255,0.9)' }}
                       >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="#1A0A0A">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="#0b090e">
                           <polygon points="5,3 19,12 5,21" />
                         </svg>
                       </div>
@@ -202,7 +198,7 @@ function ComedyPageContent(): React.JSX.Element {
         </div>
       </section>
 
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

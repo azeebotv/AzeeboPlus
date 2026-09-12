@@ -5,6 +5,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -94,7 +95,7 @@ export class SocialAuthService {
     } catch (error) {
       if (error instanceof UnauthorizedException) throw error;
       this.logger.error(`Google token verification failed: ${(error as Error).message}`);
-      throw new UnauthorizedException('Failed to verify Google token');
+      mapAndThrow(error, 'verifying Google token');
     }
   }
 
@@ -141,7 +142,7 @@ export class SocialAuthService {
     } catch (error) {
       if (error instanceof UnauthorizedException) throw error;
       this.logger.error(`Apple token verification failed: ${(error as Error).message}`);
-      throw new UnauthorizedException('Failed to verify Apple token');
+      mapAndThrow(error, 'verifying Apple token');
     }
   }
 
@@ -219,7 +220,7 @@ export class SocialAuthService {
       };
     } catch (error) {
       this.logger.error(`Google code exchange failed: ${error}`);
-      throw new UnauthorizedException('Failed to exchange Google authorization code');
+      mapAndThrow(error, 'exchanging Google authorization code');
     }
   }
 
@@ -257,7 +258,7 @@ export class SocialAuthService {
       };
     } catch (error) {
       this.logger.error(`Apple code exchange failed: ${error}`);
-      throw new UnauthorizedException('Failed to exchange Apple authorization code');
+      mapAndThrow(error, 'exchanging Apple authorization code');
     }
   }
 
@@ -397,7 +398,7 @@ export class SocialAuthService {
         throw error;
       }
       this.logger.error(`Social login error: ${(error as Error).message}`, (error as Error).stack);
-      throw new UnauthorizedException('Social login failed');
+      mapAndThrow(error, 'social login');
     }
   }
 

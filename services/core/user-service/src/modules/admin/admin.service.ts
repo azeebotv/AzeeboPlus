@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '../../prisma/client/index.js';
@@ -505,7 +506,7 @@ export class AdminService {
       });
       return response.data;
     } catch (error) {
-      throw new NotFoundException(`Content moderation failed: ${(error as Error).message}`);
+      mapAndThrow(error, 'content moderation');
     }
   }
 
@@ -518,9 +519,7 @@ export class AdminService {
       });
       return response.data;
     } catch (error) {
-      throw new NotFoundException(
-        `Failed to fetch moderation reports: ${(error as Error).message}`
-      );
+      mapAndThrow(error, 'fetching moderation reports');
     }
   }
 
@@ -544,7 +543,7 @@ export class AdminService {
       });
       return response.data;
     } catch (error) {
-      throw new NotFoundException(`Failed to resolve report: ${(error as Error).message}`);
+      mapAndThrow(error, 'resolving report');
     }
   }
 
@@ -587,9 +586,7 @@ export class AdminService {
       });
       return response.data;
     } catch (error) {
-      throw new NotFoundException(
-        `Failed to fetch verification requests: ${(error as Error).message}`
-      );
+      mapAndThrow(error, 'fetching verification requests');
     }
   }
 
@@ -619,7 +616,7 @@ export class AdminService {
       });
       return response.data;
     } catch (error) {
-      throw new NotFoundException(`Failed to verify creator: ${(error as Error).message}`);
+      mapAndThrow(error, 'verifying creator');
     }
   }
 }

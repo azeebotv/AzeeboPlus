@@ -20,7 +20,11 @@ COPY scripts/generate-prisma-clients.sh ./scripts/generate-prisma-clients.sh
 RUN bash scripts/generate-prisma-clients.sh
 
 WORKDIR /app/services/engagement/engagement-service
-RUN nest build
+# Workspace build script = the single source of truth for what "built" means:
+# prisma generate + tsc + copy the client into dist/prisma/client. Using it
+# here (instead of a hand-rolled `nest build`) is what guarantees the image
+# ships the same fresh client the schema declares.
+RUN pnpm run build
 WORKDIR /app
 
 FROM node:22.16.0-alpine AS runner

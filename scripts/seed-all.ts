@@ -11,6 +11,8 @@
  *   6. messaging-service (conversations, messages)
  *   7. notification-service (notifications)
  *   8. engagement-service (following, saved items)
+ *   9. subscription-service (bundle passes)
+ *  10. lifestyle-service (published music entries)
  *
  * Usage:
  *   pnpm tsx scripts/seed-all.ts                    # seed everything
@@ -26,6 +28,8 @@ import { seedPaymentService } from './seeders/payment-seeder.js';
 import { seedMessagingService } from './seeders/messaging-seeder.js';
 import { seedNotificationService } from './seeders/notification-seeder.js';
 import { seedEngagementService } from './seeders/engagement-seeder.js';
+import { seedSubscriptionService } from './seeders/subscription-seeder.js';
+import { seedLifestyleService } from './seeders/lifestyle-seeder.js';
 
 const SEED_ORDER = [
   { name: 'user', fn: seedUserService },
@@ -36,6 +40,8 @@ const SEED_ORDER = [
   { name: 'messaging', fn: seedMessagingService },
   { name: 'notification', fn: seedNotificationService },
   { name: 'engagement', fn: seedEngagementService },
+  { name: 'subscription', fn: seedSubscriptionService },
+  { name: 'lifestyle', fn: seedLifestyleService },
 ] as const;
 
 async function main() {

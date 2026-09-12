@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { api, ContentItem } from '@/lib/api';
+import { useUniversesQuery } from '@/hooks/useUniverses';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
@@ -17,15 +18,7 @@ function SeriesPageContent(): React.JSX.Element {
     analytics.pageView('comedy-series');
   }, []);
 
-  const universesQuery = useQuery({
-    queryKey: ['universes'],
-    queryFn: async () => {
-      const res = await api.universe.getUniverses();
-      if (!res.success || !res.data) throw new Error(res.message || 'Failed to load universes');
-      return res.data;
-    },
-    staleTime: 300000,
-  });
+  const universesQuery = useUniversesQuery();
 
   const comedyUniverse = universesQuery.data?.find((u) => u.name?.toLowerCase() === 'comedy');
 

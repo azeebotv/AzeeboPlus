@@ -168,7 +168,7 @@ function TournamentDetailPageContent(): React.JSX.Element {
                 <div
                   className="w-full h-full"
                   style={{
-                    background: `linear-gradient(135deg, ${STATUS_STYLES[tournament.status]?.bg || 'rgba(255,255,255,0.1)'}, #1A0A0A)`,
+                    background: `linear-gradient(135deg, ${STATUS_STYLES[tournament.status]?.bg || 'rgba(255,255,255,0.1)'}, #0b090e)`,
                   }}
                 >
                   <div className="absolute inset-0 flex items-center justify-center">

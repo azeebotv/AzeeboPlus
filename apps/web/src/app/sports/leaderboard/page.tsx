@@ -41,20 +41,26 @@ function LeaderboardPageContent(): React.JSX.Element {
   const error = leaderboardQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Sports" />
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black, #0b090e)' }}>
+      <AppHeader active="Sports" logoVariant="light" />
 
       <section
-        className="relative py-16 sm:py-20"
-        style={{ background: 'linear-gradient(135deg, #0D3B2E, #E8420A)' }}
+        className="relative py-16 sm:py-20 overflow-hidden"
+        style={{
+          background: 'radial-gradient(ellipse at top, rgba(232,66,10,0.2) 0%, #100e14 60%, #0b090e 100%)',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+        }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold tracking-wider uppercase mb-3 bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            Season Standings
+          </span>
           <motion.h1
             className="text-4xl sm:text-5xl font-bold text-white mb-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            Leaderboard
+            Sports Leaderboard
           </motion.h1>
           <motion.p
             className="text-xl text-white/80 max-w-2xl mx-auto"
@@ -119,7 +125,7 @@ function LeaderboardPageContent(): React.JSX.Element {
 
                     <div
                       className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0"
-                      style={{ background: 'linear-gradient(135deg, #0D3B2E, #E8420A)' }}
+                      style={{ background: 'linear-gradient(135deg, var(--brand-orange, #E8420A), var(--brand-red, #CC1C1C))' }}
                     >
                       {entry.avatar?.charAt(0) || entry.name.charAt(0)}
                     </div>
@@ -153,7 +159,7 @@ function LeaderboardPageContent(): React.JSX.Element {
         )}
       </section>
 
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

@@ -21,7 +21,7 @@ const mockRegisterState = { featureFlag: 0, flagMetrics: 0, rateLimiter: 0, even
 // Expected registrations per dynamic module for this service (A-13 audit).
 // A count of 0 for an unused module is asserted too, so an unlisted module
 // registration can never sneak in silently.
-const EXPECTED = { featureFlag: 1, flagMetrics: 1, rateLimiter: 1, eventBus: 0, bull: 0 };
+const EXPECTED = { featureFlag: 1, flagMetrics: 1, rateLimiter: 1, eventBus: 1, bull: 0 };
 
 // The mocks MUTATE the real module classes' static registration methods and
 // return the actual module object. Replacing the class with a plain object
@@ -67,9 +67,14 @@ jest.mock('@azeebo/event-bus', () => {
   const actual = jest.requireActual('@azeebo/event-bus');
   const EventBusModule = actual.EventBusModule;
   const original = EventBusModule.forRoot.bind(EventBusModule);
+  const originalAsync = EventBusModule.forRootAsync.bind(EventBusModule);
   EventBusModule.forRoot = (config?: unknown) => {
     mockRegisterState.eventBus += 1;
     return original(config);
+  };
+  EventBusModule.forRootAsync = (options?: unknown) => {
+    mockRegisterState.eventBus += 1;
+    return originalAsync(options);
   };
   return actual;
 });
@@ -105,6 +110,12 @@ jest.mock('ioredis', () => {
     expire = jest.fn(async () => 1);
     ttl = jest.fn(async () => -1);
     exists = jest.fn(async () => 0);
+    // EventBusService duplicates the connection for its pub/sub subscriber
+    // and subscribes to wallet.* channels (wallet snapshot sync).
+    duplicate = jest.fn(() => new FakeRedis());
+    subscribe = jest.fn(async () => undefined);
+    unsubscribe = jest.fn(async () => undefined);
+    publish = jest.fn(async () => undefined);
   }
   // ioredis is imported both as default (`import Redis from 'ioredis'`) and
   // named (`import { Redis } from 'ioredis'`) across the graph — cover both.

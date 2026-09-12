@@ -201,13 +201,14 @@ describe('Proxy Controller - API Contract Verification', () => {
 describe('Proxy Controller - Admin universe-flag undo routes', () => {
   const adminRoute = () => SERVICE_CONFIGS.find((r) => r.path === '/admin');
 
-  it('routes /admin to the admin service (no-prefix + ^/v1 strip)', () => {
+  it('routes /admin to the admin service (default strategy: /v1/admin/*)', () => {
     const route = adminRoute();
     expect(route).toBeDefined();
     expect(route?.envKey).toBe('ADMIN_SERVICE_URL');
     expect(route?.fallbackUrl).toBe('http://localhost:4016');
-    expect(route?.pathStrategy).toBe('no-prefix');
-    expect(route?.pathRewrite).toEqual({ '^/v1': '' });
+    // apps/admin serves URI-versioned routes (/v1/admin/...), so the gateway
+    // must use the default strategy that preserves the version prefix.
+    expect(route?.pathStrategy).toBe('default');
   });
 
   it('registers POST /universes/feature-flags/restore for forwarding', () => {

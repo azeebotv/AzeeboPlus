@@ -57,6 +57,13 @@ export class GatewayAuthGuard implements CanActivate {
     /^\/api\/v\d+\/universe\/[^/]+$/,
     // Search suggestions and trending searches
     /^\/api\/v\d+\/search\/(trending|suggestions)$/,
+    // Lifestyle music — read-only listings/detail served on the public
+    // /lifestyle/music browse page (writes still require auth)
+    /^\/api\/v\d+\/lifestyle\/music$/,
+    /^\/api\/v\d+\/lifestyle\/music\/(trending|genres)$/,
+    // genre-detail & artist-detail pages (slug/id = slugified name, derived from entries)
+    /^\/api\/v\d+\/lifestyle\/music\/(genres|artists)\/[a-z0-9-]+$/,
+    /^\/api\/v\d+\/lifestyle\/music\/[a-z0-9-]+$/,
     // Moderation report types (needed for report forms before login)
     /^\/api\/v\d+\/moderation\/report-types$/,
   ];

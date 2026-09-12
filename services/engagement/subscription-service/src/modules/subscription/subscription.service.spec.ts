@@ -299,7 +299,7 @@ describe('SubscriptionService', () => {
       mockTxSubscription.create.mockResolvedValue(mockSubscription);
       mockTxSubscriptionTransaction.create.mockResolvedValue({});
       (mockedAxios.get as jest.Mock).mockResolvedValue({
-        data: { wallet: { id: 'wallet-1', balance: 10000 } },
+        data: { data: { id: 'wallet-1', balance: 10000 } },
       });
       (mockedAxios.post as jest.Mock).mockResolvedValue({ data: {} });
     });
@@ -365,7 +365,7 @@ describe('SubscriptionService', () => {
       mockTxSubscription.create.mockResolvedValue(mockSubscription);
       mockTxSubscriptionTransaction.create.mockResolvedValue({});
       (mockedAxios.get as jest.Mock).mockResolvedValue({
-        data: { wallet: { id: 'wallet-1', balance: 10000 } },
+        data: { data: { id: 'wallet-1', balance: 10000 } },
       });
       (mockedAxios.post as jest.Mock).mockResolvedValue({ data: {} });
     });
@@ -381,7 +381,7 @@ describe('SubscriptionService', () => {
 
       // plan price 5000 - 10% = 4500 debited from the wallet
       const debitCall = (mockedAxios.post as jest.Mock).mock.calls.find((call) =>
-        String(call[0]).includes('/wallet/debit')
+        String(call[0]).includes('/internal/wallets/user/user-1/debit')
       );
       expect(debitCall).toBeDefined();
       expect(debitCall[1].amount).toBe(4500);
@@ -398,7 +398,7 @@ describe('SubscriptionService', () => {
       await service.subscribe('user-1', dto);
 
       const debitCall = (mockedAxios.post as jest.Mock).mock.calls.find((call) =>
-        String(call[0]).includes('/wallet/debit')
+        String(call[0]).includes('/internal/wallets/user/user-1/debit')
       );
       expect(debitCall[1].amount).toBe(5000);
     });
@@ -413,7 +413,7 @@ describe('SubscriptionService', () => {
       await service.subscribe('user-1', { ...dto, promoCode: 'NOPE99' });
 
       const debitCall = (mockedAxios.post as jest.Mock).mock.calls.find((call) =>
-        String(call[0]).includes('/wallet/debit')
+        String(call[0]).includes('/internal/wallets/user/user-1/debit')
       );
       expect(debitCall[1].amount).toBe(5000);
     });
