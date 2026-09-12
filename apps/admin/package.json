@@ -12,7 +12,7 @@
     "dev": "pnpm run dev:client",
     "dev:client": "vite --config client/vite.config.ts",
     "start": "node dist/main.js",
-    "start:dev": "tsx watch src/main.ts",
+    "start:dev": "bash ../../scripts/start-dev-app.sh",
     "lint": "eslint src",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -84,7 +84,8 @@
     "typescript": "^5.8.4",
     "typescript-eslint": "^8.61.1",
     "vite": "^6.3.5",
-    "vitest": "^3.2.1"
+    "vitest": "^3.2.1",
+    "tsx": "^4.8.1"
   },
   "prisma": {
     "schema": "prisma/schema.prisma"

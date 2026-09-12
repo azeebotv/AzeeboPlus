@@ -9,7 +9,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "bash ../../scripts/build-package.sh",
     "test": "jest",
     "test:cov": "jest --coverage",
     "clean": "rm -rf dist",

@@ -10,6 +10,7 @@ import AppFooter from '@/components/layout/AppFooter';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import { Trophy, Medal, Award } from 'lucide-react';
 import analytics from '@/lib/analytics';
 
 interface LeaderboardEntry {
@@ -32,11 +33,17 @@ const TIME_FRAME_LABELS: Record<TimeFrame, string> = {
   'all-time': 'All Time',
 };
 
-const RANK_STYLES: Record<number, { bg: string; text: string; icon: string }> = {
-  1: { bg: 'rgba(234,179,8,0.2)', text: 'var(--color-warning-400)', icon: 'Award' },
-  2: { bg: 'rgba(156,163,175,0.2)', text: 'var(--brand-grey)', icon: 'Medal' },
-  3: { bg: 'rgba(180,83,9,0.2)', text: 'var(--brand-amber)', icon: 'Medal' },
+const RANK_STYLES: Record<number, { bg: string; text: string }> = {
+  1: { bg: 'rgba(234,179,8,0.2)', text: '#FBBF24' },
+  2: { bg: 'rgba(156,163,175,0.2)', text: '#E2E8F0' },
+  3: { bg: 'rgba(217,119,6,0.2)', text: '#F59E0B' },
 };
+
+function RankIcon({ rank }: { rank: number }): React.JSX.Element {
+  if (rank === 1) return <Trophy className="w-8 h-8 text-amber-400 mx-auto" />;
+  if (rank === 2) return <Medal className="w-8 h-8 text-slate-300 mx-auto" />;
+  return <Award className="w-8 h-8 text-amber-600 mx-auto" />;
+}
 
 function LeaderboardPageContent(): React.JSX.Element {
   const [timeFrame, setTimeFrame] = useState<TimeFrame>('weekly');
@@ -46,7 +53,7 @@ function LeaderboardPageContent(): React.JSX.Element {
   }, []);
 
   const leaderboardQuery = useQuery({
-    queryKey: ['leaderboard', timeFrame],
+    queryKey: ['leaderboard', 'games', timeFrame],
     queryFn: async () => {
       const res = await apiFetch<LeaderboardEntry[]>(
         `/api/v1/games/leaderboard?timeFrame=${timeFrame}&limit=50`
@@ -65,20 +72,29 @@ function LeaderboardPageContent(): React.JSX.Element {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Games" />
+      <AppHeader active="Games" logoVariant="light" />
 
       {/* Hero */}
       <section
-        className="relative py-16 sm:py-20"
-        style={{ background: 'linear-gradient(135deg, #EAB308 0%, #1A0A0A 100%)' }}
+        className="relative py-16 sm:py-20 overflow-hidden"
+        style={{
+          background: 'linear-gradient(180deg, rgba(234,179,8,0.12) 0%, rgba(11,9,14,0.95) 100%)',
+        }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'radial-gradient(ellipse at 50% 0%, rgba(234,179,8,0.18), transparent 70%)',
+          }}
+        />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.h1
-            className="text-4xl sm:text-5xl font-bold text-white mb-4"
+            className="text-4xl sm:text-5xl font-bold text-white mb-4 flex items-center justify-center gap-3"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            TrophyLeaderboard
+            <Trophy className="w-10 h-10 text-amber-400" />
+            <span>Leaderboard</span>
           </motion.h1>
           <motion.p
             className="text-xl text-white/80 max-w-2xl mx-auto"
@@ -132,7 +148,9 @@ function LeaderboardPageContent(): React.JSX.Element {
                   className={isSecond ? 'sm:order-first' : ''}
                 >
                   <GlowCard universe="games" className="p-6 text-center">
-                    <div className="text-4xl mb-3">{rankStyle.icon}</div>
+                    <div className="mb-3">
+                      <RankIcon rank={entry.rank} />
+                    </div>
                     <div
                       className="w-16 h-16 mx-auto mb-3 rounded-full overflow-hidden"
                       style={{ border: `2px solid ${rankStyle.text}` }}
@@ -280,7 +298,7 @@ function LeaderboardPageContent(): React.JSX.Element {
         </div>
       </section>
 
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

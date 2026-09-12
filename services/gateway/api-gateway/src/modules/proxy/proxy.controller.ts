@@ -472,8 +472,10 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     fallbackUrl: 'http://localhost:4016',
     supportedVersions: ['1'],
     defaultVersion: '1',
-    pathStrategy: 'no-prefix',
-    pathRewrite: { '^/v1': '' },
+    // apps/admin is a standalone NestJS app with URI versioning
+    // (enableVersioning URI, prefix 'v'), so it serves /v1/admin/*.
+    // The 'default' strategy builds /v{version}/admin{path}, matching it.
+    pathStrategy: 'default',
     endpoints: [
       { method: 'GET', path: '/dashboard/stats', description: 'Get admin dashboard stats' },
       { method: 'GET', path: '/dashboard/revenue', description: 'Get revenue data' },
@@ -1902,10 +1904,19 @@ export class ProxyController {
     // any endpoint returned an empty body (or hung) and only cached repeats
     // within the 5-minute TTL succeeded.
     if (method === 'GET' && response && typeof response === 'object' && !res.headersSent) {
-      const isSuccess =
-        !('success' in (response as Record<string, unknown>)) ||
-        (response as { success?: boolean }).success !== false;
-      if (responseCacheEnabled && isSuccess) {
+      const body = response as Record<string, unknown>;
+      // Never cache responses the client will treat as data: bodies with
+      // success:false AND bare error bodies (no `success` field at all — e.g.
+      // the circuit breaker's {message, retryAfter, circuitState} 503). The
+      // old success-only check cached circuit-open bodies for the full TTL,
+      // so an admin page kept 503ing for 5 minutes after the backend healed.
+      const isWrapperError = body.success === false;
+      const isBareError =
+        !('success' in body) &&
+        (typeof body.circuitState === 'string' ||
+          typeof body.message === 'string' ||
+          body.statusCode !== undefined);
+      if (responseCacheEnabled && !isWrapperError && !isBareError) {
         await this.cacheManager.set(cacheKey, response, CACHE_TTL_MS);
       }
       res.json(response);
@@ -2009,6 +2020,7 @@ export class ProxyController {
       const cleanTargetPath = targetPath.split('?')[0];
 
       const proxyResponse = await this.circuitBreakerProxyService.proxyRequest({
+        serviceName: service,
         method: req.method,
         targetUrl,
         path: cleanTargetPath,

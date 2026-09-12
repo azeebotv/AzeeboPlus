@@ -22,32 +22,57 @@ const CATEGORY_CARDS = [
   {
     category: 'Reality',
     sub: 'The real you wants to play',
-    emoji: '\u{1F4FA}',
+    iconName: 'tv-outline' as const,
     color: colors.primary[500],
   },
-  { category: 'Vertical', sub: "Dive into what's trending", emoji: '\u{1F4F1}', color: colors.red },
-  { category: 'Movie', sub: 'Nollywood & Beyond', emoji: '\u{1F3AC}', color: colors.primary[500] },
+  {
+    category: 'Vertical',
+    sub: "Dive into what's trending",
+    iconName: 'phone-portrait-outline' as const,
+    color: colors.red,
+  },
+  {
+    category: 'Movie',
+    sub: 'Nollywood & Beyond',
+    iconName: 'film-outline' as const,
+    color: colors.primary[500],
+  },
   {
     category: 'Creator',
     sub: 'Watch. Follow. Repeat.',
-    emoji: '\u{1F4E1}',
+    iconName: 'videocam-outline' as const,
     color: colors.bg.tertiary,
   },
   {
     category: 'Cinemaxis',
     sub: 'Explore Cinemaxis',
-    emoji: '\u{1F3A5}',
+    iconName: 'sparkles-outline' as const,
     color: colors.bg.secondary,
   },
-  { category: 'Comedy', sub: 'Laugh Out Loud', emoji: '\u{1F602}', color: colors.bg.tertiary },
-  { category: 'Sports', sub: 'Live & Loud', emoji: '\u26BD', color: colors.bg.secondary },
+  {
+    category: 'Comedy',
+    sub: 'Laugh Out Loud',
+    iconName: 'happy-outline' as const,
+    color: colors.bg.tertiary,
+  },
+  {
+    category: 'Sports',
+    sub: 'Live & Loud',
+    iconName: 'football-outline' as const,
+    color: colors.bg.secondary,
+  },
   {
     category: 'Lifestyle',
     sub: 'Elevate your lifestyle',
-    emoji: '\u{1F3A8}',
+    iconName: 'color-palette-outline' as const,
     color: universeColors.lifestyle,
   },
-  { category: 'Games', sub: 'Play & Win', emoji: '\u{1F3AE}', color: universeColors.games },
+  {
+    category: 'Games',
+    sub: 'Play & Win',
+    iconName: 'game-controller-outline' as const,
+    color: universeColors.games,
+  },
 ];
 
 export default function GuestHomepage() {
@@ -118,7 +143,7 @@ export default function GuestHomepage() {
       ) : (
         /* Fallback hero for guests */
         <View style={styles.hero}>
-          <AmbientGlow color="rgba(13,90,60,0.5)" size={300} />
+          <AmbientGlow color="rgba(232,66,10,0.25)" size={300} />
 
           {/* Center content */}
           <View style={styles.heroContent}>
@@ -152,7 +177,7 @@ export default function GuestHomepage() {
               >
                 <GlassCard style={styles.categoryCard}>
                   <View style={[styles.categoryIcon, { backgroundColor: `${card.color}22` }]}>
-                    <Text style={styles.categoryEmoji}>{card.emoji}</Text>
+                    <Ionicons name={card.iconName} size={22} color={card.color || colors.primary[500]} />
                   </View>
                   <Text style={styles.categoryTitle}>{card.category}</Text>
                   <Text style={styles.categorySub}>{card.sub}</Text>
@@ -208,80 +233,75 @@ export default function GuestHomepage() {
               {[
                 {
                   name: 'Movie',
-                  icon: '\u{1F3AC}',
+                  iconName: 'film-outline' as const,
                   href: '/movies',
                   color: colors.primary[500],
-                  // Canonical DB slug (matches admin-published `universe.movie.enabled`).
                   flag: 'movie',
                 },
                 {
                   name: 'Comedy',
-                  icon: '\u{1F602}',
+                  iconName: 'happy-outline' as const,
                   href: '/comedy',
                   color: universeColors.comedy,
                   flag: 'comedy',
                 },
                 {
                   name: 'Sports',
-                  icon: '\u26BD',
+                  iconName: 'football-outline' as const,
                   href: '/sports',
                   color: universeColors.sports,
                   flag: 'sports',
                 },
                 {
                   name: 'Music',
-                  icon: '\u{1F3B5}',
+                  iconName: 'musical-notes-outline' as const,
                   href: '/music',
                   color: universeColors.music,
-                  // Canonical DB slug (matches admin-published `universe.music.enabled`).
                   flag: 'music',
                 },
                 {
                   name: 'Reality',
-                  icon: '\u{1F4FA}',
+                  iconName: 'tv-outline' as const,
                   href: '/reality',
                   color: universeColors.reality,
                   flag: 'reality',
                 },
                 {
                   name: 'Lifestyle',
-                  icon: '\u{1F3A8}',
+                  iconName: 'color-palette-outline' as const,
                   href: '/lifestyle',
                   color: universeColors.lifestyle,
                   flag: 'lifestyle',
                 },
                 {
                   name: 'Vertical',
-                  icon: '\u{1F4F1}',
+                  iconName: 'phone-portrait-outline' as const,
                   href: '/vertical',
                   color: universeColors.vertical,
                   flag: 'vertical',
                 },
                 {
                   name: 'Games',
-                  icon: '\u{1F3AE}',
+                  iconName: 'game-controller-outline' as const,
                   href: '/games',
                   color: universeColors.games,
                   flag: 'games',
                 },
                 {
                   name: 'Creator',
-                  icon: '\u{1F4E1}',
+                  iconName: 'videocam-outline' as const,
                   href: '/creators',
                   color: universeColors.creators,
-                  // Canonical DB slug (matches admin-published `universe.creator.enabled`).
                   flag: 'creator',
                 },
                 {
                   name: 'Cinemaxis',
-                  icon: '\u{1F3A6}',
+                  iconName: 'sparkles-outline' as const,
                   href: '/cinemaxis',
                   color: universeColors.comedy,
                   flag: 'cinemaxis',
                 },
               ]
-                // Per-universe nav gating: hide universes disabled by the
-                // bootstrap universe.<name>.enabled sentinels (admin-tunable).
                 .filter((u) => universeEnabled(u.flag))
                 .map((u) => (
                   <Pressable
@@ -292,7 +312,7 @@ export default function GuestHomepage() {
                     accessibilityRole="button"
                   >
                     <View style={[styles.universeIcon, { backgroundColor: `${u.color}22` }]}>
-                      <Text style={styles.universeEmoji}>{u.icon}</Text>
+                      <Ionicons name={u.iconName} size={20} color={u.color || colors.primary[500]} />
                     </View>
                     <Text style={styles.universeName}>{u.name}</Text>
                   </Pressable>

@@ -159,7 +159,7 @@ export default function OnboardingPage(): React.JSX.Element {
             style={{
               width: 260,
               height: 520,
-              background: 'linear-gradient(160deg, #1A0A0A, #000)',
+              background: 'linear-gradient(160deg, #0b090e, #000)',
               border: '2px solid rgba(255,255,255,0.15)',
               boxShadow: '0 0 50px rgba(232,66,10,0.25), 0 30px 60px rgba(0,0,0,0.6)',
             }}

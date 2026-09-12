@@ -1,4 +1,5 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { PrismaService } from '../database/prisma.service.js';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -70,7 +71,7 @@ export class SocialAuthService {
       };
     } catch (error) {
       this.logger.error('Social login failed:', error);
-      throw new UnauthorizedException('Invalid social credentials');
+      mapAndThrow(error, 'social login');
     }
   }
 

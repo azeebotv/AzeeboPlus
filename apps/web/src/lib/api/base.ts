@@ -578,6 +578,28 @@ export async function apiFetch<T>(
         } as ApiError;
       }
 
+      // T-FIX: Some upstream controllers return HTTP 200 with an error
+      // envelope ({ success: false, ... }). Honor it instead of treating
+      // the whole envelope as payload data (which broke pages calling
+      // .find()/.map() on the result).
+      if (data && typeof data === 'object' && data.success === false) {
+        return {
+          success: false,
+          type: data.type,
+          title: data.title,
+          status: response.status,
+          detail: data.detail,
+          instance: data.instance,
+          code: data.code,
+          message: data.message || data.detail || 'An error occurred',
+          error: data.error,
+          statusCode: response.status,
+          details: data.details,
+          timestamp: data.timestamp,
+          path: data.path,
+        } as ApiError;
+      }
+
       return {
         success: true,
         data: data.data !== undefined ? data.data : data,

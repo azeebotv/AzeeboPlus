@@ -46,7 +46,7 @@ export class WalletController {
   constructor(@Inject(WalletService) private readonly walletService: WalletService) {}
 
   @Get()
-  @Cache({ key: 'wallet:balance', ttl: 60 })
+  @Cache({ key: 'wallet:balance:{userId}', ttl: 60 })
   @ApiOperation({ summary: 'Get wallet balance' })
   @ApiResponse({ status: 200, description: 'Wallet balance' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -56,7 +56,7 @@ export class WalletController {
   }
 
   @Get('transactions')
-  @Cache({ key: 'wallet:transactions', ttl: 60 })
+  @Cache({ key: 'wallet:transactions:{userId}:{page}:{limit}', ttl: 60 })
   @ApiOperation({ summary: 'Get wallet transaction history' })
   @ApiResponse({ status: 200, description: 'Transaction history' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -81,7 +81,7 @@ export class WalletController {
   }
 
   @Get('summary')
-  @Cache({ key: 'wallet:summary', ttl: 60 })
+  @Cache({ key: 'wallet:summary:{userId}', ttl: 60 })
   @ApiOperation({ summary: 'Get wallet summary widget' })
   @ApiResponse({ status: 200, description: 'Wallet summary' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -289,7 +289,7 @@ export class WalletController {
   // ─── Alias routes (frontend uses different names) ──────────────────
 
   @Get('balance')
-  @Cache({ key: 'wallet:balance', ttl: 60 })
+  @Cache({ key: 'wallet:balance:{userId}', ttl: 60 })
   @ApiOperation({ summary: 'Get wallet balance (alias for GET /)' })
   @ApiResponse({ status: 200, description: 'Wallet balance' })
   async getBalanceAlias(@Request() req: AuthenticatedRequest) {

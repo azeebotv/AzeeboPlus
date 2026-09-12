@@ -21,7 +21,7 @@ export default function LeaderboardPage(): React.JSX.Element {
   const [timeframe, setTimeframe] = useState<'weekly' | 'monthly' | 'allTime'>('weekly');
 
   const leaderboardQuery = useQuery({
-    queryKey: ['leaderboard', timeframe],
+    queryKey: ['leaderboard', 'engagement', timeframe],
     queryFn: async () => {
       const response = await apiFetch<LeaderboardEntry[] | { items?: LeaderboardEntry[] }>(
         `/engagement/leaderboard?timePeriod=${timeframe}`
@@ -98,7 +98,7 @@ export default function LeaderboardPage(): React.JSX.Element {
               style={{
                 padding: '10px 24px',
                 borderRadius: 999,
-                border: timeframe === key ? 'none' : '1px solid #2A1A1A',
+                border: timeframe === key ? 'none' : '1px solid #18151e',
                 background:
                   timeframe === key
                     ? 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)'
@@ -173,7 +173,7 @@ export default function LeaderboardPage(): React.JSX.Element {
                       borderRadius: '50%',
                       overflow: 'hidden',
                       flexShrink: 0,
-                      border: entry.rank <= 3 ? '2px solid #E8420A' : '2px solid #2A1A1A',
+                      border: entry.rank <= 3 ? '2px solid #E8420A' : '2px solid #18151e',
                     }}
                   >
                     {entry.avatar ? (

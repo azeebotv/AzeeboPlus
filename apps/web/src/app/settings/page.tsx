@@ -74,9 +74,9 @@ export default function SettingsPage(): React.JSX.Element {
   return (
     <div
       style={{
-        backgroundColor: 'var(--bg-primary, #1A0A0A)',
+        backgroundColor: 'var(--bg-primary)',
         minHeight: '100vh',
-        color: 'var(--text-primary, #F5F0EB)',
+        color: 'var(--text-primary)',
       }}
     >
       <AppHeader />
@@ -84,12 +84,24 @@ export default function SettingsPage(): React.JSX.Element {
         style={{
           paddingTop: 100,
           paddingBottom: 60,
-          maxWidth: 600,
+          maxWidth: 680,
           margin: '0 auto',
           padding: '100px 24px 60px',
         }}
       >
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 32 }}>Settings</h1>
+        <div className="mb-8">
+          <span
+            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wider uppercase mb-2"
+            style={{
+              backgroundColor: 'rgba(232, 66, 10, 0.15)',
+              color: 'var(--brand-orange)',
+              border: '1px solid rgba(232, 66, 10, 0.3)',
+            }}
+          >
+            Preferences
+          </span>
+          <h1 className="az-headline text-white text-3xl sm:text-4xl">Settings</h1>
+        </div>
 
         <div className="az-glass" style={{ padding: 24, borderRadius: 20, marginBottom: 20 }}>
           <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Preferences</h2>
@@ -122,7 +134,7 @@ export default function SettingsPage(): React.JSX.Element {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '8px 0',
-                    borderBottom: '1px solid #2A1A1A',
+                    borderBottom: '1px solid #18151e',
                   }}
                 >
                   <div>
@@ -149,7 +161,7 @@ export default function SettingsPage(): React.JSX.Element {
                       position: 'relative',
                       backgroundColor: settings[item.key as keyof typeof settings]
                         ? 'var(--brand-orange, #E8420A)'
-                        : 'var(--bg-surface, #2A1A1A)',
+                        : 'var(--bg-surface, #18151e)',
                       transition: 'background-color 0.2s',
                     }}
                   >
@@ -200,7 +212,7 @@ export default function SettingsPage(): React.JSX.Element {
                   flex: 1,
                   padding: '10px 0',
                   borderRadius: 12,
-                  border: settings.downloadQuality === q ? 'none' : '1px solid #2A1A1A',
+                  border: settings.downloadQuality === q ? 'none' : '1px solid #18151e',
                   background:
                     settings.downloadQuality === q
                       ? 'linear-gradient(135deg, var(--brand-orange, #E8420A) 0%, var(--brand-red, #CC1C1C) 100%)'
@@ -235,7 +247,7 @@ export default function SettingsPage(): React.JSX.Element {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   padding: '12px 0',
-                  borderBottom: '1px solid #2A1A1A',
+                  borderBottom: '1px solid #18151e',
                   textDecoration: 'none',
                   color: 'var(--text-primary, #F5F0EB)',
                 }}

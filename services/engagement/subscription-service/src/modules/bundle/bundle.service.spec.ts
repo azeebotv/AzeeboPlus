@@ -238,7 +238,7 @@ describe('BundleService', () => {
       });
 
       (axios.get as jest.Mock).mockResolvedValue({
-        data: { id: 'wallet-1', balance: 5000 },
+        data: { data: { id: 'wallet-1', balance: 5000 } },
       });
       (axios.post as jest.Mock).mockResolvedValue({ data: {} });
 
@@ -278,7 +278,7 @@ describe('BundleService', () => {
     it('should throw BadRequestException if user already has active subscription', async () => {
       (prismaService.bundlePass.findUnique as jest.Mock).mockResolvedValue(mockBundle);
       (axios.get as jest.Mock).mockResolvedValue({
-        data: { id: 'wallet-1', balance: 5000 },
+        data: { data: { id: 'wallet-1', balance: 5000 } },
       });
       (axios.post as jest.Mock).mockResolvedValue({ data: {} });
       (prismaService.$transaction as jest.Mock).mockImplementation(async (cb) => {

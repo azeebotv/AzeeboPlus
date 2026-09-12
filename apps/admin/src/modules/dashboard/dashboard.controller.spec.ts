@@ -16,7 +16,11 @@ describe('DashboardController', () => {
               totalUsers: 0,
               totalContent: 0,
               totalRevenue: 0,
-              activeSubscriptions: 0,
+              pendingReports: 0,
+              activeCreators: 0,
+              newUsers: 0,
+              dailyActiveUsers: 0,
+              totalViews: 0,
             }),
             getRevenueData: jest.fn().mockResolvedValue([]),
             getContentTrend: jest.fn().mockResolvedValue([]),
@@ -41,7 +45,9 @@ describe('DashboardController', () => {
     expect(result).toHaveProperty('totalUsers');
     expect(result).toHaveProperty('totalContent');
     expect(result).toHaveProperty('totalRevenue');
-    expect(result).toHaveProperty('activeSubscriptions');
+    expect(result).toHaveProperty('newUsers');
+    expect(result).toHaveProperty('dailyActiveUsers');
+    expect(result).toHaveProperty('totalViews');
   });
 
   it('should return revenue data', async () => {

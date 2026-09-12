@@ -23,17 +23,18 @@ import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
     AdminModule,
     HealthModule,
     CacheModule,
-    // Reward feature gates: points ON; streaks, badges, missions and
-    // double-points OFF until launched.
+    // Reward feature gates: points, streaks, badges and missions ON for the
+    // dev environment (previously Redis dev-enables — now baked into the
+    // module defaults); double-points stays OFF until launched.
     FlagMetricsModule.register({ service: 'reward-service' }),
     FeatureFlagModule.register({
       global: true,
       ...flagHooks('reward-service'),
       defaultFlags: {
         [rewardFlags.pointsEnabled]: true,
-        [rewardFlags.streaks]: false,
-        [rewardFlags.badges]: false,
-        [rewardFlags.missions]: false,
+        [rewardFlags.streaks]: true,
+        [rewardFlags.badges]: true,
+        [rewardFlags.missions]: true,
         [rewardFlags.doublePoints]: false,
       },
     }),

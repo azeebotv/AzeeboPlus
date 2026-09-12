@@ -61,8 +61,11 @@ export default function CreatorsPage(): React.JSX.Element {
   }, [selectedCreator]);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Creators" />
+    <div
+      className="min-h-screen relative overflow-x-hidden"
+      style={{ background: 'var(--hp-bg)', color: 'var(--text-primary)' }}
+    >
+      <AppHeader active="Creators" logoVariant="light" />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-10 text-center">
@@ -209,7 +212,7 @@ export default function CreatorsPage(): React.JSX.Element {
         )}
       </main>
 
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

@@ -5,9 +5,9 @@
   "description": "Azeebo+ Queue Service (BullMQ)",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "bash ../../../scripts/build-service.sh",
     "start": "node dist/index.js",
-    "start:dev": "bash start-dev.sh",
+    "start:dev": "bash ../../../scripts/start-dev-service.sh",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",

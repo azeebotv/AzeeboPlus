@@ -209,9 +209,9 @@ describe('ProxyController routing gates', () => {
     expect(circuitBreaker.proxyRequest).toHaveBeenCalledWith(
       expect.objectContaining({
         method: 'POST',
-        // no-prefix strategy builds /admin + the wildcard path; the ^/v1
-        // rewrite only strips a version prefix, which isn't in the target.
-        path: '/admin/universes/feature-flags/restore',
+        // default strategy builds /v{version}/admin + the wildcard path,
+        // matching apps/admin's URI-versioned routes (/v1/admin/...).
+        path: '/v1/admin/universes/feature-flags/restore',
         targetUrl: 'http://localhost:4016',
         body,
       })

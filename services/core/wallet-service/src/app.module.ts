@@ -3,6 +3,8 @@ import { APP_INTERCEPTOR, APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { TerminusModule } from '@nestjs/terminus';
 import { WalletModule } from './modules/wallet/wallet.module.js';
+import { AdminModule } from './modules/admin/admin.module.js';
+import { InternalWalletModule } from './modules/internal/internal-wallet.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
 import { MetricsModule } from './modules/metrics/metrics.module.js';
@@ -29,6 +31,8 @@ import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
     TerminusModule,
     JwtConfigModule,
     WalletModule,
+    AdminModule,
+    InternalWalletModule,
     HealthModule,
     MetricsModule,
     ObservabilityModule,

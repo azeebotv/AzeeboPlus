@@ -5,6 +5,7 @@ import {
   BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { randomUUID } from 'crypto';
 import { S3Service } from './s3.service';
 import { ConfigService } from '@nestjs/config';
@@ -366,7 +367,7 @@ export class UploadService {
     } catch (error) {
       if (error instanceof BadRequestException) throw error;
       this.logger.error(`Virus scan failed for ${key}: ${(error as Error).message}`);
-      throw new BadRequestException('Upload could not be scanned. Please try again later.');
+      mapAndThrow(error, 'virus scanning upload');
     }
   }
 

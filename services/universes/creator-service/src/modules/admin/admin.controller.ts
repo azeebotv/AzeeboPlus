@@ -1,13 +1,28 @@
-import { Inject, Controller, Get, Post, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Param,
+  Query,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AdminService } from './admin.service.js';
 import { AdminGuard } from '@azeebo/security';
+import { WalletSnapshotSyncService } from '../creators/wallet-snapshot-sync.service.js';
 
 @ApiTags('Admin - Creator Service')
 @Controller('admin')
 @UseGuards(AdminGuard)
 export class AdminController {
-  constructor(@Inject(AdminService) private readonly adminService: AdminService) {}
+  constructor(
+    @Inject(AdminService) private readonly adminService: AdminService,
+    @Inject(WalletSnapshotSyncService)
+    private readonly walletSnapshotSyncService: WalletSnapshotSyncService
+  ) {}
 
   @Get('stats')
   @ApiOperation({ summary: 'Get creator service statistics (admin)' })
@@ -89,5 +104,30 @@ export class AdminController {
     @Query('status') status?: string
   ) {
     return this.adminService.getPayoutRequests({ page, limit, status });
+  }
+
+  @Post('wallet-snapshots/sync')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Trigger a wallet snapshot sync (admin)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Sync scheduled; check service logs for the result summary',
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  async triggerWalletSnapshotSync() {
+    // Fire-and-forget: the sweep can take a while and cron-logs its own result.
+    void this.walletSnapshotSyncService.syncAllCreators();
+    return { success: true, data: { message: 'Wallet snapshot sync started' } };
+  }
+
+  @Post('wallet-snapshots/sync/:userId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Sync wallet snapshots for one user (admin)' })
+  @ApiResponse({ status: 200, description: 'User wallet snapshot refreshed' })
+  @ApiResponse({ status: 404, description: 'Wallet not found for user' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  async triggerWalletSnapshotSyncForUser(@Param('userId') userId: string) {
+    const result = await this.walletSnapshotSyncService.syncWalletForUser(userId);
+    return { success: true, data: result };
   }
 }

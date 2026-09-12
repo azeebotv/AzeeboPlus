@@ -8,7 +8,21 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
+import { Clock, Search, CheckCircle2, XCircle } from 'lucide-react';
 import analytics from '@/lib/analytics';
+
+function getStatusIcon(status: string): React.JSX.Element {
+  switch (status) {
+    case 'pending':
+      return <Clock className="w-3.5 h-3.5" />;
+    case 'reviewing':
+      return <Search className="w-3.5 h-3.5" />;
+    case 'resolved':
+      return <CheckCircle2 className="w-3.5 h-3.5" />;
+    default:
+      return <XCircle className="w-3.5 h-3.5" />;
+  }
+}
 
 interface Report {
   id: string;
@@ -104,8 +118,8 @@ function MobileStatusPageContent(): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
-      <AppHeader />
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      <AppHeader logoVariant="light" />
 
       <div className="max-w-lg mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <motion.div
@@ -171,10 +185,10 @@ function MobileStatusPageContent(): React.JSX.Element {
                   <GlowCard className="p-4">
                     <div className="flex items-center justify-between mb-2">
                       <span
-                        className="px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1"
+                        className="px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1.5"
                         style={{ backgroundColor: statusStyle.bg, color: statusStyle.text }}
                       >
-                        <span>{statusStyle.icon}</span>
+                        {getStatusIcon(report.status)}
                         {statusStyle.label}
                       </span>
                       <span className="text-xs text-white/40">{formatDate(report.createdAt)}</span>
@@ -281,7 +295,7 @@ function MobileStatusPageContent(): React.JSX.Element {
         </ScrollReveal>
       </div>
 
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

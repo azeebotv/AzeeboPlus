@@ -1,4 +1,5 @@
 import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { MovieResponse } from './interfaces/movie-response.interface.js';
@@ -184,9 +185,7 @@ export class MoviesService {
         { timeout: 10000 }
       );
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? (error as Error).message : 'Failed to process payment';
-      throw new BadRequestException(errorMessage);
+      mapAndThrow(error, 'charging movie rental');
     }
 
     try {

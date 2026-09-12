@@ -1,4 +1,5 @@
 import { Inject, Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { randomInt } from 'crypto';
 import * as bcrypt from 'bcrypt';
@@ -76,7 +77,7 @@ export class OtpService {
       this.logger.log(`OTP sent to ${phoneNumber}`);
     } catch (error) {
       this.logger.error(`Failed to send OTP via notification-service: ${(error as Error).message}`);
-      throw new BadRequestException('Failed to send OTP. Please try again.');
+      mapAndThrow(error, 'sending OTP');
     }
 
     return { message: 'OTP sent successfully' };

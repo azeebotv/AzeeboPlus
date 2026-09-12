@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { MoviesService } from './movies.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
@@ -380,7 +384,10 @@ describe('MoviesService Integration - Cross-Service Communication', () => {
 
       mockedAxios.post.mockRejectedValue(new Error('Wallet service unavailable'));
 
-      await expect(service.rentMovie('user-1', 'movie-1')).rejects.toThrow(BadRequestException);
+      // An internal wallet-service outage is a server error, not a client error.
+      await expect(service.rentMovie('user-1', 'movie-1')).rejects.toThrow(
+        InternalServerErrorException
+      );
     });
   });
 });

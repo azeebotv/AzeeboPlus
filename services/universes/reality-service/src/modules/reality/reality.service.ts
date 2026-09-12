@@ -6,6 +6,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '../../prisma/client/index.js';
@@ -761,9 +762,7 @@ export class RealityService {
         },
       };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? (error as Error).message : 'Failed to purchase premium extra';
-      throw new ConflictException(errorMessage);
+      mapAndThrow(error, 'purchasing premium extra');
     }
   }
 

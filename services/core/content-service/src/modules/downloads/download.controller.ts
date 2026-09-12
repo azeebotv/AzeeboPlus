@@ -26,7 +26,7 @@ class RequestDownloadDto {
 
 @ApiTags('Downloads')
 @ApiBearerAuth()
-@Controller('downloads')
+@Controller('content/downloads')
 @UseGuards(RateLimitGuard)
 export class DownloadController {
   constructor(private readonly downloadService: DownloadService) {}

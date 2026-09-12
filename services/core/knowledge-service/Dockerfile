@@ -36,7 +36,12 @@ RUN for i in 1 2 3 4 5; do pnpm install --prod --frozen-lockfile && break || (ec
 
 COPY --from=builder /app/services/core/knowledge-service/dist ./services/core/knowledge-service/dist
 COPY --from=builder /app/services/core/knowledge-service/prisma ./services/core/knowledge-service/prisma
-COPY --from=builder /app/services/core/knowledge-service/generated ./services/core/knowledge-service/generated
+# The compiled prisma.service.js resolves the generated client from
+# dist/prisma/client. The workspace build script emits it there (schema
+# output = "../src/prisma/client"); this COPY backstops it with the builder
+# stage's fresh client so the image can never ship a stale or missing one
+# even if the dist copy step were skipped.
+COPY --from=builder /app/services/core/knowledge-service/src/prisma/client ./services/core/knowledge-service/dist/prisma/client
 
 RUN chown -R nodejs:nodejs /app
 

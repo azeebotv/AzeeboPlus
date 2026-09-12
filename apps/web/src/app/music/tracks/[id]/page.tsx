@@ -10,27 +10,11 @@ import AppFooter from '@/components/layout/AppFooter';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { Skeleton } from '@azeebo/ui/web';
+import { extractTracks } from '@/lib/music';
 import analytics from '@/lib/analytics';
 import { ShareButton } from '@/components/ui/ShareButton';
 import { ReviewsSection } from '@/components/ui/ReviewsSection';
 import { WatchPartyOverlay } from '@/components/watch-party/WatchPartyOverlay';
-
-interface TrackDetail {
-  id: string;
-  title: string;
-  artist: string;
-  artistId?: string;
-  thumbnail: string;
-  duration?: number;
-  genre?: string;
-  isExplicit?: boolean;
-  album?: string;
-  releaseDate?: string;
-  playCount?: number;
-  likeCount?: number;
-  lyrics?: string;
-  audioUrl?: string;
-}
 
 export default function TrackDetailPage(): React.JSX.Element {
   const params = useParams();
@@ -44,8 +28,8 @@ export default function TrackDetailPage(): React.JSX.Element {
   const trackQuery = useQuery({
     queryKey: ['music', 'track', id],
     queryFn: async () => {
-      const res = await api.request<TrackDetail>(`/api/v1/lifestyle/music/${id}`);
-      if (res.success && res.data) return res.data;
+      const res = await api.request<unknown>(`/api/v1/lifestyle/music/${id}`);
+      if (res.success && res.data) return extractTracks(res.data)[0] ?? null;
       return null;
     },
     staleTime: 60000,

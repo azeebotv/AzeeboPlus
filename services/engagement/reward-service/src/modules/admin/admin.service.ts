@@ -1,4 +1,5 @@
 import { Inject, Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { PrismaService } from '../database/prisma.service';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 import { Prisma } from '../../prisma/client/index.js';
@@ -312,9 +313,7 @@ export class AdminService {
       ).activityPointConfig?.create({ data });
       return ApiResponseWrapper.created(config);
     } catch (error) {
-      throw new NotFoundException(
-        `Failed to create activity point config: ${(error as Error).message}`
-      );
+      mapAndThrow(error, 'creating activity point config');
     }
   }
 
@@ -340,9 +339,7 @@ export class AdminService {
       });
       return ApiResponseWrapper.success(config);
     } catch (error) {
-      throw new NotFoundException(
-        `Failed to update activity point config: ${(error as Error).message}`
-      );
+      mapAndThrow(error, 'updating activity point config');
     }
   }
 }

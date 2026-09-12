@@ -122,7 +122,7 @@ export default function TippingPanel({
               borderColor:
                 !useCustom && amount === preset
                   ? 'var(--brand-orange, #E8420A)'
-                  : 'var(--bg-surface, #2A1A1A)',
+                  : 'var(--bg-surface, #18151e)',
               backgroundColor:
                 !useCustom && amount === preset ? 'rgba(232,66,10,0.15)' : 'transparent',
               color:
@@ -145,7 +145,7 @@ export default function TippingPanel({
             padding: '8px 16px',
             borderRadius: 8,
             border: '1px solid',
-            borderColor: useCustom ? 'var(--brand-orange, #E8420A)' : 'var(--bg-surface, #2A1A1A)',
+            borderColor: useCustom ? 'var(--brand-orange, #E8420A)' : 'var(--bg-surface, #18151e)',
             backgroundColor: useCustom ? 'rgba(232,66,10,0.15)' : 'transparent',
             color: useCustom ? 'var(--brand-orange, #E8420A)' : 'var(--text-primary, #F5F0EB)',
             fontSize: 13,
@@ -245,7 +245,7 @@ export default function TippingPanel({
         </p>
       )}
 
-      <div style={{ borderTop: '1px solid #2A1A1A', paddingTop: 16 }}>
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 16 }}>
         <p
           style={{
             color: 'var(--text-muted, #9A8A7A)',

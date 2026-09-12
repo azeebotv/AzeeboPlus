@@ -32,6 +32,7 @@ interface ProxyRequestOptions {
   timeout?: number;
   requestId?: string;
   traceId?: string;
+  serviceName?: string;
 }
 
 interface ProxyResponse {
@@ -101,18 +102,25 @@ export class CircuitBreakerProxyService {
       timeout = 30000,
       requestId,
       traceId: _traceId,
+      serviceName: explicitServiceName,
     } = options;
 
     const target = `${targetUrl}${path}${queryString ? `?${queryString}` : ''}`;
-    let serviceName = 'unknown';
-    try {
-      serviceName = new URL(targetUrl).hostname || 'unknown';
-    } catch {
-      this.logger.warn(`Failed to parse targetUrl: ${targetUrl}`);
+    let serviceName = explicitServiceName;
+    if (!serviceName) {
+      try {
+        const url = new URL(targetUrl);
+        // Strip version prefix (/v1/, /v2/, etc.) if present, then take the service segment
+        const strippedPath = path.replace(/^\/v\d+\//, '').replace(/^\//, '');
+        const pathService = strippedPath.split('/')[0] || 'root';
+        serviceName = `${url.hostname}:${pathService}`;
+      } catch {
+        this.logger.warn(`Failed to parse targetUrl: ${targetUrl}`);
+        serviceName = 'unknown';
+      }
     }
 
-    // Use path-based key to avoid shared circuit breakers across services on same host
-    const circuitKey = `${serviceName}:${path.split('/')[1] || 'root'}`;
+    const circuitKey = serviceName;
 
     this.logger.debug(`Proxying ${method} ${path}`, { requestId });
 

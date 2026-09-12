@@ -39,7 +39,7 @@ export default function ShareRedirectPage(): React.JSX.Element {
     return (
       <div
         className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}
+        style={{ backgroundColor: 'var(--bg-primary)' }}
       >
         <div className="az-glass p-8 text-center">
           <h1 className="text-2xl font-bold text-white mb-2">Link not found</h1>
@@ -52,7 +52,7 @@ export default function ShareRedirectPage(): React.JSX.Element {
   return (
     <div
       className="min-h-screen flex items-center justify-center"
-      style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}
+      style={{ backgroundColor: 'var(--bg-primary)' }}
     >
       <div className="text-center">
         <Loader

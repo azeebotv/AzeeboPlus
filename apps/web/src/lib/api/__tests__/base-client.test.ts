@@ -101,6 +101,20 @@ describe('apiFetch — standalone fetch helper', () => {
       expect(result.message).toBe('OK');
     });
 
+    it('should treat HTTP 200 with a success:false envelope as an error', async () => {
+      fetchMock.mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        json: async () => ({ success: false, message: 'Failed to fetch universes' }),
+      });
+
+      const result = await apiFetch('/api/v1/public/universes');
+
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('Failed to fetch universes');
+    });
+
     it('should return success for 201 Created with data fallback', async () => {
       fetchMock.mockResolvedValue({
         ok: true,

@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { api, ContentItem, Category } from '@/lib/api';
+import { useUniversesQuery } from '@/hooks/useUniverses';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
@@ -20,15 +21,7 @@ function MoviesPageContent(): React.JSX.Element {
     analytics.pageView('movies');
   }, []);
 
-  const universesQuery = useQuery({
-    queryKey: ['universes'],
-    queryFn: async () => {
-      const res = await api.universe.getUniverses();
-      if (!res.success || !res.data) throw new Error(res.message || 'Failed to load universes');
-      return res.data;
-    },
-    staleTime: 300000,
-  });
+  const universesQuery = useUniversesQuery();
 
   const moviesUniverse = universesQuery.data?.find((u) => u.name?.toLowerCase() === 'movie');
 
@@ -64,8 +57,11 @@ function MoviesPageContent(): React.JSX.Element {
   const error = moviesQuery.error?.message || null;
 
   return (
-    <div className="min-h-screen az-nollywood-bg">
-      <AppHeader active="Movies" />
+    <div
+      className="min-h-screen relative overflow-x-hidden"
+      style={{ background: 'var(--hp-bg)', color: 'var(--text-primary)' }}
+    >
+      <AppHeader active="Movies" logoVariant="light" />
 
       {/* Hero Section */}
       <section className="relative">
@@ -83,12 +79,18 @@ function MoviesPageContent(): React.JSX.Element {
         ) : movies.length > 0 ? (
           <div className="relative h-[400px] sm:h-[500px]">
             <OptimizedImage
-              src={movies[0].thumbnail}
+              src={movies[0].thumbnail || '/images/poster_ember_queen.jpg'}
               alt={movies[0].title}
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-[var(--brand-near-black)]/50 to-transparent" />
-            <AmbientGlow color="rgba(245,158,11,0.25)" size={500} className="bottom-0 right-0" />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  'linear-gradient(to top, rgba(11,9,14,1) 0%, rgba(11,9,14,0.6) 40%, rgba(11,9,14,0.3) 100%)',
+              }}
+            />
+            <AmbientGlow color="rgba(232,66,10,0.22)" size={550} className="bottom-0 right-0" />
 
             <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 max-w-7xl mx-auto">
               <motion.div
@@ -284,7 +286,7 @@ function MoviesPageContent(): React.JSX.Element {
         )}
       </section>
 
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

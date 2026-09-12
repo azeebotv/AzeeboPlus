@@ -12,6 +12,16 @@ import AppFooter from '../../components/layout/AppFooter';
 import { OptimizedImage } from '../../components/OptimizedImage';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { Gamepad2, Trophy, Tv, Film, Sparkles } from 'lucide-react';
+
+function getUniverseIcon(name: string): React.JSX.Element {
+  const lower = name.toLowerCase();
+  if (lower.includes('game')) return <Gamepad2 className="w-4 h-4 inline mr-2 text-amber-400" />;
+  if (lower.includes('sport')) return <Trophy className="w-4 h-4 inline mr-2 text-emerald-400" />;
+  if (lower.includes('reality') || lower.includes('show')) return <Tv className="w-4 h-4 inline mr-2 text-purple-400" />;
+  if (lower.includes('movie') || lower.includes('film') || lower.includes('cinema')) return <Film className="w-4 h-4 inline mr-2 text-rose-400" />;
+  return <Sparkles className="w-4 h-4 inline mr-2 text-orange-400" />;
+}
 
 interface ContentResponse {
   items?: ContentItem[];
@@ -185,10 +195,22 @@ export default function BrowsePage(): React.JSX.Element {
   const activeFilterCount = [searchQuery, minRating > 0, maxDuration < 300].filter(Boolean).length;
 
   return (
-    <div className="min-h-screen az-nollywood-bg">
-      <AppHeader active="Browse" />
+    <div
+      className="min-h-screen relative overflow-x-hidden"
+      style={{ background: 'var(--hp-bg)', color: 'var(--text-primary)' }}
+    >
+      <AppHeader active="Browse" logoVariant="light" />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+      {/* Top Ambient Glow */}
+      <div
+        className="pointer-events-none absolute -top-32 left-1/3 -translate-x-1/2 w-[650px] h-[450px] rounded-full blur-[140px] -z-0"
+        style={{
+          background: 'radial-gradient(circle, rgba(232,66,10,0.16) 0%, rgba(204,28,28,0.05) 50%, transparent 80%)',
+        }}
+        aria-hidden="true"
+      />
+
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
         {/* Page Title */}
         <motion.div
           className="mb-6 sm:mb-8"
@@ -196,13 +218,11 @@ export default function BrowsePage(): React.JSX.Element {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
-          <p
-            className="text-xs font-bold uppercase tracking-widest mb-2"
-            style={{ color: 'var(--brand-orange)' }}
-          >
-            Discover
-          </p>
-          <h1 className="az-headline text-white text-3xl sm:text-4xl">Browse Content</h1>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-3 border border-white/10 bg-white/5">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand-orange)] animate-pulse" />
+            <span className="tracking-widest uppercase text-white/70">DISCOVER</span>
+          </div>
+          <h1 className="az-headline font-extrabold text-white text-3xl sm:text-4xl tracking-tight">Browse Content</h1>
         </motion.div>
 
         {error && (
@@ -457,7 +477,7 @@ export default function BrowsePage(): React.JSX.Element {
                           : {}
                       }
                     >
-                      {universe.icon && <span className="mr-2">{universe.icon}</span>}
+                      {getUniverseIcon(universe.name)}
                       {universe.name}
                     </button>
                   </li>
@@ -534,9 +554,9 @@ export default function BrowsePage(): React.JSX.Element {
                     role="article"
                     tabIndex={0}
                     onKeyDown={(e) => handleContentKeyDown(e, index)}
-                    className="az-glass overflow-hidden group cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--brand-orange)]"
+                    className="rounded-2xl overflow-hidden group cursor-pointer border border-[var(--hp-card-border)] bg-[var(--hp-card-bg)] hover:border-[rgba(232,66,10,0.4)] hover:shadow-[0_8px_30px_rgba(232,66,10,0.15)] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[var(--brand-orange)] flex flex-col"
                   >
-                    <div className="relative h-48 flex items-center justify-center overflow-hidden">
+                    <div className="relative h-48 flex items-center justify-center overflow-hidden bg-black/40">
                       {item.thumbnail ? (
                         <OptimizedImage
                           src={item.thumbnail}
@@ -545,34 +565,32 @@ export default function BrowsePage(): React.JSX.Element {
                         />
                       ) : (
                         <div
-                          className="w-full h-full flex items-center justify-center"
-                          style={{
-                            background:
-                              'linear-gradient(135deg, rgba(232,66,10,0.3), rgba(13,59,46,0.4))',
-                          }}
+                          className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[var(--brand-orange)]/20 to-black/60"
                         >
-                          <span style={{ fontSize: 48 }}>
-                            {item.universe?.icon || '\uD83C\uDFAC'}
-                          </span>
+                          <svg className="w-12 h-12 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625c.621 0 1.125-.504 1.125-1.125m-1.125 1.125h-7.5c-.621 0-1.125-.504-1.125-1.125m8.625 0V5.625m0 12.75v-1.5c0-.621-.504-1.125-1.125-1.125m0 0h-7.5m7.5 0V5.625m-8.625 12.75h-7.5m7.5 0V5.625" />
+                          </svg>
                         </div>
                       )}
+                      {/* Gradient Bottom overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--hp-card-bg)] via-transparent to-transparent opacity-80" />
                     </div>
-                    <div className="p-4">
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-white/50 mb-1">
-                        {item.universe?.name}
-                      </p>
-                      <h4 className="font-bold text-white text-sm mb-1 group-hover:text-[var(--brand-orange)] transition-colors line-clamp-1">
-                        {item.title}
-                      </h4>
-                      <p className="text-white/45 text-xs line-clamp-2 mb-3">{item.description}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-white/40">{item.creator?.name}</span>
+                    <div className="p-4 flex-1 flex flex-col justify-between">
+                      <div>
+                        {item.universe?.name && (
+                          <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--brand-orange)] mb-1">
+                            {item.universe.name}
+                          </p>
+                        )}
+                        <h4 className="font-bold text-white text-base mb-1 group-hover:text-[var(--brand-orange)] transition-colors line-clamp-1">
+                          {item.title}
+                        </h4>
+                        <p className="text-white/50 text-xs line-clamp-2 mb-3 leading-relaxed">{item.description}</p>
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                        <span className="text-xs text-white/40">{item.creator?.name || 'Azeebo Originals'}</span>
                         <span
-                          className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
-                          style={{
-                            background: 'rgba(255,255,255,0.08)',
-                            color: 'var(--brand-orange)',
-                          }}
+                          className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-white/10 text-white group-hover:bg-[var(--brand-orange)] transition-colors"
                         >
                           Watch
                         </span>
@@ -594,7 +612,7 @@ export default function BrowsePage(): React.JSX.Element {
         </div>
       </main>
 
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

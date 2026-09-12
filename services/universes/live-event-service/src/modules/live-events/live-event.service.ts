@@ -7,6 +7,7 @@ import {
   ConflictException,
   ForbiddenException,
 } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { FeatureFlagService, liveEventFlags } from '@azeebo/feature-flags';
@@ -171,9 +172,7 @@ export class LiveEventService {
         });
       } catch (error) {
         this.logger.error('Wallet debit failed', error);
-        throw new BadRequestException(
-          'Insufficient balance. Please fund your wallet and try again.'
-        );
+        mapAndThrow(error, 'debiting wallet for event ticket');
       }
     }
 

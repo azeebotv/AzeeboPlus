@@ -26,6 +26,9 @@ x-common-env: &common-env
   REDIS_HOST: redis
   REDIS_PORT: "6379"
   REDIS_PASSWORD: ${REDIS_PASSWORD}
+  # Event bus (Redis pub/sub) — used by services that publish/subscribe
+  # domain events (wallet-service, creator-service wallet snapshots, ...)
+  EVENT_BUS_REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
   # Auth
   JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
   JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}

@@ -454,7 +454,7 @@ setup_multi_db() {
 run_prisma_generate() {
   section "Generating Prisma Clients"
 
-  local count=0
+  local count=0 failed=0
   for entry in "${DB_SERVICES[@]}"; do
     IFS='|' read -r svc_name svc_dir db_name port <<< "$entry"
     count=$((count + 1))
@@ -470,10 +470,20 @@ run_prisma_generate() {
     if gen_output="$(cd "$service_dir" && DATABASE_URL="$db_url" pnpm exec prisma generate 2>&1)"; then
       log_ok "  [$count] $svc_name: generated"
     else
-      log_warn "  [$count] $svc_name: failed"
-      log_debug "    $gen_output"
+      log_error "  [$count] $svc_name: prisma generate FAILED"
+      # Show the real error unconditionally — a hidden failure here becomes a
+      # cryptic "Cannot find module '.prisma/client'" crash later.
+      printf '%s\n' "$gen_output" | sed 's/^/    /'
+      failed=$((failed + 1))
     fi
   done
+
+  if (( failed > 0 )); then
+    log_error "$failed Prisma client(s) failed to generate"
+    log_error "Fix the errors above (usually a schema or datasource problem), or regenerate manually:"
+    log_error "  pnpm run prisma:generate"
+    return 1
+  fi
 }
 
 # T0: Shared packages that ALL services depend on.
@@ -512,11 +522,19 @@ build_t0_packages() {
       continue
     fi
 
-    # shared-services needs prisma generate first
+    # shared-services needs prisma generate first — failures must abort (its
+    # build and everything depending on it cannot succeed with a stale/missing
+    # client), and the error must be visible instead of swallowed.
     if [[ "$pkg" == "shared-services" ]]; then
       if [[ -f "$pkg_dir/prisma/schema.prisma" ]]; then
         local db_url="${DB_BASE_URL}/azeebo_content?schema=public"
-        (cd "$pkg_dir" && DATABASE_URL="$db_url" pnpm exec prisma generate 2>&1) >/dev/null 2>&1 || true
+        log_info "  [$count] shared-services: generating Prisma client first..."
+        if ! gen_ss_output="$(cd "$pkg_dir" && DATABASE_URL="$db_url" pnpm exec prisma generate 2>&1)"; then
+          log_error "  [$count] shared-services: prisma generate FAILED — cannot build"
+          printf '%s\n' "$gen_ss_output" | sed 's/^/    /'
+          return 1
+        fi
+        log_ok "  [$count] shared-services: client generated"
       fi
     fi
 
@@ -915,9 +933,9 @@ cmd_setup() {
     log_ok "Dependencies already installed"
   fi
 
-  run_prisma_generate
-  run_migrations
-  build_t0_packages
+  run_prisma_generate || return 1
+  run_migrations || return 1
+  build_t0_packages || return 1
 
   # Seed demo data
   section "Seeding Demo Data"
@@ -1004,7 +1022,7 @@ cmd_start() {
 
   # Build T0 shared packages first (services depend on these)
   if [[ "$do_no_build" != "true" ]]; then
-    build_t0_packages
+    build_t0_packages || return 1
   fi
 
   [[ "$do_core" == "true" ]]       && start_group "core" "${CORE_SERVICES[@]}"
@@ -1262,7 +1280,7 @@ cmd_deploy() {
   log_info "Building and deploying all services locally"
 
   # Build T0 packages
-  build_t0_packages
+  build_t0_packages || return 1
 
   # Build admin and creator client SPAs
   section "Building Admin Client"

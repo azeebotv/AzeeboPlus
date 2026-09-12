@@ -23,6 +23,7 @@ Two conventions hold across all of them:
 |-------|--------------------------------------------|-------------|
 | `check:flags` | Flag & Swagger Conventions | — |
 | `check:flags:docs` | (flag registry doc sync) | — |
+| `check:lint-ratchet` | Lint PR + lint.yml backend lint (right after `pnpm -r lint`) | baseline may only move down |
 | `check:prisma` | Flag & Swagger Conventions | — |
 | `check:dev-wiring` | Flag & Swagger Conventions | — |
 | `check:build-chain` | Flag & Swagger Conventions | — |
@@ -62,6 +63,26 @@ Fails when:
 registry byte-for-byte (it's `generate-flag-registry-table.mjs --check`).
 
 **Fix:** `node scripts/generate-flag-registry-table.mjs` (regenerates), commit.
+
+### `check:lint-ratchet` — per-rule lint warning ratchet
+
+**Invariant:** the count of `azeebo-custom/require-map-and-throw` warnings
+per workspace never exceeds the committed baseline
+(`scripts/lint-warning-baseline.json`) — and the baseline only moves down.
+
+A plain `--max-warnings` cannot enforce this ratchet: it counts ALL warnings,
+so an unrelated `console.log` could mask ratchet growth (or hide a real
+regression). This gate counts warnings **per rule and per workspace**.
+
+Fails when: any workspace's count exceeds its baseline. Workspaces absent
+from the baseline are compared against **0** — new services cannot ship with
+warnings. Dropping below the baseline does not fail; run `--update` to lock
+in the improvement (otherwise a later PR could grow back to the old count).
+
+**Fix:** migrate the flagged catch blocks to `mapAndThrow` — or, if you
+reduced warnings, `node scripts/check-lint-warning-ratchet.mjs --update` to
+lower the floor. Fully-converted services move to the `error` block in
+`eslint.config.js` and can be deleted from the baseline.
 
 ### `check:prisma` — unique-key lookups
 

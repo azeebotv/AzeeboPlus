@@ -9,6 +9,7 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import MusicTrackList from '@/components/music/MusicTrackList';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
+import { extractTracks } from '@/lib/music';
 import analytics from '@/lib/analytics';
 
 interface GenreInfo {
@@ -17,16 +18,6 @@ interface GenreInfo {
   slug: string;
   description?: string;
   icon?: string;
-}
-
-interface Track {
-  id: string;
-  title: string;
-  artist: string;
-  thumbnail: string;
-  duration?: number;
-  genre?: string;
-  isExplicit?: boolean;
 }
 
 export default function GenreDetailPage(): React.JSX.Element {
@@ -51,8 +42,8 @@ export default function GenreDetailPage(): React.JSX.Element {
   const tracksQuery = useQuery({
     queryKey: ['music', 'genre', slug, 'tracks'],
     queryFn: async () => {
-      const res = await api.request<Track[]>(`/api/v1/lifestyle/music?genre=${slug}`);
-      if (res.success && res.data) return res.data;
+      const res = await api.request<unknown>(`/api/v1/lifestyle/music?genre=${slug}`);
+      if (res.success && res.data) return extractTracks(res.data);
       return [];
     },
     staleTime: 60000,

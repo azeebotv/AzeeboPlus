@@ -8,6 +8,7 @@ import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import analytics from '@/lib/analytics';
+import { Gift, CheckCircle2 } from 'lucide-react';
 
 interface Reward {
   id: string;
@@ -50,8 +51,8 @@ function RewardDetailContent() {
   const reward = query.data;
   if (query.isLoading)
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-        <AppHeader />
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black, #0b090e)' }}>
+        <AppHeader logoVariant="light" />
         <div className="max-w-4xl mx-auto px-4 py-12">
           <Skeleton height="400px" borderRadius="16" />
         </div>
@@ -59,8 +60,8 @@ function RewardDetailContent() {
     );
   if (query.error || !reward)
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-        <AppHeader />
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black, #0b090e)' }}>
+        <AppHeader logoVariant="light" />
         <div className="max-w-4xl mx-auto px-4 py-12">
           <ErrorState title="Reward not found" />
         </div>
@@ -71,16 +72,18 @@ function RewardDetailContent() {
   const inStock = reward.available > 0;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader />
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black, #0b090e)' }}>
+      <AppHeader logoVariant="light" />
       <section className="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="az-glass p-8"
+          className="az-glass p-8 border border-white/10"
         >
           <div className="text-center mb-8">
-            <span className="text-6xl block mb-4">{reward.icon}</span>
+            <div className="w-20 h-20 rounded-2xl bg-orange-500/10 text-[var(--brand-orange)] flex items-center justify-center mx-auto mb-4 border border-orange-500/20">
+              <Gift size={40} />
+            </div>
             <span
               className="px-3 py-1 rounded-full text-xs font-semibold capitalize"
               style={{ backgroundColor: 'rgba(232,66,10,0.15)', color: 'var(--brand-orange)' }}
@@ -146,8 +149,11 @@ function RewardDetailContent() {
           )}
 
           {claimed || reward.claimed ? (
-            <div className="w-full text-center py-4 rounded-xl bg-green-900/20 border border-green-500/30">
-              <p className="text-green-400 font-semibold">CheckCircleClaimed!</p>
+            <div className="w-full text-center py-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+              <p className="text-emerald-400 font-semibold inline-flex items-center gap-2">
+                <CheckCircle2 size={18} />
+                <span>Claimed Successfully!</span>
+              </p>
             </div>
           ) : !canAfford ? (
             <div
@@ -174,14 +180,15 @@ function RewardDetailContent() {
               whileTap={{ scale: 0.98 }}
               onClick={() => claimMutation.mutate()}
               disabled={claimMutation.isPending}
-              className="w-full az-btn-primary text-lg py-4"
+              className="w-full az-btn-primary text-lg py-4 inline-flex items-center justify-center gap-2"
             >
-              {claimMutation.isPending ? 'Claiming...' : 'Gift Claim Reward'}
+              <Gift size={20} />
+              <span>{claimMutation.isPending ? 'Claiming...' : 'Claim Reward'}</span>
             </motion.button>
           )}
         </motion.div>
       </section>
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

@@ -91,3 +91,10 @@ test-results/
 **/test-results/
 playwright-report/
 **/playwright-report/
+
+.check-prisma-drift-out/
+.check-prisma-deploy-diff-out/
+.check-live-schema-lock-out/
+.reconcile-prisma-ledger-out/
+
+.drift-live-out/

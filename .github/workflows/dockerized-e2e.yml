@@ -212,6 +212,19 @@ jobs:
       - name: Service health smoke checks (nginx → gateway → services)
         run: bash scripts/docker-smoke-tests.sh http://localhost:80
 
+      # Full gateway sweep: every registered GET route, minted dev token,
+      # fails on any 5xx. Uses the same secrets the container was booted with.
+      # The admin/creator standalone apps are skipped (out of smoke scope here).
+      - name: Gateway-wide GET endpoint smoke (all services)
+        run: node scripts/smoke-gateway-get.mjs
+        env:
+          GATEWAY_URL: http://localhost:3013
+          JWT_ACCESS_SECRET: smoke_jwt_access_secret_0123456789abcdef0123456789abcdef0123456789abcdef
+          JWT_ISSUER: azeebo-auth
+          JWT_AUDIENCE: azeebo-api
+          SMOKE_SKIP_SERVICES: admin,creator
+          SMOKE_CONCURRENCY: '2'
+
       - name: Dump container logs on failure
         if: failure()
         run: |

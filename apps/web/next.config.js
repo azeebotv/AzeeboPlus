@@ -1,4 +1,4 @@
-const path = require('path')
+const path = require('path');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -8,7 +8,17 @@ const nextConfig = {
   // lockfiles and emitting a wrong standalone layout).
   outputFileTracingRoot: path.resolve(__dirname, '../../'),
   reactStrictMode: true,
-  transpilePackages: ['@azeebo/ui', '@azeebo/design-tokens', '@azeebo/utils', '@azeebo/api-client', '@azeebo/http-client', '@azeebo/shared-types', '@azeebo/validation', '@azeebo/error-handling', '@azeebo/logger'],
+  transpilePackages: [
+    '@azeebo/ui',
+    '@azeebo/design-tokens',
+    '@azeebo/utils',
+    '@azeebo/api-client',
+    '@azeebo/http-client',
+    '@azeebo/shared-types',
+    '@azeebo/validation',
+    '@azeebo/error-handling',
+    '@azeebo/logger',
+  ],
   eslint: {
     ignoreDuringBuilds: false,
   },
@@ -29,6 +39,21 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'picsum.photos',
+      },
+      {
+        // Seed data (scripts/seeders/lifestyle-seeder.ts) emits cover URLs on
+        // this host; ContentCard/OptimizedImage render them via next/image.
+        protocol: 'https',
+        hostname: 'cdn.azeebo.test',
+      },
+      {
+        // Seed data (scripts/seed-creators.ts) emits thumbnailUrl on this host.
+        protocol: 'https',
+        hostname: 'storage.azeebo.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ui-avatars.com',
       },
       {
         protocol: 'https',
@@ -83,6 +108,23 @@ const nextConfig = {
 
     return [
       {
+        source: '/sw.js',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/javascript; charset=utf-8',
+          },
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+          {
+            key: 'Service-Worker-Allowed',
+            value: '/',
+          },
+        ],
+      },
+      {
         source: '/:path*',
         headers: securityHeaders,
       },
@@ -95,7 +137,7 @@ const nextConfig = {
         destination: '/reality/episodes/:path*',
         permanent: false,
       },
-    ]
+    ];
   },
   async rewrites() {
     const apiGatewayUrl = process.env.API_GATEWAY_URL || 'http://localhost:3013';
@@ -116,8 +158,8 @@ const nextConfig = {
         source: '/metrics',
         destination: `${apiGatewayUrl}/metrics`,
       },
-    ]
+    ];
   },
-}
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

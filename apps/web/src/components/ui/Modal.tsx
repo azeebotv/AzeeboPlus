@@ -63,7 +63,7 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
       tabIndex={-1}
     >
       <div
-        className={`bg-white dark:bg-[#1a0a0a] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-2xl shadow-2xl ${sizes[size]} w-full mx-4 p-6 transition-colors`}
+        className={`bg-white dark:bg-[#18151e] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-2xl shadow-2xl ${sizes[size]} w-full mx-4 p-6 transition-colors`}
       >
         <div className="flex items-center justify-between mb-4">
           <h2 id="modal-title" className="text-lg font-semibold text-gray-900 dark:text-white">

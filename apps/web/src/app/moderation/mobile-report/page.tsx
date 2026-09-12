@@ -8,7 +8,34 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
+import { Ban, AlertTriangle, Lock, ShieldAlert, Copyright, Newspaper, Frown, Heart, Scale, FileText, Check } from 'lucide-react';
 import analytics from '@/lib/analytics';
+
+function getReasonIcon(name: string): React.JSX.Element {
+  const props = { className: 'w-5 h-5 flex-shrink-0' };
+  switch (name) {
+    case 'Ban':
+      return <Ban {...props} />;
+    case 'AlertTriangle':
+      return <AlertTriangle {...props} />;
+    case 'Lock':
+      return <Lock {...props} />;
+    case 'ShieldAlert':
+      return <ShieldAlert {...props} />;
+    case 'Copyright':
+      return <Copyright {...props} />;
+    case 'Newspaper':
+      return <Newspaper {...props} />;
+    case 'Frown':
+      return <Frown {...props} />;
+    case 'Heart':
+      return <Heart {...props} />;
+    case 'Scale':
+      return <Scale {...props} />;
+    default:
+      return <FileText {...props} />;
+  }
+}
 
 const REASONS = [
   {
@@ -103,8 +130,8 @@ function MobileReportPageContent(): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
-      <AppHeader />
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      <AppHeader logoVariant="light" />
 
       <div className="max-w-lg mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <motion.div
@@ -116,17 +143,7 @@ function MobileReportPageContent(): React.JSX.Element {
             className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
             style={{ backgroundColor: 'rgba(239,68,68,0.15)' }}
           >
-            <svg
-              width="32"
-              height="32"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#EF4444"
-              strokeWidth="2"
-            >
-              <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
-              <line x1="4" y1="22" x2="4" y2="15" />
-            </svg>
+            <ShieldAlert className="w-8 h-8 text-rose-500" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Report Content</h1>
           <p className="text-white/50 text-sm">Help keep our community safe</p>
@@ -150,16 +167,7 @@ function MobileReportPageContent(): React.JSX.Element {
                 className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center"
                 style={{ backgroundColor: 'rgba(34,197,94,0.15)' }}
               >
-                <svg
-                  width="40"
-                  height="40"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#22C55E"
-                  strokeWidth="2"
-                >
-                  <path d="M20 6L9 17l-5-5" />
-                </svg>
+                <Check className="w-10 h-10 text-emerald-400" />
               </motion.div>
               <h2 className="text-xl font-bold text-white mb-2">Report Submitted</h2>
               <p className="text-white/50 mb-4">
@@ -194,23 +202,24 @@ function MobileReportPageContent(): React.JSX.Element {
                             : '1px solid rgba(255,255,255,0.06)',
                       }}
                     >
-                      <span className="text-lg mt-0.5">{reason.icon}</span>
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
+                        style={{
+                          backgroundColor:
+                            selectedReason === reason.id
+                              ? 'rgba(232,66,10,0.2)'
+                              : 'rgba(255,255,255,0.05)',
+                          color: selectedReason === reason.id ? '#E8420A' : 'rgba(255,255,255,0.7)',
+                        }}
+                      >
+                        {getReasonIcon(reason.icon)}
+                      </div>
                       <div className="flex-1">
                         <p className="text-sm font-medium text-white">{reason.label}</p>
                         <p className="text-xs text-white/40 mt-0.5">{reason.description}</p>
                       </div>
                       {selectedReason === reason.id && (
-                        <svg
-                          className="mt-1 flex-shrink-0"
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="#E8420A"
-                          strokeWidth="2"
-                        >
-                          <path d="M20 6L9 17l-5-5" />
-                        </svg>
+                        <Check className="mt-1 w-4 h-4 text-orange-500 flex-shrink-0" />
                       )}
                     </button>
                   ))}
@@ -272,7 +281,7 @@ function MobileReportPageContent(): React.JSX.Element {
         )}
       </div>
 
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

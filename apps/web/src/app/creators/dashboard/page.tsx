@@ -70,7 +70,7 @@ export default function CreatorDashboardPage(): React.JSX.Element {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ['creator', 'dashboard'],
+    queryKey: ['creator', 'dashboard', 'v2'],
     queryFn: async () => {
       const result = await apiFetch<DashboardData>('/v1/creators/dashboard');
       if (result.success && result.data) return result.data;

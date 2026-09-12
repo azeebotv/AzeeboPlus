@@ -1,0 +1,185 @@
+name: Schema Lock Nightly (Live DBs)
+
+# ── Purpose ────────────────────────────────────────────────────────────────
+# Nightly schema-lock REPORT against every live service database, per
+# environment. Complements the PR-time gates:
+#
+#   • check-prisma-migrations.mjs (PR)   — migration folder ↔ schema shape
+#   • check-deployed-schema.mjs (PR)     — fresh `migrate deploy` ≠ schema
+#     fails the build (the deploy-then-diff schema lock)
+#   • THIS workflow (nightly)            — does each REAL environment still
+#     satisfy the lock right now? Catches hand-run ALTERs, `db push`,
+#     resolve-marked unapplied migrations, and edited-after-apply migrations
+#     as they appear in the wild — reported per environment, never blocking
+#     a PR or the build.
+#
+# Uses scripts/check-live-schema-lock.mjs, which is strictly READ-ONLY
+# (SELECTs + `prisma migrate diff`); it never writes to the live databases.
+#
+# Reporting, per environment (staging + production):
+#   • Step summary table: service × status (clean / drift class / ledger
+#     state), with drift counts (+additive / ~review / -destructive).
+#   • Artifacts: per-service diff SQL + machine-readable report-<env>.json,
+#     under .check-live-schema-lock-out/<env>/.
+#   • One GitHub check-run annotation per affected service, so drift is
+#     visible on the run without opening logs.
+#   • The job FAILS only when real drift or a broken ledger is found, so the
+#     run is red in the Actions list. UNREACHABLE environments are reported
+#     but do NOT fail (ops visibility, not a code problem).
+#
+# Secrets: same DB credentials database-backup.yml already uses, configured
+# per GitHub environment. Legs whose environment/secrets are missing are
+# skipped gracefully with a visible notice, so this workflow is safe to merge
+# before credentials exist. Manual runs can restrict the environment set via
+# the `environments` input (comma-separated subset of the matrix).
+# ===========================================================================
+
+on:
+  schedule:
+    # Nightly at 04:30 UTC — after the 02:00 database backup, before the
+    # working day; leaves room to triage before deploys.
+    - cron: '30 4 * * *'
+  workflow_dispatch:
+    inputs:
+      environments:
+        description: 'Environments to report on (comma-separated subset of the matrix below; empty = all)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '22.16.0'
+  PNPM_VERSION: '10.33.2'
+
+jobs:
+  # Resolve the environment matrix: all entries by default, filtered to the
+  # `environments` input on manual dispatch.
+  matrix:
+    name: Resolve environments
+    runs-on: ubuntu-latest
+    outputs:
+      environments: ${{ steps.set.outputs.environments }}
+    steps:
+      - id: set
+        run: |
+          all='["staging","production"]'
+          requested='${{ github.event.inputs.environments }}'
+          if [ -z "$requested" ]; then
+            echo "environments=$all" >> "$GITHUB_OUTPUT"
+          else
+            echo "environments=$(printf '%s' "$requested" | jq -c 'split(",") | map(gsub("^ +| +$";"")) | map(select(length > 0))')" >> "$GITHUB_OUTPUT"
+          fi
+
+  live-schema-lock:
+    name: Schema lock — ${{ matrix.environment }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [matrix]
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: ${{ fromJson(needs.matrix.outputs.environments) }}
+    environment: ${{ matrix.environment }}
+    steps:
+      - name: Check DB credentials for this environment
+        id: creds
+        run: |
+          missing=0
+          for v in DB_HOST DB_PORT DB_USER DB_PASSWORD; do
+            if [ -z "${!v+x}" ] || [ -z "${!v}" ]; then
+              echo "missing-cred: $v"
+              missing=1
+            fi
+          done
+          if [ "$missing" = "1" ]; then
+            echo "## Schema lock — ${{ matrix.environment }}" >> "$GITHUB_STEP_SUMMARY"
+            echo "_Skipped: DB_HOST / DB_PORT / DB_USER / DB_PASSWORD are not configured for the \`${{ matrix.environment }}\` GitHub environment. Configure them (same secrets database-backup.yml uses) to enable nightly live reporting._" >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::Skipped — DB credentials not configured for ${{ matrix.environment }}"
+          fi
+          echo "have-creds=$([ $missing -eq 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        if: steps.creds.outputs.have-creds == 'true'
+
+      - uses: pnpm/action-setup@v4
+        if: steps.creds.outputs.have-creds == 'true'
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        if: steps.creds.outputs.have-creds == 'true'
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - name: Install dependencies
+        if: steps.creds.outputs.have-creds == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Schema-lock report against live databases
+        if: steps.creds.outputs.have-creds == 'true'
+        id: sweep
+        env:
+          LIVE_DB_URL_BASE: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}
+        run: |
+          mkdir -p .check-live-schema-lock-out
+          set +e
+          node scripts/check-live-schema-lock.mjs --env "${{ matrix.environment }}" > .check-live-schema-lock-out/stdout-${{ matrix.environment }}.log 2>&1
+          status=$?
+          set -e
+          cat .check-live-schema-lock-out/stdout-${{ matrix.environment }}.log
+          echo "exit=$status" >> "$GITHUB_OUTPUT"
+          # 0 = no real drift · 1 = drift/broken ledger (failed in "Fail" step below)
+          exit 0
+
+      - name: Build step summary (per-env table + annotations)
+        if: steps.creds.outputs.have-creds == 'true'
+        env:
+          ENVIRONMENT: ${{ matrix.environment }}
+        run: |
+          node --input-type=module -e '
+            import fs from "node:fs";
+            const env = process.env.ENVIRONMENT;
+            const reportPath = `.check-live-schema-lock-out/${env}/report-${env}.json`;
+            if (!fs.existsSync(reportPath)) {
+              fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Schema lock — \`${env}\`\n\n_Report missing (run interrupted before the report was written)._\n`);
+              process.exit(0);
+            }
+            const report = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+            const lines = [];
+            lines.push(`## Schema lock — live databases (\`${env}\`)`);
+            lines.push("");
+            lines.push(`Host: \`${report.host}\` · ${report.summary.total} service(s) · generated ${report.generatedAt}`);
+            lines.push("");
+            lines.push("| Service | Status | Detail |");
+            lines.push("|---|---|---|");
+            for (const s of report.services) {
+              const detail = (s.detail || "").replaceAll("|", "\\|");
+              lines.push(`| ${s.service} | ${s.status} | ${detail} |`);
+            }
+            lines.push("");
+            lines.push(`**Summary:** ${report.summary.total} checked · ${report.summary.clean} clean · ${report.summary.noDb} no-db · ${report.summary.additiveOnly} additive-only · ${report.summary.review} review · ${report.summary.destructive} destructive · ${report.summary.ledgerMismatch} ledger-mismatch · ${report.summary.blockedLedger} blocked-ledger · ${report.summary.error} error · ${report.summary.unreachable} unreachable`);
+            lines.push("");
+            lines.push("_Read-only report: no live database was written to. Diff SQL per service is in the workflow artifacts._");
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n") + "\n");
+            const annotated = report.services.filter((s) =>
+              ["LEDGER-MISMATCH", "BLOCKED-LEDGER", "DRIFT-DESTRUCTIVE", "DRIFT-REVIEW", "ERROR"].includes(s.status));
+            if (annotated.length > 50) annotated.length = 50; // GH annotation cap
+            for (const s of annotated) {
+              console.log(`::error title=Schema lock ${s.status} — ${s.service}::${(s.detail || s.status).slice(0, 200)}`);
+            }
+          '
+
+      - name: Fail on real drift or broken ledger
+        if: steps.creds.outputs.have-creds == 'true' && steps.sweep.outputs.exit == '1'
+        run: |
+          echo "::error title=Schema lock violated — ${{ matrix.environment }}::Live databases do not satisfy the schema lock. See the step summary and artifacts; fixes go through migrations, never hand-ALTERs."
+          exit 1
+
+      - name: Upload per-env report artifacts
+        if: always() && steps.creds.outputs.have-creds == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: schema-lock-report-${{ matrix.environment }}-${{ github.run_id }}
+          path: .check-live-schema-lock-out/
+          retention-days: 30

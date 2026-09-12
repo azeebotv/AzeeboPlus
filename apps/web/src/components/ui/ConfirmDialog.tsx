@@ -74,7 +74,7 @@ export function ConfirmDialog({
       ref={dialogRef}
       tabIndex={-1}
     >
-      <div className="bg-white dark:bg-[#1a0a0a] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 transition-colors">
+      <div className="bg-white dark:bg-[#18151e] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 transition-colors">
         <h2 id="confirm-title" className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
           {title}
         </h2>

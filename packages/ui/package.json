@@ -17,7 +17,7 @@
   },
   "react-native": "src/mobile-index.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "bash ../../scripts/build-package.sh",
     "watch": "tsc -p tsconfig.json --watch",
     "clean": "rm -rf dist",
     "test": "jest",

@@ -97,12 +97,12 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
   return (
     <div
       style={{
-        backgroundColor: 'var(--brand-near-black)',
+        backgroundColor: 'var(--brand-near-black, #0b090e)',
         minHeight: '100vh',
         color: 'var(--text-primary)',
       }}
     >
-      <AppHeader />
+      <AppHeader logoVariant="light" />
       <main
         style={{
           paddingTop: 100,
@@ -132,7 +132,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
               style={{
                 width: 40,
                 height: 40,
-                border: '3px solid #2A1A1A',
+                border: '3px solid #18151e',
                 borderTopColor: 'var(--brand-orange)',
                 borderRadius: '50%',
                 animation: 'spin 0.8s linear infinite',
@@ -180,7 +180,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                     padding: 28,
                     borderRadius: 20,
                     position: 'relative',
-                    border: plan.isPopular ? '2px solid #E8420A' : '1px solid #2A1A1A',
+                    border: plan.isPopular ? '2px solid #E8420A' : '1px solid #18151e',
                   }}
                 >
                   {plan.isPopular && (
@@ -240,8 +240,9 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                         padding: '12px 0',
                         textAlign: 'center',
                         borderRadius: 999,
-                        border: '1px solid #0D3B2E',
-                        color: 'var(--brand-forest)',
+                        border: '1px solid rgba(16,185,129,0.3)',
+                        backgroundColor: 'rgba(16,185,129,0.1)',
+                        color: '#34D399',
                         fontWeight: 600,
                         fontSize: 14,
                       }}
@@ -257,7 +258,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                         width: '100%',
                         padding: '12px 0',
                         borderRadius: 999,
-                        border: plan.isPopular ? 'none' : '1px solid #2A1A1A',
+                        border: plan.isPopular ? 'none' : '1px solid #18151e',
                         background: plan.isPopular
                           ? 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)'
                           : 'transparent',
@@ -324,7 +325,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                         padding: '12px 0',
                         borderRadius: 999,
                         background: canAffordWallet
-                          ? 'linear-gradient(135deg, #0D3B2E 0%, #0A5C36 100%)'
+                          ? 'linear-gradient(135deg, #059669 0%, #10B981 100%)'
                           : 'var(--bg-secondary)',
                         color: canAffordWallet ? 'white' : 'var(--brand-grey)',
                         border: 'none',
@@ -380,7 +381,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
           );
         })()}
 
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

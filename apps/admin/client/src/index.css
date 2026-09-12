@@ -1,15 +1,17 @@
-/* Design tokens for admin app */
+/* Design tokens for admin app (synchronized with Azeebo+ luxury dark design system) */
 :root {
-  --admin-bg: #1a0a0a;
+  --admin-bg: #0b090e;
+  --admin-bg-alt: #100e14;
   --admin-text: #f5f0eb;
   --admin-text-muted: #9a8a7a;
-  --admin-surface: #2a1a1a;
+  --admin-surface: #18151e;
   --admin-surface-light: #f5f0eb;
+  --admin-border: rgba(255, 255, 255, 0.08);
   --admin-orange: #e8420a;
   --admin-red: #cc1c1c;
   --admin-green: #0d3b2e;
-  --admin-dark: #0d0505;
-  --admin-darker: #140808;
+  --admin-dark: #070609;
+  --admin-darker: #100e14;
   --admin-amber: #f59e0b;
   --admin-emerald: #10b981;
   --admin-blue: #3b82f6;

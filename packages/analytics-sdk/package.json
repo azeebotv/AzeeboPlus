@@ -14,7 +14,7 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "bash ../../scripts/build-package.sh",
     "lint": "eslint src",
     "test": "jest",
     "clean": "rm -rf dist"

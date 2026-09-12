@@ -56,15 +56,16 @@ export default function ContentCard({
       <Link
         href={`/watch/${item.id}`}
         onClick={handleClick}
-        className="block rounded-xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-[var(--brand-orange)]"
+        className="block rounded-xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-[var(--brand-orange)] transition-all duration-300"
         aria-label={t('content.watchLabel', { title: item.title })}
       >
         <div
-          className="relative overflow-hidden rounded-xl"
+          className="relative overflow-hidden rounded-xl border transition-all duration-300 group-hover:border-[rgba(232,66,10,0.5)] group-hover:shadow-[0_8px_30px_rgba(232,66,10,0.18)]"
           style={{
             width,
             height,
-            background: 'var(--brand-surface)',
+            background: 'var(--hp-card-bg)',
+            borderColor: 'var(--hp-card-border)',
           }}
         >
           <OptimizedImage

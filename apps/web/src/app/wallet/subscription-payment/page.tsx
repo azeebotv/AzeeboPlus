@@ -77,7 +77,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
   });
 
   const walletQuery = useQuery({
-    queryKey: ['wallet-balance'],
+    queryKey: ['wallet', 'balance:object'],
     queryFn: async () => {
       const res = await apiFetch<WalletBalance>('/wallet');
       if (res.success && res.data) return res.data;

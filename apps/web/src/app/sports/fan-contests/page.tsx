@@ -47,15 +47,21 @@ function FanContestsPageContent(): React.JSX.Element {
   const upcomingContests = contests.filter((c) => c.status === 'upcoming');
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Sports" />
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black, #0b090e)' }}>
+      <AppHeader active="Sports" logoVariant="light" />
 
       {/* Hero */}
       <section
-        className="relative py-16 sm:py-20"
-        style={{ background: 'linear-gradient(135deg, #0D3B2E, #1A0A0A)' }}
+        className="relative py-16 sm:py-20 overflow-hidden"
+        style={{
+          background: 'radial-gradient(ellipse at top, rgba(232,66,10,0.2) 0%, #100e14 60%, #0b090e 100%)',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+        }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold tracking-wider uppercase mb-3 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            Community Tournaments
+          </span>
           <motion.h1
             className="text-4xl sm:text-5xl font-bold text-white mb-4"
             initial={{ opacity: 0, y: 20 }}
@@ -244,7 +250,7 @@ function FanContestsPageContent(): React.JSX.Element {
         </section>
       )}
 
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

@@ -314,7 +314,7 @@ export default function MonetizationPage(): React.JSX.Element {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   padding: '12px 0',
-                  borderBottom: '1px solid #2A1A1A',
+                  borderBottom: '1px solid #18151e',
                 }}
               >
                 <div>

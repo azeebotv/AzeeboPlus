@@ -1,4 +1,5 @@
 import { Inject, Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { Prisma } from '../../prisma/client/index.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { FeatureFlagService, analyticsFlags } from '@azeebo/feature-flags';
@@ -88,9 +89,7 @@ export class ReportBuilderService {
         data: report,
       };
     } catch (error) {
-      throw new BadRequestException(
-        `Failed to create report: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
-      );
+      mapAndThrow(error, 'creating report');
     }
   }
 
@@ -117,9 +116,7 @@ export class ReportBuilderService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new BadRequestException(
-        `Failed to get report: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
-      );
+      mapAndThrow(error, 'getting report');
     }
   }
 
@@ -154,9 +151,7 @@ export class ReportBuilderService {
         data: reports,
       };
     } catch (error) {
-      throw new BadRequestException(
-        `Failed to list reports: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
-      );
+      mapAndThrow(error, 'listing reports');
     }
   }
 
@@ -305,9 +300,7 @@ export class ReportBuilderService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new BadRequestException(
-        `Failed to update report: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
-      );
+      mapAndThrow(error, 'updating report');
     }
   }
 
@@ -338,9 +331,7 @@ export class ReportBuilderService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new BadRequestException(
-        `Failed to delete report: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
-      );
+      mapAndThrow(error, 'deleting report');
     }
   }
 
@@ -377,9 +368,7 @@ export class ReportBuilderService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new BadRequestException(
-        `Failed to get execution history: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
-      );
+      mapAndThrow(error, 'getting execution history');
     }
   }
 
@@ -674,9 +663,7 @@ export class ReportBuilderService {
 
       return results as Record<string, unknown>[];
     } catch (error) {
-      throw new BadRequestException(
-        `Query execution failed: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
-      );
+      mapAndThrow(error, 'executing report query');
     }
   }
 

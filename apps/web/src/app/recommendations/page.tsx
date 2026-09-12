@@ -6,6 +6,7 @@ import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
 import { Skeleton } from '@/components/Skeleton';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import { Sparkles, Film, Tv, Smile, Trophy } from 'lucide-react';
 
 interface ContentItem {
   id: string;
@@ -23,21 +24,21 @@ interface ContentItem {
 export default function RecommendationsPage(): React.JSX.Element {
   useAuth();
   const [recommendations, setRecommendations] = useState<ContentItem[]>([]);
+  const [activeFilter, setActiveFilter] = useState<string>('all');
+  const [page, setPage] = useState<number>(1);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeFilter, setActiveFilter] = useState<string>('all');
-  const [, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const lastItemRef = useRef<HTMLDivElement | null>(null);
 
   const filters = [
-    { id: 'all', name: 'All', icon: 'Film' },
-    { id: 'movies', name: 'Movies', icon: 'Film' },
-    { id: 'series', name: 'Series', icon: 'Tv' },
-    { id: 'reality', name: 'Reality', icon: 'Drama' },
-    { id: 'comedy', name: 'Comedy', icon: 'Laugh' },
-    { id: 'sports', name: 'Sports', icon: 'CircleDot' },
+    { id: 'all', name: 'All', icon: Sparkles },
+    { id: 'movies', name: 'Movies', icon: Film },
+    { id: 'series', name: 'Series', icon: Tv },
+    { id: 'reality', name: 'Reality', icon: Tv },
+    { id: 'comedy', name: 'Comedy', icon: Smile },
+    { id: 'sports', name: 'Sports', icon: Trophy },
   ];
 
   const fetchRecommendations = useCallback(async (pageNum: number, filter: string) => {
@@ -65,36 +66,48 @@ export default function RecommendationsPage(): React.JSX.Element {
 
   useEffect(() => {
     setPage(1);
+    setRecommendations([]);
+    setHasMore(true);
     fetchRecommendations(1, activeFilter);
   }, [activeFilter, fetchRecommendations]);
 
+  const loadMore = useCallback(() => {
+    if (!isLoading && hasMore) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchRecommendations(nextPage, activeFilter);
+    }
+  }, [isLoading, hasMore, page, activeFilter, fetchRecommendations]);
+
   useEffect(() => {
+    if (isLoading) return;
     if (observerRef.current) observerRef.current.disconnect();
+
     observerRef.current = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isLoading) {
-          setPage((prev) => {
-            const next = prev + 1;
-            fetchRecommendations(next, activeFilter);
-            return next;
-          });
+        if (entries[0].isIntersecting && hasMore) {
+          loadMore();
         }
       },
       { threshold: 0.1 }
     );
-    if (lastItemRef.current) observerRef.current.observe(lastItemRef.current);
+
+    if (lastItemRef.current) {
+      observerRef.current.observe(lastItemRef.current);
+    }
+
     return () => {
       if (observerRef.current) observerRef.current.disconnect();
     };
-  }, [hasMore, isLoading, activeFilter, fetchRecommendations]);
+  }, [isLoading, hasMore, loadMore]);
 
   const handleFilterChange = useCallback((filter: string) => {
     setActiveFilter(filter);
   }, []);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader />
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black, #0b090e)' }}>
+      <AppHeader logoVariant="light" />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="az-headline text-white text-3xl sm:text-4xl mb-2">Recommended For You</h1>
@@ -109,25 +122,29 @@ export default function RecommendationsPage(): React.JSX.Element {
           role="radiogroup"
           aria-label="Content type filters"
         >
-          {filters.map((filter) => (
-            <button
-              key={filter.id}
-              role="radio"
-              aria-checked={activeFilter === filter.id}
-              onClick={() => handleFilterChange(filter.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                activeFilter === filter.id ? 'text-white' : 'text-white/60 hover:text-white'
-              }`}
-              style={
-                activeFilter === filter.id
-                  ? { background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }
-                  : { border: '1px solid rgba(255,255,255,0.15)' }
-              }
-            >
-              <span>{filter.icon}</span>
-              {filter.name}
-            </button>
-          ))}
+          {filters.map((filter) => {
+            const Icon = filter.icon;
+            const active = activeFilter === filter.id;
+            return (
+              <button
+                key={filter.id}
+                role="radio"
+                aria-checked={active}
+                onClick={() => handleFilterChange(filter.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                  active ? 'text-white shadow-lg shadow-orange-500/20' : 'text-white/60 hover:text-white hover:bg-white/5'
+                }`}
+                style={
+                  active
+                    ? { background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }
+                    : { border: '1px solid rgba(255,255,255,0.12)' }
+                }
+              >
+                <Icon size={16} />
+                <span>{filter.name}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Loading State */}
@@ -147,8 +164,22 @@ export default function RecommendationsPage(): React.JSX.Element {
 
         {/* Error State */}
         {error && (
-          <div className="az-glass p-8 text-center">
-            <span className="text-4xl mb-4 block">&#x26A0;&#xFE0F;</span>
+          <div className="az-glass p-12 text-center rounded-2xl max-w-md mx-auto">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
+              <svg
+                className="w-7 h-7"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.8}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+                />
+              </svg>
+            </div>
             <h3 className="text-lg font-bold text-white mb-2">Oops! Something went wrong</h3>
             <p className="text-white/50 text-sm mb-4">{error}</p>
             <button
@@ -186,13 +217,25 @@ export default function RecommendationsPage(): React.JSX.Element {
                       />
                     ) : (
                       <div
-                        className="w-full h-full flex items-center justify-center"
+                        className="w-full h-full flex items-center justify-center text-white/40"
                         style={{
                           background:
-                            'linear-gradient(135deg, rgba(232,66,10,0.3), rgba(13,59,46,0.4))',
+                            'linear-gradient(135deg, rgba(232,66,10,0.15), rgba(24,21,30,0.8))',
                         }}
                       >
-                        <span style={{ fontSize: 48 }}>&#x1F3AC;</span>
+                        <svg
+                          className="w-12 h-12"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={1.5}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h1.5C5.496 19.5 6 18.996 6 18.375m-3.75 0V5.625m0 12.75a1.125 1.125 0 001.125 1.125m0 0h1.5m-2.625-1.125V5.625m0 0A1.125 1.125 0 013.375 4.5h17.25c.621 0 1.125.504 1.125 1.125v12.75c0 .621-.504 1.125-1.125 1.125m-17.25-13.875h17.25"
+                          />
+                        </svg>
                       </div>
                     )}
                     {item.score != null && item.score > 80 && (
@@ -248,8 +291,22 @@ export default function RecommendationsPage(): React.JSX.Element {
 
         {/* Empty State */}
         {!isLoading && !error && recommendations.length === 0 && (
-          <div className="az-glass p-12 text-center">
-            <span className="text-5xl mb-4 block">&#x1F3AF;</span>
+          <div className="az-glass p-16 text-center rounded-2xl">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-[var(--brand-orange)]">
+              <svg
+                className="w-8 h-8"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.8}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"
+                />
+              </svg>
+            </div>
             <h3 className="text-xl font-bold text-white mb-2">No recommendations yet</h3>
             <p className="text-white/50 text-sm mb-4">
               Watch some content to get personalized recommendations
@@ -271,7 +328,7 @@ export default function RecommendationsPage(): React.JSX.Element {
           </div>
         )}
       </main>
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

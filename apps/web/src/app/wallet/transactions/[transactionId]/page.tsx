@@ -92,7 +92,7 @@ export default function TransactionDetailPage(): React.JSX.Element {
               style={{
                 width: 40,
                 height: 40,
-                border: '3px solid #2A1A1A',
+                border: '3px solid #18151e',
                 borderTopColor: 'var(--brand-orange)',
                 borderRadius: '50%',
                 animation: 'spin 0.8s linear infinite',
@@ -173,7 +173,7 @@ export default function TransactionDetailPage(): React.JSX.Element {
                       display: 'flex',
                       justifyContent: 'space-between',
                       padding: '10px 0',
-                      borderBottom: '1px solid #2A1A1A',
+                      borderBottom: '1px solid #18151e',
                     }}
                   >
                     <span style={{ color: 'var(--text-secondary)', fontSize: 14 }}>

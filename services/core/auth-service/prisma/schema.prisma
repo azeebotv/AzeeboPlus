@@ -13,6 +13,7 @@ datasource db {
 enum UserRole {
   user
   creator
+  moderator
   admin
   super_admin
 }

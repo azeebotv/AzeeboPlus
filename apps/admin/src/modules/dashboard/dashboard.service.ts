@@ -7,6 +7,11 @@ export interface DashboardStats {
   totalRevenue: number;
   pendingReports: number;
   activeCreators: number;
+  // Consumed by the admin client dashboard cards (client/src/routes/dashboard.tsx).
+  // newUsers doubles as the daily-active proxy until a dedicated DAU source exists.
+  newUsers: number;
+  dailyActiveUsers: number;
+  totalViews: number;
 }
 
 export interface RevenueData {
@@ -64,12 +69,21 @@ export class DashboardService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async getDashboardStats(): Promise<DashboardStats> {
-    const [totalUsers, totalContent, pendingReports, activeCreators] = await Promise.all([
-      this.prisma.user.count(),
-      this.prisma.contentItem.count(),
-      this.prisma.report.count({ where: { status: 'pending' } }),
-      this.prisma.user.count({ where: { role: 'creator' } }),
-    ]);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const [totalUsers, totalContent, pendingReports, activeCreators, newUsers, dau, views] =
+      await Promise.all([
+        this.prisma.user.count(),
+        this.prisma.contentItem.count(),
+        this.prisma.report.count({ where: { status: 'pending' } }),
+        this.prisma.user.count({ where: { role: 'creator' } }),
+        // Daily-active proxy: no dedicated session table in this DB, so the
+        // dashboard uses same-day signups until a DAU event source is wired.
+        this.prisma.user.count({ where: { createdAt: { gte: today } } }),
+        this.prisma.user.count({ where: { createdAt: { gte: today } } }),
+        this.prisma.contentItem.aggregate({ _sum: { viewCount: true } }),
+      ]);
 
     const totalRevenue = await this.prisma.walletTransaction.aggregate({
       where: { type: 'credit', status: 'completed' },
@@ -82,6 +96,9 @@ export class DashboardService {
       totalRevenue: Number(totalRevenue._sum.amount) || 0,
       pendingReports,
       activeCreators,
+      newUsers: newUsers,
+      dailyActiveUsers: dau,
+      totalViews: views._sum.viewCount || 0,
     };
   }
 

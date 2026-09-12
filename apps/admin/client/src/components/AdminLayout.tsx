@@ -312,8 +312,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
       <header style={styles.topBar}>
-        <a href="/" style={styles.logo}>
-          Azeebo+ Admin
+        <a href="/" style={{ ...styles.logo, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <img
+            src="/logo-white.png"
+            alt="Azeebo+"
+            style={{ height: 26, width: 'auto', objectFit: 'contain' }}
+          />
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: 1.5,
+              textTransform: 'uppercase',
+              padding: '2px 8px',
+              borderRadius: 6,
+              background: 'rgba(232,66,10,0.15)',
+              color: 'var(--admin-orange)',
+              border: '1px solid rgba(232,66,10,0.3)',
+            }}
+          >
+            Admin
+          </span>
         </a>
 
         <StaleFlagSummary

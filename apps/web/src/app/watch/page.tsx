@@ -8,14 +8,15 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import analytics from '@/lib/analytics';
+import { Tv, Smile, Film, Smartphone, Trophy, Star } from 'lucide-react';
 
 const categories = [
-  { name: 'Reality', href: '/reality', icon: 'Drama', color: 'var(--brand-orange)' },
-  { name: 'Comedy', href: '/comedy', icon: 'Laugh', color: 'var(--brand-orange)' },
-  { name: 'Movies', href: '/movies', icon: 'Film', color: 'var(--color-success-400)' },
-  { name: 'Vertical', href: '/vertical', icon: 'Smartphone', color: 'var(--color-secondary-400)' },
-  { name: 'Sports', href: '/sports', icon: 'CircleDot', color: 'var(--color-warning-500)' },
-  { name: 'Lifestyle', href: '/lifestyle', icon: 'Star', color: 'var(--brand-pink)' },
+  { name: 'Reality', href: '/reality', icon: Tv, color: 'var(--brand-orange, #E8420A)' },
+  { name: 'Comedy', href: '/comedy', icon: Smile, color: '#F59E0B' },
+  { name: 'Movies', href: '/movies', icon: Film, color: '#10B981' },
+  { name: 'Vertical', href: '/vertical', icon: Smartphone, color: '#8B5CF6' },
+  { name: 'Sports', href: '/sports', icon: Trophy, color: '#3B82F6' },
+  { name: 'Lifestyle', href: '/lifestyle', icon: Star, color: '#EC4899' },
 ];
 
 export default function WatchPage(): React.JSX.Element {
@@ -40,17 +41,17 @@ export default function WatchPage(): React.JSX.Element {
   return (
     <div
       className="min-h-screen"
-      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
+      style={{ backgroundColor: 'var(--brand-near-black, #0b090e)', color: 'var(--text-primary)' }}
     >
-      <AppHeader active="Watch" />
+      <AppHeader active="Watch" logoVariant="light" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 1200, margin: '0 auto' }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Watch</h1>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>
+        <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8, color: 'white' }}>Watch</h1>
+        <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: 32 }}>
           Discover content across all universes
         </p>
 
-        <section style={{ marginBottom: 40 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>Browse by Category</h2>
+        <section style={{ marginBottom: 44 }}>
+          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16, color: 'white' }}>Browse by Category</h2>
           <div
             style={{
               display: 'grid',
@@ -58,34 +59,53 @@ export default function WatchPage(): React.JSX.Element {
               gap: 12,
             }}
           >
-            {categories.map((cat) => (
-              <Link
-                key={cat.href}
-                href={cat.href}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  padding: 20,
-                  borderRadius: 16,
-                  border: '1px solid var(--border-default)',
-                  textDecoration: 'none',
-                  backgroundColor: 'rgba(26,10,10,0.5)',
-                  transition: 'border-color 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = cat.color;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--bg-secondary)';
-                }}
-              >
-                <span style={{ fontSize: 24 }}>{cat.icon}</span>
-                <span style={{ fontWeight: 600, fontSize: 15, color: 'var(--text-primary)' }}>
-                  {cat.name}
-                </span>
-              </Link>
-            ))}
+            {categories.map((cat) => {
+              const Icon = cat.icon;
+              return (
+                <Link
+                  key={cat.href}
+                  href={cat.href}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '16px 20px',
+                    borderRadius: 16,
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    textDecoration: 'none',
+                    backgroundColor: 'var(--brand-surface, #18151e)',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = cat.color;
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 12,
+                      backgroundColor: 'rgba(255,255,255,0.05)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: cat.color,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Icon size={20} />
+                  </div>
+                  <span style={{ fontWeight: 600, fontSize: 15, color: 'white' }}>
+                    {cat.name}
+                  </span>
+                </Link>
+              );
+            })}
           </div>
         </section>
 
@@ -164,7 +184,7 @@ export default function WatchPage(): React.JSX.Element {
           )}
         </section>
       </main>
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

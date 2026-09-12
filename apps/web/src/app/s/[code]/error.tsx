@@ -7,7 +7,7 @@ export default function ShareError() {
   return (
     <div
       className="min-h-screen flex items-center justify-center"
-      style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}
+      style={{ backgroundColor: 'var(--bg-primary)' }}
     >
       <div className="az-glass p-8 max-w-md text-center">
         <AlertTriangle

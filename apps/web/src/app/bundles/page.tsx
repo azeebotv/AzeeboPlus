@@ -143,21 +143,41 @@ function BundlesPageContent(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      <AppHeader />
-      <main className="max-w-7xl mx-auto px-4 py-8">
+    <div
+      className="min-h-screen relative overflow-x-hidden"
+      style={{ background: 'var(--hp-bg)', color: 'var(--text-primary)' }}
+    >
+      <AppHeader active="Bundles" logoVariant="light" />
+
+      {/* Top Ambient Glow */}
+      <div
+        className="pointer-events-none absolute -top-32 left-1/3 -translate-x-1/2 w-[650px] h-[450px] rounded-full blur-[140px] -z-0"
+        style={{
+          background: 'radial-gradient(circle, rgba(232,66,10,0.18) 0%, rgba(204,28,28,0.06) 50%, transparent 80%)',
+        }}
+        aria-hidden="true"
+      />
+
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Bundle Passes</h1>
-            <p className="text-gray-400 mt-1">Save big with multi-universe bundles</p>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-3 border border-white/10 bg-white/5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand-orange)] animate-pulse" />
+              <span className="tracking-widest uppercase text-white/70">ALL-IN-ONE ACCESS</span>
+            </div>
+            <h1 className="az-headline font-extrabold text-white text-3xl sm:text-4xl tracking-tight">Bundle Passes</h1>
+            <p className="text-white/60 mt-1 text-sm sm:text-base">Save big with multi-universe entertainment passes</p>
           </div>
         </div>
 
         {comparison && apiBundles.length > 0 && (
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 mb-8">
+          <div
+            className="rounded-2xl p-4 mb-8 border border-white/10"
+            style={{ background: 'var(--hp-card-bg)' }}
+          >
             <div className="flex items-center gap-4 text-sm">
-              <span className="text-gray-400">Individual total:</span>
-              <span className="line-through text-gray-500">
+              <span className="text-white/60">Individual total:</span>
+              <span className="line-through text-white/40">
                 ₦{comparison.individualTotal.toLocaleString()}/mo
               </span>
               <span className="text-green-400 font-semibold">
@@ -167,18 +187,18 @@ function BundlesPageContent(): React.JSX.Element {
           </div>
         )}
 
-        <div className="flex gap-2 mb-6 overflow-x-auto">
+        <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
           {['all', 'standard', 'premium', 'ultimate'].map((tier) => (
             <button
               key={tier}
               onClick={() => setSelectedTier(tier)}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 selectedTier === tier
-                  ? 'bg-cyan-500 text-black'
-                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                  ? 'bg-[var(--brand-orange)] text-white'
+                  : 'bg-white/5 border border-white/10 text-white/70 hover:text-white'
               }`}
             >
-              {tier === 'all' ? 'All' : tier.charAt(0).toUpperCase() + tier.slice(1)}
+              {tier === 'all' ? 'All Tiers' : tier.charAt(0).toUpperCase() + tier.slice(1)}
             </button>
           ))}
         </div>
@@ -190,12 +210,13 @@ function BundlesPageContent(): React.JSX.Element {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden hover:border-cyan-500/50 transition-all"
+              className="rounded-2xl border border-[var(--hp-card-border)] overflow-hidden transition-all duration-300 hover:border-[rgba(232,66,10,0.5)] hover:shadow-[0_8px_30px_rgba(232,66,10,0.18)]"
+              style={{ background: 'var(--hp-card-bg)' }}
             >
               <div className="p-6">
                 <div className="flex items-center justify-between mb-3">
                   <span
-                    className={`text-xs font-semibold px-2 py-1 rounded-full text-white ${TIER_COLORS[bundle.tier] || 'bg-gray-600'}`}
+                    className={`text-xs font-semibold px-2.5 py-1 rounded-full text-white ${TIER_COLORS[bundle.tier] || 'bg-white/10'}`}
                   >
                     {bundle.tier.toUpperCase()}
                   </span>
@@ -204,17 +225,17 @@ function BundlesPageContent(): React.JSX.Element {
                   )}
                 </div>
 
-                <h3 className="text-lg font-bold mb-1">{bundle.name}</h3>
-                <p className="text-sm text-gray-400 mb-4">{bundle.description}</p>
+                <h3 className="text-lg font-bold text-white mb-1">{bundle.name}</h3>
+                <p className="text-sm text-white/50 mb-4">{bundle.description}</p>
 
                 <div className="flex items-baseline gap-2 mb-1">
-                  <span className="text-3xl font-bold text-cyan-400">
+                  <span className="text-3xl font-extrabold text-white">
                     ₦{Number(bundle.price).toLocaleString()}
                   </span>
-                  <span className="text-sm text-gray-500">/mo</span>
+                  <span className="text-sm text-white/40">/mo</span>
                 </div>
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="text-sm text-gray-500 line-through">
+                  <span className="text-sm text-white/40 line-through">
                     ₦{Number(bundle.originalPrice).toLocaleString()}/mo
                   </span>
                   <span className="text-sm font-bold text-green-400">
@@ -222,13 +243,13 @@ function BundlesPageContent(): React.JSX.Element {
                   </span>
                 </div>
 
-                <div className="mb-4">
-                  <p className="text-xs text-gray-500 mb-2">Includes:</p>
+                <div className="mb-6">
+                  <p className="text-xs text-white/40 mb-2">Includes:</p>
                   <div className="flex flex-wrap gap-1.5">
                     {bundle.universeIds.map((uid) => (
                       <span
                         key={uid}
-                        className="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded-full"
+                        className="text-xs bg-white/5 border border-white/5 text-white/70 px-2.5 py-0.5 rounded-full"
                       >
                         {UNIVERSE_NAMES[uid] || uid}
                       </span>
@@ -238,7 +259,7 @@ function BundlesPageContent(): React.JSX.Element {
 
                 <Link
                   href={`/bundles/${bundle.id}`}
-                  className="block w-full text-center bg-cyan-500 hover:bg-cyan-400 text-black font-semibold py-2.5 rounded-lg transition-colors"
+                  className="az-btn-primary block w-full text-center py-2.5 rounded-xl font-semibold"
                 >
                   Get Bundle
                 </Link>
@@ -247,7 +268,7 @@ function BundlesPageContent(): React.JSX.Element {
           ))}
         </div>
       </main>
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

@@ -8,17 +8,8 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import MusicTrackList from '@/components/music/MusicTrackList';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
+import { extractTracks } from '@/lib/music';
 import analytics from '@/lib/analytics';
-
-interface Track {
-  id: string;
-  title: string;
-  artist: string;
-  thumbnail: string;
-  duration?: number;
-  genre?: string;
-  isExplicit?: boolean;
-}
 
 export default function MusicTrendingPage(): React.JSX.Element {
   useEffect(() => {
@@ -28,8 +19,8 @@ export default function MusicTrendingPage(): React.JSX.Element {
   const trendingQuery = useQuery({
     queryKey: ['music', 'trending'],
     queryFn: async () => {
-      const res = await api.request<Track[]>('/api/v1/lifestyle/music/trending');
-      if (res.success && res.data) return res.data;
+      const res = await api.request<unknown>('/api/v1/lifestyle/music/trending');
+      if (res.success && res.data) return extractTracks(res.data);
       return [];
     },
     staleTime: 60000,
@@ -52,7 +43,7 @@ export default function MusicTrendingPage(): React.JSX.Element {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            FlameTrending Music
+            Trending Music
           </motion.h1>
           <motion.p
             className="text-xl text-white/80 max-w-2xl mx-auto"

@@ -86,8 +86,11 @@ function LiveEventsPageContent(): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Live" />
+    <div
+      className="min-h-screen relative overflow-x-hidden"
+      style={{ background: 'var(--hp-bg)', color: 'var(--text-primary)' }}
+    >
+      <AppHeader active="Live" logoVariant="light" />
 
       <section
         className="relative py-16 sm:py-20"
@@ -231,7 +234,7 @@ function LiveEventsPageContent(): React.JSX.Element {
         )}
       </section>
 
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

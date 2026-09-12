@@ -6,35 +6,51 @@ import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { Skeleton } from '@azeebo/ui/web';
+import { Swords, BookOpen, Drama, Sparkles } from 'lucide-react';
 import analytics from '@/lib/analytics';
+
+function getPathIcon(name: string): React.JSX.Element {
+  switch (name) {
+    case 'Swords':
+      return <Swords className="w-8 h-8 text-rose-500" />;
+    case 'BookOpen':
+      return <BookOpen className="w-8 h-8 text-sky-400" />;
+    case 'Drama':
+      return <Drama className="w-8 h-8 text-amber-400" />;
+    case 'Sparkles':
+      return <Sparkles className="w-8 h-8 text-emerald-400" />;
+    default:
+      return <Sparkles className="w-8 h-8 text-amber-400" />;
+  }
+}
 
 const PATHS = [
   {
     id: 'warrior',
     name: 'Warrior',
     description: 'Strength, honor, and combat mastery',
-    color: 'var(--brand-crimson)',
+    color: '#EF4444',
     icon: 'Swords',
   },
   {
     id: 'sage',
     name: 'Sage',
     description: 'Wisdom, knowledge, and ancient truths',
-    color: 'var(--brand-sky)',
+    color: '#38BDF8',
     icon: 'BookOpen',
   },
   {
     id: 'trickster',
     name: 'Trickster',
     description: 'Cunning, deception, and survival',
-    color: 'var(--brand-gold)',
+    color: '#FBBF24',
     icon: 'Drama',
   },
   {
     id: 'healer',
     name: 'Healer',
     description: 'Compassion, restoration, and balance',
-    color: 'var(--brand-light-green)',
+    color: '#34D399',
     icon: 'Sparkles',
   },
 ];
@@ -61,28 +77,28 @@ export default function AgbalaPage(): React.JSX.Element {
       className="min-h-screen"
       style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
     >
-      <AppHeader active="Vertical" />
+      <AppHeader active="Vertical" logoVariant="light" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <div
             style={{
-              width: 80,
-              height: 80,
+              width: 72,
+              height: 72,
               borderRadius: 20,
               background: 'linear-gradient(135deg, #E8420A, #FF6B35)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 20px',
-              fontSize: 32,
+              boxShadow: '0 8px 32px rgba(232, 66, 10, 0.3)',
             }}
           >
-            BookOpen
+            <BookOpen className="w-8 h-8 text-white" />
           </div>
-          <h1 style={{ fontSize: 36, fontWeight: 700, marginBottom: 8 }}>Agbala</h1>
+          <h1 style={{ fontSize: 36, fontWeight: 700, marginBottom: 8, color: '#ffffff' }}>Agbala</h1>
           <p
             style={{
-              color: 'var(--text-secondary)',
+              color: 'rgba(255, 255, 255, 0.7)',
               fontSize: 18,
               maxWidth: 600,
               margin: '0 auto',
@@ -93,7 +109,7 @@ export default function AgbalaPage(): React.JSX.Element {
         </div>
 
         <section style={{ marginBottom: 48 }}>
-          <h2 style={{ fontSize: 24, fontWeight: 600, marginBottom: 16, textAlign: 'center' }}>
+          <h2 style={{ fontSize: 24, fontWeight: 600, marginBottom: 16, textAlign: 'center', color: '#ffffff' }}>
             Your Paths
           </h2>
           {isLoading ? (
@@ -124,23 +140,26 @@ export default function AgbalaPage(): React.JSX.Element {
                     display: 'block',
                     padding: 24,
                     borderRadius: 16,
-                    border: '1px solid var(--border-default)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    backgroundColor: '#18151e',
                     textDecoration: 'none',
                     color: 'var(--text-primary)',
-                    transition: 'border-color 0.2s',
+                    transition: 'border-color 0.2s, transform 0.2s',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = path.color;
+                    e.currentTarget.style.transform = 'translateY(-2px)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--bg-secondary)';
+                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+                    e.currentTarget.style.transform = 'translateY(0)';
                   }}
                 >
-                  <div style={{ fontSize: 32, marginBottom: 12 }}>{path.icon}</div>
+                  <div style={{ marginBottom: 16 }}>{getPathIcon(path.icon)}</div>
                   <h3 style={{ fontWeight: 600, fontSize: 18, marginBottom: 8, color: path.color }}>
                     {path.name}
                   </h3>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.4 }}>
+                  <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, lineHeight: 1.5 }}>
                     {path.description}
                   </p>
                 </Link>
@@ -220,7 +239,7 @@ export default function AgbalaPage(): React.JSX.Element {
           </Link>
         </div>
       </main>
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

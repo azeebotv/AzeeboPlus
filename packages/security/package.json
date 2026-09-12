@@ -13,7 +13,7 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "bash ../../scripts/build-package.sh",
     "test": "jest",
     "test:cov": "jest --coverage",
     "test:e2e:security": "RUN_SECURITY_E2E=1 jest --config jest.e2e.config.js",

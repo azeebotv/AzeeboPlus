@@ -89,6 +89,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/_next') ||
     pathname.startsWith('/assets') ||
     pathname === '/manifest.json' ||
+    pathname === '/sw.js' ||
     pathname === '/robots.txt' ||
     pathname === '/sitemap.xml' ||
     pathname === '/favicon.ico'
@@ -161,6 +162,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public files (public directory)
      */
-    '/((?!_next/static|_next/image|favicon.ico|assets).*)',
+    '/((?!_next/static|_next/image|favicon.ico|assets|sw.js).*)',
   ],
 };

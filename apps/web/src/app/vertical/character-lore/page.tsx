@@ -60,8 +60,13 @@ function CharacterLorePageContent(): React.JSX.Element {
   const charactersQuery = useQuery({
     queryKey: ['vertical-characters'],
     queryFn: async () => {
-      const res = await api.request<Character[]>('/api/v1/vertical/characters');
-      if (res.success && res.data) return res.data;
+      const res = await api.request<Character[] | { items?: Character[] }>(
+        '/api/v1/vertical/characters'
+      );
+      if (res.success && res.data) {
+        const d = res.data;
+        return Array.isArray(d) ? d : d.items || [];
+      }
       throw new Error(res.message || 'Failed to load characters');
     },
     staleTime: 60000,

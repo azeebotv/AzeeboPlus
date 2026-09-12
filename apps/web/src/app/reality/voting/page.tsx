@@ -47,7 +47,7 @@ function VotingPageContent(): React.JSX.Element {
   });
 
   const walletQuery = useQuery({
-    queryKey: ['wallet-balance'],
+    queryKey: ['wallet', 'balance:object'],
     queryFn: async () => {
       const res = await api.request<WalletBalance>('/api/v1/wallet/balance');
       if (res.success && res.data) return res.data;
@@ -67,7 +67,7 @@ function VotingPageContent(): React.JSX.Element {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reality-contestants'] });
-      queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+      queryClient.invalidateQueries({ queryKey: ['wallet', 'balance:object'] });
       setVoteSuccess(true);
       setTimeout(() => setVoteSuccess(false), 3000);
       setSelectedContestant(null);
@@ -93,15 +93,21 @@ function VotingPageContent(): React.JSX.Element {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Reality" />
+      <AppHeader active="Reality" logoVariant="light" />
 
       <section
-        className="relative py-16 sm:py-20"
+        className="relative py-16 sm:py-20 overflow-hidden"
         style={{
-          background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+          background: 'linear-gradient(180deg, rgba(232,66,10,0.15) 0%, rgba(11,9,14,0.95) 100%)',
         }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'radial-gradient(ellipse at 50% 0%, rgba(232,66,10,0.2), transparent 70%)',
+          }}
+        />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.h1
             className="text-4xl sm:text-5xl font-bold text-white mb-4"
             initial={{ opacity: 0, y: 20 }}
@@ -361,7 +367,7 @@ function VotingPageContent(): React.JSX.Element {
         )}
       </AnimatePresence>
 
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

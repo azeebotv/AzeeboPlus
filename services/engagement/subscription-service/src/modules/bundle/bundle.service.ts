@@ -1,4 +1,5 @@
 import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
@@ -7,12 +8,21 @@ import { SubscribeBundleDto } from './dto/subscribe-bundle.dto.js';
 import type { BundlePass, BundleSubscription } from '../../prisma/client/index.js';
 import { randomUUID } from 'crypto';
 import axios from 'axios';
+import {
+  walletLookupUrl,
+  walletDebitUrl,
+  walletDebitPayload,
+  walletInternalHeaders as buildWalletInternalHeaders,
+} from '../../wallet-payloads.js';
 
 @Injectable()
 export class BundleService {
   private readonly logger = new Logger(BundleService.name);
   private readonly walletServiceBaseUrl: string;
   private readonly analyticsServiceBaseUrl: string;
+  // Secret for internal wallet-service calls — same resolution order the
+  // wallet-service InternalSecretGuard uses to validate it.
+  private readonly internalApiKey: string;
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
@@ -27,6 +37,20 @@ export class BundleService {
       'ANALYTICS_SERVICE_URL',
       'http://analytics-service:3040'
     );
+    // Secret for internal wallet-service calls — same resolution order the
+    // wallet-service InternalSecretGuard uses to validate it.
+    this.internalApiKey =
+      this.configService.get<string>('GATEWAY_SECRET') ??
+      this.configService.getOrThrow<string>('INTERNAL_API_KEY');
+  }
+
+  /**
+   * Headers for internal wallet-service calls (bundle purchase debits).
+   * Those routes carry no user identity — the shared secret authenticates
+   * the service itself (wallet-service InternalSecretGuard).
+   */
+  private walletInternalHeaders(): Record<string, string> {
+    return buildWalletInternalHeaders(this.internalApiKey);
   }
 
   async getBundles(): Promise<BundlePass[]> {
@@ -187,10 +211,11 @@ export class BundleService {
   private async debitWallet(userId: string, amount: number, description: string): Promise<void> {
     try {
       const walletResponse = await axios.get(
-        `${this.walletServiceBaseUrl}/wallets/user/${userId}`,
-        { timeout: 10000 }
+        walletLookupUrl(this.walletServiceBaseUrl, userId),
+        { headers: this.walletInternalHeaders(), timeout: 10000 }
       );
-      const wallet = walletResponse.data?.wallet || walletResponse.data;
+      // Internal lookup responds enveloped: { success, data: { balance, … } }.
+      const wallet = walletResponse.data?.data;
       if (!wallet) {
         throw new BadRequestException('Wallet not found. Please fund your wallet first.');
       }
@@ -200,14 +225,13 @@ export class BundleService {
 
       const idempotencyKey = randomUUID();
       await axios.post(
-        `${this.walletServiceBaseUrl}/wallet/debit`,
-        { walletId: wallet.id, amount, description, idempotencyKey },
-        { timeout: 10000 }
+        walletDebitUrl(this.walletServiceBaseUrl, userId),
+        walletDebitPayload(amount, description, idempotencyKey),
+        { headers: this.walletInternalHeaders(), timeout: 10000 }
       );
     } catch (error) {
-      if (error instanceof BadRequestException) throw error;
       this.logger.error(`Failed to debit wallet: ${(error as Error).message}`);
-      throw new BadRequestException('Unable to process wallet payment. Please try again.');
+      mapAndThrow(error, 'debiting wallet');
     }
   }
 
@@ -225,9 +249,8 @@ export class BundleService {
         throw new BadRequestException('Payment amount does not match bundle price.');
       }
     } catch (error) {
-      if (error instanceof BadRequestException) throw error;
       this.logger.error(`Failed to verify payment: ${(error as Error).message}`);
-      throw new BadRequestException('Unable to verify payment. Please try again.');
+      mapAndThrow(error, 'verifying payment');
     }
   }
 

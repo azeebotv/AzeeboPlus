@@ -220,7 +220,7 @@ Naming: `snake_case`, `{domain}_{feature}_enabled` for kill-switches. Defaults: 
 - `notification_preferences_v2` (off) — **Implemented** — flag ON writes/reads the full `NotificationPreference` surface (per-channel columns, quietHours HH:MM, timezone, separate categoryOverrides); OFF keeps the legacy flat categoryOverrides map
 
 **reward-service**
-- `reward_points_enabled` (on), `reward_streaks` (off), `reward_badges` (off), `reward_missions` (off)
+- `reward_points_enabled` (on), `reward_streaks` (on — dev), `reward_badges` (on — dev), `reward_missions` (on — dev)
 - `reward_double_points` (off) — promotional multiplier, toggled by marketing
 
 **referral-service**

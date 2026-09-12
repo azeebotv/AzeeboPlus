@@ -98,7 +98,7 @@ export default function HeroSlides({
       className="relative w-full overflow-hidden"
       style={{
         minHeight: 'min(70vh, 600px)',
-        background: 'var(--brand-forest)',
+        background: 'var(--hp-bg)',
       }}
       onMouseEnter={(): void => setIsPaused(true)}
       onMouseLeave={(): void => setIsPaused(false)}
@@ -111,7 +111,7 @@ export default function HeroSlides({
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <AmbientGlow color="rgba(13,90,60,0.5)" size={600} className="-top-48 -left-48" />
+      <AmbientGlow color="rgba(232,66,10,0.22)" size={600} className="-top-48 -left-48" />
 
       {/* Slide content */}
       <AnimatePresence mode="wait">
@@ -136,7 +136,7 @@ export default function HeroSlides({
               src={
                 currentSlide.mediaAsset?.thumbnailUrl ||
                 currentSlide.thumbnail ||
-                '/placeholder-hero.png'
+                '/images/poster_ember_queen.jpg'
               }
               alt={currentSlide.title || t('home.heroSlide')}
               fill
@@ -144,18 +144,18 @@ export default function HeroSlides({
               priority={currentIndex === 0}
               sizes="100vw"
             />
-            {/* Gradient overlays */}
+            {/* Gradient overlays — dark cinematic vignette */}
             <div
               className="absolute inset-0"
               style={{
                 background:
-                  'linear-gradient(to right, rgba(13,59,46,0.95) 0%, rgba(13,59,46,0.6) 50%, transparent 100%)',
+                  'linear-gradient(to right, rgba(11,9,14,0.95) 0%, rgba(11,9,14,0.7) 50%, rgba(11,9,14,0.3) 100%)',
               }}
             />
             <div
               className="absolute inset-0"
               style={{
-                background: 'linear-gradient(to top, rgba(13,59,46,0.9) 0%, transparent 40%)',
+                background: 'linear-gradient(to top, rgba(11,9,14,1) 0%, rgba(11,9,14,0.4) 40%, transparent 80%)',
               }}
             />
           </div>

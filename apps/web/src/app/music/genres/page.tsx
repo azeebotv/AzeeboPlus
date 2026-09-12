@@ -9,16 +9,8 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { extractGenres } from '@/lib/music';
 import analytics from '@/lib/analytics';
-
-interface Genre {
-  id: string;
-  name: string;
-  slug: string;
-  icon?: string;
-  trackCount?: number;
-  color?: string;
-}
 
 const GENRE_COLORS: Record<string, string> = {
   afrobeats: 'var(--brand-orange)',
@@ -43,8 +35,8 @@ export default function MusicGenresPage(): React.JSX.Element {
   const genresQuery = useQuery({
     queryKey: ['music', 'genres'],
     queryFn: async () => {
-      const res = await api.request<Genre[]>('/api/v1/lifestyle/music/genres');
-      if (res.success && res.data) return res.data;
+      const res = await api.request<unknown>('/api/v1/lifestyle/music/genres');
+      if (res.success && res.data) return extractGenres(res.data);
       return [];
     },
     staleTime: 300000,
@@ -61,7 +53,7 @@ export default function MusicGenresPage(): React.JSX.Element {
       {/* Hero */}
       <section
         className="relative py-16 sm:py-20"
-        style={{ background: 'linear-gradient(135deg, #4C0A5E 0%, #1A0A3B 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #4C0A5E 0%, #100e14 100%)' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.h1

@@ -4,6 +4,7 @@ const prettierConfig = require('eslint-config-prettier');
 const globals = require('globals');
 const noHexColors = require('./packages/eslint-rules/no-hex-colors');
 const noConsoleLog = require('./packages/eslint-rules/no-console-log');
+const requireMapAndThrow = require('./packages/eslint-rules/require-map-and-throw');
 
 module.exports = [
   // Ignore patterns
@@ -36,6 +37,7 @@ module.exports = [
         rules: {
           'no-hex-colors': noHexColors,
           'no-console-log': noConsoleLog,
+          'require-map-and-throw': requireMapAndThrow,
         },
       },
     },
@@ -143,6 +145,15 @@ module.exports = [
       ],
       'no-console': 'warn',
       'azeebo-custom/no-console-log': 'error',
+      // Catch blocks must not fabricate hardcoded 4xx statuses — mapAndThrow
+      // preserves real causes (Prisma/upstream/network) instead of flattening
+      // them into a misleading client error (e.g. a DB outage surfacing as a
+      // 400). Warn repo-wide while legacy sites are migrated; content-service
+      // and user-service are fully converted and hard-fail below. New
+      // violations also fail the lint-ratchet CI gate (see
+      // scripts/check-lint-warning-ratchet.mjs): the per-workspace warning
+      // baseline may only decrease. Fix or convert; never grow the count.
+      'azeebo-custom/require-map-and-throw': 'warn',
       'azeebo-custom/no-hex-colors': [
         'error',
         {
@@ -259,6 +270,43 @@ module.exports = [
           trailingUnderscore: 'allow',
         },
       ],
+    },
+  },
+  // Fully converted to mapAndThrow — enforce the ban as an error there.
+  // Extend this block service-by-service as conversions land; a service is
+  // ready when `pnpm --filter <pkg> exec eslint src` reports zero
+  // require-map-and-throw warnings. PROMOTION IS ENFORCED: a clean service
+  // left out of this block fails CI (scripts/check-map-and-throw-promotion.mjs,
+  // wired after the lint-ratchet gate) — the failure prints the exact snippet
+  // to add here.
+  {
+    files: [
+      // core
+      'services/core/content-service/**/*.ts',
+      'services/core/knowledge-service/**/*.ts',
+      'services/core/user-service/**/*.ts',
+      'services/core/wallet-service/**/*.ts',
+      // engagement
+      'services/engagement/engagement-service/**/*.ts',
+      'services/engagement/messaging-service/**/*.ts',
+      'services/engagement/notification-service/**/*.ts',
+      'services/engagement/referral-service/**/*.ts',
+      'services/engagement/reward-service/**/*.ts',
+      'services/engagement/subscription-service/**/*.ts',
+      // intelligence
+      'services/intelligence/analytics-service/**/*.ts',
+      'services/intelligence/recommendation-service/**/*.ts',
+      // operations
+      'services/operations/queue-service/**/*.ts',
+      // universes
+      'services/universes/comedy-service/**/*.ts',
+      'services/universes/games-service/**/*.ts',
+      'services/universes/lifestyle-service/**/*.ts',
+      'services/universes/live-event-service/**/*.ts',
+      'services/universes/vertical-service/**/*.ts',
+    ],
+    rules: {
+      'azeebo-custom/require-map-and-throw': 'error',
     },
   },
   // Disable formatting rules that conflict with Prettier (must be last)

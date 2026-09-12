@@ -6,6 +6,21 @@ import { webLogger } from '@/lib/logger';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { useToast } from '@/components/ToastProvider';
+import { CreditCard, Smartphone, Building2, Wallet } from 'lucide-react';
+
+function PaymentMethodIcon({ id, name }: { id: string; name: string }) {
+  const lower = (id + ' ' + name).toLowerCase();
+  if (lower.includes('card') || lower.includes('debit') || lower.includes('credit')) {
+    return <CreditCard size={24} />;
+  }
+  if (lower.includes('mobile') || lower.includes('ussd') || lower.includes('airtime') || lower.includes('telco')) {
+    return <Smartphone size={24} />;
+  }
+  if (lower.includes('bank') || lower.includes('transfer')) {
+    return <Building2 size={24} />;
+  }
+  return <Wallet size={24} />;
+}
 
 interface PaymentMethod {
   id: string;
@@ -116,8 +131,8 @@ export default function AddFundsPage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader />
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black, #0b090e)' }}>
+      <AppHeader logoVariant="light" />
       <div className="max-w-2xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <button
@@ -140,43 +155,35 @@ export default function AddFundsPage(): React.JSX.Element {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="az-glass p-6">
-            <label className="az-label block mb-3">Enter Amount</label>
-            <div className="az-input flex items-center gap-3">
-              <span className="text-xl font-bold" style={{ color: 'var(--brand-orange)' }}>
+            <label htmlFor="amount" className="block text-sm font-medium text-white/70 mb-2">
+              Amount (₦)
+            </label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 text-lg">
                 ₦
               </span>
               <input
+                id="amount"
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0.00"
-                className="flex-1 bg-transparent outline-none text-2xl font-bold text-white placeholder:text-white/30"
                 min={pricing?.minAmount || 100}
-                max={pricing?.maxAmount || 100000}
-                step="0.01"
+                max={pricing?.maxAmount || 500000}
+                className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-[#E8420A] text-lg font-semibold"
                 required
               />
             </div>
-            <div className="flex gap-2 mt-3" role="listbox" aria-label="Quick amount selection">
-              {quickAmounts.map((quick) => (
+
+            <div className="grid grid-cols-4 gap-2 mt-4">
+              {quickAmounts.map((quickAmount) => (
                 <button
-                  key={quick}
+                  key={quickAmount}
                   type="button"
-                  onClick={() => setAmount(quick.toString())}
-                  role="option"
-                  aria-selected={amount === quick.toString()}
-                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${amount === quick.toString() ? 'az-btn-primary' : ''}`}
-                  style={
-                    amount !== quick.toString()
-                      ? {
-                          border: '1px solid rgba(255,255,255,0.2)',
-                          backgroundColor: 'rgba(255,255,255,0.08)',
-                          color: 'var(--brand-white)',
-                        }
-                      : undefined
-                  }
+                  onClick={() => setAmount(quickAmount.toString())}
+                  className="py-2 px-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm text-white/80 transition-colors"
                 >
-                  ₦{quick.toLocaleString()}
+                  ₦{quickAmount.toLocaleString()}
                 </button>
               ))}
             </div>
@@ -194,14 +201,16 @@ export default function AddFundsPage(): React.JSX.Element {
                     onClick={() => setSelectedMethod(method.id)}
                     role="radio"
                     aria-checked={selectedMethod === method.id}
-                    className={`w-full az-glass p-4 flex items-center gap-4 transition-all ${selectedMethod === method.id ? 'ring-2' : ''}`}
+                    className={`w-full az-glass p-4 flex items-center gap-4 transition-all ${selectedMethod === method.id ? 'ring-2 ring-[var(--brand-orange)]' : ''}`}
                     style={
                       selectedMethod === method.id
                         ? { boxShadow: '0 0 20px rgba(232,66,10,0.2)' }
                         : undefined
                     }
                   >
-                    <span className="text-3xl">{method.icon}</span>
+                    <div className="w-12 h-12 rounded-xl bg-orange-500/10 text-[var(--brand-orange)] flex items-center justify-center border border-orange-500/20 flex-shrink-0">
+                      <PaymentMethodIcon id={method.id} name={method.name} />
+                    </div>
                     <div className="flex-1 text-left">
                       <p className="font-semibold text-white">{method.name}</p>
                       <p className="text-sm text-white/50">{method.description}</p>
@@ -257,7 +266,7 @@ export default function AddFundsPage(): React.JSX.Element {
           </button>
         </form>
       </div>
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

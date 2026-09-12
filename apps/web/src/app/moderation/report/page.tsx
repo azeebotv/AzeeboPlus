@@ -5,7 +5,28 @@ import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { Ban, AlertTriangle, Lock, ShieldAlert, Copyright, Newspaper, FileText, Check } from 'lucide-react';
 import analytics from '@/lib/analytics';
+
+function getReasonIcon(name: string): React.JSX.Element {
+  const props = { className: 'w-5 h-5 flex-shrink-0' };
+  switch (name) {
+    case 'Ban':
+      return <Ban {...props} />;
+    case 'AlertTriangle':
+      return <AlertTriangle {...props} />;
+    case 'Lock':
+      return <Lock {...props} />;
+    case 'ShieldAlert':
+      return <ShieldAlert {...props} />;
+    case 'Copyright':
+      return <Copyright {...props} />;
+    case 'Newspaper':
+      return <Newspaper {...props} />;
+    default:
+      return <FileText {...props} />;
+  }
+}
 
 const REASONS = [
   { id: 'spam', label: 'Spam or misleading', icon: 'Ban' },
@@ -51,7 +72,7 @@ function ReportPageContent(): React.JSX.Element {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader />
+      <AppHeader logoVariant="light" />
 
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
         <motion.div
@@ -80,16 +101,7 @@ function ReportPageContent(): React.JSX.Element {
               className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
               style={{ backgroundColor: 'rgba(34,197,94,0.2)' }}
             >
-              <svg
-                width="32"
-                height="32"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#22C55E"
-                strokeWidth="2"
-              >
-                <path d="M20 6L9 17l-5-5" />
-              </svg>
+              <Check className="w-8 h-8 text-emerald-400" />
             </div>
             <h2 className="text-xl font-bold text-white mb-2">Report Submitted</h2>
             <p className="text-white/50 mb-6">
@@ -122,20 +134,21 @@ function ReportPageContent(): React.JSX.Element {
                           : '1px solid rgba(255,255,255,0.06)',
                     }}
                   >
-                    <span className="text-lg">{reason.icon}</span>
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{
+                        backgroundColor:
+                          selectedReason === reason.id
+                            ? 'rgba(232,66,10,0.2)'
+                            : 'rgba(255,255,255,0.05)',
+                        color: selectedReason === reason.id ? '#E8420A' : 'rgba(255,255,255,0.7)',
+                      }}
+                    >
+                      {getReasonIcon(reason.icon)}
+                    </div>
                     <span className="text-sm font-medium text-white">{reason.label}</span>
                     {selectedReason === reason.id && (
-                      <svg
-                        className="ml-auto"
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#E8420A"
-                        strokeWidth="2"
-                      >
-                        <path d="M20 6L9 17l-5-5" />
-                      </svg>
+                      <Check className="ml-auto w-4 h-4 text-orange-500" />
                     )}
                   </button>
                 ))}
@@ -186,7 +199,7 @@ function ReportPageContent(): React.JSX.Element {
         )}
       </div>
 
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

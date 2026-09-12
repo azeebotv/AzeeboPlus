@@ -7,6 +7,9 @@ export const metadata: Metadata = {
 
 import Link from 'next/link';
 
+import AppHeader from '@/components/layout/AppHeader';
+import AppFooter from '@/components/layout/AppFooter';
+
 /**
  * Privacy Policy & Data Collection Disclosures (TAA §83)
  *
@@ -20,15 +23,22 @@ import Link from 'next/link';
 
 export default function PrivacyPolicyPage() {
   return (
-    <div className="min-h-screen bg-background py-12 px-4">
-      <div className="max-w-4xl mx-auto">
+    <div
+      className="min-h-screen"
+      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
+    >
+      <AppHeader />
+      <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-12">
-          <Link href="/" className="text-blue-600 hover:text-blue-700 text-sm mb-4 inline-block">
+          <Link
+            href="/"
+            className="text-[var(--brand-orange)] hover:underline text-sm mb-4 inline-flex items-center gap-1"
+          >
             ← Back to Home
           </Link>
-          <h1 className="text-4xl font-bold text-foreground mb-4">Privacy Policy</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-4xl font-bold text-white mb-3">Privacy Policy</h1>
+          <p className="text-white/50 text-sm">
             Last updated:{' '}
             {new Date().toLocaleDateString('en-US', {
               year: 'numeric',
@@ -259,18 +269,19 @@ export default function PrivacyPolicyPage() {
 
           {/* Contact */}
           <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">8. Contact Us</h2>
-            <p className="text-muted-foreground mb-4">
+            <h2 className="text-2xl font-bold mb-4 text-white">8. Contact Us</h2>
+            <p className="text-white/60 mb-4">
               If you have any questions about this Privacy Policy, please contact us:
             </p>
-            <div className="bg-muted rounded-lg p-6">
-              <p className="text-foreground font-medium">Virtual Media Network Limited</p>
-              <p className="text-muted-foreground">Email: privacy@azeeboplus.com</p>
-              <p className="text-muted-foreground">Support: support@azeeboplus.com</p>
+            <div className="az-glass rounded-2xl p-6 border border-white/10">
+              <p className="text-white font-medium mb-1">Virtual Media Network Limited</p>
+              <p className="text-white/60 text-sm">Email: privacy@azeeboplus.com</p>
+              <p className="text-white/60 text-sm">Support: support@azeeboplus.com</p>
             </div>
           </section>
         </div>
       </div>
+      <AppFooter />
     </div>
   );
 }

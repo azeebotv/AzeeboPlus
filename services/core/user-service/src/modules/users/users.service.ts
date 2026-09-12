@@ -1,4 +1,12 @@
-import { Inject, Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { PrismaService } from '../database/prisma.service.js';
@@ -84,7 +92,7 @@ export class UsersService {
       return result;
     } catch (error: unknown) {
       this.logger.error(`Failed to get preferences for user ${userId}`, error);
-      throw new BadRequestException('Failed to retrieve preferences');
+      throw new InternalServerErrorException('Failed to retrieve preferences');
     }
   }
 
@@ -138,7 +146,7 @@ export class UsersService {
       return response;
     } catch (error: unknown) {
       this.logger.error(`Failed to update preferences for user ${userId}`, error);
-      throw new BadRequestException('Failed to update preferences');
+      throw new InternalServerErrorException('Failed to update preferences');
     }
   }
 
@@ -162,7 +170,7 @@ export class UsersService {
       return { ...defaults, ...(prefs.privacySettings as Record<string, unknown>) };
     } catch (error: unknown) {
       this.logger.error(`Failed to get privacy settings for user ${userId}`, error);
-      throw new BadRequestException('Failed to retrieve privacy settings');
+      mapAndThrow(error, 'Failed to retrieve privacy settings');
     }
   }
 
@@ -199,7 +207,7 @@ export class UsersService {
       return privacyData;
     } catch (error: unknown) {
       this.logger.error(`Failed to update privacy settings for user ${userId}`, error);
-      throw new BadRequestException('Failed to update privacy settings');
+      mapAndThrow(error, 'Failed to update privacy settings');
     }
   }
 
@@ -236,7 +244,7 @@ export class UsersService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get watch history for user ${userId}`, error);
-      throw new BadRequestException('Failed to retrieve watch history');
+      mapAndThrow(error, 'Failed to retrieve watch history');
     }
   }
 
@@ -273,7 +281,7 @@ export class UsersService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get saved items for user ${userId}`, error);
-      throw new BadRequestException('Failed to retrieve saved items');
+      mapAndThrow(error, 'Failed to retrieve saved items');
     }
   }
 
@@ -296,7 +304,7 @@ export class UsersService {
       return { message: 'Item saved successfully' };
     } catch (error: unknown) {
       this.logger.error(`Failed to save item for user ${userId}`, error);
-      throw new BadRequestException('Failed to save item');
+      mapAndThrow(error, 'Failed to save item');
     }
   }
 
@@ -317,8 +325,7 @@ export class UsersService {
       return { message: 'Item unsaved' };
     } catch (error: unknown) {
       this.logger.error(`Failed to unsave item for user ${userId}`, error);
-      if (error instanceof NotFoundException) throw error;
-      throw new BadRequestException('Failed to unsave item');
+      mapAndThrow(error, 'Failed to unsave item');
     }
   }
 
@@ -348,8 +355,7 @@ export class UsersService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get universe affinity for user ${userId}`, error);
-      if (error instanceof BadRequestException) throw error;
-      throw new BadRequestException('Failed to retrieve universe affinity');
+      mapAndThrow(error, 'Failed to retrieve universe affinity');
     }
   }
 
@@ -370,7 +376,7 @@ export class UsersService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to update universe affinity for user ${userId}`, error);
-      throw new BadRequestException('Failed to update universe affinity');
+      mapAndThrow(error, 'Failed to update universe affinity');
     }
   }
 
@@ -405,8 +411,7 @@ export class UsersService {
       return result;
     } catch (error: unknown) {
       this.logger.error(`Failed to get profile for user ${userId}`, error);
-      if (error instanceof NotFoundException) throw error;
-      throw new BadRequestException('Failed to retrieve profile');
+      mapAndThrow(error, 'Failed to retrieve profile');
     }
   }
 
@@ -484,8 +489,7 @@ export class UsersService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to update profile for user ${userId}`, error);
-      if (error instanceof NotFoundException) throw error;
-      throw new BadRequestException('Failed to update profile');
+      mapAndThrow(error, 'Failed to update profile');
     }
   }
 
@@ -512,8 +516,7 @@ export class UsersService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get user by ID ${userId}`, error);
-      if (error instanceof NotFoundException) throw error;
-      throw new BadRequestException('Failed to retrieve user');
+      mapAndThrow(error, 'Failed to retrieve user');
     }
   }
 
@@ -562,8 +565,7 @@ export class UsersService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to follow user ${followingId} for user ${followerId}`, error);
-      if (error instanceof BadRequestException || error instanceof NotFoundException) throw error;
-      throw new BadRequestException('Failed to follow user');
+      mapAndThrow(error, 'Failed to follow user');
     }
   }
 
@@ -602,7 +604,7 @@ export class UsersService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to unfollow user ${followingId} for user ${followerId}`, error);
-      throw new BadRequestException('Failed to unfollow user');
+      mapAndThrow(error, 'Failed to unfollow user');
     }
   }
 
@@ -650,7 +652,7 @@ export class UsersService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get followers for user ${userId}`, error);
-      throw new BadRequestException('Failed to retrieve followers');
+      mapAndThrow(error, 'Failed to retrieve followers');
     }
   }
 
@@ -698,7 +700,7 @@ export class UsersService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get following for user ${userId}`, error);
-      throw new BadRequestException('Failed to retrieve following');
+      mapAndThrow(error, 'Failed to retrieve following');
     }
   }
 
@@ -765,8 +767,7 @@ export class UsersService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to complete profile setup for user ${userId}`, error);
-      if (error instanceof NotFoundException) throw error;
-      throw new BadRequestException('Failed to complete profile setup');
+      mapAndThrow(error, 'Failed to complete profile setup');
     }
   }
 
@@ -790,23 +791,17 @@ export class UsersService {
     const scheduledAt = new Date();
     scheduledAt.setDate(scheduledAt.getDate() + 30);
 
-    try {
-      // Try to create a deletion request record if the model exists
-      await this.prisma.dataDeletionRequest?.create({
-        data: {
-          userId,
-          reason: reason || 'User requested data deletion',
-          scheduledAt,
-          status: 'scheduled',
-        },
-      });
-    } catch {
-      // If DataDeletionRequest model doesn't exist, log and continue
-      // The deletion will be handled by the anonymizeUserData method
-      this.logger.warn(
-        'DataDeletionRequest model not found, deletion scheduled without persistence'
-      );
-    }
+    // The DataDeletionRequest table must record the schedule — the 30-day
+    // GDPR cleanup job reads it. A failed write must NOT be reported as
+    // "scheduled", so DB failures propagate (mapped to the right status).
+    await this.prisma.dataDeletionRequest.create({
+      data: {
+        userId,
+        reason: reason || 'User requested data deletion',
+        scheduledAt,
+        status: 'scheduled',
+      },
+    });
 
     return { userId, reason, scheduledAt, status: 'scheduled' };
   }
@@ -844,8 +839,8 @@ export class UsersService {
       await this.prisma.following?.deleteMany({ where: { followerId: userId } });
       await this.prisma.following?.deleteMany({ where: { followingId: userId } });
 
-      // Update deletion request status if model exists
-      await this.prisma.dataDeletionRequest?.updateMany({
+      // Mark any scheduled deletion request as completed
+      await this.prisma.dataDeletionRequest.updateMany({
         where: { userId, status: 'scheduled' },
         data: { status: 'completed', completedAt: new Date() },
       });
@@ -853,7 +848,7 @@ export class UsersService {
       return { userId, deletedAt: new Date(), status: 'deleted' };
     } catch (error) {
       this.logger.error(`Failed to delete user data for ${userId}`, error);
-      throw new BadRequestException('Failed to delete user data');
+      mapAndThrow(error, 'deleting user data');
     }
   }
 
@@ -863,13 +858,13 @@ export class UsersService {
       return { userId, exportedAt: new Date(), data: user };
     } catch (error: unknown) {
       this.logger.error(`Failed to export user data for user ${userId}`, error);
-      throw new BadRequestException('Failed to export user data');
+      mapAndThrow(error, 'exporting user data');
     }
   }
 
   async getDeletionStatus(userId: string) {
     try {
-      const request = await this.prisma.dataDeletionRequest?.findFirst({
+      const request = await this.prisma.dataDeletionRequest.findFirst({
         where: { userId },
         orderBy: { createdAt: 'desc' },
       });
@@ -885,9 +880,10 @@ export class UsersService {
         scheduledAt: request.scheduledAt,
         completedAt: request.completedAt,
       };
-    } catch {
-      // If DataDeletionRequest model doesn't exist, return default
-      return { userId, status: 'none', requestedAt: null };
+    } catch (error) {
+      // A DB failure must not masquerade as "no deletion requested"
+      this.logger.error(`Failed to get deletion status for ${userId}`, error);
+      mapAndThrow(error, 'fetching deletion status');
     }
   }
 
@@ -920,7 +916,7 @@ export class UsersService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get continue watching for user ${userId}`, error);
-      throw new BadRequestException('Failed to retrieve continue watching');
+      mapAndThrow(error, 'Failed to retrieve continue watching');
     }
   }
 
@@ -945,7 +941,7 @@ export class UsersService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get universe engagement for user ${userId}`, error);
-      throw new BadRequestException('Failed to retrieve universe engagement');
+      mapAndThrow(error, 'Failed to retrieve universe engagement');
     }
   }
 
@@ -957,7 +953,7 @@ export class UsersService {
       this.logger.log(`Removed content ${contentId} from watch history for user ${userId}`);
     } catch (error: unknown) {
       this.logger.error(`Failed to remove from watch history for user ${userId}`, error);
-      throw new BadRequestException('Failed to remove from watch history');
+      mapAndThrow(error, 'Failed to remove from watch history');
     }
   }
 

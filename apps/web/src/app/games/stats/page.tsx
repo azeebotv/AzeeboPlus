@@ -9,7 +9,27 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
+import { Gamepad2, Star, Trophy, Flame, Gem, BarChart3, Award, Sparkles } from 'lucide-react';
 import analytics from '@/lib/analytics';
+
+function getStatIcon(name: string): React.JSX.Element {
+  switch (name) {
+    case 'Gamepad2':
+      return <Gamepad2 className="w-6 h-6 text-emerald-400 mx-auto" />;
+    case 'Star':
+      return <Star className="w-6 h-6 text-amber-400 mx-auto" />;
+    case 'Trophy':
+      return <Trophy className="w-6 h-6 text-yellow-400 mx-auto" />;
+    case 'Flame':
+      return <Flame className="w-6 h-6 text-orange-400 mx-auto" />;
+    case 'Gem':
+      return <Gem className="w-6 h-6 text-purple-400 mx-auto" />;
+    case 'BarChart3':
+      return <BarChart3 className="w-6 h-6 text-blue-400 mx-auto" />;
+    default:
+      return <Sparkles className="w-6 h-6 text-white/60 mx-auto" />;
+  }
+}
 
 interface PlayerStats {
   totalGamesPlayed: number;
@@ -108,20 +128,29 @@ function StatsPageContent(): React.JSX.Element {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Games" />
+      <AppHeader active="Games" logoVariant="light" />
 
       {/* Hero */}
       <section
-        className="relative py-16 sm:py-20"
-        style={{ background: 'linear-gradient(135deg, #22C55E 0%, #1A0A0A 100%)' }}
+        className="relative py-16 sm:py-20 overflow-hidden"
+        style={{
+          background: 'linear-gradient(180deg, rgba(34,197,94,0.12) 0%, rgba(11,9,14,0.95) 100%)',
+        }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'radial-gradient(ellipse at 50% 0%, rgba(34,197,94,0.18), transparent 70%)',
+          }}
+        />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.h1
-            className="text-4xl sm:text-5xl font-bold text-white mb-4"
+            className="text-4xl sm:text-5xl font-bold text-white mb-4 flex items-center justify-center gap-3"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            BarChart3Player Stats
+            <BarChart3 className="w-10 h-10 text-emerald-400" />
+            <span>Player Stats</span>
           </motion.h1>
           <motion.p
             className="text-xl text-white/80 max-w-2xl mx-auto"
@@ -163,7 +192,7 @@ function StatsPageContent(): React.JSX.Element {
                   transition={{ delay: index * 0.08 }}
                 >
                   <GlowCard universe="games" className="p-5 text-center">
-                    <span className="text-2xl mb-2 block">{stat.icon}</span>
+                    <div className="mb-2">{getStatIcon(stat.icon)}</div>
                     <p className="text-2xl font-bold text-white">{stat.value}</p>
                     <p className="text-xs text-white/50 mt-1">{stat.label}</p>
                     {stat.subtext && <p className="text-xs text-white/30 mt-0.5">{stat.subtext}</p>}
@@ -194,10 +223,10 @@ function StatsPageContent(): React.JSX.Element {
                       style={{ border: `1px solid ${rarity.border}` }}
                     >
                       <div
-                        className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
+                        className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
                         style={{ backgroundColor: rarity.bg }}
                       >
-                        {achievement.icon}
+                        <Award className="w-6 h-6" style={{ color: rarity.text }} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="text-white font-semibold truncate">{achievement.name}</h3>
@@ -289,7 +318,7 @@ function StatsPageContent(): React.JSX.Element {
         )}
       </div>
 
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

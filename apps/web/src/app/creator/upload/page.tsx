@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
+import { useUniversesQuery } from '@/hooks/useUniverses';
 import { createWebLogger } from '@/lib/logger';
 
 const logger = createWebLogger('CreatorUpload');
@@ -38,14 +39,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
   const [tags, setTags] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: universes = [], isLoading: universesLoading } = useQuery({
-    queryKey: ['universes'],
-    queryFn: async () => {
-      const res = await apiFetch<{ data: Array<{ id: string; name: string }> }>('/v1/universes');
-      if (res.success && res.data) return res.data.data;
-      return [];
-    },
-  });
+  const { data: universes = [], isLoading: universesLoading } = useUniversesQuery();
 
   const editQuery = useQuery({
     queryKey: ['creator', 'content', editId],
@@ -161,7 +155,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
     return (
       <div
         className="min-h-screen bg-[var(--brand-near-black)]"
-        style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}
+        style={{ backgroundColor: 'var(--bg-primary)' }}
       >
         <AppHeader active="Creator" />
         <main style={{ padding: '100px 24px 60px', maxWidth: 600, margin: '0 auto' }}>
@@ -178,7 +172,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
     <div
       className="min-h-screen"
       style={{
-        backgroundColor: 'var(--bg-primary, #1A0A0A)',
+        backgroundColor: 'var(--bg-primary)',
         color: 'var(--text-primary, #F5F0EB)',
       }}
     >

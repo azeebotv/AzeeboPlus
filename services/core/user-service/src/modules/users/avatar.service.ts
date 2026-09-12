@@ -1,6 +1,7 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
+import { Prisma } from '@prisma/client';
 import crypto from 'crypto';
 
 export interface AvatarUploadResult {
@@ -82,14 +83,19 @@ export class AvatarService {
       data: { avatar: url },
     });
 
-    // Also update profile if exists
+    // Also update profile if it exists (P2025 = profile row absent)
     try {
       await this.prisma.userProfile.update({
         where: { userId },
         data: { avatar: url },
       });
-    } catch {
-      // Profile might not exist yet
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        // Profile genuinely doesn't exist yet — nothing to mirror into.
+      } else {
+        this.logger.error(`Failed to mirror avatar to profile for ${userId}`, error);
+        throw error;
+      }
     }
 
     this.logger.log(`Avatar uploaded for user ${userId}: ${url}`);
@@ -118,8 +124,13 @@ export class AvatarService {
         where: { userId },
         data: { avatar: null },
       });
-    } catch {
-      // Profile might not exist
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        // Profile genuinely doesn't exist — nothing to clear.
+      } else {
+        this.logger.error(`Failed to clear profile avatar for ${userId}`, error);
+        throw error;
+      }
     }
 
     this.logger.log(`Avatar deleted for user ${userId}`);

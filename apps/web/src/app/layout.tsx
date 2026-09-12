@@ -92,7 +92,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }): React.JSX.Element {
   return (
     <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
-      <body className={`${inter.variable} ${montserrat.variable}`}>
+      <body
+        className={`${inter.variable} ${montserrat.variable} min-h-screen`}
+        style={{ backgroundColor: 'var(--hp-bg)', color: 'var(--text-primary)' }}
+      >
         <a href="#main-content" className="skip-link">
           Skip to main content
         </a>

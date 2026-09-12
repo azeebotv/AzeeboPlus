@@ -154,7 +154,7 @@ function TriviaPageContent(): React.JSX.Element {
       setTimeLeft(session.questions[nextIndex].timeLimit || 30);
     } else {
       setSession(null);
-      queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+      queryClient.invalidateQueries({ queryKey: ['leaderboard', 'games'] });
     }
   }, [session, queryClient]);
 
@@ -330,7 +330,7 @@ function TriviaPageContent(): React.JSX.Element {
           {/* Hero */}
           <section
             className="relative py-16 sm:py-20"
-            style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #1A0A0A 100%)' }}
+            style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #0b090e 100%)' }}
           >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
               <motion.h1
@@ -391,7 +391,7 @@ function TriviaPageContent(): React.JSX.Element {
                       <div
                         className="h-44 flex items-center justify-center"
                         style={{
-                          background: `linear-gradient(135deg, rgba(139,92,246,0.3), #1A0A0A)`,
+                          background: `linear-gradient(135deg, rgba(139,92,246,0.3), #0b090e)`,
                         }}
                       >
                         <span className="text-6xl">
