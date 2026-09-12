@@ -85,7 +85,9 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
     >
       <AppHeader active="Creator" logoVariant="light" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, color: '#FFFFFF' }}>Analytics</h1>
+        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, color: '#FFFFFF' }}>
+          Analytics
+        </h1>
         <p style={{ color: 'var(--text-muted, #9A8A7A)', marginBottom: 24 }}>
           Track your content performance and growth
         </p>
@@ -113,8 +115,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                     timeRange === range
                       ? '1px solid rgba(232,66,10,0.5)'
                       : '1px solid rgba(255,255,255,0.08)',
-                  background:
-                    timeRange === range ? 'rgba(232,66,10,0.15)' : '#18151e',
+                  background: timeRange === range ? 'rgba(232,66,10,0.15)' : '#18151e',
                   color:
                     timeRange === range
                       ? 'var(--brand-orange, #E8420A)'
@@ -163,11 +164,28 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                   overflow: 'hidden',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 8,
+                  }}
+                >
                   <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, margin: 0 }}>
                     Total Views
                   </p>
-                  <div style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: 'rgba(232,66,10,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 8,
+                      backgroundColor: 'rgba(232,66,10,0.1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
                     <Eye size={15} color="#E8420A" />
                   </div>
                 </div>
@@ -186,11 +204,28 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                   overflow: 'hidden',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 8,
+                  }}
+                >
                   <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, margin: 0 }}>
                     Likes
                   </p>
-                  <div style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: 'rgba(232,66,10,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 8,
+                      backgroundColor: 'rgba(232,66,10,0.1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
                     <Heart size={15} color="#E8420A" />
                   </div>
                 </div>
@@ -209,11 +244,28 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                   overflow: 'hidden',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 8,
+                  }}
+                >
                   <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, margin: 0 }}>
                     Followers
                   </p>
-                  <div style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: 'rgba(232,66,10,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 8,
+                      backgroundColor: 'rgba(232,66,10,0.1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
                     <Users size={15} color="#E8420A" />
                   </div>
                 </div>
@@ -232,11 +284,28 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                   overflow: 'hidden',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 8,
+                  }}
+                >
                   <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, margin: 0 }}>
                     Earnings
                   </p>
-                  <div style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: 'rgba(16,185,129,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 8,
+                      backgroundColor: 'rgba(16,185,129,0.1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
                     <DollarSign size={15} color="#10B981" />
                   </div>
                 </div>
@@ -247,7 +316,9 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
             </div>
 
             <div style={{ marginBottom: 32 }}>
-              <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16, color: '#FFFFFF' }}>Top Content</h2>
+              <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16, color: '#FFFFFF' }}>
+                Top Content
+              </h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {analytics.topContent.map((item) => (
                   <div
@@ -272,8 +343,16 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                       />
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <h3 style={{ fontWeight: 600, fontSize: 14, margin: 0, color: '#FFFFFF' }}>{item.title}</h3>
-                      <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, margin: '4px 0 0 0' }}>
+                      <h3 style={{ fontWeight: 600, fontSize: 14, margin: 0, color: '#FFFFFF' }}>
+                        {item.title}
+                      </h3>
+                      <p
+                        style={{
+                          color: 'var(--text-muted, #9A8A7A)',
+                          fontSize: 12,
+                          margin: '4px 0 0 0',
+                        }}
+                      >
                         {item.views.toLocaleString()} views
                       </p>
                     </div>
@@ -295,15 +374,20 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                     backgroundColor: '#18151e',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: 6,
+                    }}
+                  >
                     <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, margin: 0 }}>
                       Avg Watch Time
                     </p>
                     <Clock size={15} color="#9A8A7A" />
                   </div>
-                  <p
-                    style={{ fontSize: 22, fontWeight: 700, color: '#FFFFFF', margin: 0 }}
-                  >
+                  <p style={{ fontSize: 22, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
                     {analytics.engagementMetrics.avgWatchTime.toFixed(1)}s
                   </p>
                 </div>
@@ -316,15 +400,20 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                     backgroundColor: '#18151e',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: 6,
+                    }}
+                  >
                     <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, margin: 0 }}>
                       Completion Rate
                     </p>
                     <CheckCircle2 size={15} color="#10B981" />
                   </div>
-                  <p
-                    style={{ fontSize: 22, fontWeight: 700, color: '#FFFFFF', margin: 0 }}
-                  >
+                  <p style={{ fontSize: 22, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
                     {analytics.engagementMetrics.completionRate.toFixed(1)}%
                   </p>
                 </div>
@@ -337,15 +426,20 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                     backgroundColor: '#18151e',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: 6,
+                    }}
+                  >
                     <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, margin: 0 }}>
                       Share Rate
                     </p>
                     <Share2 size={15} color="#3B82F6" />
                   </div>
-                  <p
-                    style={{ fontSize: 22, fontWeight: 700, color: '#FFFFFF', margin: 0 }}
-                  >
+                  <p style={{ fontSize: 22, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
                     {analytics.engagementMetrics.shareRate.toFixed(1)}%
                   </p>
                 </div>
@@ -358,15 +452,20 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                     backgroundColor: '#18151e',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: 6,
+                    }}
+                  >
                     <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, margin: 0 }}>
                       Comment Rate
                     </p>
                     <MessageSquare size={15} color="#A855F7" />
                   </div>
-                  <p
-                    style={{ fontSize: 22, fontWeight: 700, color: '#FFFFFF', margin: 0 }}
-                  >
+                  <p style={{ fontSize: 22, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
                     {analytics.engagementMetrics.commentRate.toFixed(1)}%
                   </p>
                 </div>
@@ -446,4 +545,3 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
     </div>
   );
 }
-
