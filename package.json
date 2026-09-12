@@ -8,9 +8,12 @@
     "pnpm": ">=10.33.2"
   },
   "scripts": {
+    "prepare": "if [ -f scripts/install-git-hooks.sh ]; then bash scripts/install-git-hooks.sh; fi",
     "lint": "pnpm -r run lint",
     "check:flags": "node scripts/check-flag-conventions.mjs",
     "check:prisma": "node scripts/check-prisma-find-first.mjs",
+    "check:prisma-client": "node scripts/check-prisma-client-stale.mjs",
+    "check:git-hooks": "node scripts/check-git-hooks.mjs",
     "test:flag-conventions": "node --test scripts/__tests__/*.test.mjs",
     "sweep:flags": "node scripts/sweep-flag-usage.mjs",
     "generate:flags:docs": "node scripts/generate-flag-registry-table.mjs",
