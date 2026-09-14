@@ -7,7 +7,6 @@ import {
   randomItem,
   randomInt,
   randomDate,
-  generateThumbnail,
   NIGERIAN_MOVIES,
   AFROBEATS_SONGS,
   COMEDY_SPECIALS,
@@ -17,7 +16,7 @@ import {
   TAGS,
   printCount,
 } from './utils.js';
-import { seedImages } from './seed-image-hosts.js';
+import { themedArt } from './seed-image-hosts.js';
 
 let PrismaClient: new (args?: unknown) => unknown;
 
@@ -151,7 +150,7 @@ export async function seedContentService(dryRun = false): Promise<number> {
             id: `content-${group.type}-${i}`,
             title: item.title,
             description: item.desc,
-            thumbnail: generateThumbnail(i),
+            thumbnail: themedArt.poster(group.type, item.title),
             mediaUrl: seedImages.storageMedia(group.type, `${i}.mp4`),
             universeId: item.universe,
             creatorId: `creator-${i % 10}`,

@@ -3,7 +3,7 @@
  * Generates 100 creator posts and profiles
  */
 
-import { seedImages } from './seeders/seed-image-hosts.js';
+import { seedImages, themedArt } from './seeders/seed-image-hosts.js';
 
 interface CreatorProfile {
   id: string;
@@ -89,8 +89,8 @@ function generateCreator(index: number): CreatorProfile {
     userId: `usr${String(index + 1).padStart(4, '0')}`,
     displayName: name,
     bio: `Content creator specializing in ${CATEGORIES[index % CATEGORIES.length]}. Follow for amazing content!`,
-    avatarUrl: seedImages.picsum(`creator-${index + 1}`, 200, 200),
-    bannerUrl: seedImages.picsum(`creator-banner-${index + 1}`, 1200, 400),
+    avatarUrl: themedArt.avatar(name),
+    bannerUrl: themedArt.banner('creator', name),
     category: CATEGORIES[index % CATEGORIES.length],
     verified: Math.random() > 0.7,
     followerCount: Math.floor(1000 + Math.random() * 500000),
@@ -115,7 +115,7 @@ function generatePost(index: number, creatorId: string): CreatorPost {
     title: `${type.charAt(0).toUpperCase() + type.slice(1)} post #${index + 1}`,
     description: `Amazing ${type} content from our creators. Check it out!`,
     mediaUrl: seedImages.storageMedia('media', `${type}/${index + 1}`),
-    thumbnailUrl: seedImages.storageThumbnail(index + 1),
+    thumbnailUrl: themedArt.poster('creator', `Post ${index + 1}`),
     duration:
       type === 'video' || type === 'audio' ? Math.floor(60 + Math.random() * 3600) : undefined,
     views: Math.floor(100 + Math.random() * 50000),

@@ -61,8 +61,8 @@ export function seedImageUrl(host: SeedImageHost, path: string): string {
 
 /** Ready-made builders for the URL shapes the seeders actually emit. */
 export const seedImages = {
-  /** Lifestyle-seeder cover art — resolvable, deterministic per slug (600x600 square). */
-  musicCover: (slug: string) => seedImageUrl('picsum.photos', `seed/music-${slug}/600/600`),
+  /** Lifestyle-seeder cover art — themed, deterministic per title (600x600 square). */
+  musicCover: (title: string) => themedArt.cover('music', title),
   /** Lifestyle-seeder audio track media. */
   musicTrack: (slug: string) => seedImageUrl('cdn.azeebo.test', `music/${slug}.mp3`),
   /** Content-service media files (grouped by content type). */
@@ -74,4 +74,86 @@ export const seedImages = {
   /** Deterministic picsum placeholder seeded by any string (title, email, ...). */
   picsum: (seed: string, width: number, height: number) =>
     seedImageUrl('picsum.photos', `seed/${encodeURIComponent(seed)}/${width}/${height}`),
+} as const;
+
+/* -------------------------------------------------------------------------
+ * Themed per-universe seed art
+ * -------------------------------------------------------------------------
+ * Random photos (picsum) make dev browse pages look like a stock-photo site.
+ * These builders render per-universe THEMED art instead: the universe's brand
+ * color (same palette as UNIVERSES in seeders/utils.ts — keep in sync) with
+ * the universe name and the content title as readable text, via the already
+ * allowlisted placehold.co / ui-avatars.com — so the host invariant stays
+ * absolute: every emitted host is renderable through next/image.
+ */
+
+export const UNIVERSE_THEMES = {
+  movie: { label: 'MOVIES & TV', bg: 'E8420A', fg: 'FFF7ED' },
+  music: { label: 'MUSIC', bg: '8B5CF6', fg: 'F5F3FF' },
+  comedy: { label: 'COMEDY', bg: 'F59E0B', fg: 'FFFBEB' },
+  reality: { label: 'REALITY', bg: 'EC4899', fg: 'FDF2F8' },
+  sports: { label: 'SPORTS', bg: '10B981', fg: 'ECFDF5' },
+  lifestyle: { label: 'LIFESTYLE', bg: 'F97316', fg: 'FFF7ED' },
+  games: { label: 'GAMES', bg: '3B82F6', fg: 'EFF6FF' },
+  creator: { label: 'CREATOR HUB', bg: '6366F1', fg: 'EEF2FF' },
+  vertical: { label: 'VERTICAL', bg: '14B8A6', fg: 'F0FDFA' },
+  /** Neutral fallback for content outside the nine branded universes. */
+  user: { label: 'AZEEBO+', bg: '18151E', fg: 'F5F3FF' },
+} as const;
+
+export type UniverseTheme = keyof typeof UNIVERSE_THEMES;
+
+function themeFor(universe: string) {
+  return UNIVERSE_THEMES[universe as UniverseTheme] ?? UNIVERSE_THEMES.user;
+}
+
+/** placehold.co card: universe label on top, title beneath, brand palette. */
+function placeholdCard(width: number, height: number, universe: string, title: string) {
+  const theme = themeFor(universe);
+  const titleLine =
+    title
+      .toUpperCase()
+      .replace(/[^A-Z0-9+ ]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 60) || 'AZEEBO+';
+  const text = encodeURIComponent([theme.label, titleLine].join('\n'));
+  return `https://placehold.co/${width}x${height}/${theme.bg}/${theme.fg}/png?text=${text}`;
+}
+
+/** ui-avatars initials chip in the neutral brand palette. */
+function initialsAvatar(name: string) {
+  const theme = UNIVERSE_THEMES.user;
+  const initials =
+    name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((w) => w[0])
+      .join('')
+      .toUpperCase()
+      .replace(/[^A-Z]/g, '') || 'AZ';
+  const params = new URLSearchParams({
+    name: initials,
+    size: '200',
+    background: theme.bg,
+    color: theme.fg,
+    bold: 'true',
+    length: '2',
+  });
+  return `https://ui-avatars.com/api/?${params.toString()}`;
+}
+
+/** Themed art builders, shaped for how seeders actually use them. */
+export const themedArt = {
+  /** Portrait card — movies, series, specials. */
+  poster: (universe: string, title: string) => placeholdCard(400, 600, universe, title),
+  /** Square card — music, games. */
+  cover: (universe: string, title: string) => placeholdCard(400, 400, universe, title),
+  /** Landscape card — lifestyle, news-style rows. */
+  wide: (universe: string, title: string) => placeholdCard(400, 300, universe, title),
+  /** Creator/profile banner strip. */
+  banner: (universe: string, title: string) => placeholdCard(1200, 400, universe, title),
+  /** Deterministic initials avatar. */
+  avatar: (name: string) => initialsAvatar(name),
 } as const;

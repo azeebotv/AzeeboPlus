@@ -332,7 +332,7 @@ export async function seedLifestyleService(dryRun = false): Promise<number> {
         title: track.title,
         type: 'track',
         description: `${track.genre} record by ${track.artist} — from the album ${track.album}.`,
-        coverImage: seedImages.musicCover(track.slug),
+        coverImage: seedImages.musicCover(track.title),
         artistName: track.artist,
         albumName: track.album,
         duration: track.duration,
