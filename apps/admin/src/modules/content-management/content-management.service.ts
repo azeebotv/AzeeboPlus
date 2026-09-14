@@ -90,7 +90,13 @@ export class ContentManagementService {
     ]);
 
     return {
-      items,
+      items: items.map((c) => ({
+        ...c,
+        views: c.viewCount,
+        creator: c.creator
+          ? { id: c.creator.id, name: c.creator.displayName, email: c.creator.email }
+          : null,
+      })),
       total,
       page,
       limit,

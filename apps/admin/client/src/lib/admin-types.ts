@@ -27,6 +27,7 @@ export interface AdminWallet {
   balance: number;
   currency: string;
   status: 'active' | 'frozen' | 'suspended';
+  user?: { id: string; email: string; displayName: string; avatar?: string };
   createdAt: string;
   updatedAt: string;
 }

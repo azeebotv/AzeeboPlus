@@ -180,6 +180,109 @@ cd apps/admin && npm run test
 cd apps/creator && npm run test
 ```
 
+### Admin Data Freshness (scheduled job)
+
+The admin panel reads the live service databases through postgres_fdw
+federation, so its data cannot go stale by design. A LaunchAgent guards the
+federation itself: it verifies a cross-DB join every hour (at :07) and at
+login, re-applies federation if a service DB was recreated, and falls back to
+a mirror seed only on fresh checkouts that are not yet federated.
+
+**Federated scope:** every shared table (users, wallets, content, …) is a
+foreign table over its home service DB. Auth-service's own audit trail
+(`azeebo_auth.audit_logs` — a different schema from admin's, holding
+login/token events) is federated read-only as `auth_audit_logs` and merged
+into the admin Audit Logs page, so auth events appear there live. Admin's own
+`audit_logs`, plus `user_suspensions` and `saved_items`, stay local:
+`user_suspensions` and `saved_items` have no home service DB, and
+`audit_logs` is written by the panel itself.
+
+```bash
+# check state + last log lines
+bash scripts/database/admin-data-freshness.sh status
+
+# force a pass now
+bash scripts/database/admin-data-freshness.sh run
+
+# reinstall (bakes the machine's psql path into the job) / remove
+bash scripts/database/admin-data-freshness.sh install
+bash scripts/database/admin-data-freshness.sh uninstall
+```
+
+Log: `/tmp/azeebo-admin-freshness.log` (one line per pass). If the panel ever
+shows empty data, run `status` first — a `WARN` line means the job healed the
+federation on its next pass.
+
+**Alerting:** failures fire a macOS notification ("Azeebo Admin Freshness")
+and, if `ALERT_WEBHOOK_URL` is set, a Slack-style `POST {"text": ...}`.
+Alerts fire on the DOWN transition only — a persistent failure re-notifies
+after 24h (`ALERT_REPEAT_HOURS`) — and recovery logs `RECOVERED` / posts a
+RECOVERED webhook. Verify delivery anytime with:
+
+```bash
+bash scripts/database/admin-data-freshness.sh test-alert
+
+# add webhook delivery (re-install bakes it into the LaunchAgent):
+ALERT_WEBHOOK_URL='https://hooks.slack.com/services/…' \
+  bash scripts/database/admin-data-freshness.sh install
+```
+
+### Federation Drill (drop + re-federate test)
+
+Automated test that proves the admin panel's federation stays intact across a
+service-DB drop and re-federate cycle — the exact failure mode the freshness
+job above is meant to heal. Run it after changing `federate-admin-db.sh`, or
+anytime you want proof the self-heal path works:
+
+```bash
+bash scripts/database/federation-drill.sh
+```
+
+Safe by construction: it snapshots `azeebo_auth`'s schema into a throwaway
+clone (`azeebo_auth__drill`), repoints the FDW server at the clone and
+verifies the panel now reads the clone, drops the clone (from postgres_fdw's
+view, identical to a real service-DB drop), re-runs `federate-admin-db.sh`,
+then asserts the full contract: all seven FDW servers point at their
+canonical DBs, foreign tables answer, the cross-DB join works,
+`auth_audit_logs` matches its source, and rows inserted into the live auth DB
+before *and* after the heal are visible through the panel (no stale
+connections). The only writes to live data are two marker users that the
+exit trap deletes; `DRILL_KEEP=1` preserves the clone for debugging a
+failure. Live data is never modified beyond those markers.
+
+The drill exposed one real convergence gap (now fixed): re-running
+federation did not restore FDW server `dbname` options, so a repointed or
+tampered server never healed — `federate-admin-db.sh` now forces each server
+back to its canonical database on every run.
+
+### Audit Trail Retention (scheduled job)
+
+Both audit tables grow without bound otherwise — auth-service writes a row
+per login — so `scripts/database/audit-retention.sh` enforces the policy
+daily at 03:47 (LaunchAgent `com.azeebo.audit-retention`):
+
+- `azeebo_admin.audit_logs` older than **365 days** (`AUDIT_RETENTION_DAYS`)
+  is deleted, **except** `feature_flag.deleted` entries, which are never
+  age-deleted: flag restore reads its archived snapshots out of audit logs.
+- `azeebo_auth.audit_logs` older than **90 days** (`AUTH_AUDIT_RETENTION_DAYS`)
+  is deleted; the federated `auth_audit_logs` view follows automatically.
+
+Deletes run in batches (`BATCH`, default 5000) on the indexed time column so
+long locks never block login writes. The federated admin audit page just
+shows fewer old rows afterward — no other behavior changes.
+
+```bash
+bash scripts/database/audit-retention.sh status     # rows + oldest entry
+bash scripts/database/audit-retention.sh dry-run    # what WOULD be deleted
+bash scripts/database/audit-retention.sh run        # apply now
+bash scripts/database/audit-retention.sh install    # (re)install schedule
+bash scripts/database/audit-retention.sh uninstall
+```
+
+Log: `/tmp/azeebo-audit-retention.log`. Deletion-in-place (not native
+partitioning) is deliberate: Prisma models expect plain tables, and the
+indexed ranged deletes are plenty at this scale.
+
 ### Database Migration
 
 ```bash

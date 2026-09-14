@@ -28,6 +28,8 @@ export class WalletManagementService {
         promoBalance: Number(w.promoBalance),
         currency: w.currency,
         user: w.user,
+        // wallet-service has no status column yet; active is the only real state.
+        status: 'active',
         createdAt: w.createdAt,
         updatedAt: w.updatedAt,
       })),

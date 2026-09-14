@@ -153,6 +153,16 @@ if ! check_secret_preflight; then
   exit 1
 fi
 
+# ── Admin DB Federation ────────────────────────────────────
+# azeebo_admin serves the panel from foreign tables over the live per-service
+# databases (reads AND writes). Re-run (idempotent) so a fresh checkout or a
+# dropped/created admin DB picks up federation before the backend boots. A
+# failed run is not fatal: the mirror seed remains as a fallback path.
+if [ -f scripts/database/federate-admin-db.sh ]; then
+  echo -e "\n${BOLD}=== Federating Admin DB (live service data) ===${RESET}"
+  bash scripts/database/federate-admin-db.sh || echo "[WARN] admin DB federation failed — falling back to mirrored azeebo_admin data (see scripts/database/federate-admin-db.sh)"
+fi
+
 # ── Clean Up ────────────────────────────────────────────────
 echo -e "\n${BOLD}=== Cleaning Up ===${RESET}"
 for port in $(seq 3000 3028) 4000 4014 4016 4100 4104; do

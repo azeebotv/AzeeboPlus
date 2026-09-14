@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { archivedFromDetails } from './audit-logs';
+import { archivedFromDetails, sourceBadgeFor } from './audit-logs';
 import type { AuditLogEntry } from '@/lib/api/admin';
 
 const entry = (over: Partial<AuditLogEntry>): AuditLogEntry => ({
@@ -10,6 +10,18 @@ const entry = (over: Partial<AuditLogEntry>): AuditLogEntry => ({
   targetId: 'wallet_withdrawals_enabled',
   createdAt: '2026-08-12T00:00:00.000Z',
   ...over,
+});
+
+describe('sourceBadgeFor', () => {
+  it('labels each known source distinctly', () => {
+    expect(sourceBadgeFor('auth-service')).toBe('Auth service');
+    expect(sourceBadgeFor('admin')).toBe('Admin panel');
+  });
+
+  it('falls back to Admin panel for undefined or unknown sources', () => {
+    expect(sourceBadgeFor(undefined)).toBe('Admin panel');
+    expect(sourceBadgeFor('mystery-source')).toBe('Admin panel');
+  });
 });
 
 describe('archivedFromDetails', () => {

@@ -401,6 +401,10 @@ seed_analytics_db() {
 # content, and wallets exist in azeebo_auth / azeebo_content /
 # azeebo_wallet.
 #
+# NOTE: when azeebo_admin is FEDERATED (scripts/database/federate-admin-db.sh),
+# the panel already reads/writes the live service databases through foreign
+# tables and this mirror seed skips itself automatically.
+#
 # Strategy: mirror the rows the admin panel displays from the service
 # databases via psql \copy (client-side, no superuser/extensions needed):
 #   users            ← azeebo_auth.users
@@ -412,6 +416,15 @@ seed_analytics_db() {
 # Rows are keyed by the same IDs as the source services, so the mirror
 # is idempotent (ON CONFLICT DO UPDATE) and re-runs refresh counts.
 seed_admin_db() {
+  # With database federation (scripts/database/federate-admin-db.sh), azeebo_admin's
+  # shared tables are postgres_fdw foreign tables over the LIVE service databases —
+  # seeding them here would duplicate data in the wrong place. The mirror seed is
+  # only needed on a non-federated admin DB.
+  if psql "${DB_URL}/azeebo_admin" -X -q -tAc \
+      "SELECT 1 FROM pg_foreign_table ft JOIN pg_class c ON c.oid=ft.ftrelid WHERE c.relnamespace='public'::regnamespace AND c.relname='users'" 2>/dev/null | grep -q 1; then
+    info "azeebo_admin is federated to the live service DBs — skipping mirror seed"
+    return 0
+  fi
   info "Seeding azeebo_admin (mirror of auth/content/wallet data the panel reads)..."
 
   # Staging CSV tables for the \copy pipe. Recreated each run so schema

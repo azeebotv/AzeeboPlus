@@ -81,6 +81,7 @@ export const ADMIN_NAV = [
   { href: '/rate-limits', label: 'Rate Limits', icon: 'shield' },
   { href: '/automations', label: 'Automations', icon: 'clock' },
   { href: '/audit-logs', label: 'Audit Logs', icon: 'clipboardList' },
+  { href: '/ops', label: 'Ops Health', icon: 'activity' },
   { href: '/reports', label: 'Reports', icon: 'barChart' },
   { href: '/feature-flags', label: 'Feature Flags', icon: 'flag' },
   { href: '/feature-flags/global', label: 'Global Flags', icon: 'sliders' },

@@ -66,6 +66,33 @@ const actionStyle = (action: string) =>
   };
 
 /**
+ * Source badge: which trail a row came from. 'auth-service' rows are the
+ * federated login/token events from azeebo_auth (read-only view, see
+ * audit.service.ts fetchAuthTrail); everything else is written by the admin
+ * panel itself. Undefined source (older payloads) renders as admin.
+ */
+type SourceStyle = { label: string; bg: string; color: string; title: string };
+const ADMIN_SOURCE: SourceStyle = {
+  label: 'Admin panel',
+  bg: 'rgba(154,138,122,0.18)',
+  color: 'var(--admin-text-muted)',
+  title: 'Written by the admin panel itself',
+};
+const SOURCE_STYLES: Record<string, SourceStyle> = {
+  'auth-service': {
+    label: 'Auth service',
+    bg: 'rgba(59,130,246,0.18)',
+    color: 'var(--admin-blue)',
+    title: 'Federated read-only from auth-service (login/token events)',
+  },
+  admin: ADMIN_SOURCE,
+};
+const sourceStyle = (source?: string): SourceStyle =>
+  SOURCE_STYLES[source ?? 'admin'] ?? ADMIN_SOURCE;
+
+export const sourceBadgeFor = (source?: string) => sourceStyle(source).label;
+
+/**
  * Archived flag key(s) + count from a `feature_flag.deleted` entry's details.
  * Each removal archives one snapshot (`archivedSnapshot`); the plural
  * `archivedSnapshots` array is handled defensively in case a batch path ever
@@ -195,7 +222,9 @@ export default function AuditLogsPage() {
   return (
     <div>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Audit Logs</h1>
-      <p style={{ color: 'var(--admin-text-muted)', marginBottom: 24 }}>{data?.total || 0} total entries</p>
+      <p style={{ color: 'var(--admin-text-muted)', marginBottom: 24 }}>
+        {data?.total || 0} total entries
+      </p>
 
       <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
         {Object.entries(FILTERS).map(([id, f]) => (
@@ -231,7 +260,9 @@ export default function AuditLogsPage() {
           flexWrap: 'wrap',
         }}
       >
-        <span style={{ color: 'var(--admin-text-muted)', fontSize: 12, fontWeight: 600 }}>Time range</span>
+        <span style={{ color: 'var(--admin-text-muted)', fontSize: 12, fontWeight: 600 }}>
+          Time range
+        </span>
         {Object.entries(RANGES).map(([id, r]) => (
           <button
             key={id}
@@ -258,7 +289,9 @@ export default function AuditLogsPage() {
       </div>
 
       {isLoading ? (
-        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+          Loading...
+        </p>
       ) : (
         <div
           style={{
@@ -272,7 +305,7 @@ export default function AuditLogsPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--admin-surface)' }}>
-                  {['Timestamp', 'User', 'Action', 'Details', 'IP'].map((h) => (
+                  {['Timestamp', 'User', 'Action', 'Source', 'Details', 'IP'].map((h) => (
                     <th
                       key={h}
                       style={{
@@ -318,6 +351,22 @@ export default function AuditLogsPage() {
                         {actionStyle(log.action).label}
                       </span>
                     </td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span
+                        title={sourceStyle(log.source).title}
+                        style={{
+                          display: 'inline-block',
+                          padding: '3px 10px',
+                          borderRadius: 999,
+                          fontSize: 11,
+                          fontWeight: 600,
+                          backgroundColor: sourceStyle(log.source).bg,
+                          color: sourceStyle(log.source).color,
+                        }}
+                      >
+                        {sourceStyle(log.source).label}
+                      </span>
+                    </td>
                     <td
                       style={{
                         padding: '12px 16px',
@@ -342,7 +391,13 @@ export default function AuditLogsPage() {
                         </>
                       )}
                     </td>
-                    <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)', fontSize: 13 }}>
+                    <td
+                      style={{
+                        padding: '12px 16px',
+                        color: 'var(--admin-text-muted)',
+                        fontSize: 13,
+                      }}
+                    >
                       {log.ipAddress || '-'}
                     </td>
                   </tr>
