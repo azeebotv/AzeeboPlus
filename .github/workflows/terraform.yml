@@ -63,6 +63,9 @@ jobs:
     needs: [validate]
     if: github.event_name == 'pull_request'
     permissions:
+      contents: read # checkout of a private repo; a permissions block with
+                     # only pull-requests: write strips the default contents
+                     # grant and checkout fails with "repository not found"
       pull-requests: write
     steps:
       - uses: actions/checkout@v4

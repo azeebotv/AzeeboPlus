@@ -29,6 +29,8 @@ jobs:
     name: CodeQL Analysis
     runs-on: ubuntu-latest
     permissions:
+      contents: read # checkout of a private repo; a permissions block with
+                     # only security-events: write strips the default contents grant
       security-events: write
     steps:
       - uses: actions/checkout@v4
