@@ -143,6 +143,16 @@ export function renderPrComment(dark, { now, headSha }) {
 }
 
 /**
+ * Comparable view of a PR comment: strips the volatile detection-timestamp
+ * footer so an unchanged outage never churns the comment across sweeps (the
+ * schedule runs every 30 min — without this, every sweep PATCHes every
+ * stranded PR for the timestamp alone).
+ */
+export function prCommentComparable(body) {
+  return (body ?? '').replace(/^_Detected .*$/m, '').trim();
+}
+
+/**
  * Decide the comment upsert for one PR: create on first dark post, update in
  * place when the rendered body changes, and nothing when it is identical.
  *
@@ -153,7 +163,7 @@ export function decidePrComment(body, existing) {
   const ours = (existing ?? []).filter((c) => c.body?.includes(PR_COMMENT_MARKER));
   const own = ours[ours.length - 1] ?? null;
   if (!own) return { action: 'create' };
-  if (own.body === body) return { action: 'none' };
+  if (prCommentComparable(own.body) === prCommentComparable(body)) return { action: 'none' };
   return { action: 'update', comment: own };
 }
 
