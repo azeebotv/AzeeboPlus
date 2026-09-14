@@ -177,7 +177,11 @@ export default function GuestHomepage() {
               >
                 <GlassCard style={styles.categoryCard}>
                   <View style={[styles.categoryIcon, { backgroundColor: `${card.color}22` }]}>
-                    <Ionicons name={card.iconName} size={22} color={card.color || colors.primary[500]} />
+                    <Ionicons
+                      name={card.iconName}
+                      size={22}
+                      color={card.color || colors.primary[500]}
+                    />
                   </View>
                   <Text style={styles.categoryTitle}>{card.category}</Text>
                   <Text style={styles.categorySub}>{card.sub}</Text>
@@ -312,7 +316,11 @@ export default function GuestHomepage() {
                     accessibilityRole="button"
                   >
                     <View style={[styles.universeIcon, { backgroundColor: `${u.color}22` }]}>
-                      <Ionicons name={u.iconName} size={20} color={u.color || colors.primary[500]} />
+                      <Ionicons
+                        name={u.iconName}
+                        size={20}
+                        color={u.color || colors.primary[500]}
+                      />
                     </View>
                     <Text style={styles.universeName}>{u.name}</Text>
                   </Pressable>
