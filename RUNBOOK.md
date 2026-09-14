@@ -383,7 +383,16 @@ never get the comment.
    batteries remain.
 
 **If the outage also kills the watchdog schedule (full account block):**
-run the sweep from any machine with repo access as a backstop:
+install the dev-machine heartbeat (preferred — no cron editing, runs every
+30 min and at login, tokenless runs are a recorded skip):
+
+```bash
+scripts/ci-dark-launcher.sh install      # LaunchAgent com.azeebo.ci-dark-watchdog
+scripts/ci-dark-launcher.sh status       # loaded? token? last sweeps
+scripts/ci-dark-launcher.sh uninstall    # remove it
+```
+
+Or run the sweep from any machine with repo access as a one-off backstop:
 
 ```bash
 GITHUB_TOKEN=<token-with-repo-scope> GITHUB_REPOSITORY=azeebotv/AzeeboPlus \
