@@ -8,7 +8,7 @@
     "prisma:generate": "prisma generate",
     "prebuild": "prisma generate",
     "build:client": "vite build --config client/vite.config.ts",
-    "build": "pnpm build:client && prisma generate && tsc -p tsconfig.build.json",
+    "build": "pnpm build:client && prisma generate && tsc -p tsconfig.build.json && rm -rf dist/generated && mkdir -p dist/generated && cp -R src/generated/ dist/generated/",
     "dev": "pnpm run dev:client",
     "dev:client": "vite --config client/vite.config.ts",
     "start": "node dist/main.js",

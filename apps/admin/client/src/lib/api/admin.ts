@@ -46,6 +46,8 @@ export interface UserListResponse {
     role: string;
     avatar?: string;
     createdAt: string;
+    isActive?: boolean;
+    suspensionStatus?: string;
   }>;
   total: number;
   page: number;
@@ -73,6 +75,8 @@ export interface ContentListResponse {
 }
 
 export interface AuditLogEntry {
+  /** Which trail the row came from: 'admin' (panel events) or 'auth-service' (federated login/token events). */
+  source?: 'admin' | 'auth-service';
   id: string;
   actorId: string;
   action: string;
@@ -618,4 +622,32 @@ export const adminApi = {
       totalPages: number;
     }>(`/api/v1/admin/audit?${q}`);
   },
+
+  getOpsStatus: () => apiFetch<OpsStatus>('/api/v1/admin/ops/status'),
 };
+
+/** One probe/card on the Ops Health page. */
+export interface OpsCheck {
+  ok: boolean;
+  label: string;
+  detail: string;
+  latencyMs?: number;
+  ageMinutes?: number;
+  lastRunAt?: string;
+}
+
+export interface OpsAlert {
+  at: string;
+  level: 'WARN' | 'ERROR';
+  source: string;
+  message: string;
+}
+
+export interface OpsStatus {
+  overall: 'healthy' | 'degraded' | 'down';
+  db: OpsCheck;
+  federation: OpsCheck;
+  jobs: OpsCheck[];
+  alerts: OpsAlert[];
+  checkedAt: string;
+}

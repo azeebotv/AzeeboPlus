@@ -19,6 +19,7 @@ import { ReportsAdminModule } from './modules/reports-admin/reports-admin.module
 import { PlatformOverviewModule } from './modules/platform-overview/platform-overview.module';
 import { AgbalaModule } from './modules/vertical/agbala/agbala.module';
 import { HealthModule } from './modules/health/health.module';
+import { OpsModule } from './modules/ops/ops.module';
 import { WebModule } from './web/web.module';
 import { FeatureFlagsModule } from './modules/feature-flags/feature-flags.module';
 import { PaymentGatewaysModule } from './modules/payment-gateways/payment-gateways.module';
@@ -58,6 +59,7 @@ import { CsrfMiddleware } from './common/csrf.middleware';
       },
     }),
     FeatureFlagsModule,
+    OpsModule,
     PaymentGatewaysModule,
     RealityShowsModule,
     SubscriptionAdminModule,

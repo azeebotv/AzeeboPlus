@@ -1,4 +1,5 @@
 import { Inject, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import type { UserRole } from '../../generated/prisma';
 import { Prisma } from '../../generated/prisma';
 import { PrismaService } from '../../database/prisma.service';
 import { AuditLogService } from '../audit/audit.service';
@@ -31,7 +32,7 @@ export class UserManagementService {
     const where: Prisma.UserWhereInput = {};
 
     if (role && role !== 'all') {
-      where.role = role;
+      where.role = role as Prisma.EnumUserRoleFilter<'User'>;
     }
 
     if (search) {
@@ -62,6 +63,8 @@ export class UserManagementService {
         displayName: u.displayName,
         role: u.role,
         createdAt: u.createdAt,
+        isActive: !u.isSuspended,
+        suspensionStatus: u.isSuspended ? 'suspended' : 'active',
         walletBalance: u.wallet?.balance || 0,
         contentCount: u._count.contentItems,
       })),
@@ -109,8 +112,8 @@ export class UserManagementService {
     ipAddress?: string,
     userAgent?: string
   ): Promise<unknown> {
-    const allowedRoles = ['user', 'creator', 'admin', 'superadmin'];
-    if (!allowedRoles.includes(newRole)) {
+    const allowedRoles: UserRole[] = ['user', 'creator', 'moderator', 'admin', 'super_admin'];
+    if (!allowedRoles.includes(newRole as UserRole)) {
       throw new BadRequestException('Invalid role');
     }
 
@@ -125,7 +128,7 @@ export class UserManagementService {
     const oldRole = user.role;
     const updated = await this.prisma.user.update({
       where: { id: userId },
-      data: { role: newRole },
+      data: { role: newRole as UserRole },
     });
 
     await this.auditService.log({

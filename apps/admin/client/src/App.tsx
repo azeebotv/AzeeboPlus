@@ -19,6 +19,7 @@ import SearchAnalyticsPage from './routes/search';
 import NotificationsPage from './routes/notifications';
 import AnnouncementsPage from './routes/announcements';
 import AuditLogsPage from './routes/audit-logs';
+import OpsPage from './routes/ops';
 import ReportsPage from './routes/reports';
 import ReportBuilderPage from './routes/report-builder';
 import SettingsPage from './routes/settings';
@@ -96,6 +97,7 @@ export default function App() {
               <Route path="notifications" element={<NotificationsPage />} />
               <Route path="announcements" element={<AnnouncementsPage />} />
               <Route path="audit-logs" element={<AuditLogsPage />} />
+              <Route path="ops" element={<OpsPage />} />
               <Route path="reports" element={<ReportsPage />} />
               <Route
                 path="reports/builder"

@@ -30,6 +30,14 @@ model User {
   mfaEnabled      Boolean  @default(false)
   mfaSecret       String?
   mfaBackupCodes  String?
+  // Admin-owned fields: written by apps/admin through the federated
+  // azeebo_admin.users foreign table; auth-service never reads them.
+  isSuspended           Boolean   @default(false)
+  suspendedAt           DateTime?
+  suspendedBy           String?
+  suspendedUntil        DateTime?
+  suspensionReason      String?
+  notificationPreferences Json?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

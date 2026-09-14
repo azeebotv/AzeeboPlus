@@ -90,8 +90,10 @@ export default function WalletsPage() {
   }
 
   function nextStatus(current: string): { next: string; label: string; color: string } {
-    if (current === 'active') return { next: 'frozen', label: 'Freeze', color: 'var(--admin-blue)' };
-    if (current === 'frozen') return { next: 'active', label: 'Activate', color: 'var(--admin-green)' };
+    if (current === 'active')
+      return { next: 'frozen', label: 'Freeze', color: 'var(--admin-blue)' };
+    if (current === 'frozen')
+      return { next: 'active', label: 'Activate', color: 'var(--admin-green)' };
     return { next: 'active', label: 'Reactivate', color: 'var(--admin-green)' };
   }
 
@@ -103,7 +105,9 @@ export default function WalletsPage() {
       </div>
 
       {isLoading ? (
-        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+          Loading...
+        </p>
       ) : (
         <div
           style={{
@@ -141,12 +145,27 @@ export default function WalletsPage() {
                   return (
                     <tr key={w.id} style={{ borderBottom: '1px solid var(--admin-bg)' }}>
                       <td style={{ padding: '12px 16px' }}>
-                        <p style={{ fontWeight: 600, fontSize: 13 }}>{w.userId}</p>
+                        <p style={{ fontWeight: 600, fontSize: 13 }}>
+                          {w.user?.displayName || w.user?.email || w.userId}
+                        </p>
+                        {w.user?.email && w.user.displayName && (
+                          <p style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>
+                            {w.user.email}
+                          </p>
+                        )}
                       </td>
-                      <td style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--admin-orange)' }}>
+                      <td
+                        style={{
+                          padding: '12px 16px',
+                          fontWeight: 700,
+                          color: 'var(--admin-orange)',
+                        }}
+                      >
                         ₦{w.balance.toLocaleString()}
                       </td>
-                      <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>{w.currency}</td>
+                      <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>
+                        {w.currency}
+                      </td>
                       <td style={{ padding: '12px 16px' }}>
                         <span
                           style={{
@@ -162,7 +181,13 @@ export default function WalletsPage() {
                           {w.status}
                         </span>
                       </td>
-                      <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)', fontSize: 13 }}>
+                      <td
+                        style={{
+                          padding: '12px 16px',
+                          color: 'var(--admin-text-muted)',
+                          fontSize: 13,
+                        }}
+                      >
                         {new Date(w.createdAt).toLocaleDateString()}
                       </td>
                       <td style={{ padding: '12px 16px' }}>
@@ -218,7 +243,9 @@ export default function WalletsPage() {
             </table>
           </div>
           {wallets.length === 0 && (
-            <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>No wallets found</p>
+            <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>
+              No wallets found
+            </p>
           )}
           {totalPages > 1 && (
             <div
@@ -302,7 +329,14 @@ export default function WalletsPage() {
             </p>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  color: 'var(--admin-text-muted)',
+                  marginBottom: 6,
+                }}
+              >
                 Amount (NGN)
               </label>
               <input
@@ -325,7 +359,14 @@ export default function WalletsPage() {
             </div>
 
             <div style={{ marginBottom: 24 }}>
-              <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  color: 'var(--admin-text-muted)',
+                  marginBottom: 6,
+                }}
+              >
                 Reason
               </label>
               <input
@@ -360,7 +401,8 @@ export default function WalletsPage() {
                       : actionType === 'credit'
                         ? 'linear-gradient(135deg, #0D3B2E 0%, #1A5E45 100%)'
                         : 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                  color: !actionAmount || parseFloat(actionAmount) <= 0 ? 'var(--admin-grey)' : 'white',
+                  color:
+                    !actionAmount || parseFloat(actionAmount) <= 0 ? 'var(--admin-grey)' : 'white',
                   fontWeight: 600,
                   fontSize: 14,
                   cursor:

@@ -18,13 +18,24 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Mirrors the UserRole enum owned by auth-service (azeebo_auth.users.role).
+// azeebo_admin federates that table via postgres_fdw, so the type must exist
+// locally with identical labels for Prisma result mapping.
+enum UserRole {
+  user
+  creator
+  moderator
+  admin
+  super_admin
+}
+
 model User {
   id                    String   @id @default(uuid())
   email                 String   @unique
   password              String
   displayName           String
   avatar                String?
-  role                  String   @default("user")
+  role                  UserRole @default(user)
   preferences           Json?
   notificationPreferences Json?
   isSuspended           Boolean  @default(false)
