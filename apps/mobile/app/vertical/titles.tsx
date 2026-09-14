@@ -28,9 +28,8 @@ export default function TitlesListScreen() {
   const titlesQuery = useQuery({
     queryKey: ['vertical', 'titles', filter],
     queryFn: async () => {
-      const endpoint = filter === 'all'
-        ? '/v1/vertical/titles'
-        : `/v1/vertical/titles?status=${filter}`;
+      const endpoint =
+        filter === 'all' ? '/v1/vertical/titles' : `/v1/vertical/titles?status=${filter}`;
       const res = await apiClient.get<Title[]>(endpoint);
       return Array.isArray(res) ? res : [];
     },
@@ -70,7 +69,9 @@ export default function TitlesListScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+    >
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
@@ -115,40 +116,64 @@ export default function TitlesListScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    padding: 16, paddingTop: 40,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    paddingTop: 40,
   },
   backButton: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: colors.bg.tertiary, alignItems: 'center', justifyContent: 'center',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.bg.tertiary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   backIcon: { color: colors.text.primary, fontSize: 20 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
   filterBar: {
-    flexDirection: 'row', paddingHorizontal: 16, paddingBottom: 12, gap: 8,
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    gap: 8,
   },
   filterChip: {
-    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
     backgroundColor: colors.bg.tertiary,
   },
   filterChipActive: { backgroundColor: colors.primary[500] },
   filterText: { color: colors.text.secondary, fontSize: 13, fontWeight: '500' },
   filterTextActive: { color: '#fff' },
   list: { padding: 16, gap: 12 },
-  card: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: radius.lg, gap: 12 },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: radius.lg,
+    gap: 12,
+  },
   cardIcon: {
-    width: 48, height: 48, borderRadius: 14,
-    backgroundColor: colors.primary[500] + '20', alignItems: 'center', justifyContent: 'center',
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: colors.primary[500] + '20',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cardIconText: { fontSize: 22 },
   cardInfo: { flex: 1 },
   cardTitle: { fontSize: 16, fontWeight: '700', marginBottom: 2 },
   cardMeta: { fontSize: 12, color: colors.text.tertiary },
   statusBadge: {
-    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
     backgroundColor: colors.bg.tertiary,
   },
-  statusActive: { backgroundColor: '#22C55E25' },
+  statusActive: { backgroundColor: colors.alphaColors.successA25 },
   statusText: { fontSize: 11, fontWeight: '600', color: colors.text.tertiary },
   statusTextActive: { color: '#22C55E' },
 });

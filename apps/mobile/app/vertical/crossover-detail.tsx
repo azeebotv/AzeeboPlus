@@ -39,7 +39,7 @@ export default function CrossoverDetailScreen() {
     try {
       const res = await apiClient.get<CrossoverDetail>(`/v1/vertical/crossovers/${id}`);
       setData(res);
-              analytics.verticalTitleViewed(res.id);
+      analytics.verticalTitleViewed(res.id);
     } catch {
       setError('Failed to load crossover');
     } finally {

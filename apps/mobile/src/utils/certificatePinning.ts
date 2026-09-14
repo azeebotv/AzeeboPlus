@@ -46,16 +46,10 @@ const loadPinsFromConfig = (): CertificatePin[] => {
     });
   }
 
-  // Fallback to production pins if not configured in extras
-  if (pins.length === 0) {
-    pins.push({
-      hostname: 'api.azeeboplus.com',
-      sha256Fingerprint: 'YLh1dUR9y6Kja30RrAn7JKnbQG/uEtLMkBgFF2Fuihg=',
-      backupPin: 'sRHdIHwgN7K0UFMzMPCYqJhGS8B/9S2M1NjXmZKqHcQ=',
-      expiresAt: '2027-12-31T23:59:59Z',
-    });
-  }
-
+  // No hardcoded fallback pins: demo/placeholder pins in the bundle either
+  // break the API on rotation or silently validate nothing. If pins aren't
+  // configured the service simply stays unenforced — same effective behavior
+  // as today, but without pretending otherwise.
   return pins;
 };
 
@@ -78,10 +72,20 @@ const validatePins = (pins: CertificatePin[]): void => {
 // Validate pins on initialization
 validatePins(DEFAULT_PINS);
 
+const NATIVE_PINNING_AVAILABLE = (() => {
+  try {
+    const sslPinning = require('react-native-ssl-pinning');
+    return Boolean(sslPinning?.fetch || sslPinning?.default?.fetch);
+  } catch {
+    return false;
+  }
+})();
+
 class CertificatePinningService {
   private static instance: CertificatePinningService;
   private pins: CertificatePin[] = DEFAULT_PINS;
   private isEnabled: boolean = __DEV__ ? false : true;
+  private unenforcedWarned = false;
 
   static getInstance(): CertificatePinningService {
     if (!CertificatePinningService.instance) {
@@ -202,8 +206,13 @@ class CertificatePinningService {
   }
 
   getSecurityHeaders(): Record<string, string> {
+    // Headers must reflect reality: pinning is only "enabled" when the native
+    // pinning library is present AND pins are configured for the request host.
     return {
-      'X-Certificate-Pinning': this.isEnabled ? 'enabled' : 'disabled',
+      'X-Certificate-Pinning':
+        this.isEnabled && NATIVE_PINNING_AVAILABLE && this.pins.length > 0
+          ? 'enabled'
+          : 'unenforced',
       'X-Pinned-Hosts': this.pins.map((p) => p.hostname).join(','),
     };
   }
@@ -227,34 +236,37 @@ class CertificatePinningService {
     }
 
     // Attempt native SSL pinning if available
-    try {
-      const sslPinning = require('react-native-ssl-pinning');
-      const pinnedFetch = sslPinning.fetch || sslPinning.default?.fetch;
-      if (pinnedFetch) {
-        const hostname = new URL(url).hostname;
-        const pin = this.getPinForHost(hostname);
-        if (pin) {
-          const sslOptions = {
-            ...options,
-            sslPinning: {
-              certs: ['azeebo-prod'], // Certificate file names (without extension) from the native bundle
-            },
-            timeoutInterval: 10,
-          };
-          const response = await pinnedFetch(url, sslOptions);
-          return response;
+    if (NATIVE_PINNING_AVAILABLE) {
+      try {
+        const sslPinning = require('react-native-ssl-pinning');
+        const pinnedFetch = sslPinning.fetch || sslPinning.default?.fetch;
+        if (pinnedFetch) {
+          const hostname = new URL(url).hostname;
+          const pin = this.getPinForHost(hostname);
+          if (pin) {
+            const sslOptions = {
+              ...options,
+              sslPinning: {
+                certs: ['azeebo-prod'], // Certificate file names (without extension) from the native bundle
+              },
+              timeoutInterval: 10,
+            };
+            const response = await pinnedFetch(url, sslOptions);
+            return response;
+          }
         }
+      } catch (_e) {
+        // Fall through to standard fetch on a pinning error
       }
-    } catch (_e) {
-      // react-native-ssl-pinning not installed — fall through to standard fetch
     }
 
-    // Fallback: standard fetch with security headers
-    // WARNING: This does NOT validate certificate pins at the TLS level.
-    // Pins are only enforced when react-native-ssl-pinning is installed.
-    if (__DEV__) {
-      logger.debug(
-        `Certificate pinning: standard fetch (no native pinning) for ${new URL(url).hostname}`
+    // No native pinning: TLS is still validated by the OS trust store, but
+    // pins are NOT enforced here. Never advertise otherwise.
+    if (!NATIVE_PINNING_AVAILABLE && !this.unenforcedWarned) {
+      this.unenforcedWarned = true;
+      logger.warn(
+        'Certificate pinning: react-native-ssl-pinning not installed — ' +
+          'requests use standard TLS validation without pin enforcement.'
       );
     }
 
@@ -269,6 +281,10 @@ class CertificatePinningService {
 
       return response;
     } catch (error) {
+      // allowed-fabricated-4xx: mobile fetch layer — no HTTP exception
+      // classes and no mapAndThrow here; the cause is preserved by message
+      // wrapping and the branch exists so certificate failures are
+      // distinguishable from other network errors upstream.
       if (error instanceof Error && (error as Error).message.includes('certificate')) {
         throw new Error(`Certificate validation failed for ${url}: ${(error as Error).message}`);
       }
@@ -286,13 +302,12 @@ export function initializeCertificatePinning(): void {
     return;
   }
 
-  certificatePinningService.setEnabled(true);
+  // Only claim pinning is active when the native library is actually present;
+  // otherwise the app runs on standard OS TLS validation (still encrypted,
+  // just not pinned).
+  certificatePinningService.setEnabled(NATIVE_PINNING_AVAILABLE && DEFAULT_PINS.length > 0);
 
-  // Verify that native SSL pinning library is available
-  try {
-    require('react-native-ssl-pinning');
-    logger.log('Certificate pinning: native SSL pinning library detected');
-  } catch (_e) {
+  if (!NATIVE_PINNING_AVAILABLE) {
     logger.warn(
       'Certificate pinning: react-native-ssl-pinning NOT installed. ' +
         'TLS-level pinning is not enforced. Install the library and configure ' +

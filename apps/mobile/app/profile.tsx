@@ -14,7 +14,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../src/api';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import { useAuth } from '../src/contexts/AuthContext';
-import { radius } from '../src/theme';
+import { radius, colors } from '../src/theme';
 
 interface ProfileData {
   avatar?: string;
@@ -29,7 +29,11 @@ export default function ProfilePage() {
   const insets = useSafeAreaInsets();
   const [saved, setSaved] = useState(false);
 
-  const { data: profile, isLoading, error } = useQuery({
+  const {
+    data: profile,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['profile'],
     queryFn: async () => {
       if (!isAuthenticated) return null;
@@ -60,7 +64,10 @@ export default function ProfilePage() {
   if (error) {
     return (
       <SafeAreaView style={styles.container}>
-        <ErrorState title="Error Loading Profile" description="Failed to load profile. Please try again." />
+        <ErrorState
+          title="Error Loading Profile"
+          description="Failed to load profile. Please try again."
+        />
       </SafeAreaView>
     );
   }
@@ -91,7 +98,10 @@ export default function ProfilePage() {
                 </Text>
               </View>
             )}
-            <TouchableOpacity style={styles.editAvatarButton} accessibilityLabel="Edit profile photo">
+            <TouchableOpacity
+              style={styles.editAvatarButton}
+              accessibilityLabel="Edit profile photo"
+            >
               <Text style={styles.editAvatarText}>Edit</Text>
             </TouchableOpacity>
           </View>
@@ -182,10 +192,10 @@ const styles = StyleSheet.create({
   savedBanner: {
     backgroundColor: 'rgba(10,165,232,0.2)',
     borderLeftWidth: 4,
-    borderLeftColor: '#0EA5F9',
+    borderLeftColor: colors.palette.azure,
     padding: 12,
     borderRadius: radius.sm,
     marginTop: 16,
   },
-  savedText: { color: '#0EA5F9', fontSize: 14 },
+  savedText: { color: colors.palette.azure, fontSize: 14 },
 });

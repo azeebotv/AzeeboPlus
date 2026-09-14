@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { colors } from '../../src/theme';
 
 export default function ForbiddenScreen() {
   const colorScheme = useColorScheme();
@@ -60,7 +61,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 16,
-    color: '#888',
+    color: colors.palette.grey500,
     textAlign: 'center',
     lineHeight: 22,
   },

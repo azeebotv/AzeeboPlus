@@ -6,6 +6,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { apiClient } from '../../src/api';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { analytics } from '../../src/utils/analytics';
+import { colors } from '../../src/theme';
 
 interface SpecialDetail {
   id: string;
@@ -38,7 +39,7 @@ export default function SpecialDetailScreen() {
       try {
         const res = await apiClient.get<SpecialDetail>(`/comedy/specials/${id}`);
         setSpecial(res);
-                  analytics.comedyClipViewed(String(id));
+        analytics.comedyClipViewed(String(id));
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load special');
       } finally {
@@ -208,13 +209,13 @@ const styles = StyleSheet.create({
   content: { padding: 16 },
   title: { fontSize: 22, fontWeight: '700', marginBottom: 8 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-  metaText: { color: '#888', fontSize: 14 },
+  metaText: { color: colors.palette.grey500, fontSize: 14 },
   comedianRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 10 },
   comedianAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -227,7 +228,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: colors.palette.charcoal,
     marginBottom: 24,
   },
   actionButton: { alignItems: 'center', gap: 4 },
@@ -238,7 +239,7 @@ const styles = StyleSheet.create({
   relatedCard: { width: 140, borderRadius: 10, overflow: 'hidden' },
   relatedThumb: {
     height: 100,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
   },

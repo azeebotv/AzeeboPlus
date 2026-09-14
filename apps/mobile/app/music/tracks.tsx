@@ -43,7 +43,9 @@ export default function MusicTracksScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+    >
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
@@ -54,7 +56,13 @@ export default function MusicTracksScreen() {
 
       <View style={styles.searchContainer}>
         <TextInput
-          style={[styles.searchInput, { backgroundColor: isDark ? colors.bg.tertiary : '#f0f0f0', color: colors.text.primary }]}
+          style={[
+            styles.searchInput,
+            {
+              backgroundColor: isDark ? colors.bg.tertiary : '#f0f0f0',
+              color: colors.text.primary,
+            },
+          ]}
           placeholder="Search tracks..."
           placeholderTextColor={colors.text.tertiary}
           value={search}
@@ -67,7 +75,11 @@ export default function MusicTracksScreen() {
       ) : tracksQuery.error ? (
         <ErrorState description={tracksQuery.error.message} onRetry={() => tracksQuery.refetch()} />
       ) : tracks.length === 0 ? (
-        <EmptyState icon="🎵" title="No tracks" description={search ? 'No tracks match your search' : 'Tracks coming soon'} />
+        <EmptyState
+          icon="🎵"
+          title="No tracks"
+          description={search ? 'No tracks match your search' : 'Tracks coming soon'}
+        />
       ) : (
         <FlatList
           data={tracks}
@@ -83,7 +95,9 @@ export default function MusicTracksScreen() {
                 <Text style={[styles.title, { color: colors.text.primary }]} numberOfLines={1}>
                   {item.title} {item.isExplicit && <Text style={styles.explicit}>E</Text>}
                 </Text>
-                <Text style={styles.artist} numberOfLines={1}>{item.artist}</Text>
+                <Text style={styles.artist} numberOfLines={1}>
+                  {item.artist}
+                </Text>
               </View>
               <Text style={styles.duration}>{formatDuration(item.duration)}</Text>
               <Text style={styles.plays}>{(item.playCount / 1000).toFixed(0)}K</Text>
@@ -97,18 +111,51 @@ export default function MusicTracksScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingTop: 40 },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.bg.tertiary, alignItems: 'center', justifyContent: 'center' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    paddingTop: 40,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.bg.tertiary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backIcon: { color: colors.text.primary, fontSize: 20 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
   searchContainer: { paddingHorizontal: 16, marginBottom: 12 },
   searchInput: { padding: 12, borderRadius: radius.md, fontSize: 14 },
   list: { padding: 16, gap: 2 },
-  card: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: radius.md, gap: 12 },
-  index: { width: 24, textAlign: 'center', fontSize: 14, color: colors.text.tertiary, fontWeight: '600' },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: radius.md,
+    gap: 12,
+  },
+  index: {
+    width: 24,
+    textAlign: 'center',
+    fontSize: 14,
+    color: colors.text.tertiary,
+    fontWeight: '600',
+  },
   info: { flex: 1 },
   title: { fontSize: 14, fontWeight: '600', marginBottom: 2 },
-  explicit: { fontSize: 10, fontWeight: '700', color: colors.text.tertiary, backgroundColor: colors.bg.tertiary, paddingHorizontal: 4, borderRadius: 3, overflow: 'hidden' },
+  explicit: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.text.tertiary,
+    backgroundColor: colors.bg.tertiary,
+    paddingHorizontal: 4,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
   artist: { fontSize: 12, color: colors.text.tertiary },
   duration: { fontSize: 12, color: colors.text.tertiary, width: 40, textAlign: 'right' },
   plays: { fontSize: 12, color: colors.text.tertiary, width: 40, textAlign: 'right' },

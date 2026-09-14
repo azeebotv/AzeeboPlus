@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { colors } from '../../src/theme';
 
 interface Draft {
   id: string;
@@ -192,7 +193,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
   },
   header: {
@@ -208,13 +209,13 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 24,
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   title: {
     flex: 1,
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   addButton: {
     width: 40,
@@ -242,12 +243,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 8,
   },
   emptyDescription: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
     textAlign: 'center',
     marginBottom: 24,
   },
@@ -267,7 +268,7 @@ const styles = StyleSheet.create({
   },
   draftCard: {
     flexDirection: 'row',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',
@@ -290,7 +291,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: '600',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginRight: 8,
   },
   draftType: {
@@ -298,7 +299,7 @@ const styles = StyleSheet.create({
   },
   draftDescription: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
     marginBottom: 12,
   },
   draftFooter: {
@@ -321,7 +322,7 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: 10,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   draftActions: {
     flexDirection: 'row',

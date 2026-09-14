@@ -8,6 +8,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Linking,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
@@ -141,9 +142,7 @@ export default function RegisterScreen() {
       } catch (error: unknown) {
         logger.error(`${provider} OAuth error`, error);
         const message =
-          error instanceof Error
-            ? error.message
-            : `${provider} sign-up failed. Please try again.`;
+          error instanceof Error ? error.message : `${provider} sign-up failed. Please try again.`;
         setError(message);
       } finally {
         setIsSubmitting(false);
@@ -167,9 +166,12 @@ export default function RegisterScreen() {
         <PageTransition>
           <ScrollReveal direction="up" delay={0}>
             <View style={styles.header}>
-              <Text style={styles.logo}>
-                AZEEBO<Text style={styles.logoPlus}>+</Text>
-              </Text>
+              <Image
+                source={require('../../assets/logo-white.png')}
+                style={{ width: 140, height: 34, marginBottom: 8 }}
+                resizeMode="contain"
+                accessibilityLabel="Azeebo+ Logo"
+              />
               <Text style={styles.tagline}>Empowering Nigeria{'\u2019'}s Creative Renaissance</Text>
               <Text style={styles.stepIndicator}>Step 1: Your Details</Text>
               <Text style={styles.subtitle}>Create Your Azeebo+ Account</Text>

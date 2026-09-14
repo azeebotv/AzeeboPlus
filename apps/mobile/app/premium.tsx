@@ -197,7 +197,11 @@ export default function PremiumAccessScreen() {
                   selectedPlan === 'yearly' && styles.planOptionPriceActive,
                 ]}
               >
-                {plansQuery.isLoading ? '...' : (selectedPlan === 'yearly' ? priceDisplay : altPriceDisplay)}
+                {plansQuery.isLoading
+                  ? '...'
+                  : selectedPlan === 'yearly'
+                    ? priceDisplay
+                    : altPriceDisplay}
               </Text>
             </TouchableOpacity>
           </View>

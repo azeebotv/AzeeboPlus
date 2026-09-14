@@ -16,6 +16,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { userApi } from '../../../src/api';
+import { colors } from '../../../src/theme';
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -196,7 +197,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   form: {
     flex: 1,
@@ -245,7 +246,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 8,
     fontWeight: '500',
   },
@@ -253,7 +254,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: colors.palette.grey800,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
@@ -263,20 +264,20 @@ const styles = StyleSheet.create({
     borderColor: '#EF4444',
   },
   readOnlyInput: {
-    backgroundColor: '#111',
+    backgroundColor: colors.palette.grey950,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#222',
+    borderColor: colors.palette.grey900,
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
   readOnlyText: {
     fontSize: 16,
-    color: '#666',
+    color: colors.palette.grey600,
   },
   hintText: {
     fontSize: 12,
-    color: '#666',
+    color: colors.palette.grey600,
     marginTop: 4,
   },
   textArea: {
@@ -285,7 +286,7 @@ const styles = StyleSheet.create({
   },
   charCount: {
     fontSize: 12,
-    color: '#666',
+    color: colors.palette.grey600,
     textAlign: 'right',
     marginTop: 4,
   },
@@ -315,7 +316,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButtonText: {
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 16,
   },
 });

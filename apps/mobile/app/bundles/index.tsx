@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { bundleApi } from '../../src/api/bundle';
 import type { BundlePass } from '../../src/api/bundle';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
+import { colors } from '../../src/theme';
 
 const TIER_COLORS: Record<string, string> = {
   standard: '#3B82F6',
@@ -217,7 +218,7 @@ function createStyles(isDark: boolean) {
     title: { fontSize: 28, fontWeight: '700', color: text },
     subtitle: { fontSize: 14, color: subtext, marginTop: 4 },
     savingsBanner: {
-      backgroundColor: '#065F46',
+      backgroundColor: colors.success[800],
       marginHorizontal: 16,
       borderRadius: 8,
       padding: 10,

@@ -8,7 +8,7 @@ import { apiClient } from '../../src/api/client';
 import { comedySubscription } from '../../src/config/prices';
 import { ApiResponse } from '../../src/types/api';
 import { analytics } from '../../src/utils/analytics';
-import { radius } from '../../src/theme';
+import { radius, colors } from '../../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -93,7 +93,7 @@ export default function ComedyUniverseHome() {
 
   useEffect(() => {
     if (clipsQuery.data && clipsQuery.data.length > 0) {
-              analytics.comedyClipViewed(clipsQuery.data[0].id);
+      analytics.comedyClipViewed(clipsQuery.data[0].id);
     }
   }, [clipsQuery.data]);
 
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   },
   universeLabel: {
     fontSize: 14,
-    color: '#F39C12',
+    color: colors.palette.tangerine,
     fontWeight: '600',
     marginBottom: 4,
   },
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   seeAllText: {
-    color: '#F39C12',
+    color: colors.palette.tangerine,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
   },
   clipThumbnail: {
     height: 150,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   likeCount: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 12,
   },
   creatorsList: {
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
@@ -444,12 +444,12 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   creatorFollowers: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 12,
     marginBottom: 10,
   },
   subscribeButton: {
-    backgroundColor: '#F39C12',
+    backgroundColor: colors.palette.tangerine,
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: radius.sm,
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
   },
   topRatedThumbnail: {
     height: 100,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   ratingText: {
-    color: '#FFEAA7',
+    color: colors.palette.cream,
     fontSize: 10,
     fontWeight: '600',
   },
@@ -518,16 +518,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   comedyPassTitle: {
-    color: '#F39C12',
+    color: colors.palette.tangerine,
     fontSize: 16,
     fontWeight: '700',
   },
   comedyPassSubtitle: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 12,
   },
   comedyPassButton: {
-    backgroundColor: '#F39C12',
+    backgroundColor: colors.palette.tangerine,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: radius.sm,

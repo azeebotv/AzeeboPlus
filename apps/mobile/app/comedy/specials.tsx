@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { apiClient } from '../../src/api/client';
 import { ApiResponse } from '../../src/types/api';
+import { colors } from '../../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -136,7 +137,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -150,15 +151,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     marginRight: 10,
   },
-  genreChipActive: { backgroundColor: '#F39C12' },
-  genreText: { color: '#888', fontSize: 13, fontWeight: '600' },
+  genreChipActive: { backgroundColor: colors.palette.tangerine },
+  genreText: { color: colors.palette.grey500, fontSize: 13, fontWeight: '600' },
   genreTextActive: { color: '#000' },
   gridContent: { paddingHorizontal: 16, paddingBottom: 30 },
   gridRow: { gap: 12, marginBottom: 12 },
   specialCard: { flex: 1, borderRadius: 12, overflow: 'hidden', maxWidth: '48%' },
   specialThumbnail: {
     height: 160,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -173,7 +174,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 4,
   },
-  ratingText: { color: '#F39C12', fontSize: 11, fontWeight: '600' },
+  ratingText: { color: colors.palette.tangerine, fontSize: 11, fontWeight: '600' },
   durationBadge: {
     position: 'absolute',
     bottom: 8,
@@ -185,5 +186,10 @@ const styles = StyleSheet.create({
   },
   durationText: { color: '#fff', fontSize: 11 },
   specialTitle: { fontSize: 14, fontWeight: '600', padding: 10, paddingBottom: 2 },
-  specialComedian: { color: '#888', fontSize: 12, paddingHorizontal: 10, paddingBottom: 10 },
+  specialComedian: {
+    color: colors.palette.grey500,
+    fontSize: 12,
+    paddingHorizontal: 10,
+    paddingBottom: 10,
+  },
 });

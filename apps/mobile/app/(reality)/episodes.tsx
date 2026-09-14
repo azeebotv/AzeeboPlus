@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { realityApi } from '../../src/api/engagement';
 import { logger } from '../../src/utils/logger';
 import { analytics } from '../../src/utils/analytics';
+import { colors } from '../../src/theme';
 
 interface EpisodeData {
   id: string;
@@ -63,7 +64,7 @@ export default function EpisodesScreen() {
 
   useEffect(() => {
     loadEpisodes();
-          analytics.realityShowViewed(showId);
+    analytics.realityShowViewed(showId);
   }, [showId]);
 
   const loadEpisodes = async () => {
@@ -246,7 +247,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
   },
   header: {
@@ -260,7 +261,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 24,
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   headerContent: {
     flex: 1,
@@ -268,11 +269,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   subtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   seasonSelector: {
     paddingHorizontal: 24,
@@ -284,14 +285,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     marginRight: 8,
   },
   seasonButtonActive: {
     backgroundColor: '#E8420A',
   },
   seasonButtonText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 14,
     fontWeight: '500',
   },
@@ -350,12 +351,12 @@ const styles = StyleSheet.create({
   episodeTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   episodeDescription: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
     marginBottom: 8,
     lineHeight: 16,
   },

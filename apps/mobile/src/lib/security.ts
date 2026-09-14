@@ -10,6 +10,7 @@
 
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import { logger } from '../utils/logger';
 
 // ---------------------------------------------------------------------------
 // TLS Pinning Configuration
@@ -57,20 +58,20 @@ const TAMPER_CHECK_KEY = 'tamper_check_hash';
 const APP_INTEGRITY_KEY = 'app_integrity_verified';
 
 /**
- * Generate a simple integrity hash for the app
- * In production, use react-native-integrity or similar
+ * Generate an integrity marker for the app.
+ *
+ * NOTE: This is a stable-environment marker, NOT tamper detection — it only
+ * involves values that never change for a given install (platform, mode). It
+ * deliberately excludes the date: the previous daily-rotating hash flagged
+ * every launch on a new day as "possible tampering".
+ *
+ * Real integrity attestation must come from the platform (Play Integrity API
+ * on Android, DeviceCheck/App Attest on iOS).
  */
 export function generateAppIntegrityHash(): string {
-  // Simplified integrity check
-  // In production, use platform-specific integrity verification
-  const factors = [
-    Platform.OS,
-    Platform.Version.toString(),
-    __DEV__ ? 'dev' : 'prod',
-    new Date().toISOString().split('T')[0], // Daily rotation
-  ].join('|');
+  const factors = [Platform.OS, Platform.Version.toString(), __DEV__ ? 'dev' : 'prod'].join('|');
 
-  // Simple hash (not cryptographic - use native module in production)
+  // Simple marker (not cryptographic - use native attestation in production)
   let hash = 0;
   for (let i = 0; i < factors.length; i++) {
     const char = factors.charCodeAt(i);
@@ -96,9 +97,10 @@ export async function verifyAppIntegrity(): Promise<boolean> {
     }
 
     if (storedHash !== currentHash) {
-      // Potential tampering detected
-      // eslint-disable-next-line no-console
-      console.warn('App integrity check failed - possible tampering');
+      // Potential tampering detected (e.g. an OS update changing Platform
+      // Version, or a real modification). Route through the logger so
+      // production builds don't leak raw console output.
+      logger.warn('App integrity check failed - possible tampering');
       await SecureStore.setItemAsync(APP_INTEGRITY_KEY, 'false');
       return false;
     }

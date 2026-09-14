@@ -8,6 +8,7 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
+  Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,6 +18,7 @@ import { useAppleGooglePay } from '../../../src/hooks/useAppleGooglePay';
 import { LoadingState, ErrorState } from '../../../src/components/StateContainers';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { addFundsPresetAmounts, walletLimits } from '../../../src/config/prices';
+import { colors } from '../../../src/theme';
 
 const PRESET_AMOUNTS = addFundsPresetAmounts;
 
@@ -124,13 +126,31 @@ export default function AddFundsScreen() {
       });
 
       if (response.success && response.data) {
-        const { authorizationUrl } = response.data;
+        const { authorizationUrl, reference } = response.data;
 
         if (authorizationUrl) {
+          // Open the provider checkout, then verify before declaring success.
+          // The previous alert's Continue button did nothing — the redirect
+          // URL was never opened, so funding from this screen was broken.
           Alert.alert('Payment Initiated', 'You will be redirected to complete your payment.', [
             {
+              text: 'Cancel',
+              style: 'cancel',
+            },
+            {
               text: 'Continue',
-              onPress: () => {},
+              onPress: async () => {
+                const supported = await Linking.canOpenURL(authorizationUrl);
+                if (!supported) {
+                  Alert.alert('Error', 'Could not open payment URL');
+                  return;
+                }
+                await Linking.openURL(authorizationUrl);
+                if (reference) {
+                  await verifyPaymentWithRetry(reference);
+                }
+                router.back();
+              },
             },
           ]);
         } else {
@@ -147,6 +167,34 @@ export default function AddFundsScreen() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Poll verify until the provider settles (or attempts run out).
+  const verifyPaymentWithRetry = async (reference: string, attempts = 5) => {
+    for (let i = 0; i < attempts; i++) {
+      try {
+        const res = await paymentApi.verify(reference);
+        if (res.success && res.data) {
+          if (res.data.status === 'success') {
+            Alert.alert('Success', 'Wallet funded successfully!');
+            return;
+          }
+          if (res.data.status === 'failed') {
+            Alert.alert('Payment Failed', 'Your payment was not completed. No money was taken.');
+            return;
+          }
+        }
+      } catch {
+        // network blip — fall through to retry
+      }
+      if (i < attempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
+    }
+    Alert.alert(
+      'Payment Pending',
+      'Your payment is still processing. Check Transactions in a moment to confirm.'
+    );
   };
 
   const handleAppleGooglePay = async () => {
@@ -311,12 +359,12 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 24,
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   form: {
     flex: 1,
@@ -326,7 +374,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 8,
     fontWeight: '500',
   },
@@ -344,14 +392,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: colors.palette.grey800,
   },
   presetButtonSelected: {
     backgroundColor: '#E8420A',
     borderColor: '#E8420A',
   },
   presetText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 14,
     fontWeight: '500',
   },
@@ -366,17 +414,17 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: colors.palette.grey800,
   },
   methodCardSelected: {
     borderColor: '#E8420A',
-    backgroundColor: '#1f1f2e',
+    backgroundColor: colors.palette.midnightSlate,
   },
   methodIcon: {
     width: 40,
     height: 40,
     borderRadius: 8,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -390,19 +438,19 @@ const styles = StyleSheet.create({
   methodName: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 2,
   },
   methodDescription: {
     fontSize: 12,
-    color: '#666',
+    color: colors.palette.grey600,
   },
   methodRadio: {
     width: 24,
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#333',
+    borderColor: colors.palette.grey800,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -439,13 +487,13 @@ const styles = StyleSheet.create({
   },
   infoTitle: {
     fontSize: 14,
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontWeight: '500',
     marginBottom: 8,
   },
   infoText: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
     lineHeight: 20,
   },
 });

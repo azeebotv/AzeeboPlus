@@ -8,6 +8,7 @@ import { LoadingState, EmptyState, ErrorState } from '../../src/components/State
 import { userApi } from '../../src/api/user';
 import { contentApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
+import { colors } from '../../src/theme';
 
 interface WatchlistMovie {
   id: string;
@@ -207,7 +208,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -220,8 +221,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#1a1a1a',
   },
-  sortChipActive: { backgroundColor: '#FFEAA7' },
-  sortText: { color: '#888', fontSize: 12, fontWeight: '600' },
+  sortChipActive: { backgroundColor: colors.palette.cream },
+  sortText: { color: colors.palette.grey500, fontSize: 12, fontWeight: '600' },
   sortTextActive: { color: '#000' },
   listContent: { paddingHorizontal: 16, paddingBottom: 30 },
   movieCard: {
@@ -235,7 +236,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 80,
     borderRadius: 8,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -251,17 +252,17 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 4,
   },
-  ratingText: { color: '#FFEAA7', fontSize: 10, fontWeight: '600' },
+  ratingText: { color: colors.palette.cream, fontSize: 10, fontWeight: '600' },
   movieInfo: { flex: 1 },
   movieTitle: { fontSize: 15, fontWeight: '700', marginBottom: 4 },
-  movieGenre: { color: '#888', fontSize: 12 },
+  movieGenre: { color: colors.palette.grey500, fontSize: 12 },
   removeButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  removeIcon: { color: '#888', fontSize: 14 },
+  removeIcon: { color: colors.palette.grey500, fontSize: 14 },
 });

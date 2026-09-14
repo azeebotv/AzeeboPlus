@@ -6,6 +6,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { apiClient } from '../../../src/api/client';
 import { LoadingState, ErrorState } from '../../../src/components/StateContainers';
 import type { TransactionDetail } from '../../../src/api/wallet';
+import { colors } from '../../../src/theme';
 
 export default function TransactionDetailScreen() {
   const router = useRouter();
@@ -172,7 +173,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#333',
+    backgroundColor: colors.palette.grey800,
     alignItems: 'center',
     justifyContent: 'center',
   },

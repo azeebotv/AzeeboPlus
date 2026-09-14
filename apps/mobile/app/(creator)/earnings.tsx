@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
+import { colors } from '../../src/theme';
 
 interface EarningsData {
   totalEarnings: number;
@@ -183,7 +184,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
   },
   errorContainer: {
@@ -192,7 +193,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 18,
     marginBottom: 16,
   },
@@ -220,13 +221,13 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 24,
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   title: {
     flex: 1,
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   content: {
     padding: 24,
@@ -268,19 +269,19 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: '48%',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 12,
     padding: 16,
   },
   statValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   section: {
     marginBottom: 24,
@@ -288,11 +289,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 16,
   },
   revenueCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 12,
     padding: 16,
   },
@@ -306,18 +307,18 @@ const styles = StyleSheet.create({
   },
   revenueLabel: {
     fontSize: 14,
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   revenueValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   historyItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 12,
     padding: 16,
     marginBottom: 8,
@@ -328,12 +329,12 @@ const styles = StyleSheet.create({
   historySource: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   historyDate: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   historyRight: {
     alignItems: 'flex-end',
@@ -341,7 +342,7 @@ const styles = StyleSheet.create({
   historyAmount: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   statusBadge: {

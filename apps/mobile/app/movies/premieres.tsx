@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { apiClient } from '../../src/api/client';
 import { ApiResponse } from '../../src/types/api';
+import { colors } from '../../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -138,7 +139,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -150,7 +151,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 140,
     borderRadius: 10,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
@@ -160,7 +161,7 @@ const styles = StyleSheet.create({
   dateBadge: {
     position: 'absolute',
     bottom: 6,
-    backgroundColor: '#FFEAA7',
+    backgroundColor: colors.palette.cream,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 4,
@@ -168,16 +169,16 @@ const styles = StyleSheet.create({
   dateText: { color: '#000', fontSize: 10, fontWeight: '700' },
   premiereInfo: { flex: 1 },
   premiereTitle: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
-  premiereGenre: { color: '#FFEAA7', fontSize: 12, marginBottom: 6 },
-  premiereDesc: { color: '#888', fontSize: 12, marginBottom: 10, lineHeight: 18 },
+  premiereGenre: { color: colors.palette.cream, fontSize: 12, marginBottom: 6 },
+  premiereDesc: { color: colors.palette.grey500, fontSize: 12, marginBottom: 10, lineHeight: 18 },
   notifyButton: {
     alignSelf: 'flex-start',
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
   },
-  notifyButtonActive: { backgroundColor: '#FFEAA7' },
-  notifyText: { color: '#888', fontSize: 12, fontWeight: '600' },
+  notifyButtonActive: { backgroundColor: colors.palette.cream },
+  notifyText: { color: colors.palette.grey500, fontSize: 12, fontWeight: '600' },
   notifyTextActive: { color: '#000' },
 });

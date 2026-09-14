@@ -51,7 +51,7 @@ export default function CharacterLoreScreen() {
         apiClient.get<LoreChapter[]>(`/vertical/characters/${id}/lore`),
       ]);
       setCharacter(charRes);
-              analytics.verticalCharacterViewed(charRes.id);
+      analytics.verticalCharacterViewed(charRes.id);
       setLoreChapters(loreRes);
     } catch {
       setError('Failed to load character data');

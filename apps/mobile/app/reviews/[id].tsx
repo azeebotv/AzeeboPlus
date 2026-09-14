@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { logger } from '../../src/utils/logger';
 import {
   View,
   Text,
@@ -57,13 +58,15 @@ export default function ReviewsScreen() {
     try {
       setLoading(true);
       const [reviewsRes, summaryRes] = await Promise.all([
-        apiClient.get<{ data?: { items?: Review[] } }>(`/v1/content/reviews/content/${id}?sort=${sortBy}`),
+        apiClient.get<{ data?: { items?: Review[] } }>(
+          `/v1/content/reviews/content/${id}?sort=${sortBy}`
+        ),
         apiClient.get<{ data?: RatingSummary }>(`/v1/content/reviews/content/${id}/summary`),
       ]);
       setReviews(reviewsRes.data?.items || []);
       setSummary(summaryRes.data || null);
     } catch (error) {
-      console.error('Failed to load reviews:', error);
+      logger.error('Failed to load reviews:', error);
     } finally {
       setLoading(false);
     }
@@ -103,7 +106,7 @@ export default function ReviewsScreen() {
       await apiClient.post(`/v1/content/reviews/${reviewId}/helpful`);
       loadReviews();
     } catch (error) {
-      console.error('Failed to mark helpful:', error);
+      logger.error('Failed to mark helpful:', error);
     }
   };
 
@@ -120,7 +123,9 @@ export default function ReviewsScreen() {
       {
         text: 'Inappropriate',
         onPress: async () => {
-          await apiClient.post(`/v1/content/reviews/${reviewId}/report`, { reason: 'inappropriate' });
+          await apiClient.post(`/v1/content/reviews/${reviewId}/report`, {
+            reason: 'inappropriate',
+          });
           Alert.alert('Thank you', 'Review reported');
         },
       },
@@ -224,9 +229,7 @@ export default function ReviewsScreen() {
               style={styles.spoilerToggle}
               onPress={() => setHasSpoilers(!hasSpoilers)}
             >
-              <Text style={styles.spoilerText}>
-                {hasSpoilers ? '✓ ' : ''}Contains spoilers
-              </Text>
+              <Text style={styles.spoilerText}>{hasSpoilers ? '✓ ' : ''}Contains spoilers</Text>
             </TouchableOpacity>
             <View style={styles.formActions}>
               <BrandButton title="Cancel" onPress={() => setShowForm(false)} variant="ghost" />
@@ -278,10 +281,7 @@ export default function ReviewsScreen() {
               >
                 <Text style={styles.actionText}>👍 Helpful ({review.helpfulCount})</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => handleReport(review.id)}
-              >
+              <TouchableOpacity style={styles.actionButton} onPress={() => handleReport(review.id)}>
                 <Text style={styles.actionText}>⚑ Report</Text>
               </TouchableOpacity>
             </View>

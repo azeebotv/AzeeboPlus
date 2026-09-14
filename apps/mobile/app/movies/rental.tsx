@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { moviePricing } from '../../src/config/prices';
+import { colors } from '../../src/theme';
 
 type RentalOption = {
   id: string;
@@ -121,7 +122,7 @@ export default function RentalScreen() {
           <View style={styles.summaryDivider} />
           <View style={styles.summaryRow}>
             <Text style={[styles.summaryLabel, { fontWeight: '700' }]}>Total</Text>
-            <Text style={[styles.summaryValue, { color: '#FFEAA7', fontSize: 20 }]}>
+            <Text style={[styles.summaryValue, { color: colors.palette.cream, fontSize: 20 }]}>
               {selectedOption.price}
             </Text>
           </View>
@@ -146,7 +147,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -154,7 +155,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 20, fontWeight: '700' },
   content: { padding: 16, paddingBottom: 30 },
   heading: { fontSize: 24, fontWeight: '700', marginBottom: 6 },
-  subheading: { color: '#888', fontSize: 14, marginBottom: 24 },
+  subheading: { color: colors.palette.grey500, fontSize: 14, marginBottom: 24 },
   optionCard: {
     padding: 18,
     borderRadius: 14,
@@ -162,37 +163,37 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
   },
-  optionCardSelected: { borderColor: '#FFEAA7' },
+  optionCardSelected: { borderColor: colors.palette.cream },
   optionHeader: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 },
   optionType: { fontSize: 16, fontWeight: '700', marginBottom: 2 },
-  optionDuration: { color: '#888', fontSize: 13 },
+  optionDuration: { color: colors.palette.grey500, fontSize: 13 },
   optionPriceCol: { flex: 1, alignItems: 'flex-end' },
-  optionPrice: { color: '#FFEAA7', fontSize: 22, fontWeight: '700' },
+  optionPrice: { color: colors.palette.cream, fontSize: 22, fontWeight: '700' },
   selectedCheck: {
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: '#FFEAA7',
+    backgroundColor: colors.palette.cream,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 10,
   },
   checkmark: { color: '#000', fontWeight: '700', fontSize: 14 },
   optionFeatures: { gap: 4 },
-  featureText: { color: '#ccc', fontSize: 13 },
+  featureText: { color: colors.palette.grey300, fontSize: 13 },
   summaryCard: { padding: 18, borderRadius: 14, marginBottom: 16 },
   summaryTitle: { fontSize: 16, fontWeight: '700', marginBottom: 12 },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  summaryLabel: { color: '#ccc', fontSize: 14 },
-  summaryValue: { color: '#ccc', fontSize: 16, fontWeight: '600' },
-  summaryDivider: { height: 1, backgroundColor: '#2a2a2a', marginVertical: 8 },
+  summaryLabel: { color: colors.palette.grey300, fontSize: 14 },
+  summaryValue: { color: colors.palette.grey300, fontSize: 16, fontWeight: '600' },
+  summaryDivider: { height: 1, backgroundColor: colors.palette.charcoal, marginVertical: 8 },
   payButton: {
-    backgroundColor: '#FFEAA7',
+    backgroundColor: colors.palette.cream,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
     marginBottom: 12,
   },
   payText: { color: '#000', fontSize: 16, fontWeight: '700' },
-  termsText: { color: '#888', fontSize: 12, textAlign: 'center' },
+  termsText: { color: colors.palette.grey500, fontSize: 12, textAlign: 'center' },
 });

@@ -15,6 +15,7 @@ import type { RealityShow, RealityContestant } from '../../../src/api/engagement
 import { LoadingState, ErrorState } from '../../../src/components/StateContainers';
 import { useWallet } from '../../../src/contexts/WalletContext';
 import { votePackages as defaultVotePackages } from '../../../src/config/prices';
+import { colors } from '../../../src/theme';
 
 const VOTE_PACKAGES = defaultVotePackages.reality;
 
@@ -312,7 +313,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#333',
+    backgroundColor: colors.palette.grey800,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -340,7 +341,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   playIcon: { fontSize: 48, color: '#E8420A' },
-  streamLabel: { color: '#888', fontSize: 12, marginTop: 4 },
+  streamLabel: { color: colors.palette.grey500, fontSize: 12, marginTop: 4 },
   viewerBadge: {
     position: 'absolute',
     top: 16,
@@ -380,7 +381,7 @@ const styles = StyleSheet.create({
   },
   contestantInitial: { color: '#fff', fontSize: 18, fontWeight: '700' },
   contestantName: { fontSize: 12, fontWeight: '500', textAlign: 'center' },
-  voteCount: { fontSize: 11, color: '#888', marginTop: 2 },
+  voteCount: { fontSize: 11, color: colors.palette.grey500, marginTop: 2 },
   selectedBadge: {
     position: 'absolute',
     top: 0,
@@ -446,7 +447,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   votingTitle: { fontSize: 18, fontWeight: '700' },
-  closeButton: { color: '#888', fontSize: 20 },
+  closeButton: { color: colors.palette.grey500, fontSize: 20 },
   walletBalanceText: {
     color: '#10B981',
     fontSize: 14,
@@ -462,7 +463,7 @@ const styles = StyleSheet.create({
   packageCard: {
     width: '48%',
     padding: 12,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 10,
     borderWidth: 2,
     borderColor: 'transparent',
@@ -470,7 +471,7 @@ const styles = StyleSheet.create({
   packageCardSelected: { borderColor: '#E8420A' },
   packageVotes: { color: '#fff', fontSize: 15, fontWeight: '700' },
   packagePrice: { color: '#E8420A', fontSize: 14, fontWeight: '600' },
-  packageBonus: { color: '#10B911', fontSize: 11, marginTop: 2 },
+  packageBonus: { color: colors.palette.emerald, fontSize: 11, marginTop: 2 },
   quantityRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -483,14 +484,14 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
   },
   quantityButtonText: { color: '#fff', fontSize: 20, fontWeight: '600' },
   quantityValue: { fontSize: 18, fontWeight: '700', minWidth: 30, textAlign: 'center' },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  summaryLabel: { color: '#888', fontSize: 14 },
+  summaryLabel: { color: colors.palette.grey500, fontSize: 14 },
   summaryValue: { color: '#fff', fontSize: 14, fontWeight: '600' },
   voteNowButton: {
     backgroundColor: '#E8420A',

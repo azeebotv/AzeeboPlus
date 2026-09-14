@@ -16,6 +16,7 @@ import { useWallet } from '../../src/contexts/WalletContext';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { votePackages as defaultVotePackages } from '../../src/config/prices';
 import type { Contestant, RealityShow } from '../../src/types/api';
+import { colors } from '../../src/theme';
 
 const VOTE_PACKAGES = defaultVotePackages.reality;
 
@@ -355,7 +356,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#333',
+    backgroundColor: colors.palette.grey800,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -391,7 +392,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#333',
+    backgroundColor: colors.palette.grey800,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -444,14 +445,14 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   quickVoteLabel: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 13,
     fontWeight: '600',
   },
   quickVoteButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
@@ -590,7 +591,7 @@ const styles = StyleSheet.create({
   },
   chatText: {
     fontSize: 13,
-    color: '#ccc',
+    color: colors.palette.grey300,
     flex: 1,
   },
   chatInput: {
@@ -644,7 +645,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   closeButton: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 20,
   },
   walletBalanceText: {
@@ -662,7 +663,7 @@ const styles = StyleSheet.create({
   packageCard: {
     width: '48%',
     padding: 12,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 10,
     borderWidth: 2,
     borderColor: 'transparent',
@@ -704,7 +705,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -725,7 +726,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   summaryLabel: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 14,
   },
   summaryValue: {

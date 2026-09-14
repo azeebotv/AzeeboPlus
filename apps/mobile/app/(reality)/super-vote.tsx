@@ -17,6 +17,7 @@ import { analytics } from '../../src/utils/analytics';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import { getVotePackages } from '../../src/config/prices';
 import type { VotePackage } from '../../src/types/api';
+import { colors } from '../../src/theme';
 
 interface Contestant {
   id: string;
@@ -43,7 +44,11 @@ export default function SuperVoteScreen() {
 
   useEffect(() => {
     loadData();
-    getVotePackages('superVote').then((pkgs) => setVotePackages(pkgs)).catch(() => { /* non-critical: vote packages are optional UI enhancement */ });
+    getVotePackages('superVote')
+      .then((pkgs) => setVotePackages(pkgs))
+      .catch(() => {
+        /* non-critical: vote packages are optional UI enhancement */
+      });
   }, [episodeId]);
 
   const loadData = async () => {
@@ -116,12 +121,12 @@ export default function SuperVoteScreen() {
         voteCount: package_.votes,
       });
 
-              analytics.realitySupervoteCreated(
-          episodeId,
-          selectedContestant!,
-          package_.votes,
-          package_.price
-        );
+      analytics.realitySupervoteCreated(
+        episodeId,
+        selectedContestant!,
+        package_.votes,
+        package_.price
+      );
 
       Alert.alert(
         'Success!',
@@ -263,7 +268,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
   },
   header: {
@@ -279,7 +284,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 24,
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   headerContent: {
     flex: 1,
@@ -287,7 +292,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   subtitle: {
     fontSize: 14,
@@ -298,12 +303,12 @@ const styles = StyleSheet.create({
   },
   balanceLabel: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   balanceValue: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   section: {
     padding: 24,
@@ -311,12 +316,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 16,
   },
   contestantCard: {
     width: 140,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 12,
     padding: 12,
     marginRight: 12,
@@ -335,15 +340,15 @@ const styles = StyleSheet.create({
   contestantName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   contestantRank: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   packageCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -355,7 +360,7 @@ const styles = StyleSheet.create({
   },
   packageCardPopular: {
     borderColor: '#E8420A',
-    backgroundColor: '#2d1f5e',
+    backgroundColor: colors.palette.violetDusk,
   },
   popularBadge: {
     position: 'absolute',
@@ -379,12 +384,12 @@ const styles = StyleSheet.create({
   packageName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   packageDescription: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   packagePrice: {
     fontSize: 18,

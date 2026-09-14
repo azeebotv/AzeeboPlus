@@ -15,6 +15,7 @@ import { creatorApi } from '../../src/api/creator';
 import { apiClient } from '../../src/api/client';
 import { logger } from '../../src/utils/logger';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
+import { colors } from '../../src/theme';
 
 export default function CreatorSignup() {
   const colorScheme = useColorScheme();
@@ -339,7 +340,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -366,12 +367,12 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
   },
   progressCircleActive: {
-    backgroundColor: '#4ECDC4',
+    backgroundColor: colors.palette.teal,
   },
   progressItemActive: {},
   progressNumber: {
@@ -382,10 +383,10 @@ const styles = StyleSheet.create({
   progressLine: {
     flex: 1,
     height: 2,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
   },
   progressLineActive: {
-    backgroundColor: '#4ECDC4',
+    backgroundColor: colors.palette.teal,
   },
   content: {
     flex: 1,
@@ -400,7 +401,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   stepDesc: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 14,
     marginBottom: 24,
   },
@@ -418,7 +419,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   optionCardActive: {
-    borderColor: '#4ECDC4',
+    borderColor: colors.palette.teal,
   },
   optionEmoji: {
     fontSize: 32,
@@ -436,7 +437,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#4ECDC4',
+    backgroundColor: colors.palette.teal,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -453,7 +454,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   optionListItemActive: {
-    borderColor: '#4ECDC4',
+    borderColor: colors.palette.teal,
   },
   optionListLabel: {
     fontSize: 16,
@@ -492,7 +493,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: 'center',
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
   },
   backButtonMainText: {
     color: '#fff',
@@ -504,7 +505,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: 'center',
-    backgroundColor: '#4ECDC4',
+    backgroundColor: colors.palette.teal,
   },
   nextButtonText: {
     color: '#000',

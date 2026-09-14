@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { realityApi } from '../../../src/api';
 import { logger } from '../../../src/utils/logger';
+import { colors } from '../../../src/theme';
 
 interface PredictionResult {
   id: string;
@@ -164,7 +165,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: '#9CA3AF',
+    color: colors.light[400],
     marginTop: 12,
   },
   errorText: {
@@ -183,10 +184,10 @@ const styles = StyleSheet.create({
   },
   question: {
     fontSize: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   resultCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -199,7 +200,7 @@ const styles = StyleSheet.create({
   },
   resultLabel: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   badge: {
     paddingHorizontal: 12,
@@ -210,7 +211,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#10B98120',
   },
   badgeError: {
-    backgroundColor: '#EF444420',
+    backgroundColor: colors.alphaColors.dangerA20,
   },
   badgeText: {
     fontSize: 12,
@@ -236,7 +237,7 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -249,10 +250,10 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   rewardsCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 12,
     padding: 16,
   },

@@ -9,6 +9,7 @@ import { apiClient } from '../../src/api/client';
 import { comedySubscription } from '../../src/config/prices';
 import { ApiResponse } from '../../src/types/api';
 import { analytics } from '../../src/utils/analytics';
+import { colors } from '../../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -69,7 +70,7 @@ export default function VerticalUniverseHome() {
 
   useEffect(() => {
     if (featuredQuery.isSuccess && !featuredQuery.isFetching) {
-              analytics.verticalUniverseViewed('home');
+      analytics.verticalUniverseViewed('home');
     }
   }, [featuredQuery.isSuccess]);
 
@@ -293,7 +294,7 @@ const styles = StyleSheet.create({
   },
   universeLabel: {
     fontSize: 14,
-    color: '#96CEB4',
+    color: colors.palette.mint,
     fontWeight: '600',
     marginBottom: 4,
   },
@@ -302,7 +303,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   headerSubtitle: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 14,
     marginTop: 4,
   },
@@ -346,7 +347,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   seeAllText: {
-    color: '#96CEB4',
+    color: colors.palette.mint,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -361,7 +362,7 @@ const styles = StyleSheet.create({
   },
   featuredImagePlaceholder: {
     height: 240,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -379,7 +380,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   ratingText: {
-    color: '#FFEAA7',
+    color: colors.palette.cream,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -392,12 +393,12 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   featuredSeason: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 12,
     marginBottom: 10,
   },
   watchButton: {
-    backgroundColor: '#96CEB4',
+    backgroundColor: colors.palette.mint,
     paddingVertical: 8,
     borderRadius: 6,
     alignItems: 'center',
@@ -420,7 +421,7 @@ const styles = StyleSheet.create({
   },
   verticalThumbnail: {
     height: 200,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -456,18 +457,18 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   verticalGenre: {
-    color: '#96CEB4',
+    color: colors.palette.mint,
     fontSize: 12,
     fontWeight: '500',
   },
   verticalRating: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
   },
   ratingSmall: {
-    color: '#FFEAA7',
+    color: colors.palette.cream,
     fontSize: 11,
   },
   passSection: {
@@ -479,24 +480,24 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#96CEB4',
+    borderColor: colors.palette.mint,
   },
   passContent: {
     alignItems: 'center',
   },
   passTitle: {
-    color: '#96CEB4',
+    color: colors.palette.mint,
     fontSize: 20,
     fontWeight: '700',
     marginBottom: 4,
   },
   passSubtitle: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 14,
     marginBottom: 16,
   },
   passButton: {
-    backgroundColor: '#96CEB4',
+    backgroundColor: colors.palette.mint,
     paddingVertical: 10,
     paddingHorizontal: 24,
     borderRadius: 8,
@@ -513,7 +514,7 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
     backgroundColor: '#1a1a1a',
     borderTopWidth: 1,
-    borderTopColor: '#2a2a2a',
+    borderTopColor: colors.palette.charcoal,
   },
   navItem: {
     alignItems: 'center',
@@ -524,6 +525,6 @@ const styles = StyleSheet.create({
   },
   navLabel: {
     fontSize: 11,
-    color: '#888',
+    color: colors.palette.grey500,
   },
 });

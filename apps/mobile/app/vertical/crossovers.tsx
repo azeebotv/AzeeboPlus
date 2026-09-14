@@ -47,21 +47,32 @@ export default function CrossoversListScreen() {
       <View style={styles.cardHeader}>
         <Text style={styles.cardIcon}>🔀</Text>
         <View style={styles.cardInfo}>
-          <Text style={[styles.cardTitle, { color: colors.text.primary }]} numberOfLines={1}>{item.title}</Text>
-          <Text style={styles.cardUniverses}>{item.universeA} ↔ {item.universeB}</Text>
+          <Text style={[styles.cardTitle, { color: colors.text.primary }]} numberOfLines={1}>
+            {item.title}
+          </Text>
+          <Text style={styles.cardUniverses}>
+            {item.universeA} ↔ {item.universeB}
+          </Text>
         </View>
         <View style={[styles.statusBadge, item.status === 'active' && styles.statusActive]}>
-          <Text style={[styles.statusText, item.status === 'active' && styles.statusTextActive]}>{item.status}</Text>
+          <Text style={[styles.statusText, item.status === 'active' && styles.statusTextActive]}>
+            {item.status}
+          </Text>
         </View>
       </View>
-      <Text style={[styles.cardDesc, { color: isDark ? colors.text.secondary : '#666' }]} numberOfLines={2}>
+      <Text
+        style={[styles.cardDesc, { color: isDark ? colors.text.secondary : '#666' }]}
+        numberOfLines={2}
+      >
         {item.description}
       </Text>
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+    >
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
@@ -73,9 +84,16 @@ export default function CrossoversListScreen() {
       {crossoversQuery.isLoading ? (
         <LoadingState text="Loading crossovers..." />
       ) : crossoversQuery.error ? (
-        <ErrorState description={crossoversQuery.error.message} onRetry={() => crossoversQuery.refetch()} />
+        <ErrorState
+          description={crossoversQuery.error.message}
+          onRetry={() => crossoversQuery.refetch()}
+        />
       ) : crossovers.length === 0 ? (
-        <EmptyState icon="🔀" title="No crossovers" description="Cross-universe events coming soon" />
+        <EmptyState
+          icon="🔀"
+          title="No crossovers"
+          description="Cross-universe events coming soon"
+        />
       ) : (
         <FlatList
           data={crossovers}
@@ -91,8 +109,21 @@ export default function CrossoversListScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingTop: 40 },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.bg.tertiary, alignItems: 'center', justifyContent: 'center' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    paddingTop: 40,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.bg.tertiary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backIcon: { color: colors.text.primary, fontSize: 20 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
   list: { padding: 16, gap: 12 },
@@ -102,8 +133,13 @@ const styles = StyleSheet.create({
   cardInfo: { flex: 1 },
   cardTitle: { fontSize: 16, fontWeight: '700', marginBottom: 2 },
   cardUniverses: { fontSize: 12, color: colors.primary[500], fontWeight: '600' },
-  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, backgroundColor: colors.bg.tertiary },
-  statusActive: { backgroundColor: '#22C55E25' },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: colors.bg.tertiary,
+  },
+  statusActive: { backgroundColor: colors.alphaColors.successA25 },
   statusText: { fontSize: 11, fontWeight: '600', color: colors.text.tertiary },
   statusTextActive: { color: '#22C55E' },
   cardDesc: { fontSize: 13, lineHeight: 20 },

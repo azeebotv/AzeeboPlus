@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { apiClient } from '../../src/api';
 import { logger } from '../../src/utils/logger';
+import { colors } from '../../src/theme';
 
 interface Mission {
   id: string;
@@ -176,19 +177,19 @@ export default function MissionsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#1A0A0A' },
   content: { flex: 1, padding: 16, paddingBottom: 32 },
-  loadingText: { color: '#9CA3AF', marginTop: 12, textAlign: 'center' },
+  loadingText: { color: colors.light[400], marginTop: 12, textAlign: 'center' },
   backButton: { marginBottom: 16, paddingVertical: 4 },
   backText: { color: '#9A8A7A', fontSize: 14 },
   header: { marginBottom: 24 },
   title: { fontSize: 24, fontWeight: 'bold', color: '#FFFFFF', marginBottom: 4 },
-  subtitle: { fontSize: 14, color: '#9CA3AF' },
+  subtitle: { fontSize: 14, color: colors.light[400] },
   section: { marginBottom: 24 },
   sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#FFFFFF', marginBottom: 16 },
   emptyContainer: { alignItems: 'center', paddingVertical: 40 },
   emptyIcon: { fontSize: 48, marginBottom: 12 },
-  emptyText: { fontSize: 16, color: '#9CA3AF' },
+  emptyText: { fontSize: 16, color: colors.light[400] },
   missionCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
@@ -215,8 +216,13 @@ const styles = StyleSheet.create({
   missionPoints: { fontSize: 16, fontWeight: '700', color: '#E8420A' },
   missionPointsCompleted: { fontSize: 16, fontWeight: '700', color: '#10B981' },
   missionTitle: { fontSize: 16, fontWeight: '700', color: '#FFFFFF', marginBottom: 4 },
-  missionTitleCompleted: { fontSize: 16, fontWeight: '700', color: '#9CA3AF', marginBottom: 4 },
-  missionDescription: { fontSize: 13, color: '#9CA3AF', marginBottom: 16 },
+  missionTitleCompleted: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.light[400],
+    marginBottom: 4,
+  },
+  missionDescription: { fontSize: 13, color: colors.light[400], marginBottom: 16 },
   missionDescriptionCompleted: { fontSize: 13, color: '#6B7280', marginBottom: 8 },
   progressSection: { marginTop: 4 },
   progressHeader: {
@@ -224,8 +230,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 6,
   },
-  progressLabel: { fontSize: 12, color: '#9CA3AF' },
-  progressValue: { fontSize: 12, color: '#9CA3AF' },
+  progressLabel: { fontSize: 12, color: colors.light[400] },
+  progressValue: { fontSize: 12, color: colors.light[400] },
   progressTrack: {
     height: 6,
     borderRadius: 3,

@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
 import { analytics } from '../../src/utils/analytics';
+import { colors } from '../../src/theme';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -337,7 +338,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
   },
   errorContainer: {
@@ -346,7 +347,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 18,
     marginBottom: 16,
   },
@@ -384,13 +385,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   videoTitle: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 8,
   },
   videoSubtitle: {
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
     marginBottom: 24,
   },
@@ -438,7 +439,7 @@ const styles = StyleSheet.create({
   },
   progressTrack: {
     height: 4,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 2,
     marginBottom: 8,
   },
@@ -452,7 +453,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   timeText: {
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 12,
   },
   controls: {
@@ -466,7 +467,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -493,12 +494,12 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
     paddingVertical: 12,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 8,
     alignItems: 'center',
   },
   actionButtonText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 14,
     fontWeight: '500',
   },
@@ -508,13 +509,13 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   episodeTitle: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 8,
   },
   episodeDescription: {
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
     lineHeight: 20,
   },
@@ -524,7 +525,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     maxHeight: '50%',
@@ -538,12 +539,12 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.2)',
   },
   modalTitle: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 18,
     fontWeight: 'bold',
   },
   modalClose: {
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 24,
   },
   subtitleOption: {
@@ -555,7 +556,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.2)',
   },
   subtitleText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 16,
   },
   subtitleCheck: {

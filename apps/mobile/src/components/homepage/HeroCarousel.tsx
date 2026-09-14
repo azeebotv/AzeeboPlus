@@ -47,6 +47,19 @@ export default function HeroCarousel({ slides, autoRotateIntervalMs = 6000 }: He
     };
   }, [isPaused, goNext, slides.length, autoRotateIntervalMs]);
 
+  // Pause rotation while the user is interacting — on touch devices
+  // onPointerEnter/Leave never fire, so without this the carousel would yank
+  // users to the next slide mid-tap.
+  const interactionRef = useRef(false);
+  const pauseForInteraction = useCallback(() => {
+    interactionRef.current = true;
+    setIsPaused(true);
+  }, []);
+  const resumeAfterInteraction = useCallback(() => {
+    interactionRef.current = false;
+    setIsPaused(false);
+  }, []);
+
   if (slides.length === 0) return null;
 
   const currentSlide = slides[currentIndex];
@@ -62,6 +75,9 @@ export default function HeroCarousel({ slides, autoRotateIntervalMs = 6000 }: He
       accessibilityRole="adjustable"
       onPointerEnter={() => setIsPaused(true)}
       onPointerLeave={() => setIsPaused(false)}
+      onTouchStart={pauseForInteraction}
+      onTouchEnd={resumeAfterInteraction}
+      onTouchCancel={resumeAfterInteraction}
     >
       <Animated.View
         key={currentSlide.id}

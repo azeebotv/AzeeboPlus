@@ -38,7 +38,8 @@ export default function LifestyleMusicScreen() {
 
   const tracks = musicQuery.data ?? [];
 
-  const formatDuration = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
+  const formatDuration = (s: number) =>
+    `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
 
   const renderItem = ({ item }: { item: Track }) => (
     <TouchableOpacity
@@ -49,15 +50,21 @@ export default function LifestyleMusicScreen() {
         <Text style={styles.thumbText}>🎵</Text>
       </View>
       <View style={styles.cardInfo}>
-        <Text style={[styles.cardTitle, { color: colors.text.primary }]} numberOfLines={1}>{item.title}</Text>
+        <Text style={[styles.cardTitle, { color: colors.text.primary }]} numberOfLines={1}>
+          {item.title}
+        </Text>
         <Text style={styles.cardArtist}>{item.artist}</Text>
       </View>
-      <Text style={[styles.duration, { color: colors.text.tertiary }]}>{formatDuration(item.duration)}</Text>
+      <Text style={[styles.duration, { color: colors.text.tertiary }]}>
+        {formatDuration(item.duration)}
+      </Text>
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+    >
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
@@ -87,13 +94,38 @@ export default function LifestyleMusicScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingTop: 40 },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.bg.tertiary, alignItems: 'center', justifyContent: 'center' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    paddingTop: 40,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.bg.tertiary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backIcon: { color: colors.text.primary, fontSize: 20 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
   list: { padding: 16, gap: 10 },
-  card: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: radius.lg, gap: 12 },
-  thumb: { width: 48, height: 48, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: radius.lg,
+    gap: 12,
+  },
+  thumb: {
+    width: 48,
+    height: 48,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   thumbText: { fontSize: 20 },
   cardInfo: { flex: 1 },
   cardTitle: { fontSize: 15, fontWeight: '600', marginBottom: 2 },
