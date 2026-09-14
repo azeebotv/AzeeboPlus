@@ -34,7 +34,7 @@ variable "rotation_lambda_arn" {
 variable "rotation_rules" {
   description = "Rotation rules"
   type = list(object({
-    secret_name             = string
+    secret_name              = string
     automatically_after_days = number
   }))
   default = []

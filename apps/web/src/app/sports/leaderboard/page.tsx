@@ -47,7 +47,8 @@ function LeaderboardPageContent(): React.JSX.Element {
       <section
         className="relative py-16 sm:py-20 overflow-hidden"
         style={{
-          background: 'radial-gradient(ellipse at top, rgba(232,66,10,0.2) 0%, #100e14 60%, #0b090e 100%)',
+          background:
+            'radial-gradient(ellipse at top, rgba(232,66,10,0.2) 0%, #100e14 60%, #0b090e 100%)',
           borderBottom: '1px solid rgba(255,255,255,0.08)',
         }}
       >
@@ -125,7 +126,10 @@ function LeaderboardPageContent(): React.JSX.Element {
 
                     <div
                       className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0"
-                      style={{ background: 'linear-gradient(135deg, var(--brand-orange, #E8420A), var(--brand-red, #CC1C1C))' }}
+                      style={{
+                        background:
+                          'linear-gradient(135deg, var(--brand-orange, #E8420A), var(--brand-red, #CC1C1C))',
+                      }}
                     >
                       {entry.avatar?.charAt(0) || entry.name.charAt(0)}
                     </div>

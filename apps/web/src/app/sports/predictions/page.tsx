@@ -57,7 +57,8 @@ function PredictionsPageContent(): React.JSX.Element {
       <section
         className="relative py-16 sm:py-20 overflow-hidden"
         style={{
-          background: 'radial-gradient(ellipse at top, rgba(232,66,10,0.2) 0%, #100e14 60%, #0b090e 100%)',
+          background:
+            'radial-gradient(ellipse at top, rgba(232,66,10,0.2) 0%, #100e14 60%, #0b090e 100%)',
           borderBottom: '1px solid rgba(255,255,255,0.08)',
         }}
       >
@@ -142,9 +143,7 @@ function PredictionsPageContent(): React.JSX.Element {
                               backgroundColor: isUrgent
                                 ? 'rgba(239,68,68,0.2)'
                                 : 'rgba(16,185,129,0.15)',
-                              color: isUrgent
-                                ? 'var(--color-error-500)'
-                                : '#34D399',
+                              color: isUrgent ? 'var(--color-error-500)' : '#34D399',
                               border: `1px solid ${isUrgent ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.25)'}`,
                             }}
                           >
@@ -193,10 +192,7 @@ function PredictionsPageContent(): React.JSX.Element {
                                 selectedBet === `${market.id}-home`
                                   ? '#34D399'
                                   : 'rgba(255,255,255,0.1)',
-                              color:
-                                selectedBet === `${market.id}-home`
-                                  ? '#0b090e'
-                                  : 'white',
+                              color: selectedBet === `${market.id}-home` ? '#0b090e' : 'white',
                             }}
                           >
                             {market.homeTeam}
@@ -211,10 +207,7 @@ function PredictionsPageContent(): React.JSX.Element {
                                   selectedBet === `${market.id}-draw`
                                     ? '#34D399'
                                     : 'rgba(255,255,255,0.1)',
-                                color:
-                                  selectedBet === `${market.id}-draw`
-                                    ? '#0b090e'
-                                    : 'white',
+                                color: selectedBet === `${market.id}-draw` ? '#0b090e' : 'white',
                               }}
                             >
                               Draw
@@ -229,10 +222,7 @@ function PredictionsPageContent(): React.JSX.Element {
                                 selectedBet === `${market.id}-away`
                                   ? '#34D399'
                                   : 'rgba(255,255,255,0.1)',
-                              color:
-                                selectedBet === `${market.id}-away`
-                                  ? '#0b090e'
-                                  : 'white',
+                              color: selectedBet === `${market.id}-away` ? '#0b090e' : 'white',
                             }}
                           >
                             {market.awayTeam}

@@ -162,14 +162,23 @@ export default function CreatorDashboardPage(): React.JSX.Element {
     >
       <AppHeader logoVariant="light" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 960, margin: '0 auto' }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, color: 'white' }}>Creator Hub</h1>
+        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, color: 'white' }}>
+          Creator Hub
+        </h1>
         <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: 32 }}>
           {isLoading
             ? 'Loading stats...'
             : `Welcome back! ${stats?.totalContent || 0} pieces of content, ${stats?.totalFollowers || 0} followers`}
         </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 32 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: 16,
+            marginBottom: 32,
+          }}
+        >
           {[
             { label: 'Views', value: stats?.totalViews?.toLocaleString() || '0' },
             { label: 'Content', value: String(stats?.totalContent || 0) },
@@ -208,7 +217,9 @@ export default function CreatorDashboardPage(): React.JSX.Element {
           ))}
         </div>
 
-        <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16, color: 'white' }}>Creator Tools & Portals</h2>
+        <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16, color: 'white' }}>
+          Creator Tools & Portals
+        </h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {creatorLinks.map((link) => {
             const Icon = link.icon;
@@ -255,8 +266,12 @@ export default function CreatorDashboardPage(): React.JSX.Element {
                   <Icon size={22} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 2, color: 'white' }}>{link.label}</h3>
-                  <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, margin: 0 }}>{link.desc}</p>
+                  <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 2, color: 'white' }}>
+                    {link.label}
+                  </h3>
+                  <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, margin: 0 }}>
+                    {link.desc}
+                  </p>
                 </div>
                 <ArrowRight size={18} style={{ color: 'var(--brand-orange, #E8420A)' }} />
               </button>
@@ -266,7 +281,9 @@ export default function CreatorDashboardPage(): React.JSX.Element {
 
         {stats?.recentActivity && stats.recentActivity.length > 0 && (
           <div style={{ marginTop: 40 }}>
-            <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16, color: 'white' }}>Recent Activity</h2>
+            <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16, color: 'white' }}>
+              Recent Activity
+            </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {stats.recentActivity.map((activity) => (
                 <div
@@ -281,7 +298,9 @@ export default function CreatorDashboardPage(): React.JSX.Element {
                   <p style={{ fontWeight: 600, fontSize: 14, color: 'white', marginBottom: 2 }}>
                     {activity.title}
                   </p>
-                  <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, margin: 0 }}>{activity.date}</p>
+                  <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, margin: 0 }}>
+                    {activity.date}
+                  </p>
                 </div>
               ))}
             </div>

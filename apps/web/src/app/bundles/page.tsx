@@ -153,7 +153,8 @@ function BundlesPageContent(): React.JSX.Element {
       <div
         className="pointer-events-none absolute -top-32 left-1/3 -translate-x-1/2 w-[650px] h-[450px] rounded-full blur-[140px] -z-0"
         style={{
-          background: 'radial-gradient(circle, rgba(232,66,10,0.18) 0%, rgba(204,28,28,0.06) 50%, transparent 80%)',
+          background:
+            'radial-gradient(circle, rgba(232,66,10,0.18) 0%, rgba(204,28,28,0.06) 50%, transparent 80%)',
         }}
         aria-hidden="true"
       />
@@ -165,8 +166,12 @@ function BundlesPageContent(): React.JSX.Element {
               <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand-orange)] animate-pulse" />
               <span className="tracking-widest uppercase text-white/70">ALL-IN-ONE ACCESS</span>
             </div>
-            <h1 className="az-headline font-extrabold text-white text-3xl sm:text-4xl tracking-tight">Bundle Passes</h1>
-            <p className="text-white/60 mt-1 text-sm sm:text-base">Save big with multi-universe entertainment passes</p>
+            <h1 className="az-headline font-extrabold text-white text-3xl sm:text-4xl tracking-tight">
+              Bundle Passes
+            </h1>
+            <p className="text-white/60 mt-1 text-sm sm:text-base">
+              Save big with multi-universe entertainment passes
+            </p>
           </div>
         </div>
 

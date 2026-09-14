@@ -132,7 +132,9 @@ export default function RecommendationsPage(): React.JSX.Element {
                 aria-checked={active}
                 onClick={() => handleFilterChange(filter.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                  active ? 'text-white shadow-lg shadow-orange-500/20' : 'text-white/60 hover:text-white hover:bg-white/5'
+                  active
+                    ? 'text-white shadow-lg shadow-orange-500/20'
+                    : 'text-white/60 hover:text-white hover:bg-white/5'
                 }`}
                 style={
                   active

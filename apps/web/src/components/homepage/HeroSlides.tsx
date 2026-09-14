@@ -155,7 +155,8 @@ export default function HeroSlides({
             <div
               className="absolute inset-0"
               style={{
-                background: 'linear-gradient(to top, rgba(11,9,14,1) 0%, rgba(11,9,14,0.4) 40%, transparent 80%)',
+                background:
+                  'linear-gradient(to top, rgba(11,9,14,1) 0%, rgba(11,9,14,0.4) 40%, transparent 80%)',
               }}
             />
           </div>

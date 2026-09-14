@@ -16,7 +16,6 @@ import {
   CheckCircle2,
   Share2,
   MessageSquare,
-  TrendingUp,
 } from 'lucide-react';
 
 interface AnalyticsData {

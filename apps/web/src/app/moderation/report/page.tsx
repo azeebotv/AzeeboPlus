@@ -5,7 +5,16 @@ import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
-import { Ban, AlertTriangle, Lock, ShieldAlert, Copyright, Newspaper, FileText, Check } from 'lucide-react';
+import {
+  Ban,
+  AlertTriangle,
+  Lock,
+  ShieldAlert,
+  Copyright,
+  Newspaper,
+  FileText,
+  Check,
+} from 'lucide-react';
 import analytics from '@/lib/analytics';
 
 function getReasonIcon(name: string): React.JSX.Element {

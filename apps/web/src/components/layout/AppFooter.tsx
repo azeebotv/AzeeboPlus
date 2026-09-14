@@ -155,11 +155,7 @@ export default function AppFooter({
   };
 
   return (
-    <footer
-      className="relative"
-      style={{ backgroundColor: 'var(--hp-bg)' }}
-      role="contentinfo"
-    >
+    <footer className="relative" style={{ backgroundColor: 'var(--hp-bg)' }} role="contentinfo">
       {/* Ambient glow */}
       <div
         className="absolute inset-0 pointer-events-none"

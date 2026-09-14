@@ -18,8 +18,10 @@ function getUniverseIcon(name: string): React.JSX.Element {
   const lower = name.toLowerCase();
   if (lower.includes('game')) return <Gamepad2 className="w-4 h-4 inline mr-2 text-amber-400" />;
   if (lower.includes('sport')) return <Trophy className="w-4 h-4 inline mr-2 text-emerald-400" />;
-  if (lower.includes('reality') || lower.includes('show')) return <Tv className="w-4 h-4 inline mr-2 text-purple-400" />;
-  if (lower.includes('movie') || lower.includes('film') || lower.includes('cinema')) return <Film className="w-4 h-4 inline mr-2 text-rose-400" />;
+  if (lower.includes('reality') || lower.includes('show'))
+    return <Tv className="w-4 h-4 inline mr-2 text-purple-400" />;
+  if (lower.includes('movie') || lower.includes('film') || lower.includes('cinema'))
+    return <Film className="w-4 h-4 inline mr-2 text-rose-400" />;
   return <Sparkles className="w-4 h-4 inline mr-2 text-orange-400" />;
 }
 
@@ -205,7 +207,8 @@ export default function BrowsePage(): React.JSX.Element {
       <div
         className="pointer-events-none absolute -top-32 left-1/3 -translate-x-1/2 w-[650px] h-[450px] rounded-full blur-[140px] -z-0"
         style={{
-          background: 'radial-gradient(circle, rgba(232,66,10,0.16) 0%, rgba(204,28,28,0.05) 50%, transparent 80%)',
+          background:
+            'radial-gradient(circle, rgba(232,66,10,0.16) 0%, rgba(204,28,28,0.05) 50%, transparent 80%)',
         }}
         aria-hidden="true"
       />
@@ -222,7 +225,9 @@ export default function BrowsePage(): React.JSX.Element {
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand-orange)] animate-pulse" />
             <span className="tracking-widest uppercase text-white/70">DISCOVER</span>
           </div>
-          <h1 className="az-headline font-extrabold text-white text-3xl sm:text-4xl tracking-tight">Browse Content</h1>
+          <h1 className="az-headline font-extrabold text-white text-3xl sm:text-4xl tracking-tight">
+            Browse Content
+          </h1>
         </motion.div>
 
         {error && (
@@ -564,11 +569,19 @@ export default function BrowsePage(): React.JSX.Element {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       ) : (
-                        <div
-                          className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[var(--brand-orange)]/20 to-black/60"
-                        >
-                          <svg className="w-12 h-12 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625c.621 0 1.125-.504 1.125-1.125m-1.125 1.125h-7.5c-.621 0-1.125-.504-1.125-1.125m8.625 0V5.625m0 12.75v-1.5c0-.621-.504-1.125-1.125-1.125m0 0h-7.5m7.5 0V5.625m-8.625 12.75h-7.5m7.5 0V5.625" />
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[var(--brand-orange)]/20 to-black/60">
+                          <svg
+                            className="w-12 h-12 text-white/40"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={1.5}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625c.621 0 1.125-.504 1.125-1.125m-1.125 1.125h-7.5c-.621 0-1.125-.504-1.125-1.125m8.625 0V5.625m0 12.75v-1.5c0-.621-.504-1.125-1.125-1.125m0 0h-7.5m7.5 0V5.625m-8.625 12.75h-7.5m7.5 0V5.625"
+                            />
                           </svg>
                         </div>
                       )}
@@ -585,13 +598,15 @@ export default function BrowsePage(): React.JSX.Element {
                         <h4 className="font-bold text-white text-base mb-1 group-hover:text-[var(--brand-orange)] transition-colors line-clamp-1">
                           {item.title}
                         </h4>
-                        <p className="text-white/50 text-xs line-clamp-2 mb-3 leading-relaxed">{item.description}</p>
+                        <p className="text-white/50 text-xs line-clamp-2 mb-3 leading-relaxed">
+                          {item.description}
+                        </p>
                       </div>
                       <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                        <span className="text-xs text-white/40">{item.creator?.name || 'Azeebo Originals'}</span>
-                        <span
-                          className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-white/10 text-white group-hover:bg-[var(--brand-orange)] transition-colors"
-                        >
+                        <span className="text-xs text-white/40">
+                          {item.creator?.name || 'Azeebo Originals'}
+                        </span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-white/10 text-white group-hover:bg-[var(--brand-orange)] transition-colors">
                           Watch
                         </span>
                       </div>

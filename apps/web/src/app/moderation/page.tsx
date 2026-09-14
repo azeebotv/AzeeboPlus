@@ -75,7 +75,9 @@ export default function ModerationPage(): React.JSX.Element {
           >
             <Shield className="w-8 h-8 text-white" />
           </div>
-          <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8, color: '#ffffff' }}>Moderation Center</h1>
+          <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8, color: '#ffffff' }}>
+            Moderation Center
+          </h1>
           <p
             style={{
               color: 'rgba(255, 255, 255, 0.6)',
@@ -131,7 +133,9 @@ export default function ModerationPage(): React.JSX.Element {
                 {getModLinkIcon(link.icon)}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 2, color: '#ffffff' }}>{link.label}</h3>
+                <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 2, color: '#ffffff' }}>
+                  {link.label}
+                </h3>
                 <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 13, margin: 0 }}>
                   {link.desc}
                 </p>

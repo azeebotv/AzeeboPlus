@@ -51,7 +51,9 @@ export default function WatchPage(): React.JSX.Element {
         </p>
 
         <section style={{ marginBottom: 44 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16, color: 'white' }}>Browse by Category</h2>
+          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16, color: 'white' }}>
+            Browse by Category
+          </h2>
           <div
             style={{
               display: 'grid',
@@ -100,9 +102,7 @@ export default function WatchPage(): React.JSX.Element {
                   >
                     <Icon size={20} />
                   </div>
-                  <span style={{ fontWeight: 600, fontSize: 15, color: 'white' }}>
-                    {cat.name}
-                  </span>
+                  <span style={{ fontWeight: 600, fontSize: 15, color: 'white' }}>{cat.name}</span>
                 </Link>
               );
             })}

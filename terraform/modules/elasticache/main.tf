@@ -198,25 +198,25 @@ resource "aws_elasticache_replication_group" "main" {
   replication_group_id = "${local.name}-redis"
   description          = "Redis cluster for ${var.project_name} ${var.environment}"
 
-  node_type            = var.node_type
-  num_cache_clusters   = var.num_cache_nodes
-  engine_version       = var.engine_version
-  port                 = var.port
+  node_type          = var.node_type
+  num_cache_clusters = var.num_cache_nodes
+  engine_version     = var.engine_version
+  port               = var.port
 
   subnet_group_name    = aws_elasticache_subnet_group.main.name
   security_group_ids   = [aws_security_group.redis.id]
   parameter_group_name = aws_elasticache_parameter_group.main.name
 
   automatic_failover_enabled = var.automatic_failover_enabled
-  multi_az_enabled          = var.multi_az_enabled
+  multi_az_enabled           = var.multi_az_enabled
 
   at_rest_encryption_enabled = var.at_rest_encryption_enabled
   transit_encryption_enabled = var.transit_encryption_enabled
-  auth_token                = var.auth_token
+  auth_token                 = var.auth_token
 
-  snapshot_retention_limit = var.snapshot_retention_limit
-  snapshot_window         = var.snapshot_window
-  maintenance_window      = var.maintenance_window
+  snapshot_retention_limit   = var.snapshot_retention_limit
+  snapshot_window            = var.snapshot_window
+  maintenance_window         = var.maintenance_window
   auto_minor_version_upgrade = var.auto_minor_version_upgrade
 
   tags = merge(local.common_tags, {

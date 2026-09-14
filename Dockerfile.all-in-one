@@ -170,9 +170,13 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     echo "==> [T1] Building critical path (web, gateway, auth, user)..." && \
     pnpm --filter @azeebo/web run build && \
     echo "==> Web build complete. Checking standalone output..." && \
-    (ls -la apps/web/.next/standalone/apps/web/server.js 2>/dev/null && echo "  OK: standalone at nested path") || \
-    (ls -la apps/web/.next/standalone/server.js 2>/dev/null && echo "  OK: standalone at direct path") || \
-    (echo "  WARN: standalone server.js not found, checking directory..." && ls -la apps/web/.next/standalone/ 2>&1) ; true && \
+    (ls -la apps/web/.next/standalone/apps/web/server.js 2>/dev/null && echo "  OK: standalone at nested path") ; \
+    if [ ! -f apps/web/.next/standalone/apps/web/server.js ]; then \
+      (ls -la apps/web/.next/standalone/server.js 2>/dev/null && echo "  OK: standalone at direct path") ; \
+    fi ; \
+    if [ ! -f apps/web/.next/standalone/apps/web/server.js ] && [ ! -f apps/web/.next/standalone/server.js ]; then \
+      echo "  WARN: standalone server.js not found, checking directory..." && ls -la apps/web/.next/standalone/ 2>&1 ; \
+    fi ; true && \
     pnpm --filter @azeebo/api-gateway run build && \
     pnpm --filter @azeebo/auth-service run build && \
     pnpm --filter @azeebo/user-service run build && \
@@ -246,8 +250,8 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
         nested_src=$(echo "$nested_main" | sed 's|/src/.*||'); \
         echo "Flattening: $nested_src/src/ -> $dist/"; \
         find "$nested_src/src" -maxdepth 1 -type f \( -name "*.js" -o -name "*.d.ts" \) -exec cp {} "$dist/" \; 2>/dev/null; \
-        find "$nested_src/src" -mindepth 2 -type f \( -name "*.js" -o -name "*.d.ts" \) | while read f; do \
-          rel="${f#$nested_src/src/}"; \
+        find "$nested_src/src" -mindepth 2 -type f \( -name "*.js" -o -name "*.d.ts" \) | while read -r f; do \
+          rel="${f#"$nested_src/src/"}"; \
           mkdir -p "$dist/$(dirname "$rel")" && cp "$f" "$dist/$rel"; \
         done 2>/dev/null; \
         rm -rf "$nested_src" 2>/dev/null; \
@@ -276,7 +280,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     echo "==> Packaging workspace package dists for runtime" && \
     find packages -maxdepth 2 -name "dist" -type d -o -path "*/src/prisma/client" -type d 2>/dev/null | \
       tar czf /tmp/pkg-dist.tar.gz -C /app -T - 2>/dev/null || true
-SHELL ["/bin/sh", "-c"]
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # ---- Verify ALL outputs exist — crash if anything is missing ----
 RUN echo "==> Verifying build outputs..." && \
@@ -325,10 +329,10 @@ RUN echo "Cache bust: $CACHEBUST" && \
       -not -path "*/dist/*" \
       -not -path "*/.next/*" \
       -not -path "*/.prisma/*" \
-      | while read f; do \
+      | while read -r f; do \
         mkdir -p "/runtime/$(dirname "$f")" && cp "$f" "/runtime/$f"; \
       done; \
-    find services -maxdepth 2 -mindepth 2 -type d | while read svc; do \
+    find services -maxdepth 2 -mindepth 2 -type d | while read -r svc; do \
       if [ -d "$svc/dist" ]; then \
         mkdir -p "/runtime/$svc/dist" && cp -r "$svc/dist/." "/runtime/$svc/dist/"; \
       fi; \
@@ -336,7 +340,7 @@ RUN echo "Cache bust: $CACHEBUST" && \
         mkdir -p "/runtime/$svc/prisma" && cp -r "$svc/prisma/." "/runtime/$svc/prisma/"; \
       fi; \
     done; \
-    find packages -maxdepth 1 -mindepth 1 -type d | while read pkg; do \
+    find packages -maxdepth 1 -mindepth 1 -type d | while read -r pkg; do \
       if [ -d "$pkg/dist" ]; then \
         mkdir -p "/runtime/$pkg/dist" && cp -r "$pkg/dist/." "/runtime/$pkg/dist/"; \
       fi; \
@@ -372,7 +376,8 @@ RUN echo "Cache bust: $CACHEBUST" && \
     echo "=== Builder dist inventory ===" && \
     find services -name "main.js" -path "*/dist/*" | sort && \
     echo "=== Web standalone inventory ===" && \
-    ls -la apps/web/.next/standalone/apps/web/server.js 2>/dev/null && echo "OK: standalone/apps/web/server.js exists in builder" || echo "INFO: standalone at nested path (apps/web/.next/standalone/apps/web/)" && \
+    ls -la apps/web/.next/standalone/apps/web/server.js 2>/dev/null && echo "OK: standalone/apps/web/server.js exists in builder" ; \
+    if [ ! -f apps/web/.next/standalone/apps/web/server.js ]; then echo "INFO: standalone at nested path (apps/web/.next/standalone/apps/web/)"; fi && \
     echo "=== /runtime dist inventory ===" && \
     find /runtime/services -name "main.js" -path "*/dist/*" 2>/dev/null | sort && \
     echo "=== Verifying critical dist files ===" && \
@@ -385,6 +390,10 @@ RUN echo "Cache bust: $CACHEBUST" && \
 # Stage 2: Runtime — lean image with production deps only
 # ============================================================
 FROM node:22.16.0-bookworm-slim
+
+# Stage 2 RUNs pipe find(1) output; keep pipefail semantics identical to the
+# builder stage so a failed find is never silently swallowed under /bin/sh.
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -431,14 +440,21 @@ RUN if [ -d /app/apps/web/standalone/apps/web ] && [ ! -f /app/apps/web/standalo
 
 # Verify critical files exist before proceeding (warn only — entrypoint will retry)
 RUN echo "==> Verifying critical build artifacts..." && \
-    OK=true && \
-    (test -f /app/apps/web/standalone/server.js || test -f /app/apps/web/standalone/apps/web/server.js) && \
-      echo "  OK: web-app standalone server.js" || \
-      (echo "  WARN: web-app standalone server.js not found — will retry in entrypoint" && OK=false) && \
-    test -f /app/services/core/auth-service/dist/main.js && echo "  OK: auth-service" || \
-      (echo "  WARN: auth-service/dist/main.js not found" && OK=false) && \
-    test -f /app/services/gateway/api-gateway/dist/main.js && echo "  OK: api-gateway" || \
-      (echo "  WARN: api-gateway/dist/main.js not found" && OK=false) && \
+    if [ -f /app/apps/web/standalone/server.js ] || [ -f /app/apps/web/standalone/apps/web/server.js ]; then \
+      echo "  OK: web-app standalone server.js"; \
+    else \
+      echo "  WARN: web-app standalone server.js not found — will retry in entrypoint"; \
+    fi && \
+    if [ -f /app/services/core/auth-service/dist/main.js ]; then \
+      echo "  OK: auth-service"; \
+    else \
+      echo "  WARN: auth-service/dist/main.js not found"; \
+    fi && \
+    if [ -f /app/services/gateway/api-gateway/dist/main.js ]; then \
+      echo "  OK: api-gateway"; \
+    else \
+      echo "  WARN: api-gateway/dist/main.js not found"; \
+    fi && \
     echo "  Build artifact check complete (warnings are non-fatal)"
 
 # Fresh production install — only production dependencies, no devDeps
@@ -453,11 +469,13 @@ RUN tar xzf /tmp/pkg-dist.tar.gz -C /app 2>/dev/null && \
     echo "  Restored workspace package dist directories from builder"
 
 # Verify standalone output survived pnpm install (warn only)
-RUN (test -f /app/apps/web/standalone/server.js || test -f /app/apps/web/standalone/apps/web/server.js) && \
-      echo "  OK: server.js after pnpm install" || \
-    (echo "  WARN: server.js MISSING after pnpm install — entrypoint will handle" && \
-     echo "  /app/apps/web/ contents:" && ls -la /app/apps/web/ 2>&1 && \
-     echo "  Standalone contents:" && ls -la /app/apps/web/standalone/ 2>&1)
+RUN if [ -f /app/apps/web/standalone/server.js ] || [ -f /app/apps/web/standalone/apps/web/server.js ]; then \
+      echo "  OK: server.js after pnpm install"; \
+    else \
+      echo "  WARN: server.js MISSING after pnpm install — entrypoint will handle" && \
+      echo "  /app/apps/web/ contents:" && ls -la /app/apps/web/ 2>&1 && \
+      echo "  Standalone contents:" && ls -la /app/apps/web/standalone/ 2>&1; \
+    fi
 
 # All post-install setup in a single layer:
 #   1. Symlink workspace packages (avoid duplicate node_modules copies)
@@ -467,8 +485,8 @@ RUN (test -f /app/apps/web/standalone/server.js || test -f /app/apps/web/standal
 #   5. Copy @prisma/client shim to each service's local node_modules
 #   6. Aggressive cleanup of all caches and temp files
 RUN mkdir -p /app/node_modules/@azeebo && \
-    for pkg_json in $(find packages services apps -maxdepth 3 -name "package.json" \
-      -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/.prisma/*"); do \
+    find packages services apps -maxdepth 3 -name "package.json" \
+      -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/.prisma/*" | while read -r pkg_json; do \
       name=$(node -e "process.stdout.write(require('./$pkg_json').name||'')" 2>/dev/null); \
       if [ -n "$name" ]; then \
         target=$(realpath "$(dirname "$pkg_json")"); \
@@ -536,14 +554,14 @@ RUN echo "==> Installing per-service Prisma clients from builder stage..." && \
     done && \
     echo "==> Prisma clients installation complete" && \
     echo "==> Pruning unused Prisma query engine binaries (keeping linux-glibc only)..." && \
-    find /app -path '*/node_modules/.prisma/client' -type d 2>/dev/null | while read d; do \
+    find /app -path '*/node_modules/.prisma/client' -type d 2>/dev/null | while read -r d; do \
       find "$d" -maxdepth 1 -name 'libquery_engine-*' ! -name '*linux-glibc*' -exec rm -f {} + 2>/dev/null; \
     done && \
-    find /app -path '*/node_modules/@prisma/client' -type d 2>/dev/null | while read d; do \
+    find /app -path '*/node_modules/@prisma/client' -type d 2>/dev/null | while read -r d; do \
       find "$d" -maxdepth 1 -name 'libquery_engine-*' ! -name '*linux-glibc*' -exec rm -f {} + 2>/dev/null; \
     done && \
     rm -rf /root/.npm /root/.cache /root/.local 2>/dev/null; \
-    find /app/node_modules -name "*.md" -o -name "*.txt" -o -name "*.map" -o -name "LICENSE*" -o -name "CHANGELOG*" | xargs rm -f 2>/dev/null; \
+    find /app/node_modules \( -name "*.md" -o -name "*.txt" -o -name "*.map" -o -name "LICENSE*" -o -name "CHANGELOG*" \) -exec rm -f {} + 2>/dev/null; \
     find /app/node_modules -name "__tests__" -type d -exec rm -rf {} + 2>/dev/null; \
     find /app/node_modules -name "test" -type d -exec rm -rf {} + 2>/dev/null; \
     find /app/node_modules -name "docs" -type d -exec rm -rf {} + 2>/dev/null; \
@@ -567,6 +585,6 @@ RUN useradd -r -s /bin/false -u 65532 nodejs && \
 EXPOSE 80 443 3013 4000 4014 4016
 
 HEALTHCHECK --interval=30s --timeout=10s --retries=5 --start-period=300s \
-  CMD curl -f http://localhost:80/health || exit 1
+  CMD ["curl", "-f", "http://localhost:80/health"]
 
 ENTRYPOINT ["/entrypoint.sh"]

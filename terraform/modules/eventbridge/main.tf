@@ -52,7 +52,7 @@ resource "aws_cloudwatch_event_rule" "rules" {
   name           = each.value.name
   description    = each.value.description
   event_bus_name = aws_cloudwatch_event_bus.main.name
-  event_pattern = each.value.event_pattern
+  event_pattern  = each.value.event_pattern
   state          = each.value.enabled ? "ENABLED" : "DISABLED"
 }
 

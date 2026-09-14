@@ -8,6 +8,13 @@ env:
   NODE_VERSION: '22.16.0'
   PNPM_VERSION: '10.33.2'
 
+# PR-title validation and other PR-facing steps call the pull-requests API;
+# without an explicit grant the default token is read/write-contents only and
+# the calls fail with "Resource not accessible by integration".
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   pr-validation:
     name: PR Validation
@@ -58,10 +65,15 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm run lint
-      # Ratchet: azeebo-custom/require-map-and-throw warnings may only
-      # decrease over time (per-workspace baseline). A new fabricated-4xx
-      # catch block fails here even though the rule itself is still 'warn'.
+      # Ratchet: per-rule, per-workspace warning baselines from
+      # scripts/promotion-rules.json. require-map-and-throw is fully gated
+      # (error, baseline 0 = canary — see the script header for both postures);
+      # the gate also floors any future warn-while-migrating rule.
       - run: pnpm run check:lint-ratchet
+      # Tripwire: every rule in scripts/promotion-rules.json must resolve to
+      # 'error' severity for every service — fails if the rule is downgraded,
+      # scope-exceptioned, or left unconfigured for a service.
+      - run: pnpm run check:rule-promotion
 
   conventions-pr:
     name: Flag & Swagger Conventions
@@ -274,7 +286,11 @@ jobs:
       # somewhere the schema does not declare, or a skipped rewrite) that
       # would otherwise only surface as confusing type errors below.
       - run: node scripts/check-prisma-client-stale.mjs
+      # Repo-root tsc peaked past the runner's default heap on this branch
+      # (exit 134 / OOM); give it explicit headroom.
       - run: pnpm run typecheck
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
 
   test-pr:
     name: Test PR
@@ -320,6 +336,10 @@ jobs:
       # suffers, so CI and local runs exercise the exact same suites/flags.
       # CI opts into --fail-fast (abort at the first failing workspace) and
       # writes the JSON summary; local runs keep the full report by default.
+      # Workspace packages must be dist-built first (feature-flags,
+      # shared-services, ...): ts-jest resolves them via package.json main,
+      # which points at dist/ that a fresh checkout does not have.
+      - run: pnpm --filter './packages/**' run build
       - name: Full serial test sweep
         run: pnpm run test:sweep -- --fail-fast --json-out=/tmp/test-sweep-summary.json
       - name: Surface sweep summary

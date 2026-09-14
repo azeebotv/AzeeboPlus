@@ -192,7 +192,8 @@ export default function LibraryPage(): React.JSX.Element {
       <div
         className="pointer-events-none absolute -top-32 left-1/4 -translate-x-1/2 w-[600px] h-[400px] rounded-full blur-[140px] -z-0"
         style={{
-          background: 'radial-gradient(circle, rgba(232,66,10,0.16) 0%, rgba(204,28,28,0.05) 50%, transparent 80%)',
+          background:
+            'radial-gradient(circle, rgba(232,66,10,0.16) 0%, rgba(204,28,28,0.05) 50%, transparent 80%)',
         }}
         aria-hidden="true"
       />
@@ -342,8 +343,18 @@ export default function LibraryPage(): React.JSX.Element {
                             'linear-gradient(135deg, rgba(232,66,10,0.15), rgba(24,21,30,0.8))',
                         }}
                       >
-                        <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h1.5C5.496 19.5 6 18.996 6 18.375m-3.75 0V5.625m0 12.75a1.125 1.125 0 001.125 1.125m0 0h1.5m-2.625-1.125V5.625m0 0A1.125 1.125 0 013.375 4.5h17.25c.621 0 1.125.504 1.125 1.125v12.75c0 .621-.504 1.125-1.125 1.125m-17.25-13.875h17.25" />
+                        <svg
+                          className="w-12 h-12"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={1.5}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h1.5C5.496 19.5 6 18.996 6 18.375m-3.75 0V5.625m0 12.75a1.125 1.125 0 001.125 1.125m0 0h1.5m-2.625-1.125V5.625m0 0A1.125 1.125 0 013.375 4.5h17.25c.621 0 1.125.504 1.125 1.125v12.75c0 .621-.504 1.125-1.125 1.125m-17.25-13.875h17.25"
+                          />
                         </svg>
                       </div>
                     )}
@@ -411,12 +422,24 @@ export default function LibraryPage(): React.JSX.Element {
                         style={{ border: '1px solid rgba(255,255,255,0.15)' }}
                       >
                         {favorites.some((f) => f.id === item.id) ? (
-                          <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+                          <svg
+                            className="w-4 h-4 fill-current"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                          >
                             <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                           </svg>
                         ) : (
-                          <svg className="w-4 h-4 fill-none stroke-current stroke-2" viewBox="0 0 24 24" aria-hidden="true">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                          <svg
+                            className="w-4 h-4 fill-none stroke-current stroke-2"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
+                            />
                           </svg>
                         )}
                       </button>

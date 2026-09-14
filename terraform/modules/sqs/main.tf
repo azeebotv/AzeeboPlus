@@ -11,14 +11,14 @@ variable "environment" {
 variable "queues" {
   description = "SQS queues to create"
   type = list(object({
-    name                       = string
-    visibility_timeout_seconds = optional(number, 30)
-    message_retention_seconds  = optional(number, 86400)
-    receive_wait_time_seconds  = optional(number, 20)
-    max_receive_count          = optional(number, 5)
-    dead_letter_target_arn     = optional(string)
-    encryption_enabled         = optional(bool, true)
-    fifo_queue                 = optional(bool, false)
+    name                        = string
+    visibility_timeout_seconds  = optional(number, 30)
+    message_retention_seconds   = optional(number, 86400)
+    receive_wait_time_seconds   = optional(number, 20)
+    max_receive_count           = optional(number, 5)
+    dead_letter_target_arn      = optional(string)
+    encryption_enabled          = optional(bool, true)
+    fifo_queue                  = optional(bool, false)
     content_based_deduplication = optional(bool, false)
   }))
   default = []
@@ -39,8 +39,8 @@ resource "aws_sqs_queue" "queues" {
   message_retention_seconds  = each.value.message_retention_seconds
   receive_wait_time_seconds  = each.value.receive_wait_time_seconds
 
-  fifo_queue                        = each.value.fifo_queue
-  content_based_deduplication       = each.value.content_based_deduplication
+  fifo_queue                  = each.value.fifo_queue
+  content_based_deduplication = each.value.content_based_deduplication
 
   dynamic "redrive_policy" {
     for_each = each.value.dead_letter_target_arn != null ? [1] : []

@@ -61,7 +61,8 @@ function SportsPageContent(): React.JSX.Element {
           <div
             className="relative h-[500px] flex items-center justify-center overflow-hidden"
             style={{
-              background: 'radial-gradient(ellipse at top, rgba(232,66,10,0.18) 0%, #100e14 50%, #0b090e 100%)',
+              background:
+                'radial-gradient(ellipse at top, rgba(232,66,10,0.18) 0%, #100e14 50%, #0b090e 100%)',
               borderBottom: '1px solid rgba(255,255,255,0.08)',
             }}
           >
@@ -84,7 +85,16 @@ function SportsPageContent(): React.JSX.Element {
                   color: 'var(--brand-orange, #E8420A)',
                 }}
               >
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="36"
+                  height="36"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
                   <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
                   <path d="M4 22h16" />
@@ -96,8 +106,12 @@ function SportsPageContent(): React.JSX.Element {
               <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold tracking-wider uppercase mb-3 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 Live & Upcoming Sports
               </span>
-              <h2 className="text-4xl sm:text-5xl font-bold text-white mb-3 tracking-tight">{matches[0].title}</h2>
-              <p className="text-white/70 text-base sm:text-lg mb-8 max-w-2xl mx-auto leading-relaxed">{matches[0].description}</p>
+              <h2 className="text-4xl sm:text-5xl font-bold text-white mb-3 tracking-tight">
+                {matches[0].title}
+              </h2>
+              <p className="text-white/70 text-base sm:text-lg mb-8 max-w-2xl mx-auto leading-relaxed">
+                {matches[0].description}
+              </p>
               <div className="flex items-center justify-center gap-4 flex-wrap">
                 <Link href={`/watch/${matches[0].id}`}>
                   <button

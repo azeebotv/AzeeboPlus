@@ -128,7 +128,9 @@ export default function AgbalaPathPage() {
           >
             {getPathIcon(pathConfig.icon)}
           </div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, color: '#ffffff' }}>{pathConfig.name}</h1>
+          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, color: '#ffffff' }}>
+            {pathConfig.name}
+          </h1>
           <p style={{ color: 'rgba(255,255,255,0.7)', maxWidth: 500, margin: '0 auto' }}>
             {pathConfig.description}
           </p>
@@ -203,7 +205,9 @@ export default function AgbalaPathPage() {
                       />
                     </div>
                   )}
-                  <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 4, color: '#ffffff' }}>{char.name}</h3>
+                  <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 4, color: '#ffffff' }}>
+                    {char.name}
+                  </h3>
                   {char.description && (
                     <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, lineHeight: 1.4 }}>
                       {char.description}

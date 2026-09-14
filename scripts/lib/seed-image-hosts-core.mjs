@@ -32,7 +32,14 @@ const MODULE_REL = 'scripts/seeders/seed-image-hosts.ts';
 const WEB_CONFIG_REL = 'apps/web/next.config.js';
 
 /** Hosts that appear in seeder sources as links (not media) and are exempt. */
-const LINK_HOST_EXEMPTIONS = new Set(['instagram.com', 'youtube.com', 'www.youtube.com']);
+const LINK_HOST_EXEMPTIONS = new Set([
+  'instagram.com',
+  'youtube.com',
+  'www.youtube.com',
+  // Slack webhook endpoints (admin-data-freshness notifications): outbound
+  // HTTP POST targets, never image-optimizer input.
+  'hooks.slack.com',
+]);
 
 /**
  * Path shapes that mark a URL as a LINK (page/stream/doc), not image-optimizer
@@ -41,7 +48,16 @@ const LINK_HOST_EXEMPTIONS = new Set(['instagram.com', 'youtube.com', 'www.youtu
  *   /terms, /privacy  → legal pages stored in system_settings
  *   /live/            → stream landing pages in demo screening rows
  */
-const LINK_URL_EXEMPTIONS = [/\/terms(\b|\/?$)/, /\/privacy(\b|\/?$)/, /\/live\//];
+const LINK_URL_EXEMPTIONS = [
+  /\/terms(\b|\/?$)/,
+  /\/privacy(\b|\/?$)/,
+  /\/live\//,
+  // XML DOCTYPE system identifiers (e.g. http://www.apple.com/DTDs/…dtd inside a
+  // generated launchd plist) are markup boilerplate, not fetchable media or
+  // navigable links — any host can appear there, so exempt the exact DTD shape
+  // (a .jpg under /DTDs/ stays flagged).
+  /^\/DTDs\/.+\.dtd$/,
+];
 
 /**
  * Next.js-remotePatterns hostname matching, modeled exactly:

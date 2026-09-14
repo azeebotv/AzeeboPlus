@@ -69,7 +69,9 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @azeebo/mobile lint --if-present
+      # No `--if-present`: pnpm forwards it to the script's binary, and eslint
+      # rejects it as an unknown option. The mobile lint script exists.
+      - run: pnpm --filter @azeebo/mobile lint
 
   lint-backend:
     name: Lint Backend Services
@@ -85,8 +87,13 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm -r lint
-      # Ratchet: azeebo-custom/require-map-and-throw warnings may only
-      # decrease over time (per-workspace baseline, see
-      # scripts/lint-warning-baseline.json).
+      # Ratchet: per-rule, per-workspace warning baselines from
+      # scripts/promotion-rules.json. require-map-and-throw is fully gated
+      # (error, baseline 0 = canary — see the script header for both postures);
+      # the gate also floors any future warn-while-migrating rule.
       - run: pnpm run check:lint-ratchet
+      # Tripwire: every rule in scripts/promotion-rules.json must resolve to
+      # 'error' severity for every service — fails if the rule is downgraded,
+      # scope-exceptioned, or left unconfigured for a service.
+      - run: pnpm run check:rule-promotion
 

@@ -311,6 +311,42 @@ describe('diffSeederEmissions — rule 3 (injected sources)', () => {
     });
     assert.equal(problems.length, 1);
   });
+
+  test('XML DOCTYPE DTD system-identifier URLs are exempt (markup, not links or media)', () => {
+    const problems = diffSeederEmissions('/unused', {
+      seedHosts: SEED_HOSTS,
+      allowHosts: ALLOW,
+      emissionSources: {
+        // the exact shape the launcher-plist heredoc emits
+        'scripts/database/admin-data-freshness.sh':
+          '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">',
+      },
+    });
+    assert.deepEqual(problems, []);
+  });
+
+  test('a DTD-shaped path on a MEDIA-looking url is still flagged (exemption is path-only)', () => {
+    const problems = diffSeederEmissions('/unused', {
+      seedHosts: SEED_HOSTS,
+      allowHosts: ALLOW,
+      emissionSources: {
+        'scripts/demo-content/data.sql': "'https://evil.example.net/DTDs/cover.jpg'",
+      },
+    });
+    assert.equal(problems.length, 1);
+  });
+
+  test('hooks.slack.com webhook endpoints are exempt (outbound POST target, not optimizer input)', () => {
+    const problems = diffSeederEmissions('/unused', {
+      seedHosts: SEED_HOSTS,
+      allowHosts: ALLOW,
+      emissionSources: {
+        'scripts/database/admin-data-freshness.sh':
+          "'https://hooks.slack.com/services/T000/B000/XXXX'",
+      },
+    });
+    assert.deepEqual(problems, []);
+  });
 });
 
 describe('checkSeedImageHosts — real repo', () => {
