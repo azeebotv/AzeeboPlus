@@ -228,7 +228,11 @@ annotations (e.g. the canonical billing message), and maintains ONE tracking
 issue (`ci-dark` label): creates on first darkness, updates while it
 persists, closes automatically when a sweep finds CI healthy, reopens if it
 returns. During a full account outage the schedule itself can't run — the
-same script doubles as a local-cron backstop (see RUNBOOK.md).
+same script doubles as a local-cron backstop (see RUNBOOK.md). A dev-machine
+heartbeat — `scripts/ci-dark-launcher.sh install` (LaunchAgent, every 30 min,
+`status`/`uninstall` to manage) — removes the two schedule blind spots
+entirely: new workflows only register on the default branch, and a full
+Actions outage kills the schedule itself.
 
 The sweep also lifts stranded PRs: every **open PR whose head sha has dark
 batteries** gets ONE marker comment (`azeebo:ci-dark-watchdog:pr`) — created
