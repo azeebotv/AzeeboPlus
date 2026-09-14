@@ -1,0 +1,44 @@
+name: CI Dark Watchdog
+
+# Detects silent Actions outages: whole batteries whose jobs fail before any
+# step executes (billing blocks, spending limits, runner capacity). Opens ONE
+# tracking issue when darkness appears, updates it while it persists, and
+# closes it automatically when a sweep finds CI healthy again.
+#
+# Note: during a FULL account outage this workflow dies with the rest — that
+# is expected. The same script doubles as a local-cron backstop:
+#   GITHUB_TOKEN=... GITHUB_REPOSITORY=owner/repo node scripts/ci-dark-watchdog.mjs
+# (see RUNBOOK.md → "CI dark watchdog").
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+# checkout needs contents:read; the sweep writes the tracking issue.
+# Job-level permissions must not strip the default grant (see 33ffeb06).
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
+concurrency:
+  group: ci-dark-watchdog
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    name: Sweep for dark batteries
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Sweep recent Actions runs and maintain the tracking issue
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          # Narrow the sweep to the long-lived branch carrying current work.
+          # Unset → repo-wide (main, develop, and PR-head batteries).
+          WATCHDOG_BRANCH: Major-Upgrade
+        run: node scripts/ci-dark-watchdog.mjs

@@ -16,6 +16,7 @@
     "check:prisma-client": "node scripts/check-prisma-client-stale.mjs",
     "check:dev-wiring": "node scripts/check-dev-wiring.mjs",
     "check:git-hooks": "node scripts/check-git-hooks.mjs",
+    "check:ci-dark": "node scripts/ci-dark-watchdog.mjs",
     "check:seed-image-hosts": "node scripts/check-seed-image-hosts.mjs",
     "check:build-chain": "node scripts/check-build-chain.mjs",
     "check:prisma-migrations": "node scripts/check-prisma-migrations.mjs",

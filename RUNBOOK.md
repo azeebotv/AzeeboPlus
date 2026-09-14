@@ -358,6 +358,41 @@ Mechanics and guarantees (verified against prisma 6.19.3):
 - Memory > 80%: Warning
 - Database connections > 80%: Critical
 
+### CI dark watchdog
+
+GitHub Actions can fail **before any step runs** — account billing blocks,
+spending limits, runner-capacity loss. PRs then show red X's with no logs,
+and every scheduled job that would alert dies the same way: CI goes dark
+silently. The watchdog (`.github/workflows/ci-dark-watchdog.yml`, every
+30 min) detects that signature — a failed run where every job executed zero
+steps within minutes — and maintains one tracking issue (`ci-dark` label):
+it opens on first darkness with the annotated cause, updates while it
+persists, and closes itself when a sweep finds CI healthy.
+
+It also comments directly on **open PRs whose head checks failed dark** (one
+maintained comment per PR: "not a code failure — nothing to debug here"),
+so authors don't burn time debugging an outage. Real step-executing failures
+never get the comment.
+
+**When the issue fires:**
+
+1. Open the issue; the cause column names the blocker (usually "billing
+   block" → a human fixes Settings → Billing & plans).
+2. After fixing, re-run failed jobs from any battery, or just wait for the
+   next sweep — the watchdog closes the issue automatically once no dark
+   batteries remain.
+
+**If the outage also kills the watchdog schedule (full account block):**
+run the sweep from any machine with repo access as a backstop:
+
+```bash
+GITHUB_TOKEN=<token-with-repo-scope> GITHUB_REPOSITORY=azeebotv/AzeeboPlus \
+  pnpm check:ci-dark            # acts (creates/updates/closes the issue)
+  # add --dry-run after the script name to preview only
+  # set WATCHDOG_BRANCH=Major-Upgrade to scope the sweep to one branch
+  # (the scheduled workflow pins it there; unset = repo-wide)
+```
+
 ## Backup & Recovery
 
 ### Database Backup

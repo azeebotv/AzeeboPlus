@@ -28,6 +28,7 @@ Two conventions hold across all of them:
 | `check:dev-wiring` | Flag & Swagger Conventions | — |
 | `check:build-chain` | Flag & Swagger Conventions | — |
 | `check:git-hooks` | Flag & Swagger Conventions | — |
+| `check:ci-dark` | CI Dark Watchdog (schedule + workflow_dispatch) | — |
 | `check:env` | Flag & Swagger Conventions | — |
 | `check:seed-image-hosts` | Flag & Swagger Conventions | — |
 | swagger-consistency | Flag & Swagger Conventions (invoked directly) | — |
@@ -212,6 +213,33 @@ for every new clone, so CI is the backstop.
 **Fix:** restore/`chmod +x`/`git add scripts/hooks/pre-commit`.
 
 ---
+
+### `check:ci-dark` — Actions darkness watchdog (scheduled, not a PR gate)
+
+**Invariant:** CI cannot go dark silently. A "dark battery" is a workflow run
+whose jobs all fail **without executing a single step** within minutes — the
+signature of account billing blocks, spending-limit exhaustion, or runner
+capacity loss. Not a code failure, and invisible to PR triage (red X, no log).
+
+Behavior: a scheduled sweep (`.github/workflows/ci-dark-watchdog.yml`, every
+30 min) classifies recent failed runs via
+`scripts/lib/ci-dark-watchdog-core.mjs`, extracts the cause from job
+annotations (e.g. the canonical billing message), and maintains ONE tracking
+issue (`ci-dark` label): creates on first darkness, updates while it
+persists, closes automatically when a sweep finds CI healthy, reopens if it
+returns. During a full account outage the schedule itself can't run — the
+same script doubles as a local-cron backstop (see RUNBOOK.md).
+
+The sweep also lifts stranded PRs: every **open PR whose head sha has dark
+batteries** gets ONE marker comment (`azeebo:ci-dark-watchdog:pr`) — created
+on first darkness, updated in place as the outage changes, no duplicate and
+no churn on unchanged sweeps. PR heads are probed independently of the
+issue sweep's branch scope (PR batteries attach to head shas, not the base
+branch). Runs where jobs executed real steps are never commented — that's
+author-triage territory, not darkness.
+
+**Fix:** read the tracking issue's cause column; billing blocks need a human
+in Settings → Billing & plans.
 
 ## Prisma client & schema
 
