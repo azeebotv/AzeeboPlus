@@ -244,7 +244,17 @@ test('decidePrComment: none when the rendered body is unchanged (no churn)', () 
   assert.deepEqual(d, { action: 'none' });
 });
 
-test('decidePrComment: update in place when the detail changes (timestamp, battery set)', () => {
+test('decidePrComment: timestamp-only difference stays none (scheduled-sweep churn guard)', () => {
+  // Same outage rendered in two different minutes: the scheduled sweep runs
+  // every 30 min and must NOT PATCH the comment for the timestamp alone.
+  const old = renderPrComment(darkFixtures, { now: '2026-09-14 12:16 UTC', headSha: 'abc' });
+  const fresh = renderPrComment(darkFixtures, { now: '2026-09-14 12:46 UTC', headSha: 'abc' });
+  assert.notEqual(old, fresh, 'bodies differ (timestamp)');
+  const d = decidePrComment(fresh, [{ id: 11, body: old }]);
+  assert.deepEqual(d, { action: 'none' });
+});
+
+test('decidePrComment: update in place when the detail changes (battery set)', () => {
   const old = renderPrComment([darkFixtures[0]], { now: 'old', headSha: 'abc' });
   const fresh = renderPrComment(darkFixtures, { now: 'new', headSha: 'abc' });
   const d = decidePrComment(fresh, [{ id: 11, body: old }]);
@@ -254,7 +264,7 @@ test('decidePrComment: update in place when the detail changes (timestamp, batte
 
 test('decidePrComment: multiple prior comments → the newest marker comment wins', () => {
   const older = renderPrComment([darkFixtures[0]], { now: 'old', headSha: 'abc' });
-  const newer = renderPrComment(darkFixtures, { now: 'mid', headSha: 'abc' });
+  const newer = renderPrComment([darkFixtures[0]], { now: 'mid', headSha: 'abc' });
   const fresh = renderPrComment(darkFixtures, { now: 'new', headSha: 'abc' });
   const d = decidePrComment(fresh, [
     { id: 1, body: older },
