@@ -12,6 +12,11 @@
  * injected sources (no filesystem setup needed for the rule logic), then a
  * real-repo assertion that the check is green on the actual tree and a
  * discriminating drift-injection probe against real files.
+ *
+ * Rule 4 (minimality) is pinned separately: patternCoversPattern must accept
+ * exactly the (covering, covered) pattern pairs — a wrong accept would delete
+ * a needed entry from next.config.js, a wrong reject would allow the config
+ * to grow redundant entries forever.
  */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
@@ -25,6 +30,8 @@ import {
   collectSeederFiles,
   collectEmissionFiles,
   hostMatchesAllowlist,
+  patternCoversPattern,
+  diffAllowlistRedundancy,
   diffSeederEmissions,
   checkSeedImageHosts,
 } from '../lib/seed-image-hosts-core.mjs';
@@ -92,6 +99,152 @@ describe('extractAllowlistedHosts', () => {
     const { hosts, error } = extractAllowlistedHosts('module.exports = { images: {} };');
     assert.equal(hosts, null);
     assert.match(error, /remotePatterns not found/);
+  });
+
+  test('dedupe:false preserves literal duplicate entries (minimality rule input)', () => {
+    const src = CONFIG(['a.example', 'a.example']);
+    assert.deepEqual(extractAllowlistedHosts(src).hosts, ['api.azeeboplus.com', 'a.example']);
+    assert.deepEqual(extractAllowlistedHosts(src, { dedupe: false }).hosts, [
+      'api.azeeboplus.com',
+      'a.example',
+      'a.example',
+    ]);
+  });
+});
+
+describe('patternCoversPattern — minimality coverage semantics', () => {
+  test('a pattern covers itself (literal duplicate); distinct literals never cover', () => {
+    assert.equal(patternCoversPattern('cdn.azeebo.test', 'cdn.azeebo.test'), true);
+    assert.equal(patternCoversPattern('a.example', 'b.example'), false);
+  });
+
+  test('*.suffix covers an exact host only one label under the suffix', () => {
+    assert.equal(patternCoversPattern('*.azeeboplus.com', 'cdn.azeeboplus.com'), true);
+    assert.equal(
+      patternCoversPattern('*.azeeboplus.com', 'api.media.azeeboplus.com'),
+      false,
+      'two labels NOT covered by *'
+    );
+    assert.equal(
+      patternCoversPattern('*.azeeboplus.com', 'azeeboplus.com'),
+      false,
+      'apex NOT covered by *'
+    );
+    assert.equal(patternCoversPattern('*.azeeboplus.com', 'cdn.azeebo.test'), false);
+  });
+
+  test('**.suffix covers an exact host at any depth under the suffix, never the apex', () => {
+    assert.equal(patternCoversPattern('**.azeeboplus.tv', 'media.azeeboplus.tv'), true);
+    assert.equal(patternCoversPattern('**.azeeboplus.tv', 'a.b.media.azeeboplus.tv'), true);
+    assert.equal(patternCoversPattern('**.azeeboplus.tv', 'azeeboplus.tv'), false);
+  });
+
+  test('** covers * on the same suffix; * never covers **', () => {
+    assert.equal(patternCoversPattern('**.azeeboplus.com', '*.azeeboplus.com'), true);
+    assert.equal(patternCoversPattern('*.azeeboplus.com', '**.azeeboplus.com'), false);
+  });
+
+  test('** covers deeper-suffix wildcards; siblings and shallower are not covered', () => {
+    assert.equal(patternCoversPattern('**.azeeboplus.com', '**.cdn.azeeboplus.com'), true);
+    // `*` covers exactly-one-label hosts; `*.cdn.…` covers two-label hosts
+    // (label + `.cdn.…` suffix) that `*.azeeboplus.com` can never match.
+    assert.equal(patternCoversPattern('*.azeeboplus.com', '*.cdn.azeeboplus.com'), false);
+    assert.equal(
+      patternCoversPattern('**.cdn.azeeboplus.com', '**.azeeboplus.com'),
+      false,
+      'shallower suffix covers MORE hosts — not the reverse'
+    );
+    assert.equal(
+      patternCoversPattern('**.azeebo.com', '**.azeeboplus.com'),
+      false,
+      'sibling suffixes are unrelated'
+    );
+    // `*` never covers a DIFFERENT `*` pattern: *.x.cdn.… matches b.x.cdn.…
+    // (two labels under cdn.…), which *.cdn.… (exactly one label) cannot.
+    assert.equal(patternCoversPattern('*.cdn.azeeboplus.com', '*.x.cdn.azeeboplus.com'), false);
+    // but ** does cover a deeper *-suffixed pattern.
+    assert.equal(patternCoversPattern('**.cdn.azeeboplus.com', '*.x.cdn.azeeboplus.com'), true);
+  });
+
+  test('a wildcard covers its exact one-label subdomain (its own coverage set)', () => {
+    // *.suffix matches the concrete host cdn.suffix (one label under the
+    // suffix), so listing both is redundant — but the apex is a DIFFERENT
+    // concrete host the wildcard never matches, so apex+wildcard stays legal.
+    assert.equal(patternCoversPattern('*.azeeboplus.com', 'cdn.azeeboplus.com'), true);
+    assert.equal(patternCoversPattern('*.azeeboplus.com', 'azeeboplus.com'), false);
+  });
+
+  test('exact patterns never cover wildcards', () => {
+    assert.equal(patternCoversPattern('cdn.example', '*.example'), false);
+    assert.equal(patternCoversPattern('cdn.example', '**.example'), false);
+  });
+
+  test('distinct from hostMatchesAllowlist: pattern strings are not concrete hosts', () => {
+    // hostMatchesAllowlist('deep.a.com', ['**.a.com']) is the CONCRETE-host
+    // question; patternCoversPattern('**.a.com', '*.a.com') is the
+    // PATTERN-level one — every host `*.a.com` can match (one label under
+    // a.com) is also matched by `**.a.com`, so the * entry is redundant.
+    assert.equal(hostMatchesAllowlist('deep.a.com', ['**.a.com']), true);
+    assert.equal(patternCoversPattern('**.a.com', '*.a.com'), true);
+  });
+});
+
+describe('diffAllowlistRedundancy — rule 4 (injected entries)', () => {
+  test('literal duplicate is flagged', () => {
+    const problems = diffAllowlistRedundancy('', { allowEntries: ['a.example', 'a.example'] });
+    assert.equal(problems.length, 1);
+    assert.equal(problems[0].code, 'REDUNDANT_ALLOWLIST_ENTRY');
+    assert.match(problems[0].message, /"a\.example" is fully covered by "a\.example"/);
+    assert.match(problems[0].fix, /delete the \{ hostname: 'a\.example' \} entry/);
+  });
+
+  test('exact host under a covering wildcard is flagged', () => {
+    const problems = diffAllowlistRedundancy('', {
+      allowEntries: ['*.azeeboplus.com', 'cdn.azeeboplus.com'],
+    });
+    assert.equal(problems.length, 1);
+    assert.match(problems[0].message, /"cdn\.azeeboplus\.com" is fully covered by "\*\.azeeboplus\.com"/);
+  });
+
+  test('apex + wildcard is NOT flagged — * does not cover the apex in Next.js', () => {
+    const problems = diffAllowlistRedundancy('', {
+      allowEntries: ['azeeboplus.com', '*.azeeboplus.com'],
+    });
+    assert.deepEqual(problems, []);
+  });
+
+  test('sibling wildcards on different TLDs are NOT flagged', () => {
+    const problems = diffAllowlistRedundancy('', {
+      allowEntries: ['*.azeeboplus.com', '*.azeeboplus.tv'],
+    });
+    assert.deepEqual(problems, []);
+  });
+
+  test('every redundant entry is flagged (first coverage wins in the message)', () => {
+    const problems = diffAllowlistRedundancy('', {
+      allowEntries: ['**.a.example', '*.a.example', 'x.a.example'],
+    });
+    assert.equal(problems.length, 2);
+    assert.match(problems[0].message, /"\*\.a\.example" is fully covered by "\*\*\.a\.example"/);
+    assert.match(problems[1].message, /"x\.a\.example" is fully covered by "\*\*\.a\.example"/);
+  });
+
+  test('parses the config source itself, seeing duplicate entries (dedupe:false)', () => {
+    const problems = diffAllowlistRedundancy(CONFIG(['ui-avatars.com', 'ui-avatars.com']));
+    assert.equal(problems.length, 1);
+    assert.equal(problems[0].file, 'apps/web/next.config.js');
+  });
+
+  test('wired into checkSeedImageHosts — a redundant config entry fails the full check', () => {
+    const problems = checkSeedImageHosts('/unused', {
+      moduleSource: MODULE,
+      configSource: CONFIG(['cdn.azeebo.test', '*.azeebo.test']),
+      seederSources: {},
+      emissionSources: {},
+    });
+    const hit = problems.find((p) => p.code === 'REDUNDANT_ALLOWLIST_ENTRY');
+    assert.ok(hit, 'redundant exact-under-wildcard entry must fail the full check');
+    assert.match(hit.message, /cdn\.azeebo\.test/);
   });
 });
 
