@@ -8,7 +8,19 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
-import { Ban, AlertTriangle, Lock, ShieldAlert, Copyright, Newspaper, Frown, Heart, Scale, FileText, Check } from 'lucide-react';
+import {
+  Ban,
+  AlertTriangle,
+  Lock,
+  ShieldAlert,
+  Copyright,
+  Newspaper,
+  Frown,
+  Heart,
+  Scale,
+  FileText,
+  Check,
+} from 'lucide-react';
 import analytics from '@/lib/analytics';
 
 function getReasonIcon(name: string): React.JSX.Element {

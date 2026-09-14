@@ -5,6 +5,16 @@ import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
+import {
+  Eye,
+  Film,
+  DollarSign,
+  Users,
+  ChevronRight,
+  UploadCloud,
+  Zap,
+  BarChart3,
+} from 'lucide-react';
 
 interface DashboardData {
   totalViews: number;
@@ -20,43 +30,85 @@ const dashLinks = [
     href: '/creators/dashboard',
     label: 'Dashboard',
     desc: 'View your creator overview',
+    icon: BarChart3,
   },
-  { href: '/creators/upload', label: 'Upload', desc: 'Upload new content' },
-  { href: '/creators/earnings', label: 'Earnings', desc: 'Track revenue and payouts' },
+  { href: '/creators/upload', label: 'Upload', desc: 'Upload new content', icon: UploadCloud },
+  {
+    href: '/creators/earnings',
+    label: 'Earnings',
+    desc: 'Track revenue and payouts',
+    icon: DollarSign,
+  },
   {
     href: '/creators/monetization',
     label: 'Monetization',
     desc: 'Manage tipping and subscriptions',
+    icon: Zap,
   },
 ];
 
-function StatCard({ label, value, loading }: { label: string; value: string; loading: boolean }) {
+function StatCard({
+  label,
+  value,
+  loading,
+  icon: Icon,
+  accentColor = '#E8420A',
+}: {
+  label: string;
+  value: string;
+  loading: boolean;
+  icon: React.ComponentType<{ size?: number; color?: string; className?: string }>;
+  accentColor?: string;
+}) {
   return (
     <div
       style={{
         padding: 20,
         borderRadius: 16,
-        border: '1px solid var(--border-default)',
-        backgroundColor: 'rgba(26,10,10,0.5)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        backgroundColor: '#18151e',
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
-      <p
+      <div
         style={{
-          color: 'var(--text-secondary)',
-          fontSize: 12,
-          marginBottom: 4,
-          textTransform: 'uppercase',
-          letterSpacing: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 12,
         }}
       >
-        {label}
-      </p>
+        <p
+          style={{
+            color: 'var(--text-muted, #9A8A7A)',
+            fontSize: 12,
+            margin: 0,
+            textTransform: 'uppercase',
+            letterSpacing: 1,
+            fontWeight: 500,
+          }}
+        >
+          {label}
+        </p>
+        <div
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 8,
+            backgroundColor: `${accentColor}1A`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Icon size={16} color={accentColor} />
+        </div>
+      </div>
       {loading ? (
         <Skeleton height="32px" width="120px" />
       ) : (
-        <p style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-          {value}
-        </p>
+        <p style={{ fontSize: 26, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>{value}</p>
       )}
     </div>
   );
@@ -82,16 +134,16 @@ export default function CreatorDashboardPage(): React.JSX.Element {
     return (
       <div
         style={{
-          backgroundColor: 'var(--brand-near-black)',
+          backgroundColor: 'var(--brand-near-black, #0b090e)',
           minHeight: '100vh',
           color: 'var(--text-primary)',
         }}
       >
-        <AppHeader />
+        <AppHeader logoVariant="light" />
         <main style={{ padding: '100px 24px 60px', maxWidth: 960, margin: '0 auto' }}>
           <ErrorState title="Failed to load dashboard data" />
         </main>
-        <AppFooter />
+        <AppFooter logoVariant="light" />
       </div>
     );
   }
@@ -99,15 +151,17 @@ export default function CreatorDashboardPage(): React.JSX.Element {
   return (
     <div
       style={{
-        backgroundColor: 'var(--brand-near-black)',
+        backgroundColor: 'var(--brand-near-black, #0b090e)',
         minHeight: '100vh',
         color: 'var(--text-primary)',
       }}
     >
-      <AppHeader />
+      <AppHeader logoVariant="light" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 960, margin: '0 auto' }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Creator Dashboard</h1>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 4, color: '#FFFFFF' }}>
+          Creator Dashboard
+        </h1>
+        <p style={{ color: 'var(--text-muted, #9A8A7A)', marginBottom: 32 }}>
           Welcome back! Here&apos;s your overview.
         </p>
 
@@ -123,58 +177,92 @@ export default function CreatorDashboardPage(): React.JSX.Element {
             label="Total Views"
             value={(dashboard?.totalViews ?? 0).toLocaleString()}
             loading={isLoading}
+            icon={Eye}
+            accentColor="#E8420A"
           />
           <StatCard
             label="Content"
             value={String(dashboard?.totalContent ?? 0)}
             loading={isLoading}
+            icon={Film}
+            accentColor="#3B82F6"
           />
           <StatCard
             label="Earnings"
-            value={`$${(dashboard?.totalEarnings ?? 0).toLocaleString()}`}
+            value={`₦${(dashboard?.totalEarnings ?? 0).toLocaleString()}`}
             loading={isLoading}
+            icon={DollarSign}
+            accentColor="#10B981"
           />
           <StatCard
             label="Followers"
             value={(dashboard?.totalFollowers ?? 0).toLocaleString()}
             loading={isLoading}
+            icon={Users}
+            accentColor="#A855F7"
           />
         </div>
 
-        <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>Quick Links</h2>
+        <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16, color: '#FFFFFF' }}>
+          Quick Links
+        </h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {dashLinks.map((link) => (
-            <button
-              key={link.href}
-              onClick={() => router.push(link.href)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 16,
-                padding: '16px 20px',
-                borderRadius: 16,
-                border: '1px solid var(--border-default)',
-                backgroundColor: 'rgba(26,10,10,0.5)',
-                cursor: 'pointer',
-                textAlign: 'left',
-                color: 'var(--text-primary)',
-                transition: 'border-color 0.2s',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--brand-orange)')}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--bg-secondary)')}
-            >
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 2 }}>{link.label}</h3>
-                <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: 0 }}>
-                  {link.desc}
-                </p>
-              </div>
-              <span style={{ color: 'var(--brand-orange)', fontSize: 18 }}>→</span>
-            </button>
-          ))}
+          {dashLinks.map((link) => {
+            const Icon = link.icon;
+            return (
+              <button
+                key={link.href}
+                onClick={() => router.push(link.href)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 16,
+                  padding: '16px 20px',
+                  borderRadius: 16,
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  backgroundColor: '#18151e',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  color: 'var(--text-primary)',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(232,66,10,0.5)';
+                  e.currentTarget.style.backgroundColor = '#1d1925';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+                  e.currentTarget.style.backgroundColor = '#18151e';
+                }}
+              >
+                <div
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 10,
+                    backgroundColor: 'rgba(232,66,10,0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Icon size={20} color="#E8420A" />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 2, color: '#FFFFFF' }}>
+                    {link.label}
+                  </h3>
+                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 13, margin: 0 }}>
+                    {link.desc}
+                  </p>
+                </div>
+                <ChevronRight size={18} color="#E8420A" />
+              </button>
+            );
+          })}
         </div>
       </main>
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

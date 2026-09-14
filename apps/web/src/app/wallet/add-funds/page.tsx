@@ -13,7 +13,12 @@ function PaymentMethodIcon({ id, name }: { id: string; name: string }) {
   if (lower.includes('card') || lower.includes('debit') || lower.includes('credit')) {
     return <CreditCard size={24} />;
   }
-  if (lower.includes('mobile') || lower.includes('ussd') || lower.includes('airtime') || lower.includes('telco')) {
+  if (
+    lower.includes('mobile') ||
+    lower.includes('ussd') ||
+    lower.includes('airtime') ||
+    lower.includes('telco')
+  ) {
     return <Smartphone size={24} />;
   }
   if (lower.includes('bank') || lower.includes('transfer')) {

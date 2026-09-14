@@ -150,6 +150,9 @@ describe('AppModule shared-module instance counts (A-3/A-13 regression guard)', 
     process.env.WALLET_SERVICE_URL = 'http://localhost:3002';
     process.env.MEDIA_SERVICE_URL = 'http://localhost:3019';
     process.env.ANALYTICS_SERVICE_URL = 'http://localhost:3008';
+    // CreatorsService constructor getOrThrow()s this; CI's fresh checkout has
+    // no gitignored .env to fall back on (2026-09-12 backend-creator failure).
+    process.env.INTERNAL_API_KEY = 'test-internal-api-key';
   });
 
   afterAll(async () => {

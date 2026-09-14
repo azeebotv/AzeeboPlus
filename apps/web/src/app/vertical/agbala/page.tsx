@@ -95,7 +95,9 @@ export default function AgbalaPage(): React.JSX.Element {
           >
             <BookOpen className="w-8 h-8 text-white" />
           </div>
-          <h1 style={{ fontSize: 36, fontWeight: 700, marginBottom: 8, color: '#ffffff' }}>Agbala</h1>
+          <h1 style={{ fontSize: 36, fontWeight: 700, marginBottom: 8, color: '#ffffff' }}>
+            Agbala
+          </h1>
           <p
             style={{
               color: 'rgba(255, 255, 255, 0.7)',
@@ -109,7 +111,15 @@ export default function AgbalaPage(): React.JSX.Element {
         </div>
 
         <section style={{ marginBottom: 48 }}>
-          <h2 style={{ fontSize: 24, fontWeight: 600, marginBottom: 16, textAlign: 'center', color: '#ffffff' }}>
+          <h2
+            style={{
+              fontSize: 24,
+              fontWeight: 600,
+              marginBottom: 16,
+              textAlign: 'center',
+              color: '#ffffff',
+            }}
+          >
             Your Paths
           </h2>
           {isLoading ? (

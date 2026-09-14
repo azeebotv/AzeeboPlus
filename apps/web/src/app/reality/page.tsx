@@ -391,8 +391,18 @@ function RealityPageContent(): React.JSX.Element {
                           title: 'Supervote Power',
                           desc: 'Use supervotes to multiply your impact',
                           icon: (
-                            <svg className="w-5 h-5 text-[var(--brand-orange)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                            <svg
+                              className="w-5 h-5 text-[var(--brand-orange)]"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
+                              />
                             </svg>
                           ),
                         },
@@ -400,8 +410,18 @@ function RealityPageContent(): React.JSX.Element {
                           title: 'Daily Rewards',
                           desc: 'Vote daily to earn bonus points',
                           icon: (
-                            <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H4.5a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                            <svg
+                              className="w-5 h-5 text-amber-400"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H4.5a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"
+                              />
                             </svg>
                           ),
                         },
@@ -409,8 +429,18 @@ function RealityPageContent(): React.JSX.Element {
                           title: 'Leaderboard Bonus',
                           desc: 'Top voters get exclusive perks',
                           icon: (
-                            <svg className="w-5 h-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.504-1.125-1.125-1.125h-.871a3.375 3.375 0 00-3.375-3.375H12m4.5 7.875H12M9 18.75V15.375c0-.621.504-1.125 1.125-1.125h.871M12 7.5A3.75 3.75 0 008.25 3.75h7.5A3.75 3.75 0 0012 7.5z" />
+                            <svg
+                              className="w-5 h-5 text-yellow-400"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.504-1.125-1.125-1.125h-.871a3.375 3.375 0 00-3.375-3.375H12m4.5 7.875H12M9 18.75V15.375c0-.621.504-1.125 1.125-1.125h.871M12 7.5A3.75 3.75 0 008.25 3.75h7.5A3.75 3.75 0 0012 7.5z"
+                              />
                             </svg>
                           ),
                         },

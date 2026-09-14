@@ -75,10 +75,10 @@ module "rds" {
   subnet_ids            = module.vpc.database_subnet_ids
   app_security_group_id = module.vpc.app_security_group_id
 
-  instance_class     = "db.r6g.xlarge"
-  engine_version     = "16.4"
+  instance_class          = "db.r6g.xlarge"
+  engine_version          = "16.4"
   backup_retention_period = 30
-  deletion_protection = true
+  deletion_protection     = true
 
   tags = {
     CostCentre = "engineering"
@@ -96,7 +96,7 @@ module "elasticache" {
   subnet_ids            = module.vpc.private_subnet_ids
   app_security_group_id = module.vpc.app_security_group_id
 
-  node_type      = "cache.r6g.large"
+  node_type       = "cache.r6g.large"
   num_cache_nodes = 3
 
   tags = {
@@ -111,13 +111,13 @@ module "ecs" {
   project_name = "azeebo"
   environment  = "production"
 
-  vpc_id               = module.vpc.vpc_id
-  private_subnet_ids   = module.vpc.private_subnet_ids
-  public_subnet_ids    = module.vpc.public_subnet_ids
-  app_security_group_id  = module.vpc.app_security_group_id
-  alb_security_group_id  = module.vpc.alb_security_group_id
-  certificate_arn      = var.certificate_arn
-  domain_name          = var.domain_name
+  vpc_id                = module.vpc.vpc_id
+  private_subnet_ids    = module.vpc.private_subnet_ids
+  public_subnet_ids     = module.vpc.public_subnet_ids
+  app_security_group_id = module.vpc.app_security_group_id
+  alb_security_group_id = module.vpc.alb_security_group_id
+  certificate_arn       = var.certificate_arn
+  domain_name           = var.domain_name
 
   tags = {
     CostCentre = "engineering"
@@ -131,10 +131,10 @@ module "cloudfront" {
   project_name = "azeebo"
   environment  = "production"
 
-  domain_name         = var.domain_name
-  certificate_arn     = var.certificate_arn
-  alb_dns_name        = module.ecs.alb_dns_name
-  alb_zone_id         = module.ecs.alb_zone_id
+  domain_name     = var.domain_name
+  certificate_arn = var.certificate_arn
+  alb_dns_name    = module.ecs.alb_dns_name
+  alb_zone_id     = module.ecs.alb_zone_id
 
   tags = {
     CostCentre = "engineering"

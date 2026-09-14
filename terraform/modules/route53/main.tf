@@ -28,12 +28,12 @@ variable "records" {
 variable "health_checks" {
   description = "Health checks to create"
   type = list(object({
-    name               = string
-    fqdn               = string
-    port               = number
-    type               = string
-    request_interval   = optional(number, 30)
-    failure_threshold  = optional(number, 3)
+    name                   = string
+    fqdn                   = string
+    port                   = number
+    type                   = string
+    request_interval       = optional(number, 30)
+    failure_threshold      = optional(number, 3)
     failure_rate_threshold = optional(number, 1.0)
   }))
   default = []
@@ -59,10 +59,10 @@ resource "aws_route53_health_check" "checks" {
   for_each = { for hc in var.health_checks : hc.name => hc }
 
   fqdn              = each.value.fqdn
-  port               = each.value.port
-  type               = each.value.type
-  request_interval   = each.value.request_interval
-  failure_threshold  = each.value.failure_threshold
+  port              = each.value.port
+  type              = each.value.type
+  request_interval  = each.value.request_interval
+  failure_threshold = each.value.failure_threshold
 
   tags = merge(var.tags, { Name = each.value.name })
 }

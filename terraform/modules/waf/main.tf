@@ -58,8 +58,8 @@ resource "aws_wafv2_web_acl" "main" {
 
     visibility_config {
       cloudwatch_metrics_enabled = true
-      metric_name               = "${var.name}-rate-limit"
-      sampled_requests_enabled  = true
+      metric_name                = "${var.name}-rate-limit"
+      sampled_requests_enabled   = true
     }
   }
 
@@ -81,8 +81,8 @@ resource "aws_wafv2_web_acl" "main" {
 
     visibility_config {
       cloudwatch_metrics_enabled = true
-      metric_name               = "${var.name}-common-rules"
-      sampled_requests_enabled  = true
+      metric_name                = "${var.name}-common-rules"
+      sampled_requests_enabled   = true
     }
   }
 
@@ -104,8 +104,8 @@ resource "aws_wafv2_web_acl" "main" {
 
     visibility_config {
       cloudwatch_metrics_enabled = true
-      metric_name               = "${var.name}-sqli-rules"
-      sampled_requests_enabled  = true
+      metric_name                = "${var.name}-sqli-rules"
+      sampled_requests_enabled   = true
     }
   }
 
@@ -127,8 +127,8 @@ resource "aws_wafv2_web_acl" "main" {
 
     visibility_config {
       cloudwatch_metrics_enabled = true
-      metric_name               = "${var.name}-bad-inputs"
-      sampled_requests_enabled  = true
+      metric_name                = "${var.name}-bad-inputs"
+      sampled_requests_enabled   = true
     }
   }
 
@@ -151,16 +151,16 @@ resource "aws_wafv2_web_acl" "main" {
 
       visibility_config {
         cloudwatch_metrics_enabled = true
-        metric_name               = "${var.name}-geo-block"
-        sampled_requests_enabled  = true
+        metric_name                = "${var.name}-geo-block"
+        sampled_requests_enabled   = true
       }
     }
   }
 
   visibility_config {
     cloudwatch_metrics_enabled = true
-    metric_name               = "${var.name}-waf"
-    sampled_requests_enabled  = true
+    metric_name                = "${var.name}-waf"
+    sampled_requests_enabled   = true
   }
 
   tags = var.tags

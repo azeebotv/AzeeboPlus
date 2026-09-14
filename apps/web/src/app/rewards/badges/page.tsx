@@ -153,7 +153,9 @@ export default function BadgesPage(): React.JSX.Element {
                       >
                         <Award size={30} />
                       </div>
-                      <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 4, color: 'white' }}>{badge.name}</p>
+                      <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 4, color: 'white' }}>
+                        {badge.name}
+                      </p>
                       <p
                         style={{
                           fontSize: 12,
@@ -297,12 +299,16 @@ export default function BadgesPage(): React.JSX.Element {
                 alignItems: 'center',
                 justifyContent: 'center',
                 margin: '0 auto 16px',
-                color: selectedBadge.unlocked ? 'var(--brand-orange, #E8420A)' : 'rgba(255,255,255,0.3)',
+                color: selectedBadge.unlocked
+                  ? 'var(--brand-orange, #E8420A)'
+                  : 'rgba(255,255,255,0.3)',
               }}
             >
               <Award size={40} />
             </div>
-            <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8, color: 'white' }}>{selectedBadge.name}</h2>
+            <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8, color: 'white' }}>
+              {selectedBadge.name}
+            </h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 16 }}>
               {selectedBadge.description}
             </p>

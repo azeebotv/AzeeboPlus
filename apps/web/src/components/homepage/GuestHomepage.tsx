@@ -259,39 +259,90 @@ const DEVICE_FEATURES: DeviceFeature[] = [
   },
 ];
 
-function DeviceFlatIcon({ type, className = 'w-6 h-6' }: { type: DeviceFeature['iconType']; className?: string }) {
+function DeviceFlatIcon({
+  type,
+  className = 'w-6 h-6',
+}: {
+  type: DeviceFeature['iconType'];
+  className?: string;
+}) {
   switch (type) {
     case 'tv':
       return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <svg
+          className={className}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.8}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
           <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
           <path d="M17 2l-5 5-5-5" />
         </svg>
       );
     case 'tablet':
       return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <svg
+          className={className}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.8}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
           <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
           <line x1="12" y1="18" x2="12.01" y2="18" />
         </svg>
       );
     case 'phone':
       return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <svg
+          className={className}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.8}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
           <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
           <line x1="12" y1="18" x2="12.01" y2="18" />
         </svg>
       );
     case 'laptop':
       return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <svg
+          className={className}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.8}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
           <rect x="3" y="4" width="18" height="12" rx="2" />
           <path d="M2 20h20" />
         </svg>
       );
     case 'gamepad':
       return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <svg
+          className={className}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.8}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
           <line x1="6" y1="12" x2="10" y2="12" />
           <line x1="8" y1="10" x2="8" y2="14" />
           <line x1="15" y1="13" x2="15.01" y2="13" />
@@ -301,7 +352,16 @@ function DeviceFlatIcon({ type, className = 'w-6 h-6' }: { type: DeviceFeature['
       );
     case 'vr':
       return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <svg
+          className={className}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.8}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
           <path d="M3 8a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v6a4 4 0 0 1-4 4h-1.5a2 2 0 0 1-1.6-.8l-1.3-1.7a1 1 0 0 0-1.2 0l-1.3 1.7a2 2 0 0 1-1.6.8H7a4 4 0 0 1-4-4V8z" />
           <circle cx="8" cy="11" r="1.5" />
           <circle cx="16" cy="11" r="1.5" />
@@ -1432,7 +1492,11 @@ export default function GuestHomepage(): React.JSX.Element {
             <div className="relative z-10 w-full md:w-auto min-w-[320px]">
               {emailSubmitted ? (
                 <div className="p-4 rounded-xl bg-green-500/20 border border-green-500/30 text-green-300 text-sm font-medium flex items-center gap-2.5">
-                  <svg className="w-4 h-4 fill-none stroke-current stroke-[2.5]" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg
+                    className="w-4 h-4 fill-none stroke-current stroke-[2.5]"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
                   <span>You&apos;re subscribed to the Azeebo+ newsletter!</span>

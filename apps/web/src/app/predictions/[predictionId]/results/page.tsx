@@ -86,11 +86,21 @@ export default function PredictionResultsPage(): React.JSX.Element {
             />
           </div>
         ) : !results ? (
-          <div className="az-glass" style={{ padding: 48, borderRadius: 20, textAlign: 'center', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div
+            className="az-glass"
+            style={{
+              padding: 48,
+              borderRadius: 20,
+              textAlign: 'center',
+              border: '1px solid rgba(255,255,255,0.08)',
+            }}
+          >
             <div className="w-16 h-16 rounded-2xl bg-orange-500/10 text-[var(--brand-orange)] flex items-center justify-center mx-auto mb-4">
               <BarChart3 size={32} />
             </div>
-            <h3 style={{ fontSize: 18, color: 'white', fontWeight: 600 }}>Results not available yet</h3>
+            <h3 style={{ fontSize: 18, color: 'white', fontWeight: 600 }}>
+              Results not available yet
+            </h3>
             <p style={{ color: 'rgba(255,255,255,0.6)', marginTop: 8 }}>
               Check back after the prediction closes
             </p>
@@ -126,7 +136,15 @@ export default function PredictionResultsPage(): React.JSX.Element {
             )}
 
             {results.options && (
-              <div className="az-glass" style={{ padding: 24, borderRadius: 20, marginBottom: 20, border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div
+                className="az-glass"
+                style={{
+                  padding: 24,
+                  borderRadius: 20,
+                  marginBottom: 20,
+                  border: '1px solid rgba(255,255,255,0.08)',
+                }}
+              >
                 <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: 'white' }}>
                   Results Breakdown
                 </h2>
@@ -153,12 +171,11 @@ export default function PredictionResultsPage(): React.JSX.Element {
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: 6,
-                              color: isCorrect
-                                ? '#34D399'
-                                : 'white',
+                              color: isCorrect ? '#34D399' : 'white',
                             }}
                           >
-                            {opt.text} {isCorrect && <Check size={14} className="text-emerald-400" />}
+                            {opt.text}{' '}
+                            {isCorrect && <Check size={14} className="text-emerald-400" />}
                           </span>
                           <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>
                             {pct}% ({opt.votes} votes)

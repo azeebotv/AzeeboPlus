@@ -27,14 +27,14 @@ variable "enable_encryption" {
 variable "lifecycle_rules" {
   description = "Lifecycle rules for bucket"
   type = list(object({
-    id                           = string
-    enabled                      = bool
-    prefix                       = string
-    transitions                  = list(object({
+    id      = string
+    enabled = bool
+    prefix  = string
+    transitions = list(object({
       days          = number
       storage_class = string
     }))
-    expiration                   = object({
+    expiration = object({
       days = number
     })
     noncurrent_version_expiration = object({

@@ -92,6 +92,12 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # See test-web: dist-exporting packages must be built before app tests.
+      # Mobile jest compiles workspace sources (flags.test.ts imports
+      # @azeebo/feature-flags/registries and @azeebo/shared-types), so both
+      # the generated clients and the package dist entries must exist.
+      - run: pnpm run prisma:generate
+      - run: pnpm --filter './packages/**' run build
       # NOTE: no `--if-present` on the script call below — pnpm forwards it to
       # jest, which rejects it as an unknown CLI flag. The script exists.
       - run: pnpm --filter @azeebo/mobile test

@@ -18,7 +18,10 @@ interface RefundRequest {
   resolvedAt?: string;
 }
 
-const STATUS_CONFIG: Record<string, { color: string; label: string; icon: LucideIcon; badgeBg: string }> = {
+const STATUS_CONFIG: Record<
+  string,
+  { color: string; label: string; icon: LucideIcon; badgeBg: string }
+> = {
   pending: {
     color: 'text-amber-400',
     label: 'Pending Review',
@@ -60,7 +63,10 @@ export default function RefundStatusPage(): React.JSX.Element {
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--brand-near-black, #0b090e)' }}>
+      <div
+        className="min-h-screen flex flex-col"
+        style={{ backgroundColor: 'var(--brand-near-black, #0b090e)' }}
+      >
         <AppHeader logoVariant="light" />
         <main className="flex-1 max-w-3xl mx-auto px-4 py-16 text-white w-full">
           <ErrorState description="Failed to load refund status. Please try again." />
@@ -71,7 +77,10 @@ export default function RefundStatusPage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--brand-near-black, #0b090e)' }}>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ backgroundColor: 'var(--brand-near-black, #0b090e)' }}
+    >
       <AppHeader logoVariant="light" />
       <main className="flex-1 text-white">
         <div className="max-w-3xl mx-auto px-4 py-12">
@@ -90,7 +99,10 @@ export default function RefundStatusPage(): React.JSX.Element {
                 const config = STATUS_CONFIG[refund.status] ?? STATUS_CONFIG.pending;
                 const StatusIcon = config.icon;
                 return (
-                  <div key={refund.id} className="az-glass rounded-2xl p-6 border border-white/10 hover:border-white/20 transition-all">
+                  <div
+                    key={refund.id}
+                    className="az-glass rounded-2xl p-6 border border-white/10 hover:border-white/20 transition-all"
+                  >
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <p className="font-bold text-white text-base">Refund for Transaction</p>
@@ -105,7 +117,9 @@ export default function RefundStatusPage(): React.JSX.Element {
                         )}
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="font-bold text-lg text-white">₦{refund.amount.toLocaleString()}</p>
+                        <p className="font-bold text-lg text-white">
+                          ₦{refund.amount.toLocaleString()}
+                        </p>
                         <div
                           className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mt-2 ${config.color}`}
                           style={{ backgroundColor: config.badgeBg }}

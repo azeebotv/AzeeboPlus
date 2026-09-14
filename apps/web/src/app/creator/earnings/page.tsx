@@ -6,6 +6,7 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { DollarSign, Wallet, Clock, TrendingUp } from 'lucide-react';
 
 interface EarningsData {
   totalEarnings: number;
@@ -48,16 +49,16 @@ export default function CreatorEarningsPage(): React.JSX.Element {
     return (
       <div
         style={{
-          backgroundColor: 'var(--brand-near-black)',
+          backgroundColor: 'var(--brand-near-black, #0b090e)',
           minHeight: '100vh',
           color: 'var(--text-primary)',
         }}
       >
-        <AppHeader active="Creator" />
+        <AppHeader active="Creator" logoVariant="light" />
         <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
           <ErrorState title="Failed to load earnings" />
         </main>
-        <AppFooter />
+        <AppFooter logoVariant="light" />
       </div>
     );
   }
@@ -65,22 +66,24 @@ export default function CreatorEarningsPage(): React.JSX.Element {
   return (
     <div
       style={{
-        backgroundColor: 'var(--brand-near-black)',
+        backgroundColor: 'var(--brand-near-black, #0b090e)',
         minHeight: '100vh',
         color: 'var(--text-primary)',
       }}
     >
-      <AppHeader active="Creator" />
+      <AppHeader active="Creator" logoVariant="light" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Earnings</h1>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, color: '#FFFFFF' }}>
+          Earnings
+        </h1>
+        <p style={{ color: 'var(--text-muted, #9A8A7A)', marginBottom: 24 }}>
           Track your revenue and payouts
         </p>
 
         <div style={{ marginBottom: 24 }}>
           <label
             style={{
-              color: 'var(--text-secondary)',
+              color: 'var(--text-muted, #9A8A7A)',
               fontSize: 13,
               marginBottom: 8,
               display: 'block',
@@ -96,11 +99,17 @@ export default function CreatorEarningsPage(): React.JSX.Element {
                 style={{
                   padding: '8px 16px',
                   borderRadius: 8,
-                  border: '1px solid var(--border-default)',
-                  background: period === p ? 'rgba(232,66,10,0.2)' : 'transparent',
-                  color: period === p ? 'var(--brand-orange)' : 'var(--text-secondary)',
+                  border:
+                    period === p
+                      ? '1px solid rgba(232,66,10,0.5)'
+                      : '1px solid rgba(255,255,255,0.08)',
+                  background: period === p ? 'rgba(232,66,10,0.15)' : '#18151e',
+                  color:
+                    period === p ? 'var(--brand-orange, #E8420A)' : 'var(--text-muted, #9A8A7A)',
                   cursor: 'pointer',
                   fontSize: 13,
+                  fontWeight: period === p ? 600 : 400,
+                  transition: 'all 0.2s ease',
                 }}
               >
                 {p.toUpperCase()}
@@ -135,87 +144,133 @@ export default function CreatorEarningsPage(): React.JSX.Element {
                 style={{
                   padding: 20,
                   borderRadius: 16,
-                  border: '1px solid var(--border-default)',
-                  backgroundColor: 'rgba(26,10,10,0.5)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  backgroundColor: '#18151e',
                 }}
               >
-                <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginBottom: 4 }}>
-                  Total Earnings
-                </p>
-                <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 8,
+                  }}
+                >
+                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, margin: 0 }}>
+                    Total Earnings
+                  </p>
+                  <DollarSign size={15} color="#E8420A" />
+                </div>
+                <p style={{ fontSize: 24, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
                   ₦{earnings.totalEarnings.toLocaleString()}
                 </p>
               </div>
+
               <div
                 style={{
                   padding: 20,
                   borderRadius: 16,
-                  border: '1px solid var(--border-default)',
-                  backgroundColor: 'rgba(26,10,10,0.5)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  backgroundColor: '#18151e',
                 }}
               >
-                <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginBottom: 4 }}>
-                  Available Balance
-                </p>
-                <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-success-400)' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 8,
+                  }}
+                >
+                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, margin: 0 }}>
+                    Available Balance
+                  </p>
+                  <Wallet size={15} color="#10B981" />
+                </div>
+                <p style={{ fontSize: 24, fontWeight: 700, color: '#10B981', margin: 0 }}>
                   ₦{earnings.availableBalance.toLocaleString()}
                 </p>
               </div>
+
               <div
                 style={{
                   padding: 20,
                   borderRadius: 16,
-                  border: '1px solid var(--border-default)',
-                  backgroundColor: 'rgba(26,10,10,0.5)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  backgroundColor: '#18151e',
                 }}
               >
-                <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginBottom: 4 }}>
-                  Pending
-                </p>
-                <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-warning-500)' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 8,
+                  }}
+                >
+                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, margin: 0 }}>
+                    Pending
+                  </p>
+                  <Clock size={15} color="#F59E0B" />
+                </div>
+                <p style={{ fontSize: 24, fontWeight: 700, color: '#F59E0B', margin: 0 }}>
                   ₦{earnings.pendingEarnings.toLocaleString()}
                 </p>
               </div>
+
               <div
                 style={{
                   padding: 20,
                   borderRadius: 16,
-                  border: '1px solid var(--border-default)',
-                  backgroundColor: 'rgba(26,10,10,0.5)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  backgroundColor: '#18151e',
                 }}
               >
-                <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginBottom: 4 }}>
-                  Lifetime
-                </p>
-                <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 8,
+                  }}
+                >
+                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, margin: 0 }}>
+                    Lifetime
+                  </p>
+                  <TrendingUp size={15} color="#A855F7" />
+                </div>
+                <p style={{ fontSize: 24, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
                   ₦{earnings.lifetimeEarnings.toLocaleString()}
                 </p>
               </div>
             </div>
 
             <div style={{ marginBottom: 32 }}>
-              <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>Revenue Breakdown</h2>
+              <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16, color: '#FFFFFF' }}>
+                Revenue Breakdown
+              </h2>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
                 {Object.entries(earnings.revenueBreakdown).map(([key, value]) => (
                   <div
                     key={key}
                     style={{
                       padding: 16,
-                      borderRadius: 12,
-                      border: '1px solid var(--border-default)',
-                      backgroundColor: 'rgba(26,10,10,0.5)',
+                      borderRadius: 16,
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      backgroundColor: '#18151e',
                     }}
                   >
                     <p
                       style={{
-                        color: 'var(--text-secondary)',
+                        color: 'var(--text-muted, #9A8A7A)',
                         fontSize: 12,
                         textTransform: 'capitalize',
+                        margin: '0 0 6px 0',
                       }}
                     >
                       {key.replace(/([A-Z])/g, ' $1')}
                     </p>
-                    <p style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>
+                    <p style={{ fontSize: 20, fontWeight: 600, color: '#FFFFFF', margin: 0 }}>
                       ₦{value.toLocaleString()}
                     </p>
                   </div>
@@ -224,9 +279,13 @@ export default function CreatorEarningsPage(): React.JSX.Element {
             </div>
 
             <div>
-              <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>Recent Earnings</h2>
+              <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16, color: '#FFFFFF' }}>
+                Recent Earnings
+              </h2>
               {earnings.earningsHistory.length === 0 ? (
-                <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>
+                <p
+                  style={{ color: 'var(--text-muted, #9A8A7A)', textAlign: 'center', padding: 40 }}
+                >
                   No recent earnings
                 </p>
               ) : (
@@ -240,8 +299,8 @@ export default function CreatorEarningsPage(): React.JSX.Element {
                         alignItems: 'center',
                         padding: 16,
                         borderRadius: 16,
-                        border: '1px solid var(--border-default)',
-                        backgroundColor: 'rgba(26,10,10,0.5)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        backgroundColor: '#18151e',
                       }}
                     >
                       <div>
@@ -249,23 +308,29 @@ export default function CreatorEarningsPage(): React.JSX.Element {
                           style={{
                             fontWeight: 600,
                             fontSize: 14,
-                            color: 'var(--text-primary)',
+                            color: '#FFFFFF',
                             margin: 0,
                           }}
                         >
                           {item.source}
                         </p>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: 12 }}>{item.date}</p>
+                        <p
+                          style={{
+                            color: 'var(--text-muted, #9A8A7A)',
+                            fontSize: 12,
+                            margin: '4px 0 0 0',
+                          }}
+                        >
+                          {item.date}
+                        </p>
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <p
                           style={{
                             fontWeight: 600,
                             fontSize: 14,
-                            color:
-                              item.status === 'pending'
-                                ? 'var(--color-warning-500)'
-                                : 'var(--color-success-400)',
+                            color: item.status === 'pending' ? '#F59E0B' : '#10B981',
+                            margin: 0,
                           }}
                         >
                           ₦{item.amount.toLocaleString()}
@@ -273,8 +338,9 @@ export default function CreatorEarningsPage(): React.JSX.Element {
                         <p
                           style={{
                             fontSize: 11,
-                            color: 'var(--text-tertiary)',
+                            color: 'var(--text-muted, #9A8A7A)',
                             textTransform: 'uppercase',
+                            margin: '4px 0 0 0',
                           }}
                         >
                           {item.status}
@@ -295,7 +361,7 @@ export default function CreatorEarningsPage(): React.JSX.Element {
           />
         )}
       </main>
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

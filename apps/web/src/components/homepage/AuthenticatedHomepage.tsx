@@ -283,7 +283,8 @@ export default function AuthenticatedHomepage({
       <div
         className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[500px] rounded-full blur-[140px] -z-0"
         style={{
-          background: 'radial-gradient(circle, rgba(232,66,10,0.18) 0%, rgba(204,28,28,0.06) 50%, transparent 80%)',
+          background:
+            'radial-gradient(circle, rgba(232,66,10,0.18) 0%, rgba(204,28,28,0.06) 50%, transparent 80%)',
         }}
         aria-hidden="true"
       />
