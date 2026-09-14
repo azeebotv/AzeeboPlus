@@ -2,7 +2,7 @@
  * Shared utilities for seed scripts
  */
 
-import { seedImages } from './seed-image-hosts.js';
+import { themedArt } from './seed-image-hosts.js';
 
 // ─── Random Helpers ─────────────────────────────────────────────────────────
 
@@ -173,12 +173,16 @@ const CITIES = [
   'Owerri',
 ];
 
-const AVATARS = Array.from({ length: 10 }, (_, i) => seedImages.picsum(`avatar${i + 1}`, 200, 200));
+// Themed art in the universe brand palette (themedArt in seed-image-hosts.ts)
+// instead of random photos — dev browse pages should look like the platform.
+const AVATARS = Array.from({ length: 10 }, (_, i) => themedArt.avatar(`Seed User ${i + 1}`));
 
-const BANNERS = Array.from({ length: 3 }, (_, i) => seedImages.picsum(`banner${i + 1}`, 1200, 400));
+const BANNERS = Array.from({ length: 3 }, (_, i) =>
+  themedArt.banner('creator', `Creator Hub ${i + 1}`)
+);
 
 const THUMBNAILS = Array.from({ length: 5 }, (_, i) =>
-  seedImages.picsum(`thumb${i + 1}`, 400, 600)
+  themedArt.poster('movie', `Feature Presentation ${i + 1}`)
 );
 
 export function generateUser(index: number) {

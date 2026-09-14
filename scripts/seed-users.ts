@@ -6,7 +6,7 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import { seedImages } from './seeders/seed-image-hosts.js';
+import { themedArt } from './seeders/seed-image-hosts.js';
 
 const prisma = new PrismaClient();
 
@@ -141,7 +141,7 @@ async function seedUsers() {
     users.push({
       email,
       displayName: `${firstName} ${lastName}`,
-      avatar: seedImages.picsum(email, 200, 200),
+      avatar: themedArt.avatar(`${firstName} ${lastName}`),
       role,
       password: '', // Social login users
       isVerified: Math.random() > 0.3, // 70% verified

@@ -6,7 +6,7 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import { seedImages } from './seeders/seed-image-hosts.js';
+import { seedImages, themedArt } from './seeders/seed-image-hosts.js';
 
 const prisma = new PrismaClient();
 
@@ -123,7 +123,7 @@ async function seedContent() {
         description: `${movie.title} - A ${movie.genre.toLowerCase()} movie released in ${movie.year}`,
         year: movie.year,
         rating: movie.rating,
-        thumbnailUrl: seedImages.picsum(movie.title, 400, 600),
+        thumbnailUrl: themedArt.poster('movie', movie.title),
         videoUrl: seedImages.storageMedia('video', 'sample.mp4'),
       },
     });
@@ -140,7 +140,7 @@ async function seedContent() {
         genre: track.genre,
         description: `${track.title} by ${track.artist}`,
         year: track.year,
-        thumbnailUrl: seedImages.picsum(track.title, 400, 400),
+        thumbnailUrl: themedArt.cover('music', track.title),
         audioUrl: seedImages.storageMedia('audio', 'sample.mp3'),
       },
     });
@@ -157,7 +157,7 @@ async function seedContent() {
         genre: 'Comedy',
         description: `${comedy.title} by ${comedian}`,
         year: comedy.year,
-        thumbnailUrl: seedImages.picsum(comedy.title, 400, 600),
+        thumbnailUrl: themedArt.poster('comedy', comedy.title),
         videoUrl: seedImages.storageMedia('video', 'sample.mp4'),
       },
     });
@@ -174,7 +174,7 @@ async function seedContent() {
         genre: 'Reality',
         description: `${show.title} Season ${show.season}`,
         year: show.year,
-        thumbnailUrl: seedImages.picsum(show.title, 400, 600),
+        thumbnailUrl: themedArt.poster('reality', show.title),
         videoUrl: seedImages.storageMedia('video', 'sample.mp4'),
       },
     });
@@ -190,7 +190,7 @@ async function seedContent() {
         type: 'game',
         genre: 'Game',
         description: `${game.title} - A ${game.type} game for ${game.players} players`,
-        thumbnailUrl: seedImages.picsum(game.title, 400, 400),
+        thumbnailUrl: themedArt.cover('games', game.title),
       },
     });
     count++;
@@ -206,7 +206,7 @@ async function seedContent() {
         genre: item.category,
         description: `${item.title} - ${item.category} content`,
         year: 2022,
-        thumbnailUrl: seedImages.picsum(item.title, 400, 300),
+        thumbnailUrl: themedArt.wide('lifestyle', item.title),
       },
     });
     count++;
