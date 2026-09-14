@@ -104,7 +104,13 @@ every host registered in `SEED_IMAGE_HOSTS` is allowlisted in
   `scripts/database` recursively (SQL/CSV/backups/TS), the raw-SQL layer that
   can't route through the TS module. Matching models Next.js remotePatterns
   semantics exactly: `*.suffix` covers exactly one label (never the apex,
-  never two), `**.suffix` covers one-or-more (never the apex).
+  never two), `**.suffix` covers one-or-more (never the apex);
+- an allowlist entry fully covered by another entry
+  (`REDUNDANT_ALLOWLIST_ENTRY`) — literal duplicate, exact host under a
+  wildcard, `*` shadowed by `**` (same or deeper suffix). Keeps the config
+  minimal so every entry earns its place and the authorizing entry for a
+  host stays unambiguous. Wildcards never cover their own apex, so
+  `azeeboplus.com` + `*.azeeboplus.com` is a legal pair.
 
 **Exemptions (links, never optimizer input):** instagram.com / youtube.com
 hosts, and link-shaped URLs (`/terms`, `/privacy`, `/live/...`) such as the

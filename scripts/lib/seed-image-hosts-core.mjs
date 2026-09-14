@@ -19,6 +19,10 @@
  *      scripts) emitting a URL to a host the web allowlist doesn't cover —
  *      exact or wildcard — regardless of registration.
  *      → EMISSION_NOT_ALLOWLISTED
+ *   4. An allowlist entry that is fully covered by another entry (literal
+ *      duplicate, exact host under a wildcard, `*` shadowed by `**`) — the
+ *      config stays minimal and every entry earns its place.
+ *      → REDUNDANT_ALLOWLIST_ENTRY
  *
  * Social profile links (instagram.com, youtube.com) and link-shaped URLs
  * (/terms, /privacy, /live/ stream pages) are exempt: they are hyperlinks
@@ -150,7 +154,7 @@ export function extractSeedHosts(source) {
 }
 
 /** Extracts every `hostname:` value inside the web config's remotePatterns array. */
-export function extractAllowlistedHosts(configSource) {
+export function extractAllowlistedHosts(configSource, { dedupe = true } = {}) {
   const start = configSource.indexOf('remotePatterns');
   if (start === -1) return { hosts: null, error: 'remotePatterns not found in web config' };
   const open = configSource.indexOf('[', start);
@@ -178,7 +182,84 @@ export function extractAllowlistedHosts(configSource) {
   const body = configSource.slice(open, close + 1);
   const hosts = [];
   for (const m of body.matchAll(/hostname:\s*['"]([^'"]+)['"]/g)) hosts.push(m[1]);
-  return { hosts: [...new Set(hosts)], error: null };
+  // dedupe:false exposes literal duplicate entries — the minimality rule needs
+  // to see them; the sync rules want the collapsed view.
+  return { hosts: dedupe ? [...new Set(hosts)] : hosts, error: null };
+}
+
+/**
+ * Pattern-level coverage for the minimality rule. Unlike hostMatchesAllowlist
+ * (which matches CONCRETE hosts — feeding it a pattern string would wrongly
+ * parse the pattern's own labels as a hostname), this answers: does pattern
+ * `a` cover every host that pattern `b` could ever match?
+ *
+ * Coverage over all hosts:
+ *   exact H       → { H }
+ *   `*.S`         → { L.S : L is exactly one label }
+ *   `**.S`        → { W.S : W is one or more labels }
+ * so a wildcard NEVER covers its own apex, and `*.S` never covers two-label
+ * hosts — which is what keeps e.g. `azeeboplus.com` + `*.azeeboplus.com` a
+ * legal (non-redundant) pair.
+ */
+export function patternCoversPattern(pattern, other) {
+  if (pattern === other) return true; // literal duplicate
+  const parse = (p) => {
+    if (p.startsWith('**.')) return { mode: '**', suffix: p.slice(3) };
+    if (p.startsWith('*.')) return { mode: '*', suffix: p.slice(2) };
+    return { mode: 'exact', suffix: p };
+  };
+  const a = parse(pattern);
+  const b = parse(other);
+  if (b.mode === 'exact') {
+    // A wildcard covers an exact host only when that host sits strictly below
+    // the wildcard's suffix (apex excluded).
+    if (a.mode === 'exact') return false;
+    if (!b.suffix.endsWith(`.${a.suffix}`)) return false;
+    if (a.mode === '*') {
+      const before = b.suffix.slice(0, b.suffix.length - a.suffix.length - 1);
+      return !before.includes('.'); // exactly one label under the suffix
+    }
+    return true; // ** covers any depth under its suffix
+  }
+  // b is a wildcard: only a `**` pattern can be a superset of another
+  // wildcard's coverage, and only when b's suffix sits at or below a's.
+  if (a.mode !== '**') return false;
+  return b.suffix === a.suffix || b.suffix.endsWith(`.${a.suffix}`);
+}
+
+/**
+ * Minimality diff — no allowlist entry may be redundant with another entry
+ * (wildcard or exact). Redundant entries widen the matcher surface without
+ * adding coverage and obscure which entry actually authorizes a host.
+ */
+export function diffAllowlistRedundancy(configSource, { allowEntries = null } = {}) {
+  const entries =
+    allowEntries ??
+    (() => {
+      const r = extractAllowlistedHosts(configSource, { dedupe: false });
+      return r.error ? [] : r.hosts;
+    })();
+  const problems = [];
+  for (let i = 0; i < entries.length; i++) {
+    // An entry is redundant when any other entry covers it — except that a
+    // literal duplicate only flags its LATER instance (either could go; the
+    // first stays, matching how a human would de-dupe by hand).
+    const coveredBy = entries.find(
+      (other, j) =>
+        j !== i && (other !== entries[i] || j < i) && patternCoversPattern(other, entries[i])
+    );
+    if (coveredBy !== undefined) {
+      problems.push({
+        code: 'REDUNDANT_ALLOWLIST_ENTRY',
+        file: WEB_CONFIG_REL,
+        message:
+          `allowlist entry "${entries[i]}" is fully covered by "${coveredBy}" — ` +
+          'every host it matches is already authorized',
+        fix: `delete the { hostname: '${entries[i]}' } entry from images.remotePatterns to keep the allowlist minimal`,
+      });
+    }
+  }
+  return problems;
 }
 
 /** Lists the seeder source files the bypass scan covers (no glob deps). */
@@ -377,6 +458,10 @@ export function checkSeedImageHosts(
       emissionSources,
     })
   );
+
+  // Rule 4: minimality — no allowlist entry may be redundant with another
+  // (wildcard or exact). dedupe:false so a literal duplicate is caught too.
+  problems.push(...diffAllowlistRedundancy(cfgSrc));
 
   return problems;
 }
