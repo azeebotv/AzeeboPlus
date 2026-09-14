@@ -151,6 +151,64 @@ export const colors = {
     silver: '#9CA3AF',
     bronze: '#CD7F32',
   },
+
+  // Legacy/Mock Accent Palette — exact-value colors migrated from legacy
+  // screen styles during the no-hex-colors codemod (apps/mobile/app/**).
+  // Grouped here so every screen references the theme instead of raw
+  // literals. Future design pass: fold these into universeColors/pathColors
+  // or the Tailwind shade scales.
+  palette: {
+    // Neutral greys (light → dark)
+    grey100: '#f0f0f0',
+    grey150: '#eee',
+    grey200: '#e5e5e5',
+    grey300: '#ccc',
+    grey400: '#aaa',
+    grey500: '#888',
+    grey600: '#666',
+    grey700: '#444',
+    grey800: '#333',
+    grey900: '#222',
+    grey950: '#111',
+    charcoal: '#2A2A2A',
+    slate: '#3a3a3a',
+    // Paper tones
+    paper: '#fafafa',
+    cloud: '#f8f9fa',
+    lavender: '#f5f0ff',
+    mist: '#f0faf8',
+    // Decorative accents
+    cream: '#FFEAA7',
+    coral: '#FF6B6B',
+    alarmRed: '#E74C3C',
+    alertRed: '#FF4444',
+    tangerine: '#F39C12',
+    mint: '#96CEB4',
+    teal: '#4ECDC4',
+    sky: '#45B7D1',
+    azure: '#0EA5F9',
+    cyan: '#22D3EE',
+    indigo: '#6366F1',
+    plum: '#DDA0DD',
+    emerald: '#10B911',
+    cocoa: '#6B5B4B',
+    forest: '#065F46',
+    // Deep universe surfaces
+    deepSpace: '#0A0A1A',
+    nightIndigo: '#1A0A3B',
+    violetDusk: '#2d1f5e',
+    royalPurple: '#2D1B69',
+    midnightSlate: '#1f1f2e',
+  },
+
+  // Pre-multiplied alpha variants (8-digit hex) used for washes and tints.
+  alphaColors: {
+    primaryA20: '#E8420A20', // brand orange @ ~12.5% alpha
+    errorA20: '#CC1C1C20', // brand red @ ~12.5% alpha
+    dangerA20: '#EF444420', // danger red @ ~12.5% alpha
+    successA25: '#22C55E25', // success green @ ~14.5% alpha
+    violetA20: '#8B5CF620', // violet @ ~12.5% alpha
+  },
 } as const;
 
 // ── Agbala Path Colors ────────────────────────────────────────

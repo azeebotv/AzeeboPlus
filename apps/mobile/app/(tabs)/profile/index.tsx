@@ -18,7 +18,13 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { useUpdateProfile } from '../../../src/hooks/useProfileQuery';
-import { PageTransition, ScrollReveal, StaggerGrid, GlowCard } from '../../../src/components/motion';
+import {
+  PageTransition,
+  ScrollReveal,
+  StaggerGrid,
+  GlowCard,
+} from '../../../src/components/motion';
+import { colors } from '../../../src/theme';
 
 const MENU_ITEMS = [
   { id: 'subscriptions', label: 'Subscriptions', icon: '📺', action: 'navigate' },
@@ -530,7 +536,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   email: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 14,
     marginBottom: 8,
   },
@@ -572,7 +578,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   statLabel: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 12,
   },
   statDivider: {
@@ -611,7 +617,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   preferenceSubtitle: {
-    color: '#666',
+    color: colors.palette.grey600,
     fontSize: 12,
   },
   menuItem: {
@@ -631,7 +637,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   menuArrow: {
-    color: '#666',
+    color: colors.palette.grey600,
     fontSize: 24,
   },
   logoutButton: {
@@ -642,10 +648,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#FF4444',
+    borderColor: colors.palette.alertRed,
   },
   logoutButtonText: {
-    color: '#FF4444',
+    color: colors.palette.alertRed,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -654,7 +660,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   versionText: {
-    color: '#666',
+    color: colors.palette.grey600,
     fontSize: 12,
   },
   bottomPadding: {
@@ -682,7 +688,7 @@ const styles = StyleSheet.create({
   },
   modalClose: {
     fontSize: 24,
-    color: '#666',
+    color: colors.palette.grey600,
   },
   inputContainer: {
     marginBottom: 16,
@@ -691,7 +697,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     marginBottom: 8,
-    color: '#666',
+    color: colors.palette.grey600,
   },
   input: {
     padding: 16,

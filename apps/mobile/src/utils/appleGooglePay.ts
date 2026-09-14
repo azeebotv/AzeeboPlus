@@ -1,6 +1,8 @@
 import { Platform } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
 import { logger } from './logger';
+import { apiClient } from '../api/client';
+
+type ApiResponse<T> = { success: boolean; data?: T; message?: string };
 
 export type PaymentMethodType = 'apple_pay' | 'google_pay';
 
@@ -33,12 +35,9 @@ export class AppleGooglePayService {
   }
 
   isAvailable(): boolean {
-    if (Platform.OS === 'ios') {
-      return true;
-    }
-    if (Platform.OS === 'android') {
-      return true;
-    }
+    // The Stripe native confirmation flow is NOT wired up yet (see
+    // `confirmPayment`), so advertising wallet payments would dead-end at
+    // checkout. Return false until a real payment sheet is integrated.
     return false;
   }
 
@@ -106,26 +105,23 @@ export class AppleGooglePayService {
     description: string
   ): Promise<string | null> {
     try {
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL}/v1/payments/intent`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${await this.getAuthToken()}`,
-        },
-        body: JSON.stringify({
+      // Route through the shared API client so the base URL, /api/v1 prefix
+      // and auth headers stay consistent with the rest of the app.
+      const response = await apiClient.post<ApiResponse<{ clientSecret?: string }>>(
+        '/v1/payments/intent',
+        {
           amount,
           currency,
           description,
           paymentMethod: this.getPaymentMethodType(),
-        }),
-      });
+        }
+      );
 
-      if (!response.ok) {
-        throw new Error('Failed to create payment intent');
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Failed to create payment intent');
       }
 
-      const data = await response.json();
-      return data.data?.clientSecret || null;
+      return response.data.clientSecret || null;
     } catch (error) {
       logger.error('Failed to create payment intent', error);
       return null;
@@ -134,13 +130,13 @@ export class AppleGooglePayService {
 
   private async confirmPayment(_clientSecret: string): Promise<PaymentResult> {
     try {
-      // Note: useStripe() must be called from a React component, not a class method.
-      // This service should be refactored to use a React hook wrapper.
-      // For now, we return an error directing to use the hook-based approach.
+      // TODO: useStripe() must be called from a React component, not a class
+      // method. Integrating requires the @stripe/stripe-react-native package
+      // plus a hook-based wrapper (see useAppleGooglePay). Until then the
+      // wallet option is disabled via isAvailable() === false.
       return {
         success: false,
-        error:
-          'Payment confirmation requires the Stripe hook. Use confirmPaymentFromComponent() instead.',
+        error: 'Wallet payments are not yet available. Please use a card or bank transfer.',
       };
     } catch (error) {
       logger.error('Payment confirmation failed', error);
@@ -148,16 +144,6 @@ export class AppleGooglePayService {
         success: false,
         error: error instanceof Error ? (error as Error).message : 'Payment confirmation failed',
       };
-    }
-  }
-
-  private async getAuthToken(): Promise<string> {
-    try {
-      const token = await SecureStore.getItemAsync('accessToken');
-      return token || '';
-    } catch (error) {
-      logger.error('Failed to get auth token', error);
-      return '';
     }
   }
 }

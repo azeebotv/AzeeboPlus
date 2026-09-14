@@ -30,6 +30,10 @@ interface AuthContextType {
     displayName?: string;
   }) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
+  /** Re-validates the stored session against the API. Returns false (and
+   * logs the user out) when the access/refresh tokens are dead. Used by
+   * biometric unlock so a locally-stored profile can't fake a session. */
+  validateSession: () => Promise<boolean>;
   forgotPassword: (email: string) => Promise<void>;
   verifyOTP: (code: string) => Promise<{ success: boolean; message?: string; user?: User }>;
   resendOTP: () => Promise<void>;
@@ -56,6 +60,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // (logout, password changes, payment confirmations) using expo-local-authentication.
   // Currently handled via session timeout and re-authentication for critical flows.
 
+  const clearSessionTimer = useCallback(() => {
+    if (sessionTimerRef.current) {
+      clearTimeout(sessionTimerRef.current);
+      sessionTimerRef.current = null;
+    }
+  }, []);
+
+  // useCallback with stable deps so `resetSessionTimer` (which depends on
+  // `logout`) keeps a stable identity — otherwise the session timer effect
+  // would re-run on every provider re-render and silently reset the
+  // inactivity window.
+  const logout = useCallback(async () => {
+    try {
+      await authApi.logout();
+    } catch (error) {
+      logger.error('Logout error', error);
+    } finally {
+      clearSessionTimer();
+      await removeSecureItem('accessToken');
+      await removeSecureItem('refreshToken');
+      await removeItem('user');
+      apiClient.setToken(null);
+      setUser(null);
+    }
+  }, [clearSessionTimer, removeSecureItem, removeItem]);
+
+  const validateSession = useCallback(async (): Promise<boolean> => {
+    try {
+      const response = await userApi.getProfile();
+      if (response.success && response.data) {
+        return true;
+      }
+      await logout();
+      return false;
+    } catch {
+      await logout();
+      return false;
+    }
+  }, [logout]);
+
   const resetSessionTimer = useCallback(() => {
     if (sessionTimerRef.current) {
       clearTimeout(sessionTimerRef.current);
@@ -66,22 +110,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, SESSION_TIMEOUT_MS);
   }, [logout]);
 
-  const clearSessionTimer = useCallback(() => {
-    if (sessionTimerRef.current) {
-      clearTimeout(sessionTimerRef.current);
-      sessionTimerRef.current = null;
-    }
-  }, []);
-
   useEffect(() => {
     // Persist refreshed tokens so they survive app restarts
     apiClient.setOnRefreshCallback(async (tokens) => {
       await setSecureItem('accessToken', tokens.access_token);
       await setSecureItem('refreshToken', tokens.refresh_token);
     });
+    // When a 401-triggered refresh fails, the stored session is dead — clear
+    // it so the UI doesn't keep showing a signed-in state with unusable tokens.
+    apiClient.setOnRefreshFailureCallback(() => {
+      void logout();
+    });
     checkAuth();
     return () => clearSessionTimer();
-  }, []);
+  }, [logout, setSecureItem, clearSessionTimer]);
 
   useEffect(() => {
     if (user) {
@@ -121,9 +163,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // The first API call will trigger a 401 if the token is expired,
       // which the apiClient interceptor handles by refreshing or logging out.
       if (token && userData) {
-        setUser(JSON.parse(userData));
-        apiClient.setToken(token);
-        apiClient.setRefreshToken(refreshToken);
+        // Guard against a corrupted AsyncStorage profile crashing startup:
+        // a malformed entry is treated as signed-out (stale tokens are also
+        // cleared so the next login starts clean).
+        try {
+          const parsed = JSON.parse(userData) as User;
+          if (!parsed || typeof parsed.id !== 'string') {
+            throw new Error('Malformed stored user profile');
+          }
+          setUser(parsed);
+          apiClient.setToken(token);
+          apiClient.setRefreshToken(refreshToken);
+        } catch (parseError) {
+          logger.error('Stored user profile corrupt — clearing session', parseError);
+          await removeSecureItem('accessToken');
+          await removeSecureItem('refreshToken');
+          await removeItem('user');
+        }
       }
     } catch (error) {
       logger.error('Auth check failed', error);
@@ -181,21 +237,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, message };
     }
   };
-
-  async function logout() {
-    try {
-      await authApi.logout();
-    } catch (error) {
-      logger.error('Logout error', error);
-    } finally {
-      clearSessionTimer();
-      await removeSecureItem('accessToken');
-      await removeSecureItem('refreshToken');
-      await removeItem('user');
-      apiClient.setToken(null);
-      setUser(null);
-    }
-  }
 
   const forgotPassword = async (email: string) => {
     await authApi.forgotPassword(email);
@@ -278,6 +319,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         register,
         socialLogin,
         logout,
+        validateSession,
         forgotPassword,
         verifyOTP,
         resendOTP,

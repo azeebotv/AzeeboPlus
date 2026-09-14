@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../src/api/client';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
+import { colors } from '../../src/theme';
 
 interface LiveEventItem {
   id: string;
@@ -176,7 +177,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
   },
   filterChipActive: { backgroundColor: '#E8420A' },
-  filterText: { color: '#888', fontSize: 13, fontWeight: '600' },
+  filterText: { color: colors.palette.grey500, fontSize: 13, fontWeight: '600' },
   filterTextActive: { color: '#fff' },
   listContent: { paddingHorizontal: 16, paddingBottom: 30 },
   eventCard: {
@@ -189,7 +190,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 8,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
@@ -199,7 +200,7 @@ const styles = StyleSheet.create({
   eventTitle: { fontSize: 15, fontWeight: '700', marginBottom: 2 },
   eventStatus: { fontSize: 11, color: '#E8420A', fontWeight: '600' },
   eventPrice: { fontSize: 15, fontWeight: '700' },
-  eventDesc: { fontSize: 12, color: '#888', marginBottom: 8, lineHeight: 18 },
+  eventDesc: { fontSize: 12, color: colors.palette.grey500, marginBottom: 8, lineHeight: 18 },
   cardFooter: { flexDirection: 'row', gap: 16 },
-  footerText: { fontSize: 11, color: '#666' },
+  footerText: { fontSize: 11, color: colors.palette.grey600 },
 });

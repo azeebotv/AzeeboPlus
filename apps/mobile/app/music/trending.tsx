@@ -33,7 +33,9 @@ export default function MusicTrendingScreen() {
   const tracks = trendingQuery.data ?? [];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+    >
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
@@ -45,7 +47,10 @@ export default function MusicTrendingScreen() {
       {trendingQuery.isLoading ? (
         <LoadingState text="Loading trending..." />
       ) : trendingQuery.error ? (
-        <ErrorState description={trendingQuery.error.message} onRetry={() => trendingQuery.refetch()} />
+        <ErrorState
+          description={trendingQuery.error.message}
+          onRetry={() => trendingQuery.refetch()}
+        />
       ) : tracks.length === 0 ? (
         <EmptyState icon="🔥" title="No trending tracks" description="Trending data coming soon" />
       ) : (
@@ -65,8 +70,12 @@ export default function MusicTrendingScreen() {
                 {item.change === 0 && <Text style={styles.same}>—</Text>}
               </View>
               <View style={styles.info}>
-                <Text style={[styles.title, { color: colors.text.primary }]} numberOfLines={1}>{item.title}</Text>
-                <Text style={styles.artist} numberOfLines={1}>{item.artist}</Text>
+                <Text style={[styles.title, { color: colors.text.primary }]} numberOfLines={1}>
+                  {item.title}
+                </Text>
+                <Text style={styles.artist} numberOfLines={1}>
+                  {item.artist}
+                </Text>
               </View>
               <Text style={styles.plays}>{(item.playCount / 1000).toFixed(0)}K</Text>
             </TouchableOpacity>
@@ -79,12 +88,31 @@ export default function MusicTrendingScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingTop: 40 },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.bg.tertiary, alignItems: 'center', justifyContent: 'center' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    paddingTop: 40,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.bg.tertiary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backIcon: { color: colors.text.primary, fontSize: 20 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
   list: { padding: 16, gap: 4 },
-  card: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: radius.md, gap: 12 },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: radius.md,
+    gap: 12,
+  },
   rankContainer: { width: 48, alignItems: 'center' },
   rank: { fontSize: 16, fontWeight: '700', color: colors.text.tertiary },
   rankTop: { color: '#F59E0B' },

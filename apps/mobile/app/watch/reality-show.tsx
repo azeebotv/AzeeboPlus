@@ -17,7 +17,7 @@ import { walletApi } from '../../src/api/wallet';
 import { apiClient } from '../../src/api/client';
 import { logger } from '../../src/utils/logger';
 import { ApiResponse } from '../../src/types/api';
-import { defaultImages } from '../../src/theme';
+import { defaultImages, colors } from '../../src/theme';
 
 const PLACEHOLDER_IMAGE = defaultImages.thumbnail;
 
@@ -301,7 +301,10 @@ export default function RealityShowScreen() {
         <TouchableOpacity
           onPress={handleVote}
           disabled={!selectedContestant || walletBalance < voteCost}
-          style={[styles.submitVoteButton, !selectedContestant && { backgroundColor: '#333' }]}
+          style={[
+            styles.submitVoteButton,
+            !selectedContestant && { backgroundColor: colors.palette.grey800 },
+          ]}
         >
           <Text style={styles.submitVoteText}>Confirm Vote</Text>
         </TouchableOpacity>
@@ -457,7 +460,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#333',
+    backgroundColor: colors.palette.grey800,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -542,13 +545,13 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: '#1a1a1a',
     borderBottomWidth: 1,
-    borderBottomColor: '#2a2a2a',
+    borderBottomColor: colors.palette.charcoal,
   },
   walletInfo: {
     flex: 1,
   },
   walletLabel: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 12,
     marginBottom: 4,
   },
@@ -587,14 +590,14 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.palette.grey100,
     alignItems: 'center',
     justifyContent: 'center',
   },
   voteButtonText: {
     fontSize: 24,
     fontWeight: '600',
-    color: '#666',
+    color: colors.palette.grey600,
   },
   voteAmountText: {
     fontSize: 20,
@@ -607,7 +610,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   priceText: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 14,
   },
   priceAmount: {
@@ -638,7 +641,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#ccc',
+    backgroundColor: colors.palette.grey300,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
@@ -686,13 +689,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#2a2a2a',
+    borderBottomColor: colors.palette.charcoal,
   },
   rank: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#333',
+    backgroundColor: colors.palette.grey800,
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: 14,
@@ -717,7 +720,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 4,
-    backgroundColor: '#333',
+    backgroundColor: colors.palette.grey800,
     borderRadius: 2,
     overflow: 'hidden',
   },
@@ -756,10 +759,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     padding: 8,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#3a3a3a',
+    borderColor: colors.palette.slate,
   },
   predictionAvatar: {
     fontSize: 20,
@@ -799,7 +802,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalDetailText: {
-    color: '#aaa',
+    color: colors.palette.grey400,
     fontSize: 14,
     marginBottom: 8,
     textAlign: 'center',
@@ -814,7 +817,7 @@ const styles = StyleSheet.create({
   },
   modalCancel: {
     flex: 1,
-    backgroundColor: '#333',
+    backgroundColor: colors.palette.grey800,
     padding: 12,
     borderRadius: 10,
     alignItems: 'center',
@@ -850,7 +853,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   successMessage: {
-    color: '#aaa',
+    color: colors.palette.grey400,
     fontSize: 14,
     textAlign: 'center',
   },

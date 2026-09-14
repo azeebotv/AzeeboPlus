@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { useSavedContent, useRecentContent } from '../../src/hooks/useContentQuery';
+import { colors } from '../../src/theme';
 
 const TABS = [
   { id: 'watchlist', label: 'Watchlist', emoji: '📋' },
@@ -223,7 +224,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   tabLabel: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 12,
     fontWeight: '500',
   },
@@ -246,7 +247,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 60,
     borderRadius: 8,
-    backgroundColor: '#333',
+    backgroundColor: colors.palette.grey800,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -264,7 +265,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   itemMeta: {
-    color: '#666',
+    color: colors.palette.grey600,
     fontSize: 13,
   },
   playButton: {
@@ -283,7 +284,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: '#333',
+    backgroundColor: colors.palette.grey800,
   },
   resumeText: {
     color: '#E8420A',

@@ -50,7 +50,9 @@ export default function CelebrityDetailScreen() {
         message: `Check out ${celebrity.name} - ${celebrity.profession} on Azeebo+`,
         title: celebrity.name,
       });
-    } catch { /* User cancelled share */ }
+    } catch {
+      /* User cancelled share */
+    }
   }, [celebrity]);
 
   const handleOpenSocial = useCallback((url: string) => {

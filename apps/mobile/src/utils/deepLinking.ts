@@ -118,21 +118,24 @@ export class DeepLinkService {
     }
 
     try {
+      // Route ids are URL-encoded defensively — deep-link payloads are
+      // attacker-controllable and pushed straight into the router.
+      const safeId = data.id ? encodeURIComponent(data.id) : undefined;
       switch (data.type) {
         case 'content':
-          router.push(`/(tabs)/home?contentId=${data.id}`);
+          // Content links open the actual watch screen — home never consumed
+          // the contentId param, so shared content links landed on the feed.
+          if (safeId) router.push(`/watch/${safeId}`);
           break;
         case 'universe':
-          router.push(`/(tabs)/home?universeId=${data.id}`);
-          break;
         case 'creator':
-          router.push(`/(tabs)/home?creatorId=${data.id}`);
+          router.push('/(tabs)/home');
           break;
         case 'referral':
-          router.push(`/(auth)/register?referral=${data.id}`);
+          if (safeId) router.push(`/(auth)/register?referral=${safeId}`);
           break;
         case 'payment':
-          router.push(`/(tabs)/wallet?paymentId=${data.id}`);
+          router.push('/(tabs)/wallet');
           break;
         case 'wallet':
           router.push('/(tabs)/wallet');

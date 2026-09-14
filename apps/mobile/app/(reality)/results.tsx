@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
 import { analytics } from '../../src/utils/analytics';
+import { colors } from '../../src/theme';
 
 interface ContestantResult {
   id: string;
@@ -47,7 +48,7 @@ export default function ResultsScreen() {
 
   useEffect(() => {
     loadResults();
-          analytics.realityLeaderboardViewed(contentId);
+    analytics.realityLeaderboardViewed(contentId);
   }, [contentId]);
 
   const loadResults = async () => {
@@ -232,7 +233,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
   },
   header: {
@@ -246,7 +247,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 24,
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   headerContent: {
     flex: 1,
@@ -254,11 +255,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   subtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   episodeSelector: {
     paddingHorizontal: 24,
@@ -270,14 +271,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     marginRight: 8,
   },
   episodeButtonActive: {
     backgroundColor: '#E8420A',
   },
   episodeButtonText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 14,
     fontWeight: '500',
   },
@@ -293,15 +294,15 @@ const styles = StyleSheet.create({
   episodeTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   episodeDate: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   winnerCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -330,15 +331,15 @@ const styles = StyleSheet.create({
   winnerName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   winnerVotes: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   evictedCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
@@ -368,12 +369,12 @@ const styles = StyleSheet.create({
   evictedName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   evictedVotes: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   rankingsSection: {
     marginTop: 8,
@@ -381,13 +382,13 @@ const styles = StyleSheet.create({
   rankingsTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 16,
   },
   contestantRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
@@ -411,7 +412,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   rankText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 14,
     fontWeight: 'bold',
   },
@@ -427,12 +428,12 @@ const styles = StyleSheet.create({
   contestantName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 2,
   },
   contestantVotes: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   badge: {
     fontSize: 24,

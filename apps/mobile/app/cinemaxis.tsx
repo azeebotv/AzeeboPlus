@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import { apiClient } from '../src/api/client';
+import { colors } from '../src/theme';
 
 interface FilmItem {
   id: string;
@@ -157,7 +158,7 @@ export default function CinemaxisUniverseHome() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A1A',
+    backgroundColor: colors.palette.deepSpace,
   },
   containerDark: {
     backgroundColor: '#000',
@@ -190,7 +191,7 @@ const styles = StyleSheet.create({
     height: 200,
     marginHorizontal: 16,
     borderRadius: 16,
-    backgroundColor: '#1A0A3B',
+    backgroundColor: colors.palette.nightIndigo,
     marginBottom: 24,
     overflow: 'hidden',
     justifyContent: 'flex-end',
@@ -265,7 +266,7 @@ const styles = StyleSheet.create({
   },
   filmThumbnail: {
     height: 100,
-    backgroundColor: '#1A0A3B',
+    backgroundColor: colors.palette.nightIndigo,
     justifyContent: 'center',
     alignItems: 'center',
   },

@@ -57,7 +57,7 @@ export default function LoreExplorerScreen() {
 
   useEffect(() => {
     if (loreQuery.isSuccess && !loreQuery.isFetching) {
-              analytics.verticalLoreExplored(activeCategory || 'all');
+      analytics.verticalLoreExplored(activeCategory || 'all');
     }
   }, [loreQuery.isSuccess, loreQuery.isFetching, activeCategory]);
 

@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
+import { colors } from '../../src/theme';
 
 const legalContent: Record<
   string,
@@ -124,7 +125,7 @@ const styles = StyleSheet.create({
   header: {
     padding: 24,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e5e5',
+    borderBottomColor: colors.palette.grey200,
   },
   title: {
     fontSize: 28,
@@ -144,18 +145,18 @@ const styles = StyleSheet.create({
   },
   sectionContent: {
     fontSize: 16,
-    color: '#666',
+    color: colors.palette.grey600,
     lineHeight: 1.6,
   },
   footer: {
     marginTop: 24,
     paddingTop: 24,
     borderTopWidth: 1,
-    borderTopColor: '#e5e5e5',
+    borderTopColor: colors.palette.grey200,
     alignItems: 'center',
   },
   footerText: {
     fontSize: 14,
-    color: '#888',
+    color: colors.palette.grey500,
   },
 });

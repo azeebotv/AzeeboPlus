@@ -5,6 +5,7 @@ import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { apiClient } from '../../src/api';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { colors } from '../../src/theme';
 
 interface TriviaQuestion {
   id: string;
@@ -229,9 +230,9 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingTop: 50,
   },
-  exitIcon: { color: '#888', fontSize: 24 },
+  exitIcon: { color: colors.palette.grey500, fontSize: 24 },
   gameStats: { flexDirection: 'row', gap: 16 },
-  scoreText: { color: '#DDA0DD', fontSize: 16, fontWeight: '700' },
+  scoreText: { color: colors.palette.plum, fontSize: 16, fontWeight: '700' },
   streakText: { color: '#F59E0B', fontSize: 16, fontWeight: '700' },
   timerCircle: {
     width: 50,
@@ -242,10 +243,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   timerText: { fontSize: 20, fontWeight: '700' },
-  progressBar: { height: 4, backgroundColor: '#2a2a2a', marginHorizontal: 16, borderRadius: 2 },
-  progressFill: { height: 4, backgroundColor: '#DDA0DD', borderRadius: 2 },
+  progressBar: {
+    height: 4,
+    backgroundColor: colors.palette.charcoal,
+    marginHorizontal: 16,
+    borderRadius: 2,
+  },
+  progressFill: { height: 4, backgroundColor: colors.palette.plum, borderRadius: 2 },
   questionCount: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 12,
     textAlign: 'center',
     marginTop: 8,
@@ -271,11 +277,11 @@ const styles = StyleSheet.create({
   gameOverContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   gameOverEmoji: { fontSize: 80, marginBottom: 20 },
   gameOverTitle: { fontSize: 28, fontWeight: '700', marginBottom: 12 },
-  gameOverScore: { color: '#DDA0DD', fontSize: 24, fontWeight: '700', marginBottom: 8 },
-  gameOverQuestions: { color: '#888', fontSize: 16, marginBottom: 32 },
+  gameOverScore: { color: colors.palette.plum, fontSize: 24, fontWeight: '700', marginBottom: 8 },
+  gameOverQuestions: { color: colors.palette.grey500, fontSize: 16, marginBottom: 32 },
   gameOverButtons: { flexDirection: 'row', gap: 16 },
   playAgainButton: {
-    backgroundColor: '#DDA0DD',
+    backgroundColor: colors.palette.plum,
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: 10,
@@ -286,7 +292,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#888',
+    borderColor: colors.palette.grey500,
   },
-  exitText: { color: '#888', fontSize: 16, fontWeight: '600' },
+  exitText: { color: colors.palette.grey500, fontSize: 16, fontWeight: '600' },
 });

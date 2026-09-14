@@ -46,8 +46,13 @@ export default function StoryworldsListScreen() {
       <View style={styles.cardHeader}>
         <Text style={styles.cardIcon}>🌍</Text>
         <View style={styles.cardInfo}>
-          <Text style={[styles.cardName, { color: colors.text.primary }]} numberOfLines={1}>{item.name}</Text>
-          <Text style={[styles.cardDesc, { color: isDark ? colors.text.secondary : '#666' }]} numberOfLines={2}>
+          <Text style={[styles.cardName, { color: colors.text.primary }]} numberOfLines={1}>
+            {item.name}
+          </Text>
+          <Text
+            style={[styles.cardDesc, { color: isDark ? colors.text.secondary : '#666' }]}
+            numberOfLines={2}
+          >
             {item.description}
           </Text>
         </View>
@@ -61,7 +66,9 @@ export default function StoryworldsListScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+    >
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
@@ -73,7 +80,10 @@ export default function StoryworldsListScreen() {
       {storyworldsQuery.isLoading ? (
         <LoadingState text="Loading storyworlds..." />
       ) : storyworldsQuery.error ? (
-        <ErrorState description={storyworldsQuery.error.message} onRetry={() => storyworldsQuery.refetch()} />
+        <ErrorState
+          description={storyworldsQuery.error.message}
+          onRetry={() => storyworldsQuery.refetch()}
+        />
       ) : storyworlds.length === 0 ? (
         <EmptyState icon="🌍" title="No storyworlds" description="Discover connected worlds" />
       ) : (
@@ -91,8 +101,21 @@ export default function StoryworldsListScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingTop: 40 },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.bg.tertiary, alignItems: 'center', justifyContent: 'center' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    paddingTop: 40,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.bg.tertiary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backIcon: { color: colors.text.primary, fontSize: 20 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
   list: { padding: 16, gap: 12 },

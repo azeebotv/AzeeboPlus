@@ -45,7 +45,9 @@ export default function MusicGenresScreen() {
   const genres = genresQuery.data ?? [];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+    >
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
@@ -88,13 +90,33 @@ export default function MusicGenresScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingTop: 40 },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.bg.tertiary, alignItems: 'center', justifyContent: 'center' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    paddingTop: 40,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.bg.tertiary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backIcon: { color: colors.text.primary, fontSize: 20 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
   grid: { padding: 16 },
   gridRow: { gap: 12, marginBottom: 12 },
-  card: { flex: 1, padding: 20, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center', minHeight: 90 },
+  card: {
+    flex: 1,
+    padding: 20,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 90,
+  },
   genreName: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
   trackCount: { fontSize: 12, color: colors.text.tertiary },
 });

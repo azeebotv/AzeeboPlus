@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { StatusBar as RNStatusBar } from 'react-native';
 import { useVideoPlayer, type VideoPlayer } from 'expo-video';
 import { useEvent } from 'expo';
+import * as ScreenOrientation from 'expo-screen-orientation';
 import { contentApi } from '../api';
 
 interface UseVideoPlayerOptions {
@@ -125,8 +127,19 @@ export function useAzeeboVideoPlayer({
 
   // mobile_autoplay (on by default): when the caller passes autoPlay=true
   // (server flag enabled), start playback as soon as the source is ready.
+  // A ref gate ensures this fires only once per source — without it, any
+  // later status flip (e.g. after a seek) would force playback back on and
+  // fight the user's pause.
+  const autoPlayedSourceRef = useRef<string | null>(null);
   useEffect(() => {
-    if (autoPlay && status === 'readyToPlay' && videoSource && !isPlaying) {
+    if (
+      autoPlay &&
+      status === 'readyToPlay' &&
+      videoSource &&
+      !isPlaying &&
+      autoPlayedSourceRef.current !== videoSource
+    ) {
+      autoPlayedSourceRef.current = videoSource;
       player.play();
     }
   }, [autoPlay, status, videoSource, isPlaying, player]);
@@ -142,6 +155,11 @@ export function useAzeeboVideoPlayer({
       progressIntervalRef.current = setInterval(() => {
         onProgressUpdate(player.currentTime);
       }, 10000);
+    }
+    // Also flush one final progress update when playback stops so pausing or
+    // leaving mid-video still saves the resume position.
+    if (!isPlaying && onProgressUpdate && player.currentTime > 0) {
+      onProgressUpdate(player.currentTime);
     }
     return () => {
       if (progressIntervalRef.current) {
@@ -222,8 +240,32 @@ export function useAzeeboVideoPlayer({
     [currentTime, seek]
   );
 
+  // Fullscreen stretches the player surface over the whole screen, locks the
+  // device to landscape and hides the status bar. Exiting restores portrait
+  // and the status bar. The lock is async and best-effort: a failed lock
+  // still enters surface-fullscreen (the video covers the screen), we just
+  // don't force the rotation.
   const toggleFullscreen = useCallback(() => {
-    setIsFullscreen((prev) => !prev);
+    setIsFullscreen((prev) => {
+      const next = !prev;
+      RNStatusBar.setHidden(next);
+      const lockPromise = next
+        ? ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT)
+        : ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+      lockPromise.catch(() => {
+        // Rotation lock unsupported (e.g. certain tablets/emulators) —
+        // surface-fullscreen still applies.
+      });
+      return next;
+    });
+  }, []);
+
+  // Restore portrait + status bar when leaving the screen mid-fullscreen.
+  useEffect(() => {
+    return () => {
+      RNStatusBar.setHidden(false);
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
+    };
   }, []);
 
   const formatTime = useCallback((seconds: number): string => {

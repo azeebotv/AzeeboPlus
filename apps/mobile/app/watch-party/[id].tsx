@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { logger } from '../../src/utils/logger';
 import {
   View,
   Text,
@@ -69,7 +70,7 @@ export default function WatchPartyScreen() {
       const response = await apiClient.get<{ data?: WatchParty }>(`/v1/watch-parties/${id}`);
       setParty(response.data || null);
     } catch (error) {
-      console.error('Failed to load party:', error);
+      logger.error('Failed to load party:', error);
     } finally {
       setLoading(false);
     }
@@ -123,7 +124,7 @@ export default function WatchPartyScreen() {
         message: `Join my watch party for ${party.contentTitle}!\n\nInvite code: ${party.inviteCode}\n\nOr click: https://azeebo.com/watch-party/join?code=${party.inviteCode}`,
       });
     } catch (error) {
-      console.error('Failed to share:', error);
+      logger.error('Failed to share:', error);
     }
   };
 
@@ -191,7 +192,11 @@ export default function WatchPartyScreen() {
             <View style={styles.headerInfo}>
               <Text style={styles.partyTitle}>{party.contentTitle}</Text>
               <Text style={styles.partyStatus}>
-                {party.status === 'active' ? '🔴 Live' : party.status === 'paused' ? '⏸ Paused' : ' Ended'}
+                {party.status === 'active'
+                  ? '🔴 Live'
+                  : party.status === 'paused'
+                    ? '⏸ Paused'
+                    : ' Ended'}
               </Text>
             </View>
             <TouchableOpacity style={styles.inviteCode} onPress={handleShareInvite}>
@@ -216,9 +221,7 @@ export default function WatchPartyScreen() {
 
         {/* Participants */}
         <GlassCard style={styles.participantsCard}>
-          <Text style={styles.sectionTitle}>
-            Participants ({party.participants.length})
-          </Text>
+          <Text style={styles.sectionTitle}>Participants ({party.participants.length})</Text>
           <FlatList
             data={party.participants}
             horizontal
@@ -250,12 +253,7 @@ export default function WatchPartyScreen() {
             keyExtractor={(item) => item.id}
             onContentSizeChange={() => chatRef.current?.scrollToEnd()}
             renderItem={({ item }) => (
-              <View
-                style={[
-                  styles.chatMessage,
-                  item.type === 'system' && styles.systemMessage,
-                ]}
-              >
+              <View style={[styles.chatMessage, item.type === 'system' && styles.systemMessage]}>
                 {item.type === 'system' ? (
                   <Text style={styles.systemMessageText}>{item.message}</Text>
                 ) : (

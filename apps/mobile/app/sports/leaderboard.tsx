@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { apiClient } from '../../src/api/client';
 import { ApiResponse } from '../../src/types/api';
+import { colors } from '../../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -153,7 +154,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -166,8 +167,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#1a1a1a',
   },
-  periodChipActive: { backgroundColor: '#E74C3C' },
-  periodText: { color: '#888', fontSize: 13, fontWeight: '600' },
+  periodChipActive: { backgroundColor: colors.palette.alarmRed },
+  periodText: { color: colors.palette.grey500, fontSize: 13, fontWeight: '600' },
   periodTextActive: { color: '#fff' },
   listContent: { paddingHorizontal: 16, paddingBottom: 30 },
   topThree: {
@@ -183,14 +184,14 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
   },
   avatarEmoji: { fontSize: 24 },
   topName: { fontSize: 12, fontWeight: '600', marginBottom: 2, textAlign: 'center' },
-  topPoints: { color: '#E74C3C', fontSize: 12, fontWeight: '700' },
+  topPoints: { color: colors.palette.alarmRed, fontSize: 12, fontWeight: '700' },
   entryRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -198,12 +199,18 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 8,
   },
-  rankText: { width: 40, fontSize: 14, fontWeight: '700', color: '#888', textAlign: 'center' },
+  rankText: {
+    width: 40,
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.palette.grey500,
+    textAlign: 'center',
+  },
   entryAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -211,8 +218,8 @@ const styles = StyleSheet.create({
   entryAvatarEmoji: { fontSize: 20 },
   entryInfo: { flex: 1 },
   entryName: { fontSize: 14, fontWeight: '600', marginBottom: 2 },
-  entryWinRate: { color: '#888', fontSize: 12 },
+  entryWinRate: { color: colors.palette.grey500, fontSize: 12 },
   entryRight: { alignItems: 'flex-end' },
-  entryPoints: { color: '#E74C3C', fontSize: 14, fontWeight: '700', marginBottom: 2 },
+  entryPoints: { color: colors.palette.alarmRed, fontSize: 14, fontWeight: '700', marginBottom: 2 },
   changeIcon: { fontSize: 12 },
 });

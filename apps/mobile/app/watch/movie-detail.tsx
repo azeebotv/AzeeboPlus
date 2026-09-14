@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { contentApi, type ContentItem } from '../../src/api';
 import { logger } from '../../src/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
+import { colors } from '../../src/theme';
 
 export default function MovieDetailScreen() {
   const colorScheme = useColorScheme();
@@ -263,7 +264,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#333',
+    backgroundColor: colors.palette.grey800,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -279,7 +280,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#333',
+    backgroundColor: colors.palette.grey800,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -336,7 +337,7 @@ const styles = StyleSheet.create({
   progressBar: {
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#333',
+    backgroundColor: colors.palette.grey800,
     marginBottom: 8,
   },
   progressFill: {
@@ -364,14 +365,14 @@ const styles = StyleSheet.create({
   },
   metaItem: {
     fontSize: 14,
-    color: '#888',
+    color: colors.palette.grey500,
   },
   metaDivider: {
-    color: '#888',
+    color: colors.palette.grey500,
   },
   movieDescription: {
     fontSize: 14,
-    color: '#666',
+    color: colors.palette.grey600,
     lineHeight: 1.5,
   },
   actionsSection: {
@@ -427,7 +428,7 @@ const styles = StyleSheet.create({
   },
   castRole: {
     fontSize: 11,
-    color: '#888',
+    color: colors.palette.grey500,
   },
   recommendationsSection: {
     padding: 16,

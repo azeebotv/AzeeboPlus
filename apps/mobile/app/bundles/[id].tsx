@@ -5,6 +5,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { bundleApi } from '../../src/api/bundle';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
+import { colors } from '../../src/theme';
 
 const UNIVERSE_NAMES: Record<string, string> = {
   reality: 'Reality',
@@ -168,7 +169,7 @@ function createStyles(isDark: boolean) {
     container: { flex: 1, backgroundColor: bg },
     scroll: { padding: 16, paddingBottom: 40 },
     backBtn: { marginBottom: 16 },
-    backText: { color: '#22D3EE', fontSize: 15 },
+    backText: { color: colors.palette.cyan, fontSize: 15 },
     card: {
       backgroundColor: cardBg,
       borderRadius: 12,
@@ -214,8 +215,8 @@ function createStyles(isDark: boolean) {
       paddingVertical: 14,
       alignItems: 'center',
     },
-    subscribeBtnDisabled: { backgroundColor: '#4B5563' },
+    subscribeBtnDisabled: { backgroundColor: colors.light[600] },
     subscribeText: { fontSize: 16, fontWeight: '700', color: '#000000' },
-    errorText: { color: '#F87171', fontSize: 13, marginTop: 8, textAlign: 'center' },
+    errorText: { color: colors.error[400], fontSize: 13, marginTop: 8, textAlign: 'center' },
   });
 }

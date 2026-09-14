@@ -12,6 +12,7 @@ import { useRouter, useLocalSearchParams, type Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
+import { colors } from '../../src/theme';
 
 interface CreatorProfile {
   id: string;
@@ -249,7 +250,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
   },
   errorContainer: {
@@ -258,7 +259,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 18,
     marginBottom: 16,
   },
@@ -286,13 +287,13 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 24,
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   title: {
     flex: 1,
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   profileSection: {
     alignItems: 'center',
@@ -307,17 +308,17 @@ const styles = StyleSheet.create({
   displayName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   username: {
     fontSize: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
     marginBottom: 12,
   },
   bio: {
     fontSize: 14,
-    color: '#F3F4F6',
+    color: colors.light[100],
     textAlign: 'center',
     marginBottom: 24,
     paddingHorizontal: 16,
@@ -334,12 +335,12 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   actionRow: {
     width: '100%',
@@ -359,7 +360,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   followingButtonText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   section: {
     paddingHorizontal: 24,
@@ -368,11 +369,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 16,
   },
   socialCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 12,
     padding: 16,
   },
@@ -389,11 +390,11 @@ const styles = StyleSheet.create({
   },
   socialText: {
     fontSize: 16,
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   contentCard: {
     flexDirection: 'row',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',
@@ -409,7 +410,7 @@ const styles = StyleSheet.create({
   contentTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 8,
   },
   contentMeta: {
@@ -422,6 +423,6 @@ const styles = StyleSheet.create({
   },
   contentViews: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
 });

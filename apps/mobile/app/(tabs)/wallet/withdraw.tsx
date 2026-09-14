@@ -15,6 +15,7 @@ import { AmountInput } from '../../../src/components/AmountInput';
 import { walletApi } from '../../../src/api';
 import { LoadingState, ErrorState } from '../../../src/components/StateContainers';
 import { walletPresetAmounts, walletLimits } from '../../../src/config/prices';
+import { colors } from '../../../src/theme';
 
 const PRESET_AMOUNTS = walletPresetAmounts;
 
@@ -345,12 +346,12 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 24,
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   form: {
     flex: 1,
@@ -360,7 +361,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 8,
     fontWeight: '500',
   },
@@ -368,7 +369,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: colors.palette.grey800,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
@@ -378,8 +379,8 @@ const styles = StyleSheet.create({
     borderColor: '#EF4444',
   },
   readOnlyInput: {
-    backgroundColor: '#111',
-    color: '#9CA3AF',
+    backgroundColor: colors.palette.grey950,
+    color: colors.light[400],
   },
   errorText: {
     color: '#EF4444',
@@ -400,14 +401,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: colors.palette.grey800,
   },
   presetButtonSelected: {
     backgroundColor: '#E8420A',
     borderColor: '#E8420A',
   },
   presetText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 14,
     fontWeight: '500',
   },
@@ -476,13 +477,13 @@ const styles = StyleSheet.create({
   },
   infoTitle: {
     fontSize: 14,
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontWeight: '500',
     marginBottom: 8,
   },
   infoText: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
     lineHeight: 20,
   },
 });

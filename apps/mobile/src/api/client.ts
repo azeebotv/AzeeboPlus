@@ -58,6 +58,7 @@ class ApiClientClass {
   private onRefreshCallback:
     | ((tokens: { access_token: string; refresh_token: string }) => void)
     | null = null;
+  private onRefreshFailureCallback: (() => void) | null = null;
 
   setToken(token: string | null): void {
     this.config.token = token;
@@ -71,6 +72,13 @@ class ApiClientClass {
     callback: (tokens: { access_token: string; refresh_token: string }) => void
   ): void {
     this.onRefreshCallback = callback;
+  }
+
+  /** Invoked when a 401-triggered token refresh definitively fails, so the
+   * auth layer can clear the dead session instead of leaving the UI signed in
+   * with unusable tokens. */
+  setOnRefreshFailureCallback(callback: () => void): void {
+    this.onRefreshFailureCallback = callback;
   }
 
   getBaseURL(): string {
@@ -109,9 +117,11 @@ class ApiClientClass {
             return true;
           }
         }
+        this.onRefreshFailureCallback?.();
         return false;
       } catch (error) {
         logger.error('Token refresh failed:', error);
+        this.onRefreshFailureCallback?.();
         return false;
       } finally {
         this.refreshPromise = null;

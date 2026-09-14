@@ -37,7 +37,9 @@ export default function CityGuideScreen() {
   const cities = citiesQuery.data ?? [];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+    >
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
@@ -68,7 +70,9 @@ export default function CityGuideScreen() {
               <Text style={styles.cardIcon}>🏙️</Text>
               <View style={styles.cardInfo}>
                 <Text style={[styles.cardName, { color: colors.text.primary }]}>{item.name}</Text>
-                <Text style={styles.cardMeta}>{item.country} • {item.venueCount} venues</Text>
+                <Text style={styles.cardMeta}>
+                  {item.country} • {item.venueCount} venues
+                </Text>
               </View>
               <Text style={[styles.arrow, { color: colors.text.secondary }]}>›</Text>
             </TouchableOpacity>
@@ -82,13 +86,32 @@ export default function CityGuideScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingTop: 40 },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.bg.tertiary, alignItems: 'center', justifyContent: 'center' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    paddingTop: 40,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.bg.tertiary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backIcon: { color: colors.text.primary, fontSize: 20 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
   subtitle: { paddingHorizontal: 16, paddingBottom: 12, fontSize: 14 },
   list: { padding: 16, gap: 12 },
-  card: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: radius.lg, gap: 12 },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: radius.lg,
+    gap: 12,
+  },
   cardIcon: { fontSize: 28 },
   cardInfo: { flex: 1 },
   cardName: { fontSize: 16, fontWeight: '700', marginBottom: 2 },

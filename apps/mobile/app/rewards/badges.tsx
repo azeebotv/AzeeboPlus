@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { apiClient } from '../../src/api';
 import { logger } from '../../src/utils/logger';
+import { colors } from '../../src/theme';
 
 interface Badge {
   id: string;
@@ -230,12 +231,12 @@ export default function BadgesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#1A0A0A' },
   content: { flex: 1, padding: 16, paddingBottom: 32 },
-  loadingText: { color: '#9CA3AF', marginTop: 12, textAlign: 'center' },
+  loadingText: { color: colors.light[400], marginTop: 12, textAlign: 'center' },
   backButton: { marginBottom: 16, paddingVertical: 4 },
   backText: { color: '#9A8A7A', fontSize: 14 },
   header: { marginBottom: 24 },
   title: { fontSize: 24, fontWeight: 'bold', color: '#FFFFFF', marginBottom: 4 },
-  subtitle: { fontSize: 14, color: '#9CA3AF' },
+  subtitle: { fontSize: 14, color: colors.light[400] },
   section: { marginBottom: 24 },
   sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#FFFFFF', marginBottom: 16 },
   badgeGrid: {
@@ -246,7 +247,7 @@ const styles = StyleSheet.create({
   badgeItem: {
     width: BADGE_SIZE,
     alignItems: 'center',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 12,
     padding: 12,
   },
@@ -293,7 +294,7 @@ const styles = StyleSheet.create({
   badgeProgressText: { fontSize: 9, color: '#6B7280' },
   emptyContainer: { alignItems: 'center', paddingVertical: 60 },
   emptyIcon: { fontSize: 48, marginBottom: 12 },
-  emptyText: { fontSize: 16, color: '#9CA3AF' },
+  emptyText: { fontSize: 16, color: colors.light[400] },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.8)',
@@ -302,7 +303,7 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   modalContent: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 24,
     padding: 32,
     alignItems: 'center',
@@ -321,10 +322,15 @@ const styles = StyleSheet.create({
   modalIconLocked: { backgroundColor: 'rgba(255,255,255,0.05)' },
   modalIconText: { fontSize: 40 },
   modalTitle: { fontSize: 20, fontWeight: 'bold', color: '#FFFFFF', marginBottom: 8 },
-  modalDescription: { fontSize: 14, color: '#9CA3AF', textAlign: 'center', marginBottom: 16 },
+  modalDescription: {
+    fontSize: 14,
+    color: colors.light[400],
+    textAlign: 'center',
+    marginBottom: 16,
+  },
   modalStats: { flexDirection: 'row', gap: 32, marginBottom: 20 },
   modalStat: { alignItems: 'center' },
-  modalStatLabel: { fontSize: 12, color: '#9CA3AF', marginBottom: 4 },
+  modalStatLabel: { fontSize: 12, color: colors.light[400], marginBottom: 4 },
   modalStatValue: { fontSize: 18, fontWeight: '700', color: '#E8420A' },
   modalCloseButton: {
     paddingHorizontal: 32,

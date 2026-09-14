@@ -35,7 +35,9 @@ export default function MusicArtistsScreen() {
   const artists = artistsQuery.data ?? [];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+    >
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
@@ -46,7 +48,13 @@ export default function MusicArtistsScreen() {
 
       <View style={styles.searchContainer}>
         <TextInput
-          style={[styles.searchInput, { backgroundColor: isDark ? colors.bg.tertiary : '#f0f0f0', color: colors.text.primary }]}
+          style={[
+            styles.searchInput,
+            {
+              backgroundColor: isDark ? colors.bg.tertiary : '#f0f0f0',
+              color: colors.text.primary,
+            },
+          ]}
           placeholder="Search artists..."
           placeholderTextColor={colors.text.tertiary}
           value={search}
@@ -57,9 +65,16 @@ export default function MusicArtistsScreen() {
       {artistsQuery.isLoading ? (
         <LoadingState text="Loading artists..." />
       ) : artistsQuery.error ? (
-        <ErrorState description={artistsQuery.error.message} onRetry={() => artistsQuery.refetch()} />
+        <ErrorState
+          description={artistsQuery.error.message}
+          onRetry={() => artistsQuery.refetch()}
+        />
       ) : artists.length === 0 ? (
-        <EmptyState icon="🎤" title="No artists" description={search ? 'No artists match your search' : 'Artists coming soon'} />
+        <EmptyState
+          icon="🎤"
+          title="No artists"
+          description={search ? 'No artists match your search' : 'Artists coming soon'}
+        />
       ) : (
         <FlatList
           data={artists}
@@ -76,9 +91,13 @@ export default function MusicArtistsScreen() {
               <View style={[styles.avatar, { backgroundColor: colors.primary[500] + '20' }]}>
                 <Text style={styles.avatarText}>{item.name.charAt(0)}</Text>
               </View>
-              <Text style={[styles.cardName, { color: colors.text.primary }]} numberOfLines={1}>{item.name}</Text>
+              <Text style={[styles.cardName, { color: colors.text.primary }]} numberOfLines={1}>
+                {item.name}
+              </Text>
               <Text style={styles.cardGenre}>{item.genre}</Text>
-              <Text style={styles.cardFollowers}>{item.followerCount.toLocaleString()} followers</Text>
+              <Text style={styles.cardFollowers}>
+                {item.followerCount.toLocaleString()} followers
+              </Text>
             </TouchableOpacity>
           )}
         />
@@ -89,8 +108,21 @@ export default function MusicArtistsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingTop: 40 },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.bg.tertiary, alignItems: 'center', justifyContent: 'center' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    paddingTop: 40,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.bg.tertiary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backIcon: { color: colors.text.primary, fontSize: 20 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
   searchContainer: { paddingHorizontal: 16, marginBottom: 12 },
@@ -98,7 +130,14 @@ const styles = StyleSheet.create({
   grid: { padding: 16 },
   gridRow: { gap: 12, marginBottom: 12 },
   card: { flex: 1, padding: 16, borderRadius: radius.lg, alignItems: 'center' },
-  avatar: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  avatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
   avatarText: { fontSize: 24, fontWeight: '700', color: colors.primary[500] },
   cardName: { fontSize: 14, fontWeight: '700', textAlign: 'center', marginBottom: 2 },
   cardGenre: { fontSize: 11, color: colors.primary[500], fontWeight: '600', marginBottom: 2 },

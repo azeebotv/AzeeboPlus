@@ -6,6 +6,7 @@ import { apiClient } from '../../src/api';
 import type { Game, GameLevel, LeaderboardEntry, Achievement } from '../../src/types/api';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { analytics } from '../../src/utils/analytics';
+import { colors } from '../../src/theme';
 
 export default function GameplayPage() {
   const colorScheme = useColorScheme();
@@ -33,7 +34,7 @@ export default function GameplayPage() {
         apiClient.get<Achievement[]>(`/games/${id}/achievements`),
       ]);
       setGame(gameRes);
-              analytics.gameStarted(String(id), 'session_' + Date.now());
+      analytics.gameStarted(String(id), 'session_' + Date.now());
       setLevels(levelsRes || []);
       setLeaderboard(leaderboardRes || []);
       setAchievements(achievementsRes || []);
@@ -295,7 +296,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -311,7 +312,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   gameGenre: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 14,
   },
   content: {
@@ -327,7 +328,7 @@ const styles = StyleSheet.create({
     height: 200,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
   },
   previewEmoji: {
     fontSize: 80,
@@ -336,7 +337,7 @@ const styles = StyleSheet.create({
   playButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#DDA0DD',
+    backgroundColor: colors.palette.plum,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 10,
@@ -361,15 +362,15 @@ const styles = StyleSheet.create({
   },
   scoreDivider: {
     width: 1,
-    backgroundColor: '#333',
+    backgroundColor: colors.palette.grey800,
   },
   scoreLabel: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 13,
     marginBottom: 4,
   },
   scoreValue: {
-    color: '#DDA0DD',
+    color: colors.palette.plum,
     fontSize: 20,
     fontWeight: '700',
   },
@@ -408,7 +409,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   levelDifficulty: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 12,
   },
   levelStars: {
@@ -429,21 +430,21 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#2a2a2a',
+    borderBottomColor: colors.palette.charcoal,
   },
   leaderboardItemYou: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
   },
   rankBadge: {
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: '#333',
+    backgroundColor: colors.palette.grey800,
     alignItems: 'center',
     justifyContent: 'center',
   },
   rankBadgeTop: {
-    backgroundColor: '#DDA0DD',
+    backgroundColor: colors.palette.plum,
   },
   rankText: {
     color: '#fff',
@@ -465,7 +466,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   playerScore: {
-    color: '#DDA0DD',
+    color: colors.palette.plum,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -487,7 +488,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 10,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -506,7 +507,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   achievementDesc: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 12,
   },
   gameContainer: {
@@ -533,7 +534,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   gameHighScore: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 12,
   },
   gameArea: {
@@ -560,13 +561,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   scoreButton: {
-    backgroundColor: '#DDA0DD',
+    backgroundColor: colors.palette.plum,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
   },
   scoreButtonSpecial: {
-    backgroundColor: '#FFEAA7',
+    backgroundColor: colors.palette.cream,
   },
   scoreButtonText: {
     color: '#000',
@@ -602,7 +603,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#333',
+    backgroundColor: colors.palette.grey800,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -621,7 +622,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#DDA0DD',
+    backgroundColor: colors.palette.plum,
     alignItems: 'center',
     justifyContent: 'center',
   },

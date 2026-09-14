@@ -38,7 +38,7 @@ export default function TimelineScreen() {
 
   useEffect(() => {
     if (timelineQuery.isSuccess && !timelineQuery.isFetching) {
-              analytics.verticalUniverseViewed('timeline');
+      analytics.verticalUniverseViewed('timeline');
     }
   }, [timelineQuery.isSuccess, timelineQuery.isFetching]);
 

@@ -8,7 +8,7 @@ import { LoadingState, EmptyState, ErrorState } from '../../src/components/State
 import { apiClient } from '../../src/api/client';
 import { ApiResponse } from '../../src/types/api';
 import { analytics } from '../../src/utils/analytics';
-import { radius } from '../../src/theme';
+import { radius, colors } from '../../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -78,7 +78,7 @@ export default function RealityUniverseHome() {
 
   useEffect(() => {
     if (liveShows.length > 0 && liveShows[0].id) {
-              analytics.realityShowViewed(liveShows[0].id);
+      analytics.realityShowViewed(liveShows[0].id);
     }
   }, [liveShows]);
 
@@ -140,7 +140,12 @@ export default function RealityUniverseHome() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <ScrollView style={[{ flex: 1 }, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
-        <View style={[styles.header, { paddingTop: insets.top, backgroundColor: isDark ? '#1a1a1a' : '#ffffff' }]}>
+        <View
+          style={[
+            styles.header,
+            { paddingTop: insets.top, backgroundColor: isDark ? '#1a1a1a' : '#ffffff' },
+          ]}
+        >
           <View style={styles.headerTop}>
             <Text style={styles.universeLabel}>🎭 Reality</Text>
             <TouchableOpacity style={styles.notificationBadge} accessibilityLabel="Notifications">
@@ -153,7 +158,11 @@ export default function RealityUniverseHome() {
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.liveShowCard} onPress={() => router.push('/reality/show')} accessibilityLabel={`Watch ${showName} live`}>
+        <TouchableOpacity
+          style={styles.liveShowCard}
+          onPress={() => router.push('/reality/show')}
+          accessibilityLabel={`Watch ${showName} live`}
+        >
           <View style={styles.liveShowImagePlaceholder}>
             <Text style={styles.playIcon}>▶️</Text>
             <View style={styles.liveBadge}>
@@ -286,7 +295,7 @@ const styles = StyleSheet.create({
   },
   universeLabel: {
     fontSize: 14,
-    color: '#FF6B6B',
+    color: colors.palette.coral,
     fontWeight: '600',
   },
   notificationBadge: {
@@ -316,7 +325,7 @@ const styles = StyleSheet.create({
   },
   liveShowImagePlaceholder: {
     height: 200,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -376,11 +385,11 @@ const styles = StyleSheet.create({
   },
   liveShowSubtitle: {
     fontSize: 14,
-    color: '#888',
+    color: colors.palette.grey500,
     marginBottom: 12,
   },
   watchNowButton: {
-    backgroundColor: '#FF6B6B',
+    backgroundColor: colors.palette.coral,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: radius.sm,
@@ -417,7 +426,7 @@ const styles = StyleSheet.create({
   },
   voteCTASubtitle: {
     fontSize: 12,
-    color: '#888',
+    color: colors.palette.grey500,
   },
   voteButton: {
     backgroundColor: '#E8420A',
@@ -493,7 +502,7 @@ const styles = StyleSheet.create({
   },
   contestantVotes: {
     fontSize: 11,
-    color: '#888',
+    color: colors.palette.grey500,
   },
   highlightsList: {
     paddingHorizontal: 16,
@@ -506,7 +515,7 @@ const styles = StyleSheet.create({
   },
   highlightThumbnail: {
     height: 100,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -546,7 +555,7 @@ const styles = StyleSheet.create({
   },
   seasonImagePlaceholder: {
     height: 80,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -562,6 +571,6 @@ const styles = StyleSheet.create({
   },
   seasonSubtitle: {
     fontSize: 12,
-    color: '#888',
+    color: colors.palette.grey500,
   },
 });

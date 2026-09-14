@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, {
@@ -12,6 +12,7 @@ import Animated, {
   Extrapolation,
 } from 'react-native-reanimated';
 import { AccessibilityInfo } from 'react-native';
+import Feather from '@expo/vector-icons/Feather';
 import { colors, typography, spacing, shadows } from '../src/theme';
 import { BrandButton } from '../src/components/ui';
 import { AmbientGlow, FadeIn, ScrollReveal } from '../src/components/motion';
@@ -28,7 +29,6 @@ export default function SplashScreen() {
 
   const logoScale = useSharedValue(0.6);
   const logoOpacity = useSharedValue(0);
-  const ringRotation = useSharedValue(0);
   const featuresOpacity = useSharedValue(0);
   const featuresTranslate = useSharedValue(20);
 
@@ -40,7 +40,6 @@ export default function SplashScreen() {
       if (reduceMotion) {
         logoScale.value = 1;
         logoOpacity.value = 1;
-        ringRotation.value = 0;
         featuresOpacity.value = 1;
         featuresTranslate.value = 0;
         setShowContent(true);
@@ -50,7 +49,6 @@ export default function SplashScreen() {
       const timer = setTimeout(() => {
         logoScale.value = withSpring(1, { damping: 12, stiffness: 100 });
         logoOpacity.value = withTiming(1, { duration: 600 });
-        ringRotation.value = withTiming(360, { duration: 1200 });
         featuresOpacity.value = withDelay(400, withTiming(1, { duration: 500 }));
         featuresTranslate.value = withDelay(400, withTiming(0, { duration: 500 }));
         setShowContent(true);
@@ -62,16 +60,18 @@ export default function SplashScreen() {
     return () => {
       cancelled = true;
     };
-  }, [featuresOpacity, featuresTranslate, logoOpacity, logoScale, ringRotation]);
+  }, [featuresOpacity, featuresTranslate, logoOpacity, logoScale]);
 
   useEffect(() => {
     if (!showContent || isLoading) return;
+    // Fake progress is display-only; routing waits for real auth resolution.
+    // Authenticated users go straight to the tabs — the previous code sent
+    // everyone to login unless they happened to press a button.
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
           setTimeout(() => {
-            // Route based on actual auth state instead of always going to login
             if (isAuthenticated) {
               router.replace('/(tabs)');
             } else {
@@ -92,20 +92,16 @@ export default function SplashScreen() {
     transform: [{ scale: logoScale.value }],
   }));
 
-  const ringAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${ringRotation.value}deg` }],
-  }));
-
   const featuresAnimatedStyle = useAnimatedStyle(() => ({
     opacity: interpolate(featuresOpacity.value, [0, 1], [0, 1], Extrapolation.CLAMP),
     transform: [{ translateY: featuresTranslate.value }],
   }));
 
-  const featureItems = [
-    { icon: '🎬', label: 'Movies' },
-    { icon: '🎵', label: 'Music' },
-    { icon: '🎮', label: 'Games' },
-    { icon: '⚽', label: 'Sports' },
+  const featureItems: Array<{ icon: keyof typeof Feather.glyphMap; label: string }> = [
+    { icon: 'film', label: 'Movies' },
+    { icon: 'music', label: 'Music' },
+    { icon: 'play-circle', label: 'Games' },
+    { icon: 'award', label: 'Sports' },
   ];
 
   return (
@@ -119,19 +115,11 @@ export default function SplashScreen() {
 
       <Animated.View style={logoAnimatedStyle}>
         <View style={styles.logoContainer}>
-          <Animated.View style={[styles.logoRing, ringAnimatedStyle]}>
-            <Text style={styles.logoText}>A</Text>
-            <Text style={styles.logoPlus}>+</Text>
-          </Animated.View>
-          <Text
-            style={[
-              styles.appName,
-              { color: colorScheme === 'dark' ? colors.text.primary : '#1A0A0A' },
-            ]}
-          >
-            Azeebo
-            <Text style={styles.appNamePlus}>+</Text>
-          </Text>
+          <Image
+            source={require('../assets/logo-white.png')}
+            style={{ width: 180, height: 46, marginBottom: 16 }}
+            resizeMode="contain"
+          />
           <Text style={styles.appTagline}>Experience the Future of Entertainment</Text>
         </View>
 
@@ -146,7 +134,7 @@ export default function SplashScreen() {
                   accessibilityLabel={item.label}
                   accessibilityRole="button"
                 >
-                  <Text style={styles.featureIconText}>{item.icon}</Text>
+                  <Feather name={item.icon} size={22} color={colors.primary[500]} />
                 </AnimatedTouchable>
               </ScrollReveal>
             );

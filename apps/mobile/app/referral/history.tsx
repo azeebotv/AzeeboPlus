@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { referralApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
+import { colors } from '../../src/theme';
 
 interface ReferralStats {
   referralCode: string;
@@ -216,33 +217,33 @@ export default function ReferralHistoryScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#1A0A0A' },
   content: { flex: 1, padding: 16, paddingBottom: 32 },
-  loadingText: { color: '#9CA3AF', marginTop: 12, textAlign: 'center' },
+  loadingText: { color: colors.light[400], marginTop: 12, textAlign: 'center' },
   errorText: { color: '#EF4444', textAlign: 'center', marginTop: 40 },
   backButton: { marginBottom: 16, paddingVertical: 4 },
   backText: { color: '#9A8A7A', fontSize: 14 },
   header: { marginBottom: 24 },
   title: { fontSize: 24, fontWeight: 'bold', color: '#FFFFFF', marginBottom: 4 },
-  subtitle: { fontSize: 14, color: '#9CA3AF' },
+  subtitle: { fontSize: 14, color: colors.light[400] },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 20 },
   statCard: {
     flex: 1,
     minWidth: '30%',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
   },
   statValue: { fontSize: 22, fontWeight: 'bold', color: '#E8420A', marginBottom: 4 },
   earningsValue: { color: '#10B981' },
-  statLabel: { fontSize: 11, color: '#9CA3AF' },
+  statLabel: { fontSize: 11, color: colors.light[400] },
   shareSection: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 16,
     padding: 20,
     marginBottom: 24,
     alignItems: 'center',
   },
-  shareText: { color: '#9CA3AF', fontSize: 14, marginBottom: 12 },
+  shareText: { color: colors.light[400], fontSize: 14, marginBottom: 12 },
   shareButtons: { flexDirection: 'row', gap: 12, width: '100%' },
   shareButton: {
     flex: 1,
@@ -266,10 +267,10 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#FFFFFF', marginBottom: 16 },
   emptyContainer: { alignItems: 'center', paddingVertical: 40 },
   emptyIcon: { fontSize: 48, marginBottom: 12 },
-  emptyText: { fontSize: 16, color: '#9CA3AF', marginBottom: 4 },
+  emptyText: { fontSize: 16, color: colors.light[400], marginBottom: 4 },
   emptySubtext: { fontSize: 14, color: '#6B7280' },
   referralCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -285,7 +286,7 @@ const styles = StyleSheet.create({
   referralDate: { fontSize: 12, color: '#6B7280' },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   statusBadgeSuccess: { backgroundColor: '#10B98120' },
-  statusBadgeActive: { backgroundColor: '#E8420A20' },
+  statusBadgeActive: { backgroundColor: colors.alphaColors.primaryA20 },
   statusBadgePending: { backgroundColor: '#F59E0B20' },
   statusText: { fontSize: 12, fontWeight: '600', color: '#FFFFFF' },
   earningsText: { fontSize: 14, color: '#10B981', fontWeight: '600' },

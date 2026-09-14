@@ -5,6 +5,7 @@ import {
   BiometricResult,
   BiometricCredentials,
 } from '../utils/biometricAuth';
+import { useAuth } from '../contexts/AuthContext';
 
 interface UseBiometricState {
   isAvailable: boolean;
@@ -15,6 +16,7 @@ interface UseBiometricState {
 }
 
 export function useBiometric() {
+  const { validateSession } = useAuth();
   const [state, setState] = useState<UseBiometricState>({
     isAvailable: false,
     biometricType: 'none',
@@ -103,14 +105,28 @@ export function useBiometric() {
 
     const result = await BiometricAuthService.authenticateWithStoredCredentials();
 
-    setState((prev) => ({
-      ...prev,
-      isLoading: false,
-      error: result.success ? null : result.error || null,
-    }));
+    if (!result.success) {
+      setState((prev) => ({ ...prev, isLoading: false, error: result.error || null }));
+      return result;
+    }
 
+    // Biometrics only verified a local profile — the stored tokens may still be
+    // expired/revoked. Re-validate the session against the API before declaring
+    // success; on failure the auth context logs out and the user re-enters
+    // their password.
+    const sessionValid = await validateSession();
+    if (!sessionValid) {
+      const failed: BiometricResult = {
+        success: false,
+        error: 'Your session has expired. Please sign in with your password.',
+      };
+      setState((prev) => ({ ...prev, isLoading: false, error: failed.error || null }));
+      return failed;
+    }
+
+    setState((prev) => ({ ...prev, isLoading: false, error: null }));
     return result;
-  }, []);
+  }, [validateSession]);
 
   return {
     ...state,

@@ -1,20 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-interface FeatureFlag {
-  key: string;
-  enabled: boolean;
-  value?: string | number | boolean | null;
-}
-
-interface FeatureFlagsResponse {
-  flags: FeatureFlag[];
-  generatedAt: string;
-  evaluatedFor: 'user' | 'anonymous';
-}
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { fetchBootstrapFlags, type BootstrapFlag } from '../api/flags';
+import { useAuth } from '../contexts/AuthContext';
 
 interface UseFeatureFlagsResult {
-  flags: Record<string, FeatureFlag>;
+  flags: Record<string, BootstrapFlag>;
   isLoading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
@@ -22,129 +11,56 @@ interface UseFeatureFlagsResult {
   getValue: (key: string) => string | number | boolean | null;
 }
 
-const CACHE_KEY = 'azeebo_feature_flags';
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-
-interface CacheEntry {
-  flags: Record<string, FeatureFlag>;
-  expiresAt: number;
-}
-
 /**
  * Hook to manage feature flags in the mobile app.
- * Fetches flags from the API and caches them locally.
+ *
+ * Single source of truth: `fetchBootstrapFlags` in `src/api/flags.ts` (the same
+ * feed `FlagsContext` uses), including its AsyncStorage TTL cache and
+ * conservative fall-back-to-cache behavior. This hook exists for screens that
+ * need flags before `FlagsProvider` wraps them (e.g. the login screen) — the
+ * two can never diverge because both read the identical cached/fetched feed.
  */
 export function useFeatureFlags(): UseFeatureFlagsResult {
-  const [flags, setFlags] = useState<Record<string, FeatureFlag>>({});
+  const { user } = useAuth();
+  const userId = user?.id;
+  const [flags, setFlags] = useState<Record<string, BootstrapFlag>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const readCache = useCallback(async (): Promise<Record<string, FeatureFlag> | null> => {
-    try {
-      const raw = await AsyncStorage.getItem(CACHE_KEY);
-      if (!raw) return null;
-
-      const entry: CacheEntry = JSON.parse(raw);
-      if (entry.expiresAt < Date.now()) {
-        await AsyncStorage.removeItem(CACHE_KEY);
-        return null;
-      }
-
-      return entry.flags;
-    } catch {
-      return null;
-    }
-  }, []);
-
-  const writeCache = useCallback(async (data: Record<string, FeatureFlag>) => {
-    try {
-      const entry: CacheEntry = {
-        flags: data,
-        expiresAt: Date.now() + CACHE_TTL_MS,
-      };
-      await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(entry));
-    } catch {
-      // Storage unavailable — skip caching
-    }
-  }, []);
-
-  const fetchFlags = useCallback(async () => {
+  const load = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-
     try {
-      // Try cache first
-      const cached = await readCache();
-      if (cached) {
-        setFlags(cached);
-        setIsLoading(false);
-        return;
-      }
-
-      // Fetch from API
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3013';
-      const response = await fetch(`${apiUrl}/v1/feature-flags/bootstrap`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Feature flags fetch failed: ${response.status}`);
-      }
-
-      const json = await response.json();
-      const data = (json.data ?? json) as FeatureFlagsResponse;
-      const flagsList = Array.isArray(data.flags) ? data.flags : [];
-
-      // Convert to map
-      const flagsMap: Record<string, FeatureFlag> = {};
-      for (const flag of flagsList) {
-        flagsMap[flag.key] = flag;
-      }
-
-      setFlags(flagsMap);
-      await writeCache(flagsMap);
+      const result = await fetchBootstrapFlags(userId);
+      const map: Record<string, BootstrapFlag> = {};
+      for (const flag of result) map[flag.key] = flag;
+      setFlags(map);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load feature flags';
-      setError(message);
-
-      // Try cache on error
-      const cached = await readCache();
-      if (cached) {
-        setFlags(cached);
-      }
+      // fetchBootstrapFlags never throws in practice, but stay defensive.
+      setError(err instanceof Error ? err.message : 'Failed to load feature flags');
     } finally {
       setIsLoading(false);
     }
-  }, [readCache, writeCache]);
+  }, [userId]);
 
   useEffect(() => {
-    fetchFlags();
-  }, [fetchFlags]);
+    void load();
+  }, [load]);
 
-  const isEnabled = useCallback(
-    (key: string): boolean => {
-      return flags[key]?.enabled === true;
-    },
-    [flags]
+  const value = useMemo<UseFeatureFlagsResult>(
+    () => ({
+      flags,
+      isLoading,
+      error,
+      refresh: load,
+      isEnabled: (key: string) => flags[key]?.enabled === true,
+      getValue: (key: string) => {
+        if (flags[key]?.enabled !== true) return null;
+        return flags[key]?.value ?? null;
+      },
+    }),
+    [flags, isLoading, error, load]
   );
 
-  const getValue = useCallback(
-    (key: string): string | number | boolean | null => {
-      if (flags[key]?.enabled !== true) return null;
-      return flags[key]?.value ?? null;
-    },
-    [flags]
-  );
-
-  return {
-    flags,
-    isLoading,
-    error,
-    refresh: fetchFlags,
-    isEnabled,
-    getValue,
-  };
+  return value;
 }

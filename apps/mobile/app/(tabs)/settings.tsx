@@ -389,10 +389,7 @@ export default function SettingsScreen() {
           visible={languageModalVisible}
           onRequestClose={() => setLanguageModalVisible(false)}
         >
-          <Pressable
-            style={styles.modalOverlay}
-            onPress={() => setLanguageModalVisible(false)}
-          >
+          <Pressable style={styles.modalOverlay} onPress={() => setLanguageModalVisible(false)}>
             <Pressable
               style={[
                 styles.modalContent,
@@ -447,9 +444,7 @@ export default function SettingsScreen() {
                     </Text>
                     <Text style={styles.languageNative}>{lang.nativeName}</Text>
                   </View>
-                  {currentLanguage === lang.code && (
-                    <Text style={styles.languageCheck}>✓</Text>
-                  )}
+                  {currentLanguage === lang.code && <Text style={styles.languageCheck}>✓</Text>}
                 </TouchableOpacity>
               ))}
 
@@ -818,15 +813,15 @@ const styles = StyleSheet.create({
   },
   settingDescription: {
     fontSize: 12,
-    color: '#666',
+    color: colors.palette.grey600,
     marginTop: 2,
   },
   settingValue: {
     fontSize: 16,
-    color: '#666',
+    color: colors.palette.grey600,
   },
   menuArrow: {
-    color: '#666',
+    color: colors.palette.grey600,
     fontSize: 24,
   },
   bottomPadding: {
@@ -872,7 +867,7 @@ const styles = StyleSheet.create({
   },
   languageNative: {
     fontSize: 13,
-    color: '#888',
+    color: colors.palette.grey500,
     marginTop: 2,
   },
   languageCheck: {

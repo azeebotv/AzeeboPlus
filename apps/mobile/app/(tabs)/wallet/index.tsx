@@ -136,10 +136,7 @@ export default function WalletScreen() {
           styles.container,
           styles.centered,
           {
-            backgroundColor:
-              colorScheme === 'dark'
-                ? colors.bg.primary
-                : colors.light[50],
+            backgroundColor: colorScheme === 'dark' ? colors.bg.primary : colors.light[50],
           },
         ]}
       >
@@ -155,10 +152,7 @@ export default function WalletScreen() {
           styles.container,
           styles.centered,
           {
-            backgroundColor:
-              colorScheme === 'dark'
-                ? colors.bg.primary
-                : colors.light[50],
+            backgroundColor: colorScheme === 'dark' ? colors.bg.primary : colors.light[50],
           },
         ]}
       >
@@ -167,10 +161,7 @@ export default function WalletScreen() {
           style={[
             styles.lockText,
             {
-              color:
-                colorScheme === 'dark'
-                  ? colors.text.primary
-                  : colors.light[900],
+              color: colorScheme === 'dark' ? colors.text.primary : colors.light[900],
             },
           ]}
         >
@@ -185,10 +176,7 @@ export default function WalletScreen() {
       style={[
         styles.container,
         {
-          backgroundColor:
-            colorScheme === 'dark'
-              ? colors.bg.primary
-              : colors.light[50],
+          backgroundColor: colorScheme === 'dark' ? colors.bg.primary : colors.light[50],
         },
       ]}
     >
@@ -209,10 +197,7 @@ export default function WalletScreen() {
             style={[
               styles.greeting,
               {
-                color:
-                  colorScheme === 'dark'
-                    ? colors.text.primary
-                    : colors.light[900],
+                color: colorScheme === 'dark' ? colors.text.primary : colors.light[900],
               },
             ]}
           >
@@ -511,10 +496,7 @@ export default function WalletScreen() {
                 style={[
                   styles.cancelButton,
                   {
-                    borderColor:
-                      colorScheme === 'dark'
-                        ? colors.bg.tertiary
-                        : colors.light[200],
+                    borderColor: colorScheme === 'dark' ? colors.bg.tertiary : colors.light[200],
                   },
                 ]}
                 onPress={() => setShowWithdrawModal(false)}
@@ -525,10 +507,7 @@ export default function WalletScreen() {
                   style={[
                     styles.cancelButtonText,
                     {
-                      color:
-                        colorScheme === 'dark'
-                          ? colors.text.primary
-                          : colors.light[900],
+                      color: colorScheme === 'dark' ? colors.text.primary : colors.light[900],
                     },
                   ]}
                 >
@@ -646,7 +625,7 @@ const styles = StyleSheet.create({
   actionLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: colors.palette.grey800,
   },
   transactionsSection: {
     padding: 20,
@@ -704,7 +683,7 @@ const styles = StyleSheet.create({
   },
   transactionDate: {
     fontSize: 12,
-    color: '#666',
+    color: colors.palette.grey600,
   },
   transactionAmount: {
     fontSize: 16,
@@ -733,7 +712,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     marginBottom: 8,
-    color: '#666',
+    color: colors.palette.grey600,
   },
   input: {
     padding: 16,

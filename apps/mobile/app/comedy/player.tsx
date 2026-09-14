@@ -18,6 +18,7 @@ import { contentApi, type ContentItem } from '../../src/api';
 import { logger } from '../../src/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 import { analytics } from '../../src/utils/analytics';
+import { colors } from '../../src/theme';
 
 const { width: _width } = Dimensions.get('window');
 
@@ -46,7 +47,7 @@ export default function ComedyClipPlayer() {
       if (featured.success && featured.data?.[0]) {
         const clipData = featured.data[0];
         setClip(clipData);
-                  analytics.comedyClipViewed(clipData.id);
+        analytics.comedyClipViewed(clipData.id);
         const relatedRes = await contentApi.getTrendingContent(5);
         if (relatedRes.success && relatedRes.data) {
           setRelated(relatedRes.data.filter((item) => item.id !== clipData.id));
@@ -362,7 +363,7 @@ const styles = StyleSheet.create({
   },
   relatedThumbnail: {
     height: 100,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -445,7 +446,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   statText: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 13,
   },
   creatorRow: {
@@ -461,7 +462,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -473,7 +474,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   creatorMeta: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 12,
     marginTop: 2,
   },
@@ -486,7 +487,7 @@ const styles = StyleSheet.create({
   followButtonActive: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#888',
+    borderColor: colors.palette.grey500,
   },
   followButtonText: {
     color: '#fff',
@@ -494,7 +495,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   followButtonTextActive: {
-    color: '#888',
+    color: colors.palette.grey500,
   },
   description: {
     fontSize: 14,
@@ -508,13 +509,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   tag: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
   },
   tagText: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 12,
   },
   actionsRow: {
@@ -524,7 +525,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: colors.palette.charcoal,
   },
   actionButton: {
     alignItems: 'center',
@@ -534,7 +535,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
   },
   actionText: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 11,
   },
   commentsSection: {
@@ -553,7 +554,7 @@ const styles = StyleSheet.create({
   },
   commentInput: {
     flex: 1,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,

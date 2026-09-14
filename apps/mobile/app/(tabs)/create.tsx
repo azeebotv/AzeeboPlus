@@ -17,12 +17,13 @@ import { universeApi, contentApi, mediaApi } from '../../src/api';
 import { mediaFingerprint } from '../../src/utils/mediaCache';
 import { logger } from '../../src/utils/logger';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
+import { colors } from '../../src/theme';
 
 const uploadOptions = [
-  { id: 'video', name: 'Video', icon: '📹', color: '#FF6B6B' },
-  { id: 'image', name: 'Image', icon: '📷', color: '#4ECDC4' },
-  { id: 'live', name: 'Live Stream', icon: '🎥', color: '#45B7D1' },
-  { id: 'story', name: 'Story', icon: '📖', color: '#96CEB4' },
+  { id: 'video', name: 'Video', icon: '📹', color: colors.palette.coral },
+  { id: 'image', name: 'Image', icon: '📷', color: colors.palette.teal },
+  { id: 'live', name: 'Live Stream', icon: '🎥', color: colors.palette.sky },
+  { id: 'story', name: 'Story', icon: '📖', color: colors.palette.mint },
 ];
 
 interface SelectedFile {
@@ -363,7 +364,7 @@ export default function CreateScreen() {
         <TouchableOpacity
           onPress={handleUpload}
           disabled={isUploading}
-          style={[styles.submitButton, isUploading && { backgroundColor: '#666' }]}
+          style={[styles.submitButton, isUploading && { backgroundColor: colors.palette.grey600 }]}
         >
           {isUploading ? (
             <View style={styles.uploadingRow}>
@@ -427,7 +428,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 2,
     borderColor: '#e0e0e0',
-    backgroundColor: '#fafafa',
+    backgroundColor: colors.palette.paper,
   },
   uploadIcon: {
     fontSize: 24,
@@ -446,7 +447,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 32,
     alignItems: 'center',
-    backgroundColor: '#f5f0ff',
+    backgroundColor: colors.palette.lavender,
   },
   uploadIconLarge: {
     fontSize: 48,
@@ -459,15 +460,15 @@ const styles = StyleSheet.create({
   },
   uploadHint: {
     fontSize: 12,
-    color: '#888',
+    color: colors.palette.grey500,
   },
   selectedFileContainer: {
     borderWidth: 2,
-    borderColor: '#4ECDC4',
+    borderColor: colors.palette.teal,
     borderRadius: 16,
     padding: 24,
     alignItems: 'center',
-    backgroundColor: '#f0faf8',
+    backgroundColor: colors.palette.mist,
   },
   selectedFileIcon: {
     fontSize: 36,
@@ -476,20 +477,20 @@ const styles = StyleSheet.create({
   selectedFileName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: colors.palette.grey800,
     marginBottom: 4,
     maxWidth: '80%',
   },
   selectedFileSize: {
     fontSize: 12,
-    color: '#666',
+    color: colors.palette.grey600,
     marginBottom: 12,
   },
   removeFileButton: {
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: '#ff4444',
+    backgroundColor: colors.palette.alertRed,
   },
   removeFileText: {
     color: '#fff',
@@ -524,7 +525,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.palette.grey100,
   },
   universeIcon: {
     fontSize: 16,
@@ -532,7 +533,7 @@ const styles = StyleSheet.create({
   universeName: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#333',
+    color: colors.palette.grey800,
   },
   privacySection: {
     marginBottom: 24,
@@ -545,13 +546,13 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 12,
     borderRadius: 8,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.palette.grey100,
     alignItems: 'center',
   },
   privacyText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#333',
+    color: colors.palette.grey800,
   },
   submitButton: {
     backgroundColor: '#E8420A',
@@ -571,7 +572,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tipsSection: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.palette.cloud,
     borderRadius: 12,
     padding: 16,
   },
@@ -585,7 +586,7 @@ const styles = StyleSheet.create({
   },
   tipItem: {
     fontSize: 13,
-    color: '#666',
+    color: colors.palette.grey600,
     lineHeight: 1.5,
   },
 });

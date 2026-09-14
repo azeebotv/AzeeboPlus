@@ -15,7 +15,7 @@ import {
   AnimatedProgress,
   FadeIn,
 } from '../../src/components/motion';
-import { radius } from '../../src/theme';
+import { radius, colors } from '../../src/theme';
 
 interface RewardItem {
   id: string;
@@ -120,7 +120,10 @@ export default function RewardsScreen() {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <ScrollView
-        style={[styles.container, { paddingTop: insets.top, backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}
+        style={[
+          styles.container,
+          { paddingTop: insets.top, backgroundColor: isDark ? '#1A0A0A' : '#ffffff' },
+        ]}
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#E8420A" />
         }
@@ -271,7 +274,9 @@ export default function RewardsScreen() {
                       <View
                         style={[
                           styles.redeemPoints,
-                          currentPoints < option.points && { backgroundColor: '#ccc' },
+                          currentPoints < option.points && {
+                            backgroundColor: colors.palette.grey300,
+                          },
                         ]}
                       >
                         <Text style={styles.redeemPointsText}>{option.points} pts</Text>
@@ -290,7 +295,7 @@ export default function RewardsScreen() {
               </Text>
               <View style={styles.historyList}>
                 {history.length === 0 ? (
-                  <Text style={{ color: '#888', textAlign: 'center', padding: 20 }}>
+                  <Text style={{ color: colors.palette.grey500, textAlign: 'center', padding: 20 }}>
                     No recent activity
                   </Text>
                 ) : (
@@ -462,12 +467,12 @@ const styles = StyleSheet.create({
   },
   rewardDescription: {
     fontSize: 13,
-    color: '#888',
+    color: colors.palette.grey500,
     marginBottom: 8,
   },
   rewardProgressText: {
     fontSize: 12,
-    color: '#666',
+    color: colors.palette.grey600,
     marginTop: 4,
   },
   redeemGrid: {
@@ -513,7 +518,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.palette.grey100,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -529,7 +534,7 @@ const styles = StyleSheet.create({
   },
   historyDate: {
     fontSize: 12,
-    color: '#888',
+    color: colors.palette.grey500,
   },
   historyPoints: {
     fontSize: 16,
@@ -555,7 +560,7 @@ const styles = StyleSheet.create({
   },
   bonusDescription: {
     fontSize: 13,
-    color: '#B45309',
+    color: colors.warning[700],
   },
   bonusButton: {
     paddingHorizontal: 14,

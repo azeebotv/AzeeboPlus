@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { apiClient } from '../../src/api/client';
 import { ApiResponse } from '../../src/types/api';
+import { colors } from '../../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -153,7 +154,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -163,7 +164,7 @@ const styles = StyleSheet.create({
   heroBanner: { alignItems: 'center', padding: 24, marginBottom: 20 },
   heroEmoji: { fontSize: 60, marginBottom: 12 },
   heroTitle: { fontSize: 28, fontWeight: '700', marginBottom: 6 },
-  heroSubtitle: { color: '#888', fontSize: 14, textAlign: 'center' },
+  heroSubtitle: { color: colors.palette.grey500, fontSize: 14, textAlign: 'center' },
   planCard: {
     padding: 20,
     borderRadius: 16,
@@ -171,13 +172,13 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
   },
-  planCardSelected: { borderColor: '#FFEAA7' },
-  planCardPopular: { borderColor: '#FFEAA7' },
+  planCardSelected: { borderColor: colors.palette.cream },
+  planCardPopular: { borderColor: colors.palette.cream },
   popularBadge: {
     position: 'absolute',
     top: -10,
     alignSelf: 'center',
-    backgroundColor: '#FFEAA7',
+    backgroundColor: colors.palette.cream,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 10,
@@ -188,26 +189,26 @@ const styles = StyleSheet.create({
   planInfo: { flex: 1 },
   planName: { fontSize: 18, fontWeight: '700', marginBottom: 4 },
   priceRow: { flexDirection: 'row', alignItems: 'baseline' },
-  planPrice: { color: '#FFEAA7', fontSize: 24, fontWeight: '700' },
-  planPeriod: { color: '#888', fontSize: 14 },
+  planPrice: { color: colors.palette.cream, fontSize: 24, fontWeight: '700' },
+  planPeriod: { color: colors.palette.grey500, fontSize: 14 },
   selectedCheck: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#FFEAA7',
+    backgroundColor: colors.palette.cream,
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkmark: { color: '#000', fontWeight: '700', fontSize: 16 },
   featuresList: { gap: 6 },
-  featureText: { color: '#ccc', fontSize: 14 },
+  featureText: { color: colors.palette.grey300, fontSize: 14 },
   subscribeButton: {
-    backgroundColor: '#FFEAA7',
+    backgroundColor: colors.palette.cream,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
     marginBottom: 12,
   },
   subscribeText: { color: '#000', fontSize: 16, fontWeight: '700' },
-  termsText: { color: '#888', fontSize: 12, textAlign: 'center' },
+  termsText: { color: colors.palette.grey500, fontSize: 12, textAlign: 'center' },
 });

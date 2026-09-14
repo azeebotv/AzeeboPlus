@@ -8,6 +8,7 @@ import { LoadingState } from '../../src/components/StateContainers';
 import { useWallet } from '../../src/contexts/WalletContext';
 import { createLogger } from '../../src/utils/logger';
 import type { SubscriptionPlan } from '../../src/types/api';
+import { colors } from '../../src/theme';
 
 const logger = createLogger('SubscriptionPlans');
 
@@ -172,7 +173,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#333',
+    backgroundColor: colors.palette.grey800,
     alignItems: 'center',
     justifyContent: 'center',
   },

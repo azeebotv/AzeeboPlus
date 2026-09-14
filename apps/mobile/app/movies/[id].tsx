@@ -15,6 +15,7 @@ import { apiClient } from '../../src/api';
 import { moviePricing } from '../../src/config/prices';
 import type { Movie, CastMember } from '../../src/types/api';
 import { analytics } from '../../src/utils/analytics';
+import { colors } from '../../src/theme';
 
 const PRICING_OPTIONS = [
   {
@@ -62,7 +63,7 @@ export default function MovieDetailPage() {
         apiClient.get<Movie[]>(`/movies/${id}/similar`),
       ]);
       setMovie(movieRes);
-              analytics.movieViewed(String(id));
+      analytics.movieViewed(String(id));
       setCast(castRes || []);
       setSimilarMovies(similarRes || []);
     } catch (err: unknown) {
@@ -330,7 +331,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 60,
     right: 16,
-    backgroundColor: '#FFEAA7',
+    backgroundColor: colors.palette.cream,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 4,
@@ -361,11 +362,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   heroMetaItem: {
-    color: '#ccc',
+    color: colors.palette.grey300,
     fontSize: 14,
   },
   heroDirector: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 13,
   },
   content: {
@@ -381,7 +382,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFEAA7',
+    backgroundColor: colors.palette.cream,
     paddingVertical: 14,
     borderRadius: 10,
     gap: 8,
@@ -399,7 +400,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 10,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -411,7 +412,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 10,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -428,12 +429,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   pricingLabel: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 14,
     marginRight: 8,
   },
   pricingValue: {
-    color: '#FFEAA7',
+    color: colors.palette.cream,
     fontSize: 18,
     fontWeight: '700',
     marginRight: 6,
@@ -444,7 +445,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   pricingChevron: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 24,
   },
   section: {
@@ -456,7 +457,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   synopsisText: {
-    color: '#ccc',
+    color: colors.palette.grey300,
     fontSize: 15,
     lineHeight: 22,
   },
@@ -472,7 +473,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
@@ -487,7 +488,7 @@ const styles = StyleSheet.create({
   },
   castRole: {
     fontSize: 11,
-    color: '#888',
+    color: colors.palette.grey500,
     textAlign: 'center',
   },
   similarList: {
@@ -499,7 +500,7 @@ const styles = StyleSheet.create({
   },
   similarThumbnail: {
     height: 150,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
@@ -515,7 +516,7 @@ const styles = StyleSheet.create({
   },
   similarGenre: {
     fontSize: 12,
-    color: '#888',
+    color: colors.palette.grey500,
   },
   pricingModal: {
     position: 'absolute',
@@ -544,7 +545,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   closeButton: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 20,
   },
   pricingOptions: {
@@ -553,13 +554,13 @@ const styles = StyleSheet.create({
   },
   pricingOption: {
     padding: 16,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 12,
     borderWidth: 2,
     borderColor: 'transparent',
   },
   pricingOptionSelected: {
-    borderColor: '#FFEAA7',
+    borderColor: colors.palette.cream,
   },
   pricingOptionHeader: {
     flexDirection: 'row',
@@ -574,13 +575,13 @@ const styles = StyleSheet.create({
   pricingOptionPrice: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FFEAA7',
+    color: colors.palette.cream,
   },
   pricingOptionFeatures: {
     gap: 4,
   },
   pricingOptionFeature: {
-    color: '#ccc',
+    color: colors.palette.grey300,
     fontSize: 13,
   },
   selectedCheck: {
@@ -590,7 +591,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#FFEAA7',
+    backgroundColor: colors.palette.cream,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -599,7 +600,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   purchaseButton: {
-    backgroundColor: '#FFEAA7',
+    backgroundColor: colors.palette.cream,
     paddingVertical: 16,
     borderRadius: 10,
     alignItems: 'center',
@@ -610,7 +611,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   passNote: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 12,
     textAlign: 'center',
     marginTop: 12,

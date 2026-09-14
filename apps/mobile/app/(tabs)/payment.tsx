@@ -17,6 +17,7 @@ import { paymentApi } from '../../src/api/payment';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import { paymentPresetAmounts } from '../../src/config/prices';
+import { colors } from '../../src/theme';
 
 const PAYMENT_AMOUNTS = paymentPresetAmounts.map((value) => ({
   value,
@@ -72,6 +73,36 @@ export default function PaymentScreen() {
     setCustomAmount('');
   };
 
+  // Poll verify until the provider settles (or attempts run out). Redirect
+  // payments can take a few seconds to confirm.
+  const verifyPaymentWithRetry = async (reference: string, attempts = 5) => {
+    for (let i = 0; i < attempts; i++) {
+      try {
+        const res = await paymentApi.verify(reference);
+        if (res.success && res.data) {
+          if (res.data.status === 'success') {
+            Alert.alert('Success', `Payment of ₦${res.data.amount.toLocaleString()} confirmed`);
+            return;
+          }
+          if (res.data.status === 'failed') {
+            Alert.alert('Payment Failed', 'Your payment was not completed. No money was taken.');
+            return;
+          }
+          // pending → wait and retry
+        }
+      } catch {
+        // network blip — fall through to retry
+      }
+      if (i < attempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
+    }
+    Alert.alert(
+      'Payment Pending',
+      'Your payment is still processing. Check Transactions in a moment to confirm.'
+    );
+  };
+
   const handleCustomAmountChange = (text: string) => {
     const numericValue = text.replace(/[^0-9]/g, '');
     setCustomAmount(numericValue);
@@ -109,7 +140,7 @@ export default function PaymentScreen() {
         if (response.data.authorizationUrl) {
           Alert.alert(
             'Redirect to Payment',
-            `You will be redirected to Paystack to complete your payment of ₦${amount.toLocaleString()}.`,
+            `You will be redirected to complete your payment of ₦${amount.toLocaleString()}.`,
             [
               {
                 text: 'Cancel',
@@ -118,9 +149,15 @@ export default function PaymentScreen() {
               {
                 text: 'Continue',
                 onPress: async () => {
-                  const supported = await Linking.canOpenURL(response.data!.authorizationUrl);
+                  const url = response.data!.authorizationUrl;
+                  const supported = await Linking.canOpenURL(url);
                   if (supported) {
-                    await Linking.openURL(response.data!.authorizationUrl);
+                    await Linking.openURL(url);
+                    // Redirect flows are asynchronous — verify with the
+                    // backend before claiming success. Previously the app
+                    // showed "processed successfully" the moment the
+                    // initialize call returned, before any money moved.
+                    await verifyPaymentWithRetry(response.data!.reference);
                   } else {
                     Alert.alert('Error', 'Could not open payment URL');
                   }
@@ -129,7 +166,8 @@ export default function PaymentScreen() {
             ]
           );
         } else {
-          Alert.alert('Success', `Payment of ₦${amount.toLocaleString()} processed successfully`);
+          // No redirect: verify immediately (provider completed inline).
+          await verifyPaymentWithRetry(response.data.reference);
         }
       } else {
         Alert.alert('Error', response.message || 'Failed to initialize payment');
@@ -344,7 +382,7 @@ export default function PaymentScreen() {
               <Text
                 style={[styles.summaryValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
               >
-                Paystack
+                {providers.find((p) => p.provider === selectedProvider)?.name || selectedProvider}
               </Text>
             </View>
             <View style={styles.summaryDivider} />
@@ -380,7 +418,10 @@ export default function PaymentScreen() {
 
         <View style={styles.secureNote}>
           <Text style={styles.secureIcon}>🔒</Text>
-          <Text style={styles.secureText}>Your payment is secured by Paystack</Text>
+          <Text style={styles.secureText}>
+            Secured by{' '}
+            {providers.find((p) => p.provider === selectedProvider)?.name || 'our payment provider'}
+          </Text>
         </View>
 
         <View style={styles.bottomPadding} />
@@ -497,7 +538,7 @@ const styles = StyleSheet.create({
   },
   providerDescription: {
     fontSize: 12,
-    color: '#666',
+    color: colors.palette.grey600,
   },
   radioOuter: {
     width: 24,
@@ -535,7 +576,7 @@ const styles = StyleSheet.create({
   },
   summaryDivider: {
     height: 1,
-    backgroundColor: '#333',
+    backgroundColor: colors.palette.grey800,
     marginVertical: 8,
   },
   payButton: {
@@ -565,7 +606,7 @@ const styles = StyleSheet.create({
   },
   secureText: {
     fontSize: 12,
-    color: '#666',
+    color: colors.palette.grey600,
   },
   bottomPadding: {
     height: 24,

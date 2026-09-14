@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useFlags } from '@/contexts/FlagsContext';
@@ -88,7 +88,10 @@ export default function GuestHomepage() {
 
     const checkForOTAUpdate = async () => {
       try {
-        if (!Updates.channel || !__DEV__) return;
+        // Skip in dev builds (updates are embedded, not fetched) and when no
+        // updates channel is configured. The previous condition was inverted
+        // (`!__DEV__`), so production installs never checked.
+        if (__DEV__ || !Updates.channel) return;
         const update = await Updates.checkForUpdateAsync();
         if (!cancelled && update.isAvailable) setHasOTAUpdate(true);
       } catch (error) {
@@ -127,7 +130,12 @@ export default function GuestHomepage() {
       {hasOTAUpdate ? (
         <Pressable
           style={styles.updateBanner}
-          onPress={() => Updates.reloadAsync()}
+          onPress={() =>
+            Alert.alert('Install update?', 'The app will reload to apply the update.', [
+              { text: 'Later', style: 'cancel' },
+              { text: 'Install', onPress: () => void Updates.reloadAsync() },
+            ])
+          }
           accessibilityLabel={t('home.installNow')}
           accessibilityRole="button"
         >

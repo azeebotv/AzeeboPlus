@@ -8,6 +8,7 @@ import { LoadingState, EmptyState, ErrorState } from '../../src/components/State
 import { apiClient } from '../../src/api/client';
 import { ApiResponse } from '../../src/types/api';
 import { analytics } from '../../src/utils/analytics';
+import { colors } from '../../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -91,7 +92,7 @@ export default function LifestyleUniverseHome() {
 
   useEffect(() => {
     if (featuredQuery.isSuccess && !featuredQuery.isFetching) {
-              analytics.lifestyleFeedViewed();
+      analytics.lifestyleFeedViewed();
     }
   }, [featuredQuery.isSuccess]);
 
@@ -335,7 +336,7 @@ const styles = StyleSheet.create({
   },
   universeLabel: {
     fontSize: 14,
-    color: '#45B7D1',
+    color: colors.palette.sky,
     fontWeight: '600',
     marginBottom: 4,
   },
@@ -366,7 +367,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   categoryCount: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 11,
   },
   section: {
@@ -384,7 +385,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   seeAllText: {
-    color: '#45B7D1',
+    color: colors.palette.sky,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -399,7 +400,7 @@ const styles = StyleSheet.create({
   },
   featuredImagePlaceholder: {
     height: 140,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -424,7 +425,7 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   featuredCategory: {
-    color: '#45B7D1',
+    color: colors.palette.sky,
     fontSize: 11,
     fontWeight: '600',
     marginBottom: 4,
@@ -448,7 +449,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#45B7D1',
+    backgroundColor: colors.palette.sky,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -461,7 +462,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 8,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -477,7 +478,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   trendingViews: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 12,
   },
   creatorsList: {
@@ -495,7 +496,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
@@ -509,12 +510,12 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   creatorFollowers: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 11,
     marginBottom: 10,
   },
   followButton: {
-    backgroundColor: '#45B7D1',
+    backgroundColor: colors.palette.sky,
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 6,
@@ -531,7 +532,7 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
     backgroundColor: '#1a1a1a',
     borderTopWidth: 1,
-    borderTopColor: '#2a2a2a',
+    borderTopColor: colors.palette.charcoal,
   },
   navItem: {
     alignItems: 'center',
@@ -542,6 +543,6 @@ const styles = StyleSheet.create({
   },
   navLabel: {
     fontSize: 11,
-    color: '#888',
+    color: colors.palette.grey500,
   },
 });

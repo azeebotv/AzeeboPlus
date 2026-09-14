@@ -13,6 +13,8 @@ export interface ContentItem {
   contentType?: string;
   status: 'draft' | 'processing' | 'published' | 'archived';
   isPremium?: boolean;
+  /** Last-watched position in seconds, when the history endpoint supplies it. */
+  watchProgress?: number;
   mediaAsset?: {
     thumbnailUrl?: string;
     mediaUrl?: string;
@@ -197,9 +199,15 @@ export const contentApi = {
     );
   },
 
-  addToWatchHistory: async (contentId: string): Promise<ApiResponse<{ message: string }>> => {
+  addToWatchHistory: async (
+    contentId: string,
+    positionSeconds?: number
+  ): Promise<ApiResponse<{ message: string }>> => {
+    // Position lets the backend power "Continue Watching" with real resume
+    // points; servers that don't persist it simply ignore the extra field.
     return apiClient.post<ApiResponse<{ message: string }>>('/api/v1/users/me/history', {
       contentId,
+      position: positionSeconds != null ? Math.round(positionSeconds) : undefined,
     });
   },
 

@@ -11,6 +11,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { walletApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
+import { colors } from '../../src/theme';
 
 interface TransactionDetail {
   id: string;
@@ -206,7 +207,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: '#9CA3AF',
+    color: colors.light[400],
     marginTop: 12,
   },
   errorContainer: {
@@ -221,7 +222,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
     marginBottom: 20,
   },
   backButton: {
@@ -252,7 +253,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   card: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.palette.charcoal,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -297,7 +298,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   value: {
     fontSize: 14,

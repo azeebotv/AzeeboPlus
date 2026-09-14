@@ -51,7 +51,9 @@ export default function CharactersListScreen() {
         <Text style={styles.avatarText}>{item.avatar || item.name[0]}</Text>
       </View>
       <View style={styles.cardInfo}>
-        <Text style={[styles.cardName, { color: colors.text.primary }]} numberOfLines={1}>{item.name}</Text>
+        <Text style={[styles.cardName, { color: colors.text.primary }]} numberOfLines={1}>
+          {item.name}
+        </Text>
         <Text style={styles.cardRole}>{item.role}</Text>
       </View>
       <Text style={[styles.arrow, { color: colors.text.secondary }]}>›</Text>
@@ -59,7 +61,9 @@ export default function CharactersListScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+    >
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
@@ -70,7 +74,14 @@ export default function CharactersListScreen() {
 
       <View style={styles.searchBar}>
         <TextInput
-          style={[styles.searchInput, { color: colors.text.primary, borderColor: colors.border.default, backgroundColor: colors.bg.tertiary }]}
+          style={[
+            styles.searchInput,
+            {
+              color: colors.text.primary,
+              borderColor: colors.border.default,
+              backgroundColor: colors.bg.tertiary,
+            },
+          ]}
           placeholder="Search characters..."
           placeholderTextColor={colors.text.tertiary}
           value={search}
@@ -81,7 +92,10 @@ export default function CharactersListScreen() {
       {charactersQuery.isLoading ? (
         <LoadingState text="Loading characters..." />
       ) : charactersQuery.error ? (
-        <ErrorState description={charactersQuery.error.message} onRetry={() => charactersQuery.refetch()} />
+        <ErrorState
+          description={charactersQuery.error.message}
+          onRetry={() => charactersQuery.refetch()}
+        />
       ) : characters.length === 0 ? (
         <EmptyState icon="🧑" title="No characters found" description="Check back later" />
       ) : (
@@ -99,15 +113,40 @@ export default function CharactersListScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingTop: 40 },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.bg.tertiary, alignItems: 'center', justifyContent: 'center' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    paddingTop: 40,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.bg.tertiary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backIcon: { color: colors.text.primary, fontSize: 20 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
   searchBar: { paddingHorizontal: 16, paddingBottom: 12 },
   searchInput: { padding: 12, borderRadius: 12, borderWidth: 1, fontSize: 14 },
   list: { padding: 16, gap: 12 },
-  card: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: radius.lg, gap: 12 },
-  avatar: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: radius.lg,
+    gap: 12,
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   avatarText: { fontSize: 20, fontWeight: '700', color: colors.primary[500] },
   cardInfo: { flex: 1 },
   cardName: { fontSize: 16, fontWeight: '700', marginBottom: 2 },

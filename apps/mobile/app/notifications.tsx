@@ -9,7 +9,7 @@ import {
   useMarkAllNotificationsRead,
 } from '../src/hooks/useNotificationQuery';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
-import { radius } from '../src/theme';
+import { radius, colors } from '../src/theme';
 
 export default function NotificationsScreen() {
   const colorScheme = useColorScheme();
@@ -91,7 +91,11 @@ export default function NotificationsScreen() {
         ]}
       >
         <View style={[styles.header, { paddingTop: insets.top }]}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()} accessibilityLabel="Go back">
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            accessibilityLabel="Go back"
+          >
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text
@@ -100,7 +104,11 @@ export default function NotificationsScreen() {
             Notifications
           </Text>
           {unreadCount > 0 && (
-            <TouchableOpacity style={styles.markAllButton} onPress={markAllAsRead} accessibilityLabel="Mark all notifications as read">
+            <TouchableOpacity
+              style={styles.markAllButton}
+              onPress={markAllAsRead}
+              accessibilityLabel="Mark all notifications as read"
+            >
               <Text style={styles.markAllText}>Mark All Read</Text>
             </TouchableOpacity>
           )}
@@ -110,7 +118,9 @@ export default function NotificationsScreen() {
           {notificationsList.length === 0 ? (
             <View style={{ padding: 40, alignItems: 'center' }}>
               <Text style={{ fontSize: 48, marginBottom: 12 }}>🔔</Text>
-              <Text style={[{ fontSize: 16, color: '#888' }]}>No notifications yet</Text>
+              <Text style={[{ fontSize: 16, color: colors.palette.grey500 }]}>
+                No notifications yet
+              </Text>
             </View>
           ) : (
             notificationsList.map((notification) => (
@@ -210,7 +220,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#333',
+    backgroundColor: colors.palette.grey800,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -265,7 +275,7 @@ const styles = StyleSheet.create({
   },
   notificationMessage: {
     fontSize: 13,
-    color: '#888',
+    color: colors.palette.grey500,
     marginBottom: 8,
   },
   notificationFooter: {
@@ -275,7 +285,7 @@ const styles = StyleSheet.create({
   },
   notificationTime: {
     fontSize: 12,
-    color: '#666',
+    color: colors.palette.grey600,
   },
   notificationAction: {
     fontSize: 12,
@@ -318,6 +328,6 @@ const styles = StyleSheet.create({
   },
   settingDescription: {
     fontSize: 12,
-    color: '#888',
+    color: colors.palette.grey500,
   },
 });

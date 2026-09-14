@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { apiClient } from '../../src/api/client';
 import { createLogger } from '../../src/utils/logger';
+import { colors } from '../../src/theme';
 
 const logger = createLogger('AddFunds');
 
@@ -138,7 +139,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#333',
+    backgroundColor: colors.palette.grey800,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -174,7 +175,7 @@ const styles = StyleSheet.create({
   quickLabel: { color: '#fff', fontSize: 14, fontWeight: '600', marginBottom: 12 },
   quickButtons: { flexDirection: 'row', gap: 8 },
   quickButton: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,

@@ -42,7 +42,9 @@ export default function VotingScreen() {
   });
 
   useEffect(() => {
-    if (showId) { analytics.realityShowViewed(showId); }
+    if (showId) {
+      analytics.realityShowViewed(showId);
+    }
     const contestants = contestantsQuery.data ?? [];
     if (contestants.length > 0 && !selectedContestant) {
       setSelectedContestant(contestants[0]);
@@ -59,7 +61,12 @@ export default function VotingScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reality', 'contestants'] });
-      analytics.realityVoteCreated(showId || '', selectedContestant?.id || '', selectedPackage.votes, selectedPackage.price);
+      analytics.realityVoteCreated(
+        showId || '',
+        selectedContestant?.id || '',
+        selectedPackage.votes,
+        selectedPackage.price
+      );
     },
   });
 
@@ -67,7 +74,9 @@ export default function VotingScreen() {
   const maxVotes = Math.max(0, ...contestants.map((c) => c.votes));
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+    >
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
@@ -79,7 +88,9 @@ export default function VotingScreen() {
 
         <View style={styles.content}>
           {/* Contestant Selection */}
-          <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Choose Contestant</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
+            Choose Contestant
+          </Text>
           {contestants.map((c) => (
             <TouchableOpacity
               key={c.id}
@@ -90,13 +101,25 @@ export default function VotingScreen() {
               ]}
               onPress={() => setSelectedContestant(c)}
             >
-              <View style={[styles.contestantAvatar, { backgroundColor: colors.primary[500] + '20' }]}>
+              <View
+                style={[styles.contestantAvatar, { backgroundColor: colors.primary[500] + '20' }]}
+              >
                 <Text style={styles.contestantInitial}>{c.name[0]}</Text>
               </View>
               <View style={styles.contestantInfo}>
-                <Text style={[styles.contestantName, { color: colors.text.primary }]}>{c.name}</Text>
+                <Text style={[styles.contestantName, { color: colors.text.primary }]}>
+                  {c.name}
+                </Text>
                 <View style={styles.voteBar}>
-                  <View style={[styles.voteBarFill, { width: `${(c.votes / (maxVotes || 1)) * 100}%`, backgroundColor: colors.primary[500] }]} />
+                  <View
+                    style={[
+                      styles.voteBarFill,
+                      {
+                        width: `${(c.votes / (maxVotes || 1)) * 100}%`,
+                        backgroundColor: colors.primary[500],
+                      },
+                    ]}
+                  />
                 </View>
                 <Text style={styles.voteCount}>{c.votes.toLocaleString()} votes</Text>
               </View>
@@ -105,7 +128,9 @@ export default function VotingScreen() {
           ))}
 
           {/* Vote Packages */}
-          <Text style={[styles.sectionTitle, { color: colors.text.primary, marginTop: 24 }]}>Vote Package</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text.primary, marginTop: 24 }]}>
+            Vote Package
+          </Text>
           <View style={styles.packagesGrid}>
             {VOTE_PACKAGES.map((pkg) => (
               <TouchableOpacity
@@ -117,21 +142,36 @@ export default function VotingScreen() {
                 ]}
                 onPress={() => setSelectedPackage(pkg)}
               >
-                {pkg.popular && <View style={styles.popularBadge}><Text style={styles.popularText}>POPULAR</Text></View>}
-                <Text style={[styles.packageLabel, { color: colors.text.primary }]}>{pkg.label}</Text>
-                <Text style={[styles.packagePrice, { color: colors.primary[500] }]}>₦{pkg.price.toLocaleString()}</Text>
+                {pkg.popular && (
+                  <View style={styles.popularBadge}>
+                    <Text style={styles.popularText}>POPULAR</Text>
+                  </View>
+                )}
+                <Text style={[styles.packageLabel, { color: colors.text.primary }]}>
+                  {pkg.label}
+                </Text>
+                <Text style={[styles.packagePrice, { color: colors.primary[500] }]}>
+                  ₦{pkg.price.toLocaleString()}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
 
           {/* Vote Button */}
           <TouchableOpacity
-            style={[styles.voteButton, (!selectedContestant || voteMutation.isPending) && styles.voteButtonDisabled]}
+            style={[
+              styles.voteButton,
+              (!selectedContestant || voteMutation.isPending) && styles.voteButtonDisabled,
+            ]}
             onPress={() => voteMutation.mutate()}
             disabled={!selectedContestant || voteMutation.isPending}
           >
             <Text style={styles.voteButtonText}>
-              {voteMutation.isPending ? 'Voting...' : voteMutation.isSuccess ? '✓ Vote Cast!' : `Vote ${selectedPackage.label}`}
+              {voteMutation.isPending
+                ? 'Voting...'
+                : voteMutation.isSuccess
+                  ? '✓ Vote Cast!'
+                  : `Vote ${selectedPackage.label}`}
             </Text>
           </TouchableOpacity>
 
@@ -148,18 +188,43 @@ export default function VotingScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingTop: 40 },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.bg.tertiary, alignItems: 'center', justifyContent: 'center' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    paddingTop: 40,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.bg.tertiary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backIcon: { color: colors.text.primary, fontSize: 20 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
   content: { padding: 16 },
   sectionTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
   contestantCard: {
-    flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: radius.lg,
-    marginBottom: 10, gap: 12, borderWidth: 2, borderColor: 'transparent',
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: radius.lg,
+    marginBottom: 10,
+    gap: 12,
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
   contestantSelected: { borderColor: colors.primary[500] },
-  contestantAvatar: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  contestantAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   contestantInitial: { fontSize: 18, fontWeight: '700', color: colors.primary[500] },
   contestantInfo: { flex: 1 },
   contestantName: { fontSize: 15, fontWeight: '600', marginBottom: 6 },
@@ -169,16 +234,30 @@ const styles = StyleSheet.create({
   checkmark: { fontSize: 18, color: colors.primary[500], fontWeight: '700' },
   packagesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24 },
   packageCard: {
-    flex: 1, minWidth: '45%', padding: 16, borderRadius: radius.lg,
-    alignItems: 'center', borderWidth: 2, borderColor: 'transparent',
+    flex: 1,
+    minWidth: '45%',
+    padding: 16,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
   packageSelected: { borderColor: colors.primary[500] },
-  popularBadge: { backgroundColor: colors.primary[500], paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, marginBottom: 8 },
+  popularBadge: {
+    backgroundColor: colors.primary[500],
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginBottom: 8,
+  },
   popularText: { fontSize: 9, fontWeight: '700', color: '#fff' },
   packageLabel: { fontSize: 14, fontWeight: '600', marginBottom: 4 },
   packagePrice: { fontSize: 16, fontWeight: '700' },
   voteButton: {
-    backgroundColor: colors.primary[500], paddingVertical: 16, borderRadius: 12, alignItems: 'center',
+    backgroundColor: colors.primary[500],
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
   },
   voteButtonDisabled: { opacity: 0.5 },
   voteButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },

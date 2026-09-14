@@ -4,8 +4,8 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
   ScrollView,
+  useWindowDimensions,
   useColorScheme,
   Alert,
 } from 'react-native';
@@ -17,8 +17,7 @@ import { useFlags } from '../../src/contexts/FlagsContext';
 import { contentApi, type ContentItem } from '../../src/api';
 import { logger } from '../../src/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+import { colors } from '../../src/theme';
 
 export default function WatchScreen() {
   const router = useRouter();
@@ -26,16 +25,22 @@ export default function WatchScreen() {
   const colorScheme = useColorScheme();
   const { isEnabled } = useFlags();
 
+  // Live viewport — updates when the device rotates into fullscreen landscape.
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const isLandscape = windowWidth > windowHeight;
+
   const [content, setContent] = useState<ContentItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [relatedContent, setRelatedContent] = useState<ContentItem[]>([]);
 
   const handleProgressUpdate = useCallback(
-    async (_progress: number) => {
+    async (progress: number) => {
       if (contentId) {
         try {
-          await contentApi.addToWatchHistory(contentId);
+          // Persist the actual playback position so Continue Watching shows
+          // a real resume point instead of a placeholder.
+          await contentApi.addToWatchHistory(contentId, progress);
         } catch (err) {
           logger.error('Failed to update watch progress', err);
         }
@@ -66,6 +71,7 @@ export default function WatchScreen() {
     formatTime,
   } = useAzeeboVideoPlayer({
     contentId: contentId || '',
+    initialProgress: content?.watchProgress ?? 0,
     onProgressUpdate: handleProgressUpdate,
     onComplete: handleComplete,
     // mobile_autoplay (on by default): auto-start playback when ready; off
@@ -106,6 +112,10 @@ export default function WatchScreen() {
   const handleSeek = (time: number) => {
     seek(time);
   };
+
+  // Measured width of the seek bar — using the screen width minus a guess was
+  // off by the container padding and made end-of-video seeks overshoot.
+  const [seekBarWidth, setSeekBarWidth] = useState(0);
 
   const handleVideoPress = () => {
     setShowControls(true);
@@ -152,18 +162,34 @@ export default function WatchScreen() {
   const displayDuration = duration || content.duration || 3600;
   const progressPercent = displayDuration > 0 ? (currentTime / displayDuration) * 100 : 0;
 
+  // Embedded (non-fullscreen) video keeps a 16:9 box that fits the current
+  // orientation — sized from the short edge so landscape never overflows.
+  const embeddedWidth = Math.min(windowWidth, (windowHeight * 16) / 9);
+  const embeddedHeight = (embeddedWidth * 9) / 16;
+
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
-      edges={['top']}
+      // No safe-area edges in fullscreen so the video covers the entire screen
+      // (status bar is hidden by the player hook).
+      edges={isFullscreen ? [] : ['top']}
     >
-      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-        <Text style={[styles.backText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
-          ← Back
-        </Text>
-      </TouchableOpacity>
+      {!isFullscreen && (
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Text style={[styles.backText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+            ← Back
+          </Text>
+        </TouchableOpacity>
+      )}
 
-      <View style={[styles.videoContainer, isFullscreen && styles.videoContainerFullscreen]}>
+      <View
+        style={[
+          styles.videoContainer,
+          isFullscreen
+            ? styles.videoContainerFullscreen
+            : { width: embeddedWidth, height: embeddedHeight },
+        ]}
+      >
         <TouchableOpacity
           style={[styles.videoPlaceholder, { backgroundColor: '#000' }]}
           onPress={handleVideoPress}
@@ -191,9 +217,11 @@ export default function WatchScreen() {
           )}
 
           {showControls && (
-            <View style={styles.controlsOverlay}>
-              <View style={styles.topControls}>
-                <TouchableOpacity onPress={() => router.back()}>
+            <View style={[styles.controlsOverlay, isLandscape && styles.controlsOverlayLandscape]}>
+              <View style={[styles.topControls, isLandscape && styles.topControlsLandscape]}>
+                <TouchableOpacity
+                  onPress={() => (isFullscreen ? toggleFullscreen() : router.back())}
+                >
                   <Text style={styles.controlText}>✕</Text>
                 </TouchableOpacity>
                 <Text style={styles.videoTitle} numberOfLines={1}>
@@ -204,25 +232,36 @@ export default function WatchScreen() {
                 </TouchableOpacity>
               </View>
 
-              <View style={styles.centerControls}>
+              <View style={[styles.centerControls, isLandscape && styles.centerControlsLandscape]}>
                 <TouchableOpacity style={styles.seekButton} onPress={() => seekBackward(10)}>
-                  <Text style={styles.seekText}>-10s</Text>
+                  <Text style={[styles.seekText, isLandscape && styles.seekTextLandscape]}>
+                    -10s
+                  </Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.mainPlayButton} onPress={togglePlay}>
-                  <Text style={styles.mainPlayIcon}>{isPlaying ? '⏸️' : '▶️'}</Text>
+                <TouchableOpacity
+                  style={[styles.mainPlayButton, isLandscape && styles.mainPlayButtonLandscape]}
+                  onPress={togglePlay}
+                >
+                  <Text style={[styles.mainPlayIcon, isLandscape && styles.mainPlayIconLandscape]}>
+                    {isPlaying ? '⏸️' : '▶️'}
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.seekButton} onPress={() => seekForward(10)}>
-                  <Text style={styles.seekText}>+10s</Text>
+                  <Text style={[styles.seekText, isLandscape && styles.seekTextLandscape]}>
+                    +10s
+                  </Text>
                 </TouchableOpacity>
               </View>
 
-              <View style={styles.bottomControls}>
+              <View style={[styles.bottomControls, isLandscape && styles.bottomControlsLandscape]}>
                 <Text style={styles.timeText}>{formatTime(currentTime)}</Text>
                 <TouchableOpacity
                   style={styles.progressBar}
+                  onLayout={(e) => setSeekBarWidth(e.nativeEvent.layout.width)}
                   onPress={(e) => {
+                    if (seekBarWidth <= 0) return;
                     const x = e.nativeEvent.locationX;
-                    const percent = x / (SCREEN_WIDTH - 100);
+                    const percent = Math.min(Math.max(x / seekBarWidth, 0), 1);
                     handleSeek(percent * displayDuration);
                   }}
                   activeOpacity={0.8}
@@ -238,7 +277,12 @@ export default function WatchScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.contentInfo} showsVerticalScrollIndicator={false}>
+      {/* Info pane is hidden in fullscreen so the rotated layout only
+          contains the player. */}
+      <ScrollView
+        style={[styles.contentInfo, isFullscreen && styles.contentInfoHidden]}
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={[styles.title, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
           {content.title}
         </Text>
@@ -347,9 +391,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  // Embedded size is injected at render time from useWindowDimensions()
+  // (16:9 box that fits the current orientation).
   videoContainer: {
-    width: SCREEN_WIDTH,
-    height: (SCREEN_WIDTH * 9) / 16,
+    backgroundColor: '#000',
   },
   videoContainerFullscreen: {
     position: 'absolute',
@@ -394,6 +439,35 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 12,
     backgroundColor: 'rgba(0,0,0,0.3)',
+  },
+  // ── Landscape (fullscreen) control layout ────────────────
+  controlsOverlayLandscape: {
+    padding: 24,
+    paddingVertical: 16,
+  },
+  topControlsLandscape: {
+    paddingHorizontal: 8,
+  },
+  centerControlsLandscape: {
+    gap: 56,
+  },
+  seekTextLandscape: {
+    fontSize: 18,
+  },
+  mainPlayButtonLandscape: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+  },
+  mainPlayIconLandscape: {
+    fontSize: 38,
+  },
+  bottomControlsLandscape: {
+    paddingHorizontal: 8,
+    gap: 12,
+  },
+  contentInfoHidden: {
+    display: 'none',
   },
   topControls: {
     flexDirection: 'row',
@@ -478,7 +552,7 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 13,
-    color: '#666',
+    color: colors.palette.grey600,
   },
   actionRow: {
     flexDirection: 'row',
@@ -487,7 +561,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: '#eee',
+    borderColor: colors.palette.grey150,
   },
   actionButton: {
     alignItems: 'center',
@@ -498,7 +572,7 @@ const styles = StyleSheet.create({
   },
   actionLabel: {
     fontSize: 12,
-    color: '#666',
+    color: colors.palette.grey600,
   },
   descriptionSection: {
     paddingVertical: 12,
@@ -535,7 +609,7 @@ const styles = StyleSheet.create({
   },
   subscriberText: {
     fontSize: 13,
-    color: '#666',
+    color: colors.palette.grey600,
   },
   subscribeButton: {
     backgroundColor: '#E8420A',

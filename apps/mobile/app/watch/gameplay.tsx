@@ -6,6 +6,7 @@ import { apiClient } from '../../src/api';
 import { logger } from '../../src/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 import { analytics } from '../../src/utils/analytics';
+import { colors } from '../../src/theme';
 
 interface GameQuestion {
   id: number;
@@ -85,7 +86,7 @@ export default function GameplayScreen() {
 
   useEffect(() => {
     if (isGameOver) {
-              analytics.gameCompleted('trivia', score, 60 - timeLeft);
+      analytics.gameCompleted('trivia', score, 60 - timeLeft);
     }
   }, [isGameOver]);
 
@@ -262,7 +263,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#333',
+    backgroundColor: colors.palette.grey800,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -279,7 +280,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statLabel: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 12,
     marginBottom: 4,
   },
@@ -303,14 +304,14 @@ const styles = StyleSheet.create({
   optionButton: {
     padding: 16,
     borderRadius: 12,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.palette.grey100,
     borderWidth: 2,
     borderColor: '#e0e0e0',
   },
   optionText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#333',
+    color: colors.palette.grey800,
   },
   nextButton: {
     margin: 16,
@@ -340,7 +341,7 @@ const styles = StyleSheet.create({
   },
   scoreLabel: {
     fontSize: 16,
-    color: '#888',
+    color: colors.palette.grey500,
     marginBottom: 8,
   },
   scoreValue: {
@@ -364,7 +365,7 @@ const styles = StyleSheet.create({
   },
   resultStatLabel: {
     fontSize: 14,
-    color: '#888',
+    color: colors.palette.grey500,
   },
   playAgainButton: {
     paddingHorizontal: 48,

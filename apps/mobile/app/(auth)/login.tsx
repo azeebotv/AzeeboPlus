@@ -8,6 +8,7 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
@@ -153,9 +154,7 @@ export default function LoginScreen() {
       } catch (error: unknown) {
         logger.error(`${provider} OAuth login error`, error);
         const message =
-          error instanceof Error
-            ? error.message
-            : `${provider} sign-in failed. Please try again.`;
+          error instanceof Error ? error.message : `${provider} sign-in failed. Please try again.`;
         setError(message);
       } finally {
         setIsSubmitting(false);
@@ -179,9 +178,12 @@ export default function LoginScreen() {
         <PageTransition>
           <ScrollReveal direction="up" delay={0}>
             <View style={styles.header}>
-              <Text style={styles.logo}>
-                AZEEBO<Text style={styles.logoPlus}>+</Text>
-              </Text>
+              <Image
+                source={require('../../assets/logo-white.png')}
+                style={{ width: 140, height: 34, marginBottom: 8 }}
+                resizeMode="contain"
+                accessibilityLabel="Azeebo+ Logo"
+              />
               <Text style={styles.subtitle}>Welcome back</Text>
             </View>
           </ScrollReveal>

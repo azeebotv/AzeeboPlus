@@ -41,7 +41,9 @@ export default function LiveEventsScreen() {
   const filteredEvents = filter === 'all' ? events : events.filter((e) => e.status === filter);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+    >
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
@@ -59,7 +61,11 @@ export default function LiveEventsScreen() {
             style={[styles.tab, filter === tab && styles.tabActive]}
           >
             <Text style={[styles.tabText, filter === tab && styles.tabTextActive]}>
-              {tab === 'all' ? 'All' : tab === 'live' ? `🔴 Live (${liveEvents.length})` : `Upcoming (${upcomingEvents.length})`}
+              {tab === 'all'
+                ? 'All'
+                : tab === 'live'
+                  ? `🔴 Live (${liveEvents.length})`
+                  : `Upcoming (${upcomingEvents.length})`}
             </Text>
           </TouchableOpacity>
         ))}
@@ -70,7 +76,11 @@ export default function LiveEventsScreen() {
       ) : eventsQuery.error ? (
         <ErrorState description={eventsQuery.error.message} onRetry={() => eventsQuery.refetch()} />
       ) : filteredEvents.length === 0 ? (
-        <EmptyState icon="📺" title="No events" description="No live events right now. Check back soon!" />
+        <EmptyState
+          icon="📺"
+          title="No events"
+          description="No live events right now. Check back soon!"
+        />
       ) : (
         <FlatList
           data={filteredEvents}
@@ -84,16 +94,28 @@ export default function LiveEventsScreen() {
             >
               <View style={styles.cardHeader}>
                 {item.status === 'live' && <View style={styles.liveDot} />}
-                <Text style={[styles.cardTitle, { color: colors.text.primary }]} numberOfLines={1}>{item.title}</Text>
+                <Text style={[styles.cardTitle, { color: colors.text.primary }]} numberOfLines={1}>
+                  {item.title}
+                </Text>
               </View>
-              <Text style={[styles.cardDesc, { color: isDark ? colors.text.secondary : '#666' }]} numberOfLines={2}>
+              <Text
+                style={[styles.cardDesc, { color: isDark ? colors.text.secondary : '#666' }]}
+                numberOfLines={2}
+              >
                 {item.description}
               </Text>
               <View style={styles.cardMeta}>
                 <Text style={styles.metaText}>{item.universe}</Text>
-                {item.status === 'live' && <Text style={styles.metaText}>👁 {item.viewerCount.toLocaleString()}</Text>}
+                {item.status === 'live' && (
+                  <Text style={styles.metaText}>👁 {item.viewerCount.toLocaleString()}</Text>
+                )}
                 <Text style={styles.metaText}>
-                  {new Date(item.scheduledAt).toLocaleDateString('en-NG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  {new Date(item.scheduledAt).toLocaleDateString('en-NG', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -106,12 +128,30 @@ export default function LiveEventsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingTop: 40 },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.bg.tertiary, alignItems: 'center', justifyContent: 'center' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    paddingTop: 40,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.bg.tertiary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backIcon: { color: colors.text.primary, fontSize: 20 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
   tabRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 8, marginBottom: 12 },
-  tab: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: colors.bg.tertiary },
+  tab: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: colors.bg.tertiary,
+  },
   tabActive: { backgroundColor: colors.primary[500] },
   tabText: { fontSize: 13, fontWeight: '600', color: colors.text.tertiary },
   tabTextActive: { color: '#fff' },

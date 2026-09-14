@@ -40,7 +40,9 @@ export default function InfluencerDetailScreen() {
         message: `Check out ${influencer.name} on Azeebo+`,
         title: influencer.name,
       });
-    } catch { /* User cancelled share */ }
+    } catch {
+      /* User cancelled share */
+    }
   }, [influencer]);
 
   const handleOpenSocial = useCallback((url: string) => {

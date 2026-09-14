@@ -8,7 +8,7 @@ import { LoadingState, EmptyState, ErrorState } from '../../src/components/State
 import { apiClient } from '../../src/api/client';
 import { ApiResponse } from '../../src/types/api';
 import { analytics } from '../../src/utils/analytics';
-import { radius } from '../../src/theme';
+import { radius, colors } from '../../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -98,7 +98,7 @@ export default function SportsUniverseHome() {
 
   useEffect(() => {
     if (liveQuery.data && liveQuery.data.length > 0) {
-              analytics.sportsFixtureViewed(liveQuery.data[0].id);
+      analytics.sportsFixtureViewed(liveQuery.data[0].id);
     }
   }, [liveQuery.data]);
 
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
   },
   universeLabel: {
     fontSize: 14,
-    color: '#E74C3C',
+    color: colors.palette.alarmRed,
     fontWeight: '600',
     marginBottom: 4,
   },
@@ -362,10 +362,10 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#E74C3C',
+    backgroundColor: colors.palette.alarmRed,
   },
   liveText: {
-    color: '#E74C3C',
+    color: colors.palette.alarmRed,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -383,13 +383,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   leagueName: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 12,
   },
   liveBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E74C3C',
+    backgroundColor: colors.palette.alarmRed,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
@@ -429,7 +429,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   scoreDisplay: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: radius.sm,
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
   },
   watchButton: {
     flex: 1,
-    backgroundColor: '#E74C3C',
+    backgroundColor: colors.palette.alarmRed,
     paddingVertical: 10,
     borderRadius: radius.sm,
     alignItems: 'center',
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
   },
   predictButton: {
     flex: 1,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     paddingVertical: 10,
     borderRadius: radius.sm,
     alignItems: 'center',
@@ -481,7 +481,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   seeAllText: {
-    color: '#E74C3C',
+    color: colors.palette.alarmRed,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -508,20 +508,20 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   upcomingDate: {
-    color: '#E74C3C',
+    color: colors.palette.alarmRed,
     fontSize: 12,
     fontWeight: '600',
     marginBottom: 2,
   },
   upcomingLeague: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 11,
   },
   remindButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -552,16 +552,16 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   predictionParticipants: {
-    color: '#888',
+    color: colors.palette.grey500,
     fontSize: 12,
   },
   predictionPrize: {
-    color: '#E74C3C',
+    color: colors.palette.alarmRed,
     fontSize: 12,
     fontWeight: '600',
   },
   joinButton: {
-    backgroundColor: '#E74C3C',
+    backgroundColor: colors.palette.alarmRed,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 6,

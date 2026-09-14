@@ -26,7 +26,9 @@ export default function SubscribersScreen() {
   const subscribersQuery = useQuery({
     queryKey: ['creator', 'subscribers'],
     queryFn: async () => {
-      const res = await apiClient.get<{ items: Subscriber[]; total: number }>('/v1/creator/subscribers');
+      const res = await apiClient.get<{ items: Subscriber[]; total: number }>(
+        '/v1/creator/subscribers'
+      );
       return res?.items ?? [];
     },
     staleTime: 60_000,
@@ -49,12 +51,16 @@ export default function SubscribersScreen() {
           {item.plan} • Subscribed {new Date(item.subscribedAt).toLocaleDateString()}
         </Text>
       </View>
-      <Text style={[styles.amount, { color: colors.primary[500] }]}>₦{item.totalPaid.toLocaleString()}</Text>
+      <Text style={[styles.amount, { color: colors.primary[500] }]}>
+        ₦{item.totalPaid.toLocaleString()}
+      </Text>
     </View>
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
+    >
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
@@ -66,9 +72,16 @@ export default function SubscribersScreen() {
       {subscribersQuery.isLoading ? (
         <LoadingState text="Loading subscribers..." />
       ) : subscribersQuery.error ? (
-        <ErrorState description={subscribersQuery.error.message} onRetry={() => subscribersQuery.refetch()} />
+        <ErrorState
+          description={subscribersQuery.error.message}
+          onRetry={() => subscribersQuery.refetch()}
+        />
       ) : subscribers.length === 0 ? (
-        <EmptyState icon="👥" title="No subscribers yet" description="Share your content to grow your audience" />
+        <EmptyState
+          icon="👥"
+          title="No subscribers yet"
+          description="Share your content to grow your audience"
+        />
       ) : (
         <FlatList
           data={subscribers}
@@ -89,14 +102,39 @@ export default function SubscribersScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingTop: 40 },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.bg.tertiary, alignItems: 'center', justifyContent: 'center' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    paddingTop: 40,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.bg.tertiary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backIcon: { color: colors.text.primary, fontSize: 20 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
   count: { fontSize: 14, marginBottom: 12 },
   list: { padding: 16, gap: 12 },
-  card: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: radius.lg, gap: 12 },
-  avatar: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: radius.lg,
+    gap: 12,
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   avatarText: { fontSize: 18, fontWeight: '700', color: colors.primary[500] },
   cardInfo: { flex: 1 },
   cardName: { fontSize: 15, fontWeight: '600', marginBottom: 2 },

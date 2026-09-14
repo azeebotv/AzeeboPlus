@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -42,7 +42,6 @@ export default function AuthenticatedHomepage({
 
   // Section 2: Recently Watched
   const [recentlyWatched, setRecentlyWatched] = useState<ContentItem[]>([]);
-  const [recentlyWatchedOffset, setRecentlyWatchedOffset] = useState(0);
   const [hasMoreHistory, setHasMoreHistory] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
 
@@ -85,58 +84,70 @@ export default function AuthenticatedHomepage({
   // --- Section 2: Recently Watched (with infinite scroll) ---
   const HISTORY_PAGE_SIZE = 10;
 
-  const loadRecentlyWatched = useCallback(
-    async (cancelled?: boolean) => {
-      try {
-        const response = await api.content.getContentList({
-          page: Math.floor(recentlyWatchedOffset / HISTORY_PAGE_SIZE) + 1,
-          limit: HISTORY_PAGE_SIZE,
-        });
-        if (!cancelled && response.success && response.data) {
-          const newItems = response.data.items || [];
-          setRecentlyWatched((prev) =>
-            recentlyWatchedOffset === 0 ? newItems : [...prev, ...newItems]
-          );
-          setHasMoreHistory(newItems.length === HISTORY_PAGE_SIZE);
-        }
-      } catch (error) {
-        if (!cancelled) logger.error('Failed to load recently watched:', error);
-      } finally {
-        if (!cancelled) setIsLoadingHistory(false);
-      }
-    },
-    [recentlyWatchedOffset]
-  );
+  // Single loader keyed by page number. The previous version had two
+  // divergent code paths (initial effect + load-more) mutating
+  // `recentlyWatchedOffset` before the fetch resolved, which duplicated items
+  // on rapid triggers. One guarded, page-indexed loader fixes both.
+  const historyPageRef = useRef(1);
+  const isLoadingMoreHistoryRef = useRef(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    loadRecentlyWatched(cancelled);
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const loadMoreHistory = useCallback(async () => {
-    const nextOffset = recentlyWatchedOffset + HISTORY_PAGE_SIZE;
-    setRecentlyWatchedOffset(nextOffset);
+  const loadRecentlyWatched = useCallback(async () => {
+    setIsLoadingHistory(true);
     try {
       const response = await api.content.getContentList({
-        page: Math.floor(nextOffset / HISTORY_PAGE_SIZE) + 1,
+        page: 1,
         limit: HISTORY_PAGE_SIZE,
       });
       if (response.success && response.data) {
-        setRecentlyWatched((prev) => [...prev, ...(response.data?.items || [])]);
-        setHasMoreHistory(response.data.items?.length === HISTORY_PAGE_SIZE);
+        const newItems = response.data.items || [];
+        setRecentlyWatched(newItems);
+        setHasMoreHistory(newItems.length === HISTORY_PAGE_SIZE);
+        historyPageRef.current = 1;
+      }
+    } catch (error) {
+      logger.error('Failed to load recently watched:', error);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadRecentlyWatched();
+  }, [loadRecentlyWatched]);
+
+  const loadMoreHistory = useCallback(async () => {
+    if (isLoadingMoreHistoryRef.current || !hasMoreHistory) return;
+    isLoadingMoreHistoryRef.current = true;
+    const nextPage = historyPageRef.current + 1;
+    try {
+      const response = await api.content.getContentList({
+        page: nextPage,
+        limit: HISTORY_PAGE_SIZE,
+      });
+      if (response.success && response.data) {
+        const newItems = response.data.items || [];
+        setRecentlyWatched((prev) => {
+          const seen = new Set(prev.map((i) => i.id));
+          return [...prev, ...newItems.filter((i) => !seen.has(i.id))];
+        });
+        setHasMoreHistory(newItems.length === HISTORY_PAGE_SIZE);
+        historyPageRef.current = nextPage;
       }
     } catch (error) {
       logger.error('Failed to load more history:', error);
+    } finally {
+      isLoadingMoreHistoryRef.current = false;
     }
-  }, [recentlyWatchedOffset]);
+  }, [hasMoreHistory]);
 
-  const recentlyWatchedProgressMap: Record<string, number> = {};
-  recentlyWatched.forEach((item) => {
-    recentlyWatchedProgressMap[item.id] = 0;
-  });
+  // Real resume positions when the history feed supplies them; 0 otherwise.
+  const recentlyWatchedProgressMap: Record<string, number> = useMemo(() => {
+    const map: Record<string, number> = {};
+    recentlyWatched.forEach((item) => {
+      map[item.id] = item.watchProgress ?? 0;
+    });
+    return map;
+  }, [recentlyWatched]);
 
   // --- Section 3: Universe-Specific Content ---
   useEffect(() => {

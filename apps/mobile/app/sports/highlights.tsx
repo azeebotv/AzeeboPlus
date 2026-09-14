@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { apiClient } from '../../src/api/client';
 import { ApiResponse } from '../../src/types/api';
+import { colors } from '../../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -116,7 +117,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -126,7 +127,7 @@ const styles = StyleSheet.create({
   highlightCard: { borderRadius: 12, overflow: 'hidden', marginBottom: 16 },
   thumbnail: {
     height: 200,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.palette.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -151,6 +152,6 @@ const styles = StyleSheet.create({
   durationText: { color: '#fff', fontSize: 12, fontWeight: '600' },
   highlightInfo: { padding: 14 },
   highlightTitle: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
-  highlightMatch: { color: '#E74C3C', fontSize: 13, marginBottom: 4 },
-  highlightViews: { color: '#888', fontSize: 12 },
+  highlightMatch: { color: colors.palette.alarmRed, fontSize: 13, marginBottom: 4 },
+  highlightViews: { color: colors.palette.grey500, fontSize: 12 },
 });
