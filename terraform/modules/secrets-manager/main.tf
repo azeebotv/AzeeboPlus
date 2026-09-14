@@ -17,6 +17,7 @@ variable "secrets" {
     kms_key_arn = optional(string)
   }))
   sensitive = true
+  default   = []
 }
 
 variable "recovery_window_in_days" {

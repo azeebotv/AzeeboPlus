@@ -204,6 +204,13 @@ resource "aws_cloudfront_distribution" "main" {
     minimum_protocol_version = "TLSv1.2_2021"
   }
 
+  # Geographic restrictions (required block; no restrictions by default)
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
   # Logging
   logging_config {
     include_cookies = false

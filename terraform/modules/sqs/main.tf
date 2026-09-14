@@ -42,13 +42,25 @@ resource "aws_sqs_queue" "queues" {
   fifo_queue                  = each.value.fifo_queue
   content_based_deduplication = each.value.content_based_deduplication
 
-  dynamic "redrive_policy" {
-    for_each = each.value.dead_letter_target_arn != null ? [1] : []
-    content {
-      dead_letter_target_arn = each.value.dead_letter_target_arn
-      max_receive_count      = each.value.max_receive_count
-    }
-  }
+  # redrive is an attribute (JSON policy document), not a nested block, on
+  # aws_sqs_queue. The policy allows SQS itself to move messages to the DLQ
+  # (max_receive_count exceeded); SourceArn is the DLQ this queue drains to.
+  redrive_policy = each.value.dead_letter_target_arn != null ? jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = "sqs:SendMessage"
+        Resource  = "*"
+        Condition = {
+          ArnEquals = {
+            "aws:SourceArn" = each.value.dead_letter_target_arn
+          }
+        }
+      }
+    ]
+  }) : null
 
   kms_master_key_id                 = each.value.encryption_enabled ? "alias/aws/sqs" : null
   kms_data_key_reuse_period_seconds = each.value.encryption_enabled ? 300 : null
