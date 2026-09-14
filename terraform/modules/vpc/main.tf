@@ -194,7 +194,81 @@ resource "aws_route_table_association" "private" {
   route_table_id = var.enable_nat_gateway ? (var.single_nat_gateway ? aws_route_table.private[0].id : aws_route_table.private[count.index].id) : aws_route_table.private[0].id
 }
 
+# Security Groups
+# ALB: accepts public HTTPS/HTTP traffic; egress is unrestricted inside the VPC.
+resource "aws_security_group" "alb" {
+  name        = "${local.name}-alb-sg"
+  description = "ALB ingress from the internet"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description = "HTTPS from the internet"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "HTTP from the internet"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    description = "To application tasks"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name}-alb-sg"
+  })
+}
+
+# App/tasks: only the ALB may reach container ports; tasks may egress anywhere
+# (databases, third-party APIs) via the NAT gateway.
+resource "aws_security_group" "app" {
+  name        = "${local.name}-app-sg"
+  description = "ECS application tasks"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description     = "Container traffic from the ALB"
+    from_port       = 0
+    to_port         = 65535
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb.id]
+  }
+
+  egress {
+    description = "All outbound via NAT"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name}-app-sg"
+  })
+}
+
 # Outputs
+output "app_security_group_id" {
+  description = "Security group attached to ECS application tasks"
+  value       = aws_security_group.app.id
+}
+
+output "alb_security_group_id" {
+  description = "Security group attached to the public ALB"
+  value       = aws_security_group.alb.id
+}
+
 output "vpc_id" {
   description = "The ID of the VPC"
   value       = aws_vpc.main.id

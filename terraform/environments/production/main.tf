@@ -43,6 +43,12 @@ variable "certificate_arn" {
   type        = string
 }
 
+variable "database_password" {
+  description = "RDS master password (supplied via TF_VAR_database_password in CI, never committed)"
+  type        = string
+  sensitive   = true
+}
+
 # =============================================================================
 # Modules
 # =============================================================================
@@ -54,10 +60,9 @@ module "vpc" {
   environment  = "production"
   vpc_cidr     = "10.0.0.0/16"
 
-  availability_zones    = ["af-south-1a", "af-south-1b", "af-south-1c"]
-  public_subnet_cidrs   = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
-  private_subnet_cidrs  = ["10.0.11.0/24", "10.0.12.0/24", "10.0.13.0/24"]
-  database_subnet_cidrs = ["10.0.21.0/24", "10.0.22.0/24", "10.0.23.0/24"]
+  availability_zones   = ["af-south-1a", "af-south-1b", "af-south-1c"]
+  public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+  private_subnet_cidrs = ["10.0.11.0/24", "10.0.12.0/24", "10.0.13.0/24"]
 
   tags = {
     CostCentre = "engineering"
@@ -68,12 +73,13 @@ module "vpc" {
 module "rds" {
   source = "../../modules/rds"
 
-  project_name = "azeebo"
-  environment  = "production"
+  project_name      = "azeebo"
+  environment       = "production"
+  database_password = var.database_password
 
-  vpc_id                = module.vpc.vpc_id
-  subnet_ids            = module.vpc.database_subnet_ids
-  app_security_group_id = module.vpc.app_security_group_id
+  vpc_id                     = module.vpc.vpc_id
+  subnet_ids                 = module.vpc.private_subnet_ids
+  allowed_security_group_ids = [module.vpc.app_security_group_id]
 
   instance_class          = "db.r6g.xlarge"
   engine_version          = "16.4"
@@ -92,9 +98,9 @@ module "elasticache" {
   project_name = "azeebo"
   environment  = "production"
 
-  vpc_id                = module.vpc.vpc_id
-  subnet_ids            = module.vpc.private_subnet_ids
-  app_security_group_id = module.vpc.app_security_group_id
+  vpc_id                     = module.vpc.vpc_id
+  subnet_ids                 = module.vpc.private_subnet_ids
+  allowed_security_group_ids = [module.vpc.app_security_group_id]
 
   node_type       = "cache.r6g.large"
   num_cache_nodes = 3
@@ -131,10 +137,9 @@ module "cloudfront" {
   project_name = "azeebo"
   environment  = "production"
 
-  domain_name     = var.domain_name
-  certificate_arn = var.certificate_arn
-  alb_dns_name    = module.ecs.alb_dns_name
-  alb_zone_id     = module.ecs.alb_zone_id
+  domain_name            = var.domain_name
+  origin_domain_name     = module.ecs.alb_dns_name
+  viewer_certificate_arn = var.certificate_arn
 
   tags = {
     CostCentre = "engineering"
@@ -145,10 +150,10 @@ module "cloudfront" {
 module "waf" {
   source = "../../modules/waf"
 
-  project_name = "azeebo"
-  environment  = "production"
+  name        = "azeebo"
+  environment = "production"
 
-  cloudfront_arn = module.cloudfront.distribution_arn
+  cloudfront_distribution_arn = module.cloudfront.distribution_arn
 
   tags = {
     CostCentre = "engineering"
@@ -159,8 +164,8 @@ module "waf" {
 module "secrets_manager" {
   source = "../../modules/secrets-manager"
 
-  project_name = "azeebo"
-  environment  = "production"
+  name        = "azeebo"
+  environment = "production"
 
   tags = {
     CostCentre = "engineering"
@@ -171,12 +176,40 @@ module "secrets_manager" {
 module "cloudwatch" {
   source = "../../modules/cloudwatch"
 
-  project_name = "azeebo"
-  environment  = "production"
+  name        = "azeebo"
+  environment = "production"
 
-  ecs_cluster_name = module.ecs.cluster_name
-  rds_cluster_id   = module.rds.cluster_arn
-  redis_cluster_id = module.elasticache.cluster_id
+  # Log groups + dashboard per deployable service (leaf names under services/)
+  services = [
+    "analytics-service",
+    "api-gateway",
+    "auth-service",
+    "comedy-service",
+    "content-service",
+    "creator-service",
+    "games-service",
+    "knowledge-service",
+    "lifestyle-service",
+    "live-event-service",
+    "media-service",
+    "messaging-service",
+    "moderation-service",
+    "movie-service",
+    "notification-service",
+    "payment-service",
+    "queue-service",
+    "reality-service",
+    "recommendation-service",
+    "referral-service",
+    "reward-service",
+    "search-service",
+    "sports-service",
+    "subscription-service",
+    "support-service",
+    "user-service",
+    "vertical-service",
+    "wallet-service",
+  ]
 
   tags = {
     CostCentre = "engineering"
@@ -201,7 +234,7 @@ output "cloudfront_domain" {
 }
 
 output "rds_endpoint" {
-  value = module.rds.cluster_endpoint
+  value = module.rds.db_instance_endpoint
 }
 
 output "redis_endpoint" {
