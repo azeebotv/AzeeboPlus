@@ -44,7 +44,13 @@ function RewardDetailContent() {
   });
 
   const claimMutation = useMutation({
-    mutationFn: async () => api.request(`/api/v1/rewards/${id}/claim`, { method: 'POST' }),
+    // Reward-service exposes POST /rewards/redeem { rewardId } — there is no
+    // per-reward /claim route.
+    mutationFn: async () =>
+      api.request(`/api/v1/rewards/redeem`, {
+        method: 'POST',
+        body: JSON.stringify({ rewardId: id }),
+      }),
     onSuccess: () => setClaimed(true),
   });
 

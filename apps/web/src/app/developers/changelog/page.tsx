@@ -19,7 +19,8 @@ const CHANGELOG: ChangelogEntry[] = [
     date: '2026-09-01',
     type: 'added',
     description: 'Performance monitoring and rate limiting dashboards for admin panel',
-    endpoints: ['/api/v1/analytics/performance', '/api/v1/analytics/rate-limits'],
+    // rate-limit dashboards shipped under the admin service, not /analytics.
+    endpoints: ['/api/v1/analytics/performance', '/api/v1/admin/ops/gateway-rate-limits'],
   },
   {
     version: '2.1.0',

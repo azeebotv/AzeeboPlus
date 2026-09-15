@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { creatorApi } from '@/lib/api/creator';
 import { useAuth } from '@/context/AuthContext';
+import type { CreatorProfile } from '@/lib/creator-types';
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -19,11 +20,11 @@ export default function ProfilePage() {
     tiktok: '',
   });
 
-  const { data: profile, isLoading } = useQuery({
+  const { data: profile, isLoading, isError, error } = useQuery({
     queryKey: ['creator', 'profile'],
     queryFn: async () => {
       const res = await creatorApi.getProfile();
-      if (res.success && res.data) return res.data;
+      if (res.success && res.data) return res.data as CreatorProfile;
       return {
         id: user?.id || '',
         displayName: user?.displayName || user?.name || '',
@@ -38,22 +39,23 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (profile) {
+      const p = profile as CreatorProfile;
       setFormData({
-        displayName: profile.displayName || user?.displayName || '',
-        bio: profile.bio || '',
-        avatar: profile.avatar || user?.avatar || '',
-        website: profile.website || '',
-        twitter: profile.socialLinks?.twitter || '',
-        instagram: profile.socialLinks?.instagram || '',
-        youtube: profile.socialLinks?.youtube || '',
-        tiktok: profile.socialLinks?.tiktok || '',
+        displayName: p.displayName || user?.displayName || '',
+        bio: p.bio || '',
+        avatar: p.avatar || user?.avatar || '',
+        website: p.website || p.socialLinks?.website || '',
+        twitter: p.socialLinks?.twitter || '',
+        instagram: p.socialLinks?.instagram || '',
+        youtube: p.socialLinks?.youtube || '',
+        tiktok: p.socialLinks?.tiktok || '',
       });
     }
   }, [profile, user]);
 
   const updateMutation = useMutation({
     mutationFn: async () => {
-      return creatorApi.updateProfile({
+      const res = await creatorApi.updateProfile({
         displayName: formData.displayName,
         bio: formData.bio,
         avatar: formData.avatar,
@@ -65,6 +67,7 @@ export default function ProfilePage() {
           tiktok: formData.tiktok,
         },
       });
+      return creatorApi.assertSuccess<CreatorProfile>(res);
     },
     onSuccess: () => {
       setSavedMessage('Profile updated successfully!');
@@ -106,6 +109,10 @@ export default function ProfilePage() {
 
       {isLoading ? (
         <p style={{ color: 'var(--creator-text-muted)' }}>Loading profile...</p>
+      ) : isError ? (
+        <p style={{ color: 'var(--creator-red)', fontSize: 13 }}>
+          {creatorApi.errorMessage(error)}
+        </p>
       ) : (
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           {/* Avatar Preview */}
@@ -383,6 +390,11 @@ export default function ProfilePage() {
           >
             {updateMutation.isPending ? 'Saving Changes...' : 'Save Profile'}
           </button>
+          {updateMutation.isError && (
+            <p style={{ color: 'var(--creator-red)', fontSize: 13 }}>
+              {creatorApi.errorMessage(updateMutation.error)}
+            </p>
+          )}
         </form>
       )}
     </div>

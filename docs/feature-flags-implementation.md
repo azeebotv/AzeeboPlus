@@ -372,7 +372,7 @@ After adding or renaming a flag, re-run the generator; CI (`check:flags:docs`)
 fails if this table is stale. Each domain is a registry consumed by one
 service (or client surface for `web` / `mobile` / `admin`).
 
-**32 domains · 192 unique flag keys.**
+**33 domains · 194 unique flag keys.**
 
 | Domain | Flag key |
 | --- | --- |
@@ -543,6 +543,7 @@ service (or client surface for `web` / `mobile` / `admin`).
 | support | `support_escalation_ai` |
 | support | `support_self_service_refunds` |
 | support | `support_takedowns_auto` |
+| tv | `tv_autoplay` |
 | user | `user_continue_watching` |
 | user | `user_deletion_soft` |
 | user | `user_follow_system` |
@@ -571,4 +572,6 @@ service (or client surface for `web` / `mobile` / `admin`).
 | web | `web_recommendations_rail` |
 
 <!-- flag-registry-table:end -->
+
+
 

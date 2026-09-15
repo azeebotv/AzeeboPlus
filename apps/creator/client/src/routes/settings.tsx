@@ -1,6 +1,8 @@
-import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { creatorApi } from '@/lib/api/creator';
+import type { CreatorSettings } from '@/lib/creator-types';
+import { errorTextStyle } from '@/lib/ui';
 
 type NotificationPrefs = {
   email: boolean;
@@ -32,14 +34,35 @@ export default function SettingsPage() {
     allowMessages: true,
   });
 
+  // Hydrate the form from the saved settings (backend returns defaults when
+  // nothing was persisted yet).
+  const { data: saved } = useQuery({
+    queryKey: ['creator', 'settings'],
+    queryFn: async () => {
+      const res = await creatorApi.getSettings();
+      return res.success ? (res.data as CreatorSettings) : null;
+    },
+  });
+
+  useEffect(() => {
+    if (saved) {
+      if (saved.payoutMethod) setPayoutMethod(saved.payoutMethod);
+      if (saved.minimumPayout != null) setMinimumPayout(String(saved.minimumPayout));
+      if (saved.notifications) setNotifications((prev) => ({ ...prev, ...saved.notifications }));
+      if (saved.privacy) setPrivacy((prev) => ({ ...prev, ...saved.privacy }));
+    }
+  }, [saved]);
+
   const settingsMutation = useMutation({
-    mutationFn: () =>
-      creatorApi.updateSettings({
+    mutationFn: async () => {
+      const res = await creatorApi.updateSettings({
         payoutMethod,
         minimumPayout: Number(minimumPayout),
         notifications,
         privacy,
-      }),
+      });
+      return creatorApi.assertSuccess<{ success: boolean }>(res);
+    },
   });
 
   const toggleNotification = (key: keyof NotificationPrefs) => {
@@ -93,7 +116,7 @@ export default function SettingsPage() {
 
           <div style={{ marginBottom: 16 }}>
             <label style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}>
-              Minimum Payout ($)
+              Minimum Payout (₦)
             </label>
             <input
               type="number"
@@ -310,7 +333,7 @@ export default function SettingsPage() {
           </p>
         )}
         {settingsMutation.isError && (
-          <p style={{ color: 'var(--creator-red)', fontSize: 13, marginTop: 8 }}>Failed to save settings</p>
+          <p style={errorTextStyle()}>{creatorApi.errorMessage(settingsMutation.error)}</p>
         )}
       </div>
     </div>

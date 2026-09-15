@@ -32,6 +32,13 @@ export class CsrfMiddleware implements NestMiddleware {
           path: '/',
         });
       }
+      res.setHeader('X-CSRF-Token', csrfToken);
+      return next();
+    }
+
+    // CSRF only protects cookie-authenticated flows; Bearer token requests cannot be forged via CSRF
+    const authHeader = req.headers['authorization'];
+    if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
       return next();
     }
 

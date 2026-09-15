@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { creatorApi } from '@/lib/api/creator';
 import type { PayoutsData } from '@/lib/creator-types';
+import { formatNgn, errorTextStyle } from '@/lib/ui';
 
 const inputStyle = {
   width: '100%',
@@ -18,12 +19,14 @@ const statusColor: Record<string, string> = {
   processing: 'rgba(59,130,246,0.2)',
   completed: 'rgba(13,59,46,0.2)',
   failed: 'rgba(204,28,28,0.2)',
+  rejected: 'rgba(204,28,28,0.2)',
 };
 const statusText: Record<string, string> = {
   pending: 'var(--creator-amber, #f59e0b)',
   processing: 'var(--creator-blue, #3b82f6)',
   completed: 'var(--creator-green)',
   failed: 'var(--creator-red)',
+  rejected: 'var(--creator-red)',
 };
 
 export default function PayoutsPage() {
@@ -31,7 +34,7 @@ export default function PayoutsPage() {
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState('bank_transfer');
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ['creator', 'payouts'],
     queryFn: async () => {
       const res = await creatorApi.getPayouts();
@@ -40,9 +43,13 @@ export default function PayoutsPage() {
   });
 
   const requestMutation = useMutation({
-    mutationFn: () => creatorApi.requestPayoutAmount(Number(amount), method),
+    mutationFn: async () => {
+      const res = await creatorApi.requestPayoutAmount(Number(amount), method);
+      return creatorApi.assertSuccess<{ success: boolean; message: string }>(res);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['creator', 'payouts'] });
+      queryClient.invalidateQueries({ queryKey: ['creator', 'earnings'] });
       setAmount('');
     },
   });
@@ -56,6 +63,8 @@ export default function PayoutsPage() {
 
       {isLoading ? (
         <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+      ) : isError ? (
+        <p style={errorTextStyle()}>{creatorApi.errorMessage(error)}</p>
       ) : data ? (
         <>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 32 }}>
@@ -71,7 +80,7 @@ export default function PayoutsPage() {
             >
               <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 4 }}>Available Balance</p>
               <p style={{ fontSize: 28, fontWeight: 700, color: 'var(--creator-green)' }}>
-                ${data.availableBalance.toLocaleString()}
+                {formatNgn(data.availableBalance)}
               </p>
             </div>
             <div
@@ -86,7 +95,7 @@ export default function PayoutsPage() {
             >
               <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 4 }}>Pending Payout</p>
               <p style={{ fontSize: 28, fontWeight: 700 }}>
-                ${data.pendingPayout.toLocaleString()}
+                {formatNgn(data.pendingPayout)}
               </p>
             </div>
             <div
@@ -100,7 +109,7 @@ export default function PayoutsPage() {
               }}
             >
               <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 4 }}>Total Paid Out</p>
-              <p style={{ fontSize: 28, fontWeight: 700 }}>${data.totalPaidOut.toLocaleString()}</p>
+              <p style={{ fontSize: 28, fontWeight: 700 }}>{formatNgn(data.totalPaidOut)}</p>
             </div>
           </div>
 
@@ -117,7 +126,7 @@ export default function PayoutsPage() {
             <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Request Payout</h3>
             <div style={{ marginBottom: 12 }}>
               <label style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}>
-                Amount ($)
+                Amount (₦)
               </label>
               <input
                 type="number"
@@ -166,9 +175,7 @@ export default function PayoutsPage() {
               </p>
             )}
             {requestMutation.isError && (
-              <p style={{ color: 'var(--creator-red)', fontSize: 13, marginTop: 8 }}>
-                Failed to request payout
-              </p>
+              <p style={errorTextStyle()}>{creatorApi.errorMessage(requestMutation.error)}</p>
             )}
           </div>
 
@@ -207,7 +214,7 @@ export default function PayoutsPage() {
                     {data.history.map((p) => (
                       <tr key={p.id} style={{ borderBottom: '1px solid var(--creator-border-light)' }}>
                         <td style={{ padding: '10px 12px', fontWeight: 600 }}>
-                          ${p.amount.toLocaleString()}
+                          {formatNgn(p.amount)}
                         </td>
                         <td
                           style={{

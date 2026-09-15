@@ -1129,7 +1129,7 @@ const savedLang = typeof window !== 'undefined' ? localStorage.getItem('@azeebo/
 
 const detectedLang = detectBrowserLanguage();
 
-i18n.use(initReactI18next as Parameters<typeof i18n.use>[0]).init({
+i18n.use(initReactI18next as unknown as Parameters<typeof i18n.use>[0]).init({
   resources,
   lng: savedLang || detectedLang || 'en',
   fallbackLng: 'en',

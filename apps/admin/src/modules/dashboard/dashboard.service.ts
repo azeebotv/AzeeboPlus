@@ -39,6 +39,18 @@ export interface TopCreatorItem {
   totalViews: number;
 }
 
+/** Governance summary card: dual-control + rights-clearance health (TAA §55). */
+export interface GovernanceSummary {
+  /** Requests awaiting any approval action (pending + first_approved). */
+  pendingDualControl: number;
+  /** Requests fully approved but not yet executed — the operator's to-do. */
+  approvedNotExecuted: number;
+  /** Clearances expiring within 30 days — renewal outreach needed. */
+  expiringClearances: number;
+  /** Clearances already past expiry but still not rejected — potential unlicensed use. */
+  expiredClearances: number;
+}
+
 export interface RecentActivityData {
   recentUsers: {
     id: string;
@@ -255,6 +267,32 @@ export class DashboardService {
       recentContent,
       recentReports,
     };
+  }
+
+  /** Feeds the Executive Dashboard governance card. */
+  async getGovernanceSummary(): Promise<GovernanceSummary> {
+    const now = new Date();
+    const in30Days = new Date(now);
+    in30Days.setDate(in30Days.getDate() + 30);
+
+    const [pendingDualControl, approvedNotExecuted, expiringClearances, expiredClearances] =
+      await Promise.all([
+        this.prisma.dualControlRequest.count({
+          where: { status: { in: ['pending', 'first_approved'] } },
+        }),
+        this.prisma.dualControlRequest.count({ where: { status: 'approved' } }),
+        this.prisma.rightsClearance.count({
+          where: {
+            status: { in: ['pending', 'approved'] },
+            expiryDate: { gt: now, lte: in30Days },
+          },
+        }),
+        this.prisma.rightsClearance.count({
+          where: { status: { in: ['pending', 'approved'] }, expiryDate: { lte: now } },
+        }),
+      ]);
+
+    return { pendingDualControl, approvedNotExecuted, expiringClearances, expiredClearances };
   }
 
   async getPlatformOverview() {

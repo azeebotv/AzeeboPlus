@@ -1,3 +1,12 @@
+export interface RecentContentItem {
+  id: string;
+  title: string;
+  type: string;
+  status: string;
+  viewCount: number;
+  createdAt: string;
+}
+
 export interface DashboardStats {
   totalViews: number;
   subscribers: number;
@@ -7,6 +16,7 @@ export interface DashboardStats {
   subscribersChange: string;
   earningsChange: string;
   contentChange: string;
+  recentContent?: RecentContentItem[];
 }
 
 export interface ContentItem {
@@ -51,6 +61,23 @@ export interface EarningsData {
   lifetimeEarnings: number;
 }
 
+export interface EarningsSummaryData extends EarningsData {
+  lastPayout: number;
+}
+
+export interface EarningsEntry {
+  id: string;
+  type: string;
+  description: string | null;
+  amount: number;
+  createdAt: string;
+}
+
+export interface EarningsHistoryData {
+  items: EarningsEntry[];
+  total: number;
+}
+
 export interface PayoutRequest {
   success: boolean;
   message: string;
@@ -86,7 +113,7 @@ export interface PayoutItem {
   id: string;
   amount: number;
   method: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'rejected';
   requestedAt: string;
   processedAt: string | null;
 }
@@ -102,8 +129,8 @@ export interface PayoutsData {
 export interface Subscriber {
   id: string;
   name: string;
-  email: string;
-  avatar: string;
+  email: string | null;
+  avatar: string | null;
   tier: string;
   joinedAt: string;
 }
@@ -129,17 +156,26 @@ export interface MonetizationTier {
   id: string;
   name: string;
   price: number;
-  perks: string[];
   subscriberCount: number;
+  perks: string[];
 }
 
 export interface MonetizationData {
-  tiers: MonetizationTier[];
   tipEnabled: boolean;
   tipMin: number;
   tipMax: number;
   payoutMethod: string;
   payoutDetails: Record<string, string>;
+  /** Optional: present when the backend exposes subscription tiers. */
+  tiers?: MonetizationTier[];
+  // Mobile app aliases
+  isTipEnabled?: boolean;
+  minimumTip?: number;
+  isMonetizationEnabled?: boolean;
+  isSubscriptionEnabled?: boolean;
+  subscriptionPrice?: number;
+  isAdEnabled?: boolean;
+  adRevenueShare?: number;
 }
 
 // Challenges
@@ -160,4 +196,26 @@ export interface ChallengeSubmission {
   title: string;
   status: 'submitted' | 'under_review' | 'winner' | 'rejected';
   submittedAt: string;
+}
+
+// Profile
+export interface CreatorProfile {
+  id: string;
+  userId: string;
+  displayName?: string;
+  email?: string;
+  avatar?: string | null;
+  website?: string;
+  bio: string | null;
+  banner: string | null;
+  socialLinks: {
+    twitter?: string;
+    instagram?: string;
+    youtube?: string;
+    tiktok?: string;
+    website?: string;
+  } | null;
+  verified: boolean;
+  createdAt: string;
+  updatedAt: string;
 }

@@ -20,5 +20,22 @@ allprojects {
   }
 }
 
+// Keep every Android module on the NDK version pinned by the Expo root plugin
+// (already present under $ANDROID_HOME/ndk). Modules that don't read
+// rootProject.ext.ndkVersion would otherwise fall back to AGP's bundled
+// default and trigger a multi-hundred-MB auto-download at build time.
+subprojects {
+  afterEvaluate {
+    def androidExt = it.extensions.findByName('android')
+    if (androidExt != null && rootProject.ext.has('ndkVersion')) {
+      try {
+        androidExt.ndkVersion = rootProject.ext.ndkVersion
+      } catch (Exception ignored) {
+        // Module doesn't expose an AGP android extension with ndkVersion.
+      }
+    }
+  }
+}
+
 apply plugin: "expo-root-project"
 apply plugin: "com.facebook.react.rootproject"

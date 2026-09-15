@@ -25,3 +25,23 @@ const { data, loading, error } = useApi('/api/data');
 - **Team**: Frontend Engineering
 - **Maintainer**: frontend@azeeboplus.com
 - **Last Updated**: 2026-05-11
+
+## Storybook
+
+Component playground and living style guide. Stories live next to their
+components in `src/**/*.stories.tsx`.
+
+```bash
+# Interactive dev server on http://localhost:6006 (from packages/ui)
+pnpm storybook
+
+# Regenerate the static build into storybook-static/
+pnpm build-storybook
+```
+
+From the repo root, scope either command with `pnpm --filter @azeebo/ui ...`.
+
+The `storybook-static/` output directory is a build artifact: it is
+**gitignored** and not published anywhere, so regenerate it locally with
+`build-storybook` whenever you need to browse the latest components. Delete it
+freely — it is fully reproducible from source.

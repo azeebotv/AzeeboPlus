@@ -1,23 +1,48 @@
 import { useQuery } from '@tanstack/react-query';
 import { creatorApi } from '@/lib/api/creator';
-import type { DashboardStats } from '@/lib/creator-types';
+import { formatNgn, isPositiveChange, cardStyle } from '@/lib/ui';
 
 export default function OverviewPage() {
-  const { data, isLoading } = useQuery({
-    queryKey: ['creator', 'overview'],
-    queryFn: async () => {
-      const res = await creatorApi.getDashboard();
-      return res.success ? (res.data as DashboardStats) : null;
-    },
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['creator', 'dashboard'],
+    queryFn: async () => creatorApi.assertSuccess(await creatorApi.getDashboard()),
   });
+
+  const stat = (label: string, value: string | number, change?: string) => (
+    <div style={cardStyle}>
+      <h3 style={{ fontSize: 14, color: 'var(--creator-text-muted)', marginBottom: 8 }}>{label}</h3>
+      <p style={{ fontSize: 32, fontWeight: 700 }}>
+        {typeof value === 'number' ? value.toLocaleString() : value}
+      </p>
+      {change && (
+        <p
+          style={{
+            fontSize: 13,
+            color: isPositiveChange(change) ? 'var(--creator-green)' : 'var(--creator-red)',
+            marginTop: 4,
+          }}
+        >
+          {change}
+        </p>
+      )}
+    </div>
+  );
 
   return (
     <div>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Overview</h1>
-      <p style={{ color: 'var(--creator-text-muted)', marginBottom: 24 }}>Your creator performance at a glance</p>
+      <p style={{ color: 'var(--creator-text-muted)', marginBottom: 24 }}>
+        Your creator performance at a glance
+      </p>
 
       {isLoading ? (
-        <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>
+          Loading...
+        </p>
+      ) : error ? (
+        <p style={{ color: 'var(--creator-red)', textAlign: 'center', padding: 40 }}>
+          {creatorApi.errorMessage(error)}
+        </p>
       ) : data ? (
         <div
           style={{
@@ -26,71 +51,15 @@ export default function OverviewPage() {
             gap: 16,
           }}
         >
-          <div
-            style={{
-              padding: 20,
-              borderRadius: 12,
-              border: '1px solid var(--creator-border)',
-              backgroundColor: 'rgba(26,10,10,0.5)',
-            }}
-          >
-            <h3 style={{ fontSize: 14, color: 'var(--creator-text-muted)', marginBottom: 8 }}>Views This Month</h3>
-            <p style={{ fontSize: 32, fontWeight: 700 }}>{data.totalViews.toLocaleString()}</p>
-            <p
-              style={{
-                fontSize: 13,
-                color: data.viewsChange.startsWith('+') ? 'var(--creator-green)' : 'var(--creator-red)',
-                marginTop: 4,
-              }}
-            >
-              {data.viewsChange}
-            </p>
-          </div>
-          <div
-            style={{
-              padding: 20,
-              borderRadius: 12,
-              border: '1px solid var(--creator-border)',
-              backgroundColor: 'rgba(26,10,10,0.5)',
-            }}
-          >
-            <h3 style={{ fontSize: 14, color: 'var(--creator-text-muted)', marginBottom: 8 }}>Total Earnings</h3>
-            <p style={{ fontSize: 32, fontWeight: 700 }}>${data.totalEarnings.toLocaleString()}</p>
-            <p
-              style={{
-                fontSize: 13,
-                color: data.earningsChange.startsWith('+') ? 'var(--creator-green)' : 'var(--creator-red)',
-                marginTop: 4,
-              }}
-            >
-              {data.earningsChange}
-            </p>
-          </div>
-          <div
-            style={{
-              padding: 20,
-              borderRadius: 12,
-              border: '1px solid var(--creator-border)',
-              backgroundColor: 'rgba(26,10,10,0.5)',
-            }}
-          >
-            <h3 style={{ fontSize: 14, color: 'var(--creator-text-muted)', marginBottom: 8 }}>Subscribers</h3>
-            <p style={{ fontSize: 32, fontWeight: 700 }}>{data.subscribers.toLocaleString()}</p>
-          </div>
-          <div
-            style={{
-              padding: 20,
-              borderRadius: 12,
-              border: '1px solid var(--creator-border)',
-              backgroundColor: 'rgba(26,10,10,0.5)',
-            }}
-          >
-            <h3 style={{ fontSize: 14, color: 'var(--creator-text-muted)', marginBottom: 8 }}>Published Content</h3>
-            <p style={{ fontSize: 32, fontWeight: 700 }}>{data.contentCount}</p>
-          </div>
+          {stat('Views This Month', data.totalViews, data.viewsChange)}
+          {stat('Earnings', formatNgn(data.totalEarnings), data.earningsChange)}
+          {stat('Subscribers', data.subscribers, data.subscribersChange)}
+          {stat('Content', data.contentCount, data.contentChange)}
         </div>
       ) : (
-        <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>No data available</p>
+        <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>
+          No data available
+        </p>
       )}
     </div>
   );

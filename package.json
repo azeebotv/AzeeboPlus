@@ -28,6 +28,7 @@
     "reconcile:ledger": "node scripts/reconcile-prisma-ledger.mjs",
     "check:env": "node scripts/check-env-consistency.mjs",
     "check:upstreams": "node scripts/check-gateway-upstreams.mjs",
+    "check:route-contracts": "node scripts/check-route-contracts.mjs",
     "drift:live-db": "node scripts/drift-live-db.mjs",
     "smoke:gateway": "node scripts/smoke-gateway-get.mjs",
     "seed:flags": "node scripts/seed-dev-flags.mjs",
@@ -101,6 +102,9 @@
       "multer": ">=2.2.0",
       "js-yaml@>=4.0.0": ">=4.2.0",
       "js-yaml@<4.0.0": ">=3.15.0"
+    },
+    "patchedDependencies": {
+      "@react-native/gradle-plugin@0.85.3": "patches/@react-native__gradle-plugin@0.85.3.patch"
     }
   }
 }

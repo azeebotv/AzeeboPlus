@@ -48,17 +48,19 @@ export default function UploadPage() {
   });
 
   const uploadMutation = useMutation({
-    mutationFn: (file: File) => {
+    mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('title', title);
       formData.append('description', description);
       formData.append('type', type);
       formData.append('universe', universe);
-      return creatorApi.uploadContent(formData);
+      const res = await creatorApi.uploadContent(formData);
+      return creatorApi.assertSuccess<UploadProgress>(res);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['creator', 'uploads'] });
+      queryClient.invalidateQueries({ queryKey: ['creator', 'content'] });
       setTitle('');
       setDescription('');
       setSelectedFile(null);
@@ -225,7 +227,9 @@ export default function UploadPage() {
               </p>
             )}
             {uploadMutation.isError && (
-              <p style={{ color: 'var(--creator-red)', fontSize: 13, marginTop: 8 }}>Upload failed</p>
+              <p style={{ color: 'var(--creator-red)', fontSize: 13, marginTop: 8 }}>
+                {creatorApi.errorMessage(uploadMutation.error)}
+              </p>
             )}
           </div>
         </div>
@@ -245,7 +249,7 @@ export default function UploadPage() {
             {isLoading ? (
               <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 20 }}>Loading...</p>
             ) : uploads && uploads.length > 0 ? (
-              uploads.map((u) => (
+              uploads.map((u: UploadProgress) => (
                 <div key={u.id} style={{ padding: '12px 0', borderBottom: '1px solid var(--creator-border-light)' }}>
                   <div
                     style={{

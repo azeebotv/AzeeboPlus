@@ -575,6 +575,45 @@ export class ContentController {
     );
   }
 
+  @Post(':id/media/upload-url')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
+  @ApiOperation({ summary: 'Get a presigned upload URL for content media' })
+  @ApiResponse({ status: 201, description: 'Upload URL created' })
+  @ApiResponse({ status: 404, description: 'Content not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async createMediaUploadUrl(
+    @Request() req: { user: { id: string; role?: string } },
+    @Param('id') id: string,
+    @Body() body: { fileName: string; fileSize: number; contentType: string }
+  ): Promise<{
+    success: boolean;
+    data: { signedUrl: string; mediaAssetId: string };
+  }> {
+    return this.contentService.createMediaUploadUrl(req.user.id, id, body, req.user.role);
+  }
+
+  @Post(':id/media/complete')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
+  @ApiOperation({ summary: 'Complete a direct upload and register the media asset' })
+  @ApiResponse({ status: 201, description: 'Media asset registered' })
+  @ApiResponse({ status: 400, description: 'Upload not found in storage' })
+  @ApiResponse({ status: 404, description: 'Content not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async completeMediaUpload(
+    @Request() req: { user: { id: string; role?: string } },
+    @Param('id') id: string,
+    @Body() body: { mediaAssetId: string }
+  ): Promise<ContentResponse> {
+    return this.contentService.completeMediaUpload(
+      req.user.id,
+      id,
+      body.mediaAssetId,
+      req.user.role
+    );
+  }
+
   @Post(':id/media/thumbnail')
   @UseGuards(RateLimitGuard)
   @RateLimit(10, 60000)

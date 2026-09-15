@@ -101,6 +101,13 @@ export const adminApi = {
       `/api/v1/admin/dashboard/revenue?days=${days}`
     ),
   getPlatformOverview: () => apiFetch<PlatformOverview>('/api/v1/admin/overview'),
+  getGovernanceSummary: () =>
+    apiFetch<{
+      pendingDualControl: number;
+      approvedNotExecuted: number;
+      expiringClearances: number;
+      expiredClearances: number;
+    }>('/api/v1/admin/dashboard/governance-summary'),
 
   // ─── Users ──────────────────────────────────────────────────────────────
   getUsers: (page = 1, limit = 20, role?: string, search?: string) => {

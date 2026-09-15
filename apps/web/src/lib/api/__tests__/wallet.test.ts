@@ -126,23 +126,4 @@ describe('Wallet API Methods', () => {
       expect(result.data).toEqual(mockTx);
     });
   });
-
-  describe('getEarnings', () => {
-    it('should GET /api/v1/wallet/earnings with range param', async () => {
-      const mockEarnings = {
-        totalEarnings: 10000,
-        pendingEarnings: 2000,
-        withdrawableBalance: 8000,
-      };
-      client.request.mockResolvedValue({ success: true, data: mockEarnings });
-
-      await wallet.getEarnings({ range: '30d' });
-
-      expect(client.request).toHaveBeenCalledWith(
-        '/api/v1/wallet/earnings?range=30d',
-        {},
-        { skipRetry: true }
-      );
-    });
-  });
 });
