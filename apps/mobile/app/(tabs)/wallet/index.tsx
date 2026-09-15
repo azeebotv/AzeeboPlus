@@ -13,13 +13,13 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAuth } from '../../../src/contexts/AuthContext';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import {
   useWalletBalance,
   useWalletTransactions,
   useFundWallet,
   useWithdraw,
-} from '../../../src/hooks/useWalletQuery';
+} from '@azeebo/react-data/hooks/useWalletQuery';
 import { colors, radius } from '../../../src/theme';
 import { colors as dtColors } from '@azeebo/design-tokens';
 
@@ -625,7 +625,7 @@ const styles = StyleSheet.create({
   actionLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.palette.grey800,
+    color: colors.neutral[800],
   },
   transactionsSection: {
     padding: 20,
@@ -683,7 +683,7 @@ const styles = StyleSheet.create({
   },
   transactionDate: {
     fontSize: 12,
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
   },
   transactionAmount: {
     fontSize: 16,
@@ -712,7 +712,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     marginBottom: 8,
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
   },
   input: {
     padding: 16,

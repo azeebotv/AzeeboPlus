@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { apiClient } from '../../src/api';
+import { apiClient } from '@azeebo/react-data';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
 
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -200,20 +200,20 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
   },
   avatarEmoji: { fontSize: 50 },
   name: { fontSize: 24, fontWeight: '700', marginBottom: 8 },
-  bio: { color: colors.palette.grey500, fontSize: 14, textAlign: 'center', marginBottom: 16 },
+  bio: { color: colors.text.secondary, fontSize: 14, textAlign: 'center', marginBottom: 16 },
   statsRow: { flexDirection: 'row', gap: 32, marginBottom: 16 },
   statItem: { alignItems: 'center' },
   statValue: { fontSize: 18, fontWeight: '700', marginBottom: 2 },
-  statLabel: { color: colors.palette.grey500, fontSize: 12 },
+  statLabel: { color: colors.text.secondary, fontSize: 12 },
   followButton: {
-    backgroundColor: colors.palette.tangerine,
+    backgroundColor: colors.category.amber,
     paddingHorizontal: 32,
     paddingVertical: 10,
     borderRadius: 20,
@@ -221,17 +221,17 @@ const styles = StyleSheet.create({
   followingButton: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: colors.palette.grey500,
+    borderColor: colors.neutral[500],
   },
   followButtonText: { color: '#000', fontSize: 14, fontWeight: '600' },
-  followingButtonText: { color: colors.palette.grey500 },
+  followingButtonText: { color: colors.text.secondary },
   section: { marginBottom: 24, paddingHorizontal: 16 },
   sectionTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
   clipsList: { gap: 12 },
   clipCard: { width: 160, borderRadius: 10, overflow: 'hidden' },
   clipThumb: {
     height: 100,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
   clipDurationText: { color: '#fff', fontSize: 11 },
   clipTitle: { fontSize: 13, fontWeight: '600', padding: 8, paddingBottom: 2 },
   clipViews: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 11,
     paddingHorizontal: 8,
     paddingBottom: 8,
@@ -265,5 +265,5 @@ const styles = StyleSheet.create({
   specialEmoji: { fontSize: 30 },
   specialInfo: { flex: 1 },
   specialTitle: { fontSize: 15, fontWeight: '600', marginBottom: 2 },
-  specialYear: { color: colors.palette.grey500, fontSize: 12 },
+  specialYear: { color: colors.text.secondary, fontSize: 12 },
 });

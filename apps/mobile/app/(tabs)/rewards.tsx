@@ -3,9 +3,9 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } 
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../src/contexts/AuthContext';
-import { apiClient } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { apiClient } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import {
   PageTransition,
@@ -275,7 +275,7 @@ export default function RewardsScreen() {
                         style={[
                           styles.redeemPoints,
                           currentPoints < option.points && {
-                            backgroundColor: colors.palette.grey300,
+                            backgroundColor: colors.neutral[300],
                           },
                         ]}
                       >
@@ -295,7 +295,7 @@ export default function RewardsScreen() {
               </Text>
               <View style={styles.historyList}>
                 {history.length === 0 ? (
-                  <Text style={{ color: colors.palette.grey500, textAlign: 'center', padding: 20 }}>
+                  <Text style={{ color: colors.text.secondary, textAlign: 'center', padding: 20 }}>
                     No recent activity
                   </Text>
                 ) : (
@@ -467,12 +467,12 @@ const styles = StyleSheet.create({
   },
   rewardDescription: {
     fontSize: 13,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     marginBottom: 8,
   },
   rewardProgressText: {
     fontSize: 12,
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
     marginTop: 4,
   },
   redeemGrid: {
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: colors.palette.grey100,
+    backgroundColor: colors.neutral[100],
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -534,7 +534,7 @@ const styles = StyleSheet.create({
   },
   historyDate: {
     fontSize: 12,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
   },
   historyPoints: {
     fontSize: 16,

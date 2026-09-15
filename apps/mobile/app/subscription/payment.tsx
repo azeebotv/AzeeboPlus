@@ -10,9 +10,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useAuth } from '../../src/contexts/AuthContext';
-import { useWallet } from '../../src/contexts/WalletContext';
-import { subscriptionApi } from '../../src/api/subscription';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { useWallet } from '@azeebo/react-data/contexts/WalletContext';
+import { subscriptionApi } from '@azeebo/react-data/api/subscription';
 import { colors, typography, spacing, radius } from '../../src/theme';
 
 type PaymentMethod = 'wallet' | 'external';

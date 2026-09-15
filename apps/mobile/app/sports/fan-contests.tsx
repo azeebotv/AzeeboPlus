@@ -5,8 +5,8 @@ import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { apiClient } from '../../src/api/client';
-import { ApiResponse } from '../../src/types/api';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { ApiResponse } from '@azeebo/react-data/types/api';
 import { colors } from '../../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 12,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -183,14 +183,14 @@ const styles = StyleSheet.create({
   emojiLarge: { fontSize: 30 },
   contestInfo: { flex: 1 },
   contestTitle: { fontSize: 15, fontWeight: '700', marginBottom: 4 },
-  contestDesc: { color: colors.palette.grey500, fontSize: 12, marginBottom: 8 },
+  contestDesc: { color: colors.text.secondary, fontSize: 12, marginBottom: 8 },
   contestMeta: { flexDirection: 'row', gap: 12, marginBottom: 4 },
-  metaText: { color: colors.palette.grey500, fontSize: 12 },
+  metaText: { color: colors.text.secondary, fontSize: 12 },
   contestFooter: { flexDirection: 'row', gap: 12 },
-  entryFee: { color: colors.palette.alarmRed, fontSize: 12, fontWeight: '600' },
-  deadline: { color: colors.palette.grey500, fontSize: 12 },
+  entryFee: { color: colors.error[500], fontSize: 12, fontWeight: '600' },
+  deadline: { color: colors.text.secondary, fontSize: 12 },
   entryButton: {
-    backgroundColor: colors.palette.alarmRed,
+    backgroundColor: colors.error[500],
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
@@ -200,9 +200,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
   },
-  completedText: { color: colors.palette.grey500, fontSize: 12 },
+  completedText: { color: colors.text.secondary, fontSize: 12 },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.8)',
@@ -211,9 +211,9 @@ const styles = StyleSheet.create({
   },
   modalContent: { width: '85%', padding: 24, borderRadius: 16 },
   modalTitle: { fontSize: 20, fontWeight: '700', marginBottom: 12, textAlign: 'center' },
-  modalText: { color: colors.palette.grey300, fontSize: 14, textAlign: 'center', marginBottom: 8 },
+  modalText: { color: colors.neutral[300], fontSize: 14, textAlign: 'center', marginBottom: 8 },
   modalFee: {
-    color: colors.palette.alarmRed,
+    color: colors.error[500],
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
@@ -225,15 +225,15 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
   },
-  cancelText: { color: colors.palette.grey500, fontSize: 14, fontWeight: '600' },
+  cancelText: { color: colors.text.secondary, fontSize: 14, fontWeight: '600' },
   confirmButton: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: colors.palette.alarmRed,
+    backgroundColor: colors.error[500],
     alignItems: 'center',
   },
   confirmText: { color: '#fff', fontSize: 14, fontWeight: '600' },

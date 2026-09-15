@@ -170,9 +170,12 @@ export default function RiskEnginePage() {
     },
   });
 
-  const classifications = classificationsQuery.data?.data ?? [];
-  const stats = statsQuery.data?.data ?? ({} as RiskStats);
-  const approvals = approvalsQuery.data?.data ?? [];
+  // Array/object guards: envelope drift renders empty/zero, never crashes.
+  const classifications = Array.isArray(classificationsQuery.data?.data)
+    ? classificationsQuery.data!.data
+    : [];
+  const stats = (statsQuery.data?.data ?? {}) as Partial<RiskStats>;
+  const approvals = Array.isArray(approvalsQuery.data?.data) ? approvalsQuery.data!.data : [];
 
   const domains = [...new Set(classifications.map((c: RiskClassification) => c.domain))].sort();
 

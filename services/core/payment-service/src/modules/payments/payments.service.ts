@@ -23,6 +23,7 @@ import {
   TransactionHistoryResponse,
 } from './interfaces/payment-response.interface.js';
 import { toNumber } from '@azeebo/utils';
+import { mapAndThrow } from '@azeebo/security';
 import { FeatureFlagService, paymentFlags } from '@azeebo/feature-flags';
 import { tryUpdatePaymentIntent } from './payment-intent.optimistic-lock.js';
 
@@ -342,8 +343,7 @@ export class PaymentsService {
         );
       }
 
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new BadRequestException(`Payment initialization failed: ${errorMessage}`);
+      mapAndThrow(error, 'initializing payment');
     }
   }
 
@@ -464,13 +464,9 @@ export class PaymentsService {
         },
       };
     } catch (error: unknown) {
-      // A stale-write Conflict must not be masked as a generic confirmation
-      // failure — the client should retry against the current state.
-      if (error instanceof ConflictException) {
-        throw error;
-      }
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new BadRequestException(`Payment intent confirmation failed: ${errorMessage}`);
+      // mapAndThrow rethrows the in-try stale-write Conflict unchanged, so the
+      // client still retries against current state instead of a generic 400.
+      mapAndThrow(error, 'confirming payment intent');
     }
   }
 
@@ -622,7 +618,7 @@ export class PaymentsService {
       throw new BadRequestException('Payment verification failed');
     } catch (error: unknown) {
       // A stale-write Conflict must not be swallowed by the generic failure
-      // path (which would mask it as BadRequest and try a stale failed-mark).
+      // path — and must not get a stale failed-mark either.
       if (error instanceof ConflictException) {
         throw error;
       }
@@ -640,8 +636,7 @@ export class PaymentsService {
         );
       }
 
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new BadRequestException(`Payment verification failed: ${errorMessage}`);
+      mapAndThrow(error, 'verifying payment');
     } finally {
       await this.redisService.del(lockKey);
     }
@@ -918,8 +913,7 @@ export class PaymentsService {
         },
       });
 
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new BadRequestException(`Refund failed: ${errorMessage}`);
+      mapAndThrow(error, 'processing refund');
     }
   }
 

@@ -27,9 +27,9 @@ plugins: {
 
 | Rule | Type | Severity in this repo | Purpose |
 |------|------|----------------------|---------|
-| [`require-map-and-throw`](#require-map-and-throw) | problem | `warn` repo-wide, `error` for fully-converted services | Ban fabricated 4xx statuses in catch blocks |
+| [`require-map-and-throw`](#require-map-and-throw) | problem | `error` repo-wide (canary ratchet at 0) | Ban fabricated 4xx statuses in catch blocks |
 | [`no-console-log`](#no-console-log) | problem | `error` (off in logger/scripts) | Ban `console.log` in favor of the structured logger |
-| [`no-hex-colors`](#no-hex-colors) | suggestion | `error` (with allow-list) | Ban hardcoded hex colors in favor of design tokens |
+| [`no-hex-colors`](#no-hex-colors) | suggestion | `error` repo-wide (token migration complete, baseline canary at 0) | Ban hardcoded hex colors in favor of design tokens |
 
 ---
 
@@ -84,7 +84,29 @@ Inside any `catch` block:
 
 | Option | Default | Effect |
 |--------|---------|--------|
-| `banPlainErrors` | `false` | Also flag `throw new Error(…)` / `TypeError(…)` inside catch blocks (they yield generic 500s and lose the cause). Not enabled repo-wide yet. |
+| `banPlainErrors` | `false` | Also flag `throw new Error(…)` / `TypeError(…)` inside catch blocks (they yield generic 500s and lose the cause). **Enabled repo-wide** at `error` in the root `eslint.config.js` since the plain-error campaign — see below. |
+
+### `banPlainErrors` in effect (repo-wide `error`)
+
+With the option live, a plain `Error` throw in a catch block resolves one of
+three ways — in order of preference:
+
+1. **Convert to `mapAndThrow(error, '<context>')`** — the default for service
+   catch blocks where the cause varies (DB, network, upstream).
+2. **Throw the specific honest exception the branch already identified** —
+   e.g. a circuit-breaker branch that knows the upstream is unreachable throws
+   `ServiceUnavailableException` (a truthful 503 the rule permits; no marker
+   needed).
+3. **Marker (`allowed-fabricated-4xx`) for deliberate plain-error catches** —
+   the suppression comment also sanctions these: cause-inspected
+   `instanceof` branches that reclassify before throwing (e.g. jwt error types
+   → `UnauthorizedException`), non-HTTP layers with no exception classes to
+   throw (mobile fetch helpers), and boot-time config validation where no
+   request is in flight.
+
+The option was onboarded through the same gate machinery as a rule migration
+(warn blocks + ratchet floor), but every flagged site was resolved before the
+floor was ever written — the baseline sits at 0 and the canary posture holds.
 
 ### Usage
 
@@ -102,21 +124,98 @@ catch (error) {
 }
 ```
 
-### Enforcement & migration
+### Enforcement (steady state)
 
-The rule is `warn` repo-wide so legacy sites still lint green, with two
-escalation mechanisms:
+The migration that introduced this rule is **complete**: every service was
+converted, the rule is `error` in the `eslint.config.js` base config, and
+there are no per-service severity exceptions. Two CI gates keep it that way,
+plus one read-only report:
 
-1. **Error block** — fully converted services (currently `content-service`,
-   `user-service`) match a dedicated `files` block in `eslint.config.js`
-   where the rule is `error`. A service is ready when
-   `pnpm --filter <pkg> exec eslint src` reports zero warnings for this rule.
-2. **Ratchet gate** — `pnpm run check:lint-ratchet`
-   (`scripts/check-lint-warning-ratchet.mjs`) compares per-workspace warning
-   counts against `scripts/lint-warning-baseline.json` in CI. The baseline may
-   only **decrease**: adding a fabricated 4xx fails `lint-pr`/`lint-backend`
-   even though the rule itself is `warn`. After converting a service, lower
-   its floor with `node scripts/check-lint-warning-ratchet.mjs --update`.
+1. **Tripwire** — `pnpm run check:rule-promotion`
+   (`scripts/check-rule-promotion.mjs`) resolves every service's effective
+   severity for each rule listed in `scripts/promotion-rules.json` through
+   ESLint itself (`calculateConfigForFile` on a virtual probe path), so it
+   cannot be fooled by config reshaping, and fails when any service drops
+   below `error` — a `warn`/`off` override, a scope exception, or an
+   unconfigured rule. New services under `services/*/*` are covered
+   automatically; there is no list to extend.
+2. **Canary ratchet** — `pnpm run check:lint-ratchet`
+   (`scripts/check-lint-warning-ratchet.mjs`) enforces a per-workspace
+   warning baseline for every rule with a `ratchet` path in
+   `scripts/promotion-rules.json` (for this rule:
+   `scripts/lint-warning-baseline.json`). The rule is `error`, so live
+   warnings should be impossible — the baseline sits at total **0**, and
+   the first fabricated 4xx anywhere fails CI with the conversion
+   guidance. The same gate doubles as the regression floor for a future
+   warn-while-migrating rule (see its header for the two postures).
+3. **Scorecard** — `pnpm run lint-scorecard`
+   (`scripts/lint-scorecard.mjs`) prints the per-service progress table for
+   any ratcheted rule — live warnings, gated status, and trend vs the oldest
+   committed baseline snapshot. `--rule <id>` narrows to one rule (an
+   unlisted id is an operator error). Without `--rule` it scores every
+   ratcheted rule from one shared ESLint pass. It enforces nothing; the two
+   gates above do the enforcing.
+
+To migrate a *new* rule with this same machinery — warn repo-wide, add a
+config entry with a ratchet path, `--update` once, then flip to `error` and
+empty the baseline when the last site converts — follow the flow documented
+in `scripts/promotion-rules.json`.
+
+### Wrapping HTTP clients: the error shape `mapAndThrow` understands
+
+`mapAndThrow(error, context)` classifies the caught error by duck-typed
+fields, not by type — any `Error` carrying an axios-style `response` works.
+A hand-rolled HTTP wrapper is compatible with the mapping **from birth** if
+it throws that shape instead of collapsing failures into one status:
+
+```ts
+// The fields the mapper reads (all optional, axios-compatible):
+throw Object.assign(new Error(message), {
+  response: {
+    status: 404,               // upstream status → drives the HttpException
+    data: { message: '…' },    // client-facing message (data.error also read)
+  },
+  // code: 'ECONNREFUSED',     // network-code path → 503
+});
+```
+
+How the mapper classifies (in order):
+
+| Thrown error carries | `mapAndThrow` throws |
+|---|---|
+| Prisma `code` (`P2025`, `P2002`, `P2003`, …) | `NotFoundException` / `ConflictException` / … per the mapper's Prisma table |
+| Infra Prisma codes (`P1001`, `P1002`, `P1008`, `P1017`, `P2024`) | `ServiceUnavailableException` (503) |
+| `response.status` in the mapper's table (400, 401, 403, 404, 409, 422) | the matching 4xx `HttpException`, message from `response.data.message` / `data.error` |
+| any other `response.status` (incl. ≥ 500) | `BadGatewayException` (502) |
+| `code` in the network set (`ECONNREFUSED`, `ECONNABORTED`, `ETIMEDOUT`, `ENOTFOUND`, `EAI_AGAIN`, `ECONNRESET`, `EPIPE`) | `ServiceUnavailableException` (503) |
+| none of the above | `InternalServerErrorException` (500) |
+
+The wrapper decides the *classification inputs*; the catch block decides
+nothing. Two rules of thumb:
+
+```ts
+// ✅ Non-ok response → attach the shape, let the mapper decide the status
+if (!res.ok) {
+  const msg = await res.text().catch(() => 'Request failed');
+  throw Object.assign(new Error(`HTTP ${res.status}: ${msg}`), {
+    response: { status: res.status, data: { message: msg } },
+  });
+}
+
+// ❌ Throwing a bare Error with the status only in the message — the mapper
+//    sees no `response`, so a real upstream 404 becomes a 500
+throw new Error(`HTTP ${res.status}: ${msg}`);
+```
+
+- Throw an `Error` **instance** — a bare object with `response` attached is
+  invisible to the mapper (and becomes a 500).
+- Transport failures: axios errors already carry `code` → 503 for free;
+  `fetch` rejects with a bare `TypeError` → honest 500. Attach a `code`
+  yourself if you want the 503 "unreachable" classification.
+
+Live examples: every service calling other services through axios (native
+shape), and `apps/admin`'s `agbala.service.ts` `fetch` helper (hand-rolled
+shape).
 
 ## `no-console-log`
 
@@ -161,6 +260,47 @@ route them through design tokens (`packages/design-tokens`) instead.
 |--------|---------|--------|
 | `allowList` | `[]` | Hex literals that pass as-is. The current brand palette is allow-listed centrally in `eslint.config.js` — add new brand colors there rather than scattering literals through components. |
 | `allowTransparent` | `true` | Allow the `transparent` keyword. |
+
+### What it flags
+
+Hex literals in **style positions** only: values of color-bearing properties
+inside `StyleSheet.create(...)` objects and inline style objects — including
+string values that *contain* hexes, like `background:
+'linear-gradient(#a, #b)'`. Hexes in arbitrary strings, data attributes, or
+non-style object literals are untouched. Each distinct hex reports exactly
+once (a two-hex gradient string is two warnings, never one or three).
+
+### Completed: the apps/web design-token migration
+
+The rule is `error` repo-wide with **no scope exceptions**; the baseline sits
+at total 0 as a canary (any warning means severity regressed somewhere and
+fails CI immediately).
+
+The migration converted **130 sites** in `apps/web/src`:
+
+- Page surfaces (`var(--brand-near-black, #0b090e)` roots and raw
+  `#0b090e`/`#100e14`/`#18151e` cards) now use the **theme-aware**
+  `--bg-primary`/`--bg-secondary`/`--bg-tertiary` tokens — the actual win:
+  those tokens flip per mode under `html:not(.dark)`, which raw hexes never
+  did.
+- Gradient literals were rebuilt from token references; repeated vertical
+  identity art got its own fixed tokens (`--music-purple`, `--live-gradient`,
+  `--auth-warm-gradient`).
+- GuestHomepage's fixed dark marketing art joined the `--hp-*` family in
+  `globals.css` (`--hp-logo-gradient`, `--hp-appwindow-bg`, `--hp-cta-bg`,
+  `--hp-poster-bg`, `--hp-actionbar-bg`) — intentionally NOT theme-aware,
+  matching the existing `--hp-tile-*` precedent.
+
+Two rule bugs surfaced and were fixed along the way, each pinned by a unit
+test: missing color-bearing properties (`background` shorthands carry
+gradients) with a node+hex dedupe for double reports, and a per-file dedupe
+collapse — the key used `node.start`, which the typescript-eslint parser does
+not populate, so each distinct hex reported once per file and masked every
+duplicate. The key now uses `node.range[0]`.
+
+Guidance that outlives the migration: new brand colors go in the central
+`HEX_ALLOW_LIST` (never inline); page surfaces use themed tokens; fixed
+one-off art follows the `--hp-*` pattern in `globals.css`.
 
 ---
 

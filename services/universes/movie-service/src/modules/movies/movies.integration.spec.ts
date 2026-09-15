@@ -276,7 +276,11 @@ describe('MoviesService Integration - Cross-Service Communication', () => {
 
       mockPrismaService.rental.create.mockRejectedValue(new Error('Database error'));
 
-      await expect(service.rentMovie('user-1', 'movie-1')).rejects.toThrow(BadRequestException);
+      // A Prisma failure after the wallet debit is a server fault (the saga
+      // compensates either way) — mapAndThrow maps it honestly to 500.
+      await expect(service.rentMovie('user-1', 'movie-1')).rejects.toThrow(
+        InternalServerErrorException
+      );
 
       expect(mockedAxios.post).toHaveBeenCalledWith(
         expect.stringContaining('/wallet/credit'),

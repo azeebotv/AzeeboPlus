@@ -13,9 +13,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { colors } from '../../src/theme';
-import { moderationApi, Challenge, ChallengeSubmission } from '../../src/api/moderation';
+import { moderationApi, Challenge, ChallengeSubmission } from '@azeebo/react-data/api/moderation';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
-import { logger } from '../../src/utils/logger';
+import { logger } from '@azeebo/react-data/utils/logger';
 
 type Tab = 'active' | 'submissions';
 

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { apiClient } from '../../src/api';
+import { apiClient } from '@azeebo/react-data';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
 
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -178,13 +178,13 @@ const styles = StyleSheet.create({
   heroCard: { margin: 16, padding: 20, borderRadius: 16, alignItems: 'center' },
   heroEmoji: { fontSize: 64, marginBottom: 12 },
   heroTitle: { fontSize: 22, fontWeight: '700', marginBottom: 4, textAlign: 'center' },
-  heroGame: { color: colors.palette.plum, fontSize: 14, marginBottom: 8 },
-  heroDesc: { color: colors.palette.grey500, fontSize: 13, textAlign: 'center', marginBottom: 12 },
+  heroGame: { color: colors.category.purple, fontSize: 14, marginBottom: 8 },
+  heroDesc: { color: colors.text.secondary, fontSize: 13, textAlign: 'center', marginBottom: 12 },
   heroMeta: { flexDirection: 'row', gap: 20, marginBottom: 16 },
-  heroPrize: { color: colors.palette.plum, fontSize: 16, fontWeight: '700' },
-  heroParticipants: { color: colors.palette.grey500, fontSize: 14 },
+  heroPrize: { color: colors.category.purple, fontSize: 16, fontWeight: '700' },
+  heroParticipants: { color: colors.text.secondary, fontSize: 14 },
   joinButton: {
-    backgroundColor: colors.palette.plum,
+    backgroundColor: colors.category.purple,
     paddingVertical: 12,
     paddingHorizontal: 32,
     borderRadius: 10,
@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
   liveText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   section: { paddingHorizontal: 16, marginBottom: 24 },
   sectionTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
-  ruleText: { color: colors.palette.grey300, fontSize: 13, marginBottom: 8, lineHeight: 20 },
+  ruleText: { color: colors.neutral[300], fontSize: 13, marginBottom: 8, lineHeight: 20 },
   lbRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -212,16 +212,16 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
   },
   lbAvatarEmoji: { fontSize: 18 },
   lbName: { flex: 1, fontSize: 14, fontWeight: '600' },
-  lbScore: { color: colors.palette.plum, fontSize: 14, fontWeight: '700' },
+  lbScore: { color: colors.category.purple, fontSize: 14, fontWeight: '700' },
   emptyText: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 14,
     textAlign: 'center',
     paddingVertical: 20,

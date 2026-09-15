@@ -5,8 +5,8 @@ import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { apiClient } from '../../src/api/client';
-import { ApiResponse } from '../../src/types/api';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { ApiResponse } from '@azeebo/react-data/types/api';
 import { colors } from '../../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -147,8 +147,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     marginRight: 10,
   },
-  genreChipActive: { backgroundColor: colors.palette.tangerine },
-  genreText: { color: colors.palette.grey500, fontSize: 13, fontWeight: '600' },
+  genreChipActive: { backgroundColor: colors.category.amber },
+  genreText: { color: colors.text.secondary, fontSize: 13, fontWeight: '600' },
   genreTextActive: { color: '#000' },
   listContent: { paddingHorizontal: 16, paddingBottom: 30 },
   seriesCard: {
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 10,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -180,12 +180,12 @@ const styles = StyleSheet.create({
   episodeText: { color: '#fff', fontSize: 9 },
   seriesInfo: { flex: 1 },
   seriesTitle: { fontSize: 15, fontWeight: '700', marginBottom: 4 },
-  seriesGenre: { color: colors.palette.grey500, fontSize: 12, marginBottom: 6 },
+  seriesGenre: { color: colors.text.secondary, fontSize: 12, marginBottom: 6 },
   nextEpisodeRow: { flexDirection: 'row', gap: 6 },
-  nextLabel: { color: colors.palette.grey500, fontSize: 12 },
-  nextTime: { color: colors.palette.tangerine, fontSize: 12, fontWeight: '600' },
+  nextLabel: { color: colors.text.secondary, fontSize: 12 },
+  nextTime: { color: colors.category.amber, fontSize: 12, fontWeight: '600' },
   watchButton: {
-    backgroundColor: colors.palette.tangerine,
+    backgroundColor: colors.category.amber,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 6,

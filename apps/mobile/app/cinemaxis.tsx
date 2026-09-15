@@ -4,7 +4,7 @@ import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
-import { apiClient } from '../src/api/client';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { colors } from '../src/theme';
 
 interface FilmItem {
@@ -158,7 +158,7 @@ export default function CinemaxisUniverseHome() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.palette.deepSpace,
+    backgroundColor: colors.bg.deep,
   },
   containerDark: {
     backgroundColor: '#000',
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     height: 200,
     marginHorizontal: 16,
     borderRadius: 16,
-    backgroundColor: colors.palette.nightIndigo,
+    backgroundColor: colors.bg.deep,
     marginBottom: 24,
     overflow: 'hidden',
     justifyContent: 'flex-end',
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
   },
   filmThumbnail: {
     height: 100,
-    backgroundColor: colors.palette.nightIndigo,
+    backgroundColor: colors.bg.deep,
     justifyContent: 'center',
     alignItems: 'center',
   },

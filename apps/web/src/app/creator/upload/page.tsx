@@ -154,7 +154,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
 
   if (editQuery.isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black, #0b090e)' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
         <AppHeader active="Creator" logoVariant="light" />
         <main style={{ padding: '100px 24px 60px', maxWidth: 640, margin: '0 auto' }}>
           <Skeleton className="h-12 w-full mb-6" />
@@ -170,7 +170,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
     <div
       className="min-h-screen"
       style={{
-        backgroundColor: 'var(--brand-near-black, #0b090e)',
+        backgroundColor: 'var(--bg-primary)',
         color: 'var(--text-primary, #F5F0EB)',
       }}
     >
@@ -189,7 +189,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
 
         <div
           style={{
-            backgroundColor: '#18151e',
+            backgroundColor: 'var(--bg-tertiary)',
             borderRadius: 20,
             border: '1px solid rgba(255,255,255,0.08)',
             padding: 28,
@@ -226,7 +226,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
                 padding: '12px 16px',
                 borderRadius: 10,
                 border: '1px solid rgba(255,255,255,0.08)',
-                background: '#100e14',
+                background: 'var(--bg-secondary)',
                 color: '#FFFFFF',
                 fontSize: 14,
                 outline: 'none',
@@ -259,7 +259,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
                 padding: '12px 16px',
                 borderRadius: 10,
                 border: '1px solid rgba(255,255,255,0.08)',
-                background: '#100e14',
+                background: 'var(--bg-secondary)',
                 color: '#FFFFFF',
                 fontSize: 14,
                 resize: 'vertical',
@@ -297,7 +297,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
                   padding: '12px 16px',
                   borderRadius: 10,
                   border: '1px solid rgba(255,255,255,0.08)',
-                  background: '#100e14',
+                  background: 'var(--bg-secondary)',
                   color: '#FFFFFF',
                   fontSize: 14,
                   outline: 'none',
@@ -342,7 +342,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
                 padding: '12px 16px',
                 borderRadius: 10,
                 border: '1px solid rgba(255,255,255,0.08)',
-                background: '#100e14',
+                background: 'var(--bg-secondary)',
                 color: '#FFFFFF',
                 fontSize: 14,
                 outline: 'none',
@@ -374,7 +374,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
                   borderRadius: 12,
                   padding: '24px 16px',
                   textAlign: 'center',
-                  backgroundColor: '#100e14',
+                  backgroundColor: 'var(--bg-secondary)',
                 }}
               >
                 <input
@@ -421,7 +421,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
                 style={{
                   position: 'relative',
                   aspectRatio: '16/9',
-                  backgroundColor: '#100e14',
+                  backgroundColor: 'var(--bg-secondary)',
                   borderRadius: 12,
                   overflow: 'hidden',
                   border: '1px solid rgba(255,255,255,0.08)',

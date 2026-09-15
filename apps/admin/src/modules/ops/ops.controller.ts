@@ -2,6 +2,8 @@ import {
   Inject,
   Controller,
   Get,
+  Put,
+  Body,
   Query,
   Post,
   Param,
@@ -52,6 +54,19 @@ export class OpsController {
   getTippingSummary(@Query('limit') limit?: string): Promise<CreatorTipSummary[]> {
     const parsed = Number(limit);
     return this.opsService.getTippingSummary(Number.isFinite(parsed) && parsed > 0 ? parsed : 50);
+  }
+
+  /** Platform commission and limit settings for creator tips */
+  @Get('tipping-config')
+  getTippingConfig() {
+    return this.opsService.getTippingConfig();
+  }
+
+  @Put('tipping-config')
+  updateTippingConfig(
+    @Body() body: { platformCommissionPct?: number; maxTipAmount?: number; currency?: string }
+  ) {
+    return this.opsService.updateTippingConfig(body);
   }
 
   /** Gateway HTTP performance, scraped server-side from the gateway's Prometheus exposition. */

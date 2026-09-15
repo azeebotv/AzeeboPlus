@@ -11,8 +11,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { realityApi, chatApi } from '../../../src/api';
-import { logger } from '../../../src/utils/logger';
+import { realityApi, chatApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../../../src/theme';
 
 interface ChatMessage {
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   viewersBadge: {
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
   reaction: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.2)',
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
   },
   input: {
     flex: 1,

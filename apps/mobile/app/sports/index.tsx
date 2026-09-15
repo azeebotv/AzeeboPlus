@@ -5,8 +5,8 @@ import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { apiClient } from '../../src/api/client';
-import { ApiResponse } from '../../src/types/api';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { ApiResponse } from '@azeebo/react-data/types/api';
 import { analytics } from '../../src/utils/analytics';
 import { radius, colors } from '../../src/theme';
 
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
   },
   universeLabel: {
     fontSize: 14,
-    color: colors.palette.alarmRed,
+    color: colors.error[500],
     fontWeight: '600',
     marginBottom: 4,
   },
@@ -362,10 +362,10 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: colors.palette.alarmRed,
+    backgroundColor: colors.error[500],
   },
   liveText: {
-    color: colors.palette.alarmRed,
+    color: colors.error[500],
     fontSize: 14,
     fontWeight: '700',
   },
@@ -383,13 +383,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   leagueName: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 12,
   },
   liveBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.palette.alarmRed,
+    backgroundColor: colors.error[500],
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
@@ -429,7 +429,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   scoreDisplay: {
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: radius.sm,
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
   },
   watchButton: {
     flex: 1,
-    backgroundColor: colors.palette.alarmRed,
+    backgroundColor: colors.error[500],
     paddingVertical: 10,
     borderRadius: radius.sm,
     alignItems: 'center',
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
   },
   predictButton: {
     flex: 1,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     paddingVertical: 10,
     borderRadius: radius.sm,
     alignItems: 'center',
@@ -481,7 +481,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   seeAllText: {
-    color: colors.palette.alarmRed,
+    color: colors.error[500],
     fontSize: 14,
     fontWeight: '600',
   },
@@ -508,20 +508,20 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   upcomingDate: {
-    color: colors.palette.alarmRed,
+    color: colors.error[500],
     fontSize: 12,
     fontWeight: '600',
     marginBottom: 2,
   },
   upcomingLeague: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 11,
   },
   remindButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -552,16 +552,16 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   predictionParticipants: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 12,
   },
   predictionPrize: {
-    color: colors.palette.alarmRed,
+    color: colors.error[500],
     fontSize: 12,
     fontWeight: '600',
   },
   joinButton: {
-    backgroundColor: colors.palette.alarmRed,
+    backgroundColor: colors.error[500],
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 6,

@@ -5,8 +5,8 @@ import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { apiClient } from '../../src/api/client';
-import { ApiResponse } from '../../src/types/api';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { ApiResponse } from '@azeebo/react-data/types/api';
 import { colors } from '../../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -189,11 +189,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     marginRight: 10,
   },
-  filterChipActive: { backgroundColor: colors.palette.alarmRed },
-  filterText: { color: colors.palette.grey500, fontSize: 13, fontWeight: '600' },
+  filterChipActive: { backgroundColor: colors.error[500] },
+  filterText: { color: colors.text.secondary, fontSize: 13, fontWeight: '600' },
   filterTextActive: { color: '#fff' },
   sectionHeader: { paddingHorizontal: 16, paddingVertical: 8 },
-  sectionDate: { fontSize: 14, fontWeight: '700', color: colors.palette.alarmRed },
+  sectionDate: { fontSize: 14, fontWeight: '700', color: colors.error[500] },
   listContent: { paddingBottom: 30 },
   fixtureCard: { marginHorizontal: 16, marginBottom: 12, padding: 16, borderRadius: 12 },
   fixtureLeague: {
@@ -202,15 +202,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  leagueText: { color: colors.palette.grey500, fontSize: 12 },
+  leagueText: { color: colors.text.secondary, fontSize: 12 },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
   },
-  statusLive: { backgroundColor: colors.palette.alarmRed },
-  statusText: { color: colors.palette.grey500, fontSize: 11, fontWeight: '600' },
+  statusLive: { backgroundColor: colors.error[500] },
+  statusText: { color: colors.text.secondary, fontSize: 11, fontWeight: '600' },
   statusTextLive: { color: '#fff' },
   fixtureTeams: {
     flexDirection: 'row',
@@ -223,13 +223,13 @@ const styles = StyleSheet.create({
   teamEmoji: { fontSize: 24 },
   teamName: { fontSize: 14, fontWeight: '600' },
   scoreBox: {
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
   },
   scoreText: { fontSize: 20, fontWeight: '700' },
   vsBox: { paddingHorizontal: 20 },
-  vsText: { color: colors.palette.grey500, fontSize: 16, fontWeight: '600' },
-  venueText: { color: colors.palette.grey500, fontSize: 12, textAlign: 'center' },
+  vsText: { color: colors.text.secondary, fontSize: 16, fontWeight: '600' },
+  venueText: { color: colors.text.secondary, fontSize: 12, textAlign: 'center' },
 });

@@ -96,6 +96,7 @@ Naming: `snake_case`, `{domain}_{feature}_enabled` for kill-switches. Defaults: 
 | `auth_otp_email` / `auth_otp_sms` | on | `otp/` controller | Channel routing: switch SMS→Email at scale; kill an abusive channel |
 | `auth_passwordless_magic_link` | off | `auth/magic-link/*` | New login method, 5% rollout. **Implemented**: `POST /auth/magic-link/request` (3/hr rate limit) stores a single-use `magic_link:{token}` (15-min TTL), sends the first-class `magic-link` email template (notification-service subject + shared-services HTML, env override `EMAIL_TEMPLATE_MAGIC_LINK_HTML`), and never reveals whether the account exists; `POST /auth/magic-link/verify` (5/15min) burns the link and issues tokens. Fail-closed: both endpoints 403 while the flag is off. Admins still hit the MFA challenge on passwordless sign-in |
 | `auth_device_limits` | off | `DeviceLimitService` | Enforce subscription-tier device caps (Free=1…Enterprise=10) |
+| `auth_device_link` | off | `device-link/` module | RFC 8628-style TV sign-in: `POST /auth/device/link[/poll]` (public, HMAC-stored codes, poll-once tokens) + JWT `confirm`/`deny` consumed by the web `/link` page; TV polls with a 256-bit deviceCode so a photographed userCode alone can never mint a session. Kill-switch + rollout plan: `docs/auth-device-link-rollout.md` |
 | `auth_refresh_rotation` | on | token service | Kill-switch for refresh-token rotation |
 | `auth_email_verification_required` | off | signup flow | Require verified email before login. **Implemented**: `register()` branches — no tokens issued, verification email sent via `sendVerificationEmail()` (shared with `resendVerification`), response carries `requiresEmailVerification`; `login()` rejects unverified users with 403 `email_not_verified` (audit-logged + analytics) until `verifyEmail()` marks them verified. The verification link is a **first-class template**: `email-verification` registered in `EmailService.registerTemplates()` (env override `EMAIL_TEMPLATE_EMAIL_VERIFICATION_HTML`), delivered via notification-service's new `POST /v1/notifications/email` (`sendTemplatedEmail` — template→subject map, email kill-switch, unknown template = 400). Tokens expire after **1h** (`VERIFICATION_TOKEN_TTL_SECONDS`, was 24h) and are hardened with a **per-token attempt budget** (5 tries, then the token is burned with 429; counter TTL matches the token) plus a **per-user resend throttle** (3 emails/hour, 429). **Post-verification auto-login**: `verifyEmail()` ends by calling `generateTokens()` — the user gets fresh `access_token`/`refresh_token` (plus `user`/`expiresAt`) in the response, so no second sign-in is needed; works with the flag on or off (verification is always proof of identity) |
 | `auth_role_select` | on | `/select-role` | Gate the role-selection flow |
@@ -385,6 +386,7 @@ service (or client surface for `web` / `mobile` / `admin`).
 | analytics | `analytics_report_builder_v2` |
 | analytics | `analytics_sampling_rate` |
 | auth | `auth_device_limits` |
+| auth | `auth_device_link` |
 | auth | `auth_email_verification_required` |
 | auth | `auth_mfa_required_for_admins` |
 | auth | `auth_mfa_totp` |

@@ -5,9 +5,9 @@ import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { userApi } from '../../src/api/user';
-import { contentApi } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { userApi } from '@azeebo/react-data/api/user';
+import { contentApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../../src/theme';
 
 interface WatchlistMovie {
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -221,8 +221,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#1a1a1a',
   },
-  sortChipActive: { backgroundColor: colors.palette.cream },
-  sortText: { color: colors.palette.grey500, fontSize: 12, fontWeight: '600' },
+  sortChipActive: { backgroundColor: colors.category.highlight },
+  sortText: { color: colors.text.secondary, fontSize: 12, fontWeight: '600' },
   sortTextActive: { color: '#000' },
   listContent: { paddingHorizontal: 16, paddingBottom: 30 },
   movieCard: {
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 80,
     borderRadius: 8,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -252,17 +252,17 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 4,
   },
-  ratingText: { color: colors.palette.cream, fontSize: 10, fontWeight: '600' },
+  ratingText: { color: colors.category.highlight, fontSize: 10, fontWeight: '600' },
   movieInfo: { flex: 1 },
   movieTitle: { fontSize: 15, fontWeight: '700', marginBottom: 4 },
-  movieGenre: { color: colors.palette.grey500, fontSize: 12 },
+  movieGenre: { color: colors.text.secondary, fontSize: 12 },
   removeButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  removeIcon: { color: colors.palette.grey500, fontSize: 14 },
+  removeIcon: { color: colors.text.secondary, fontSize: 14 },
 });

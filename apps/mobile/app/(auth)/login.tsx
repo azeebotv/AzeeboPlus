@@ -12,12 +12,13 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { useAuth } from '../../src/contexts/AuthContext';
-import { authApi } from '../../src/api';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { authApi } from '@azeebo/react-data';
 import { useBiometric } from '../../src/hooks/useBiometric';
-import { useFeatureFlags } from '../../src/hooks/useFeatureFlags';
+import { analytics } from '../../src/utils/analytics';
+import { useFeatureFlags } from '@azeebo/react-data/hooks/useFeatureFlags';
 import { authFlags } from '@azeebo/feature-flags/registries';
-import { logger } from '../../src/utils/logger';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { colors, typography, spacing, radius } from '../../src/theme';
 import { GlassCard, BrandButton, BrandInput } from '../../src/components/ui';
 import { PageTransition, ScrollReveal, AmbientGlow } from '../../src/components/motion';
@@ -45,9 +46,15 @@ export default function LoginScreen() {
   }, [isAvailable, isEnabled]);
 
   const handleBiometricLogin = async () => {
+    // Track the in-flight state like the password path does, so the submit
+    // button's loading indicator and double-tap guard cover biometrics too
+    // (previously only the password/social paths set isSubmitting).
+    setIsSubmitting(true);
+    setError(null);
     try {
       const result = await authenticateWithStoredCredentials();
       if (result.success) {
+        analytics.userLoggedIn('biometric', 'mobile');
         router.replace('/(tabs)/home');
       } else {
         Alert.alert(
@@ -58,6 +65,8 @@ export default function LoginScreen() {
       }
     } catch {
       Alert.alert('Error', 'Biometric authentication failed');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -76,6 +85,7 @@ export default function LoginScreen() {
     try {
       const result = await login(email, password);
       if (result.success) {
+        analytics.userLoggedIn('password', 'mobile');
         router.replace('/(tabs)/home');
       } else {
         setError(result.message || 'Invalid email or password');
@@ -144,6 +154,7 @@ export default function LoginScreen() {
         const socialResult = await socialLogin({ code, state: returnedState });
 
         if (socialResult.success) {
+          analytics.userLoggedIn(provider, 'mobile');
           router.replace('/(tabs)/home');
         } else {
           setError(

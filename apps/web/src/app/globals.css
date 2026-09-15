@@ -26,6 +26,12 @@
   --brand-copper: #cd7f32; /* Copper — metallic accents */
   --brand-light-green: #32cd32; /* Light Green — online, active */
 
+  /* Vertical identity accents (fixed, not theme-aware — like the --hp- art
+     palette below): gradient endpoints for vertical landing headers. */
+  --music-purple: #4C0A5E; /* Music vertical — gradient headers */
+  --live-gradient: linear-gradient(135deg, #E8420A 0%, #7c2d12 100%); /* Live page header art */
+  --auth-warm-gradient: linear-gradient(160deg, #3a1a0a, #0b090e); /* Auth pages decorative bg */
+
   /* Glass panel — Frosted luxury dark panels */
   --glass-bg: rgba(24, 21, 30, 0.75);
   --glass-border: rgba(255, 255, 255, 0.08);
@@ -260,6 +266,14 @@
   --hp-tile-sports:     linear-gradient(150deg, #166534 0%, #052e16 100%);
   --hp-tile-movies:     linear-gradient(150deg, #92400e 0%, #451a01 100%);
   --hp-tile-lifestyle:  linear-gradient(150deg, #9d174d 0%, #500727 100%);
+  /* GuestHomepage fixed art pieces (the homepage is hard-coded dark marketing
+     art — var(--hp-card-bg) classes and text-white — so its one-off surfaces
+     live here rather than in the themed --bg-* family). */
+  --hp-logo-gradient:   linear-gradient(145deg, #E5251C 0%, #F3501A 45%, #FF6B00 100%); /* Hero logo card */
+  --hp-appwindow-bg:    #0D0B12; /* Inset dark app window */
+  --hp-cta-bg:          #120E17; /* Bottom CTA panel */
+  --hp-poster-bg:       #1F2937; /* Poster image placeholder */
+  --hp-actionbar-bg:    #FF6B00; /* Mock-UI highlighted action bar */
   --hp-tile-creator:    linear-gradient(150deg, #c2410c 0%, #7c1d0a 100%);
   --hp-tile-vertical:   linear-gradient(150deg, #1e40af 0%, #0f1f5c 100%);
   --hp-tile-games:      linear-gradient(150deg, #6d28d9 0%, #2e1065 100%);

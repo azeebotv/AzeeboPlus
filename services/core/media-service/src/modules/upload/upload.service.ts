@@ -314,6 +314,10 @@ export class UploadService {
     try {
       return JSON.parse(raw);
     } catch {
+      // allowed-fabricated-4xx: the only fallible call is JSON.parse on the
+      // stored session — a single-shaped parse failure where 400 (start over
+      // with a fresh upload) is operationally correct; mapAndThrow would
+      // wrongly escalate it to a retryable-looking 500.
       throw new BadRequestException('Upload session is corrupt');
     }
   }

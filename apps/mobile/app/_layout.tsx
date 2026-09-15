@@ -2,18 +2,26 @@ import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as Linking from 'expo-linking';
 import * as Notifications from 'expo-notifications';
 import * as ScreenOrientation from 'expo-screen-orientation';
-import { AuthProvider } from '../src/contexts/AuthContext';
-import { FlagsProvider, useFlags } from '../src/contexts/FlagsContext';
-import { WalletProvider } from '../src/contexts/WalletContext';
+// i18n side-effect import: registers + initializes i18next (async, non-blocking)
+// BEFORE any screen renders, so useTranslation() finds the instance on the very
+// first frame. Without it, every t() call returns raw keys until Settings is
+// first opened (the only place that previously imported src/i18n).
+import '../src/i18n';
+import { AuthProvider } from '@azeebo/react-data/contexts/AuthContext';
+import { VideoPlayerProvider } from '../src/contexts/VideoPlayerContext';
+import { MiniPlayerOverlay } from '../src/components/video/MiniPlayerOverlay';
+import { FlagsProvider, useFlags } from '@azeebo/react-data/contexts/FlagsContext';
+import { WalletProvider } from '@azeebo/react-data/contexts/WalletContext';
 import { NotificationProvider } from '../src/contexts/NotificationContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
-import { initializeCertificatePinning } from '../src/utils/certificatePinning';
-import { DeepLinkService } from '../src/utils/deepLinking';
+import { initializeCertificatePinning } from '@azeebo/react-data/utils/certificatePinning';
+import { DeepLinkService } from '@azeebo/react-data/utils/deepLinking';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -87,53 +95,58 @@ function RootNavigator() {
           <AuthProvider>
             <FlagsProvider>
               <WalletProvider>
-                <NotificationProvider>
-                  <StatusBar style={resolvedDark ? 'light' : 'dark'} />
-                  <DeepLinkHandler />
-                  <Stack
-                    screenOptions={{
-                      headerShown: false,
-                      animation: 'slide_from_right',
-                    }}
-                  >
-                    <Stack.Screen name="index" options={{ headerShown: false }} />
-                    <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                    <Stack.Screen name="watch/[contentId]" options={{ headerShown: false }} />
-                    <Stack.Screen name="subscription" options={{ headerShown: false }} />
+                {/* Shared video player + PiP overlay: above the navigator so
+                    the mini card floats over every screen. */}
+                <VideoPlayerProvider>
+                  <NotificationProvider>
+                    <StatusBar style={resolvedDark ? 'light' : 'dark'} />
+                    <DeepLinkHandler />
+                    <MiniPlayerOverlay />
+                    <Stack
+                      screenOptions={{
+                        headerShown: false,
+                        animation: 'slide_from_right',
+                      }}
+                    >
+                      <Stack.Screen name="index" options={{ headerShown: false }} />
+                      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                      <Stack.Screen name="watch/[contentId]" options={{ headerShown: false }} />
+                      <Stack.Screen name="subscription" options={{ headerShown: false }} />
 
-                    {/* Reality */}
-                    <Stack.Screen name="reality" options={{ headerShown: false }} />
-                    <Stack.Screen name="reality/[showId]" options={{ headerShown: false }} />
+                      {/* Reality */}
+                      <Stack.Screen name="reality" options={{ headerShown: false }} />
+                      <Stack.Screen name="reality/[showId]" options={{ headerShown: false }} />
 
-                    {/* Lifestyle */}
-                    <Stack.Screen name="lifestyle" options={{ headerShown: false }} />
+                      {/* Lifestyle */}
+                      <Stack.Screen name="lifestyle" options={{ headerShown: false }} />
 
-                    {/* Vertical / Vertical Title */}
-                    <Stack.Screen name="vertical" options={{ headerShown: false }} />
-                    <Stack.Screen name="vertical-title" options={{ headerShown: false }} />
+                      {/* Vertical / Vertical Title */}
+                      <Stack.Screen name="vertical" options={{ headerShown: false }} />
+                      <Stack.Screen name="vertical-title" options={{ headerShown: false }} />
 
-                    {/* Sports */}
-                    <Stack.Screen name="sports" options={{ headerShown: false }} />
+                      {/* Sports */}
+                      <Stack.Screen name="sports" options={{ headerShown: false }} />
 
-                    {/* Comedy */}
-                    <Stack.Screen name="comedy" options={{ headerShown: false }} />
+                      {/* Comedy */}
+                      <Stack.Screen name="comedy" options={{ headerShown: false }} />
 
-                    {/* Games */}
-                    <Stack.Screen name="games" options={{ headerShown: false }} />
+                      {/* Games */}
+                      <Stack.Screen name="games" options={{ headerShown: false }} />
 
-                    {/* Movies */}
-                    <Stack.Screen name="movies" options={{ headerShown: false }} />
+                      {/* Movies */}
+                      <Stack.Screen name="movies" options={{ headerShown: false }} />
 
-                    {/* Standalone screens */}
-                    <Stack.Screen name="vote" options={{ headerShown: false }} />
-                    <Stack.Screen name="leaderboard" options={{ headerShown: false }} />
-                    <Stack.Screen name="prediction" options={{ headerShown: false }} />
-                    <Stack.Screen name="messages" options={{ headerShown: false }} />
-                    <Stack.Screen name="notifications" options={{ headerShown: false }} />
-                    <Stack.Screen name="premium" options={{ headerShown: false }} />
-                  </Stack>
-                </NotificationProvider>
+                      {/* Standalone screens */}
+                      <Stack.Screen name="vote" options={{ headerShown: false }} />
+                      <Stack.Screen name="leaderboard" options={{ headerShown: false }} />
+                      <Stack.Screen name="prediction" options={{ headerShown: false }} />
+                      <Stack.Screen name="messages" options={{ headerShown: false }} />
+                      <Stack.Screen name="notifications" options={{ headerShown: false }} />
+                      <Stack.Screen name="premium" options={{ headerShown: false }} />
+                    </Stack>
+                  </NotificationProvider>
+                </VideoPlayerProvider>
               </WalletProvider>
             </FlagsProvider>
           </AuthProvider>
@@ -144,5 +157,11 @@ function RootNavigator() {
 }
 
 export default function RootLayout() {
-  return <RootNavigator />;
+  // Root view for react-native-gesture-handler (video player gestures run
+  // through it; RNGH pan/tap recognizers no-op without an ancestor root).
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <RootNavigator />
+    </GestureHandlerRootView>
+  );
 }

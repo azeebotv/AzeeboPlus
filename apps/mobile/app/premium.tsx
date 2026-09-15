@@ -11,8 +11,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '../src/contexts/AuthContext';
-import { subscriptionApi } from '../src/api/subscription';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { subscriptionApi } from '@azeebo/react-data/api/subscription';
 import { colors, typography, spacing, radius } from '../src/theme';
 
 const PREMIUM_FEATURES = [

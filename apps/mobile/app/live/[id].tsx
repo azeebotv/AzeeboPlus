@@ -10,7 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiClient } from '../../src/api/client';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
 
@@ -186,7 +186,7 @@ export default function LiveEventDetailScreen() {
             <TouchableOpacity
               style={[
                 styles.purchaseButton,
-                purchaseMutation.isPending && { backgroundColor: colors.palette.grey600 },
+                purchaseMutation.isPending && { backgroundColor: colors.neutral[600] },
               ]}
               onPress={() => purchaseMutation.mutate()}
               disabled={purchaseMutation.isPending}
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     width: '90%',
     height: 200,
     borderRadius: 16,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
@@ -248,13 +248,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   price: { fontSize: 28, fontWeight: '700' },
-  priceLabel: { fontSize: 12, color: colors.palette.grey500, marginTop: 2 },
+  priceLabel: { fontSize: 12, color: colors.text.secondary, marginTop: 2 },
   infoGrid: { marginBottom: 20, gap: 12 },
   infoItem: {},
-  infoLabel: { fontSize: 12, color: colors.palette.grey500, marginBottom: 2 },
+  infoLabel: { fontSize: 12, color: colors.text.secondary, marginBottom: 2 },
   infoValue: { fontSize: 14, fontWeight: '600' },
   sectionTitle: { fontSize: 18, fontWeight: '700', marginBottom: 8 },
-  description: { fontSize: 14, color: colors.palette.grey500, lineHeight: 22, marginBottom: 24 },
+  description: { fontSize: 14, color: colors.text.secondary, lineHeight: 22, marginBottom: 24 },
   cancelledBanner: {
     backgroundColor: 'rgba(239,68,68,0.15)',
     borderRadius: 12,
@@ -280,5 +280,5 @@ const styles = StyleSheet.create({
   },
   purchaseButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   terms: { gap: 6 },
-  termText: { fontSize: 12, color: colors.palette.grey600 },
+  termText: { fontSize: 12, color: colors.text.tertiary },
 });

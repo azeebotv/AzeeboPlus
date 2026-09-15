@@ -70,9 +70,7 @@ describe('InternalWalletController', () => {
 
   describe('auth (InternalSecretGuard)', () => {
     it('403s without the x-internal-api-key header', () => {
-      return request(app.getHttpServer())
-        .get('/internal/wallets/user/u1')
-        .expect(403);
+      return request(app.getHttpServer()).get('/internal/wallets/user/u1').expect(403);
     });
 
     it('403s with a wrong secret', () => {
@@ -95,9 +93,7 @@ describe('InternalWalletController', () => {
     it('403s with a clear message when no secret is configured at all', async () => {
       delete process.env.GATEWAY_SECRET;
       try {
-        const res = await request(app.getHttpServer())
-          .get('/internal/wallets/user/u1')
-          .expect(403);
+        const res = await request(app.getHttpServer()).get('/internal/wallets/user/u1').expect(403);
         expect(res.body?.message).toMatch(/not configured/i);
       } finally {
         process.env.GATEWAY_SECRET = SECRET;
@@ -146,7 +142,11 @@ describe('InternalWalletController', () => {
         .expect(201);
 
       expect(walletService.debitBalance).toHaveBeenCalledWith(
-        'w1', 500, 'Tip to creator c1', undefined, 'tip-1'
+        'w1',
+        500,
+        'Tip to creator c1',
+        undefined,
+        'tip-1'
       );
       expect(res.body).toEqual({ success: true, data: { newBalance: 0 } });
     });
@@ -189,9 +189,7 @@ describe('InternalWalletController', () => {
         .send({ amount: 500, description: 'Tip received', idempotencyKey: 'tip-1' })
         .expect(201);
 
-      expect(walletService.creditBalance).toHaveBeenCalledWith(
-        'w2', 500, 'Tip received', 'tip-1'
-      );
+      expect(walletService.creditBalance).toHaveBeenCalledWith('w2', 500, 'Tip received', 'tip-1');
       expect(res.body).toEqual({ success: true, data: { newBalance: 1500 } });
     });
 

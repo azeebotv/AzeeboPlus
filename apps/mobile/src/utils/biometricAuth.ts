@@ -1,6 +1,6 @@
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
-import { logger } from './logger';
+import { logger } from '@azeebo/react-data/utils/logger';
 
 const BIOMETRIC_ENABLED_KEY = 'biometric_enabled';
 const BIOMETRIC_CREDENTIALS_KEY = 'biometric_credentials';

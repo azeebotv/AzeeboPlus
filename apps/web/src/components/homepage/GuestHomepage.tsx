@@ -897,7 +897,7 @@ export default function GuestHomepage(): React.JSX.Element {
               <div
                 className="relative rounded-3xl p-5 sm:p-7 w-full max-w-lg"
                 style={{
-                  background: 'linear-gradient(145deg, #E5251C 0%, #F3501A 45%, #FF6B00 100%)',
+                  background: 'var(--hp-logo-gradient)',
                   boxShadow: '0 20px 60px rgba(229, 37, 28, 0.35)',
                 }}
               >
@@ -905,7 +905,7 @@ export default function GuestHomepage(): React.JSX.Element {
                 <div
                   className="rounded-2xl p-4 sm:p-6"
                   style={{
-                    background: '#0D0B12',
+                    background: 'var(--hp-appwindow-bg)',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
                   }}
                 >
@@ -931,7 +931,7 @@ export default function GuestHomepage(): React.JSX.Element {
                     <div className="relative pt-2">
                       <div
                         className="h-9 w-full rounded-lg flex items-center px-4"
-                        style={{ background: '#FF6B00' }}
+                        style={{ background: 'var(--hp-actionbar-bg)' }}
                       >
                         <span className="text-xs font-bold text-white uppercase tracking-wider">
                           CONTINUE WATCHING &bull; EPISODE 4
@@ -1058,7 +1058,7 @@ export default function GuestHomepage(): React.JSX.Element {
                         className="relative rounded-lg overflow-hidden flex items-center justify-center text-center p-1"
                         style={{
                           aspectRatio: '3 / 4',
-                          background: '#1F2937',
+                          background: 'var(--hp-poster-bg)',
                         }}
                       >
                         <Image
@@ -1142,7 +1142,7 @@ export default function GuestHomepage(): React.JSX.Element {
                 className="relative rounded-2xl overflow-hidden group cursor-pointer"
                 style={{
                   aspectRatio: idx % 2 === 0 ? '4 / 5' : '5 / 6',
-                  background: '#18151e',
+                  background: 'var(--hp-card-bg)',
                   marginTop: idx % 2 === 1 ? '1.25rem' : '0',
                 }}
                 whileHover={{ scale: 1.03, zIndex: 10 }}
@@ -1457,7 +1457,7 @@ export default function GuestHomepage(): React.JSX.Element {
           <div
             className="relative rounded-3xl p-8 sm:p-14 overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8"
             style={{
-              background: '#120E17',
+              background: 'var(--hp-cta-bg)',
               border: '1px solid rgba(255, 255, 255, 0.08)',
             }}
           >

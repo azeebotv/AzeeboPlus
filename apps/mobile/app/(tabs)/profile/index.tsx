@@ -16,8 +16,10 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../../../src/contexts/AuthContext';
-import { useUpdateProfile } from '../../../src/hooks/useProfileQuery';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { useUpdateProfile } from '@azeebo/react-data/hooks/useProfileQuery';
+import { notificationApi, type NotificationPreferences } from '@azeebo/react-data';
 import {
   PageTransition,
   ScrollReveal,
@@ -30,7 +32,6 @@ const MENU_ITEMS = [
   { id: 'subscriptions', label: 'Subscriptions', icon: '📺', action: 'navigate' },
   { id: 'notifications', label: 'Notifications', icon: '🔔', action: 'navigate' },
   { id: 'privacy', label: 'Privacy & Security', icon: '🔒', action: 'navigate' },
-  { id: 'parental', label: 'Parental Controls', icon: '👨‍👩‍👧', action: 'navigate' },
   { id: 'help', label: 'Help & Support', icon: '❓', action: 'navigate' },
   { id: 'about', label: 'About', icon: 'ℹ️', action: 'navigate' },
 ];
@@ -39,13 +40,56 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { logout, user, isAuthenticated, isLoading: authLoading } = useAuth();
   const colorScheme = useColorScheme();
-  const [pushEnabled, setPushEnabled] = useState(true);
-  const [emailEnabled, setEmailEnabled] = useState(true);
+  const queryClient = useQueryClient();
   const [showEditModal, setShowEditModal] = useState(false);
   const [editForm, setEditForm] = useState({
     name: user?.name || '',
     phone: user?.phone || '',
   });
+
+  // Real notification preferences (previously decorative local state that
+  // persisted nothing). Same query/mutation keys as the Settings screen so
+  // both surfaces share one cache entry and stay in sync.
+  const { data: preferences } = useQuery({
+    queryKey: ['notification', 'preferences'],
+    queryFn: async () => {
+      const response = await notificationApi.getPreferences();
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Failed to fetch preferences');
+      }
+      return response.data as NotificationPreferences;
+    },
+    enabled: isAuthenticated,
+    staleTime: 60_000,
+  });
+
+  const updatePreferencesMutation = useMutation({
+    mutationFn: async (prefs: NotificationPreferences) => {
+      const response = await notificationApi.updatePreferences(prefs);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to save preferences');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notification', 'preferences'] });
+    },
+  });
+
+  const pushEnabled = preferences?.push ?? true;
+  const emailEnabled = preferences?.email ?? true;
+
+  const handleTogglePreference = (key: 'push' | 'email', value: boolean) => {
+    if (!preferences) return;
+    updatePreferencesMutation.mutate(
+      { ...preferences, [key]: value },
+      {
+        onError: (error: Error) => {
+          Alert.alert('Error', error.message || 'Failed to save preferences');
+        },
+      }
+    );
+  };
 
   const updateProfileMutation = useUpdateProfile();
 
@@ -100,13 +144,14 @@ export default function ProfileScreen() {
     } else if (item.id === 'notifications') {
       router.push('/notifications');
     } else if (item.id === 'privacy') {
-      router.push('/settings/privacy');
-    } else if (item.id === 'parental') {
-      router.push('/settings/parental');
+      // Settings hosts the security (biometric) section and the Privacy
+      // Policy / Terms links — there is no separate privacy route.
+      router.push('/(tabs)/settings');
     } else if (item.id === 'help') {
       router.push('/support');
     } else if (item.id === 'about') {
-      router.push('/settings/about');
+      // Settings' About section shows the app version and legal links.
+      router.push('/(tabs)/settings');
     }
   };
 
@@ -271,7 +316,7 @@ export default function ProfileScreen() {
                   </View>
                   <Switch
                     value={pushEnabled}
-                    onValueChange={setPushEnabled}
+                    onValueChange={(value) => handleTogglePreference('push', value)}
                     trackColor={{ false: '#333', true: '#E8420A' }}
                     thumbColor="#fff"
                   />
@@ -298,7 +343,7 @@ export default function ProfileScreen() {
                   </View>
                   <Switch
                     value={emailEnabled}
-                    onValueChange={setEmailEnabled}
+                    onValueChange={(value) => handleTogglePreference('email', value)}
                     trackColor={{ false: '#333', true: '#E8420A' }}
                     thumbColor="#fff"
                   />
@@ -536,7 +581,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   email: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 14,
     marginBottom: 8,
   },
@@ -578,7 +623,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   statLabel: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 12,
   },
   statDivider: {
@@ -617,7 +662,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   preferenceSubtitle: {
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
     fontSize: 12,
   },
   menuItem: {
@@ -637,7 +682,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   menuArrow: {
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
     fontSize: 24,
   },
   logoutButton: {
@@ -648,10 +693,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: colors.palette.alertRed,
+    borderColor: colors.error[500],
   },
   logoutButtonText: {
-    color: colors.palette.alertRed,
+    color: colors.error[500],
     fontSize: 16,
     fontWeight: '600',
   },
@@ -660,7 +705,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   versionText: {
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
     fontSize: 12,
   },
   bottomPadding: {
@@ -688,7 +733,7 @@ const styles = StyleSheet.create({
   },
   modalClose: {
     fontSize: 24,
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
   },
   inputContainer: {
     marginBottom: 16,
@@ -697,7 +742,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     marginBottom: 8,
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
   },
   input: {
     padding: 16,

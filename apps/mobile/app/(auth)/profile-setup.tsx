@@ -13,9 +13,9 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../../src/contexts/AuthContext';
-import { userApi } from '../../src/api/user';
-import { apiClient } from '../../src/api/client';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { userApi } from '@azeebo/react-data/api/user';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { ErrorState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
 
@@ -250,14 +250,14 @@ const styles = StyleSheet.create({
   },
   interestSubtitle: {
     fontSize: 12,
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
     marginBottom: 12,
   },
   input: {
     backgroundColor: '#1a1a1a',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.palette.grey800,
+    borderColor: colors.neutral[700],
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   },
   charCount: {
     fontSize: 12,
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
     textAlign: 'right',
     marginTop: 4,
   },
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#1a1a1a',
     borderWidth: 1,
-    borderColor: colors.palette.grey800,
+    borderColor: colors.neutral[700],
   },
   interestChipSelected: {
     backgroundColor: '#E8420A',

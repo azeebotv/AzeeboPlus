@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
+import { asArray, asRecord, num } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 interface ModReport {
@@ -56,7 +57,14 @@ export default function ModerationPage() {
         status: statusFilter === 'all' ? undefined : statusFilter,
       });
       if (!res.success) throw new Error(res.message || 'Failed to load reports');
-      return res.data as { reports: ModReport[]; total: number; totalPages: number };
+      // Backend returns { reports, total, page, limit, totalPages } — normalize
+      // so a drift (e.g. an items-style envelope) renders empty, not crashes.
+      const rec = asRecord(res.data);
+      return {
+        reports: asArray<ModReport>(rec.reports),
+        total: num(rec.total),
+        totalPages: num(rec.totalPages, 1),
+      };
     },
   });
 

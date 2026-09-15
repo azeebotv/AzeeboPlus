@@ -181,4 +181,95 @@ export class WalletManagementService {
       updatedAt: new Date().toISOString(),
     };
   }
+
+  // ─── Payout Requests ────────────────────────────────────────────────────────
+
+  async getPayoutRequests(page = 1, limit = 20, status?: string) {
+    const where = status ? { status } : {};
+    const [items, total, agg] = await Promise.all([
+      this.prisma.payoutRequest.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip: (page - 1) * limit,
+        include: { user: { select: { displayName: true, email: true } } },
+      }),
+      this.prisma.payoutRequest.count({ where }),
+      this.prisma.payoutRequest.groupBy({
+        by: ['status'],
+        _count: { id: true },
+        _sum: { amount: true },
+      }),
+    ]);
+
+    const statsMap: Record<string, { count: number; amount: number }> = {};
+    for (const row of agg) {
+      statsMap[row.status] = {
+        count: row._count.id,
+        amount: Number(row._sum.amount || 0),
+      };
+    }
+
+    return {
+      items: items.map((r) => ({
+        id: r.id,
+        userId: r.userId,
+        amount: Number(r.amount),
+        currency: r.currency,
+        status: r.status,
+        method: r.method,
+        metadata: r.metadata as Record<string, unknown> | undefined,
+        completedAt: r.completedAt?.toISOString() ?? null,
+        createdAt: r.createdAt.toISOString(),
+        updatedAt: r.updatedAt.toISOString(),
+        user: r.user ? { displayName: r.user.displayName, email: r.user.email } : undefined,
+      })),
+      total,
+      stats: {
+        pending: statsMap['pending']?.count ?? 0,
+        pendingAmount: statsMap['pending']?.amount ?? 0,
+        approved: statsMap['approved']?.count ?? 0,
+        approvedAmount: statsMap['approved']?.amount ?? 0,
+        completed: statsMap['completed']?.count ?? 0,
+        completedAmount: statsMap['completed']?.amount ?? 0,
+        rejected: statsMap['rejected']?.count ?? 0,
+      },
+    };
+  }
+
+  async approvePayoutRequest(id: string, actorId?: string) {
+    const req = await this.prisma.payoutRequest.findUnique({ where: { id } });
+    if (!req) throw new NotFoundException(`Payout request ${id} not found`);
+    const updated = await this.prisma.payoutRequest.update({
+      where: { id },
+      data: {
+        status: 'approved',
+        metadata: {
+          ...(req.metadata as Record<string, unknown>),
+          approvedBy: actorId,
+          approvedAt: new Date().toISOString(),
+        },
+      },
+    });
+    return { id: updated.id, status: updated.status };
+  }
+
+  async rejectPayoutRequest(id: string, reason: string, actorId?: string) {
+    const req = await this.prisma.payoutRequest.findUnique({ where: { id } });
+    if (!req) throw new NotFoundException(`Payout request ${id} not found`);
+    const updated = await this.prisma.payoutRequest.update({
+      where: { id },
+      data: {
+        status: 'rejected',
+        metadata: {
+          ...(req.metadata as Record<string, unknown>),
+          rejectedBy: actorId,
+          rejectedAt: new Date().toISOString(),
+          rejectionReason: reason,
+        },
+      },
+    });
+    return { id: updated.id, status: updated.status };
+  }
 }
+

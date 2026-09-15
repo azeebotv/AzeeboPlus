@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { CacheService } from '@azeebo/shared-services';
 import { FeatureFlagService } from '@azeebo/feature-flags';
 import { MetricsService } from '../metrics/metrics.service.js';
-import { BadRequestException, Logger } from '@nestjs/common';
+import { BadRequestException, InternalServerErrorException, Logger } from '@nestjs/common';
 import axios from 'axios';
 
 jest.mock('axios');
@@ -233,11 +233,11 @@ describe('SearchService', () => {
       }
     });
 
-    it('should throw BadRequestException on Prisma error', async () => {
+    it('should surface a Prisma failure as InternalServerErrorException', async () => {
       (cacheService.get as jest.Mock).mockResolvedValue(null);
       (prismaService.contentItem.findMany as jest.Mock).mockRejectedValue(new Error('DB error'));
 
-      await expect(service.search('test query')).rejects.toThrow(BadRequestException);
+      await expect(service.search('test query')).rejects.toThrow(InternalServerErrorException);
     });
   });
 
@@ -944,10 +944,12 @@ describe('SearchService', () => {
       expect(result.data).toHaveProperty('facets');
     });
 
-    it('should throw BadRequestException on error', async () => {
+    it('should surface a Prisma failure as InternalServerErrorException', async () => {
       (prismaService.contentItem.findMany as jest.Mock).mockRejectedValue(new Error('DB error'));
 
-      await expect(service.searchWithFacets('test query')).rejects.toThrow(BadRequestException);
+      await expect(service.searchWithFacets('test query')).rejects.toThrow(
+        InternalServerErrorException
+      );
     });
   });
 
@@ -978,11 +980,11 @@ describe('SearchService', () => {
       expect(cacheService.set).toHaveBeenCalled();
     });
 
-    it('should throw BadRequestException on error', async () => {
+    it('should surface a Prisma failure as InternalServerErrorException', async () => {
       (cacheService.get as jest.Mock).mockResolvedValue(null);
       (prismaService.searchQueryLog.findMany as jest.Mock).mockRejectedValue(new Error('DB error'));
 
-      await expect(service.getSuggestions('test')).rejects.toThrow(BadRequestException);
+      await expect(service.getSuggestions('test')).rejects.toThrow(InternalServerErrorException);
     });
 
     describe('search_suggestions_ai ranking', () => {
@@ -1068,10 +1070,10 @@ describe('SearchService', () => {
       expect(result.data).toHaveProperty('trending');
     });
 
-    it('should throw BadRequestException on error', async () => {
+    it('should surface a Prisma failure as InternalServerErrorException', async () => {
       (prismaService.searchQueryLog.findMany as jest.Mock).mockRejectedValue(new Error('DB error'));
 
-      await expect(service.getTrending()).rejects.toThrow(BadRequestException);
+      await expect(service.getTrending()).rejects.toThrow(InternalServerErrorException);
     });
   });
 
@@ -1095,10 +1097,10 @@ describe('SearchService', () => {
       expect(result.data).toHaveProperty('facets');
     });
 
-    it('should throw BadRequestException on error', async () => {
+    it('should surface a Prisma failure as InternalServerErrorException', async () => {
       (prismaService.universe.findMany as jest.Mock).mockRejectedValue(new Error('DB error'));
 
-      await expect(service.getFacets()).rejects.toThrow(BadRequestException);
+      await expect(service.getFacets()).rejects.toThrow(InternalServerErrorException);
     });
   });
 
@@ -1146,10 +1148,12 @@ describe('SearchService', () => {
       expect(prismaService.searchTypoCorrection.upsert).not.toHaveBeenCalled();
     });
 
-    it('should throw BadRequestException on error', async () => {
+    it('should surface a Prisma failure as InternalServerErrorException', async () => {
       (prismaService.searchQueryLog.create as jest.Mock).mockRejectedValue(new Error('DB error'));
 
-      await expect(service.logSearch('user-1', 'test', 5)).rejects.toThrow(BadRequestException);
+      await expect(service.logSearch('user-1', 'test', 5)).rejects.toThrow(
+        InternalServerErrorException
+      );
     });
   });
 

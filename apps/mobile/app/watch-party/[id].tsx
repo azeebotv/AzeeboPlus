@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { logger } from '../../src/utils/logger';
+import { logger } from '@azeebo/react-data/utils/logger';
 import {
   View,
   Text,
@@ -12,8 +12,8 @@ import {
   Share,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useAuth } from '../../src/contexts/AuthContext';
-import { apiClient } from '../../src/api';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { apiClient } from '@azeebo/react-data';
 import { colors, typography, spacing, radius } from '../../src/theme';
 import { GlassCard, BrandButton } from '../../src/components/ui';
 import { PageTransition } from '../../src/components/motion';

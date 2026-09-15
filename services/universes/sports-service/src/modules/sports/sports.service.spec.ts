@@ -2,7 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SportsService } from './sports.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import axios from 'axios';
 
 jest.mock('axios');
@@ -37,7 +41,15 @@ describe('SportsService', () => {
         {
           provide: ConfigService,
           useValue: {
-            get: jest.fn().mockReturnValue('test-value'),
+            // Fee keys must resolve to NUMBERS or the service's balance check
+            // (Number(balance) < fee) silently no-ops — NaN comparisons are
+            // always false — and tests only pass via later crashes.
+            get: jest.fn(
+              (key: string) =>
+                ({ PREDICTION_FEE: 10, CONTEST_ENTRY_FEE: 50 })[
+                  key as 'PREDICTION_FEE' | 'CONTEST_ENTRY_FEE'
+                ] ?? 'test-value'
+            ),
             getOrThrow: jest.fn().mockReturnValue('test-value'),
           },
         },
@@ -155,7 +167,9 @@ describe('SportsService', () => {
       (prismaService.predictionEntry.create as jest.Mock).mockRejectedValue(new Error('DB error'));
 
       await expect(service.submitPrediction(userId, predictionBody)).rejects.toThrow(
-        BadRequestException
+        // A Prisma failure after the wallet debit is a server fault (the saga
+        // compensates either way) — mapAndThrow maps it honestly to 500.
+        InternalServerErrorException
       );
 
       expect(mockedAxios.post).toHaveBeenCalledTimes(2);

@@ -1,6 +1,7 @@
 import { Inject, Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
+import { mapAndThrow } from '@azeebo/security';
 
 interface FlutterwaveInitializeResponse {
   status: string;
@@ -120,8 +121,7 @@ export class FlutterwaveProvider {
         authorizationUrl: response.data.data.link,
       };
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new BadRequestException(`Flutterwave initialization failed: ${errorMessage}`);
+      mapAndThrow(error, 'initializing Flutterwave payment');
     }
   }
 
@@ -152,8 +152,7 @@ export class FlutterwaveProvider {
         reference: response.data.data.tx_ref,
       };
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new BadRequestException(`Flutterwave verification failed: ${errorMessage}`);
+      mapAndThrow(error, `verifying Flutterwave payment ${reference}`);
     }
   }
 
@@ -186,8 +185,7 @@ export class FlutterwaveProvider {
         status: response.data.data.status,
       };
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new BadRequestException(`Flutterwave refund failed: ${errorMessage}`);
+      mapAndThrow(error, `processing Flutterwave refund ${transactionReference}`);
     }
   }
 

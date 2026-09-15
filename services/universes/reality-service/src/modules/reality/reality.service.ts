@@ -406,9 +406,7 @@ export class RealityService {
             compensateError
           );
         });
-      const errorMessage =
-        error instanceof Error ? (error as Error).message : 'Failed to submit supervote';
-      throw new ConflictException(errorMessage);
+      mapAndThrow(error, 'submitting supervote');
     }
   }
 
@@ -645,9 +643,7 @@ export class RealityService {
         .catch((compensateError: unknown) => {
           this.logger.error('Failed to compensate wallet after votes failure:', compensateError);
         });
-      const errorMessage =
-        error instanceof Error ? (error as Error).message : 'Failed to submit votes';
-      throw new ConflictException(errorMessage);
+      mapAndThrow(error, 'submitting votes');
     }
   }
 

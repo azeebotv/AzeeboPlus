@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { apiClient } from '../../src/api';
+import { apiClient } from '@azeebo/react-data';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { analytics } from '../../src/utils/analytics';
 import { colors } from '../../src/theme';
@@ -209,13 +209,13 @@ const styles = StyleSheet.create({
   content: { padding: 16 },
   title: { fontSize: 22, fontWeight: '700', marginBottom: 8 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-  metaText: { color: colors.palette.grey500, fontSize: 14 },
+  metaText: { color: colors.text.secondary, fontSize: 14 },
   comedianRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 10 },
   comedianAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: colors.palette.charcoal,
+    borderColor: colors.bg.tertiary,
     marginBottom: 24,
   },
   actionButton: { alignItems: 'center', gap: 4 },
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   relatedCard: { width: 140, borderRadius: 10, overflow: 'hidden' },
   relatedThumb: {
     height: 100,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },

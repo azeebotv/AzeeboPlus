@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { colors } from '../../src/theme';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { lifestyleApi, NightlifeVenue } from '../../src/api/lifestyle';
+import { lifestyleApi, NightlifeVenue } from '@azeebo/react-data/api/lifestyle';
 
 const CATEGORIES = ['All', 'Bars', 'Clubs', 'Lounges', 'Rooftops', 'Lounge'];
 

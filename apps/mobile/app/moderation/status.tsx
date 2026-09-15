@@ -3,9 +3,9 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, useColorScheme } fr
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { colors } from '../../src/theme';
-import { moderationApi, Report } from '../../src/api/moderation';
+import { moderationApi, Report } from '@azeebo/react-data/api/moderation';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
-import { logger } from '../../src/utils/logger';
+import { logger } from '@azeebo/react-data/utils/logger';
 
 type StatusFilter = 'all' | 'pending' | 'reviewing' | 'resolved' | 'dismissed';
 

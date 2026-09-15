@@ -12,9 +12,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { colors } from '../../src/theme';
-import { moderationApi, ReportReason } from '../../src/api/moderation';
+import { moderationApi, ReportReason } from '@azeebo/react-data/api/moderation';
 import { LoadingState, ErrorState, SuccessState } from '../../src/components/StateContainers';
-import { logger } from '../../src/utils/logger';
+import { logger } from '@azeebo/react-data/utils/logger';
 
 const REPORT_REASONS: ReportReason[] = [
   { id: 'spam', label: 'Spam or misleading' },

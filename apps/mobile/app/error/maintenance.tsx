@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 16,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: 1.6,
     marginBottom: 24,
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 14,
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
     textAlign: 'center',
   },
 });

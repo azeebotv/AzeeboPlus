@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { NotificationTemplate } from '@/lib/admin-types';
+import { unwrapList } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 function getTypeStyle(type: string): { bg: string; color: string } {
@@ -33,7 +34,7 @@ export default function AnnouncementsPage() {
     queryKey: ['admin', 'announcements'],
     queryFn: async () => {
       const res = await adminApi.getNotificationTemplates();
-      return res.success ? (res.data as NotificationTemplate[]) : [];
+      return res.success ? unwrapList<NotificationTemplate>(res.data).items : [];
     },
   });
 

@@ -17,6 +17,7 @@ import { FeatureFlagModule } from '@azeebo/feature-flags';
 import { authFlags, subscriptionFlags } from '@azeebo/feature-flags';
 import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 import { SocialAuthModule } from './modules/social-auth/social-auth.module.js';
+import { DeviceLinkModule } from './modules/device-link/device-link.module.js';
 
 @Module({
   imports: [
@@ -53,6 +54,9 @@ import { SocialAuthModule } from './modules/social-auth/social-auth.module.js';
         [authFlags.otpSms]: true,
         [authFlags.passwordlessMagicLink]: false,
         [authFlags.deviceLimits]: false,
+        // Device-link TV sign-in: default OFF until the /link activation page
+        // and TV sign-in screen ship to users.
+        [authFlags.deviceLink]: false,
         [authFlags.refreshRotation]: true,
         [authFlags.emailVerificationRequired]: false,
         [authFlags.roleSelect]: true,
@@ -62,6 +66,7 @@ import { SocialAuthModule } from './modules/social-auth/social-auth.module.js';
       },
     }),
     SocialAuthModule,
+    DeviceLinkModule,
   ],
   providers: [
     {

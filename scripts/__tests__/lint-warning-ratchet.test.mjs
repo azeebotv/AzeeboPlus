@@ -22,7 +22,13 @@ const {
   countWarnings,
   validateBaseline,
   compare,
+  buildBaselineRecord,
+  resolveRatchetRules,
+  RULE,
 } = await import('../check-lint-warning-ratchet.mjs');
+
+import { fileURLToPath } from 'node:url';
+const REPO_ROOT = fileURLToPath(new URL('../..', import.meta.url));
 
 // ---------------------------------------------------------------------------
 // parseLintDirs
@@ -237,6 +243,71 @@ test('validateBaseline rejects rule, shape, count, and total mismatches', () => 
   assert.match(validateBaseline({ ...GOOD, workspaces: { a: -1 }, total: -1 }), /non-negative integer/);
   assert.match(validateBaseline({ ...GOOD, workspaces: { a: 1.5 }, total: 1.5 }), /non-negative integer/);
   assert.match(validateBaseline({ ...GOOD, total: 99 }), /regenerate with --update/);
+});
+
+// ---------------------------------------------------------------------------
+// buildBaselineRecord / resolveRatchetRules — the multi-rule pieces
+// ---------------------------------------------------------------------------
+
+test('buildBaselineRecord builds the on-disk record (total, workspaces, generatedAt)', () => {
+  const record = buildBaselineRecord('some/rule', new Map([['a', 2], ['b', 1]]), '2026-09-12T00:00:00Z');
+  assert.deepEqual(record, { rule: 'some/rule', generatedAt: '2026-09-12T00:00:00Z', total: 3, workspaces: { a: 2, b: 1 } });
+  assert.equal(validateBaseline(record, 'some/rule'), null, 'round-trips through validation');
+});
+
+test('buildBaselineRecord defaults generatedAt to a parseable timestamp', () => {
+  const record = buildBaselineRecord('some/rule', new Map());
+  assert.ok(!Number.isNaN(new Date(record.generatedAt).getTime()));
+});
+
+test('resolveRatchetRules: the committed config yields the map-and-throw rule with its baseline', () => {
+  const { rules, warnings } = resolveRatchetRules(REPO_ROOT);
+  const ids = rules.map((r) => r.id);
+  assert.ok(ids.includes(RULE), 'require-map-and-throw must stay ratcheted');
+  const mt = rules.find((r) => r.id === RULE);
+  assert.equal(mt.ratchet, 'scripts/lint-warning-baseline.json');
+  assert.equal(warnings.length, 0);
+});
+
+test('resolveRatchetRules: a config with no ratcheted rules is an operator error, not a silent pass', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ratchet-config-'));
+  try {
+    fs.mkdirSync(path.join(root, 'scripts'), { recursive: true });
+    fs.writeFileSync(
+      path.join(root, 'scripts', 'promotion-rules.json'),
+      JSON.stringify({ rules: [{ id: 'a/no-baseline-rule' }] }),
+    );
+    assert.throws(() => resolveRatchetRules(root), /no rule in scripts\/promotion-rules\.json declares a "ratchet"/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('resolveRatchetRules: every returned rule carries a baseline path', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ratchet-config2-'));
+  try {
+    fs.mkdirSync(path.join(root, 'scripts'), { recursive: true });
+    fs.writeFileSync(
+      path.join(root, 'scripts', 'promotion-rules.json'),
+      JSON.stringify({ rules: [{ id: 'a/one', ratchet: 'x.json' }, { id: 'a/two', ratchet: 'y.json' }] }),
+    );
+    // Fixture root has no x.json/y.json — the paths survive as warnings,
+    // but the rules are still returned (the CLI prints the warnings).
+    const { rules } = resolveRatchetRules(root);
+    assert.deepEqual(rules.map((r) => r.id), ['a/one', 'a/two']);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// validateBaseline — per-rule expected id
+// ---------------------------------------------------------------------------
+
+test('validateBaseline checks against the EXPECTED rule id, not a hard-coded one', () => {
+  const other = { rule: 'other/rule', total: 1, workspaces: { a: 1 } };
+  assert.match(validateBaseline(other, RULE), /baseline rule/);
+  assert.equal(validateBaseline(other, 'other/rule'), null);
 });
 
 // ---------------------------------------------------------------------------

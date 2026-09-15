@@ -76,7 +76,7 @@ export default function CreatorChallengesPage(): React.JSX.Element {
   return (
     <div
       style={{
-        backgroundColor: 'var(--brand-near-black, #0b090e)',
+        backgroundColor: 'var(--bg-primary)',
         minHeight: '100vh',
         color: 'var(--text-primary)',
       }}
@@ -153,7 +153,7 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                   style={{
                     padding: 20,
                     borderRadius: 16,
-                    backgroundColor: '#18151e',
+                    backgroundColor: 'var(--bg-tertiary)',
                     border: '1px solid rgba(255,255,255,0.08)',
                   }}
                 >
@@ -188,7 +188,7 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                     padding: 20,
                     borderRadius: 16,
                     border: '1px solid rgba(255,255,255,0.08)',
-                    backgroundColor: '#18151e',
+                    backgroundColor: 'var(--bg-tertiary)',
                   }}
                 >
                   <div
@@ -326,7 +326,7 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                 style={{
                   padding: 20,
                   borderRadius: 16,
-                  backgroundColor: '#18151e',
+                  backgroundColor: 'var(--bg-tertiary)',
                   border: '1px solid rgba(255,255,255,0.08)',
                 }}
               >
@@ -353,7 +353,7 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                   padding: 20,
                   borderRadius: 16,
                   border: '1px solid rgba(255,255,255,0.08)',
-                  backgroundColor: '#18151e',
+                  backgroundColor: 'var(--bg-tertiary)',
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -426,7 +426,7 @@ export default function CreatorChallengesPage(): React.JSX.Element {
             >
               <div
                 style={{
-                  backgroundColor: '#18151e',
+                  backgroundColor: 'var(--bg-tertiary)',
                   borderRadius: 20,
                   padding: 28,
                   maxWidth: 480,
@@ -491,7 +491,7 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                     padding: '12px 14px',
                     borderRadius: 10,
                     border: '1px solid rgba(255,255,255,0.08)',
-                    backgroundColor: '#100e14',
+                    backgroundColor: 'var(--bg-secondary)',
                     color: '#FFFFFF',
                     fontSize: 14,
                     marginBottom: 16,
@@ -519,7 +519,7 @@ export default function CreatorChallengesPage(): React.JSX.Element {
                     padding: '12px 14px',
                     borderRadius: 10,
                     border: '1px solid rgba(255,255,255,0.08)',
-                    backgroundColor: '#100e14',
+                    backgroundColor: 'var(--bg-secondary)',
                     color: '#FFFFFF',
                     fontSize: 14,
                     marginBottom: 20,

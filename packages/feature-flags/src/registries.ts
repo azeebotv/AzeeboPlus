@@ -82,6 +82,7 @@ export const authFlags = {
   otpSms: 'auth_otp_sms',
   passwordlessMagicLink: 'auth_passwordless_magic_link',
   deviceLimits: 'auth_device_limits',
+  deviceLink: 'auth_device_link',
   refreshRotation: 'auth_refresh_rotation',
   emailVerificationRequired: 'auth_email_verification_required',
   roleSelect: 'auth_role_select',
@@ -299,6 +300,12 @@ export const mobileFlags = {
   lowDataDefault: 'mobile_low_data_default',
   pushEnabled: 'mobile_push_enabled',
   biometricAuth: 'mobile_biometric_auth',
+} as const;
+
+export const tvFlags = {
+  /** Auto-start playback when the watch screen loads (ops can turn it off
+   * without a store release, mirroring mobile_autoplay / web_autoplay). */
+  autoplay: 'tv_autoplay',
 } as const;
 
 export const adminFlags = {

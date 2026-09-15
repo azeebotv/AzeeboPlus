@@ -60,7 +60,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
     return (
       <div
         style={{
-          backgroundColor: 'var(--brand-near-black, #0b090e)',
+          backgroundColor: 'var(--bg-primary)',
           minHeight: '100vh',
           color: 'var(--text-primary, #F5F0EB)',
         }}
@@ -77,7 +77,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
   return (
     <div
       style={{
-        backgroundColor: 'var(--brand-near-black, #0b090e)',
+        backgroundColor: 'var(--bg-primary)',
         minHeight: '100vh',
         color: 'var(--text-primary, #F5F0EB)',
       }}
@@ -158,7 +158,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                   padding: 20,
                   borderRadius: 16,
                   border: '1px solid rgba(255,255,255,0.08)',
-                  backgroundColor: '#18151e',
+                  backgroundColor: 'var(--bg-tertiary)',
                   position: 'relative',
                   overflow: 'hidden',
                 }}
@@ -198,7 +198,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                   padding: 20,
                   borderRadius: 16,
                   border: '1px solid rgba(255,255,255,0.08)',
-                  backgroundColor: '#18151e',
+                  backgroundColor: 'var(--bg-tertiary)',
                   position: 'relative',
                   overflow: 'hidden',
                 }}
@@ -238,7 +238,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                   padding: 20,
                   borderRadius: 16,
                   border: '1px solid rgba(255,255,255,0.08)',
-                  backgroundColor: '#18151e',
+                  backgroundColor: 'var(--bg-tertiary)',
                   position: 'relative',
                   overflow: 'hidden',
                 }}
@@ -278,7 +278,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                   padding: 20,
                   borderRadius: 16,
                   border: '1px solid rgba(255,255,255,0.08)',
-                  backgroundColor: '#18151e',
+                  backgroundColor: 'var(--bg-tertiary)',
                   position: 'relative',
                   overflow: 'hidden',
                 }}
@@ -329,7 +329,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                       padding: 16,
                       borderRadius: 16,
                       border: '1px solid rgba(255,255,255,0.08)',
-                      backgroundColor: '#18151e',
+                      backgroundColor: 'var(--bg-tertiary)',
                     }}
                   >
                     {item.thumbnail && (
@@ -370,7 +370,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                     padding: 20,
                     borderRadius: 16,
                     border: '1px solid rgba(255,255,255,0.08)',
-                    backgroundColor: '#18151e',
+                    backgroundColor: 'var(--bg-tertiary)',
                   }}
                 >
                   <div
@@ -396,7 +396,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                     padding: 20,
                     borderRadius: 16,
                     border: '1px solid rgba(255,255,255,0.08)',
-                    backgroundColor: '#18151e',
+                    backgroundColor: 'var(--bg-tertiary)',
                   }}
                 >
                   <div
@@ -422,7 +422,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                     padding: 20,
                     borderRadius: 16,
                     border: '1px solid rgba(255,255,255,0.08)',
-                    backgroundColor: '#18151e',
+                    backgroundColor: 'var(--bg-tertiary)',
                   }}
                 >
                   <div
@@ -448,7 +448,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                     padding: 20,
                     borderRadius: 16,
                     border: '1px solid rgba(255,255,255,0.08)',
-                    backgroundColor: '#18151e',
+                    backgroundColor: 'var(--bg-tertiary)',
                   }}
                 >
                   <div
@@ -480,7 +480,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                   padding: 20,
                   borderRadius: 16,
                   border: '1px solid rgba(255,255,255,0.08)',
-                  backgroundColor: '#18151e',
+                  backgroundColor: 'var(--bg-tertiary)',
                 }}
               >
                 <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 14, marginBottom: 12 }}>
@@ -501,7 +501,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                         style={{
                           flex: 1,
                           height: 8,
-                          backgroundColor: '#100e14',
+                          backgroundColor: 'var(--bg-secondary)',
                           borderRadius: 4,
                           overflow: 'hidden',
                         }}

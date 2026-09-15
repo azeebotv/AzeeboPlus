@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -16,7 +16,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { colors, typography, spacing, shadows } from '../src/theme';
 import { BrandButton } from '../src/components/ui';
 import { AmbientGlow, FadeIn, ScrollReveal } from '../src/components/motion';
-import { useAuth } from '../src/contexts/AuthContext';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -26,6 +26,7 @@ export default function SplashScreen() {
   const { isAuthenticated, isLoading } = useAuth();
   const [progress, setProgress] = useState(0);
   const [showContent, setShowContent] = useState(false);
+  const routeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const logoScale = useSharedValue(0.6);
   const logoOpacity = useSharedValue(0);
@@ -63,28 +64,44 @@ export default function SplashScreen() {
   }, [featuresOpacity, featuresTranslate, logoOpacity, logoScale]);
 
   useEffect(() => {
-    if (!showContent || isLoading) return;
-    // Fake progress is display-only; routing waits for real auth resolution.
-    // Authenticated users go straight to the tabs — the previous code sent
-    // everyone to login unless they happened to press a button.
+    if (!showContent) return;
+    // M12: the bar is display-only, but it must not *claim* completion while
+    // auth is still restoring — it holds at 90% until isLoading resolves,
+    // then finishes and routes. Route scheduling lives in this effect so a
+    // pending route is always cancelled if auth state changes underneath it
+    // (the old version scheduled a fire-and-forget timeout that survived
+    // effect re-runs and could route with stale auth state).
+    const cap = isLoading ? 90 : 100;
+    let scheduled = false;
     const interval = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setTimeout(() => {
-            if (isAuthenticated) {
-              router.replace('/(tabs)');
-            } else {
-              router.replace('/(auth)/login');
+        if (prev >= cap) {
+          if (!scheduled) {
+            scheduled = true;
+            clearInterval(interval);
+            if (cap === 100) {
+              routeTimerRef.current = setTimeout(() => {
+                if (isAuthenticated) {
+                  router.replace('/(tabs)');
+                } else {
+                  router.replace('/(auth)/login');
+                }
+              }, 400);
             }
-          }, 400);
-          return 100;
+          }
+          return cap;
         }
         return prev + 2;
       });
     }, 30);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (routeTimerRef.current) {
+        clearTimeout(routeTimerRef.current);
+        routeTimerRef.current = null;
+      }
+    };
   }, [showContent, isLoading, isAuthenticated, router]);
 
   const logoAnimatedStyle = useAnimatedStyle(() => ({
@@ -148,24 +165,45 @@ export default function SplashScreen() {
         </View>
 
         <FadeIn delay={800}>
-          <BrandButton
-            title="Get Started"
-            onPress={() => router.replace('/(auth)/login')}
-            variant="primary"
-          />
+          {/* Auth-aware CTAs: a signed-in user landing here (deep link, stale
+              route, back-swipe from tabs) goes home instead of losing their
+              session context by being pushed into the auth stack. */}
+          {isAuthenticated ? (
+            <BrandButton
+              title="Continue to Azeebo+"
+              onPress={() => router.replace('/(tabs)')}
+              variant="primary"
+            />
+          ) : (
+            <BrandButton
+              title="Get Started"
+              onPress={() => router.replace('/(auth)/login')}
+              variant="primary"
+            />
+          )}
 
           <View style={styles.bottomLinks}>
-            <BrandButton
-              title="Sign In"
-              onPress={() => router.replace('/(auth)/login')}
-              variant="ghost"
-            />
-            <Text style={styles.divider}>|</Text>
-            <BrandButton
-              title="Sign Up"
-              onPress={() => router.replace('/(auth)/register')}
-              variant="ghost"
-            />
+            {isAuthenticated ? (
+              <BrandButton
+                title="Go to Home"
+                onPress={() => router.replace('/(tabs)')}
+                variant="ghost"
+              />
+            ) : (
+              <>
+                <BrandButton
+                  title="Sign In"
+                  onPress={() => router.replace('/(auth)/login')}
+                  variant="ghost"
+                />
+                <Text style={styles.divider}>|</Text>
+                <BrandButton
+                  title="Sign Up"
+                  onPress={() => router.replace('/(auth)/register')}
+                  variant="ghost"
+                />
+              </>
+            )}
           </View>
         </FadeIn>
       </Animated.View>

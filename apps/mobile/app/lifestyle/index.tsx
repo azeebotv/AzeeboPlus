@@ -5,8 +5,8 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { apiClient } from '../../src/api/client';
-import { ApiResponse } from '../../src/types/api';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { ApiResponse } from '@azeebo/react-data/types/api';
 import { analytics } from '../../src/utils/analytics';
 import { colors } from '../../src/theme';
 
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
   },
   universeLabel: {
     fontSize: 14,
-    color: colors.palette.sky,
+    color: colors.category.blue,
     fontWeight: '600',
     marginBottom: 4,
   },
@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   categoryCount: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 11,
   },
   section: {
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   seeAllText: {
-    color: colors.palette.sky,
+    color: colors.category.blue,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
   },
   featuredImagePlaceholder: {
     height: 140,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -425,7 +425,7 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   featuredCategory: {
-    color: colors.palette.sky,
+    color: colors.category.blue,
     fontSize: 11,
     fontWeight: '600',
     marginBottom: 4,
@@ -449,7 +449,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: colors.palette.sky,
+    backgroundColor: colors.category.blue,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -462,7 +462,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 8,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -478,7 +478,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   trendingViews: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 12,
   },
   creatorsList: {
@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
@@ -510,12 +510,12 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   creatorFollowers: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 11,
     marginBottom: 10,
   },
   followButton: {
-    backgroundColor: colors.palette.sky,
+    backgroundColor: colors.category.blue,
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 6,
@@ -532,7 +532,7 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
     backgroundColor: '#1a1a1a',
     borderTopWidth: 1,
-    borderTopColor: colors.palette.charcoal,
+    borderTopColor: colors.bg.tertiary,
   },
   navItem: {
     alignItems: 'center',
@@ -543,6 +543,6 @@ const styles = StyleSheet.create({
   },
   navLabel: {
     fontSize: 11,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
   },
 });

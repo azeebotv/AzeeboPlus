@@ -1,13 +1,40 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
-import type { PaymentGateway } from '@/lib/admin-types';
+import type { PaymentGateway, WebhookEvent } from '@/lib/admin-types';
 import { Icon } from '@/components/Icons';
 
 export default function PaymentGatewaysPage() {
   const queryClient = useQueryClient();
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<PaymentGateway | null>(null);
+  const [expandedGatewayId, setExpandedGatewayId] = useState<string | null>(null);
+  const [webhooksMap, setWebhooksMap] = useState<Record<string, WebhookEvent[]>>({});
+  const [loadingWebhooks, setLoadingWebhooks] = useState<string | null>(null);
+
+  const fetchWebhooks = async (id: string) => {
+    if (expandedGatewayId === id) {
+      setExpandedGatewayId(null);
+      return;
+    }
+    setExpandedGatewayId(id);
+    if (!webhooksMap[id]) {
+      setLoadingWebhooks(id);
+      try {
+        const res = await adminApi.getGatewayWebhooks(id, 20);
+        if (res.success && res.data) {
+          setWebhooksMap((prev) => ({
+            ...prev,
+            [id]: (res.data as { items: WebhookEvent[] }).items || [],
+          }));
+        }
+      } catch (err) {
+        setWebhooksMap((prev) => ({ ...prev, [id]: [] }));
+      } finally {
+        setLoadingWebhooks(null);
+      }
+    }
+  };
   const [form, setForm] = useState({ provider: '', name: '', mode: 'test' as 'live' | 'test' });
 
   const {
@@ -254,7 +281,107 @@ export default function PaymentGatewaysPage() {
                 >
                   {g.isEnabled ? 'Disable' : 'Enable'}
                 </button>
+                <button
+                  onClick={() => fetchWebhooks(g.id)}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 8,
+                    border: '1px solid var(--admin-border)',
+                    background: expandedGatewayId === g.id ? 'var(--admin-surface)' : 'transparent',
+                    color: expandedGatewayId === g.id ? 'var(--admin-orange)' : 'var(--admin-text-muted)',
+                    fontSize: 12,
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {expandedGatewayId === g.id ? 'Hide Logs' : 'Webhooks'}
+                </button>
               </div>
+
+              {/* Webhook Events Log Panel */}
+              {expandedGatewayId === g.id && (
+                <div
+                  style={{
+                    marginTop: 16,
+                    paddingTop: 16,
+                    borderTop: '1px solid var(--admin-card)',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--admin-text)' }}>
+                      Recent Webhook Events
+                    </p>
+                    <span style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>
+                      {webhooksMap[g.id]?.length ?? 0} events
+                    </span>
+                  </div>
+
+                  {loadingWebhooks === g.id ? (
+                    <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', textAlign: 'center', padding: 12 }}>
+                      Loading events...
+                    </p>
+                  ) : (webhooksMap[g.id]?.length ?? 0) === 0 ? (
+                    <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', textAlign: 'center', padding: 12 }}>
+                      No recent webhook events for this gateway.
+                    </p>
+                  ) : (
+                    <div style={{ maxHeight: 200, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {webhooksMap[g.id]?.map((evt) => (
+                        <div
+                          key={evt.id}
+                          style={{
+                            padding: '8px 10px',
+                            borderRadius: 8,
+                            backgroundColor: 'var(--admin-dark)',
+                            border: '1px solid rgba(255,255,255,0.05)',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            fontSize: 12,
+                          }}
+                        >
+                          <div>
+                            <span style={{ fontWeight: 600, color: 'var(--admin-text)' }}>
+                              {evt.eventType}
+                            </span>
+                            <span style={{ color: 'var(--admin-text-muted)', marginLeft: 8 }}>
+                              {evt.reference.slice(0, 14)}...
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontWeight: 600, color: 'var(--admin-emerald)' }}>
+                              {evt.currency} {evt.amount.toLocaleString()}
+                            </span>
+                            <span
+                              style={{
+                                padding: '2px 6px',
+                                borderRadius: 4,
+                                fontSize: 10,
+                                fontWeight: 600,
+                                textTransform: 'uppercase',
+                                backgroundColor:
+                                  evt.status === 'success'
+                                    ? 'rgba(16,185,129,0.2)'
+                                    : evt.status === 'failed'
+                                      ? 'rgba(239,68,68,0.2)'
+                                      : 'rgba(245,158,11,0.2)',
+                                color:
+                                  evt.status === 'success'
+                                    ? 'var(--admin-emerald)'
+                                    : evt.status === 'failed'
+                                      ? 'var(--admin-red)'
+                                      : 'var(--admin-amber)',
+                              }}
+                            >
+                              {evt.status}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ))}
           {gateways.length === 0 && (

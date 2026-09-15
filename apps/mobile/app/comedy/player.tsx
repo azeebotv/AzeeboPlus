@@ -14,8 +14,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAzeeboVideoPlayer } from '../../src/hooks/useVideoPlayer';
-import { contentApi, type ContentItem } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { contentApi, type ContentItem } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 import { analytics } from '../../src/utils/analytics';
 import { colors } from '../../src/theme';
@@ -37,6 +37,9 @@ export default function ComedyClipPlayer() {
   const { isPlaying, isBuffering, currentTime, duration, player, togglePlay, formatTime } =
     useAzeeboVideoPlayer({
       contentId: clip?.id || '',
+      title: clip?.title,
+      ownerPath: '/comedy/player',
+      screenKey: '/comedy/player',
     });
 
   const fetchClip = useCallback(async () => {
@@ -363,7 +366,7 @@ const styles = StyleSheet.create({
   },
   relatedThumbnail: {
     height: 100,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -446,7 +449,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   statText: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 13,
   },
   creatorRow: {
@@ -462,7 +465,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -474,7 +477,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   creatorMeta: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 12,
     marginTop: 2,
   },
@@ -487,7 +490,7 @@ const styles = StyleSheet.create({
   followButtonActive: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: colors.palette.grey500,
+    borderColor: colors.neutral[500],
   },
   followButtonText: {
     color: '#fff',
@@ -495,7 +498,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   followButtonTextActive: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
   },
   description: {
     fontSize: 14,
@@ -509,13 +512,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   tag: {
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
   },
   tagText: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 12,
   },
   actionsRow: {
@@ -525,7 +528,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: colors.palette.charcoal,
+    borderColor: colors.bg.tertiary,
   },
   actionButton: {
     alignItems: 'center',
@@ -535,7 +538,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
   },
   actionText: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 11,
   },
   commentsSection: {
@@ -554,7 +557,7 @@ const styles = StyleSheet.create({
   },
   commentInput: {
     flex: 1,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,

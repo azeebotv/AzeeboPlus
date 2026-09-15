@@ -12,7 +12,10 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public, InternalSecretGuard, RateLimitGuard, RateLimit } from '@azeebo/security';
 import { WalletService } from '../wallet/wallet.service.js';
 import { PrismaService } from '../database/prisma.service.js';
-import { InternalDebitWalletDto, InternalCreditWalletDto } from '../wallet/dto/wallet-operation.dto.js';
+import {
+  InternalDebitWalletDto,
+  InternalCreditWalletDto,
+} from '../wallet/dto/wallet-operation.dto.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
 /**

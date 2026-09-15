@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { readFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { PrismaService } from '../../database/prisma.service';
+import { buildServiceStampHeaders } from '../../common/upstream-auth.middleware';
 
 export interface OpsCheck {
   ok: boolean;
@@ -326,6 +327,11 @@ export class OpsService {
     const results = await Promise.allSettled(
       creators.map(async (c) => {
         const res = await fetch(`${CREATOR_SVC}/v1/creators/tips/stats/${c.id}`, {
+          // creator-service runs the global ServiceAuthGuard: bare probes
+          // 401 and every creator would silently show zero tips. Forward the
+          // caller's identity (request context) or a service stamp
+          // (background callers).
+          headers: buildServiceStampHeaders(),
           signal: AbortSignal.timeout(4_000),
         });
         if (!res.ok) throw new Error(`stats ${res.status}`);
@@ -857,4 +863,48 @@ export class OpsService {
       strictMode: false, // surfacing the flag state would need a flag-service call; the gauge's max label already reflects the effective limit
     };
   }
+
+  // ─── Tipping Platform Configuration ──────────────────────────────────────────
+
+  async getTippingConfig() {
+    const key = 'tipping.platform_config';
+    const row = await this.prisma.systemSettings.findUnique({ where: { key } });
+    const val = row?.value as Record<string, unknown> | null;
+    return {
+      platformCommissionPct: typeof val?.platformCommissionPct === 'number' ? val.platformCommissionPct : 10,
+      maxTipAmount: typeof val?.maxTipAmount === 'number' ? val.maxTipAmount : 500000,
+      currency: typeof val?.currency === 'string' ? val.currency : 'NGN',
+      updatedAt: row?.updatedAt?.toISOString() || new Date().toISOString(),
+    };
+  }
+
+  async updateTippingConfig(cfg: { platformCommissionPct?: number; maxTipAmount?: number; currency?: string }) {
+    const key = 'tipping.platform_config';
+    const current = await this.getTippingConfig();
+    const updated = {
+      ...current,
+      ...cfg,
+      updatedAt: new Date().toISOString(),
+    };
+
+    const existing = await this.prisma.systemSettings.findUnique({ where: { key } });
+    if (existing) {
+      await this.prisma.systemSettings.update({
+        where: { key },
+        data: { value: updated },
+      });
+    } else {
+      await this.prisma.systemSettings.create({
+        data: {
+          key,
+          value: updated,
+          category: 'monetization',
+          description: 'Platform commission and max limit config for creator tipping',
+          isPublic: false,
+        },
+      });
+    }
+    return updated;
+  }
 }
+

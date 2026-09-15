@@ -224,6 +224,28 @@ export class UserManagementService {
     };
   }
 
+  async bulkSuspend(
+    userIds: string[],
+    reason: string,
+    suspendedBy: string,
+    durationDays?: number,
+    ipAddress?: string
+  ): Promise<{ suspended: number; failed: number }> {
+    let suspended = 0;
+    let failed = 0;
+
+    for (const id of userIds) {
+      try {
+        await this.suspendUser(id, reason, suspendedBy, durationDays, ipAddress);
+        suspended++;
+      } catch (err) {
+        failed++;
+      }
+    }
+
+    return { suspended, failed };
+  }
+
   async revokeSuspension(
     userId: string,
     revokedBy: string,

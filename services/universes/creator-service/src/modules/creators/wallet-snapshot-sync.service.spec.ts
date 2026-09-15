@@ -46,11 +46,7 @@ const balancePage = (balance: number | string, currency = 'NGN') => ({
   data: { success: true, data: { balance, bonusBalance: 0, promoBalance: 0, currency } },
 });
 
-const walletEvent = (
-  type: string,
-  userId: string | undefined,
-  id = 'evt-1'
-): DomainEvent => ({
+const walletEvent = (type: string, userId: string | undefined, id = 'evt-1'): DomainEvent => ({
   id,
   type,
   source: 'wallet-service',
@@ -120,8 +116,7 @@ describe('WalletSnapshotSyncService', () => {
             if (key === 'INTERNAL_API_KEY') return 'test-internal-key';
             throw new Error(`Unexpected getOrThrow for ${key}`);
           },
-          get: (key: string) =>
-            key === 'GATEWAY_SECRET' ? 'test-gateway-secret' : undefined,
+          get: (key: string) => (key === 'GATEWAY_SECRET' ? 'test-gateway-secret' : undefined),
         },
       },
     ];
@@ -271,21 +266,14 @@ describe('WalletSnapshotSyncService', () => {
         )
       );
 
-      await expect(service.syncWalletForUser('user-404')).rejects.toBeInstanceOf(
-        NotFoundException
-      );
+      await expect(service.syncWalletForUser('user-404')).rejects.toBeInstanceOf(NotFoundException);
     });
 
     it('wraps transport failures in ServiceUnavailableException', async () => {
-      mockedAxiosRequest.mockRejectedValue(
-        new AxiosError(
-          'socket hang up',
-          'ECONNRESET',
-          undefined,
-          undefined,
-          { status: 503 } as AxiosResponse
-        )
-      );
+      // A real transport failure has no HTTP response — the connection dies
+      // before one arrives. mapAndThrow classifies ECONNRESET as unreachable
+      // upstream → 503.
+      mockedAxiosRequest.mockRejectedValue(new AxiosError('socket hang up', 'ECONNRESET'));
 
       await expect(service.syncWalletForUser('user-1')).rejects.toBeInstanceOf(
         ServiceUnavailableException

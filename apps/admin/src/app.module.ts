@@ -27,8 +27,9 @@ import { RealityShowsModule } from './modules/reality-shows/reality-shows.module
 import { SubscriptionAdminModule } from './modules/subscription-admin/subscription-admin.module';
 import { AnalyticsProxyModule } from './modules/analytics-proxy/analytics-proxy.module';
 import { LiveEventsProxyModule } from './modules/live-events-proxy/live-events-proxy.module';
+import { SupportAdminModule } from './modules/support-admin/support-admin.module';
 import { ServiceAuthGuard, RateLimiterModule, SecurityModule } from '@azeebo/security';
-import { FeatureFlagModule, queueFlags, adminFlags } from '@azeebo/feature-flags';
+import { FeatureFlagModule, queueFlags, adminFlags, authFlags } from '@azeebo/feature-flags';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { CsrfMiddleware } from './common/csrf.middleware';
 
@@ -44,7 +45,9 @@ import { CsrfMiddleware } from './common/csrf.middleware';
     // flags owned by the queue-service — registering their defaults here makes
     // them visible/tunable in the admin feature-flags page. The admin flags
     // themselves (new dashboard, report builder, bulk actions) are off until
-    // launched.
+    // launched. auth_device_link is cross-service too (owned by auth-service,
+    // gated TV sign-in) — registered here so ops sees and stages it in the
+    // Global Flags page before the first Redis write exists.
     FeatureFlagModule.register({
       global: true,
       defaultValues: {
@@ -57,6 +60,7 @@ import { CsrfMiddleware } from './common/csrf.middleware';
         [adminFlags.reportBuilder]: false,
         [adminFlags.bulkActions]: false,
         [adminFlags.governanceDashboard]: false,
+        [authFlags.deviceLink]: false,
       },
     }),
     FeatureFlagsModule,
@@ -66,6 +70,7 @@ import { CsrfMiddleware } from './common/csrf.middleware';
     SubscriptionAdminModule,
     AnalyticsProxyModule,
     LiveEventsProxyModule,
+    SupportAdminModule,
     AuthModule,
     DatabaseModule,
     UserManagementModule,

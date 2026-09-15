@@ -192,7 +192,12 @@ module.exports = [
       // packages/eslint-rules/README.md); CI keeps a tripwire
       // (scripts/check-rule-promotion.mjs) that fails if the rule is ever
       // weakened below `error` for a service.
-      'azeebo-custom/require-map-and-throw': 'error',
+      // ...and plain Error throws in catch blocks too (banPlainErrors):
+      // they collapse every cause into an uninformative 500 and lose the
+      // cause. Cause-inspected branches (instanceof ladders that classify
+      // before throwing) and non-HTTP contexts carry the
+      // allowed-fabricated-4xx marker; see packages/eslint-rules/README.md.
+      'azeebo-custom/require-map-and-throw': ['error', { banPlainErrors: true }],
       'azeebo-custom/no-hex-colors': [
         'error',
         {
@@ -285,33 +290,14 @@ module.exports = [
       ],
     },
   },
-  // ---------------------------------------------------------------------------
-  // MIGRATING: apps/web design-token migration (no-hex-colors).
-  //
-  // Web tsx files use `var(--token, #hex)` fallbacks whose raw values are the
-  // page/surface palette already defined in apps/web/src/app/globals.css
-  // (--brand-near-black #0b090e, --brand-surface #18151e, --bg-secondary
-  // #100e14) — so the hexes were allow-listed. The allow-list entries are now
-  // TRIMMED and this block warns while the fallbacks are replaced with plain
-  // `var(--token)` references; the ratchet (scripts/no-hex-colors-baseline.json)
-  // floors the count and the scorecard tracks it. Everywhere else the rule is
-  // `error` (base config above). When the last fallback is converted, DELETE
-  // this block — the base config is already the steady state.
-  //
-  // (Flat config: a block rule entry REPLACES the base entry, so the trimmed
-  // allow-list options are repeated here — they share HEX_ALLOW_LIST above.)
-  {
-    files: ['apps/web/src/**/*.ts', 'apps/web/src/**/*.tsx'],
-    rules: {
-      'azeebo-custom/no-hex-colors': [
-        'warn',
-        {
-          allowList: HEX_ALLOW_LIST,
-          allowTransparent: true,
-        },
-      ],
-    },
-  },
+  // HISTORY: this block was the migrating warn scope of the apps/web
+  // design-token migration (no-hex-colors): `var(--token, #hex)` fallbacks
+  // and raw surface/art hexes converted to the themed --bg-*/text families
+  // plus fixed-art --hp-*/--music-purple tokens (see globals.css). With the
+  // last site converted the block was deleted; the base config above is the
+  // steady state, the no-hex baseline sits at total 0 as a canary, and
+  // scripts/check-rule-promotion.mjs fails if the rule is ever weakened for
+  // any workspace. See packages/eslint-rules/README.md.
 
   // HISTORY: this block was the per-service error gate of the
   // require-map-and-throw migration (one glob per converted service). With

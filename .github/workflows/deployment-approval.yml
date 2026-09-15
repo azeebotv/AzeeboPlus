@@ -19,6 +19,9 @@ on:
         required: false
         default: ''
 
+# Identity audit (docs/WORKFLOW_IDENTITIES.md): the gh call here is read-only
+# (gh run view) — the workflow token is correct; no App identity needed. The
+# approval gate itself is GitHub Environment protection rules, not this token.
 permissions:
   contents: read
   actions: read

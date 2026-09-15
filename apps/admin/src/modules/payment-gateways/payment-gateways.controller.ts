@@ -28,4 +28,9 @@ export class PaymentGatewaysController {
     if (!result) throw new NotFoundException(`Unknown gateway: ${id}`);
     return result;
   }
+
+  @Get(':id/webhooks')
+  async getWebhooks(@Param('id') id: string) {
+    return this.gatewaysService.getWebhookEvents(id);
+  }
 }

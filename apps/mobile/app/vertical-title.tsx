@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'rea
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { apiClient } from '../src/api/client';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import { analytics } from '../src/utils/analytics';
 import { defaultImages, colors } from '../src/theme';
@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
-    backgroundColor: colors.palette.grey800,
+    backgroundColor: colors.bg.tertiary,
   },
   followButtonActive: {
     backgroundColor: '#E8420A',
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 8,
-    backgroundColor: colors.palette.grey800,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
   tabsContainer: {
     backgroundColor: '#1a1a1a',
     borderBottomWidth: 1,
-    borderBottomColor: colors.palette.charcoal,
+    borderBottomColor: colors.bg.tertiary,
   },
   tabs: {
     flexDirection: 'row',
@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E8420A',
   },
   tabText: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -471,7 +471,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: colors.palette.grey800,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
@@ -483,7 +483,7 @@ const styles = StyleSheet.create({
   },
   castName: {
     fontSize: 12,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     textAlign: 'center',
   },
   charactersList: {
@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 12,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -523,12 +523,12 @@ const styles = StyleSheet.create({
   },
   characterActor: {
     fontSize: 12,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     marginBottom: 6,
   },
   characterDescription: {
     fontSize: 13,
-    color: colors.palette.grey400,
+    color: colors.neutral[400],
     lineHeight: 18,
   },
   loreList: {
@@ -562,7 +562,7 @@ const styles = StyleSheet.create({
   },
   loreText: {
     fontSize: 13,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     lineHeight: 20,
   },
   timeline: {},
@@ -582,7 +582,7 @@ const styles = StyleSheet.create({
   timelineLine: {
     width: 2,
     flex: 1,
-    backgroundColor: colors.palette.grey800,
+    backgroundColor: colors.bg.tertiary,
     marginVertical: 8,
   },
   timelineContent: {
@@ -601,7 +601,7 @@ const styles = StyleSheet.create({
   },
   timelineYear: {
     fontSize: 12,
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
   },
   timelineTitle: {
     fontSize: 15,
@@ -610,6 +610,6 @@ const styles = StyleSheet.create({
   },
   timelineDescription: {
     fontSize: 13,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
   },
 });

@@ -136,7 +136,7 @@ export default function AddFundsPage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black, #0b090e)' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
       <AppHeader logoVariant="light" />
       <div className="max-w-2xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">

@@ -107,7 +107,7 @@ export default function PredictionsPage() {
                 className="p-4 rounded-xl"
                 style={{
                   border: '1px solid rgba(255,255,255,0.06)',
-                  backgroundColor: 'var(--brand-surface, #18151e)',
+                  backgroundColor: 'var(--bg-tertiary)',
                 }}
               >
                 <Skeleton width="60%" height="16px" />
@@ -144,7 +144,7 @@ export default function PredictionsPage() {
                   className="p-4 rounded-xl flex items-center justify-between transition-all hover:border-white/20"
                   style={{
                     border: '1px solid rgba(255,255,255,0.08)',
-                    backgroundColor: 'var(--brand-surface, #18151e)',
+                    backgroundColor: 'var(--bg-tertiary)',
                   }}
                 >
                   <div className="flex-1">

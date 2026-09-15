@@ -19,7 +19,6 @@ describe('DashboardController', () => {
               pendingReports: 0,
               activeCreators: 0,
               newUsers: 0,
-              dailyActiveUsers: 0,
               totalViews: 0,
             }),
             getRevenueData: jest.fn().mockResolvedValue([]),
@@ -46,7 +45,6 @@ describe('DashboardController', () => {
     expect(result).toHaveProperty('totalContent');
     expect(result).toHaveProperty('totalRevenue');
     expect(result).toHaveProperty('newUsers');
-    expect(result).toHaveProperty('dailyActiveUsers');
     expect(result).toHaveProperty('totalViews');
   });
 

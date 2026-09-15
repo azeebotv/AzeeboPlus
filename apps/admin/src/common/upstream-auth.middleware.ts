@@ -67,3 +67,34 @@ export const upstreamAuthMiddleware: RequestHandler = (
   }
   next();
 };
+
+/**
+ * Header builder for server-side upstream fetches. Uses the caller's
+ * request-scoped credentials when available; falls back to a service stamp
+ * (x-user-* + x-gateway-secret from env) for background contexts with no
+ * incoming request — bare unauthenticated fetches get 401'd by downstream
+ * services running the global ServiceAuthGuard and silently degrade to
+ * fake zero metrics.
+ *
+ * GATEWAY_SECRET is preferred: it is the secret services actually validate
+ * stamps against (probed live — INTERNAL_API_KEY may differ per service).
+ */
+export function buildServiceStampHeaders(role = 'admin'): Record<string, string> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+
+  const auth = upstreamAuthContext.getStore();
+  if (auth?.authorization) {
+    headers['authorization'] = auth.authorization;
+    return headers;
+  }
+
+  const userId = auth?.userId || 'admin-backend';
+  headers['x-user-id'] = userId;
+  if (auth?.email) headers['x-user-email'] = auth.email;
+  headers['x-user-role'] = auth?.role || role;
+
+  const secret = auth?.gatewaySecret || process.env.GATEWAY_SECRET || process.env.INTERNAL_API_KEY;
+  if (secret) headers['x-gateway-secret'] = secret;
+
+  return headers;
+}

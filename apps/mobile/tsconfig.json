@@ -10,6 +10,12 @@
       "@/*": [
         "./src/*"
       ],
+      "@azeebo/react-data": [
+        "../../packages/react-data/src/index.ts"
+      ],
+      "@azeebo/react-data/*": [
+        "../../packages/react-data/src/*"
+      ],
       "@azeebo/feature-flags/registries": [
         "../../packages/feature-flags/dist/registries"
       ],

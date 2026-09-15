@@ -12,6 +12,8 @@
     "lint": "pnpm -r run lint",
     "check:flags": "node scripts/check-flag-conventions.mjs",
     "check:lint-ratchet": "node scripts/check-lint-warning-ratchet.mjs",
+    "check:rule-promotion": "node scripts/check-rule-promotion.mjs",
+    "lint-scorecard": "node scripts/lint-scorecard.mjs",
     "check:prisma": "node scripts/check-prisma-find-first.mjs",
     "check:prisma-client": "node scripts/check-prisma-client-stale.mjs",
     "check:dev-wiring": "node scripts/check-dev-wiring.mjs",

@@ -5,8 +5,8 @@ import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { apiClient } from '../../src/api/client';
-import { ApiResponse } from '../../src/types/api';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { ApiResponse } from '@azeebo/react-data/types/api';
 import { colors } from '../../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -170,8 +170,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#1a1a1a',
   },
-  periodChipActive: { backgroundColor: colors.palette.plum },
-  periodText: { color: colors.palette.grey500, fontSize: 13, fontWeight: '600' },
+  periodChipActive: { backgroundColor: colors.category.purple },
+  periodText: { color: colors.text.secondary, fontSize: 13, fontWeight: '600' },
   periodTextActive: { color: '#000' },
   listContent: { paddingHorizontal: 16, paddingBottom: 30 },
   topThree: {
@@ -187,14 +187,14 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
   },
   avatarEmoji: { fontSize: 24 },
   topName: { fontSize: 12, fontWeight: '600', marginBottom: 2, textAlign: 'center' },
-  topScore: { color: colors.palette.plum, fontSize: 12, fontWeight: '700' },
+  topScore: { color: colors.category.purple, fontSize: 12, fontWeight: '700' },
   entryRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -206,14 +206,14 @@ const styles = StyleSheet.create({
     width: 40,
     fontSize: 14,
     fontWeight: '700',
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     textAlign: 'center',
   },
   entryAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -221,8 +221,8 @@ const styles = StyleSheet.create({
   entryAvatarEmoji: { fontSize: 20 },
   entryInfo: { flex: 1 },
   entryName: { fontSize: 14, fontWeight: '600', marginBottom: 2 },
-  entryMeta: { color: colors.palette.grey500, fontSize: 11 },
+  entryMeta: { color: colors.text.secondary, fontSize: 11 },
   entryRight: { alignItems: 'flex-end' },
-  entryScore: { color: colors.palette.plum, fontSize: 14, fontWeight: '700', marginBottom: 2 },
+  entryScore: { color: colors.category.purple, fontSize: 14, fontWeight: '700', marginBottom: 2 },
   changeIcon: { fontSize: 12 },
 });

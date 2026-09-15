@@ -1,4 +1,5 @@
 import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { SportsResponse } from './interfaces/sports-response.interface.js';
@@ -268,9 +269,7 @@ export class SportsService {
             compensateError
           );
         });
-      const errorMessage =
-        error instanceof Error ? (error as Error).message : 'Failed to submit prediction';
-      throw new BadRequestException(errorMessage);
+      mapAndThrow(error, 'submitting prediction');
     }
   }
 
@@ -440,9 +439,7 @@ export class SportsService {
         .catch((compensateError: unknown) => {
           this.logger.error('Failed to compensate wallet:', compensateError);
         });
-      const errorMessage =
-        error instanceof Error ? (error as Error).message : 'Failed to enter contest';
-      throw new BadRequestException(errorMessage);
+      mapAndThrow(error, 'entering fan contest');
     }
   }
 

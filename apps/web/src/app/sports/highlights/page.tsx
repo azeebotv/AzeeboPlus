@@ -34,14 +34,14 @@ function HighlightsPageContent(): React.JSX.Element {
   const error = highlightsQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black, #0b090e)' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
       <AppHeader active="Sports" logoVariant="light" />
 
       <section
         className="relative py-16 sm:py-20 overflow-hidden"
         style={{
           background:
-            'radial-gradient(ellipse at top, rgba(232,66,10,0.2) 0%, #100e14 60%, #0b090e 100%)',
+            'radial-gradient(ellipse at top, rgba(232,66,10,0.2) 0%, var(--bg-secondary) 60%, var(--bg-primary) 100%)',
           borderBottom: '1px solid rgba(255,255,255,0.08)',
         }}
       >

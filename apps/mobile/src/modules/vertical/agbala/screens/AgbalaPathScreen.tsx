@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import type { RouteProp } from '@react-navigation/native';
 import { AgbalaEndCard } from '../components/AgbalaEndCard';
 import { colors, typography, spacing } from '../../../../theme';
-import { apiClient } from '../../../../api/client';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, ErrorState } from '../../../../components/StateContainers';
 import type { AgbalaStackParamList } from '../types';
 

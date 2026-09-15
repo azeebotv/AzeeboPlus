@@ -1,9 +1,28 @@
+/**
+ * Shared-instance video player hook — the screen-level face of the global
+ * VideoPlayerProvider (PiP backbone).
+ *
+ * Every player screen (watch, comedy) calls this hook, and they all get the
+ * SAME underlying expo-video player. That is what makes the mini player
+ * work: when the owning screen blurs while playing, the provider flips to
+ * mini mode and the video keeps running over the next screen.
+ *
+ * Semantics:
+ *  - On focus the screen claims the player for its content; blur while
+ *    playing schedules the mini overlay; re-focus dismisses it.
+ *  - While the mini overlay shows THIS content, the screen renders without
+ *    a VideoView (the overlay owns the only surface) and stays quiescent.
+ *  - Progress is flushed on pause, blur, and unmount — including the
+ *    navigate-away-while-playing case, which previously lost the final
+ *    position (Continue Watching resumed from the last 10s tick).
+ */
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { StatusBar as RNStatusBar } from 'react-native';
-import { useVideoPlayer, type VideoPlayer } from 'expo-video';
-import { useEvent } from 'expo';
+import { type VideoPlayer } from 'expo-video';
+import { useFocusEffect } from 'expo-router';
 import * as ScreenOrientation from 'expo-screen-orientation';
-import { contentApi } from '../api';
+import { contentApi, setPlaybackActive, formatTime } from '@azeebo/react-data';
+import { useSharedVideoPlayer } from '../contexts/VideoPlayerContext';
 
 interface UseVideoPlayerOptions {
   contentId: string;
@@ -16,6 +35,12 @@ interface UseVideoPlayerOptions {
    * (tap-to-play) which is the conservative behavior.
    */
   autoPlay?: boolean;
+  /** Title for the mini-player surface. */
+  title?: string;
+  /** Route to open when the user expands the mini player. */
+  ownerPath?: string;
+  /** Stable key identifying the claiming screen (defaults to ownerPath). */
+  screenKey?: string;
 }
 
 interface UseVideoPlayerReturn {
@@ -26,6 +51,11 @@ interface UseVideoPlayerReturn {
   duration: number;
   showControls: boolean;
   error: string | null;
+  /**
+   * Classifies `error`: 'entitlement' means a 403 from the signed-url
+   * endpoint (paywall — offer an upgrade path), 'generic' everything else.
+   */
+  errorKind: 'entitlement' | 'generic';
   videoSource: string | null;
   player: VideoPlayer;
   play: () => void;
@@ -37,6 +67,11 @@ interface UseVideoPlayerReturn {
   toggleFullscreen: () => void;
   setShowControls: (show: boolean) => void;
   formatTime: (seconds: number) => string;
+  /**
+   * True when the mini overlay is showing this content: the screen must NOT
+   * render its own VideoView and must not re-claim the player.
+   */
+  isMiniVisible: boolean;
 }
 
 export function useAzeeboVideoPlayer({
@@ -45,7 +80,21 @@ export function useAzeeboVideoPlayer({
   onProgressUpdate,
   onComplete,
   autoPlay = false,
+  title,
+  ownerPath,
+  screenKey,
 }: UseVideoPlayerOptions): UseVideoPlayerReturn {
+  const {
+    player,
+    claimPlayer,
+    markSourceLoaded,
+    notifyScreenFocus,
+    notifyScreenBlur,
+    miniVisible,
+    active,
+    loadedSource,
+  } = useSharedVideoPlayer();
+
   const hideControlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -55,45 +104,69 @@ export function useAzeeboVideoPlayer({
   const [error, setError] = useState<string | null>(null);
   const [videoSource, setVideoSource] = useState<string | null>(null);
 
-  const player = useVideoPlayer(null, (p) => {
-    p.timeUpdateEventInterval = 1;
-  });
+  const resolvedScreenKey = screenKey ?? ownerPath ?? 'watch';
 
-  const { isPlaying } = useEvent(player, 'playingChange', {
-    isPlaying: player.playing,
-  });
+  // The mini overlay shows this exact content: the overlay owns the surface.
+  const isMiniVisible = miniVisible && active?.contentId === contentId;
 
-  const { status } = useEvent(player, 'statusChange', {
-    status: player.status,
-  });
+  const isCurrentOwner = active?.contentId === contentId;
 
-  const timeUpdate = useEvent(player, 'timeUpdate', {
-    currentTime: player.currentTime,
-    currentLiveTimestamp: null,
-    currentOffsetFromLive: null,
-    targetOffsetFromLive: 0,
-    bufferedPosition: 0,
-  });
+  // ── Progress plumbing ─────────────────────────────────────────
+  const progressRef = useRef(onProgressUpdate);
+  progressRef.current = onProgressUpdate;
+  const lastSavedPositionRef = useRef(0);
 
-  const currentTime = timeUpdate?.currentTime ?? player.currentTime;
-
-  const [duration, setDuration] = useState(0);
-
-  useEffect(() => {
-    if (status === 'readyToPlay') {
-      setDuration(player.duration);
+  const flushProgress = useCallback(() => {
+    const position = player.currentTime;
+    if (progressRef.current && position > 0 && position !== lastSavedPositionRef.current) {
+      lastSavedPositionRef.current = position;
+      progressRef.current(position);
     }
-  }, [status, player]);
+  }, [player]);
+
+  // ── Claim + focus/blur lifecycle ──────────────────────────────
+  useFocusEffect(
+    useCallback(() => {
+      if (isMiniVisible) {
+        // Returning to the owner while minimized: restore full-surface mode
+        // and re-claim; the source is already loaded so playback continues.
+        notifyScreenFocus(resolvedScreenKey);
+        return () => {
+          notifyScreenBlur(resolvedScreenKey);
+        };
+      }
+      claimPlayer({ contentId, title: title ?? 'Now playing', ownerPath: ownerPath ?? '/watch' });
+      notifyScreenFocus(resolvedScreenKey);
+      return () => {
+        notifyScreenBlur(resolvedScreenKey);
+      };
+    }, [contentId, isMiniVisible, resolvedScreenKey])
+  );
+
+  // Title arrives async (content fetch) — sync it into the provider so the
+  // mini card shows the real title. Direct setActive path: safe to run while
+  // focused, unlike a useFocusEffect re-run (whose cleanup would fire blur).
+  useEffect(() => {
+    if (isCurrentOwner && title && active?.title !== title) {
+      claimPlayer({ contentId, title, ownerPath: ownerPath ?? '/watch' });
+    }
+  }, [title, isCurrentOwner]);
+
+  // ── Source loading (only the claiming content loads its URL) ──
+  // M4: a 403 from the signed-url endpoint means the account is not entitled
+  // (premium content, no subscription). Surfaced as errorKind 'entitlement'
+  // so screens can offer an upgrade path instead of a dead-end error.
+  const [errorKind, setErrorKind] = useState<'entitlement' | 'generic'>('generic');
 
   useEffect(() => {
-    if (!contentId) return;
-
+    if (!contentId || !isCurrentOwner) return;
     let cancelled = false;
 
     const fetchSignedUrl = async () => {
       try {
         setIsBuffering(true);
         setError(null);
+        setErrorKind('generic');
         const response = await contentApi.getSignedUrl(contentId);
         if (cancelled) return;
 
@@ -102,10 +175,14 @@ export function useAzeeboVideoPlayer({
         } else {
           setError(response.message || 'Failed to load video');
         }
-      } catch {
-        if (!cancelled) setError('Failed to load video');
-      } finally {
-        if (!cancelled) setIsBuffering(false);
+      } catch (err) {
+        if (cancelled) return;
+        if ((err as { status?: number }).status === 403) {
+          setErrorKind('entitlement');
+          setError('This title is included with Azeebo+ Premium.');
+        } else {
+          setError('Failed to load video');
+        }
       }
     };
 
@@ -113,24 +190,115 @@ export function useAzeeboVideoPlayer({
     return () => {
       cancelled = true;
     };
-  }, [contentId]);
+  }, [contentId, isCurrentOwner]);
+
+  // ── Player events ─────────────────────────────────────────────
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
-    if (!videoSource) return;
+    const sub = player.addListener('playingChange', (event) => {
+      setIsPlaying(event.isPlaying);
+    });
+    return () => sub.remove();
+  }, [player]);
 
+  // Register playback with the shared session-timeout exemption: while this
+  // video is actually playing, the 30-min inactivity logout defers (the mini
+  // player keeps playing across screens where the user isn't "interacting").
+  useEffect(() => {
+    setPlaybackActive(contentId, isPlaying);
+    return () => setPlaybackActive(contentId, false);
+  }, [contentId, isPlaying]);
+
+  const [status, setStatus] = useState(player.status);
+  useEffect(() => {
+    const sub = player.addListener('statusChange', (event) => {
+      setStatus(event.status);
+    });
+    return () => sub.remove();
+  }, [player]);
+
+  const [currentTime, setCurrentTime] = useState(player.currentTime);
+  useEffect(() => {
+    const sub = player.addListener('timeUpdate', (event) => {
+      setCurrentTime(event.currentTime);
+    });
+    return () => sub.remove();
+  }, [player]);
+
+  const [duration, setDuration] = useState(0);
+  useEffect(() => {
+    if (status === 'readyToPlay') {
+      setDuration(player.duration);
+    }
+  }, [status, player]);
+
+  // Pause + flush when the screen minimizes so background playback is an
+  // explicit choice (the overlay's play button), not a default.
+  useEffect(() => {
+    if (miniVisible && isPlaying) {
+      player.pause();
+      flushProgress();
+    }
+  }, [miniVisible]);
+
+  // Flush progress on pause.
+  useEffect(() => {
+    if (!isPlaying) {
+      flushProgress();
+    }
+  }, [isPlaying]);
+
+  // Pause + flush when the screen unmounts entirely (deep navigation while
+  // playing previously dropped the final position on the floor).
+  useEffect(() => {
+    return () => {
+      if (player.playing) {
+        flushProgress();
+        player.pause();
+      }
+    };
+  }, [player]);
+
+  // 10s cadence while playing (previous behavior preserved).
+  useEffect(() => {
+    if (progressRef.current && isPlaying) {
+      progressIntervalRef.current = setInterval(() => {
+        flushProgress();
+      }, 10000);
+    }
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+    };
+  }, [isPlaying, flushProgress]);
+
+  useEffect(() => {
+    const sub = player.addListener('playToEnd', () => {
+      flushProgress();
+      onComplete?.();
+    });
+    return () => sub.remove();
+  }, [player, onComplete, flushProgress]);
+
+  // ── Source swap + resume position ────────────────────────────
+  const autoPlayedSourceRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!videoSource) return;
+    // Expand-from-mini (or re-focus): the provider already has this source
+    // hot in the shared player — replacing it would restart playback from
+    // the resume position. Skip when the source is already loaded.
+    if (loadedSource === videoSource) return;
     player.replaceAsync(videoSource).then(() => {
+      markSourceLoaded(videoSource);
       if (initialProgress > 0) {
         player.currentTime = initialProgress;
       }
     });
-  }, [videoSource, player, initialProgress]);
+  }, [videoSource, loadedSource]);
 
-  // mobile_autoplay (on by default): when the caller passes autoPlay=true
-  // (server flag enabled), start playback as soon as the source is ready.
-  // A ref gate ensures this fires only once per source — without it, any
-  // later status flip (e.g. after a seek) would force playback back on and
-  // fight the user's pause.
-  const autoPlayedSourceRef = useRef<string | null>(null);
+  // mobile_autoplay: start once per source when the caller passes autoPlay.
   useEffect(() => {
     if (
       autoPlay &&
@@ -150,30 +318,29 @@ export function useAzeeboVideoPlayer({
     }
   }, [status]);
 
-  useEffect(() => {
-    if (onProgressUpdate && isPlaying) {
-      progressIntervalRef.current = setInterval(() => {
-        onProgressUpdate(player.currentTime);
-      }, 10000);
-    }
-    // Also flush one final progress update when playback stops so pausing or
-    // leaving mid-video still saves the resume position.
-    if (!isPlaying && onProgressUpdate && player.currentTime > 0) {
-      onProgressUpdate(player.currentTime);
-    }
-    return () => {
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-    };
-  }, [isPlaying, onProgressUpdate, player]);
-
-  useEffect(() => {
-    const sub = player.addListener('playToEnd', () => {
-      onComplete?.();
+  // ── Fullscreen (unchanged semantics, shared player) ──────────
+  const toggleFullscreen = useCallback(() => {
+    setIsFullscreen((prev) => {
+      const next = !prev;
+      RNStatusBar.setHidden(next);
+      const lockPromise = next
+        ? ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT)
+        : ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+      lockPromise.catch(() => {
+        // Rotation lock unsupported (e.g. certain tablets/emulators) —
+        // surface-fullscreen still applies.
+      });
+      return next;
     });
-    return () => sub.remove();
-  }, [player, onComplete]);
+  }, []);
+
+  // Restore portrait + status bar when leaving the screen mid-fullscreen.
+  useEffect(() => {
+    return () => {
+      RNStatusBar.setHidden(false);
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
+    };
+  }, []);
 
   const scheduleHideControls = useCallback(() => {
     if (hideControlsTimeoutRef.current) {
@@ -221,6 +388,7 @@ export function useAzeeboVideoPlayer({
     (time: number) => {
       const clampedTime = Math.max(0, Math.min(time, duration));
       player.currentTime = clampedTime;
+      setCurrentTime(clampedTime);
       onProgressUpdate?.(clampedTime);
     },
     [player, duration, onProgressUpdate]
@@ -240,43 +408,7 @@ export function useAzeeboVideoPlayer({
     [currentTime, seek]
   );
 
-  // Fullscreen stretches the player surface over the whole screen, locks the
-  // device to landscape and hides the status bar. Exiting restores portrait
-  // and the status bar. The lock is async and best-effort: a failed lock
-  // still enters surface-fullscreen (the video covers the screen), we just
-  // don't force the rotation.
-  const toggleFullscreen = useCallback(() => {
-    setIsFullscreen((prev) => {
-      const next = !prev;
-      RNStatusBar.setHidden(next);
-      const lockPromise = next
-        ? ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT)
-        : ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-      lockPromise.catch(() => {
-        // Rotation lock unsupported (e.g. certain tablets/emulators) —
-        // surface-fullscreen still applies.
-      });
-      return next;
-    });
-  }, []);
-
-  // Restore portrait + status bar when leaving the screen mid-fullscreen.
-  useEffect(() => {
-    return () => {
-      RNStatusBar.setHidden(false);
-      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
-    };
-  }, []);
-
-  const formatTime = useCallback((seconds: number): string => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = Math.floor(seconds % 60);
-    if (hrs > 0) {
-      return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  }, []);
+  // formatTime is shared with TV via @azeebo/react-data/utils/format.
 
   return {
     isPlaying,
@@ -286,6 +418,7 @@ export function useAzeeboVideoPlayer({
     duration,
     showControls,
     error,
+    errorKind,
     videoSource,
     player,
     play,
@@ -297,5 +430,6 @@ export function useAzeeboVideoPlayer({
     toggleFullscreen,
     setShowControls,
     formatTime,
+    isMiniVisible,
   };
 }

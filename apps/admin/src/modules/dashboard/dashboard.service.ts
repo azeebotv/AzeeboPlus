@@ -8,9 +8,7 @@ export interface DashboardStats {
   pendingReports: number;
   activeCreators: number;
   // Consumed by the admin client dashboard cards (client/src/routes/dashboard.tsx).
-  // newUsers doubles as the daily-active proxy until a dedicated DAU source exists.
   newUsers: number;
-  dailyActiveUsers: number;
   totalViews: number;
 }
 
@@ -72,15 +70,15 @@ export class DashboardService {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const [totalUsers, totalContent, pendingReports, activeCreators, newUsers, dau, views] =
+    const [totalUsers, totalContent, pendingReports, activeCreators, newUsers, views] =
       await Promise.all([
         this.prisma.user.count(),
         this.prisma.contentItem.count(),
         this.prisma.report.count({ where: { status: 'pending' } }),
         this.prisma.user.count({ where: { role: 'creator' } }),
-        // Daily-active proxy: no dedicated session table in this DB, so the
-        // dashboard uses same-day signups until a DAU event source is wired.
-        this.prisma.user.count({ where: { createdAt: { gte: today } } }),
+        // Same-day signups. Honest label: this is NOT daily-active — no
+        // session/DAU event source exists yet (engagement-service would own
+        // that), so the dashboard must not present a signups count as DAU.
         this.prisma.user.count({ where: { createdAt: { gte: today } } }),
         this.prisma.contentItem.aggregate({ _sum: { viewCount: true } }),
       ]);
@@ -96,8 +94,7 @@ export class DashboardService {
       totalRevenue: Number(totalRevenue._sum.amount) || 0,
       pendingReports,
       activeCreators,
-      newUsers: newUsers,
-      dailyActiveUsers: dau,
+      newUsers,
       totalViews: views._sum.viewCount || 0,
     };
   }

@@ -147,7 +147,7 @@ export class MediaService {
       return this.getSignedUrl(thumbnailKey);
     } catch (error) {
       this.logger.error('Error generating thumbnail:', error);
-      throw new Error('Failed to generate thumbnail');
+      mapAndThrow(error, 'generating media thumbnail');
     }
   }
 }

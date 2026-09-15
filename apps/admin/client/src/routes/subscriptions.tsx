@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
-import type { SubscriptionPlan, SubscriptionStats } from '@/lib/admin-types';
+import { unwrapList } from '@/lib/payload';
+import type { SubscriptionPlan, SubscriptionStats, PromoCode } from '@/lib/admin-types';
 import { Icon } from '@/components/Icons';
 
 const TIER_COLORS: Record<string, string> = {
@@ -32,12 +34,60 @@ function formatDate(date: string) {
 
 export default function SubscriptionsPage() {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<'plans' | 'promos'>('plans');
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState('');
   const [tierFilter, setTierFilter] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  // Promo Code State
+  const [showPromoModal, setShowPromoModal] = useState(false);
+  const [promoForm, setPromoForm] = useState({
+    code: '',
+    discountType: 'percent' as 'percent' | 'flat',
+    discountValue: '20',
+    maxUses: '',
+    expiresAt: '',
+  });
+
+  const { data: promoData, isLoading: loadingPromos } = useQuery({
+    queryKey: ['admin', 'promo-codes'],
+    queryFn: async () => {
+      const res = await adminApi.getPromoCodes();
+      return res.success ? (res.data as { items: PromoCode[] })?.items || [] : [];
+    },
+  });
+
+  const createPromoMutation = useMutation({
+    mutationFn: (data: any) => adminApi.createPromoCode(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'promo-codes'] });
+      setShowPromoModal(false);
+      setPromoForm({
+        code: '',
+        discountType: 'percent',
+        discountValue: '20',
+        maxUses: '',
+        expiresAt: '',
+      });
+    },
+  });
+
+  const expirePromoMutation = useMutation({
+    mutationFn: (id: string) => adminApi.expirePromoCode(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'promo-codes'] });
+    },
+  });
+
+  const deletePromoMutation = useMutation({
+    mutationFn: (id: string) => adminApi.deletePromoCode(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'promo-codes'] });
+    },
+  });
 
   const [form, setForm] = useState({
     name: '',
@@ -72,9 +122,11 @@ export default function SubscriptionsPage() {
         status: statusFilter || undefined,
         tier: tierFilter || undefined,
       });
-      return res.success
-        ? (res.data as { items: SubscriptionPlan[]; total: number })
-        : { items: [], total: 0 };
+      // Upstream returns { items, total, page, limit, totalPages } — unwrap
+      // through the shared guard so an envelope drift renders an empty list
+      // instead of crashing (this page crashed twice on payload shape).
+      const { items, total } = unwrapList<SubscriptionPlan>(res.success ? res.data : null);
+      return { items, total: total ?? items.length };
     },
   });
 
@@ -245,27 +297,85 @@ export default function SubscriptionsPage() {
             Subscriptions
           </h1>
           <p style={{ color: 'var(--admin-text-muted)' }}>
-            Manage subscription plans, pricing, and tiers
+            Manage subscription plans, pricing, and promotional discount codes
           </p>
         </div>
+        <div style={{ display: 'flex', gap: 10 }}>
+          {activeTab === 'plans' ? (
+            <button
+              onClick={openCreate}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '10px 20px',
+                borderRadius: 10,
+                border: 'none',
+                background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+                color: 'white',
+                fontWeight: 600,
+                fontSize: 14,
+                cursor: 'pointer',
+              }}
+            >
+              <Icon name="plus" size={16} color="#FFFFFF" />
+              New Plan
+            </button>
+          ) : (
+            <button
+              onClick={() => setShowPromoModal(true)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '10px 20px',
+                borderRadius: 10,
+                border: 'none',
+                background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+                color: 'white',
+                fontWeight: 600,
+                fontSize: 14,
+                cursor: 'pointer',
+              }}
+            >
+              <Icon name="plus" size={16} color="#FFFFFF" />
+              New Promo Code
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Main Tab Navigation */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24, borderBottom: '1px solid var(--admin-card)', paddingBottom: 12 }}>
         <button
-          onClick={openCreate}
+          onClick={() => setActiveTab('plans')}
           style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '10px 20px',
-            borderRadius: 10,
+            padding: '8px 18px',
+            borderRadius: 8,
             border: 'none',
-            background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-            color: 'white',
+            backgroundColor: activeTab === 'plans' ? 'var(--admin-orange)' : 'transparent',
+            color: activeTab === 'plans' ? 'white' : 'var(--admin-text-muted)',
             fontWeight: 600,
-            fontSize: 14,
+            fontSize: 13,
             cursor: 'pointer',
           }}
         >
-          <Icon name="plus" size={16} color="#FFFFFF" />
-          New Plan
+          Subscription Plans ({total})
+        </button>
+        <button
+          onClick={() => setActiveTab('promos')}
+          style={{
+            padding: '8px 18px',
+            borderRadius: 8,
+            border: 'none',
+            backgroundColor: activeTab === 'promos' ? 'var(--admin-orange)' : 'transparent',
+            color: activeTab === 'promos' ? 'white' : 'var(--admin-text-muted)',
+            fontWeight: 600,
+            fontSize: 13,
+            cursor: 'pointer',
+          }}
+        >
+          Promo Codes ({promoData?.length ?? 0})
         </button>
       </div>
 
@@ -310,8 +420,10 @@ export default function SubscriptionsPage() {
         </div>
       )}
 
-      {/* Filters */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+      {activeTab === 'plans' ? (
+        <>
+          {/* Filters */}
+          <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
         <select
           value={statusFilter}
           onChange={(e) => {
@@ -487,7 +599,15 @@ export default function SubscriptionsPage() {
                   return (
                     <tr key={plan.id} style={{ borderBottom: '1px solid var(--admin-card)' }}>
                       <td style={{ padding: '12px 16px' }}>
-                        <p style={{ fontWeight: 600, marginBottom: 2 }}>{plan.name}</p>
+                        <p style={{ fontWeight: 600, marginBottom: 2 }}>
+                          {plan.name}
+                          <Link
+                            to={`/subscriptions/plans/${plan.id}`}
+                            style={{ marginLeft: 8, fontSize: 12, textDecoration: 'none' }}
+                          >
+                            View →
+                          </Link>
+                        </p>
                         {plan.description && (
                           <p
                             style={{
@@ -689,6 +809,334 @@ export default function SubscriptionsPage() {
             </div>
           )}
         </>
+      ) : (
+        /* Promo Codes Table Tab */
+        <div>
+          {loadingPromos ? (
+            <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+              Loading promo codes...
+            </p>
+          ) : (promoData?.length ?? 0) === 0 ? (
+            <div
+              style={{
+                textAlign: 'center',
+                padding: 60,
+                border: '1px dashed var(--admin-card)',
+                borderRadius: 16,
+              }}
+            >
+              <p style={{ color: 'var(--admin-text-muted)', fontSize: 14, marginBottom: 12 }}>
+                No promo codes created yet
+              </p>
+              <button
+                onClick={() => setShowPromoModal(true)}
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: 8,
+                  border: 'none',
+                  background: 'var(--admin-orange)',
+                  color: 'white',
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              >
+                Create Promo Code
+              </button>
+            </div>
+          ) : (
+            <div
+              style={{
+                borderRadius: 16,
+                border: '1px solid var(--admin-card)',
+                backgroundColor: 'var(--admin-surface)',
+                overflow: 'hidden',
+              }}
+            >
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--admin-card)', textAlign: 'left' }}>
+                      <th style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>Code</th>
+                      <th style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>Discount</th>
+                      <th style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>Redemptions</th>
+                      <th style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>Status</th>
+                      <th style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>Expires</th>
+                      <th style={{ padding: '12px 16px', color: 'var(--admin-text-muted)', textAlign: 'right' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {promoData?.map((p) => (
+                      <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <td style={{ padding: '12px 16px' }}>
+                          <span
+                            style={{
+                              fontFamily: 'monospace',
+                              fontWeight: 700,
+                              fontSize: 14,
+                              color: 'var(--admin-orange)',
+                              letterSpacing: 1,
+                            }}
+                          >
+                            {p.code}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--admin-emerald)' }}>
+                          {p.discountType === 'percent' ? `${p.discountValue}% OFF` : `$${p.discountValue} OFF`}
+                        </td>
+                        <td style={{ padding: '12px 16px', color: 'var(--admin-text)' }}>
+                          {p.usedCount} / {p.maxUses ? p.maxUses : '∞'}
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <span
+                            style={{
+                              padding: '3px 8px',
+                              borderRadius: 4,
+                              fontSize: 11,
+                              fontWeight: 600,
+                              textTransform: 'uppercase',
+                              backgroundColor:
+                                p.status === 'active'
+                                  ? 'rgba(13,59,46,0.3)'
+                                  : 'rgba(204,28,28,0.2)',
+                              color:
+                                p.status === 'active'
+                                  ? 'var(--admin-emerald)'
+                                  : 'var(--admin-red)',
+                            }}
+                          >
+                            {p.status}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>
+                          {p.expiresAt ? new Date(p.expiresAt).toLocaleDateString() : 'Never'}
+                        </td>
+                        <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                          <div style={{ display: 'inline-flex', gap: 6 }}>
+                            {p.status === 'active' && (
+                              <button
+                                onClick={() => expirePromoMutation.mutate(p.id)}
+                                disabled={expirePromoMutation.isPending}
+                                style={{
+                                  padding: '4px 8px',
+                                  borderRadius: 6,
+                                  border: '1px solid var(--admin-card)',
+                                  backgroundColor: 'transparent',
+                                  color: 'var(--admin-amber)',
+                                  fontSize: 11,
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                Expire
+                              </button>
+                            )}
+                            <button
+                              onClick={() => deletePromoMutation.mutate(p.id)}
+                              disabled={deletePromoMutation.isPending}
+                              style={{
+                                padding: '4px 8px',
+                                borderRadius: 6,
+                                border: '1px solid var(--admin-red)',
+                                backgroundColor: 'transparent',
+                                color: 'var(--admin-red)',
+                                fontSize: 11,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Create Promo Code Modal */}
+      {showPromoModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.75)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: 'var(--admin-dark)',
+              border: '1px solid var(--admin-card)',
+              borderRadius: 16,
+              padding: 24,
+              width: '90%',
+              maxWidth: 420,
+            }}
+          >
+            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Create Promo Code</h3>
+            
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+                Promo Code
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. SUMMER50"
+                value={promoForm.code}
+                onChange={(e) => setPromoForm({ ...promoForm, code: e.target.value.toUpperCase() })}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  border: '1px solid var(--admin-card)',
+                  backgroundColor: 'var(--admin-surface)',
+                  color: 'var(--admin-text)',
+                  fontFamily: 'monospace',
+                  fontWeight: 600,
+                  fontSize: 14,
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+                  Discount Type
+                </label>
+                <select
+                  value={promoForm.discountType}
+                  onChange={(e) => setPromoForm({ ...promoForm, discountType: e.target.value as any })}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    border: '1px solid var(--admin-card)',
+                    backgroundColor: 'var(--admin-surface)',
+                    color: 'var(--admin-text)',
+                    fontSize: 13,
+                  }}
+                >
+                  <option value="percent">Percentage (%)</option>
+                  <option value="flat">Flat Amount ($)</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+                  Discount Value
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={promoForm.discountValue}
+                  onChange={(e) => setPromoForm({ ...promoForm, discountValue: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    border: '1px solid var(--admin-card)',
+                    backgroundColor: 'var(--admin-surface)',
+                    color: 'var(--admin-text)',
+                    fontSize: 13,
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+                  Max Redemptions
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  placeholder="Unlimited"
+                  value={promoForm.maxUses}
+                  onChange={(e) => setPromoForm({ ...promoForm, maxUses: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    border: '1px solid var(--admin-card)',
+                    backgroundColor: 'var(--admin-surface)',
+                    color: 'var(--admin-text)',
+                    fontSize: 13,
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+                  Expires At
+                </label>
+                <input
+                  type="date"
+                  value={promoForm.expiresAt}
+                  onChange={(e) => setPromoForm({ ...promoForm, expiresAt: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    border: '1px solid var(--admin-card)',
+                    backgroundColor: 'var(--admin-surface)',
+                    color: 'var(--admin-text)',
+                    fontSize: 13,
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <button
+                onClick={() => setShowPromoModal(false)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: 8,
+                  border: '1px solid var(--admin-card)',
+                  backgroundColor: 'transparent',
+                  color: 'var(--admin-text-muted)',
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() =>
+                  createPromoMutation.mutate({
+                    code: promoForm.code,
+                    discountType: promoForm.discountType,
+                    discountValue: Number(promoForm.discountValue),
+                    maxUses: promoForm.maxUses ? Number(promoForm.maxUses) : null,
+                    expiresAt: promoForm.expiresAt || null,
+                  })
+                }
+                disabled={!promoForm.code || createPromoMutation.isPending}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: 8,
+                  border: 'none',
+                  backgroundColor: 'var(--admin-orange)',
+                  color: 'white',
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: !promoForm.code ? 'not-allowed' : 'pointer',
+                  opacity: !promoForm.code ? 0.5 : 1,
+                }}
+              >
+                {createPromoMutation.isPending ? 'Creating...' : 'Create Code'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Create/Edit Modal */}

@@ -147,8 +147,10 @@ export default function AgentsPage() {
     },
   });
 
-  const agents = agentsQuery.data?.data ?? [];
-  const stats = statsQuery.data?.data ?? ({} as AgentStats);
+  // Array/object guards: envelope drift from the analytics service renders
+  // empty/zero state instead of crashing on .filter/.map below.
+  const agents = Array.isArray(agentsQuery.data?.data) ? agentsQuery.data!.data : [];
+  const stats = (statsQuery.data?.data ?? {}) as Partial<AgentStats>;
 
   return (
     <div>

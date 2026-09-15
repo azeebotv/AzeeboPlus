@@ -14,8 +14,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../../../src/contexts/AuthContext';
-import { userApi } from '../../../src/api';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { userApi } from '@azeebo/react-data';
 import { colors } from '../../../src/theme';
 
 export default function EditProfileScreen() {
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.palette.grey800,
+    borderColor: colors.neutral[700],
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
@@ -264,20 +264,20 @@ const styles = StyleSheet.create({
     borderColor: '#EF4444',
   },
   readOnlyInput: {
-    backgroundColor: colors.palette.grey950,
+    backgroundColor: colors.neutral[950],
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.palette.grey900,
+    borderColor: colors.neutral[900],
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
   readOnlyText: {
     fontSize: 16,
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
   },
   hintText: {
     fontSize: 12,
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
     marginTop: 4,
   },
   textArea: {
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
   },
   charCount: {
     fontSize: 12,
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
     textAlign: 'right',
     marginTop: 4,
   },

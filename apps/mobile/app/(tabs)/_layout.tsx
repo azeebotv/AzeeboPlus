@@ -5,11 +5,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { colors, typography, spacing, radius, shadows, spring } from '../../src/theme';
-import { useWallet } from '../../src/contexts/WalletContext';
+import { useWallet } from '@azeebo/react-data/contexts/WalletContext';
 import { useNotification } from '../../src/contexts/NotificationContext';
-import { useAuth } from '../../src/contexts/AuthContext';
-import { apiClient } from '../../src/api/client';
-import { logger } from '../../src/utils/logger';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { realityApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 
 interface TabIconProps {
   name: 'home' | 'watch' | 'rewards' | 'tips' | 'profile';
@@ -97,17 +97,14 @@ function HeaderUtilities({
   const [isLive, setIsLive] = useState(false);
 
   useEffect(() => {
-    // Check if there are any live shows. Uses the configured API base URL —
-    // relative URLs never resolve in React Native fetch.
+    // Live-shows badge via the shared client (pinning wrapper, 30s timeout,
+    // auth header, RFC 7807 error normalization) — the previous raw fetch
+    // bypassed all of those.
     const checkLive = async () => {
       try {
-        const response = await fetch(`${apiClient.getBaseURL()}/api/v1/reality/shows/live`);
-        if (!response.ok) {
-          setIsLive(false);
-          return;
-        }
-        const data = (await response.json()) as { shows?: unknown[] } | null;
-        setIsLive(Array.isArray(data?.shows) && data.shows.length > 0);
+        const response = await realityApi.getLiveShows();
+        const shows = response.success ? response.data?.shows : undefined;
+        setIsLive(Array.isArray(shows) && shows.length > 0);
       } catch (error) {
         logger.warn('Live-shows check failed', undefined, error);
         setIsLive(false);

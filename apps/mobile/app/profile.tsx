@@ -11,9 +11,9 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../src/api';
+import { apiClient } from '@azeebo/react-data';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
-import { useAuth } from '../src/contexts/AuthContext';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { radius, colors } from '../src/theme';
 
 interface ProfileData {
@@ -192,10 +192,10 @@ const styles = StyleSheet.create({
   savedBanner: {
     backgroundColor: 'rgba(10,165,232,0.2)',
     borderLeftWidth: 4,
-    borderLeftColor: colors.palette.azure,
+    borderLeftColor: colors.category.blue,
     padding: 12,
     borderRadius: radius.sm,
     marginTop: 16,
   },
-  savedText: { color: colors.palette.azure, fontSize: 14 },
+  savedText: { color: colors.category.blue, fontSize: 14 },
 });

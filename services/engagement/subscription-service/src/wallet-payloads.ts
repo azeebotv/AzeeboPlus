@@ -35,7 +35,11 @@ export function walletDebitUrl(baseUrl: string, userId: string): string {
  * URL path — no walletId in the body, which forbidNonWhitelisted would
  * reject).
  */
-export function walletDebitPayload(amount: number, description: string, idempotencyKey: string): InternalDebitPayload {
+export function walletDebitPayload(
+  amount: number,
+  description: string,
+  idempotencyKey: string
+): InternalDebitPayload {
   return {
     amount,
     description,

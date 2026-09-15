@@ -1,4 +1,10 @@
-import { Inject, Injectable, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  BadRequestException,
+  ServiceUnavailableException,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   S3Client,
@@ -139,7 +145,10 @@ export class S3Service {
       if (error instanceof CircuitBreakerOpenError) {
         const err = error as CircuitBreakerOpenError;
         this.logger.warn(`S3 circuit breaker open: ${err.message}`);
-        throw new BadRequestException(
+        // Circuit-open is S3 unreachability, not a bad request — the honest
+        // 503 preserves the retry signal the message describes. (An honest 5xx
+        // in a catch is legitimate; no mapAndThrow/marker needed here.)
+        throw new ServiceUnavailableException(
           'File upload service temporarily unavailable. Please try again later.'
         );
       }
@@ -307,7 +316,8 @@ export class S3Service {
       if (error instanceof CircuitBreakerOpenError) {
         const err = error as CircuitBreakerOpenError;
         this.logger.warn(`S3 circuit breaker open: ${err.message}`);
-        throw new BadRequestException(
+        // Circuit-open = dependency unreachable → honest 503, not a 400.
+        throw new ServiceUnavailableException(
           'File download service temporarily unavailable. Please try again later.'
         );
       }
@@ -343,7 +353,8 @@ export class S3Service {
       if (error instanceof CircuitBreakerOpenError) {
         const err = error as CircuitBreakerOpenError;
         this.logger.warn(`S3 circuit breaker open: ${err.message}`);
-        throw new BadRequestException(
+        // Circuit-open = dependency unreachable → honest 503, not a 400.
+        throw new ServiceUnavailableException(
           'File upload service temporarily unavailable. Please try again later.'
         );
       }
@@ -368,7 +379,8 @@ export class S3Service {
       if (error instanceof CircuitBreakerOpenError) {
         const err = error as CircuitBreakerOpenError;
         this.logger.warn(`S3 circuit breaker open: ${err.message}`);
-        throw new BadRequestException(
+        // Circuit-open = dependency unreachable → honest 503, not a 400.
+        throw new ServiceUnavailableException(
           'File deletion service temporarily unavailable. Please try again later.'
         );
       }
@@ -400,7 +412,8 @@ export class S3Service {
       if (error instanceof CircuitBreakerOpenError) {
         const err = error as CircuitBreakerOpenError;
         this.logger.warn(`S3 circuit breaker open: ${err.message}`);
-        throw new BadRequestException(
+        // Circuit-open = dependency unreachable → honest 503, not a 400.
+        throw new ServiceUnavailableException(
           'File metadata service temporarily unavailable. Please try again later.'
         );
       }

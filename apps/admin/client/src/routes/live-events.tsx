@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
+import { unwrapList } from '@/lib/payload';
 import type { LiveEventAdmin } from '@/lib/admin-types';
 
 const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
@@ -45,9 +46,11 @@ export default function LiveEventsPage() {
     queryKey: ['admin', 'live-events', statusFilter],
     queryFn: async () => {
       const res = await adminApi.listLiveEvents(statusFilter || undefined);
-      return res.success
-        ? (res.data as { items: LiveEventAdmin[]; total: number })
-        : { items: [], total: 0 };
+      // Upstream listEvents returns { items, total, page, limit, totalPages } —
+      // but an upstream envelope drift must never crash the tree, so unwrap
+      // through the shared guard instead of casting.
+      const { items, total } = unwrapList<LiveEventAdmin>(res.success ? res.data : null);
+      return { items, total: total ?? items.length };
     },
   });
 

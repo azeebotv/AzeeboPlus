@@ -10,10 +10,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../src/contexts/AuthContext';
-import { subscriptionApi, type Subscription } from '../../src/api/subscription';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { subscriptionApi, type Subscription } from '@azeebo/react-data/api/subscription';
 import { colors, typography, spacing, radius } from '../../src/theme';
-import { createLogger } from '../../src/utils/logger';
+import { createLogger } from '@azeebo/react-data/utils/logger';
 
 const logger = createLogger('SubscriptionHistory');
 

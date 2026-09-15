@@ -63,10 +63,7 @@ export default function RefundStatusPage(): React.JSX.Element {
 
   if (error) {
     return (
-      <div
-        className="min-h-screen flex flex-col"
-        style={{ backgroundColor: 'var(--brand-near-black, #0b090e)' }}
-      >
+      <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--bg-primary)' }}>
         <AppHeader logoVariant="light" />
         <main className="flex-1 max-w-3xl mx-auto px-4 py-16 text-white w-full">
           <ErrorState description="Failed to load refund status. Please try again." />
@@ -77,10 +74,7 @@ export default function RefundStatusPage(): React.JSX.Element {
   }
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{ backgroundColor: 'var(--brand-near-black, #0b090e)' }}
-    >
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--bg-primary)' }}>
       <AppHeader logoVariant="light" />
       <main className="flex-1 text-white">
         <div className="max-w-3xl mx-auto px-4 py-12">

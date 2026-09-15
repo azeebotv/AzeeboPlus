@@ -23,6 +23,9 @@ export const colors = {
     tertiary: '#201C28', // Elevated surface
     surface: '#18151E', // Card backgrounds, input fields (--hp-card-bg)
     surfaceInput: '#18151E', // Input field backgrounds
+    surfaceLight: '#fafafa', // Light card/paper surface (light-scheme panels)
+    deep: '#0A0A1A', // Deep-space universe hero surfaces
+    deepRaised: '#2d1f5e', // Elevated deep-surface (violet dusk)
     glass: 'rgba(255,255,255,0.06)', // Frosted glass panels
     glassBorder: 'rgba(255,255,255,0.12)', // Glass panel borders
     green: '#0D3B2E', // Forest green — legacy compatibility
@@ -109,6 +112,45 @@ export const colors = {
     subtle: 'rgba(255,255,255,0.04)',
   },
 
+  // Canonical neutral ramp — Tailwind-coincident cool greys. Text-tier
+  // greys live in text.*; these serve borders, disabled fills, and
+  // light-surface UI.
+  neutral: {
+    100: '#f0f0f0',
+    200: '#e5e5e5',
+    300: '#ccc',
+    400: '#aaa',
+    500: '#888',
+    600: '#666',
+    700: '#444',
+    800: '#333',
+    900: '#222',
+    950: '#111',
+  },
+
+  // Decorative category hues — badges, chips, tags, stat fills that carry
+  // vertical identity (games, comedy, sports, creators). These are the one
+  // deliberately non-semantic group: they encode category color-coding.
+  category: {
+    highlight: '#FFEAA7', // warm gold
+    amber: '#F39C12',
+    mint: '#96CEB4',
+    teal: '#4ECDC4',
+    blue: '#45B7D1',
+    indigo: '#6366F1',
+    purple: '#DDA0DD',
+    green: '#10B911',
+    cocoa: '#6B5B4B',
+  },
+
+  // Pre-multiplied alpha washes (8-digit hex) for tints and glows.
+  alpha: {
+    primary20: '#E8420A20',
+    danger20: '#CC1C1C20',
+    success25: '#22C55E25',
+    violet20: '#8B5CF620',
+  },
+
   // Overlays
   overlay: {
     dark: 'rgba(10,10,10,0.85)',
@@ -150,64 +192,6 @@ export const colors = {
     gold: '#F59E0B',
     silver: '#9CA3AF',
     bronze: '#CD7F32',
-  },
-
-  // Legacy/Mock Accent Palette — exact-value colors migrated from legacy
-  // screen styles during the no-hex-colors codemod (apps/mobile/app/**).
-  // Grouped here so every screen references the theme instead of raw
-  // literals. Future design pass: fold these into universeColors/pathColors
-  // or the Tailwind shade scales.
-  palette: {
-    // Neutral greys (light → dark)
-    grey100: '#f0f0f0',
-    grey150: '#eee',
-    grey200: '#e5e5e5',
-    grey300: '#ccc',
-    grey400: '#aaa',
-    grey500: '#888',
-    grey600: '#666',
-    grey700: '#444',
-    grey800: '#333',
-    grey900: '#222',
-    grey950: '#111',
-    charcoal: '#2A2A2A',
-    slate: '#3a3a3a',
-    // Paper tones
-    paper: '#fafafa',
-    cloud: '#f8f9fa',
-    lavender: '#f5f0ff',
-    mist: '#f0faf8',
-    // Decorative accents
-    cream: '#FFEAA7',
-    coral: '#FF6B6B',
-    alarmRed: '#E74C3C',
-    alertRed: '#FF4444',
-    tangerine: '#F39C12',
-    mint: '#96CEB4',
-    teal: '#4ECDC4',
-    sky: '#45B7D1',
-    azure: '#0EA5F9',
-    cyan: '#22D3EE',
-    indigo: '#6366F1',
-    plum: '#DDA0DD',
-    emerald: '#10B911',
-    cocoa: '#6B5B4B',
-    forest: '#065F46',
-    // Deep universe surfaces
-    deepSpace: '#0A0A1A',
-    nightIndigo: '#1A0A3B',
-    violetDusk: '#2d1f5e',
-    royalPurple: '#2D1B69',
-    midnightSlate: '#1f1f2e',
-  },
-
-  // Pre-multiplied alpha variants (8-digit hex) used for washes and tints.
-  alphaColors: {
-    primaryA20: '#E8420A20', // brand orange @ ~12.5% alpha
-    errorA20: '#CC1C1C20', // brand red @ ~12.5% alpha
-    dangerA20: '#EF444420', // danger red @ ~12.5% alpha
-    successA25: '#22C55E25', // success green @ ~14.5% alpha
-    violetA20: '#8B5CF620', // violet @ ~12.5% alpha
   },
 } as const;
 

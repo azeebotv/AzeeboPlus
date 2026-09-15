@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { creatorApi } from '../api/creator';
+import { creatorApi } from '@azeebo/react-data/api/creator';
 import { colors } from '../theme';
 
 const PRESET_AMOUNTS = [100, 500, 1000, 5000, 10000];

@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../../src/contexts/AuthContext';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { useSavedContent, useRecentContent } from '../../src/hooks/useContentQuery';
+import { useSavedContent, useRecentContent } from '@azeebo/react-data/hooks/useContentQuery';
 import { colors } from '../../src/theme';
 
 const TABS = [
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   tabLabel: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 12,
     fontWeight: '500',
   },
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 60,
     borderRadius: 8,
-    backgroundColor: colors.palette.grey800,
+    backgroundColor: colors.bg.tertiary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   itemMeta: {
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
     fontSize: 13,
   },
   playButton: {
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: colors.palette.grey800,
+    backgroundColor: colors.bg.tertiary,
   },
   resumeText: {
     color: '#E8420A',

@@ -291,6 +291,9 @@ export class SocialAuthService {
           }
         } catch (e) {
           if (e instanceof BadRequestException) throw e;
+          // allowed-fabricated-4xx: the only other cause here is a malformed
+          // redirect_uri (URL.parse of client input) — the cause cannot vary,
+          // and mapAndThrow would turn it into a 500. Constant 400 by design.
           throw new BadRequestException('Invalid redirect URI');
         }
       }

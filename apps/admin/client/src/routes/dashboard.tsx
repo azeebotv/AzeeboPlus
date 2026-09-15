@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
+import { isRecord, num } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 export default function DashboardPage() {
@@ -13,7 +14,25 @@ export default function DashboardPage() {
     queryKey: ['admin', 'dashboard'],
     queryFn: async () => {
       const res = await adminApi.getDashboard();
-      return res.success ? res.data : null;
+      // Field guards: a degraded/partial payload renders zeros, never throws.
+      const d: Record<string, unknown> = isRecord(res.data) ? res.data : {};
+      return {
+        totalUsers: num(d.totalUsers),
+        totalContent: num(d.totalContent),
+        totalViews: num(d.totalViews),
+        totalRevenue: num(d.totalRevenue),
+        newUsers: num(d.newUsers),
+      };
+    },
+  });
+
+  // Real wallet aggregate — replaces a fabricated activity number.
+  const { data: walletStats = { totalWallets: 0 } } = useQuery({
+    queryKey: ['admin', 'wallet-stats'],
+    queryFn: async () => {
+      const res = await adminApi.getWalletStats();
+      const d: Record<string, unknown> = isRecord(res.data) ? res.data : {};
+      return { totalWallets: num(d.totalWallets) };
     },
   });
 
@@ -27,8 +46,10 @@ export default function DashboardPage() {
           bgGlow: 'rgba(232,66,10,0.1)',
         },
         {
-          label: 'Daily Active',
-          value: stats.dailyActiveUsers?.toLocaleString() || '0',
+          // Honest metric: same-day signups. There is no session/DAU event
+          // source, so no "Daily Active" number is claimed.
+          label: 'New Users Today',
+          value: stats.newUsers.toLocaleString(),
           icon: 'trending',
           color: 'var(--admin-emerald)',
           bgGlow: 'rgba(16,185,129,0.1)',
@@ -55,8 +76,8 @@ export default function DashboardPage() {
           bgGlow: 'rgba(16,185,129,0.1)',
         },
         {
-          label: 'New Users Today',
-          value: stats.newUsers?.toLocaleString() || '0',
+          label: 'Wallets',
+          value: walletStats.totalWallets.toLocaleString(),
           icon: 'sparkles',
           color: 'var(--admin-orange)',
           bgGlow: 'rgba(232,66,10,0.1)',

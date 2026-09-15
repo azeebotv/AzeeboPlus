@@ -37,6 +37,11 @@ export class AuthGuard implements CanActivate {
       request.user = payload;
       return true;
     } catch {
+      // allowed-fabricated-4xx: token verification is pure client-input
+      // handling — malformed, expired, and wrong-signature tokens all get
+      // the same uniform 401 (anti-enumeration), and the cause cannot vary
+      // beyond a failed verify, so mapAndThrow (which would map plain JWT
+      // errors to a 500) is deliberately not used here.
       throw new UnauthorizedException('Invalid or expired token');
     }
   }

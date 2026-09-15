@@ -56,7 +56,7 @@ export default function AuthenticatedHomePage(): React.JSX.Element {
           className="w-full flex items-center justify-center"
           style={{
             minHeight: 'min(70vh, 600px)',
-            background: 'linear-gradient(180deg, #100e14 0%, #0b090e 100%)',
+            background: 'linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%)',
           }}
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-center">

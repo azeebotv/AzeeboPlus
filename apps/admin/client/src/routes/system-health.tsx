@@ -120,7 +120,9 @@ function useServiceHealth() {
         checkedAt: string;
       }>('/api/v1/admin/ops/services');
       if (!res.success || !res.data) return [];
-      return res.data.services.map((s) => ({
+      // services array guard: envelope drift renders empty, never crashes.
+      const services = Array.isArray(res.data.services) ? res.data.services : [];
+      return services.map((s) => ({
         name: s.name,
         port: s.port,
         status: s.status,

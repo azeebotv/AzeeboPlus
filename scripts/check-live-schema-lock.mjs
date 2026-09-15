@@ -53,6 +53,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { psql as sharedPsql, serviceUrl, adminUrl as sharedAdminUrl, parseNameOverrides } from './lib/live-db-probe.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SERVICES_DIR = path.join(ROOT, 'services');
@@ -69,9 +70,7 @@ const log = jsonOut ? (...m) => console.error(...m) : (...m) => console.log(...m
 
 const LIVE_DB_URL_BASE = process.env.LIVE_DB_URL_BASE
   ?? 'postgresql://azeebo:azeebo_dev_2024@localhost:5432';
-const NAME_OVERRIDES = (() => {
-  try { return JSON.parse(process.env.LIVE_DB_NAME_OVERRIDES ?? '{}'); } catch { return {}; }
-})();
+const NAME_OVERRIDES = parseNameOverrides(process.env.LIVE_DB_NAME_OVERRIDES);
 
 // ----------------------------------------------------------------------------
 // Discovery + plumbing (conventions shared with check-deployed-schema.mjs)
@@ -107,29 +106,21 @@ function runPrisma(serviceDir, argv, extraEnv = {}) {
 }
 
 function psql(url, sql) {
-  return execFileSync('psql', [url, '-tAc', sql], {
-    encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 30_000,
-  });
+  return sharedPsql(url, sql);
 }
 
-// Server-level probes need an explicit connect database — LIVE_DB_URL_BASE
-// conventionally has none, and psql would otherwise fall back to the OS user.
-const ADMIN_URL = (() => {
-  const u = new URL(LIVE_DB_URL_BASE);
-  if (!u.pathname || u.pathname === '/') u.pathname = '/postgres';
-  return u.toString();
-})();
+// Server-level probes connect through the shared admin URL helper (explicit
+// /postgres database — psql would otherwise fall back to the OS user).
+const ADMIN_URL = sharedAdminUrl(LIVE_DB_URL_BASE);
 
 // Live DB name: repo convention azeebo_<service> (same as drift-live-db.mjs),
 // overridable per environment via LIVE_DB_NAME_OVERRIDES. The base URL is
 // authoritative — service .env files are NEVER read here (they carry dev
 // placeholders; the environment's credentials come from LIVE_DB_URL_BASE).
+// Shared with the weekly tracker sweep via scripts/lib/live-db-probe.mjs so
+// both tools can never disagree about which database belongs to a service.
 function liveUrlFor(rel) {
-  const fallback = `azeebo_${path.basename(rel).replace(/-service$/, '').replace(/-/g, '_')}`;
-  const dbName = NAME_OVERRIDES[rel] ?? NAME_OVERRIDES[path.basename(rel)] ?? fallback;
-  const u = new URL(LIVE_DB_URL_BASE);
-  u.pathname = `/${dbName}`;
-  return { url: u.toString(), dbName };
+  return serviceUrl(LIVE_DB_URL_BASE, rel, NAME_OVERRIDES);
 }
 
 function folderMigrations(dir) {

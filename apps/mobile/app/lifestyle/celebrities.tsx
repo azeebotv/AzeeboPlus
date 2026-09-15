@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { colors } from '../../src/theme';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { lifestyleApi, Celebrity } from '../../src/api/lifestyle';
+import { lifestyleApi, Celebrity } from '@azeebo/react-data/api/lifestyle';
 
 export default function CelebritiesScreen() {
   const router = useRouter();

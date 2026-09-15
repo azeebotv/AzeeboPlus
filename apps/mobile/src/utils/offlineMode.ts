@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
-import { logger } from './logger';
+import { logger } from '@azeebo/react-data/utils/logger';
 
 const CACHE_PREFIX = 'offline_cache_';
 const CACHE_EXPIRY_PREFIX = 'offline_cache_expiry_';

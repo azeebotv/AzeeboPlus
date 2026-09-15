@@ -20,11 +20,14 @@ interface CapacityEntry {
   createdAt: string;
 }
 
+// Summary — matched to capacity-ledger service getPeriodSummary: byDomain
+// buckets are { baseline, released, count } (an earlier revision read a
+// `tasks` field that doesn't exist, so every card showed 0 workflows).
 interface CapacitySummary {
   totalEntries: number;
   totalHoursReleased: number;
   headcountAvoided: number;
-  byDomain: Record<string, { released: number; tasks: number }>;
+  byDomain: Record<string, { baseline: number; released: number; count: number }>;
 }
 
 /* ── Component ─────────────────────────────────────────────────────────────── */
@@ -116,7 +119,9 @@ export default function CapacityLedgerPage() {
     onError: () => setFormError('Failed to validate entry — is the analytics service up?'),
   });
 
-  const entries = entriesQuery.data?.data ?? [];
+  const entries = (
+    Array.isArray(entriesQuery.data?.data) ? entriesQuery.data!.data : []
+  ) as CapacityEntry[];
   const summary = summaryQuery.data?.data ?? {
     totalEntries: 0,
     totalHoursReleased: 0,
@@ -484,7 +489,7 @@ export default function CapacityLedgerPage() {
           }}
         >
           {Object.entries(summary.byDomain).map(
-            ([domain, data]: [string, { released: number; tasks: number }]) => (
+            ([domain, data]: [string, { baseline: number; released: number; count: number }]) => (
               <div
                 key={domain}
                 style={{
@@ -501,7 +506,7 @@ export default function CapacityLedgerPage() {
                   {data.released}h released
                 </p>
                 <p style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>
-                  {data.tasks} workflows
+                  {data.count} workflows
                 </p>
               </div>
             )

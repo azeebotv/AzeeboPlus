@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { colors } from '../../src/theme';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
-import { lifestyleApi } from '../../src/api/lifestyle';
+import { lifestyleApi } from '@azeebo/react-data/api/lifestyle';
 
 export default function EventDetailScreen() {
   const router = useRouter();

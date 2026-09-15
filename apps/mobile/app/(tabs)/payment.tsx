@@ -13,8 +13,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { paymentApi } from '../../src/api/payment';
-import { useAuth } from '../../src/contexts/AuthContext';
+import { paymentApi } from '@azeebo/react-data/api/payment';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import { paymentPresetAmounts } from '../../src/config/prices';
 import { colors } from '../../src/theme';
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
   },
   providerDescription: {
     fontSize: 12,
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
   },
   radioOuter: {
     width: 24,
@@ -576,7 +576,7 @@ const styles = StyleSheet.create({
   },
   summaryDivider: {
     height: 1,
-    backgroundColor: colors.palette.grey800,
+    backgroundColor: colors.bg.tertiary,
     marginVertical: 8,
   },
   payButton: {
@@ -606,7 +606,7 @@ const styles = StyleSheet.create({
   },
   secureText: {
     fontSize: 12,
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
   },
   bottomPadding: {
     height: 24,

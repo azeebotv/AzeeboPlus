@@ -53,7 +53,7 @@ function RedemptionContent() {
   const isLoading = walletQuery.isLoading || itemsQuery.isLoading;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black, #0b090e)' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
       <AppHeader active="Rewards" logoVariant="light" />
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>

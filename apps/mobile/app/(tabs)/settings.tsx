@@ -15,9 +15,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '../../src/contexts/AuthContext';
-import { useFlags } from '../../src/contexts/FlagsContext';
-import { notificationApi, type NotificationPreferences } from '../../src/api';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { useFlags } from '@azeebo/react-data/contexts/FlagsContext';
+import { notificationApi, type NotificationPreferences } from '@azeebo/react-data';
 import { useBiometric } from '../../src/hooks/useBiometric';
 import Constants from 'expo-constants';
 import { colors } from '../../src/theme';
@@ -813,15 +813,15 @@ const styles = StyleSheet.create({
   },
   settingDescription: {
     fontSize: 12,
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
     marginTop: 2,
   },
   settingValue: {
     fontSize: 16,
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
   },
   menuArrow: {
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
     fontSize: 24,
   },
   bottomPadding: {
@@ -867,7 +867,7 @@ const styles = StyleSheet.create({
   },
   languageNative: {
     fontSize: 13,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     marginTop: 2,
   },
   languageCheck: {

@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Switch, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { apiClient } from '../../../src/api/client';
-import { logger } from '../../../src/utils/logger';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../../../src/theme';
 
 interface SecurityOption {
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 8,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -359,7 +359,7 @@ const styles = StyleSheet.create({
   },
   optionDescription: {
     fontSize: 12,
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
   },
   optionAction: {
     alignItems: 'center',
@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
   },
   arrowText: {
     fontSize: 24,
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
   },
   valueText: {
     fontSize: 14,

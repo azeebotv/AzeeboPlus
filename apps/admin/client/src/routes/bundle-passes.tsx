@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { BundlePassAdmin } from '@/lib/admin-types';
+import { unwrapList } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 const TIER_COLORS: Record<string, string> = {
@@ -42,7 +43,7 @@ export default function BundlePassesPage() {
     queryKey: ['admin', 'bundle-passes'],
     queryFn: async () => {
       const res = await adminApi.getBundlePasses();
-      return res.success ? (res.data as BundlePassAdmin[]) : [];
+      return res.success ? unwrapList<BundlePassAdmin>(res.data).items : [];
     },
   });
 

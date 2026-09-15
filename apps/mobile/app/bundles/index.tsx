@@ -3,8 +3,8 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, useColorScheme } fr
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { bundleApi } from '../../src/api/bundle';
-import type { BundlePass } from '../../src/api/bundle';
+import { bundleApi } from '@azeebo/react-data/api/bundle';
+import type { BundlePass } from '@azeebo/react-data/api/bundle';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
 

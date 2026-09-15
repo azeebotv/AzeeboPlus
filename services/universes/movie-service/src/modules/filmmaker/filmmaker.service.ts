@@ -315,8 +315,7 @@ export class FilmmakerService {
         .catch((compensateError: unknown) => {
           this.logger.error('Failed to compensate wallet after backing failure:', compensateError);
         });
-      const errorMessage = dbError instanceof Error ? dbError.message : 'Failed to back project';
-      throw new BadRequestException(errorMessage);
+      mapAndThrow(dbError, 'backing filmmaker project');
     }
   }
 

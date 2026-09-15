@@ -11,11 +11,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { contentApi } from '../../src/api';
-import type { ContentItem } from '../../src/api/content';
+import { contentApi } from '@azeebo/react-data';
+import type { ContentItem } from '@azeebo/react-data/api/content';
 import { colors, typography, spacing, radius, universeColors } from '../../src/theme';
 import { EmptyState } from '../../src/components/StateContainers';
-import { useFlags } from '../../src/contexts/FlagsContext';
+import { useFlags } from '@azeebo/react-data/contexts/FlagsContext';
 
 export default function SearchScreen() {
   const colorScheme = useColorScheme();

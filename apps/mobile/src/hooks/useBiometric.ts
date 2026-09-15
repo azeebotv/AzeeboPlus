@@ -5,7 +5,7 @@ import {
   BiometricResult,
   BiometricCredentials,
 } from '../utils/biometricAuth';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 
 interface UseBiometricState {
   isAvailable: boolean;

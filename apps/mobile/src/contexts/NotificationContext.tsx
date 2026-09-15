@@ -1,11 +1,11 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { notificationApi, type Notification } from '../api';
-import { useAuth } from './AuthContext';
-import { useFlags } from './FlagsContext';
+import { notificationApi, type Notification } from '@azeebo/react-data';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { useFlags } from '@azeebo/react-data/contexts/FlagsContext';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
-import { logger } from '../utils/logger';
+import { logger } from '@azeebo/react-data/utils/logger';
 
 interface NotificationContextType {
   notifications: Notification[];

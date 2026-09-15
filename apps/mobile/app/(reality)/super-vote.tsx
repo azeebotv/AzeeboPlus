@@ -11,12 +11,12 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { contentApi, walletApi } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { contentApi, walletApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { analytics } from '../../src/utils/analytics';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import { getVotePackages } from '../../src/config/prices';
-import type { VotePackage } from '../../src/types/api';
+import type { VotePackage } from '@azeebo/react-data/types/api';
 import { colors } from '../../src/theme';
 
 interface Contestant {
@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
   },
   contestantCard: {
     width: 140,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 12,
     marginRight: 12,
@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
     color: colors.light[400],
   },
   packageCard: {
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -360,7 +360,7 @@ const styles = StyleSheet.create({
   },
   packageCardPopular: {
     borderColor: '#E8420A',
-    backgroundColor: colors.palette.violetDusk,
+    backgroundColor: colors.bg.deepRaised,
   },
   popularBadge: {
     position: 'absolute',

@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
-import { logger } from './logger';
-import { apiClient } from '../api/client';
+import { logger } from '@azeebo/react-data/utils/logger';
+import { apiClient } from '@azeebo/react-data/api/client';
 
 type ApiResponse<T> = { success: boolean; data?: T; message?: string };
 

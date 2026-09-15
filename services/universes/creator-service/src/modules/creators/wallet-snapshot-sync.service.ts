@@ -5,18 +5,13 @@ import {
   NotFoundException,
   OnModuleInit,
   Optional,
-  ServiceUnavailableException,
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
-import {
-  DomainEvent,
-  EventBusService,
-  EventTypes,
-  EVENT_BUS_SERVICE,
-} from '@azeebo/event-bus';
+import { mapAndThrow } from '@azeebo/security';
+import { DomainEvent, EventBusService, EventTypes, EVENT_BUS_SERVICE } from '@azeebo/event-bus';
 
 /**
  * Denormalized wallet read-model sync (creator-service) — event-driven.
@@ -332,18 +327,7 @@ export class WalletSnapshotSyncService implements OnModuleInit {
       });
       return response.data;
     } catch (error) {
-      if (error instanceof AxiosError && error.response?.status === 404) {
-        throw new NotFoundException(`Wallet not found for user ${userId}`);
-      }
-      const status =
-        error instanceof AxiosError && error.response?.status
-          ? ` (status ${error.response.status})`
-          : '';
-      throw new ServiceUnavailableException(
-        `wallet-service request failed for ${url}${status}: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
+      mapAndThrow(error, `syncing wallet snapshot from wallet-service (${url})`);
     }
   }
 }

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { adminApi } from '@/lib/api/admin';
+import { asArray } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 interface UniverseFeatureFlagRow {
@@ -118,8 +119,10 @@ export default function FeatureFlagsPage() {
     queryKey: ['admin', 'feature-flags'],
     queryFn: async () => {
       const res = await adminApi.listFeatureFlags();
-      const rows = res.success ? ((res.data as unknown[]) ?? []) : [];
-      return rows as UniverseFeatureFlagRow[];
+      // Backend getAll() returns a bare array — but never trust it: a future
+      // envelope (or an error object) used to crash the whole tree with
+      // "flags.filter is not a function". Coerce through the shared guard.
+      return asArray<UniverseFeatureFlagRow>(res.success ? res.data : null);
     },
   });
 
@@ -127,8 +130,10 @@ export default function FeatureFlagsPage() {
     queryKey: ['admin', 'universes'],
     queryFn: async () => {
       const res = await adminApi.getAllUniverses();
-      const rows = res.success ? ((res.data as unknown[]) ?? []) : [];
-      return rows as AdminUniverseOption[];
+      // getAllUniverses returns the paginated envelope { data: [...], meta }
+      // — NOT a bare array (a bare-array cast crashed this page with
+      // "universes.filter is not a function" before the payload helpers).
+      return asArray<AdminUniverseOption>(res.success ? res.data : null, 'data');
     },
   });
 
@@ -393,14 +398,24 @@ export default function FeatureFlagsPage() {
         }}
       >
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <h1
+            style={{
+              fontSize: 28,
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
             <Icon name="flag" size={26} color="var(--admin-orange)" />
             Feature Flags
           </h1>
           <p style={{ color: 'var(--admin-text-muted)', marginTop: 4 }}>
             {flags.length} flags ({enabledCount} enabled)
             {staleFlags.length > 0 && (
-              <span style={{ color: 'var(--admin-orange)', marginLeft: 8 }}>· {staleFlags.length} stale</span>
+              <span style={{ color: 'var(--admin-orange)', marginLeft: 8 }}>
+                · {staleFlags.length} stale
+              </span>
             )}
           </p>
         </div>
@@ -517,7 +532,11 @@ export default function FeatureFlagsPage() {
               Recently removed universe flags ({recentlyDeleted.length}) — restorable from the audit
               archive
             </span>
-            <Icon name={showDeleted ? 'chevronDown' : 'chevronRight'} size={14} color="var(--admin-text-muted)" />
+            <Icon
+              name={showDeleted ? 'chevronDown' : 'chevronRight'}
+              size={14}
+              color="var(--admin-text-muted)"
+            />
           </button>
           {showDeleted && (
             <div style={{ padding: '0 18px 18px' }}>
@@ -541,7 +560,9 @@ export default function FeatureFlagsPage() {
                   >
                     <div>
                       <code style={{ color: 'var(--admin-text-muted)' }}>{label}</code>
-                      <span style={{ color: 'var(--admin-text-muted)', marginLeft: 8, fontSize: 12 }}>
+                      <span
+                        style={{ color: 'var(--admin-text-muted)', marginLeft: 8, fontSize: 12 }}
+                      >
                         removed {f.deletedAt ? new Date(f.deletedAt).toLocaleString() : ''}
                         {f.deletedBy ? ` by ${f.deletedBy}` : ''}
                         {!f.archived ? ' · no archive' : ''}
@@ -760,7 +781,9 @@ export default function FeatureFlagsPage() {
       )}
 
       {isLoading ? (
-        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+          Loading...
+        </p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {filtered.map((flag) => {
@@ -800,7 +823,9 @@ export default function FeatureFlagsPage() {
                         borderRadius: 999,
                         fontSize: 11,
                         fontWeight: 500,
-                        backgroundColor: flag.isEnabled ? 'var(--admin-green)' : 'var(--admin-dark)',
+                        backgroundColor: flag.isEnabled
+                          ? 'var(--admin-green)'
+                          : 'var(--admin-dark)',
                         color: flag.isEnabled ? 'var(--admin-emerald)' : 'var(--admin-red)',
                       }}
                     >
@@ -847,7 +872,9 @@ export default function FeatureFlagsPage() {
                   )}
                   <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
                     {rollout !== undefined && rollout < 100 && (
-                      <span style={{ color: 'var(--admin-orange)', fontSize: 11 }}>Rollout: {rollout}%</span>
+                      <span style={{ color: 'var(--admin-orange)', fontSize: 11 }}>
+                        Rollout: {rollout}%
+                      </span>
                     )}
                     {userIds.length > 0 && (
                       <span style={{ color: 'var(--admin-text-muted)', fontSize: 11 }}>
@@ -864,7 +891,9 @@ export default function FeatureFlagsPage() {
                       flexWrap: 'wrap',
                     }}
                   >
-                    <span style={{ color: 'var(--admin-text-muted)', fontSize: 11 }}>stale after</span>
+                    <span style={{ color: 'var(--admin-text-muted)', fontSize: 11 }}>
+                      stale after
+                    </span>
                     <input
                       type="date"
                       value={

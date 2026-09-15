@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { apiClient } from '../../src/api';
+import { apiClient } from '@azeebo/react-data';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
 
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -187,12 +187,12 @@ const styles = StyleSheet.create({
   avatarEmoji: { fontSize: 40 },
   name: { fontSize: 22, fontWeight: '700', marginBottom: 8 },
   rankRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  rankBadge: { color: colors.palette.plum, fontSize: 16, fontWeight: '700' },
-  rankChange: { color: colors.palette.grey500, fontSize: 14 },
+  rankBadge: { color: colors.category.purple, fontSize: 16, fontWeight: '700' },
+  rankChange: { color: colors.text.secondary, fontSize: 14 },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, gap: 10 },
   statCard: { width: '47%', padding: 16, borderRadius: 12, alignItems: 'center' },
   statValue: { fontSize: 22, fontWeight: '700', marginBottom: 4 },
-  statLabel: { color: colors.palette.grey500, fontSize: 12 },
+  statLabel: { color: colors.text.secondary, fontSize: 12 },
   section: { paddingHorizontal: 16, marginTop: 24 },
   sectionTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
   achievementsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
@@ -216,6 +216,6 @@ const styles = StyleSheet.create({
   recentEmoji: { fontSize: 28, marginRight: 12 },
   recentInfo: { flex: 1 },
   recentTitle: { fontSize: 14, fontWeight: '600', marginBottom: 2 },
-  recentDate: { color: colors.palette.grey500, fontSize: 12 },
-  recentScore: { color: colors.palette.plum, fontSize: 16, fontWeight: '700' },
+  recentDate: { color: colors.text.secondary, fontSize: 12 },
+  recentScore: { color: colors.category.purple, fontSize: 16, fontWeight: '700' },
 });

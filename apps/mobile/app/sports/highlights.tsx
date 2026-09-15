@@ -4,8 +4,8 @@ import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { apiClient } from '../../src/api/client';
-import { ApiResponse } from '../../src/types/api';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { ApiResponse } from '@azeebo/react-data/types/api';
 import { colors } from '../../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   highlightCard: { borderRadius: 12, overflow: 'hidden', marginBottom: 16 },
   thumbnail: {
     height: 200,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -152,6 +152,6 @@ const styles = StyleSheet.create({
   durationText: { color: '#fff', fontSize: 12, fontWeight: '600' },
   highlightInfo: { padding: 14 },
   highlightTitle: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
-  highlightMatch: { color: colors.palette.alarmRed, fontSize: 13, marginBottom: 4 },
-  highlightViews: { color: colors.palette.grey500, fontSize: 12 },
+  highlightMatch: { color: colors.error[500], fontSize: 13, marginBottom: 4 },
+  highlightViews: { color: colors.text.secondary, fontSize: 12 },
 });

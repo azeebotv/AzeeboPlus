@@ -10,8 +10,8 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams, type Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { contentApi } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { contentApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../../src/theme';
 
 interface CreatorProfile {
@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   socialCard: {
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
   },
@@ -394,7 +394,7 @@ const styles = StyleSheet.create({
   },
   contentCard: {
     flexDirection: 'row',
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',

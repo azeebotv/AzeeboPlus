@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet } from 'react-native';
 import type { RouteProp } from '@react-navigation/native';
 import { AgbalaQuizResult } from '../components/AgbalaQuizResult';
 import { colors } from '../../../../theme';
-import { apiClient } from '../../../../api/client';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, ErrorState } from '../../../../components/StateContainers';
 import type { AgbalaStackParamList } from '../types';
 

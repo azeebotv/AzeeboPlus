@@ -201,6 +201,12 @@ const ADMIN_NAV_SECTIONS: NavSection[] = [
         icon: 'megaphone',
         description: 'Platform broadcast banners',
       },
+      {
+        href: '/support',
+        label: 'Support Tickets',
+        icon: 'messageSquare',
+        description: 'Appeals, disputes & helpdesk tickets',
+      },
     ],
   },
   {

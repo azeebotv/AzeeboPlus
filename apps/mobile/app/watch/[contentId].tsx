@@ -13,17 +13,25 @@ import { VideoView } from 'expo-video';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAzeeboVideoPlayer } from '../../src/hooks/useVideoPlayer';
-import { useFlags } from '../../src/contexts/FlagsContext';
-import { contentApi, type ContentItem } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { useFlags } from '@azeebo/react-data/contexts/FlagsContext';
+import { contentApi, type ContentItem } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
+import { VideoGestureLayer } from '../../src/components/video/VideoGestureLayer';
+import { PlayerSettingsSheet } from '../../src/components/video/PlayerSettingsSheet';
+import { usePlayerPreferences } from '../../src/hooks/usePlayerPreferences';
+import { NativeShareService } from '../../src/utils/nativeShare';
+import { useTranslation } from 'react-i18next';
 import { colors } from '../../src/theme';
 
 export default function WatchScreen() {
   const router = useRouter();
   const { contentId } = useLocalSearchParams<{ contentId: string }>();
   const colorScheme = useColorScheme();
+  const { t } = useTranslation();
   const { isEnabled } = useFlags();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
   // Live viewport — updates when the device rotates into fullscreen landscape.
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
@@ -33,6 +41,17 @@ export default function WatchScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [relatedContent, setRelatedContent] = useState<ContentItem[]>([]);
+  const [settingsVisible, setSettingsVisible] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  // Persisted playback preferences (quality / speed / autoplay-next).
+  const {
+    preferences,
+    hydrated: prefsHydrated,
+    setQuality,
+    setPlaybackSpeed,
+    setAutoplayNext,
+  } = usePlayerPreferences();
 
   const handleProgressUpdate = useCallback(
     async (progress: number) => {
@@ -50,8 +69,15 @@ export default function WatchScreen() {
   );
 
   const handleComplete = useCallback(() => {
+    // YouTube-style autoplay-next: replace (not push) so Back from the next
+    // video exits the player instead of replaying the finished one. Skipped
+    // while preferences are still hydrating to avoid a stale default firing.
+    if (prefsHydrated && preferences.autoplayNext && relatedContent.length > 0) {
+      router.replace(`/watch/${relatedContent[0].id}`);
+      return;
+    }
     Alert.alert('Video Complete', 'Thanks for watching!');
-  }, []);
+  }, [prefsHydrated, preferences.autoplayNext, relatedContent, router]);
 
   const {
     isPlaying,
@@ -61,6 +87,7 @@ export default function WatchScreen() {
     duration,
     showControls,
     error: playerError,
+    errorKind: playerErrorKind,
     player,
     togglePlay,
     seek,
@@ -69,6 +96,7 @@ export default function WatchScreen() {
     toggleFullscreen,
     setShowControls,
     formatTime,
+    isMiniVisible,
   } = useAzeeboVideoPlayer({
     contentId: contentId || '',
     initialProgress: content?.watchProgress ?? 0,
@@ -77,7 +105,17 @@ export default function WatchScreen() {
     // mobile_autoplay (on by default): auto-start playback when ready; off
     // keeps the conservative tap-to-play behavior.
     autoPlay: isEnabled('mobile_autoplay'),
+    title: content?.title,
+    ownerPath: `/watch/${contentId}`,
+    screenKey: contentId ? `/watch/${contentId}` : 'watch',
   });
+
+  // Apply the persisted playback speed. Re-applied when `content` changes
+  // (source swap after autoplay-next) in case the native player resets its
+  // rate on replaceAsync.
+  useEffect(() => {
+    player.playbackRate = preferences.playbackSpeed;
+  }, [player, preferences.playbackSpeed, content]);
 
   const fetchContent = useCallback(async () => {
     if (!contentId) return;
@@ -110,16 +148,40 @@ export default function WatchScreen() {
   }, [fetchContent]);
 
   const handleSeek = (time: number) => {
+    // No duration yet — the progress bar is not tappable/meaningful.
+    if (displayDuration <= 0) return;
     seek(time);
   };
+
+  // Guest gate (parity with the TV home screen): signed-out users hitting a
+  // watch route (guest homepage, shared links) previously got a raw
+  // "Failed to load video" — and the failed token refresh could clear a
+  // session they didn't have. Route to sign-in instead.
+  if (!authLoading && !isAuthenticated) {
+    return (
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
+      >
+        <EmptyState
+          icon="🔒"
+          title="Sign in to watch"
+          description="Create a free account or sign in to stream this content."
+          actionLabel="Sign In"
+          onAction={() => router.replace('/(auth)/login')}
+        />
+      </SafeAreaView>
+    );
+  }
 
   // Measured width of the seek bar — using the screen width minus a guess was
   // off by the container padding and made end-of-video seeks overshoot.
   const [seekBarWidth, setSeekBarWidth] = useState(0);
 
-  const handleVideoPress = () => {
-    setShowControls(true);
-    togglePlay();
+  // Surface tap toggles the custom controls; playback toggles live on the
+  // center button / play overlay. Double-tap-to-seek and the brightness /
+  // volume edge swipes are handled inside VideoGestureLayer.
+  const handleSurfaceTap = () => {
+    setShowControls(!showControls);
   };
 
   if (isLoading) {
@@ -133,14 +195,28 @@ export default function WatchScreen() {
   }
 
   if (error || playerError) {
+    // M4: an entitlement denial (403 from the signed-url endpoint) is not a
+    // failure — it's a paywall. Route to the Premium screen instead of a
+    // retry button that can never succeed.
+    const isEntitlement = playerErrorKind === 'entitlement' && !error;
     return (
       <SafeAreaView
         style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
       >
-        <ErrorState
-          description={error || playerError || 'Failed to load video'}
-          onRetry={fetchContent}
-        />
+        {isEntitlement ? (
+          <EmptyState
+            icon="💎"
+            title={t('common.premium')}
+            description={playerError || t('common.errorEntitlement')}
+            actionLabel="See Premium plans"
+            onAction={() => router.push('/premium' as never)}
+          />
+        ) : (
+          <ErrorState
+            description={error || playerError || t('common.error')}
+            onRetry={fetchContent}
+          />
+        )}
       </SafeAreaView>
     );
   }
@@ -159,8 +235,12 @@ export default function WatchScreen() {
     );
   }
 
-  const displayDuration = duration || content.duration || 3600;
-  const progressPercent = displayDuration > 0 ? (currentTime / displayDuration) * 100 : 0;
+  // A fake fallback duration made every seek land at the wrong position when
+  // metadata was missing — use 0 and disable the bar until the player reports
+  // the real duration (parity with the TV watch screen).
+  const displayDuration = duration || content.duration || 0;
+  const progressPercent =
+    displayDuration > 0 ? Math.min((currentTime / displayDuration) * 100, 100) : 0;
 
   // Embedded (non-fullscreen) video keeps a 16:9 box that fits the current
   // orientation — sized from the short edge so landscape never overflows.
@@ -190,20 +270,32 @@ export default function WatchScreen() {
             : { width: embeddedWidth, height: embeddedHeight },
         ]}
       >
-        <TouchableOpacity
-          style={[styles.videoPlaceholder, { backgroundColor: '#000' }]}
-          onPress={handleVideoPress}
-          activeOpacity={0.9}
-        >
-          <VideoView
-            style={StyleSheet.absoluteFill}
-            player={player}
-            contentFit="contain"
-            nativeControls={false}
-          />
+        <View style={[styles.videoPlaceholder, { backgroundColor: '#000' }]}>
+          {isMiniVisible ? (
+            // The mini overlay owns the video surface while minimized —
+            // rendering a second VideoView here would detach it from the
+            // overlay card.
+            <View style={styles.miniYieldNotice}>
+              <Text style={styles.miniYieldText}>Playing in mini player — tap it to return</Text>
+            </View>
+          ) : (
+            <VideoGestureLayer
+              player={player}
+              onSingleTap={handleSurfaceTap}
+              onSeekBack={() => seekBackward(10)}
+              onSeekForward={() => seekForward(10)}
+            >
+              <VideoView
+                style={StyleSheet.absoluteFill}
+                player={player}
+                contentFit="contain"
+                nativeControls={false}
+              />
+            </VideoGestureLayer>
+          )}
 
           {!isPlaying && !isBuffering && (
-            <View style={styles.playOverlay}>
+            <View style={styles.playOverlay} pointerEvents="box-none">
               <TouchableOpacity style={styles.playButton} onPress={togglePlay}>
                 <Text style={styles.playIcon}>▶️</Text>
               </TouchableOpacity>
@@ -211,14 +303,20 @@ export default function WatchScreen() {
           )}
 
           {isBuffering && (
-            <View style={styles.playOverlay}>
+            <View style={styles.playOverlay} pointerEvents="box-none">
               <View style={styles.bufferingIndicator} />
             </View>
           )}
 
           {showControls && (
-            <View style={[styles.controlsOverlay, isLandscape && styles.controlsOverlayLandscape]}>
-              <View style={[styles.topControls, isLandscape && styles.topControlsLandscape]}>
+            <View
+              style={[styles.controlsOverlay, isLandscape && styles.controlsOverlayLandscape]}
+              pointerEvents="box-none"
+            >
+              <View
+                style={[styles.topControls, isLandscape && styles.topControlsLandscape]}
+                pointerEvents="box-none"
+              >
                 <TouchableOpacity
                   onPress={() => (isFullscreen ? toggleFullscreen() : router.back())}
                 >
@@ -227,12 +325,21 @@ export default function WatchScreen() {
                 <Text style={styles.videoTitle} numberOfLines={1}>
                   {content.title}
                 </Text>
+                <TouchableOpacity
+                  onPress={() => setSettingsVisible(true)}
+                  accessibilityLabel="Playback settings"
+                >
+                  <Text style={styles.controlText}>⚙️</Text>
+                </TouchableOpacity>
                 <TouchableOpacity onPress={toggleFullscreen}>
                   <Text style={styles.controlText}>{isFullscreen ? '⊠' : '⛶'}</Text>
                 </TouchableOpacity>
               </View>
 
-              <View style={[styles.centerControls, isLandscape && styles.centerControlsLandscape]}>
+              <View
+                style={[styles.centerControls, isLandscape && styles.centerControlsLandscape]}
+                pointerEvents="box-none"
+              >
                 <TouchableOpacity style={styles.seekButton} onPress={() => seekBackward(10)}>
                   <Text style={[styles.seekText, isLandscape && styles.seekTextLandscape]}>
                     -10s
@@ -253,18 +360,22 @@ export default function WatchScreen() {
                 </TouchableOpacity>
               </View>
 
-              <View style={[styles.bottomControls, isLandscape && styles.bottomControlsLandscape]}>
+              <View
+                style={[styles.bottomControls, isLandscape && styles.bottomControlsLandscape]}
+                pointerEvents="box-none"
+              >
                 <Text style={styles.timeText}>{formatTime(currentTime)}</Text>
                 <TouchableOpacity
                   style={styles.progressBar}
                   onLayout={(e) => setSeekBarWidth(e.nativeEvent.layout.width)}
                   onPress={(e) => {
-                    if (seekBarWidth <= 0) return;
+                    if (seekBarWidth <= 0 || displayDuration <= 0) return;
                     const x = e.nativeEvent.locationX;
                     const percent = Math.min(Math.max(x / seekBarWidth, 0), 1);
                     handleSeek(percent * displayDuration);
                   }}
                   activeOpacity={0.8}
+                  disabled={displayDuration <= 0}
                 >
                   <View style={styles.progressBackground}>
                     <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
@@ -274,7 +385,7 @@ export default function WatchScreen() {
               </View>
             </View>
           )}
-        </TouchableOpacity>
+        </View>
       </View>
 
       {/* Info pane is hidden in fullscreen so the rotated layout only
@@ -294,21 +405,53 @@ export default function WatchScreen() {
         </View>
 
         <View style={styles.actionRow}>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => Alert.alert('Coming soon', 'Likes are not available yet — stay tuned!')}
+            accessibilityRole="button"
+            accessibilityLabel="Like"
+          >
             <Text style={styles.actionIcon}>👍</Text>
             <Text style={styles.actionLabel}>Like</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() =>
+              Alert.alert('Coming soon', 'Comments are not available yet — stay tuned!')
+            }
+            accessibilityRole="button"
+            accessibilityLabel="Comment"
+          >
             <Text style={styles.actionIcon}>💬</Text>
             <Text style={styles.actionLabel}>Comment</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() =>
+              void NativeShareService.shareWithFallback({
+                title: content.title,
+                message: content.description || `Watch "${content.title}" on Azeebo+`,
+                url: `https://azeebo.plus/watch/${content.id}`,
+              })
+            }
+            accessibilityRole="button"
+            accessibilityLabel="Share"
+          >
             <Text style={styles.actionIcon}>↗️</Text>
             <Text style={styles.actionLabel}>Share</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
-            <Text style={styles.actionIcon}>➕</Text>
-            <Text style={styles.actionLabel}>Save</Text>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => {
+              if (saved) return;
+              setSaved(true);
+              void contentApi.saveContent(content.id).catch(() => setSaved(false));
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={saved ? 'Saved' : 'Save'}
+          >
+            <Text style={styles.actionIcon}>{saved ? '✅' : '➕'}</Text>
+            <Text style={styles.actionLabel}>{saved ? 'Saved' : 'Save'}</Text>
           </TouchableOpacity>
         </View>
 
@@ -324,7 +467,7 @@ export default function WatchScreen() {
         </View>
 
         <View style={styles.creatorSection}>
-          <View style={[styles.creatorAvatar, { backgroundColor: '#E8420A' }]}>
+          <View style={[styles.creatorAvatar, { backgroundColor: colors.primary[500] }]}>
             <Text style={styles.creatorInitial}>{content.creator?.name?.charAt(0) || 'A'}</Text>
           </View>
           <View style={styles.creatorInfo}>
@@ -375,6 +518,15 @@ export default function WatchScreen() {
           </View>
         )}
       </ScrollView>
+
+      <PlayerSettingsSheet
+        visible={settingsVisible}
+        onClose={() => setSettingsVisible(false)}
+        preferences={preferences}
+        onQualityChange={setQuality}
+        onSpeedChange={setPlaybackSpeed}
+        onAutoplayNextChange={setAutoplayNext}
+      />
     </SafeAreaView>
   );
 }
@@ -419,7 +571,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: 'rgba(139, 92, 246, 0.8)',
+    backgroundColor: colors.alpha.primary20,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -432,7 +584,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 4,
     borderColor: 'rgba(255,255,255,0.2)',
-    borderTopColor: '#E8420A',
+    borderTopColor: colors.primary[500],
   },
   controlsOverlay: {
     ...StyleSheet.absoluteFill,
@@ -503,7 +655,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: 'rgba(139, 92, 246, 0.9)',
+    backgroundColor: 'rgba(232, 66, 10, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -532,12 +684,21 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#E8420A',
+    backgroundColor: colors.primary[500],
     borderRadius: 2,
   },
   contentInfo: {
     flex: 1,
     padding: 16,
+  },
+  miniYieldNotice: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  miniYieldText: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 14,
   },
   title: {
     fontSize: 22,
@@ -552,7 +713,7 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 13,
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
   },
   actionRow: {
     flexDirection: 'row',
@@ -561,7 +722,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: colors.palette.grey150,
+    borderColor: colors.neutral[200],
   },
   actionButton: {
     alignItems: 'center',
@@ -572,7 +733,7 @@ const styles = StyleSheet.create({
   },
   actionLabel: {
     fontSize: 12,
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
   },
   descriptionSection: {
     paddingVertical: 12,
@@ -596,7 +757,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   creatorInitial: {
-    color: '#fff',
+    color: colors.text.primary,
     fontSize: 20,
     fontWeight: '600',
   },
@@ -609,16 +770,16 @@ const styles = StyleSheet.create({
   },
   subscriberText: {
     fontSize: 13,
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
   },
   subscribeButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: colors.primary[500],
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
   },
   subscribeButtonText: {
-    color: '#fff',
+    color: colors.text.primary,
     fontWeight: '600',
     fontSize: 14,
   },

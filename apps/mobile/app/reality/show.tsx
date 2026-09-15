@@ -10,12 +10,12 @@ import {
 } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { realityApi } from '../../src/api';
-import { apiClient } from '../../src/api/client';
-import { useWallet } from '../../src/contexts/WalletContext';
+import { realityApi } from '@azeebo/react-data';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { useWallet } from '@azeebo/react-data/contexts/WalletContext';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { votePackages as defaultVotePackages } from '../../src/config/prices';
-import type { Contestant, RealityShow } from '../../src/types/api';
+import type { Contestant, RealityShow } from '@azeebo/react-data/types/api';
 import { colors } from '../../src/theme';
 
 const VOTE_PACKAGES = defaultVotePackages.reality;
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.grey800,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.grey800,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -445,14 +445,14 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   quickVoteLabel: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 13,
     fontWeight: '600',
   },
   quickVoteButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
@@ -591,7 +591,7 @@ const styles = StyleSheet.create({
   },
   chatText: {
     fontSize: 13,
-    color: colors.palette.grey300,
+    color: colors.neutral[300],
     flex: 1,
   },
   chatInput: {
@@ -645,7 +645,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   closeButton: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 20,
   },
   walletBalanceText: {
@@ -663,7 +663,7 @@ const styles = StyleSheet.create({
   packageCard: {
     width: '48%',
     padding: 12,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 10,
     borderWidth: 2,
     borderColor: 'transparent',
@@ -705,7 +705,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -726,7 +726,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   summaryLabel: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 14,
   },
   summaryValue: {

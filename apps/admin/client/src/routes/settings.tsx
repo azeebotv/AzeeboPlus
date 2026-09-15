@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { SystemSetting } from '@/lib/admin-types';
+import { unwrapList } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 export default function SettingsPage() {
@@ -9,12 +10,37 @@ export default function SettingsPage() {
   const [tab, setTab] = useState('general');
   const [editKey, setEditKey] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [testingKey, setTestingKey] = useState<string | null>(null);
+  const [testResults, setTestResults] = useState<Record<string, { ok: boolean; message: string }>>({});
+
+  const handleTest = async (key: string) => {
+    // extract provider name e.g. integrations.paystack -> paystack
+    const provider = key.includes('.') ? key.split('.')[1] : key;
+    setTestingKey(key);
+    try {
+      const res = await adminApi.testSettingIntegration(provider);
+      setTestResults((prev) => ({
+        ...prev,
+        [key]: {
+          ok: res.success && (res.data as any)?.status === 'connected',
+          message: res.success ? `Connected (${(res.data as any)?.status || 'OK'})` : (res.message || 'Connection failed'),
+        },
+      }));
+    } catch (e) {
+      setTestResults((prev) => ({
+        ...prev,
+        [key]: { ok: false, message: 'Ping failed' },
+      }));
+    } finally {
+      setTestingKey(null);
+    }
+  };
 
   const { data: settings = [], isLoading } = useQuery({
     queryKey: ['admin', 'settings'],
     queryFn: async () => {
       const res = await adminApi.getAllSettings();
-      return res.success ? (res.data as SystemSetting[]) : [];
+      return res.success ? unwrapList<SystemSetting>(res.data).items : [];
     },
   });
 
@@ -26,6 +52,50 @@ export default function SettingsPage() {
       setEditKey(null);
     },
   });
+
+  // Export/import + bulk save (backend routes previously unused).
+  const [importFeedback, setImportFeedback] = useState<string | null>(null);
+  const handleExport = async () => {
+    const res = await adminApi.exportSettings();
+    if (!res.success) {
+      setImportFeedback(`Export failed: ${res.message || 'unknown error'}`);
+      return;
+    }
+    const blob = new Blob([JSON.stringify(res.data, null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `azeebo-settings-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setImportFeedback('Settings exported.');
+  };
+
+  const handleImportFile = async (file: File) => {
+    try {
+      const parsed = JSON.parse(await file.text());
+      const res = await adminApi.importSettings(parsed, 'merge');
+      setImportFeedback(
+        res.success ? 'Settings imported.' : `Import failed: ${res.message || 'unknown error'}`
+      );
+      if (res.success) queryClient.invalidateQueries({ queryKey: ['admin', 'settings'] });
+    } catch {
+      setImportFeedback('Import failed: file is not valid JSON.');
+    }
+  };
+
+  const handleImportClick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (file) void handleImportFile(file);
+    };
+    input.click();
+  };
 
   /**
    * The edit input always yields a string, but settings can be boolean or
@@ -107,6 +177,41 @@ export default function SettingsPage() {
             {t}
           </button>
         ))}
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+          {importFeedback && (
+            <span style={{ color: 'var(--admin-text-muted)', fontSize: 12 }}>{importFeedback}</span>
+          )}
+          <button
+            onClick={() => void handleExport()}
+            style={{
+              padding: '7px 14px',
+              borderRadius: 8,
+              border: '1px solid var(--admin-card)',
+              background: 'transparent',
+              color: 'var(--admin-text)',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Export
+          </button>
+          <button
+            onClick={handleImportClick}
+            style={{
+              padding: '7px 14px',
+              borderRadius: 8,
+              border: '1px solid var(--admin-card)',
+              background: 'transparent',
+              color: 'var(--admin-text)',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Import
+          </button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -198,6 +303,31 @@ export default function SettingsPage() {
                     >
                       {String(s.value)}
                     </span>
+                    {tab === 'integrations' && (
+                      <button
+                        onClick={() => handleTest(s.key)}
+                        disabled={testingKey === s.key}
+                        style={{
+                          padding: '4px 12px',
+                          borderRadius: 6,
+                          border: '1px solid var(--admin-border)',
+                          background: 'transparent',
+                          color: testResults[s.key]?.ok
+                            ? 'var(--admin-emerald)'
+                            : testResults[s.key]
+                              ? 'var(--admin-red)'
+                              : 'var(--admin-text)',
+                          fontSize: 12,
+                          cursor: testingKey === s.key ? 'not-allowed' : 'pointer',
+                        }}
+                      >
+                        {testingKey === s.key
+                          ? 'Testing...'
+                          : testResults[s.key]
+                            ? testResults[s.key].message
+                            : 'Test'}
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         setEditKey(s.key);

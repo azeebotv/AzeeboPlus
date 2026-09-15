@@ -12,11 +12,11 @@ import {
 } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { realityApi } from '../../src/api/engagement';
-import { walletApi } from '../../src/api/wallet';
-import { apiClient } from '../../src/api/client';
-import { logger } from '../../src/utils/logger';
-import { ApiResponse } from '../../src/types/api';
+import { realityApi } from '@azeebo/react-data/api/engagement';
+import { walletApi } from '@azeebo/react-data/api/wallet';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { logger } from '@azeebo/react-data/utils/logger';
+import { ApiResponse } from '@azeebo/react-data/types/api';
 import { defaultImages, colors } from '../../src/theme';
 
 const PLACEHOLDER_IMAGE = defaultImages.thumbnail;
@@ -303,7 +303,7 @@ export default function RealityShowScreen() {
           disabled={!selectedContestant || walletBalance < voteCost}
           style={[
             styles.submitVoteButton,
-            !selectedContestant && { backgroundColor: colors.palette.grey800 },
+            !selectedContestant && { backgroundColor: colors.bg.tertiary },
           ]}
         >
           <Text style={styles.submitVoteText}>Confirm Vote</Text>
@@ -460,7 +460,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.grey800,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -545,13 +545,13 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: '#1a1a1a',
     borderBottomWidth: 1,
-    borderBottomColor: colors.palette.charcoal,
+    borderBottomColor: colors.bg.tertiary,
   },
   walletInfo: {
     flex: 1,
   },
   walletLabel: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 12,
     marginBottom: 4,
   },
@@ -590,14 +590,14 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.palette.grey100,
+    backgroundColor: colors.neutral[100],
     alignItems: 'center',
     justifyContent: 'center',
   },
   voteButtonText: {
     fontSize: 24,
     fontWeight: '600',
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
   },
   voteAmountText: {
     fontSize: 20,
@@ -610,7 +610,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   priceText: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 14,
   },
   priceAmount: {
@@ -641,7 +641,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.palette.grey300,
+    backgroundColor: colors.neutral[300],
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
@@ -689,13 +689,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: colors.palette.charcoal,
+    borderBottomColor: colors.bg.tertiary,
   },
   rank: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: colors.palette.grey800,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: 14,
@@ -720,7 +720,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 4,
-    backgroundColor: colors.palette.grey800,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 2,
     overflow: 'hidden',
   },
@@ -759,10 +759,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     padding: 8,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: colors.palette.slate,
+    borderColor: colors.neutral[800],
   },
   predictionAvatar: {
     fontSize: 20,
@@ -802,7 +802,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalDetailText: {
-    color: colors.palette.grey400,
+    color: colors.neutral[400],
     fontSize: 14,
     marginBottom: 8,
     textAlign: 'center',
@@ -817,7 +817,7 @@ const styles = StyleSheet.create({
   },
   modalCancel: {
     flex: 1,
-    backgroundColor: colors.palette.grey800,
+    backgroundColor: colors.bg.tertiary,
     padding: 12,
     borderRadius: 10,
     alignItems: 'center',
@@ -853,7 +853,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   successMessage: {
-    color: colors.palette.grey400,
+    color: colors.neutral[400],
     fontSize: 14,
     textAlign: 'center',
   },

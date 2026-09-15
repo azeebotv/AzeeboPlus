@@ -1,4 +1,4 @@
-import { apiClient, gatewayPath } from '../../../../api/client';
+import { apiClient, gatewayPath } from '@azeebo/react-data/api/client';
 import type { AgbalaStoryworld, AgbalaQuiz, AgbalaTheory, AgbalaRoom } from '../types';
 
 export const agbalaApi = {

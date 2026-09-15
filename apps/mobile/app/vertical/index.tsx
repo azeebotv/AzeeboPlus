@@ -5,9 +5,9 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { apiClient } from '../../src/api/client';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { comedySubscription } from '../../src/config/prices';
-import { ApiResponse } from '../../src/types/api';
+import { ApiResponse } from '@azeebo/react-data/types/api';
 import { analytics } from '../../src/utils/analytics';
 import { colors } from '../../src/theme';
 
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
   },
   universeLabel: {
     fontSize: 14,
-    color: colors.palette.mint,
+    color: colors.category.mint,
     fontWeight: '600',
     marginBottom: 4,
   },
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   headerSubtitle: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 14,
     marginTop: 4,
   },
@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   seeAllText: {
-    color: colors.palette.mint,
+    color: colors.category.mint,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
   },
   featuredImagePlaceholder: {
     height: 240,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   ratingText: {
-    color: colors.palette.cream,
+    color: colors.category.highlight,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -393,12 +393,12 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   featuredSeason: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 12,
     marginBottom: 10,
   },
   watchButton: {
-    backgroundColor: colors.palette.mint,
+    backgroundColor: colors.category.mint,
     paddingVertical: 8,
     borderRadius: 6,
     alignItems: 'center',
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
   },
   verticalThumbnail: {
     height: 200,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -457,18 +457,18 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   verticalGenre: {
-    color: colors.palette.mint,
+    color: colors.category.mint,
     fontSize: 12,
     fontWeight: '500',
   },
   verticalRating: {
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
   },
   ratingSmall: {
-    color: colors.palette.cream,
+    color: colors.category.highlight,
     fontSize: 11,
   },
   passSection: {
@@ -480,24 +480,24 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
-    borderColor: colors.palette.mint,
+    borderColor: colors.category.mint,
   },
   passContent: {
     alignItems: 'center',
   },
   passTitle: {
-    color: colors.palette.mint,
+    color: colors.category.mint,
     fontSize: 20,
     fontWeight: '700',
     marginBottom: 4,
   },
   passSubtitle: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 14,
     marginBottom: 16,
   },
   passButton: {
-    backgroundColor: colors.palette.mint,
+    backgroundColor: colors.category.mint,
     paddingVertical: 10,
     paddingHorizontal: 24,
     borderRadius: 8,
@@ -514,7 +514,7 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
     backgroundColor: '#1a1a1a',
     borderTopWidth: 1,
-    borderTopColor: colors.palette.charcoal,
+    borderTopColor: colors.bg.tertiary,
   },
   navItem: {
     alignItems: 'center',
@@ -525,6 +525,6 @@ const styles = StyleSheet.create({
   },
   navLabel: {
     fontSize: 11,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
   },
 });
