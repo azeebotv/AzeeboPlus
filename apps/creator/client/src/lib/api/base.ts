@@ -52,6 +52,65 @@ const CSRF_HEADER = 'X-CSRF-Token';
 const CSRF_COOKIE = '_csrf';
 const STATE_CHANGING_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
+/**
+ * Single-flight refresh: N parallel 401s must trigger ONE refresh, not N.
+ * Concurrent refreshes race the server-side token rotation — the losers
+ * 401/429 and force a bogus logout (seen as logout-on-reload when the page
+ * fires several queries at boot).
+ */
+let refreshInFlight: Promise<boolean> | null = null;
+let cachedCsrfToken: string | null = null;
+
+function refreshSession(): Promise<boolean> {
+  if (!refreshInFlight) {
+    refreshInFlight = fetch('/api/v1/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    })
+      .then((r) => r.ok)
+      .catch(() => false)
+      .finally(() => {
+        setTimeout(() => {
+          refreshInFlight = null;
+        }, 50);
+      });
+  }
+  return refreshInFlight;
+}
+
+function resolveCsrfToken(): string | null {
+  return cachedCsrfToken || getCookie(CSRF_COOKIE);
+}
+
+/**
+ * CSRF recovery: the gateway mints tokens with an in-memory secret, so its
+ * secret rotates on restart and every cached token instantly goes stale. A
+ * mutation then 403s ("CSRF token missing/mismatch") forever because the
+ * cached token short-circuits re-bootstrap. On a CSRF-flavored 403, drop the
+ * cache, expire the cookies, re-bootstrap once, and retry the mutation with
+ * the fresh token. Single-flight so parallel mutations share one recovery.
+ */
+let csrfRecoveryInFlight: Promise<string | null> | null = null;
+
+function recoverCsrfToken(): Promise<string | null> {
+  if (!csrfRecoveryInFlight) {
+    csrfRecoveryInFlight = (async () => {
+      cachedCsrfToken = null;
+      if (typeof document !== 'undefined') {
+        document.cookie = `${CSRF_COOKIE}=; Max-Age=0; path=/`;
+        document.cookie = `${CSRF_COOKIE}_client=; Max-Age=0; path=/`;
+      }
+      return fetchCsrfToken();
+    })().finally(() => {
+      setTimeout(() => {
+        csrfRecoveryInFlight = null;
+      }, 50);
+    });
+  }
+  return csrfRecoveryInFlight;
+}
+
 export async function apiFetch<T>(
   endpoint: string,
   options: RequestInit & { skipAuthRetry?: boolean } = {}
@@ -66,7 +125,13 @@ export async function apiFetch<T>(
 
   const method = (options.method || 'GET').toUpperCase();
   if (STATE_CHANGING_METHODS.includes(method)) {
-    const csrfToken = getCookie(CSRF_COOKIE);
+    // Bootstrap when no token is cached: the gateway only mints the _csrf
+    // cookie on bootstrap, so a cold page would otherwise send cookieless
+    // mutations that the backend must reject.
+    let csrfToken = resolveCsrfToken();
+    if (!csrfToken) {
+      csrfToken = await fetchCsrfToken();
+    }
     if (csrfToken) {
       headers[CSRF_HEADER] = csrfToken;
     }
@@ -79,46 +144,51 @@ export async function apiFetch<T>(
       credentials: 'include',
     });
 
+    // Capture a fresh CSRF token if the response carries one (the gateway
+    // rotates it alongside the auth cookies).
+    const responseCsrf = response.headers.get(CSRF_HEADER);
+    if (responseCsrf) {
+      cachedCsrfToken = responseCsrf;
+      if (typeof document !== 'undefined') {
+        document.cookie = `${CSRF_COOKIE}_client=${encodeURIComponent(responseCsrf)}; path=/; SameSite=Lax`;
+      }
+    }
+
     const data = await response.json();
 
     if (!response.ok) {
       if (response.status === 401 && !options.skipAuthRetry) {
-        // Try refresh via httpOnly cookie — browser sends refresh_token cookie automatically
-        try {
-          const refreshResponse = await fetch('/api/v1/auth/refresh', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+        // Refresh via the httpOnly refresh_token cookie — the browser sends it
+        // automatically and the backend rotates + resets the cookies itself.
+        // Single-flight so parallel 401s share one rotation.
+        const refreshed = await refreshSession();
+
+        if (refreshed) {
+          // Retry the original request with a fresh CSRF header — the rotation
+          // may have replaced the old one, and reusing it would 403 the retry.
+          const retryCsrf = resolveCsrfToken() || (await fetchCsrfToken());
+          const retryHeaders: Record<string, string> = {
+            ...headers,
+            ...(retryCsrf ? { [CSRF_HEADER]: retryCsrf } : {}),
+          };
+          const retryResponse = await fetch(endpoint, {
+            ...options,
+            headers: retryHeaders,
             credentials: 'include',
           });
-
-          if (refreshResponse.ok) {
-            const refreshData = await refreshResponse.json();
-            if (refreshData.data?.access_token) {
-              // Set new access token as httpOnly cookie
-              await setAuthCookies(refreshData.data.access_token, refreshData.data.refresh_token);
-              // Retry original request — browser will send new cookie
-              const retryResponse = await fetch(endpoint, {
-                ...options,
-                headers,
-                credentials: 'include',
-              });
-              const retryData = await retryResponse.json();
-              if (!retryResponse.ok) {
-                return {
-                  success: false,
-                  message: retryData.message || 'Request failed',
-                  statusCode: retryResponse.status,
-                } as ApiError;
-              }
-              return {
-                success: true,
-                data: retryData.data !== undefined ? retryData.data : retryData,
-                message: retryData.message,
-              };
-            }
+          const retryData = await retryResponse.json();
+          if (!retryResponse.ok) {
+            return {
+              success: false,
+              message: retryData.message || 'Request failed',
+              statusCode: retryResponse.status,
+            } as ApiError;
           }
-        } catch {
-          // Refresh failed
+          return {
+            success: true,
+            data: retryData.data !== undefined ? retryData.data : retryData,
+            message: retryData.message,
+          };
         }
 
         clearSession();
@@ -127,6 +197,40 @@ export async function apiFetch<T>(
           message: 'Session expired. Please login again.',
           statusCode: 401,
         } as ApiError;
+      }
+
+      // CSRF-flavored 403: the gateway's in-memory secret rotated (restart)
+      // and our cached token is dead. Re-bootstrap once and retry the
+      // mutation with the fresh token instead of failing the user's action.
+      if (
+        response.status === 403 &&
+        !options.skipAuthRetry &&
+        /csrf/i.test(String(data?.error || data?.message || data?.title || ''))
+      ) {
+        const freshToken = await recoverCsrfToken();
+        if (freshToken) {
+          const retryResponse = await fetch(endpoint, {
+            ...options,
+            headers: { ...headers, [CSRF_HEADER]: freshToken },
+            credentials: 'include',
+          });
+          const retryData = await retryResponse.json().catch(() => null);
+          if (retryResponse.ok) {
+            return {
+              success: true,
+              data: retryData && retryData.data !== undefined ? retryData.data : retryData,
+              message: retryData?.message,
+            };
+          }
+          return {
+            success: false,
+            message:
+              (retryData && (retryData.message || retryData.detail)) ||
+              data?.message ||
+              'Request failed',
+            statusCode: retryResponse.status,
+          } as ApiError;
+        }
       }
 
       return {
@@ -224,10 +328,21 @@ export async function clearSession(): Promise<void> {
   }
 }
 
-export async function fetchCsrfToken(): Promise<void> {
+export async function fetchCsrfToken(): Promise<string | null> {
   try {
-    await fetch('/api/v1/auth/csrf', { credentials: 'include' });
+    const res = await fetch('/api/v1/auth/csrf', { credentials: 'include' });
+    const headerToken = res.headers.get(CSRF_HEADER) || res.headers.get('x-csrf-token');
+    const cookieToken = getCookie(CSRF_COOKIE);
+    const token = headerToken || cookieToken;
+    if (token) {
+      cachedCsrfToken = token;
+      if (typeof document !== 'undefined') {
+        document.cookie = `${CSRF_COOKIE}_client=${encodeURIComponent(token)}; path=/; SameSite=Lax`;
+      }
+    }
+    return token;
   } catch {
     // CSRF token fetch failed - the cookie may already exist from a prior request
+    return null;
   }
 }

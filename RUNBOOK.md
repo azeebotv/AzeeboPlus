@@ -693,6 +693,52 @@ a point before the drop.
 3. Verify authentication works
 4. Monitor for unauthorized access
 
+### CSRF Token Registry (gateway)
+
+The gateway's CSRF middleware (SEC-005) does **not** rely on an in-process secret.
+Tokens are validated against a **Redis-backed registry** (`CsrfTokenRegistry`), so
+**gateway restarts do NOT invalidate clients' cached tokens** — a deploy does not
+force every admin/creator/web session to re-bootstrap CSRF.
+
+How it works:
+
+- Every minted token (gateway safe-method responses and `GET /api/v1/auth/csrf`)
+  is registered in Redis under `csrf:token:<sha256(token)>` with a **24h TTL**.
+- State-changing, cookie-authenticated requests must present a token that is
+  still in the registry (in addition to the cookie==header double-submit check).
+- Tokens that were never minted here are rejected with `403 CSRF token unknown`.
+- The raw token is never stored — only its SHA-256 hash as the key.
+
+**Requirements & failure posture:**
+
+- `REDIS_URL` must be set on **both** the gateway and auth-service (they share
+  one registry). Without it the gateway logs
+  `REDIS_URL not set — CSRF registry disabled` at boot and validation degrades
+  to the plain double-submit check (fails **open**, availability over strictness).
+- If Redis goes down mid-flight the same fail-open applies; a single WARN is
+  logged per validation failure. Reconnecting restores strict validation
+  automatically (no restart needed).
+- An emergency bypass still exists via the `gateway_csrf_enforce` feature flag.
+
+**Ops notes:**
+
+- Restart-safe: token keys live in Redis, not in the gateway process.
+- Scale-safe: any gateway replica validates tokens minted by any other.
+- Leaked-token blast radius is capped at the 24h TTL.
+- To rotate immediately (suspected leak), flush only CSRF keys —
+  clients transparently re-bootstrap on their next GET and retry:
+
+  ```bash
+  redis-cli --scan --pattern 'csrf:token:*' | xargs redis-cli del
+  ```
+
+- Sanity check that the registry is alive:
+
+  ```bash
+  curl -s -D - -o /dev/null http://localhost:3013/api/v1/auth/csrf | grep -i x-csrf-token
+  redis-cli --scan --pattern 'csrf:token:*' | wc -l   # should be >= 1
+  ```
+
 ### SSL Certificate Renewal
 
 1. Check expiration: `openssl x509 -enddate -noout -in cert.pem`
