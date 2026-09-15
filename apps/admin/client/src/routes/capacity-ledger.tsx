@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api/base';
+import { useAuth } from '@/context/AuthContext';
+import { Icon } from '@/components/Icons';
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
 
@@ -29,6 +31,8 @@ interface CapacitySummary {
 
 export default function CapacityLedgerPage() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const [formError, setFormError] = useState('');
   const [periodFilter, setPeriodFilter] = useState('');
   const [domainFilter, setDomainFilter] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
@@ -64,18 +68,28 @@ export default function CapacityLedgerPage() {
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
+      // Guard the numeric fields: parseFloat('') is NaN, and JSON.stringify
+      // serializes NaN as null — corrupting the analytics payload.
+      const baseline = Number.parseFloat(data.baselineHours);
+      const postAgent = Number.parseFloat(data.postAgentHours);
+      if (!data.taskType.trim()) throw new Error('Task type is required.');
+      if (Number.isNaN(baseline) || baseline < 0)
+        throw new Error('Baseline hours must be a non-negative number.');
+      if (Number.isNaN(postAgent) || postAgent < 0)
+        throw new Error('Post-agent hours must be a non-negative number.');
       return apiFetch('/api/v1/analytics/capacity/entries', {
         method: 'POST',
         body: JSON.stringify({
           taskType: data.taskType,
           domain: data.domain,
-          baselineHours: parseFloat(data.baselineHours),
-          postAgentHours: parseFloat(data.postAgentHours),
+          baselineHours: baseline,
+          postAgentHours: postAgent,
           headcountAvoided: data.headcountAvoided,
           period: data.period,
         }),
       });
     },
+    onError: (e: Error) => setFormError(e.message || 'Failed to add entry'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'capacity-entries'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'capacity-summary'] });
@@ -95,10 +109,11 @@ export default function CapacityLedgerPage() {
     mutationFn: async (entryId: string) => {
       return apiFetch(`/api/v1/analytics/capacity/entries/${entryId}/validate`, {
         method: 'POST',
-        body: JSON.stringify({ validatedBy: 'admin' }),
+        body: JSON.stringify({ validatedBy: user?.email || user?.id || 'admin' }),
       });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'capacity-entries'] }),
+    onError: () => setFormError('Failed to validate entry — is the analytics service up?'),
   });
 
   const entries = entriesQuery.data?.data ?? [];
@@ -131,7 +146,19 @@ export default function CapacityLedgerPage() {
         }}
       >
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>⏱️ Capacity Ledger</h1>
+          <h1
+            style={{
+              fontSize: 28,
+              fontWeight: 700,
+              marginBottom: 8,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+            }}
+          >
+            <Icon name="clock" size={32} color="var(--admin-orange)" />
+            <span>Capacity Ledger</span>
+          </h1>
           <p style={{ color: 'var(--admin-text-muted)' }}>
             Before/after time tracking, headcount avoidance, and CFO/People validation
           </p>
@@ -147,15 +174,19 @@ export default function CapacityLedgerPage() {
             style={{
               padding: '10px 16px',
               borderRadius: 10,
-              border: '1px solid #3B82F6',
+              border: '1px solid var(--admin-blue)',
               backgroundColor: 'transparent',
               color: 'var(--admin-blue)',
               fontSize: 13,
               fontWeight: 600,
               cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
             }}
           >
-            🌱 Seed Sample Data
+            <Icon name="sprout" size={16} />
+            <span>Seed Sample Data</span>
           </button>
           <button
             onClick={() => setShowAddForm(!showAddForm)}
@@ -186,12 +217,37 @@ export default function CapacityLedgerPage() {
             marginBottom: 24,
           }}
         >
-          <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16, color: 'var(--admin-text)' }}>
+          <h3
+            style={{ fontSize: 14, fontWeight: 700, marginBottom: 16, color: 'var(--admin-text)' }}
+          >
             Record New Capacity Entry
           </h3>
+          {formError && (
+            <div
+              role="alert"
+              style={{
+                padding: '10px 14px',
+                borderRadius: 8,
+                border: '1px solid rgba(204,28,28,0.4)',
+                backgroundColor: 'rgba(204,28,28,0.12)',
+                color: 'var(--admin-red-light)',
+                fontSize: 13,
+                marginBottom: 16,
+              }}
+            >
+              {formError}
+            </div>
+          )}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 12 }}>
             <div>
-              <label style={{ fontSize: 11, color: 'var(--admin-text-muted)', display: 'block', marginBottom: 4 }}>
+              <label
+                style={{
+                  fontSize: 11,
+                  color: 'var(--admin-text-muted)',
+                  display: 'block',
+                  marginBottom: 4,
+                }}
+              >
                 Task Type
               </label>
               <input
@@ -212,7 +268,14 @@ export default function CapacityLedgerPage() {
               />
             </div>
             <div>
-              <label style={{ fontSize: 11, color: 'var(--admin-text-muted)', display: 'block', marginBottom: 4 }}>
+              <label
+                style={{
+                  fontSize: 11,
+                  color: 'var(--admin-text-muted)',
+                  display: 'block',
+                  marginBottom: 4,
+                }}
+              >
                 Domain
               </label>
               <select
@@ -237,7 +300,14 @@ export default function CapacityLedgerPage() {
               </select>
             </div>
             <div>
-              <label style={{ fontSize: 11, color: 'var(--admin-text-muted)', display: 'block', marginBottom: 4 }}>
+              <label
+                style={{
+                  fontSize: 11,
+                  color: 'var(--admin-text-muted)',
+                  display: 'block',
+                  marginBottom: 4,
+                }}
+              >
                 Baseline Hours/Week
               </label>
               <input
@@ -258,7 +328,14 @@ export default function CapacityLedgerPage() {
               />
             </div>
             <div>
-              <label style={{ fontSize: 11, color: 'var(--admin-text-muted)', display: 'block', marginBottom: 4 }}>
+              <label
+                style={{
+                  fontSize: 11,
+                  color: 'var(--admin-text-muted)',
+                  display: 'block',
+                  marginBottom: 4,
+                }}
+              >
                 Post-Agent Hours/Week
               </label>
               <input
@@ -344,7 +421,7 @@ export default function CapacityLedgerPage() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
           gap: 16,
           marginBottom: 32,
         }}
@@ -354,10 +431,12 @@ export default function CapacityLedgerPage() {
             padding: 20,
             borderRadius: 16,
             border: '1px solid var(--admin-surface)',
-            backgroundColor: 'rgba(26,10,10,0.5)',
+            backgroundColor: 'var(--admin-surface)',
           }}
         >
-          <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 8 }}>Total Hours Released</p>
+          <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 8 }}>
+            Total Hours Released
+          </p>
           <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--admin-emerald)' }}>
             {summary.totalHoursReleased.toLocaleString()}h
           </p>
@@ -367,10 +446,12 @@ export default function CapacityLedgerPage() {
             padding: 20,
             borderRadius: 16,
             border: '1px solid var(--admin-surface)',
-            backgroundColor: 'rgba(26,10,10,0.5)',
+            backgroundColor: 'var(--admin-surface)',
           }}
         >
-          <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 8 }}>Headcount Avoided</p>
+          <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 8 }}>
+            Headcount Avoided
+          </p>
           <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--admin-blue)' }}>
             {summary.headcountAvoided}
           </p>
@@ -380,11 +461,15 @@ export default function CapacityLedgerPage() {
             padding: 20,
             borderRadius: 16,
             border: '1px solid var(--admin-surface)',
-            backgroundColor: 'rgba(26,10,10,0.5)',
+            backgroundColor: 'var(--admin-surface)',
           }}
         >
-          <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 8 }}>Tracked Workflows</p>
-          <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--admin-orange)' }}>{summary.totalEntries}</p>
+          <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 8 }}>
+            Tracked Workflows
+          </p>
+          <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--admin-orange)' }}>
+            {summary.totalEntries}
+          </p>
         </div>
       </div>
 
@@ -398,23 +483,29 @@ export default function CapacityLedgerPage() {
             marginBottom: 32,
           }}
         >
-          {Object.entries(summary.byDomain).map(([domain, data]: [string, any]) => (
-            <div
-              key={domain}
-              style={{
-                padding: 14,
-                borderRadius: 10,
-                border: '1px solid var(--admin-surface)',
-                backgroundColor: 'rgba(26,10,10,0.5)',
-              }}
-            >
-              <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginBottom: 4 }}>{domain}</p>
-              <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--admin-text)' }}>
-                {data.released}h released
-              </p>
-              <p style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>{data.tasks} workflows</p>
-            </div>
-          ))}
+          {Object.entries(summary.byDomain).map(
+            ([domain, data]: [string, { released: number; tasks: number }]) => (
+              <div
+                key={domain}
+                style={{
+                  padding: 14,
+                  borderRadius: 10,
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-surface)',
+                }}
+              >
+                <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                  {domain}
+                </p>
+                <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--admin-text)' }}>
+                  {data.released}h released
+                </p>
+                <p style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>
+                  {data.tasks} workflows
+                </p>
+              </div>
+            )
+          )}
         </div>
       )}
 
@@ -456,7 +547,9 @@ export default function CapacityLedgerPage() {
 
       {/* Entries Table */}
       {entriesQuery.isLoading ? (
-        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading…</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+          Loading…
+        </p>
       ) : entries.length === 0 ? (
         <div
           style={{
@@ -466,13 +559,17 @@ export default function CapacityLedgerPage() {
             borderRadius: 16,
           }}
         >
-          <p style={{ fontSize: 48, marginBottom: 16 }}>⏱️</p>
+          <div style={{ marginBottom: 16 }}>
+            <Icon name="clock" size={48} color="var(--admin-text-muted)" />
+          </div>
           <p style={{ fontSize: 16, color: 'var(--admin-text-muted)' }}>
             No capacity entries recorded yet. Add your first entry above.
           </p>
         </div>
       ) : (
-        <div style={{ borderRadius: 16, border: '1px solid var(--admin-surface)', overflow: 'hidden' }}>
+        <div
+          style={{ borderRadius: 16, border: '1px solid var(--admin-surface)', overflow: 'hidden' }}
+        >
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ backgroundColor: 'rgba(232,66,10,0.08)' }}>
@@ -497,7 +594,9 @@ export default function CapacityLedgerPage() {
                 return (
                   <tr key={entry.id} style={{ borderBottom: '1px solid var(--admin-surface)' }}>
                     <td style={tdStyle}>
-                      <p style={{ fontWeight: 600, color: 'var(--admin-text)' }}>{entry.taskType}</p>
+                      <p style={{ fontWeight: 600, color: 'var(--admin-text)' }}>
+                        {entry.taskType}
+                      </p>
                     </td>
                     <td style={tdStyle}>
                       <span
@@ -525,7 +624,11 @@ export default function CapacityLedgerPage() {
                           fontSize: 11,
                           fontWeight: 600,
                           color:
-                            savingsPct > 50 ? 'var(--admin-emerald)' : savingsPct > 25 ? 'var(--admin-amber)' : 'var(--admin-text-muted)',
+                            savingsPct > 50
+                              ? 'var(--admin-emerald)'
+                              : savingsPct > 25
+                                ? 'var(--admin-amber)'
+                                : 'var(--admin-text-muted)',
                           backgroundColor:
                             savingsPct > 50
                               ? 'rgba(16,185,129,0.1)'
@@ -559,6 +662,9 @@ export default function CapacityLedgerPage() {
                       {entry.validated ? (
                         <span
                           style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4,
                             padding: '3px 8px',
                             borderRadius: 6,
                             fontSize: 11,
@@ -567,10 +673,13 @@ export default function CapacityLedgerPage() {
                             backgroundColor: 'rgba(16,185,129,0.15)',
                           }}
                         >
-                          ✓ {entry.validatedBy}
+                          <Icon name="check" size={12} color="var(--admin-emerald)" />
+                          <span>{entry.validatedBy}</span>
                         </span>
                       ) : (
-                        <span style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>Pending</span>
+                        <span style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>
+                          Pending
+                        </span>
                       )}
                     </td>
                     <td style={tdStyle}>{entry.period}</td>

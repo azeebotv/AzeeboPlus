@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { PaymentGateway } from '@/lib/admin-types';
+import { Icon } from '@/components/Icons';
 
 export default function PaymentGatewaysPage() {
   const queryClient = useQueryClient();
@@ -9,17 +10,57 @@ export default function PaymentGatewaysPage() {
   const [editing, setEditing] = useState<PaymentGateway | null>(null);
   const [form, setForm] = useState({ provider: '', name: '', mode: 'test' as 'live' | 'test' });
 
-  const { data: gateways = [], isLoading } = useQuery({
+  const {
+    data: gateways = [],
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ['admin', 'payment-gateways'],
     queryFn: async () => {
       const res = await adminApi.getPaymentGateways();
-      return res.success ? (res.data as PaymentGateway[]) : [];
+      // The endpoint returns a dashboard envelope {items, recentIntents,
+      // total} — cast the items array out (an unguarded cast of res.data
+      // crashed this page: `gateways.map is not a function`).
+      if (!res.success) return [];
+      const d = res.data as unknown;
+      const list: unknown[] = Array.isArray(d)
+        ? d
+        : Array.isArray((d as { items?: unknown[] }).items)
+          ? (d as { items: unknown[] }).items
+          : [];
+      return list.map((g) => {
+        const rec = g as Record<string, unknown>;
+        return {
+          id: String(rec.id),
+          // Backend sends provider (== id) and enabled; the page/type
+          // contract uses isEnabled (type maps to the provider kind).
+          provider: (rec.provider as string) ?? (rec.type as string) ?? String(rec.id),
+          name: (rec.name as string) ?? String(rec.id),
+          mode: ((rec.mode as string) === 'live' ? 'live' : 'test') as 'live' | 'test',
+          isEnabled: (rec.isEnabled as boolean | undefined) ?? rec.enabled === true,
+          config: (rec.config as Record<string, unknown>) ?? {},
+          stats: rec.stats,
+          createdAt: (rec.createdAt as string) ?? '',
+          updatedAt: (rec.updatedAt as string) ?? '',
+        } satisfies PaymentGateway & { stats?: unknown };
+      });
     },
   });
 
   const toggleMutation = useMutation({
     mutationFn: ({ id, isEnabled }: { id: string; isEnabled: boolean }) =>
       adminApi.togglePaymentGateway(id, isEnabled),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'payment-gateways'] });
+    },
+    onError: () => {
+      window.alert('Failed to update gateway. Please try again.');
+    },
+  });
+
+  const updateModeMutation = useMutation({
+    mutationFn: ({ id, mode }: { id: string; mode: 'live' | 'test' }) =>
+      adminApi.updateGatewayMode(id, mode),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'payment-gateways'] });
     },
@@ -33,11 +74,14 @@ export default function PaymentGatewaysPage() {
 
   function handleSave() {
     if (!editing) return;
-    const payload = { ...form, config: { ...(editing.config || {}) } };
-    adminApi.updateNotificationTemplate(editing.id, payload).then(() => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'payment-gateways'] });
-      closeModal();
-    });
+    updateModeMutation.mutate(
+      { id: editing.id, mode: form.mode },
+      {
+        onSuccess: () => {
+          closeModal();
+        },
+      }
+    );
   }
 
   return (
@@ -51,18 +95,36 @@ export default function PaymentGatewaysPage() {
         }}
       >
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Payment Gateways</h1>
+          <h1
+            style={{
+              fontSize: 28,
+              fontWeight: 700,
+              marginBottom: 8,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+            }}
+          >
+            <Icon name="creditCard" size={28} color="var(--admin-orange)" />
+            <span>Payment Gateways</span>
+          </h1>
           <p style={{ color: 'var(--admin-text-muted)' }}>{gateways.length} gateways configured</p>
         </div>
       </div>
 
-      {isLoading ? (
-        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+      {isError ? (
+        <p style={{ color: 'var(--admin-red)', textAlign: 'center', padding: 40 }}>
+          Failed to load payment gateways. Check that the admin backend is running.
+        </p>
+      ) : isLoading ? (
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+          Loading...
+        </p>
       ) : (
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
             gap: 16,
           }}
         >
@@ -72,8 +134,8 @@ export default function PaymentGatewaysPage() {
               style={{
                 padding: 20,
                 borderRadius: 16,
-                border: '1px solid var(--admin-surface)',
-                backgroundColor: 'rgba(26,10,10,0.5)',
+                border: '1px solid var(--admin-card)',
+                backgroundColor: 'var(--admin-surface)',
               }}
             >
               <div
@@ -109,7 +171,7 @@ export default function PaymentGatewaysPage() {
                       inset: 0,
                       borderRadius: 22,
                       transition: '0.3s',
-                      backgroundColor: g.isEnabled ? 'var(--admin-green)' : 'var(--admin-surface)',
+                      backgroundColor: g.isEnabled ? 'var(--admin-emerald)' : 'var(--admin-card)',
                     }}
                   >
                     <span
@@ -128,7 +190,7 @@ export default function PaymentGatewaysPage() {
                 </label>
               </div>
 
-              <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
                 <span
                   style={{
                     padding: '3px 10px',
@@ -136,8 +198,8 @@ export default function PaymentGatewaysPage() {
                     fontSize: 11,
                     fontWeight: 600,
                     backgroundColor:
-                      g.mode === 'live' ? 'rgba(13,59,46,0.2)' : 'rgba(245,158,11,0.2)',
-                    color: g.mode === 'live' ? 'var(--admin-green)' : 'var(--admin-amber)',
+                      g.mode === 'live' ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)',
+                    color: g.mode === 'live' ? 'var(--admin-emerald)' : 'var(--admin-amber)',
                     textTransform: 'capitalize',
                   }}
                 >
@@ -149,15 +211,15 @@ export default function PaymentGatewaysPage() {
                     borderRadius: 999,
                     fontSize: 11,
                     fontWeight: 600,
-                    backgroundColor: g.isEnabled ? 'rgba(13,59,46,0.2)' : 'rgba(204,28,28,0.2)',
-                    color: g.isEnabled ? 'var(--admin-green)' : 'var(--admin-red)',
+                    backgroundColor: g.isEnabled ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
+                    color: g.isEnabled ? 'var(--admin-emerald)' : 'var(--admin-red)',
                   }}
                 >
                   {g.isEnabled ? 'Active' : 'Inactive'}
                 </span>
               </div>
 
-              <div style={{ display: 'flex', gap: 6 }}>
+              <div style={{ display: 'flex', gap: 8 }}>
                 <button
                   onClick={() => {
                     setEditing(g);
@@ -167,10 +229,11 @@ export default function PaymentGatewaysPage() {
                   style={{
                     padding: '6px 14px',
                     borderRadius: 8,
-                    border: '1px solid var(--admin-surface)',
+                    border: '1px solid var(--admin-border)',
                     background: 'transparent',
-                    color: 'var(--admin-text-muted)',
+                    color: 'var(--admin-text)',
                     fontSize: 12,
+                    fontWeight: 500,
                     cursor: 'pointer',
                   }}
                 >
@@ -181,10 +244,11 @@ export default function PaymentGatewaysPage() {
                   style={{
                     padding: '6px 14px',
                     borderRadius: 8,
-                    border: '1px solid rgba(13,59,46,0.3)',
+                    border: `1px solid ${g.isEnabled ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.3)'}`,
                     background: 'transparent',
-                    color: 'var(--admin-green)',
+                    color: g.isEnabled ? 'var(--admin-red)' : 'var(--admin-emerald)',
                     fontSize: 12,
+                    fontWeight: 500,
                     cursor: 'pointer',
                   }}
                 >
@@ -194,7 +258,14 @@ export default function PaymentGatewaysPage() {
             </div>
           ))}
           {gateways.length === 0 && (
-            <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)', gridColumn: '1/-1' }}>
+            <p
+              style={{
+                textAlign: 'center',
+                padding: 40,
+                color: 'var(--admin-text-muted)',
+                gridColumn: '1/-1',
+              }}
+            >
               No payment gateways configured
             </p>
           )}
@@ -210,16 +281,17 @@ export default function PaymentGatewaysPage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: 'rgba(0,0,0,0.7)',
+            backgroundColor: 'rgba(0,0,0,0.75)',
+            backdropFilter: 'blur(4px)',
             padding: 16,
           }}
           onClick={closeModal}
         >
           <div
             style={{
-              backgroundColor: 'var(--admin-bg)',
+              backgroundColor: 'var(--admin-surface)',
               borderRadius: 16,
-              border: '1px solid var(--admin-surface)',
+              border: '1px solid var(--admin-card)',
               padding: 24,
               maxWidth: 480,
               width: '100%',
@@ -231,7 +303,14 @@ export default function PaymentGatewaysPage() {
             </h2>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  color: 'var(--admin-text-muted)',
+                  marginBottom: 6,
+                }}
+              >
                 Display Name
               </label>
               <input
@@ -241,8 +320,8 @@ export default function PaymentGatewaysPage() {
                   width: '100%',
                   padding: '10px 12px',
                   borderRadius: 8,
-                  border: '1px solid var(--admin-surface)',
-                  backgroundColor: 'var(--admin-dark)',
+                  border: '1px solid var(--admin-border)',
+                  backgroundColor: 'var(--admin-card)',
                   color: 'var(--admin-text)',
                   fontSize: 14,
                   outline: 'none',
@@ -251,7 +330,14 @@ export default function PaymentGatewaysPage() {
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  color: 'var(--admin-text-muted)',
+                  marginBottom: 6,
+                }}
+              >
                 Provider
               </label>
               <input
@@ -261,8 +347,8 @@ export default function PaymentGatewaysPage() {
                   width: '100%',
                   padding: '10px 12px',
                   borderRadius: 8,
-                  border: '1px solid var(--admin-surface)',
-                  backgroundColor: 'var(--admin-dark)',
+                  border: '1px solid var(--admin-border)',
+                  backgroundColor: 'var(--admin-card)',
                   color: 'var(--admin-text)',
                   fontSize: 14,
                   outline: 'none',
@@ -271,7 +357,14 @@ export default function PaymentGatewaysPage() {
             </div>
 
             <div style={{ marginBottom: 24 }}>
-              <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  color: 'var(--admin-text-muted)',
+                  marginBottom: 6,
+                }}
+              >
                 Mode
               </label>
               <select
@@ -281,8 +374,8 @@ export default function PaymentGatewaysPage() {
                   width: '100%',
                   padding: '10px 12px',
                   borderRadius: 8,
-                  border: '1px solid var(--admin-surface)',
-                  backgroundColor: 'var(--admin-dark)',
+                  border: '1px solid var(--admin-border)',
+                  backgroundColor: 'var(--admin-card)',
                   color: 'var(--admin-text)',
                   fontSize: 14,
                   outline: 'none',
@@ -315,7 +408,7 @@ export default function PaymentGatewaysPage() {
                 style={{
                   padding: '12px 20px',
                   borderRadius: 10,
-                  border: '1px solid var(--admin-surface)',
+                  border: '1px solid var(--admin-border)',
                   background: 'transparent',
                   color: 'var(--admin-text-muted)',
                   fontWeight: 600,

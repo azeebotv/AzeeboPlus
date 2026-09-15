@@ -12,7 +12,6 @@ import type {
   SearchStats,
   NotificationTemplate,
   NotificationStats,
-  AdminReport,
   AdminUniverse,
   Storyworld,
   AgbalaCharacter,
@@ -110,6 +109,7 @@ export const adminApi = {
       method: 'PUT',
       body: JSON.stringify({ reason, durationDays }),
     }),
+  deleteUser: (id: string) => apiFetch<unknown>(`/api/v1/admin/users/${id}`, { method: 'DELETE' }),
   revokeSuspension: (id: string, reason: string) =>
     apiFetch<unknown>(`/api/v1/admin/users/${id}/suspension/revoke`, {
       method: 'PUT',
@@ -209,9 +209,9 @@ export const adminApi = {
       `/api/v1/admin/users?role=creator&page=${page}&limit=${limit}`
     ),
   verifyCreator: (id: string) =>
-    apiFetch<unknown>(`/api/v1/admin/creators/${id}/verify`, { method: 'POST' }),
+    apiFetch<unknown>(`/api/v1/admin/users/${id}/verify`, { method: 'POST' }),
   unverifyCreator: (id: string) =>
-    apiFetch<unknown>(`/api/v1/admin/creators/${id}/unverify`, { method: 'POST' }),
+    apiFetch<unknown>(`/api/v1/admin/users/${id}/unverify`, { method: 'POST' }),
 
   // ─── Reality Shows ──────────────────────────────────────────────────────
   getRealityShows: (page = 1, limit = 20) =>
@@ -223,13 +223,33 @@ export const adminApi = {
       method: 'PUT',
       body: JSON.stringify({ status }),
     }),
+  createRealityShow: (data: { title: string; description?: string; creatorId?: string }) =>
+    apiFetch<unknown>('/api/v1/admin/reality-shows', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateRealityShow: (id: string, data: { title?: string; description?: string }) =>
+    apiFetch<unknown>(`/api/v1/admin/reality-shows/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  deleteRealityShow: (id: string) =>
+    apiFetch<unknown>(`/api/v1/admin/reality-shows/${id}`, { method: 'DELETE' }),
 
   // ─── Payment Gateways ──────────────────────────────────────────────────
-  getPaymentGateways: () => apiFetch<PaymentGateway[]>('/api/v1/admin/payment-gateways'),
+  getPaymentGateways: () =>
+    apiFetch<{ items: PaymentGateway[]; recentIntents?: unknown[]; total: number }>(
+      '/api/v1/admin/payment-gateways'
+    ),
   togglePaymentGateway: (id: string, isEnabled: boolean) =>
     apiFetch<unknown>(`/api/v1/admin/payment-gateways/${id}/toggle`, {
       method: 'PUT',
-      body: JSON.stringify({ isEnabled }),
+      body: JSON.stringify({ enabled: isEnabled }),
+    }),
+  updateGatewayMode: (id: string, mode: 'live' | 'test') =>
+    apiFetch<unknown>(`/api/v1/admin/payment-gateways/${id}/mode`, {
+      method: 'PUT',
+      body: JSON.stringify({ mode }),
     }),
 
   // ─── Engagement ─────────────────────────────────────────────────────────
@@ -263,7 +283,9 @@ export const adminApi = {
 
   // ─── Reports ────────────────────────────────────────────────────────────
   getReports: (range?: string) =>
-    apiFetch<AdminReport[]>(`/api/v1/admin/reports${range ? `?range=${range}` : ''}`),
+    apiFetch<{ reports: SavedAdminReport[]; summary: ReportsActivitySummary }>(
+      `/api/v1/admin/reports${range ? `?range=${range}` : ''}`
+    ),
   createCustomReport: (data: Record<string, unknown>) =>
     apiFetch<unknown>('/api/v1/admin/reports', { method: 'POST', body: JSON.stringify(data) }),
   executeReport: (id: string) =>
@@ -272,7 +294,20 @@ export const adminApi = {
     apiFetch<unknown>(`/api/v1/admin/reports/${id}`, { method: 'DELETE' }),
 
   // ─── Universes ──────────────────────────────────────────────────────────
-  getAllUniverses: () => apiFetch<AdminUniverse[]>('/api/v1/admin/universes'),
+  // Backend paginates server-side: returns {data: [...], meta: {total, page,
+  // limit, totalPages}}. Typed loosely because older callers may still treat
+  // the response as a bare array.
+  getAllUniverses: (page = 1, limit = 20, search?: string) => {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (search) params.set('search', search);
+    return apiFetch<
+      | AdminUniverse[]
+      | {
+          data: AdminUniverse[];
+          meta: { total: number; page: number; limit: number; totalPages: number };
+        }
+    >(`/api/v1/admin/universes?${params.toString()}`);
+  },
   getUniverseById: (id: string) => apiFetch<AdminUniverse>(`/api/v1/admin/universes/${id}`),
   createUniverse: (data: Record<string, unknown>) =>
     apiFetch<unknown>('/api/v1/admin/universes', { method: 'POST', body: JSON.stringify(data) }),
@@ -594,6 +629,41 @@ export const adminApi = {
       period: string;
     }>(`/api/v1/creators/tips/leaderboard/${creatorId}?period=${period}`),
 
+  // ─── Moderation ──────────────────────────────────────────────────────────
+  getModerationReports: (
+    params: { page?: number; limit?: number; status?: string; type?: string } = {}
+  ) => {
+    const q = new URLSearchParams();
+    if (params.page) q.set('page', String(params.page));
+    if (params.limit) q.set('limit', String(params.limit));
+    if (params.status) q.set('status', params.status);
+    if (params.type) q.set('type', params.type);
+    return apiFetch<{
+      reports: unknown[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }>(`/api/v1/admin/moderation/reports?${q.toString()}`);
+  },
+  getModerationStats: () =>
+    apiFetch<{
+      pendingReports: number;
+      inReviewReports: number;
+      resolvedReports: number;
+      totalReports: number;
+    }>('/api/v1/admin/moderation/reports/stats'),
+  resolveModerationReport: (id: string, action: string, reason: string) =>
+    apiFetch<unknown>(`/api/v1/admin/moderation/reports/${id}/resolve`, {
+      method: 'PUT',
+      body: JSON.stringify({ action, reason }),
+    }),
+  dismissModerationReport: (id: string, reason: string) =>
+    apiFetch<unknown>(`/api/v1/admin/moderation/reports/${id}/dismiss`, {
+      method: 'PUT',
+      body: JSON.stringify({ reason }),
+    }),
+
   // ─── Audit Logs ─────────────────────────────────────────────────────────
   getAuditLogs: (
     params: {
@@ -624,7 +694,22 @@ export const adminApi = {
   },
 
   getOpsStatus: () => apiFetch<OpsStatus>('/api/v1/admin/ops/status'),
+  getOpsRunHistory: (hours?: number) =>
+    apiFetch<OpsRunHistory>(`/api/v1/admin/ops/runs${hours ? `?hours=${hours}` : ''}`),
+  getGatewayHttp: () => apiFetch<GatewayHttpSummary>('/api/v1/admin/ops/gateway-http'),
+  getGatewayRateLimits: () =>
+    apiFetch<GatewayRateLimitSnapshot>('/api/v1/admin/ops/gateway-rate-limits'),
+  runOpsJob: (job: string) =>
+    apiFetch<RunJobOutcome>(`/api/v1/admin/ops/run/${job}`, { method: 'POST' }),
 };
+
+/** Outcome of a manual "Run now" job execution. */
+export interface RunJobOutcome {
+  job: string;
+  ok: boolean;
+  durationMs: number;
+  output: string[];
+}
 
 /** One probe/card on the Ops Health page. */
 export interface OpsCheck {
@@ -634,6 +719,8 @@ export interface OpsCheck {
   latencyMs?: number;
   ageMinutes?: number;
   lastRunAt?: string;
+  /** Rows the job purged in its last pass (retention jobs only). */
+  rowsPurged?: number;
 }
 
 export interface OpsAlert {
@@ -650,4 +737,105 @@ export interface OpsStatus {
   jobs: OpsCheck[];
   alerts: OpsAlert[];
   checkedAt: string;
+}
+
+/** One appended pass from the job_runs ledger. */
+export interface JobRunRow {
+  job: string;
+  status: 'ok' | 'warn' | 'error';
+  detail: string | null;
+  rowsPurged: number | null;
+  durationMs: number | null;
+  ranAt: string;
+}
+
+/** One UTC day of pass history for a single job (only days with runs appear). */
+export interface JobRunDailySummary {
+  date: string;
+  total: number;
+  ok: number;
+  /** Whole-percent success rate: round(100 * ok / total). */
+  rate: number;
+}
+
+/** A report definition saved from the Report Builder. */
+export interface SavedAdminReport {
+  id: string;
+  name: string;
+  category: string;
+  dateRange: string;
+  format: string;
+  config: unknown;
+  createdAt: string;
+  createdBy?: string;
+  lastRunAt?: string | null;
+  lastRunSummary?: string | null;
+}
+
+/** The activity summary behind the Reports page's overview strip. */
+export interface ReportsActivitySummary {
+  userGrowth: Record<string, number>;
+  contentPublished: Record<string, number>;
+  revenue: Record<string, number>;
+  reports: { total: number; pending: number; resolved: number; byType: Record<string, number> };
+}
+
+/** One endpoint's latency profile from the gateway's Prometheus histogram. */
+export interface GatewayRouteMetric {
+  route: string;
+  method: string;
+  requestCount: number;
+  errorCount: number;
+  errorRate: number;
+  avgMs: number;
+  p95Ms: number;
+  p99Ms: number;
+}
+
+export interface GatewayHttpSummary {
+  available: boolean;
+  scrapedAt: string;
+  totalRequests: number;
+  errorCount: number;
+  errorRate: number;
+  avgMs: number;
+  p95Ms: number;
+  p99Ms: number;
+  routes: GatewayRouteMetric[];
+}
+
+export interface GatewayRateLimitEntry {
+  identifierType: 'ip' | 'account';
+  identifier: string;
+  endpoint: string;
+  limit: number;
+  remaining: number;
+  usagePercent: number;
+}
+
+export interface GatewayRateLimitSnapshot {
+  available: boolean;
+  scrapedAt: string;
+  entries: GatewayRateLimitEntry[];
+  blockedTotal: number;
+  blockedByEndpoint: Array<{ endpoint: string; blocked: number }>;
+  strictMode: boolean;
+}
+
+export interface JobRunSummary {
+  job: string;
+  /** Counts cover the FULL requested window, not the capped `runs` array. */
+  total: number;
+  ok: number;
+  warn: number;
+  error: number;
+  lastAt: string | null;
+  runs: JobRunRow[];
+  /** Chronological per-day success rates across the full window. */
+  daily: JobRunDailySummary[];
+}
+
+export interface OpsRunHistory {
+  windowHours: number;
+  perJob: JobRunSummary[];
 }

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { Storyworld } from '@/lib/admin-types';
+import { Icon } from '@/components/Icons';
 
 type Tab = 'storyworlds' | 'characters' | 'paths' | 'quizzes';
 
@@ -14,8 +15,22 @@ export default function AgbalaPage() {
     queryFn: async () => {
       const res = await adminApi.getStoryworlds();
       if (res.success && res.data) {
-        const d = res.data as Storyworld[] | { items: Storyworld[] };
-        return Array.isArray(d) ? d : d.items || [];
+        const d = res.data as unknown;
+        const list: Record<string, unknown>[] = Array.isArray(d)
+          ? d
+          : Array.isArray((d as { items?: unknown[] }).items)
+            ? (d as { items: unknown[] }).items
+            : [];
+        // vertical-service returns name/status/locationCount; the page
+        // contract (and Storyworld type) uses title/isPublished/pathCount —
+        // normalize here so upstream field drift can't blank the cards.
+        return list.map((s) => ({
+          ...s,
+          title: (s.title as string) ?? (s.name as string) ?? '(untitled)',
+          isPublished:
+            (s.isPublished as boolean | undefined) ??
+            (s.status === 'active' || s.status === 'published'),
+        })) as unknown as Storyworld[];
       }
       return [];
     },
@@ -60,8 +75,7 @@ export default function AgbalaPage() {
     enabled: tab === 'quizzes',
   });
 
-  const sw = storyworldsQ.data as Storyworld[] | undefined;
-  const storyworlds = sw || [];
+  const storyworlds = storyworldsQ.data || [];
 
   const tabs: { key: Tab; label: string; count?: number }[] = [
     { key: 'storyworlds', label: 'Storyworlds', count: storyworlds.length },
@@ -73,16 +87,30 @@ export default function AgbalaPage() {
   const baseCard: React.CSSProperties = {
     padding: 16,
     borderRadius: 16,
-    border: '1px solid var(--admin-surface)',
-    backgroundColor: 'rgba(26,10,10,0.5)',
+    border: '1px solid var(--admin-card)',
+    backgroundColor: 'var(--admin-surface)',
   };
 
   return (
     <div>
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Agbala</h1>
-      <p style={{ color: 'var(--admin-text-muted)', marginBottom: 24 }}>
-        Interactive narrative engine — storyworlds, characters, paths, and quizzes
-      </p>
+      <div style={{ marginBottom: 24 }}>
+        <h1
+          style={{
+            fontSize: 28,
+            fontWeight: 700,
+            marginBottom: 8,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
+          <Icon name="bookOpen" size={28} color="var(--admin-orange)" />
+          <span>Agbala</span>
+        </h1>
+        <p style={{ color: 'var(--admin-text-muted)' }}>
+          Interactive narrative engine — storyworlds, characters, paths, and quizzes
+        </p>
+      </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
         {tabs.map((t) => (
@@ -110,7 +138,9 @@ export default function AgbalaPage() {
       {tab === 'storyworlds' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {storyworldsQ.isLoading ? (
-            <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+            <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+              Loading...
+            </p>
           ) : storyworlds.length === 0 ? (
             <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
               No storyworlds yet.
@@ -129,10 +159,12 @@ export default function AgbalaPage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 2 }}>{s.title}</h3>
                     {s.description && (
-                      <p style={{ color: 'var(--admin-text-muted)', fontSize: 13, margin: 0 }}>{s.description}</p>
+                      <p style={{ color: 'var(--admin-text-muted)', fontSize: 13, margin: 0 }}>
+                        {s.description}
+                      </p>
                     )}
                     <p style={{ color: 'var(--admin-text-muted)', fontSize: 12, marginTop: 4 }}>
-                      {s.characterCount || 0} characters · {s.pathCount || 0} paths
+                      {s.characterCount || 0} characters · {s.locationCount || 0} locations
                     </p>
                   </div>
                   <span
@@ -142,9 +174,9 @@ export default function AgbalaPage() {
                       fontSize: 11,
                       fontWeight: 600,
                       backgroundColor: s.isPublished
-                        ? 'rgba(13,59,46,0.2)'
-                        : 'rgba(154,138,122,0.2)',
-                      color: s.isPublished ? 'var(--admin-green)' : 'var(--admin-text-muted)',
+                        ? 'rgba(16,185,129,0.15)'
+                        : 'rgba(107,114,128,0.15)',
+                      color: s.isPublished ? 'var(--admin-emerald)' : 'var(--admin-text-muted)',
                     }}
                   >
                     {s.isPublished ? 'Published' : 'Draft'}
@@ -184,7 +216,9 @@ export default function AgbalaPage() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {charactersQ.isLoading ? (
-              <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+              <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+                Loading...
+              </p>
             ) : (
               (
                 charactersQ.data as {
@@ -205,7 +239,9 @@ export default function AgbalaPage() {
                   </div>
                 </div>
               )) || (
-                <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>No characters.</p>
+                <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+                  No characters.
+                </p>
               )
             )}
           </div>
@@ -215,7 +251,9 @@ export default function AgbalaPage() {
       {tab === 'paths' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {pathsQ.isLoading ? (
-            <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+            <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+              Loading...
+            </p>
           ) : (
             (
               pathsQ.data as { id: string; name: string; totalSteps: number; color?: string }[]
@@ -232,11 +270,17 @@ export default function AgbalaPage() {
                   />
                   <div style={{ flex: 1 }}>
                     <h3 style={{ fontWeight: 600, fontSize: 14, marginBottom: 2 }}>{p.name}</h3>
-                    <p style={{ color: 'var(--admin-text-muted)', fontSize: 12 }}>{p.totalSteps} steps</p>
+                    <p style={{ color: 'var(--admin-text-muted)', fontSize: 12 }}>
+                      {p.totalSteps} steps
+                    </p>
                   </div>
                 </div>
               </div>
-            )) || <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>No paths.</p>
+            )) || (
+              <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+                No paths.
+              </p>
+            )
           )}
         </div>
       )}
@@ -269,7 +313,9 @@ export default function AgbalaPage() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {quizzesQ.isLoading ? (
-              <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+              <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+                Loading...
+              </p>
             ) : (
               (quizzesQ.data as { id: string; title: string; questionCount: number }[])?.map(
                 (q) => (
@@ -286,7 +332,11 @@ export default function AgbalaPage() {
                     </div>
                   </div>
                 )
-              ) || <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>No quizzes.</p>
+              ) || (
+                <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+                  No quizzes.
+                </p>
+              )
             )}
           </div>
         </div>

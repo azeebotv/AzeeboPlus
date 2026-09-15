@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
+import { Icon } from '@/components/Icons';
 
 export default function ReportBuilderPage() {
   const navigate = useNavigate();
@@ -29,9 +30,16 @@ export default function ReportBuilderPage() {
           background: 'transparent',
           color: 'var(--admin-orange)',
           cursor: 'pointer',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 8,
+          fontSize: 13,
+          fontWeight: 600,
+          transition: 'all 0.15s ease',
         }}
       >
-        &larr; Back to Reports
+        <Icon name="arrowLeft" size={16} />
+        <span>Back to Reports</span>
       </button>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Report Builder</h1>
       <p style={{ color: 'var(--admin-text-muted)', marginBottom: 32 }}>Configure and generate a custom report</p>

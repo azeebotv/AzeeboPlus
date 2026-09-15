@@ -26,6 +26,7 @@ import { PaymentGatewaysModule } from './modules/payment-gateways/payment-gatewa
 import { RealityShowsModule } from './modules/reality-shows/reality-shows.module';
 import { SubscriptionAdminModule } from './modules/subscription-admin/subscription-admin.module';
 import { AnalyticsProxyModule } from './modules/analytics-proxy/analytics-proxy.module';
+import { LiveEventsProxyModule } from './modules/live-events-proxy/live-events-proxy.module';
 import { ServiceAuthGuard, RateLimiterModule, SecurityModule } from '@azeebo/security';
 import { FeatureFlagModule, queueFlags, adminFlags } from '@azeebo/feature-flags';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
@@ -64,6 +65,7 @@ import { CsrfMiddleware } from './common/csrf.middleware';
     RealityShowsModule,
     SubscriptionAdminModule,
     AnalyticsProxyModule,
+    LiveEventsProxyModule,
     AuthModule,
     DatabaseModule,
     UserManagementModule,

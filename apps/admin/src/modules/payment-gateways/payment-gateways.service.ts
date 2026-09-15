@@ -1,17 +1,62 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
+import type { InputJsonValue } from '@prisma/client/runtime/library';
+
+/** system_settings key holding gateway enable/mode overrides. */
+const GATEWAYS_KEY = 'admin.payment_gateways_config';
 
 /**
  * Payment gateways admin service.
  *
- * The platform currently supports Paystack and Flutterwave — their
- * configuration lives in env vars. This service surfaces usage stats
- * derived from the PaymentIntent table so the admin UI can show real
- * gateway health without a separate PaymentGateway model.
+ * The platform currently supports Paystack and Flutterwave — their secrets
+ * live in env vars, but the ENABLED flag and MODE are operator choices that
+ * must survive refetches. They persist in system_settings (FDW-safe
+ * find-then-write, same pattern as reports-admin) and are merged over the
+ * env-derived defaults, so toggle/mode changes are real and durable instead
+ * of stub responses that silently revert on the next list.
  */
 @Injectable()
 export class PaymentGatewaysService {
+  /** The two gateways the payment-service actually supports. */
+  private static readonly PROVIDERS = ['paystack', 'flutterwave'] as const;
+
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+
+  /**
+   * Read persisted overrides. Deliberately NO catch-and-default here: a
+   * failed FDW read silently rendering as "all defaults" made disabled
+   * gateways flip back to enabled on the next list — lying to the operator.
+   * Corruption inside a valid row is still tolerated; real DB errors throw.
+   */
+  private async readOverrides(): Promise<Record<string, { enabled: boolean; mode: 'live' | 'test' }>> {
+    const row = await this.prisma.systemSettings.findUnique({ where: { key: GATEWAYS_KEY } });
+    const value = row?.value as unknown;
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? (value as Record<string, { enabled: boolean; mode: 'live' | 'test' }>)
+      : {};
+  }
+
+  private async writeOverrides(
+    overrides: Record<string, { enabled: boolean; mode: 'live' | 'test' }>
+  ): Promise<void> {
+    const value = overrides as unknown as InputJsonValue;
+    // system_settings is a postgres_fdw FOREIGN table here — ON CONFLICT
+    // (Prisma upsert) is not supported through FDW, so find-then-write,
+    // matching the creator-profile pattern in user-management.
+    const existing = await this.prisma.systemSettings.findUnique({ where: { key: GATEWAYS_KEY } });
+    if (existing) {
+      await this.prisma.systemSettings.update({ where: { key: GATEWAYS_KEY }, data: { value } });
+    } else {
+      await this.prisma.systemSettings.create({
+        data: {
+          key: GATEWAYS_KEY,
+          value,
+          category: 'payments',
+          description: 'Payment gateway enabled/mode overrides (admin panel)',
+        },
+      });
+    }
+  }
 
   async getGateways() {
     const now = new Date();
@@ -20,8 +65,9 @@ export class PaymentGatewaysService {
     const weekAgo = new Date(today);
     weekAgo.setDate(weekAgo.getDate() - 7);
 
-    const [totalIntents, todayIntents, successfulIntents, failedIntents, weeklyIntents] =
+    const [overrides, totalIntents, todayIntents, successfulIntents, failedIntents, weeklyIntents] =
       await Promise.all([
+        this.readOverrides(),
         this.prisma.paymentIntent.count(),
         this.prisma.paymentIntent.count({ where: { createdAt: { gte: today } } }),
         this.prisma.paymentIntent.count({ where: { status: 'completed' } }),
@@ -29,79 +75,55 @@ export class PaymentGatewaysService {
         this.prisma.paymentIntent.count({ where: { createdAt: { gte: weekAgo } } }),
       ]);
 
-    const recentIntents = await this.prisma.paymentIntent.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 10,
-      select: {
-        id: true,
-        amount: true,
-        currency: true,
-        status: true,
-        providerReference: true,
-        createdAt: true,
-      },
-    });
-
     const successRate = totalIntents > 0 ? Math.round((successfulIntents / totalIntents) * 100) : 0;
 
-    return {
-      items: [
-        {
-          id: 'paystack',
-          name: 'Paystack',
-          type: 'card',
-          enabled: true,
-          mode: 'live',
-          stats: {
-            totalIntents,
-            todayIntents,
-            weeklyIntents,
-            successRate,
-            successful: successfulIntents,
-            failed: failedIntents,
-          },
-        },
-        {
-          id: 'flutterwave',
-          name: 'Flutterwave',
-          type: 'card',
-          enabled: true,
-          mode: 'live',
-          stats: {
-            totalIntents: 0,
-            todayIntents: 0,
-            weeklyIntents: 0,
-            successRate: 0,
-            successful: 0,
-            failed: 0,
-          },
-        },
-      ],
-      recentIntents,
-      total: 2,
-    };
+    const items = PaymentGatewaysService.PROVIDERS.map((provider) => ({
+      id: provider,
+      provider,
+      name: provider === 'paystack' ? 'Paystack' : 'Flutterwave',
+      type: 'card',
+      // Overrides persist; env could later seed defaults, but enabled-by-
+      // default with mode 'live' matches the long-standing hardcode.
+      enabled: overrides[provider]?.enabled ?? true,
+      mode: overrides[provider]?.mode ?? ('live' as const),
+      config: {},
+      stats: {
+        totalIntents,
+        todayIntents,
+        weeklyIntents,
+        successRate,
+        successful: successfulIntents,
+        failed: failedIntents,
+      },
+    }));
+
+    return { items, total: items.length };
   }
 
-  async toggleGateway(id: string) {
-    // In production this would update a PaymentGateway config row.
-    // For now, return success since gateway toggling is env-var driven.
-    return {
-      id,
-      enabled: true,
-      updatedAt: new Date().toISOString(),
-      message: `Gateway ${id} toggle recorded. Restart the service with updated env vars to apply.`,
-    };
-  }
-
-  async updateGatewayMode(id: string, mode: string) {
-    if (!['test', 'live'].includes(mode)) {
-      throw new Error('Mode must be "test" or "live"');
+  async toggleGateway(id: string, enabled: boolean) {
+    if (!PaymentGatewaysService.PROVIDERS.includes(id as 'paystack' | 'flutterwave')) {
+      return null;
     }
+    const overrides = await this.readOverrides();
+    overrides[id] = { ...overrides[id], enabled };
+    await this.writeOverrides(overrides);
+    const fresh = await this.getGateways();
+    const gateway = fresh.items.find((g) => g.id === id);
     return {
-      id,
-      mode,
-      updatedAt: new Date().toISOString(),
-      message: `Gateway ${id} mode set to ${mode}. Restart the service to apply.`,
+      gateway,
+      message: `${gateway?.name ?? id} ${enabled ? 'enabled' : 'disabled'} — persisted.`,
     };
+  }
+
+  async updateGatewayMode(id: string, mode: 'live' | 'test') {
+    if (!PaymentGatewaysService.PROVIDERS.includes(id as 'paystack' | 'flutterwave')) {
+      return null;
+    }
+    const overrides = await this.readOverrides();
+    overrides[id] = { ...overrides[id], mode };
+    await this.writeOverrides(overrides);
+    const fresh = await this.getGateways();
+    const gateway = fresh.items.find((g) => g.id === id);
+    return { gateway, message: `${gateway?.name ?? id} mode set to ${mode} — persisted.` };
   }
 }

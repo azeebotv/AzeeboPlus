@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { archivedFromDetails, sourceBadgeFor } from './audit-logs';
+import { sourceBadgeFor, archivedFromDetails } from '@/lib/audit-log-helpers';
 import type { AuditLogEntry } from '@/lib/api/admin';
 
 const entry = (over: Partial<AuditLogEntry>): AuditLogEntry => ({

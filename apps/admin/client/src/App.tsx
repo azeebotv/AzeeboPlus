@@ -8,6 +8,7 @@ import UsersPage from './routes/users';
 import UserDetailPage from './routes/user-detail';
 import ContentPage from './routes/content';
 import ContentReviewPage from './routes/content-review';
+import ModerationPage from './routes/moderation';
 import CreatorsPage from './routes/creators';
 import RealityPage from './routes/reality';
 import UniversesPage from './routes/universes';
@@ -86,6 +87,7 @@ export default function App() {
               <Route path="users/:id" element={<UserDetailPage />} />
               <Route path="content" element={<ContentPage />} />
               <Route path="content-review" element={<ContentReviewPage />} />
+              <Route path="moderation" element={<ModerationPage />} />
               <Route path="creators" element={<CreatorsPage />} />
               <Route path="reality" element={<RealityPage />} />
               <Route path="universes" element={<UniversesPage />} />

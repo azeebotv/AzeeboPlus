@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
+import { Icon } from '@/components/Icons';
 
 interface UserItem {
   id: string;
@@ -16,7 +17,7 @@ export default function UsersPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
-  const [page, _setPage] = useState(1);
+  const [page, setPage] = useState(1);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin', 'users', page, roleFilter, search],
@@ -43,7 +44,8 @@ export default function UsersPage() {
   });
 
   const users = data?.users || [];
-  const filtered = useMemo(() => users, [users]);
+  const total = data?.total ?? users.length;
+  const totalPages = data?.totalPages ?? 1;
 
   return (
     <div>
@@ -57,14 +59,19 @@ export default function UsersPage() {
       >
         <div>
           <h1 style={{ fontSize: 28, fontWeight: 700 }}>Users</h1>
-          <p style={{ color: 'var(--admin-text-muted)', marginTop: 4 }}>{users.length} total users</p>
+          <p style={{ color: 'var(--admin-text-muted)', marginTop: 4 }}>
+            {total.toLocaleString()} total users
+          </p>
         </div>
       </div>
 
       <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
         <input
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
           placeholder="Search users..."
           aria-label="Search users"
           style={{
@@ -82,7 +89,10 @@ export default function UsersPage() {
           {['all', 'user', 'creator', 'admin'].map((role) => (
             <button
               key={role}
-              onClick={() => setRoleFilter(role)}
+              onClick={() => {
+                setRoleFilter(role);
+                setPage(1);
+              }}
               style={{
                 padding: '8px 16px',
                 borderRadius: 999,
@@ -105,13 +115,15 @@ export default function UsersPage() {
       </div>
 
       {isLoading ? (
-        <div style={{ padding: 40, textAlign: 'center', color: 'var(--admin-text-muted)' }}>Loading...</div>
+        <div style={{ padding: 40, textAlign: 'center', color: 'var(--admin-text-muted)' }}>
+          Loading...
+        </div>
       ) : error ? (
         <div
           style={{
             padding: 24,
             borderRadius: 16,
-            border: '1px solid #CC1C1C',
+            border: '1px solid var(--admin-red)',
             backgroundColor: 'rgba(204,28,28,0.1)',
           }}
         >
@@ -122,7 +134,7 @@ export default function UsersPage() {
           style={{
             borderRadius: 16,
             border: '1px solid var(--admin-surface)',
-            backgroundColor: 'rgba(26,10,10,0.5)',
+            backgroundColor: 'var(--admin-surface)',
             overflow: 'hidden',
           }}
         >
@@ -148,7 +160,7 @@ export default function UsersPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((u) => (
+                {users.map((u) => (
                   <tr key={u.id} style={{ borderBottom: '1px solid var(--admin-bg)' }}>
                     <td style={{ padding: '12px 16px' }}>
                       <p style={{ fontWeight: 600 }}>{u.username}</p>
@@ -179,7 +191,13 @@ export default function UsersPage() {
                         {u.role}
                       </span>
                     </td>
-                    <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)', fontSize: 13 }}>
+                    <td
+                      style={{
+                        padding: '12px 16px',
+                        color: 'var(--admin-text-muted)',
+                        fontSize: 13,
+                      }}
+                    >
                       {new Date(u.createdAt).toLocaleDateString()}
                     </td>
                     <td style={{ padding: '12px 16px' }}>
@@ -218,8 +236,68 @@ export default function UsersPage() {
               </tbody>
             </table>
           </div>
-          {filtered.length === 0 && (
-            <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>No users found</p>
+          {users.length === 0 && (
+            <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>
+              No users found
+            </p>
+          )}
+
+          {totalPages > 1 && (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '12px 16px',
+                borderTop: '1px solid var(--admin-border)',
+                fontSize: 13,
+                color: 'var(--admin-text-muted)',
+              }}
+            >
+              <span>
+                Page {page} of {totalPages}
+              </span>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 8,
+                    border: '1px solid var(--admin-border)',
+                    background: 'transparent',
+                    color: page <= 1 ? 'var(--admin-text-dim)' : 'var(--admin-text)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontSize: 12,
+                    cursor: page <= 1 ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  <Icon name="arrowLeft" size={14} />
+                  <span>Previous</span>
+                </button>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 8,
+                    border: '1px solid var(--admin-border)',
+                    background: 'transparent',
+                    color: page >= totalPages ? 'var(--admin-text-dim)' : 'var(--admin-text)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontSize: 12,
+                    cursor: page >= totalPages ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  <span>Next</span>
+                  <Icon name="arrowRight" size={14} />
+                </button>
+              </div>
+            </div>
           )}
         </div>
       )}

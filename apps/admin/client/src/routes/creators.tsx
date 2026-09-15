@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { AdminCreator } from '@/lib/admin-types';
+import { Icon } from '@/components/Icons';
 
 export default function CreatorsPage() {
   const queryClient = useQueryClient();
@@ -24,8 +25,13 @@ export default function CreatorsPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Creators</h1>
-      <p style={{ color: 'var(--admin-text-muted)', marginBottom: 24 }}>{creators.length} registered creators</p>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Icon name="users" size={28} color="var(--admin-orange)" />
+          <span>Creators</span>
+        </h1>
+        <p style={{ color: 'var(--admin-text-muted)' }}>{creators.length} registered creators</p>
+      </div>
 
       {isLoading ? (
         <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
@@ -43,8 +49,8 @@ export default function CreatorsPage() {
               style={{
                 padding: 20,
                 borderRadius: 16,
-                border: '1px solid var(--admin-surface)',
-                backgroundColor: 'rgba(26,10,10,0.5)',
+                border: '1px solid var(--admin-card)',
+                backgroundColor: 'var(--admin-surface)',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>

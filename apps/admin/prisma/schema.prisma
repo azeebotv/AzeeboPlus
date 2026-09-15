@@ -36,6 +36,7 @@ model User {
   displayName           String
   avatar                String?
   role                  UserRole @default(user)
+  isVerified            Boolean  @default(false)
   preferences           Json?
   notificationPreferences Json?
   isSuspended           Boolean  @default(false)

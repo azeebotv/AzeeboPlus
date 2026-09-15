@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { NotificationTemplate } from '@/lib/admin-types';
+import { Icon } from '@/components/Icons';
 
 export default function NotificationsPage() {
   const queryClient = useQueryClient();
@@ -31,19 +32,25 @@ export default function NotificationsPage() {
         style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           marginBottom: 24,
         }}
       >
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Notifications</h1>
-          <p style={{ color: 'var(--admin-text-muted)', marginTop: 4 }}>{templates.length} templates</p>
+          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Icon name="bell" size={28} color="var(--admin-orange)" />
+            <span>Notifications</span>
+          </h1>
+          <p style={{ color: 'var(--admin-text-muted)' }}>{templates.length} templates</p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
           style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
             padding: '10px 20px',
-            borderRadius: 12,
+            borderRadius: 10,
             border: 'none',
             background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
             color: 'white',
@@ -52,7 +59,8 @@ export default function NotificationsPage() {
             cursor: 'pointer',
           }}
         >
-          Create Template
+          <Icon name={showForm ? 'x' : 'plus'} size={16} />
+          <span>{showForm ? 'Cancel' : 'Create Template'}</span>
         </button>
       </div>
 
@@ -61,8 +69,8 @@ export default function NotificationsPage() {
           style={{
             padding: 24,
             borderRadius: 16,
-            border: '1px solid var(--admin-surface)',
-            backgroundColor: 'rgba(26,10,10,0.8)',
+            border: '1px solid var(--admin-card)',
+            backgroundColor: 'var(--admin-surface)',
             marginBottom: 24,
           }}
         >
@@ -173,8 +181,8 @@ export default function NotificationsPage() {
                 gap: 16,
                 padding: 16,
                 borderRadius: 16,
-                border: '1px solid var(--admin-surface)',
-                backgroundColor: 'rgba(26,10,10,0.5)',
+                border: '1px solid var(--admin-card)',
+                backgroundColor: 'var(--admin-surface)',
               }}
             >
               <div style={{ flex: 1 }}>

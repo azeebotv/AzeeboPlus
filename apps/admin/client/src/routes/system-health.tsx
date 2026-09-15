@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch } from '@/lib/api/base';
+import { Icon } from '@/components/Icons';
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
 
@@ -54,12 +55,20 @@ const STATUS_COLOR = {
   unknown: 'var(--admin-grey)',
 } as const;
 
-const STATUS_DOT = {
-  healthy: '🟢',
-  degraded: '🟡',
-  down: '🔴',
-  unknown: '⚪',
-} as const;
+function StatusDot({ status }: { status: 'healthy' | 'degraded' | 'down' | 'unknown' }) {
+  return (
+    <span
+      style={{
+        display: 'inline-block',
+        width: 10,
+        height: 10,
+        borderRadius: '50%',
+        backgroundColor: STATUS_COLOR[status],
+        boxShadow: `0 0 8px ${STATUS_COLOR[status]}66`,
+      }}
+    />
+  );
+}
 
 /* ── Component ─────────────────────────────────────────────────────────────── */
 
@@ -98,34 +107,25 @@ const BACKEND_SERVICES = [
 function useServiceHealth() {
   return useQuery({
     queryKey: ['admin', 'service-health'] as const,
+    // Probed server-side via the admin backend — the browser never dials
+    // localhost:30xx (those hostnames only resolve where the services run).
     queryFn: async (): Promise<ServiceHealth[]> => {
-      const results = await Promise.all(
-        BACKEND_SERVICES.map(async (svc) => {
-          const start = Date.now();
-          try {
-            const healthPath = svc.name === 'live-event-service' ? '/health' : '/v1/health';
-            const res = await fetch(`http://localhost:${svc.port}${healthPath}`, {
-              signal: AbortSignal.timeout(5000),
-            });
-            const latency = Date.now() - start;
-            const status: ServiceHealth['status'] = res.ok ? 'healthy' : 'degraded';
-            return {
-              name: svc.name,
-              port: svc.port,
-              status,
-              latency,
-            };
-          } catch {
-            return {
-              name: svc.name,
-              port: svc.port,
-              status: 'down' as const,
-              latency: Date.now() - start,
-            };
-          }
-        })
-      );
-      return results;
+      const res = await apiFetch<{
+        services: Array<{
+          name: string;
+          port: number;
+          status: ServiceHealth['status'];
+          latencyMs: number;
+        }>;
+        checkedAt: string;
+      }>('/api/v1/admin/ops/services');
+      if (!res.success || !res.data) return [];
+      return res.data.services.map((s) => ({
+        name: s.name,
+        port: s.port,
+        status: s.status,
+        latency: s.latencyMs,
+      }));
     },
     refetchInterval: 15_000,
   });
@@ -240,7 +240,19 @@ export default function SystemHealthPage() {
         }}
       >
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>🏥 System Health</h1>
+          <h1
+            style={{
+              fontSize: 28,
+              fontWeight: 700,
+              marginBottom: 8,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+            }}
+          >
+            <Icon name="activity" size={28} color="var(--admin-orange)" />
+            <span>System Health</span>
+          </h1>
           <p style={{ color: 'var(--admin-text-muted)' }}>
             Single-pane-of-glass view across all AOS-MA-001 governance systems
           </p>
@@ -249,14 +261,14 @@ export default function SystemHealthPage() {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 8,
+            gap: 10,
             padding: '10px 20px',
             borderRadius: 10,
             border: `1px solid ${STATUS_COLOR[systemStatus]}30`,
             backgroundColor: `${STATUS_COLOR[systemStatus]}10`,
           }}
         >
-          <span style={{ fontSize: 18 }}>{STATUS_DOT[systemStatus]}</span>
+          <StatusDot status={systemStatus} />
           <span
             style={{
               fontSize: 14,
@@ -283,7 +295,9 @@ export default function SystemHealthPage() {
           <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--admin-text)' }}>
             Backend Services ({healthyCount}/{totalCount} healthy)
           </h2>
-          <span style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>Auto-refreshes every 15s</span>
+          <span style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>
+            Auto-refreshes every 15s
+          </span>
         </div>
         {servicesQuery.isLoading ? (
           <div
@@ -294,7 +308,10 @@ export default function SystemHealthPage() {
             }}
           >
             {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} style={{ height: 48, borderRadius: 8, backgroundColor: 'var(--admin-surface)' }} />
+              <div
+                key={i}
+                style={{ height: 48, borderRadius: 8, backgroundColor: 'var(--admin-surface)' }}
+              />
             ))}
           </div>
         ) : (
@@ -361,15 +378,21 @@ export default function SystemHealthPage() {
       </div>
 
       {isLoading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+            gap: 16,
+          }}
+        >
           {Array.from({ length: 5 }).map((_, i) => (
             <div
               key={i}
               style={{
                 padding: 24,
                 borderRadius: 16,
-                border: '1px solid var(--admin-surface)',
-                backgroundColor: 'rgba(26,10,10,0.5)',
+                border: '1px solid var(--admin-card)',
+                backgroundColor: 'var(--admin-surface)',
               }}
             >
               <div
@@ -382,7 +405,12 @@ export default function SystemHealthPage() {
                 }}
               />
               <div
-                style={{ width: '40%', height: 28, backgroundColor: 'var(--admin-surface)', borderRadius: 4 }}
+                style={{
+                  width: '40%',
+                  height: 28,
+                  backgroundColor: 'var(--admin-surface)',
+                  borderRadius: 4,
+                }}
               />
             </div>
           ))}
@@ -393,7 +421,7 @@ export default function SystemHealthPage() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(5, 1fr)',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
               gap: 16,
               marginBottom: 32,
             }}
@@ -403,7 +431,7 @@ export default function SystemHealthPage() {
               value={agents.total}
               subtitle={`${agents.active} active · ${agents.suspended} suspended`}
               color="#E8420A"
-              dot={agents.killSwitchActive > 0 ? '🟡' : '🟢'}
+              status={agents.killSwitchActive > 0 ? 'degraded' : 'healthy'}
               onClick={() => navigate('/agents')}
             />
             <SummaryCard
@@ -411,7 +439,7 @@ export default function SystemHealthPage() {
               value={`$${cost.totalCostUsd.toFixed(2)}`}
               subtitle={`${cost.totalEvents.toLocaleString()} requests`}
               color="#10B981"
-              dot="🟢"
+              status="healthy"
               onClick={() => navigate('/cost-dashboard')}
             />
             <SummaryCard
@@ -419,7 +447,7 @@ export default function SystemHealthPage() {
               value={tasks.total}
               subtitle={`${tasks.automationCandidates} auto · ${tasks.eliminationCandidates} elim`}
               color="#3B82F6"
-              dot="🟢"
+              status="healthy"
               onClick={() => navigate('/task-router')}
             />
             <SummaryCard
@@ -427,7 +455,7 @@ export default function SystemHealthPage() {
               value={risk.total}
               subtitle={`${risk.approvalRequiredCount} approvals · ${risk.irreversibleCount} irrevers`}
               color="#8B5CF6"
-              dot={risk.irreversibleCount > 0 ? '🟡' : '🟢'}
+              status={risk.irreversibleCount > 0 ? 'degraded' : 'healthy'}
               onClick={() => navigate('/risk-engine')}
             />
             <SummaryCard
@@ -435,22 +463,27 @@ export default function SystemHealthPage() {
               value={`${capacity.totalHoursReleased}h`}
               subtitle={`${capacity.headcountAvoided} HC avoided`}
               color="#F59E0B"
-              dot="🟢"
+              status="healthy"
               onClick={() => navigate('/capacity-ledger')}
             />
           </div>
 
           {/* Detailed Sections */}
           <div
-            style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 32 }}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+              gap: 24,
+              marginBottom: 32,
+            }}
           >
             {/* Agent Health Breakdown */}
             <div
               style={{
                 padding: 24,
                 borderRadius: 16,
-                border: '1px solid var(--admin-surface)',
-                backgroundColor: 'rgba(26,10,10,0.5)',
+                border: '1px solid var(--admin-card)',
+                backgroundColor: 'var(--admin-surface)',
               }}
             >
               <h2
@@ -464,12 +497,23 @@ export default function SystemHealthPage() {
                   gap: 8,
                 }}
               >
-                🤖 Agent Health Breakdown
+                <Icon name="bot" size={18} color="var(--admin-blue)" />
+                <span>Agent Health Breakdown</span>
                 <span
                   onClick={() => navigate('/agents')}
-                  style={{ fontSize: 12, color: 'var(--admin-orange)', cursor: 'pointer', fontWeight: 500 }}
+                  style={{
+                    fontSize: 12,
+                    color: 'var(--admin-orange)',
+                    cursor: 'pointer',
+                    fontWeight: 500,
+                    marginLeft: 'auto',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
                 >
-                  View →
+                  View
+                  <Icon name="arrowRight" size={12} color="var(--admin-orange)" />
                 </span>
               </h2>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -485,8 +529,8 @@ export default function SystemHealthPage() {
               style={{
                 padding: 24,
                 borderRadius: 16,
-                border: '1px solid var(--admin-surface)',
-                backgroundColor: 'rgba(26,10,10,0.5)',
+                border: '1px solid var(--admin-card)',
+                backgroundColor: 'var(--admin-surface)',
               }}
             >
               <h2
@@ -500,12 +544,23 @@ export default function SystemHealthPage() {
                   gap: 8,
                 }}
               >
-                📋 Work Classification Distribution
+                <Icon name="clipboardList" size={18} color="var(--admin-orange)" />
+                <span>Work Classification</span>
                 <span
                   onClick={() => navigate('/task-router')}
-                  style={{ fontSize: 12, color: 'var(--admin-orange)', cursor: 'pointer', fontWeight: 500 }}
+                  style={{
+                    fontSize: 12,
+                    color: 'var(--admin-orange)',
+                    cursor: 'pointer',
+                    fontWeight: 500,
+                    marginLeft: 'auto',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
                 >
-                  View →
+                  View
+                  <Icon name="arrowRight" size={12} color="var(--admin-orange)" />
                 </span>
               </h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -531,9 +586,13 @@ export default function SystemHealthPage() {
                         <span style={{ fontSize: 12, color: 'var(--admin-text)' }}>
                           {key} — {label}
                         </span>
-                        <span style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>{count}</span>
+                        <span style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>
+                          {count}
+                        </span>
                       </div>
-                      <div style={{ height: 6, backgroundColor: 'var(--admin-surface)', borderRadius: 3 }}>
+                      <div
+                        style={{ height: 6, backgroundColor: 'var(--admin-card)', borderRadius: 3 }}
+                      >
                         <div
                           style={{
                             height: 6,
@@ -552,14 +611,20 @@ export default function SystemHealthPage() {
           </div>
 
           {/* Risk Level Distribution + Capacity Summary */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+              gap: 24,
+            }}
+          >
             {/* Risk Level Distribution */}
             <div
               style={{
                 padding: 24,
                 borderRadius: 16,
-                border: '1px solid var(--admin-surface)',
-                backgroundColor: 'rgba(26,10,10,0.5)',
+                border: '1px solid var(--admin-card)',
+                backgroundColor: 'var(--admin-surface)',
               }}
             >
               <h2
@@ -573,12 +638,23 @@ export default function SystemHealthPage() {
                   gap: 8,
                 }}
               >
-                🛡️ Risk Level Distribution
+                <Icon name="shield" size={18} color="var(--admin-red)" />
+                <span>Risk Level Distribution</span>
                 <span
                   onClick={() => navigate('/risk-engine')}
-                  style={{ fontSize: 12, color: 'var(--admin-orange)', cursor: 'pointer', fontWeight: 500 }}
+                  style={{
+                    fontSize: 12,
+                    color: 'var(--admin-orange)',
+                    cursor: 'pointer',
+                    fontWeight: 500,
+                    marginLeft: 'auto',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
                 >
-                  View →
+                  View
+                  <Icon name="arrowRight" size={12} color="var(--admin-orange)" />
                 </span>
               </h2>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -617,8 +693,8 @@ export default function SystemHealthPage() {
               style={{
                 padding: 24,
                 borderRadius: 16,
-                border: '1px solid var(--admin-surface)',
-                backgroundColor: 'rgba(26,10,10,0.5)',
+                border: '1px solid var(--admin-card)',
+                backgroundColor: 'var(--admin-surface)',
               }}
             >
               <h2
@@ -632,35 +708,60 @@ export default function SystemHealthPage() {
                   gap: 8,
                 }}
               >
-                ⏱️ Capacity Summary
+                <Icon name="clock" size={18} color="var(--admin-amber)" />
+                <span>Capacity Summary</span>
                 <span
                   onClick={() => navigate('/capacity-ledger')}
-                  style={{ fontSize: 12, color: 'var(--admin-orange)', cursor: 'pointer', fontWeight: 500 }}
+                  style={{
+                    fontSize: 12,
+                    color: 'var(--admin-orange)',
+                    cursor: 'pointer',
+                    fontWeight: 500,
+                    marginLeft: 'auto',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
                 >
-                  View →
+                  View
+                  <Icon name="arrowRight" size={12} color="var(--admin-orange)" />
                 </span>
               </h2>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div style={{ padding: 12, borderRadius: 8, backgroundColor: 'var(--admin-darker)' }}>
+                <div
+                  style={{ padding: 12, borderRadius: 8, backgroundColor: 'var(--admin-darker)' }}
+                >
                   <p style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>Hours Released</p>
                   <p style={{ fontSize: 20, fontWeight: 700, color: 'var(--admin-emerald)' }}>
                     {capacity.totalHoursReleased}h
                   </p>
                 </div>
-                <div style={{ padding: 12, borderRadius: 8, backgroundColor: 'var(--admin-darker)' }}>
-                  <p style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>Headcount Avoided</p>
+                <div
+                  style={{ padding: 12, borderRadius: 8, backgroundColor: 'var(--admin-darker)' }}
+                >
+                  <p style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>
+                    Headcount Avoided
+                  </p>
                   <p style={{ fontSize: 20, fontWeight: 700, color: 'var(--admin-blue)' }}>
                     {capacity.headcountAvoided}
                   </p>
                 </div>
-                <div style={{ padding: 12, borderRadius: 8, backgroundColor: 'var(--admin-darker)' }}>
-                  <p style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>Workflows Tracked</p>
+                <div
+                  style={{ padding: 12, borderRadius: 8, backgroundColor: 'var(--admin-darker)' }}
+                >
+                  <p style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>
+                    Workflows Tracked
+                  </p>
                   <p style={{ fontSize: 20, fontWeight: 700, color: 'var(--admin-orange)' }}>
                     {capacity.totalEntries}
                   </p>
                 </div>
-                <div style={{ padding: 12, borderRadius: 8, backgroundColor: 'var(--admin-darker)' }}>
-                  <p style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>Pending Approvals</p>
+                <div
+                  style={{ padding: 12, borderRadius: 8, backgroundColor: 'var(--admin-darker)' }}
+                >
+                  <p style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>
+                    Pending Approvals
+                  </p>
                   <p style={{ fontSize: 20, fontWeight: 700, color: 'var(--admin-amber)' }}>
                     {risk.approvalRequiredCount}
                   </p>
@@ -681,14 +782,14 @@ function SummaryCard({
   value,
   subtitle,
   color,
-  dot,
+  status,
   onClick,
 }: {
   title: string;
   value: string | number;
   subtitle: string;
   color: string;
-  dot: string;
+  status: 'healthy' | 'degraded' | 'down' | 'unknown';
   onClick: () => void;
 }) {
   return (
@@ -697,8 +798,8 @@ function SummaryCard({
       style={{
         padding: 20,
         borderRadius: 16,
-        border: '1px solid var(--admin-surface)',
-        backgroundColor: 'rgba(26,10,10,0.5)',
+        border: '1px solid var(--admin-card)',
+        backgroundColor: 'var(--admin-surface)',
         cursor: 'pointer',
         transition: 'border-color 0.2s, transform 0.2s',
       }}
@@ -707,7 +808,7 @@ function SummaryCard({
         e.currentTarget.style.transform = 'translateY(-2px)';
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = 'var(--admin-surface)';
+        e.currentTarget.style.borderColor = 'var(--admin-card)';
         e.currentTarget.style.transform = 'translateY(0)';
       }}
     >
@@ -720,7 +821,7 @@ function SummaryCard({
         }}
       >
         <p style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>{title}</p>
-        <span>{dot}</span>
+        <StatusDot status={status} />
       </div>
       <p style={{ fontSize: 24, fontWeight: 700, color }}>{value}</p>
       <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginTop: 4 }}>{subtitle}</p>

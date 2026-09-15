@@ -171,8 +171,15 @@ export class UniverseManagementService {
         this.prisma.universe.count({ where }),
       ]);
 
+      // Map Prisma's _count into the contentCount field the admin SPA's
+      // AdminUniverse contract expects (raw _count renders as 0 on the cards).
+      const items = universes.map((u) => {
+        const { _count, ...rest } = u as typeof u & { _count?: { contentItems: number } };
+        return { ...rest, contentCount: _count?.contentItems ?? 0 };
+      });
+
       return {
-        data: universes,
+        data: items,
         meta: {
           total,
           page,

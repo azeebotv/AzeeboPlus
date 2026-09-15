@@ -2,17 +2,18 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { NotificationTemplate } from '@/lib/admin-types';
+import { Icon } from '@/components/Icons';
 
 function getTypeStyle(type: string): { bg: string; color: string } {
   switch (type) {
     case 'email':
-      return { bg: 'rgba(13,59,46,0.2)', color: 'var(--admin-green)' };
+      return { bg: 'rgba(16,185,129,0.15)', color: 'var(--admin-emerald)' };
     case 'push':
-      return { bg: 'rgba(232,66,10,0.2)', color: 'var(--admin-orange)' };
+      return { bg: 'rgba(232,66,10,0.15)', color: 'var(--admin-orange)' };
     case 'sms':
-      return { bg: 'rgba(245,158,11,0.2)', color: 'var(--admin-amber)' };
+      return { bg: 'rgba(245,158,11,0.15)', color: 'var(--admin-amber)' };
     default:
-      return { bg: 'rgba(154,138,122,0.2)', color: 'var(--admin-text-muted)' };
+      return { bg: 'rgba(107,114,128,0.15)', color: 'var(--admin-text-muted)' };
   }
 }
 
@@ -109,12 +110,18 @@ export default function AnnouncementsPage() {
         }}
       >
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Announcements</h1>
+          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Icon name="bell" size={28} color="var(--admin-orange)" />
+            <span>Announcements</span>
+          </h1>
           <p style={{ color: 'var(--admin-text-muted)' }}>{announcements.length} announcements</p>
         </div>
         <button
           onClick={openCreate}
           style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
             padding: '10px 20px',
             borderRadius: 10,
             border: 'none',
@@ -125,7 +132,8 @@ export default function AnnouncementsPage() {
             cursor: 'pointer',
           }}
         >
-          + New Announcement
+          <Icon name="plus" size={16} />
+          <span>New Announcement</span>
         </button>
       </div>
 
@@ -142,8 +150,8 @@ export default function AnnouncementsPage() {
                 style={{
                   padding: 16,
                   borderRadius: 16,
-                  border: '1px solid var(--admin-surface)',
-                  backgroundColor: 'rgba(26,10,10,0.5)',
+                  border: '1px solid var(--admin-card)',
+                  backgroundColor: 'var(--admin-surface)',
                 }}
               >
                 <div

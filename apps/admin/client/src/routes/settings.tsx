@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { SystemSetting } from '@/lib/admin-types';
+import { Icon } from '@/components/Icons';
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
@@ -26,6 +27,23 @@ export default function SettingsPage() {
     },
   });
 
+  /**
+   * The edit input always yields a string, but settings can be boolean or
+   * numeric. Restoring the original value's type on save prevents writing
+   * "true"/"42" over real boolean/number settings.
+   */
+  function coerceToOriginalType(original: unknown, raw: string): unknown {
+    if (typeof original === 'boolean') {
+      if (/^(true|false)$/i.test(raw.trim())) return raw.trim().toLowerCase() === 'true';
+      return raw; // let the backend validation reject an invalid boolean
+    }
+    if (typeof original === 'number') {
+      const n = Number(raw);
+      return Number.isFinite(n) ? n : raw;
+    }
+    return raw;
+  }
+
   const tabs = [
     'general',
     'access',
@@ -49,10 +67,24 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Settings</h1>
-      <p style={{ color: 'var(--admin-text-muted)', marginBottom: 24 }}>
-        Platform configuration and system settings
-      </p>
+      <div style={{ marginBottom: 24 }}>
+        <h1
+          style={{
+            fontSize: 28,
+            fontWeight: 700,
+            marginBottom: 8,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
+          <Icon name="settings" size={28} color="var(--admin-orange)" />
+          <span>Settings</span>
+        </h1>
+        <p style={{ color: 'var(--admin-text-muted)' }}>
+          Platform configuration and system settings
+        </p>
+      </div>
 
       <div style={{ display: 'flex', gap: 6, marginBottom: 24, flexWrap: 'wrap' }}>
         {tabs.map((t) => (
@@ -62,7 +94,7 @@ export default function SettingsPage() {
             style={{
               padding: '8px 16px',
               borderRadius: 999,
-              border: tab === t ? 'none' : '1px solid var(--admin-surface)',
+              border: tab === t ? 'none' : '1px solid var(--admin-border)',
               background:
                 tab === t ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)' : 'transparent',
               color: tab === t ? 'white' : 'var(--admin-text-muted)',
@@ -78,7 +110,9 @@ export default function SettingsPage() {
       </div>
 
       {isLoading ? (
-        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+          Loading...
+        </p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {filteredSettings.map((s) => (
@@ -90,13 +124,15 @@ export default function SettingsPage() {
                 alignItems: 'center',
                 padding: '14px 16px',
                 borderRadius: 12,
-                border: '1px solid var(--admin-surface)',
-                backgroundColor: 'rgba(26,10,10,0.5)',
+                border: '1px solid var(--admin-card)',
+                backgroundColor: 'var(--admin-surface)',
               }}
             >
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontWeight: 500, fontSize: 14, marginBottom: 2 }}>{s.key}</p>
-                {s.description && <p style={{ color: 'var(--admin-text-muted)', fontSize: 12 }}>{s.description}</p>}
+                {s.description && (
+                  <p style={{ color: 'var(--admin-text-muted)', fontSize: 12 }}>{s.description}</p>
+                )}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                 {editKey === s.key ? (
@@ -115,7 +151,12 @@ export default function SettingsPage() {
                       }}
                     />
                     <button
-                      onClick={() => updateMutation.mutate({ key: s.key, value: editValue })}
+                      onClick={() =>
+                        updateMutation.mutate({
+                          key: s.key,
+                          value: coerceToOriginalType(s.value, editValue),
+                        })
+                      }
                       style={{
                         padding: '4px 12px',
                         borderRadius: 6,

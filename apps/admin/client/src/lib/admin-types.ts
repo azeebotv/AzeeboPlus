@@ -58,11 +58,14 @@ export interface RealityShow {
   id: string;
   title: string;
   description?: string;
-  status: 'upcoming' | 'live' | 'ended' | 'cancelled';
-  seasonCount: number;
-  episodeCount: number;
-  startDate?: string;
-  endDate?: string;
+  /** ContentItem status of the underlying row (reality universe). */
+  status: string;
+  creator?: { id: string; displayName: string; email: string };
+  mediaUrl?: string;
+  isExclusive?: boolean;
+  isPremiere?: boolean;
+  viewCount?: number;
+  publishedAt?: string;
   createdAt: string;
 }
 
@@ -280,6 +283,8 @@ export interface Storyworld {
   isPublished: boolean;
   characterCount: number;
   pathCount: number;
+  /** vertical-service returns locationCount instead of pathCount. */
+  locationCount?: number;
   createdAt: string;
   updatedAt: string;
 }

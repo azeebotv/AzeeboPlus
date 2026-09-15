@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { adminApi } from '@/lib/api/admin';
 import type { GlobalFeatureFlag, LastNightlyRun, StaleFlagMetrics } from '@/lib/admin-types';
+import { Icon } from '@/components/Icons';
 
 interface ServiceContext {
   label: string;
@@ -506,7 +507,10 @@ export default function GlobalFeatureFlagsPage() {
         }}
       >
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Global Feature Flags</h1>
+          <h1 style={{ fontSize: 28, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Icon name="flag" size={26} color="var(--admin-orange)" />
+            Global Feature Flags
+          </h1>
           <p style={{ color: 'var(--admin-text-muted)', marginTop: 4 }}>
             {flags.length} flags ({numericCount} numeric) · stored in Redis, merged with service
             defaults
@@ -518,18 +522,28 @@ export default function GlobalFeatureFlagsPage() {
                   marginTop: 4,
                   fontSize: 12,
                   color: servingStaleFlags.length > 0 ? 'var(--admin-orange)' : 'var(--admin-text-muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
                 }}
               >
-                {staleMetrics.available
-                  ? servingStaleFlags.length > 0
-                    ? `⚠ ${servingStaleFlags.length} stale flag(s) actively served past expiry (last 5m)`
-                    : 'No stale flag is currently being served past expiry'
-                  : 'Stale-serving metrics unavailable — set PROMETHEUS_URL on the admin backend'}
+                {staleMetrics.available ? (
+                  servingStaleFlags.length > 0 ? (
+                    <>
+                      <Icon name="alertTriangle" size={14} color="var(--admin-orange)" />
+                      <span>{servingStaleFlags.length} stale flag(s) actively served past expiry (last 5m)</span>
+                    </>
+                  ) : (
+                    'No stale flag is currently being served past expiry'
+                  )
+                ) : (
+                  'Stale-serving metrics unavailable — set PROMETHEUS_URL on the admin backend'
+                )}
               </p>
               {staleMetrics.available && autoDisabledStaleFlags.length > 0 && (
-                <p style={{ marginTop: 4, fontSize: 12, color: 'var(--admin-orange)' }}>
-                  ⚠ {autoDisabledStaleFlags.length} stale flag(s) auto-disabled by the self-disable
-                  safety (flag_auto_disabled_total)
+                <p style={{ marginTop: 4, fontSize: 12, color: 'var(--admin-orange)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Icon name="alertTriangle" size={14} color="var(--admin-orange)" />
+                  <span>{autoDisabledStaleFlags.length} stale flag(s) auto-disabled by the self-disable safety (flag_auto_disabled_total)</span>
                 </p>
               )}
             </>
@@ -574,9 +588,12 @@ export default function GlobalFeatureFlagsPage() {
                   onClick={undoPrune}
                   disabled={restoreMutation.isPending}
                   style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
                     padding: '5px 12px',
                     borderRadius: 6,
-                    border: '1px solid var(--admin-surface)',
+                    border: '1px solid var(--admin-card)',
                     background: 'var(--admin-green)',
                     color: 'white',
                     cursor: 'pointer',
@@ -584,7 +601,14 @@ export default function GlobalFeatureFlagsPage() {
                     fontSize: 12,
                   }}
                 >
-                  {restoreMutation.isPending ? 'Restoring…' : '↩ Undo — restore from audit archive'}
+                  {restoreMutation.isPending ? (
+                    'Restoring…'
+                  ) : (
+                    <>
+                      <Icon name="undo" size={13} color="white" />
+                      Undo — restore from audit archive
+                    </>
+                  )}
                 </button>
               ) : null}
             </div>
@@ -602,8 +626,8 @@ export default function GlobalFeatureFlagsPage() {
             flexWrap: 'wrap',
             padding: '10px 16px',
             borderRadius: 10,
-            border: '1px solid var(--admin-surface)',
-            backgroundColor: 'rgba(26,10,10,0.5)',
+            border: '1px solid var(--admin-card)',
+            backgroundColor: 'var(--admin-surface)',
             marginBottom: 16,
             fontSize: 12,
           }}
@@ -634,6 +658,9 @@ export default function GlobalFeatureFlagsPage() {
           {lastRun.pruneBlocked === 'no-webhook' && (
             <span
               style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
                 padding: '2px 10px',
                 borderRadius: 999,
                 fontSize: 11,
@@ -643,7 +670,8 @@ export default function GlobalFeatureFlagsPage() {
               }}
               title="Auto-prune is enabled but no STALE_FLAG_OPS_WEBHOOK_URL is set — the pass blocked removals to prevent silent pruning. Configure the webhook or set STALE_FLAG_ALLOW_PRUNE_WITHOUT_WEBHOOK=true."
             >
-              ⚠ prune blocked · no webhook
+              <Icon name="alertTriangle" size={12} color="var(--admin-orange)" />
+              <span>prune blocked · no webhook</span>
             </span>
           )}
           <span
@@ -691,7 +719,7 @@ export default function GlobalFeatureFlagsPage() {
             <span>
               Recently removed flags ({recentlyDeleted.length}) — restorable from the audit archive
             </span>
-            <span>{showDeleted ? '▾' : '▸'}</span>
+            <Icon name={showDeleted ? 'chevronDown' : 'chevronRight'} size={14} color="var(--admin-text-muted)" />
           </button>
           {showDeleted && (
             <div style={{ padding: '0 18px 18px' }}>
@@ -703,7 +731,7 @@ export default function GlobalFeatureFlagsPage() {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '8px 0',
-                    borderBottom: '1px solid #2A2A2A',
+                    borderBottom: '1px solid var(--admin-card)',
                     fontSize: 13,
                   }}
                 >
@@ -886,8 +914,8 @@ export default function GlobalFeatureFlagsPage() {
             style={{
               padding: '16px 20px',
               borderRadius: 16,
-              border: isFocused ? '2px solid var(--admin-orange)' : '1px solid var(--admin-surface)',
-              backgroundColor: isFocused ? 'rgba(232,66,10,0.12)' : 'rgba(26,10,10,0.8)',
+              border: isFocused ? '2px solid var(--admin-orange)' : '1px solid var(--admin-card)',
+              backgroundColor: isFocused ? 'rgba(232,66,10,0.12)' : 'var(--admin-surface)',
               boxShadow: isFocused ? '0 0 0 3px rgba(232,66,10,0.25)' : undefined,
               animation: isFocused ? 'flagFlash 1.8s ease-out' : undefined,
               marginBottom: 12,
@@ -1148,7 +1176,7 @@ export default function GlobalFeatureFlagsPage() {
                     style={{
                       marginTop: 12,
                       paddingTop: 12,
-                      borderTop: '1px solid #1E1010',
+                      borderTop: '1px solid var(--admin-card)',
                     }}
                   >
                     <div
@@ -1243,7 +1271,7 @@ export default function GlobalFeatureFlagsPage() {
                   style={{
                     marginTop: 12,
                     paddingTop: 12,
-                    borderTop: '1px solid #1E1010',
+                    borderTop: '1px solid var(--admin-card)',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 10,
@@ -1365,7 +1393,7 @@ function KnownFlagsReference() {
             ({isLoading ? '…' : `${data?.total ?? 0} across ${data?.domains.length ?? 0} domains`})
           </span>
         </span>
-        <span>{open ? '▾' : '▸'}</span>
+        <Icon name={open ? 'chevronDown' : 'chevronRight'} size={14} color="var(--admin-text-muted)" />
       </button>
       {open && (
         <div style={{ padding: '0 18px 18px' }}>

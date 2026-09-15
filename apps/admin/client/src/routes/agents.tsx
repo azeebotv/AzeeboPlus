@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api/base';
+import { Icon } from '@/components/Icons';
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
 
@@ -76,16 +77,16 @@ const riskColor = (r: string) => {
   }
 };
 
-const categoryIcon = (c: string) => {
+const categoryIconName = (c: string) => {
   switch (c) {
     case 'CONTROL_PLANE':
-      return '🎯';
+      return 'crosshair';
     case 'SHARED_ENTERPRISE':
-      return '🏢';
+      return 'briefcase';
     case 'UNIVERSAL':
-      return '🌐';
+      return 'globe';
     default:
-      return '🤖';
+      return 'bot';
   }
 };
 
@@ -112,7 +113,7 @@ export default function AgentsPage() {
   const statsQuery = useQuery({
     queryKey: ['admin', 'agents-stats'],
     queryFn: async () => {
-      return apiFetch<AgentStats>('/api/v1/analytics/agents/stats');
+      return apiFetch<AgentStats>('/api/v1/analytics/agents/stats/overview');
     },
   });
 
@@ -160,7 +161,19 @@ export default function AgentsPage() {
         }}
       >
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>🤖 Agent Registry</h1>
+          <h1
+            style={{
+              fontSize: 28,
+              fontWeight: 700,
+              marginBottom: 8,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+            }}
+          >
+            <Icon name="bot" size={32} color="var(--admin-orange)" />
+            <span>Agent Registry</span>
+          </h1>
           <p style={{ color: 'var(--admin-text-muted)' }}>
             Manage registered agents, kill switches, health status, and cost budgets
           </p>
@@ -178,9 +191,13 @@ export default function AgentsPage() {
             fontWeight: 600,
             cursor: 'pointer',
             opacity: seedMutation.isPending ? 0.6 : 1,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
           }}
         >
-          {seedMutation.isPending ? 'Seeding…' : '🌱 Seed AOS-MA-001 Agents'}
+          <Icon name="sprout" size={16} />
+          <span>{seedMutation.isPending ? 'Seeding…' : 'Seed AOS-MA-001 Agents'}</span>
         </button>
       </div>
 
@@ -188,13 +205,17 @@ export default function AgentsPage() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(5, 1fr)',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
           gap: 16,
           marginBottom: 32,
         }}
       >
         {[
-          { label: 'Total Agents', value: stats.total ?? agents.length, color: 'var(--admin-orange)' },
+          {
+            label: 'Total Agents',
+            value: stats.total ?? agents.length,
+            color: 'var(--admin-orange)',
+          },
           {
             label: 'Active',
             value:
@@ -228,10 +249,12 @@ export default function AgentsPage() {
               padding: 20,
               borderRadius: 16,
               border: '1px solid var(--admin-surface)',
-              backgroundColor: 'rgba(26,10,10,0.5)',
+              backgroundColor: 'var(--admin-surface)',
             }}
           >
-            <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 8 }}>{s.label}</p>
+            <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 8 }}>
+              {s.label}
+            </p>
             <p style={{ fontSize: 24, fontWeight: 700, color: s.color }}>{s.value}</p>
           </div>
         ))}
@@ -292,7 +315,9 @@ export default function AgentsPage() {
 
       {/* Agent Table */}
       {agentsQuery.isLoading ? (
-        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading agents…</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+          Loading agents…
+        </p>
       ) : agents.length === 0 ? (
         <div
           style={{
@@ -302,13 +327,17 @@ export default function AgentsPage() {
             borderRadius: 16,
           }}
         >
-          <p style={{ fontSize: 48, marginBottom: 16 }}>🤖</p>
+          <div style={{ marginBottom: 16 }}>
+            <Icon name="bot" size={48} color="var(--admin-text-muted)" />
+          </div>
           <p style={{ fontSize: 16, color: 'var(--admin-text-muted)' }}>
             No agents registered. Seed the AOS-MA-001 agents to get started.
           </p>
         </div>
       ) : (
-        <div style={{ borderRadius: 16, border: '1px solid var(--admin-surface)', overflow: 'hidden' }}>
+        <div
+          style={{ borderRadius: 16, border: '1px solid var(--admin-surface)', overflow: 'hidden' }}
+        >
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
             <thead>
               <tr style={{ backgroundColor: 'rgba(232,66,10,0.08)' }}>
@@ -327,8 +356,21 @@ export default function AgentsPage() {
                 <tr key={agent.id} style={{ borderBottom: '1px solid var(--admin-surface)' }}>
                   <td style={tdStyle}>
                     <div>
-                      <p style={{ fontWeight: 600, color: 'var(--admin-text)' }}>
-                        {categoryIcon(agent.category)} {agent.name}
+                      <p
+                        style={{
+                          fontWeight: 600,
+                          color: 'var(--admin-text)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                        }}
+                      >
+                        <Icon
+                          name={categoryIconName(agent.category)}
+                          size={16}
+                          color="var(--admin-orange)"
+                        />
+                        <span>{agent.name}</span>
                       </p>
                       <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginTop: 2 }}>
                         {agent.purpose}
@@ -379,7 +421,9 @@ export default function AgentsPage() {
                       {agent.riskLevel}
                     </span>
                     <span style={{ color: 'var(--admin-text-muted)', margin: '0 4px' }}>/</span>
-                    <span style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>{agent.autonomyLevel}</span>
+                    <span style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>
+                      {agent.autonomyLevel}
+                    </span>
                   </td>
                   <td style={tdStyle}>
                     <span

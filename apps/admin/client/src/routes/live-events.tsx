@@ -51,12 +51,15 @@ export default function LiveEventsPage() {
     },
   });
 
+  const [formError, setFormError] = useState('');
+
   const createMutation = useMutation({
     mutationFn: (data: Record<string, unknown>) => adminApi.createLiveEvent(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'live-events'] });
       closeModal();
     },
+    onError: (e: Error) => setFormError(e.message || 'Failed to create event'),
   });
 
   const updateMutation = useMutation({
@@ -66,11 +69,13 @@ export default function LiveEventsPage() {
       queryClient.invalidateQueries({ queryKey: ['admin', 'live-events'] });
       closeModal();
     },
+    onError: (e: Error) => setFormError(e.message || 'Failed to update event'),
   });
 
   const cancelMutation = useMutation({
     mutationFn: (id: string) => adminApi.cancelLiveEvent(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'live-events'] }),
+    onError: (e: Error) => setFormError(e.message || 'Failed to cancel event'),
   });
 
   const events = data?.items ?? [];
@@ -124,6 +129,18 @@ export default function LiveEventsPage() {
   }
 
   function handleSubmit() {
+    setFormError('');
+    // Validate BEFORE Date math — new Date('') → Invalid Date →
+    // toISOString() throws RangeError and crashes the component tree.
+    const when = new Date(form.scheduledAt);
+    if (!form.title.trim()) {
+      setFormError('Title is required.');
+      return;
+    }
+    if (Number.isNaN(when.getTime())) {
+      setFormError('Pick a valid date and time for the schedule.');
+      return;
+    }
     const payload: Record<string, unknown> = {
       title: form.title,
       description: form.description || undefined,
@@ -132,7 +149,7 @@ export default function LiveEventsPage() {
       currency: form.currency,
       maxViewers: form.maxViewers ? parseInt(form.maxViewers) : undefined,
       duration: parseInt(form.duration) || 60,
-      scheduledAt: new Date(form.scheduledAt).toISOString(),
+      scheduledAt: when.toISOString(),
       chatEnabled: form.chatEnabled,
     };
     if (editing) {
@@ -186,7 +203,8 @@ export default function LiveEventsPage() {
               fontSize: 13,
               fontWeight: 500,
               border: 'none',
-              backgroundColor: statusFilter === s ? 'var(--admin-orange)' : 'rgba(255,255,255,0.05)',
+              backgroundColor:
+                statusFilter === s ? 'var(--admin-orange)' : 'rgba(255,255,255,0.05)',
               color: statusFilter === s ? 'white' : 'var(--admin-text-muted)',
               cursor: 'pointer',
             }}
@@ -197,14 +215,20 @@ export default function LiveEventsPage() {
       </div>
 
       {isLoading && (
-        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+          Loading...
+        </p>
       )}
       {error && (
-        <p style={{ color: 'var(--admin-red)', textAlign: 'center', padding: 40 }}>Failed to load events</p>
+        <p style={{ color: 'var(--admin-red)', textAlign: 'center', padding: 40 }}>
+          Failed to load events
+        </p>
       )}
 
       {!isLoading && !error && (
-        <div style={{ borderRadius: 16, border: '1px solid var(--admin-surface)', overflow: 'hidden' }}>
+        <div
+          style={{ borderRadius: 16, border: '1px solid var(--admin-surface)', overflow: 'hidden' }}
+        >
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
               <thead>
@@ -257,13 +281,31 @@ export default function LiveEventsPage() {
                           {event.status}
                         </span>
                       </td>
-                      <td style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--admin-orange)' }}>
+                      <td
+                        style={{
+                          padding: '12px 16px',
+                          fontWeight: 700,
+                          color: 'var(--admin-orange)',
+                        }}
+                      >
                         {formatCurrency(Number(event.ticketPrice), event.currency)}
                       </td>
-                      <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)', fontSize: 13 }}>
+                      <td
+                        style={{
+                          padding: '12px 16px',
+                          color: 'var(--admin-text-muted)',
+                          fontSize: 13,
+                        }}
+                      >
                         {formatDate(event.scheduledAt)}
                       </td>
-                      <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)', fontSize: 13 }}>
+                      <td
+                        style={{
+                          padding: '12px 16px',
+                          color: 'var(--admin-text-muted)',
+                          fontSize: 13,
+                        }}
+                      >
                         {event._count?.tickets ?? 0}
                         {event.maxViewers ? ` / ${event.maxViewers}` : ''}
                       </td>
@@ -312,7 +354,10 @@ export default function LiveEventsPage() {
                 })}
                 {events.length === 0 && (
                   <tr>
-                    <td colSpan={6} style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>
+                    <td
+                      colSpan={6}
+                      style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}
+                    >
                       No live events found
                     </td>
                   </tr>
@@ -354,8 +399,32 @@ export default function LiveEventsPage() {
               {editing ? 'Edit Live Event' : 'New Live Event'}
             </h2>
 
+            {formError && (
+              <div
+                role="alert"
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: 8,
+                  border: '1px solid rgba(204,28,28,0.4)',
+                  backgroundColor: 'rgba(204,28,28,0.12)',
+                  color: 'var(--admin-red-light)',
+                  fontSize: 13,
+                  marginBottom: 16,
+                }}
+              >
+                {formError}
+              </div>
+            )}
+
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  color: 'var(--admin-text-muted)',
+                  marginBottom: 6,
+                }}
+              >
                 Title
               </label>
               <input
@@ -375,7 +444,14 @@ export default function LiveEventsPage() {
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  color: 'var(--admin-text-muted)',
+                  marginBottom: 6,
+                }}
+              >
                 Description
               </label>
               <textarea
@@ -397,7 +473,14 @@ export default function LiveEventsPage() {
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  color: 'var(--admin-text-muted)',
+                  marginBottom: 6,
+                }}
+              >
                 Thumbnail URL
               </label>
               <input
@@ -421,7 +504,12 @@ export default function LiveEventsPage() {
             >
               <div>
                 <label
-                  style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}
+                  style={{
+                    display: 'block',
+                    fontSize: 13,
+                    color: 'var(--admin-text-muted)',
+                    marginBottom: 6,
+                  }}
                 >
                   Ticket Price
                 </label>
@@ -444,7 +532,12 @@ export default function LiveEventsPage() {
               </div>
               <div>
                 <label
-                  style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}
+                  style={{
+                    display: 'block',
+                    fontSize: 13,
+                    color: 'var(--admin-text-muted)',
+                    marginBottom: 6,
+                  }}
                 >
                   Currency
                 </label>
@@ -473,7 +566,12 @@ export default function LiveEventsPage() {
             >
               <div>
                 <label
-                  style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}
+                  style={{
+                    display: 'block',
+                    fontSize: 13,
+                    color: 'var(--admin-text-muted)',
+                    marginBottom: 6,
+                  }}
                 >
                   Duration (min)
                 </label>
@@ -496,7 +594,12 @@ export default function LiveEventsPage() {
               </div>
               <div>
                 <label
-                  style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}
+                  style={{
+                    display: 'block',
+                    fontSize: 13,
+                    color: 'var(--admin-text-muted)',
+                    marginBottom: 6,
+                  }}
                 >
                   Max Viewers
                 </label>
@@ -520,7 +623,14 @@ export default function LiveEventsPage() {
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  color: 'var(--admin-text-muted)',
+                  marginBottom: 6,
+                }}
+              >
                 Scheduled Date & Time
               </label>
               <input

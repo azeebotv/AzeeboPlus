@@ -96,6 +96,9 @@ export class UserManagementService {
       displayName: user.displayName,
       role: user.role,
       avatar: user.avatar,
+      isSuspended: user.isSuspended,
+      suspensionReason: user.suspensionReason,
+      isVerified: user.creatorProfile?.verified ?? false,
       createdAt: user.createdAt,
       wallet: user.wallet,
       creatorProfile: user.creatorProfile,
@@ -297,6 +300,54 @@ export class UserManagementService {
     return {
       success: true,
       data: suspensions,
+    };
+  }
+
+  /** Verify/unverify a creator (the Creators page's verify buttons). */
+  async setCreatorVerified(
+    userId: string,
+    verified: boolean,
+    actorId?: string,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<unknown> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    if (user.role !== 'creator') {
+      throw new BadRequestException('User is not a creator');
+    }
+
+    // creator_profiles is a postgres_fdw FOREIGN table here — ON CONFLICT
+    // (Prisma upsert) is not supported through FDW, so find-then-write.
+    const existing = await this.prisma.creatorProfile.findUnique({ where: { userId } });
+    const profile = existing
+      ? await this.prisma.creatorProfile.update({ where: { userId }, data: { verified } })
+      : await this.prisma.creatorProfile.create({ data: { userId, verified } });
+
+    await this.auditService.log({
+      actorId,
+      action: verified ? 'verify_creator' : 'unverify_creator',
+      targetType: 'user',
+      targetId: userId,
+      details: { email: user.email, displayName: user.displayName },
+      ipAddress,
+      userAgent,
+    });
+
+    return {
+      success: true,
+      data: {
+        id: user.id,
+        email: user.email,
+        displayName: user.displayName,
+        role: user.role,
+        isVerified: profile.verified,
+      },
     };
   }
 

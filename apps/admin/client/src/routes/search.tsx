@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { SearchCorrectionsData, SearchCorrectionDay, SearchStats } from '@/lib/admin-types';
+import { Icon } from '@/components/Icons';
 
 const RANGES = [7, 14, 30, 90] as const;
 
@@ -24,8 +25,8 @@ const fmtDateLong = (iso: string): string => {
 const cardStyle: React.CSSProperties = {
   padding: 20,
   borderRadius: 16,
-  border: '1px solid var(--admin-surface)',
-  background: 'var(--admin-darker)',
+  border: '1px solid var(--admin-card)',
+  background: 'var(--admin-surface)',
 };
 
 /**
@@ -82,7 +83,7 @@ function CorrectionChart({ series }: { series: SearchCorrectionDay[] }): React.J
               x2={W - PAD_R}
               y1={rateY(r)}
               y2={rateY(r)}
-              stroke="#2A1A1A"
+              stroke="var(--admin-border)"
               strokeWidth={1}
             />
             <text x={W - PAD_R - 4} y={rateY(r) + 4} textAnchor="end" fontSize={10} fill={MUTED}>
@@ -160,7 +161,7 @@ function CorrectionChart({ series }: { series: SearchCorrectionDay[] }): React.J
             cy={rateY(d.rate)}
             r={3}
             fill={RATE_GREEN}
-            stroke="#140808"
+            stroke="var(--admin-card)"
             strokeWidth={1.5}
           />
         ))}
@@ -185,8 +186,8 @@ function CorrectionChart({ series }: { series: SearchCorrectionDay[] }): React.J
                 width={156}
                 height={64}
                 rx={6}
-                fill="#241212"
-                stroke="#3A2626"
+                fill="var(--admin-surface)"
+                stroke="var(--admin-card)"
               />
               <text
                 x={Math.min(Math.max(center(hover) - 70, PAD_L + 8), W - PAD_R - 148)}
@@ -353,10 +354,24 @@ export default function SearchAnalyticsPage(): React.JSX.Element {
 
   return (
     <div>
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Search Analytics</h1>
-      <p style={{ color: MUTED, marginBottom: 32 }}>
-        'Did you mean' correction acceptance — suggestions shown vs accepted over time
-      </p>
+      <div style={{ marginBottom: 24 }}>
+        <h1
+          style={{
+            fontSize: 28,
+            fontWeight: 700,
+            marginBottom: 8,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
+          <Icon name="search" size={28} color="var(--admin-orange)" />
+          <span>Search Analytics</span>
+        </h1>
+        <p style={{ color: MUTED }}>
+          'Did you mean' correction acceptance — suggestions shown vs accepted over time
+        </p>
+      </div>
 
       {/* Range selector */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
@@ -368,7 +383,7 @@ export default function SearchAnalyticsPage(): React.JSX.Element {
             style={{
               padding: '8px 16px',
               borderRadius: 8,
-              border: `1px solid ${days === r ? BRAND_ORANGE : 'var(--admin-surface)'}`,
+              border: `1px solid ${days === r ? BRAND_ORANGE : 'var(--admin-border)'}`,
               background: days === r ? 'rgba(232,66,10,0.15)' : 'transparent',
               color: days === r ? 'var(--admin-text)' : MUTED,
               fontWeight: days === r ? 700 : 400,
@@ -398,25 +413,25 @@ export default function SearchAnalyticsPage(): React.JSX.Element {
               width: 10,
               height: 10,
               borderRadius: '50%',
-              background: stats?.fuzzy.degraded ? 'var(--admin-red)' : RATE_GREEN,
+              background: stats?.fuzzy?.degraded ? 'var(--admin-red)' : RATE_GREEN,
             }}
           />
           <strong style={{ color: 'var(--admin-text)', fontSize: 14 }}>
-            Fuzzy search: {stats?.fuzzy.degraded ? 'DEGRADED' : 'healthy'}
+            Fuzzy search: {stats?.fuzzy?.degraded ? 'DEGRADED' : 'healthy'}
           </strong>
         </div>
-        <StatusChip label="Enabled" value={stats?.fuzzy.enabled ? 'Yes' : 'No'} />
+        <StatusChip label="Enabled" value={stats?.fuzzy?.enabled ? 'Yes' : 'No'} />
         <StatusChip
           label="pg_trgm"
-          value={stats?.fuzzy.pgTrgm ? stateLabel(stats.fuzzy.pgTrgm) : '…'}
+          value={stats?.fuzzy?.pgTrgm ? stateLabel(stats.fuzzy.pgTrgm) : '…'}
           color={stats?.fuzzy.pgTrgm ? stateColor(stats.fuzzy.pgTrgm) : undefined}
         />
         <StatusChip
           label="Indexes"
-          value={stats?.fuzzy.indexes ? stateLabel(stats.fuzzy.indexes) : '…'}
+          value={stats?.fuzzy?.indexes ? stateLabel(stats.fuzzy.indexes) : '…'}
           color={stats?.fuzzy.indexes ? stateColor(stats.fuzzy.indexes) : undefined}
         />
-        <StatusChip label="Mode" value={stats?.fuzzy.mode ?? '…'} />
+        <StatusChip label="Mode" value={stats?.fuzzy?.mode ?? '…'} />
         <StatusChip
           label="Searches today"
           value={stats ? String(stats.totalSearchesToday.toLocaleString()) : '…'}
@@ -425,9 +440,19 @@ export default function SearchAnalyticsPage(): React.JSX.Element {
           label="Unique searchers"
           value={stats ? String(stats.uniqueSearchers.toLocaleString()) : '…'}
         />
-        {stats?.fuzzy.warning && (
-          <span style={{ color: 'var(--admin-amber)', fontSize: 12, flexBasis: '100%' }}>
-            ⚠ {stats.fuzzy.warning}
+        {stats?.fuzzy?.warning && (
+          <span
+            style={{
+              color: 'var(--admin-amber)',
+              fontSize: 12,
+              flexBasis: '100%',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <Icon name="alertTriangle" size={14} color="var(--admin-amber)" />
+            <span>{stats.fuzzy.warning}</span>
           </span>
         )}
       </div>
@@ -451,7 +476,14 @@ export default function SearchAnalyticsPage(): React.JSX.Element {
                   marginBottom: 16,
                 }}
               />
-              <div style={{ height: 26, width: '35%', background: 'var(--admin-surface)', borderRadius: 6 }} />
+              <div
+                style={{
+                  height: 26,
+                  width: '35%',
+                  background: 'var(--admin-surface)',
+                  borderRadius: 6,
+                }}
+              />
             </div>
           ))}
         </div>
@@ -464,7 +496,7 @@ export default function SearchAnalyticsPage(): React.JSX.Element {
             style={{
               padding: '8px 20px',
               borderRadius: 8,
-              border: '1px solid #3A2626',
+              border: '1px solid var(--admin-card)',
               background: 'transparent',
               color: 'var(--admin-text)',
               cursor: 'pointer',
@@ -518,7 +550,9 @@ export default function SearchAnalyticsPage(): React.JSX.Element {
 
           {/* Chart */}
           <div style={cardStyle}>
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--admin-text)', marginBottom: 4 }}>
+            <h2
+              style={{ fontSize: 16, fontWeight: 700, color: 'var(--admin-text)', marginBottom: 4 }}
+            >
               Acceptance rate over time
             </h2>
             <p style={{ color: MUTED, fontSize: 12, marginBottom: 16 }}>
@@ -530,21 +564,52 @@ export default function SearchAnalyticsPage(): React.JSX.Element {
 
           {/* Accessible data table */}
           <div style={{ ...cardStyle, marginTop: 24 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--admin-text)', marginBottom: 16 }}>
+            <h2
+              style={{
+                fontSize: 16,
+                fontWeight: 700,
+                color: 'var(--admin-text)',
+                marginBottom: 16,
+              }}
+            >
               Daily breakdown
             </h2>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr style={{ color: MUTED, textAlign: 'left' }}>
-                    <th style={{ padding: '8px 12px', borderBottom: '1px solid var(--admin-surface)' }}>Date</th>
-                    <th style={{ padding: '8px 12px', borderBottom: '1px solid var(--admin-surface)' }}>
+                    <th
+                      style={{
+                        padding: '8px 12px',
+                        borderBottom: '1px solid var(--admin-surface)',
+                      }}
+                    >
+                      Date
+                    </th>
+                    <th
+                      style={{
+                        padding: '8px 12px',
+                        borderBottom: '1px solid var(--admin-surface)',
+                      }}
+                    >
                       Shown
                     </th>
-                    <th style={{ padding: '8px 12px', borderBottom: '1px solid var(--admin-surface)' }}>
+                    <th
+                      style={{
+                        padding: '8px 12px',
+                        borderBottom: '1px solid var(--admin-surface)',
+                      }}
+                    >
                       Accepted
                     </th>
-                    <th style={{ padding: '8px 12px', borderBottom: '1px solid var(--admin-surface)' }}>Rate</th>
+                    <th
+                      style={{
+                        padding: '8px 12px',
+                        borderBottom: '1px solid var(--admin-surface)',
+                      }}
+                    >
+                      Rate
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -553,19 +618,34 @@ export default function SearchAnalyticsPage(): React.JSX.Element {
                     .reverse()
                     .map((d) => (
                       <tr key={d.date} style={{ color: 'var(--admin-text)' }}>
-                        <td style={{ padding: '8px 12px', borderBottom: '1px solid #1E1010' }}>
+                        <td
+                          style={{
+                            padding: '8px 12px',
+                            borderBottom: '1px solid var(--admin-card)',
+                          }}
+                        >
                           {fmtDateLong(d.date)}
                         </td>
-                        <td style={{ padding: '8px 12px', borderBottom: '1px solid #1E1010' }}>
+                        <td
+                          style={{
+                            padding: '8px 12px',
+                            borderBottom: '1px solid var(--admin-card)',
+                          }}
+                        >
                           {d.shown.toLocaleString()}
                         </td>
-                        <td style={{ padding: '8px 12px', borderBottom: '1px solid #1E1010' }}>
+                        <td
+                          style={{
+                            padding: '8px 12px',
+                            borderBottom: '1px solid var(--admin-card)',
+                          }}
+                        >
                           {d.accepted.toLocaleString()}
                         </td>
                         <td
                           style={{
                             padding: '8px 12px',
-                            borderBottom: '1px solid #1E1010',
+                            borderBottom: '1px solid var(--admin-card)',
                             color: RATE_GREEN,
                           }}
                         >

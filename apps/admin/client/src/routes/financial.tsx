@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
+import { Icon } from '@/components/Icons';
 
 export default function FinancialPage() {
   const { data, isLoading } = useQuery({
@@ -28,8 +29,13 @@ export default function FinancialPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Financial Overview</h1>
-      <p style={{ color: 'var(--admin-text-muted)', marginBottom: 32 }}>Revenue, payouts, and financial metrics</p>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Icon name="dollarSign" size={28} color="var(--admin-orange)" />
+          <span>Financial Overview</span>
+        </h1>
+        <p style={{ color: 'var(--admin-text-muted)' }}>Revenue, payouts, and financial metrics</p>
+      </div>
 
       {isLoading ? (
         <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
@@ -38,7 +44,7 @@ export default function FinancialPage() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
               gap: 16,
               marginBottom: 32,
             }}
@@ -47,12 +53,12 @@ export default function FinancialPage() {
               style={{
                 padding: 20,
                 borderRadius: 16,
-                border: '1px solid var(--admin-surface)',
-                backgroundColor: 'rgba(26,10,10,0.5)',
+                border: '1px solid var(--admin-card)',
+                backgroundColor: 'var(--admin-surface)',
               }}
             >
               <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 8 }}>Total Revenue</p>
-              <p style={{ fontSize: 22, fontWeight: 700, color: 'var(--admin-green)' }}>
+              <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--admin-emerald)' }}>
                 ₦{fin.totalRevenue.toLocaleString()}
               </p>
             </div>
@@ -63,8 +69,8 @@ export default function FinancialPage() {
               style={{
                 padding: 24,
                 borderRadius: 20,
-                border: '1px solid var(--admin-surface)',
-                backgroundColor: 'rgba(26,10,10,0.5)',
+                border: '1px solid var(--admin-card)',
+                backgroundColor: 'var(--admin-surface)',
               }}
             >
               <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>
