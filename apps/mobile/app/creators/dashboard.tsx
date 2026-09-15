@@ -3,7 +3,11 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { creatorApi, type CreatorDashboard, type CreatorAnalytics } from '../../src/api/creator';
+import {
+  creatorApi,
+  type CreatorDashboard,
+  type CreatorAnalytics,
+} from '@azeebo/react-data/api/creator';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
 
@@ -187,7 +191,7 @@ export default function CreatorDashboardScreen() {
                   </View>
                 ))
               ) : (
-                <Text style={{ color: colors.palette.grey500, textAlign: 'center', width: '100%' }}>
+                <Text style={{ color: colors.text.secondary, textAlign: 'center', width: '100%' }}>
                   No data available
                 </Text>
               )}
@@ -234,7 +238,7 @@ export default function CreatorDashboardScreen() {
                 </TouchableOpacity>
               ))
             ) : (
-              <Text style={{ color: colors.palette.grey500, textAlign: 'center', padding: 20 }}>
+              <Text style={{ color: colors.text.secondary, textAlign: 'center', padding: 20 }}>
                 No content yet
               </Text>
             )}
@@ -274,7 +278,7 @@ export default function CreatorDashboardScreen() {
                 </View>
               ))
             ) : (
-              <Text style={{ color: colors.palette.grey500, textAlign: 'center', padding: 20 }}>
+              <Text style={{ color: colors.text.secondary, textAlign: 'center', padding: 20 }}>
                 No recent activity
               </Text>
             )}
@@ -303,7 +307,7 @@ export default function CreatorDashboardScreen() {
           </TouchableOpacity>
           <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
             <Text style={styles.navIcon}>✨</Text>
-            <Text style={[styles.navLabel, { color: colors.palette.teal }]}>Create</Text>
+            <Text style={[styles.navLabel, { color: colors.category.teal }]}>Create</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
             <Text style={styles.navIcon}>⭐</Text>
@@ -337,7 +341,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -354,7 +358,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -370,7 +374,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: colors.palette.teal,
+    backgroundColor: colors.category.teal,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -385,14 +389,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   creatorCategory: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 13,
   },
   editButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -421,7 +425,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   statLabel: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 12,
     marginBottom: 6,
   },
@@ -450,7 +454,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   seeAllText: {
-    color: colors.palette.teal,
+    color: colors.category.teal,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -471,12 +475,12 @@ const styles = StyleSheet.create({
   },
   bar: {
     width: 24,
-    backgroundColor: colors.palette.teal,
+    backgroundColor: colors.category.teal,
     borderRadius: 4,
     marginBottom: 8,
   },
   chartLabel: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 10,
   },
   section: {
@@ -497,7 +501,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 8,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -518,11 +522,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   metaText: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 12,
   },
   timeText: {
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
     fontSize: 11,
   },
   moreButton: {
@@ -532,7 +536,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   moreIcon: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 18,
   },
   notificationsList: {
@@ -568,7 +572,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   notificationTime: {
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
     fontSize: 11,
   },
   actionsSection: {
@@ -582,13 +586,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.palette.teal,
+    backgroundColor: colors.category.teal,
     paddingVertical: 14,
     borderRadius: 10,
     gap: 8,
   },
   secondaryAction: {
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
   },
   actionIcon: {
     fontSize: 18,
@@ -605,7 +609,7 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
     backgroundColor: '#1a1a1a',
     borderTopWidth: 1,
-    borderTopColor: colors.palette.charcoal,
+    borderTopColor: colors.bg.tertiary,
   },
   navItem: {
     alignItems: 'center',
@@ -616,6 +620,6 @@ const styles = StyleSheet.create({
   },
   navLabel: {
     fontSize: 11,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
   },
 });

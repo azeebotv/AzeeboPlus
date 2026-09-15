@@ -10,9 +10,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../src/contexts/AuthContext';
-import { contentApi } from '../../src/api';
-import type { ContentItem } from '../../src/api/content';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { contentApi } from '@azeebo/react-data';
+import type { ContentItem } from '@azeebo/react-data/api/content';
 import { colors, typography, spacing, radius } from '../../src/theme';
 import { ContentCardSkeleton, ErrorState, EmptyState } from '../../src/components/StateContainers';
 import { ScrollReveal, PageTransition } from '../../src/components/motion';

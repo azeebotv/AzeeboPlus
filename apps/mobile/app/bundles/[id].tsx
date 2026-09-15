@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useColorScheme } 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { bundleApi } from '../../src/api/bundle';
+import { bundleApi } from '@azeebo/react-data/api/bundle';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
 
@@ -169,7 +169,7 @@ function createStyles(isDark: boolean) {
     container: { flex: 1, backgroundColor: bg },
     scroll: { padding: 16, paddingBottom: 40 },
     backBtn: { marginBottom: 16 },
-    backText: { color: colors.palette.cyan, fontSize: 15 },
+    backText: { color: colors.category.blue, fontSize: 15 },
     card: {
       backgroundColor: cardBg,
       borderRadius: 12,

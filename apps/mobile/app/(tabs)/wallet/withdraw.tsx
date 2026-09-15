@@ -12,7 +12,7 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AmountInput } from '../../../src/components/AmountInput';
-import { walletApi } from '../../../src/api';
+import { walletApi } from '@azeebo/react-data';
 import { LoadingState, ErrorState } from '../../../src/components/StateContainers';
 import { walletPresetAmounts, walletLimits } from '../../../src/config/prices';
 import { colors } from '../../../src/theme';
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.palette.grey800,
+    borderColor: colors.neutral[700],
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
@@ -379,7 +379,7 @@ const styles = StyleSheet.create({
     borderColor: '#EF4444',
   },
   readOnlyInput: {
-    backgroundColor: colors.palette.grey950,
+    backgroundColor: colors.neutral[950],
     color: colors.light[400],
   },
   errorText: {
@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.palette.grey800,
+    borderColor: colors.neutral[700],
   },
   presetButtonSelected: {
     backgroundColor: '#E8420A',

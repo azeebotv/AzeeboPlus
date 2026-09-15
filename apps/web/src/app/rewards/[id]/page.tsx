@@ -51,7 +51,7 @@ function RewardDetailContent() {
   const reward = query.data;
   if (query.isLoading)
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black, #0b090e)' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
         <AppHeader logoVariant="light" />
         <div className="max-w-4xl mx-auto px-4 py-12">
           <Skeleton height="400px" borderRadius="16" />
@@ -60,7 +60,7 @@ function RewardDetailContent() {
     );
   if (query.error || !reward)
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black, #0b090e)' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
         <AppHeader logoVariant="light" />
         <div className="max-w-4xl mx-auto px-4 py-12">
           <ErrorState title="Reward not found" />
@@ -72,7 +72,7 @@ function RewardDetailContent() {
   const inStock = reward.available > 0;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black, #0b090e)' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
       <AppHeader logoVariant="light" />
       <section className="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-12">
         <motion.div

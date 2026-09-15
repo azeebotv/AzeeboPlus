@@ -53,7 +53,7 @@ export default function ModerationPage(): React.JSX.Element {
     <div
       className="min-h-screen"
       style={{
-        backgroundColor: '#0b090e',
+        backgroundColor: 'var(--bg-primary)',
         color: '#F5F0EB',
       }}
     >
@@ -105,7 +105,7 @@ export default function ModerationPage(): React.JSX.Element {
                 cursor: 'pointer',
                 textAlign: 'left',
                 border: '1px solid rgba(255, 255, 255, 0.08)',
-                backgroundColor: '#18151e',
+                backgroundColor: 'var(--bg-tertiary)',
                 color: '#F5F0EB',
                 transition: 'border-color 0.2s, transform 0.2s',
               }}

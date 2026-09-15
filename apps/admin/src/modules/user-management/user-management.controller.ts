@@ -70,6 +70,29 @@ export class UserManagementController {
     return result;
   }
 
+  @Post('bulk/suspend')
+  async bulkSuspendUsers(
+    @Req() req: AuthRequest,
+    @Body() body: { ids: string[]; reason: string; durationDays?: number }
+  ): Promise<unknown> {
+    const actorId = resolveActorId(req);
+    const result = await this.userService.bulkSuspend(
+      body.ids || [],
+      body.reason || 'Bulk suspended by admin',
+      actorId,
+      body.durationDays,
+      req.ip
+    );
+    await this.auditLogService.log({
+      actorId,
+      action: 'user.bulk_suspended',
+      targetType: 'user',
+      details: { count: body.ids?.length, reason: body.reason, durationDays: body.durationDays },
+      ipAddress: req.ip,
+    });
+    return result;
+  }
+
   @Put(':id/suspend')
   async suspendUser(
     @Param('id') id: string,

@@ -22,12 +22,30 @@ const STYLE_PROPERTIES = [
   'shadowColor',
   'textDecorationColor',
   'outlineColor',
+  // Shorthands and SVG props that carry colors (gradients live here):
+  'background',
+  'backgroundImage',
+  'fill',
+  'stroke',
+  'caretColor',
+  'columnRuleColor',
 ];
 
 function create(context) {
   const options = context.options[0] || {};
   const allowList = (options.allowList || []).map((c) => c.toLowerCase());
   const allowTransparent = options.allowTransparent !== false;
+  // A literal inside StyleSheet.create matches BOTH the StyleSheet visitor
+  // and the generic Literal visitor below — dedupe so each distinct hex at
+  // each site reports exactly once (keyed by node position + hex, because a
+  // single string like a gradient can carry several different hexes; the
+  // ratchet counts rule warnings, so double reports would double every
+  // floor). The position comes from node.range[0]: the typescript-eslint
+  // parser does NOT populate node.start (a Babel/espree concept), so keying
+  // on node.start silently collapsed every key to 'undefined:<hex>' and
+  // reported each distinct hex only ONCE PER FILE — masking every duplicate
+  // of a hex after its first occurrence. range[0] exists on every node.
+  const reportedKeys = new Set();
 
   function isStyleSheetCreate(node) {
     return (
@@ -77,6 +95,10 @@ function create(context) {
       const lowerHex = hex.toLowerCase();
 
       if (allowList.includes(lowerHex)) continue;
+
+      const reportKey = `${node.range[0]}:${lowerHex}`;
+      if (reportedKeys.has(reportKey)) continue;
+      reportedKeys.add(reportKey);
 
       context.report({
         node,

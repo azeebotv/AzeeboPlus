@@ -64,7 +64,9 @@ export default function ArtistDetailPage(): React.JSX.Element {
       {/* Artist Hero */}
       <section
         className="relative py-16 sm:py-20"
-        style={{ background: 'linear-gradient(135deg, #4C0A5E 0%, #0b090e 100%)' }}
+        style={{
+          background: 'linear-gradient(135deg, var(--music-purple) 0%, var(--bg-primary) 100%)',
+        }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Link
@@ -90,7 +92,7 @@ export default function ArtistDetailPage(): React.JSX.Element {
             ) : (
               <div
                 className="w-32 h-32 sm:w-40 sm:h-40 rounded-full flex items-center justify-center text-5xl"
-                style={{ background: 'linear-gradient(135deg, #4C0A5E, #E8420A)' }}
+                style={{ background: 'linear-gradient(135deg, var(--music-purple), #E8420A)' }}
               >
                 Mic
               </div>

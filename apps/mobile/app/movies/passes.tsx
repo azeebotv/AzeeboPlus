@@ -5,8 +5,8 @@ import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { apiClient } from '../../src/api/client';
-import { ApiResponse } from '../../src/types/api';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { ApiResponse } from '@azeebo/react-data/types/api';
 import { colors } from '../../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   heroBanner: { alignItems: 'center', padding: 24, marginBottom: 20 },
   heroEmoji: { fontSize: 60, marginBottom: 12 },
   heroTitle: { fontSize: 28, fontWeight: '700', marginBottom: 6 },
-  heroSubtitle: { color: colors.palette.grey500, fontSize: 14, textAlign: 'center' },
+  heroSubtitle: { color: colors.text.secondary, fontSize: 14, textAlign: 'center' },
   planCard: {
     padding: 20,
     borderRadius: 16,
@@ -172,13 +172,13 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
   },
-  planCardSelected: { borderColor: colors.palette.cream },
-  planCardPopular: { borderColor: colors.palette.cream },
+  planCardSelected: { borderColor: colors.category.highlight },
+  planCardPopular: { borderColor: colors.category.highlight },
   popularBadge: {
     position: 'absolute',
     top: -10,
     alignSelf: 'center',
-    backgroundColor: colors.palette.cream,
+    backgroundColor: colors.category.highlight,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 10,
@@ -189,26 +189,26 @@ const styles = StyleSheet.create({
   planInfo: { flex: 1 },
   planName: { fontSize: 18, fontWeight: '700', marginBottom: 4 },
   priceRow: { flexDirection: 'row', alignItems: 'baseline' },
-  planPrice: { color: colors.palette.cream, fontSize: 24, fontWeight: '700' },
-  planPeriod: { color: colors.palette.grey500, fontSize: 14 },
+  planPrice: { color: colors.category.highlight, fontSize: 24, fontWeight: '700' },
+  planPeriod: { color: colors.text.secondary, fontSize: 14 },
   selectedCheck: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: colors.palette.cream,
+    backgroundColor: colors.category.highlight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkmark: { color: '#000', fontWeight: '700', fontSize: 16 },
   featuresList: { gap: 6 },
-  featureText: { color: colors.palette.grey300, fontSize: 14 },
+  featureText: { color: colors.neutral[300], fontSize: 14 },
   subscribeButton: {
-    backgroundColor: colors.palette.cream,
+    backgroundColor: colors.category.highlight,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
     marginBottom: 12,
   },
   subscribeText: { color: '#000', fontSize: 16, fontWeight: '700' },
-  termsText: { color: colors.palette.grey500, fontSize: 12, textAlign: 'center' },
+  termsText: { color: colors.text.secondary, fontSize: 12, textAlign: 'center' },
 });

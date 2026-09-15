@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { apiClient } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { apiClient } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 import { analytics } from '../../src/utils/analytics';
 import { colors } from '../../src/theme';
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.grey800,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statLabel: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 12,
     marginBottom: 4,
   },
@@ -304,14 +304,14 @@ const styles = StyleSheet.create({
   optionButton: {
     padding: 16,
     borderRadius: 12,
-    backgroundColor: colors.palette.grey100,
+    backgroundColor: colors.neutral[100],
     borderWidth: 2,
     borderColor: '#e0e0e0',
   },
   optionText: {
     fontSize: 16,
     fontWeight: '500',
-    color: colors.palette.grey800,
+    color: colors.neutral[800],
   },
   nextButton: {
     margin: 16,
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
   },
   scoreLabel: {
     fontSize: 16,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     marginBottom: 8,
   },
   scoreValue: {
@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
   },
   resultStatLabel: {
     fontSize: 14,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
   },
   playAgainButton: {
     paddingHorizontal: 48,

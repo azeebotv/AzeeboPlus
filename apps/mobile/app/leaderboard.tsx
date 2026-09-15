@@ -11,7 +11,7 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
-import { engagementApi } from '../src/api';
+import { engagementApi } from '@azeebo/react-data';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import { colors } from '../src/theme';
 
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     marginRight: 8,
   },
   filterButtonActive: {
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
   },
   categoryButtonActive: {
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderRadius: 16,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     flex: 1,
   },
   topCardFirst: {
@@ -320,13 +320,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
   },
   listItemCurrentUser: {
     borderWidth: 2,
     borderColor: '#E8420A',
-    backgroundColor: colors.palette.royalPurple,
+    backgroundColor: colors.bg.deep,
   },
   rankText: {
     fontSize: 18,

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import type { ContentItem } from '@/api';
+import type { ContentItem } from '@azeebo/react-data';
 import { colors } from '@/theme';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;

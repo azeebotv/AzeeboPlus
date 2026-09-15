@@ -10,12 +10,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { apiClient } from '../src/api/client';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
-import { useWallet } from '../src/contexts/WalletContext';
+import { useWallet } from '@azeebo/react-data/contexts/WalletContext';
 import { votePackages as defaultVotePackages } from '../src/config/prices';
-import { realityApi } from '../src/api/engagement';
-import type { RealityShow, RealityContestant } from '../src/api/engagement';
+import { realityApi } from '@azeebo/react-data/api/engagement';
+import type { RealityShow, RealityContestant } from '@azeebo/react-data/api/engagement';
 import { colors } from '../src/theme';
 
 const VOTE_PACKAGES = defaultVotePackages.reality;
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   headerTitle: { color: '#fff', fontSize: 18, fontWeight: '600', marginLeft: 'auto' },
   content: { padding: 16 },
   showTitle: { color: '#fff', fontSize: 24, fontWeight: '700', marginBottom: 8 },
-  viewerCount: { color: colors.palette.grey500, fontSize: 14, marginBottom: 24 },
+  viewerCount: { color: colors.text.secondary, fontSize: 14, marginBottom: 24 },
   sectionTitle: { color: '#fff', fontSize: 18, fontWeight: '600', marginBottom: 12 },
   contestantList: { marginBottom: 24 },
   contestantItem: {
@@ -256,14 +256,14 @@ const styles = StyleSheet.create({
   },
   contestantInitial: { color: '#fff', fontSize: 18, fontWeight: '700' },
   contestantName: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  contestantRank: { color: colors.palette.grey500, fontSize: 12, marginTop: 2 },
+  contestantRank: { color: colors.text.secondary, fontSize: 12, marginTop: 2 },
   checkmark: { color: '#10B981', fontSize: 20, fontWeight: '700' },
   packageGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 },
   packageCard: {
     flex: 1,
     minWidth: '48%',
     padding: 16,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 2,
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   packageSelected: { borderColor: '#E8420A' },
   packageVotes: { color: '#fff', fontSize: 18, fontWeight: '700' },
   packagePrice: { color: '#E8420A', fontSize: 14, fontWeight: '600', marginTop: 4 },
-  packageBonus: { color: colors.palette.emerald, fontSize: 12, marginTop: 2 },
+  packageBonus: { color: colors.category.green, fontSize: 12, marginTop: 2 },
   quantityRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -298,10 +298,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 16,
   },
-  summaryLabel: { color: colors.palette.grey500, fontSize: 14 },
+  summaryLabel: { color: colors.text.secondary, fontSize: 14 },
   summaryPrice: { color: '#fff', fontSize: 14, fontWeight: '600' },
   balanceLabel: {
-    color: colors.palette.emerald,
+    color: colors.category.green,
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 16,

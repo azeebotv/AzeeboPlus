@@ -11,8 +11,8 @@ import {
 } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { contentApi } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { contentApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
 
@@ -360,7 +360,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     marginRight: 8,
   },
   filterButtonActive: {
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
   },
   viewModeToggle: {
     flexDirection: 'row',
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 8,
     padding: 2,
   },
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
   gridItem: {
     flex: 1,
     margin: 8,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     overflow: 'hidden',
   },
@@ -480,7 +480,7 @@ const styles = StyleSheet.create({
   },
   listItem: {
     flexDirection: 'row',
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',

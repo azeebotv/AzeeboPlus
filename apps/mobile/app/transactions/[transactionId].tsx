@@ -9,8 +9,8 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { walletApi } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { walletApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../../src/theme';
 
 interface TransactionDetail {
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   card: {
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,

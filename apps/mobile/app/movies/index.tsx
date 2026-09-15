@@ -4,9 +4,9 @@ import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { apiClient } from '../../src/api/client';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { moviePassPrice, rentPrice } from '../../src/config/prices';
-import type { Movie, SubscriptionPlan } from '../../src/types/api';
+import type { Movie, SubscriptionPlan } from '@azeebo/react-data/types/api';
 import { analytics } from '../../src/utils/analytics';
 import { colors } from '../../src/theme';
 
@@ -297,7 +297,7 @@ export default function MoviesUniverseHome() {
           </TouchableOpacity>
           <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
             <Text style={styles.navIcon}>📺</Text>
-            <Text style={[styles.navLabel, { color: colors.palette.cream }]}>Watch</Text>
+            <Text style={[styles.navLabel, { color: colors.category.highlight }]}>Watch</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
             <Text style={styles.navIcon}>✨</Text>
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
   },
   universeLabel: {
     fontSize: 14,
-    color: colors.palette.cream,
+    color: colors.category.highlight,
     fontWeight: '600',
     marginBottom: 4,
   },
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
   },
   searchPlaceholder: {
     fontSize: 15,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
   },
   passBanner: {
     marginHorizontal: 16,
@@ -360,21 +360,21 @@ const styles = StyleSheet.create({
   },
   passBannerContent: {
     padding: 20,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
   },
   passBannerTitle: {
-    color: colors.palette.cream,
+    color: colors.category.highlight,
     fontSize: 20,
     fontWeight: '700',
     marginBottom: 4,
   },
   passBannerSubtitle: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 14,
     marginBottom: 12,
   },
   passButton: {
-    backgroundColor: colors.palette.cream,
+    backgroundColor: colors.category.highlight,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   seeAllText: {
-    color: colors.palette.cream,
+    color: colors.category.highlight,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
   },
   movieThumbnail: {
     height: 180,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
@@ -441,7 +441,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   ratingText: {
-    color: colors.palette.cream,
+    color: colors.category.highlight,
     fontSize: 11,
     fontWeight: '600',
   },
@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
   },
   movieGenre: {
     fontSize: 12,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
   },
   featuredCard: {
     marginHorizontal: 16,
@@ -462,7 +462,7 @@ const styles = StyleSheet.create({
   },
   featuredImagePlaceholder: {
     height: 200,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -474,7 +474,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 12,
     left: 12,
-    backgroundColor: colors.palette.cream,
+    backgroundColor: colors.category.highlight,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 4,
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   featuredRating: {
-    color: colors.palette.cream,
+    color: colors.category.highlight,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -509,7 +509,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   featuredGenre: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 14,
     marginBottom: 12,
   },
@@ -522,7 +522,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.palette.cream,
+    backgroundColor: colors.category.highlight,
     paddingVertical: 10,
     borderRadius: 8,
     gap: 6,
@@ -540,12 +540,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: colors.palette.cream,
+    borderColor: colors.category.highlight,
     paddingVertical: 10,
     borderRadius: 8,
   },
   rentText: {
-    color: colors.palette.cream,
+    color: colors.category.highlight,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -559,7 +559,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: colors.palette.cream,
+    borderColor: colors.category.highlight,
   },
   passHeader: {
     flexDirection: 'row',
@@ -575,24 +575,24 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   passPrice: {
-    color: colors.palette.cream,
+    color: colors.category.highlight,
     fontSize: 20,
     fontWeight: '700',
   },
   passPeriod: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 12,
   },
   passFeatures: {
     marginBottom: 12,
   },
   passFeature: {
-    color: colors.palette.grey300,
+    color: colors.neutral[300],
     fontSize: 13,
     marginBottom: 4,
   },
   subscribeButton: {
-    backgroundColor: colors.palette.cream,
+    backgroundColor: colors.category.highlight,
     paddingVertical: 10,
     borderRadius: 8,
     alignItems: 'center',
@@ -609,7 +609,7 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
     backgroundColor: '#1a1a1a',
     borderTopWidth: 1,
-    borderTopColor: colors.palette.charcoal,
+    borderTopColor: colors.bg.tertiary,
   },
   navItem: {
     alignItems: 'center',
@@ -620,6 +620,6 @@ const styles = StyleSheet.create({
   },
   navLabel: {
     fontSize: 11,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
   },
 });

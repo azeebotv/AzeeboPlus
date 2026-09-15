@@ -13,17 +13,17 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
-import { universeApi, contentApi, mediaApi } from '../../src/api';
-import { mediaFingerprint } from '../../src/utils/mediaCache';
-import { logger } from '../../src/utils/logger';
+import { universeApi, contentApi, mediaApi } from '@azeebo/react-data';
+import { mediaFingerprint } from '@azeebo/react-data/utils/mediaCache';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
 
 const uploadOptions = [
-  { id: 'video', name: 'Video', icon: '📹', color: colors.palette.coral },
-  { id: 'image', name: 'Image', icon: '📷', color: colors.palette.teal },
-  { id: 'live', name: 'Live Stream', icon: '🎥', color: colors.palette.sky },
-  { id: 'story', name: 'Story', icon: '📖', color: colors.palette.mint },
+  { id: 'video', name: 'Video', icon: '📹', color: colors.error[500] },
+  { id: 'image', name: 'Image', icon: '📷', color: colors.category.teal },
+  { id: 'live', name: 'Live Stream', icon: '🎥', color: colors.category.blue },
+  { id: 'story', name: 'Story', icon: '📖', color: colors.category.mint },
 ];
 
 interface SelectedFile {
@@ -364,7 +364,7 @@ export default function CreateScreen() {
         <TouchableOpacity
           onPress={handleUpload}
           disabled={isUploading}
-          style={[styles.submitButton, isUploading && { backgroundColor: colors.palette.grey600 }]}
+          style={[styles.submitButton, isUploading && { backgroundColor: colors.neutral[600] }]}
         >
           {isUploading ? (
             <View style={styles.uploadingRow}>
@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 2,
     borderColor: '#e0e0e0',
-    backgroundColor: colors.palette.paper,
+    backgroundColor: colors.bg.surfaceLight,
   },
   uploadIcon: {
     fontSize: 24,
@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 32,
     alignItems: 'center',
-    backgroundColor: colors.palette.lavender,
+    backgroundColor: colors.bg.surfaceLight,
   },
   uploadIconLarge: {
     fontSize: 48,
@@ -460,15 +460,15 @@ const styles = StyleSheet.create({
   },
   uploadHint: {
     fontSize: 12,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
   },
   selectedFileContainer: {
     borderWidth: 2,
-    borderColor: colors.palette.teal,
+    borderColor: colors.category.teal,
     borderRadius: 16,
     padding: 24,
     alignItems: 'center',
-    backgroundColor: colors.palette.mist,
+    backgroundColor: colors.bg.surfaceLight,
   },
   selectedFileIcon: {
     fontSize: 36,
@@ -477,20 +477,20 @@ const styles = StyleSheet.create({
   selectedFileName: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.palette.grey800,
+    color: colors.neutral[800],
     marginBottom: 4,
     maxWidth: '80%',
   },
   selectedFileSize: {
     fontSize: 12,
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
     marginBottom: 12,
   },
   removeFileButton: {
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: colors.palette.alertRed,
+    backgroundColor: colors.error[500],
   },
   removeFileText: {
     color: '#fff',
@@ -525,7 +525,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: colors.palette.grey100,
+    backgroundColor: colors.neutral[100],
   },
   universeIcon: {
     fontSize: 16,
@@ -533,7 +533,7 @@ const styles = StyleSheet.create({
   universeName: {
     fontSize: 13,
     fontWeight: '500',
-    color: colors.palette.grey800,
+    color: colors.neutral[800],
   },
   privacySection: {
     marginBottom: 24,
@@ -546,13 +546,13 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 12,
     borderRadius: 8,
-    backgroundColor: colors.palette.grey100,
+    backgroundColor: colors.neutral[100],
     alignItems: 'center',
   },
   privacyText: {
     fontSize: 14,
     fontWeight: '500',
-    color: colors.palette.grey800,
+    color: colors.neutral[800],
   },
   submitButton: {
     backgroundColor: '#E8420A',
@@ -572,7 +572,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tipsSection: {
-    backgroundColor: colors.palette.cloud,
+    backgroundColor: colors.bg.surfaceLight,
     borderRadius: 12,
     padding: 16,
   },
@@ -586,7 +586,7 @@ const styles = StyleSheet.create({
   },
   tipItem: {
     fontSize: 13,
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
     lineHeight: 1.5,
   },
 });

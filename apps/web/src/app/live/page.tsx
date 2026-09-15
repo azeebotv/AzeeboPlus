@@ -92,10 +92,7 @@ function LiveEventsPageContent(): React.JSX.Element {
     >
       <AppHeader active="Live" logoVariant="light" />
 
-      <section
-        className="relative py-16 sm:py-20"
-        style={{ background: 'linear-gradient(135deg, #E8420A 0%, #7c2d12 100%)' }}
-      >
+      <section className="relative py-16 sm:py-20" style={{ background: 'var(--live-gradient)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.h1
             className="text-4xl sm:text-5xl font-bold text-white mb-4"

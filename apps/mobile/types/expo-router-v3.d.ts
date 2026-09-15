@@ -50,6 +50,8 @@ declare module 'expo-router' {
 
   // Utility hooks
   export function useLocalSearchParams<T extends Record<string, unknown>>(): Partial<T>;
+  /** Runs the callback on focus; the returned cleanup runs on blur. */
+  export function useFocusEffect(callback: () => undefined | void | (() => void)): void;
   export function usePathname(): string;
   export function useSegments(): string[];
   export function useRootNavigation(): { getState: () => unknown; addListener: () => () => void };

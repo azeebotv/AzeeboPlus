@@ -12,9 +12,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../src/contexts/AuthContext';
-import { apiClient } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { apiClient } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../../src/theme';
 
 interface Badge {
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
   badgeItem: {
     width: BADGE_SIZE,
     alignItems: 'center',
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 12,
   },
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   modalContent: {
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 24,
     padding: 32,
     alignItems: 'center',

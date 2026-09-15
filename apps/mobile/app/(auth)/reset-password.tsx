@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams, Link } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { authApi } from '../../src/api';
+import { authApi } from '@azeebo/react-data';
 import { PasswordInput } from '../../src/components/PasswordInput';
 import { PasswordStrengthMeter } from '../../src/components/PasswordStrengthMeter';
 import { colors } from '../../src/theme';

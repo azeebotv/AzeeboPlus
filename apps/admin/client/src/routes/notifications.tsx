@@ -2,28 +2,64 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { NotificationTemplate } from '@/lib/admin-types';
+import { unwrapList } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 export default function NotificationsPage() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', type: 'email' as string, subject: '', content: '' });
+  // Edit/delete were backend-supported but had no UI; edit reuses the form.
+  const [editTarget, setEditTarget] = useState<NotificationTemplate | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ['admin', 'notifications'],
     queryFn: async () => {
       const res = await adminApi.getNotificationTemplates();
-      return res.success ? (res.data as NotificationTemplate[]) : [];
+      return res.success ? unwrapList<NotificationTemplate>(res.data).items : [];
     },
   });
+
+  // Delivery stats strip (GET /admin/notifications/stats — previously unused).
+  const { data: stats } = useQuery({
+    queryKey: ['admin', 'notification-stats'],
+    queryFn: async () => {
+      const res = await adminApi.getNotificationStats();
+      return res.success ? (res.data ?? null) : null;
+    },
+  });
+
+  const resetForm = () => setForm({ name: '', type: 'email', subject: '', content: '' });
 
   const createMutation = useMutation({
     mutationFn: () => adminApi.createNotificationTemplate(form),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'notifications'] });
       setShowForm(false);
-      setForm({ name: '', type: 'email', subject: '', content: '' });
+      resetForm();
+      setFormError(null);
     },
+    onError: (e) => setFormError((e as Error).message || 'Create failed'),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
+      adminApi.updateNotificationTemplate(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'notifications'] });
+      setShowForm(false);
+      setEditTarget(null);
+      resetForm();
+      setFormError(null);
+    },
+    onError: (e) => setFormError((e as Error).message || 'Update failed'),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => adminApi.deleteNotificationTemplate(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'notifications'] }),
+    onError: (e) => setFormError((e as Error).message || 'Delete failed'),
   });
 
   return (
@@ -37,14 +73,34 @@ export default function NotificationsPage() {
         }}
       >
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <h1
+            style={{
+              fontSize: 28,
+              fontWeight: 700,
+              marginBottom: 8,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+            }}
+          >
             <Icon name="bell" size={28} color="var(--admin-orange)" />
             <span>Notifications</span>
           </h1>
-          <p style={{ color: 'var(--admin-text-muted)' }}>{templates.length} templates</p>
+          <p style={{ color: 'var(--admin-text-muted)' }}>
+            {templates.length} templates
+            {stats
+              ? ` · ${(stats as { totalSent?: number }).totalSent ?? 0} sent · ${((stats as { deliveryRate?: number }).deliveryRate ?? 0).toFixed(1)}% delivered`
+              : ''}
+          </p>
         </div>
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => {
+            setShowForm(!showForm);
+            if (!showForm) {
+              setEditTarget(null);
+              resetForm();
+            }
+          }}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -74,7 +130,12 @@ export default function NotificationsPage() {
             marginBottom: 24,
           }}
         >
-          <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>New Template</h3>
+          <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>
+            {editTarget ? `Edit "${editTarget.name}"` : 'New Template'}
+          </h3>
+          {formError && (
+            <p style={{ color: 'var(--admin-red)', fontSize: 13, marginBottom: 8 }}>{formError}</p>
+          )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <input
               value={form.name}
@@ -136,8 +197,12 @@ export default function NotificationsPage() {
             />
             <div style={{ display: 'flex', gap: 8 }}>
               <button
-                onClick={() => createMutation.mutate()}
-                disabled={createMutation.isPending}
+                onClick={() =>
+                  editTarget
+                    ? updateMutation.mutate({ id: editTarget.id, data: form })
+                    : createMutation.mutate()
+                }
+                disabled={createMutation.isPending || updateMutation.isPending}
                 style={{
                   padding: '10px 20px',
                   borderRadius: 8,
@@ -148,7 +213,13 @@ export default function NotificationsPage() {
                   cursor: 'pointer',
                 }}
               >
-                {createMutation.isPending ? 'Creating...' : 'Create'}
+                {editTarget
+                  ? updateMutation.isPending
+                    ? 'Saving...'
+                    : 'Save'
+                  : createMutation.isPending
+                    ? 'Creating...'
+                    : 'Create'}
               </button>
               <button
                 onClick={() => setShowForm(false)}
@@ -169,7 +240,9 @@ export default function NotificationsPage() {
       )}
 
       {isLoading ? (
-        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+          Loading...
+        </p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {templates.map((t) => (
@@ -202,10 +275,54 @@ export default function NotificationsPage() {
               >
                 {t.type}
               </span>
+              <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                <button
+                  onClick={() => {
+                    setEditTarget(t);
+                    setForm({
+                      name: t.name,
+                      type: t.type,
+                      subject: t.subject ?? '',
+                      content: t.content ?? '',
+                    });
+                    setShowForm(true);
+                    setFormError(null);
+                  }}
+                  style={{
+                    padding: '5px 12px',
+                    borderRadius: 6,
+                    border: '1px solid var(--admin-surface)',
+                    background: 'transparent',
+                    color: 'var(--admin-text-muted)',
+                    fontSize: 12,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => {
+                    if (window.confirm(`Delete template "${t.name}"?`)) deleteMutation.mutate(t.id);
+                  }}
+                  style={{
+                    padding: '5px 12px',
+                    borderRadius: 6,
+                    border: '1px solid rgba(204,28,28,0.4)',
+                    background: 'transparent',
+                    color: 'var(--admin-red)',
+                    fontSize: 12,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           ))}
           {templates.length === 0 && (
-            <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>No templates found</p>
+            <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>
+              No templates found
+            </p>
           )}
         </div>
       )}

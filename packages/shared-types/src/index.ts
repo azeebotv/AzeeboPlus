@@ -605,6 +605,7 @@ export { validateStartup, isPlaceholderSecret, validateNoPlaceholders } from './
 
 // Data Classification types
 export { DataClassification, PiiCategory, ConsentType } from './data-classification';
+export { DEFAULT_RETENTION_POLICIES } from './data-classification';
 export type {
   DataClassificationMetadata,
   UserDataExport,

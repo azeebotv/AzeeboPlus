@@ -131,6 +131,9 @@ export class SocialAuthService {
         provider: SocialProvider.APPLE,
       };
     } catch {
+      // allowed-fabricated-4xx: the only cause is a malformed id_token payload
+      // (base64/JSON decode of client input) — the cause cannot vary, and
+      // mapAndThrow would turn it into a 500. Constant 401 by design.
       throw new UnauthorizedException('Invalid Apple token');
     }
   }

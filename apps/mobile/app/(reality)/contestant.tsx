@@ -12,8 +12,8 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { contentApi } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { contentApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../../src/theme';
 
 interface Contestant {
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     flexDirection: 'row',
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     marginTop: 24,
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   socialButton: {
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,

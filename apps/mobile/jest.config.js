@@ -1,6 +1,12 @@
 module.exports = {
   moduleFileExtensions: ["js", "json", "ts", "tsx"],
   testRegex: ".*\\.(spec|test)\\.tsx?$",
+  moduleNameMapper: {
+    // @azeebo/react-data is consumed as TS source (see tsconfig paths); jest
+    // needs the same mapping to resolve its modules when tests import it.
+    '^@azeebo/react-data$': '<rootDir>/../../packages/react-data/src/index.ts',
+    '^@azeebo/react-data/(.*)$': '<rootDir>/../../packages/react-data/src/$1',
+  },
   transform: {
     "^.+\\.(t|j)sx?$": ["ts-jest", { tsconfig: { jsx: "react-jsx" } }],
   },

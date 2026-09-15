@@ -62,7 +62,7 @@ function SportsPageContent(): React.JSX.Element {
             className="relative h-[500px] flex items-center justify-center overflow-hidden"
             style={{
               background:
-                'radial-gradient(ellipse at top, rgba(232,66,10,0.18) 0%, #100e14 50%, #0b090e 100%)',
+                'radial-gradient(ellipse at top, rgba(232,66,10,0.18) 0%, var(--bg-secondary) 50%, var(--bg-primary) 100%)',
               borderBottom: '1px solid rgba(255,255,255,0.08)',
             }}
           >

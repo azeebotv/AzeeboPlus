@@ -41,7 +41,7 @@ export default function WatchPage(): React.JSX.Element {
   return (
     <div
       className="min-h-screen"
-      style={{ backgroundColor: 'var(--brand-near-black, #0b090e)', color: 'var(--text-primary)' }}
+      style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}
     >
       <AppHeader active="Watch" logoVariant="light" />
       <main style={{ padding: '100px 24px 60px', maxWidth: 1200, margin: '0 auto' }}>
@@ -75,7 +75,7 @@ export default function WatchPage(): React.JSX.Element {
                     borderRadius: 16,
                     border: '1px solid rgba(255,255,255,0.08)',
                     textDecoration: 'none',
-                    backgroundColor: 'var(--brand-surface, #18151e)',
+                    backgroundColor: 'var(--bg-tertiary)',
                     transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={(e) => {

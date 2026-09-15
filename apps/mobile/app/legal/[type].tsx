@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   header: {
     padding: 24,
     borderBottomWidth: 1,
-    borderBottomColor: colors.palette.grey200,
+    borderBottomColor: colors.neutral[200],
   },
   title: {
     fontSize: 28,
@@ -145,18 +145,18 @@ const styles = StyleSheet.create({
   },
   sectionContent: {
     fontSize: 16,
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
     lineHeight: 1.6,
   },
   footer: {
     marginTop: 24,
     paddingTop: 24,
     borderTopWidth: 1,
-    borderTopColor: colors.palette.grey200,
+    borderTopColor: colors.neutral[200],
     alignItems: 'center',
   },
   footerText: {
     fontSize: 14,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
   },
 });

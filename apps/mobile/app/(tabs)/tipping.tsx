@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { creatorApi } from '../../src/api/creator';
+import { creatorApi } from '@azeebo/react-data/api/creator';
 import { colors, spacing, typography, radius } from '../../src/theme';
 
 const TIER_COLORS: Record<string, string> = {

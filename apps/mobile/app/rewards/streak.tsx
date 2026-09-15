@@ -10,9 +10,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../src/contexts/AuthContext';
-import { apiClient } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { apiClient } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../../src/theme';
 
 interface StreakData {
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
   statsGrid: { flexDirection: 'row', gap: 12, marginBottom: 24 },
   statCard: {
     flex: 1,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
   statLabel: { fontSize: 12, color: colors.light[400], marginBottom: 8 },
   statValue: { fontSize: 20, fontWeight: 'bold', color: '#E8420A' },
   calendarSection: {
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 16,
     padding: 16,
     marginBottom: 24,
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   calendarDayContainer: { alignItems: 'center', width: 32 },
-  dayLabel: { fontSize: 9, color: colors.palette.cocoa, marginBottom: 2 },
+  dayLabel: { fontSize: 9, color: colors.category.cocoa, marginBottom: 2 },
   calendarDay: {
     width: 28,
     height: 28,
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
   },
   calendarDayActive: { backgroundColor: 'rgba(232,66,10,0.25)' },
   calendarDayToday: { borderWidth: 1, borderColor: '#E8420A' },
-  calendarDayText: { fontSize: 10, color: colors.palette.cocoa },
+  calendarDayText: { fontSize: 10, color: colors.category.cocoa },
   calendarDayTextActive: { color: '#E8420A' },
   calendarDayTextToday: { color: '#E8420A' },
   milestonesSection: { marginBottom: 24 },

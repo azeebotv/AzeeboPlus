@@ -25,125 +25,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
-import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildZip } from './helpers/zip-fixture.mjs';
+import { startFakeGitHub } from './helpers/fake-github-server.mjs';
 import { COMMENT_MARKER } from '../lib/drift-pr-comment.mjs';
 
 const POSTER = fileURLToPath(new URL('../post-drift-pr-comment.mjs', import.meta.url));
-
-// ── Fake GitHub API server ──────────────────────────────────────────────────
-
-function readBody(req) {
-  return new Promise((resolve, reject) => {
-    const chunks = [];
-    req.on('data', (c) => chunks.push(c));
-    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
-    req.on('error', reject);
-  });
-}
-
-function json(res, obj, status = 200) {
-  res.writeHead(status, { 'content-type': 'application/json' });
-  res.end(JSON.stringify(obj));
-}
-
-/**
- * Start the fake API. `artifacts` maps runId → [{id, name, zip: Buffer}];
- * `behavior` can force statuses: { listCommentsStatus, runsStatus }.
- * Every request is recorded in `state.requests` (method, url, auth, body).
- */
-async function startServer({ comments = [], runs = [], artifacts = {}, behavior = {} } = {}) {
-  const state = { comments: [...comments], nextId: 1000, requests: [] };
-
-  const server = http.createServer(async (req, res) => {
-    const body = await readBody(req);
-    state.requests.push({ method: req.method, url: req.url, auth: req.headers.authorization ?? null, body });
-    const p = new URL(req.url, 'http://x').pathname;
-
-    const mComments = /^\/repos\/[^/]+\/[^/]+\/issues\/(\d+)\/comments$/.exec(p);
-    if (mComments) {
-      if (behavior.listCommentsStatus) {
-        res.writeHead(behavior.listCommentsStatus);
-        res.end('boom');
-        return;
-      }
-      if (req.method === 'GET') return json(res, state.comments);
-      if (req.method === 'POST') {
-        const { body: commentBody } = JSON.parse(body);
-        const id = state.nextId++;
-        // Absolute URL pointing back at THIS server (the bot PATCHes the
-        // comment's `url` exactly like the real GitHub API contract).
-        const created = { id, url: `${base}/comments/${id}`, body: commentBody };
-        state.comments.push(created);
-        return json(res, created, 201);
-      }
-    }
-
-    const mComment = /^\/comments\/(\d+)$/.exec(p);
-    if (mComment && req.method === 'PATCH') {
-      const { body: commentBody } = JSON.parse(body);
-      const existing = state.comments.find((c) => String(c.id) === mComment[1]);
-      if (!existing) {
-        res.writeHead(404);
-        res.end();
-        return;
-      }
-      existing.body = commentBody;
-      return json(res, existing);
-    }
-
-    if (/^\/repos\/[^/]+\/[^/]+\/actions\/workflows\/schema-lock-nightly\.yml\/runs$/.test(p)) {
-      if (behavior.runsStatus) {
-        res.writeHead(behavior.runsStatus);
-        res.end('boom');
-        return;
-      }
-      return json(res, {
-        total_count: runs.length,
-        workflow_runs: runs.map((r) => ({
-          id: r.id,
-          html_url: `http://127.0.0.1/actions/runs/${r.id}`,
-          head_sha: 'a'.repeat(40),
-          created_at: '2026-09-11T04:30:00Z',
-        })),
-      });
-    }
-
-    const mArtifacts = /^\/repos\/[^/]+\/[^/]+\/actions\/runs\/(\d+)\/artifacts$/.exec(p);
-    if (mArtifacts) {
-      const list = artifacts[mArtifacts[1]] ?? [];
-      return json(res, { total_count: list.length, artifacts: list.map((a) => ({ id: a.id, name: a.name })) });
-    }
-
-    const mZip = /^\/repos\/[^/]+\/[^/]+\/actions\/artifacts\/(\d+)\/zip$/.exec(p);
-    if (mZip) {
-      const found = Object.values(artifacts).flat().find((a) => String(a.id) === mZip[1]);
-      if (!found?.zip) {
-        res.writeHead(404);
-        res.end('no artifact');
-        return;
-      }
-      res.writeHead(200, { 'content-type': 'application/zip' });
-      res.end(found.zip);
-      return;
-    }
-
-    res.writeHead(404);
-    res.end('not found');
-  });
-
-  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
-  const base = `http://127.0.0.1:${server.address().port}`;
-  return {
-    base,
-    state,
-    requests: state.requests,
-    close: () => new Promise((resolve) => server.close(resolve)),
-  };
-}
 
 // ── Bot subprocess driver ───────────────────────────────────────────────────
 
@@ -243,7 +132,7 @@ function nightlyArtifact({ id, env = 'staging', report }) {
 }
 
 async function withServer(t, options) {
-  const api = await startServer(options);
+  const api = await startFakeGitHub(options);
   t.after(() => api.close());
   return api;
 }

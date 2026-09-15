@@ -48,7 +48,7 @@ export default function WalletPage(): React.JSX.Element {
       <section
         className="py-14 relative overflow-hidden"
         style={{
-          background: 'linear-gradient(180deg, #18151e 0%, #0b090e 100%)',
+          background: 'linear-gradient(180deg, var(--bg-tertiary) 0%, var(--bg-primary) 100%)',
           borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
         }}
       >

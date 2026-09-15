@@ -34,7 +34,7 @@ function MusicPageContent(): React.JSX.Element {
       {/* Hero */}
       <section
         className="relative py-16 sm:py-20"
-        style={{ background: 'linear-gradient(135deg, #E8420A 0%, #0b090e 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #E8420A 0%, var(--bg-primary) 100%)' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.h1

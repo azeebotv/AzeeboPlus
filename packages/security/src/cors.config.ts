@@ -20,6 +20,9 @@ export function configureCors(app: INestApplication, options: CorsOptions): void
       new URL(origin);
       return origin;
     } catch {
+      // allowed-fabricated-4xx: boot-time config validation in the security
+      // package — a malformed origin list must fail process startup loudly,
+      // not become an HTTP response; there is no request in flight.
       throw new Error(`Invalid CORS origin: ${origin}`);
     }
   });

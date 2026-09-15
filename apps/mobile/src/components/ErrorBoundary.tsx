@@ -1,7 +1,7 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
 import { colors } from '@azeebo/design-tokens';
-import { logger } from '../utils/logger';
+import { logger } from '@azeebo/react-data/utils/logger';
 
 interface Props {
   children: ReactNode;

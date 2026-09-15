@@ -10,8 +10,8 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { contentApi } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { contentApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { analytics } from '../../src/utils/analytics';
 import { colors } from '../../src/theme';
 
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     marginRight: 8,
   },
   episodeButtonActive: {
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
     color: colors.light[400],
   },
   winnerCard: {
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
     color: colors.light[400],
   },
   evictedCard: {
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
   contestantRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,

@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useBiometric } from '../../src/hooks/useBiometric';
-import { useAuth } from '../../src/contexts/AuthContext';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { colors } from '../../src/theme';
 
 export default function BiometricAuthScreen() {
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: colors.alphaColors.primaryA20,
+    backgroundColor: colors.alpha.primary20,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 32,
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   errorContainer: {
-    backgroundColor: colors.alphaColors.errorA20,
+    backgroundColor: colors.alpha.danger20,
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.palette.grey800,
+    borderColor: colors.neutral[700],
   },
   secondaryButtonText: {
     color: '#E8420A',

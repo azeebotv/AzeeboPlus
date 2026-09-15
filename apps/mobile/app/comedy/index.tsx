@@ -4,9 +4,9 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useColorScheme } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { apiClient } from '../../src/api/client';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { comedySubscription } from '../../src/config/prices';
-import { ApiResponse } from '../../src/types/api';
+import { ApiResponse } from '@azeebo/react-data/types/api';
 import { analytics } from '../../src/utils/analytics';
 import { radius, colors } from '../../src/theme';
 
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   },
   universeLabel: {
     fontSize: 14,
-    color: colors.palette.tangerine,
+    color: colors.category.amber,
     fontWeight: '600',
     marginBottom: 4,
   },
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   seeAllText: {
-    color: colors.palette.tangerine,
+    color: colors.category.amber,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
   },
   clipThumbnail: {
     height: 150,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   likeCount: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 12,
   },
   creatorsList: {
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
@@ -444,12 +444,12 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   creatorFollowers: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 12,
     marginBottom: 10,
   },
   subscribeButton: {
-    backgroundColor: colors.palette.tangerine,
+    backgroundColor: colors.category.amber,
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: radius.sm,
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
   },
   topRatedThumbnail: {
     height: 100,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   ratingText: {
-    color: colors.palette.cream,
+    color: colors.category.highlight,
     fontSize: 10,
     fontWeight: '600',
   },
@@ -518,16 +518,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   comedyPassTitle: {
-    color: colors.palette.tangerine,
+    color: colors.category.amber,
     fontSize: 16,
     fontWeight: '700',
   },
   comedyPassSubtitle: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 12,
   },
   comedyPassButton: {
-    backgroundColor: colors.palette.tangerine,
+    backgroundColor: colors.category.amber,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: radius.sm,

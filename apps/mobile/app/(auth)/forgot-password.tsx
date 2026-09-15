@@ -14,7 +14,7 @@ import {
 import Feather from '@expo/vector-icons/Feather';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../src/contexts/AuthContext';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { colors } from '../../src/theme';
 
 export default function ForgotPasswordScreen() {
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     lineHeight: 24,
   },
   form: {

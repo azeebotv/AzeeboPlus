@@ -1,5 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api/base';
+import { adminApi } from '@/lib/api/admin';
+import { asArray } from '@/lib/payload';
+import type { TippingConfig } from '@/lib/admin-types';
 import { Icon } from '@/components/Icons';
 
 interface CreatorTipInfo {
@@ -12,6 +16,36 @@ interface CreatorTipInfo {
 }
 
 export default function TippingPage() {
+  const queryClient = useQueryClient();
+  const [editingConfig, setEditingConfig] = useState(false);
+  const [commissionPct, setCommissionPct] = useState<number>(10);
+  const [maxTip, setMaxTip] = useState<number>(500000);
+  const [configFeedback, setConfigFeedback] = useState<string | null>(null);
+
+  const { data: config } = useQuery({
+    queryKey: ['admin', 'tipping-config'],
+    queryFn: async () => {
+      const res = await adminApi.getTippingConfig();
+      if (res.success && res.data) {
+        const d = res.data as TippingConfig;
+        setCommissionPct(d.platformCommissionPct ?? 10);
+        setMaxTip(d.maxTipAmount ?? 500000);
+        return d;
+      }
+      return null;
+    },
+  });
+
+  const updateConfigMutation = useMutation({
+    mutationFn: (newCfg: { platformCommissionPct: number; maxTipAmount: number }) =>
+      adminApi.updateTippingConfig(newCfg),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'tipping-config'] });
+      setEditingConfig(false);
+      setConfigFeedback('Configuration updated successfully.');
+      setTimeout(() => setConfigFeedback(null), 4000);
+    },
+  });
   // One aggregated backend call — the old version fanned out to 51 HTTP
   // requests per page load (list creators + one stats call each).
   const {
@@ -22,8 +56,10 @@ export default function TippingPage() {
     queryKey: ['admin', 'tipping-summary'],
     queryFn: async (): Promise<CreatorTipInfo[]> => {
       const res = await apiFetch<CreatorTipInfo[]>('/api/v1/admin/ops/tipping-summary?limit=50');
-      if (!res.success || !res.data) throw new Error(res.message || 'Failed to load tipping data');
-      return res.data;
+      if (!res.success) throw new Error(res.message || 'Failed to load tipping data');
+      // Array guard: a downstream envelope drift must render the empty state,
+      // not crash on creators.reduce().
+      return asArray<CreatorTipInfo>(res.data);
     },
     refetchInterval: 60_000,
   });
@@ -270,6 +306,190 @@ export default function TippingPage() {
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Platform Tipping Configuration Card */}
+          <div
+            style={{
+              borderRadius: 16,
+              border: '1px solid var(--admin-card)',
+              backgroundColor: 'var(--admin-surface)',
+              padding: 24,
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 16,
+                flexWrap: 'wrap',
+                gap: 12,
+              }}
+            >
+              <div>
+                <h3 style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>
+                  Platform Tipping Settings
+                </h3>
+                <p style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>
+                  Configure platform cut on creator gifts and transaction limits
+                </p>
+              </div>
+
+              {!editingConfig ? (
+                <button
+                  onClick={() => setEditingConfig(true)}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 8,
+                    border: '1px solid var(--admin-card)',
+                    backgroundColor: 'transparent',
+                    color: 'var(--admin-orange)',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Edit Settings
+                </button>
+              ) : (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={() => {
+                      setEditingConfig(false);
+                      setCommissionPct(config?.platformCommissionPct ?? 10);
+                      setMaxTip(config?.maxTipAmount ?? 500000);
+                    }}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-card)',
+                      backgroundColor: 'transparent',
+                      color: 'var(--admin-text-muted)',
+                      fontSize: 12,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() =>
+                      updateConfigMutation.mutate({
+                        platformCommissionPct: Number(commissionPct),
+                        maxTipAmount: Number(maxTip),
+                      })
+                    }
+                    disabled={updateConfigMutation.isPending}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: 8,
+                      border: 'none',
+                      backgroundColor: 'var(--admin-green)',
+                      color: 'white',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {updateConfigMutation.isPending ? 'Saving...' : 'Save Settings'}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {configFeedback && (
+              <p style={{ color: 'var(--admin-emerald)', fontSize: 13, marginBottom: 16, fontWeight: 500 }}>
+                {configFeedback}
+              </p>
+            )}
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                gap: 20,
+              }}
+            >
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: 'var(--admin-text-muted)',
+                    marginBottom: 6,
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Platform Commission (%)
+                </label>
+                {editingConfig ? (
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={commissionPct}
+                    onChange={(e) => setCommissionPct(Number(e.target.value))}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-card)',
+                      backgroundColor: 'var(--admin-dark)',
+                      color: 'var(--admin-text)',
+                      fontSize: 14,
+                    }}
+                  />
+                ) : (
+                  <p style={{ fontSize: 20, fontWeight: 700, color: 'var(--admin-orange)' }}>
+                    {config?.platformCommissionPct ?? 10}%
+                  </p>
+                )}
+                <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginTop: 4 }}>
+                  Portion retained by platform per tip transaction
+                </p>
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: 'var(--admin-text-muted)',
+                    marginBottom: 6,
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Maximum Tip Amount ({config?.currency || 'NGN'})
+                </label>
+                {editingConfig ? (
+                  <input
+                    type="number"
+                    min="100"
+                    step="1000"
+                    value={maxTip}
+                    onChange={(e) => setMaxTip(Number(e.target.value))}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-card)',
+                      backgroundColor: 'var(--admin-dark)',
+                      color: 'var(--admin-text)',
+                      fontSize: 14,
+                    }}
+                  />
+                ) : (
+                  <p style={{ fontSize: 20, fontWeight: 700, color: 'var(--admin-text)' }}>
+                    {config?.currency || 'NGN'} {(config?.maxTipAmount ?? 500000).toLocaleString()}
+                  </p>
+                )}
+                <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginTop: 4 }}>
+                  Maximum allowed tip in a single payment
+                </p>
+              </div>
             </div>
           </div>
         </>

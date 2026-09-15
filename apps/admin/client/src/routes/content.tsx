@@ -1,9 +1,10 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import { useAdminFlags, ADMIN_FLAG_KEYS } from '@/hooks/useAdminFlags';
+import { unwrapList } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
-
 interface ContentItem {
   id: string;
   title: string;
@@ -26,6 +27,18 @@ export default function ContentPage() {
   const [editItem, setEditItem] = useState<ContentItem | null>(null);
   const [editForm, setEditForm] = useState({ title: '', description: '' });
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  // Category/tag inline editors (backend has full CRUD — previously the UI
+  // was read-only and every mutation helper went unused).
+  const [newCategory, setNewCategory] = useState('');
+  const [editingCategory, setEditingCategory] = useState<{ id: string; name: string } | null>(null);
+  const [newTag, setNewTag] = useState('');
+  const [showCreate, setShowCreate] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    title: '',
+    description: '',
+    mediaUrl: '',
+    universeId: '',
+  });
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['admin', 'content', page, statusFilter, search],
@@ -36,9 +49,7 @@ export default function ContentPage() {
         status: statusFilter || undefined,
         search: search || undefined,
       });
-      return res.success
-        ? (res.data as { items: ContentItem[]; total: number })
-        : { items: [], total: 0 };
+      return res.success ? unwrapList<ContentItem>(res.data) : { items: [], total: 0 };
     },
   });
 
@@ -46,7 +57,11 @@ export default function ContentPage() {
     queryKey: ['admin', 'categories'],
     queryFn: async () => {
       const res = await adminApi.getContentCategories();
-      return res.success ? (res.data as Array<{ id: string; name: string }>) : [];
+      // Backend includes _count.contentItems — surface it on the rows.
+      return res.success
+        ? unwrapList<{ id: string; name: string; _count?: { contentItems?: number } }>(res.data)
+            .items
+        : [];
     },
   });
 
@@ -54,7 +69,22 @@ export default function ContentPage() {
     queryKey: ['admin', 'tags'],
     queryFn: async () => {
       const res = await adminApi.getContentTags();
-      return res.success ? (res.data as Array<{ id: string; name: string }>) : [];
+      return res.success ? unwrapList<{ id: string; name: string }>(res.data).items : [];
+    },
+  });
+
+  const { data: stats } = useQuery({
+    queryKey: ['admin', 'content-stats'],
+    queryFn: async () => {
+      const res = await adminApi.getContentStats();
+      if (!res.success) return null;
+      const d = res.data as {
+        total?: number;
+        byStatus?: Record<string, number>;
+        createdLast7Days?: number;
+        createdLast30Days?: number;
+      };
+      return d ?? null;
     },
   });
 
@@ -94,6 +124,67 @@ export default function ContentPage() {
     },
   });
 
+  const invalidateTaxonomy = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin', 'categories'] });
+    queryClient.invalidateQueries({ queryKey: ['admin', 'tags'] });
+  };
+
+  const createCategoryMutation = useMutation({
+    mutationFn: (name: string) => adminApi.createContentCategory({ name }),
+    onSuccess: () => {
+      setNewCategory('');
+      invalidateTaxonomy();
+    },
+  });
+  const updateCategoryMutation = useMutation({
+    mutationFn: ({ id, name }: { id: string; name: string }) =>
+      adminApi.updateContentCategory(id, { name }),
+    onSuccess: () => {
+      setEditingCategory(null);
+      invalidateTaxonomy();
+    },
+  });
+  const deleteCategoryMutation = useMutation({
+    mutationFn: (id: string) => adminApi.deleteContentCategory(id),
+    onSuccess: invalidateTaxonomy,
+  });
+  const createTagMutation = useMutation({
+    mutationFn: (name: string) => adminApi.createContentTag({ name }),
+    onSuccess: () => {
+      setNewTag('');
+      invalidateTaxonomy();
+    },
+  });
+  const deleteTagMutation = useMutation({
+    mutationFn: (id: string) => adminApi.deleteContentTag(id),
+    onSuccess: invalidateTaxonomy,
+  });
+
+  const unpublishMutation = useMutation({
+    mutationFn: (id: string) => adminApi.unpublishContent(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'content'] }),
+  });
+
+  const { data: universes = [] } = useQuery({
+    queryKey: ['admin', 'universes-for-content'],
+    queryFn: async () => {
+      const res = await adminApi.getAllUniverses(1, 100);
+      // Paginated { data, meta } envelope — not a bare array.
+      return res.success
+        ? unwrapList<{ id: string; name: string; displayName?: string }>(res.data, 'data').items
+        : [];
+    },
+  });
+
+  const createContentMutation = useMutation({
+    mutationFn: (data: Record<string, unknown>) => adminApi.createContent(data),
+    onSuccess: () => {
+      setShowCreate(false);
+      setCreateForm({ title: '', description: '', mediaUrl: '', universeId: '' });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'content'] });
+    },
+  });
+
   const toggleSelected = (id: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -128,10 +219,18 @@ export default function ContentPage() {
           <Icon name="film" size={28} color="var(--admin-orange)" />
           <span>Content Management</span>
         </h1>
-        <p style={{ color: 'var(--admin-text-muted)' }}>{total} items</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
+          <p style={{ color: 'var(--admin-text-muted)' }}>{total} items</p>
+          {stats && (
+            <p style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>
+              {stats.byStatus?.published ?? 0} published · {stats.byStatus?.draft ?? 0} draft ·{' '}
+              {stats.createdLast7Days ?? 0} new this week
+            </p>
+          )}
+        </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24, alignItems: 'center' }}>
         {(['content', 'categories', 'tags'] as const).map((t) => (
           <button
             key={t}
@@ -152,6 +251,24 @@ export default function ContentPage() {
             {t}
           </button>
         ))}
+        {tab === 'content' && (
+          <button
+            onClick={() => setShowCreate(true)}
+            style={{
+              marginLeft: 'auto',
+              padding: '8px 18px',
+              borderRadius: 8,
+              border: 'none',
+              background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+              color: 'white',
+              fontWeight: 600,
+              fontSize: 13,
+              cursor: 'pointer',
+            }}
+          >
+            + New Content
+          </button>
+        )}
       </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
@@ -361,6 +478,12 @@ export default function ContentPage() {
                           }}
                         >
                           {item.title}
+                          <Link
+                            to={`/content/${item.id}`}
+                            style={{ marginLeft: 8, fontSize: 12, textDecoration: 'none' }}
+                          >
+                            View →
+                          </Link>
                         </td>
                         <td
                           style={{
@@ -433,20 +556,35 @@ export default function ContentPage() {
                             >
                               Edit
                             </button>
-                            {item.status !== 'published' && (
+                            {item.status !== 'published' ? (
                               <button
                                 onClick={() => publishMutation.mutate(item.id)}
                                 style={{
                                   padding: '4px 10px',
                                   borderRadius: 6,
                                   border: 'none',
-                                  background: 'linear-gradient(135deg, #0D3B2E 0%, #1A5E45 100%)',
+                                  background: 'var(--admin-emerald)',
                                   color: 'white',
                                   fontSize: 12,
                                   cursor: 'pointer',
                                 }}
                               >
                                 Publish
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => unpublishMutation.mutate(item.id)}
+                                style={{
+                                  padding: '4px 10px',
+                                  borderRadius: 6,
+                                  border: '1px solid var(--admin-surface)',
+                                  background: 'transparent',
+                                  color: 'var(--admin-amber)',
+                                  fontSize: 12,
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                Unpublish
                               </button>
                             )}
                             <button
@@ -505,7 +643,7 @@ export default function ContentPage() {
                         padding: '6px 14px',
                         borderRadius: 8,
                         border: 'none',
-                        background: 'linear-gradient(135deg, #0D3B2E 0%, #1A5E45 100%)',
+                        background: 'var(--admin-emerald)',
                         color: 'white',
                         fontSize: 12,
                         fontWeight: 600,
@@ -602,6 +740,42 @@ export default function ContentPage() {
 
       {tab === 'categories' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+            <input
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+              placeholder="New category name"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && newCategory.trim())
+                  createCategoryMutation.mutate(newCategory.trim());
+              }}
+              style={{
+                flex: 1,
+                padding: '10px 14px',
+                borderRadius: 8,
+                border: '1px solid var(--admin-card)',
+                backgroundColor: 'var(--admin-dark)',
+                color: 'var(--admin-text)',
+                fontSize: 14,
+              }}
+            />
+            <button
+              disabled={!newCategory.trim() || createCategoryMutation.isPending}
+              onClick={() => createCategoryMutation.mutate(newCategory.trim())}
+              style={{
+                padding: '8px 18px',
+                borderRadius: 8,
+                border: 'none',
+                background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+                color: 'white',
+                fontWeight: 600,
+                fontSize: 13,
+                cursor: 'pointer',
+              }}
+            >
+              + Add
+            </button>
+          </div>
           {categories.map((c) => (
             <div
               key={c.id}
@@ -609,40 +783,181 @@ export default function ContentPage() {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
+                gap: 12,
                 padding: '12px 16px',
                 borderRadius: 12,
                 border: '1px solid var(--admin-card)',
                 backgroundColor: 'var(--admin-surface)',
               }}
             >
-              <span style={{ fontWeight: 500 }}>{c.name}</span>
+              {editingCategory?.id === c.id ? (
+                <>
+                  <input
+                    value={editingCategory.name}
+                    onChange={(e) => setEditingCategory({ id: c.id, name: e.target.value })}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && editingCategory.name.trim())
+                        updateCategoryMutation.mutate({
+                          id: c.id,
+                          name: editingCategory.name.trim(),
+                        });
+                    }}
+                    autoFocus
+                    style={{
+                      flex: 1,
+                      padding: '6px 10px',
+                      borderRadius: 6,
+                      border: '1px solid var(--admin-orange)',
+                      backgroundColor: 'var(--admin-dark)',
+                      color: 'var(--admin-text)',
+                      fontSize: 14,
+                    }}
+                  />
+                  <button
+                    disabled={!editingCategory.name.trim()}
+                    onClick={() =>
+                      updateCategoryMutation.mutate({ id: c.id, name: editingCategory.name.trim() })
+                    }
+                    style={{ padding: '4px 10px', borderRadius: 6, cursor: 'pointer' }}
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => setEditingCategory(null)}
+                    style={{ padding: '4px 10px', borderRadius: 6, cursor: 'pointer' }}
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span style={{ fontWeight: 500 }}>{c.name}</span>
+                  <span
+                    style={{
+                      color: 'var(--admin-text-muted)',
+                      fontSize: 12,
+                      marginLeft: 'auto',
+                      marginRight: 12,
+                    }}
+                  >
+                    {c._count?.contentItems ?? 0} items
+                  </span>
+                  <button
+                    onClick={() => setEditingCategory({ id: c.id, name: c.name })}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: 6,
+                      border: '1px solid var(--admin-surface)',
+                      background: 'transparent',
+                      color: 'var(--admin-text-muted)',
+                      fontSize: 12,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (confirm(`Delete category "${c.name}"?`))
+                        deleteCategoryMutation.mutate(c.id);
+                    }}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: 6,
+                      border: '1px solid #CC1C1C',
+                      background: 'transparent',
+                      color: 'var(--admin-red)',
+                      fontSize: 12,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Delete
+                  </button>
+                </>
+              )}
             </div>
           ))}
           {categories.length === 0 && (
             <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>
-              No categories
+              No categories yet — add the first one above.
             </p>
           )}
         </div>
       )}
 
       {tab === 'tags' && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          {tags.map((t) => (
-            <span
-              key={t.id}
+        <div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+            <input
+              value={newTag}
+              onChange={(e) => setNewTag(e.target.value)}
+              placeholder="New tag name"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && newTag.trim()) createTagMutation.mutate(newTag.trim());
+              }}
               style={{
-                padding: '6px 14px',
-                borderRadius: 999,
+                flex: 1,
+                padding: '10px 14px',
+                borderRadius: 8,
                 border: '1px solid var(--admin-card)',
-                backgroundColor: 'var(--admin-surface)',
+                backgroundColor: 'var(--admin-dark)',
                 color: 'var(--admin-text)',
+                fontSize: 14,
+              }}
+            />
+            <button
+              disabled={!newTag.trim() || createTagMutation.isPending}
+              onClick={() => createTagMutation.mutate(newTag.trim())}
+              style={{
+                padding: '8px 18px',
+                borderRadius: 8,
+                border: 'none',
+                background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+                color: 'white',
+                fontWeight: 600,
                 fontSize: 13,
+                cursor: 'pointer',
               }}
             >
-              {t.name}
-            </span>
-          ))}
+              + Add
+            </button>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {tags.map((t) => (
+              <span
+                key={t.id}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '6px 14px',
+                  borderRadius: 999,
+                  border: '1px solid var(--admin-card)',
+                  backgroundColor: 'var(--admin-surface)',
+                  color: 'var(--admin-text)',
+                  fontSize: 13,
+                }}
+              >
+                {t.name}
+                <button
+                  onClick={() => {
+                    if (confirm(`Delete tag "${t.name}"?`)) deleteTagMutation.mutate(t.id);
+                  }}
+                  aria-label={`Delete tag ${t.name}`}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    color: 'var(--admin-red)',
+                    cursor: 'pointer',
+                    fontSize: 12,
+                    padding: 0,
+                  }}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
           {tags.length === 0 && (
             <p
               style={{
@@ -652,9 +967,145 @@ export default function ContentPage() {
                 width: '100%',
               }}
             >
-              No tags
+              No tags yet — add the first one above.
             </p>
           )}
+        </div>
+      )}
+
+      {showCreate && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 100,
+          }}
+          onClick={() => setShowCreate(false)}
+        >
+          <div
+            style={{
+              width: 520,
+              maxWidth: '90%',
+              backgroundColor: 'var(--admin-bg)',
+              border: '1px solid var(--admin-surface)',
+              borderRadius: 16,
+              padding: 24,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>New Content</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <input
+                value={createForm.title}
+                onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
+                placeholder="Title *"
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: 8,
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
+                  fontSize: 14,
+                }}
+              />
+              <textarea
+                value={createForm.description}
+                onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+                placeholder="Description"
+                rows={3}
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: 8,
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
+                  fontSize: 14,
+                  resize: 'vertical',
+                }}
+              />
+              <input
+                value={createForm.mediaUrl}
+                onChange={(e) => setCreateForm({ ...createForm, mediaUrl: e.target.value })}
+                placeholder="Media URL"
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: 8,
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
+                  fontSize: 14,
+                }}
+              />
+              <select
+                value={createForm.universeId}
+                onChange={(e) => setCreateForm({ ...createForm, universeId: e.target.value })}
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: 8,
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
+                  fontSize: 14,
+                }}
+              >
+                <option value="">No universe</option>
+                {universes.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.displayName || u.name}
+                  </option>
+                ))}
+              </select>
+              {createContentMutation.isError && (
+                <p style={{ color: 'var(--admin-red)', fontSize: 13, margin: 0 }}>
+                  {(createContentMutation.error as Error)?.message || 'Create failed'}
+                </p>
+              )}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() =>
+                    createContentMutation.mutate({
+                      title: createForm.title.trim(),
+                      description: createForm.description || undefined,
+                      mediaUrl: createForm.mediaUrl || undefined,
+                      universeId: createForm.universeId || undefined,
+                    })
+                  }
+                  disabled={!createForm.title.trim() || createContentMutation.isPending}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: 8,
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+                    color: 'white',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {createContentMutation.isPending ? 'Creating...' : 'Create'}
+                </button>
+                <button
+                  onClick={() => setShowCreate(false)}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: 8,
+                    border: '1px solid var(--admin-surface)',
+                    background: 'transparent',
+                    color: 'var(--admin-text-muted)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

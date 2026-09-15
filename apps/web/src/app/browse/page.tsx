@@ -397,12 +397,14 @@ export default function BrowsePage(): React.JSX.Element {
 
             {/* Categories */}
             <div className="az-glass p-4">
-              <h3 id="categories-heading" className="font-bold text-white text-sm mb-3">
+              <h2 id="categories-heading" className="font-bold text-white text-sm mb-3">
                 Categories
-              </h3>
+              </h2>
+              {/* Filter buttons in a plain list; selected state via aria-pressed
+                  (listbox/option semantics require focusable option children —
+                  buttons inside li are invalid ARIA and fail Lighthouse). */}
               <ul
                 ref={categoryListRef}
-                role="listbox"
                 aria-label="Content categories"
                 aria-labelledby="categories-heading"
                 className="space-y-1.5"
@@ -411,7 +413,7 @@ export default function BrowsePage(): React.JSX.Element {
                   <button
                     onClick={() => setSelectedCategory(null)}
                     onKeyDown={(e) => handleCategoryKeyDown(e, 0)}
-                    aria-selected={!selectedCategory}
+                    aria-pressed={!selectedCategory}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${!selectedCategory ? 'text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
                     style={
                       !selectedCategory
@@ -427,7 +429,7 @@ export default function BrowsePage(): React.JSX.Element {
                     <button
                       onClick={() => setSelectedCategory(category.id)}
                       onKeyDown={(e) => handleCategoryKeyDown(e, index + 1)}
-                      aria-selected={selectedCategory === category.id}
+                      aria-pressed={selectedCategory === category.id}
                       className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${selectedCategory === category.id ? 'text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
                       style={
                         selectedCategory === category.id
@@ -444,12 +446,11 @@ export default function BrowsePage(): React.JSX.Element {
 
             {/* Universes */}
             <div className="az-glass p-4">
-              <h3 id="universes-heading" className="font-bold text-white text-sm mb-3">
+              <h2 id="universes-heading" className="font-bold text-white text-sm mb-3">
                 Universes
-              </h3>
+              </h2>
               <ul
                 ref={universeListRef}
-                role="listbox"
                 aria-label="Content universes"
                 aria-labelledby="universes-heading"
                 className="space-y-1.5"
@@ -458,7 +459,7 @@ export default function BrowsePage(): React.JSX.Element {
                   <button
                     onClick={() => setSelectedUniverseId(null)}
                     onKeyDown={(e) => handleUniverseKeyDown(e, 0)}
-                    aria-selected={!selectedUniverseId}
+                    aria-pressed={!selectedUniverseId}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${!selectedUniverseId ? 'text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
                     style={
                       !selectedUniverseId
@@ -474,7 +475,7 @@ export default function BrowsePage(): React.JSX.Element {
                     <button
                       onClick={() => setSelectedUniverseId(universe.id)}
                       onKeyDown={(e) => handleUniverseKeyDown(e, index + 1)}
-                      aria-selected={selectedUniverseId === universe.id}
+                      aria-pressed={selectedUniverseId === universe.id}
                       className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${selectedUniverseId === universe.id ? 'text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
                       style={
                         selectedUniverseId === universe.id

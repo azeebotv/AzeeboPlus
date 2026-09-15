@@ -82,6 +82,9 @@ docx/
 pacts/
 buildpush.txt
 
+# Storybook build output
+packages/ui/storybook-static/
+
 
 .freebuff
 .claude

@@ -229,8 +229,7 @@ export class MoviesService {
         .catch((compensateError: unknown) => {
           this.logger.error('Failed to compensate wallet after rental failure:', compensateError);
         });
-      const errorMessage = dbError instanceof Error ? dbError.message : 'Failed to create rental';
-      throw new BadRequestException(errorMessage);
+      mapAndThrow(dbError, 'creating movie rental');
     }
   }
 

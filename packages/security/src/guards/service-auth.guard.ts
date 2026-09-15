@@ -125,6 +125,9 @@ export class ServiceAuthGuard implements CanActivate {
           email: payload.email || '',
         };
       } catch {
+        // allowed-fabricated-4xx: token verification is pure client-input
+        // handling — every failure shape gets the same uniform 401
+        // (anti-enumeration); the cause cannot vary beyond a failed verify.
         throw new UnauthorizedException('Invalid or expired token.');
       }
     } else if (request.cookies?.access_token) {
@@ -151,6 +154,9 @@ export class ServiceAuthGuard implements CanActivate {
           email: payload.email || '',
         };
       } catch {
+        // allowed-fabricated-4xx: token verification is pure client-input
+        // handling — every failure shape gets the same uniform 401
+        // (anti-enumeration); the cause cannot vary beyond a failed verify.
         throw new UnauthorizedException('Invalid or expired token.');
       }
     }

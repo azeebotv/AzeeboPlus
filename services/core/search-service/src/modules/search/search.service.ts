@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger, OnModuleInit, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { mapAndThrow } from '@azeebo/security';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 import { FeatureFlagService, searchFlags } from '@azeebo/feature-flags';
@@ -575,7 +576,7 @@ export class SearchService implements OnModuleInit {
       return result;
     } catch (error: unknown) {
       this.logger.error('Failed to perform search', error);
-      throw new BadRequestException('Failed to perform search');
+      mapAndThrow(error, 'performing search');
     }
   }
 
@@ -847,7 +848,7 @@ export class SearchService implements OnModuleInit {
         return this.searchWithExact(query, filters, page, limit, cacheK);
       }
       this.logger.error('Failed to perform fuzzy search', error);
-      throw new BadRequestException('Failed to perform search');
+      mapAndThrow(error, 'performing fuzzy search');
     }
   }
 
@@ -1100,7 +1101,7 @@ export class SearchService implements OnModuleInit {
       };
     } catch (error: unknown) {
       this.logger.error('Failed to search with facets', error);
-      throw new BadRequestException('Failed to perform faceted search');
+      mapAndThrow(error, 'performing faceted search');
     }
   }
 
@@ -1228,7 +1229,7 @@ export class SearchService implements OnModuleInit {
       return result;
     } catch (error: unknown) {
       this.logger.error('Failed to fetch search suggestions', error);
-      throw new BadRequestException('Failed to fetch search suggestions');
+      mapAndThrow(error, 'fetching search suggestions');
     }
   }
 
@@ -1265,7 +1266,7 @@ export class SearchService implements OnModuleInit {
       };
     } catch (error: unknown) {
       this.logger.error('Failed to fetch trending searches', error);
-      throw new BadRequestException('Failed to fetch trending searches');
+      mapAndThrow(error, 'fetching trending searches');
     }
   }
 
@@ -1370,7 +1371,7 @@ export class SearchService implements OnModuleInit {
       };
     } catch (error: unknown) {
       this.logger.error('Failed to fetch facets', error);
-      throw new BadRequestException('Failed to fetch facets');
+      mapAndThrow(error, 'fetching facets');
     }
   }
 
@@ -1431,7 +1432,7 @@ export class SearchService implements OnModuleInit {
       };
     } catch (error: unknown) {
       this.logger.error('Failed to log search', error);
-      throw new BadRequestException('Failed to log search');
+      mapAndThrow(error, 'logging search');
     }
   }
 
@@ -1460,12 +1461,23 @@ export class SearchService implements OnModuleInit {
     const weekAgo = new Date(today);
     weekAgo.setDate(weekAgo.getDate() - 7);
 
-    const [totalQueries, todayQueries, weekQueries, avgResultCount] = await Promise.all([
-      this.prisma.searchQueryLog.count(),
-      this.prisma.searchQueryLog.count({ where: { createdAt: { gte: today } } }),
-      this.prisma.searchQueryLog.count({ where: { createdAt: { gte: weekAgo } } }),
-      this.prisma.searchQueryLog.aggregate({ _avg: { resultCount: true } }),
-    ]);
+    // The admin SPA's Search page renders totalSearchesToday, uniqueSearchers
+    // and the fuzzy-guard block from this endpoint (it cannot reach the
+    // /v1/admin/* duplicate of this route — the gateway maps /admin to the
+    // admin-backend). Return the union of both stats contracts; the legacy
+    // keys stay so existing consumers keep working.
+    const [totalQueries, todayQueries, weekQueries, avgResultCount, totalSearchesToday, uniqueSearchers, fuzzy] =
+      await Promise.all([
+        this.prisma.searchQueryLog.count(),
+        this.prisma.searchQueryLog.count({ where: { createdAt: { gte: today } } }),
+        this.prisma.searchQueryLog.count({ where: { createdAt: { gte: weekAgo } } }),
+        this.prisma.searchQueryLog.aggregate({ _avg: { resultCount: true } }),
+        this.prisma.userSearch.count({ where: { createdAt: { gte: today } } }),
+        this.prisma.userSearch
+          .groupBy({ by: ['userId'], where: { createdAt: { gte: today } } })
+          .then((groups) => groups.length),
+        this.getFuzzyStatus(),
+      ]);
 
     const topQueries = await this.prisma.searchQueryLog.groupBy({
       by: ['query'],
@@ -1480,6 +1492,9 @@ export class SearchService implements OnModuleInit {
       weekQueries,
       avgResultCount: avgResultCount._avg.resultCount ?? 0,
       topQueries: topQueries.map((q) => ({ query: q.query, count: q._count.query })),
+      totalSearchesToday,
+      uniqueSearchers,
+      fuzzy,
     };
   }
 

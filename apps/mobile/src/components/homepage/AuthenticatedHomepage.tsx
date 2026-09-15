@@ -4,14 +4,14 @@ import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { api } from '@/api';
-import type { ContentItem } from '@/api';
-import type { HomepageRecommendationGroup } from '@/api';
+import { api } from '@azeebo/react-data';
+import type { ContentItem } from '@azeebo/react-data';
+import type { HomepageRecommendationGroup } from '@azeebo/react-data';
 import { colors } from '@/theme';
-import { useFlags } from '@/contexts/FlagsContext';
+import { useFlags } from '@azeebo/react-data/contexts/FlagsContext';
 import { BrandButton } from '@/components/ui/BrandButton';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
-import { logger } from '@/utils/logger';
+import { logger } from '@azeebo/react-data/utils/logger';
 import HeroCarousel from './HeroCarousel';
 import ContentRow from './ContentRow';
 
@@ -57,7 +57,6 @@ export default function AuthenticatedHomepage({
 
   // Section 5: Supplementary
   const [trendingContent, setTrendingContent] = useState<ContentItem[]>([]);
-  const [continueWatching] = useState<ContentItem[]>([]);
   const [newReleases, setNewReleases] = useState<ContentItem[]>([]);
   const [popularInRegion, setPopularInRegion] = useState<ContentItem[]>([]);
   const [isLoadingSupplementary, setIsLoadingSupplementary] = useState(true);
@@ -347,16 +346,11 @@ export default function AuthenticatedHomepage({
       {/* ===== Section 5: Supplementary Sections (gated by mobile_new_home) ===== */}
       {showNewHomeRails ? (
         <>
-          {/* Continue Watching */}
-          <ContentRow
-            title={t('home.continueWatching')}
-            subtitle={t('home.continueWatchingSubtitle')}
-            sectionId="continue-watching"
-            items={continueWatching}
-            isLoading={isLoadingSupplementary}
-            showProgress
-            progressMap={Object.fromEntries(continueWatching.map((c) => [c.id, 0.5]))}
-          />
+          {/* Continue Watching was removed: it rendered a permanently-empty
+              rail with a hard-coded 50% progress fabrication. Real Continue
+              Watching needs a history-backed query — the Recently Watched rail
+              above already shows true per-item resume progress from watch
+              history. */}
 
           {/* Trending Now */}
           <ContentRow

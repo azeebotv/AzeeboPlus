@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { PaymentsService } from './payments.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
@@ -230,7 +234,7 @@ describe('PaymentsService Integration', () => {
           currency: 'NGN',
           description: 'test',
         })
-      ).rejects.toThrow(BadRequestException);
+      ).rejects.toThrow(InternalServerErrorException);
 
       // The failed-mark is an optimistic-concurrency write keyed on the version
       // the caller read (0) and atomically increments it.
@@ -352,7 +356,11 @@ describe('PaymentsService Integration', () => {
       mockRedisService.setIfNotExists.mockResolvedValue(true);
       mockPaystackProvider.verifyPayment.mockRejectedValue(new Error('Provider error'));
 
-      await expect(service.verifyPayment('user-1', 'pi-1')).rejects.toThrow(BadRequestException);
+      // A plain provider error (no upstream shape) maps to an honest 500; the
+      // lock release is asserted below and happens in the finally block.
+      await expect(service.verifyPayment('user-1', 'pi-1')).rejects.toThrow(
+        InternalServerErrorException
+      );
 
       expect(mockRedisService.del).toHaveBeenCalledWith('payment_verify_lock:pi-1');
     });
@@ -488,7 +496,7 @@ describe('PaymentsService Integration', () => {
       mockPaystackProvider.processRefund.mockRejectedValue(new Error('Refund provider error'));
 
       await expect(service.requestRefund('user-1', 'pi-1', 'reason')).rejects.toThrow(
-        BadRequestException
+        InternalServerErrorException
       );
 
       expect(mockPrismaService.refund.update).toHaveBeenCalledWith({

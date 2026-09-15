@@ -3,9 +3,9 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { apiClient } from '../../../src/api/client';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, ErrorState } from '../../../src/components/StateContainers';
-import type { TransactionDetail } from '../../../src/api/wallet';
+import type { TransactionDetail } from '@azeebo/react-data/api/wallet';
 import { colors } from '../../../src/theme';
 
 export default function TransactionDetailScreen() {
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.grey800,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },

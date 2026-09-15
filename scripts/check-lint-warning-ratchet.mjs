@@ -1,33 +1,53 @@
 #!/usr/bin/env node
 // ============================================================================
-// check-lint-warning-ratchet.mjs — ratchet gate for lint warnings
+// check-lint-warning-ratchet.mjs — ratchet gate for lint warnings (multi-rule)
 //
-// `azeebo-custom/require-map-and-throw` runs at `warn` severity repo-wide
-// while legacy catch blocks are migrated to `mapAndThrow`. A plain `--max-
-// warnings` flag cannot enforce a ratchet here: it counts ALL warnings
-// (no-console, no-unused-vars, …), so an unrelated `console.log` could mask
-// ratchet growth — and vice versa. This gate counts warnings PER RULE and
-// PER WORKSPACE instead, and fails when any count exceeds the committed
-// baseline (scripts/lint-warning-baseline.json).
+// Rules listed in scripts/promotion-rules.json (see
+// scripts/lib/promotion-config.mjs) with a `ratchet` baseline path may not
+// grow: each gets a PER-RULE baseline and this gate. A plain
+// `--max-warnings` flag cannot enforce a ratchet here: it counts ALL
+// warnings (no-console, no-unused-vars, …), so an unrelated `console.log`
+// could mask ratchet growth — and vice versa. This gate counts warnings PER
+// RULE and PER WORKSPACE instead, and fails when any count exceeds that
+// rule's committed baseline.
 //
-// Ratchet mechanics:
+// Two postures, one mechanism:
+//   • Migrating rule (warn repo-wide) — the baseline is a floor that only
+//     moves down; conversions lower it via --update until it reaches 0.
+//   • Fully-gated rule (error in the base config) — the baseline sits at
+//     total 0 as a canary. The rule is error-severity, so live warnings
+//     should be impossible; if any appear, the severity regressed somewhere
+//     and this gate (plus check-rule-promotion.mjs) fails CI. This is the
+//     posture of require-map-and-throw since its migration completed.
+//
+// Ratchet mechanics (per rule, unchanged in spirit):
 //   • Baseline may only move DOWN. Any workspace exceeding its baseline
-//     count fails CI. Dropping below the baseline does not fail — run
-//     `--update` to lock in the improvement and make the new level the
-//     floor (otherwise a regressing PR could grow back to the old count).
+//     fails CI. Dropping below the baseline does not fail — run `--update`
+//     to lock in the improvement and make the new level the floor (otherwise
+//     a regressing PR could grow back to the old count).
 //   • New workspaces start at 0: a workspace absent from the baseline is
-//     compared against 0, so new services cannot ship with warnings.
-//   • Fully-converted services move to the `error` block in
-//     eslint.config.js (they stop warning entirely) and can be deleted
-//     from the baseline with `--update`.
+//     compared against 0, so new workspaces cannot ship with warnings.
+//   • Fully-converted workspaces move to the `error` block in
+//     eslint.config.js (they stop warning entirely) and can be deleted from
+//     the baseline with `--update`.
+//
+// Onboarding a new warn-while-migrating rule is automatic: implement the
+// rule, set it `warn` repo-wide, add `{ id, ratchet: "scripts/<rule>-baseline.json" }`
+// to scripts/promotion-rules.json, and run this script once with `--update`.
+// From then on both gates (this regression gate + check-rule-promotion.mjs)
+// cover it — no new script, no new workflow wiring. When the migration
+// finishes, flip the rule to `error` in the base config and empty the
+// baseline with one more --update (see the postures above).
 //
 // Usage:
 //   node scripts/check-lint-warning-ratchet.mjs            # gate (exit 1 on growth)
-//   node scripts/check-lint-warning-ratchet.mjs --update   # rewrite baseline from current state
-//   node scripts/check-lint-warning-ratchet.mjs --list     # show discovered workspaces, no gate
+//   node scripts/check-lint-warning-ratchet.mjs --update   # rewrite baselines from current state
+//   node scripts/check-lint-warning-ratchet.mjs --list     # show rules + workspaces, no gate
+//   AZEEBO_LINT_RULE=<id> node scripts/check-lint-warning-ratchet.mjs   # single listed rule
 //
 // CI wiring: pr-checks.yml (lint-pr) and lint.yml (lint-backend), right
-// after `pnpm -r lint`. Requires no network, no DB, and ~one ESLint pass.
+// after `pnpm -r lint`. Requires no network, no DB, and ~one ESLint pass
+// for ALL rules combined.
 // ============================================================================
 
 import { execFileSync } from 'node:child_process';
@@ -35,10 +55,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
+import { loadPromotionConfig, selectRules } from './lib/promotion-config.mjs';
 
 export const RULE = 'azeebo-custom/require-map-and-throw';
 const require = createRequire(import.meta.url);
-const BASELINE_PATH = path.join(
+/**
+ * The canonical baseline (require-map-and-throw) — kept at the historical
+ * path so the scorecard's git-history trend and old snapshots stay valid.
+ * Every additional rule gets its own file, referenced from
+ * scripts/promotion-rules.json.
+ */
+export const BASELINE_PATH = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
   'lint-warning-baseline.json',
 );
@@ -152,9 +179,11 @@ export function countWarnings(results, workspaces, ruleId = RULE) {
 // ---------------------------------------------------------------------------
 
 /** Validate baseline structure; returns an error string or null. */
-export function validateBaseline(baseline) {
+export function validateBaseline(baseline, expectedRuleId = RULE) {
   if (!baseline || typeof baseline !== 'object') return 'baseline is not an object';
-  if (baseline.rule !== RULE) return `baseline rule ${JSON.stringify(baseline.rule)} !== ${JSON.stringify(RULE)}`;
+  if (baseline.rule !== expectedRuleId) {
+    return `baseline rule ${JSON.stringify(baseline.rule)} !== ${JSON.stringify(expectedRuleId)}`;
+  }
   if (!baseline.workspaces || typeof baseline.workspaces !== 'object') return 'baseline.workspaces missing';
   let sum = 0;
   for (const [name, count] of Object.entries(baseline.workspaces)) {
@@ -163,6 +192,20 @@ export function validateBaseline(baseline) {
   }
   if (baseline.total !== sum) return `baseline.total (${baseline.total}) !== sum of workspaces (${sum}) — regenerate with --update instead of hand-editing`;
   return null;
+}
+
+/**
+ * Build the on-disk baseline record for a rule from its live counts.
+ * Pure; --update writes exactly what this returns.
+ */
+export function buildBaselineRecord(ruleId, counts, generatedAt = new Date().toISOString()) {
+  let total = 0;
+  const record = {};
+  for (const [name, count] of counts) {
+    record[name] = count;
+    total += count;
+  }
+  return { rule: ruleId, generatedAt, total, workspaces: record };
 }
 
 /**
@@ -190,6 +233,30 @@ export function compare(baseline, currentCounts) {
 }
 
 // ---------------------------------------------------------------------------
+// Rule resolution — which rules get ratcheted (config-driven)
+// ---------------------------------------------------------------------------
+
+/**
+ * Resolve the rules this gate enforces from the promotion config: every
+ * listed rule that declares a `ratchet` baseline path. Rules without a
+ * baseline are promotion-gate territory only and are skipped here (the
+ * gate's own output explains how to add one).
+ * Throws when the config lists no ratcheted rules at all — that means the
+ * ratchet is unconfigured, not that everything passes.
+ */
+export function resolveRatchetRules(root) {
+  const { rules, warnings } = loadPromotionConfig(root);
+  const ratcheted = rules.filter((r) => r.ratchet !== undefined);
+  if (ratcheted.length === 0) {
+    throw new Error(
+      'no rule in scripts/promotion-rules.json declares a "ratchet" baseline — ' +
+        'add { "id": "<rule>", "ratchet": "scripts/<rule>-baseline.json" } and run --update once',
+    );
+  }
+  return { rules: ratcheted, warnings };
+}
+
+// ---------------------------------------------------------------------------
 // ESLint invocation
 // ---------------------------------------------------------------------------
 
@@ -202,7 +269,7 @@ function resolveEslintBin() {
 
 /**
  * Run ESLint with JSON output over the given dirs. Exported so the
- * promotion gate (check-map-and-throw-promotion.mjs) reuses the exact same
+ * promotion gate (check-rule-promotion.mjs) reuses the exact same
  * invocation instead of forking it.
  */
 export function runEslintJson(lintDirs, cwd) {
@@ -231,16 +298,16 @@ export function runEslintJson(lintDirs, cwd) {
 // Output helpers
 // ---------------------------------------------------------------------------
 
-function printCounts(workspaces, counts) {
+function printCounts(ruleId, workspaces, counts) {
   const rows = workspaces
     .map((w) => ({ name: w.name, count: counts.get(w.name) ?? 0 }))
     .filter((r) => r.count > 0)
     .sort((a, b) => b.count - a.count);
   if (rows.length === 0) {
-    console.log(`No ${RULE} warnings found.`);
+    console.log(`No ${ruleId} warnings found.`);
     return;
   }
-  console.log(`${RULE} warnings by workspace:`);
+  console.log(`${ruleId} warnings by workspace:`);
   for (const r of rows) console.log(`  ${String(r.count).padStart(3)}  ${r.name}`);
 }
 
@@ -265,64 +332,103 @@ function main() {
     return;
   }
 
+  let ratcheted;
+  try {
+    ratcheted = resolveRatchetRules(root);
+  } catch (err) {
+    console.error(err.message);
+    process.exit(2);
+  }
+  let selected;
+  try {
+    selected = selectRules(ratcheted.rules);
+  } catch (err) {
+    console.error(err.message);
+    process.exit(2);
+  }
+  // Config warnings (e.g. a baseline path not yet generated) are expected
+  // exactly once — before the first --update — so surface them in gate mode
+  // but suppress them when --update is about to resolve them.
+  if (!update) for (const warning of ratcheted.warnings) console.warn(`⚠️  ${warning}`);
+
+  // ONE shared ESLint pass for every rule.
   const allDirs = workspaces.flatMap((w) => w.lintDirs);
   const results = runEslintJson(allDirs, root);
-  const { counts, other } = countWarnings(results, workspaces);
 
-  if (update) {
-    let total = 0;
-    const record = {};
-    for (const [name, count] of counts) {
-      record[name] = count;
-      total += count;
+  const failures = [];
+  const improvementNotices = [];
+  const otherNotices = new Map();
+
+  for (const rule of selected) {
+    const baselinePath = path.resolve(root, rule.ratchet);
+    const { counts, other } = countWarnings(results, workspaces, rule.id);
+    if (other.length > 0) otherNotices.set(rule.id, other);
+
+    if (update) {
+      const record = buildBaselineRecord(rule.id, counts);
+      fs.mkdirSync(path.dirname(baselinePath), { recursive: true });
+      fs.writeFileSync(baselinePath, JSON.stringify(record, null, 2) + '\n');
+      console.log(`\nBaseline written: ${path.relative(root, baselinePath)} (${record.total} warning(s))`);
+      printCounts(rule.id, workspaces, counts);
+      continue;
     }
-    const baseline = { rule: RULE, generatedAt: new Date().toISOString(), total, workspaces: record };
-    fs.writeFileSync(BASELINE_PATH, JSON.stringify(baseline, null, 2) + '\n');
-    console.log(`Baseline written: ${path.relative(root, BASELINE_PATH)}`);
-    printCounts(workspaces, counts);
+
+    if (!fs.existsSync(baselinePath)) {
+      console.error(`\nNo baseline for ${rule.id} at ${path.relative(root, baselinePath)}.`);
+      console.error('Generate it once with: node scripts/check-lint-warning-ratchet.mjs --update');
+      process.exit(2);
+    }
+    let baseline;
+    try {
+      baseline = JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
+    } catch (err) {
+      console.error(`\nUnparsable baseline for ${rule.id} (${path.relative(root, baselinePath)}): ${err.message}`);
+      process.exit(2);
+    }
+    const invalid = validateBaseline(baseline, rule.id);
+    if (invalid) {
+      console.error(`\nInvalid baseline for ${rule.id} (${path.relative(root, baselinePath)}): ${invalid}`);
+      process.exit(2);
+    }
+
+    const { violations, improvements, currentTotal, baselineTotal } = compare(baseline, counts);
+    console.log(`\n── ${rule.id} ──`);
+    printCounts(rule.id, workspaces, counts);
+    for (const imp of improvements) {
+      improvementNotices.push(`${rule.id}: ${imp.name}: ${imp.allowed} → ${imp.current} (run --update to lock in the improvement)`);
+    }
+    if (violations.length > 0) {
+      for (const v of violations) {
+        // GitHub renders ::error lines as annotations in Actions logs; harmless text elsewhere.
+        failures.push(
+          `${rule.id} ratchet violated — warnings may only decrease: ${v.name}: ${v.current} warning(s) > baseline ${v.allowed} (+${v.delta})`,
+        );
+        console.error(`::error file=${path.relative(root, baselinePath)}::[${rule.id}] ${v.name}: ${v.current} warning(s) > baseline ${v.allowed} (+${v.delta})`);
+        console.error(`   Convert these catch blocks to mapAndThrow(error, '<context>') from @azeebo/security (or the rule's prescribed form).`);
+      }
+    } else {
+      console.log(`✅ Ratchet holds: ${currentTotal} warning(s) ≤ baseline ${baselineTotal}.`);
+    }
+  }
+
+  if (!update && improvementNotices.length > 0) {
+    console.log('');
+    for (const n of improvementNotices) console.log(`✅ ${n}`);
+  }
+  for (const [ruleId, other] of otherNotices) {
     if (other.length > 0) {
-      console.warn(`\n${other.length} ${RULE} warning(s) outside any workspace dir (not ratcheted):`);
+      console.warn(`\n${other.length} ${ruleId} warning(s) outside any workspace dir (not ratcheted):`);
       for (const line of other.slice(0, 10)) console.warn(`  ${line}`);
     }
-    return;
   }
 
-  if (!fs.existsSync(BASELINE_PATH)) {
-    console.error(`No baseline at ${path.relative(root, BASELINE_PATH)}.`);
-    console.error('Generate it once with: node scripts/check-lint-warning-ratchet.mjs --update');
-    process.exit(2);
-  }
-  const baseline = JSON.parse(fs.readFileSync(BASELINE_PATH, 'utf8'));
-  const invalid = validateBaseline(baseline);
-  if (invalid) {
-    console.error(`Invalid baseline: ${invalid}`);
-    process.exit(2);
-  }
-
-  const { violations, improvements, currentTotal, baselineTotal } = compare(baseline, counts);
-  printCounts(workspaces, counts);
-
-  for (const imp of improvements) {
-    console.log(`✅ ${imp.name}: ${imp.allowed} → ${imp.current} (run --update to lock in the improvement)`);
-  }
-  if (other.length > 0) {
-    console.warn(`${other.length} warning(s) outside any workspace dir (not ratcheted):`);
-    for (const line of other.slice(0, 10)) console.warn(`  ${line}`);
-  }
-
-  if (violations.length > 0) {
-    console.error(`\n🚫 ${RULE} ratchet violated — warnings may only decrease:`);
-    for (const v of violations) {
-      // GitHub renders ::error lines as annotations in Actions logs; harmless text elsewhere.
-      console.error(`::error file=scripts/lint-warning-baseline.json::${v.name}: ${v.current} warning(s) > baseline ${v.allowed} (+${v.delta})${v.note ? ` — ${v.note}` : ''}`);
-      console.error(`   Convert these catch blocks to mapAndThrow(error, '<context>') from @azeebo/security.`);
-    }
-    console.error(`\nIf conversion is genuinely intentional (never for new violations), lower the floor explicitly:`);
+  if (failures.length > 0) {
+    console.error(`\n🚫 ${failures.length} ratchet violation(s) across ${selected.length} rule(s):`);
+    for (const f of failures) console.error(`  ${f}`);
+    console.error(`\nIf a conversion is genuinely intentional (never for new violations), lower the floor explicitly:`);
     console.error(`  node scripts/check-lint-warning-ratchet.mjs --update`);
     process.exit(1);
   }
-
-  console.log(`\n✅ Ratchet holds: ${currentTotal} warning(s) ≤ baseline ${baselineTotal} across ${workspaces.length} workspaces.`);
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {

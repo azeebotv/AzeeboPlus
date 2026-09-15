@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { contentApi, type ContentItem } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { contentApi, type ContentItem } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
 
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.grey800,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.grey800,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
   progressBar: {
     height: 4,
     borderRadius: 2,
-    backgroundColor: colors.palette.grey800,
+    backgroundColor: colors.bg.tertiary,
     marginBottom: 8,
   },
   progressFill: {
@@ -365,14 +365,14 @@ const styles = StyleSheet.create({
   },
   metaItem: {
     fontSize: 14,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
   },
   metaDivider: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
   },
   movieDescription: {
     fontSize: 14,
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
     lineHeight: 1.5,
   },
   actionsSection: {
@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
   },
   castRole: {
     fontSize: 11,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
   },
   recommendationsSection: {
     padding: 16,

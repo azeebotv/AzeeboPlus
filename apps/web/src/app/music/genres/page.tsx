@@ -53,7 +53,9 @@ export default function MusicGenresPage(): React.JSX.Element {
       {/* Hero */}
       <section
         className="relative py-16 sm:py-20"
-        style={{ background: 'linear-gradient(135deg, #4C0A5E 0%, #100e14 100%)' }}
+        style={{
+          background: 'linear-gradient(135deg, var(--music-purple) 0%, var(--bg-secondary) 100%)',
+        }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.h1

@@ -59,6 +59,180 @@ export default function UniversesPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'universes'] }),
   });
 
+  // Edit (name/displayName/description) — updateUniverse existed but had no UI.
+  const [editTarget, setEditTarget] = useState<AdminUniverse | null>(null);
+  const [editForm, setEditForm] = useState({ displayName: '', description: '' });
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
+      adminApi.updateUniverse(id, data),
+    onSuccess: () => {
+      setEditTarget(null);
+      queryClient.invalidateQueries({ queryKey: ['admin', 'universes'] });
+    },
+  });
+
+  // Clone (POST :id/copy) — backend route previously unused.
+  const [cloneError, setCloneError] = useState<string | null>(null);
+  const cloneMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
+      adminApi.cloneUniverse(id, data),
+    onSuccess: () => {
+      setCloneError(null);
+      queryClient.invalidateQueries({ queryKey: ['admin', 'universes'] });
+    },
+    onError: (e) => setCloneError((e as Error).message || 'Clone failed'),
+  });
+
+  // Bulk enable/disable (POST bulk/toggle) — previously unused.
+  const [bulkSelection, setBulkSelection] = useState<Set<string>>(new Set());
+  const bulkToggleMutation = useMutation({
+    mutationFn: ({ ids, isEnabled }: { ids: string[]; isEnabled: boolean }) =>
+      adminApi.bulkToggleUniverses(ids, isEnabled),
+    onSuccess: () => {
+      setBulkSelection(new Set());
+      queryClient.invalidateQueries({ queryKey: ['admin', 'universes'] });
+    },
+  });
+
+  // Stats strip (GET stats — previously unused).
+  const { data: stats } = useQuery({
+    queryKey: ['admin', 'universe-stats'],
+    queryFn: async () => {
+      const res = await adminApi.getUniverseStats();
+      if (!res.success) return null;
+      const d = res.data as {
+        totalUniverses?: number;
+        enabledUniverses?: number;
+        disabledUniverses?: number;
+        totalContentItems?: number;
+      };
+      return d ?? null;
+    },
+  });
+
+  // ── Export / import (backend routes previously unused) ────────────────
+  const [ioFeedback, setIoFeedback] = useState<string | null>(null);
+
+  const exportUniverse = async (u: AdminUniverse) => {
+    setIoFeedback(`Exporting "${u.displayName || u.name}"...`);
+    const res = await adminApi.exportUniverse(u.id);
+    if (!res.success) {
+      setIoFeedback(`Export failed: ${res.message || 'unknown error'}`);
+      return;
+    }
+    const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `universe-${u.name}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setIoFeedback(`Exported "${u.displayName || u.name}" — check your downloads.`);
+  };
+
+  /**
+   * Accepts a single exported universe object, a bare array, or a wrapper
+   * { universes: [...] }. The backend ValidationPipe runs with
+   * forbidNonWhitelisted, so any key outside the import DTO (e.g. the
+   * `exportedAt` stamp our own export adds) would 400 the whole request —
+   * strip everything down to the DTO fields before sending.
+   */
+  const sanitizeForImport = (raw: unknown): Array<Record<string, unknown>> => {
+    let list: unknown[] = [];
+    if (Array.isArray(raw)) list = raw;
+    else if (raw && typeof raw === 'object') {
+      const rec = raw as Record<string, unknown>;
+      list = Array.isArray(rec.universes) ? rec.universes : [rec];
+    }
+    return list
+      .filter((u): u is Record<string, unknown> => !!u && typeof u === 'object')
+      .map((u) => {
+        const flags = Array.isArray(u.featureFlags)
+          ? (u.featureFlags as Record<string, unknown>[]).map((f) => ({
+              featureKey: String(f.featureKey ?? ''),
+              isEnabled: f.isEnabled === true,
+              ...(f.metadata != null && typeof f.metadata === 'object'
+                ? { metadata: f.metadata as Record<string, unknown> }
+                : {}),
+            }))
+          : undefined;
+        return {
+          name: String(u.name ?? ''),
+          displayName: String(u.displayName ?? u.name ?? ''),
+          ...(u.description != null ? { description: String(u.description) } : {}),
+          ...(u.icon != null ? { icon: String(u.icon) } : {}),
+          ...(u.color != null ? { color: String(u.color) } : {}),
+          ...(u.isEnabled != null ? { isEnabled: u.isEnabled === true } : {}),
+          ...(u.sortOrder != null ? { sortOrder: Number(u.sortOrder) || 0 } : {}),
+          ...(u.metadata != null && typeof u.metadata === 'object'
+            ? { metadata: u.metadata as Record<string, unknown> }
+            : {}),
+          ...(flags && flags.length > 0 ? { featureFlags: flags } : {}),
+        };
+      })
+      .filter((u) => u.name.length > 0);
+  };
+
+  const importUniversesFromFile = async (file: File) => {
+    setIoFeedback(`Importing ${file.name}...`);
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(await file.text());
+    } catch {
+      setIoFeedback('Import failed: file is not valid JSON.');
+      return;
+    }
+    const universes = sanitizeForImport(parsed);
+    if (universes.length === 0) {
+      setIoFeedback('Import failed: no universes found in the file.');
+      return;
+    }
+    const res = await adminApi.importUniverses({ universes });
+    if (!res.success) {
+      setIoFeedback(`Import failed: ${res.message || 'unknown error'}`);
+      return;
+    }
+    // Backend sends counts as numbers ({ imported: 1, ... }) but tolerates
+    // array-valued results defensively too.
+    const d = (res.data ?? {}) as {
+      imported?: number | unknown[];
+      skipped?: number | unknown[];
+      errors?: number | unknown[];
+    };
+    const count = (v: number | unknown[] | undefined): number =>
+      typeof v === 'number' ? v : Array.isArray(v) ? v.length : 0;
+    const imported = count(d.imported);
+    const skipped = count(d.skipped);
+    const errors = count(d.errors);
+    setIoFeedback(
+      `Import finished: ${imported} imported · ${skipped} skipped (already exist) · ${errors} errors.`
+    );
+    if (imported > 0) {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'universes'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'universe-stats'] });
+    }
+  };
+
+  const handleImportClick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (file) void importUniversesFromFile(file);
+    };
+    input.click();
+  };
+
+  const toggleBulk = (id: string) => {
+    setBulkSelection((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   // Search is server-side (QueryUniverseDto.search) and debounced via the
   // keyed useQuery — no client-side filter to mismatch on payload shape.
 
@@ -85,27 +259,62 @@ export default function UniversesPage() {
             <Icon name="globe" size={26} color="var(--admin-orange)" />
             Universes
           </h1>
-          <p style={{ color: 'var(--admin-text-muted)', marginTop: 4 }}>{total} universes</p>
+          <p style={{ color: 'var(--admin-text-muted)', marginTop: 4 }}>
+            {stats
+              ? `${stats.totalUniverses ?? total} universes · ${stats.enabledUniverses ?? 0} enabled · ${stats.disabledUniverses ?? 0} disabled · ${stats.totalContentItems ?? 0} content items`
+              : `${total} universes`}
+          </p>
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '10px 20px',
-            borderRadius: 12,
-            border: 'none',
-            background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-            color: 'white',
-            fontWeight: 600,
-            fontSize: 14,
-            cursor: 'pointer',
-          }}
-        >
-          <Icon name="plus" size={16} color="#FFFFFF" />
-          Create Universe
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {ioFeedback && (
+            <span
+              style={{
+                color:
+                  ioFeedback.startsWith('Export failed') || ioFeedback.startsWith('Import failed')
+                    ? 'var(--admin-red)'
+                    : 'var(--admin-text-muted)',
+                fontSize: 12,
+                maxWidth: 320,
+              }}
+            >
+              {ioFeedback}
+            </span>
+          )}
+          <button
+            onClick={handleImportClick}
+            style={{
+              padding: '9px 16px',
+              borderRadius: 10,
+              border: '1px solid var(--admin-card)',
+              background: 'transparent',
+              color: 'var(--admin-text)',
+              fontWeight: 600,
+              fontSize: 13,
+              cursor: 'pointer',
+            }}
+          >
+            Import
+          </button>
+          <button
+            onClick={() => setShowCreate(true)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '10px 20px',
+              borderRadius: 12,
+              border: 'none',
+              background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+              color: 'white',
+              fontWeight: 600,
+              fontSize: 14,
+              cursor: 'pointer',
+            }}
+          >
+            <Icon name="plus" size={16} color="#FFFFFF" />
+            Create Universe
+          </button>
+        </div>
       </div>
 
       <input
@@ -240,6 +449,65 @@ export default function UniversesPage() {
               gap: 16,
             }}
           >
+            {bulkSelection.size > 0 && (
+              <div
+                style={{
+                  gridColumn: '1 / -1',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: '10px 16px',
+                  borderRadius: 12,
+                  border: '1px solid var(--admin-orange)',
+                  backgroundColor: 'rgba(232,66,10,0.08)',
+                }}
+              >
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--admin-orange)' }}>
+                  {bulkSelection.size} selected
+                </span>
+                <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
+                  <button
+                    disabled={bulkToggleMutation.isPending}
+                    onClick={() =>
+                      bulkToggleMutation.mutate({ ids: Array.from(bulkSelection), isEnabled: true })
+                    }
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: 8,
+                      border: 'none',
+                      backgroundColor: 'var(--admin-emerald)',
+                      color: 'white',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Enable all
+                  </button>
+                  <button
+                    disabled={bulkToggleMutation.isPending}
+                    onClick={() =>
+                      bulkToggleMutation.mutate({
+                        ids: Array.from(bulkSelection),
+                        isEnabled: false,
+                      })
+                    }
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-surface)',
+                      background: 'transparent',
+                      color: 'var(--admin-text-muted)',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Disable all
+                  </button>
+                </div>
+              </div>
+            )}
             {universes.map((u) => (
               <div
                 key={u.id}
@@ -248,6 +516,7 @@ export default function UniversesPage() {
                   borderRadius: 16,
                   border: '1px solid var(--admin-card)',
                   backgroundColor: 'var(--admin-surface)',
+                  position: 'relative',
                 }}
               >
                 <div
@@ -287,24 +556,89 @@ export default function UniversesPage() {
                   style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                 >
                   <span style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>
-                    {u.contentCount || 0} items
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <input
+                        type="checkbox"
+                        checked={bulkSelection.has(u.id)}
+                        onChange={() => toggleBulk(u.id)}
+                        aria-label={`Select ${u.name}`}
+                      />
+                      {u.contentCount || 0} items
+                    </label>
                   </span>
-                  <button
-                    onClick={() => {
-                      if (confirm('Delete this universe?')) deleteMutation.mutate(u.id);
-                    }}
-                    style={{
-                      padding: '4px 12px',
-                      borderRadius: 8,
-                      border: '1px solid #CC1C1C',
-                      background: 'transparent',
-                      color: 'var(--admin-red)',
-                      fontSize: 12,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Delete
-                  </button>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button
+                      onClick={() => {
+                        setEditForm({
+                          displayName: u.displayName || '',
+                          description: u.description || '',
+                        });
+                        setEditTarget(u);
+                      }}
+                      style={{
+                        padding: '4px 12px',
+                        borderRadius: 8,
+                        border: '1px solid var(--admin-surface)',
+                        background: 'transparent',
+                        color: 'var(--admin-text-muted)',
+                        fontSize: 12,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => {
+                        const newName = window.prompt(
+                          `Clone "${u.displayName || u.name}" — new slug:`,
+                          `${u.name}-copy`
+                        );
+                        if (newName && newName.trim())
+                          cloneMutation.mutate({ id: u.id, data: { name: newName.trim() } });
+                      }}
+                      style={{
+                        padding: '4px 12px',
+                        borderRadius: 8,
+                        border: '1px solid var(--admin-surface)',
+                        background: 'transparent',
+                        color: 'var(--admin-text-muted)',
+                        fontSize: 12,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Clone
+                    </button>
+                    <button
+                      onClick={() => void exportUniverse(u)}
+                      style={{
+                        padding: '4px 12px',
+                        borderRadius: 8,
+                        border: '1px solid var(--admin-surface)',
+                        background: 'transparent',
+                        color: 'var(--admin-text-muted)',
+                        fontSize: 12,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Export
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm('Delete this universe?')) deleteMutation.mutate(u.id);
+                      }}
+                      style={{
+                        padding: '4px 12px',
+                        borderRadius: 8,
+                        border: '1px solid #CC1C1C',
+                        background: 'transparent',
+                        color: 'var(--admin-red)',
+                        fontSize: 12,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -355,6 +689,113 @@ export default function UniversesPage() {
             </div>
           )}
         </>
+      )}
+
+      {/* Edit universe modal */}
+      {editTarget && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 50,
+          }}
+          onClick={() => setEditTarget(null)}
+        >
+          <div
+            style={{
+              width: 'min(460px, 92vw)',
+              padding: 24,
+              borderRadius: 16,
+              border: '1px solid var(--admin-card)',
+              backgroundColor: 'var(--admin-surface)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>
+              Edit "{editTarget.displayName || editTarget.name}"
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <input
+                value={editForm.displayName}
+                onChange={(e) => setEditForm({ ...editForm, displayName: e.target.value })}
+                placeholder="Display name"
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: 8,
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
+                  fontSize: 14,
+                }}
+              />
+              <textarea
+                value={editForm.description}
+                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                placeholder="Description"
+                rows={3}
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: 8,
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
+                  fontSize: 14,
+                  resize: 'vertical',
+                }}
+              />
+              {updateMutation.isError && (
+                <p style={{ color: 'var(--admin-red)', fontSize: 13, margin: 0 }}>
+                  {(updateMutation.error as Error)?.message || 'Update failed'}
+                </p>
+              )}
+              {cloneError && (
+                <p style={{ color: 'var(--admin-red)', fontSize: 13, margin: 0 }}>{cloneError}</p>
+              )}
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                <button
+                  onClick={() => setEditTarget(null)}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: 8,
+                    border: '1px solid var(--admin-surface)',
+                    background: 'transparent',
+                    color: 'var(--admin-text-muted)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  disabled={updateMutation.isPending}
+                  onClick={() =>
+                    updateMutation.mutate({
+                      id: editTarget.id,
+                      data: {
+                        displayName: editForm.displayName,
+                        description: editForm.description || undefined,
+                      },
+                    })
+                  }
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: 8,
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+                    color: 'white',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {updateMutation.isPending ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -41,7 +41,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
   return (
     <div
       style={{
-        backgroundColor: 'var(--brand-near-black, #0b090e)',
+        backgroundColor: 'var(--bg-primary)',
         minHeight: '100vh',
         color: 'var(--text-primary)',
       }}
@@ -93,7 +93,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
               style={{
                 padding: 16,
                 borderRadius: 16,
-                backgroundColor: '#18151e',
+                backgroundColor: 'var(--bg-tertiary)',
                 border: '1px solid rgba(255,255,255,0.08)',
               }}
             >
@@ -127,7 +127,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
               style={{
                 padding: 16,
                 borderRadius: 16,
-                backgroundColor: '#18151e',
+                backgroundColor: 'var(--bg-tertiary)',
                 border: '1px solid rgba(255,255,255,0.08)',
               }}
             >
@@ -161,7 +161,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
               style={{
                 padding: 16,
                 borderRadius: 16,
-                backgroundColor: '#18151e',
+                backgroundColor: 'var(--bg-tertiary)',
                 border: '1px solid rgba(255,255,255,0.08)',
               }}
             >
@@ -195,7 +195,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
               style={{
                 padding: 16,
                 borderRadius: 16,
-                backgroundColor: '#18151e',
+                backgroundColor: 'var(--bg-tertiary)',
                 border: '1px solid rgba(255,255,255,0.08)',
               }}
             >
@@ -236,7 +236,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
                   style={{
                     padding: 16,
                     borderRadius: 12,
-                    backgroundColor: '#18151e',
+                    backgroundColor: 'var(--bg-tertiary)',
                     border: '1px solid rgba(255,255,255,0.08)',
                   }}
                 >
@@ -272,7 +272,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
                     padding: 16,
                     borderRadius: 16,
                     border: '1px solid rgba(255,255,255,0.08)',
-                    backgroundColor: '#18151e',
+                    backgroundColor: 'var(--bg-tertiary)',
                   }}
                 >
                   <div
@@ -280,7 +280,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
                       width: 44,
                       height: 44,
                       borderRadius: 22,
-                      backgroundColor: '#100e14',
+                      backgroundColor: 'var(--bg-secondary)',
                       border: '1px solid rgba(255,255,255,0.08)',
                       display: 'flex',
                       alignItems: 'center',
@@ -343,7 +343,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
             {/* Age Groups */}
             <div
               style={{
-                backgroundColor: '#18151e',
+                backgroundColor: 'var(--bg-tertiary)',
                 borderRadius: 16,
                 padding: 20,
                 border: '1px solid rgba(255,255,255,0.08)',
@@ -371,7 +371,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
                     style={{
                       height: 6,
                       borderRadius: 3,
-                      backgroundColor: '#100e14',
+                      backgroundColor: 'var(--bg-secondary)',
                       overflow: 'hidden',
                     }}
                   >
@@ -391,7 +391,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
             {/* Top Regions */}
             <div
               style={{
-                backgroundColor: '#18151e',
+                backgroundColor: 'var(--bg-tertiary)',
                 borderRadius: 16,
                 padding: 20,
                 border: '1px solid rgba(255,255,255,0.08)',
@@ -422,7 +422,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
                     style={{
                       height: 6,
                       borderRadius: 3,
-                      backgroundColor: '#100e14',
+                      backgroundColor: 'var(--bg-secondary)',
                       overflow: 'hidden',
                     }}
                   >

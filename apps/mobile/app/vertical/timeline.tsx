@@ -5,9 +5,9 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { colors } from '../../src/theme';
-import { apiClient } from '../../src/api/client';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { ApiResponse } from '../../src/types/api';
+import { ApiResponse } from '@azeebo/react-data/types/api';
 import { analytics } from '../../src/utils/analytics';
 
 interface TimelineEvent {

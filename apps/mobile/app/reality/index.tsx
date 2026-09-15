@@ -5,8 +5,8 @@ import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { apiClient } from '../../src/api/client';
-import { ApiResponse } from '../../src/types/api';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { ApiResponse } from '@azeebo/react-data/types/api';
 import { analytics } from '../../src/utils/analytics';
 import { radius, colors } from '../../src/theme';
 
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
   },
   universeLabel: {
     fontSize: 14,
-    color: colors.palette.coral,
+    color: colors.error[500],
     fontWeight: '600',
   },
   notificationBadge: {
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
   },
   liveShowImagePlaceholder: {
     height: 200,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -385,11 +385,11 @@ const styles = StyleSheet.create({
   },
   liveShowSubtitle: {
     fontSize: 14,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     marginBottom: 12,
   },
   watchNowButton: {
-    backgroundColor: colors.palette.coral,
+    backgroundColor: colors.error[500],
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: radius.sm,
@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
   },
   voteCTASubtitle: {
     fontSize: 12,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
   },
   voteButton: {
     backgroundColor: '#E8420A',
@@ -502,7 +502,7 @@ const styles = StyleSheet.create({
   },
   contestantVotes: {
     fontSize: 11,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
   },
   highlightsList: {
     paddingHorizontal: 16,
@@ -515,7 +515,7 @@ const styles = StyleSheet.create({
   },
   highlightThumbnail: {
     height: 100,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -555,7 +555,7 @@ const styles = StyleSheet.create({
   },
   seasonImagePlaceholder: {
     height: 80,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -571,6 +571,6 @@ const styles = StyleSheet.create({
   },
   seasonSubtitle: {
     fontSize: 12,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
   },
 });

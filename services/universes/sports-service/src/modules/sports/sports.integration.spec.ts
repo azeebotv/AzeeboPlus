@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { SportsService } from './sports.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
@@ -312,7 +316,9 @@ describe('SportsService Integration - Cross-Service Communication', () => {
           eventId: 'event-1',
           prediction: { winner: 'Brazil' },
         })
-      ).rejects.toThrow(BadRequestException);
+        // A Prisma failure after the wallet debit is a server fault (the saga
+        // compensates either way) — mapAndThrow maps it honestly to 500.
+      ).rejects.toThrow(InternalServerErrorException);
 
       expect(mockedAxios.post).toHaveBeenCalledWith(
         expect.stringContaining('/wallet/credit'),
@@ -486,8 +492,10 @@ describe('SportsService Integration - Cross-Service Communication', () => {
 
       mockPrismaService.contestEntry.create.mockRejectedValue(new Error('DB error'));
 
+      // A Prisma failure after the wallet debit is a server fault (the saga
+      // compensates either way) — mapAndThrow maps it honestly to 500.
       await expect(service.enterContest('user-1', 'contest-1')).rejects.toThrow(
-        BadRequestException
+        InternalServerErrorException
       );
 
       expect(mockedAxios.post).toHaveBeenCalledWith(

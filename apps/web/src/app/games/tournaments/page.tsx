@@ -66,7 +66,7 @@ function TournamentsPageContent(): React.JSX.Element {
       {/* Hero */}
       <section
         className="relative py-16 sm:py-20"
-        style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #0b090e 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #3B82F6 0%, var(--bg-primary) 100%)' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.h1
@@ -142,7 +142,7 @@ function TournamentsPageContent(): React.JSX.Element {
                     <div
                       className="h-44 relative"
                       style={{
-                        background: `linear-gradient(135deg, ${statusStyle.bg}, #0b090e)`,
+                        background: `linear-gradient(135deg, ${statusStyle.bg}, var(--bg-primary))`,
                       }}
                     >
                       <div className="absolute inset-0 flex items-center justify-center">

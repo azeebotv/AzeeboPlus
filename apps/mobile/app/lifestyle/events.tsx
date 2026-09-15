@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { colors } from '../../src/theme';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { lifestyleApi, LifestyleEvent } from '../../src/api/lifestyle';
+import { lifestyleApi, LifestyleEvent } from '@azeebo/react-data/api/lifestyle';
 
 const CATEGORIES = ['All', 'Concerts', 'Festivals', 'Nightlife', 'Food', 'Sports', 'Arts'];
 

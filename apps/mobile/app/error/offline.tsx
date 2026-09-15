@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 16,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: 1.6,
   },

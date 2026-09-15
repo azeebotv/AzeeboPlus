@@ -98,6 +98,9 @@ export class SafetyScanningService {
     try {
       parsed = new URL(url);
     } catch {
+      // allowed-fabricated-4xx: the only fallible call is `new URL(url)` — a
+      // pure client-input parse whose single failure shape is a malformed URL.
+      // mapAndThrow would escalate it to a 500; a 400 is the correct answer.
       throw new BadRequestException('Invalid media URL format');
     }
 

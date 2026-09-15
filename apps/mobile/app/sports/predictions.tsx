@@ -5,8 +5,8 @@ import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { apiClient } from '../../src/api/client';
-import { ApiResponse } from '../../src/types/api';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { ApiResponse } from '@azeebo/react-data/types/api';
 import { colors } from '../../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -157,8 +157,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     marginRight: 10,
   },
-  categoryChipActive: { backgroundColor: colors.palette.alarmRed },
-  categoryText: { color: colors.palette.grey500, fontSize: 13, fontWeight: '600' },
+  categoryChipActive: { backgroundColor: colors.error[500] },
+  categoryText: { color: colors.text.secondary, fontSize: 13, fontWeight: '600' },
   categoryTextActive: { color: '#fff' },
   listContent: { paddingHorizontal: 16, paddingBottom: 30 },
   marketCard: { padding: 16, borderRadius: 12, marginBottom: 12 },
@@ -168,14 +168,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
-  marketCategory: { color: colors.palette.alarmRed, fontSize: 12, fontWeight: '600' },
-  marketStatus: { color: colors.palette.grey500, fontSize: 12 },
-  statusClosed: { color: colors.palette.grey600 },
+  marketCategory: { color: colors.error[500], fontSize: 12, fontWeight: '600' },
+  marketStatus: { color: colors.text.secondary, fontSize: 12 },
+  statusClosed: { color: colors.text.tertiary },
   marketQuestion: { fontSize: 16, fontWeight: '700', marginBottom: 8 },
-  marketVolume: { color: colors.palette.grey500, fontSize: 12, marginBottom: 12 },
+  marketVolume: { color: colors.text.secondary, fontSize: 12, marginBottom: 12 },
   optionsRow: { flexDirection: 'row', gap: 10, marginBottom: 10 },
   optionCard: { flex: 1, padding: 12, borderRadius: 8, alignItems: 'center' },
   optionLabel: { fontSize: 13, fontWeight: '600', marginBottom: 4 },
-  optionOdds: { color: colors.palette.alarmRed, fontSize: 16, fontWeight: '700' },
-  endsAt: { color: colors.palette.grey500, fontSize: 11 },
+  optionOdds: { color: colors.error[500], fontSize: 16, fontWeight: '700' },
+  endsAt: { color: colors.text.secondary, fontSize: 11 },
 });

@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { colors } from '../../src/theme';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { lifestyleApi, SavedItem } from '../../src/api/lifestyle';
+import { lifestyleApi, SavedItem } from '@azeebo/react-data/api/lifestyle';
 
 export default function SocialScreen() {
   const router = useRouter();

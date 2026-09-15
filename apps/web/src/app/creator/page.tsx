@@ -138,7 +138,7 @@ export default function CreatorDashboardPage(): React.JSX.Element {
     return (
       <div
         style={{
-          backgroundColor: 'var(--brand-near-black, #0b090e)',
+          backgroundColor: 'var(--bg-primary)',
           minHeight: '100vh',
           color: 'var(--text-primary)',
         }}
@@ -155,7 +155,7 @@ export default function CreatorDashboardPage(): React.JSX.Element {
   return (
     <div
       style={{
-        backgroundColor: 'var(--brand-near-black, #0b090e)',
+        backgroundColor: 'var(--bg-primary)',
         minHeight: '100vh',
         color: 'var(--text-primary)',
       }}
@@ -191,7 +191,7 @@ export default function CreatorDashboardPage(): React.JSX.Element {
                 padding: 20,
                 borderRadius: 16,
                 border: '1px solid rgba(255,255,255,0.08)',
-                backgroundColor: 'var(--brand-surface, #18151e)',
+                backgroundColor: 'var(--bg-tertiary)',
               }}
             >
               <p
@@ -237,7 +237,7 @@ export default function CreatorDashboardPage(): React.JSX.Element {
                   cursor: 'pointer',
                   textAlign: 'left',
                   border: '1px solid rgba(255,255,255,0.08)',
-                  backgroundColor: 'var(--brand-surface, #18151e)',
+                  backgroundColor: 'var(--bg-tertiary)',
                   color: 'white',
                   transition: 'all 0.2s ease',
                 }}
@@ -291,7 +291,7 @@ export default function CreatorDashboardPage(): React.JSX.Element {
                   style={{
                     padding: 16,
                     borderRadius: 12,
-                    backgroundColor: 'var(--brand-surface, #18151e)',
+                    backgroundColor: 'var(--bg-tertiary)',
                     border: '1px solid rgba(255,255,255,0.08)',
                   }}
                 >

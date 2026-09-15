@@ -1,6 +1,8 @@
 import { Controller, All, Req, Res, UseGuards, Logger } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { ServiceAuthGuard } from '@azeebo/security';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { buildIdentityHeaders } from '../../common/identity-headers';
 
 const ANALYTICS_URL = process.env.ANALYTICS_SERVICE_URL || 'http://localhost:3008';
@@ -9,7 +11,13 @@ const API_PREFIX_RE = /^\/(?:api\/)?v\d+\/analytics/;
 /** Hop-by-hop headers to strip from proxied responses */
 const SKIP_HEADERS = new Set(['transfer-encoding', 'connection', 'keep-alive', 'content-encoding']);
 
-@UseGuards(ServiceAuthGuard)
+// Aligned with the rest of the admin surface (JwtAuthGuard + RolesGuard):
+// the JwtStrategy accepts the httpOnly access_token cookie, gateway x-user-*
+// stamps, and Bearer headers — the generic ServiceAuthGuard's cookie branch
+// verifies against an unconfigured jwtService here, so direct :4016
+// cookie-only requests 401'd even though every other admin route worked.
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin', 'superadmin')
 @Controller('analytics')
 export class AnalyticsProxyController {
   private readonly logger = new Logger(AnalyticsProxyController.name);

@@ -17,19 +17,29 @@ export class ModelCostTrackerController {
 
   @Get('summary')
   @ApiOperation({ summary: 'Get cost summary for a date range' })
-  @ApiQuery({ name: 'startDate', required: true })
-  @ApiQuery({ name: 'endDate', required: true })
+  @ApiQuery({ name: 'startDate', required: false })
+  @ApiQuery({ name: 'endDate', required: false })
   @ApiQuery({ name: 'agentId', required: false })
   @ApiQuery({ name: 'domain', required: false })
   @ApiQuery({ name: 'model', required: false })
   getSummary(
-    @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
     @Query('agentId') agentId?: string,
     @Query('domain') domain?: string,
     @Query('model') model?: string
   ) {
-    return this.costService.getCostSummary(new Date(startDate), new Date(endDate), {
+    // Default to the last 30 days when absent or unparsable — dashboard
+    // callers omit the range, and `new Date(undefined)` previously crashed
+    // Prisma with an Invalid Date.
+    const parsedStart = startDate ? new Date(startDate) : null;
+    const parsedEnd = endDate ? new Date(endDate) : null;
+    const valid = (d: Date | null): d is Date => d !== null && !Number.isNaN(d.getTime());
+    const end = valid(parsedEnd) ? parsedEnd : new Date();
+    const start = valid(parsedStart)
+      ? parsedStart
+      : new Date(end.getTime() - 30 * 24 * 60 * 60 * 1000);
+    return this.costService.getCostSummary(start, end, {
       agentId,
       domain,
       model,

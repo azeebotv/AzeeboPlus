@@ -123,7 +123,10 @@ function useHealthMonitor() {
       checkedAt: string;
     }>('/api/v1/admin/ops/services');
     if (!res.success || !res.data) return [];
-    const results: ServiceHealth[] = res.data.services.map((s) => ({
+    // services array guard: a backend envelope drift must render an empty
+    // grid, not crash the monitor loop.
+    const services = Array.isArray(res.data.services) ? res.data.services : [];
+    const results: ServiceHealth[] = services.map((s) => ({
       name: s.name,
       port: s.port,
       status: s.status,

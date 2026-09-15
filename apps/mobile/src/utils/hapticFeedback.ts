@@ -1,6 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
-import { logger } from './logger';
+import { logger } from '@azeebo/react-data/utils/logger';
 
 export type HapticFeedbackType =
   | 'light'

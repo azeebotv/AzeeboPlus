@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { apiClient } from '../../src/api';
-import type { Game, GameLevel, LeaderboardEntry, Achievement } from '../../src/types/api';
+import { apiClient } from '@azeebo/react-data';
+import type { Game, GameLevel, LeaderboardEntry, Achievement } from '@azeebo/react-data/types/api';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { analytics } from '../../src/utils/analytics';
 import { colors } from '../../src/theme';
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   gameGenre: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 14,
   },
   content: {
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
     height: 200,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
   },
   previewEmoji: {
     fontSize: 80,
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
   playButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.palette.plum,
+    backgroundColor: colors.category.purple,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 10,
@@ -362,15 +362,15 @@ const styles = StyleSheet.create({
   },
   scoreDivider: {
     width: 1,
-    backgroundColor: colors.palette.grey800,
+    backgroundColor: colors.bg.tertiary,
   },
   scoreLabel: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 13,
     marginBottom: 4,
   },
   scoreValue: {
-    color: colors.palette.plum,
+    color: colors.category.purple,
     fontSize: 20,
     fontWeight: '700',
   },
@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   levelDifficulty: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 12,
   },
   levelStars: {
@@ -430,21 +430,21 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 12,
     borderBottomWidth: 1,
-    borderBottomColor: colors.palette.charcoal,
+    borderBottomColor: colors.bg.tertiary,
   },
   leaderboardItemYou: {
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
   },
   rankBadge: {
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: colors.palette.grey800,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   rankBadgeTop: {
-    backgroundColor: colors.palette.plum,
+    backgroundColor: colors.category.purple,
   },
   rankText: {
     color: '#fff',
@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   playerScore: {
-    color: colors.palette.plum,
+    color: colors.category.purple,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -488,7 +488,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 10,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   achievementDesc: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 12,
   },
   gameContainer: {
@@ -534,7 +534,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   gameHighScore: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 12,
   },
   gameArea: {
@@ -561,13 +561,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   scoreButton: {
-    backgroundColor: colors.palette.plum,
+    backgroundColor: colors.category.purple,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
   },
   scoreButtonSpecial: {
-    backgroundColor: colors.palette.cream,
+    backgroundColor: colors.category.highlight,
   },
   scoreButtonText: {
     color: '#000',
@@ -603,7 +603,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: colors.palette.grey800,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -622,7 +622,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: colors.palette.plum,
+    backgroundColor: colors.category.purple,
     alignItems: 'center',
     justifyContent: 'center',
   },

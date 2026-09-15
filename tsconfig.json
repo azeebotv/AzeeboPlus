@@ -117,6 +117,12 @@
       ],
       "@azeebo/test-utils": [
         "./packages/test-utils/dist"
+      ],
+      "@azeebo/react-data": [
+        "./packages/react-data/src/index.ts"
+      ],
+      "@azeebo/react-data/*": [
+        "./packages/react-data/src/*"
       ]
     }
   },

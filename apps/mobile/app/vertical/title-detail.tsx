@@ -4,7 +4,7 @@ import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../../src/theme';
-import { apiClient } from '../../src/api/client';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import { analytics } from '../../src/utils/analytics';
 
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg.tertiary,
     marginBottom: 12,
   },
-  statusActive: { backgroundColor: colors.alphaColors.successA25 },
+  statusActive: { backgroundColor: colors.alpha.success25 },
   statusText: { fontSize: 12, fontWeight: '600', color: colors.text.tertiary },
   statusTextActive: { color: '#22C55E' },
   heroDesc: { fontSize: 14, lineHeight: 22, textAlign: 'center' },

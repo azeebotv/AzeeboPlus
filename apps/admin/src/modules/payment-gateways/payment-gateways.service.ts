@@ -126,4 +126,38 @@ export class PaymentGatewaysService {
     const gateway = fresh.items.find((g) => g.id === id);
     return { gateway, message: `${gateway?.name ?? id} mode set to ${mode} — persisted.` };
   }
+
+  async getWebhookEvents(provider: string, limit = 20) {
+    const intents = await this.prisma.paymentIntent.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: Math.min(limit, 100),
+    });
+
+    // Map intents into WebhookEvent format, filtering loosely by metadata or provider identifier
+    const items = intents
+      .filter((pi) => {
+        const meta = pi.metadata as Record<string, unknown> | null;
+        if (!meta) return true;
+        if (meta.provider) return String(meta.provider).toLowerCase() === provider.toLowerCase();
+        return true;
+      })
+      .slice(0, limit)
+      .map((pi) => {
+        const meta = pi.metadata as Record<string, unknown> | null;
+        return {
+          id: `evt_${pi.id.slice(0, 8)}`,
+          provider,
+          eventType: pi.status === 'completed' ? 'charge.success' : pi.status === 'failed' ? 'charge.failed' : 'payment.pending',
+          reference: (meta?.reference as string) || (meta?.paystackReference as string) || pi.id,
+          amount: Number(pi.amount),
+          currency: pi.currency,
+          status: pi.status === 'completed' ? 'success' : pi.status === 'failed' ? 'failed' : 'pending',
+          metadata: meta || undefined,
+          createdAt: pi.createdAt.toISOString(),
+        };
+      });
+
+    return { items, total: items.length };
+  }
 }
+

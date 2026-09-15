@@ -4,7 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { colors, radius } from '../../src/theme';
-import { apiClient } from '../../src/api/client';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 
 interface MatchDetail {
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
   statBarContainer: {
     flex: 1,
     height: 6,
-    backgroundColor: colors.alphaColors.violetA20,
+    backgroundColor: colors.alpha.violet20,
     borderRadius: 3,
     position: 'relative',
   },

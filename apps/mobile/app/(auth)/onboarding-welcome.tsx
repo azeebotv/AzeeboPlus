@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
     bottom: '10%',
     borderRadius: 100,
     borderWidth: 2,
-    borderColor: colors.palette.indigo,
+    borderColor: colors.category.indigo,
     opacity: 0.2,
   },
   ring3: {
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 16,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: 1.6,
     marginBottom: 32,

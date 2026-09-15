@@ -81,9 +81,7 @@ export default function TaskRouterPage() {
       const params = new URLSearchParams();
       if (domainFilter) params.set('domain', domainFilter);
       if (classFilter) params.set('workClass', classFilter);
-      return apiFetch<TaskClassification[]>(
-        `/api/v1/analytics/tasks/classifications?${params}`
-      );
+      return apiFetch<TaskClassification[]>(`/api/v1/analytics/tasks/classifications?${params}`);
     },
     refetchInterval: 30000,
   });
@@ -108,8 +106,9 @@ export default function TaskRouterPage() {
     },
   });
 
-  const tasks = tasksQuery.data?.data ?? [];
-  const stats = statsQuery.data?.data ?? ({} as TaskStats);
+  // Array/object guards: envelope drift renders empty/zero, never crashes.
+  const tasks = Array.isArray(tasksQuery.data?.data) ? tasksQuery.data!.data : [];
+  const stats = (statsQuery.data?.data ?? {}) as Partial<TaskStats>;
 
   const domains = [...new Set(tasks.map((t: TaskClassification) => t.domain))].sort();
   const workClasses = ['X', 'S', 'A2', 'A1', 'H1', 'H0'];
@@ -126,7 +125,16 @@ export default function TaskRouterPage() {
         }}
       >
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <h1
+            style={{
+              fontSize: 28,
+              fontWeight: 700,
+              marginBottom: 8,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+            }}
+          >
             <Icon name="clipboardList" size={28} color="var(--admin-orange)" />
             <span>Task Router</span>
           </h1>
@@ -199,7 +207,9 @@ export default function TaskRouterPage() {
               <span style={{ fontSize: 18, fontWeight: 700, color: tierColor(tier) }}>{tier}</span>
               <span style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>{cost}</span>
             </div>
-            <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--admin-text)', marginBottom: 2 }}>
+            <p
+              style={{ fontSize: 12, fontWeight: 600, color: 'var(--admin-text)', marginBottom: 2 }}
+            >
               {label}
             </p>
             <p style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>{desc}</p>
@@ -224,7 +234,9 @@ export default function TaskRouterPage() {
             backgroundColor: 'var(--admin-surface)',
           }}
         >
-          <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginBottom: 4 }}>Total Classifications</p>
+          <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+            Total Classifications
+          </p>
           <p style={{ fontSize: 20, fontWeight: 700, color: 'var(--admin-orange)' }}>
             {stats.total ?? tasks.length}
           </p>
@@ -237,7 +249,9 @@ export default function TaskRouterPage() {
             backgroundColor: 'var(--admin-surface)',
           }}
         >
-          <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginBottom: 4 }}>Automation Candidates</p>
+          <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+            Automation Candidates
+          </p>
           <p style={{ fontSize: 20, fontWeight: 700, color: 'var(--admin-blue)' }}>
             {stats.automationCandidates ?? 0}
           </p>
@@ -250,7 +264,9 @@ export default function TaskRouterPage() {
             backgroundColor: 'var(--admin-surface)',
           }}
         >
-          <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginBottom: 4 }}>Elimination Candidates</p>
+          <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+            Elimination Candidates
+          </p>
           <p style={{ fontSize: 20, fontWeight: 700, color: 'var(--admin-red)' }}>
             {stats.eliminationCandidates ?? 0}
           </p>
@@ -263,7 +279,9 @@ export default function TaskRouterPage() {
             backgroundColor: 'var(--admin-surface)',
           }}
         >
-          <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginBottom: 4 }}>Work Classes</p>
+          <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+            Work Classes
+          </p>
           <p style={{ fontSize: 20, fontWeight: 700, color: 'var(--admin-purple)' }}>
             {Object.keys(stats.byWorkClass ?? {}).length}
           </p>
@@ -314,7 +332,9 @@ export default function TaskRouterPage() {
 
       {/* Task Table */}
       {tasksQuery.isLoading ? (
-        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading…</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+          Loading…
+        </p>
       ) : tasks.length === 0 ? (
         <div
           style={{
@@ -334,7 +354,9 @@ export default function TaskRouterPage() {
           </p>
         </div>
       ) : (
-        <div style={{ borderRadius: 16, border: '1px solid var(--admin-surface)', overflow: 'hidden' }}>
+        <div
+          style={{ borderRadius: 16, border: '1px solid var(--admin-surface)', overflow: 'hidden' }}
+        >
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ backgroundColor: 'rgba(232,66,10,0.08)' }}>

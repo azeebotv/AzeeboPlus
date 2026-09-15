@@ -12,9 +12,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../src/contexts/AuthContext';
-import { referralApi } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { referralApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../../src/theme';
 
 interface ReferralStats {
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     minWidth: '30%',
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
   earningsValue: { color: '#10B981' },
   statLabel: { fontSize: 11, color: colors.light[400] },
   shareSection: {
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 16,
     padding: 20,
     marginBottom: 24,
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
   emptyText: { fontSize: 16, color: colors.light[400], marginBottom: 4 },
   emptySubtext: { fontSize: 14, color: '#6B7280' },
   referralCard: {
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
   referralDate: { fontSize: 12, color: '#6B7280' },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   statusBadgeSuccess: { backgroundColor: '#10B98120' },
-  statusBadgeActive: { backgroundColor: colors.alphaColors.primaryA20 },
+  statusBadgeActive: { backgroundColor: colors.alpha.primary20 },
   statusBadgePending: { backgroundColor: '#F59E0B20' },
   statusText: { fontSize: 12, fontWeight: '600', color: '#FFFFFF' },
   earningsText: { fontSize: 14, color: '#10B981', fontWeight: '600' },

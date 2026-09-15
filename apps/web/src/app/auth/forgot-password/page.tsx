@@ -87,7 +87,7 @@ export default function ForgotPasswordPage(): React.JSX.Element {
               top: 95,
               width: 180,
               height: 160,
-              background: 'linear-gradient(160deg, #3a1a0a, #0b090e)',
+              background: 'var(--auth-warm-gradient)',
               border: '2px solid rgba(232,66,10,0.5)',
               boxShadow: '0 0 40px rgba(204,28,28,0.4)',
             }}

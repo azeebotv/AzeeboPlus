@@ -66,7 +66,7 @@ function StatCard({
         padding: 20,
         borderRadius: 16,
         border: '1px solid rgba(255,255,255,0.08)',
-        backgroundColor: '#18151e',
+        backgroundColor: 'var(--bg-tertiary)',
         position: 'relative',
         overflow: 'hidden',
       }}
@@ -134,7 +134,7 @@ export default function CreatorDashboardPage(): React.JSX.Element {
     return (
       <div
         style={{
-          backgroundColor: 'var(--brand-near-black, #0b090e)',
+          backgroundColor: 'var(--bg-primary)',
           minHeight: '100vh',
           color: 'var(--text-primary)',
         }}
@@ -151,7 +151,7 @@ export default function CreatorDashboardPage(): React.JSX.Element {
   return (
     <div
       style={{
-        backgroundColor: 'var(--brand-near-black, #0b090e)',
+        backgroundColor: 'var(--bg-primary)',
         minHeight: '100vh',
         color: 'var(--text-primary)',
       }}
@@ -220,7 +220,7 @@ export default function CreatorDashboardPage(): React.JSX.Element {
                   padding: '16px 20px',
                   borderRadius: 16,
                   border: '1px solid rgba(255,255,255,0.08)',
-                  backgroundColor: '#18151e',
+                  backgroundColor: 'var(--bg-tertiary)',
                   cursor: 'pointer',
                   textAlign: 'left',
                   color: 'var(--text-primary)',

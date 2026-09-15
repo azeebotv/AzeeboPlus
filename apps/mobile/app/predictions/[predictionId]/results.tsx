@@ -9,8 +9,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
-import { realityApi } from '../../../src/api';
-import { logger } from '../../../src/utils/logger';
+import { realityApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../../../src/theme';
 
 interface PredictionResult {
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     color: colors.light[400],
   },
   resultCard: {
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#10B98120',
   },
   badgeError: {
-    backgroundColor: colors.alphaColors.dangerA20,
+    backgroundColor: colors.alpha.danger20,
   },
   badgeText: {
     fontSize: 12,
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
     color: colors.light[400],
   },
   rewardsCard: {
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
   },

@@ -17,7 +17,10 @@
  * forbidNonWhitelisted) and can be asserted against DTO truth in tests.
  */
 
-import type { InternalDebitWalletDto, InternalCreditWalletDto } from './wallet-contract/internal-wallet.dtos.js';
+import type {
+  InternalDebitWalletDto,
+  InternalCreditWalletDto,
+} from './wallet-contract/internal-wallet.dtos.js';
 
 export type InternalDebitPayload = Omit<InternalDebitWalletDto, never>;
 export type InternalCreditPayload = Omit<InternalCreditWalletDto, never>;
@@ -28,12 +31,20 @@ export function tipIdempotencyKey(fromUserId: string, toUserId: string, amount: 
 }
 
 /** Idempotency key for a subscription debit (`subscribe:user:creator:tier`). */
-export function subscriptionIdempotencyKey(userId: string, creatorId: string, tier: string): string {
+export function subscriptionIdempotencyKey(
+  userId: string,
+  creatorId: string,
+  tier: string
+): string {
   return `subscribe:${userId}:${creatorId}:${tier}`;
 }
 
 /** Debit the tip sender's wallet. */
-export function tipDebitPayload(fromUserId: string, toUserId: string, amount: number): InternalDebitPayload {
+export function tipDebitPayload(
+  fromUserId: string,
+  toUserId: string,
+  amount: number
+): InternalDebitPayload {
   return {
     amount,
     description: `Tip to creator ${toUserId}`,
@@ -42,7 +53,11 @@ export function tipDebitPayload(fromUserId: string, toUserId: string, amount: nu
 }
 
 /** Credit the tip recipient's wallet. */
-export function tipCreditPayload(fromUserId: string, toUserId: string, amount: number): InternalCreditPayload {
+export function tipCreditPayload(
+  fromUserId: string,
+  toUserId: string,
+  amount: number
+): InternalCreditPayload {
   return {
     amount,
     description: `Tip from user ${fromUserId}`,
@@ -51,7 +66,11 @@ export function tipCreditPayload(fromUserId: string, toUserId: string, amount: n
 }
 
 /** Compensate the sender (refund) after a failed tip credit. */
-export function tipCompensationPayload(fromUserId: string, toUserId: string, amount: number): InternalCreditPayload {
+export function tipCompensationPayload(
+  fromUserId: string,
+  toUserId: string,
+  amount: number
+): InternalCreditPayload {
   return {
     amount,
     description: `Compensation for failed tip credit: ${tipIdempotencyKey(fromUserId, toUserId, amount)}`,
@@ -60,7 +79,12 @@ export function tipCompensationPayload(fromUserId: string, toUserId: string, amo
 }
 
 /** Debit the subscriber's wallet for a premium subscription. */
-export function subscriptionDebitPayload(userId: string, creatorId: string, amount: number, tier: string): InternalDebitPayload {
+export function subscriptionDebitPayload(
+  userId: string,
+  creatorId: string,
+  amount: number,
+  tier: string
+): InternalDebitPayload {
   return {
     amount,
     description: `Subscription to creator ${creatorId} - ${tier}`,
@@ -69,7 +93,12 @@ export function subscriptionDebitPayload(userId: string, creatorId: string, amou
 }
 
 /** Credit the creator's wallet for a premium subscription. */
-export function subscriptionCreditPayload(userId: string, creatorId: string, amount: number, tier: string): InternalCreditPayload {
+export function subscriptionCreditPayload(
+  userId: string,
+  creatorId: string,
+  amount: number,
+  tier: string
+): InternalCreditPayload {
   return {
     amount,
     description: `Subscription from user ${userId} - ${tier}`,
@@ -78,7 +107,12 @@ export function subscriptionCreditPayload(userId: string, creatorId: string, amo
 }
 
 /** Compensate the subscriber after a failed subscription credit. */
-export function subscriptionCompensationPayload(userId: string, creatorId: string, amount: number, tier: string): InternalCreditPayload {
+export function subscriptionCompensationPayload(
+  userId: string,
+  creatorId: string,
+  amount: number,
+  tier: string
+): InternalCreditPayload {
   return {
     amount,
     description: `Compensation for failed subscription credit: ${subscriptionIdempotencyKey(userId, creatorId, tier)}`,

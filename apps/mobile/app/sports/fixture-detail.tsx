@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { apiClient } from '../../src/api';
+import { apiClient } from '@azeebo/react-data';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
 
@@ -102,7 +102,7 @@ export default function FixtureDetailScreen() {
             <View
               style={[
                 styles.statBarFill,
-                { width: `${homePct}%`, backgroundColor: colors.palette.alarmRed },
+                { width: `${homePct}%`, backgroundColor: colors.error[500] },
               ]}
             />
           </View>
@@ -111,7 +111,7 @@ export default function FixtureDetailScreen() {
             <View
               style={[
                 styles.statBarFillRight,
-                { width: `${100 - homePct}%`, backgroundColor: colors.palette.grey500 },
+                { width: `${100 - homePct}%`, backgroundColor: colors.neutral[500] },
               ]}
             />
           </View>
@@ -221,14 +221,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   backIcon: { color: '#fff', fontSize: 20 },
   headerTitle: { fontSize: 20, fontWeight: '700' },
   matchCard: { margin: 16, padding: 20, borderRadius: 16, alignItems: 'center' },
-  leagueText: { color: colors.palette.alarmRed, fontSize: 12, fontWeight: '600', marginBottom: 16 },
+  leagueText: { color: colors.error[500], fontSize: 12, fontWeight: '600', marginBottom: 16 },
   matchTeams: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -241,8 +241,8 @@ const styles = StyleSheet.create({
   teamName: { fontSize: 14, fontWeight: '700', textAlign: 'center' },
   scoreColumn: { alignItems: 'center', paddingHorizontal: 20 },
   scoreText: { fontSize: 32, fontWeight: '700', marginBottom: 4 },
-  statusText: { color: colors.palette.grey500, fontSize: 12 },
-  venueText: { color: colors.palette.grey500, fontSize: 12 },
+  statusText: { color: colors.text.secondary, fontSize: 12 },
+  venueText: { color: colors.text.secondary, fontSize: 12 },
   tabBar: { flexDirection: 'row', paddingHorizontal: 16, marginBottom: 16 },
   tab: {
     flex: 1,
@@ -251,17 +251,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
-  tabActive: { borderBottomColor: colors.palette.alarmRed },
-  tabText: { color: colors.palette.grey500, fontSize: 14, fontWeight: '600' },
-  tabTextActive: { color: colors.palette.alarmRed },
+  tabActive: { borderBottomColor: colors.error[500] },
+  tabText: { color: colors.text.secondary, fontSize: 14, fontWeight: '600' },
+  tabTextActive: { color: colors.error[500] },
   statsSection: { paddingHorizontal: 16, gap: 16 },
   statRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   statValue: { fontSize: 14, fontWeight: '700', width: 30, textAlign: 'center' },
   statBarContainer: { flex: 1, alignItems: 'center' },
-  statBar: { height: 4, backgroundColor: colors.palette.charcoal, borderRadius: 2, width: '100%' },
+  statBar: { height: 4, backgroundColor: colors.bg.tertiary, borderRadius: 2, width: '100%' },
   statBarFill: { height: 4, borderRadius: 2 },
   statBarFillRight: { height: 4, borderRadius: 2, marginLeft: 'auto' },
-  statLabel: { color: colors.palette.grey500, fontSize: 11, marginVertical: 4 },
+  statLabel: { color: colors.text.secondary, fontSize: 11, marginVertical: 4 },
   predictionsSection: { paddingHorizontal: 16, gap: 10 },
   predictionCard: {
     flexDirection: 'row',
@@ -271,10 +271,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   predictionLabel: { fontSize: 14, fontWeight: '600' },
-  predictionOdds: { color: colors.palette.alarmRed, fontSize: 16, fontWeight: '700' },
+  predictionOdds: { color: colors.error[500], fontSize: 16, fontWeight: '700' },
   lineupsSection: { paddingHorizontal: 16 },
   emptyText: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 14,
     textAlign: 'center',
     paddingVertical: 30,

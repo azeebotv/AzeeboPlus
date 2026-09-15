@@ -32,6 +32,7 @@ calls the API at all anymore.
      | Permission | Access | Why |
      |---|---|---|
      | Pull requests | Read and write | Upsert the drift comment on PRs |
+     | Issues | Read and write | Own the production-drift tracking issue (create/update/close — see below) |
      | Actions | Read-only | Fetch the nightly `schema-lock-report-<env>-<run_id>` artifacts for the live-environment section |
      | Contents | no access | The bot never reads or writes code |
      | Metadata | Read-only | (forced on by GitHub) |
@@ -68,6 +69,56 @@ secret makes the condition false without failing the run.
 There is deliberately **no fallback to `github.token`** — a hidden fallback
 would silently reintroduce the workflow identity this split removes.
 
+## Production-drift tracking issue
+
+Beyond PR comments, the App owns ONE tracking issue for production schema
+drift (found by the `<!-- azeebo:prod-drift-tracking -->` marker via issue
+search): the nightly workflow's production leg runs
+`scripts/update-drift-tracking-issue.mjs`, which
+
+- **creates** the issue when drift first appears,
+- **updates** it in place only when the violating-service set changes (no
+  noisy nightly edits),
+- **closes** it with a resolved body when a nightly run finds production
+  clean, and **reopens** it if drift returns,
+- **skips loudly** when the App is not configured (no fallback to the
+  workflow token — an App-owned issue does not retrigger workflows; a
+  workflow-owned one would).
+
+The tracker reads the report the nightly run just wrote (`DRIFT_LOCAL_REPORT`)
+— the freshest *completed* run's artifact is still yesterday's at that point.
+
+## Weekly tracker staleness sweep
+
+A service can stay in the tracker forever if its database was
+**decommissioned** (dropped with the service) while it carried a blocking
+row: the nightly's own NO-DB path eventually stops listing it, but that
+self-heal launders the history, does nothing on weeks the nightly cannot
+run, and never fires when a fossilized database keeps flapping
+ERROR/BLOCKED-LEDGER.
+
+The weekly drift sweep workflow (`drift-sweep-schedule.yml` →
+`drift-tracker-sweep` job) runs `scripts/sweep-drift-tracker.mjs` under the
+App identity to close that hole:
+
+- parses the **open tracker's own violation table** (the source of truth —
+  works even when the nightly is broken),
+- probes each listed service against the production DB host using the same
+  naming convention + existence probe as the nightly
+  (`scripts/lib/live-db-probe.mjs`),
+- **removes only entries whose database no longer exists** — a decommission,
+  never a "fix" — with a durable note in the issue naming what was removed,
+  so the decision is auditable,
+- **aborts without editing** when more than a couple of probes fail (an
+  unverifiable host must not become "everything is stale"), and closes the
+  tracker if every listed entry turns out to be gone.
+
+Requires the production DB credentials (`DB_HOST` / `DB_PORT` / `DB_USER` /
+`DB_PASSWORD` on the `production` environment, the same secrets the nightly
+uses) in addition to the App configuration. Unconfigured App or missing DB
+secrets → a visible skip, never a fallback. The probes are read-only
+(`pg_database` existence checks); the sweep never writes to any database.
+
 ## Key rotation
 
 Generate a new key on the App's settings page, update
@@ -79,3 +130,6 @@ short-lived (~1 hour) so the swap window is harmless.
 `scripts/__tests__/post-drift-pr-comment.integration.test.mjs` covers the
 identity paths against a fake GitHub API server: token-present on every call,
 absent-token skip, empty-string skip, and rejected-token failure.
+`scripts/__tests__/sweep-drift-tracker.integration.test.mjs` covers the
+weekly staleness sweep the same way (plus a fake `psql` shim simulating
+database existence, per-probe failures, and a dead host).

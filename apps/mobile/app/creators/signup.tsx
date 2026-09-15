@@ -11,9 +11,9 @@ import {
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { creatorApi } from '../../src/api/creator';
-import { apiClient } from '../../src/api/client';
-import { logger } from '../../src/utils/logger';
+import { creatorApi } from '@azeebo/react-data/api/creator';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
 
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -367,12 +367,12 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   progressCircleActive: {
-    backgroundColor: colors.palette.teal,
+    backgroundColor: colors.category.teal,
   },
   progressItemActive: {},
   progressNumber: {
@@ -383,10 +383,10 @@ const styles = StyleSheet.create({
   progressLine: {
     flex: 1,
     height: 2,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
   },
   progressLineActive: {
-    backgroundColor: colors.palette.teal,
+    backgroundColor: colors.category.teal,
   },
   content: {
     flex: 1,
@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   stepDesc: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 14,
     marginBottom: 24,
   },
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   optionCardActive: {
-    borderColor: colors.palette.teal,
+    borderColor: colors.category.teal,
   },
   optionEmoji: {
     fontSize: 32,
@@ -437,7 +437,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: colors.palette.teal,
+    backgroundColor: colors.category.teal,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   optionListItemActive: {
-    borderColor: colors.palette.teal,
+    borderColor: colors.category.teal,
   },
   optionListLabel: {
     fontSize: 16,
@@ -493,7 +493,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: 'center',
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
   },
   backButtonMainText: {
     color: '#fff',
@@ -505,7 +505,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: 'center',
-    backgroundColor: colors.palette.teal,
+    backgroundColor: colors.category.teal,
   },
   nextButtonText: {
     color: '#000',

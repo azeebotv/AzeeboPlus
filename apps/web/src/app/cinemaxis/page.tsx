@@ -51,7 +51,9 @@ function CinemaxisPageContent(): React.JSX.Element {
       {/* Hero */}
       <section
         className="relative py-20 overflow-hidden"
-        style={{ background: 'linear-gradient(180deg, #100e14 0%, #0b090e 100%)' }}
+        style={{
+          background: 'linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%)',
+        }}
       >
         <AmbientGlow
           color="rgba(232, 66, 10, 0.15)"

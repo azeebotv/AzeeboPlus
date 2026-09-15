@@ -118,7 +118,7 @@ export default function NotificationsScreen() {
           {notificationsList.length === 0 ? (
             <View style={{ padding: 40, alignItems: 'center' }}>
               <Text style={{ fontSize: 48, marginBottom: 12 }}>🔔</Text>
-              <Text style={[{ fontSize: 16, color: colors.palette.grey500 }]}>
+              <Text style={[{ fontSize: 16, color: colors.text.secondary }]}>
                 No notifications yet
               </Text>
             </View>
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.palette.grey800,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
   },
   notificationMessage: {
     fontSize: 13,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     marginBottom: 8,
   },
   notificationFooter: {
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
   },
   notificationTime: {
     fontSize: 12,
-    color: colors.palette.grey600,
+    color: colors.text.tertiary,
   },
   notificationAction: {
     fontSize: 12,
@@ -328,6 +328,6 @@ const styles = StyleSheet.create({
   },
   settingDescription: {
     fontSize: 12,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
   },
 });

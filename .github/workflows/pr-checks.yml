@@ -292,6 +292,39 @@ jobs:
         env:
           NODE_OPTIONS: --max-old-space-size=6144
 
+  tv-bundle-pr:
+    name: TV Metro Graph Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      # Expo Router needs typed routes during export; apps/tv generates them
+      # into .expo/types at build time (gitignored). This also populates any
+      # other repo prisma clients the packages' type graph references.
+      - run: pnpm run prisma:generate --if-present
+      # The TV tsconfig resolves @azeebo/feature-flags/registries (and the
+      # @azeebo/* fallback) from packages/*/dist — a fresh checkout has no
+      # dist, so build the packages first (same as test-pr).
+      - run: pnpm --filter './packages/**' run build
+      # (1) TV's own TS project: app, src, types — the root `typecheck` only
+      # covers apps/web, so without this job a TV-only regression ships
+      # uncaught on every PR.
+      - run: pnpm --filter @azeebo/tv run typecheck
+      # (2) Compile the real Metro graph (expo-router entries, package exports
+      # maps, asset resolution) to Hermes bytecode. Catches the class of
+      # breakage tsc cannot see: a bad exports map, an import only Metro
+      # resolves, a malformed screen. Verifies what a TV device would
+      # actually download.
+      - run: pnpm --filter @azeebo/tv run bundle:check
+
   test-pr:
     name: Test PR
     runs-on: ubuntu-latest
@@ -407,7 +440,7 @@ jobs:
     name: Build PR
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: [pr-validation, lint-pr, conventions-pr, prisma-migrations-pr, prisma-live-drift-pr, typecheck-pr, test-pr, integration-test-pr]
+    needs: [pr-validation, lint-pr, conventions-pr, prisma-migrations-pr, prisma-live-drift-pr, typecheck-pr, tv-bundle-pr, test-pr, integration-test-pr]
 
     steps:
       - uses: actions/checkout@v4

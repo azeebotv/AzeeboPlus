@@ -14,8 +14,8 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { colors } from '../../src/theme';
-import { apiClient } from '../../src/api/client';
-import { useAuth } from '../../src/contexts/AuthContext';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 
 interface ChatMessage {

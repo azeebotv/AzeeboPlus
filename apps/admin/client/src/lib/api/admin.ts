@@ -24,13 +24,20 @@ import type {
   SystemSetting,
   SubscriptionPlan,
   SubscriptionStats,
+  WalletStats,
   LiveEventAdmin,
   BundlePassAdmin,
+  PayoutRequest,
+  PayoutStats,
+  TippingConfig,
+  PromoCode,
+  WebhookEvent,
+  SupportTicket,
+  SupportStats,
 } from '../admin-types';
 
 export interface DashboardStats {
   totalUsers: number;
-  dailyActiveUsers: number;
   totalContent: number;
   totalViews: number;
   totalRevenue: number;
@@ -89,6 +96,10 @@ export interface AuditLogEntry {
 export const adminApi = {
   // ─── Dashboard ──────────────────────────────────────────────────────────
   getDashboard: () => apiFetch<DashboardStats>('/api/v1/admin/dashboard/stats'),
+  getDashboardRevenue: (days = 30) =>
+    apiFetch<Array<{ date: string; revenue: number }>>(
+      `/api/v1/admin/dashboard/revenue?days=${days}`
+    ),
   getPlatformOverview: () => apiFetch<PlatformOverview>('/api/v1/admin/overview'),
 
   // ─── Users ──────────────────────────────────────────────────────────────
@@ -253,6 +264,7 @@ export const adminApi = {
     }),
 
   // ─── Engagement ─────────────────────────────────────────────────────────
+  getWalletStats: () => apiFetch<WalletStats>('/api/v1/admin/wallets/stats'),
   getEngagementMetrics: () => apiFetch<EngagementMetrics>('/api/v1/admin/engagement/metrics'),
   getEngagementTrends: (range: string) =>
     apiFetch<EngagementTrend[]>(`/api/v1/admin/engagement/trends?range=${range}`),
@@ -328,10 +340,7 @@ export const adminApi = {
       method: 'PUT',
       body: JSON.stringify(flag),
     }),
-  deleteFeatureFlag: (universeId: string, featureKey: string) =>
-    apiFetch<unknown>(`/api/v1/admin/universes/${universeId}/feature-flags/${featureKey}`, {
-      method: 'DELETE',
-    }),
+  // (deleteFeatureFlag was a dead duplicate of deleteFeatureFlagByKey — removed.)
 
   // ─── Feature Flags (per-universe, published to Redis at runtime) ──────
   listFeatureFlags: () => apiFetch<unknown>('/api/v1/admin/universes/feature-flags'),
@@ -481,15 +490,14 @@ export const adminApi = {
     apiFetch<unknown>(`/api/v1/admin/agbala/storyworlds/${id}/unpublish`, { method: 'POST' }),
 
   // ─── Agbala / Characters ────────────────────────────────────────────────
-  getCharacters: (storyworldId?: string, page = 1, limit = 20) => {
-    const q = new URLSearchParams({ page: String(page), limit: String(limit) });
-    if (storyworldId) q.set('storyworldId', storyworldId);
-    return apiFetch<{ items: AgbalaCharacter[]; total: number }>(
-      `/api/v1/admin/agbala/characters?${q}`
-    );
-  },
-  createCharacter: (data: Record<string, unknown>) =>
-    apiFetch<unknown>('/api/v1/admin/agbala/characters', {
+  // Characters live under the nested storyworld route upstream — the flat
+  // /admin/agbala/characters path has no backend route (404).
+  getCharacters: (storyworldId: string) =>
+    apiFetch<{ items: AgbalaCharacter[]; total: number }>(
+      `/api/v1/admin/agbala/storyworlds/${storyworldId}/characters`
+    ),
+  createCharacter: (storyworldId: string, data: Record<string, unknown>) =>
+    apiFetch<unknown>(`/api/v1/admin/agbala/storyworlds/${storyworldId}/characters`, {
       method: 'POST',
       body: JSON.stringify(data),
     }),
@@ -701,7 +709,111 @@ export const adminApi = {
     apiFetch<GatewayRateLimitSnapshot>('/api/v1/admin/ops/gateway-rate-limits'),
   runOpsJob: (job: string) =>
     apiFetch<RunJobOutcome>(`/api/v1/admin/ops/run/${job}`, { method: 'POST' }),
+
+  // ─── Payout Requests (G7 — Financial) ────────────────────────────────────────
+  getPayoutRequests: (params: { page?: number; limit?: number; status?: string } = {}) => {
+    const q = new URLSearchParams();
+    if (params.page) q.set('page', String(params.page));
+    if (params.limit) q.set('limit', String(params.limit));
+    if (params.status) q.set('status', params.status);
+    return apiFetch<{ items: PayoutRequest[]; total: number; stats: PayoutStats }>(
+      `/api/v1/admin/wallets/payouts?${q}`
+    );
+  },
+  approvePayoutRequest: (id: string) =>
+    apiFetch<PayoutRequest>(`/api/v1/admin/wallets/payouts/${id}/approve`, { method: 'PUT' }),
+  rejectPayoutRequest: (id: string, reason: string) =>
+    apiFetch<PayoutRequest>(`/api/v1/admin/wallets/payouts/${id}/reject`, {
+      method: 'PUT',
+      body: JSON.stringify({ reason }),
+    }),
+
+  // ─── Bulk user actions (G1 — Users) ──────────────────────────────────────────
+  bulkSuspendUsers: (ids: string[], reason: string, durationDays?: number) =>
+    apiFetch<{ suspended: number; failed: number }>(
+      '/api/v1/admin/users/bulk/suspend',
+      {
+        method: 'POST',
+        body: JSON.stringify({ ids, reason, durationDays }),
+      }
+    ),
+
+  // ─── Tipping Config (G2 — Tipping) ───────────────────────────────────────────
+  getTippingConfig: () => apiFetch<TippingConfig>('/api/v1/admin/ops/tipping-config'),
+  updateTippingConfig: (cfg: Partial<TippingConfig>) =>
+    apiFetch<TippingConfig>('/api/v1/admin/ops/tipping-config', {
+      method: 'PUT',
+      body: JSON.stringify(cfg),
+    }),
+
+  // ─── Promo Codes (G3 — Subscriptions) ────────────────────────────────────────
+  getPromoCodes: () =>
+    apiFetch<{ items: PromoCode[]; total: number }>('/api/v1/admin/subscriptions/promo-codes'),
+  createPromoCode: (data: Omit<PromoCode, 'id' | 'usedCount' | 'status' | 'createdAt'>) =>
+    apiFetch<PromoCode>('/api/v1/admin/subscriptions/promo-codes', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  expirePromoCode: (id: string) =>
+    apiFetch<PromoCode>(`/api/v1/admin/subscriptions/promo-codes/${id}/expire`, {
+      method: 'PUT',
+    }),
+  deletePromoCode: (id: string) =>
+    apiFetch<unknown>(`/api/v1/admin/subscriptions/promo-codes/${id}`, { method: 'DELETE' }),
+
+  // ─── Webhook Events (G4 — Payment Gateways) ──────────────────────────────────
+  getGatewayWebhooks: (id: string, limit = 20) =>
+    apiFetch<{ items: WebhookEvent[]; total: number }>(
+      `/api/v1/admin/payment-gateways/${id}/webhooks?limit=${limit}`
+    ),
+
+  // ─── Settings test-integration (G5 — Settings) ───────────────────────────────
+  testSettingIntegration: (provider: string) =>
+    apiFetch<{ provider: string; status: string; testedAt: string; details: Record<string, unknown> }>(
+      `/api/v1/admin/settings/integrations/${provider}/test`,
+      { method: 'POST' }
+    ),
+
+  // ─── Support Tickets (G6 — Support) ──────────────────────────────────────────
+  getSupportStats: () => apiFetch<SupportStats>('/api/v1/admin/support/stats'),
+  getSupportTickets: (params: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    priority?: string;
+    category?: string;
+    search?: string;
+  } = {}) => {
+    const q = new URLSearchParams();
+    if (params.page) q.set('page', String(params.page));
+    if (params.limit) q.set('limit', String(params.limit));
+    if (params.status) q.set('status', params.status);
+    if (params.priority) q.set('priority', params.priority);
+    if (params.category) q.set('category', params.category);
+    if (params.search) q.set('search', params.search);
+    return apiFetch<{ items: SupportTicket[]; total: number; totalPages: number }>(
+      `/api/v1/admin/support/tickets?${q}`
+    );
+  },
+  getSupportTicket: (id: string) =>
+    apiFetch<SupportTicket>(`/api/v1/admin/support/tickets/${id}`),
+  updateSupportTicketStatus: (id: string, status: string) =>
+    apiFetch<SupportTicket>(`/api/v1/admin/support/tickets/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    }),
+  assignSupportTicket: (id: string, assignedTo: string) =>
+    apiFetch<SupportTicket>(`/api/v1/admin/support/tickets/${id}/assign`, {
+      method: 'PUT',
+      body: JSON.stringify({ assignedTo }),
+    }),
+  replySupportTicket: (id: string, body: string) =>
+    apiFetch<SupportTicket>(`/api/v1/admin/support/tickets/${id}/reply`, {
+      method: 'POST',
+      body: JSON.stringify({ body }),
+    }),
 };
+
 
 /** Outcome of a manual "Run now" job execution. */
 export interface RunJobOutcome {

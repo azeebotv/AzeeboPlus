@@ -5,8 +5,8 @@ import {
   Post,
   Put,
   Param,
-  Body,
   Query,
+  Body,
   UseGuards,
   Req,
 } from '@nestjs/common';
@@ -27,11 +27,11 @@ interface AuthRequest extends Request {
 @Roles('admin', 'superadmin')
 export class WalletManagementController {
   constructor(
-    @Inject(WalletManagementService) private readonly walletService: WalletManagementService,
-    @Inject(AuditLogService) private readonly auditLogService: AuditLogService
+    @Inject(WalletManagementService)
+    private readonly walletService: WalletManagementService,
+    @Inject(AuditLogService) private readonly auditService: AuditLogService
   ) {}
 
-  /** Manual balance adjustment — credit/debit/correction with ledger entry. */
   @Post(':walletId/adjust')
   async adjustWalletBalance(
     @Param('walletId') walletId: string,
@@ -46,7 +46,7 @@ export class WalletManagementController {
       body.description || '',
       actorId
     );
-    await this.auditLogService.log({
+    await this.auditService.log({
       actorId,
       action: 'wallet.adjusted',
       targetType: 'wallet',
@@ -65,6 +65,48 @@ export class WalletManagementController {
   @Get('stats')
   async getWalletStats() {
     return this.walletService.getWalletStats();
+  }
+
+  @Get('payouts')
+  async getPayoutRequests(
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+    @Query('status') status?: string
+  ) {
+    return this.walletService.getPayoutRequests(Number(page), Number(limit), status);
+  }
+
+  @Put('payouts/:id/approve')
+  async approvePayoutRequest(@Param('id') id: string, @Req() req: AuthRequest) {
+    const actorId = resolveActorId(req);
+    const result = await this.walletService.approvePayoutRequest(id, actorId);
+    await this.auditService.log({
+      actorId,
+      action: 'payout.approved',
+      targetType: 'payout_request',
+      targetId: id,
+      ipAddress: req.ip,
+    });
+    return result;
+  }
+
+  @Put('payouts/:id/reject')
+  async rejectPayoutRequest(
+    @Param('id') id: string,
+    @Body() body: { reason: string },
+    @Req() req: AuthRequest
+  ) {
+    const actorId = resolveActorId(req);
+    const result = await this.walletService.rejectPayoutRequest(id, body?.reason || '', actorId);
+    await this.auditService.log({
+      actorId,
+      action: 'payout.rejected',
+      targetType: 'payout_request',
+      targetId: id,
+      details: { reason: body?.reason },
+      ipAddress: req.ip,
+    });
+    return result;
   }
 
   @Get(':id/transactions')

@@ -23,7 +23,8 @@ Two conventions hold across all of them:
 |-------|--------------------------------------------|-------------|
 | `check:flags` | Flag & Swagger Conventions | — |
 | `check:flags:docs` | (flag registry doc sync) | — |
-| `check:lint-ratchet` | Lint PR + lint.yml backend lint (right after `pnpm -r lint`) | baseline may only move down |
+| `check:lint-ratchet` | Lint PR + lint.yml backend lint (right after `pnpm -r lint`) | per-rule baselines; fully-gated rules canary at 0 |
+| `check:rule-promotion` | Lint PR + lint.yml backend lint (right after the ratchet) | listed rules must stay `error` for every service |
 | `check:prisma` | Flag & Swagger Conventions | — |
 | `check:dev-wiring` | Flag & Swagger Conventions | — |
 | `check:build-chain` | Flag & Swagger Conventions | — |
@@ -39,6 +40,7 @@ Two conventions hold across all of them:
 | `check:live-schema-lock` | none (report only, never fails a PR) | read-only probe of live DBs |
 | `check:upstreams` | none (startup advisory; `--strict` for CI) | run after `start-all.sh` |
 | route-contracts | none (manual dev tool) | client↔gateway contract audit |
+| federation-drill | Federation Drill (`.github/workflows/federation-drill.yml`) | weekly LaunchAgent on dev machines |
 
 ---
 
@@ -68,23 +70,33 @@ registry byte-for-byte (it's `generate-flag-registry-table.mjs --check`).
 
 ### `check:lint-ratchet` — per-rule lint warning ratchet
 
-**Invariant:** the count of `azeebo-custom/require-map-and-throw` warnings
-per workspace never exceeds the committed baseline
-(`scripts/lint-warning-baseline.json`) — and the baseline only moves down.
+**Invariant:** for every rule with a `ratchet` path in
+`scripts/promotion-rules.json`, the per-workspace warning count never exceeds
+the committed baseline, and the baseline only moves down.
 
 A plain `--max-warnings` cannot enforce this ratchet: it counts ALL warnings,
-so an unrelated `console.log` could mask ratchet growth (or hide a real
-regression). This gate counts warnings **per rule and per workspace**.
+so an unrelated `console.log` could mask growth (or hide a real regression).
+This gate counts warnings **per rule and per workspace**.
+
+Two postures, one mechanism:
+
+- **Migrating rule** (`warn` repo-wide) — the baseline is a floor that only
+  moves down; conversions lower it via `--update` until it reaches 0.
+- **Fully-gated rule** (`error` in the base config — `require-map-and-throw`
+  since its migration completed) — the baseline sits at total **0** as a
+  canary: live warnings should be impossible, so the first one fails CI
+  immediately, meaning the severity regressed somewhere.
 
 Fails when: any workspace's count exceeds its baseline. Workspaces absent
 from the baseline are compared against **0** — new services cannot ship with
 warnings. Dropping below the baseline does not fail; run `--update` to lock
 in the improvement (otherwise a later PR could grow back to the old count).
 
-**Fix:** migrate the flagged catch blocks to `mapAndThrow` — or, if you
-reduced warnings, `node scripts/check-lint-warning-ratchet.mjs --update` to
-lower the floor. Fully-converted services move to the `error` block in
-`eslint.config.js` and can be deleted from the baseline.
+**Fix:** for a migrating rule, convert the flagged catch blocks (or lower
+the floor with `node scripts/check-lint-warning-ratchet.mjs --update` after
+a genuine reduction). For a fully-gated rule, the warning itself is the bug —
+fix the catch block (see `packages/eslint-rules/README.md`), never lower the
+floor to make it pass.
 
 ### `check:seed-image-hosts` — seeder media hosts ↔ web image allowlist
 
@@ -140,6 +152,30 @@ API versioning is owned by the api-gateway; services don't call
 `setGlobalPrefix`.
 
 **Fix:** add the `SwaggerModule.setup` / version declaration the error names.
+
+### federation-drill — federation survives service-DB failures
+
+**Invariant:** the admin panel's postgres_fdw federation (live foreign
+tables over the per-service DBs) heals from both failure classes — a
+dropped service DB, and a service DB recreated without the admin-owned
+additive columns.
+
+Runs when: a PR touches `scripts/database/**` or the workflow itself
+(`workflow_dispatch` for manual runs). The job boots an ephemeral
+postgres:16 container, creates the seven service DBs from the checked-in
+fixture (`scripts/database/ci/drill-fixture.sql`), bootstraps federation
+cold (which is itself the first-federation test), then runs
+`scripts/database/federation-drill.sh` — both scenarios, with its
+assertion-style exit code deciding the job.
+
+Fails when: any drill assertion fails — an FDW server not pointing at its
+canonical DB, a foreign table broken, the cross-DB `users ⋈ wallets` join
+empty, `auth_audit_logs` diverged from its source, or (scenario 2) the six
+admin-owned `users` columns not repaired after the drift.
+
+**Fix:** the failing assertion names the contract; run the drill locally
+against a scratch pair to reproduce (see RUNBOOK "Federation Drill"), patch
+`federate-admin-db.sh`, re-push.
 
 ### route-contracts (manual)
 
@@ -212,8 +248,6 @@ for every new clone, so CI is the backstop.
 
 **Fix:** restore/`chmod +x`/`git add scripts/hooks/pre-commit`.
 
----
-
 ### `check:ci-dark` — Actions darkness watchdog (scheduled, not a PR gate)
 
 **Invariant:** CI cannot go dark silently. A "dark battery" is a workflow run
@@ -244,6 +278,8 @@ author-triage territory, not darkness.
 
 **Fix:** read the tracking issue's cause column; billing blocks need a human
 in Settings → Billing & plans.
+
+---
 
 ## Prisma client & schema
 

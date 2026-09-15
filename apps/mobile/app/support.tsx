@@ -10,9 +10,9 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { supportApi } from '../src/api/support';
-import { apiClient } from '../src/api';
-import { logger } from '../src/utils/logger';
+import { supportApi } from '@azeebo/react-data/api/support';
+import { apiClient } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import { colors } from '../src/theme';
 

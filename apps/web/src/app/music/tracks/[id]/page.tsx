@@ -86,7 +86,7 @@ export default function TrackDetailPage(): React.JSX.Element {
             ) : (
               <div
                 className="w-64 h-64 sm:w-72 sm:h-72 rounded-2xl flex items-center justify-center text-7xl"
-                style={{ background: 'linear-gradient(135deg, #4C0A5E, #E8420A)' }}
+                style={{ background: 'linear-gradient(135deg, var(--music-purple), #E8420A)' }}
               >
                 Music2
               </div>

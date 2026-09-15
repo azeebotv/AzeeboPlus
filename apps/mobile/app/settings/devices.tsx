@@ -11,9 +11,9 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { authApi, type Device } from '../../src/api';
-import { useAuth } from '../../src/contexts/AuthContext';
-import { logger } from '../../src/utils/logger';
+import { authApi, type Device } from '@azeebo/react-data';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../../src/theme';
 
 export default function DeviceManagementScreen() {

@@ -173,7 +173,7 @@ export default function AgbalaPathPage() {
                     padding: 20,
                     borderRadius: 16,
                     border: '1px solid rgba(255,255,255,0.08)',
-                    backgroundColor: '#18151e',
+                    backgroundColor: 'var(--bg-tertiary)',
                     textDecoration: 'none',
                     color: 'var(--text-primary)',
                     transition: 'border-color 0.2s, transform 0.2s',

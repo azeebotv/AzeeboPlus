@@ -21,6 +21,11 @@ on:
 
 permissions:
   contents: read
+  # The verify step reads the GHCR package version list to confirm the
+  # rollback target tag actually exists (packages/container/.../versions needs
+  # packages: read; with contents-only the call 403s and the step silently
+  # degrades to "attempting rollback anyway").
+  packages: read
 
 jobs:
   rollback:

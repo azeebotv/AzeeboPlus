@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ViewStyle, TextStyle } from '
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { apiClient } from '../../src/api';
+import { apiClient } from '@azeebo/react-data';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
 
@@ -230,9 +230,9 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingTop: 50,
   },
-  exitIcon: { color: colors.palette.grey500, fontSize: 24 },
+  exitIcon: { color: colors.text.secondary, fontSize: 24 },
   gameStats: { flexDirection: 'row', gap: 16 },
-  scoreText: { color: colors.palette.plum, fontSize: 16, fontWeight: '700' },
+  scoreText: { color: colors.category.purple, fontSize: 16, fontWeight: '700' },
   streakText: { color: '#F59E0B', fontSize: 16, fontWeight: '700' },
   timerCircle: {
     width: 50,
@@ -245,13 +245,13 @@ const styles = StyleSheet.create({
   timerText: { fontSize: 20, fontWeight: '700' },
   progressBar: {
     height: 4,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     marginHorizontal: 16,
     borderRadius: 2,
   },
-  progressFill: { height: 4, backgroundColor: colors.palette.plum, borderRadius: 2 },
+  progressFill: { height: 4, backgroundColor: colors.category.purple, borderRadius: 2 },
   questionCount: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 12,
     textAlign: 'center',
     marginTop: 8,
@@ -277,11 +277,16 @@ const styles = StyleSheet.create({
   gameOverContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   gameOverEmoji: { fontSize: 80, marginBottom: 20 },
   gameOverTitle: { fontSize: 28, fontWeight: '700', marginBottom: 12 },
-  gameOverScore: { color: colors.palette.plum, fontSize: 24, fontWeight: '700', marginBottom: 8 },
-  gameOverQuestions: { color: colors.palette.grey500, fontSize: 16, marginBottom: 32 },
+  gameOverScore: {
+    color: colors.category.purple,
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  gameOverQuestions: { color: colors.text.secondary, fontSize: 16, marginBottom: 32 },
   gameOverButtons: { flexDirection: 'row', gap: 16 },
   playAgainButton: {
-    backgroundColor: colors.palette.plum,
+    backgroundColor: colors.category.purple,
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: 10,
@@ -292,7 +297,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: colors.palette.grey500,
+    borderColor: colors.neutral[500],
   },
-  exitText: { color: colors.palette.grey500, fontSize: 16, fontWeight: '600' },
+  exitText: { color: colors.text.secondary, fontSize: 16, fontWeight: '600' },
 });

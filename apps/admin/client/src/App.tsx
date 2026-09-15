@@ -7,6 +7,7 @@ import OverviewPage from './routes/overview';
 import UsersPage from './routes/users';
 import UserDetailPage from './routes/user-detail';
 import ContentPage from './routes/content';
+import ContentDetailPage from './routes/content-detail';
 import ContentReviewPage from './routes/content-review';
 import ModerationPage from './routes/moderation';
 import CreatorsPage from './routes/creators';
@@ -25,9 +26,11 @@ import ReportsPage from './routes/reports';
 import ReportBuilderPage from './routes/report-builder';
 import SettingsPage from './routes/settings';
 import SubscriptionsPage from './routes/subscriptions';
+import PlanDetailPage from './routes/plan-detail';
 import FeatureFlagsPage from './routes/feature-flags';
 import GlobalFeatureFlagsPage from './routes/global-feature-flags';
 import AgbalaPage from './routes/agbala';
+import StoryworldDetailPage from './routes/storyworld-detail';
 import LiveEventsPage from './routes/live-events';
 import BundlePassesPage from './routes/bundle-passes';
 import TippingPage from './routes/tipping';
@@ -41,6 +44,7 @@ import ServiceHealthPage from './routes/service-health';
 import PerformanceMonitorPage from './routes/performance-monitor';
 import RateLimitsPage from './routes/rate-limits';
 import AutomationsPage from './routes/automations';
+import SupportPage from './routes/support';
 import LoginPage from './routes/login';
 import { FlagGate } from './components/FlagGate';
 import { useAdminFlags, ADMIN_FLAG_KEYS } from './hooks/useAdminFlags';
@@ -86,6 +90,7 @@ export default function App() {
               <Route path="users" element={<UsersPage />} />
               <Route path="users/:id" element={<UserDetailPage />} />
               <Route path="content" element={<ContentPage />} />
+              <Route path="content/:id" element={<ContentDetailPage />} />
               <Route path="content-review" element={<ContentReviewPage />} />
               <Route path="moderation" element={<ModerationPage />} />
               <Route path="creators" element={<CreatorsPage />} />
@@ -111,9 +116,11 @@ export default function App() {
               />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="subscriptions" element={<SubscriptionsPage />} />
+              <Route path="subscriptions/plans/:id" element={<PlanDetailPage />} />
               <Route path="feature-flags" element={<FeatureFlagsPage />} />
               <Route path="feature-flags/global" element={<GlobalFeatureFlagsPage />} />
               <Route path="agbala" element={<AgbalaPage />} />
+              <Route path="agbala/storyworlds/:id" element={<StoryworldDetailPage />} />
               <Route path="live-events" element={<LiveEventsPage />} />
               <Route path="bundle-passes" element={<BundlePassesPage />} />
               <Route path="tipping" element={<TippingPage />} />
@@ -127,6 +134,7 @@ export default function App() {
               <Route path="performance" element={<PerformanceMonitorPage />} />
               <Route path="rate-limits" element={<RateLimitsPage />} />
               <Route path="automations" element={<AutomationsPage />} />
+              <Route path="support" element={<SupportPage />} />
             </Route>
           </Routes>
         </BrowserRouter>

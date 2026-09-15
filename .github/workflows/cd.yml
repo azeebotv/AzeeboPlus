@@ -18,6 +18,12 @@ env:
   NODE_VERSION: '22.16.0'
   PNPM_VERSION: '10.33.2'
 
+# Baseline: deny-by-default; each job grants only what it needs (see
+# docs/WORKFLOW_IDENTITIES.md). Deployment contexts must never inherit
+# read/write token defaults.
+permissions:
+  contents: read
+
 jobs:
   # CD approval gate: branch protection only covers PRs, so push-to-main
   # deploys get their own gate — this job waits for the push-time CI checks
@@ -86,6 +92,10 @@ jobs:
     name: Deploy to Staging
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # GHCR push needs packages: write — the ONLY write grant in this workflow.
+    permissions:
+      contents: read
+      packages: write
     needs: [verify-ci-checks]
     if: (github.ref == 'refs/heads/main' || github.event.inputs.environment == 'staging') && (needs.verify-ci-checks.result == 'success' || needs.verify-ci-checks.result == 'skipped')
     environment: staging
@@ -166,6 +176,8 @@ jobs:
     name: Health Check (Staging)
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
     needs: [deploy-staging]
     steps:
       - name: Validate staging URL variables are configured
@@ -273,6 +285,9 @@ jobs:
     name: Deploy to Production
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Deploys go through webhooks/SSH — no GitHub API writes at all.
+    permissions:
+      contents: read
     if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'production'
     environment: production
     needs: [health-check-staging]
@@ -319,6 +334,8 @@ jobs:
     name: Health Check (Production)
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
     needs: [deploy-production]
     steps:
       - name: Validate production URL variables are configured

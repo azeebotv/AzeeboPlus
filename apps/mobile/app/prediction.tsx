@@ -12,11 +12,11 @@ import {
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { colors } from '../src/theme';
-import { engagementApi, PredictionResult } from '../src/api/engagement';
-import type { RealityShow } from '../src/types/api';
-import { walletApi } from '../src/api/wallet';
-import { apiClient } from '../src/api/client';
-import { logger } from '../src/utils/logger';
+import { engagementApi, PredictionResult } from '@azeebo/react-data/api/engagement';
+import type { RealityShow } from '@azeebo/react-data/types/api';
+import { walletApi } from '@azeebo/react-data/api/wallet';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import { analytics } from '../src/utils/analytics';
 

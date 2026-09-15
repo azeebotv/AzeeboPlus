@@ -1,6 +1,6 @@
 import { Analytics, ConsentCategory } from '@azeebo/analytics-sdk';
 import Constants from 'expo-constants';
-import { logger } from './logger';
+import { logger } from '@azeebo/react-data/utils/logger';
 
 const constantsExtra = (
   (Constants as Record<string, unknown>).expoConfig as Record<string, unknown>

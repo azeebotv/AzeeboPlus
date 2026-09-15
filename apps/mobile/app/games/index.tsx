@@ -3,8 +3,8 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from '
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { apiClient } from '../../src/api/client';
-import { ApiResponse } from '../../src/types/api';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { ApiResponse } from '@azeebo/react-data/types/api';
 import { analytics } from '../../src/utils/analytics';
 import { colors } from '../../src/theme';
 
@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
   },
   universeLabel: {
     fontSize: 14,
-    color: colors.palette.plum,
+    color: colors.category.purple,
     fontWeight: '600',
     marginBottom: 4,
   },
@@ -274,18 +274,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statValue: {
-    color: colors.palette.plum,
+    color: colors.category.purple,
     fontSize: 20,
     fontWeight: '700',
   },
   statLabel: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 12,
   },
   statDivider: {
     width: 1,
     height: 30,
-    backgroundColor: colors.palette.grey800,
+    backgroundColor: colors.bg.tertiary,
   },
   featuredSection: {
     paddingHorizontal: 16,
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
   },
   featuredImagePlaceholder: {
     height: 200,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 12,
     left: 12,
-    backgroundColor: colors.palette.plum,
+    backgroundColor: colors.category.purple,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 4,
@@ -334,14 +334,14 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   featuredGenre: {
-    color: colors.palette.grey300,
+    color: colors.neutral[300],
     fontSize: 14,
     marginBottom: 12,
   },
   featuredPlayButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.palette.plum,
+    backgroundColor: colors.category.purple,
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -381,13 +381,13 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   categoryBadge: {
-    backgroundColor: colors.palette.grey800,
+    backgroundColor: colors.bg.tertiary,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 10,
   },
   categoryCount: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 11,
   },
   section: {
@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   seeAllText: {
-    color: colors.palette.plum,
+    color: colors.category.purple,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
   },
   gameThumbnail: {
     height: 100,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
@@ -450,11 +450,11 @@ const styles = StyleSheet.create({
   },
   gameGenre: {
     fontSize: 12,
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     marginBottom: 10,
   },
   playButton: {
-    backgroundColor: colors.palette.plum,
+    backgroundColor: colors.category.purple,
     paddingVertical: 8,
     borderRadius: 6,
     alignItems: 'center',
@@ -480,7 +480,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 10,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -496,26 +496,26 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   tournamentPrize: {
-    color: colors.palette.plum,
+    color: colors.category.purple,
     fontSize: 13,
     fontWeight: '600',
     marginBottom: 2,
   },
   tournamentEntrants: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 12,
   },
   tournamentStatus: {
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6,
-    backgroundColor: colors.palette.grey800,
+    backgroundColor: colors.bg.tertiary,
   },
   statusLive: {
     backgroundColor: '#EF4444',
   },
   statusText: {
-    color: colors.palette.grey500,
+    color: colors.text.secondary,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -539,7 +539,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.palette.charcoal,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -555,7 +555,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   playerScore: {
-    color: colors.palette.plum,
+    color: colors.category.purple,
     fontSize: 14,
     fontWeight: '600',
   },

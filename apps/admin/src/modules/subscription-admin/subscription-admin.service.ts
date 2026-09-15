@@ -252,4 +252,88 @@ export class SubscriptionAdminService {
   async toggleSubscriptionPlanStatus(id: string, status: string, actorId?: string) {
     return this.updateSubscriptionPlan(id, { status }, actorId);
   }
+
+  // ─── Promo Codes (interim storage in system_settings) ─────────────────────────
+
+  private async readPromoCodes(): Promise<any[]> {
+    const key = 'subscription.promo_codes';
+    const row = await this.prisma.systemSettings.findUnique({ where: { key } });
+    if (!row || !Array.isArray(row.value)) return [];
+    return row.value;
+  }
+
+  private async writePromoCodes(codes: any[]): Promise<void> {
+    const key = 'subscription.promo_codes';
+    const existing = await this.prisma.systemSettings.findUnique({ where: { key } });
+    if (existing) {
+      await this.prisma.systemSettings.update({
+        where: { key },
+        data: { value: codes },
+      });
+    } else {
+      await this.prisma.systemSettings.create({
+        data: {
+          key,
+          value: codes,
+          category: 'monetization',
+          description: 'Promotional discount codes for subscription memberships',
+          isPublic: false,
+        },
+      });
+    }
+  }
+
+  async getPromoCodes() {
+    const codes = await this.readPromoCodes();
+    return { items: codes, total: codes.length };
+  }
+
+  async createPromoCode(data: {
+    code: string;
+    discountType: 'percent' | 'flat';
+    discountValue: number;
+    maxUses?: number | null;
+    expiresAt?: string | null;
+    applicablePlanIds?: string[];
+  }) {
+    const codes = await this.readPromoCodes();
+    const cleanCode = data.code.trim().toUpperCase();
+    if (codes.some((c) => c.code === cleanCode)) {
+      throw new Error(`Promo code "${cleanCode}" already exists`);
+    }
+
+    const newCode = {
+      id: `promo_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      code: cleanCode,
+      discountType: data.discountType || 'percent',
+      discountValue: Number(data.discountValue || 0),
+      maxUses: data.maxUses ? Number(data.maxUses) : null,
+      usedCount: 0,
+      expiresAt: data.expiresAt || null,
+      status: 'active',
+      applicablePlanIds: data.applicablePlanIds || [],
+      createdAt: new Date().toISOString(),
+    };
+
+    codes.unshift(newCode);
+    await this.writePromoCodes(codes);
+    return newCode;
+  }
+
+  async expirePromoCode(id: string) {
+    const codes = await this.readPromoCodes();
+    const target = codes.find((c) => c.id === id);
+    if (!target) throw new NotFoundException(`Promo code ${id} not found`);
+    target.status = 'expired';
+    await this.writePromoCodes(codes);
+    return target;
+  }
+
+  async deletePromoCode(id: string) {
+    let codes = await this.readPromoCodes();
+    codes = codes.filter((c) => c.id !== id);
+    await this.writePromoCodes(codes);
+    return { success: true };
+  }
 }
+

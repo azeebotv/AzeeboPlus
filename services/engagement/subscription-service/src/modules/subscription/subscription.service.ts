@@ -429,10 +429,10 @@ export class SubscriptionService {
 
   private async debitWallet(userId: string, amount: number, description: string): Promise<void> {
     try {
-      const walletResponse = await axios.get(
-        walletLookupUrl(this.walletServiceBaseUrl, userId),
-        { headers: this.walletInternalHeaders(), timeout: 10000 }
-      );
+      const walletResponse = await axios.get(walletLookupUrl(this.walletServiceBaseUrl, userId), {
+        headers: this.walletInternalHeaders(),
+        timeout: 10000,
+      });
       // Internal lookup responds enveloped: { success, data: { balance, … } }.
       const wallet = walletResponse.data?.data;
       if (!wallet) {

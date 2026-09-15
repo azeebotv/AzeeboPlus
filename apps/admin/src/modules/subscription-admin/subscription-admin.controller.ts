@@ -93,4 +93,30 @@ export class SubscriptionAdminController {
   ) {
     return this.subscriptionService.deleteSubscriptionPlan(id, this.getActorId(req));
   }
+
+  // ─── Promo Codes ─────────────────────────────────────────────────────────────
+
+  @Get('promo-codes')
+  @ApiOperation({ summary: 'Get list of promo codes' })
+  async getPromoCodes() {
+    return this.subscriptionService.getPromoCodes();
+  }
+
+  @Post('promo-codes')
+  @ApiOperation({ summary: 'Create new promo code' })
+  async createPromoCode(@Body() body: any) {
+    return this.subscriptionService.createPromoCode(body);
+  }
+
+  @Put('promo-codes/:id/expire')
+  @ApiOperation({ summary: 'Expire promo code' })
+  async expirePromoCode(@Param('id') id: string) {
+    return this.subscriptionService.expirePromoCode(id);
+  }
+
+  @Delete('promo-codes/:id')
+  @ApiOperation({ summary: 'Delete promo code' })
+  async deletePromoCode(@Param('id') id: string) {
+    return this.subscriptionService.deletePromoCode(id);
+  }
 }

@@ -2,8 +2,6 @@ export interface PlatformOverview {
   totalUsers: number;
   totalContent: number;
   totalViews: number;
-  dailyActiveUsers: number;
-  dailyViews: number;
   totalRevenue: number;
   newUsers: number;
   newContent: number;
@@ -79,18 +77,34 @@ export interface ContentReviewItem {
   creatorName?: string;
 }
 
+/**
+ * Real engagement metrics — exactly what the engagement-admin backend
+ * computes (never invented fields). `activeUsers` is wallets with a
+ * completed transaction this week; there is no session/DAU source, so no
+ * DAU/retention/bounce numbers are claimed.
+ */
 export interface EngagementMetrics {
-  dailyActiveUsers: number;
-  monthlyActiveUsers: number;
-  averageSessionDuration: number;
-  retentionRate: number;
-  bounceRate: number;
+  totalViews: number;
+  totalContent: number;
+  activeUsers: number;
+  newUsersThisWeek: number;
+  dailyTransactions: number;
 }
 
 export interface EngagementTrend {
   date: string;
-  metric: string;
-  value: number;
+  newUsers: number;
+  publishedContent: number;
+  draftContent: number;
+}
+
+/** Aggregate wallet stats from /admin/wallets/stats. */
+export interface WalletStats {
+  totalWallets: number;
+  totalBalance: number;
+  totalBonus: number;
+  totalPromo: number;
+  todayTransactions: number;
 }
 
 export interface SearchCorrectionDay {
@@ -369,4 +383,111 @@ export interface LiveEventAdmin {
   createdAt: string;
   updatedAt: string;
   _count?: { tickets: number };
+}
+
+// ─── Payout Requests (G7 — Financial) ─────────────────────────────────────────
+
+export interface PayoutRequest {
+  id: string;
+  userId: string;
+  amount: number;
+  currency: string;
+  /** pending | approved | rejected | completed | failed | cancelled */
+  status: string;
+  method: string;
+  metadata?: Record<string, unknown>;
+  completedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  /** Joined from users FDW table when available */
+  user?: { displayName: string; email: string };
+}
+
+export interface PayoutStats {
+  pending: number;
+  pendingAmount: number;
+  approved: number;
+  approvedAmount: number;
+  completed: number;
+  completedAmount: number;
+  rejected: number;
+}
+
+// ─── Tipping Config (G2 — Tipping) ────────────────────────────────────────────
+
+export interface TippingConfig {
+  platformCommissionPct: number;
+  maxTipAmount: number;
+  currency: string;
+  updatedAt?: string;
+}
+
+// ─── Promo Codes (G3 — Subscriptions) ─────────────────────────────────────────
+
+export interface PromoCode {
+  id: string;
+  code: string;
+  discountType: 'percent' | 'flat';
+  discountValue: number;
+  maxUses: number | null;
+  usedCount: number;
+  expiresAt: string | null;
+  /** active | expired | deleted */
+  status: string;
+  applicablePlanIds: string[];
+  createdAt: string;
+}
+
+// ─── Webhook Events (G4 — Payment Gateways) ───────────────────────────────────
+
+export interface WebhookEvent {
+  id: string;
+  provider: string;
+  eventType: string;
+  reference: string;
+  amount: number;
+  currency: string;
+  /** success | failed | pending */
+  status: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+}
+
+// ─── Support Tickets (G6 — Support) ───────────────────────────────────────────
+
+export interface SupportTicket {
+  id: string;
+  subject: string;
+  description: string;
+  userId: string;
+  userEmail?: string;
+  userName?: string;
+  /** open | in_progress | resolved | closed */
+  status: string;
+  /** low | medium | high | urgent */
+  priority: string;
+  category: string;
+  assignedTo?: string | null;
+  assignedToName?: string | null;
+  messages?: SupportMessage[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SupportMessage {
+  id: string;
+  ticketId: string;
+  authorId: string;
+  authorName?: string;
+  authorRole?: string;
+  body: string;
+  createdAt: string;
+}
+
+export interface SupportStats {
+  open: number;
+  inProgress: number;
+  resolved: number;
+  closed: number;
+  avgResponseTimeMs?: number;
 }

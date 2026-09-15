@@ -82,6 +82,14 @@ jobs:
       matrix:
         environment: ${{ fromJson(needs.matrix.outputs.environments) }}
     environment: ${{ matrix.environment }}
+    # issues: write exists solely for the production-drift tracking issue
+    # (update-drift-tracking-issue.mjs) — but the issue is created/updated
+    # under the azeebo-drift-bot App token, NOT this token (App-owned issues
+    # don't retrigger workflows). This token only reads databases + uploads
+    # artifacts.
+    permissions:
+      contents: read
+      issues: write
     steps:
       - name: Check DB credentials for this environment
         id: creds
@@ -206,3 +214,17 @@ jobs:
           name: schema-lock-report-${{ matrix.environment }}-${{ github.run_id }}
           path: .check-live-schema-lock-out/
           retention-days: 30
+
+      # Persistent home for production world-drift: creates/updates/closes ONE
+      # tracking issue (found by marker) under the azeebo-drift-bot App —
+      # created when drift appears, updated only when the violating-service
+      # set changes, closed when production is clean, reopened if it returns.
+      # No App configured → skips loudly; the report above is unaffected.
+      - name: Update production drift tracking issue
+        if: ${{ always() && matrix.environment == 'production' && steps.creds.outputs.have-creds == 'true' && steps.app-token.outputs.token != '' }}
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          # Read the report THIS run just wrote — the freshest artifact on the
+          # Actions API would still be yesterday's run at this point.
+          DRIFT_LOCAL_REPORT: .check-live-schema-lock-out/production/report-production.json
+        run: node scripts/update-drift-tracking-issue.mjs
